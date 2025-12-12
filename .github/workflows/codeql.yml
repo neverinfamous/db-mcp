@@ -39,7 +39,7 @@ jobs:
       matrix:
         language: [ 'javascript-typescript' ]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Check for JS/TS files
       id: check-files
       run: |
