@@ -161,7 +161,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
             const partition = input.partitionBy
                 ? `PARTITION BY ${input.partitionBy}`
                 : '';
-            const rankFunc = input.rankType.toUpperCase().replace('_', '_');
+            const rankFunc = input.rankType.toUpperCase();
 
             let sql = `
                 SELECT ${columns},

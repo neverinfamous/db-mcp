@@ -99,6 +99,74 @@ export const ERROR_CODES = {
 } as const;
 
 // =============================================================================
+// Security Utilities
+// =============================================================================
+
+/**
+ * Patterns for sensitive data fields that should be redacted in logs
+ */
+const SENSITIVE_PATTERNS = [
+    /password/i,
+    /secret/i,
+    /token/i,
+    /key/i,
+    /auth/i,
+    /credential/i,
+    /bearer/i,
+    /api[-_]?key/i,
+    /private/i,
+    /session/i,
+    /cookie/i
+];
+
+/**
+ * Sanitize log input to prevent log injection attacks.
+ * Removes newlines and other control characters that could be used
+ * to forge log entries or inject malicious content.
+ */
+function sanitizeLogInput(input: string): string {
+    // Remove newlines, carriage returns, and other control characters
+    // that could be used for log injection
+    return input
+        .replace(/[\r\n]/g, ' ')  // Replace newlines with spaces
+        // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
+        .replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
+}
+
+/**
+ * Check if a key name matches sensitive data patterns
+ */
+function isSensitiveKey(key: string): boolean {
+    return SENSITIVE_PATTERNS.some(pattern => pattern.test(key));
+}
+
+/**
+ * Redact sensitive data from an object for safe logging.
+ * Replaces values of sensitive keys with '[REDACTED]'.
+ */
+function redactSensitiveData(data: Record<string, unknown>): Record<string, unknown> {
+    const redacted: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+        if (isSensitiveKey(key)) {
+            redacted[key] = '[REDACTED]';
+        } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            redacted[key] = redactSensitiveData(value as Record<string, unknown>);
+        } else if (Array.isArray(value)) {
+            redacted[key] = value.map((item: unknown): unknown =>
+                typeof item === 'object' && item !== null
+                    ? redactSensitiveData(item as Record<string, unknown>)
+                    : item
+            );
+        } else {
+            redacted[key] = value;
+        }
+    }
+
+    return redacted;
+}
+
+// =============================================================================
 // Logger Class
 // =============================================================================
 
@@ -195,22 +263,27 @@ export class Logger {
         // Code
         parts.push(`[${codeStr}]`);
 
-        // Message
-        parts.push(message);
+        // Message (sanitized to prevent log injection)
+        parts.push(sanitizeLogInput(message));
 
-        // Context
+        // Context (redacted and sanitized to prevent sensitive data exposure)
         if (payload?.context && Object.keys(payload.context).length > 0) {
-            parts.push(`(${JSON.stringify(payload.context)})`);
+            const redactedContext = redactSensitiveData(payload.context);
+            parts.push(`(${sanitizeLogInput(JSON.stringify(redactedContext))})`);
         }
 
-        // Output main message
+        // Output main message (all parts are now sanitized)
         this.config.output(parts.join(' '));
 
-        // Stack trace for errors
+        // Stack trace for errors (sanitized but not redacted - stack traces are internal)
         if (this.config.includeStacks && level === 'error') {
             const stack = payload?.stack ?? payload?.error?.stack;
             if (stack) {
-                this.config.output(`  Stack: ${stack}`);
+                // Sanitize stack trace to prevent log injection
+                // but keep newlines within stack as they're structural, not user input
+                // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
+                const sanitizedStack = stack.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                this.config.output(`  Stack: ${sanitizedStack}`);
             }
         }
     }

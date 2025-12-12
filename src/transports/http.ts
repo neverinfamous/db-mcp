@@ -119,9 +119,10 @@ export class HttpTransport {
         if (this.config.cors) {
             this.app.use(cors(this.config.cors) as RequestHandler);
         } else {
-            // Default CORS for development
+            // Default CORS - restrictive by default to prevent CSRF attacks
+            // Use config.cors to specify allowed origins in production
             this.app.use(cors({
-                origin: true,
+                origin: false,  // Reject cross-origin requests by default (CodeQL: js/cors-permissive-configuration)
                 methods: ['GET', 'POST', 'OPTIONS'],
                 allowedHeaders: ['Authorization', 'Content-Type'],
                 credentials: true
