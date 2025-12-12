@@ -120,20 +120,6 @@ const SENSITIVE_PATTERNS = [
 ];
 
 /**
- * Sanitize log input to prevent log injection attacks.
- * Removes newlines and other control characters that could be used
- * to forge log entries or inject malicious content.
- */
-function sanitizeLogInput(input: string): string {
-    // Remove newlines, carriage returns, and other control characters
-    // that could be used for log injection
-    return input
-        .replace(/[\r\n]/g, ' ')  // Replace newlines with spaces
-        // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
-        .replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
-}
-
-/**
  * Check if a key name matches sensitive data patterns
  */
 function isSensitiveKey(key: string): boolean {
@@ -246,41 +232,55 @@ export class Logger {
         // Normalize code
         const codeStr = typeof code === 'string' ? code : code.full;
 
-        // Build log parts
-        const parts: string[] = [];
+        // Build log parts - only trusted, non-user-controlled data here
+        const trustedParts: string[] = [];
 
-        // Timestamp
+        // Timestamp - trusted (system generated)
         if (this.config.timestamps) {
-            parts.push(`[${new Date().toISOString()}]`);
+            trustedParts.push(`[${new Date().toISOString()}]`);
         }
 
-        // Level (uppercase)
-        parts.push(`[${level.toUpperCase()}]`);
+        // Level - trusted (internal enum)
+        trustedParts.push(`[${level.toUpperCase()}]`);
 
-        // Module
-        parts.push(`[${module.toUpperCase()}]`);
+        // Module - trusted (internal string from code)
+        trustedParts.push(`[${module.toUpperCase()}]`);
 
-        // Code
-        parts.push(`[${codeStr}]`);
+        // Code - trusted (internal string/ErrorCode from code)
+        trustedParts.push(`[${codeStr}]`);
 
-        // Message (sanitized to prevent log injection)
-        parts.push(sanitizeLogInput(message));
+        // Build the trusted prefix (no user data)
+        const trustedPrefix = trustedParts.join(' ');
 
-        // Context (redacted and sanitized to prevent sensitive data exposure)
+        // Sanitize message - apply sanitization inline with .replace() that CodeQL recognizes
+        // This breaks the taint chain by explicitly sanitizing user-controlled input
+        const sanitizedMessage = message
+            .replace(/[\r\n]/g, ' ')  // Remove newlines to prevent log injection
+            // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
+            .replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
+
+        // Build the final log line
+        let logLine = `${trustedPrefix} ${sanitizedMessage}`;
+
+        // Context handling - redact sensitive data and sanitize
         if (payload?.context && Object.keys(payload.context).length > 0) {
             const redactedContext = redactSensitiveData(payload.context);
-            parts.push(`(${sanitizeLogInput(JSON.stringify(redactedContext))})`);
+            const contextStr = JSON.stringify(redactedContext)
+                .replace(/[\r\n]/g, ' ')  // Remove newlines to prevent log injection
+                // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
+                .replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
+            logLine += ` (${contextStr})`;
         }
 
-        // Output main message (all parts are now sanitized)
-        this.config.output(parts.join(' '));
+        // Output the sanitized log line
+        this.config.output(logLine);
 
-        // Stack trace for errors (sanitized but not redacted - stack traces are internal)
+        // Stack trace for errors
         if (this.config.includeStacks && level === 'error') {
             const stack = payload?.stack ?? payload?.error?.stack;
             if (stack) {
-                // Sanitize stack trace to prevent log injection
-                // but keep newlines within stack as they're structural, not user input
+                // Sanitize stack trace - remove only dangerous control characters
+                // Keep newlines as they're structural in stack traces
                 // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
                 const sanitizedStack = stack.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
                 this.config.output(`  Stack: ${sanitizedStack}`);
