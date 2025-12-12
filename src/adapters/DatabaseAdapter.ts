@@ -160,14 +160,20 @@ export abstract class DatabaseAdapter {
         const tools = this.getToolDefinitions();
 
         for (const tool of tools) {
-            // Skip tools that are filtered out
-            if (!enabledTools.has(tool.name)) {
+            // Check if tool is enabled:
+            // 1. Exact match: enabledTools.has('sqlite_read_query')
+            // 2. Base name match: tool is 'sqlite_read_query' and enabledTools has 'read_query'
+            // 3. If no filter rules applied (all tools in enabledTools), allow all adapter tools
+            const baseName = tool.name.replace(/^(sqlite|mysql|postgres|mongodb|redis|sqlserver)_/, '');
+            const isEnabled = enabledTools.has(tool.name) ||
+                enabledTools.has(baseName) ||
+                enabledTools.size === 0;
+
+            if (!isEnabled) {
                 continue;
             }
 
             // Register with MCP server
-            // Note: Actual registration uses server.tool() method
-            // This is a placeholder for the implementation
             this.registerTool(server, tool);
         }
     }

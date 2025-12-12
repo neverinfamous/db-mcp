@@ -1,9 +1,31 @@
 # db-mcp Implementation Plan
 
-> **Last Updated**: December 11, 2025  
-> **Status**: Phase 1 Complete, Phase 2 In Progress
+> **Last Updated**: December 12, 2025  
+> **Status**: Phase 1-2 Complete, SQLite Adapter Complete (89 tools)
 
-A sequential development plan for building a multi-database MCP server with OAuth 2.0 authentication, tool filtering, and code mode architecture in TypeScript.
+A development plan for building database MCP servers with OAuth 2.0 authentication, tool filtering, and code mode architecture in TypeScript.
+
+---
+
+## Critical Limitation: One Database Per MCP Server
+
+> [!WARNING]
+> **MCP Tool Limits**: Due to MCP tool limits, we cannot support multiple database systems in a single MCP server—even with tool filtering. Dynamic filtering is not currently supported, so all database tools would need to be registered upfront, exceeding practical limits.
+
+### Architectural Decision
+
+> [!IMPORTANT]
+> Each MCP server is **fully independent** with no shared runtime dependencies. Users install only the database server(s) they need.
+
+| Project | Description |
+|---------|-------------|
+| **db-mcp** | SQLite MCP server (this project) - **89 tools** |
+| **postgres-mcp** | Future: Independent PostgreSQL MCP server |
+| **mysql-mcp** | Future: Independent MySQL MCP server |
+| **mongo-mcp** | Future: Independent MongoDB MCP server |
+| **redis-mcp** | Future: Independent Redis MCP server |
+
+Future database servers may use this project as a reference implementation, but will be completely standalone with their own dependencies.
 
 ---
 
@@ -12,13 +34,17 @@ A sequential development plan for building a multi-database MCP server with OAut
 ```
 Phase 1: Core Infrastructure    ████████████████████ 100% ✅
 Phase 2: OAuth 2.0 Integration  ████████████████████ 100% ✅
-Phase 3: SQLite Adapter         ░░░░░░░░░░░░░░░░░░░░   0% 🔄
-Phase 4: PostgreSQL Adapter     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Phase 5: MySQL Adapter          ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Phase 6: MongoDB Adapter        ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Phase 7: Redis Adapter          ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Phase 8: SQL Server Adapter     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Phase 3: SQLite Adapter         ████████████████████ 100% ✅
+  └─ WASM Backend (sql.js)      ████████████████████  76 tools
+  └─ Native Backend (better-sqlite3) ██████████████████  89 tools
 ```
+
+**Future Independent Servers** (separate projects, no shared dependencies):
+- postgres-mcp
+- mysql-mcp
+- mongo-mcp
+- redis-mcp
+- sqlserver-mcp
 
 ---
 
@@ -26,16 +52,13 @@ Phase 8: SQL Server Adapter     ░░░░░░░░░░░░░░░░
 
 ### Key Principles
 
-1. **Sequential Database Development** - Complete each database adapter to 100% before starting the next
-2. **OAuth 2.0 First** - Build authentication layer before database adapters
-3. **SQLite as Template** - First adapter serves as the reference implementation for all others
-4. **Single Thread Per Phase** - One conversation context per major phase for focus
+1. **One Database Per Server** - Each database system gets its own fully independent MCP server
+2. **No Shared Dependencies** - Each server is standalone, users install only what they need
+3. **SQLite as Reference** - This implementation serves as the template for future servers
 
-### Execution Order
+### SQLite Complete (db-mcp)
 
-```
-Core → OAuth 2.0 → SQLite (100%) → PostgreSQL (100%) → MySQL (100%) → MongoDB (100%) → Redis (100%) → SQL Server (100%)
-```
+This project (`db-mcp`) serves as the SQLite MCP server and template for future database servers.
 
 ---
 
@@ -115,85 +138,80 @@ npm run typecheck # ✅ No errors
 
 ---
 
-## Phase 3: SQLite Adapter 🔄 NEXT
+## Phase 3: SQLite Adapter ✅ COMPLETE
 
-**Status**: Ready to start (OAuth complete)  
-**Estimated Effort**: 2-3 conversation threads  
-**Reference**: [sqlite-mcp-server](https://github.com/neverinfamous/sqlite-mcp-server) (73 tools)
+**Status**: Both backends fully functional  
+**WASM Backend**: 76 tools (cross-platform, no compilation required)  
+**Native Backend**: 89 tools (better-sqlite3, requires Node.js compilation)
 
-### Tool Categories (73 Total)
+### Backend Comparison
 
-| Category | Tools | Status | Description |
-|----------|-------|--------|-------------|
-| **Core Database** | 8 | ⏳ | CRUD, schema management, transactions |
-| **JSON Helper** | 6 | ⏳ | Simplified JSON operations |
-| **JSON Operations** | 12 | ⏳ | Full JSON/JSONB manipulation |
-| **Text Processing** | 8 | ⏳ | Regex, fuzzy matching, phonetic |
-| **Statistical Analysis** | 8 | ⏳ | Stats, percentiles, time series |
-| **Virtual Tables** | 8 | ⏳ | CSV, R-Tree, series generation |
-| **Full-Text Search** | 4 | ⏳ | FTS5, BM25, hybrid search |
-| **Vector/Semantic** | 11 | ⏳ | Embeddings, similarity search |
-| **Geospatial** | 7 | ⏳ | SpatiaLite operations |
-| **Admin** | 1 | ⏳ | Vacuum, PRAGMA |
+| Feature | WASM (sql.js) | Native (better-sqlite3) |
+|---------|---------------|-------------------------|
+| **Tools** | 76 | 89 |
+| **Transactions** | ❌ | ✅ (7 tools) |
+| **Window Functions** | ❌ | ✅ (6 tools) |
+| **FTS5** | ⚠️ Limited | ✅ Full |
+| **JSON1** | ⚠️ Limited | ✅ Full |
+| **Cross-platform** | ✅ | Requires compilation |
+| **In-memory DBs** | ✅ | ✅ |
+| **File-based DBs** | ✅ | ✅ |
 
-### Deliverables
+### Tool Categories
+
+| Category | WASM | Native | Description |
+|----------|------|--------|-------------|
+| Core Database | 8 | 8 | CRUD, schema, indexes |
+| JSON Helpers | 6 | 6 | Simplified JSON ops |
+| JSON Operations | 12 | 12 | Full JSON manipulation |
+| Text Processing | 8 | 8 | Regex, matching |
+| FTS5 Full-Text Search | 4 | 4 | Search, ranking |
+| Statistical Analysis | 8 | 14 | Stats + window functions |
+| Virtual Tables | 4 | 4 | Generate series |
+| Vector/Semantic | 11 | 11 | Embeddings, similarity |
+| Geospatial | 7 | 7 | Distance, bounding box |
+| Admin | 4 | 11 | Vacuum, backup, transactions |
+| **Total** | **76** | **89** | |
+
+### Native-Only Tools (13 additional)
+
+**Transaction Tools** (7):
+- `sqlite_transaction_begin` - Start transaction (deferred/immediate/exclusive)
+- `sqlite_transaction_commit` - Commit transaction
+- `sqlite_transaction_rollback` - Rollback transaction
+- `sqlite_transaction_savepoint` - Create savepoint
+- `sqlite_transaction_release` - Release savepoint
+- `sqlite_transaction_rollback_to` - Rollback to savepoint
+- `sqlite_transaction_execute` - Execute multiple statements atomically
+
+**Window Function Tools** (6):
+- `sqlite_window_row_number` - Sequential row numbering
+- `sqlite_window_rank` - RANK/DENSE_RANK/PERCENT_RANK
+- `sqlite_window_lag_lead` - Previous/next row values
+- `sqlite_window_running_total` - Cumulative sum
+- `sqlite_window_moving_avg` - Rolling average
+- `sqlite_window_ntile` - Divide into buckets/quantiles
+
+### Deliverables ✅
 
 | File | Status | Description |
 |------|--------|-------------|
-| `src/adapters/sqlite/SqliteAdapter.ts` | ⏳ | Main adapter class |
-| `src/adapters/sqlite/tools/core.ts` | ⏳ | Core database tools |
-| `src/adapters/sqlite/tools/json.ts` | ⏳ | JSON operations |
-| `src/adapters/sqlite/tools/text.ts` | ⏳ | Text processing |
-| `src/adapters/sqlite/tools/stats.ts` | ⏳ | Statistical analysis |
-| `src/adapters/sqlite/tools/virtual.ts` | ⏳ | Virtual tables |
-| `src/adapters/sqlite/tools/fts.ts` | ⏳ | Full-text search |
-| `src/adapters/sqlite/tools/vector.ts` | ⏳ | Vector operations |
-| `src/adapters/sqlite/tools/geo.ts` | ⏳ | Geospatial (SpatiaLite) |
-| `src/adapters/sqlite/resources/` | ⏳ | MCP resources (7) |
-| `src/adapters/sqlite/prompts/` | ⏳ | MCP prompts (7) |
-
-### MCP Resources (7)
-
-| Resource URI | Description |
-|--------------|-------------|
-| `database://schema` | Complete database schema |
-| `database://tables` | Table listing |
-| `database://indexes` | Index information |
-| `database://stats` | Database statistics |
-| `database://health` | Health status |
-| `database://capabilities` | Adapter capabilities |
-| `database://extensions` | Installed extensions |
-
-### MCP Prompts (7)
-
-| Prompt | Description |
-|--------|-------------|
-| `optimize_query` | Query optimization workflow |
-| `design_schema` | Schema design guidance |
-| `migrate_data` | Data migration assistance |
-| `analyze_performance` | Performance analysis |
-| `setup_fts` | FTS5 setup guide |
-| `json_operations` | JSON best practices |
-| `backup_strategy` | Backup planning |
-
-### Implementation Tasks
-
-- [ ] Create `SqliteAdapter` extending `DatabaseAdapter`
-- [ ] Implement connection management with sql.js
-- [ ] Implement core tools (8 tools)
-- [ ] Implement JSON helper tools (6 tools)
-- [ ] Implement JSON operations (12 tools)
-- [ ] Implement text processing (8 tools)
-- [ ] Implement statistical analysis (8 tools)
-- [ ] Implement virtual tables (8 tools)
-- [ ] Implement FTS5 tools (4 tools)
-- [ ] Implement vector/semantic tools (11 tools)
-- [ ] Implement geospatial tools (7 tools)
-- [ ] Implement admin tool (1 tool)
-- [ ] Create MCP resources (7)
-- [ ] Create MCP prompts (7)
-- [ ] Add comprehensive test suite
-- [ ] Verify with MCP Inspector
+| [SqliteAdapter.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/SqliteAdapter.ts) | ✅ | WASM adapter (sql.js) |
+| [NativeSqliteAdapter.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite-native/NativeSqliteAdapter.ts) | ✅ | Native adapter (better-sqlite3) |
+| [tools/core.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/core.ts) | ✅ | Core database tools |
+| [tools/json-helpers.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/json-helpers.ts) | ✅ | JSON helper tools |
+| [tools/json-operations.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/json-operations.ts) | ✅ | JSON operations |
+| [tools/text.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/text.ts) | ✅ | Text processing |
+| [tools/fts.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/fts.ts) | ✅ | Full-text search |
+| [tools/stats.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/stats.ts) | ✅ | Statistical analysis |
+| [tools/virtual.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/virtual.ts) | ✅ | Virtual tables |
+| [tools/vector.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/vector.ts) | ✅ | Vector operations |
+| [tools/geo.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/geo.ts) | ✅ | Geospatial |
+| [tools/admin.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/tools/admin.ts) | ✅ | Admin tools |
+| [tools/transactions.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite-native/tools/transactions.ts) | ✅ | Transaction tools (native) |
+| [tools/window.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite-native/tools/window.ts) | ✅ | Window functions (native) |
+| [resources.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/resources.ts) | ✅ | MCP resources (7) |
+| [prompts.ts](file:///C:/Users/chris/Desktop/db-mcp/src/adapters/sqlite/prompts.ts) | ✅ | MCP prompts (7) |
 - [ ] Document all tools
 
 ---

@@ -117,7 +117,22 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
         'create_index',
         'drop_index',
         'reindex',
-        'optimize'
+        'optimize',
+        // Native SQLite transaction tools
+        'transaction_begin',
+        'transaction_commit',
+        'transaction_rollback',
+        'transaction_savepoint',
+        'transaction_release',
+        'transaction_rollback_to',
+        'transaction_execute',
+        // Native SQLite window function tools
+        'window_row_number',
+        'window_rank',
+        'window_lag_lead',
+        'window_running_total',
+        'window_moving_avg',
+        'window_ntile'
     ]
 };
 
@@ -147,15 +162,21 @@ export function getToolGroup(toolName: string): ToolGroup | undefined {
  * @returns Parsed filter configuration
  */
 export function parseToolFilter(filterString: string | undefined): ToolFilterConfig {
+    // When no filter is specified, use empty Set to indicate "allow all"
+    // This is checked in DatabaseAdapter.registerTools()
+    if (!filterString || filterString.trim() === '') {
+        return {
+            raw: '',
+            rules: [],
+            enabledTools: new Set<string>() // Empty = allow all
+        };
+    }
+
     const config: ToolFilterConfig = {
-        raw: filterString ?? '',
+        raw: filterString,
         rules: [],
         enabledTools: new Set(getAllToolNames())
     };
-
-    if (!filterString || filterString.trim() === '') {
-        return config;
-    }
 
     // Split by comma and process each rule
     const parts = filterString.split(',').map(p => p.trim()).filter(p => p.length > 0);
@@ -260,13 +281,16 @@ export function calculateTokenSavings(
  */
 export function getFilterSummary(config: ToolFilterConfig): string {
     const totalTools = getAllToolNames().length;
-    const enabledCount = config.enabledTools.size;
+
+    // Empty enabledTools means "allow all" - show as all enabled
+    const isAllEnabled = config.enabledTools.size === 0;
+    const enabledCount = isAllEnabled ? totalTools : config.enabledTools.size;
     const { tokensSaved, percentSaved } = calculateTokenSavings(totalTools, enabledCount);
 
     const lines = [
         `Tool Filter Summary:`,
         `  Filter: ${config.raw || '(none)'}`,
-        `  Tools: ${enabledCount}/${totalTools} enabled`,
+        `  Tools: ${isAllEnabled ? 'all' : enabledCount}/${totalTools} enabled`,
         `  Token savings: ~${tokensSaved} tokens (${percentSaved}% reduction)`
     ];
 

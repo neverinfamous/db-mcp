@@ -52,6 +52,15 @@ function parseArgs(): Partial<McpServerConfig> {
                     connectionString: dbPath
                 });
             }
+        } else if (arg === '--sqlite-native') {
+            const dbPath = args[++i];
+            if (dbPath) {
+                databases.push({
+                    type: 'sqlite',
+                    connectionString: dbPath,
+                    options: { backend: 'better-sqlite3' }
+                } as DatabaseConfig);
+            }
         } else if (arg === '--postgresql' || arg === '--postgres') {
             const connString = args[++i];
             if (connString) {
@@ -246,8 +255,25 @@ async function main(): Promise<void> {
             });
         });
 
-        // TODO: Register database adapters based on config.databases
-        // This will be implemented when individual adapters are created
+        // Register database adapters based on config.databases
+        for (const dbConfig of config.databases) {
+            if (dbConfig.type === 'sqlite') {
+                const options = dbConfig.options as { backend?: string } | undefined;
+                if (options?.backend === 'better-sqlite3') {
+                    // Use native SQLite adapter with FTS5, window functions, transactions
+                    const { NativeSqliteAdapter } = await import('./adapters/sqlite-native/index.js');
+                    const adapter = new NativeSqliteAdapter();
+                    await server.registerAdapter(adapter, dbConfig);
+                } else {
+                    // Use sql.js WASM adapter (default)
+                    const { SqliteAdapter } = await import('./adapters/sqlite/index.js');
+                    const adapter = new SqliteAdapter();
+                    await server.registerAdapter(adapter, dbConfig);
+                }
+            }
+            // TODO: Add other database adapters as they are implemented
+            // else if (dbConfig.type === 'postgresql') { ... }
+        }
 
         if (config.databases.length === 0) {
             console.error('Warning: No databases configured. Use --sqlite, --postgresql, etc. or set DATABASE_URI');
