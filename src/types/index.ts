@@ -187,6 +187,15 @@ export interface OAuthConfig {
 
     /** Expected issuer in tokens */
     issuer?: string;
+
+    /** Clock tolerance for token validation (seconds) */
+    clockTolerance?: number;
+
+    /** JWKS cache TTL (seconds) */
+    jwksCacheTtl?: number;
+
+    /** Paths that bypass authentication */
+    publicPaths?: string[];
 }
 
 /**

@@ -47,3 +47,22 @@ coverage/
 
 # Optional eslint cache
 .eslintcache
+
+# Keycloak (development server)
+keycloak-*/
+keycloak/
+
+# Local config files with secrets
+config/*.local.json
+config/secrets/
+
+# Database files
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Credentials
+.env.local
+*.pem
+*.key

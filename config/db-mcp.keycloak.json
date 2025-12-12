@@ -1,0 +1,25 @@
+{
+    "name": "db-mcp",
+    "version": "1.0.0",
+    "transport": "http",
+    "port": 3000,
+    "oauth": {
+        "enabled": true,
+        "authorizationServerUrl": "http://localhost:8080/realms/db-mcp",
+        "issuer": "http://localhost:8080/realms/db-mcp",
+        "audience": "db-mcp-server",
+        "jwksUri": "http://localhost:8080/realms/db-mcp/protocol/openid-connect/certs",
+        "clockTolerance": 60,
+        "publicPaths": [
+            "/health",
+            "/.well-known/*"
+        ]
+    },
+    "databases": {
+        "demo": {
+            "type": "sqlite",
+            "path": "./data/demo.db"
+        }
+    },
+    "toolFilter": "core,monitoring"
+}

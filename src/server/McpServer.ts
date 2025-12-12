@@ -194,7 +194,7 @@ export class DbMcpServer {
                 await this.startStdio();
                 break;
             case 'http':
-                this.startHttp();
+                await this.startHttp();
                 break;
             default:
                 throw new Error(`Unsupported transport: ${this.config.transport}`);
@@ -212,15 +212,49 @@ export class DbMcpServer {
 
     /**
      * Start server with HTTP transport (Streamable HTTP)
-     * TODO: Implement after OAuth integration
      */
-    private startHttp(): void {
-        const port = this.config.port ?? 3000;
+    private async startHttp(): Promise<void> {
+        const { HttpTransport } = await import('../transports/http.js');
 
-        // Placeholder for HTTP transport implementation
-        // This will use express + @modelcontextprotocol/sdk HTTP transport
-        console.error(`HTTP transport not yet implemented (port ${String(port)})`);
-        throw new Error('HTTP transport not yet implemented');
+        // Build OAuth config, only including defined optional properties
+        const oauthConfig: {
+            enabled: boolean;
+            authorizationServerUrl: string;
+            audience: string;
+            issuer?: string;
+            jwksUri?: string;
+            clockTolerance?: number;
+            publicPaths?: string[];
+        } = {
+            enabled: this.config.oauth?.enabled ?? false,
+            authorizationServerUrl: this.config.oauth?.authorizationServerUrl ?? '',
+            audience: this.config.oauth?.audience ?? this.config.name
+        };
+
+        // Only add optional properties if they are defined
+        if (this.config.oauth?.issuer !== undefined) {
+            oauthConfig.issuer = this.config.oauth.issuer;
+        }
+        if (this.config.oauth?.jwksUri !== undefined) {
+            oauthConfig.jwksUri = this.config.oauth.jwksUri;
+        }
+        if (this.config.oauth?.clockTolerance !== undefined) {
+            oauthConfig.clockTolerance = this.config.oauth.clockTolerance;
+        }
+        if (this.config.oauth?.publicPaths !== undefined) {
+            oauthConfig.publicPaths = this.config.oauth.publicPaths;
+        }
+
+        const transport = new HttpTransport({
+            port: this.config.port ?? 3000,
+            oauth: oauthConfig
+        });
+
+        const mcpTransport = await transport.initialize();
+        await this.server.connect(mcpTransport);
+        await transport.start();
+
+        console.error(`db-mcp server started (HTTP transport on port ${String(this.config.port ?? 3000)})`);
     }
 
     /**
