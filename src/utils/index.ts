@@ -10,7 +10,7 @@ export {
     createErrorCode,
     ERROR_CODES,
     type LogLevel,
-    type LogPayload,
-    type ErrorCode,
-    type LoggerConfig
+    type LogContext,
+    type LogModule,
+    type ErrorCode
 } from './logger.js';

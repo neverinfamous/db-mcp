@@ -76,7 +76,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
                 fileMustExist: false
             });
 
-            log.info('CONNECT', `Connected to SQLite database (native): ${filePath}`);
+            log.info(`Connected to SQLite database (native): ${filePath}`, { code: 'SQLITE_CONNECT' });
 
             // Apply options
             this.applyOptions(sqliteConfig.options);
@@ -85,7 +85,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
             if (filePath !== ':memory:' && !sqliteConfig.options?.walMode) {
                 try {
                     this.db.pragma('journal_mode = WAL');
-                    log.info('WAL', 'Enabled WAL mode for better concurrency');
+                    log.info('Enabled WAL mode for better concurrency', { code: 'SQLITE_WAL' });
                 } catch {
                     // WAL mode may not be available
                 }
@@ -94,7 +94,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
             this.connected = true;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            log.error(ERROR_CODES.DB.CONNECT_FAILED, `Failed to connect to native SQLite: ${message}`);
+            log.error(`Failed to connect to native SQLite: ${message}`, { code: ERROR_CODES.DB.CONNECT_FAILED.full });
             throw new Error(`Native SQLite connection failed: ${message}`);
         }
 
@@ -122,9 +122,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         if (options.spatialite) {
             try {
                 this.db.loadExtension('mod_spatialite');
-                log.info('EXTENSION', 'Loaded SpatiaLite extension');
+                log.info('Loaded SpatiaLite extension', { code: 'SQLITE_EXTENSION' });
             } catch {
-                log.warning('EXTENSION', 'SpatiaLite extension not available');
+                log.warning('SpatiaLite extension not available', { code: 'SQLITE_EXTENSION' });
             }
         }
     }
@@ -137,7 +137,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
             this.db.close();
             this.db = null;
             this.connected = false;
-            log.info('DISCONNECT', 'Disconnected from native SQLite database');
+            log.info('Disconnected from native SQLite database', { code: 'SQLITE_DISCONNECT' });
         }
         return Promise.resolve();
     }

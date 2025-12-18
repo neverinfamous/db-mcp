@@ -1,8 +1,8 @@
 # db-mcp
 
-Last Updated December 12, 2025
+Last Updated December 18, 2025
 
-*Enterprise-grade SQLite MCP Server with OAuth 2.0 authentication & 89 specialized tools*
+*Enterprise-grade SQLite MCP Server with OAuth 2.1 authentication & 89 specialized tools*
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -14,7 +14,7 @@ Last Updated December 12, 2025
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)
 
-A **SQLite MCP Server** with up to 89 tools, OAuth 2.0 authentication, and granular access control. Written in TypeScript.
+A **SQLite MCP Server** with up to 89 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript.
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)** • **[Security](SECURITY.md)**
 
@@ -35,7 +35,7 @@ A **SQLite MCP Server** with up to 89 tools, OAuth 2.0 authentication, and granu
 
 ### Features & Resources
 - [🔥 Core Capabilities](#-core-capabilities)
-- [🔐 OAuth 2.0 Implementation](#-oauth-20-implementation)
+- [🔐 OAuth 2.1 Implementation](#-oauth-20-implementation)
 - [🏆 Why Choose db-mcp?](#-why-choose-db-mcp)
 - [📈 Project Stats](#-project-stats)
 
@@ -66,7 +66,7 @@ npm run test
 ### 🛡️ Security Features
 
 - ✅ **SQL Injection Prevention** - Parameter binding on all queries
-- ✅ **OAuth 2.0 Authentication** - RFC 9728/8414 compliant
+- ✅ **OAuth 2.1 Authentication** - RFC 9728/8414 compliant
 - ✅ **Scope-based Authorization** - Granular read/write/admin access
 - ✅ **Strict TypeScript** - Full type safety with no `any` types
 
@@ -601,7 +601,7 @@ sqlite_text_similarity({
 
 ### 🏢 Enterprise Features
 
-- 🔐 **OAuth 2.0 Authentication** - RFC 9728/8414 compliant token-based authentication
+- 🔐 **OAuth 2.1 Authentication** - RFC 9728/8414 compliant token-based authentication
 - 🛡️ **Tool Filtering** - Control which database operations are exposed
 - 👥 **Access Control** - Granular scopes for read-only, write, and admin access
 - 🎯 **Full-Text Search (FTS5)** - Advanced search with BM25 ranking
@@ -611,7 +611,7 @@ sqlite_text_similarity({
 
 ---
 
-## 🔐 OAuth 2.0 Implementation
+## 🔐 OAuth 2.1 Implementation
 
 | Component | Status | Description |
 |-----------|--------|-------------|
@@ -643,7 +643,7 @@ See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as 
 
 ✅ **TypeScript Native** - Full type safety with strict mode, no `any` types  
 ✅ **89 Specialized Tools** - Most comprehensive SQLite MCP server available  
-✅ **OAuth 2.0 Built-in** - Enterprise-grade authentication out of the box  
+✅ **OAuth 2.1 Built-in** - Enterprise-grade authentication out of the box  
 ✅ **Dual Backends** - WASM for portability, native for performance  
 ✅ **Tool Filtering** - Stay within AI IDE tool limits with preset configurations  
 ✅ **Window Functions** - Advanced analytics with ROW_NUMBER, RANK, LAG/LEAD  
@@ -662,7 +662,7 @@ See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as 
 - **Strict TypeScript** with full type coverage
 - **Multi-platform** support (Windows, Linux, macOS)
 - **Docker images** available for easy deployment
-- **OAuth 2.0** RFC-compliant authentication
+- **OAuth 2.1** RFC-compliant authentication
 - **Active development** with regular updates
 
 [⬆️ Back to Table of Contents](#-table-of-contents)

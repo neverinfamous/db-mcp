@@ -40,7 +40,7 @@ export class AuthorizationServerDiscovery {
         this.cacheTtl = config.cacheTtl ?? 3600;
         this.timeout = config.timeout ?? 5000;
 
-        logger.info('INIT', `Authorization Server Discovery initialized for: ${this.authServerUrl}`);
+        logger.info(`Authorization Server Discovery initialized for: ${this.authServerUrl}`, { code: 'AUTH_INIT' });
     }
 
     /**
@@ -55,13 +55,13 @@ export class AuthorizationServerDiscovery {
     async discover(): Promise<AuthorizationServerMetadata> {
         // Check cache
         if (this.cachedMetadata && Date.now() < this.cacheExpiry) {
-            logger.info('CACHE_HIT', 'Using cached authorization server metadata');
+            logger.info('Using cached authorization server metadata', { code: 'AUTH_CACHE_HIT' });
             return this.cachedMetadata;
         }
 
         const metadataUrl = `${this.authServerUrl}/.well-known/oauth-authorization-server`;
 
-        logger.info('DISCOVERY', `Fetching authorization server metadata from: ${metadataUrl}`);
+        logger.info(`Fetching authorization server metadata from: ${metadataUrl}`, { code: 'AUTH_DISCOVERY' });
 
         try {
             const controller = new AbortController();
@@ -90,16 +90,16 @@ export class AuthorizationServerDiscovery {
             this.cachedMetadata = metadata;
             this.cacheExpiry = Date.now() + (this.cacheTtl * 1000);
 
-            logger.info('DISCOVERY_SUCCESS', `Authorization server metadata cached for ${String(this.cacheTtl)}s`);
+            logger.info(`Authorization server metadata cached for ${String(this.cacheTtl)}s`, { code: 'AUTH_DISCOVERY_SUCCESS' });
 
             return metadata;
         } catch (error) {
             const cause = error instanceof Error ? error : new Error(String(error));
 
             logger.error(
-                ERROR_CODES.AUTH.DISCOVERY_FAILED,
                 `Failed to discover authorization server: ${this.authServerUrl}`,
                 {
+                    code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full,
                     operation: 'discover',
                     entityId: this.authServerUrl,
                     error: cause
@@ -127,8 +127,8 @@ export class AuthorizationServerDiscovery {
         const expectedIssuer = this.authServerUrl;
         if (metadata.issuer !== expectedIssuer) {
             logger.warning(
-                'ISSUER_MISMATCH',
-                `Issuer mismatch: expected ${expectedIssuer}, got ${metadata.issuer}`
+                `Issuer mismatch: expected ${expectedIssuer}, got ${metadata.issuer}`,
+                { code: 'AUTH_ISSUER_MISMATCH' }
             );
             // Note: This is a warning, not an error, as some auth servers may use different URLs
         }
@@ -211,7 +211,7 @@ export class AuthorizationServerDiscovery {
     clearCache(): void {
         this.cachedMetadata = null;
         this.cacheExpiry = 0;
-        logger.info('CACHE_CLEARED', 'Authorization server metadata cache cleared');
+        logger.info('Authorization server metadata cache cleared', { code: 'AUTH_CACHE_CLEARED' });
     }
 
     /**

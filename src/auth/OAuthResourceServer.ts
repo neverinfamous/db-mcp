@@ -40,7 +40,7 @@ export class OAuthResourceServer {
             bearerMethodsSupported: config.bearerMethodsSupported ?? ['header']
         };
 
-        logger.info('INIT', `OAuth Resource Server initialized for: ${this.config.resource}`);
+        logger.info(`OAuth Resource Server initialized for: ${this.config.resource}`, { code: 'AUTH_INIT' });
     }
 
     /**
@@ -78,7 +78,7 @@ export class OAuthResourceServer {
             res.setHeader('Cache-Control', 'public, max-age=3600');
             res.json(metadata);
 
-            logger.info('METADATA_SERVED', 'Protected Resource Metadata served');
+            logger.info('Protected Resource Metadata served', { code: 'AUTH_METADATA_SERVED' });
         };
     }
 

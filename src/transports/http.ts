@@ -110,7 +110,7 @@ export class HttpTransport {
      * @returns The MCP StreamableHTTPServerTransport instance
      */
     async initialize(): Promise<StreamableHTTPServerTransport> {
-        logger.info('INIT', 'Initializing HTTP transport...');
+        logger.info('Initializing HTTP transport...', { code: 'HTTP_INIT' });
 
         // Create Express app
         this.app = express();
@@ -161,12 +161,11 @@ export class HttpTransport {
         // Error handler
         this.app.use(oauthErrorHandler);
 
-        logger.info('INIT_COMPLETE', 'HTTP transport initialized', {
-            context: {
-                port: this.config.port,
-                oauth: this.config.oauth.enabled,
-                resourceUri
-            }
+        logger.info('HTTP transport initialized', {
+            code: 'HTTP_INIT_COMPLETE',
+            port: this.config.port,
+            oauth: this.config.oauth.enabled,
+            resourceUri
         });
 
         return this.mcpTransport;
@@ -176,7 +175,7 @@ export class HttpTransport {
      * Set up OAuth 2.0 components
      */
     private async setupOAuth(resourceUri: string): Promise<void> {
-        logger.info('OAUTH_SETUP', 'Setting up OAuth 2.0...');
+        logger.info('Setting up OAuth 2.0...', { code: 'HTTP_OAUTH_SETUP' });
 
         // Create Resource Server
         this.resourceServer = new OAuthResourceServer({
@@ -207,23 +206,21 @@ export class HttpTransport {
                 clockTolerance: this.config.oauth.clockTolerance
             });
 
-            logger.info('OAUTH_READY', 'OAuth 2.0 setup complete');
+            logger.info('OAuth 2.0 setup complete', { code: 'HTTP_OAUTH_READY' });
         } catch (error) {
             // If discovery fails, we can still start without OAuth validation
             // This allows the server to start and return proper errors to clients
             logger.warning(
-                ERROR_CODES.AUTH.DISCOVERY_FAILED,
                 'Authorization server discovery failed. OAuth validation disabled.',
-                { error: error instanceof Error ? error : undefined }
+                { code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full, error: error instanceof Error ? error : undefined }
             );
 
             // Create a dummy token validator that always fails
             // This ensures requests still get proper 401 responses
             if (!this.config.oauth.jwksUri) {
                 logger.error(
-                    ERROR_CODES.AUTH.DISCOVERY_FAILED,
                     'No JWKS URI available. Please provide oauth.jwksUri in config.',
-                    {}
+                    { code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full }
                 );
                 throw error;
             }
@@ -277,9 +274,8 @@ export class HttpTransport {
                 );
             } catch (error) {
                 logger.error(
-                    ERROR_CODES.SERVER.TRANSPORT_ERROR,
                     'Error handling MCP request',
-                    { error: error instanceof Error ? error : undefined }
+                    { code: ERROR_CODES.SERVER.TRANSPORT_ERROR.full, error: error instanceof Error ? error : undefined }
                 );
 
                 if (!res.headersSent) {
@@ -306,9 +302,8 @@ export class HttpTransport {
                 );
             } catch (error) {
                 logger.error(
-                    ERROR_CODES.SERVER.TRANSPORT_ERROR,
                     'Error handling MCP DELETE request',
-                    { error: error instanceof Error ? error : undefined }
+                    { code: ERROR_CODES.SERVER.TRANSPORT_ERROR.full, error: error instanceof Error ? error : undefined }
                 );
 
                 if (!res.headersSent) {
@@ -332,15 +327,14 @@ export class HttpTransport {
         return new Promise((resolve, reject) => {
             try {
                 this.server = this.app?.listen(this.config.port, this.config.host ?? '0.0.0.0', () => {
-                    logger.info('SERVER_STARTED', `HTTP server listening on ${this.config.host ?? '0.0.0.0'}:${String(this.config.port)}`);
+                    logger.info(`HTTP server listening on ${this.config.host ?? '0.0.0.0'}:${String(this.config.port)}`, { code: 'HTTP_SERVER_STARTED' });
                     resolve();
                 }) ?? null;
 
                 this.server?.on('error', (error) => {
                     logger.error(
-                        ERROR_CODES.SERVER.START_FAILED,
                         'Failed to start HTTP server',
-                        { error }
+                        { code: ERROR_CODES.SERVER.START_FAILED.full, error }
                     );
                     reject(error);
                 });
@@ -363,13 +357,12 @@ export class HttpTransport {
             this.server.close((error) => {
                 if (error) {
                     logger.error(
-                        ERROR_CODES.SERVER.SHUTDOWN_FAILED,
                         'Error stopping HTTP server',
-                        { error }
+                        { code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full, error }
                     );
                     reject(error);
                 } else {
-                    logger.info('SERVER_STOPPED', 'HTTP server stopped');
+                    logger.info('HTTP server stopped', { code: 'HTTP_SERVER_STOPPED' });
                     resolve();
                 }
             });

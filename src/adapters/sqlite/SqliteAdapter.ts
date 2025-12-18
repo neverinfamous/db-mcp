@@ -68,7 +68,7 @@ export class SqliteAdapter extends DatabaseAdapter {
             if (filePath === ':memory:') {
                 // Create in-memory database
                 this.db = new this.sqlJsInstance.Database();
-                log.info('CONNECT', `Connected to in-memory SQLite database`);
+                log.info('Connected to in-memory SQLite database', { code: 'SQLITE_CONNECT' });
             } else {
                 // For file-based databases, we need to read the file
                 // sql.js works in-memory but can load/save to files
@@ -77,16 +77,16 @@ export class SqliteAdapter extends DatabaseAdapter {
                     if (fs.existsSync(filePath)) {
                         const buffer = fs.readFileSync(filePath);
                         this.db = new this.sqlJsInstance.Database(buffer);
-                        log.info('CONNECT', `Connected to SQLite database: ${filePath}`);
+                        log.info(`Connected to SQLite database: ${filePath}`, { code: 'SQLITE_CONNECT' });
                     } else {
                         // Create new database
                         this.db = new this.sqlJsInstance.Database();
-                        log.info('CONNECT', `Created new SQLite database: ${filePath}`);
+                        log.info(`Created new SQLite database: ${filePath}`, { code: 'SQLITE_CONNECT' });
                     }
                 } catch {
                     // Browser environment or no file access - create in-memory
                     this.db = new this.sqlJsInstance.Database();
-                    log.warning('FALLBACK', 'File access unavailable, using in-memory database');
+                    log.warning('File access unavailable, using in-memory database', { code: 'SQLITE_FALLBACK' });
                 }
             }
 
@@ -98,7 +98,7 @@ export class SqliteAdapter extends DatabaseAdapter {
             if (filePath !== ':memory:' && !this.config.options?.walMode) {
                 try {
                     this.db.run('PRAGMA journal_mode = WAL');
-                    log.info('WAL', 'Enabled WAL mode for better concurrency');
+                    log.info('Enabled WAL mode for better concurrency', { code: 'SQLITE_WAL' });
                 } catch {
                     // WAL mode may not be supported (e.g., sql.js limitations)
                 }
@@ -107,7 +107,7 @@ export class SqliteAdapter extends DatabaseAdapter {
             this.connected = true;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            log.error(ERROR_CODES.DB.CONNECT_FAILED, `Failed to connect to SQLite: ${message}`);
+            log.error(`Failed to connect to SQLite: ${message}`, { code: ERROR_CODES.DB.CONNECT_FAILED.full });
             throw new Error(`SQLite connection failed: ${message}`);
         }
     }
@@ -143,16 +143,16 @@ export class SqliteAdapter extends DatabaseAdapter {
                     const fs = await import('fs');
                     const data = this.db.export();
                     fs.writeFileSync(this.config.filePath, Buffer.from(data));
-                    log.info('DISCONNECT', `Saved database to: ${this.config.filePath}`);
+                    log.info(`Saved database to: ${this.config.filePath}`, { code: 'SQLITE_DISCONNECT' });
                 } catch {
-                    log.warning('SAVE_FAILED', 'Could not save database to file');
+                    log.warning('Could not save database to file', { code: 'SQLITE_SAVE_FAILED' });
                 }
             }
 
             this.db.close();
             this.db = null;
             this.connected = false;
-            log.info('DISCONNECT', 'Disconnected from SQLite database');
+            log.info('Disconnected from SQLite database', { code: 'SQLITE_DISCONNECT' });
         }
     }
 
@@ -228,7 +228,7 @@ export class SqliteAdapter extends DatabaseAdapter {
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            log.error(ERROR_CODES.DB.QUERY_FAILED, `Query failed: ${message}`);
+            log.error(`Query failed: ${message}`, { code: ERROR_CODES.DB.QUERY_FAILED.full });
             throw new Error(`Query execution failed: ${message}`);
         }
     }
@@ -258,7 +258,7 @@ export class SqliteAdapter extends DatabaseAdapter {
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            log.error(ERROR_CODES.DB.QUERY_FAILED, `Write query failed: ${message}`);
+            log.error(`Write query failed: ${message}`, { code: ERROR_CODES.DB.QUERY_FAILED.full });
             throw new Error(`Write query failed: ${message}`);
         }
     }

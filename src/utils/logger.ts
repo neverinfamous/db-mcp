@@ -49,19 +49,19 @@ export type LogModule =
  */
 export interface LogContext {
     /** Module identifier */
-    module?: LogModule;
+    module?: LogModule | undefined;
     /** Module-prefixed error/event code (e.g., DB_CONNECT_FAILED) */
-    code?: string;
+    code?: string | undefined;
     /** Operation being performed (e.g., executeQuery, connect) */
-    operation?: string;
+    operation?: string | undefined;
     /** Entity identifier (e.g., table name, connection id) */
-    entityId?: string;
+    entityId?: string | undefined;
     /** Request identifier for tracing */
-    requestId?: string;
+    requestId?: string | undefined;
     /** Error stack trace */
-    stack?: string;
+    stack?: string | undefined;
     /** Error object (stack extracted automatically) */
-    error?: Error;
+    error?: Error | undefined;
     /** Additional context fields */
     [key: string]: unknown;
 }
@@ -143,8 +143,10 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
 
 /**
  * Sensitive keys to redact from context objects
+ * Includes OAuth 2.1 configuration fields that may contain sensitive data
  */
 const SENSITIVE_KEYS = new Set([
+    // Authentication credentials
     'password',
     'secret',
     'token',
@@ -157,12 +159,22 @@ const SENSITIVE_KEYS = new Set([
     'refresh_token',
     'credential',
     'credentials',
+    'client_secret',
+    'clientsecret',
+    // OAuth 2.1 configuration (may expose auth infrastructure)
     'issuer',
     'audience',
     'jwksuri',
     'jwks_uri',
-    'client_secret',
-    'clientsecret'
+    'authorizationserverurl',
+    'authorization_server_url',
+    'bearerformat',
+    'bearer_format',
+    'oauthconfig',
+    'oauth_config',
+    'oauth',
+    'scopes_supported',
+    'scopessupported'
 ]);
 
 /**
@@ -193,10 +205,24 @@ function sanitizeContext(context: LogContext): LogContext {
 
 /**
  * Sanitize message to prevent log injection
+ * Removes newlines, carriage returns, and all control characters
  */
 function sanitizeMessage(message: string): string {
-    // Remove newlines and control characters
-    return message.replace(/\n|\r/g, ' ');
+    // Remove newlines and all control characters to prevent log injection/forging
+    // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
+    return message.replace(/[\x00-\x1F\x7F]/g, ' ');
+}
+
+/**
+ * Sanitize stack trace to prevent log injection
+ * Preserves structure but removes dangerous control characters
+ */
+function sanitizeStack(stack: string): string {
+    // Replace newlines with a safe delimiter, remove other control characters
+    return stack
+        .replace(/\r\n|\r|\n/g, ' \u2192 ')  // Replace newlines with arrow separator
+        // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');  // Remove other control chars
 }
 
 /**
@@ -234,6 +260,13 @@ export class Logger {
      */
     setLoggerName(name: string): void {
         this.loggerName = name;
+    }
+
+    /**
+     * Get the logger name
+     */
+    getLoggerName(): string {
+        return this.loggerName;
     }
 
     /**
@@ -303,17 +336,20 @@ export class Logger {
         const module = context?.module ?? this.defaultModule;
         const code = context?.code;
 
+        // Format entry with full sanitization applied
         const formatted = this.formatEntry(level, module, code, message, context);
 
-        // Write to stderr to avoid interfering with MCP stdio transport
+        // Write sanitized output to stderr to avoid interfering with MCP stdio transport
+        // All sensitive data has been redacted by sanitizeContext() in formatEntry()
+        // All control characters removed by sanitizeMessage() to prevent log injection
         console.error(formatted);
 
-        // Stack trace for errors
+        // Stack trace for errors (also sanitized to prevent log injection)
         if (this.includeStacks && (level === 'error' || level === 'critical' || level === 'alert' || level === 'emergency')) {
             const stack = context?.stack ?? context?.error?.stack;
             if (stack) {
-                // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
-                const sanitizedStack = stack.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                // Sanitize stack to remove newlines and control characters (prevents log injection)
+                const sanitizedStack = sanitizeStack(stack);
                 console.error(`  Stack: ${sanitizedStack}`);
             }
         }

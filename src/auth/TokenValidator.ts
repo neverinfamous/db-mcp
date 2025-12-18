@@ -49,7 +49,7 @@ export class TokenValidator {
         this.clockTolerance = config.clockTolerance ?? 60;
         this.jwksCacheTtl = config.jwksCacheTtl ?? 3600;
 
-        logger.info('INIT', `Token Validator initialized for issuer: ${this.issuer}`);
+        logger.info(`Token Validator initialized for issuer: ${this.issuer}`, { code: 'AUTH_INIT' });
     }
 
     /**
@@ -73,12 +73,11 @@ export class TokenValidator {
             // Extract and normalize claims
             const claims = this.extractClaims(payload);
 
-            logger.info('TOKEN_VALID', `Token validated for subject: ${claims.sub}`, {
-                context: {
-                    sub: claims.sub,
-                    scopes: claims.scopes.length,
-                    exp: new Date(claims.exp * 1000).toISOString()
-                }
+            logger.info(`Token validated for subject: ${claims.sub}`, {
+                code: 'AUTH_TOKEN_VALID',
+                sub: claims.sub,
+                scopes: claims.scopes.length,
+                exp: new Date(claims.exp * 1000).toISOString()
             });
 
             return {
@@ -99,7 +98,7 @@ export class TokenValidator {
             return this.jwks;
         }
 
-        logger.info('JWKS_FETCH', `Fetching JWKS from: ${this.jwksUri}`);
+        logger.info(`Fetching JWKS from: ${this.jwksUri}`, { code: 'AUTH_JWKS_FETCH' });
 
         try {
             // Create JWKS remote key set
@@ -110,16 +109,15 @@ export class TokenValidator {
 
             this.jwksExpiry = Date.now() + (this.jwksCacheTtl * 1000);
 
-            logger.info('JWKS_CACHED', `JWKS cached for ${String(this.jwksCacheTtl)}s`);
+            logger.info(`JWKS cached for ${String(this.jwksCacheTtl)}s`, { code: 'AUTH_JWKS_CACHED' });
 
             return this.jwks;
         } catch (error) {
             const cause = error instanceof Error ? error : new Error(String(error));
 
             logger.error(
-                ERROR_CODES.AUTH.JWKS_FETCH_FAILED,
                 `Failed to fetch JWKS: ${this.jwksUri}`,
-                { error: cause }
+                { code: ERROR_CODES.AUTH.JWKS_FETCH_FAILED.full, error: cause }
             );
 
             throw new JwksFetchError(this.jwksUri, cause);
@@ -163,9 +161,8 @@ export class TokenValidator {
         // Handle jose-specific errors
         if (error instanceof jose.errors.JWTExpired) {
             logger.warning(
-                ERROR_CODES.AUTH.TOKEN_EXPIRED,
                 'Token has expired',
-                { error: error as Error }
+                { code: ERROR_CODES.AUTH.TOKEN_EXPIRED.full, error: error as Error }
             );
 
             return {
@@ -177,9 +174,8 @@ export class TokenValidator {
 
         if (error instanceof jose.errors.JWTClaimValidationFailed) {
             logger.warning(
-                ERROR_CODES.AUTH.TOKEN_INVALID,
                 `Token claim validation failed: ${error.message}`,
-                { error }
+                { code: ERROR_CODES.AUTH.TOKEN_INVALID.full, error }
             );
 
             return {
@@ -191,9 +187,8 @@ export class TokenValidator {
 
         if (error instanceof jose.errors.JWSSignatureVerificationFailed) {
             logger.warning(
-                ERROR_CODES.AUTH.SIGNATURE_INVALID,
                 'Token signature verification failed',
-                { error }
+                { code: ERROR_CODES.AUTH.SIGNATURE_INVALID.full, error }
             );
 
             return {
@@ -205,9 +200,8 @@ export class TokenValidator {
 
         if (error instanceof jose.errors.JWKSNoMatchingKey) {
             logger.warning(
-                ERROR_CODES.AUTH.TOKEN_INVALID,
                 'No matching key found in JWKS',
-                { error }
+                { code: ERROR_CODES.AUTH.TOKEN_INVALID.full, error }
             );
 
             return {
@@ -221,9 +215,8 @@ export class TokenValidator {
         const message = error instanceof Error ? error.message : String(error);
 
         logger.error(
-            ERROR_CODES.AUTH.TOKEN_INVALID,
             `Token validation failed: ${message}`,
-            { error: error instanceof Error ? error : undefined }
+            { code: ERROR_CODES.AUTH.TOKEN_INVALID.full, error: error instanceof Error ? error : undefined }
         );
 
         return {
@@ -240,7 +233,7 @@ export class TokenValidator {
         this.jwks = null;
         this.jwksExpiry = 0;
         this.getJwks();
-        logger.info('JWKS_REFRESHED', 'JWKS cache refreshed');
+        logger.info('JWKS cache refreshed', { code: 'AUTH_JWKS_REFRESHED' });
     }
 
     /**
@@ -249,7 +242,7 @@ export class TokenValidator {
     clearCache(): void {
         this.jwks = null;
         this.jwksExpiry = 0;
-        logger.info('CACHE_CLEARED', 'Token validator cache cleared');
+        logger.info('Token validator cache cleared', { code: 'AUTH_CACHE_CLEARED' });
     }
 
     /**

@@ -150,8 +150,10 @@ export function createAuthMiddleware(config: AuthMiddlewareConfig): RequestHandl
 
         // Check if path is public
         if (isPublicPath(req.path, publicPaths)) {
-            logger.info('PUBLIC_PATH', `Public path accessed: ${req.path}`, {
-                context: { requestId, path: req.path }
+            logger.info(`Public path accessed: ${req.path}`, {
+                code: 'AUTH_PUBLIC_PATH',
+                requestId,
+                path: req.path
             });
             next();
             return;
@@ -164,9 +166,8 @@ export function createAuthMiddleware(config: AuthMiddlewareConfig): RequestHandl
             const error = new TokenMissingError(resourceServer.getResourceUri());
 
             logger.warning(
-                ERROR_CODES.AUTH.TOKEN_MISSING,
                 'No access token provided',
-                { context: { requestId, path: req.path } }
+                { code: ERROR_CODES.AUTH.TOKEN_MISSING.full, requestId, path: req.path }
             );
 
             res.status(error.httpStatus);
@@ -186,9 +187,8 @@ export function createAuthMiddleware(config: AuthMiddlewareConfig): RequestHandl
             new InvalidTokenError(result.error);
 
             logger.warning(
-                result.errorCode ?? ERROR_CODES.AUTH.TOKEN_INVALID.full,
                 `Token validation failed: ${result.error ?? 'Unknown error'}`,
-                { context: { requestId, path: req.path } }
+                { code: result.errorCode ?? ERROR_CODES.AUTH.TOKEN_INVALID.full, requestId, path: req.path }
             );
 
             res.status(401);
@@ -213,13 +213,12 @@ export function createAuthMiddleware(config: AuthMiddlewareConfig): RequestHandl
         req.auth = claims;
         req.accessToken = token;
 
-        logger.info('AUTH_SUCCESS', `Request authenticated: ${claims.sub}`, {
-            context: {
-                requestId,
-                sub: claims.sub,
-                scopes: claims.scopes.length,
-                path: req.path
-            }
+        logger.info(`Request authenticated: ${claims.sub}`, {
+            code: 'AUTH_SUCCESS',
+            requestId,
+            sub: claims.sub,
+            scopes: claims.scopes.length,
+            path: req.path
         });
 
         next();
@@ -254,14 +253,12 @@ export function requireScope(scope: string): RequestHandler {
             const error = new InsufficientScopeError(scope, req.auth.scopes);
 
             logger.warning(
-                ERROR_CODES.AUTH.SCOPE_DENIED,
                 `Insufficient scope: required ${scope}`,
                 {
-                    context: {
-                        requestId: req.requestId,
-                        requiredScope: scope,
-                        providedScopes: req.auth.scopes
-                    }
+                    code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+                    requestId: req.requestId,
+                    requiredScope: scope,
+                    providedScopes: req.auth.scopes
                 }
             );
 
@@ -307,14 +304,12 @@ export function requireAnyScope(scopes: string[]): RequestHandler {
             const error = new InsufficientScopeError(scopes, req.auth.scopes);
 
             logger.warning(
-                ERROR_CODES.AUTH.SCOPE_DENIED,
                 `Insufficient scope: required one of [${scopes.join(', ')}]`,
                 {
-                    context: {
-                        requestId: req.requestId,
-                        requiredScopes: scopes,
-                        providedScopes: req.auth.scopes
-                    }
+                    code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+                    requestId: req.requestId,
+                    requiredScopes: scopes,
+                    providedScopes: req.auth.scopes
                 }
             );
 
@@ -357,14 +352,12 @@ export function requireToolScope(toolName: string): RequestHandler {
             );
 
             logger.warning(
-                ERROR_CODES.AUTH.SCOPE_DENIED,
                 `Insufficient scope for tool: ${toolName}`,
                 {
-                    context: {
-                        requestId: req.requestId,
-                        toolName,
-                        providedScopes: req.auth.scopes
-                    }
+                    code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+                    requestId: req.requestId,
+                    toolName,
+                    providedScopes: req.auth.scopes
                 }
             );
 
