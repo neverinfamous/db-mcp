@@ -342,6 +342,8 @@ export class Logger {
         // Write sanitized output to stderr to avoid interfering with MCP stdio transport
         // All sensitive data has been redacted by sanitizeContext() in formatEntry()
         // All control characters removed by sanitizeMessage() to prevent log injection
+        // codeql[js/clear-text-logging] - False positive: sensitive data redacted by sanitizeContext()
+        // codeql[js/log-injection] - False positive: user input sanitized by sanitizeMessage()
         console.error(formatted);
 
         // Stack trace for errors (also sanitized to prevent log injection)
