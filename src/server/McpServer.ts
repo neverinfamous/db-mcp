@@ -34,11 +34,18 @@ export class DbMcpServer {
     constructor(config: McpServerConfig) {
         this.config = config;
 
-        // Initialize MCP server
-        this.server = new McpServer({
-            name: config.name,
-            version: config.version
-        });
+        // Initialize MCP server with logging capability
+        this.server = new McpServer(
+            {
+                name: config.name,
+                version: config.version
+            },
+            {
+                capabilities: {
+                    logging: {}
+                }
+            }
+        );
 
         // Initialize tool filter from config or environment
         this.toolFilter = config.toolFilter
@@ -47,6 +54,15 @@ export class DbMcpServer {
 
         // Log filter summary
         logger.info(getFilterSummary(this.toolFilter), { module: 'FILTER' });
+
+        // Log server initialization with capabilities
+        logger.info('MCP Server initialized', {
+            module: 'SERVER',
+            name: config.name,
+            version: config.version,
+            toolFilter: config.toolFilter ?? 'none',
+            capabilities: ['logging']
+        });
 
         // Register built-in tools
         this.registerBuiltInTools();
