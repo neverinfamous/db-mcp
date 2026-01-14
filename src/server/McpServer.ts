@@ -268,7 +268,15 @@ export class DbMcpServer {
         });
 
         const mcpTransport = await transport.initialize();
-        await this.server.connect(mcpTransport);
+
+        // Ensure transport has onclose handler (required by SDK 1.25.2+)
+        mcpTransport.onclose ??= () => {
+            logger.info('MCP transport connection closed', { module: 'TRANSPORT' });
+        };
+
+        // Type assertion: SDK 1.25.2+ has stricter onclose/onerror requirements
+        // We set onclose above, and use type assertion to satisfy the narrower Transport type
+        await this.server.connect(mcpTransport as Parameters<typeof this.server.connect>[0]);
         await transport.start();
 
         logger.info(`db-mcp server started (HTTP transport on port ${String(this.config.port ?? 3000)})`, { module: 'TRANSPORT' });

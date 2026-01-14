@@ -1,6 +1,6 @@
 # db-mcp
 
-Last Updated December 18, 2025
+Last Updated January 14, 2026
 
 *Enterprise-grade SQLite MCP Server with OAuth 2.1 authentication & 89 specialized tools*
 
@@ -137,7 +137,7 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 
 ### Prerequisites
 - ✅ Docker installed and running (for Docker method)
-- ✅ Node.js 18+ (for local installation)
+- ✅ Node.js 24+ (LTS) (for local installation)
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 

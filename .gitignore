@@ -29,6 +29,7 @@ lerna-debug.log*
 Thumbs.db
 
 # Editor directories and files
+.gemini/
 .vscode/
 .idea/
 *.swp
