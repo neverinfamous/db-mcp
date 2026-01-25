@@ -2,30 +2,30 @@ name: "CodeQL Analysis"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - '**.js'
-      - '**.jsx'
-      - '**.ts'
-      - '**.tsx'
-      - '**.mjs'
-      - '**.cjs'
-      - 'package.json'
+      - "**.js"
+      - "**.jsx"
+      - "**.ts"
+      - "**.tsx"
+      - "**.mjs"
+      - "**.cjs"
+      - "package.json"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - '**.js'
-      - '**.jsx'
-      - '**.ts'
-      - '**.tsx'
-      - '**.mjs'
-      - '**.cjs'
-      - 'package.json'
+      - "**.js"
+      - "**.jsx"
+      - "**.ts"
+      - "**.tsx"
+      - "**.mjs"
+      - "**.cjs"
+      - "package.json"
   # Uncomment when JS/TS code is added:
   # schedule:
   #   - cron: '0 0 * * 1'
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: "0 0 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -40,28 +40,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript-typescript' ]
+        language: ["javascript-typescript"]
     steps:
-    - uses: actions/checkout@v6
-    - name: Check for JS/TS files
-      id: check-files
-      run: |
-        if find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.mjs" -o -name "*.cjs" \) | grep -q .; then
-          echo "has_code=true" >> $GITHUB_OUTPUT
-        else
-          echo "has_code=false" >> $GITHUB_OUTPUT
-        fi
-    - uses: github/codeql-action/init@v4
-      if: steps.check-files.outputs.has_code == 'true'
-      with:
-        languages: ${{ matrix.language }}
-        queries: security-extended,security-and-quality
-    - uses: github/codeql-action/autobuild@v4
-      if: steps.check-files.outputs.has_code == 'true'
-    - uses: github/codeql-action/analyze@v4
-      if: steps.check-files.outputs.has_code == 'true'
-      with:
-        category: "/language:${{matrix.language}}"
-    - name: Skip notification
-      if: steps.check-files.outputs.has_code == 'false'
-      run: echo "No JavaScript/TypeScript files found. Skipping CodeQL analysis."
+      - uses: actions/checkout@v6
+      - name: Check for JS/TS files
+        id: check-files
+        run: |
+          if find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.mjs" -o -name "*.cjs" \) | grep -q .; then
+            echo "has_code=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_code=false" >> $GITHUB_OUTPUT
+          fi
+      - uses: github/codeql-action/init@v4
+        if: steps.check-files.outputs.has_code == 'true'
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+      - uses: github/codeql-action/autobuild@v4
+        if: steps.check-files.outputs.has_code == 'true'
+      - uses: github/codeql-action/analyze@v4
+        if: steps.check-files.outputs.has_code == 'true'
+        with:
+          category: "/language:${{matrix.language}}"
+      - name: Skip notification
+        if: steps.check-files.outputs.has_code == 'false'
+        run: echo "No JavaScript/TypeScript files found. Skipping CodeQL analysis."

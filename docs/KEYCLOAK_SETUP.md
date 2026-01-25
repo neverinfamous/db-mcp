@@ -69,12 +69,12 @@ Using Keycloak Admin CLI:
 
 ## OAuth Endpoints
 
-| Endpoint | URL |
-|----------|-----|
-| Issuer | `http://localhost:8080/realms/db-mcp` |
-| JWKS URI | `http://localhost:8080/realms/db-mcp/protocol/openid-connect/certs` |
-| Token Endpoint | `http://localhost:8080/realms/db-mcp/protocol/openid-connect/token` |
-| Discovery | `http://localhost:8080/realms/db-mcp/.well-known/openid-configuration` |
+| Endpoint       | URL                                                                    |
+| -------------- | ---------------------------------------------------------------------- |
+| Issuer         | `http://localhost:8080/realms/db-mcp`                                  |
+| JWKS URI       | `http://localhost:8080/realms/db-mcp/protocol/openid-connect/certs`    |
+| Token Endpoint | `http://localhost:8080/realms/db-mcp/protocol/openid-connect/token`    |
+| Discovery      | `http://localhost:8080/realms/db-mcp/.well-known/openid-configuration` |
 
 ---
 
@@ -94,22 +94,27 @@ KEYCLOAK_CLIENT_SECRET=your_client_secret_here
 ### TypeScript Configuration
 
 ```typescript
-import { McpServer } from './server/McpServer.js';
+import { McpServer } from "./server/McpServer.js";
 
 const server = new McpServer({
-    name: 'db-mcp',
-    version: '1.0.0',
-    transport: 'http',
-    port: 3000,
-    oauth: {
-        enabled: true,
-        authorizationServerUrl: process.env.KEYCLOAK_URL + '/realms/' + process.env.KEYCLOAK_REALM,
-        issuer: process.env.KEYCLOAK_URL + '/realms/' + process.env.KEYCLOAK_REALM,
-        audience: process.env.KEYCLOAK_CLIENT_ID,
-        jwksUri: process.env.KEYCLOAK_URL + '/realms/' + process.env.KEYCLOAK_REALM + '/protocol/openid-connect/certs',
-        clockTolerance: 60,
-        publicPaths: ['/health']
-    }
+  name: "db-mcp",
+  version: "1.0.0",
+  transport: "http",
+  port: 3000,
+  oauth: {
+    enabled: true,
+    authorizationServerUrl:
+      process.env.KEYCLOAK_URL + "/realms/" + process.env.KEYCLOAK_REALM,
+    issuer: process.env.KEYCLOAK_URL + "/realms/" + process.env.KEYCLOAK_REALM,
+    audience: process.env.KEYCLOAK_CLIENT_ID,
+    jwksUri:
+      process.env.KEYCLOAK_URL +
+      "/realms/" +
+      process.env.KEYCLOAK_REALM +
+      "/protocol/openid-connect/certs",
+    clockTolerance: 60,
+    publicPaths: ["/health"],
+  },
 });
 
 await server.start();
@@ -137,6 +142,7 @@ $response.access_token
 ## Security Notes
 
 > **⚠️ Important**: Never commit credentials to version control.
+>
 > - Store secrets in `.env` (gitignored)
 > - Use environment variables in production
 > - Rotate client secrets regularly

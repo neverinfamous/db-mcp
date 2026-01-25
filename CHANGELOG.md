@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+
 - **Node.js 24 LTS Baseline** — Upgraded from Node 20 to Node 24 LTS as the project baseline
   - `package.json` now requires Node.js >=24.0.0 in `engines` field
   - README prerequisites updated to specify Node.js 24+ (LTS)
@@ -22,14 +23,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `zod`: 4.1.13 → 4.3.5
 
 ### Security
+
 - **Transitive Dependency Fixes** — Resolved high severity vulnerabilities via npm audit fix
 
 ### Fixed
+
 - **MCP SDK 1.25.2 Compatibility** — Fixed stricter transport type requirements
   - Added onclose handler to StreamableHTTPServerTransport before connecting
   - Used type assertion to satisfy SDK's narrower Transport type constraints
 
 ### Added
+
+- **Whitelist-Style Tool Filtering** — Enhanced tool filtering to match postgres-mcp syntax
+  - **Whitelist mode**: Specify only the groups you want (e.g., `core,json,text`)
+  - **Shortcuts**: Predefined bundles (`starter`, `analytics`, `search`, `spatial`, `minimal`, `full`)
+  - **Mixed mode**: Combine whitelist with exclusions (e.g., `starter,-fts5`)
+  - **Backward compatible**: Legacy exclusion syntax (`-vector,-geo`) still works
+  - See README "Tool Filtering" section for documentation
 - **MCP Enhanced Logging** — Full MCP protocol-compliant structured logging
   - RFC 5424 severity levels: debug, info, notice, warning, error, critical, alert, emergency
   - Module-prefixed error codes (e.g., `DB_CONNECT_FAILED`, `AUTH_TOKEN_INVALID`)
@@ -42,4 +52,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project documentation (README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY)
 - GitHub workflows (CodeQL, Dependabot)
 - Issue and PR templates
-

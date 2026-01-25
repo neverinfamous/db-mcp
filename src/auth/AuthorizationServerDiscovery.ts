@@ -1,20 +1,20 @@
 /**
  * db-mcp - Authorization Server Discovery (RFC 8414)
- * 
+ *
  * Discovers and caches OAuth 2.0 Authorization Server Metadata
  * as specified in RFC 8414.
- * 
+ *
  * @see https://datatracker.ietf.org/doc/html/rfc8414
  */
 
 import type {
-    AuthorizationServerMetadata,
-    AuthServerDiscoveryConfig
-} from './types.js';
-import { AuthServerDiscoveryError } from './errors.js';
-import { createModuleLogger, ERROR_CODES } from '../utils/logger.js';
+  AuthorizationServerMetadata,
+  AuthServerDiscoveryConfig,
+} from "./types.js";
+import { AuthServerDiscoveryError } from "./errors.js";
+import { createModuleLogger, ERROR_CODES } from "../utils/logger.js";
 
-const logger = createModuleLogger('AUTH');
+const logger = createModuleLogger("AUTH");
 
 // =============================================================================
 // Authorization Server Discovery
@@ -22,211 +22,227 @@ const logger = createModuleLogger('AUTH');
 
 /**
  * Authorization Server Metadata Discovery
- * 
+ *
  * Fetches and caches OAuth 2.0 authorization server metadata
  * from the /.well-known/oauth-authorization-server endpoint.
  */
 export class AuthorizationServerDiscovery {
-    private readonly authServerUrl: string;
-    private readonly cacheTtl: number;
-    private readonly timeout: number;
+  private readonly authServerUrl: string;
+  private readonly cacheTtl: number;
+  private readonly timeout: number;
 
-    private cachedMetadata: AuthorizationServerMetadata | null = null;
-    private cacheExpiry = 0;
+  private cachedMetadata: AuthorizationServerMetadata | null = null;
+  private cacheExpiry = 0;
 
-    constructor(config: AuthServerDiscoveryConfig) {
-        // Normalize URL (remove trailing slash)
-        this.authServerUrl = config.authServerUrl.replace(/\/+$/, '');
-        this.cacheTtl = config.cacheTtl ?? 3600;
-        this.timeout = config.timeout ?? 5000;
+  constructor(config: AuthServerDiscoveryConfig) {
+    // Normalize URL (remove trailing slash)
+    this.authServerUrl = config.authServerUrl.replace(/\/+$/, "");
+    this.cacheTtl = config.cacheTtl ?? 3600;
+    this.timeout = config.timeout ?? 5000;
 
-        logger.info(`Authorization Server Discovery initialized for: ${this.authServerUrl}`, { code: 'AUTH_INIT' });
+    logger.info(
+      `Authorization Server Discovery initialized for: ${this.authServerUrl}`,
+      { code: "AUTH_INIT" },
+    );
+  }
+
+  /**
+   * Discover authorization server metadata
+   *
+   * Fetches from /.well-known/oauth-authorization-server
+   * Results are cached for cacheTtl seconds.
+   *
+   * @returns Authorization server metadata
+   * @throws AuthServerDiscoveryError if discovery fails
+   */
+  async discover(): Promise<AuthorizationServerMetadata> {
+    // Check cache
+    if (this.cachedMetadata && Date.now() < this.cacheExpiry) {
+      logger.info("Using cached authorization server metadata", {
+        code: "AUTH_CACHE_HIT",
+      });
+      return this.cachedMetadata;
     }
 
-    /**
-     * Discover authorization server metadata
-     * 
-     * Fetches from /.well-known/oauth-authorization-server
-     * Results are cached for cacheTtl seconds.
-     * 
-     * @returns Authorization server metadata
-     * @throws AuthServerDiscoveryError if discovery fails
-     */
-    async discover(): Promise<AuthorizationServerMetadata> {
-        // Check cache
-        if (this.cachedMetadata && Date.now() < this.cacheExpiry) {
-            logger.info('Using cached authorization server metadata', { code: 'AUTH_CACHE_HIT' });
-            return this.cachedMetadata;
-        }
+    const metadataUrl = `${this.authServerUrl}/.well-known/oauth-authorization-server`;
 
-        const metadataUrl = `${this.authServerUrl}/.well-known/oauth-authorization-server`;
+    logger.info(`Fetching authorization server metadata from: ${metadataUrl}`, {
+      code: "AUTH_DISCOVERY",
+    });
 
-        logger.info(`Fetching authorization server metadata from: ${metadataUrl}`, { code: 'AUTH_DISCOVERY' });
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      const response = await fetch(metadataUrl, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        signal: controller.signal,
+      });
 
-            const response = await fetch(metadataUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                },
-                signal: controller.signal
-            });
+      clearTimeout(timeoutId);
 
-            clearTimeout(timeoutId);
+      if (!response.ok) {
+        throw new Error(
+          `HTTP ${String(response.status)}: ${response.statusText}`,
+        );
+      }
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${String(response.status)}: ${response.statusText}`);
-            }
+      const metadata = (await response.json()) as AuthorizationServerMetadata;
 
-            const metadata = await response.json() as AuthorizationServerMetadata;
+      // Validate required fields per RFC 8414
+      this.validateMetadata(metadata);
 
-            // Validate required fields per RFC 8414
-            this.validateMetadata(metadata);
+      // Cache the metadata
+      this.cachedMetadata = metadata;
+      this.cacheExpiry = Date.now() + this.cacheTtl * 1000;
 
-            // Cache the metadata
-            this.cachedMetadata = metadata;
-            this.cacheExpiry = Date.now() + (this.cacheTtl * 1000);
+      logger.info(
+        `Authorization server metadata cached for ${String(this.cacheTtl)}s`,
+        { code: "AUTH_DISCOVERY_SUCCESS" },
+      );
 
-            logger.info(`Authorization server metadata cached for ${String(this.cacheTtl)}s`, { code: 'AUTH_DISCOVERY_SUCCESS' });
+      return metadata;
+    } catch (error) {
+      const cause = error instanceof Error ? error : new Error(String(error));
 
-            return metadata;
-        } catch (error) {
-            const cause = error instanceof Error ? error : new Error(String(error));
+      logger.error(
+        `Failed to discover authorization server: ${this.authServerUrl}`,
+        {
+          code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full,
+          operation: "discover",
+          entityId: this.authServerUrl,
+          error: cause,
+        },
+      );
 
-            logger.error(
-                `Failed to discover authorization server: ${this.authServerUrl}`,
-                {
-                    code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full,
-                    operation: 'discover',
-                    entityId: this.authServerUrl,
-                    error: cause
-                }
-            );
+      throw new AuthServerDiscoveryError(this.authServerUrl, cause);
+    }
+  }
 
-            throw new AuthServerDiscoveryError(this.authServerUrl, cause);
-        }
+  /**
+   * Validate required metadata fields per RFC 8414
+   */
+  private validateMetadata(metadata: AuthorizationServerMetadata): void {
+    if (!metadata.issuer) {
+      throw new Error("Missing required field: issuer");
     }
 
-    /**
-     * Validate required metadata fields per RFC 8414
-     */
-    private validateMetadata(metadata: AuthorizationServerMetadata): void {
-        if (!metadata.issuer) {
-            throw new Error('Missing required field: issuer');
-        }
-
-        if (!metadata.token_endpoint) {
-            throw new Error('Missing required field: token_endpoint');
-        }
-
-        // Validate issuer matches the expected URL
-        // Per RFC 8414, issuer MUST be identical to the authorization server URL
-        const expectedIssuer = this.authServerUrl;
-        if (metadata.issuer !== expectedIssuer) {
-            logger.warning(
-                `Issuer mismatch: expected ${expectedIssuer}, got ${metadata.issuer}`,
-                { code: 'AUTH_ISSUER_MISMATCH' }
-            );
-            // Note: This is a warning, not an error, as some auth servers may use different URLs
-        }
+    if (!metadata.token_endpoint) {
+      throw new Error("Missing required field: token_endpoint");
     }
 
-    /**
-     * Get cached metadata (throws if not discovered)
-     */
-    getMetadata(): AuthorizationServerMetadata {
-        if (!this.cachedMetadata) {
-            throw new Error('Authorization server metadata not yet discovered. Call discover() first.');
-        }
-        return this.cachedMetadata;
+    // Validate issuer matches the expected URL
+    // Per RFC 8414, issuer MUST be identical to the authorization server URL
+    const expectedIssuer = this.authServerUrl;
+    if (metadata.issuer !== expectedIssuer) {
+      logger.warning(
+        `Issuer mismatch: expected ${expectedIssuer}, got ${metadata.issuer}`,
+        { code: "AUTH_ISSUER_MISMATCH" },
+      );
+      // Note: This is a warning, not an error, as some auth servers may use different URLs
+    }
+  }
+
+  /**
+   * Get cached metadata (throws if not discovered)
+   */
+  getMetadata(): AuthorizationServerMetadata {
+    if (!this.cachedMetadata) {
+      throw new Error(
+        "Authorization server metadata not yet discovered. Call discover() first.",
+      );
+    }
+    return this.cachedMetadata;
+  }
+
+  /**
+   * Get JWKS URI from metadata
+   *
+   * @throws Error if metadata not discovered or jwks_uri not present
+   */
+  getJwksUri(): string {
+    const metadata = this.getMetadata();
+
+    if (!metadata.jwks_uri) {
+      throw new Error("Authorization server does not provide jwks_uri");
     }
 
-    /**
-     * Get JWKS URI from metadata
-     * 
-     * @throws Error if metadata not discovered or jwks_uri not present
-     */
-    getJwksUri(): string {
-        const metadata = this.getMetadata();
+    return metadata.jwks_uri;
+  }
 
-        if (!metadata.jwks_uri) {
-            throw new Error('Authorization server does not provide jwks_uri');
-        }
+  /**
+   * Get token endpoint from metadata
+   */
+  getTokenEndpoint(): string {
+    return this.getMetadata().token_endpoint;
+  }
 
-        return metadata.jwks_uri;
-    }
+  /**
+   * Get issuer from metadata
+   */
+  getIssuer(): string {
+    return this.getMetadata().issuer;
+  }
 
-    /**
-     * Get token endpoint from metadata
-     */
-    getTokenEndpoint(): string {
-        return this.getMetadata().token_endpoint;
-    }
+  /**
+   * Get registration endpoint from metadata (RFC 7591)
+   *
+   * @returns Registration endpoint or null if not supported
+   */
+  getRegistrationEndpoint(): string | null {
+    return this.getMetadata().registration_endpoint ?? null;
+  }
 
-    /**
-     * Get issuer from metadata
-     */
-    getIssuer(): string {
-        return this.getMetadata().issuer;
-    }
+  /**
+   * Check if dynamic client registration is supported
+   */
+  supportsClientRegistration(): boolean {
+    return this.getRegistrationEndpoint() !== null;
+  }
 
-    /**
-     * Get registration endpoint from metadata (RFC 7591)
-     * 
-     * @returns Registration endpoint or null if not supported
-     */
-    getRegistrationEndpoint(): string | null {
-        return this.getMetadata().registration_endpoint ?? null;
-    }
+  /**
+   * Get supported scopes from metadata
+   */
+  getSupportedScopes(): string[] {
+    return this.getMetadata().scopes_supported ?? [];
+  }
 
-    /**
-     * Check if dynamic client registration is supported
-     */
-    supportsClientRegistration(): boolean {
-        return this.getRegistrationEndpoint() !== null;
-    }
+  /**
+   * Check if a specific scope is supported
+   */
+  isScopeSupported(scope: string): boolean {
+    const supportedScopes = this.getSupportedScopes();
+    // If no scopes are listed, assume all scopes are supported
+    return supportedScopes.length === 0 || supportedScopes.includes(scope);
+  }
 
-    /**
-     * Get supported scopes from metadata
-     */
-    getSupportedScopes(): string[] {
-        return this.getMetadata().scopes_supported ?? [];
-    }
+  /**
+   * Clear cached metadata
+   */
+  clearCache(): void {
+    this.cachedMetadata = null;
+    this.cacheExpiry = 0;
+    logger.info("Authorization server metadata cache cleared", {
+      code: "AUTH_CACHE_CLEARED",
+    });
+  }
 
-    /**
-     * Check if a specific scope is supported
-     */
-    isScopeSupported(scope: string): boolean {
-        const supportedScopes = this.getSupportedScopes();
-        // If no scopes are listed, assume all scopes are supported
-        return supportedScopes.length === 0 || supportedScopes.includes(scope);
-    }
+  /**
+   * Check if cache is valid
+   */
+  isCacheValid(): boolean {
+    return this.cachedMetadata !== null && Date.now() < this.cacheExpiry;
+  }
 
-    /**
-     * Clear cached metadata
-     */
-    clearCache(): void {
-        this.cachedMetadata = null;
-        this.cacheExpiry = 0;
-        logger.info('Authorization server metadata cache cleared', { code: 'AUTH_CACHE_CLEARED' });
-    }
-
-    /**
-     * Check if cache is valid
-     */
-    isCacheValid(): boolean {
-        return this.cachedMetadata !== null && Date.now() < this.cacheExpiry;
-    }
-
-    /**
-     * Get the authorization server URL
-     */
-    getAuthServerUrl(): string {
-        return this.authServerUrl;
-    }
+  /**
+   * Get the authorization server URL
+   */
+  getAuthServerUrl(): string {
+    return this.authServerUrl;
+  }
 }
 
 // =============================================================================
@@ -237,12 +253,12 @@ export class AuthorizationServerDiscovery {
  * Create an Authorization Server Discovery instance
  */
 export function createAuthServerDiscovery(
-    authServerUrl: string,
-    options?: Partial<Omit<AuthServerDiscoveryConfig, 'authServerUrl'>>
+  authServerUrl: string,
+  options?: Partial<Omit<AuthServerDiscoveryConfig, "authServerUrl">>,
 ): AuthorizationServerDiscovery {
-    return new AuthorizationServerDiscovery({
-        authServerUrl,
-        cacheTtl: options?.cacheTtl,
-        timeout: options?.timeout
-    });
+  return new AuthorizationServerDiscovery({
+    authServerUrl,
+    cacheTtl: options?.cacheTtl,
+    timeout: options?.timeout,
+  });
 }

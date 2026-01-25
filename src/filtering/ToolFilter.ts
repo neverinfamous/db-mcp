@@ -1,267 +1,278 @@
 /**
  * db-mcp - Tool Filtering System
- * 
+ *
  * Parses and applies tool filter rules from environment variables.
- * Compatible with sqlite-mcp-server and postgres-mcp-server filtering syntax.
- * 
+ * Compatible with postgres-mcp-server filtering syntax.
+ *
  * Syntax:
- *   -group    → Disable all tools in a group
- *   -tool     → Disable a specific tool
- *   +tool     → Re-enable a tool after group disable
- * 
- * Example: DB_MCP_TOOL_FILTER="-vector,-geo,+vector_search"
+ *   groupName     → Enable only this group (whitelist mode)
+ *   shortcut      → Use a preset (starter, analytics, search, etc.)
+ *   -group        → Disable all tools in a group
+ *   +group        → Enable all tools in a group
+ *   -tool         → Disable a specific tool
+ *   +tool         → Enable a specific tool
+ *
+ * Mode Detection:
+ *   - If first token starts with '-', start with ALL tools enabled (exclusion mode)
+ *   - Otherwise, start with NO tools enabled (whitelist mode)
+ *
+ * Examples:
+ *   "core,json"           → Whitelist: only core and json groups
+ *   "starter"             → Preset: core + json + text
+ *   "starter,-fts5"       → Preset minus fts5 group
+ *   "-vector,-geo"        → Legacy: all tools except vector and geo
  */
 
 import type {
-    ToolGroup,
-    ToolFilterConfig,
-    ToolDefinition
-} from '../types/index.js';
+  ToolGroup,
+  MetaGroup,
+  ToolFilterConfig,
+  ToolDefinition,
+} from "../types/index.js";
+
+import { TOOL_GROUPS, META_GROUPS } from "./ToolConstants.js";
+
+// Re-export for backwards compatibility
+export { TOOL_GROUPS, META_GROUPS } from "./ToolConstants.js";
 
 /**
- * Default tool groups and their member tools.
- * This serves as the canonical mapping of tools to groups.
+ * Cached list of all tool names
+ * Lazy-initialized since TOOL_GROUPS is immutable
  */
-export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
-    core: [
-        'execute_query',
-        'read_query',
-        'write_query',
-        'list_tables',
-        'describe_table',
-        'list_schemas',
-        'create_table',
-        'drop_table',
-        'get_schema'
-    ],
-    json: [
-        'json_extract',
-        'json_insert',
-        'json_replace',
-        'json_remove',
-        'json_set',
-        'json_array',
-        'json_object',
-        'json_valid',
-        'json_type',
-        'json_query',
-        'json_merge'
-    ],
-    text: [
-        'fuzzy_search',
-        'regex_match',
-        'text_similarity',
-        'phonetic_search',
-        'tokenize_text',
-        'highlight_match'
-    ],
-    fts5: [
-        'fts_search',
-        'create_fts_index',
-        'fts_match_info',
-        'fts_rebuild'
-    ],
-    stats: [
-        'describe_stats',
-        'percentile',
-        'correlation',
-        'regression',
-        'histogram',
-        'time_series_analysis',
-        'moving_average',
-        'outlier_detection'
-    ],
-    performance: [
-        'analyze_query',
-        'explain_query',
-        'index_recommendations',
-        'query_plan',
-        'slow_queries',
-        'workload_analysis'
-    ],
-    vector: [
-        'vector_search',
-        'cosine_similarity',
-        'euclidean_distance',
-        'create_vector_index',
-        'hybrid_search',
-        'vector_cluster',
-        'nearest_neighbors',
-        'embedding_stats'
-    ],
-    geo: [
-        'distance_calc',
-        'spatial_query',
-        'create_spatial_index',
-        'point_in_polygon',
-        'buffer_query',
-        'intersection_query',
-        'bounding_box'
-    ],
-    backup: [
-        'backup_database',
-        'restore_database',
-        'backup_table',
-        'export_data'
-    ],
-    monitoring: [
-        'health_check',
-        'connection_status',
-        'database_stats',
-        'active_queries',
-        'resource_usage'
-    ],
-    admin: [
-        'vacuum_database',
-        'analyze_tables',
-        'pragma_get',
-        'pragma_set',
-        'extension_list',
-        'extension_install',
-        'create_index',
-        'drop_index',
-        'reindex',
-        'optimize'
-    ],
-    transactions: [
-        'transaction_begin',
-        'transaction_commit',
-        'transaction_rollback',
-        'transaction_savepoint',
-        'transaction_release',
-        'transaction_rollback_to',
-        'transaction_execute'
-    ],
-    window: [
-        'window_row_number',
-        'window_rank',
-        'window_lag_lead',
-        'window_running_total',
-        'window_moving_avg',
-        'window_ntile'
-    ]
-};
+let cachedAllToolNames: string[] | null = null;
 
 /**
- * Get all tool names from all groups
+ * Reverse lookup map: tool name -> group
+ * Lazy-initialized for O(1) tool group lookups
+ */
+let toolToGroupMap: Map<string, ToolGroup> | null = null;
+
+/**
+ * Get all tool names from all groups (cached)
  */
 export function getAllToolNames(): string[] {
-    return Object.values(TOOL_GROUPS).flat();
+  if (cachedAllToolNames) {
+    return cachedAllToolNames;
+  }
+  const groups = Object.keys(TOOL_GROUPS) as ToolGroup[];
+  cachedAllToolNames = groups.flatMap((group) => TOOL_GROUPS[group]);
+  return cachedAllToolNames;
 }
 
 /**
- * Get the group for a specific tool
+ * Get or initialize the tool-to-group reverse lookup map
+ */
+function getToolToGroupMap(): Map<string, ToolGroup> {
+  if (toolToGroupMap) {
+    return toolToGroupMap;
+  }
+
+  toolToGroupMap = new Map<string, ToolGroup>();
+  const groups = Object.keys(TOOL_GROUPS) as ToolGroup[];
+  for (const group of groups) {
+    for (const tool of TOOL_GROUPS[group]) {
+      toolToGroupMap.set(tool, group);
+    }
+  }
+  return toolToGroupMap;
+}
+
+/**
+ * Get the group for a specific tool (O(1) lookup)
  */
 export function getToolGroup(toolName: string): ToolGroup | undefined {
-    for (const [group, tools] of Object.entries(TOOL_GROUPS)) {
-        if (tools.includes(toolName)) {
-            return group as ToolGroup;
-        }
-    }
-    return undefined;
+  return getToolToGroupMap().get(toolName);
+}
+
+/**
+ * Clear all caches - useful for testing
+ */
+export function clearToolFilterCaches(): void {
+  cachedAllToolNames = null;
+  toolToGroupMap = null;
+}
+
+/**
+ * Check if a name is a valid tool group
+ */
+export function isToolGroup(name: string): name is ToolGroup {
+  return name in TOOL_GROUPS;
+}
+
+/**
+ * Check if a name is a valid meta-group
+ */
+export function isMetaGroup(name: string): name is MetaGroup {
+  return name in META_GROUPS;
+}
+
+/**
+ * Get all tool names from a meta-group
+ */
+export function getMetaGroupTools(metaGroup: MetaGroup): string[] {
+  const tools: string[] = [];
+  for (const group of META_GROUPS[metaGroup]) {
+    tools.push(...TOOL_GROUPS[group]);
+  }
+  return tools;
 }
 
 /**
  * Parse a tool filter string into structured rules
- * 
- * @param filterString - The filter string (e.g., "-vector,-geo,+vector_search")
+ *
+ * @param filterString - The filter string (e.g., "starter" or "-vector,-geo,+vector_search")
  * @returns Parsed filter configuration
  */
-export function parseToolFilter(filterString: string | undefined): ToolFilterConfig {
-    // When no filter is specified, use empty Set to indicate "allow all"
-    // This is checked in DatabaseAdapter.registerTools()
-    if (!filterString || filterString.trim() === '') {
-        return {
-            raw: '',
-            rules: [],
-            enabledTools: new Set<string>() // Empty = allow all
-        };
-    }
+export function parseToolFilter(
+  filterString: string | undefined,
+): ToolFilterConfig {
+  const allTools = getAllToolNames();
+  const enabledTools = new Set<string>(allTools);
 
-    const config: ToolFilterConfig = {
-        raw: filterString,
-        rules: [],
-        enabledTools: new Set(getAllToolNames())
+  if (!filterString || filterString.trim() === "") {
+    return {
+      raw: "",
+      rules: [],
+      enabledTools,
     };
+  }
 
-    // Split by comma and process each rule
-    const parts = filterString.split(',').map(p => p.trim()).filter(p => p.length > 0);
+  const rules: ToolFilterConfig["rules"] = [];
+  const parts = filterString
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) => p);
 
-    for (const part of parts) {
-        if (part.startsWith('-')) {
-            const target = part.slice(1);
-            const isGroup = target in TOOL_GROUPS;
+  if (parts.length === 0) {
+    return {
+      raw: filterString,
+      rules: [],
+      enabledTools,
+    };
+  }
 
-            config.rules.push({
-                type: 'exclude',
-                target,
-                isGroup
-            });
+  // Mode detection: if first token starts with '-', exclusion mode (legacy)
+  // Otherwise, whitelist mode (new) - start with empty set
+  const firstPart = parts[0];
+  if (!firstPart) {
+    return {
+      raw: filterString,
+      rules: [],
+      enabledTools,
+    };
+  }
+  const startsWithExclude = firstPart.startsWith("-");
 
-            // Apply the rule
-            if (isGroup) {
-                const groupTools = TOOL_GROUPS[target as ToolGroup];
-                if (groupTools.length > 0) {
-                    for (const tool of groupTools) {
-                        config.enabledTools.delete(tool);
-                    }
-                }
-            } else {
-                config.enabledTools.delete(target);
-            }
-        } else if (part.startsWith('+')) {
-            const target = part.slice(1);
-            const isGroup = target in TOOL_GROUPS;
+  if (!startsWithExclude) {
+    enabledTools.clear();
+  }
 
-            config.rules.push({
-                type: 'include',
-                target,
-                isGroup
-            });
+  for (const part of parts) {
+    if (!part) continue;
 
-            // Apply the rule
-            if (isGroup) {
-                const groupTools = TOOL_GROUPS[target as ToolGroup];
-                if (groupTools.length > 0) {
-                    for (const tool of groupTools) {
-                        config.enabledTools.add(tool);
-                    }
-                }
-            } else {
-                config.enabledTools.add(target);
-            }
+    let isInclude = true; // Default to include (whitelist mode)
+    let isExclude = false;
+    let target = part;
+
+    if (part.startsWith("+")) {
+      isInclude = true;
+      target = part.substring(1);
+    } else if (part.startsWith("-")) {
+      isInclude = false;
+      isExclude = true;
+      target = part.substring(1);
+    }
+    // No prefix = include (whitelist mode)
+
+    // Special case: 'all'
+    if (target === "all") {
+      if (isExclude) {
+        enabledTools.clear();
+      } else {
+        for (const tool of allTools) {
+          enabledTools.add(tool);
         }
-        // Ignore rules without + or - prefix
+      }
+      continue;
     }
 
-    return config;
+    const targetIsMetaGroup = isMetaGroup(target);
+    const targetIsGroup = isToolGroup(target);
+
+    rules.push({
+      type: isInclude ? "include" : "exclude",
+      target,
+      isGroup: targetIsGroup || targetIsMetaGroup,
+    });
+
+    // Apply rule - check meta-groups first, then regular groups, then individual tools
+    if (targetIsMetaGroup) {
+      // Expand meta-group to all its underlying groups' tools
+      const metaGroupTools = getMetaGroupTools(target as MetaGroup);
+      if (isExclude) {
+        for (const tool of metaGroupTools) {
+          enabledTools.delete(tool);
+        }
+      } else {
+        for (const tool of metaGroupTools) {
+          enabledTools.add(tool);
+        }
+      }
+    } else if (targetIsGroup) {
+      const groupTools = TOOL_GROUPS[target as ToolGroup];
+      if (isExclude) {
+        for (const tool of groupTools) {
+          enabledTools.delete(tool);
+        }
+      } else {
+        for (const tool of groupTools) {
+          enabledTools.add(tool);
+        }
+      }
+    } else {
+      // Individual tool
+      if (isExclude) {
+        enabledTools.delete(target);
+      } else {
+        enabledTools.add(target);
+      }
+    }
+  }
+
+  return {
+    raw: filterString,
+    rules,
+    enabledTools,
+  };
 }
 
 /**
  * Check if a tool is enabled based on filter configuration
  */
-export function isToolEnabled(toolName: string, config: ToolFilterConfig): boolean {
-    return config.enabledTools.has(toolName);
+export function isToolEnabled(
+  toolName: string,
+  config: ToolFilterConfig,
+): boolean {
+  return config.enabledTools.has(toolName);
 }
 
 /**
  * Filter a list of tool definitions based on filter configuration
  */
 export function filterTools(
-    tools: ToolDefinition[],
-    config: ToolFilterConfig
+  tools: ToolDefinition[],
+  config: ToolFilterConfig,
 ): ToolDefinition[] {
-    return tools.filter(tool => isToolEnabled(tool.name, config));
+  return tools.filter((tool) => config.enabledTools.has(tool.name));
 }
 
 /**
  * Get the tool filter from environment variable
  */
 export function getToolFilterFromEnv(): ToolFilterConfig {
-    const filterString = process.env['DB_MCP_TOOL_FILTER'] ??
-        process.env['TOOL_FILTER'] ??
-        '';
-    return parseToolFilter(filterString);
+  const filterString =
+    process.env["DB_MCP_TOOL_FILTER"] ?? process.env["TOOL_FILTER"] ?? "";
+  return parseToolFilter(filterString);
 }
 
 /**
@@ -269,45 +280,86 @@ export function getToolFilterFromEnv(): ToolFilterConfig {
  * Assumes ~200 tokens per tool definition (description + parameters)
  */
 export function calculateTokenSavings(
-    totalTools: number,
-    enabledTools: number,
-    tokensPerTool = 200
+  totalTools: number,
+  enabledTools: number,
+  tokensPerTool = 200,
 ): { tokensSaved: number; percentSaved: number } {
-    const disabledTools = totalTools - enabledTools;
-    const tokensSaved = disabledTools * tokensPerTool;
-    const percentSaved = totalTools > 0
-        ? Math.round((disabledTools / totalTools) * 100)
-        : 0;
+  const disabledTools = totalTools - enabledTools;
+  const tokensSaved = disabledTools * tokensPerTool;
+  const percentSaved =
+    totalTools > 0 ? Math.round((disabledTools / totalTools) * 100) : 0;
 
-    return { tokensSaved, percentSaved };
+  return { tokensSaved, percentSaved };
 }
 
 /**
  * Generate a summary of the current filter configuration
  */
 export function getFilterSummary(config: ToolFilterConfig): string {
-    const totalTools = getAllToolNames().length;
+  const allTools = getAllToolNames();
+  const enabledCount = config.enabledTools.size;
+  const disabledCount = allTools.length - enabledCount;
 
-    // Empty enabledTools means "allow all" - show as all enabled
-    const isAllEnabled = config.enabledTools.size === 0;
-    const enabledCount = isAllEnabled ? totalTools : config.enabledTools.size;
-    const { tokensSaved, percentSaved } = calculateTokenSavings(totalTools, enabledCount);
+  const lines: string[] = [
+    `Tool Filter Summary:`,
+    `  Total tools: ${String(allTools.length)}`,
+    `  Enabled: ${String(enabledCount)}`,
+    `  Disabled: ${String(disabledCount)}`,
+  ];
 
-    const lines = [
-        `Tool Filter Summary:`,
-        `  Filter: ${config.raw || '(none)'}`,
-        `  Tools: ${isAllEnabled ? 'all' : enabledCount}/${totalTools} enabled`,
-        `  Token savings: ~${tokensSaved} tokens (${percentSaved}% reduction)`
-    ];
-
-    if (config.rules.length > 0) {
-        lines.push(`  Rules applied: ${config.rules.length}`);
-        for (const rule of config.rules) {
-            const prefix = rule.type === 'exclude' ? '-' : '+';
-            const type = rule.isGroup ? 'group' : 'tool';
-            lines.push(`    ${prefix}${rule.target} (${type})`);
-        }
+  if (config.rules.length > 0) {
+    lines.push(`  Rules applied:`);
+    for (const rule of config.rules) {
+      const prefix = rule.type === "include" ? "+" : "-";
+      // Determine type: meta-group, group, or tool
+      let type: string;
+      if (isMetaGroup(rule.target)) {
+        type = "meta-group";
+      } else if (rule.isGroup) {
+        type = "group";
+      } else {
+        type = "tool";
+      }
+      lines.push(`    ${prefix}${rule.target} (${type})`);
     }
+  }
 
-    return lines.join('\n');
+  // Show per-group breakdown
+  lines.push(`  By group:`);
+  for (const [group, tools] of Object.entries(TOOL_GROUPS)) {
+    const enabled = tools.filter((t) => config.enabledTools.has(t)).length;
+    lines.push(`    ${group}: ${String(enabled)}/${String(tools.length)}`);
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Get a list of all tool groups with their tool counts
+ */
+export function getToolGroupInfo(): {
+  group: ToolGroup;
+  count: number;
+  tools: string[];
+}[] {
+  return Object.entries(TOOL_GROUPS).map(([group, tools]) => ({
+    group: group as ToolGroup,
+    count: tools.length,
+    tools,
+  }));
+}
+
+/**
+ * Get a list of all meta-groups with their expanded tool counts
+ */
+export function getMetaGroupInfo(): {
+  metaGroup: MetaGroup;
+  groups: ToolGroup[];
+  count: number;
+}[] {
+  return Object.entries(META_GROUPS).map(([metaGroup, groups]) => ({
+    metaGroup: metaGroup as MetaGroup,
+    groups,
+    count: getMetaGroupTools(metaGroup as MetaGroup).length,
+  }));
 }
