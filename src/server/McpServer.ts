@@ -84,7 +84,7 @@ export class DbMcpServer {
     this.adapters.set(adapterId, adapter);
 
     // Register adapter's tools with filtering
-    adapter.registerTools(this.server, this.toolFilter.enabledTools);
+    adapter.registerTools(this.server, this.toolFilter);
     adapter.registerResources(this.server);
     adapter.registerPrompts(this.server);
 
@@ -139,7 +139,7 @@ export class DbMcpServer {
                   adapters: adapterInfo,
                   toolFilter: {
                     raw: this.toolFilter.raw,
-                    enabledCount: this.toolFilter.enabledTools.size,
+                    enabledGroups: [...this.toolFilter.enabledGroups],
                   },
                 },
                 null,

@@ -312,8 +312,14 @@ export interface ToolFilterConfig {
   /** Parsed rules in order */
   rules: ToolFilterRule[];
 
-  /** Set of enabled tool names after applying rules */
-  enabledTools: Set<string>;
+  /** Set of enabled tool groups after applying rules */
+  enabledGroups: Set<ToolGroup>;
+
+  /** Set of explicitly excluded tool names (base names without prefix) */
+  excludedTools: Set<string>;
+
+  /** Set of explicitly included tool names (base names without prefix) */
+  includedTools: Set<string>;
 }
 
 // =============================================================================

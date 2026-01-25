@@ -20,7 +20,9 @@ import type {
   PromptDefinition,
   RequestContext,
   ToolGroup,
+  ToolFilterConfig,
 } from "../types/index.js";
+import { isToolEnabled } from "../filtering/ToolFilter.js";
 
 /**
  * Abstract base class for database adapters
@@ -160,26 +162,13 @@ export abstract class DatabaseAdapter {
   /**
    * Register tools with the MCP server
    * @param server - MCP server instance
-   * @param enabledTools - Set of enabled tool names (from filtering)
+   * @param filterConfig - Tool filter configuration
    */
-  registerTools(server: McpServer, enabledTools: Set<string>): void {
+  registerTools(server: McpServer, filterConfig: ToolFilterConfig): void {
     const tools = this.getToolDefinitions();
 
     for (const tool of tools) {
-      // Check if tool is enabled:
-      // 1. Exact match: enabledTools.has('sqlite_read_query')
-      // 2. Base name match: tool is 'sqlite_read_query' and enabledTools has 'read_query'
-      // 3. If no filter rules applied (all tools in enabledTools), allow all adapter tools
-      const baseName = tool.name.replace(
-        /^(sqlite|mysql|postgres|mongodb|redis|sqlserver)_/,
-        "",
-      );
-      const isEnabled =
-        enabledTools.has(tool.name) ||
-        enabledTools.has(baseName) ||
-        enabledTools.size === 0;
-
-      if (!isEnabled) {
+      if (!isToolEnabled(tool, filterConfig)) {
         continue;
       }
 

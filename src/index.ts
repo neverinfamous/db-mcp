@@ -62,14 +62,13 @@ export { DatabaseAdapter } from "./adapters/DatabaseAdapter.js";
 // Tool filtering utilities
 export {
   TOOL_GROUPS,
+  META_GROUPS,
+  ALL_TOOL_GROUPS,
   parseToolFilter,
   isToolEnabled,
   filterTools,
   getToolFilterFromEnv,
   getFilterSummary,
-  calculateTokenSavings,
-  getAllToolNames,
-  getToolGroup,
 } from "./filtering/ToolFilter.js";
 
 // Version info

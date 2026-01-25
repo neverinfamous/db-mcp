@@ -13,14 +13,14 @@
  *   +tool         → Enable a specific tool
  *
  * Mode Detection:
- *   - If first token starts with '-', start with ALL tools enabled (exclusion mode)
- *   - Otherwise, start with NO tools enabled (whitelist mode)
+ *   - If first token starts with '-', start with ALL groups enabled (exclusion mode)
+ *   - Otherwise, start with NO groups enabled (whitelist mode)
  *
  * Examples:
  *   "core,json"           → Whitelist: only core and json groups
- *   "starter"             → Preset: core + json + text
+ *   "starter"             → Preset: core + json + text groups
  *   "starter,-fts5"       → Preset minus fts5 group
- *   "-vector,-geo"        → Legacy: all tools except vector and geo
+ *   "-vector,-geo"        → Legacy: all groups except vector and geo
  */
 
 import type {
@@ -30,73 +30,35 @@ import type {
   ToolDefinition,
 } from "../types/index.js";
 
-import { TOOL_GROUPS, META_GROUPS } from "./ToolConstants.js";
+import { META_GROUPS } from "./ToolConstants.js";
 
 // Re-export for backwards compatibility
-export { TOOL_GROUPS, META_GROUPS } from "./ToolConstants.js";
+export { META_GROUPS, TOOL_GROUPS } from "./ToolConstants.js";
 
 /**
- * Cached list of all tool names
- * Lazy-initialized since TOOL_GROUPS is immutable
+ * All valid tool groups
  */
-let cachedAllToolNames: string[] | null = null;
-
-/**
- * Reverse lookup map: tool name -> group
- * Lazy-initialized for O(1) tool group lookups
- */
-let toolToGroupMap: Map<string, ToolGroup> | null = null;
-
-/**
- * Get all tool names from all groups (cached)
- */
-export function getAllToolNames(): string[] {
-  if (cachedAllToolNames) {
-    return cachedAllToolNames;
-  }
-  const groups = Object.keys(TOOL_GROUPS) as ToolGroup[];
-  cachedAllToolNames = groups.flatMap((group) => TOOL_GROUPS[group]);
-  return cachedAllToolNames;
-}
-
-/**
- * Get or initialize the tool-to-group reverse lookup map
- */
-function getToolToGroupMap(): Map<string, ToolGroup> {
-  if (toolToGroupMap) {
-    return toolToGroupMap;
-  }
-
-  toolToGroupMap = new Map<string, ToolGroup>();
-  const groups = Object.keys(TOOL_GROUPS) as ToolGroup[];
-  for (const group of groups) {
-    for (const tool of TOOL_GROUPS[group]) {
-      toolToGroupMap.set(tool, group);
-    }
-  }
-  return toolToGroupMap;
-}
-
-/**
- * Get the group for a specific tool (O(1) lookup)
- */
-export function getToolGroup(toolName: string): ToolGroup | undefined {
-  return getToolToGroupMap().get(toolName);
-}
-
-/**
- * Clear all caches - useful for testing
- */
-export function clearToolFilterCaches(): void {
-  cachedAllToolNames = null;
-  toolToGroupMap = null;
-}
+export const ALL_TOOL_GROUPS: ToolGroup[] = [
+  "core",
+  "json",
+  "text",
+  "fts5",
+  "stats",
+  "performance",
+  "vector",
+  "geo",
+  "backup",
+  "monitoring",
+  "admin",
+  "transactions",
+  "window",
+];
 
 /**
  * Check if a name is a valid tool group
  */
 export function isToolGroup(name: string): name is ToolGroup {
-  return name in TOOL_GROUPS;
+  return ALL_TOOL_GROUPS.includes(name as ToolGroup);
 }
 
 /**
@@ -107,33 +69,33 @@ export function isMetaGroup(name: string): name is MetaGroup {
 }
 
 /**
- * Get all tool names from a meta-group
+ * Get tool groups from a meta-group
  */
-export function getMetaGroupTools(metaGroup: MetaGroup): string[] {
-  const tools: string[] = [];
-  for (const group of META_GROUPS[metaGroup]) {
-    tools.push(...TOOL_GROUPS[group]);
-  }
-  return tools;
+export function getMetaGroupGroups(metaGroup: MetaGroup): ToolGroup[] {
+  return META_GROUPS[metaGroup];
 }
 
 /**
  * Parse a tool filter string into structured rules
  *
- * @param filterString - The filter string (e.g., "starter" or "-vector,-geo,+vector_search")
- * @returns Parsed filter configuration
+ * @param filterString - The filter string (e.g., "starter" or "-vector,-geo")
+ * @returns Parsed filter configuration with enabled groups
  */
 export function parseToolFilter(
   filterString: string | undefined,
 ): ToolFilterConfig {
-  const allTools = getAllToolNames();
-  const enabledTools = new Set<string>(allTools);
+  // Default: all groups enabled, no specific tool exclusions
+  const enabledGroups = new Set<ToolGroup>(ALL_TOOL_GROUPS);
+  const excludedTools = new Set<string>();
+  const includedTools = new Set<string>();
 
   if (!filterString || filterString.trim() === "") {
     return {
       raw: "",
       rules: [],
-      enabledTools,
+      enabledGroups,
+      excludedTools,
+      includedTools,
     };
   }
 
@@ -147,24 +109,28 @@ export function parseToolFilter(
     return {
       raw: filterString,
       rules: [],
-      enabledTools,
+      enabledGroups,
+      excludedTools,
+      includedTools,
     };
   }
 
   // Mode detection: if first token starts with '-', exclusion mode (legacy)
-  // Otherwise, whitelist mode (new) - start with empty set
+  // Otherwise, whitelist mode (new) - start with empty groups
   const firstPart = parts[0];
   if (!firstPart) {
     return {
       raw: filterString,
       rules: [],
-      enabledTools,
+      enabledGroups,
+      excludedTools,
+      includedTools,
     };
   }
   const startsWithExclude = firstPart.startsWith("-");
 
   if (!startsWithExclude) {
-    enabledTools.clear();
+    enabledGroups.clear();
   }
 
   for (const part of parts) {
@@ -187,10 +153,10 @@ export function parseToolFilter(
     // Special case: 'all'
     if (target === "all") {
       if (isExclude) {
-        enabledTools.clear();
+        enabledGroups.clear();
       } else {
-        for (const tool of allTools) {
-          enabledTools.add(tool);
+        for (const group of ALL_TOOL_GROUPS) {
+          enabledGroups.add(group);
         }
       }
       continue;
@@ -207,34 +173,32 @@ export function parseToolFilter(
 
     // Apply rule - check meta-groups first, then regular groups, then individual tools
     if (targetIsMetaGroup) {
-      // Expand meta-group to all its underlying groups' tools
-      const metaGroupTools = getMetaGroupTools(target as MetaGroup);
+      // Expand meta-group to its constituent groups
+      const groupsInMeta = getMetaGroupGroups(target as MetaGroup);
       if (isExclude) {
-        for (const tool of metaGroupTools) {
-          enabledTools.delete(tool);
+        for (const group of groupsInMeta) {
+          enabledGroups.delete(group);
         }
       } else {
-        for (const tool of metaGroupTools) {
-          enabledTools.add(tool);
+        for (const group of groupsInMeta) {
+          enabledGroups.add(group);
         }
       }
     } else if (targetIsGroup) {
-      const groupTools = TOOL_GROUPS[target as ToolGroup];
+      // Add/remove a single group
       if (isExclude) {
-        for (const tool of groupTools) {
-          enabledTools.delete(tool);
-        }
+        enabledGroups.delete(target as ToolGroup);
       } else {
-        for (const tool of groupTools) {
-          enabledTools.add(tool);
-        }
+        enabledGroups.add(target as ToolGroup);
       }
     } else {
-      // Individual tool
+      // Individual tool - track in include/exclude sets
       if (isExclude) {
-        enabledTools.delete(target);
+        excludedTools.add(target);
+        includedTools.delete(target);
       } else {
-        enabledTools.add(target);
+        includedTools.add(target);
+        excludedTools.delete(target);
       }
     }
   }
@@ -242,18 +206,43 @@ export function parseToolFilter(
   return {
     raw: filterString,
     rules,
-    enabledTools,
+    enabledGroups,
+    excludedTools,
+    includedTools,
   };
 }
 
 /**
  * Check if a tool is enabled based on filter configuration
+ * Uses the tool's group property for matching
  */
 export function isToolEnabled(
-  toolName: string,
+  tool: ToolDefinition,
   config: ToolFilterConfig,
 ): boolean {
-  return config.enabledTools.has(toolName);
+  const baseName = tool.name.replace(
+    /^(sqlite|mysql|postgres|mongodb|redis|sqlserver)_/,
+    "",
+  );
+
+  // Check explicit tool exclusion
+  if (
+    config.excludedTools.has(tool.name) ||
+    config.excludedTools.has(baseName)
+  ) {
+    return false;
+  }
+
+  // Check explicit tool inclusion
+  if (
+    config.includedTools.has(tool.name) ||
+    config.includedTools.has(baseName)
+  ) {
+    return true;
+  }
+
+  // Check if tool's group is enabled
+  return config.enabledGroups.has(tool.group);
 }
 
 /**
@@ -263,7 +252,7 @@ export function filterTools(
   tools: ToolDefinition[],
   config: ToolFilterConfig,
 ): ToolDefinition[] {
-  return tools.filter((tool) => config.enabledTools.has(tool.name));
+  return tools.filter((tool) => isToolEnabled(tool, config));
 }
 
 /**
@@ -276,90 +265,52 @@ export function getToolFilterFromEnv(): ToolFilterConfig {
 }
 
 /**
- * Calculate token savings from tool filtering
- * Assumes ~200 tokens per tool definition (description + parameters)
- */
-export function calculateTokenSavings(
-  totalTools: number,
-  enabledTools: number,
-  tokensPerTool = 200,
-): { tokensSaved: number; percentSaved: number } {
-  const disabledTools = totalTools - enabledTools;
-  const tokensSaved = disabledTools * tokensPerTool;
-  const percentSaved =
-    totalTools > 0 ? Math.round((disabledTools / totalTools) * 100) : 0;
-
-  return { tokensSaved, percentSaved };
-}
-
-/**
  * Generate a summary of the current filter configuration
  */
 export function getFilterSummary(config: ToolFilterConfig): string {
-  const allTools = getAllToolNames();
-  const enabledCount = config.enabledTools.size;
-  const disabledCount = allTools.length - enabledCount;
-
   const lines: string[] = [
     `Tool Filter Summary:`,
-    `  Total tools: ${String(allTools.length)}`,
-    `  Enabled: ${String(enabledCount)}`,
-    `  Disabled: ${String(disabledCount)}`,
+    `  Filter: ${config.raw || "(none)"}`,
+    `  Enabled groups: ${config.enabledGroups.size}/${ALL_TOOL_GROUPS.length}`,
   ];
 
-  if (config.rules.length > 0) {
-    lines.push(`  Rules applied:`);
-    for (const rule of config.rules) {
-      const prefix = rule.type === "include" ? "+" : "-";
-      // Determine type: meta-group, group, or tool
-      let type: string;
-      if (isMetaGroup(rule.target)) {
-        type = "meta-group";
-      } else if (rule.isGroup) {
-        type = "group";
-      } else {
-        type = "tool";
-      }
-      lines.push(`    ${prefix}${rule.target} (${type})`);
-    }
+  if (config.enabledGroups.size > 0) {
+    lines.push(`    Groups: ${[...config.enabledGroups].join(", ")}`);
   }
 
-  // Show per-group breakdown
-  lines.push(`  By group:`);
-  for (const [group, tools] of Object.entries(TOOL_GROUPS)) {
-    const enabled = tools.filter((t) => config.enabledTools.has(t)).length;
-    lines.push(`    ${group}: ${String(enabled)}/${String(tools.length)}`);
+  if (config.excludedTools.size > 0) {
+    lines.push(`  Excluded tools: ${[...config.excludedTools].join(", ")}`);
+  }
+
+  if (config.includedTools.size > 0) {
+    lines.push(`  Included tools: ${[...config.includedTools].join(", ")}`);
+  }
+
+  if (config.rules.length > 0) {
+    lines.push(`  Rules applied: ${config.rules.length}`);
+    for (const rule of config.rules) {
+      const prefix = rule.type === "include" ? "+" : "-";
+      const type = isMetaGroup(rule.target)
+        ? "meta-group"
+        : rule.isGroup
+          ? "group"
+          : "tool";
+      lines.push(`    ${prefix}${rule.target} (${type})`);
+    }
   }
 
   return lines.join("\n");
 }
 
 /**
- * Get a list of all tool groups with their tool counts
- */
-export function getToolGroupInfo(): {
-  group: ToolGroup;
-  count: number;
-  tools: string[];
-}[] {
-  return Object.entries(TOOL_GROUPS).map(([group, tools]) => ({
-    group: group as ToolGroup,
-    count: tools.length,
-    tools,
-  }));
-}
-
-/**
- * Get a list of all meta-groups with their expanded tool counts
+ * Get a list of all meta-groups with their expanded groups
  */
 export function getMetaGroupInfo(): {
   metaGroup: MetaGroup;
   groups: ToolGroup[];
-  count: number;
 }[] {
   return Object.entries(META_GROUPS).map(([metaGroup, groups]) => ({
     metaGroup: metaGroup as MetaGroup,
     groups,
-    count: getMetaGroupTools(metaGroup as MetaGroup).length,
   }));
 }
