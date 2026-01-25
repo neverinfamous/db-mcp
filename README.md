@@ -172,9 +172,9 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 | Vector/Semantic       | 11     | 11     | Embeddings, similarity search              |
 | Geospatial            | 7      | 7      | Distance, bounding box, clustering         |
 | Admin                 | 4      | 4      | Vacuum, backup, analyze, optimize          |
-| Transactions          | —      | 10     | Begin, commit, rollback, savepoints        |
-| Window Functions      | —      | 9      | Row number, rank, lag/lead, running totals |
-| **Total**             | **28** | **37** |                                            |
+| Transactions          | —      | 7      | Begin, commit, rollback, savepoints        |
+| Window Functions      | —      | 6      | Row number, rank, lag/lead, running totals |
+| **Total**             | **73** | **86** |                                            |
 
 ### SQLite Backend Options
 
@@ -182,7 +182,7 @@ Choose between two SQLite backends based on your needs:
 
 | Feature                   | WASM (sql.js)     | Native (better-sqlite3)       |
 | ------------------------- | ----------------- | ----------------------------- |
-| **Tools Available**       | 28                | **37**                        |
+| **Tools Available**       | 73                | **86**                        |
 | **Transactions**          | ❌                | ✅ 7 tools                    |
 | **Window Functions**      | ❌                | ✅ 6 tools                    |
 | **FTS5 Full-Text Search** | ⚠️ Limited        | ✅ Full                       |
@@ -381,12 +381,12 @@ Specify exactly the groups you need:
 
 | Shortcut    | Tools  | Use Case           | What's Included           |
 | ----------- | ------ | ------------------ | ------------------------- |
-| `starter`   | **18** | 🌟 **Recommended** | Core, JSON, Text          |
-| `analytics` | 23     | Data Analysis      | Core, JSON, Stats, Window |
-| `search`    | 14     | Search Workloads   | Core, Text, FTS5, Vector  |
-| `spatial`   | 17     | Geospatial         | Core, JSON, Geo           |
-| `minimal`   | 9      | Bare Minimum       | Core only                 |
-| `full`      | 37     | All Tools          | Everything enabled        |
+| `starter`   | **32** | 🌟 **Recommended** | Core, JSON, Text          |
+| `analytics` | 38     | Data Analysis      | Core, JSON, Stats, Window |
+| `search`    | 31     | Search Workloads   | Core, Text, FTS5, Vector  |
+| `spatial`   | 33     | Geospatial         | Core, JSON, Geo           |
+| `minimal`   | 8      | Bare Minimum       | Core only                 |
+| `full`      | 86     | All Tools          | Everything enabled        |
 
 ---
 
@@ -394,19 +394,19 @@ Specify exactly the groups you need:
 
 | Group          | Tools | Description                       |
 | -------------- | ----- | --------------------------------- |
-| `core`         | 9     | Basic CRUD, schema, tables        |
-| `json`         | 11    | JSON operations                   |
-| `text`         | 4     | Text processing (regex, fuzzy)    |
-| `fts5`         | 6     | Full-text search                  |
-| `stats`        | 3     | Statistical analysis              |
-| `performance`  | 3     | Query analysis, optimization      |
-| `vector`       | 4     | Embeddings, similarity search     |
-| `geo`          | 3     | Geospatial operations             |
-| `backup`       | 3     | Database backup/restore           |
-| `monitoring`   | 3     | Health checks, resource usage     |
-| `admin`        | 5     | Vacuum, analyze, pragmas          |
-| `transactions` | 10    | Transaction control (native only) |
-| `window`       | 9     | Window functions (native only)    |
+| `core`         | 8     | Basic CRUD, schema, tables        |
+| `json`         | 18    | JSON operations                   |
+| `text`         | 8     | Text processing (regex, fuzzy)    |
+| `fts5`         | 4     | Full-text search                  |
+| `stats`        | 10    | Statistical analysis              |
+| `performance`  | 0     | (covered by stats/admin)          |
+| `vector`       | 11    | Embeddings, similarity search     |
+| `geo`          | 4     | Geospatial operations             |
+| `backup`       | 1     | Database backup                   |
+| `monitoring`   | 1     | Integrity check                   |
+| `admin`        | 10    | Vacuum, analyze, views, pragmas   |
+| `transactions` | 7     | Transaction control (native only) |
+| `window`       | 6     | Window functions (native only)    |
 
 ---
 
