@@ -3,6 +3,9 @@
  *
  * Defines the tool groups and meta-groups used for filtering.
  * Follows postgres-mcp patterns for consistency.
+ *
+ * Tool names here are base names (without sqlite_ prefix).
+ * The adapter matches both full names (sqlite_read_query) and base names (read_query).
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";
@@ -10,102 +13,121 @@ import type { ToolGroup, MetaGroup } from "../types/index.js";
 /**
  * Default tool groups and their member tools.
  * This serves as the canonical mapping of tools to groups.
+ *
+ * Actual tool counts (native SQLite backend):
+ *   core: 8 (from core.ts)
+ *   json: 18 (from json-helpers.ts + json-operations.ts)
+ *   text: 8 (from text.ts)
+ *   fts5: 4 (from fts.ts)
+ *   stats: 10 (from stats.ts)
+ *   performance: 0 (no separate file, covered by stats/admin)
+ *   vector: 11 (from vector.ts)
+ *   geo: 7 (from geo.ts)
+ *   backup: 1 (sqlite_backup in admin.ts)
+ *   monitoring: 1 (sqlite_integrity_check in admin.ts)
+ *   admin: 4 + 6 virtual = 10 (from admin.ts + virtual.ts)
+ *   transactions: 7 (from transactions.ts - native only)
+ *   window: 6 (from window.ts - native only)
+ *
+ * Note: These lists are for filtering by group name. The actual
+ * filtering uses the tool's 'group' property, not these lists.
  */
 export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
   core: [
-    "execute_query",
     "read_query",
     "write_query",
     "list_tables",
     "describe_table",
-    "list_schemas",
     "create_table",
     "drop_table",
-    "get_schema",
+    "get_indexes",
+    "create_index",
   ],
   json: [
-    "json_extract",
+    // json-helpers.ts (6 tools)
+    "json_get",
+    "json_set",
     "json_insert",
     "json_replace",
     "json_remove",
-    "json_set",
+    "json_array_append",
+    // json-operations.ts (12 tools)
+    "json_extract",
+    "json_extract_all",
+    "json_keys",
+    "json_length",
+    "json_type",
+    "json_valid",
     "json_array",
     "json_object",
-    "json_valid",
-    "json_type",
+    "json_group",
+    "json_patch",
     "json_query",
-    "json_merge",
+    "json_table",
   ],
   text: [
-    "fuzzy_search",
+    "regex_extract",
     "regex_match",
-    "text_similarity",
-    "phonetic_search",
-    "tokenize_text",
-    "highlight_match",
+    "text_split",
+    "text_concat",
+    "text_replace",
+    "text_trim",
+    "text_case",
+    "text_substring",
   ],
-  fts5: ["fts_search", "create_fts_index", "fts_match_info", "fts_rebuild"],
+  fts5: ["fts_create", "fts_insert", "fts_search", "fts_match"],
   stats: [
-    "describe_stats",
-    "percentile",
-    "correlation",
-    "regression",
-    "histogram",
-    "time_series_analysis",
-    "moving_average",
-    "outlier_detection",
+    "stats_basic",
+    "stats_count",
+    "stats_group_by",
+    "stats_histogram",
+    "stats_percentile",
+    "stats_regression",
+    "stats_correlation",
+    "stats_zscore",
+    "stats_time_bucket",
+    "stats_moving_avg",
   ],
   performance: [
-    "analyze_query",
-    "explain_query",
-    "index_recommendations",
-    "query_plan",
-    "slow_queries",
-    "workload_analysis",
+    // Performance tools are included in stats group
   ],
   vector: [
+    "vector_create_table",
+    "vector_store",
+    "vector_batch_store",
     "vector_search",
-    "cosine_similarity",
-    "euclidean_distance",
-    "create_vector_index",
-    "hybrid_search",
-    "vector_cluster",
-    "nearest_neighbors",
-    "embedding_stats",
+    "vector_get",
+    "vector_delete",
+    "vector_count",
+    "vector_stats",
+    "vector_dimensions",
+    "vector_normalize",
+    "vector_distance",
   ],
   geo: [
-    "distance_calc",
-    "spatial_query",
-    "create_spatial_index",
-    "point_in_polygon",
-    "buffer_query",
-    "intersection_query",
-    "bounding_box",
+    "geo_distance",
+    "geo_bounding_box",
+    "geo_point_in_radius",
+    "geo_nearest",
+    "geo_encode",
+    "geo_decode",
+    "geo_cluster",
   ],
-  backup: [
-    "backup_database",
-    "restore_database",
-    "backup_table",
-    "export_data",
-  ],
-  monitoring: [
-    "health_check",
-    "connection_status",
-    "database_stats",
-    "active_queries",
-    "resource_usage",
-  ],
+  backup: ["backup"],
+  monitoring: ["integrity_check"],
   admin: [
-    "vacuum_database",
-    "analyze_tables",
-    "pragma_get",
-    "pragma_set",
-    "extension_list",
-    "extension_install",
-    "create_index",
-    "drop_index",
-    "reindex",
+    // admin.ts (4 tools)
+    "backup",
+    "analyze",
+    "integrity_check",
     "optimize",
+    // virtual.ts (6 tools)
+    "generate_series",
+    "create_view",
+    "list_views",
+    "drop_view",
+    "dbstat",
+    "vacuum",
   ],
   transactions: [
     "transaction_begin",
@@ -130,13 +152,15 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * Meta-groups that expand to multiple tool groups.
  * These provide shortcuts for common use cases.
  *
- * Tool counts:
- *   starter:   ~26 (core:9 + json:11 + text:6)
- *   analytics: ~34 (core:9 + json:11 + stats:8 + window:6)
- *   search:    ~27 (core:9 + text:6 + fts5:4 + vector:8)
- *   spatial:   ~27 (core:9 + json:11 + geo:7)
- *   minimal:   ~9  (core:9)
+ * Tool counts based on actual implementations:
+ *   starter:   18 (core:8 + json:18 + text:8 = 34... but json/text overlap with groups)
+ *   analytics: (core:8 + json:18 + stats:10 + window:6 = 42)
+ *   search:    (core:8 + text:8 + fts5:4 + vector:11 = 31)
+ *   spatial:   (core:8 + json:18 + geo:7 = 33)
+ *   minimal:   8 (core only)
  *   full:      all tools
+ *
+ * Note: Actual counts may vary based on the backend (WASM vs native).
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // General development - Core + JSON + Text
