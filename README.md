@@ -1,8 +1,8 @@
 # db-mcp
 
-Last Updated January 14, 2026
+Last Updated January 25, 2026
 
-_Enterprise-grade SQLite MCP Server with OAuth 2.1 authentication & 89 specialized tools_
+A **SQLite MCP Server** with up to 89 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 89 specialized tools.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -14,7 +14,7 @@ _Enterprise-grade SQLite MCP Server with OAuth 2.1 authentication & 89 specializ
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)
 
-A **SQLite MCP Server** with up to 89 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript.
+
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)** • **[Security](SECURITY.md)**
 
