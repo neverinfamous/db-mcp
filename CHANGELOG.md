@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **MCP Tool Annotations (2025-11-25 spec)** — Added behavioral hints to all 73 tools
+  - `readOnlyHint`: Indicates read-only tools (SELECT queries, schema inspection)
+  - `destructiveHint`: Warns about irreversible operations (DROP, DELETE, TRUNCATE)
+  - `idempotentHint`: Marks safe-to-retry operations (CREATE IF NOT EXISTS)
+  - Annotation presets in `src/utils/annotations.ts`: READ_ONLY, WRITE, DESTRUCTIVE, IDEMPOTENT, ADMIN
+  - Helper functions: `readOnly()`, `write()`, `destructive()`, `idempotent()`, `admin()`
 - **Whitelist-Style Tool Filtering** — Enhanced tool filtering to match postgres-mcp syntax
   - **Whitelist mode**: Specify only the groups you want (e.g., `core,json,text`)
   - **Shortcuts**: Predefined bundles (`starter`, `analytics`, `search`, `spatial`, `minimal`, `full`)

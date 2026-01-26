@@ -8,6 +8,12 @@
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import {
+  readOnly,
+  write,
+  idempotent,
+  destructive,
+} from "../../../utils/annotations.js";
+import {
   ReadQuerySchema,
   WriteQuerySchema,
   CreateTableSchema,
@@ -44,6 +50,7 @@ function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: ReadQuerySchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Read Query"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = ReadQuerySchema.parse(params);
 
@@ -70,6 +77,7 @@ function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: WriteQuerySchema,
     requiredScopes: ["write"],
+    annotations: write("Write Query"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = WriteQuerySchema.parse(params);
 
@@ -95,6 +103,7 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: CreateTableSchema,
     requiredScopes: ["write"],
+    annotations: idempotent("Create Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateTableSchema.parse(params);
 
@@ -149,6 +158,7 @@ function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: {},
     requiredScopes: ["read"],
+    annotations: readOnly("List Tables"),
     handler: async (_params: unknown, _context: RequestContext) => {
       const tables = await adapter.listTables();
 
@@ -177,6 +187,7 @@ function createDescribeTableTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: DescribeTableSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Describe Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DescribeTableSchema.parse(params);
 
@@ -203,6 +214,7 @@ function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: DropTableSchema,
     requiredScopes: ["admin"],
+    annotations: destructive("Drop Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DropTableSchema.parse(params);
 
@@ -235,6 +247,7 @@ function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: GetIndexesSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Get Indexes"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GetIndexesSchema.parse(params);
 
@@ -277,6 +290,7 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
     group: "core",
     inputSchema: CreateIndexSchema,
     requiredScopes: ["write"],
+    annotations: idempotent("Create Index"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateIndexSchema.parse(params);
 

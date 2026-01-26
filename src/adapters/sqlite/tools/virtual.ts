@@ -8,6 +8,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly, idempotent, destructive, admin } from "../../../utils/annotations.js";
 
 // Virtual table schemas
 const GenerateSeriesSchema = z.object({
@@ -67,6 +68,7 @@ function createGenerateSeriesTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: GenerateSeriesSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Generate Series"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GenerateSeriesSchema.parse(params);
 
@@ -113,6 +115,7 @@ function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: CreateViewSchema,
     requiredScopes: ["write"],
+    annotations: idempotent("Create View"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateViewSchema.parse(params);
 
@@ -151,6 +154,7 @@ function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: ListViewsSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("List Views"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = ListViewsSchema.parse(params);
 
@@ -182,6 +186,7 @@ function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: DropViewSchema,
     requiredScopes: ["admin"],
+    annotations: destructive("Drop View"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DropViewSchema.parse(params);
 
@@ -212,6 +217,7 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: DbStatSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Database Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DbStatSchema.parse(params);
 
@@ -262,6 +268,7 @@ function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: VacuumSchema,
     requiredScopes: ["admin"],
+    annotations: admin("Vacuum Database"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VacuumSchema.parse(params);
 

@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly } from "../../../utils/annotations.js";
 
 // Geo schemas
 const GeoDistanceSchema = z.object({
@@ -86,9 +87,9 @@ function haversineDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -104,6 +105,7 @@ function createGeoDistanceTool(): ToolDefinition {
     group: "admin",
     inputSchema: GeoDistanceSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Geo Distance"),
     handler: (params: unknown, _context: RequestContext) => {
       const input = GeoDistanceSchema.parse(params);
 
@@ -136,6 +138,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: GeoNearbySchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Geo Nearby"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoNearbySchema.parse(params);
 
@@ -220,6 +223,7 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: GeoBoundingBoxSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Geo Bounding Box"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoBoundingBoxSchema.parse(params);
 
@@ -277,6 +281,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: GeoClusterSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Geo Cluster"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoClusterSchema.parse(params);
 

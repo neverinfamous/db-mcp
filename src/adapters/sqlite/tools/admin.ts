@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { admin, readOnly } from "../../../utils/annotations.js";
 
 // Admin schemas
 const BackupSchema = z.object({
@@ -58,6 +59,7 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: BackupSchema,
     requiredScopes: ["admin"],
+    annotations: admin("Database Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = BackupSchema.parse(params);
 
@@ -89,6 +91,7 @@ function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: AnalyzeSchema,
     requiredScopes: ["admin"],
+    annotations: admin("Analyze Tables"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = AnalyzeSchema.parse(params);
 
@@ -127,6 +130,7 @@ function createIntegrityCheckTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: IntegrityCheckSchema,
     requiredScopes: ["admin"],
+    annotations: readOnly("Integrity Check"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = IntegrityCheckSchema.parse(params);
 
@@ -156,6 +160,7 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: OptimizeSchema,
     requiredScopes: ["admin"],
+    annotations: admin("Optimize Database"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = OptimizeSchema.parse(params);
 

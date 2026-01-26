@@ -8,6 +8,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 
 // FTS schemas
 const FtsCreateSchema = z.object({
@@ -71,6 +72,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: FtsCreateSchema,
     requiredScopes: ["write"],
+    annotations: idempotent("FTS Create"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsCreateSchema.parse(params);
 
@@ -120,6 +122,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: FtsSearchSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("FTS Search"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsSearchSchema.parse(params);
 
@@ -173,6 +176,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: FtsRebuildSchema,
     requiredScopes: ["admin"],
+    annotations: admin("FTS Rebuild"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsRebuildSchema.parse(params);
 
@@ -204,6 +208,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: FtsMatchInfoSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("FTS Match Info"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsMatchInfoSchema.parse(params);
 

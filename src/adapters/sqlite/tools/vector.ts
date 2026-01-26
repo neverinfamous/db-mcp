@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly, write, idempotent, destructive } from "../../../utils/annotations.js";
 
 // Vector schemas
 const VectorStoreSchema = z.object({
@@ -186,6 +187,7 @@ function createVectorCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorCreateTableSchema,
     requiredScopes: ["write"],
+    annotations: idempotent("Create Vector Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorCreateTableSchema.parse(params);
 
@@ -231,6 +233,7 @@ function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorStoreSchema,
     requiredScopes: ["write"],
+    annotations: write("Store Vector"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorStoreSchema.parse(params);
 
@@ -275,6 +278,7 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorBatchStoreSchema,
     requiredScopes: ["write"],
+    annotations: write("Batch Store Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorBatchStoreSchema.parse(params);
 
@@ -318,6 +322,7 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorSearchSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Vector Search"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorSearchSchema.parse(params);
 
@@ -398,6 +403,7 @@ function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorGetSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Get Vector"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorGetSchema.parse(params);
 
@@ -447,6 +453,7 @@ function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorDeleteSchema,
     requiredScopes: ["write"],
+    annotations: destructive("Delete Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorDeleteSchema.parse(params);
 
@@ -482,6 +489,7 @@ function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorCountSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Count Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorCountSchema.parse(params);
 
@@ -510,6 +518,7 @@ function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorStatsSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Vector Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorStatsSchema.parse(params);
 
@@ -580,6 +589,7 @@ function createVectorDimensionsTool(adapter: SqliteAdapter): ToolDefinition {
     group: "vector",
     inputSchema: VectorDimensionsSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Vector Dimensions"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorDimensionsSchema.parse(params);
 
@@ -621,6 +631,7 @@ function createVectorNormalizeTool(): ToolDefinition {
     group: "vector",
     inputSchema: VectorNormalizeSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Normalize Vector"),
     handler: (params: unknown, _context: RequestContext) => {
       const input = VectorNormalizeSchema.parse(params);
 
@@ -648,6 +659,7 @@ function createVectorDistanceTool(): ToolDefinition {
     group: "vector",
     inputSchema: VectorDistanceSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Vector Distance"),
     handler: (params: unknown, _context: RequestContext) => {
       const input = VectorDistanceSchema.parse(params);
 

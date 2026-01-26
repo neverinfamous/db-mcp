@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly, write } from "../../../utils/annotations.js";
 
 // Text tool schemas
 const RegexExtractSchema = z.object({
@@ -109,6 +110,7 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: RegexExtractSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Regex Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = RegexExtractSchema.parse(params);
 
@@ -166,6 +168,7 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: RegexMatchSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Regex Match"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = RegexMatchSchema.parse(params);
 
@@ -215,6 +218,7 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: TextSplitSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Text Split"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextSplitSchema.parse(params);
 
@@ -267,6 +271,7 @@ function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: TextConcatSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Text Concat"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextConcatSchema.parse(params);
 
@@ -313,6 +318,7 @@ function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: TextReplaceSchema,
     requiredScopes: ["write"],
+    annotations: write("Text Replace"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextReplaceSchema.parse(params);
 
@@ -349,6 +355,7 @@ function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: TextTrimSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Text Trim"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextTrimSchema.parse(params);
 
@@ -399,6 +406,7 @@ function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: TextCaseSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Text Case"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextCaseSchema.parse(params);
 
@@ -439,6 +447,7 @@ function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition {
     group: "text",
     inputSchema: TextSubstringSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Text Substring"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextSubstringSchema.parse(params);
 

@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly, write } from "../../../utils/annotations.js";
 import {
   ValidateJsonSchema,
   JsonExtractSchema,
@@ -105,6 +106,7 @@ function createValidateJsonTool(): ToolDefinition {
     group: "json",
     inputSchema: ValidateJsonSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Validate JSON"),
     handler: (params: unknown, _context: RequestContext) => {
       const input = ValidateJsonSchema.parse(params);
 
@@ -137,6 +139,7 @@ function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonExtractSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("JSON Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonExtractSchema.parse(params);
 
@@ -178,6 +181,7 @@ function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonSetSchema,
     requiredScopes: ["write"],
+    annotations: write("JSON Set"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonSetSchema.parse(params);
 
@@ -215,6 +219,7 @@ function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonRemoveSchema,
     requiredScopes: ["write"],
+    annotations: write("JSON Remove"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonRemoveSchema.parse(params);
 
@@ -252,6 +257,7 @@ function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonTypeSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("JSON Type"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonTypeSchema.parse(params);
 
@@ -294,6 +300,7 @@ function createJsonArrayLengthTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonArrayLengthSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Array Length"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonArrayLengthSchema.parse(params);
 
@@ -336,6 +343,7 @@ function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonArrayAppendSchema,
     requiredScopes: ["write"],
+    annotations: write("Array Append"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonArrayAppendSchema.parse(params);
 
@@ -378,6 +386,7 @@ function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonKeysSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("JSON Keys"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonKeysSchema.parse(params);
 
@@ -430,6 +439,7 @@ function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonEachSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("JSON Each"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonEachSchema.parse(params);
 
@@ -474,6 +484,7 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonGroupArraySchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Group Array"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupArraySchema.parse(params);
 
@@ -524,6 +535,7 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonGroupObjectSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Group Object"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupObjectSchema.parse(params);
 
@@ -576,6 +588,7 @@ function createJsonPrettyTool(): ToolDefinition {
     group: "json",
     inputSchema: JsonPrettySchema,
     requiredScopes: ["read"],
+    annotations: readOnly("JSON Pretty"),
     handler: (params: unknown, _context: RequestContext) => {
       const input = JsonPrettySchema.parse(params);
 

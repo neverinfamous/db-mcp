@@ -8,6 +8,7 @@
 
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly, write } from "../../../utils/annotations.js";
 import {
   JsonInsertSchema,
   JsonUpdateSchema,
@@ -42,6 +43,7 @@ function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonInsertSchema,
     requiredScopes: ["write"],
+    annotations: write("JSON Insert"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonInsertSchema.parse(params);
 
@@ -97,6 +99,7 @@ function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonUpdateSchema,
     requiredScopes: ["write"],
+    annotations: write("JSON Update"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonUpdateSchema.parse(params);
 
@@ -141,6 +144,7 @@ function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonSelectSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("JSON Select"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonSelectSchema.parse(params);
 
@@ -192,6 +196,7 @@ function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonQuerySchema,
     requiredScopes: ["read"],
+    annotations: readOnly("JSON Query"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonQuerySchema.parse(params);
 
@@ -261,6 +266,7 @@ function createJsonValidatePathTool(): ToolDefinition {
     group: "json",
     inputSchema: JsonValidatePathSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Validate JSON Path"),
     handler: (params: unknown, _context: RequestContext) => {
       const input = JsonValidatePathSchema.parse(params);
 
@@ -299,6 +305,7 @@ function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
     group: "json",
     inputSchema: JsonMergeSchema,
     requiredScopes: ["write"],
+    annotations: write("JSON Merge"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonMergeSchema.parse(params);
 

@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import { readOnly } from "../../../utils/annotations.js";
 
 // Stats schemas
 const BasicStatsSchema = z.object({
@@ -119,6 +120,7 @@ function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: BasicStatsSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = BasicStatsSchema.parse(params);
 
@@ -163,6 +165,7 @@ function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: CountSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CountSchema.parse(params);
 
@@ -208,6 +211,7 @@ function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: GroupByStatsSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Group By Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GroupByStatsSchema.parse(params);
 
@@ -256,6 +260,7 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: HistogramSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Histogram"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = HistogramSchema.parse(params);
 
@@ -337,6 +342,7 @@ function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: PercentileSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Percentile"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = PercentileSchema.parse(params);
 
@@ -398,6 +404,7 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: CorrelationSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Correlation"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CorrelationSchema.parse(params);
 
@@ -469,6 +476,7 @@ function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: TopNSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Top N Values"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TopNSchema.parse(params);
 
@@ -510,6 +518,7 @@ function createDistinctValuesTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: DistinctValuesSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Distinct Values"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DistinctValuesSchema.parse(params);
 
@@ -548,6 +557,7 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: SummaryStatsSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Summary Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = SummaryStatsSchema.parse(params);
 
@@ -615,6 +625,7 @@ function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: FrequencySchema,
     requiredScopes: ["read"],
+    annotations: readOnly("Frequency"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FrequencySchema.parse(params);
 

@@ -315,6 +315,28 @@ export interface ToolFilterConfig {
 }
 
 // =============================================================================
+// MCP Tool Annotations (2025-11-25 spec)
+// =============================================================================
+
+/**
+ * Tool annotations provide behavioral hints to clients
+ * following the MCP 2025-11-25 specification.
+ */
+export interface ToolAnnotations {
+  /** Human-readable title for the tool */
+  title?: string;
+
+  /** If true, the tool is guaranteed not to modify any state */
+  readOnlyHint?: boolean;
+
+  /** If true, multiple identical requests have the same effect as a single request */
+  idempotentHint?: boolean;
+
+  /** If true, the operation is irreversible or causes significant data loss */
+  destructiveHint?: boolean;
+}
+
+// =============================================================================
 // Adapter Types
 // =============================================================================
 
@@ -365,6 +387,9 @@ export interface ToolDefinition {
 
   /** Required OAuth scopes */
   requiredScopes?: OAuthScope[];
+
+  /** MCP tool annotations (behavioral hints) */
+  annotations?: ToolAnnotations;
 
   /** Tool handler function */
   handler: (params: unknown, context: RequestContext) => Promise<unknown>;
