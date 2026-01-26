@@ -45,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `idempotentHint`: Marks safe-to-retry operations (CREATE IF NOT EXISTS)
   - Annotation presets in `src/utils/annotations.ts`: READ_ONLY, WRITE, DESTRUCTIVE, IDEMPOTENT, ADMIN
   - Helper functions: `readOnly()`, `write()`, `destructive()`, `idempotent()`, `admin()`
+- **MCP Resource Annotations (2025-11-25 spec)** — Added metadata hints to all 7 resources
+  - `audience`: Intended consumer (`user`, `assistant`, or both)
+  - `priority`: Display ordering hint (0-1 range)
+  - `lastModified`: ISO 8601 timestamp for cache invalidation
+  - Annotation presets in `src/utils/resourceAnnotations.ts`: HIGH_PRIORITY, MEDIUM_PRIORITY, LOW_PRIORITY
 - **Whitelist-Style Tool Filtering** — Enhanced tool filtering to match postgres-mcp syntax
   - **Whitelist mode**: Specify only the groups you want (e.g., `core,json,text`)
   - **Shortcuts**: Predefined bundles (`starter`, `analytics`, `search`, `spatial`, `minimal`, `full`)

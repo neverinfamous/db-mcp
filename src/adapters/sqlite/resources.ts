@@ -7,6 +7,11 @@
 
 import type { SqliteAdapter } from "./SqliteAdapter.js";
 import type { ResourceDefinition } from "../../types/index.js";
+import {
+  HIGH_PRIORITY,
+  MEDIUM_PRIORITY,
+  LOW_PRIORITY,
+} from "../../utils/resourceAnnotations.js";
 
 /**
  * Get all resource definitions for the SQLite adapter
@@ -35,6 +40,7 @@ function createSchemaResource(adapter: SqliteAdapter): ResourceDefinition {
     description:
       "Get the full database schema including all tables, columns, and indexes",
     mimeType: "application/json",
+    annotations: HIGH_PRIORITY,
     handler: async () => {
       const schema = await adapter.getSchema();
       return {
@@ -59,6 +65,7 @@ function createTablesResource(adapter: SqliteAdapter): ResourceDefinition {
     uri: "sqlite://tables",
     description: "List all tables in the database",
     mimeType: "application/json",
+    annotations: MEDIUM_PRIORITY,
     handler: async () => {
       const tables = await adapter.listTables();
       return {
@@ -83,6 +90,7 @@ function createTableSchemaResource(adapter: SqliteAdapter): ResourceDefinition {
     uri: "sqlite://table/{tableName}/schema",
     description: "Get the schema for a specific table",
     mimeType: "application/json",
+    annotations: MEDIUM_PRIORITY,
     handler: async (uri: string) => {
       // Extract table name from URI
       const regex = /sqlite:\/\/table\/([^/]+)\/schema/;
@@ -114,6 +122,7 @@ function createIndexesResource(adapter: SqliteAdapter): ResourceDefinition {
     uri: "sqlite://indexes",
     description: "List all indexes in the database",
     mimeType: "application/json",
+    annotations: MEDIUM_PRIORITY,
     handler: async () => {
       // Get indexes for all tables
       const tables = await adapter.listTables();
@@ -148,6 +157,7 @@ function createViewsResource(adapter: SqliteAdapter): ResourceDefinition {
     uri: "sqlite://views",
     description: "List all views in the database",
     mimeType: "application/json",
+    annotations: MEDIUM_PRIORITY,
     handler: async () => {
       const result = await adapter.executeReadQuery(
         "SELECT name, sql FROM sqlite_master WHERE type = 'view' ORDER BY name",
@@ -174,6 +184,7 @@ function createHealthResource(adapter: SqliteAdapter): ResourceDefinition {
     uri: "sqlite://health",
     description: "Get database health and connection status",
     mimeType: "application/json",
+    annotations: HIGH_PRIORITY,
     handler: async () => {
       const health = await adapter.getHealth();
       return {
@@ -198,6 +209,7 @@ function createMetaResource(adapter: SqliteAdapter): ResourceDefinition {
     uri: "sqlite://meta",
     description: "Get database metadata and configuration",
     mimeType: "application/json",
+    annotations: LOW_PRIORITY,
     handler: async () => {
       // Get various pragma values
       const pragmas = [
