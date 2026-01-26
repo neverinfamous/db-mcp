@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-A **SQLite MCP Server** with up to 102 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 102 specialized tools.
+A **SQLite MCP Server** with up to 105 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 105 specialized tools.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -165,14 +165,14 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 | JSON Operations       | 15     | 15      | Full JSON manipulation, JSONB support             |
 | Text Processing       | 12     | 12      | Regex, case, fuzzy, phonetic, normalize, validate |
 | FTS5 Full-Text Search | 4      | 4       | Create, search, rebuild                           |
-| Statistical Analysis  | 8      | 8       | Stats, percentiles, histograms                    |
+| Statistical Analysis  | 13     | 13      | Stats, outliers, regression, hypothesis testing   |
 | Virtual Tables        | 13     | 13      | CSV, R-Tree, series, list/drop/info               |
 | Vector/Semantic       | 11     | 11      | Embeddings, similarity search                     |
 | Geospatial            | 7      | 7       | Distance, bounding box, clustering                |
 | Admin                 | 4      | 4       | Vacuum, backup, analyze, optimize                 |
 | Transactions          | —      | 7       | Begin, commit, rollback, savepoints               |
 | Window Functions      | —      | 6       | Row number, rank, lag/lead, running totals        |
-| **Total**             | **89** | **102** |                                                   |
+| **Total**             | **92** | **105** |                                                   |
 
 ### SQLite Backend Options
 
@@ -180,7 +180,7 @@ Choose between two SQLite backends based on your needs:
 
 | Feature                   | WASM (sql.js)     | Native (better-sqlite3)       |
 | ------------------------- | ----------------- | ----------------------------- |
-| **Tools Available**       | 89                | **102**                       |
+| **Tools Available**       | 92                | **105**                       |
 | **Transactions**          | ❌                | ✅ 7 tools                    |
 | **Window Functions**      | ❌                | ✅ 6 tools                    |
 | **FTS5 Full-Text Search** | ⚠️ Limited        | ✅ Full                       |
@@ -324,7 +324,7 @@ Use `:memory:` for a temporary in-memory database:
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 102 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 105 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Quick Start: Recommended Configurations
 
@@ -409,10 +409,10 @@ Specify exactly the groups you need:
 | Shortcut    | Tools  | + Built-in | Use Case           | What's Included    |
 | ----------- | ------ | ---------- | ------------------ | ------------------ |
 | `starter`   | **42** | **45**     | 🌟 **Recommended** | Core, JSON, Text   |
-| `analytics` | 46     | 49         | Data Analysis      | Core, JSON, Stats  |
+| `analytics` | 49     | 52         | Data Analysis      | Core, JSON, Stats  |
 | `search`    | 35     | 38         | Search Workloads   | Core, Text, Vector |
 | `minimal`   | 8      | 11         | Bare Minimum       | Core only          |
-| `full`      | 102    | 105        | All Tools          | Everything enabled |
+| `full`      | 105    | 108        | All Tools          | Everything enabled |
 
 ---
 
@@ -472,14 +472,14 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 
 ## 🔥 Core Capabilities
 
-- 📊 **Statistical Analysis** - Descriptive stats, percentiles, time series analysis
+- 📊 **Statistical Analysis** - Outliers, regression, hypothesis testing, percentiles
 - 🔍 **Advanced Text Processing** - Regex, fuzzy match, phonetic, normalize, validate
 - 🧠 **Vector/Semantic Search** - AI-native embeddings, cosine similarity, hybrid search
 - 🗺️ **Geospatial Operations** - Distance calculations, bounding boxes, spatial queries
 - 🔐 **Transaction Safety** - Full ACID compliance with savepoints (native backend)
 - 📦 **JSON & JSONB Support** - Auto-normalization, schema analysis, binary storage
 - 🛡️ **Enhanced Error Diagnostics** - Categorized errors with actionable suggestions
-- 🎛️ **102 Specialized Tools** - Complete database administration and analytics suite
+- 🎛️ **105 Specialized Tools** - Complete database administration and analytics suite
 
 ### 🏢 Enterprise Features
 
@@ -524,7 +524,7 @@ See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as 
 ## 🏆 Why Choose db-mcp?
 
 ✅ **TypeScript Native** - Full type safety with strict mode, no `any` types  
-✅ **102 Specialized Tools** - Most comprehensive SQLite MCP server available  
+✅ **105 Specialized Tools** - Most comprehensive SQLite MCP server available  
 ✅ **OAuth 2.1 Built-in** - Enterprise-grade authentication out of the box  
 ✅ **Dual Backends** - WASM for portability, native for performance  
 ✅ **Tool Filtering** - Stay within AI IDE tool limits with preset configurations  
@@ -533,6 +533,7 @@ See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as 
 ✅ **JSON/JSONB Support** - Auto-normalization, schema inference, binary storage  
 ✅ **Advanced Text Processing** - Fuzzy match, phonetic, normalize, validate  
 ✅ **Virtual Tables** - CSV, R-Tree spatial indexing, series generation  
+✅ **Statistical Analysis** - Outliers, regression, hypothesis testing  
 ✅ **Modern Architecture** - Built on MCP SDK with clean, modular design  
 ✅ **Active Development** - Regular updates and improvements
 
@@ -542,7 +543,7 @@ See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as 
 
 ## 📈 Project Stats
 
-- **102 Tools** in native backend (89 in WASM)
+- **105 Tools** in native backend (92 in WASM)
 - **13 Tool Groups** for flexible filtering
 - **Strict TypeScript** with full type coverage
 - **Multi-platform** support (Windows, Linux, macOS)
