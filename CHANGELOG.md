@@ -56,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Mixed mode**: Combine whitelist with exclusions (e.g., `starter,-fts5`)
   - **Backward compatible**: Legacy exclusion syntax (`-vector,-geo`) still works
   - See README "Tool Filtering" section for documentation
+- **ServerInstructions for AI Agents** — Added automated instruction delivery to MCP clients
+  - New `src/constants/ServerInstructions.ts` with tiered instruction levels (essential/standard/full)
+  - Instructions automatically passed to MCP server during initialization
+  - Includes usage examples for JSON, Vector, FTS5, Stats, Geo, Window Functions, and Transactions
+  - Following patterns from memory-journal-mcp and postgres-mcp
 - **MCP Enhanced Logging** — Full MCP protocol-compliant structured logging
   - RFC 5424 severity levels: debug, info, notice, warning, error, critical, alert, emergency
   - Module-prefixed error codes (e.g., `DB_CONNECT_FAILED`, `AUTH_TOKEN_INVALID`)

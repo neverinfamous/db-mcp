@@ -18,6 +18,7 @@ import {
   getFilterSummary,
   getToolFilterFromEnv,
 } from "../filtering/ToolFilter.js";
+import { generateInstructions } from "../constants/ServerInstructions.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -34,7 +35,20 @@ export class DbMcpServer {
   constructor(config: McpServerConfig) {
     this.config = config;
 
-    // Initialize MCP server with logging capability
+    // Initialize tool filter from config or environment (needed for instructions)
+    this.toolFilter = config.toolFilter
+      ? parseToolFilter(config.toolFilter)
+      : getToolFilterFromEnv();
+
+    // Generate server instructions based on enabled tools
+    const enabledTools = new Set<string>();
+    for (const group of this.toolFilter.enabledGroups) {
+      // Add all tools from enabled groups to the set
+      enabledTools.add(group);
+    }
+    const instructions = generateInstructions(enabledTools, [], []);
+
+    // Initialize MCP server with logging capability and instructions
     this.server = new McpServer(
       {
         name: config.name,
@@ -44,13 +58,9 @@ export class DbMcpServer {
         capabilities: {
           logging: {},
         },
+        instructions,
       },
     );
-
-    // Initialize tool filter from config or environment
-    this.toolFilter = config.toolFilter
-      ? parseToolFilter(config.toolFilter)
-      : getToolFilterFromEnv();
 
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });
