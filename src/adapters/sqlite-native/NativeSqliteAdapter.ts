@@ -367,18 +367,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Get supported tool groups
    */
   override getSupportedToolGroups(): ToolGroup[] {
-    return [
-      "core",
-      "json",
-      "text",
-      "stats",
-      "performance",
-      "vector",
-      "geo",
-      "backup",
-      "monitoring",
-      "admin",
-    ];
+    return ["core", "json", "text", "stats", "vector", "admin"];
   }
 
   /**

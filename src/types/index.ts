@@ -262,31 +262,23 @@ export interface RequestContext {
  * Tool group identifiers
  */
 export type ToolGroup =
-  | "core" // Basic CRUD, schema operations
-  | "json" // JSON/JSONB operations
-  | "text" // Text processing
-  | "fts5" // Full-text search (FTS5)
-  | "stats" // Statistical analysis
-  | "performance" // Performance optimization
-  | "vector" // Vector/semantic search
-  | "geo" // Geospatial operations
-  | "backup" // Backup & recovery
-  | "monitoring" // Monitoring & health
-  | "admin" // Administration
-  | "transactions" // Transaction control (native only)
-  | "window"; // Window functions (native only)
+  | "core" // Basic CRUD, schema operations (8 tools)
+  | "json" // JSON/JSONB operations (18 tools)
+  | "text" // Text processing (12 tools)
+  | "stats" // Statistical analysis (16 tools)
+  | "vector" // Vector/semantic search (11 tools)
+  | "admin"; // Administration (21 tools)
 
 /**
  * Meta-group identifiers for common multi-group selections.
  * These are shortcuts that expand to multiple ToolGroups.
  */
 export type MetaGroup =
-  | "starter" // Core + JSON + Text (~26 tools) - General development
-  | "analytics" // Core + JSON + Stats + Window (~34 tools) - Data analysis
-  | "search" // Core + Text + FTS5 + Vector (~27 tools) - Search workloads
-  | "spatial" // Core + JSON + Geo (~27 tools) - Geospatial
-  | "minimal" // Core only (~9 tools) - Bare minimum
-  | "full"; // All tools enabled
+  | "starter" // Core + JSON + Text (38 tools) - General development
+  | "analytics" // Core + JSON + Stats (42 tools) - Data analysis
+  | "search" // Core + Text + Vector (31 tools) - Search workloads
+  | "minimal" // Core only (8 tools) - Bare minimum
+  | "full"; // All tools enabled (86 tools)
 
 /**
  * Tool filter rule

@@ -2,35 +2,37 @@
  * db-mcp - Tool Constants
  *
  * Defines the tool groups and meta-groups used for filtering.
- * Follows postgres-mcp patterns for consistency.
  *
- * Tool names here are base names (without sqlite_ prefix).
- * The adapter matches both full names (sqlite_read_query) and base names (read_query).
+ * Actual tool groups (from code audit):
+ *   core: 8 tools (from core.ts)
+ *   json: 18 tools (from json-helpers.ts + json-operations.ts)
+ *   text: 12 tools (from text.ts)
+ *   stats: 16 tools (from stats.ts)
+ *   vector: 11 tools (from vector.ts)
+ *   admin: 21 tools (from admin.ts + virtual.ts)
+ *   Total: 86 tools
+ *
+ * Note: 3 built-in server tools (server_info, server_health, list_adapters)
+ * are always available regardless of filter settings.
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";
 
 /**
- * Default tool groups and their member tools.
- * This serves as the canonical mapping of tools to groups.
- *
- * Actual tool counts (native SQLite backend):
- *   core: 8 (from core.ts)
- *   json: 18 (from json-helpers.ts + json-operations.ts)
- *   text: 8 (from text.ts)
- *   fts5: 4 (from fts.ts)
- *   stats: 10 (from stats.ts)
- *   performance: 0 (no separate file, covered by stats/admin)
- *   vector: 11 (from vector.ts)
- *   geo: 7 (from geo.ts)
- *   backup: 1 (sqlite_backup in admin.ts)
- *   monitoring: 1 (sqlite_integrity_check in admin.ts)
- *   admin: 4 + 6 virtual = 10 (from admin.ts + virtual.ts)
- *   transactions: 7 (from transactions.ts - native only)
- *   window: 6 (from window.ts - native only)
- *
- * Note: These lists are for filtering by group name. The actual
- * filtering uses the tool's 'group' property, not these lists.
+ * All valid tool groups
+ */
+export const ALL_TOOL_GROUPS: ToolGroup[] = [
+  "core",
+  "json",
+  "text",
+  "stats",
+  "vector",
+  "admin",
+];
+
+/**
+ * Tool groups - kept for backwards compatibility with scopes.ts
+ * The actual filtering uses the tool's 'group' property, not these lists.
  */
 export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
   core: [
@@ -44,14 +46,12 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "create_index",
   ],
   json: [
-    // json-helpers.ts (6 tools)
     "json_get",
     "json_set",
     "json_insert",
     "json_replace",
     "json_remove",
     "json_array_append",
-    // json-operations.ts (12 tools)
     "json_extract",
     "json_extract_all",
     "json_keys",
@@ -74,8 +74,11 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "text_trim",
     "text_case",
     "text_substring",
+    "fts_create",
+    "fts_insert",
+    "fts_search",
+    "fts_match",
   ],
-  fts5: ["fts_create", "fts_insert", "fts_search", "fts_match"],
   stats: [
     "stats_basic",
     "stats_count",
@@ -87,9 +90,12 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "stats_zscore",
     "stats_time_bucket",
     "stats_moving_avg",
-  ],
-  performance: [
-    // Performance tools are included in stats group
+    "geo_distance",
+    "geo_bounding_box",
+    "geo_point_in_radius",
+    "geo_nearest",
+    "geo_encode",
+    "geo_decode",
   ],
   vector: [
     "vector_create_table",
@@ -104,32 +110,17 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "vector_normalize",
     "vector_distance",
   ],
-  geo: [
-    "geo_distance",
-    "geo_bounding_box",
-    "geo_point_in_radius",
-    "geo_nearest",
-    "geo_encode",
-    "geo_decode",
-    "geo_cluster",
-  ],
-  backup: ["backup"],
-  monitoring: ["integrity_check"],
   admin: [
-    // admin.ts (4 tools)
     "backup",
     "analyze",
     "integrity_check",
     "optimize",
-    // virtual.ts (6 tools)
     "generate_series",
     "create_view",
     "list_views",
     "drop_view",
     "dbstat",
     "vacuum",
-  ],
-  transactions: [
     "transaction_begin",
     "transaction_commit",
     "transaction_rollback",
@@ -137,61 +128,30 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "transaction_release",
     "transaction_rollback_to",
     "transaction_execute",
-  ],
-  window: [
     "window_row_number",
     "window_rank",
     "window_lag_lead",
     "window_running_total",
-    "window_moving_avg",
-    "window_ntile",
   ],
 };
 
 /**
  * Meta-groups that expand to multiple tool groups.
  * These provide shortcuts for common use cases.
- *
- * Tool counts based on actual implementations:
- *   starter:   18 (core:8 + json:18 + text:8 = 34... but json/text overlap with groups)
- *   analytics: (core:8 + json:18 + stats:10 + window:6 = 42)
- *   search:    (core:8 + text:8 + fts5:4 + vector:11 = 31)
- *   spatial:   (core:8 + json:18 + geo:7 = 33)
- *   minimal:   8 (core only)
- *   full:      all tools
- *
- * Note: Actual counts may vary based on the backend (WASM vs native).
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text
+  // General development - Core + JSON + Text (38 tools)
   starter: ["core", "json", "text"],
 
-  // Data analysis - Core + JSON + Stats + Window
-  analytics: ["core", "json", "stats", "window"],
+  // Data analysis - Core + JSON + Stats (42 tools)
+  analytics: ["core", "json", "stats"],
 
-  // Search workloads - Core + Text + FTS5 + Vector
-  search: ["core", "text", "fts5", "vector"],
+  // Search workloads - Core + Text + Vector (31 tools)
+  search: ["core", "text", "vector"],
 
-  // Geospatial - Core + JSON + Geo
-  spatial: ["core", "json", "geo"],
-
-  // Bare minimum - Core only
+  // Bare minimum - Core only (8 tools)
   minimal: ["core"],
 
-  // All tools enabled
-  full: [
-    "core",
-    "json",
-    "text",
-    "fts5",
-    "stats",
-    "performance",
-    "vector",
-    "geo",
-    "backup",
-    "monitoring",
-    "admin",
-    "transactions",
-    "window",
-  ],
+  // All tools enabled (86 tools)
+  full: ["core", "json", "text", "stats", "vector", "admin"],
 };

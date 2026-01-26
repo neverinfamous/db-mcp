@@ -30,29 +30,10 @@ import type {
   ToolDefinition,
 } from "../types/index.js";
 
-import { META_GROUPS } from "./ToolConstants.js";
+import { META_GROUPS, ALL_TOOL_GROUPS } from "./ToolConstants.js";
 
 // Re-export for backwards compatibility
-export { META_GROUPS, TOOL_GROUPS } from "./ToolConstants.js";
-
-/**
- * All valid tool groups
- */
-export const ALL_TOOL_GROUPS: ToolGroup[] = [
-  "core",
-  "json",
-  "text",
-  "fts5",
-  "stats",
-  "performance",
-  "vector",
-  "geo",
-  "backup",
-  "monitoring",
-  "admin",
-  "transactions",
-  "window",
-];
+export { META_GROUPS, TOOL_GROUPS, ALL_TOOL_GROUPS } from "./ToolConstants.js";
 
 /**
  * Check if a name is a valid tool group

@@ -60,7 +60,6 @@ export const SUPPORTED_SCOPES = [
  */
 export const READ_SCOPE_GROUPS: ToolGroup[] = [
   "core", // read_query, list_tables, describe_table, etc.
-  "monitoring", // health_check, connection_status, etc.
 ];
 
 /**
@@ -71,9 +70,7 @@ export const WRITE_SCOPE_GROUPS: ToolGroup[] = [
   "json", // JSON operations
   "text", // Text processing
   "stats", // Statistical analysis
-  "performance", // Performance optimization
   "vector", // Vector operations
-  "geo", // Geospatial operations
 ];
 
 /**
@@ -81,7 +78,6 @@ export const WRITE_SCOPE_GROUPS: ToolGroup[] = [
  */
 export const ADMIN_SCOPE_GROUPS: ToolGroup[] = [
   ...WRITE_SCOPE_GROUPS,
-  "backup", // Backup & recovery
   "admin", // Administration
 ];
 

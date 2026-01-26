@@ -14,8 +14,6 @@ A **SQLite MCP Server** with up to 89 tools, OAuth 2.1 authentication, and granu
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)
 
-
-
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)** • **[Security](SECURITY.md)**
 
 ---
@@ -379,34 +377,28 @@ Specify exactly the groups you need:
 
 ### Shortcuts (Predefined Bundles)
 
-| Shortcut    | Tools  | Use Case           | What's Included           |
-| ----------- | ------ | ------------------ | ------------------------- |
-| `starter`   | **32** | 🌟 **Recommended** | Core, JSON, Text          |
-| `analytics` | 38     | Data Analysis      | Core, JSON, Stats, Window |
-| `search`    | 31     | Search Workloads   | Core, Text, FTS5, Vector  |
-| `spatial`   | 33     | Geospatial         | Core, JSON, Geo           |
-| `minimal`   | 8      | Bare Minimum       | Core only                 |
-| `full`      | 86     | All Tools          | Everything enabled        |
+| Shortcut    | Tools  | Use Case           | What's Included    |
+| ----------- | ------ | ------------------ | ------------------ |
+| `starter`   | **38** | 🌟 **Recommended** | Core, JSON, Text   |
+| `analytics` | 42     | Data Analysis      | Core, JSON, Stats  |
+| `search`    | 31     | Search Workloads   | Core, Text, Vector |
+| `minimal`   | 8      | Bare Minimum       | Core only          |
+| `full`      | 86     | All Tools          | Everything enabled |
 
 ---
 
-### Tool Groups (13 Available)
+### Tool Groups (6 Available)
 
-| Group          | Tools | Description                       |
-| -------------- | ----- | --------------------------------- |
-| `core`         | 8     | Basic CRUD, schema, tables        |
-| `json`         | 18    | JSON operations                   |
-| `text`         | 8     | Text processing (regex, fuzzy)    |
-| `fts5`         | 4     | Full-text search                  |
-| `stats`        | 10    | Statistical analysis              |
-| `performance`  | 0     | (covered by stats/admin)          |
-| `vector`       | 11    | Embeddings, similarity search     |
-| `geo`          | 4     | Geospatial operations             |
-| `backup`       | 1     | Database backup                   |
-| `monitoring`   | 1     | Integrity check                   |
-| `admin`        | 10    | Vacuum, analyze, views, pragmas   |
-| `transactions` | 7     | Transaction control (native only) |
-| `window`       | 6     | Window functions (native only)    |
+> **Note:** Each group shows its tools + 3 built-in server tools (server_info, server_health, list_adapters)
+
+| Group    | Group Tools | With Built-in | Description                     |
+| -------- | ----------- | ------------- | ------------------------------- |
+| `core`   | 8           | 11            | Basic CRUD, schema, tables      |
+| `json`   | 18          | 21            | JSON operations                 |
+| `text`   | 12          | 15            | Text processing (regex, fuzzy)  |
+| `stats`  | 16          | 19            | Statistical analysis            |
+| `vector` | 11          | 14            | Embeddings, similarity search   |
+| `admin`  | 21          | 24            | Vacuum, analyze, views, pragmas |
 
 ---
 
