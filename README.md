@@ -212,6 +212,34 @@ Window Function Tools (6) - Native Only
 | `sqlite_window_moving_avg`    | Calculate rolling averages                            |
 | `sqlite_window_ntile`         | Divide rows into N buckets (quartiles, deciles, etc.) |
 
+### 📁 Resources (7)
+
+MCP resources provide read-only access to database metadata:
+
+| Resource              | URI                              | Description                          |
+| --------------------- | -------------------------------- | ------------------------------------ |
+| `sqlite_schema`       | `sqlite://schema`                | Full database schema (tables, indexes) |
+| `sqlite_tables`       | `sqlite://tables`                | List all tables in the database      |
+| `sqlite_table_schema` | `sqlite://table/{name}/schema`   | Schema for a specific table          |
+| `sqlite_indexes`      | `sqlite://indexes`               | All indexes in the database          |
+| `sqlite_views`        | `sqlite://views`                 | All views in the database            |
+| `sqlite_health`       | `sqlite://health`                | Database health and connection status |
+| `sqlite_meta`         | `sqlite://meta`                  | Database metadata and configuration  |
+
+### 💬 Prompts (7)
+
+MCP prompts provide AI-assisted database workflows:
+
+| Prompt                   | Description                                      |
+| ------------------------ | ------------------------------------------------ |
+| `sqlite_explain_schema`  | Explain database structure and relationships     |
+| `sqlite_query_builder`   | Help construct SQL queries for common operations |
+| `sqlite_data_analysis`   | Analyze data patterns and provide insights       |
+| `sqlite_optimization`    | Analyze and suggest database optimizations       |
+| `sqlite_migration`       | Help create database migration scripts           |
+| `sqlite_debug_query`     | Debug SQL queries that aren't working            |
+| `sqlite_documentation`   | Generate documentation for the database schema   |
+
 [⬆️ Back to Table of Contents](#-table-of-contents)
 
 ---
