@@ -1,8 +1,8 @@
 /**
  * SQLite Virtual Table Tools
  *
- * Create and manage virtual tables for CSV, generation, etc.
- * 6 tools total.
+ * Create and manage virtual tables for CSV, R-Tree, generation, etc.
+ * 13 tools total.
  */
 
 import { z } from "zod";
@@ -55,6 +55,57 @@ const VacuumSchema = z.object({
   into: z.string().optional().describe("Optional file path to vacuum into"),
 });
 
+// New virtual table schemas
+const ListVirtualTablesSchema = z.object({
+  pattern: z.string().optional().describe("Optional LIKE pattern to filter"),
+});
+
+const VirtualTableInfoSchema = z.object({
+  tableName: z.string().describe("Name of the virtual table"),
+});
+
+const DropVirtualTableSchema = z.object({
+  tableName: z.string().describe("Name of the virtual table to drop"),
+  ifExists: z.boolean().optional().default(true),
+});
+
+const CreateCsvTableSchema = z.object({
+  tableName: z.string().describe("Name for the virtual table"),
+  filePath: z.string().describe("Path to the CSV file"),
+  header: z.boolean().optional().default(true).describe("First row is header"),
+  delimiter: z.string().optional().default(",").describe("Column delimiter"),
+  columns: z
+    .array(z.string())
+    .optional()
+    .describe("Manual column names if no header"),
+});
+
+const AnalyzeCsvSchemaSchema = z.object({
+  filePath: z.string().describe("Path to the CSV file"),
+  sampleRows: z.number().optional().default(100).describe("Rows to sample"),
+  delimiter: z.string().optional().default(",").describe("Column delimiter"),
+});
+
+const CreateRtreeTableSchema = z.object({
+  tableName: z.string().describe("Name for the R-Tree table"),
+  dimensions: z
+    .number()
+    .min(2)
+    .max(5)
+    .optional()
+    .default(2)
+    .describe("Number of dimensions (2-5)"),
+  idColumn: z.string().optional().default("id").describe("ID column name"),
+});
+
+const CreateSeriesTableSchema = z.object({
+  tableName: z.string().describe("Name for the series table"),
+  start: z.number().describe("Start value"),
+  stop: z.number().describe("Stop value"),
+  step: z.number().optional().default(1).describe("Step value"),
+  columnName: z.string().optional().default("value").describe("Column name"),
+});
+
 /**
  * Get all virtual table tools
  */
@@ -66,6 +117,14 @@ export function getVirtualTools(adapter: SqliteAdapter): ToolDefinition[] {
     createDropViewTool(adapter),
     createDbStatTool(adapter),
     createVacuumTool(adapter),
+    // New virtual table tools
+    createListVirtualTablesTool(adapter),
+    createVirtualTableInfoTool(adapter),
+    createDropVirtualTableTool(adapter),
+    createCsvTableTool(adapter),
+    createAnalyzeCsvSchemaTool(adapter),
+    createRtreeTableTool(adapter),
+    createSeriesTableTool(adapter),
   ];
 }
 
@@ -306,6 +365,497 @@ function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
           ? `Database vacuumed into '${input.into}'`
           : "Database vacuumed",
         durationMs: duration,
+      };
+    },
+  };
+}
+
+// =============================================================================
+// New Virtual Table Tools
+// =============================================================================
+
+/**
+ * Check if a module is available
+ */
+async function isModuleAvailable(
+  adapter: SqliteAdapter,
+  moduleName: string,
+): Promise<boolean> {
+  try {
+    const result = await adapter.executeReadQuery(
+      `SELECT name FROM pragma_module_list WHERE name = '${moduleName}'`,
+    );
+    return (result.rows?.length ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * List all virtual tables
+ */
+function createListVirtualTablesTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_list_virtual_tables",
+    description: "List all virtual tables in the database.",
+    group: "admin",
+    inputSchema: ListVirtualTablesSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      count: z.number(),
+      virtualTables: z.array(
+        z.object({
+          name: z.string(),
+          module: z.string(),
+          sql: z.string(),
+        }),
+      ),
+    }),
+    requiredScopes: ["read"],
+    annotations: readOnly("List Virtual Tables"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = ListVirtualTablesSchema.parse(params);
+
+      let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'`;
+      if (input.pattern) {
+        sql += ` AND name LIKE '${input.pattern.replace(/'/g, "''")}'`;
+      }
+
+      const result = await adapter.executeReadQuery(sql);
+
+      const virtualTables = (result.rows ?? []).map((row) => {
+        const sqlStr = typeof row["sql"] === "string" ? row["sql"] : "";
+        // Extract module name from SQL: CREATE VIRTUAL TABLE x USING module(...)
+        const match = /USING\s+(\w+)/i.exec(sqlStr);
+        return {
+          name: typeof row["name"] === "string" ? row["name"] : "",
+          module: match?.[1] ?? "unknown",
+          sql: sqlStr,
+        };
+      });
+
+      return {
+        success: true,
+        count: virtualTables.length,
+        virtualTables,
+      };
+    },
+  };
+}
+
+/**
+ * Get virtual table info
+ */
+function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_virtual_table_info",
+    description: "Get metadata about a specific virtual table.",
+    group: "admin",
+    inputSchema: VirtualTableInfoSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      name: z.string(),
+      module: z.string(),
+      columns: z.array(
+        z.object({
+          name: z.string(),
+          type: z.string(),
+        }),
+      ),
+      sql: z.string(),
+    }),
+    requiredScopes: ["read"],
+    annotations: readOnly("Virtual Table Info"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = VirtualTableInfoSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        throw new Error("Invalid table name");
+      }
+
+      // Get the CREATE statement
+      const sqlResult = await adapter.executeReadQuery(
+        `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '${input.tableName.replace(/'/g, "''")}' AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
+      );
+
+      if (!sqlResult.rows || sqlResult.rows.length === 0) {
+        throw new Error(`Virtual table '${input.tableName}' not found`);
+      }
+
+      const sqlStr =
+        typeof sqlResult.rows[0]?.["sql"] === "string"
+          ? sqlResult.rows[0]["sql"]
+          : "";
+      const match = /USING\s+(\w+)/i.exec(sqlStr);
+
+      // Get column info
+      const colResult = await adapter.executeReadQuery(
+        `PRAGMA table_info("${input.tableName}")`,
+      );
+
+      const columns = (colResult.rows ?? []).map((row) => ({
+        name: typeof row["name"] === "string" ? row["name"] : "",
+        type: typeof row["type"] === "string" ? row["type"] : "TEXT",
+      }));
+
+      return {
+        success: true,
+        name: input.tableName,
+        module: match?.[1] ?? "unknown",
+        columns,
+        sql: sqlStr,
+      };
+    },
+  };
+}
+
+/**
+ * Drop virtual table
+ */
+function createDropVirtualTableTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_drop_virtual_table",
+    description: "Drop a virtual table.",
+    group: "admin",
+    inputSchema: DropVirtualTableSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+    }),
+    requiredScopes: ["write"],
+    annotations: destructive("Drop Virtual Table"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = DropVirtualTableSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        throw new Error("Invalid table name");
+      }
+
+      const sql = input.ifExists
+        ? `DROP TABLE IF EXISTS "${input.tableName}"`
+        : `DROP TABLE "${input.tableName}"`;
+
+      await adapter.executeWriteQuery(sql);
+
+      return {
+        success: true,
+        message: `Dropped virtual table '${input.tableName}'`,
+      };
+    },
+  };
+}
+
+/**
+ * Create CSV virtual table
+ */
+function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_create_csv_table",
+    description:
+      "Create a virtual table from a CSV file. Requires the csv extension.",
+    group: "admin",
+    inputSchema: CreateCsvTableSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      sql: z.string(),
+      columns: z.array(z.string()),
+    }),
+    requiredScopes: ["write"],
+    annotations: idempotent("Create CSV Table"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = CreateCsvTableSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        throw new Error("Invalid table name");
+      }
+
+      // Check if csv module is available
+      const csvAvailable = await isModuleAvailable(adapter, "csv");
+      if (!csvAvailable) {
+        throw new Error(
+          "CSV extension not available. Load the csv extension or use a SQLite build with csv support.",
+        );
+      }
+
+      // Build CREATE VIRTUAL TABLE statement
+      const options: string[] = [
+        `filename='${input.filePath.replace(/'/g, "''")}'`,
+      ];
+      if (!input.header) {
+        options.push("header=false");
+      }
+      if (input.delimiter !== ",") {
+        options.push(`delimiter='${input.delimiter}'`);
+      }
+      if (input.columns && input.columns.length > 0) {
+        options.push(`columns=${String(input.columns.length)}`);
+      }
+
+      const sql = `CREATE VIRTUAL TABLE "${input.tableName}" USING csv(${options.join(", ")})`;
+      await adapter.executeWriteQuery(sql);
+
+      // Get column names
+      const colResult = await adapter.executeReadQuery(
+        `PRAGMA table_info("${input.tableName}")`,
+      );
+      const columns = (colResult.rows ?? []).map((row) =>
+        typeof row["name"] === "string" ? row["name"] : "",
+      );
+
+      return {
+        success: true,
+        message: `Created CSV virtual table '${input.tableName}'`,
+        sql,
+        columns,
+      };
+    },
+  };
+}
+
+/**
+ * Analyze CSV schema
+ */
+function createAnalyzeCsvSchemaTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_analyze_csv_schema",
+    description:
+      "Analyze a CSV file structure and infer column types. Uses a temporary virtual table.",
+    group: "admin",
+    inputSchema: AnalyzeCsvSchemaSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      hasHeader: z.boolean(),
+      rowCount: z.number(),
+      columns: z.array(
+        z.object({
+          name: z.string(),
+          inferredType: z.string(),
+          nullCount: z.number(),
+          sampleValues: z.array(z.string()),
+        }),
+      ),
+    }),
+    requiredScopes: ["read"],
+    annotations: readOnly("Analyze CSV Schema"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = AnalyzeCsvSchemaSchema.parse(params);
+
+      // Check if csv module is available
+      const csvAvailable = await isModuleAvailable(adapter, "csv");
+      if (!csvAvailable) {
+        throw new Error(
+          "CSV extension not available. Cannot analyze CSV schema.",
+        );
+      }
+
+      // Create temporary table name
+      const tempName = `_csv_analyze_${Date.now()}`;
+
+      try {
+        // Create temp virtual table
+        const options = [`filename='${input.filePath.replace(/'/g, "''")}'`];
+        if (input.delimiter !== ",") {
+          options.push(`delimiter='${input.delimiter}'`);
+        }
+
+        await adapter.executeWriteQuery(
+          `CREATE VIRTUAL TABLE "${tempName}" USING csv(${options.join(", ")})`,
+        );
+
+        // Get columns
+        const colResult = await adapter.executeReadQuery(
+          `PRAGMA table_info("${tempName}")`,
+        );
+        const columnNames = (colResult.rows ?? []).map((row) => {
+          const name = row["name"];
+          const cid = row["cid"];
+          if (typeof name === "string") return name;
+          return `col${typeof cid === "number" ? cid : 0}`;
+        });
+
+        // Sample data
+        const sampleResult = await adapter.executeReadQuery(
+          `SELECT * FROM "${tempName}" LIMIT ${input.sampleRows}`,
+        );
+
+        // Analyze each column
+        const columns = columnNames.map((name) => {
+          let nullCount = 0;
+          let intCount = 0;
+          let floatCount = 0;
+          const samples: string[] = [];
+
+          for (const row of sampleResult.rows ?? []) {
+            const val = row[name];
+            const strVal =
+              typeof val === "string" ? val : JSON.stringify(val ?? "");
+
+            if (val === null || strVal === "") {
+              nullCount++;
+            } else {
+              if (samples.length < 3) samples.push(strVal);
+              if (/^-?\d+$/.test(strVal)) intCount++;
+              else if (/^-?\d+\.\d+$/.test(strVal)) floatCount++;
+            }
+          }
+
+          const total = (sampleResult.rows?.length ?? 0) - nullCount;
+          let inferredType = "TEXT";
+          if (total > 0) {
+            if (intCount === total) inferredType = "INTEGER";
+            else if (floatCount === total || intCount + floatCount === total)
+              inferredType = "REAL";
+          }
+
+          return { name, inferredType, nullCount, sampleValues: samples };
+        });
+
+        // Count total rows
+        const countResult = await adapter.executeReadQuery(
+          `SELECT COUNT(*) as cnt FROM "${tempName}"`,
+        );
+        const rowCount =
+          typeof countResult.rows?.[0]?.["cnt"] === "number"
+            ? countResult.rows[0]["cnt"]
+            : 0;
+
+        return {
+          success: true,
+          hasHeader: true, // CSV module assumes header
+          rowCount,
+          columns,
+        };
+      } finally {
+        // Clean up temp table
+        await adapter
+          .executeWriteQuery(`DROP TABLE IF EXISTS "${tempName}"`)
+          .catch(() => {
+            // Ignore cleanup errors
+          });
+      }
+    },
+  };
+}
+
+/**
+ * Create R-Tree virtual table
+ */
+function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_create_rtree_table",
+    description:
+      "Create an R-Tree virtual table for spatial indexing. Supports 2-5 dimensions.",
+    group: "admin",
+    inputSchema: CreateRtreeTableSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      sql: z.string(),
+      columns: z.array(z.string()),
+    }),
+    requiredScopes: ["write"],
+    annotations: idempotent("Create R-Tree Table"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = CreateRtreeTableSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        throw new Error("Invalid table name");
+      }
+
+      // Check if rtree module is available
+      const rtreeAvailable = await isModuleAvailable(adapter, "rtree");
+      if (!rtreeAvailable) {
+        throw new Error(
+          "R-Tree extension not available. Use a SQLite build with rtree support.",
+        );
+      }
+
+      // Build column list based on dimensions
+      const columns = [input.idColumn];
+      const dimNames = ["X", "Y", "Z", "W", "V"];
+      for (let i = 0; i < input.dimensions; i++) {
+        const dim = dimNames[i] ?? `D${i}`;
+        columns.push(`min${dim}`, `max${dim}`);
+      }
+
+      const sql = `CREATE VIRTUAL TABLE "${input.tableName}" USING rtree(${columns.join(", ")})`;
+      await adapter.executeWriteQuery(sql);
+
+      return {
+        success: true,
+        message: `Created R-Tree table '${input.tableName}' with ${input.dimensions} dimensions`,
+        sql,
+        columns,
+      };
+    },
+  };
+}
+
+/**
+ * Create persistent series table
+ */
+function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_create_series_table",
+    description:
+      "Create a table populated with a series of numbers. Unlike generate_series, this creates a persistent table.",
+    group: "admin",
+    inputSchema: CreateSeriesTableSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      rowCount: z.number(),
+    }),
+    requiredScopes: ["write"],
+    annotations: idempotent("Create Series Table"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = CreateSeriesTableSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.columnName)) {
+        throw new Error("Invalid column name");
+      }
+
+      // Create table
+      await adapter.executeWriteQuery(
+        `CREATE TABLE IF NOT EXISTS "${input.tableName}" ("${input.columnName}" INTEGER PRIMARY KEY)`,
+      );
+
+      // Insert series using generate_series if available, otherwise loop
+      try {
+        await adapter.executeWriteQuery(
+          `INSERT OR IGNORE INTO "${input.tableName}" ("${input.columnName}") SELECT value FROM generate_series(${input.start}, ${input.stop}, ${input.step})`,
+        );
+      } catch {
+        // Fallback: insert values manually
+        const values: number[] = [];
+        for (let v = input.start; v <= input.stop; v += input.step) {
+          values.push(v);
+        }
+        if (values.length > 0) {
+          const insertValues = values.map((v) => `(${v})`).join(",");
+          await adapter.executeWriteQuery(
+            `INSERT OR IGNORE INTO "${input.tableName}" ("${input.columnName}") VALUES ${insertValues}`,
+          );
+        }
+      }
+
+      // Count rows
+      const countResult = await adapter.executeReadQuery(
+        `SELECT COUNT(*) as cnt FROM "${input.tableName}"`,
+      );
+      const rowCount =
+        typeof countResult.rows?.[0]?.["cnt"] === "number"
+          ? countResult.rows[0]["cnt"]
+          : 0;
+
+      return {
+        success: true,
+        message: `Created series table '${input.tableName}' with ${rowCount} rows`,
+        rowCount,
       };
     },
   };
