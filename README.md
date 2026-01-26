@@ -423,7 +423,7 @@ Specify exactly the groups you need:
 | Group    | Group Tools | With Built-in | Description                     |
 | -------- | ----------- | ------------- | ------------------------------- |
 | `core`   | 8           | 11            | Basic CRUD, schema, tables      |
-| `json`   | 18          | 21            | JSON operations                 |
+| `json`   | 23          | 26            | JSON/JSONB operations, analysis |
 | `text`   | 12          | 15            | Text processing (regex, fuzzy)  |
 | `stats`  | 16          | 19            | Statistical analysis            |
 | `vector` | 11          | 14            | Embeddings, similarity search   |
