@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Admin/PRAGMA Tools** — Added 8 new database administration tools (100 total)
+  - `sqlite_restore`: Restore database from backup file
+  - `sqlite_verify_backup`: Verify backup file integrity without restoring
+  - `sqlite_index_stats`: Get detailed index statistics with column info
+  - `sqlite_pragma_compile_options`: List SQLite compile-time options
+  - `sqlite_pragma_database_list`: List all attached databases
+  - `sqlite_pragma_optimize`: Run PRAGMA optimize for performance tuning
+  - `sqlite_pragma_settings`: Get or set PRAGMA values
+  - `sqlite_pragma_table_info`: Get detailed table column metadata
 - **MCP Tool Annotations (2025-11-25 spec)** — Added behavioral hints to all 73 tools
   - `readOnlyHint`: Indicates read-only tools (SELECT queries, schema inspection)
   - `destructiveHint`: Warns about irreversible operations (DROP, DELETE, TRUNCATE)
