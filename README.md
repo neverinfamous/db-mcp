@@ -377,13 +377,13 @@ Specify exactly the groups you need:
 
 ### Shortcuts (Predefined Bundles)
 
-| Shortcut    | Tools  | Use Case           | What's Included    |
-| ----------- | ------ | ------------------ | ------------------ |
-| `starter`   | **38** | 🌟 **Recommended** | Core, JSON, Text   |
-| `analytics` | 42     | Data Analysis      | Core, JSON, Stats  |
-| `search`    | 31     | Search Workloads   | Core, Text, Vector |
-| `minimal`   | 8      | Bare Minimum       | Core only          |
-| `full`      | 86     | All Tools          | Everything enabled |
+| Shortcut    | Tools  | + Built-in | Use Case           | What's Included    |
+| ----------- | ------ | ---------- | ------------------ | ------------------ |
+| `starter`   | **38** | **41**     | 🌟 **Recommended** | Core, JSON, Text   |
+| `analytics` | 42     | 45         | Data Analysis      | Core, JSON, Stats  |
+| `search`    | 31     | 34         | Search Workloads   | Core, Text, Vector |
+| `minimal`   | 8      | 11         | Bare Minimum       | Core only          |
+| `full`      | 86     | 89         | All Tools          | Everything enabled |
 
 ---
 
