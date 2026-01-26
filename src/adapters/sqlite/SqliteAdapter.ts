@@ -24,6 +24,11 @@ import type {
   ToolGroup,
 } from "../../types/index.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
+import {
+  QueryError,
+  ConnectionError,
+  ConfigurationError,
+} from "../../utils/errors.js";
 import type { SqliteConfig, SqliteOptions } from "./types.js";
 
 // Tool definitions from modular files
@@ -55,8 +60,9 @@ export class SqliteAdapter extends DatabaseAdapter {
    */
   override async connect(config: DatabaseConfig): Promise<void> {
     if (config.type !== "sqlite") {
-      throw new Error(
+      throw new ConfigurationError(
         `Invalid database type: expected 'sqlite', got '${config.type}'`,
+        "DB_TYPE_MISMATCH",
       );
     }
 
@@ -139,7 +145,13 @@ export class SqliteAdapter extends DatabaseAdapter {
       log.error(`Failed to connect to SQLite: ${message}`, {
         code: ERROR_CODES.DB.CONNECT_FAILED.full,
       });
-      throw new Error(`SQLite connection failed: ${message}`);
+      throw new ConnectionError(
+        `SQLite connection failed: ${message}`,
+        "DB_CONNECT_FAILED",
+        {
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
   }
 
@@ -283,7 +295,14 @@ export class SqliteAdapter extends DatabaseAdapter {
       log.error(`Query failed: ${message}`, {
         code: ERROR_CODES.DB.QUERY_FAILED.full,
       });
-      throw new Error(`Query execution failed: ${message}`);
+      throw new QueryError(
+        `Query execution failed: ${message}`,
+        "DB_QUERY_FAILED",
+        {
+          sql,
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
   }
 
@@ -318,7 +337,14 @@ export class SqliteAdapter extends DatabaseAdapter {
       log.error(`Write query failed: ${message}`, {
         code: ERROR_CODES.DB.QUERY_FAILED.full,
       });
-      throw new Error(`Write query failed: ${message}`);
+      throw new QueryError(
+        `Write query failed: ${message}`,
+        "DB_WRITE_FAILED",
+        {
+          sql,
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
   }
 
