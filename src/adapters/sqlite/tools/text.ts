@@ -2,8 +2,8 @@
  * SQLite Text Processing Tools
  *
  * String manipulation and pattern matching:
- * regex, split, concat, format, etc.
- * 8 tools total.
+ * regex, split, concat, format, fuzzy match, phonetic, normalize, validate.
+ * 12 tools total.
  */
 
 import { z } from "zod";
@@ -87,6 +87,51 @@ const TextSubstringSchema = z.object({
   limit: z.number().optional().default(100),
 });
 
+// New text tool schemas
+const FuzzyMatchSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column to search"),
+  search: z.string().describe("Search string"),
+  maxDistance: z
+    .number()
+    .optional()
+    .default(3)
+    .describe("Maximum Levenshtein distance"),
+  limit: z.number().optional().default(10),
+});
+
+const PhoneticMatchSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column to search"),
+  search: z.string().describe("Search string"),
+  algorithm: z.enum(["soundex", "metaphone"]).optional().default("soundex"),
+  limit: z.number().optional().default(100),
+});
+
+const TextNormalizeSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column to normalize"),
+  mode: z
+    .enum(["nfc", "nfd", "nfkc", "nfkd", "strip_accents"])
+    .describe("Normalization mode"),
+  whereClause: z.string().optional(),
+  limit: z.number().optional().default(100),
+});
+
+const TextValidateSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column to validate"),
+  pattern: z
+    .enum(["email", "phone", "url", "uuid", "ipv4", "custom"])
+    .describe("Validation pattern"),
+  customPattern: z
+    .string()
+    .optional()
+    .describe("Custom regex (required if pattern=custom)"),
+  whereClause: z.string().optional(),
+  limit: z.number().optional().default(100),
+});
+
 /**
  * Get all text processing tools
  */
@@ -100,6 +145,10 @@ export function getTextTools(adapter: SqliteAdapter): ToolDefinition[] {
     createTextTrimTool(adapter),
     createTextCaseTool(adapter),
     createTextSubstringTool(adapter),
+    createFuzzyMatchTool(adapter),
+    createPhoneticMatchTool(adapter),
+    createTextNormalizeTool(adapter),
+    createTextValidateTool(adapter),
   ];
 }
 
@@ -485,6 +534,455 @@ function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition {
         success: true,
         rowCount: result.rows?.length ?? 0,
         results: result.rows,
+      };
+    },
+  };
+}
+
+// =============================================================================
+// New Text Tools: Fuzzy, Phonetic, Normalize, Validate
+// =============================================================================
+
+/**
+ * Calculate Levenshtein distance between two strings
+ */
+function levenshtein(a: string, b: string): number {
+  const aLower = a.toLowerCase();
+  const bLower = b.toLowerCase();
+
+  // Handle edge cases
+  if (aLower === bLower) return 0;
+  if (aLower.length === 0) return bLower.length;
+  if (bLower.length === 0) return aLower.length;
+
+  // Create matrix with proper initialization
+  const rows = bLower.length + 1;
+  const cols = aLower.length + 1;
+  const matrix: number[][] = [];
+
+  for (let i = 0; i < rows; i++) {
+    matrix.push(new Array<number>(cols).fill(0));
+  }
+
+  // Initialize first column and row
+  for (let i = 0; i < rows; i++) {
+    const row = matrix[i];
+    if (row) row[0] = i;
+  }
+  for (let j = 0; j < cols; j++) {
+    const firstRow = matrix[0];
+    if (firstRow) firstRow[j] = j;
+  }
+
+  // Fill in the rest of the matrix
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      const currentRow = matrix[i];
+      const prevRow = matrix[i - 1];
+      if (!currentRow || !prevRow) continue;
+
+      const cost = bLower[i - 1] === aLower[j - 1] ? 0 : 1;
+      const del = (prevRow[j] ?? 0) + 1;
+      const ins = (currentRow[j - 1] ?? 0) + 1;
+      const sub = (prevRow[j - 1] ?? 0) + cost;
+      currentRow[j] = Math.min(del, ins, sub);
+    }
+  }
+
+  const lastRow = matrix[bLower.length];
+  return lastRow?.[aLower.length] ?? 0;
+}
+
+/**
+ * Simple Metaphone implementation
+ */
+function metaphone(word: string): string {
+  const vowels = "AEIOU";
+  let result = "";
+  const w = word.toUpperCase().replace(/[^A-Z]/g, "");
+
+  for (let i = 0; i < w.length && result.length < 4; i++) {
+    const c = w.charAt(i);
+    const prev = i > 0 ? w.charAt(i - 1) : "";
+    const next = i < w.length - 1 ? w.charAt(i + 1) : "";
+
+    // Skip duplicate adjacent letters
+    if (c === prev && c !== "C") continue;
+
+    // Skip vowels except at start
+    if (vowels.includes(c) && i > 0) continue;
+
+    // Consonant rules (simplified)
+    if (c === "B" && i === w.length - 1 && prev === "M") continue;
+    if (c === "C") {
+      if (next === "H") {
+        result += "X";
+        i++;
+      } else if ("IEY".includes(next)) result += "S";
+      else result += "K";
+    } else if (c === "D") {
+      const afterNext = w.charAt(i + 2);
+      if (next === "G" && "IEY".includes(afterNext)) {
+        result += "J";
+        i++;
+      } else result += "T";
+    } else if (c === "G") {
+      if (next === "H") continue;
+      if ("IEY".includes(next)) result += "J";
+      else result += "K";
+    } else if (c === "K" && prev === "C") continue;
+    else if (c === "P" && next === "H") {
+      result += "F";
+      i++;
+    } else if (c === "Q") result += "K";
+    else if (c === "S" && next === "H") {
+      result += "X";
+      i++;
+    } else if (c === "T" && next === "H") {
+      result += "0";
+      i++;
+    } else if (c === "W" && vowels.includes(next)) result += "W";
+    else if (c === "X") result += "KS";
+    else if (c === "Z") result += "S";
+    else if (!"HW".includes(c)) result += c;
+  }
+
+  return result;
+}
+
+/**
+ * Strip accents from text
+ */
+function stripAccents(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * Validation patterns
+ */
+const VALIDATION_PATTERNS: Record<string, RegExp> = {
+  email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  phone: /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]{7,}$/,
+  url: /^https?:\/\/[^\s/$.?#].[^\s]*$/i,
+  uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+};
+
+/**
+ * Fuzzy match using Levenshtein distance
+ */
+function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_fuzzy_match",
+    description:
+      "Find fuzzy matches using Levenshtein distance. Returns values within max edit distance.",
+    group: "text",
+    inputSchema: FuzzyMatchSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      matchCount: z.number(),
+      matches: z.array(
+        z.object({
+          value: z.string(),
+          distance: z.number(),
+          row: z.record(z.string(), z.unknown()),
+        }),
+      ),
+    }),
+    requiredScopes: ["read"],
+    annotations: readOnly("Fuzzy Match"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = FuzzyMatchSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      const sql = `SELECT * FROM "${input.table}" WHERE "${input.column}" IS NOT NULL LIMIT 1000`;
+      const result = await adapter.executeReadQuery(sql);
+
+      const matches: {
+        value: string;
+        distance: number;
+        row: Record<string, unknown>;
+      }[] = [];
+
+      for (const row of result.rows ?? []) {
+        const rawValue = row[input.column];
+        const value =
+          typeof rawValue === "string"
+            ? rawValue
+            : JSON.stringify(rawValue ?? "");
+        const distance = levenshtein(input.search, value);
+        if (distance <= input.maxDistance) {
+          matches.push({ value, distance, row });
+        }
+      }
+
+      // Sort by distance (ascending) and limit
+      matches.sort((a, b) => a.distance - b.distance);
+      const limited = matches.slice(0, input.limit);
+
+      return {
+        success: true,
+        matchCount: limited.length,
+        matches: limited,
+      };
+    },
+  };
+}
+
+/**
+ * Phonetic match using Soundex or Metaphone
+ */
+function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_phonetic_match",
+    description:
+      "Find phonetically similar values using Soundex (SQLite native) or Metaphone algorithm.",
+    group: "text",
+    inputSchema: PhoneticMatchSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      searchCode: z.string(),
+      matchCount: z.number(),
+      matches: z.array(
+        z.object({
+          value: z.string(),
+          phoneticCode: z.string(),
+          row: z.record(z.string(), z.unknown()),
+        }),
+      ),
+    }),
+    requiredScopes: ["read"],
+    annotations: readOnly("Phonetic Match"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = PhoneticMatchSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      const searchCode =
+        input.algorithm === "metaphone" ? metaphone(input.search) : ""; // Soundex done in SQL
+
+      let sql: string;
+      if (input.algorithm === "soundex") {
+        // Use SQLite's native soundex function
+        sql = `SELECT *, soundex("${input.column}") as _phonetic FROM "${input.table}" WHERE soundex("${input.column}") = soundex('${input.search.replace(/'/g, "''")}') LIMIT ${input.limit}`;
+        const result = await adapter.executeReadQuery(sql);
+
+        const matches = (result.rows ?? []).map((row) => {
+          const rawValue = row[input.column];
+          const rawPhonetic = row["_phonetic"];
+          return {
+            value:
+              typeof rawValue === "string"
+                ? rawValue
+                : JSON.stringify(rawValue ?? ""),
+            phoneticCode: typeof rawPhonetic === "string" ? rawPhonetic : "",
+            row,
+          };
+        });
+
+        return {
+          success: true,
+          searchCode: matches[0]?.phoneticCode ?? "",
+          matchCount: matches.length,
+          matches,
+        };
+      } else {
+        // Metaphone in JS
+        sql = `SELECT * FROM "${input.table}" WHERE "${input.column}" IS NOT NULL LIMIT 1000`;
+        const result = await adapter.executeReadQuery(sql);
+
+        const matches: {
+          value: string;
+          phoneticCode: string;
+          row: Record<string, unknown>;
+        }[] = [];
+
+        for (const row of result.rows ?? []) {
+          const rawValue = row[input.column];
+          const value =
+            typeof rawValue === "string"
+              ? rawValue
+              : JSON.stringify(rawValue ?? "");
+          const code = metaphone(value);
+          if (code === searchCode) {
+            matches.push({ value, phoneticCode: code, row });
+          }
+        }
+
+        return {
+          success: true,
+          searchCode,
+          matchCount: matches.length,
+          matches: matches.slice(0, input.limit),
+        };
+      }
+    },
+  };
+}
+
+/**
+ * Normalize text (Unicode normalization or accent stripping)
+ */
+function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_text_normalize",
+    description:
+      "Normalize text using Unicode normalization (NFC, NFD, NFKC, NFKD) or strip accents.",
+    group: "text",
+    inputSchema: TextNormalizeSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      rowCount: z.number(),
+      rows: z.array(
+        z.object({
+          original: z.string(),
+          normalized: z.string(),
+        }),
+      ),
+    }),
+    requiredScopes: ["read"],
+    annotations: readOnly("Text Normalize"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = TextNormalizeSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      let sql = `SELECT "${input.column}" as original FROM "${input.table}"`;
+      if (input.whereClause) {
+        sql += ` WHERE ${input.whereClause}`;
+      }
+      sql += ` LIMIT ${input.limit}`;
+
+      const result = await adapter.executeReadQuery(sql);
+
+      const rows = (result.rows ?? []).map((row) => {
+        const rawOriginal = row["original"];
+        const original =
+          typeof rawOriginal === "string"
+            ? rawOriginal
+            : JSON.stringify(rawOriginal ?? "");
+        let normalized: string;
+
+        if (input.mode === "strip_accents") {
+          normalized = stripAccents(original);
+        } else {
+          normalized = original.normalize(
+            input.mode.toUpperCase() as "NFC" | "NFD" | "NFKC" | "NFKD",
+          );
+        }
+
+        return { original, normalized };
+      });
+
+      return {
+        success: true,
+        rowCount: rows.length,
+        rows,
+      };
+    },
+  };
+}
+
+/**
+ * Validate text against common patterns
+ */
+function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_text_validate",
+    description:
+      "Validate text values against patterns: email, phone, URL, UUID, IPv4, or custom regex.",
+    group: "text",
+    inputSchema: TextValidateSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      totalRows: z.number(),
+      validCount: z.number(),
+      invalidCount: z.number(),
+      invalidRows: z.array(
+        z.object({
+          value: z.string(),
+          rowid: z.number().optional(),
+        }),
+      ),
+    }),
+    requiredScopes: ["read"],
+    annotations: readOnly("Text Validate"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = TextValidateSchema.parse(params);
+
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      // Get validation pattern
+      let pattern: RegExp;
+      if (input.pattern === "custom") {
+        if (!input.customPattern) {
+          throw new Error("customPattern is required when pattern='custom'");
+        }
+        pattern = new RegExp(input.customPattern);
+      } else {
+        const foundPattern = VALIDATION_PATTERNS[input.pattern];
+        if (!foundPattern) {
+          throw new Error(`Unknown pattern: ${input.pattern}`);
+        }
+        pattern = foundPattern;
+      }
+
+      let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
+      if (input.whereClause) {
+        sql += ` WHERE ${input.whereClause}`;
+      }
+      sql += ` LIMIT ${input.limit}`;
+
+      const result = await adapter.executeReadQuery(sql);
+
+      const invalidRows: { value: string; rowid?: number }[] = [];
+      let validCount = 0;
+
+      for (const row of result.rows ?? []) {
+        const rawValue = row["value"];
+        const value =
+          typeof rawValue === "string"
+            ? rawValue
+            : JSON.stringify(rawValue ?? "");
+        if (pattern.test(value)) {
+          validCount++;
+        } else {
+          const rowid = row["rowid"];
+          if (typeof rowid === "number") {
+            invalidRows.push({ value, rowid });
+          } else {
+            invalidRows.push({ value });
+          }
+        }
+      }
+
+      return {
+        success: true,
+        totalRows: result.rows?.length ?? 0,
+        validCount,
+        invalidCount: invalidRows.length,
+        invalidRows,
       };
     },
   };
