@@ -9,6 +9,11 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
+import {
+  FtsCreateOutputSchema,
+  FtsSearchOutputSchema,
+  FtsRebuildOutputSchema,
+} from "../output-schemas.js";
 
 // FTS schemas
 const FtsCreateSchema = z.object({
@@ -71,6 +76,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Create an FTS5 full-text search virtual table.",
     group: "text",
     inputSchema: FtsCreateSchema,
+    outputSchema: FtsCreateOutputSchema,
     requiredScopes: ["write"],
     annotations: idempotent("FTS Create"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -121,6 +127,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Search an FTS5 table using full-text query syntax.",
     group: "text",
     inputSchema: FtsSearchSchema,
+    outputSchema: FtsSearchOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("FTS Search"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -175,6 +182,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Rebuild an FTS5 index to optimize search performance.",
     group: "text",
     inputSchema: FtsRebuildSchema,
+    outputSchema: FtsRebuildOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("FTS Rebuild"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -207,6 +215,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get FTS5 match ranking information using bm25.",
     group: "text",
     inputSchema: FtsMatchInfoSchema,
+    outputSchema: FtsSearchOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("FTS Match Info"),
     handler: async (params: unknown, _context: RequestContext) => {

@@ -10,6 +10,11 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, write } from "../../../utils/annotations.js";
+import {
+  RegexMatchOutputSchema,
+  TextSplitOutputSchema,
+  RegexReplaceOutputSchema,
+} from "../output-schemas.js";
 
 // Text tool schemas
 const RegexExtractSchema = z.object({
@@ -109,6 +114,7 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
       "Extract text matching a regex pattern. Processed in JavaScript after fetching data.",
     group: "text",
     inputSchema: RegexExtractSchema,
+    outputSchema: RegexMatchOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Regex Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -167,6 +173,7 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
       "Find rows where column matches a regex pattern. Processed in JavaScript.",
     group: "text",
     inputSchema: RegexMatchSchema,
+    outputSchema: RegexMatchOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Regex Match"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -217,6 +224,7 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Split a text column by delimiter into array results.",
     group: "text",
     inputSchema: TextSplitSchema,
+    outputSchema: TextSplitOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Split"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -317,6 +325,7 @@ function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Replace text in a column using SQLite replace() function.",
     group: "text",
     inputSchema: TextReplaceSchema,
+    outputSchema: RegexReplaceOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Text Replace"),
     handler: async (params: unknown, _context: RequestContext) => {

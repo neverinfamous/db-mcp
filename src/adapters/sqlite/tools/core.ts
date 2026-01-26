@@ -22,6 +22,16 @@ import {
   CreateIndexSchema,
   GetIndexesSchema,
 } from "../types.js";
+import {
+  ReadQueryOutputSchema,
+  WriteQueryOutputSchema,
+  CreateTableOutputSchema,
+  ListTablesOutputSchema,
+  DescribeTableOutputSchema,
+  DropTableOutputSchema,
+  GetIndexesOutputSchema,
+  CreateIndexOutputSchema,
+} from "../output-schemas.js";
 
 /**
  * Get all core database tools
@@ -49,6 +59,7 @@ function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
       "Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety.",
     group: "core",
     inputSchema: ReadQuerySchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Read Query"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -76,6 +87,7 @@ function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
       "Execute an INSERT, UPDATE, or DELETE query. Returns affected row count. Use parameter binding for safety.",
     group: "core",
     inputSchema: WriteQuerySchema,
+    outputSchema: WriteQueryOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Write Query"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -102,6 +114,7 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       "Create a new table in the database with specified columns and constraints.",
     group: "core",
     inputSchema: CreateTableSchema,
+    outputSchema: CreateTableOutputSchema,
     requiredScopes: ["write"],
     annotations: idempotent("Create Table"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -157,6 +170,7 @@ function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
       "List all tables and views in the database with their row counts.",
     group: "core",
     inputSchema: {},
+    outputSchema: ListTablesOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("List Tables"),
     handler: async (_params: unknown, _context: RequestContext) => {
@@ -186,6 +200,7 @@ function createDescribeTableTool(adapter: SqliteAdapter): ToolDefinition {
       "Get detailed schema information for a table including columns, types, and constraints.",
     group: "core",
     inputSchema: DescribeTableSchema,
+    outputSchema: DescribeTableOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Describe Table"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -213,6 +228,7 @@ function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       "Drop (delete) a table from the database. This is irreversible!",
     group: "core",
     inputSchema: DropTableSchema,
+    outputSchema: DropTableOutputSchema,
     requiredScopes: ["admin"],
     annotations: destructive("Drop Table"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -246,6 +262,7 @@ function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
       "List all indexes in the database, optionally filtered by table.",
     group: "core",
     inputSchema: GetIndexesSchema,
+    outputSchema: GetIndexesOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Get Indexes"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -289,6 +306,7 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       "Create an index on one or more columns to improve query performance.",
     group: "core",
     inputSchema: CreateIndexSchema,
+    outputSchema: CreateIndexOutputSchema,
     requiredScopes: ["write"],
     annotations: idempotent("Create Index"),
     handler: async (params: unknown, _context: RequestContext) => {

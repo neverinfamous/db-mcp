@@ -385,6 +385,9 @@ export interface ToolDefinition {
   /** Zod schema for input validation */
   inputSchema: unknown;
 
+  /** Zod schema for output validation (MCP 2025-11-25) */
+  outputSchema?: unknown;
+
   /** Required OAuth scopes */
   requiredScopes?: OAuthScope[];
 

@@ -10,6 +10,12 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
+import {
+  ReadQueryOutputSchema,
+  StatsHistogramOutputSchema,
+  StatsPercentileOutputSchema,
+  StatsCorrelationOutputSchema,
+} from "../output-schemas.js";
 
 // Stats schemas
 const BasicStatsSchema = z.object({
@@ -119,6 +125,7 @@ function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
       "Get basic statistics (count, sum, avg, min, max) for a numeric column.",
     group: "stats",
     inputSchema: BasicStatsSchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -164,6 +171,7 @@ function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Count rows, optionally distinct values in a column.",
     group: "stats",
     inputSchema: CountSchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -210,6 +218,7 @@ function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Aggregate statistics grouped by a column.",
     group: "stats",
     inputSchema: GroupByStatsSchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Group By Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -259,6 +268,7 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Create a histogram with specified number of buckets.",
     group: "stats",
     inputSchema: HistogramSchema,
+    outputSchema: StatsHistogramOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Histogram"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -341,6 +351,7 @@ function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
       "Calculate percentiles (median, quartiles, etc.) for a column.",
     group: "stats",
     inputSchema: PercentileSchema,
+    outputSchema: StatsPercentileOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Percentile"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -403,6 +414,7 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
       "Calculate Pearson correlation coefficient between two numeric columns.",
     group: "stats",
     inputSchema: CorrelationSchema,
+    outputSchema: StatsCorrelationOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Correlation"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -475,6 +487,7 @@ function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get top N values from a column.",
     group: "stats",
     inputSchema: TopNSchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Top N Values"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -517,6 +530,7 @@ function createDistinctValuesTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get distinct values from a column.",
     group: "stats",
     inputSchema: DistinctValuesSchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Distinct Values"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -556,6 +570,7 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get summary statistics for multiple columns at once.",
     group: "stats",
     inputSchema: SummaryStatsSchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Summary Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -624,6 +639,7 @@ function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get frequency distribution of values in a column.",
     group: "stats",
     inputSchema: FrequencySchema,
+    outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Frequency"),
     handler: async (params: unknown, _context: RequestContext) => {

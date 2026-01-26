@@ -8,7 +8,19 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
-import { readOnly, idempotent, destructive, admin } from "../../../utils/annotations.js";
+import {
+  readOnly,
+  idempotent,
+  destructive,
+  admin,
+} from "../../../utils/annotations.js";
+import {
+  GenerateSeriesOutputSchema,
+  CreateTableOutputSchema,
+  ListTablesOutputSchema,
+  DropTableOutputSchema,
+  VacuumOutputSchema,
+} from "../output-schemas.js";
 
 // Virtual table schemas
 const GenerateSeriesSchema = z.object({
@@ -67,6 +79,7 @@ function createGenerateSeriesTool(adapter: SqliteAdapter): ToolDefinition {
       "Generate a series of numbers using generate_series() virtual table.",
     group: "admin",
     inputSchema: GenerateSeriesSchema,
+    outputSchema: GenerateSeriesOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Generate Series"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -114,6 +127,7 @@ function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Create a view based on a SELECT query.",
     group: "admin",
     inputSchema: CreateViewSchema,
+    outputSchema: CreateTableOutputSchema,
     requiredScopes: ["write"],
     annotations: idempotent("Create View"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -153,6 +167,7 @@ function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "List all views in the database.",
     group: "admin",
     inputSchema: ListViewsSchema,
+    outputSchema: ListTablesOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("List Views"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -185,6 +200,7 @@ function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Drop (delete) a view from the database.",
     group: "admin",
     inputSchema: DropViewSchema,
+    outputSchema: DropTableOutputSchema,
     requiredScopes: ["admin"],
     annotations: destructive("Drop View"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -267,6 +283,7 @@ function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
       "Rebuild the database to reclaim space and optimize structure.",
     group: "admin",
     inputSchema: VacuumSchema,
+    outputSchema: VacuumOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Vacuum Database"),
     handler: async (params: unknown, _context: RequestContext) => {

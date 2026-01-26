@@ -17,6 +17,14 @@ import {
   JsonValidatePathSchema,
   JsonMergeSchema,
 } from "../types.js";
+import {
+  JsonInsertOutputSchema,
+  JsonUpdateOutputSchema,
+  JsonSelectOutputSchema,
+  JsonQueryOutputSchema,
+  JsonValidatePathOutputSchema,
+  JsonMergeOutputSchema,
+} from "../output-schemas.js";
 
 /**
  * Get all JSON helper tools
@@ -42,6 +50,7 @@ function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
       "Insert a row with JSON data. Automatically normalizes JSON for consistent storage.",
     group: "json",
     inputSchema: JsonInsertSchema,
+    outputSchema: JsonInsertOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSON Insert"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -98,6 +107,7 @@ function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Update a value at a specific JSON path using json_set().",
     group: "json",
     inputSchema: JsonUpdateSchema,
+    outputSchema: JsonUpdateOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSON Update"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -143,6 +153,7 @@ function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Select rows and optionally extract specific JSON paths.",
     group: "json",
     inputSchema: JsonSelectSchema,
+    outputSchema: JsonSelectOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Select"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -195,6 +206,7 @@ function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Query JSON data with path-based filters and projections.",
     group: "json",
     inputSchema: JsonQuerySchema,
+    outputSchema: JsonQueryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Query"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -265,6 +277,7 @@ function createJsonValidatePathTool(): ToolDefinition {
     description: "Validate a JSON path syntax without executing a query.",
     group: "json",
     inputSchema: JsonValidatePathSchema,
+    outputSchema: JsonValidatePathOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Validate JSON Path"),
     handler: (params: unknown, _context: RequestContext) => {
@@ -304,6 +317,7 @@ function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
       "Merge JSON object into existing JSON column using json_patch().",
     group: "json",
     inputSchema: JsonMergeSchema,
+    outputSchema: JsonMergeOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSON Merge"),
     handler: async (params: unknown, _context: RequestContext) => {

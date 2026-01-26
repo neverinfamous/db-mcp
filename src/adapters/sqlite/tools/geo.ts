@@ -10,6 +10,12 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
+import {
+  GeoDistanceOutputSchema,
+  GeoWithinRadiusOutputSchema,
+  GeoBoundingBoxOutputSchema,
+  GeoClusterOutputSchema,
+} from "../output-schemas.js";
 
 // Geo schemas
 const GeoDistanceSchema = z.object({
@@ -87,9 +93,9 @@ function haversineDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) *
-    Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -104,6 +110,7 @@ function createGeoDistanceTool(): ToolDefinition {
       "Calculate the distance between two geographic points using Haversine formula.",
     group: "admin",
     inputSchema: GeoDistanceSchema,
+    outputSchema: GeoDistanceOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Geo Distance"),
     handler: (params: unknown, _context: RequestContext) => {
@@ -137,6 +144,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Find points within a radius of a center point.",
     group: "admin",
     inputSchema: GeoNearbySchema,
+    outputSchema: GeoWithinRadiusOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Geo Nearby"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -222,6 +230,7 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Find points within a rectangular bounding box.",
     group: "admin",
     inputSchema: GeoBoundingBoxSchema,
+    outputSchema: GeoBoundingBoxOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Geo Bounding Box"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -280,6 +289,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Cluster geographic points into grid cells.",
     group: "admin",
     inputSchema: GeoClusterSchema,
+    outputSchema: GeoClusterOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Geo Cluster"),
     handler: async (params: unknown, _context: RequestContext) => {

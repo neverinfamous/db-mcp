@@ -16,6 +16,18 @@ import {
   JsonSetSchema,
   JsonRemoveSchema,
 } from "../types.js";
+import {
+  JsonValidOutputSchema,
+  JsonExtractOutputSchema,
+  JsonSetOutputSchema,
+  JsonRemoveOutputSchema,
+  JsonTypeOutputSchema,
+  JsonArrayLengthOutputSchema,
+  JsonKeysOutputSchema,
+  JsonEachOutputSchema,
+  JsonGroupArrayOutputSchema,
+  JsonGroupObjectOutputSchema,
+} from "../output-schemas.js";
 
 // Additional schemas for JSON operations
 const JsonTypeSchema = z.object({
@@ -105,6 +117,7 @@ function createValidateJsonTool(): ToolDefinition {
     description: "Check if a string is valid JSON.",
     group: "json",
     inputSchema: ValidateJsonSchema,
+    outputSchema: JsonValidOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Validate JSON"),
     handler: (params: unknown, _context: RequestContext) => {
@@ -138,6 +151,7 @@ function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
       "Extract a value from a JSON column at the specified path using json_extract().",
     group: "json",
     inputSchema: JsonExtractSchema,
+    outputSchema: JsonExtractOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -180,6 +194,7 @@ function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
       "Set a value at a JSON path using json_set(). Creates path if it does not exist.",
     group: "json",
     inputSchema: JsonSetSchema,
+    outputSchema: JsonSetOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSON Set"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -218,6 +233,7 @@ function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Remove a value at a JSON path using json_remove().",
     group: "json",
     inputSchema: JsonRemoveSchema,
+    outputSchema: JsonRemoveOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSON Remove"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -256,6 +272,7 @@ function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
       "Get the JSON type (null, true, false, integer, real, text, array, object) at a path.",
     group: "json",
     inputSchema: JsonTypeSchema,
+    outputSchema: JsonTypeOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Type"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -299,6 +316,7 @@ function createJsonArrayLengthTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get the length of a JSON array at the specified path.",
     group: "json",
     inputSchema: JsonArrayLengthSchema,
+    outputSchema: JsonArrayLengthOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Array Length"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -342,6 +360,7 @@ function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Append a value to a JSON array using json_insert().",
     group: "json",
     inputSchema: JsonArrayAppendSchema,
+    outputSchema: JsonSetOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Array Append"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -385,6 +404,7 @@ function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get the keys of a JSON object at the specified path.",
     group: "json",
     inputSchema: JsonKeysSchema,
+    outputSchema: JsonKeysOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Keys"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -438,6 +458,7 @@ function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Expand a JSON array or object into rows using json_each().",
     group: "json",
     inputSchema: JsonEachSchema,
+    outputSchema: JsonEachOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Each"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -483,6 +504,7 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
       "Aggregate column values into a JSON array using json_group_array().",
     group: "json",
     inputSchema: JsonGroupArraySchema,
+    outputSchema: JsonGroupArrayOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Group Array"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -534,6 +556,7 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
       "Aggregate key-value pairs into a JSON object using json_group_object().",
     group: "json",
     inputSchema: JsonGroupObjectSchema,
+    outputSchema: JsonGroupObjectOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Group Object"),
     handler: async (params: unknown, _context: RequestContext) => {

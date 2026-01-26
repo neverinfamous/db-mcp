@@ -10,6 +10,11 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { admin, readOnly } from "../../../utils/annotations.js";
+import {
+  BackupOutputSchema,
+  AnalyzeOutputSchema,
+  OptimizeOutputSchema,
+} from "../output-schemas.js";
 
 // Admin schemas
 const BackupSchema = z.object({
@@ -58,6 +63,7 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Create a backup of the database to a file.",
     group: "admin",
     inputSchema: BackupSchema,
+    outputSchema: BackupOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Database Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -90,6 +96,7 @@ function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Analyze table statistics to improve query performance.",
     group: "admin",
     inputSchema: AnalyzeSchema,
+    outputSchema: AnalyzeOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Analyze Tables"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -159,6 +166,7 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Optimize database by reindexing and/or analyzing.",
     group: "admin",
     inputSchema: OptimizeSchema,
+    outputSchema: OptimizeOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Optimize Database"),
     handler: async (params: unknown, _context: RequestContext) => {
