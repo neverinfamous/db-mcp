@@ -30,6 +30,7 @@ import type { SqliteConfig, SqliteOptions } from "./types.js";
 import { getAllToolDefinitions } from "./tools/index.js";
 import { getResourceDefinitions } from "./resources.js";
 import { getPromptDefinitions } from "./prompts.js";
+import { isJsonbSupportedVersion, setJsonbSupported } from "./json-utils.js";
 
 // Module logger
 const log = createModuleLogger("SQLITE");
@@ -115,6 +116,21 @@ export class SqliteAdapter extends DatabaseAdapter {
         } catch {
           // WAL mode may not be supported (e.g., sql.js limitations)
         }
+      }
+
+      // Detect JSONB support based on SQLite version
+      try {
+        const versionResult = this.db.exec("SELECT sqlite_version()");
+        const version = (versionResult[0]?.values[0]?.[0] as string) ?? "0.0.0";
+        const jsonbSupported = isJsonbSupportedVersion(version);
+        setJsonbSupported(jsonbSupported);
+        if (jsonbSupported) {
+          log.info(`JSONB support enabled (SQLite ${version})`, {
+            code: "SQLITE_JSONB",
+          });
+        }
+      } catch {
+        setJsonbSupported(false);
       }
 
       this.connected = true;

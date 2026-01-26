@@ -31,6 +31,17 @@ export interface SqliteOptions {
   /** Enable SpatiaLite extension if available */
   spatialite?: boolean;
 
+  /**
+   * JSON storage format:
+   * - 'text': Always use text JSON (compatible with all SQLite versions)
+   * - 'jsonb': Use JSONB binary format (requires SQLite 3.45+, falls back to text)
+   * - 'auto': Use JSONB if available, else text (default)
+   */
+  jsonStorage?: "text" | "jsonb" | "auto";
+
+  /** Enable automatic JSON normalization (key sorting, compact format) */
+  jsonNormalize?: boolean;
+
   /** Index signature for compatibility with DatabaseConfig.options */
   [key: string]: unknown;
 }

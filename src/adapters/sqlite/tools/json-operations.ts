@@ -27,7 +27,13 @@ import {
   JsonEachOutputSchema,
   JsonGroupArrayOutputSchema,
   JsonGroupObjectOutputSchema,
+  ReadQueryOutputSchema,
 } from "../output-schemas.js";
+import {
+  normalizeJson,
+  isJsonbSupported,
+  detectJsonStorageFormat,
+} from "../json-utils.js";
 
 // Additional schemas for JSON operations
 const JsonTypeSchema = z.object({
@@ -105,6 +111,10 @@ export function getJsonOperationTools(
     createJsonGroupArrayTool(adapter),
     createJsonGroupObjectTool(adapter),
     createJsonPrettyTool(),
+    // JSONB tools
+    createJsonbConvertTool(adapter),
+    createJsonStorageInfoTool(adapter),
+    createJsonNormalizeColumnTool(adapter),
   ];
 }
 
@@ -628,6 +638,224 @@ function createJsonPrettyTool(): ToolDefinition {
           error: error instanceof Error ? error.message : "Invalid JSON",
         });
       }
+    },
+  };
+}
+
+// =============================================================================
+// JSONB Tools
+// =============================================================================
+
+// Schema for JSONB convert tool
+const JsonbConvertSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("JSON column to convert"),
+  whereClause: z.string().optional().describe("Optional WHERE clause"),
+});
+
+// Schema for storage info tool
+const JsonStorageInfoSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("JSON column to analyze"),
+  sampleSize: z
+    .number()
+    .optional()
+    .default(100)
+    .describe("Number of rows to sample"),
+});
+
+// Schema for normalize column tool
+const JsonNormalizeColumnSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("JSON column to normalize"),
+  whereClause: z.string().optional().describe("Optional WHERE clause"),
+});
+
+/**
+ * Convert text JSON column to JSONB format
+ */
+function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_jsonb_convert",
+    description:
+      "Convert a text JSON column to JSONB binary format for faster processing. Requires SQLite 3.45+.",
+    group: "json",
+    inputSchema: JsonbConvertSchema,
+    outputSchema: ReadQueryOutputSchema,
+    requiredScopes: ["write"],
+    annotations: write("JSONB Convert"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = JsonbConvertSchema.parse(params);
+
+      // Validate names
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      // Check JSONB support
+      if (!isJsonbSupported()) {
+        return {
+          success: false,
+          error: "JSONB not supported (requires SQLite 3.45+)",
+          hint: "Current SQLite version does not support JSONB. Data remains as text JSON.",
+        };
+      }
+
+      let sql = `UPDATE "${input.table}" SET "${input.column}" = jsonb("${input.column}")`;
+      if (input.whereClause) {
+        sql += ` WHERE ${input.whereClause}`;
+      }
+
+      const result = await adapter.executeWriteQuery(sql);
+
+      return {
+        success: true,
+        message: `Converted ${result.rowsAffected} rows to JSONB format`,
+        rowsAffected: result.rowsAffected,
+      };
+    },
+  };
+}
+
+/**
+ * Get storage format info for a JSON column
+ */
+function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_json_storage_info",
+    description:
+      "Analyze storage format of a JSON column (text vs JSONB) and report statistics.",
+    group: "json",
+    inputSchema: JsonStorageInfoSchema,
+    outputSchema: ReadQueryOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("JSON Storage Info"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = JsonStorageInfoSchema.parse(params);
+
+      // Validate names
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      // Sample rows to detect format
+      const sql = `SELECT "${input.column}" FROM "${input.table}" LIMIT ${input.sampleSize}`;
+      const result = await adapter.executeReadQuery(sql);
+
+      let textCount = 0;
+      let jsonbCount = 0;
+      let nullCount = 0;
+      let unknownCount = 0;
+
+      for (const row of result.rows ?? []) {
+        const value = row[input.column];
+        if (value === null || value === undefined) {
+          nullCount++;
+        } else {
+          const format = detectJsonStorageFormat(value);
+          if (format === "text") textCount++;
+          else if (format === "jsonb") jsonbCount++;
+          else unknownCount++;
+        }
+      }
+
+      const total = result.rows?.length ?? 0;
+
+      return {
+        success: true,
+        jsonbSupported: isJsonbSupported(),
+        sampleSize: total,
+        formats: {
+          text: textCount,
+          jsonb: jsonbCount,
+          null: nullCount,
+          unknown: unknownCount,
+        },
+        recommendation:
+          jsonbCount === 0 && textCount > 0 && isJsonbSupported()
+            ? "Column uses text JSON. Consider converting to JSONB for better performance."
+            : jsonbCount > 0
+              ? "Column already uses JSONB format."
+              : "No JSON data found in sample.",
+      };
+    },
+  };
+}
+
+/**
+ * Normalize JSON data in a column for consistent storage
+ */
+function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_json_normalize_column",
+    description:
+      "Normalize JSON data in a column (sort keys, compact format) for consistent storage and comparison.",
+    group: "json",
+    inputSchema: JsonNormalizeColumnSchema,
+    outputSchema: ReadQueryOutputSchema,
+    requiredScopes: ["write"],
+    annotations: write("Normalize JSON Column"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = JsonNormalizeColumnSchema.parse(params);
+
+      // Validate names
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      // First, read all rows
+      let selectSql = `SELECT rowid, "${input.column}" as json_data FROM "${input.table}"`;
+      if (input.whereClause) {
+        selectSql += ` WHERE ${input.whereClause}`;
+      }
+
+      const selectResult = await adapter.executeReadQuery(selectSql);
+      let normalizedCount = 0;
+      let unchangedCount = 0;
+      let errorCount = 0;
+
+      // Normalize each row
+      for (const row of selectResult.rows ?? []) {
+        const rowid = row["rowid"];
+        const jsonData = row["json_data"];
+
+        if (jsonData === null || jsonData === undefined) {
+          unchangedCount++;
+          continue;
+        }
+
+        try {
+          const { normalized, wasModified } = normalizeJson(jsonData);
+
+          if (wasModified) {
+            const updateSql = `UPDATE "${input.table}" SET "${input.column}" = ? WHERE rowid = ?`;
+            await adapter.executeWriteQuery(updateSql, [normalized, rowid]);
+            normalizedCount++;
+          } else {
+            unchangedCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+
+      return {
+        success: true,
+        message: `Normalized ${normalizedCount} rows`,
+        normalized: normalizedCount,
+        unchanged: unchangedCount,
+        errors: errorCount,
+        total: selectResult.rows?.length ?? 0,
+      };
     },
   };
 }

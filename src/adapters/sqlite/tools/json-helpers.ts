@@ -25,6 +25,7 @@ import {
   JsonValidatePathOutputSchema,
   JsonMergeOutputSchema,
 } from "../output-schemas.js";
+import { normalizeJson } from "../json-utils.js";
 
 /**
  * Get all JSON helper tools
@@ -56,12 +57,13 @@ function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonInsertSchema.parse(params);
 
-      // Normalize JSON data - only stringify if it's an object
-      // If data is already a string, assume it's valid JSON
-      const jsonStr =
+      // Normalize JSON data for consistent storage
+      const rawJson =
         typeof input.data === "string"
           ? input.data
           : JSON.stringify(input.data);
+
+      const { normalized: jsonStr } = normalizeJson(rawJson);
 
       // Build column list
       const columns = [input.column];
