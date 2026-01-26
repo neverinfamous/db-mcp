@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-A **SQLite MCP Server** with up to 89 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 89 specialized tools.
+A **SQLite MCP Server** with up to 91 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 91 specialized tools.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -158,21 +158,21 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 
 ## 📊 Tool Categories
 
-| Category              | WASM   | Native | Description                                |
-| --------------------- | ------ | ------ | ------------------------------------------ |
-| Core Database         | 8      | 8      | CRUD, schema, indexes, views               |
-| JSON Helpers          | 6      | 6      | Simplified JSON operations                 |
-| JSON Operations       | 12     | 12     | Full JSON manipulation                     |
-| Text Processing       | 8      | 8      | Regex, case, substring                     |
-| FTS5 Full-Text Search | 4      | 4      | Create, search, rebuild                    |
-| Statistical Analysis  | 8      | 8      | Stats, percentiles, histograms             |
-| Virtual Tables        | 4      | 4      | Generate series                            |
-| Vector/Semantic       | 11     | 11     | Embeddings, similarity search              |
-| Geospatial            | 7      | 7      | Distance, bounding box, clustering         |
-| Admin                 | 4      | 4      | Vacuum, backup, analyze, optimize          |
-| Transactions          | —      | 7      | Begin, commit, rollback, savepoints        |
-| Window Functions      | —      | 6      | Row number, rank, lag/lead, running totals |
-| **Total**             | **73** | **86** |                                            |
+| Category              | WASM   | Native | Description                                 |
+| --------------------- | ------ | ------ | ------------------------------------------- |
+| Core Database         | 8      | 8      | CRUD, schema, indexes, views                |
+| JSON Helpers          | 8      | 8      | Simplified JSON operations, schema analysis |
+| JSON Operations       | 15     | 15     | Full JSON manipulation, JSONB support       |
+| Text Processing       | 8      | 8      | Regex, case, substring                      |
+| FTS5 Full-Text Search | 4      | 4      | Create, search, rebuild                     |
+| Statistical Analysis  | 8      | 8      | Stats, percentiles, histograms              |
+| Virtual Tables        | 4      | 4      | Generate series                             |
+| Vector/Semantic       | 11     | 11     | Embeddings, similarity search               |
+| Geospatial            | 7      | 7      | Distance, bounding box, clustering          |
+| Admin                 | 4      | 4      | Vacuum, backup, analyze, optimize           |
+| Transactions          | —      | 7      | Begin, commit, rollback, savepoints         |
+| Window Functions      | —      | 6      | Row number, rank, lag/lead, running totals  |
+| **Total**             | **78** | **91** |                                             |
 
 ### SQLite Backend Options
 
@@ -180,11 +180,12 @@ Choose between two SQLite backends based on your needs:
 
 | Feature                   | WASM (sql.js)     | Native (better-sqlite3)       |
 | ------------------------- | ----------------- | ----------------------------- |
-| **Tools Available**       | 73                | **86**                        |
+| **Tools Available**       | 78                | **91**                        |
 | **Transactions**          | ❌                | ✅ 7 tools                    |
 | **Window Functions**      | ❌                | ✅ 6 tools                    |
 | **FTS5 Full-Text Search** | ⚠️ Limited        | ✅ Full                       |
-| **JSON1 Extension**       | ⚠️ Limited        | ✅ Full                       |
+| **JSON1 Extension**       | ✅ Full           | ✅ Full                       |
+| **JSONB Binary Storage**  | ✅ (3.45+)        | ✅ (3.45+)                    |
 | **Cross-platform**        | ✅ No compilation | Requires Node.js native build |
 | **In-memory DBs**         | ✅                | ✅                            |
 | **File-based DBs**        | ✅                | ✅                            |
@@ -323,7 +324,7 @@ Use `:memory:` for a temporary in-memory database:
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 89 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 91 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Quick Start: Recommended Configurations
 
@@ -411,7 +412,7 @@ Specify exactly the groups you need:
 | `analytics` | 42     | 45         | Data Analysis      | Core, JSON, Stats  |
 | `search`    | 31     | 34         | Search Workloads   | Core, Text, Vector |
 | `minimal`   | 8      | 11         | Bare Minimum       | Core only          |
-| `full`      | 86     | 89         | All Tools          | Everything enabled |
+| `full`      | 91     | 94         | All Tools          | Everything enabled |
 
 ---
 
@@ -476,7 +477,9 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 - 🧠 **Vector/Semantic Search** - AI-native embeddings, cosine similarity, hybrid search
 - 🗺️ **Geospatial Operations** - Distance calculations, bounding boxes, spatial queries
 - 🔐 **Transaction Safety** - Full ACID compliance with savepoints (native backend)
-- 🎛️ **89 Specialized Tools** - Complete database administration and analytics suite
+- 📦 **JSON & JSONB Support** - Auto-normalization, schema analysis, binary storage
+- 🛡️ **Enhanced Error Diagnostics** - Categorized errors with actionable suggestions
+- 🎛️ **91 Specialized Tools** - Complete database administration and analytics suite
 
 ### 🏢 Enterprise Features
 
@@ -521,12 +524,13 @@ See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as 
 ## 🏆 Why Choose db-mcp?
 
 ✅ **TypeScript Native** - Full type safety with strict mode, no `any` types  
-✅ **89 Specialized Tools** - Most comprehensive SQLite MCP server available  
+✅ **91 Specialized Tools** - Most comprehensive SQLite MCP server available  
 ✅ **OAuth 2.1 Built-in** - Enterprise-grade authentication out of the box  
 ✅ **Dual Backends** - WASM for portability, native for performance  
 ✅ **Tool Filtering** - Stay within AI IDE tool limits with preset configurations  
 ✅ **Window Functions** - Advanced analytics with ROW_NUMBER, RANK, LAG/LEAD  
 ✅ **Transaction Support** - Full ACID compliance with savepoints  
+✅ **JSON/JSONB Support** - Auto-normalization, schema inference, binary storage  
 ✅ **Modern Architecture** - Built on MCP SDK with clean, modular design  
 ✅ **Active Development** - Regular updates and improvements
 
@@ -536,12 +540,13 @@ See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as 
 
 ## 📈 Project Stats
 
-- **89 Tools** in native backend (76 in WASM)
+- **91 Tools** in native backend (78 in WASM)
 - **13 Tool Groups** for flexible filtering
 - **Strict TypeScript** with full type coverage
 - **Multi-platform** support (Windows, Linux, macOS)
 - **Docker images** available for easy deployment
 - **OAuth 2.1** RFC-compliant authentication
+- **Enhanced Error Diagnostics** with categorized errors
 - **Active development** with regular updates
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
