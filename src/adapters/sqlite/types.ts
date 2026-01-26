@@ -246,6 +246,45 @@ export const VacuumSchema = z.object({
     .describe("Run ANALYZE after VACUUM"),
 });
 
+// Analyze JSON Schema
+export const AnalyzeJsonSchemaSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("JSON column to analyze"),
+  sampleSize: z
+    .number()
+    .optional()
+    .default(100)
+    .describe("Number of rows to sample"),
+});
+
+// Create JSON Collection
+export const CreateJsonCollectionSchema = z.object({
+  tableName: z.string().describe("Collection table name"),
+  idColumn: z.string().optional().default("id").describe("ID column name"),
+  dataColumn: z
+    .string()
+    .optional()
+    .default("data")
+    .describe("JSON data column name"),
+  timestamps: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Add created_at/updated_at columns"),
+  indexes: z
+    .array(
+      z.object({
+        path: z.string().describe("JSON path to index (e.g., $.name)"),
+        name: z
+          .string()
+          .optional()
+          .describe("Index name (auto-generated if omitted)"),
+      }),
+    )
+    .optional()
+    .describe("JSON path indexes to create"),
+});
+
 // Export schema types
 export type ReadQueryInput = z.infer<typeof ReadQuerySchema>;
 export type WriteQueryInput = z.infer<typeof WriteQuerySchema>;
@@ -265,3 +304,7 @@ export type JsonExtractInput = z.infer<typeof JsonExtractSchema>;
 export type JsonSetInput = z.infer<typeof JsonSetSchema>;
 export type JsonRemoveInput = z.infer<typeof JsonRemoveSchema>;
 export type VacuumInput = z.infer<typeof VacuumSchema>;
+export type AnalyzeJsonSchemaInput = z.infer<typeof AnalyzeJsonSchemaSchema>;
+export type CreateJsonCollectionInput = z.infer<
+  typeof CreateJsonCollectionSchema
+>;

@@ -2,8 +2,8 @@
  * SQLite JSON Helper Tools
  *
  * High-level JSON operations for common patterns:
- * insert, update, select, query, validate path, merge.
- * 6 tools total.
+ * insert, update, select, query, validate path, merge, analyze schema, create collection.
+ * 8 tools total.
  */
 
 import type { SqliteAdapter } from "../SqliteAdapter.js";
@@ -16,6 +16,8 @@ import {
   JsonQuerySchema,
   JsonValidatePathSchema,
   JsonMergeSchema,
+  AnalyzeJsonSchemaSchema,
+  CreateJsonCollectionSchema,
 } from "../types.js";
 import {
   JsonInsertOutputSchema,
@@ -24,6 +26,8 @@ import {
   JsonQueryOutputSchema,
   JsonValidatePathOutputSchema,
   JsonMergeOutputSchema,
+  AnalyzeJsonSchemaOutputSchema,
+  CreateJsonCollectionOutputSchema,
 } from "../output-schemas.js";
 import { normalizeJson } from "../json-utils.js";
 
@@ -38,6 +42,8 @@ export function getJsonHelperTools(adapter: SqliteAdapter): ToolDefinition[] {
     createJsonQueryTool(adapter),
     createJsonValidatePathTool(),
     createJsonMergeTool(adapter),
+    createAnalyzeJsonSchemaTool(adapter),
+    createJsonCollectionTool(adapter),
   ];
 }
 
@@ -344,6 +350,190 @@ function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
         success: true,
         message: `Merged JSON into ${input.table}.${input.column}`,
         rowsAffected: result.rowsAffected,
+      };
+    },
+  };
+}
+
+/**
+ * Analyze JSON schema from column data
+ */
+function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_analyze_json_schema",
+    description:
+      "Analyze JSON data in a column to infer its schema (types, nullability, counts).",
+    group: "json",
+    inputSchema: AnalyzeJsonSchemaSchema,
+    outputSchema: AnalyzeJsonSchemaOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("Analyze JSON Schema"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = AnalyzeJsonSchemaSchema.parse(params);
+
+      // Validate names
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
+        throw new Error("Invalid table name");
+      }
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
+        throw new Error("Invalid column name");
+      }
+
+      // Sample rows
+      const sql = `SELECT "${input.column}" as json_data FROM "${input.table}" LIMIT ${input.sampleSize}`;
+      const result = await adapter.executeReadQuery(sql);
+
+      // Infer schema
+      const properties: Record<
+        string,
+        { type: string; nullable: boolean; count: number; itemType?: string }
+      > = {};
+      let nullCount = 0;
+      let errorCount = 0;
+
+      for (const row of result.rows ?? []) {
+        const jsonData = row["json_data"];
+        if (jsonData === null || jsonData === undefined) {
+          nullCount++;
+          continue;
+        }
+
+        try {
+          const parsed: unknown =
+            typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
+
+          if (
+            typeof parsed === "object" &&
+            parsed !== null &&
+            !Array.isArray(parsed)
+          ) {
+            for (const [key, value] of Object.entries(
+              parsed as Record<string, unknown>,
+            )) {
+              properties[key] ??= {
+                type: "unknown",
+                nullable: false,
+                count: 0,
+              };
+              properties[key].count++;
+
+              // Determine type
+              let valueType: string;
+              if (value === null) {
+                valueType = "null";
+                properties[key].nullable = true;
+              } else if (Array.isArray(value)) {
+                valueType = "array";
+                if (value.length > 0) {
+                  properties[key].itemType = typeof value[0];
+                }
+              } else {
+                valueType = typeof value;
+              }
+
+              // Set or merge type
+              if (properties[key].type === "unknown") {
+                properties[key].type = valueType;
+              } else if (
+                properties[key].type !== valueType &&
+                valueType !== "null"
+              ) {
+                properties[key].type = "mixed";
+              }
+            }
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+
+      const sampleSize = result.rows?.length ?? 0;
+
+      // Mark missing properties as nullable
+      for (const prop of Object.values(properties)) {
+        if (prop.count < sampleSize - nullCount - errorCount) {
+          prop.nullable = true;
+        }
+      }
+
+      return {
+        success: true,
+        schema: {
+          type: "object",
+          properties,
+          sampleSize,
+          nullCount,
+          errorCount,
+        },
+      };
+    },
+  };
+}
+
+/**
+ * Create a JSON document collection table
+ */
+function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_create_json_collection",
+    description:
+      "Create an optimized JSON document collection table with ID, data column, optional timestamps, and JSON path indexes.",
+    group: "json",
+    inputSchema: CreateJsonCollectionSchema,
+    outputSchema: CreateJsonCollectionOutputSchema,
+    requiredScopes: ["write"],
+    annotations: write("Create JSON Collection"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = CreateJsonCollectionSchema.parse(params);
+
+      // Validate table name
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        throw new Error("Invalid table name");
+      }
+
+      const idCol = input.idColumn ?? "id";
+      const dataCol = input.dataColumn ?? "data";
+      const sqls: string[] = [];
+
+      // Build CREATE TABLE
+      const columns = [
+        `"${idCol}" TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))))`,
+        `"${dataCol}" TEXT NOT NULL CHECK(json_valid("${dataCol}"))`,
+      ];
+
+      if (input.timestamps) {
+        columns.push(`created_at TEXT DEFAULT (datetime('now'))`);
+        columns.push(`updated_at TEXT DEFAULT (datetime('now'))`);
+      }
+
+      const createSql = `CREATE TABLE IF NOT EXISTS "${input.tableName}" (\n  ${columns.join(",\n  ")}\n)`;
+      sqls.push(createSql);
+
+      // Execute CREATE TABLE
+      await adapter.executeWriteQuery(createSql);
+
+      // Create indexes
+      let indexCount = 0;
+      if (input.indexes) {
+        for (const idx of input.indexes) {
+          if (!idx.path.startsWith("$")) {
+            throw new Error(`JSON path must start with $: ${idx.path}`);
+          }
+          const indexName =
+            idx.name ??
+            `idx_${input.tableName}_${idx.path.replace(/[$.[\]]/g, "_")}`;
+          const indexSql = `CREATE INDEX IF NOT EXISTS "${indexName}" ON "${input.tableName}"(json_extract("${dataCol}", '${idx.path}'))`;
+          sqls.push(indexSql);
+          await adapter.executeWriteQuery(indexSql);
+          indexCount++;
+        }
+      }
+
+      return {
+        success: true,
+        message: `Created collection '${input.tableName}'${indexCount > 0 ? ` with ${indexCount} index(es)` : ""}`,
+        sql: sqls,
+        indexCount,
       };
     },
   };

@@ -208,8 +208,8 @@ describe("SqliteAdapter", () => {
       const tools = adapter.getToolDefinitions();
 
       expect(tools.length).toBeGreaterThan(0);
-      // Should have 76 tools (including 3 new JSONB tools)
-      expect(tools.length).toBe(76);
+      // Should have 78 tools (added 2 new JSON tools)
+      expect(tools.length).toBe(78);
     });
 
     it("should have required tool properties", () => {

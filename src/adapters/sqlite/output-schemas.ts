@@ -180,6 +180,40 @@ export const JsonMergeOutputSchema = z.object({
   rowsAffected: z.number(),
 });
 
+/**
+ * JSON property schema info
+ */
+const JsonPropertySchemaSchema = z.object({
+  type: z.string(),
+  nullable: z.boolean(),
+  count: z.number(),
+  itemType: z.string().optional(),
+});
+
+/**
+ * sqlite_analyze_json_schema output
+ */
+export const AnalyzeJsonSchemaOutputSchema = z.object({
+  success: z.boolean(),
+  schema: z.object({
+    type: z.string(),
+    properties: z.record(z.string(), JsonPropertySchemaSchema),
+    sampleSize: z.number(),
+    nullCount: z.number(),
+    errorCount: z.number(),
+  }),
+});
+
+/**
+ * sqlite_create_json_collection output
+ */
+export const CreateJsonCollectionOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  sql: z.array(z.string()),
+  indexCount: z.number(),
+});
+
 // =============================================================================
 // JSON Operation Tool Output Schemas (12 tools)
 // =============================================================================
