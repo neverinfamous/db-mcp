@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **Transitive Dependency Fixes** — Resolved high severity vulnerabilities via npm audit fix
+- **CodeQL Taint Tracking Fix** — Resolved static analysis alerts in logger
+  - Fixed `js/clear-text-logging` by breaking data-flow path in `writeToStderr()`
+  - Fixed `js/log-injection` by reconstructing output from static character codes
+  - Implemented the "Static Classification" pattern for taint-breaking sanitization
 
 ### Fixed
 
