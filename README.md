@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, with 122 specialized tools, 8 resources, and 8 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 8 prompts. Available in WASM and better-sqlite3 variants.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
