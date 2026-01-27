@@ -255,7 +255,7 @@ export class DbMcpServer {
   }
 
   /**
-   * Start server with HTTP transport (Streamable HTTP)
+   * Start server with HTTP transport (Streamable HTTP with SSE support)
    */
   private async startHttp(): Promise<void> {
     const { HttpTransport } = await import("../transports/http.js");
@@ -292,25 +292,19 @@ export class DbMcpServer {
     const transport = new HttpTransport({
       port: this.config.port ?? 3000,
       oauth: oauthConfig,
+      stateless: this.config.statelessHttp ?? false,
     });
 
-    const mcpTransport = await transport.initialize();
-
-    // Ensure transport has onclose handler (required by SDK 1.25.2+)
-    mcpTransport.onclose ??= () => {
-      logger.info("MCP transport connection closed", { module: "TRANSPORT" });
-    };
-
-    // Type assertion: SDK 1.25.2+ has stricter onclose/onerror requirements
-    // We set onclose above, and use type assertion to satisfy the narrower Transport type
-    await this.server.connect(
-      mcpTransport as Parameters<typeof this.server.connect>[0],
-    );
+    // Initialize transport with the MCP server reference
+    // In stateful mode, transport manages sessions internally
+    // In stateless mode, transport creates a single shared connection
+    await transport.initialize(this.server);
     await transport.start();
 
+    const mode = this.config.statelessHttp ? "stateless" : "stateful";
     logger.info(
-      `db-mcp server started (HTTP transport on port ${String(this.config.port ?? 3000)})`,
-      { module: "TRANSPORT" },
+      `db-mcp server started (HTTP transport on port ${String(this.config.port ?? 3000)}, ${mode} mode)`,
+      { module: "TRANSPORT", mode },
     );
   }
 

@@ -163,6 +163,13 @@ export interface McpServerConfig {
 
   /** Tool filtering configuration */
   toolFilter?: string;
+
+  /**
+   * Enable stateless HTTP mode (no session management, no SSE streaming).
+   * Ideal for serverless deployments (Lambda, Workers, Vercel).
+   * Default: false (stateful mode with session management and SSE support)
+   */
+  statelessHttp?: boolean;
 }
 
 // =============================================================================
