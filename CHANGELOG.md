@@ -33,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Interactive Demo Prompt** — Flagship MCP demonstration
   - `sqlite_demo` prompt for interactive capability walkthrough
   - Guides through data creation, querying, and insight capture
+- **MCP Progress Notifications (2025-11-25)** — Real-time progress updates for long-running operations
+  - New `src/utils/progress-utils.ts` module with `sendProgress()` and `buildProgressContext()` utilities
+  - Extended `RequestContext` interface with optional `server` and `progressToken` fields
+  - `sqlite_restore`: 3-phase progress (prepare → restore → verify)
+  - `sqlite_optimize`: Dynamic multi-phase progress (start → reindex → analyze → complete)
+  - `sqlite_vacuum`: 2-phase progress (start → complete)
+  - Notifications are best-effort and require client support for `progressToken` in `_meta`
 
 ### Changed
 

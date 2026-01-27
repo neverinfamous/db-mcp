@@ -259,6 +259,18 @@ export interface RequestContext {
 
   /** Request ID for tracing */
   requestId: string;
+
+  /**
+   * MCP Server instance for sending progress notifications.
+   * Only available when running in HTTP/SSE transport with stateful sessions.
+   */
+  server?: unknown;
+
+  /**
+   * Progress token from client request _meta (MCP 2025-11-25).
+   * If present, the client has requested progress updates.
+   */
+  progressToken?: string | number;
 }
 
 // =============================================================================

@@ -15,6 +15,10 @@ import {
   admin,
 } from "../../../utils/annotations.js";
 import {
+  buildProgressContext,
+  sendProgress,
+} from "../../../utils/progress-utils.js";
+import {
   GenerateSeriesOutputSchema,
   CreateTableOutputSchema,
   ListTablesOutputSchema,
@@ -345,8 +349,12 @@ function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
     outputSchema: VacuumOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Vacuum Database"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (params: unknown, context: RequestContext) => {
       const input = VacuumSchema.parse(params);
+      const progress = buildProgressContext(context);
+
+      // Phase 1: Starting vacuum
+      await sendProgress(progress, 1, 2, "Starting vacuum operation...");
 
       let sql = "VACUUM";
       if (input.into) {
@@ -358,6 +366,9 @@ function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
       const start = Date.now();
       await adapter.executeQuery(sql);
       const duration = Date.now() - start;
+
+      // Phase 2: Complete
+      await sendProgress(progress, 2, 2, "Vacuum complete");
 
       return {
         success: true,

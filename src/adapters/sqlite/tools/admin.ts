@@ -12,6 +12,10 @@ import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { admin, readOnly } from "../../../utils/annotations.js";
 import { insightsManager } from "../../../utils/insightsManager.js";
 import {
+  buildProgressContext,
+  sendProgress,
+} from "../../../utils/progress-utils.js";
+import {
   BackupOutputSchema,
   AnalyzeOutputSchema,
   OptimizeOutputSchema,
@@ -227,14 +231,29 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
     outputSchema: OptimizeOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Optimize Database"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (params: unknown, context: RequestContext) => {
       const input = OptimizeSchema.parse(params);
+      const progress = buildProgressContext(context);
+
+      // Calculate total steps for progress tracking
+      const totalSteps =
+        1 + (input.reindex ? 1 : 0) + (input.analyze ? 1 : 0) + 1; // start + ops + complete
+      let step = 0;
 
       const operations: string[] = [];
       const start = Date.now();
 
+      // Phase 1: Starting
+      await sendProgress(
+        progress,
+        ++step,
+        totalSteps,
+        "Starting optimization...",
+      );
+
       // Reindex if requested
       if (input.reindex) {
+        await sendProgress(progress, ++step, totalSteps, "Reindexing...");
         if (input.table) {
           if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
             throw new Error("Invalid table name");
@@ -249,6 +268,7 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Analyze if requested
       if (input.analyze) {
+        await sendProgress(progress, ++step, totalSteps, "Analyzing...");
         if (input.table) {
           await adapter.executeQuery(`ANALYZE "${input.table}"`);
           operations.push(`analyzed ${input.table}`);
@@ -259,6 +279,14 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const duration = Date.now() - start;
+
+      // Phase N: Complete
+      await sendProgress(
+        progress,
+        totalSteps,
+        totalSteps,
+        "Optimization complete",
+      );
 
       return {
         success: true,
@@ -282,9 +310,13 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     outputSchema: RestoreOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Restore Database"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (params: unknown, context: RequestContext) => {
       const input = RestoreSchema.parse(params);
+      const progress = buildProgressContext(context);
       const start = Date.now();
+
+      // Phase 1: Preparing restore
+      await sendProgress(progress, 1, 3, "Preparing restore...");
 
       // Attach the backup, copy data, detach
       const escapedPath = input.sourcePath.replace(/'/g, "''");
@@ -294,11 +326,17 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         `SELECT * FROM pragma_integrity_check((SELECT 1)) LIMIT 1`,
       );
 
+      // Phase 2: Restoring database
+      await sendProgress(progress, 2, 3, "Restoring database from backup...");
+
       // Use VACUUM FROM to restore (reverse of VACUUM INTO)
       // Note: This approach requires SQLite 3.27.0+
       await adapter.executeQuery(`VACUUM main FROM '${escapedPath}'`);
 
       const duration = Date.now() - start;
+
+      // Phase 3: Complete
+      await sendProgress(progress, 3, 3, "Restore complete");
 
       return {
         success: true,
