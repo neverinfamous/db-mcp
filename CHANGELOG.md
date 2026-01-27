@@ -65,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- **Transitive Dependency Fixes** — Resolved high severity vulnerabilities via npm audit fix
+- **Transitive Dependency Fixes** — Resolved vulnerabilities via npm audit fix
+  - `hono`: 4.11.5 → 4.11.7 (moderate severity fix via `@modelcontextprotocol/sdk`)
 - **CodeQL Taint Tracking Fix** — Resolved static analysis alerts in logger
   - Fixed `js/clear-text-logging` by breaking data-flow path in `writeToStderr()`
   - Fixed `js/log-injection` by reconstructing output from static character codes
