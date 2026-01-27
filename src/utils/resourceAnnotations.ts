@@ -16,8 +16,8 @@ import type { ResourceAnnotations } from "../types/index.js";
  * Examples: health, schema
  */
 export const HIGH_PRIORITY: ResourceAnnotations = {
-    audience: ["user", "assistant"],
-    priority: 0.9,
+  audience: ["user", "assistant"],
+  priority: 0.9,
 };
 
 /**
@@ -25,8 +25,8 @@ export const HIGH_PRIORITY: ResourceAnnotations = {
  * Examples: tables, indexes, views
  */
 export const MEDIUM_PRIORITY: ResourceAnnotations = {
-    audience: ["user", "assistant"],
-    priority: 0.6,
+  audience: ["user", "assistant"],
+  priority: 0.6,
 };
 
 /**
@@ -34,8 +34,8 @@ export const MEDIUM_PRIORITY: ResourceAnnotations = {
  * Examples: meta, configuration
  */
 export const LOW_PRIORITY: ResourceAnnotations = {
-    audience: ["user", "assistant"],
-    priority: 0.4,
+  audience: ["user", "assistant"],
+  priority: 0.4,
 };
 
 /**
@@ -43,8 +43,8 @@ export const LOW_PRIORITY: ResourceAnnotations = {
  * Examples: capabilities, settings reference
  */
 export const ASSISTANT_FOCUSED: ResourceAnnotations = {
-    audience: ["assistant"],
-    priority: 0.5,
+  audience: ["assistant"],
+  priority: 0.5,
 };
 
 // =============================================================================
@@ -55,17 +55,17 @@ export const ASSISTANT_FOCUSED: ResourceAnnotations = {
  * Create annotations with a custom priority
  */
 export function withPriority(
-    priority: number,
-    base: ResourceAnnotations = HIGH_PRIORITY,
+  priority: number,
+  base: ResourceAnnotations = HIGH_PRIORITY,
 ): ResourceAnnotations {
-    return { ...base, priority };
+  return { ...base, priority };
 }
 
 /**
  * Create annotations with lastModified timestamp
  */
 export function withTimestamp(
-    base: ResourceAnnotations = MEDIUM_PRIORITY,
+  base: ResourceAnnotations = MEDIUM_PRIORITY,
 ): ResourceAnnotations {
-    return { ...base, lastModified: new Date().toISOString() };
+  return { ...base, lastModified: new Date().toISOString() };
 }

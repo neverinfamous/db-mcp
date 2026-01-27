@@ -36,9 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `@types/node`: 25.0.2 → 25.0.10
   - `better-sqlite3`: 12.5.0 → 12.6.2
   - `cors`: 2.8.5 → 2.8.6
-  - `globals`: 16.5.0 → 17.1.0 (major version bump)
+  - `globals`: 16.5.0 → 17.2.0 (major version bump)
   - `pg`: 8.16.3 → 8.17.2
-  - `typescript-eslint`: 8.49.0 → 8.53.1
+  - `typescript-eslint`: 8.49.0 → 8.54.0
   - `vitest`: 4.0.15 → 4.0.18
   - `zod`: 4.1.13 → 4.3.6
 

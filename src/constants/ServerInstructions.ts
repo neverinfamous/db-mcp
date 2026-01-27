@@ -7,24 +7,24 @@
  * Optimized for token efficiency with tiered instruction levels.
  */
 
-import type { ToolGroup } from '../types/index.js';
-import { TOOL_GROUPS, ALL_TOOL_GROUPS } from '../filtering/ToolConstants.js';
+import type { ToolGroup } from "../types/index.js";
+import { TOOL_GROUPS, ALL_TOOL_GROUPS } from "../filtering/ToolConstants.js";
 
 /**
  * Resource definition for instruction generation
  */
 export interface ResourceDefinition {
-    uri: string;
-    name: string;
-    description?: string;
+  uri: string;
+  name: string;
+  description?: string;
 }
 
 /**
  * Prompt definition for instruction generation
  */
 export interface PromptDefinition {
-    name: string;
-    description?: string;
+  name: string;
+  description?: string;
 }
 
 /**
@@ -33,7 +33,7 @@ export interface PromptDefinition {
  * - standard: ~400 tokens - + Tool filtering and groups (default)
  * - full: ~600 tokens - + Complete tool/resource reference
  */
-export type InstructionLevel = 'essential' | 'standard' | 'full';
+export type InstructionLevel = "essential" | "standard" | "full";
 
 /**
  * Essential behavioral guidance (~200 tokens)
@@ -149,65 +149,66 @@ sqlite_text_similarity({ text1: "machine learning", text2: "deep learning", algo
  * @param level - Instruction detail level (default: 'standard')
  */
 export function generateInstructions(
-    enabledTools: Set<string>,
-    _resources: ResourceDefinition[],
-    prompts: PromptDefinition[],
-    level: InstructionLevel = 'standard',
+  enabledTools: Set<string>,
+  _resources: ResourceDefinition[],
+  prompts: PromptDefinition[],
+  level: InstructionLevel = "standard",
 ): string {
-    let instructions = ESSENTIAL_INSTRUCTIONS;
+  let instructions = ESSENTIAL_INSTRUCTIONS;
 
-    // Standard and full levels include filtering patterns
-    if (level === 'standard' || level === 'full') {
-        instructions += FILTERING_INSTRUCTIONS;
+  // Standard and full levels include filtering patterns
+  if (level === "standard" || level === "full") {
+    instructions += FILTERING_INSTRUCTIONS;
+  }
+
+  // Full level includes complete tool reference
+  if (level === "full") {
+    instructions += TOOL_REFERENCE;
+
+    // Add active tools summary
+    const activeGroups = getActiveToolGroups(enabledTools);
+    if (activeGroups.length > 0) {
+      instructions += `\n## Active Tools (${String(enabledTools.size)})\n`;
+      for (const { group, tools } of activeGroups) {
+        instructions += `**${group}**: ${tools.map((t) => `\`${t}\``).join(", ")}\n`;
+      }
     }
 
-    // Full level includes complete tool reference
-    if (level === 'full') {
-        instructions += TOOL_REFERENCE;
-
-        // Add active tools summary
-        const activeGroups = getActiveToolGroups(enabledTools);
-        if (activeGroups.length > 0) {
-            instructions += `\n## Active Tools (${String(enabledTools.size)})\n`;
-            for (const { group, tools } of activeGroups) {
-                instructions += `**${group}**: ${tools.map((t) => `\`${t}\``).join(', ')}\n`;
-            }
-        }
-
-        // Add prompts section
-        if (prompts.length > 0) {
-            instructions += `\n## Prompts (${String(prompts.length)})\n`;
-            instructions += 'Pre-built templates and guided workflows:\n';
-            for (const prompt of prompts) {
-                instructions += `- \`${prompt.name}\` - ${prompt.description ?? ''}\n`;
-            }
-        }
+    // Add prompts section
+    if (prompts.length > 0) {
+      instructions += `\n## Prompts (${String(prompts.length)})\n`;
+      instructions += "Pre-built templates and guided workflows:\n";
+      for (const prompt of prompts) {
+        instructions += `- \`${prompt.name}\` - ${prompt.description ?? ""}\n`;
+      }
     }
+  }
 
-    return instructions;
+  return instructions;
 }
 
 /**
  * Get active tool groups with their enabled tools
  */
 function getActiveToolGroups(
-    enabledTools: Set<string>,
+  enabledTools: Set<string>,
 ): { group: ToolGroup; tools: string[] }[] {
-    const activeGroups: { group: ToolGroup; tools: string[] }[] = [];
+  const activeGroups: { group: ToolGroup; tools: string[] }[] = [];
 
-    for (const group of ALL_TOOL_GROUPS) {
-        const allTools = TOOL_GROUPS[group];
-        const enabledInGroup = allTools.filter((tool) => enabledTools.has(tool));
-        if (enabledInGroup.length > 0) {
-            activeGroups.push({ group, tools: enabledInGroup });
-        }
+  for (const group of ALL_TOOL_GROUPS) {
+    const allTools = TOOL_GROUPS[group];
+    const enabledInGroup = allTools.filter((tool) => enabledTools.has(tool));
+    if (enabledInGroup.length > 0) {
+      activeGroups.push({ group, tools: enabledInGroup });
     }
+  }
 
-    return activeGroups;
+  return activeGroups;
 }
 
 /**
  * Static instructions for backward compatibility
  * @deprecated Use generateInstructions() instead for dynamic content
  */
-export const SERVER_INSTRUCTIONS = ESSENTIAL_INSTRUCTIONS + FILTERING_INSTRUCTIONS;
+export const SERVER_INSTRUCTIONS =
+  ESSENTIAL_INSTRUCTIONS + FILTERING_INSTRUCTIONS;
