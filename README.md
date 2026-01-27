@@ -553,6 +553,46 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 
 See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as your OAuth provider.
 
+### Quick Start with OAuth
+
+**1. Start the server with OAuth enabled:**
+
+```bash
+# Set environment variables
+export KEYCLOAK_URL=http://localhost:8080
+export KEYCLOAK_REALM=db-mcp
+export KEYCLOAK_CLIENT_ID=db-mcp-server
+
+# Start server with HTTP transport and OAuth
+node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
+```
+
+**2. Get an access token from Keycloak:**
+
+```bash
+# Using cURL
+curl -X POST "http://localhost:8080/realms/db-mcp/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=db-mcp-server" \
+  -d "client_secret=YOUR_SECRET" \
+  -d "username=testuser" \
+  -d "password=YOUR_PASSWORD" \
+  -d "grant_type=password" \
+  -d "scope=openid read write"
+```
+
+**3. Make authenticated MCP requests:**
+
+```bash
+# Initialize session with Bearer token
+curl -X POST "http://localhost:3000/mcp" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}},"id":1}'
+```
+
+> **Note:** OAuth is automatically enabled when running in HTTP mode with OAuth environment variables configured. The `/.well-known/oauth-protected-resource` endpoint provides RFC 9728 metadata for client discovery.
+
 [⬆️ Back to Table of Contents](#-table-of-contents)
 
 ---

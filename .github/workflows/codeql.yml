@@ -3,27 +3,8 @@ name: "CodeQL Analysis"
 on:
   push:
     branches: ["main"]
-    paths:
-      - "**.js"
-      - "**.jsx"
-      - "**.ts"
-      - "**.tsx"
-      - "**.mjs"
-      - "**.cjs"
-      - "package.json"
   pull_request:
     branches: ["main"]
-    paths:
-      - "**.js"
-      - "**.jsx"
-      - "**.ts"
-      - "**.tsx"
-      - "**.mjs"
-      - "**.cjs"
-      - "package.json"
-  # Uncomment when JS/TS code is added:
-  # schedule:
-  #   - cron: '0 0 * * 1'
   schedule:
     - cron: "0 0 * * 1"
   workflow_dispatch:
