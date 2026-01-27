@@ -67,6 +67,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Transitive Dependency Fixes** — Resolved vulnerabilities via npm audit fix
   - `hono`: 4.11.5 → 4.11.7 (moderate severity fix via `@modelcontextprotocol/sdk`)
+- **Log Injection Prevention** — Control character sanitization for log messages
+  - Strips all ASCII control characters (0x00-0x1F) and DEL (0x7F) from messages
+  - Prevents log forging and escape sequence attacks
+  - Dedicated `sanitizeStack()` function replaces newlines with arrow delimiters for safe stack trace logging
+- **Sensitive Data Redaction** — Automatic redaction of security-sensitive fields in log context
+  - Sensitive keys redacted: password, secret, token, authorization, apikey, access_token, refresh_token, credential, client_secret
+  - OAuth 2.1 fields redacted: issuer, audience, jwks_uri, oauth_config, scopes_supported, bearer_format
+  - Supports recursive sanitization for nested configuration objects
+  - Prevents exposure of OAuth configuration data in log output
 - **CodeQL Taint Tracking Fix** — Resolved static analysis alerts in logger
   - Fixed `js/clear-text-logging` by breaking data-flow path in `writeToStderr()`
   - Fixed `js/log-injection` by reconstructing output from static character codes
