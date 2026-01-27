@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_optimize`: Dynamic multi-phase progress (start → reindex → analyze → complete)
   - `sqlite_vacuum`: 2-phase progress (start → complete)
   - Notifications are best-effort and require client support for `progressToken` in `_meta`
+- **Modern Tool Registration** — Migrated from deprecated `server.tool()` to `server.registerTool()` API
+  - Both `SqliteAdapter` and `NativeSqliteAdapter` now use modern pattern
+  - Full `inputSchema`/`outputSchema` passed (not just `.shape`)
+  - MCP 2025-11-25 `structuredContent` returned when `outputSchema` is present
+  - Progress token extraction from `extra._meta` enables progress notifications
+  - Removed all eslint-disable comments for deprecated API usage
 
 ### Changed
 
