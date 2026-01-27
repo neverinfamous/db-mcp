@@ -274,12 +274,26 @@ export abstract class DatabaseAdapter {
 
   /**
    * Create a request context for tool execution
+   * @param requestId Optional request ID for tracing
+   * @param server Optional MCP Server instance for progress notifications
+   * @param progressToken Optional progress token from client request _meta
    */
-  protected createContext(requestId?: string): RequestContext {
-    return {
+  protected createContext(
+    requestId?: string,
+    server?: unknown,
+    progressToken?: string | number,
+  ): RequestContext {
+    const context: RequestContext = {
       timestamp: new Date(),
       requestId: requestId ?? crypto.randomUUID(),
     };
+    if (server !== undefined) {
+      context.server = server;
+    }
+    if (progressToken !== undefined) {
+      context.progressToken = progressToken;
+    }
+    return context;
   }
 
   /**

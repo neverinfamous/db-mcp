@@ -8,6 +8,7 @@
 
 import initSqlJs, { type Database } from "sql.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { z } from "zod";
 import { DatabaseAdapter } from "../DatabaseAdapter.js";
 import type {
   DatabaseConfig,
@@ -559,33 +560,94 @@ export class SqliteAdapter extends DatabaseAdapter {
 
   /**
    * Register a single tool with the MCP server
+   * Uses modern registerTool() API for MCP 2025-11-25 compliance
    */
   protected override registerTool(
     server: McpServer,
     tool: ToolDefinition,
   ): void {
-    // MCP SDK server.tool() registration
-    // Extract the Zod shape from inputSchema for MCP SDK compatibility
-    // The SDK expects ZodRawShapeCompat (e.g., {name: z.string()})
-    const inputSchema = tool.inputSchema as
-      | { shape?: Record<string, unknown> }
-      | undefined;
-    const zodShape = inputSchema?.shape ?? {};
+    // Build tool options for registerTool()
+    const toolOptions: Record<string, unknown> = {
+      description: tool.description,
+    };
 
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    server.tool(
+    // Pass full inputSchema (not just .shape) for proper validation
+    if (tool.inputSchema !== undefined) {
+      toolOptions["inputSchema"] = tool.inputSchema;
+    }
+
+    // MCP 2025-11-25: Pass outputSchema for structured responses
+    if (tool.outputSchema !== undefined) {
+      toolOptions["outputSchema"] = tool.outputSchema;
+    }
+
+    // MCP 2025-11-25: Pass annotations for behavioral hints
+    if (tool.annotations) {
+      toolOptions["annotations"] = tool.annotations;
+    }
+
+    // Track whether tool has outputSchema for response handling
+    const hasOutputSchema = Boolean(tool.outputSchema);
+
+    server.registerTool(
       tool.name,
-      tool.description,
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      zodShape as Parameters<typeof server.tool>[2], // Cast for type compatibility
-      async (params: unknown) => {
-        const context = this.createContext();
-        const result = await tool.handler(params, context);
-        return {
-          content: [
-            { type: "text" as const, text: JSON.stringify(result, null, 2) },
-          ],
-        };
+      toolOptions as {
+        description?: string;
+        inputSchema?: z.ZodType;
+        outputSchema?: z.ZodType;
+      },
+      async (args: unknown, extra: unknown) => {
+        try {
+          // Extract progressToken from extra._meta (SDK passes RequestHandlerExtra)
+          const extraMeta = extra as {
+            _meta?: { progressToken?: string | number };
+          };
+          const progressToken = extraMeta?._meta?.progressToken;
+
+          // Create context with progress support
+          const context = this.createContext(
+            undefined,
+            server.server,
+            progressToken,
+          );
+          const result = await tool.handler(args, context);
+
+          // MCP 2025-11-25: Return structuredContent if outputSchema present
+          if (hasOutputSchema) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: JSON.stringify(result, null, 2),
+                },
+              ],
+              structuredContent: result as Record<string, unknown>,
+            };
+          }
+
+          // Standard text content response
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  typeof result === "string"
+                    ? result
+                    : JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
       },
     );
   }

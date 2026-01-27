@@ -7,6 +7,7 @@
 
 import Database from "better-sqlite3";
 import type { Database as DatabaseType } from "better-sqlite3";
+import type { z } from "zod";
 import { DatabaseAdapter } from "../DatabaseAdapter.js";
 import type {
   DatabaseConfig,
@@ -411,32 +412,94 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
 
   /**
    * Register a tool with the MCP server
+   * Uses modern registerTool() API for MCP 2025-11-25 compliance
    */
   protected override registerTool(
     server: McpServer,
     tool: ToolDefinition,
   ): void {
-    const inputSchema = tool.inputSchema as
-      | { shape?: Record<string, unknown> }
-      | undefined;
-    const zodShape = inputSchema?.shape ?? {};
+    // Build tool options for registerTool()
+    const toolOptions: Record<string, unknown> = {
+      description: tool.description,
+    };
 
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    server.tool(
+    // Pass full inputSchema (not just .shape) for proper validation
+    if (tool.inputSchema !== undefined) {
+      toolOptions["inputSchema"] = tool.inputSchema;
+    }
+
+    // MCP 2025-11-25: Pass outputSchema for structured responses
+    if (tool.outputSchema !== undefined) {
+      toolOptions["outputSchema"] = tool.outputSchema;
+    }
+
+    // MCP 2025-11-25: Pass annotations for behavioral hints
+    if (tool.annotations) {
+      toolOptions["annotations"] = tool.annotations;
+    }
+
+    // Track whether tool has outputSchema for response handling
+    const hasOutputSchema = Boolean(tool.outputSchema);
+
+    server.registerTool(
       tool.name,
-      tool.description,
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      zodShape as Parameters<typeof server.tool>[2],
-      async (params: unknown) => {
-        const result = await tool.handler(params, {
-          timestamp: new Date(),
-          requestId: crypto.randomUUID(),
-        });
-        return {
-          content: [
-            { type: "text" as const, text: JSON.stringify(result, null, 2) },
-          ],
-        };
+      toolOptions as {
+        description?: string;
+        inputSchema?: z.ZodType;
+        outputSchema?: z.ZodType;
+      },
+      async (args: unknown, extra: unknown) => {
+        try {
+          // Extract progressToken from extra._meta (SDK passes RequestHandlerExtra)
+          const extraMeta = extra as {
+            _meta?: { progressToken?: string | number };
+          };
+          const progressToken = extraMeta?._meta?.progressToken;
+
+          // Create context with progress support
+          const context = this.createContext(
+            undefined,
+            server.server,
+            progressToken,
+          );
+          const result = await tool.handler(args, context);
+
+          // MCP 2025-11-25: Return structuredContent if outputSchema present
+          if (hasOutputSchema) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: JSON.stringify(result, null, 2),
+                },
+              ],
+              structuredContent: result as Record<string, unknown>,
+            };
+          }
+
+          // Standard text content response
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  typeof result === "string"
+                    ? result
+                    : JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
       },
     );
   }
