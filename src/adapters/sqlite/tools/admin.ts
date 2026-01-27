@@ -3,13 +3,14 @@
  *
  * Database administration operations:
  * backup, restore, analyze, optimize, integrity check, PRAGMA operations.
- * 12 tools total.
+ * 13 tools total.
  */
 
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { admin, readOnly } from "../../../utils/annotations.js";
+import { insightsManager } from "../../../utils/insightsManager.js";
 import {
   BackupOutputSchema,
   AnalyzeOutputSchema,
@@ -104,6 +105,7 @@ export function getAdminTools(adapter: SqliteAdapter): ToolDefinition[] {
     createPragmaOptimizeTool(adapter),
     createPragmaSettingsTool(adapter),
     createPragmaTableInfoTool(adapter),
+    createAppendInsightTool(),
   ];
 }
 
@@ -629,6 +631,51 @@ function createPragmaTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
         table: input.table,
         columns,
       };
+    },
+  };
+}
+
+/**
+ * Schema for append_insight input
+ */
+const AppendInsightSchema = z.object({
+  insight: z
+    .string()
+    .describe("Business insight discovered from data analysis"),
+});
+
+/**
+ * Output schema for append_insight
+ */
+const AppendInsightOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  insightCount: z.number(),
+});
+
+/**
+ * Append a business insight to the memo resource
+ */
+function createAppendInsightTool(): ToolDefinition {
+  return {
+    name: "sqlite_append_insight",
+    description:
+      "Add a business insight to the memo://insights resource. Use this to capture key findings during data analysis.",
+    group: "admin",
+    inputSchema: AppendInsightSchema,
+    outputSchema: AppendInsightOutputSchema,
+    requiredScopes: ["write"],
+    annotations: admin("Append Insight"),
+    handler: (params: unknown, _context: RequestContext) => {
+      const input = AppendInsightSchema.parse(params);
+
+      insightsManager.append(input.insight);
+
+      return Promise.resolve({
+        success: true,
+        message: "Insight added to memo",
+        insightCount: insightsManager.count(),
+      });
     },
   };
 }

@@ -210,7 +210,7 @@ Window Function Tools (6) - Native Only
 | `sqlite_window_moving_avg`    | Calculate rolling averages                            |
 | `sqlite_window_ntile`         | Divide rows into N buckets (quartiles, deciles, etc.) |
 
-### 📁 Resources (7)
+### 📁 Resources (8)
 
 MCP resources provide read-only access to database metadata:
 
@@ -223,6 +223,7 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_views`        | `sqlite://views`               | All views in the database              |
 | `sqlite_health`       | `sqlite://health`              | Database health and connection status  |
 | `sqlite_meta`         | `sqlite://meta`                | Database metadata and configuration    |
+| `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis)      |
 
 ### 💬 Prompts (7)
 

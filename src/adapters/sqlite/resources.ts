@@ -2,7 +2,7 @@
  * SQLite Resource Definitions
  *
  * MCP resources for schema introspection, data access, and metadata.
- * 7 resources total.
+ * 8 resources total.
  */
 
 import type { SqliteAdapter } from "./SqliteAdapter.js";
@@ -12,6 +12,7 @@ import {
   MEDIUM_PRIORITY,
   LOW_PRIORITY,
 } from "../../utils/resourceAnnotations.js";
+import { insightsManager } from "../../utils/insightsManager.js";
 
 /**
  * Get all resource definitions for the SQLite adapter
@@ -27,6 +28,7 @@ export function getResourceDefinitions(
     createViewsResource(adapter),
     createHealthResource(adapter),
     createMetaResource(adapter),
+    createInsightsResource(),
   ];
 }
 
@@ -244,6 +246,31 @@ function createMetaResource(adapter: SqliteAdapter): ResourceDefinition {
           },
         ],
       };
+    },
+  };
+}
+
+/**
+ * Business insights memo resource
+ */
+function createInsightsResource(): ResourceDefinition {
+  return {
+    name: "sqlite_insights",
+    uri: "memo://insights",
+    description:
+      "Business insights memo that gets updated during database analysis",
+    mimeType: "text/plain",
+    annotations: HIGH_PRIORITY,
+    handler: () => {
+      return Promise.resolve({
+        contents: [
+          {
+            uri: "memo://insights",
+            mimeType: "text/plain",
+            text: insightsManager.synthesizeMemo(),
+          },
+        ],
+      });
     },
   };
 }
