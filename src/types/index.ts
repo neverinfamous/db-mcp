@@ -263,22 +263,24 @@ export interface RequestContext {
  */
 export type ToolGroup =
   | "core" // Basic CRUD, schema operations (8 tools)
-  | "json" // JSON/JSONB operations (18 tools)
-  | "text" // Text processing (12 tools)
-  | "stats" // Statistical analysis (16 tools)
+  | "json" // JSON/JSONB operations (23 tools)
+  | "text" // Text processing + FTS5 (16 tools)
+  | "stats" // Statistical analysis (13 WASM / 19 Native)
   | "vector" // Vector/semantic search (11 tools)
-  | "admin"; // Administration (21 tools)
+  | "admin" // Administration (25 WASM / 32 Native)
+  | "geo"; // Geospatial (4 WASM / 11 Native)
 
 /**
  * Meta-group identifiers for common multi-group selections.
  * These are shortcuts that expand to multiple ToolGroups.
  */
 export type MetaGroup =
-  | "starter" // Core + JSON + Text (38 tools) - General development
-  | "analytics" // Core + JSON + Stats (42 tools) - Data analysis
-  | "search" // Core + Text + Vector (31 tools) - Search workloads
-  | "minimal" // Core only (8 tools) - Bare minimum
-  | "full"; // All tools enabled (86 tools)
+  | "starter" // Core + JSON + Text (47 tools)
+  | "analytics" // Core + JSON + Stats (44 WASM / 50 Native)
+  | "search" // Core + Text + Vector (35 tools)
+  | "spatial" // Core + Geo + Vector (23 WASM / 30 Native)
+  | "minimal" // Core only (8 tools)
+  | "full"; // All tools (100 WASM / 120 Native)
 
 /**
  * Tool filter rule

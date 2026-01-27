@@ -516,7 +516,7 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Get supported tool groups
    */
   override getSupportedToolGroups(): ToolGroup[] {
-    return ["core", "json", "text", "stats", "vector", "admin"];
+    return ["core", "json", "text", "stats", "vector", "admin", "geo"];
   }
 
   /**
@@ -644,11 +644,11 @@ export class SqliteAdapter extends DatabaseAdapter {
           role: "user" | "assistant";
           content: { type: "text"; text: string };
         }[] = Array.isArray(result)
-          ? (result as {
+            ? (result as {
               role: "user" | "assistant";
               content: { type: "text"; text: string };
             }[])
-          : [
+            : [
               {
                 role: "assistant" as const,
                 content: {

@@ -93,9 +93,9 @@ function haversineDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -108,7 +108,7 @@ function createGeoDistanceTool(): ToolDefinition {
     name: "sqlite_geo_distance",
     description:
       "Calculate the distance between two geographic points using Haversine formula.",
-    group: "admin",
+    group: "geo",
     inputSchema: GeoDistanceSchema,
     outputSchema: GeoDistanceOutputSchema,
     requiredScopes: ["read"],
@@ -142,7 +142,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_geo_nearby",
     description: "Find points within a radius of a center point.",
-    group: "admin",
+    group: "geo",
     inputSchema: GeoNearbySchema,
     outputSchema: GeoWithinRadiusOutputSchema,
     requiredScopes: ["read"],
@@ -228,7 +228,7 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_geo_bounding_box",
     description: "Find points within a rectangular bounding box.",
-    group: "admin",
+    group: "geo",
     inputSchema: GeoBoundingBoxSchema,
     outputSchema: GeoBoundingBoxOutputSchema,
     requiredScopes: ["read"],
@@ -287,7 +287,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_geo_cluster",
     description: "Cluster geographic points into grid cells.",
-    group: "admin",
+    group: "geo",
     inputSchema: GeoClusterSchema,
     outputSchema: GeoClusterOutputSchema,
     requiredScopes: ["read"],

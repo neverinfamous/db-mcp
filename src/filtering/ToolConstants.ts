@@ -5,12 +5,13 @@
  *
  * Actual tool groups (from code audit):
  *   core: 8 tools (from core.ts)
- *   json: 18 tools (from json-helpers.ts + json-operations.ts)
- *   text: 12 tools (from text.ts)
- *   stats: 16 tools (from stats.ts)
+ *   json: 23 tools (from json-helpers.ts + json-operations.ts)
+ *   text: 16 tools (from text.ts + fts.ts)
+ *   stats: 19 tools (from stats.ts + window.ts)
  *   vector: 11 tools (from vector.ts)
- *   admin: 21 tools (from admin.ts + virtual.ts)
- *   Total: 86 tools
+ *   admin: 32 tools (from admin.ts + virtual.ts + transactions.ts)
+ *   geo: 11 tools (from geo.ts + spatialite.ts) - Native: 11, WASM: 4
+ *   Total: 120 Native / 100 WASM tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -28,6 +29,7 @@ export const ALL_TOOL_GROUPS: ToolGroup[] = [
   "stats",
   "vector",
   "admin",
+  "geo",
 ];
 
 /**
@@ -133,6 +135,19 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "window_lag_lead",
     "window_running_total",
   ],
+  geo: [
+    "geo_distance",
+    "geo_nearby",
+    "geo_bounding_box",
+    "geo_cluster",
+    "spatialite_load",
+    "spatialite_create_table",
+    "spatialite_query",
+    "spatialite_analyze",
+    "spatialite_index",
+    "spatialite_transform",
+    "spatialite_import",
+  ],
 };
 
 /**
@@ -140,18 +155,21 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text (38 tools)
+  // General development - Core + JSON + Text (47 tools)
   starter: ["core", "json", "text"],
 
-  // Data analysis - Core + JSON + Stats (42 tools)
+  // Data analysis - Core + JSON + Stats (50 tools Native, 44 WASM)
   analytics: ["core", "json", "stats"],
 
-  // Search workloads - Core + Text + Vector (31 tools)
+  // Search workloads - Core + Text + Vector (35 tools)
   search: ["core", "text", "vector"],
+
+  // Geospatial workloads - Core + Geo + Vector (30 tools Native, 23 WASM)
+  spatial: ["core", "geo", "vector"],
 
   // Bare minimum - Core only (8 tools)
   minimal: ["core"],
 
-  // All tools enabled (86 tools)
-  full: ["core", "json", "text", "stats", "vector", "admin"],
+  // All tools enabled (120 Native / 100 WASM tools)
+  full: ["core", "json", "text", "stats", "vector", "admin", "geo"],
 };

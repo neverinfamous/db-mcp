@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-A **SQLite MCP Server** with up to 113 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 113 specialized tools.
+A **SQLite MCP Server** with up to 120 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 120 specialized tools.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -168,9 +168,9 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 | Statistical Analysis  | 13      | 19      | Stats, outliers, regression + window functions |
 | Virtual Tables        | 13      | 13      | CSV, R-Tree, series, views, vacuum, dbstat     |
 | Vector/Semantic       | 11      | 11      | Embeddings, similarity search                  |
-| Geospatial            | 4       | 4       | Distance, bounding box, nearest, clustering    |
+| Geospatial            | 4       | 11      | Distance, bounding box + SpatiaLite GIS        |
 | Admin/PRAGMA          | 12      | 19      | Backup, restore, pragmas, transactions         |
-| **Total**             | **100** | **113** |                                                |
+| **Total**             | **100** | **120** |                                                |
 
 ### SQLite Backend Options
 
@@ -403,30 +403,32 @@ Specify exactly the groups you need:
 
 ### Shortcuts (Predefined Bundles)
 
-> **Note:** Native includes transactions (7) and window functions (6) not available in WASM.
+> **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
 
 | Shortcut    | WASM   | Native | + Built-in | What's Included    |
 | ----------- | ------ | ------ | ---------- | ------------------ |
 | `starter`   | **47** | **47** | +3         | Core, JSON, Text   |
 | `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
 | `search`    | 35     | 35     | +3         | Core, Text, Vector |
+| `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
 | `minimal`   | 8      | 8      | +3         | Core only          |
-| `full`      | 100    | 113    | +3         | Everything enabled |
+| `full`      | 100    | 120    | +3         | Everything enabled |
 
 ---
 
-### Tool Groups (6 Available)
+### Tool Groups (7 Available)
 
 > **Note:** +3 built-in tools (server_info, server_health, list_adapters) are always included.
 
-| Group    | WASM | Native | + Built-in | Description                            |
-| -------- | ---- | ------ | ---------- | -------------------------------------- |
-| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables             |
-| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis        |
-| `text`   | 16   | 16     | +3         | Text processing + FTS5                 |
-| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)  |
-| `vector` | 11   | 11     | +3         | Embeddings, similarity search          |
-| `admin`  | 29   | 36     | +3         | Backup, restore, geo, virtual, pragmas |
+| Group    | WASM | Native | + Built-in | Description                             |
+| -------- | ---- | ------ | ---------- | --------------------------------------- |
+| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables              |
+| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis         |
+| `text`   | 16   | 16     | +3         | Text processing + FTS5                  |
+| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)   |
+| `vector` | 11   | 11     | +3         | Embeddings, similarity search           |
+| `admin`  | 25   | 32     | +3         | Backup, restore, virtual tables, pragma |
+| `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)   |
 
 ---
 

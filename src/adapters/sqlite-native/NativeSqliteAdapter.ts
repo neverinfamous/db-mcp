@@ -43,6 +43,7 @@ import { getPromptDefinitions } from "../sqlite/prompts.js";
 // Import native-specific tools
 import { getTransactionTools } from "./tools/transactions.js";
 import { getWindowTools } from "./tools/window.js";
+import { getSpatialiteTools } from "./tools/spatialite.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
@@ -367,7 +368,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Get supported tool groups
    */
   override getSupportedToolGroups(): ToolGroup[] {
-    return ["core", "json", "text", "stats", "vector", "admin"];
+    return ["core", "json", "text", "stats", "vector", "admin", "geo"];
   }
 
   /**
@@ -390,6 +391,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       // Native-only tools
       ...getTransactionTools(this),
       ...getWindowTools(this),
+      ...getSpatialiteTools(this),
     ];
   }
 
@@ -497,11 +499,11 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
           role: "user" | "assistant";
           content: { type: "text"; text: string };
         }[] = Array.isArray(result)
-          ? (result as {
+            ? (result as {
               role: "user" | "assistant";
               content: { type: "text"; text: string };
             }[])
-          : [
+            : [
               {
                 role: "assistant" as const,
                 content: {

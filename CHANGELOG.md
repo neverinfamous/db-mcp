@@ -39,6 +39,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **SpatiaLite Geospatial Tools (Native-only)** — 7 new tools for GIS capabilities
+  - `sqlite_spatialite_load` — Load SpatiaLite extension
+  - `sqlite_spatialite_create_table` — Create tables with geometry columns
+  - `sqlite_spatialite_query` — Execute spatial SQL (ST_Distance, ST_Within, etc.)
+  - `sqlite_spatialite_analyze` — Spatial analysis (nearest neighbor, point-in-polygon)
+  - `sqlite_spatialite_index` — Create/manage spatial R-Tree indexes
+  - `sqlite_spatialite_transform` — Geometry operations (buffer, union, intersection)
+  - `sqlite_spatialite_import` — Import WKT/GeoJSON data
+  - Tools gracefully fail with helpful error if SpatiaLite extension not installed
+- **Geo Tool Group** — New dedicated group for geospatial tools
+  - Moved 4 Haversine-based geo tools from `admin` to `geo` group
+  - SpatiaLite tools also in `geo` group (7 Native-only tools)
+  - New `spatial` shortcut: Core + Geo + Vector (23 WASM / 30 Native tools)
+  - 7 tool groups now available (was 6)
+
 - **Admin/PRAGMA Tools** — Added 8 new database administration tools (100 total)
   - `sqlite_restore`: Restore database from backup file
   - `sqlite_verify_backup`: Verify backup file integrity without restoring
