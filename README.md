@@ -2,7 +2,7 @@
 
 Last Updated January 27, 2026
 
-**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -317,6 +317,39 @@ Use `:memory:` for a temporary in-memory database:
   "args": ["--transport", "stdio", "--sqlite-native", ":memory:"]
 }
 ```
+
+### HTTP/SSE Transport (Remote Access)
+
+For remote access, web-based clients, or MCP Inspector testing, run the server in HTTP mode:
+
+```bash
+node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
+```
+
+**Endpoints:**
+
+| Endpoint      | Description                                   |
+| ------------- | --------------------------------------------- |
+| `GET /`       | Server info and available endpoints           |
+| `POST /mcp`   | JSON-RPC requests (initialize, tools/call)    |
+| `GET /mcp`    | SSE stream for server-to-client notifications |
+| `DELETE /mcp` | Session termination                           |
+| `GET /health` | Health check (always public)                  |
+
+**Session Management:** The server uses stateful sessions by default. Include the `mcp-session-id` header (returned from initialization) in subsequent requests for session continuity.
+
+#### Stateless Mode (Serverless)
+
+For serverless deployments (AWS Lambda, Cloudflare Workers, Vercel), use stateless mode:
+
+```bash
+node dist/cli.js --transport http --port 3000 --stateless --sqlite-native :memory:
+```
+
+| Mode                      | Progress Notifications | SSE Streaming | Serverless |
+| ------------------------- | ---------------------- | ------------- | ---------- |
+| Stateful (default)        | ✅ Yes                 | ✅ Yes        | ⚠️ Complex |
+| Stateless (`--stateless`) | ❌ No                  | ❌ No         | ✅ Native  |
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 

@@ -33,6 +33,9 @@ function parseArgs(): Partial<McpServerConfig> {
       if (portValue) {
         config.port = parseInt(portValue, 10);
       }
+    } else if (arg === "--stateless") {
+      // Enable stateless HTTP mode (no session management, no SSE)
+      config.statelessHttp = true;
     } else if (arg === "--name") {
       const nameValue = args[++i];
       if (nameValue) {
@@ -131,6 +134,8 @@ Usage: db-mcp [options]
 Transport Options:
   --transport, -t <type>    Transport type: stdio (default), http, sse
   --port, -p <port>         HTTP port (default: 3000)
+  --stateless               Use stateless HTTP mode (no session management, no SSE)
+                            Ideal for serverless deployments (Lambda, Workers)
 
 Database Options:
   --sqlite <path>           Add SQLite database (WASM/sql.js)

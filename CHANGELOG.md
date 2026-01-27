@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **HTTP/SSE Streaming Transport** — Enhanced HTTP transport with session management and SSE
+  - **Stateful mode (default)**: Multi-session management with SSE streaming for notifications
+  - **Stateless mode (`--stateless`)**: Lightweight serverless-compatible mode for Lambda/Workers
+  - `POST /mcp`: JSON-RPC requests with session management
+  - `GET /mcp`: SSE stream for server-to-client notifications
+  - `DELETE /mcp`: Session termination endpoint
+  - Enhanced CORS headers for `mcp-session-id` and `Last-Event-ID`
+  - Health endpoint reports active session count and transport mode
 - **Business Insights Memo** — New tool and resource for capturing analysis insights
   - `sqlite_append_insight` tool: Add business insights discovered during data analysis
   - `memo://insights` resource: Synthesized memo of all captured insights
