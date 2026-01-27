@@ -2,7 +2,7 @@
  * SQLite Prompt Definitions
  *
  * MCP prompts for common database operations and analysis.
- * 8 prompts total.
+ * 9 prompts total.
  */
 
 import type { SqliteAdapter } from "./SqliteAdapter.js";
@@ -23,6 +23,7 @@ export function getPromptDefinitions(
     createDebugQueryPrompt(),
     createDocumentationPrompt(adapter),
     createSummarizeTablePrompt(),
+    createHybridSearchWorkflowPrompt(),
   ];
 }
 
@@ -439,6 +440,112 @@ Generate a summary with:
 - Recommendations
 
 Start by examining the schema of '${tableName}'.`,
+            },
+          },
+        ],
+      });
+    },
+  };
+}
+
+/**
+ * Hybrid search workflow prompt - FTS5 + Vector search
+ */
+function createHybridSearchWorkflowPrompt(): PromptDefinition {
+  return {
+    name: "sqlite_hybrid_search_workflow",
+    description: "Hybrid keyword + semantic search implementation workflow",
+    arguments: [
+      {
+        name: "use_case",
+        description:
+          "Use case for search (e.g., 'product_search', 'document_retrieval')",
+        required: true,
+      },
+    ],
+    handler: (args: Record<string, string>) => {
+      const useCase = args["use_case"] ?? "content";
+
+      return Promise.resolve({
+        messages: [
+          {
+            role: "user" as const,
+            content: {
+              type: "text" as const,
+              text: `# Hybrid Search Workflow: ${useCase}
+
+Implement a hybrid search combining FTS5 keyword search with vector/semantic search.
+
+## 1. Schema Setup
+
+### FTS5 Virtual Table (Keyword Search)
+\`\`\`sql
+CREATE VIRTUAL TABLE IF NOT EXISTS ${useCase}_fts USING fts5(
+  title,
+  content,
+  tokenize='porter unicode61'
+);
+\`\`\`
+
+### Embeddings Table (Semantic Search)
+\`\`\`sql
+CREATE TABLE IF NOT EXISTS ${useCase}_embeddings (
+  id INTEGER PRIMARY KEY,
+  source_id INTEGER NOT NULL,
+  embedding BLOB NOT NULL,
+  embedding_model TEXT DEFAULT 'text-embedding-3-small'
+);
+\`\`\`
+
+## 2. Hybrid Search Query
+
+### Step 1: FTS5 Keyword Search
+\`\`\`sql
+SELECT rowid, bm25(${useCase}_fts) as keyword_score
+FROM ${useCase}_fts
+WHERE ${useCase}_fts MATCH ?
+ORDER BY bm25(${useCase}_fts)
+LIMIT 50;
+\`\`\`
+
+### Step 2: Vector Similarity Search
+Use \`sqlite_vector_search\` tool with cosine similarity.
+
+### Step 3: Combine Results
+\`\`\`sql
+-- Weighted hybrid scoring
+SELECT
+  id,
+  (0.6 * COALESCE(keyword_score, 0) + 0.4 * COALESCE(vector_score, 0)) as hybrid_score
+FROM (
+  SELECT id, keyword_score, NULL as vector_score FROM keyword_results
+  UNION
+  SELECT id, NULL, vector_score FROM vector_results
+)
+GROUP BY id
+ORDER BY hybrid_score DESC
+LIMIT 20;
+\`\`\`
+
+## 3. Optimization for ${useCase}
+
+### Recommended Weights
+- Exact keyword match: Higher weight for precision
+- Semantic similarity: Higher weight for recall
+
+### Typical configurations:
+- **Product search**: 70% keyword + 30% semantic
+- **Document retrieval**: 50% keyword + 50% semantic
+- **Q&A/Support**: 40% keyword + 60% semantic
+
+## 4. Next Steps
+
+1. Create the FTS5 virtual table
+2. Generate embeddings for your content
+3. Implement the hybrid search function
+4. Tune weights based on evaluation
+
+Start by creating the FTS5 table for '${useCase}'.`,
             },
           },
         ],

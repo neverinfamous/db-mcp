@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Advanced Search Tool** — Multi-mode text search
   - `sqlite_advanced_search` tool combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching
   - Configurable threshold and technique selection
+- **Hybrid Search Workflow Prompt** — Combined FTS5 + vector search
+  - `sqlite_hybrid_search_workflow` prompt for hybrid search implementation
+  - Guides through schema setup, query structure, and weight tuning
 
 ### Changed
 

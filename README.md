@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 8 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 9 prompts. Available in WASM and better-sqlite3 variants.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -225,20 +225,21 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_meta`         | `sqlite://meta`                | Database metadata and configuration    |
 | `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis)      |
 
-### 💬 Prompts (8)
+### 💬 Prompts (9)
 
 MCP prompts provide AI-assisted database workflows:
 
-| Prompt                    | Description                                      |
-| ------------------------- | ------------------------------------------------ |
-| `sqlite_explain_schema`   | Explain database structure and relationships     |
-| `sqlite_query_builder`    | Help construct SQL queries for common operations |
-| `sqlite_data_analysis`    | Analyze data patterns and provide insights       |
-| `sqlite_optimization`     | Analyze and suggest database optimizations       |
-| `sqlite_migration`        | Help create database migration scripts           |
-| `sqlite_debug_query`      | Debug SQL queries that aren't working            |
-| `sqlite_documentation`    | Generate documentation for the database schema   |
-| `sqlite_summarize_table`  | Intelligent table analysis and summary           |
+| Prompt                         | Description                                      |
+| ------------------------------ | ------------------------------------------------ |
+| `sqlite_explain_schema`        | Explain database structure and relationships     |
+| `sqlite_query_builder`         | Help construct SQL queries for common operations |
+| `sqlite_data_analysis`         | Analyze data patterns and provide insights       |
+| `sqlite_optimization`          | Analyze and suggest database optimizations       |
+| `sqlite_migration`             | Help create database migration scripts           |
+| `sqlite_debug_query`           | Debug SQL queries that aren't working            |
+| `sqlite_documentation`         | Generate documentation for the database schema   |
+| `sqlite_summarize_table`       | Intelligent table analysis and summary           |
+| `sqlite_hybrid_search_workflow`| Hybrid FTS5 + vector search workflow             |
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 
