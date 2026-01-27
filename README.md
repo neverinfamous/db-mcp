@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 9 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -225,7 +225,7 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_meta`         | `sqlite://meta`                | Database metadata and configuration    |
 | `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis)      |
 
-### 💬 Prompts (9)
+### 💬 Prompts (10)
 
 MCP prompts provide AI-assisted database workflows:
 
@@ -240,6 +240,7 @@ MCP prompts provide AI-assisted database workflows:
 | `sqlite_documentation`         | Generate documentation for the database schema   |
 | `sqlite_summarize_table`       | Intelligent table analysis and summary           |
 | `sqlite_hybrid_search_workflow`| Hybrid FTS5 + vector search workflow             |
+| `sqlite_demo`                  | Interactive demo of MCP capabilities             |
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 

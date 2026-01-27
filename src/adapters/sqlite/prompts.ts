@@ -2,7 +2,7 @@
  * SQLite Prompt Definitions
  *
  * MCP prompts for common database operations and analysis.
- * 9 prompts total.
+ * 10 prompts total.
  */
 
 import type { SqliteAdapter } from "./SqliteAdapter.js";
@@ -24,6 +24,7 @@ export function getPromptDefinitions(
     createDocumentationPrompt(adapter),
     createSummarizeTablePrompt(),
     createHybridSearchWorkflowPrompt(),
+    createDemoPrompt(),
   ];
 }
 
@@ -546,6 +547,90 @@ LIMIT 20;
 4. Tune weights based on evaluation
 
 Start by creating the FTS5 table for '${useCase}'.`,
+            },
+          },
+        ],
+      });
+    },
+  };
+}
+
+/**
+ * Interactive MCP demo prompt
+ */
+function createDemoPrompt(): PromptDefinition {
+  return {
+    name: "sqlite_demo",
+    description:
+      "Interactive walkthrough demonstrating MCP SQLite capabilities",
+    arguments: [
+      {
+        name: "topic",
+        description: "Topic for demo scenario (e.g., 'retail sales')",
+        required: true,
+      },
+    ],
+    handler: (args: Record<string, string>) => {
+      const topic = args["topic"] ?? "business analytics";
+
+      return Promise.resolve({
+        messages: [
+          {
+            role: "user" as const,
+            content: {
+              type: "text" as const,
+              text: `# Interactive MCP Demo: ${topic}
+
+You are guiding an interactive demo of the SQLite MCP Server capabilities.
+
+## MCP Overview
+
+**Prompts**: Pre-written templates that structure AI conversations (like this one)
+**Tools**: SQL operations (read_query, write_query, create_table, etc.)
+**Resources**: Living documents like \`memo://insights\` that update during analysis
+
+## Demo Workflow
+
+### 1. Create Business Narrative
+Describe a business problem for "${topic}":
+- Include a protagonist who needs data analysis
+- Add an approaching deadline
+- Explain why Claude is helping
+
+### 2. Setup Data
+Create 2-3 relevant tables using \`sqlite_create_table\`:
+- Design appropriate schemas for ${topic}
+- Insert 10-15 rows of synthetic data per table
+- Say "Setting up the data..." while working
+
+### 3. Present Query Options
+After setup, present 3-4 natural language query choices:
+- "Show me the top performers"
+- "What are the trends over time?"
+- "Identify any anomalies"
+
+### 4. Execute & Analyze
+For each user selection:
+- Run the appropriate SQL query
+- Explain the results
+- Use \`sqlite_append_insight\` to capture findings
+
+### 5. Capture Insights
+Remind the user about \`memo://insights\`:
+- Each insight is automatically added to this resource
+- They can attach it to see all discoveries
+
+### 6. Wrap Up
+Summarize what was demonstrated:
+- Data creation and querying
+- Insight capture via resources
+- The power of MCP for database workflows
+
+---
+
+Start with: "Hey there! I see you've chosen **${topic}**. Let's explore what we can do! 🚀"
+
+Then begin creating the business narrative.`,
             },
           },
         ],

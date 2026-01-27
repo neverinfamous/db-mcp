@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hybrid Search Workflow Prompt** — Combined FTS5 + vector search
   - `sqlite_hybrid_search_workflow` prompt for hybrid search implementation
   - Guides through schema setup, query structure, and weight tuning
+- **Interactive Demo Prompt** — Flagship MCP demonstration
+  - `sqlite_demo` prompt for interactive capability walkthrough
+  - Guides through data creation, querying, and insight capture
 
 ### Changed
 
