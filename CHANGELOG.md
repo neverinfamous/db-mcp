@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_append_insight` tool: Add business insights discovered during data analysis
   - `memo://insights` resource: Synthesized memo of all captured insights
   - Insights manager singleton for in-memory insight storage
+- **Summarize Table Prompt** — Intelligent table analysis workflow
+  - `sqlite_summarize_table` prompt with configurable analysis depth
+  - Supports basic, detailed, and comprehensive analysis modes
 
 ### Changed
 

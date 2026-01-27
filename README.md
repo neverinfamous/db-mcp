@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-A **SQLite MCP Server** with up to 120 tools, OAuth 2.1 authentication, and granular access control. Written in TypeScript. OAuth 2.1 authentication & 120 specialized tools.
+**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 120 specialized tools, 8 resources, and 8 prompts. Available in WASM and better-sqlite3 variants.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -225,19 +225,20 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_meta`         | `sqlite://meta`                | Database metadata and configuration    |
 | `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis)      |
 
-### 💬 Prompts (7)
+### 💬 Prompts (8)
 
 MCP prompts provide AI-assisted database workflows:
 
-| Prompt                  | Description                                      |
-| ----------------------- | ------------------------------------------------ |
-| `sqlite_explain_schema` | Explain database structure and relationships     |
-| `sqlite_query_builder`  | Help construct SQL queries for common operations |
-| `sqlite_data_analysis`  | Analyze data patterns and provide insights       |
-| `sqlite_optimization`   | Analyze and suggest database optimizations       |
-| `sqlite_migration`      | Help create database migration scripts           |
-| `sqlite_debug_query`    | Debug SQL queries that aren't working            |
-| `sqlite_documentation`  | Generate documentation for the database schema   |
+| Prompt                    | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `sqlite_explain_schema`   | Explain database structure and relationships     |
+| `sqlite_query_builder`    | Help construct SQL queries for common operations |
+| `sqlite_data_analysis`    | Analyze data patterns and provide insights       |
+| `sqlite_optimization`     | Analyze and suggest database optimizations       |
+| `sqlite_migration`        | Help create database migration scripts           |
+| `sqlite_debug_query`      | Debug SQL queries that aren't working            |
+| `sqlite_documentation`    | Generate documentation for the database schema   |
+| `sqlite_summarize_table`  | Intelligent table analysis and summary           |
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 

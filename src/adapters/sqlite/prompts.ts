@@ -2,7 +2,7 @@
  * SQLite Prompt Definitions
  *
  * MCP prompts for common database operations and analysis.
- * 7 prompts total.
+ * 8 prompts total.
  */
 
 import type { SqliteAdapter } from "./SqliteAdapter.js";
@@ -22,6 +22,7 @@ export function getPromptDefinitions(
     createMigrationPrompt(),
     createDebugQueryPrompt(),
     createDocumentationPrompt(adapter),
+    createSummarizeTablePrompt(),
   ];
 }
 
@@ -357,6 +358,91 @@ Include:
           },
         ],
       };
+    },
+  };
+}
+
+/**
+ * Summarize table prompt - Intelligent table analysis
+ */
+function createSummarizeTablePrompt(): PromptDefinition {
+  return {
+    name: "sqlite_summarize_table",
+    description:
+      "Intelligent table analysis and summary generation with key statistics",
+    arguments: [
+      {
+        name: "table_name",
+        description: "Name of the table to analyze and summarize",
+        required: true,
+      },
+      {
+        name: "analysis_depth",
+        description:
+          "Depth of analysis: 'basic', 'detailed', or 'comprehensive'",
+        required: false,
+      },
+    ],
+    handler: (args: Record<string, string | undefined>) => {
+      const tableName = args["table_name"] ?? "unknown";
+      const depth = args["analysis_depth"] ?? "basic";
+
+      const depthGuide =
+        depth === "comprehensive"
+          ? `- Full statistical profiles for all columns
+- Pattern detection and correlation analysis
+- Data quality scoring and recommendations
+- Anomaly detection and outlier analysis`
+          : depth === "detailed"
+            ? `- Data distributions and histograms
+- NULL value counts per column
+- Unique value analysis
+- Top values for categorical columns`
+            : `- Row counts and column types
+- Sample data preview
+- Basic NULL detection`;
+
+      return Promise.resolve({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `# Table Analysis: ${tableName}
+
+Perform a ${depth} analysis of the '${tableName}' table.
+
+## Analysis Workflow
+
+### 1. Schema Analysis
+First, examine the table structure:
+- Use \`sqlite_describe_table\` with table: ${tableName}
+
+### 2. Basic Statistics
+\`\`\`sql
+SELECT COUNT(*) as total_rows FROM ${tableName};
+\`\`\`
+
+### 3. ${depth.charAt(0).toUpperCase() + depth.slice(1)} Profile
+${depthGuide}
+
+### 4. Data Quality Assessment
+- Check for NULL values in each column
+- Identify potential duplicate records
+- Look for outliers or unusual patterns
+
+### 5. Summary Report
+Generate a summary with:
+- Table purpose (inferred from schema)
+- Key statistics
+- Data quality score
+- Recommendations
+
+Start by examining the schema of '${tableName}'.`,
+            },
+          },
+        ],
+      });
     },
   };
 }
