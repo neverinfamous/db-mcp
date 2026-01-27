@@ -1,6 +1,6 @@
 # db-mcp
 
-Last Updated January 26, 2026
+Last Updated January 27, 2026
 
 **SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 
@@ -229,18 +229,18 @@ MCP resources provide read-only access to database metadata:
 
 MCP prompts provide AI-assisted database workflows:
 
-| Prompt                         | Description                                      |
-| ------------------------------ | ------------------------------------------------ |
-| `sqlite_explain_schema`        | Explain database structure and relationships     |
-| `sqlite_query_builder`         | Help construct SQL queries for common operations |
-| `sqlite_data_analysis`         | Analyze data patterns and provide insights       |
-| `sqlite_optimization`          | Analyze and suggest database optimizations       |
-| `sqlite_migration`             | Help create database migration scripts           |
-| `sqlite_debug_query`           | Debug SQL queries that aren't working            |
-| `sqlite_documentation`         | Generate documentation for the database schema   |
-| `sqlite_summarize_table`       | Intelligent table analysis and summary           |
-| `sqlite_hybrid_search_workflow`| Hybrid FTS5 + vector search workflow             |
-| `sqlite_demo`                  | Interactive demo of MCP capabilities             |
+| Prompt                          | Description                                      |
+| ------------------------------- | ------------------------------------------------ |
+| `sqlite_explain_schema`         | Explain database structure and relationships     |
+| `sqlite_query_builder`          | Help construct SQL queries for common operations |
+| `sqlite_data_analysis`          | Analyze data patterns and provide insights       |
+| `sqlite_optimization`           | Analyze and suggest database optimizations       |
+| `sqlite_migration`              | Help create database migration scripts           |
+| `sqlite_debug_query`            | Debug SQL queries that aren't working            |
+| `sqlite_documentation`          | Generate documentation for the database schema   |
+| `sqlite_summarize_table`        | Intelligent table analysis and summary           |
+| `sqlite_hybrid_search_workflow` | Hybrid FTS5 + vector search workflow             |
+| `sqlite_demo`                   | Interactive demo of MCP capabilities             |
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 
@@ -424,15 +424,15 @@ Specify exactly the groups you need:
 
 > **Note:** +3 built-in tools (server_info, server_health, list_adapters) are always included.
 
-| Group    | WASM | Native | + Built-in | Description                             |
-| -------- | ---- | ------ | ---------- | --------------------------------------- |
-| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables              |
-| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis         |
-| `text`   | 17   | 17     | +3         | Text processing + FTS5 + advanced search|
-| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)   |
-| `vector` | 11   | 11     | +3         | Embeddings, similarity search           |
-| `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma |
-| `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)   |
+| Group    | WASM | Native | + Built-in | Description                              |
+| -------- | ---- | ------ | ---------- | ---------------------------------------- |
+| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables               |
+| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis          |
+| `text`   | 17   | 17     | +3         | Text processing + FTS5 + advanced search |
+| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)    |
+| `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
+| `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
+| `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
 
 ---
 

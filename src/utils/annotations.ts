@@ -15,33 +15,33 @@ import type { ToolAnnotations } from "../types/index.js";
 
 /** Read-only query tools (SELECT, schema retrieval, metadata) */
 export const READ_ONLY: ToolAnnotations = {
-    readOnlyHint: true,
-    destructiveHint: false,
+  readOnlyHint: true,
+  destructiveHint: false,
 };
 
 /** Standard write tools (INSERT, UPDATE, CREATE) */
 export const WRITE: ToolAnnotations = {
-    readOnlyHint: false,
-    destructiveHint: false,
+  readOnlyHint: false,
+  destructiveHint: false,
 };
 
 /** Destructive tools (DELETE, DROP, TRUNCATE) */
 export const DESTRUCTIVE: ToolAnnotations = {
-    readOnlyHint: false,
-    destructiveHint: true,
+  readOnlyHint: false,
+  destructiveHint: true,
 };
 
 /** Idempotent tools (CREATE IF NOT EXISTS, upserts) */
 export const IDEMPOTENT: ToolAnnotations = {
-    readOnlyHint: false,
-    destructiveHint: false,
-    idempotentHint: true,
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: true,
 };
 
 /** Admin/maintenance tools (VACUUM, ANALYZE, PRAGMA) */
 export const ADMIN: ToolAnnotations = {
-    readOnlyHint: false,
-    destructiveHint: false,
+  readOnlyHint: false,
+  destructiveHint: false,
 };
 
 // =============================================================================
@@ -52,43 +52,43 @@ export const ADMIN: ToolAnnotations = {
  * Create annotations with a custom title
  */
 export function withTitle(
-    title: string,
-    base: ToolAnnotations = READ_ONLY,
+  title: string,
+  base: ToolAnnotations = READ_ONLY,
 ): ToolAnnotations {
-    return { title, ...base };
+  return { title, ...base };
 }
 
 /**
  * Create read-only annotations with title
  */
 export function readOnly(title: string): ToolAnnotations {
-    return { title, ...READ_ONLY };
+  return { title, ...READ_ONLY };
 }
 
 /**
  * Create write annotations with title
  */
 export function write(title: string): ToolAnnotations {
-    return { title, ...WRITE };
+  return { title, ...WRITE };
 }
 
 /**
  * Create destructive annotations with title
  */
 export function destructive(title: string): ToolAnnotations {
-    return { title, ...DESTRUCTIVE };
+  return { title, ...DESTRUCTIVE };
 }
 
 /**
  * Create idempotent annotations with title
  */
 export function idempotent(title: string): ToolAnnotations {
-    return { title, ...IDEMPOTENT };
+  return { title, ...IDEMPOTENT };
 }
 
 /**
  * Create admin annotations with title
  */
 export function admin(title: string): ToolAnnotations {
-    return { title, ...ADMIN };
+  return { title, ...ADMIN };
 }

@@ -499,11 +499,11 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
           role: "user" | "assistant";
           content: { type: "text"; text: string };
         }[] = Array.isArray(result)
-            ? (result as {
+          ? (result as {
               role: "user" | "assistant";
               content: { type: "text"; text: string };
             }[])
-            : [
+          : [
               {
                 role: "assistant" as const,
                 content: {
