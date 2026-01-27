@@ -64,6 +64,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added onclose handler to StreamableHTTPServerTransport before connecting
   - Used type assertion to satisfy SDK's narrower Transport type constraints
 
+### Verified
+
+- **OAuth 2.1 Implementation** — Tested with Keycloak 26.4.7
+  - Token validation with JWKS endpoint verified
+  - Scope enforcement (`read`, `write`, `admin`) working correctly
+  - RFC 9728 Protected Resource Metadata endpoint operational
+  - Added OAuth Quick Start section to README with usage examples
+
 ### Added
 
 - **SpatiaLite Geospatial Tools (Native-only)** — 7 new tools for GIS capabilities
