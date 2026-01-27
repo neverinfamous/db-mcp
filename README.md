@@ -2,7 +2,7 @@
 
 Last Updated January 26, 2026
 
-**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, 120 specialized tools, 8 resources, and 8 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with OAuth 2.1 authentication, smart tool filtering, granular access control, with 122 specialized tools, 8 resources, and 8 prompts. Available in WASM and better-sqlite3 variants.
 
 > **Beta** - This project is actively being developed and is not yet ready for production use.
 
@@ -163,14 +163,14 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 | Core Database         | 8       | 8       | CRUD, schema, indexes, views                   |
 | JSON Helpers          | 8       | 8       | Simplified JSON operations, schema analysis    |
 | JSON Operations       | 15      | 15      | Full JSON manipulation, JSONB support          |
-| Text Processing       | 12      | 12      | Regex, fuzzy, phonetic, normalize, validate    |
+| Text Processing       | 13      | 13      | Regex, fuzzy, phonetic, advanced search        |
 | FTS5 Full-Text Search | 4       | 4       | Create, search, rebuild, optimize              |
 | Statistical Analysis  | 13      | 19      | Stats, outliers, regression + window functions |
 | Virtual Tables        | 13      | 13      | CSV, R-Tree, series, views, vacuum, dbstat     |
 | Vector/Semantic       | 11      | 11      | Embeddings, similarity search                  |
 | Geospatial            | 4       | 11      | Distance, bounding box + SpatiaLite GIS        |
-| Admin/PRAGMA          | 12      | 19      | Backup, restore, pragmas, transactions         |
-| **Total**             | **100** | **120** |                                                |
+| Admin/PRAGMA          | 13      | 20      | Backup, restore, pragmas, transactions         |
+| **Total**             | **102** | **122** |                                                |
 
 ### SQLite Backend Options
 
@@ -426,10 +426,10 @@ Specify exactly the groups you need:
 | -------- | ---- | ------ | ---------- | --------------------------------------- |
 | `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables              |
 | `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis         |
-| `text`   | 16   | 16     | +3         | Text processing + FTS5                  |
+| `text`   | 17   | 17     | +3         | Text processing + FTS5 + advanced search|
 | `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)   |
 | `vector` | 11   | 11     | +3         | Embeddings, similarity search           |
-| `admin`  | 25   | 32     | +3         | Backup, restore, virtual tables, pragma |
+| `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma |
 | `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)   |
 
 ---

@@ -3,7 +3,7 @@
  *
  * String manipulation and pattern matching:
  * regex, split, concat, format, fuzzy match, phonetic, normalize, validate.
- * 12 tools total.
+ * 13 tools total.
  */
 
 import { z } from "zod";
@@ -132,6 +132,24 @@ const TextValidateSchema = z.object({
   limit: z.number().optional().default(100),
 });
 
+const AdvancedSearchSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column to search"),
+  searchTerm: z.string().describe("Search term"),
+  techniques: z
+    .array(z.enum(["exact", "fuzzy", "phonetic"]))
+    .optional()
+    .default(["exact", "fuzzy", "phonetic"])
+    .describe("Search techniques to use"),
+  fuzzyThreshold: z
+    .number()
+    .optional()
+    .default(0.6)
+    .describe("Fuzzy match threshold (0-1)"),
+  whereClause: z.string().optional(),
+  limit: z.number().optional().default(100),
+});
+
 /**
  * Get all text processing tools
  */
@@ -149,6 +167,7 @@ export function getTextTools(adapter: SqliteAdapter): ToolDefinition[] {
     createPhoneticMatchTool(adapter),
     createTextNormalizeTool(adapter),
     createTextValidateTool(adapter),
+    createAdvancedSearchTool(adapter),
   ];
 }
 
@@ -658,6 +677,49 @@ function stripAccents(text: string): string {
 }
 
 /**
+ * Simple Soundex implementation for phonetic matching
+ */
+function soundex(word: string): string {
+  if (!word) return "0000";
+  const upper = word.toUpperCase().replace(/[^A-Z]/g, "");
+  if (!upper) return "0000";
+
+  const first = upper[0] ?? "0";
+  const mapping: Record<string, string> = {
+    B: "1",
+    F: "1",
+    P: "1",
+    V: "1",
+    C: "2",
+    G: "2",
+    J: "2",
+    K: "2",
+    Q: "2",
+    S: "2",
+    X: "2",
+    Z: "2",
+    D: "3",
+    T: "3",
+    L: "4",
+    M: "5",
+    N: "5",
+    R: "6",
+  };
+
+  let result = first;
+  for (let i = 1; i < upper.length && result.length < 4; i++) {
+    const char = upper[i];
+    if (char && mapping[char]) {
+      const code = mapping[char];
+      if (code && !result.endsWith(code)) {
+        result += code;
+      }
+    }
+  }
+  return (result + "000").slice(0, 4);
+}
+
+/**
  * Validation patterns
  */
 const VALIDATION_PATTERNS: Record<string, RegExp> = {
@@ -983,6 +1045,135 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
         validCount,
         invalidCount: invalidRows.length,
         invalidRows,
+      };
+    },
+  };
+}
+
+/**
+ * Output schema for advanced search
+ */
+const AdvancedSearchOutputSchema = z.object({
+  success: z.boolean(),
+  searchTerm: z.string(),
+  techniques: z.array(z.string()),
+  matchCount: z.number(),
+  matches: z.array(
+    z.object({
+      rowid: z.number(),
+      text: z.string(),
+      matchTypes: z.array(z.string()),
+      bestScore: z.number(),
+      bestType: z.string(),
+    }),
+  ),
+});
+
+/**
+ * Advanced search combining multiple text processing techniques
+ */
+function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_advanced_search",
+    description:
+      "Advanced search combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching",
+    group: "text",
+    inputSchema: AdvancedSearchSchema,
+    outputSchema: AdvancedSearchOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("Advanced Search"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = AdvancedSearchSchema.parse(params);
+
+      // Fetch candidate rows
+      const whereClause = input.whereClause ? ` AND ${input.whereClause}` : "";
+      const query = `SELECT rowid, ${input.column} AS value FROM ${input.table} WHERE ${input.column} IS NOT NULL${whereClause} LIMIT 1000`;
+      const result = await adapter.executeQuery(query);
+
+      if (!result.rows || result.rows.length === 0) {
+        return {
+          success: true,
+          searchTerm: input.searchTerm,
+          techniques: input.techniques,
+          matchCount: 0,
+          matches: [],
+        };
+      }
+
+      const searchLower = input.searchTerm.toLowerCase();
+      const searchSoundex = soundex(input.searchTerm);
+
+      interface Match {
+        rowid: number;
+        text: string;
+        matchTypes: string[];
+        bestScore: number;
+        bestType: string;
+      }
+
+      const allMatches: Match[] = [];
+
+      for (const row of result.rows) {
+        const rawValue: unknown = row["value"];
+        const text =
+          typeof rawValue === "string"
+            ? rawValue
+            : typeof rawValue === "number"
+              ? String(rawValue)
+              : "";
+        const textLower = text.toLowerCase();
+        const matches: { type: string; score: number }[] = [];
+
+        // Exact match (case-insensitive substring)
+        if (input.techniques.includes("exact")) {
+          if (textLower.includes(searchLower)) {
+            matches.push({ type: "exact", score: 1.0 });
+          }
+        }
+
+        // Fuzzy match (Levenshtein ratio)
+        if (input.techniques.includes("fuzzy")) {
+          const distance = levenshtein(input.searchTerm, text);
+          const maxLen = Math.max(input.searchTerm.length, text.length);
+          const similarity = maxLen === 0 ? 1 : 1 - distance / maxLen;
+          if (similarity >= input.fuzzyThreshold) {
+            matches.push({ type: "fuzzy", score: similarity });
+          }
+        }
+
+        // Phonetic match (Soundex)
+        if (input.techniques.includes("phonetic")) {
+          const words = text.split(/\s+/);
+          for (const word of words) {
+            if (soundex(word) === searchSoundex) {
+              matches.push({ type: "phonetic", score: 0.8 });
+              break;
+            }
+          }
+        }
+
+        if (matches.length > 0) {
+          const best = matches.reduce((a, b) => (a.score > b.score ? a : b));
+          allMatches.push({
+            rowid: Number(row["rowid"]),
+            text: text.length > 100 ? text.slice(0, 100) + "..." : text,
+            matchTypes: matches.map((m) => m.type),
+            bestScore: Math.round(best.score * 1000) / 1000,
+            bestType: best.type,
+          });
+        }
+      }
+
+      // Sort by score and limit
+      allMatches.sort((a, b) => b.bestScore - a.bestScore);
+      const limited = allMatches.slice(0, input.limit);
+
+      return {
+        success: true,
+        searchTerm: input.searchTerm,
+        techniques: input.techniques,
+        matchCount: limited.length,
+        matches: limited,
       };
     },
   };
