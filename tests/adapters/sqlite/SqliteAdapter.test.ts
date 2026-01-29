@@ -208,8 +208,8 @@ describe("SqliteAdapter", () => {
       const tools = adapter.getToolDefinitions();
 
       expect(tools.length).toBeGreaterThan(0);
-      // Should have 100 tools (added 8 admin/pragma tools)
-      expect(tools.length).toBe(100);
+      // Should have 102 tools (WASM variant)
+      expect(tools.length).toBe(102);
     });
 
     it("should have required tool properties", () => {
@@ -228,7 +228,7 @@ describe("SqliteAdapter", () => {
     it("should return resource definitions", () => {
       const resources = adapter.getResourceDefinitions();
 
-      expect(resources.length).toBe(7);
+      expect(resources.length).toBe(8);
     });
   });
 
@@ -236,7 +236,7 @@ describe("SqliteAdapter", () => {
     it("should return prompt definitions", () => {
       const prompts = adapter.getPromptDefinitions();
 
-      expect(prompts.length).toBe(7);
+      expect(prompts.length).toBe(10);
     });
   });
 });

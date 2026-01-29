@@ -14,3 +14,22 @@ export {
   type LogModule,
   type ErrorCode,
 } from "./logger.js";
+
+export {
+  UnsafeWhereClauseError,
+  validateWhereClause,
+  sanitizeWhereClause,
+} from "./where-clause.js";
+
+export {
+  InvalidIdentifierError,
+  validateIdentifier,
+  sanitizeIdentifier,
+  sanitizeTableName,
+  sanitizeColumnRef,
+  sanitizeIdentifiers,
+  createColumnList,
+  sanitizeIndexName,
+  quoteIdentifier,
+  needsQuoting,
+} from "./identifiers.js";

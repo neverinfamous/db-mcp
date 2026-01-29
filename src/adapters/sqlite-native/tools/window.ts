@@ -7,6 +7,7 @@
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../NativeSqliteAdapter.js";
+import { validateWhereClause } from "../../../utils/index.js";
 
 // Schemas
 const RowNumberSchema = z.object({
@@ -160,6 +161,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
             `;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -206,6 +208,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
             `;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -258,6 +261,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
             `;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -308,6 +312,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
             `;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -358,6 +363,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
             `;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -405,6 +411,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
             `;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;

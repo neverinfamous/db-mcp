@@ -46,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - MCP 2025-11-25 `structuredContent` returned when `outputSchema` is present
   - Progress token extraction from `extra._meta` enables progress notifications
   - Removed all eslint-disable comments for deprecated API usage
+- **Metadata Caching Pattern** — TTL-based schema caching ported from mysql-mcp
+  - New `SchemaManager.ts` module with configurable cache TTL (default: 5s)
+  - Schema, tables, and indexes cached to reduce repeated introspection queries
+  - Auto-invalidation on DDL operations (CREATE/ALTER/DROP) in all query methods
+  - Fixed N+1 query pattern in `sqlite://indexes` resource
+  - ToolFilter caching for O(1) tool group lookups
+  - `METADATA_CACHE_TTL_MS` environment variable for tuning (documented in README)
 
 ### Changed
 
@@ -80,6 +87,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed `js/clear-text-logging` by breaking data-flow path in `writeToStderr()`
   - Fixed `js/log-injection` by reconstructing output from static character codes
   - Implemented the "Static Classification" pattern for taint-breaking sanitization
+- **SQL Injection Protection** — WHERE clause validation and identifier sanitization (adapted from postgres-mcp)
+  - New `src/utils/where-clause.ts` utility with SQLite-specific dangerous pattern detection
+  - Blocks: ATTACH DATABASE, load_extension, PRAGMA, fileio functions, hex literals, comments, UNION attacks
+  - New `src/utils/identifiers.ts` with centralized identifier validation and quoting
+  - Integrated `validateWhereClause` into 31 tool handlers (text, window, vector, stats)
+  - New `tests/security/security-injection.test.ts` test suite (49 comprehensive test cases)
 
 ### Fixed
 

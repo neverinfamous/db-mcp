@@ -126,15 +126,15 @@ function createIndexesResource(adapter: SqliteAdapter): ResourceDefinition {
     mimeType: "application/json",
     annotations: MEDIUM_PRIORITY,
     handler: async () => {
-      // Get indexes for all tables
-      const tables = await adapter.listTables();
-      const allIndexes: Record<string, unknown[]> = {};
+      // Use single cached query via SchemaManager (eliminates N+1)
+      const indexes = await adapter.getAllIndexes();
 
-      for (const table of tables) {
-        const indexes = await adapter.getIndexes(table.name);
-        if (indexes.length > 0) {
-          allIndexes[table.name] = indexes;
-        }
+      // Group by table name for output format
+      const allIndexes: Record<string, unknown[]> = {};
+      for (const idx of indexes) {
+        const tableName = idx.tableName;
+        const arr = (allIndexes[tableName] ??= []);
+        arr.push(idx);
       }
 
       return {
