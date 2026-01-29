@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
+import { validateWhereClause } from "../../../utils/index.js";
 import {
   GeoDistanceOutputSchema,
   GeoWithinRadiusOutputSchema,
@@ -304,6 +305,11 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
       }
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.lonColumn)) {
         throw new Error("Invalid longitude column name");
+      }
+
+      // Security: Validate WHERE clause if provided
+      if (input.whereClause) {
+        validateWhereClause(input.whereClause);
       }
 
       // Use ROUND to create grid cells

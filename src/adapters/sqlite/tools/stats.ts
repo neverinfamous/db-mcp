@@ -559,6 +559,7 @@ function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT * FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` ORDER BY "${input.column}" ${order} LIMIT ${input.n}`;
@@ -600,6 +601,7 @@ function createDistinctValuesTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT DISTINCT "${input.column}" as value FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -711,6 +713,7 @@ function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
       let sql = `SELECT "${input.column}" as value, COUNT(*) as frequency 
                 FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` GROUP BY "${input.column}" ORDER BY frequency DESC LIMIT ${input.limit}`;
@@ -808,6 +811,11 @@ function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
       }
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
         throw new Error("Invalid column name");
+      }
+
+      // Security: Validate WHERE clause if provided
+      if (input.whereClause) {
+        validateWhereClause(input.whereClause);
       }
 
       const whereClause = input.whereClause ? ` AND ${input.whereClause}` : "";
