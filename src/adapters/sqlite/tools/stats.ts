@@ -11,6 +11,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
+import { validateWhereClause } from "../../../utils/index.js";
 import {
   ReadQueryOutputSchema,
   StatsHistogramOutputSchema,
@@ -196,6 +197,7 @@ function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
             FROM "${input.table}"`;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
 
@@ -243,6 +245,7 @@ function createCountTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT ${countExpr} as count FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
 
@@ -290,6 +293,7 @@ function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
                 FROM "${input.table}"`;
 
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
 
@@ -332,6 +336,7 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
       // First get min/max
       let minMaxSql = `SELECT MIN("${input.column}") as min_val, MAX("${input.column}") as max_val FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         minMaxSql += ` WHERE ${input.whereClause}`;
       }
 
@@ -360,6 +365,7 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT ${bucketCases.join(", ")} FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
 
@@ -412,9 +418,9 @@ function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
         throw new Error("Invalid column name");
       }
 
-      // Get all values sorted
       let sql = `SELECT "${input.column}" as value FROM "${input.table}" WHERE "${input.column}" IS NOT NULL`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` AND ${input.whereClause}`;
       }
       sql += ` ORDER BY "${input.column}"`;
@@ -483,6 +489,7 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
                 FROM "${input.table}" 
                 WHERE "${input.column1}" IS NOT NULL AND "${input.column2}" IS NOT NULL`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` AND ${input.whereClause}`;
       }
 
@@ -654,6 +661,7 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
                 FROM "${input.table}"`;
 
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
 

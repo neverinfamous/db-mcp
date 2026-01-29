@@ -15,6 +15,7 @@ import {
   idempotent,
   destructive,
 } from "../../../utils/annotations.js";
+import { validateWhereClause } from "../../../utils/index.js";
 import {
   CreateTableOutputSchema,
   WriteQueryOutputSchema,
@@ -361,6 +362,7 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT ${selectCols}, "${input.vectorColumn}" FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
 

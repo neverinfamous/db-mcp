@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, write } from "../../../utils/annotations.js";
+import { validateWhereClause } from "../../../utils/index.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
@@ -198,6 +199,7 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -257,6 +259,7 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -308,6 +311,7 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -369,6 +373,7 @@ function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT ${concatExpr} as concatenated FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -410,6 +415,7 @@ function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
       const search = input.searchPattern.replace(/'/g, "''");
       const replace = input.replaceWith.replace(/'/g, "''");
 
+      validateWhereClause(input.whereClause);
       const sql = `UPDATE "${input.table}" SET "${input.column}" = replace("${input.column}", '${search}', '${replace}') WHERE ${input.whereClause}`;
 
       const result = await adapter.executeWriteQuery(sql);
@@ -458,6 +464,7 @@ function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT rowid, "${input.column}" as original, ${trimFunc}("${input.column}") as trimmed FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -499,6 +506,7 @@ function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT rowid, "${input.column}" as original, ${caseFunc}("${input.column}") as transformed FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -543,6 +551,7 @@ function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT rowid, "${input.column}" as original, ${substrExpr} as substring FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -927,6 +936,7 @@ function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT "${input.column}" as original FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -1012,6 +1022,7 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
       if (input.whereClause) {
+        validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
       sql += ` LIMIT ${input.limit}`;
@@ -1086,7 +1097,11 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
       const input = AdvancedSearchSchema.parse(params);
 
       // Fetch candidate rows
-      const whereClause = input.whereClause ? ` AND ${input.whereClause}` : "";
+      let whereClause = "";
+      if (input.whereClause) {
+        validateWhereClause(input.whereClause);
+        whereClause = ` AND ${input.whereClause}`;
+      }
       const query = `SELECT rowid, ${input.column} AS value FROM ${input.table} WHERE ${input.column} IS NOT NULL${whereClause} LIMIT 1000`;
       const result = await adapter.executeQuery(query);
 

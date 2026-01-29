@@ -87,6 +87,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed `js/clear-text-logging` by breaking data-flow path in `writeToStderr()`
   - Fixed `js/log-injection` by reconstructing output from static character codes
   - Implemented the "Static Classification" pattern for taint-breaking sanitization
+- **SQL Injection Protection** — WHERE clause validation and identifier sanitization (adapted from postgres-mcp)
+  - New `src/utils/where-clause.ts` utility with SQLite-specific dangerous pattern detection
+  - Blocks: ATTACH DATABASE, load_extension, PRAGMA, fileio functions, hex literals, comments, UNION attacks
+  - New `src/utils/identifiers.ts` with centralized identifier validation and quoting
+  - Integrated `validateWhereClause` into 31 tool handlers (text, window, vector, stats)
+  - New `tests/security/security-injection.test.ts` test suite (49 comprehensive test cases)
 
 ### Fixed
 
