@@ -246,6 +246,21 @@ MCP prompts provide AI-assisted database workflows:
 
 ---
 
+## ⚡ Performance Tuning
+
+Schema metadata is cached to reduce repeated queries during tool/resource invocations.
+
+| Variable                | Default | Description                                        |
+| ----------------------- | ------- | -------------------------------------------------- |
+| `METADATA_CACHE_TTL_MS` | `5000`  | Cache TTL for schema metadata (milliseconds)       |
+| `LOG_LEVEL`             | `info`  | Log verbosity: `debug`, `info`, `warning`, `error` |
+
+> **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
+
+[⬆️ Back to Table of Contents](#-table-of-contents)
+
+---
+
 ## 📚 MCP Client Configuration
 
 ### Cursor IDE

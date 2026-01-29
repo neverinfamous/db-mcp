@@ -30,10 +30,64 @@ import type {
   ToolDefinition,
 } from "../types/index.js";
 
-import { META_GROUPS, ALL_TOOL_GROUPS } from "./ToolConstants.js";
+import { META_GROUPS, ALL_TOOL_GROUPS, TOOL_GROUPS } from "./ToolConstants.js";
 
 // Re-export for backwards compatibility
 export { META_GROUPS, TOOL_GROUPS, ALL_TOOL_GROUPS } from "./ToolConstants.js";
+
+/**
+ * Cached list of all tool names
+ * Lazy-initialized since TOOL_GROUPS is immutable
+ */
+let cachedAllToolNames: string[] | null = null;
+
+/**
+ * Reverse lookup map: tool name -> group
+ * Lazy-initialized for O(1) tool group lookups
+ */
+let toolToGroupMap: Map<string, ToolGroup> | null = null;
+
+/**
+ * Get all tool names from all groups (cached)
+ */
+export function getAllToolNames(): string[] {
+  if (cachedAllToolNames) {
+    return cachedAllToolNames;
+  }
+  cachedAllToolNames = ALL_TOOL_GROUPS.flatMap((group) => TOOL_GROUPS[group]);
+  return cachedAllToolNames;
+}
+
+/**
+ * Get or initialize the tool-to-group reverse lookup map
+ */
+function getToolToGroupMap(): Map<string, ToolGroup> {
+  if (toolToGroupMap) {
+    return toolToGroupMap;
+  }
+  toolToGroupMap = new Map<string, ToolGroup>();
+  for (const group of ALL_TOOL_GROUPS) {
+    for (const tool of TOOL_GROUPS[group]) {
+      toolToGroupMap.set(tool, group);
+    }
+  }
+  return toolToGroupMap;
+}
+
+/**
+ * Get the group for a specific tool (O(1) lookup)
+ */
+export function getToolGroup(toolName: string): ToolGroup | undefined {
+  return getToolToGroupMap().get(toolName);
+}
+
+/**
+ * Clear all caches - useful for testing
+ */
+export function clearToolFilterCaches(): void {
+  cachedAllToolNames = null;
+  toolToGroupMap = null;
+}
 
 /**
  * Check if a name is a valid tool group

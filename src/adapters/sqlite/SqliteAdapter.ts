@@ -31,6 +31,7 @@ import {
   ConfigurationError,
 } from "../../utils/errors.js";
 import type { SqliteConfig, SqliteOptions } from "./types.js";
+import { SchemaManager } from "./SchemaManager.js";
 
 // Tool definitions from modular files
 import { getAllToolDefinitions } from "./tools/index.js";
@@ -55,6 +56,7 @@ export class SqliteAdapter extends DatabaseAdapter {
   private db: Database | null = null;
   protected override config: SqliteConfig | null = null;
   private sqlJsInstance: Awaited<ReturnType<typeof initSqlJs>> | null = null;
+  private schemaManager: SchemaManager | null = null;
 
   /**
    * Connect to a SQLite database
@@ -139,6 +141,9 @@ export class SqliteAdapter extends DatabaseAdapter {
       } catch {
         setJsonbSupported(false);
       }
+
+      // Initialize SchemaManager with this adapter as the executor
+      this.schemaManager = new SchemaManager(this);
 
       this.connected = true;
     } catch (error) {
@@ -329,6 +334,16 @@ export class SqliteAdapter extends DatabaseAdapter {
 
       const changes = db.getRowsModified();
 
+      // Auto-invalidate schema cache on DDL operations
+      const normalizedSql = sql.trim().toUpperCase();
+      if (
+        normalizedSql.startsWith("CREATE") ||
+        normalizedSql.startsWith("ALTER") ||
+        normalizedSql.startsWith("DROP")
+      ) {
+        this.clearSchemaCache();
+      }
+
       return Promise.resolve({
         rowsAffected: changes,
         executionTimeMs: Date.now() - start,
@@ -364,6 +379,15 @@ export class SqliteAdapter extends DatabaseAdapter {
         : db.exec(sql);
 
       if (results.length === 0) {
+        // Auto-invalidate schema cache on DDL operations
+        const normalizedSql = sql.trim().toUpperCase();
+        if (
+          normalizedSql.startsWith("CREATE") ||
+          normalizedSql.startsWith("ALTER") ||
+          normalizedSql.startsWith("DROP")
+        ) {
+          this.clearSchemaCache();
+        }
         return Promise.resolve({
           rowsAffected: db.getRowsModified(),
           executionTimeMs: Date.now() - start,
@@ -386,6 +410,16 @@ export class SqliteAdapter extends DatabaseAdapter {
         return obj;
       });
 
+      // Auto-invalidate schema cache on DDL operations
+      const normalizedSql = sql.trim().toUpperCase();
+      if (
+        normalizedSql.startsWith("CREATE") ||
+        normalizedSql.startsWith("ALTER") ||
+        normalizedSql.startsWith("DROP")
+      ) {
+        this.clearSchemaCache();
+      }
+
       return Promise.resolve({
         rows,
         executionTimeMs: Date.now() - start,
@@ -397,23 +431,28 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
   /**
-   * Get full database schema
+   * Get full database schema (cached via SchemaManager)
    */
   override async getSchema(): Promise<SchemaInfo> {
     this.ensureConnected();
-
+    if (this.schemaManager) {
+      return this.schemaManager.getSchema();
+    }
+    // Fallback if SchemaManager not initialized
     const tables = await this.listTables();
     const indexes = await this.getIndexes();
-
     return { tables, indexes };
   }
 
   /**
-   * List all tables
+   * List all tables (cached via SchemaManager)
    */
   override async listTables(): Promise<TableInfo[]> {
     this.ensureConnected();
-
+    if (this.schemaManager) {
+      return this.schemaManager.listTables();
+    }
+    // Fallback if SchemaManager not initialized
     const result = await this.executeReadQuery(
       `SELECT name, type FROM sqlite_master 
              WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
@@ -424,30 +463,27 @@ export class SqliteAdapter extends DatabaseAdapter {
     for (const row of result.rows ?? []) {
       const name = row["name"] as string;
       const type = row["type"] as "table" | "view";
-
-      // Get column info
       const tableInfo = await this.describeTable(name);
       tables.push({ ...tableInfo, type });
     }
-
     return tables;
   }
 
   /**
-   * Describe a table's structure
+   * Describe a table's structure (cached via SchemaManager)
    */
   override async describeTable(tableName: string): Promise<TableInfo> {
     this.ensureConnected();
-
-    // Validate table name
+    if (this.schemaManager) {
+      return this.schemaManager.describeTable(tableName);
+    }
+    // Fallback if SchemaManager not initialized
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
       throw new Error("Invalid table name");
     }
-
     const result = await this.executeReadQuery(
       `PRAGMA table_info("${tableName}")`,
     );
-
     const columns: ColumnInfo[] = (result.rows ?? []).map((row) => ({
       name: row["name"] as string,
       type: row["type"] as string,
@@ -455,13 +491,10 @@ export class SqliteAdapter extends DatabaseAdapter {
       primaryKey: row["pk"] === 1,
       defaultValue: row["dflt_value"],
     }));
-
-    // Get row count
     const countResult = await this.executeReadQuery(
       `SELECT COUNT(*) as count FROM "${tableName}"`,
     );
     const rowCount = (countResult.rows?.[0]?.["count"] as number) ?? 0;
-
     return {
       name: tableName,
       type: "table",
@@ -478,24 +511,47 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
   /**
-   * Get indexes, optionally for a specific table
+   * Get indexes, optionally for a specific table (cached via SchemaManager)
    */
   async getIndexes(table?: string): Promise<IndexInfo[]> {
+    this.ensureConnected();
+    if (this.schemaManager) {
+      if (table) {
+        return this.schemaManager.getTableIndexes(table);
+      }
+      return this.schemaManager.getAllIndexes();
+    }
+    // Fallback if SchemaManager not initialized
     let sql = `SELECT name, tbl_name, sql FROM sqlite_master 
              WHERE type = 'index' AND sql IS NOT NULL`;
-
     if (table) {
       sql += ` AND tbl_name = '${table.replace(/'/g, "''")}'`;
     }
-
     const result = await this.executeReadQuery(sql);
-
     return (result.rows ?? []).map((row) => ({
       name: row["name"] as string,
       tableName: row["tbl_name"] as string,
-      columns: [], // Would need to parse SQL to get columns
+      columns: [],
       unique: (row["sql"] as string)?.includes("UNIQUE") ?? false,
     }));
+  }
+
+  /**
+   * Get all indexes in a single query (cached via SchemaManager)
+   * Performance optimization: eliminates N+1 query pattern
+   */
+  async getAllIndexes(): Promise<IndexInfo[]> {
+    return this.getIndexes();
+  }
+
+  /**
+   * Clear the schema metadata cache
+   * Call after DDL operations or when fresh data is needed
+   */
+  clearSchemaCache(): void {
+    if (this.schemaManager) {
+      this.schemaManager.clearCache();
+    }
   }
 
   /**
