@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - README prerequisites updated to specify Node.js 24+ (LTS)
 - **Dependency Updates** — Updated npm dependencies to latest versions
   - `@modelcontextprotocol/sdk`: 1.24.3 → 1.25.3
-  - `@types/node`: 25.0.2 → 25.0.10
+  - `@types/node`: 25.0.2 → 25.1.0
   - `better-sqlite3`: 12.5.0 → 12.6.2
   - `cors`: 2.8.5 → 2.8.6
   - `globals`: 16.5.0 → 17.2.0 (major version bump)
