@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **JSONB Support in Native Adapter** — Fixed JSONB detection missing in `NativeSqliteAdapter`
+  - `NativeSqliteAdapter.connect()` now detects SQLite version and sets JSONB support flag
+  - `sqlite_jsonb_convert` and other JSONB tools now work correctly with better-sqlite3 backend
+  - better-sqlite3 includes SQLite 3.51.2 which fully supports JSONB (requires 3.45+)
+- **JSONB-Compatible Collection Tables** — Updated `sqlite_create_json_collection` CHECK constraint
+  - Changed from `CHECK(json_valid("data"))` to `CHECK(json_type("data") IS NOT NULL)`
+  - `json_valid()` only works on text JSON; `json_type()` works on both text and JSONB formats
+  - Collections can now store JSONB data after `sqlite_jsonb_convert`
+
 ### Changed
 
 - **SQLite-Focused Branding** — Updated project descriptions to reflect SQLite-only focus
