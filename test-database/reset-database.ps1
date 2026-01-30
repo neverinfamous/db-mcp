@@ -128,15 +128,18 @@ if ($deletedCount -gt 0) {
 Write-Step "2" $totalSteps "Creating database from seed file..."
 
 if (-not $useCli) {
-    # Use sqlite3 command line
-    $sqlContent = Get-Content $SqlFile -Raw
-    $result = & $sqlite3Path $DatabasePath -cmd ".read `"$SqlFile`"" ".quit" 2>&1
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Err "Failed to create database: $result"
+    # Use sqlite3 command line with input redirection
+    # The .read command with -cmd doesn't work reliably, so we use Get-Content | sqlite3
+    try {
+        Get-Content $SqlFile -Raw | & $sqlite3Path $DatabasePath
+        if ($LASTEXITCODE -ne 0) {
+            throw "sqlite3 exited with code $LASTEXITCODE"
+        }
+        Write-Success "Database created using sqlite3"
+    } catch {
+        Write-Err "Failed to create database: $_"
         exit 1
     }
-    Write-Success "Database created using sqlite3"
 } else {
     # Use Node.js with better-sqlite3 via inline script
     $dbMcpRoot = Split-Path -Parent $ScriptDir
