@@ -1,9 +1,9 @@
 /**
  * db-mcp - Database Adapter Interface
  *
- * Abstract base class that all database adapters must implement.
- * Provides a consistent interface for database operations across
- * different database systems.
+ * Abstract base class for SQLite database adapters.
+ * Provides a consistent interface for SQLite database operations
+ * across WASM and native backend variants.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

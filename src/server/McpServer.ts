@@ -1,8 +1,8 @@
 /**
  * db-mcp - Main MCP Server
  *
- * Code mode MCP server that supports multiple database adapters,
- * OAuth 2.0 authentication, and dynamic tool filtering.
+ * SQLite MCP server with OAuth 2.1 authentication,
+ * HTTP/SSE transport, and dynamic tool filtering.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

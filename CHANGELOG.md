@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **SQLite-Focused Branding** — Updated project descriptions to reflect SQLite-only focus
+  - `package.json`: Updated description and removed unused database keywords (postgresql, mysql, mongodb, redis)
+  - `src/cli.ts`: Updated help text, removed dead CLI options and environment variable parsing for unsupported databases
+  - Updated header comments in `src/index.ts`, `src/server/McpServer.ts`, `src/adapters/DatabaseAdapter.ts`
+
 ### Security
 
 - **Identifier Validation Centralization** — Migrated 83 tool handlers to use centralized `sanitizeIdentifier()` utility

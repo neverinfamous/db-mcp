@@ -1,5 +1,5 @@
 /**
- * db-mcp - Multi-database MCP Server
+ * db-mcp - SQLite MCP Server
  *
  * Main entry point and public API exports.
  */

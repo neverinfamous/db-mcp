@@ -1,7 +1,7 @@
 {
   "name": "db-mcp",
   "version": "0.1.0",
-  "description": "Multi-database MCP server with OAuth 2.0 authentication, tool filtering, and code mode architecture",
+  "description": "SQLite MCP server with OAuth 2.1 authentication, HTTP/SSE transport, and smart tool filtering",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,10 +29,6 @@
     "model-context-protocol",
     "database",
     "sqlite",
-    "postgresql",
-    "mysql",
-    "mongodb",
-    "redis",
     "oauth",
     "ai",
     "llm"
