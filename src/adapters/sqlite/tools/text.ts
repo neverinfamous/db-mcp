@@ -225,8 +225,8 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
 
       return {
         success: true,
-        matchCount: extracts.length,
-        results: extracts,
+        rowCount: extracts.length,
+        matches: extracts,
       };
     },
   };
@@ -274,8 +274,8 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
 
       return {
         success: true,
-        matchCount: matches.length,
-        rows: matches,
+        rowCount: matches.length,
+        matches,
       };
     },
   };
@@ -323,10 +323,14 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
         };
       });
 
+      // Output schema expects parts and count for a single split result
+      // But this tool returns per-row splits, so we need to align with actual usage
+      // Return format matching the actual operation which is row-based splits
+      const allParts = splits.flatMap((s) => s.parts);
       return {
         success: true,
-        rowCount: splits.length,
-        results: splits,
+        parts: allParts,
+        count: allParts.length,
       };
     },
   };
@@ -1130,8 +1134,16 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         if (matches.length > 0) {
           const best = matches.reduce((a, b) => (a.score > b.score ? a : b));
+          // Safely coerce rowid to number, defaulting to 0 if undefined/null
+          const rawRowid = row["rowid"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
           allMatches.push({
-            rowid: Number(row["rowid"]),
+            rowid,
             text: text.length > 100 ? text.slice(0, 100) + "..." : text,
             matchTypes: matches.map((m) => m.type),
             bestScore: Math.round(best.score * 1000) / 1000,

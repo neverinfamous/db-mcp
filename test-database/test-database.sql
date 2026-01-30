@@ -144,6 +144,19 @@ INSERT INTO test_articles (title, body, author, category) VALUES
      'Statistical analysis of database content reveals patterns and insights. Common operations include calculating averages, standard deviations, percentiles, and correlations. These metrics help understand data distributions and identify outliers.',
      'Henry Taylor', 'analytics');
 
+-- Create FTS5 virtual table for full-text search testing
+CREATE VIRTUAL TABLE IF NOT EXISTS test_articles_fts USING fts5(
+    title,
+    body,
+    content='test_articles',
+    content_rowid='id',
+    tokenize="unicode61"
+);
+
+-- Populate FTS index from test_articles
+INSERT INTO test_articles_fts(rowid, title, body)
+SELECT id, title, body FROM test_articles;
+
 -- =============================================================================
 -- TEXT: User Data with Various Patterns
 -- =============================================================================

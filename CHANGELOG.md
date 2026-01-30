@@ -35,6 +35,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `extractColumnNameFromPath()` and `getUniqueColumnNames()` helpers in `json-helpers.ts`
   - Duplicate path segments get numeric suffixes (e.g., `name`, `name_2`)
 
+- **Text Tool Output Schema Fixes** — Fixed 6 tools with output validation errors
+  - `sqlite_regex_extract`: Changed `matchCount`/`results` to `rowCount`/`matches` to match schema
+  - `sqlite_regex_match`: Changed `matchCount`/`rows` to `rowCount`/`matches` to match schema
+  - `sqlite_text_split`: Changed `rowCount`/`results` to `parts`/`count` to match schema
+  - `sqlite_advanced_search`: Fixed NaN bug when coercing rowid to number
+  - `sqlite_fts_create`: Changed `sql` to `tableName` in response to match schema
+  - `sqlite_fts_rebuild`: Added missing `tableName` field to response
+
+- **Test Database FTS5 Table** — Added pre-built FTS5 table for testing
+  - `test_articles_fts`: FTS5 virtual table indexing `test_articles` (title, body)
+  - Updated `test-database.sql` to create and populate the FTS index
+  - Updated `reset-database.md` documentation with new table
+
 - **JSONB Support in Native Adapter** — Fixed JSONB detection missing in `NativeSqliteAdapter`
   - `NativeSqliteAdapter.connect()` now detects SQLite version and sets JSONB support flag
   - `sqlite_jsonb_convert` and other JSONB tools now work correctly with better-sqlite3 backend

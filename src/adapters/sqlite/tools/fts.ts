@@ -105,7 +105,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
       return {
         success: true,
         message: `FTS5 table '${input.tableName}' created`,
-        sql,
+        tableName: input.tableName,
       };
     },
   };
@@ -188,6 +188,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
       return {
         success: true,
         message: `FTS5 index '${input.table}' rebuilt`,
+        tableName: input.table,
       };
     },
   };
