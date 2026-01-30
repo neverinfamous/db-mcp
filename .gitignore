@@ -76,3 +76,7 @@ data/
 .env.local
 *.pem
 *.key
+
+# Test database (seed scripts tracked, databases excluded)
+test-database/*.db
+test-database/*.db-*

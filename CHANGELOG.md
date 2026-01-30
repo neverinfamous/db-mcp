@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing
+  - `test-database/test-database.sql`: Seed data with 10 tables and 409 rows covering all 7 tool groups
+  - `test-database/reset-database.ps1`: PowerShell script to reset database to clean state with verification
+  - `test-database/test-groups/`: Individual test guides for each tool group (core, json, text, stats, vector, admin, geo)
+  - Uses ESM-compatible Node.js scripts with better-sqlite3 for cross-platform reset
+  - Test tables: products, orders, json_docs, articles, users, measurements, embeddings, locations, categories, events
+
 - **HTTP/SSE Streaming Transport** — Enhanced HTTP transport with session management and SSE
   - **Stateful mode (default)**: Multi-session management with SSE streaming for notifications
   - **Stateless mode (`--stateless`)**: Lightweight serverless-compatible mode for Lambda/Workers
