@@ -33,6 +33,67 @@ import {
 import { normalizeJson } from "../json-utils.js";
 
 /**
+ * Extract a meaningful column name from a JSONPath expression.
+ * Examples:
+ *   $.title -> title
+ *   $.nested.key -> key
+ *   $.items[0].name -> name
+ *   $[0] -> item_0
+ *   $ -> value
+ */
+function extractColumnNameFromPath(path: string): string {
+  // Try to extract the last key from dot notation (e.g., $.title or $.nested.key)
+  const dotRegex = /\.([a-zA-Z_][a-zA-Z0-9_]*)(?:\[\d+\])?$/;
+  const dotMatch = dotRegex.exec(path);
+  if (dotMatch?.[1]) {
+    return dotMatch[1];
+  }
+  // Handle array index at root (e.g., $[0])
+  const indexRegex = /^\$\[(\d+)\]$/;
+  const indexMatch = indexRegex.exec(path);
+  if (indexMatch?.[1]) {
+    return `item_${indexMatch[1]}`;
+  }
+  // Handle root ($)
+  if (path === "$") {
+    return "value";
+  }
+  // Fallback: clean up path for use as alias
+  return path.replace(/^\$\.?/, "").replace(/\W+/g, "_") || "value";
+}
+
+/**
+ * Generate unique column aliases from paths, appending suffixes for duplicates.
+ */
+function generateUniqueAliases(paths: string[]): string[] {
+  const nameCount = new Map<string, number>();
+  const result: string[] = [];
+
+  // First pass: count occurrences of each base name
+  for (const path of paths) {
+    const baseName = extractColumnNameFromPath(path);
+    nameCount.set(baseName, (nameCount.get(baseName) ?? 0) + 1);
+  }
+
+  // Second pass: generate unique names
+  const usedCounts = new Map<string, number>();
+  for (const path of paths) {
+    const baseName = extractColumnNameFromPath(path);
+    const totalCount = nameCount.get(baseName) ?? 1;
+
+    if (totalCount === 1) {
+      result.push(baseName);
+    } else {
+      const index = (usedCounts.get(baseName) ?? 0) + 1;
+      usedCounts.set(baseName, index);
+      result.push(`${baseName}_${index}`);
+    }
+  }
+
+  return result;
+}
+
+/**
  * Get all JSON helper tools
  */
 export function getJsonHelperTools(adapter: SqliteAdapter): ToolDefinition[] {
@@ -166,12 +227,13 @@ function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
 
       let selectClause: string;
       if (input.paths && input.paths.length > 0) {
-        // Extract specific paths
+        // Generate unique column aliases from paths
+        const aliases = generateUniqueAliases(input.paths);
         const extracts = input.paths.map((path, i) => {
           if (!path.startsWith("$")) {
             throw new Error(`JSON path must start with $: ${path}`);
           }
-          return `json_extract("${input.column}", '${path}') as path_${i}`;
+          return `json_extract("${input.column}", '${path}') as "${aliases[i]}"`;
         });
         selectClause = extracts.join(", ");
       } else {
@@ -216,11 +278,13 @@ function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
       // Build select clause
       let selectClause: string;
       if (input.selectPaths && input.selectPaths.length > 0) {
+        // Generate unique column aliases from paths
+        const aliases = generateUniqueAliases(input.selectPaths);
         const extracts = input.selectPaths.map((path, i) => {
           if (!path.startsWith("$")) {
             throw new Error(`JSON path must start with $: ${path}`);
           }
-          return `json_extract("${input.column}", '${path}') as result_${i}`;
+          return `json_extract("${input.column}", '${path}') as "${aliases[i]}"`;
         });
         selectClause = extracts.join(", ");
       } else {

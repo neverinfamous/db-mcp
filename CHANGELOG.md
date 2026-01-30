@@ -37,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_json_storage_info`: New dedicated `JsonStorageInfoOutputSchema` with format statistics
   - `sqlite_json_normalize_column`: New dedicated `JsonNormalizeColumnOutputSchema` with normalization counts
 
+- **JSON Query Column Naming** — Improved UX for `sqlite_json_query` and `sqlite_json_select`
+  - Column aliases now derived from JSONPath (e.g., `$.title` → `title` instead of `result_0`)
+  - Added `extractColumnNameFromPath()` and `generateUniqueAliases()` helpers
+  - Automatic duplicate handling appends suffix only when conflicts occur (e.g., `name_1`, `name_2`)
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing
