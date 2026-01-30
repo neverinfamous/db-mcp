@@ -324,13 +324,28 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       )
       .all() as { name: string; type: string; sql: string }[];
 
-    return Promise.resolve(
-      result.map((row) => ({
+    // Build tables with column info from PRAGMA table_info()
+    const tables = result.map((row) => {
+      const columns = db.prepare(`PRAGMA table_info("${row.name}")`).all() as {
+        name: string;
+        type: string;
+        notnull: number;
+        pk: number;
+      }[];
+
+      return {
         name: row.name,
         type: row.type as "table" | "view",
-        columns: [],
-      })),
-    );
+        columns: columns.map((c) => ({
+          name: c.name,
+          type: c.type,
+          nullable: c.notnull === 0,
+          primaryKey: c.pk > 0,
+        })),
+      };
+    });
+
+    return Promise.resolve(tables);
   }
 
   /**
