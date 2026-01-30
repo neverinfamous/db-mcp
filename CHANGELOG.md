@@ -29,6 +29,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_create_table` message now accurately indicates when table already exists (using IF NOT EXISTS): "Table 'x' already exists (no changes made)"
   - `sqlite_list_tables` now correctly returns `columnCount` for each table (was always returning 0 in native adapter because `PRAGMA table_info()` was not being called)
 
+- **JSONB Support in Native Adapter** — Fixed JSONB detection missing in `NativeSqliteAdapter`
+  - `NativeSqliteAdapter.connect()` now detects SQLite version and sets JSONB support flag
+  - `sqlite_jsonb_convert` and other JSONB tools now work correctly with better-sqlite3 backend
+  - better-sqlite3 includes SQLite 3.51.2 which fully supports JSONB (requires 3.45+)
+
+- **JSONB-Compatible Collection Tables** — Updated `sqlite_create_json_collection` CHECK constraint
+  - Changed from `CHECK(json_valid("data"))` to `CHECK(json_type("data") IS NOT NULL)`
+  - `json_valid()` only works on text JSON; `json_type()` works on both text and JSONB formats
+  - Collections can now store JSONB data after `sqlite_jsonb_convert`
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

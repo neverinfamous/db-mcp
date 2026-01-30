@@ -40,6 +40,10 @@ import { getGeoTools } from "../sqlite/tools/geo.js";
 import { getAdminTools } from "../sqlite/tools/admin.js";
 import { getResourceDefinitions } from "../sqlite/resources.js";
 import { getPromptDefinitions } from "../sqlite/prompts.js";
+import {
+  isJsonbSupportedVersion,
+  setJsonbSupported,
+} from "../sqlite/json-utils.js";
 
 // Import native-specific tools
 import { getTransactionTools } from "./tools/transactions.js";
@@ -98,6 +102,23 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         } catch {
           // WAL mode may not be available
         }
+      }
+
+      // Detect JSONB support based on SQLite version
+      try {
+        const versionResult = this.db
+          .prepare("SELECT sqlite_version()")
+          .get() as { "sqlite_version()": string } | undefined;
+        const version = versionResult?.["sqlite_version()"] ?? "0.0.0";
+        const jsonbSupported = isJsonbSupportedVersion(version);
+        setJsonbSupported(jsonbSupported);
+        if (jsonbSupported) {
+          log.info(`JSONB support enabled (SQLite ${version})`, {
+            code: "SQLITE_JSONB",
+          });
+        }
+      } catch {
+        setJsonbSupported(false);
       }
 
       this.connected = true;
