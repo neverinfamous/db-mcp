@@ -31,18 +31,26 @@ This directory contains scripts and documentation for testing the db-mcp SQLite 
 
 The seed data creates 10 test tables with 409 total rows:
 
-| Table               | Rows | Purpose               | Tool Groups  |
-| ------------------- | ---- | --------------------- | ------------ |
-| `test_products`     | 15   | Product catalog       | Core, Stats  |
-| `test_orders`       | 20   | Order transactions    | Core, Stats  |
-| `test_jsonb_docs`   | 6    | JSON documents        | JSON         |
-| `test_articles`     | 8    | Article content       | Text, FTS    |
-| `test_users`        | 8    | User profiles         | Text, Core   |
-| `test_measurements` | 200  | Sensor data           | Stats        |
-| `test_embeddings`   | 20   | Vector embeddings     | Vector       |
-| `test_locations`    | 15   | Geographic points     | Geo          |
-| `test_categories`   | 17   | Hierarchical taxonomy | Text         |
-| `test_events`       | 100  | Event logs            | Stats, Admin |
+| Table               | Rows | Columns                                                                 | Tool Groups  |
+| ------------------- | ---- | ----------------------------------------------------------------------- | ------------ |
+| `test_products`     | 15   | id, name, description, price, category                                  | Core, Stats  |
+| `test_orders`       | 20   | id, product_id (FK), customer_name, quantity, total_price, status       | Core, Stats  |
+| `test_jsonb_docs`   | 6    | id, title, content, **metadata** (JSON), **tags** (JSON array)          | JSON         |
+| `test_articles`     | 8    | id, title, content, author, published_at                                | Text, FTS    |
+| `test_users`        | 8    | id, username, email, phone, bio                                         | Text, Core   |
+| `test_measurements` | 200  | id, sensor_id, temperature, humidity, pressure, recorded_at             | Stats        |
+| `test_embeddings`   | 20   | id, label, category, **embedding** (8-dim vector as JSON array)         | Vector       |
+| `test_locations`    | 15   | id, name, latitude, longitude, country                                  | Geo          |
+| `test_categories`   | 17   | id, name, **path** (dot-separated hierarchy, e.g., "electronics.phones")| Text         |
+| `test_events`       | 100  | id, type, user_id, **payload** (JSON), created_at                       | Stats, Admin |
+
+**JSON columns for JSON tool testing:**
+
+- `test_jsonb_docs.metadata` — Nested object with keys: source, language, version, quality, subscribers
+- `test_jsonb_docs.tags` — Array of strings
+- `test_embeddings.embedding` — Array of 8 floats
+- `test_events.payload` — Event-specific JSON object
+
 
 ## Starting the Server for Testing
 
@@ -128,3 +136,56 @@ If verification shows unexpected row counts:
 1. Check that `test-database.sql` is intact
 2. Run with `-Verbose` flag to see details
 3. Try manual reset: `sqlite3 test.db < test-database.sql`
+
+---
+
+## JSON Tool Group Testing Prompt
+
+Copy and paste this prompt to test the JSON tool group:
+
+Please conduct a comprehensive test of the db-mcp SQLite MCP server "json" tool group (23 + 3 built-in tools) using the live MCP server tool calls. Use the MCP tools directly for testing, not scripts/terminal.
+
+### Test Database Schema
+
+The test database (test-database/test.db) contains these tables with JSON-relevant columns:
+
+| Table | Rows | Columns | JSON Columns |
+|-------|------|---------|--------------|
+| test_products | 15 | id, name, description, price, category | — |
+| test_orders | 20 | id, product_id (FK), customer_name, quantity, total_price, status | — |
+| test_jsonb_docs | 6 | id, title, content, metadata, tags | **metadata** (nested object), **tags** (string array) |
+| test_articles | 8 | id, title, content, author, published_at | — |
+| test_users | 8 | id, username, email, phone, bio | — |
+| test_measurements | 200 | id, sensor_id, temperature, humidity, pressure, recorded_at | — |
+| test_embeddings | 20 | id, label, category, embedding | **embedding** (8-dim float array) |
+| test_locations | 15 | id, name, latitude, longitude, country | — |
+| test_categories | 17 | id, name, path | — |
+| test_events | 100 | id, type, user_id, payload, created_at | **payload** (event-specific JSON) |
+
+**Primary JSON test tables:**
+- `test_jsonb_docs.metadata` — Object with keys: source, language, version, quality, subscribers
+- `test_jsonb_docs.tags` — Array of strings like ["tech", "tutorial"]
+- `test_events.payload` — Varies by event type
+
+### Testing Requirements
+
+1. Use existing `test_*` tables for read operations (SELECT, COUNT, queries)
+2. Create temporary tables with `temp_*` prefix for write operations
+3. Clean up any `temp_*` tables after testing
+4. Test each tool with realistic inputs based on the schema above
+5. Report all: failures, unexpected behaviors, improvement opportunities, or overly large payloads
+
+### Reporting Format
+
+- ✅ Pass: Tool works as expected
+- ❌ Fail: Tool errors or produces incorrect results (include error message)
+- ⚠️ Issue: Unexpected behavior or improvement opportunity
+- 📦 Payload: Unnecessarily large response that could be optimized
+
+### Final Summary
+
+At the end, provide:
+- Total tools tested / passed / failed
+- List of any issues found
+- Recommended fixes or improvements
+
