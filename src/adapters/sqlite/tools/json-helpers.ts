@@ -473,7 +473,8 @@ function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition {
       // Build CREATE TABLE
       const columns = [
         `"${idCol}" TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))))`,
-        `"${dataCol}" TEXT NOT NULL CHECK(json_valid("${dataCol}"))`,
+        // Use json_type() IS NOT NULL instead of json_valid() to support both text JSON and JSONB
+        `"${dataCol}" TEXT NOT NULL CHECK(json_type("${dataCol}") IS NOT NULL)`,
       ];
 
       if (input.timestamps) {
