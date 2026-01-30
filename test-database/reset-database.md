@@ -6,6 +6,7 @@ This directory contains scripts and documentation for testing the db-mcp SQLite 
 
 ```powershell
 # Reset database to clean state
+.\test-database\reset-database.ps1
 .\reset-database.ps1
 
 # Reset with verbose output

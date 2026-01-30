@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Consistent security pattern across 10 files: `geo.ts`, `admin.ts`, `text.ts`, `vector.ts`, `virtual.ts`, `stats.ts`, `fts.ts`, `json-operations.ts`, `json-helpers.ts`, `core.ts`
   - Updated security tests to expect new error message format
 
+### Fixed
+
+- **Core Tool Bug Fixes** — Resolved 3 issues discovered during comprehensive MCP tool testing
+  - `sqlite_describe_table` now correctly returns an error for non-existent tables (was returning `success: true` with empty columns)
+  - `sqlite_write_query` and other query methods now auto-convert boolean parameters (`true`/`false`) to integers (`1`/`0`) since SQLite doesn't have native boolean type
+  - `sqlite_create_table` message now accurately indicates when table already exists (using IF NOT EXISTS): "Table 'x' already exists (no changes made)"
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

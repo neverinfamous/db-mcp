@@ -121,6 +121,16 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateTableSchema.parse(params);
 
+      // Check if table already exists (when using IF NOT EXISTS)
+      let tableExisted = false;
+      if (input.ifNotExists) {
+        const checkResult = await adapter.executeReadQuery(
+          `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
+          [input.tableName],
+        );
+        tableExisted = (checkResult.rows?.length ?? 0) > 0;
+      }
+
       // Build column definitions
       const columnDefs = input.columns.map((col) => {
         const parts = [`"${col.name}" ${col.type}`];
@@ -154,7 +164,9 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
 
       return {
         success: true,
-        message: `Table '${input.tableName}' created successfully`,
+        message: tableExisted
+          ? `Table '${input.tableName}' already exists (no changes made)`
+          : `Table '${input.tableName}' created successfully`,
         sql,
       };
     },
