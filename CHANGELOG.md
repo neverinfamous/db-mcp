@@ -39,6 +39,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `json_valid()` only works on text JSON; `json_type()` works on both text and JSONB formats
   - Collections can now store JSONB data after `sqlite_jsonb_convert`
 
+- **JSON Tool Output Schema Fixes** — Fixed 6 tools with output validation errors
+  - `sqlite_json_keys`: Added missing `rowCount` field and fixed `keys` array type
+  - `sqlite_json_group_array`: Changed `results` to `rows` to match schema
+  - `sqlite_json_group_object`: Changed `results` to `rows` to match schema
+  - `sqlite_jsonb_convert`: Created dedicated `JsonbConvertOutputSchema`
+  - `sqlite_json_storage_info`: Created dedicated `JsonStorageInfoOutputSchema`
+  - `sqlite_json_normalize_column`: Created dedicated `JsonNormalizeColumnOutputSchema`
+  - Added `JsonPrettyOutputSchema` for `sqlite_json_pretty`
+  - Updated `ToolConstants.ts` with correct list of all 23 JSON tool names
+
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

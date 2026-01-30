@@ -28,8 +28,12 @@ import {
   JsonEachOutputSchema,
   JsonGroupArrayOutputSchema,
   JsonGroupObjectOutputSchema,
-  ReadQueryOutputSchema,
+  JsonPrettyOutputSchema,
+  JsonbConvertOutputSchema,
+  JsonStorageInfoOutputSchema,
+  JsonNormalizeColumnOutputSchema,
 } from "../output-schemas.js";
+
 import {
   normalizeJson,
   isJsonbSupported,
@@ -424,9 +428,12 @@ function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
 
       const result = await adapter.executeReadQuery(sql);
 
+      const keys = result.rows?.map((r) => r["key"]) ?? [];
+
       return {
         success: true,
-        keys: result.rows?.map((r) => r["key"]) ?? [],
+        rowCount: keys.length,
+        keys: keys,
       };
     },
   };
@@ -513,7 +520,7 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
       return {
         success: true,
         rowCount: result.rows?.length ?? 0,
-        results: result.rows,
+        rows: result.rows ?? [],
       };
     },
   };
@@ -560,7 +567,7 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
       return {
         success: true,
         rowCount: result.rows?.length ?? 0,
-        results: result.rows,
+        rows: result.rows ?? [],
       };
     },
   };
@@ -575,6 +582,7 @@ function createJsonPrettyTool(): ToolDefinition {
     description: "Format JSON string with indentation for readability.",
     group: "json",
     inputSchema: JsonPrettySchema,
+    outputSchema: JsonPrettyOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Pretty"),
     handler: (params: unknown, _context: RequestContext) => {
@@ -636,7 +644,7 @@ function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
       "Convert a text JSON column to JSONB binary format for faster processing. Requires SQLite 3.45+.",
     group: "json",
     inputSchema: JsonbConvertSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: JsonbConvertOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSONB Convert"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -681,7 +689,7 @@ function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
       "Analyze storage format of a JSON column (text vs JSONB) and report statistics.",
     group: "json",
     inputSchema: JsonStorageInfoSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: JsonStorageInfoOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Storage Info"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -744,7 +752,7 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
       "Normalize JSON data in a column (sort keys, compact format) for consistent storage and comparison.",
     group: "json",
     inputSchema: JsonNormalizeColumnSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: JsonNormalizeColumnOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Normalize JSON Column"),
     handler: async (params: unknown, _context: RequestContext) => {

@@ -267,7 +267,7 @@ export const JsonArrayLengthOutputSchema = z.object({
 export const JsonKeysOutputSchema = z.object({
   success: z.boolean(),
   rowCount: z.number(),
-  keys: z.array(z.array(z.string()).nullable()),
+  keys: z.array(z.union([z.string(), z.number()]).nullable()),
 });
 
 /**
@@ -280,18 +280,22 @@ export const JsonValidOutputSchema = z.object({
 
 /**
  * sqlite_json_group_array output
+ * Returns aggregated arrays - either a single array or grouped arrays with group keys
  */
 export const JsonGroupArrayOutputSchema = z.object({
   success: z.boolean(),
-  result: z.array(z.unknown()),
+  rowCount: z.number(),
+  rows: z.array(z.record(z.string(), z.unknown())),
 });
 
 /**
  * sqlite_json_group_object output
+ * Returns aggregated objects - either single object or grouped objects with group keys
  */
 export const JsonGroupObjectOutputSchema = z.object({
   success: z.boolean(),
-  result: z.record(z.string(), z.unknown()),
+  rowCount: z.number(),
+  rows: z.array(z.record(z.string(), z.unknown())),
 });
 
 /**
@@ -331,6 +335,58 @@ export const JsonTreeOutputSchema = z.object({
 export const JsonPatchOutputSchema = z.object({
   success: z.boolean(),
   rowsAffected: z.number(),
+});
+
+/**
+ * sqlite_json_pretty output
+ */
+export const JsonPrettyOutputSchema = z.object({
+  success: z.boolean(),
+  formatted: z.string().optional(),
+  error: z.string().optional(),
+});
+
+// =============================================================================
+// JSONB Tool Output Schemas (3 tools)
+// =============================================================================
+
+/**
+ * sqlite_jsonb_convert output
+ */
+export const JsonbConvertOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string().optional(),
+  rowsAffected: z.number().optional(),
+  error: z.string().optional(),
+  hint: z.string().optional(),
+});
+
+/**
+ * sqlite_json_storage_info output
+ */
+export const JsonStorageInfoOutputSchema = z.object({
+  success: z.boolean(),
+  jsonbSupported: z.boolean(),
+  sampleSize: z.number(),
+  formats: z.object({
+    text: z.number(),
+    jsonb: z.number(),
+    null: z.number(),
+    unknown: z.number(),
+  }),
+  recommendation: z.string(),
+});
+
+/**
+ * sqlite_json_normalize_column output
+ */
+export const JsonNormalizeColumnOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  normalized: z.number(),
+  unchanged: z.number(),
+  errors: z.number(),
+  total: z.number(),
 });
 
 // =============================================================================
