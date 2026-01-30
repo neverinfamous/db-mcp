@@ -31,18 +31,18 @@ This directory contains scripts and documentation for testing the db-mcp SQLite 
 
 The seed data creates 10 test tables with 409 total rows:
 
-| Table               | Rows | Purpose               | Tool Groups  |
-| ------------------- | ---- | --------------------- | ------------ |
-| `test_products`     | 15   | Product catalog       | Core, Stats  |
-| `test_orders`       | 20   | Order transactions    | Core, Stats  |
-| `test_jsonb_docs`   | 6    | JSON documents        | JSON         |
-| `test_articles`     | 8    | Article content       | Text, FTS    |
-| `test_users`        | 8    | User profiles         | Text, Core   |
-| `test_measurements` | 200  | Sensor data           | Stats        |
-| `test_embeddings`   | 20   | Vector embeddings     | Vector       |
-| `test_locations`    | 15   | Geographic points     | Geo          |
-| `test_categories`   | 17   | Hierarchical taxonomy | Text         |
-| `test_events`       | 100  | Event logs            | Stats, Admin |
+| Table               | Rows | Purpose                        | Tool Groups  |
+| ------------------- | ---- | ------------------------------ | ------------ |
+| `test_products`     | 15   | Product catalog                | Core, Stats  |
+| `test_orders`       | 20   | Order transactions             | Core, Stats  |
+| `test_jsonb_docs`   | 6    | JSON documents (nested arrays) | JSON         |
+| `test_articles`     | 8    | Article content                | Text, FTS    |
+| `test_users`        | 8    | User profiles                  | Text, Core   |
+| `test_measurements` | 200  | Sensor data                    | Stats        |
+| `test_embeddings`   | 20   | Vector embeddings              | Vector       |
+| `test_locations`    | 15   | Geographic points              | Geo          |
+| `test_categories`   | 17   | Hierarchical taxonomy          | Text         |
+| `test_events`       | 100  | Event logs                     | Stats, Admin |
 
 ## Starting the Server for Testing
 

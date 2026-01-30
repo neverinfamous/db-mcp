@@ -86,22 +86,22 @@ CREATE TABLE IF NOT EXISTS test_jsonb_docs (
 );
 
 INSERT INTO test_jsonb_docs (doc, metadata, tags) VALUES
-    ('{"type": "article", "title": "Getting Started with SQLite", "author": "Alice", "views": 1250, "rating": 4.5}',
+    ('{"type": "article", "title": "Getting Started with SQLite", "author": "Alice", "views": 1250, "rating": 4.5, "tags": ["database", "tutorial", "beginner"]}',
      '{"source": "blog", "language": "en", "version": 1}',
      '["database", "tutorial", "beginner"]'),
-    ('{"type": "article", "title": "Advanced JSON Operations", "author": "Bob", "views": 890, "rating": 4.8}',
+    ('{"type": "article", "title": "Advanced JSON Operations", "author": "Bob", "views": 890, "rating": 4.8, "tags": ["json", "advanced", "sqlite"]}',
      '{"source": "docs", "language": "en", "version": 2}',
      '["json", "advanced", "sqlite"]'),
-    ('{"type": "video", "title": "MCP Protocol Deep Dive", "author": "Carol", "duration": 3600, "views": 5400}',
+    ('{"type": "video", "title": "MCP Protocol Deep Dive", "author": "Carol", "duration": 3600, "views": 5400, "tags": ["mcp", "protocol", "ai"]}',
      '{"source": "youtube", "language": "en", "quality": "1080p"}',
      '["mcp", "protocol", "ai"]'),
-    ('{"type": "article", "title": "FTS5 Full-Text Search", "author": "David", "views": 670, "rating": 4.2, "nested": {"level1": {"level2": "deep value"}}}',
+    ('{"type": "article", "title": "FTS5 Full-Text Search", "author": "David", "views": 670, "rating": 4.2, "tags": ["fts5", "search", "indexing"], "nested": {"level1": {"level2": "deep value"}}}',
      '{"source": "wiki", "language": "en", "version": 1}',
      '["fts5", "search", "indexing"]'),
-    ('{"type": "podcast", "title": "Database Performance Tips", "author": "Eve", "duration": 2700, "episodes": 12}',
+    ('{"type": "podcast", "title": "Database Performance Tips", "author": "Eve", "duration": 2700, "episodes": 12, "tags": ["performance", "tips", "podcast"]}',
      '{"source": "spotify", "language": "en", "subscribers": 15000}',
      '["performance", "tips", "podcast"]'),
-    ('{"type": "article", "title": "Vector Search Fundamentals", "author": "Frank", "views": 2100, "rating": 4.7}',
+    ('{"type": "article", "title": "Vector Search Fundamentals", "author": "Frank", "views": 2100, "rating": 4.7, "tags": ["vector", "embeddings", "similarity"]}',
      '{"source": "medium", "language": "en", "version": 3}',
      '["vector", "embeddings", "similarity"]');
 
