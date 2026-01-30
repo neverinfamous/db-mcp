@@ -29,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_create_table` message now accurately indicates when table already exists (using IF NOT EXISTS): "Table 'x' already exists (no changes made)"
   - `sqlite_list_tables` now correctly returns `columnCount` for each table (was always returning 0 in native adapter because `PRAGMA table_info()` was not being called)
 
+- **JSON Tool Output Schema Fixes** — Resolved 6 output validation errors in JSON tool group
+  - `sqlite_json_keys`: Fixed schema to return flat array instead of nested arrays
+  - `sqlite_json_group_array`: Added `rowCount` and changed `result` to `results` array
+  - `sqlite_json_group_object`: Added `rowCount` and changed `result` to `results` array
+  - `sqlite_jsonb_convert`: New dedicated `JsonbConvertOutputSchema` (was using generic `ReadQueryOutputSchema`)
+  - `sqlite_json_storage_info`: New dedicated `JsonStorageInfoOutputSchema` with format statistics
+  - `sqlite_json_normalize_column`: New dedicated `JsonNormalizeColumnOutputSchema` with normalization counts
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

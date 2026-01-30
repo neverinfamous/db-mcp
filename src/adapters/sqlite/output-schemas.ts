@@ -214,6 +214,45 @@ export const CreateJsonCollectionOutputSchema = z.object({
   indexCount: z.number(),
 });
 
+/**
+ * sqlite_jsonb_convert output
+ */
+export const JsonbConvertOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string().optional(),
+  rowsAffected: z.number().optional(),
+  error: z.string().optional(),
+  hint: z.string().optional(),
+});
+
+/**
+ * sqlite_json_storage_info output
+ */
+export const JsonStorageInfoOutputSchema = z.object({
+  success: z.boolean(),
+  jsonbSupported: z.boolean(),
+  sampleSize: z.number(),
+  formats: z.object({
+    text: z.number(),
+    jsonb: z.number(),
+    null: z.number(),
+    unknown: z.number(),
+  }),
+  recommendation: z.string(),
+});
+
+/**
+ * sqlite_json_normalize_column output
+ */
+export const JsonNormalizeColumnOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  normalized: z.number(),
+  unchanged: z.number(),
+  errors: z.number(),
+  total: z.number(),
+});
+
 // =============================================================================
 // JSON Operation Tool Output Schemas (12 tools)
 // =============================================================================
@@ -266,8 +305,7 @@ export const JsonArrayLengthOutputSchema = z.object({
  */
 export const JsonKeysOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  keys: z.array(z.array(z.string()).nullable()),
+  keys: z.array(z.string().nullable()),
 });
 
 /**
@@ -283,7 +321,8 @@ export const JsonValidOutputSchema = z.object({
  */
 export const JsonGroupArrayOutputSchema = z.object({
   success: z.boolean(),
-  result: z.array(z.unknown()),
+  rowCount: z.number(),
+  results: z.array(z.record(z.string(), z.unknown())),
 });
 
 /**
@@ -291,7 +330,8 @@ export const JsonGroupArrayOutputSchema = z.object({
  */
 export const JsonGroupObjectOutputSchema = z.object({
   success: z.boolean(),
-  result: z.record(z.string(), z.unknown()),
+  rowCount: z.number(),
+  results: z.array(z.record(z.string(), z.unknown())),
 });
 
 /**

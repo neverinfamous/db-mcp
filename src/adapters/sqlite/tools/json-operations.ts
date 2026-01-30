@@ -28,7 +28,9 @@ import {
   JsonEachOutputSchema,
   JsonGroupArrayOutputSchema,
   JsonGroupObjectOutputSchema,
-  ReadQueryOutputSchema,
+  JsonbConvertOutputSchema,
+  JsonStorageInfoOutputSchema,
+  JsonNormalizeColumnOutputSchema,
 } from "../output-schemas.js";
 import {
   normalizeJson,
@@ -636,7 +638,7 @@ function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
       "Convert a text JSON column to JSONB binary format for faster processing. Requires SQLite 3.45+.",
     group: "json",
     inputSchema: JsonbConvertSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: JsonbConvertOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSONB Convert"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -681,7 +683,7 @@ function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
       "Analyze storage format of a JSON column (text vs JSONB) and report statistics.",
     group: "json",
     inputSchema: JsonStorageInfoSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: JsonStorageInfoOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("JSON Storage Info"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -744,7 +746,7 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
       "Normalize JSON data in a column (sort keys, compact format) for consistent storage and comparison.",
     group: "json",
     inputSchema: JsonNormalizeColumnSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: JsonNormalizeColumnOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Normalize JSON Column"),
     handler: async (params: unknown, _context: RequestContext) => {
