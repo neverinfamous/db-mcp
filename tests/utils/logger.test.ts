@@ -14,7 +14,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   Logger,
   ModuleLogger,
-  LogLevel,
   LogModule,
   createErrorCode,
   ERROR_CODES,
@@ -182,7 +181,6 @@ describe("Logger Security", () => {
     it("should sanitize CRLF in messages", () => {
       logger.info("First\r\nSecond\r\nThird");
 
-      const output = stderrOutput.join("\n");
       // Each line should appear but not as separate log entries
       expect(stderrOutput.length).toBe(1);
     });
