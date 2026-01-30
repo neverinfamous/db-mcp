@@ -247,6 +247,20 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Normalize parameters for SQLite binding
+   * Converts booleans to integers since SQLite doesn't have native boolean type
+   */
+  private normalizeParams(
+    params?: unknown[],
+  ): (string | number | null | Uint8Array)[] | undefined {
+    if (!params) return undefined;
+    return params.map((p) => {
+      if (typeof p === "boolean") return p ? 1 : 0;
+      return p as string | number | null | Uint8Array;
+    });
+  }
+
+  /**
    * Execute a read-only query
    */
   override executeReadQuery(
@@ -260,8 +274,9 @@ export class SqliteAdapter extends DatabaseAdapter {
     const start = Date.now();
 
     try {
-      const results = params
-        ? db.exec(sql, params as (string | number | null | Uint8Array)[])
+      const normalizedParams = this.normalizeParams(params);
+      const results = normalizedParams
+        ? db.exec(sql, normalizedParams)
         : db.exec(sql);
 
       if (results.length === 0) {
@@ -326,8 +341,9 @@ export class SqliteAdapter extends DatabaseAdapter {
     const start = Date.now();
 
     try {
-      if (params) {
-        db.run(sql, params as (string | number | null | Uint8Array)[]);
+      const normalizedParams = this.normalizeParams(params);
+      if (normalizedParams) {
+        db.run(sql, normalizedParams);
       } else {
         db.run(sql);
       }
@@ -374,8 +390,9 @@ export class SqliteAdapter extends DatabaseAdapter {
     const start = Date.now();
 
     try {
-      const results = params
-        ? db.exec(sql, params as (string | number | null | Uint8Array)[])
+      const normalizedParams = this.normalizeParams(params);
+      const results = normalizedParams
+        ? db.exec(sql, normalizedParams)
         : db.exec(sql);
 
       if (results.length === 0) {

@@ -205,6 +205,18 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Normalize parameters for SQLite binding
+   * Converts booleans to integers since SQLite doesn't have native boolean type
+   */
+  private normalizeParams(params?: unknown[]): unknown[] | undefined {
+    if (!params) return undefined;
+    return params.map((p) => {
+      if (typeof p === "boolean") return p ? 1 : 0;
+      return p;
+    });
+  }
+
+  /**
    * Execute a read query
    */
   override executeReadQuery(
@@ -217,7 +229,10 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     try {
       const db = this.ensureDb();
       const stmt = db.prepare(sql);
-      const rows = params ? stmt.all(...params) : stmt.all();
+      const normalizedParams = this.normalizeParams(params);
+      const rows = normalizedParams
+        ? stmt.all(...normalizedParams)
+        : stmt.all();
 
       return Promise.resolve({
         rows: rows as Record<string, unknown>[],
@@ -245,7 +260,10 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     try {
       const db = this.ensureDb();
       const stmt = db.prepare(sql);
-      const info = params ? stmt.run(...params) : stmt.run();
+      const normalizedParams = this.normalizeParams(params);
+      const info = normalizedParams
+        ? stmt.run(...normalizedParams)
+        : stmt.run();
 
       return Promise.resolve({
         rows: [],
@@ -306,13 +324,28 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       )
       .all() as { name: string; type: string; sql: string }[];
 
-    return Promise.resolve(
-      result.map((row) => ({
+    // Build tables with column info from PRAGMA table_info()
+    const tables = result.map((row) => {
+      const columns = db.prepare(`PRAGMA table_info("${row.name}")`).all() as {
+        name: string;
+        type: string;
+        notnull: number;
+        pk: number;
+      }[];
+
+      return {
         name: row.name,
         type: row.type as "table" | "view",
-        columns: [],
-      })),
-    );
+        columns: columns.map((c) => ({
+          name: c.name,
+          type: c.type,
+          nullable: c.notnull === 0,
+          primaryKey: c.pk > 0,
+        })),
+      };
+    });
+
+    return Promise.resolve(tables);
   }
 
   /**
@@ -328,6 +361,11 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       notnull: number;
       pk: number;
     }[];
+
+    // Check if table exists (PRAGMA returns empty for non-existent tables)
+    if (columns.length === 0) {
+      throw new Error(`Table '${tableName}' does not exist`);
+    }
 
     return Promise.resolve({
       name: tableName,

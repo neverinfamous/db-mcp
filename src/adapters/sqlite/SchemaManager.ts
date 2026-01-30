@@ -132,6 +132,11 @@ export class SchemaManager {
       `PRAGMA table_info("${tableName}")`,
     );
 
+    // Check if table exists (PRAGMA returns empty for non-existent tables)
+    if (!result.rows || result.rows.length === 0) {
+      throw new Error(`Table '${tableName}' does not exist`);
+    }
+
     const columns: ColumnInfo[] = (result.rows ?? []).map((row) => ({
       name: row["name"] as string,
       type: row["type"] as string,
