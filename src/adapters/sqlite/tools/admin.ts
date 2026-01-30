@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { admin, readOnly } from "../../../utils/annotations.js";
+import { sanitizeIdentifier } from "../../../utils/index.js";
 import { insightsManager } from "../../../utils/insightsManager.js";
 import {
   buildProgressContext,
@@ -163,10 +164,8 @@ function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql: string;
       if (input.table) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
-        }
-        sql = `ANALYZE "${input.table}"`;
+        const table = sanitizeIdentifier(input.table);
+        sql = `ANALYZE ${table}`;
       } else {
         sql = "ANALYZE";
       }
@@ -255,10 +254,8 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.reindex) {
         await sendProgress(progress, ++step, totalSteps, "Reindexing...");
         if (input.table) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-            throw new Error("Invalid table name");
-          }
-          await adapter.executeQuery(`REINDEX "${input.table}"`);
+          const table = sanitizeIdentifier(input.table);
+          await adapter.executeQuery(`REINDEX ${table}`);
           operations.push(`reindexed ${input.table}`);
         } else {
           await adapter.executeQuery("REINDEX");
@@ -270,7 +267,8 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.analyze) {
         await sendProgress(progress, ++step, totalSteps, "Analyzing...");
         if (input.table) {
-          await adapter.executeQuery(`ANALYZE "${input.table}"`);
+          const table = sanitizeIdentifier(input.table);
+          await adapter.executeQuery(`ANALYZE ${table}`);
           operations.push(`analyzed ${input.table}`);
         } else {
           await adapter.executeQuery("ANALYZE");
@@ -431,9 +429,8 @@ function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
         WHERE type = 'index' AND sql IS NOT NULL
       `;
       if (input.table) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
-        }
+        // Validate table name using centralized utility
+        sanitizeIdentifier(input.table);
         sql += ` AND tbl_name = '${input.table}'`;
       }
       sql += " ORDER BY tbl_name, name";
@@ -646,13 +643,11 @@ function createPragmaTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = PragmaTableInfoSchema.parse(params);
 
-      // Validate table name
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate and quote table name
+      const table = sanitizeIdentifier(input.table);
 
       const result = await adapter.executeReadQuery(
-        `PRAGMA table_info("${input.table}")`,
+        `PRAGMA table_info(${table})`,
       );
 
       const columns = (result.rows ?? []).map((r) => ({

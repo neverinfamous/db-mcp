@@ -13,6 +13,7 @@ import {
   idempotent,
   destructive,
 } from "../../../utils/annotations.js";
+import { sanitizeIdentifier } from "../../../utils/index.js";
 import {
   ReadQuerySchema,
   WriteQuerySchema,
@@ -235,9 +236,7 @@ function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       const input = DropTableSchema.parse(params);
 
       // Validate table name
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      sanitizeIdentifier(input.tableName);
 
       const ifExists = input.ifExists ? "IF EXISTS " : "";
       const sql = `DROP TABLE ${ifExists}"${input.tableName}"`;
@@ -272,9 +271,7 @@ function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (input.tableName) {
         // Validate table name
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-          throw new Error("Invalid table name");
-        }
+        sanitizeIdentifier(input.tableName);
         sql += ` AND tbl_name = '${input.tableName}'`;
       }
 
@@ -313,16 +310,10 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       const input = CreateIndexSchema.parse(params);
 
       // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.indexName)) {
-        throw new Error("Invalid index name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      sanitizeIdentifier(input.indexName);
+      sanitizeIdentifier(input.tableName);
       for (const col of input.columns) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-          throw new Error(`Invalid column name: ${col}`);
-        }
+        sanitizeIdentifier(col);
       }
 
       const unique = input.unique ? "UNIQUE " : "";

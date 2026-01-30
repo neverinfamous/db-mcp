@@ -9,6 +9,7 @@
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, write } from "../../../utils/annotations.js";
+import { sanitizeIdentifier } from "../../../utils/index.js";
 import {
   JsonInsertSchema,
   JsonUpdateSchema,
@@ -79,9 +80,7 @@ function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.additionalColumns) {
         for (const [col, val] of Object.entries(input.additionalColumns)) {
           // Validate column name
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-            throw new Error(`Invalid column name: ${col}`);
-          }
+          sanitizeIdentifier(col);
           columns.push(col);
           placeholders.push("?");
           values.push(typeof val === "object" ? JSON.stringify(val) : val);
@@ -89,9 +88,7 @@ function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       // Validate table name
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
+      sanitizeIdentifier(input.table);
 
       const sql = `INSERT INTO "${input.table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${placeholders.join(", ")})`;
 
@@ -122,12 +119,8 @@ function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
       const input = JsonUpdateSchema.parse(params);
 
       // Validate table and column names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.column);
 
       // Validate JSON path format
       if (!input.path.startsWith("$")) {
@@ -168,12 +161,8 @@ function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
       const input = JsonSelectSchema.parse(params);
 
       // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.column);
 
       let selectClause: string;
       if (input.paths && input.paths.length > 0) {
@@ -221,12 +210,8 @@ function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
       const input = JsonQuerySchema.parse(params);
 
       // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.column);
 
       // Build select clause
       let selectClause: string;
@@ -332,12 +317,8 @@ function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
       const input = JsonMergeSchema.parse(params);
 
       // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.column);
 
       const mergeJson = JSON.stringify(input.mergeData);
 
@@ -372,12 +353,8 @@ function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinition {
       const input = AnalyzeJsonSchemaSchema.parse(params);
 
       // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.column);
 
       // Sample rows
       const sql = `SELECT "${input.column}" as json_data FROM "${input.table}" LIMIT ${input.sampleSize}`;
@@ -487,9 +464,7 @@ function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition {
       const input = CreateJsonCollectionSchema.parse(params);
 
       // Validate table name
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      sanitizeIdentifier(input.tableName);
 
       const idCol = input.idColumn ?? "id";
       const dataCol = input.dataColumn ?? "data";

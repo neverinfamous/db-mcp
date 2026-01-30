@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, write } from "../../../utils/annotations.js";
+import { sanitizeIdentifier } from "../../../utils/index.js";
 import {
   ValidateJsonSchema,
   JsonExtractSchema,
@@ -167,18 +168,14 @@ function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonExtractSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
       if (!input.path.startsWith("$")) {
         throw new Error("JSON path must start with $");
       }
 
-      let sql = `SELECT json_extract("${input.column}", '${input.path}') as value FROM "${input.table}"`;
+      let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
       if (input.whereClause) {
         sql += ` WHERE ${input.whereClause}`;
       }
@@ -210,19 +207,15 @@ function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonSetSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
       if (!input.path.startsWith("$")) {
         throw new Error("JSON path must start with $");
       }
 
       const valueJson = JSON.stringify(input.value);
-      const sql = `UPDATE "${input.table}" SET "${input.column}" = json_set("${input.column}", '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+      const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
 
       const result = await adapter.executeWriteQuery(sql);
 
@@ -249,18 +242,14 @@ function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonRemoveSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
       if (!input.path.startsWith("$")) {
         throw new Error("JSON path must start with $");
       }
 
-      const sql = `UPDATE "${input.table}" SET "${input.column}" = json_remove("${input.column}", '${input.path}') WHERE ${input.whereClause}`;
+      const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}') WHERE ${input.whereClause}`;
 
       const result = await adapter.executeWriteQuery(sql);
 
@@ -288,20 +277,16 @@ function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonTypeSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const path = input.path ?? "$";
       if (!path.startsWith("$")) {
         throw new Error("JSON path must start with $");
       }
 
-      let sql = `SELECT json_type("${input.column}", '${path}') as type FROM "${input.table}"`;
+      let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
       if (input.whereClause) {
         sql += ` WHERE ${input.whereClause}`;
       }
@@ -332,20 +317,16 @@ function createJsonArrayLengthTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonArrayLengthSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const path = input.path ?? "$";
       if (!path.startsWith("$")) {
         throw new Error("JSON path must start with $");
       }
 
-      let sql = `SELECT json_array_length("${input.column}", '${path}') as length FROM "${input.table}"`;
+      let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
       if (input.whereClause) {
         sql += ` WHERE ${input.whereClause}`;
       }
@@ -376,13 +357,9 @@ function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonArrayAppendSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
       if (!input.path.startsWith("$")) {
         throw new Error("JSON path must start with $");
       }
@@ -393,7 +370,7 @@ function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinition {
         ? input.path.replace(/\]$/, "#]")
         : `${input.path}[#]`;
 
-      const sql = `UPDATE "${input.table}" SET "${input.column}" = json_insert("${input.column}", '${appendPath}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+      const sql = `UPDATE ${table} SET ${column} = json_insert(${column}, '${appendPath}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
 
       const result = await adapter.executeWriteQuery(sql);
 
@@ -420,13 +397,9 @@ function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonKeysSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const path = input.path ?? "$";
       if (!path.startsWith("$")) {
@@ -441,12 +414,12 @@ function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
         // This avoids ambiguity between e.g. table.id and json_each.id
         sql = `SELECT DISTINCT json_each.key 
                     FROM json_each(
-                        (SELECT "${input.column}" FROM "${input.table}" WHERE ${input.whereClause} LIMIT 1),
+                        (SELECT ${column} FROM ${table} WHERE ${input.whereClause} LIMIT 1),
                         '${path}'
                     )`;
       } else {
         // Without WHERE, simpler subquery avoids 'key' column ambiguity
-        sql = `SELECT DISTINCT json_each.key FROM "${input.table}" AS t, json_each(t."${input.column}", '${path}')`;
+        sql = `SELECT DISTINCT json_each.key FROM ${table} AS t, json_each(t.${column}, '${path}')`;
       }
 
       const result = await adapter.executeReadQuery(sql);
@@ -474,20 +447,16 @@ function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonEachSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const path = input.path ?? "$";
       if (!path.startsWith("$")) {
         throw new Error("JSON path must start with $");
       }
 
-      let sql = `SELECT je.key, je.value, je.type FROM "${input.table}", json_each("${input.column}", '${path}') as je`;
+      let sql = `SELECT je.key, je.value, je.type FROM ${table}, json_each(${column}, '${path}') as je`;
       if (input.whereClause) {
         sql += ` WHERE ${input.whereClause}`;
       }
@@ -520,26 +489,20 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupArraySchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.valueColumn)) {
-        throw new Error("Invalid value column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const valueColumn = sanitizeIdentifier(input.valueColumn);
 
-      let selectClause = `json_group_array("${input.valueColumn}") as array_result`;
+      let selectClause = `json_group_array(${valueColumn}) as array_result`;
       let groupByClause = "";
 
       if (input.groupByColumn) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.groupByColumn)) {
-          throw new Error("Invalid group by column name");
-        }
-        selectClause = `"${input.groupByColumn}", ${selectClause}`;
-        groupByClause = ` GROUP BY "${input.groupByColumn}"`;
+        const groupByCol = sanitizeIdentifier(input.groupByColumn);
+        selectClause = `${groupByCol}, ${selectClause}`;
+        groupByClause = ` GROUP BY ${groupByCol}`;
       }
 
-      let sql = `SELECT ${selectClause} FROM "${input.table}"`;
+      let sql = `SELECT ${selectClause} FROM ${table}`;
       if (input.whereClause) {
         sql += ` WHERE ${input.whereClause}`;
       }
@@ -572,29 +535,21 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupObjectSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.keyColumn)) {
-        throw new Error("Invalid key column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.valueColumn)) {
-        throw new Error("Invalid value column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const keyColumn = sanitizeIdentifier(input.keyColumn);
+      const valueColumn = sanitizeIdentifier(input.valueColumn);
 
-      let selectClause = `json_group_object("${input.keyColumn}", "${input.valueColumn}") as object_result`;
+      let selectClause = `json_group_object(${keyColumn}, ${valueColumn}) as object_result`;
       let groupByClause = "";
 
       if (input.groupByColumn) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.groupByColumn)) {
-          throw new Error("Invalid group by column name");
-        }
-        selectClause = `"${input.groupByColumn}", ${selectClause}`;
-        groupByClause = ` GROUP BY "${input.groupByColumn}"`;
+        const groupByCol = sanitizeIdentifier(input.groupByColumn);
+        selectClause = `${groupByCol}, ${selectClause}`;
+        groupByClause = ` GROUP BY ${groupByCol}`;
       }
 
-      let sql = `SELECT ${selectClause} FROM "${input.table}"`;
+      let sql = `SELECT ${selectClause} FROM ${table}`;
       if (input.whereClause) {
         sql += ` WHERE ${input.whereClause}`;
       }
@@ -687,13 +642,9 @@ function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonbConvertSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       // Check JSONB support
       if (!isJsonbSupported()) {
@@ -704,7 +655,7 @@ function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      let sql = `UPDATE "${input.table}" SET "${input.column}" = jsonb("${input.column}")`;
+      let sql = `UPDATE ${table} SET ${column} = jsonb(${column})`;
       if (input.whereClause) {
         sql += ` WHERE ${input.whereClause}`;
       }
@@ -736,16 +687,11 @@ function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonStorageInfoSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate identifiers
+      const table = sanitizeIdentifier(input.table);
 
       // Sample rows to detect format
-      const sql = `SELECT "${input.column}" FROM "${input.table}" LIMIT ${input.sampleSize}`;
+      const sql = `SELECT ${sanitizeIdentifier(input.column)} FROM ${table} LIMIT ${input.sampleSize}`;
       const result = await adapter.executeReadQuery(sql);
 
       let textCount = 0;
@@ -804,16 +750,12 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonNormalizeColumnSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       // First, read all rows
-      let selectSql = `SELECT rowid, "${input.column}" as json_data FROM "${input.table}"`;
+      let selectSql = `SELECT rowid, ${column} as json_data FROM ${table}`;
       if (input.whereClause) {
         selectSql += ` WHERE ${input.whereClause}`;
       }
@@ -837,7 +779,7 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
           const { normalized, wasModified } = normalizeJson(jsonData);
 
           if (wasModified) {
-            const updateSql = `UPDATE "${input.table}" SET "${input.column}" = ? WHERE rowid = ?`;
+            const updateSql = `UPDATE ${table} SET ${column} = ? WHERE rowid = ?`;
             await adapter.executeWriteQuery(updateSql, [normalized, rowid]);
             normalizedCount++;
           } else {

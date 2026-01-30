@@ -125,7 +125,7 @@ describe("Security: PRAGMA Operations", () => {
         getTool("sqlite_pragma_table_info")({
           table: "users; DROP TABLE users--",
         }),
-      ).rejects.toThrow("Invalid table name");
+      ).rejects.toThrow("Invalid identifier");
     });
 
     it("should reject table name with quotes", async () => {
@@ -133,7 +133,7 @@ describe("Security: PRAGMA Operations", () => {
         getTool("sqlite_pragma_table_info")({
           table: 'users")',
         }),
-      ).rejects.toThrow("Invalid table name");
+      ).rejects.toThrow("Invalid identifier");
     });
 
     it("should reject table name with parentheses", async () => {
@@ -141,7 +141,7 @@ describe("Security: PRAGMA Operations", () => {
         getTool("sqlite_pragma_table_info")({
           table: "users()",
         }),
-      ).rejects.toThrow("Invalid table name");
+      ).rejects.toThrow("Invalid identifier");
     });
 
     it("should allow valid table names", async () => {
@@ -199,7 +199,7 @@ describe("Security: PRAGMA Operations", () => {
         getTool("sqlite_index_stats")({
           table: "users' OR '1'='1",
         }),
-      ).rejects.toThrow("Invalid table name");
+      ).rejects.toThrow("Invalid identifier");
     });
 
     it("should allow valid table filter", async () => {

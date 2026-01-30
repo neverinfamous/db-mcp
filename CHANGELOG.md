@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Identifier Validation Centralization** — Migrated 83 tool handlers to use centralized `sanitizeIdentifier()` utility
+  - Replaced inline regex validations with type-safe `InvalidIdentifierError` handling
+  - Consistent security pattern across 10 files: `geo.ts`, `admin.ts`, `text.ts`, `vector.ts`, `virtual.ts`, `stats.ts`, `fts.ts`, `json-operations.ts`, `json-helpers.ts`, `core.ts`
+  - Updated security tests to expect new error message format
+
 ### Added
 
 - **HTTP/SSE Streaming Transport** — Enhanced HTTP transport with session management and SSE

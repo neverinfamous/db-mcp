@@ -18,6 +18,7 @@ import {
   buildProgressContext,
   sendProgress,
 } from "../../../utils/progress-utils.js";
+import { sanitizeIdentifier } from "../../../utils/index.js";
 import {
   GenerateSeriesOutputSchema,
   CreateTableOutputSchema,
@@ -196,9 +197,8 @@ function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateViewSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.viewName)) {
-        throw new Error("Invalid view name");
-      }
+      // Validate and quote view name
+      const viewName = sanitizeIdentifier(input.viewName);
 
       // Basic validation that it's a SELECT
       if (!input.selectQuery.trim().toUpperCase().startsWith("SELECT")) {
@@ -208,7 +208,7 @@ function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
       const createOrReplace = input.replace
         ? "CREATE OR REPLACE VIEW"
         : "CREATE VIEW";
-      const sql = `${createOrReplace} "${input.viewName}" AS ${input.selectQuery}`;
+      const sql = `${createOrReplace} ${viewName} AS ${input.selectQuery}`;
 
       await adapter.executeQuery(sql);
 
@@ -269,12 +269,11 @@ function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DropViewSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.viewName)) {
-        throw new Error("Invalid view name");
-      }
+      // Validate and quote view name
+      const viewName = sanitizeIdentifier(input.viewName);
 
       const ifExists = input.ifExists ? "IF EXISTS " : "";
-      const sql = `DROP VIEW ${ifExists}"${input.viewName}"`;
+      const sql = `DROP VIEW ${ifExists}${viewName}`;
 
       await adapter.executeQuery(sql);
 
@@ -305,10 +304,10 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
                     FROM dbstat`;
 
         if (input.table) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-            throw new Error("Invalid table name");
-          }
-          sql += ` WHERE name = '${input.table}'`;
+          // Validate table name
+          sanitizeIdentifier(input.table);
+          // For WHERE clause, we need raw table name without quotes for string comparison
+          sql += ` WHERE name = '${input.table.replace(/'/g, "''")}'`;
         }
 
         sql += ` LIMIT 100`;
@@ -480,9 +479,8 @@ function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VirtualTableInfoSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate table name (we need raw name for queries)
+      sanitizeIdentifier(input.tableName);
 
       // Get the CREATE statement
       const sqlResult = await adapter.executeReadQuery(
@@ -538,13 +536,12 @@ function createDropVirtualTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DropVirtualTableSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate and quote table name
+      const tableName = sanitizeIdentifier(input.tableName);
 
       const sql = input.ifExists
-        ? `DROP TABLE IF EXISTS "${input.tableName}"`
-        : `DROP TABLE "${input.tableName}"`;
+        ? `DROP TABLE IF EXISTS ${tableName}`
+        : `DROP TABLE ${tableName}`;
 
       await adapter.executeWriteQuery(sql);
 
@@ -577,9 +574,8 @@ function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateCsvTableSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate table name (we'll use it with double quotes in SQL)
+      sanitizeIdentifier(input.tableName);
 
       // Check if csv module is available
       const csvAvailable = await isModuleAvailable(adapter, "csv");
@@ -770,9 +766,8 @@ function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateRtreeTableSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate table name
+      sanitizeIdentifier(input.tableName);
 
       // Check if rtree module is available
       const rtreeAvailable = await isModuleAvailable(adapter, "rtree");
@@ -823,22 +818,19 @@ function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateSeriesTableSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.columnName)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const tableName = sanitizeIdentifier(input.tableName);
+      const columnName = sanitizeIdentifier(input.columnName);
 
       // Create table
       await adapter.executeWriteQuery(
-        `CREATE TABLE IF NOT EXISTS "${input.tableName}" ("${input.columnName}" INTEGER PRIMARY KEY)`,
+        `CREATE TABLE IF NOT EXISTS ${tableName} (${columnName} INTEGER PRIMARY KEY)`,
       );
 
       // Insert series using generate_series if available, otherwise loop
       try {
         await adapter.executeWriteQuery(
-          `INSERT OR IGNORE INTO "${input.tableName}" ("${input.columnName}") SELECT value FROM generate_series(${input.start}, ${input.stop}, ${input.step})`,
+          `INSERT OR IGNORE INTO ${tableName} (${columnName}) SELECT value FROM generate_series(${input.start}, ${input.stop}, ${input.step})`,
         );
       } catch {
         // Fallback: insert values manually
@@ -849,14 +841,14 @@ function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
         if (values.length > 0) {
           const insertValues = values.map((v) => `(${v})`).join(",");
           await adapter.executeWriteQuery(
-            `INSERT OR IGNORE INTO "${input.tableName}" ("${input.columnName}") VALUES ${insertValues}`,
+            `INSERT OR IGNORE INTO ${tableName} (${columnName}) VALUES ${insertValues}`,
           );
         }
       }
 
       // Count rows
       const countResult = await adapter.executeReadQuery(
-        `SELECT COUNT(*) as cnt FROM "${input.tableName}"`,
+        `SELECT COUNT(*) as cnt FROM ${tableName}`,
       );
       const rowCount =
         typeof countResult.rows?.[0]?.["cnt"] === "number"

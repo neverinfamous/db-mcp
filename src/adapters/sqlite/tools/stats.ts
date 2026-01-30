@@ -11,7 +11,10 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
-import { validateWhereClause } from "../../../utils/index.js";
+import {
+  validateWhereClause,
+  sanitizeIdentifier,
+} from "../../../utils/index.js";
 import {
   ReadQueryOutputSchema,
   StatsHistogramOutputSchema,
@@ -180,21 +183,18 @@ function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = BasicStatsSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       let sql = `SELECT 
-                COUNT("${input.column}") as count,
-                SUM("${input.column}") as sum,
-                AVG("${input.column}") as avg,
-                MIN("${input.column}") as min,
-                MAX("${input.column}") as max,
-                MAX("${input.column}") - MIN("${input.column}") as range
-            FROM "${input.table}"`;
+                COUNT(${column}) as count,
+                SUM(${column}) as sum,
+                AVG(${column}) as avg,
+                MIN(${column}) as min,
+                MAX(${column}) as max,
+                MAX(${column}) - MIN(${column}) as range
+            FROM ${table}`;
 
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
@@ -227,23 +227,20 @@ function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CountSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate and quote table name
+      const table = sanitizeIdentifier(input.table);
 
       let countExpr: string;
       if (input.column) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-          throw new Error("Invalid column name");
-        }
+        const column = sanitizeIdentifier(input.column);
         countExpr = input.distinct
-          ? `COUNT(DISTINCT "${input.column}")`
-          : `COUNT("${input.column}")`;
+          ? `COUNT(DISTINCT ${column})`
+          : `COUNT(${column})`;
       } else {
         countExpr = "COUNT(*)";
       }
 
-      let sql = `SELECT ${countExpr} as count FROM "${input.table}"`;
+      let sql = `SELECT ${countExpr} as count FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -275,29 +272,23 @@ function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GroupByStatsSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.valueColumn)) {
-        throw new Error("Invalid value column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.groupByColumn)) {
-        throw new Error("Invalid group by column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const valueColumn = sanitizeIdentifier(input.valueColumn);
+      const groupByColumn = sanitizeIdentifier(input.groupByColumn);
 
       const statFunc = input.stat.toUpperCase();
-      const orderCol =
-        input.orderBy === "value" ? "stat_value" : `"${input.groupByColumn}"`;
+      const orderCol = input.orderBy === "value" ? "stat_value" : groupByColumn;
 
-      let sql = `SELECT "${input.groupByColumn}", ${statFunc}("${input.valueColumn}") as stat_value 
-                FROM "${input.table}"`;
+      let sql = `SELECT ${groupByColumn}, ${statFunc}(${valueColumn}) as stat_value 
+                FROM ${table}`;
 
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
 
-      sql += ` GROUP BY "${input.groupByColumn}" ORDER BY ${orderCol} DESC LIMIT ${input.limit}`;
+      sql += ` GROUP BY ${groupByColumn} ORDER BY ${orderCol} DESC LIMIT ${input.limit}`;
 
       const result = await adapter.executeReadQuery(sql);
 
@@ -326,15 +317,12 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = HistogramSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       // First get min/max
-      let minMaxSql = `SELECT MIN("${input.column}") as min_val, MAX("${input.column}") as max_val FROM "${input.table}"`;
+      let minMaxSql = `SELECT MIN(${column}) as min_val, MAX(${column}) as max_val FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         minMaxSql += ` WHERE ${input.whereClause}`;
@@ -359,11 +347,11 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         const bucketMin = minVal + i * bucketSize;
         const bucketMax = minVal + (i + 1) * bucketSize;
         bucketCases.push(
-          `SUM(CASE WHEN "${input.column}" >= ${bucketMin} AND "${input.column}" < ${bucketMax} THEN 1 ELSE 0 END) as bucket_${i}`,
+          `SUM(CASE WHEN ${column} >= ${bucketMin} AND ${column} < ${bucketMax} THEN 1 ELSE 0 END) as bucket_${i}`,
         );
       }
 
-      let sql = `SELECT ${bucketCases.join(", ")} FROM "${input.table}"`;
+      let sql = `SELECT ${bucketCases.join(", ")} FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -411,19 +399,16 @@ function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = PercentileSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT "${input.column}" as value FROM "${input.table}" WHERE "${input.column}" IS NOT NULL`;
+      let sql = `SELECT ${column} as value FROM ${table} WHERE ${column} IS NOT NULL`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` AND ${input.whereClause}`;
       }
-      sql += ` ORDER BY "${input.column}"`;
+      sql += ` ORDER BY ${column}`;
 
       const result = await adapter.executeReadQuery(sql);
       const values = (result.rows ?? []).map((r) => r["value"] as number);
@@ -474,20 +459,15 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CorrelationSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column1)) {
-        throw new Error("Invalid column1 name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column2)) {
-        throw new Error("Invalid column2 name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const col1 = sanitizeIdentifier(input.column1);
+      const col2 = sanitizeIdentifier(input.column2);
 
       // Get paired values
-      let sql = `SELECT "${input.column1}" as x, "${input.column2}" as y 
-                FROM "${input.table}" 
-                WHERE "${input.column1}" IS NOT NULL AND "${input.column2}" IS NOT NULL`;
+      let sql = `SELECT ${col1} as x, ${col2} as y 
+                FROM ${table} 
+                WHERE ${col1} IS NOT NULL AND ${col2} IS NOT NULL`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` AND ${input.whereClause}`;
@@ -548,21 +528,18 @@ function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TopNSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const order = input.orderDirection.toUpperCase();
 
-      let sql = `SELECT * FROM "${input.table}"`;
+      let sql = `SELECT * FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
-      sql += ` ORDER BY "${input.column}" ${order} LIMIT ${input.n}`;
+      sql += ` ORDER BY ${column} ${order} LIMIT ${input.n}`;
 
       const result = await adapter.executeReadQuery(sql);
 
@@ -592,14 +569,11 @@ function createDistinctValuesTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DistinctValuesSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT DISTINCT "${input.column}" as value FROM "${input.table}"`;
+      let sql = `SELECT DISTINCT ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -633,9 +607,8 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = SummaryStatsSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate table name
+      const table = sanitizeIdentifier(input.table);
 
       // Get table info to find columns
       const tableInfo = await adapter.describeTable(input.table);
@@ -643,24 +616,23 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
       // Filter to requested columns or all columns from table
       let columns = (tableInfo.columns ?? []).map((c) => c.name);
       if (input.columns && input.columns.length > 0) {
-        for (const col of input.columns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-            throw new Error(`Invalid column name: ${col}`);
-          }
-        }
-        columns = input.columns;
+        columns = input.columns.map((col) => {
+          sanitizeIdentifier(col); // Validate
+          return col;
+        });
       }
 
       // Build summary query for each column
       const summaries: Record<string, unknown>[] = [];
 
       for (const col of columns) {
+        const quotedCol = sanitizeIdentifier(col);
         let sql = `SELECT 
-                    COUNT("${col}") as count,
-                    AVG("${col}") as avg,
-                    MIN("${col}") as min,
-                    MAX("${col}") as max
-                FROM "${input.table}"`;
+                    COUNT(${quotedCol}) as count,
+                    AVG(${quotedCol}) as avg,
+                    MIN(${quotedCol}) as min,
+                    MAX(${quotedCol}) as max
+                FROM ${table}`;
 
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
@@ -703,20 +675,17 @@ function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FrequencySchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT "${input.column}" as value, COUNT(*) as frequency 
-                FROM "${input.table}"`;
+      let sql = `SELECT ${column} as value, COUNT(*) as frequency 
+                FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
       }
-      sql += ` GROUP BY "${input.column}" ORDER BY frequency DESC LIMIT ${input.limit}`;
+      sql += ` GROUP BY ${column} ORDER BY frequency DESC LIMIT ${input.limit}`;
 
       const result = await adapter.executeReadQuery(sql);
 
@@ -806,12 +775,9 @@ function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = OutlierSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate identifiers
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.column);
 
       // Security: Validate WHERE clause if provided
       if (input.whereClause) {
@@ -955,15 +921,10 @@ function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = RegressionSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.xColumn)) {
-        throw new Error("Invalid X column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.yColumn)) {
-        throw new Error("Invalid Y column name");
-      }
+      // Validate identifiers
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.xColumn);
+      sanitizeIdentifier(input.yColumn);
 
       const andClause = input.whereClause ? ` AND ${input.whereClause}` : "";
 
@@ -1043,12 +1004,9 @@ function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = HypothesisSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate identifiers
+      sanitizeIdentifier(input.table);
+      sanitizeIdentifier(input.column);
 
       const whereClause = input.whereClause ? ` AND ${input.whereClause}` : "";
 
@@ -1094,9 +1052,7 @@ function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
         if (!input.column2) {
           throw new Error("column2 is required for two-sample t-test");
         }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column2)) {
-          throw new Error("Invalid column2 name");
-        }
+        sanitizeIdentifier(input.column2);
 
         // Get stats for both columns
         const statsResult = await adapter.executeReadQuery(
