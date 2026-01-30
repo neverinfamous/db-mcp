@@ -15,7 +15,10 @@ import {
   idempotent,
   destructive,
 } from "../../../utils/annotations.js";
-import { validateWhereClause } from "../../../utils/index.js";
+import {
+  validateWhereClause,
+  sanitizeIdentifier,
+} from "../../../utils/index.js";
 import {
   CreateTableOutputSchema,
   WriteQueryOutputSchema,
@@ -204,9 +207,8 @@ function createVectorCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorCreateTableSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate and quote table name
+      const tableName = sanitizeIdentifier(input.tableName);
 
       const columns = [
         "id INTEGER PRIMARY KEY",
@@ -216,14 +218,12 @@ function createVectorCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (input.additionalColumns) {
         for (const col of input.additionalColumns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col.name)) {
-            throw new Error(`Invalid column name: ${col.name}`);
-          }
-          columns.push(`"${col.name}" ${col.type}`);
+          const colName = sanitizeIdentifier(col.name);
+          columns.push(`${colName} ${col.type}`);
         }
       }
 
-      const sql = `CREATE TABLE IF NOT EXISTS "${input.tableName}" (${columns.join(", ")})`;
+      const sql = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns.join(", ")})`;
 
       await adapter.executeQuery(sql);
 
@@ -251,25 +251,20 @@ function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorStoreSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.idColumn)) {
-        throw new Error("Invalid ID column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.vectorColumn)) {
-        throw new Error("Invalid vector column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const idColumn = sanitizeIdentifier(input.idColumn);
+      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
       const vectorJson = JSON.stringify(input.vector);
       const idValue = typeof input.id === "string" ? `'${input.id}'` : input.id;
 
       // Try update first, then insert
-      const updateSql = `UPDATE "${input.table}" SET "${input.vectorColumn}" = '${vectorJson}' WHERE "${input.idColumn}" = ${idValue}`;
+      const updateSql = `UPDATE ${table} SET ${vectorColumn} = '${vectorJson}' WHERE ${idColumn} = ${idValue}`;
       const updateResult = await adapter.executeWriteQuery(updateSql);
 
       if (updateResult.rowsAffected === 0) {
-        const insertSql = `INSERT INTO "${input.table}" ("${input.idColumn}", "${input.vectorColumn}") VALUES (${idValue}, '${vectorJson}')`;
+        const insertSql = `INSERT INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
         await adapter.executeWriteQuery(insertSql);
       }
 
@@ -297,22 +292,17 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorBatchStoreSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.idColumn)) {
-        throw new Error("Invalid ID column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.vectorColumn)) {
-        throw new Error("Invalid vector column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const idColumn = sanitizeIdentifier(input.idColumn);
+      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
       let stored = 0;
       for (const item of input.items) {
         const vectorJson = JSON.stringify(item.vector);
         const idValue = typeof item.id === "string" ? `'${item.id}'` : item.id;
 
-        const sql = `INSERT OR REPLACE INTO "${input.table}" ("${input.idColumn}", "${input.vectorColumn}") VALUES (${idValue}, '${vectorJson}')`;
+        const sql = `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
         await adapter.executeWriteQuery(sql);
         stored++;
       }
@@ -342,25 +332,20 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorSearchSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.vectorColumn)) {
-        throw new Error("Invalid vector column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
       // Build select clause
       let selectCols = "*";
       if (input.returnColumns && input.returnColumns.length > 0) {
-        for (const col of input.returnColumns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-            throw new Error(`Invalid column name: ${col}`);
-          }
-        }
-        selectCols = input.returnColumns.map((c) => `"${c}"`).join(", ");
+        const quotedCols = input.returnColumns.map((c) =>
+          sanitizeIdentifier(c),
+        );
+        selectCols = quotedCols.join(", ");
       }
 
-      let sql = `SELECT ${selectCols}, "${input.vectorColumn}" FROM "${input.table}"`;
+      let sql = `SELECT ${selectCols}, ${vectorColumn} FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -425,18 +410,14 @@ function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorGetSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.idColumn)) {
-        throw new Error("Invalid ID column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.vectorColumn)) {
-        throw new Error("Invalid vector column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const idColumn = sanitizeIdentifier(input.idColumn);
+      // Keep vectorColumn raw for JS object access, but validate
+      sanitizeIdentifier(input.vectorColumn);
 
       const idValue = typeof input.id === "string" ? `'${input.id}'` : input.id;
-      const sql = `SELECT * FROM "${input.table}" WHERE "${input.idColumn}" = ${idValue}`;
+      const sql = `SELECT * FROM ${table} WHERE ${idColumn} = ${idValue}`;
 
       const result = await adapter.executeReadQuery(sql);
 
@@ -476,18 +457,15 @@ function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorDeleteSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.idColumn)) {
-        throw new Error("Invalid ID column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const idColumn = sanitizeIdentifier(input.idColumn);
 
       const idValues = input.ids
         .map((id) => (typeof id === "string" ? `'${id}'` : String(id)))
         .join(", ");
 
-      const sql = `DELETE FROM "${input.table}" WHERE "${input.idColumn}" IN (${idValues})`;
+      const sql = `DELETE FROM ${table} WHERE ${idColumn} IN (${idValues})`;
       const result = await adapter.executeWriteQuery(sql);
 
       return {
@@ -513,11 +491,10 @@ function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorCountSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
+      // Validate and quote table name
+      const table = sanitizeIdentifier(input.table);
 
-      const sql = `SELECT COUNT(*) as count FROM "${input.table}"`;
+      const sql = `SELECT COUNT(*) as count FROM ${table}`;
       const result = await adapter.executeReadQuery(sql);
 
       return {
@@ -543,15 +520,12 @@ function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorStatsSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.vectorColumn)) {
-        throw new Error("Invalid vector column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
       // Get sample of vectors
-      const sql = `SELECT "${input.vectorColumn}" FROM "${input.table}" LIMIT ${input.sampleSize}`;
+      const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT ${input.sampleSize}`;
       const result = await adapter.executeReadQuery(sql);
 
       const vectors = (result.rows ?? [])
@@ -615,14 +589,11 @@ function createVectorDimensionsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VectorDimensionsSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.vectorColumn)) {
-        throw new Error("Invalid vector column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-      const sql = `SELECT "${input.vectorColumn}" FROM "${input.table}" LIMIT 1`;
+      const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT 1`;
       const result = await adapter.executeReadQuery(sql);
 
       if (!result.rows || result.rows.length === 0) {

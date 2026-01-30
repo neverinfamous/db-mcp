@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Identifier Validation Centralization** — Migrated 83 tool handlers to use centralized `sanitizeIdentifier()` utility
+  - Replaced inline regex validations with type-safe `InvalidIdentifierError` handling
+  - Consistent security pattern across 10 files: `geo.ts`, `admin.ts`, `text.ts`, `vector.ts`, `virtual.ts`, `stats.ts`, `fts.ts`, `json-operations.ts`, `json-helpers.ts`, `core.ts`
+  - Updated security tests to expect new error message format
+
 ### Added
 
 - **HTTP/SSE Streaming Transport** — Enhanced HTTP transport with session management and SSE
@@ -91,8 +98,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `src/utils/where-clause.ts` utility with SQLite-specific dangerous pattern detection
   - Blocks: ATTACH DATABASE, load_extension, PRAGMA, fileio functions, hex literals, comments, UNION attacks
   - New `src/utils/identifiers.ts` with centralized identifier validation and quoting
-  - Integrated `validateWhereClause` into 31 tool handlers (text, window, vector, stats)
+  - Integrated `validateWhereClause` into 36 tool handlers (text, window, vector, stats, geo)
   - New `tests/security/security-injection.test.ts` test suite (49 comprehensive test cases)
+  - New `tests/security/tool-integration.test.ts` test suite (67 end-to-end handler tests)
+- **Handler Security Hardening** — Added missing WHERE clause validation to tool handlers
+  - `geo.ts`: Added `validateWhereClause()` to `sqlite_geo_cluster`
+  - `stats.ts`: Added `validateWhereClause()` to `sqlite_stats_outliers`, `sqlite_stats_top_n`, `sqlite_stats_distinct`, `sqlite_stats_frequency`
 
 ### Fixed
 

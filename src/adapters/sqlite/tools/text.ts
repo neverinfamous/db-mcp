@@ -10,7 +10,10 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, write } from "../../../utils/annotations.js";
-import { validateWhereClause } from "../../../utils/index.js";
+import {
+  validateWhereClause,
+  sanitizeIdentifier,
+} from "../../../utils/index.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
@@ -189,15 +192,11 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = RegexExtractSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
+      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -249,15 +248,11 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = RegexMatchSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
+      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -301,15 +296,11 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextSplitSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
+      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -355,23 +346,17 @@ function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextConcatSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      for (const col of input.columns) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-          throw new Error(`Invalid column name: ${col}`);
-        }
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
 
       // Build concatenation expression
       const sep = input.separator.replace(/'/g, "''");
-      const concatExpr = input.columns
-        .map((c) => `COALESCE("${c}", '')`)
+      const concatExpr = quotedCols
+        .map((c) => `COALESCE(${c}, '')`)
         .join(`, '${sep}', `);
 
-      let sql = `SELECT ${concatExpr} as concatenated FROM "${input.table}"`;
+      let sql = `SELECT ${concatExpr} as concatenated FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -404,19 +389,15 @@ function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextReplaceSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const search = input.searchPattern.replace(/'/g, "''");
       const replace = input.replaceWith.replace(/'/g, "''");
 
       validateWhereClause(input.whereClause);
-      const sql = `UPDATE "${input.table}" SET "${input.column}" = replace("${input.column}", '${search}', '${replace}') WHERE ${input.whereClause}`;
+      const sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}') WHERE ${input.whereClause}`;
 
       const result = await adapter.executeWriteQuery(sql);
 
@@ -442,13 +423,9 @@ function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextTrimSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       let trimFunc: string;
       switch (input.mode) {
@@ -462,7 +439,7 @@ function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
           trimFunc = "trim";
       }
 
-      let sql = `SELECT rowid, "${input.column}" as original, ${trimFunc}("${input.column}") as trimmed FROM "${input.table}"`;
+      let sql = `SELECT rowid, ${column} as original, ${trimFunc}(${column}) as trimmed FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -494,17 +471,13 @@ function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextCaseSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const caseFunc = input.mode === "upper" ? "upper" : "lower";
 
-      let sql = `SELECT rowid, "${input.column}" as original, ${caseFunc}("${input.column}") as transformed FROM "${input.table}"`;
+      let sql = `SELECT rowid, ${column} as original, ${caseFunc}(${column}) as transformed FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -536,20 +509,16 @@ function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextSubstringSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const substrExpr =
         input.length !== undefined
-          ? `substr("${input.column}", ${input.start}, ${input.length})`
-          : `substr("${input.column}", ${input.start})`;
+          ? `substr(${column}, ${input.start}, ${input.length})`
+          : `substr(${column}, ${input.start})`;
 
-      let sql = `SELECT rowid, "${input.column}" as original, ${substrExpr} as substring FROM "${input.table}"`;
+      let sql = `SELECT rowid, ${column} as original, ${substrExpr} as substring FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -765,14 +734,11 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FuzzyMatchSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      const sql = `SELECT * FROM "${input.table}" WHERE "${input.column}" IS NOT NULL LIMIT 1000`;
+      const sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
       const result = await adapter.executeReadQuery(sql);
 
       const matches: {
@@ -833,12 +799,9 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = PhoneticMatchSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       const searchCode =
         input.algorithm === "metaphone" ? metaphone(input.search) : ""; // Soundex done in SQL
@@ -846,7 +809,7 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
       let sql: string;
       if (input.algorithm === "soundex") {
         // Use SQLite's native soundex function
-        sql = `SELECT *, soundex("${input.column}") as _phonetic FROM "${input.table}" WHERE soundex("${input.column}") = soundex('${input.search.replace(/'/g, "''")}') LIMIT ${input.limit}`;
+        sql = `SELECT *, soundex(${column}) as _phonetic FROM ${table} WHERE soundex(${column}) = soundex('${input.search.replace(/'/g, "''")}') LIMIT ${input.limit}`;
         const result = await adapter.executeReadQuery(sql);
 
         const matches = (result.rows ?? []).map((row) => {
@@ -870,7 +833,7 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } else {
         // Metaphone in JS
-        sql = `SELECT * FROM "${input.table}" WHERE "${input.column}" IS NOT NULL LIMIT 1000`;
+        sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
         const result = await adapter.executeReadQuery(sql);
 
         const matches: {
@@ -927,14 +890,11 @@ function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextNormalizeSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT "${input.column}" as original FROM "${input.table}"`;
+      let sql = `SELECT ${column} as original FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -998,12 +958,9 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextValidateSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-        throw new Error("Invalid column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
 
       // Get validation pattern
       let pattern: RegExp;
@@ -1020,7 +977,7 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
         pattern = foundPattern;
       }
 
-      let sql = `SELECT rowid, "${input.column}" as value FROM "${input.table}"`;
+      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -1096,13 +1053,17 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = AdvancedSearchSchema.parse(params);
 
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const column = sanitizeIdentifier(input.column);
+
       // Fetch candidate rows
       let whereClause = "";
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         whereClause = ` AND ${input.whereClause}`;
       }
-      const query = `SELECT rowid, ${input.column} AS value FROM ${input.table} WHERE ${input.column} IS NOT NULL${whereClause} LIMIT 1000`;
+      const query = `SELECT rowid, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 1000`;
       const result = await adapter.executeQuery(query);
 
       if (!result.rows || result.rows.length === 0) {

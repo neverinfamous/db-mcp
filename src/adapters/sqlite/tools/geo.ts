@@ -11,6 +11,11 @@ import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
 import {
+  validateWhereClause,
+  sanitizeIdentifier,
+  createColumnList,
+} from "../../../utils/index.js";
+import {
   GeoDistanceOutputSchema,
   GeoWithinRadiusOutputSchema,
   GeoBoundingBoxOutputSchema,
@@ -150,28 +155,20 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoNearbySchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.latColumn)) {
-        throw new Error("Invalid latitude column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.lonColumn)) {
-        throw new Error("Invalid longitude column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const latColumn = sanitizeIdentifier(input.latColumn);
+      const lonColumn = sanitizeIdentifier(input.lonColumn);
 
       // Build select
       let selectCols = "*";
       if (input.returnColumns && input.returnColumns.length > 0) {
-        for (const col of input.returnColumns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-            throw new Error(`Invalid column name: ${col}`);
-          }
-        }
-        selectCols = [...input.returnColumns, input.latColumn, input.lonColumn]
-          .map((c) => `"${c}"`)
-          .join(", ");
+        const allCols = [
+          ...input.returnColumns,
+          input.latColumn,
+          input.lonColumn,
+        ];
+        selectCols = createColumnList(allCols);
       }
 
       // Calculate rough bounding box for pre-filtering
@@ -185,9 +182,9 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
       const lonDelta =
         radiusKm / (111 * Math.cos((input.centerLat * Math.PI) / 180));
 
-      const sql = `SELECT ${selectCols} FROM "${input.table}"
-                WHERE "${input.latColumn}" BETWEEN ${input.centerLat - latDelta} AND ${input.centerLat + latDelta}
-                AND "${input.lonColumn}" BETWEEN ${input.centerLon - lonDelta} AND ${input.centerLon + lonDelta}`;
+      const sql = `SELECT ${selectCols} FROM ${table}
+                WHERE ${latColumn} BETWEEN ${input.centerLat - latDelta} AND ${input.centerLat + latDelta}
+                AND ${lonColumn} BETWEEN ${input.centerLon - lonDelta} AND ${input.centerLon + lonDelta}`;
 
       const result = await adapter.executeReadQuery(sql);
 
@@ -236,31 +233,20 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoBoundingBoxSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.latColumn)) {
-        throw new Error("Invalid latitude column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.lonColumn)) {
-        throw new Error("Invalid longitude column name");
-      }
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const latColumn = sanitizeIdentifier(input.latColumn);
+      const lonColumn = sanitizeIdentifier(input.lonColumn);
 
       // Build select
       let selectCols = "*";
       if (input.returnColumns && input.returnColumns.length > 0) {
-        for (const col of input.returnColumns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-            throw new Error(`Invalid column name: ${col}`);
-          }
-        }
-        selectCols = input.returnColumns.map((c) => `"${c}"`).join(", ");
+        selectCols = createColumnList(input.returnColumns);
       }
 
-      const sql = `SELECT ${selectCols} FROM "${input.table}"
-                WHERE "${input.latColumn}" BETWEEN ${input.minLat} AND ${input.maxLat}
-                AND "${input.lonColumn}" BETWEEN ${input.minLon} AND ${input.maxLon}
+      const sql = `SELECT ${selectCols} FROM ${table}
+                WHERE ${latColumn} BETWEEN ${input.minLat} AND ${input.maxLat}
+                AND ${lonColumn} BETWEEN ${input.minLon} AND ${input.maxLon}
                 LIMIT ${input.limit}`;
 
       const result = await adapter.executeReadQuery(sql);
@@ -295,26 +281,25 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoClusterSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.latColumn)) {
-        throw new Error("Invalid latitude column name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.lonColumn)) {
-        throw new Error("Invalid longitude column name");
+      // Validate and quote identifiers
+      const table = sanitizeIdentifier(input.table);
+      const latColumn = sanitizeIdentifier(input.latColumn);
+      const lonColumn = sanitizeIdentifier(input.lonColumn);
+
+      // Security: Validate WHERE clause if provided
+      if (input.whereClause) {
+        validateWhereClause(input.whereClause);
       }
 
       // Use ROUND to create grid cells
       const gridSize = input.gridSize;
       const sql = `SELECT 
-                ROUND("${input.latColumn}" / ${gridSize}) * ${gridSize} as grid_lat,
-                ROUND("${input.lonColumn}" / ${gridSize}) * ${gridSize} as grid_lon,
+                ROUND(${latColumn} / ${gridSize}) * ${gridSize} as grid_lat,
+                ROUND(${lonColumn} / ${gridSize}) * ${gridSize} as grid_lon,
                 COUNT(*) as point_count,
-                AVG("${input.latColumn}") as center_lat,
-                AVG("${input.lonColumn}") as center_lon
-            FROM "${input.table}"
+                AVG(${latColumn}) as center_lat,
+                AVG(${lonColumn}) as center_lon
+            FROM ${table}
             ${input.whereClause ? `WHERE ${input.whereClause}` : ""}
             GROUP BY grid_lat, grid_lon
             ORDER BY point_count DESC`;

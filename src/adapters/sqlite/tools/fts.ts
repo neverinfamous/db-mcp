@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
+import { sanitizeIdentifier } from "../../../utils/index.js";
 import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
@@ -82,26 +83,18 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsCreateSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-        throw new Error("Invalid FTS table name");
-      }
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.sourceTable)) {
-        throw new Error("Invalid source table name");
-      }
+      // Validate identifiers (FTS5 uses raw column names, not quoted)
+      sanitizeIdentifier(input.tableName);
+      sanitizeIdentifier(input.sourceTable);
       for (const col of input.columns) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-          throw new Error(`Invalid column name: ${col}`);
-        }
+        sanitizeIdentifier(col);
       }
 
       const columnList = input.columns.join(", ");
       let options = `tokenize="${input.tokenizer}"`;
 
       if (input.contentTable) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.contentTable)) {
-          throw new Error("Invalid content table name");
-        }
+        sanitizeIdentifier(input.contentTable);
         options += `, content="${input.contentTable}"`;
       }
 
@@ -133,10 +126,8 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsSearchSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid FTS table name");
-      }
+      // Validate FTS table name
+      sanitizeIdentifier(input.table);
 
       // Build query - use single quotes for FTS5 MATCH strings (not double quotes which are identifiers)
       const queryEscaped = input.query.replace(/'/g, "''");
@@ -145,9 +136,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
       // If specific columns, use column filters
       if (input.columns && input.columns.length > 0) {
         for (const col of input.columns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
-            throw new Error(`Invalid column name: ${col}`);
-          }
+          sanitizeIdentifier(col);
         }
         const colFilter = input.columns
           .map((c) => `${c}:${queryEscaped}`)
@@ -188,10 +177,8 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsRebuildSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid FTS table name");
-      }
+      // Validate FTS table name
+      sanitizeIdentifier(input.table);
 
       // Rebuild = drop shadow tables and recreate
       const sql = `INSERT INTO "${input.table}"("${input.table}") VALUES('rebuild')`;
@@ -221,10 +208,8 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsMatchInfoSchema.parse(params);
 
-      // Validate names
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-        throw new Error("Invalid FTS table name");
-      }
+      // Validate FTS table name
+      sanitizeIdentifier(input.table);
 
       // Use single quotes for FTS5 MATCH strings
       const queryEscaped = input.query.replace(/'/g, "''");
