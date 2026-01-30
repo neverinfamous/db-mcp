@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_create_table` message now accurately indicates when table already exists (using IF NOT EXISTS): "Table 'x' already exists (no changes made)"
   - `sqlite_list_tables` now correctly returns `columnCount` for each table (was always returning 0 in native adapter because `PRAGMA table_info()` was not being called)
 
+- **JSON Path Column Naming** — Fixed column naming in `json_select` and `json_query` tools
+  - Columns now use meaningful names extracted from JSONPath expressions (e.g., `$.user.email` → `email`)
+  - Was returning generic indexed names (`path_0`, `result_0`)
+  - Added `extractColumnNameFromPath()` and `getUniqueColumnNames()` helpers in `json-helpers.ts`
+  - Duplicate path segments get numeric suffixes (e.g., `name`, `name_2`)
+
 - **JSONB Support in Native Adapter** — Fixed JSONB detection missing in `NativeSqliteAdapter`
   - `NativeSqliteAdapter.connect()` now detects SQLite version and sets JSONB support flag
   - `sqlite_jsonb_convert` and other JSONB tools now work correctly with better-sqlite3 backend
@@ -48,7 +54,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_json_normalize_column`: Created dedicated `JsonNormalizeColumnOutputSchema`
   - Added `JsonPrettyOutputSchema` for `sqlite_json_pretty`
   - Updated `ToolConstants.ts` with correct list of all 23 JSON tool names
-
 
 ### Added
 

@@ -31,18 +31,18 @@ This directory contains scripts and documentation for testing the db-mcp SQLite 
 
 The seed data creates 10 test tables with 409 total rows:
 
-| Table               | Rows | Columns                                                                 | Tool Groups  |
-| ------------------- | ---- | ----------------------------------------------------------------------- | ------------ |
-| `test_products`     | 15   | id, name, description, price, category                                  | Core, Stats  |
-| `test_orders`       | 20   | id, product_id (FK), customer_name, quantity, total_price, status       | Core, Stats  |
-| `test_jsonb_docs`   | 6    | id, title, content, **metadata** (JSON), **tags** (JSON array)          | JSON         |
-| `test_articles`     | 8    | id, title, content, author, published_at                                | Text, FTS    |
-| `test_users`        | 8    | id, username, email, phone, bio                                         | Text, Core   |
-| `test_measurements` | 200  | id, sensor_id, temperature, humidity, pressure, recorded_at             | Stats        |
-| `test_embeddings`   | 20   | id, label, category, **embedding** (8-dim vector as JSON array)         | Vector       |
-| `test_locations`    | 15   | id, name, latitude, longitude, country                                  | Geo          |
-| `test_categories`   | 17   | id, name, **path** (dot-separated hierarchy, e.g., "electronics.phones")| Text         |
-| `test_events`       | 100  | id, type, user_id, **payload** (JSON), created_at                       | Stats, Admin |
+| Table               | Rows | Columns                                                                  | Tool Groups  |
+| ------------------- | ---- | ------------------------------------------------------------------------ | ------------ |
+| `test_products`     | 15   | id, name, description, price, category                                   | Core, Stats  |
+| `test_orders`       | 20   | id, product_id (FK), customer_name, quantity, total_price, status        | Core, Stats  |
+| `test_jsonb_docs`   | 6    | id, title, content, **metadata** (JSON), **tags** (JSON array)           | JSON         |
+| `test_articles`     | 8    | id, title, content, author, published_at                                 | Text, FTS    |
+| `test_users`        | 8    | id, username, email, phone, bio                                          | Text, Core   |
+| `test_measurements` | 200  | id, sensor_id, temperature, humidity, pressure, recorded_at              | Stats        |
+| `test_embeddings`   | 20   | id, label, category, **embedding** (8-dim vector as JSON array)          | Vector       |
+| `test_locations`    | 15   | id, name, latitude, longitude, country                                   | Geo          |
+| `test_categories`   | 17   | id, name, **path** (dot-separated hierarchy, e.g., "electronics.phones") | Text         |
+| `test_events`       | 100  | id, type, user_id, **payload** (JSON), created_at                        | Stats, Admin |
 
 **JSON columns for JSON tool testing:**
 
@@ -50,7 +50,6 @@ The seed data creates 10 test tables with 409 total rows:
 - `test_jsonb_docs.tags` — Array of strings
 - `test_embeddings.embedding` — Array of 8 floats
 - `test_events.payload` — Event-specific JSON object
-
 
 ## Starting the Server for Testing
 
@@ -149,20 +148,21 @@ Please conduct a comprehensive test of the db-mcp SQLite MCP server "json" tool 
 
 The test database (test-database/test.db) contains these tables with JSON-relevant columns:
 
-| Table | Rows | Columns | JSON Columns |
-|-------|------|---------|--------------|
-| test_products | 15 | id, name, description, price, category | — |
-| test_orders | 20 | id, product_id (FK), customer_name, quantity, total_price, status | — |
-| test_jsonb_docs | 6 | id, title, content, metadata, tags | **metadata** (nested object), **tags** (string array) |
-| test_articles | 8 | id, title, content, author, published_at | — |
-| test_users | 8 | id, username, email, phone, bio | — |
-| test_measurements | 200 | id, sensor_id, temperature, humidity, pressure, recorded_at | — |
-| test_embeddings | 20 | id, label, category, embedding | **embedding** (8-dim float array) |
-| test_locations | 15 | id, name, latitude, longitude, country | — |
-| test_categories | 17 | id, name, path | — |
-| test_events | 100 | id, type, user_id, payload, created_at | **payload** (event-specific JSON) |
+| Table             | Rows | Columns                                                           | JSON Columns                                          |
+| ----------------- | ---- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| test_products     | 15   | id, name, description, price, category                            | —                                                     |
+| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, status | —                                                     |
+| test_jsonb_docs   | 6    | id, title, content, metadata, tags                                | **metadata** (nested object), **tags** (string array) |
+| test_articles     | 8    | id, title, content, author, published_at                          | —                                                     |
+| test_users        | 8    | id, username, email, phone, bio                                   | —                                                     |
+| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, recorded_at       | —                                                     |
+| test_embeddings   | 20   | id, label, category, embedding                                    | **embedding** (8-dim float array)                     |
+| test_locations    | 15   | id, name, latitude, longitude, country                            | —                                                     |
+| test_categories   | 17   | id, name, path                                                    | —                                                     |
+| test_events       | 100  | id, type, user_id, payload, created_at                            | **payload** (event-specific JSON)                     |
 
 **Primary JSON test tables:**
+
 - `test_jsonb_docs.metadata` — Object with keys: source, language, version, quality, subscribers
 - `test_jsonb_docs.tags` — Array of strings like ["tech", "tutorial"]
 - `test_events.payload` — Varies by event type
@@ -185,7 +185,7 @@ The test database (test-database/test.db) contains these tables with JSON-releva
 ### Final Summary
 
 At the end, provide:
+
 - Total tools tested / passed / failed
 - List of any issues found
 - Recommended fixes or improvements
-

@@ -33,6 +33,61 @@ import {
 import { normalizeJson } from "../json-utils.js";
 
 /**
+ * Extract a meaningful column name from a JSONPath expression.
+ * Examples:
+ *   $.name -> name
+ *   $.user.email -> email
+ *   $[0] -> item_0
+ *   $[*].name -> name
+ *   $.items[0].price -> price
+ */
+function extractColumnNameFromPath(path: string): string {
+  // Remove leading $
+  const remaining = path.slice(1);
+
+  // Find the last meaningful segment
+  // Match either .key or [index]
+  const segments: string[] = [];
+  const regex = /\.([a-zA-Z_][a-zA-Z0-9_]*)|\[(\d+|\*)\]/g;
+  let match;
+  while ((match = regex.exec(remaining)) !== null) {
+    if (match[1]) {
+      // Property access: .name
+      segments.push(match[1]);
+    } else if (match[2]) {
+      // Array index or wildcard: [0] or [*]
+      segments.push(match[2] === "*" ? "items" : `item_${match[2]}`);
+    }
+  }
+
+  // Return the last segment, or fallback to "value"
+  const lastSegment = segments[segments.length - 1];
+  return lastSegment ?? "value";
+}
+
+/**
+ * Given an array of JSONPath expressions, return unique column names.
+ * Duplicates get numeric suffixes (e.g., name, name_2, name_3).
+ */
+function getUniqueColumnNames(paths: string[]): string[] {
+  const names: string[] = [];
+  const counts: Record<string, number> = {};
+
+  for (const path of paths) {
+    const baseName = extractColumnNameFromPath(path);
+    if ((counts[baseName] ?? 0) === 0) {
+      counts[baseName] = 1;
+      names.push(baseName);
+    } else {
+      counts[baseName] = (counts[baseName] ?? 0) + 1;
+      names.push(`${baseName}_${counts[baseName]}`);
+    }
+  }
+
+  return names;
+}
+
+/**
  * Get all JSON helper tools
  */
 export function getJsonHelperTools(adapter: SqliteAdapter): ToolDefinition[] {
@@ -166,12 +221,13 @@ function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
 
       let selectClause: string;
       if (input.paths && input.paths.length > 0) {
-        // Extract specific paths
+        // Extract specific paths with meaningful column names
+        const columnNames = getUniqueColumnNames(input.paths);
         const extracts = input.paths.map((path, i) => {
           if (!path.startsWith("$")) {
             throw new Error(`JSON path must start with $: ${path}`);
           }
-          return `json_extract("${input.column}", '${path}') as path_${i}`;
+          return `json_extract("${input.column}", '${path}') as "${columnNames[i]}"`;
         });
         selectClause = extracts.join(", ");
       } else {
@@ -213,14 +269,15 @@ function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
       sanitizeIdentifier(input.table);
       sanitizeIdentifier(input.column);
 
-      // Build select clause
+      // Build select clause with meaningful column names
       let selectClause: string;
       if (input.selectPaths && input.selectPaths.length > 0) {
+        const columnNames = getUniqueColumnNames(input.selectPaths);
         const extracts = input.selectPaths.map((path, i) => {
           if (!path.startsWith("$")) {
             throw new Error(`JSON path must start with $: ${path}`);
           }
-          return `json_extract("${input.column}", '${path}') as result_${i}`;
+          return `json_extract("${input.column}", '${path}') as "${columnNames[i]}"`;
         });
         selectClause = extracts.join(", ");
       } else {
