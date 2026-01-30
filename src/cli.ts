@@ -68,46 +68,6 @@ function parseArgs(): Partial<McpServerConfig> {
           options: { backend: "better-sqlite3" },
         } as DatabaseConfig);
       }
-    } else if (arg === "--postgresql" || arg === "--postgres") {
-      const connString = args[++i];
-      if (connString) {
-        databases.push({
-          type: "postgresql",
-          connectionString: connString,
-        });
-      }
-    } else if (arg === "--mysql") {
-      const connString = args[++i];
-      if (connString) {
-        databases.push({
-          type: "mysql",
-          connectionString: connString,
-        });
-      }
-    } else if (arg === "--mongodb" || arg === "--mongo") {
-      const connString = args[++i];
-      if (connString) {
-        databases.push({
-          type: "mongodb",
-          connectionString: connString,
-        });
-      }
-    } else if (arg === "--redis") {
-      const connString = args[++i];
-      if (connString) {
-        databases.push({
-          type: "redis",
-          connectionString: connString,
-        });
-      }
-    } else if (arg === "--sqlserver" || arg === "--mssql") {
-      const connString = args[++i];
-      if (connString) {
-        databases.push({
-          type: "sqlserver",
-          connectionString: connString,
-        });
-      }
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -127,7 +87,7 @@ function parseArgs(): Partial<McpServerConfig> {
 function printHelp(): void {
   // Use stderr for all output - stdout is reserved for MCP protocol
   console.error(`
-db-mcp - Multi-database MCP Server
+db-mcp - SQLite MCP Server
 
 Usage: db-mcp [options]
 
@@ -140,11 +100,6 @@ Transport Options:
 Database Options:
   --sqlite <path>           Add SQLite database (WASM/sql.js)
   --sqlite-native <path>    Add SQLite database (native/better-sqlite3)
-  --postgresql <uri>        Add PostgreSQL database
-  --mysql <uri>             Add MySQL database  
-  --mongodb <uri>           Add MongoDB database
-  --redis <uri>             Add Redis database
-  --sqlserver <uri>         Add SQL Server database
 
 Server Options:
   --name <name>             Server name (default: db-mcp)
@@ -157,7 +112,7 @@ Server Options:
 
 Environment Variables:
   DB_MCP_TOOL_FILTER        Tool filter string
-  DATABASE_URI              Default database connection string
+  SQLITE_DATABASE           SQLite database path
 
 Examples:
   db-mcp --sqlite-native ./data.db
@@ -184,64 +139,11 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     config.toolFilter = toolFilter;
   }
 
-  // Default database from environment
-  const databaseUri = process.env["DATABASE_URI"];
-  if (databaseUri) {
-    // Try to detect database type from URI
-    if (
-      databaseUri.startsWith("postgres://") ||
-      databaseUri.startsWith("postgresql://")
-    ) {
-      databases.push({ type: "postgresql", connectionString: databaseUri });
-    } else if (databaseUri.startsWith("mysql://")) {
-      databases.push({ type: "mysql", connectionString: databaseUri });
-    } else if (
-      databaseUri.startsWith("mongodb://") ||
-      databaseUri.startsWith("mongodb+srv://")
-    ) {
-      databases.push({ type: "mongodb", connectionString: databaseUri });
-    } else if (
-      databaseUri.startsWith("redis://") ||
-      databaseUri.startsWith("rediss://")
-    ) {
-      databases.push({ type: "redis", connectionString: databaseUri });
-    } else if (
-      databaseUri.startsWith("sqlserver://") ||
-      databaseUri.startsWith("mssql://")
-    ) {
-      databases.push({ type: "sqlserver", connectionString: databaseUri });
-    } else {
-      // Assume SQLite for file paths
-      databases.push({ type: "sqlite", connectionString: databaseUri });
-    }
-  }
-
-  // Individual database environment variables
+  // SQLite database from environment
   const sqliteUri =
     process.env["SQLITE_DATABASE"] ?? process.env["SQLITE_PATH"];
   if (sqliteUri) {
     databases.push({ type: "sqlite", connectionString: sqliteUri });
-  }
-
-  const postgresUri =
-    process.env["POSTGRES_URI"] ?? process.env["POSTGRESQL_URI"];
-  if (postgresUri) {
-    databases.push({ type: "postgresql", connectionString: postgresUri });
-  }
-
-  const mysqlUri = process.env["MYSQL_URI"];
-  if (mysqlUri) {
-    databases.push({ type: "mysql", connectionString: mysqlUri });
-  }
-
-  const mongoUri = process.env["MONGODB_URI"] ?? process.env["MONGO_URI"];
-  if (mongoUri) {
-    databases.push({ type: "mongodb", connectionString: mongoUri });
-  }
-
-  const redisUri = process.env["REDIS_URI"];
-  if (redisUri) {
-    databases.push({ type: "redis", connectionString: redisUri });
   }
 
   if (databases.length > 0) {
