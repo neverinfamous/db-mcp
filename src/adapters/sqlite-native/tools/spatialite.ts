@@ -224,6 +224,9 @@ function isSpatialiteLoaded(adapter: NativeSqliteAdapter): boolean {
 
   try {
     db.exec("SELECT spatialite_version()");
+    // Extension is loaded but not tracked - ensure metadata tables exist
+    // InitSpatialMetaData(1) safely skips if already initialized
+    db.exec("SELECT InitSpatialMetaData(1)");
     loadedDatabases.add(db);
     return true;
   } catch {

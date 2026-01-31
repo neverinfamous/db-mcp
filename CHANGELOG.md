@@ -122,6 +122,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added verification step after geometry column creation to ensure column exists before reporting success
   - Cascading fix enables `sqlite_spatialite_import` and `sqlite_spatialite_analyze` to work correctly
 
+- **SpatiaLite Metadata Initialization** — Fixed missing `geometry_columns` table on pre-loaded databases
+  - `isSpatialiteLoaded()` now calls `InitSpatialMetaData(1)` when detecting a pre-loaded SpatiaLite extension
+  - Ensures SpatiaLite metadata tables (`geometry_columns`, `spatial_ref_sys`) exist even if extension was loaded in previous session
+  - Fixes `sqlite_spatialite_analyze` "no such table: geometry_columns" error
+  - Fixes `sqlite_spatialite_create_table` returning 0 from `AddGeometryColumn()` call
+
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing
