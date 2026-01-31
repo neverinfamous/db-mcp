@@ -9,7 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WASM Mode FTS5 Graceful Handling** — FTS5 tools now return helpful errors instead of crashes in WASM mode
+  - All 4 FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) detect "no such module: fts5" errors
+  - Returns structured error with `hint` directing to native SQLite backend (`--sqlite-native`)
+  - Prevents tool failures when running in WASM mode (sql.js) which lacks FTS5 module
+
+- **WASM Mode Soundex Fallback** — `sqlite_phonetic_match` now works with soundex algorithm in WASM mode
+  - JavaScript-based soundex implementation used as fallback when SQLite's native `soundex()` function unavailable
+  - Behavior matches metaphone algorithm path (fetch rows, filter in JS)
+  - Same output format and accuracy as native soundex
+  - Gracefully handles "no such function: soundex" error without user intervention
+
+### Added
+
+- **WASM vs Native Documentation** — Added feature comparison table to `ServerInstructions.ts`
+  - Lists FTS5, transactions, window functions, SpatiaLite, and soundex availability
+  - Token-efficient format optimized for AI agent consumption
+
 - **WASM Mode Core Tool Compatibility** — Fixed issues discovered during WASM mode testing
+
   - `server_health` now correctly reports `filePath` from `connectionString` when `filePath` is not set
   - `sqlite_list_tables` now gracefully handles FTS5 virtual tables in WASM mode (sql.js lacks FTS5 module)
   - FTS5 shadow tables (`_fts_*`) are automatically skipped in table listings

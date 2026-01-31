@@ -59,6 +59,15 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | \`sqlite_describe_table\` | Get table schema |
 | \`sqlite_create_table\` | Create new table |
 | \`sqlite_create_index\` | Create index |
+
+## WASM vs Native
+| Feature | Native | WASM |
+|---------|--------|------|
+| FTS5 full-text search | ✅ | ❌ |
+| Transactions (7 tools) | ✅ | ❌ |
+| Window functions (6 tools) | ✅ | ❌ |
+| SpatiaLite GIS (7 tools) | ✅ | ❌ |
+| soundex() | ✅ native | JS fallback |
 `;
 
 /**

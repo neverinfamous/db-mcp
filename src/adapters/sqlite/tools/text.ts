@@ -840,36 +840,82 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql: string;
       if (input.algorithm === "soundex") {
-        // Use SQLite's native soundex function
+        // Try SQLite's native soundex function first, fall back to JS implementation
         sql = `SELECT *, soundex(${column}) as _phonetic FROM ${table} WHERE soundex(${column}) = soundex('${input.search.replace(/'/g, "''")}') LIMIT ${input.limit}`;
-        const result = await adapter.executeReadQuery(sql);
+        try {
+          const result = await adapter.executeReadQuery(sql);
 
-        const matches = (result.rows ?? []).map((row) => {
-          const rawValue = row[input.column];
-          const rawPhonetic = row["_phonetic"];
-          const match: {
-            value: string;
-            phoneticCode: string;
-            row?: Record<string, unknown>;
-          } = {
-            value:
-              typeof rawValue === "string"
-                ? rawValue
-                : JSON.stringify(rawValue ?? ""),
-            phoneticCode: typeof rawPhonetic === "string" ? rawPhonetic : "",
+          const matches = (result.rows ?? []).map((row) => {
+            const rawValue = row[input.column];
+            const rawPhonetic = row["_phonetic"];
+            const match: {
+              value: string;
+              phoneticCode: string;
+              row?: Record<string, unknown>;
+            } = {
+              value:
+                typeof rawValue === "string"
+                  ? rawValue
+                  : JSON.stringify(rawValue ?? ""),
+              phoneticCode: typeof rawPhonetic === "string" ? rawPhonetic : "",
+            };
+            if (input.includeRowData) {
+              match.row = row;
+            }
+            return match;
+          });
+
+          return {
+            success: true,
+            searchCode, // Use pre-computed local soundex code
+            matchCount: matches.length,
+            matches,
           };
-          if (input.includeRowData) {
-            match.row = row;
-          }
-          return match;
-        });
+        } catch (error) {
+          // If SQLite soundex() is unavailable (WASM mode), fall back to JS implementation
+          if (
+            error instanceof Error &&
+            error.message.toLowerCase().includes("no such function: soundex")
+          ) {
+            // Fall through to JS-based soundex matching below
+            sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+            const result = await adapter.executeReadQuery(sql);
 
-        return {
-          success: true,
-          searchCode, // Use pre-computed local soundex code
-          matchCount: matches.length,
-          matches,
-        };
+            const matches: {
+              value: string;
+              phoneticCode: string;
+              row?: Record<string, unknown>;
+            }[] = [];
+
+            for (const row of result.rows ?? []) {
+              const rawValue = row[input.column];
+              const value =
+                typeof rawValue === "string"
+                  ? rawValue
+                  : JSON.stringify(rawValue ?? "");
+              const code = soundex(value); // Use JS-based soundex
+              if (code === searchCode) {
+                const match: {
+                  value: string;
+                  phoneticCode: string;
+                  row?: Record<string, unknown>;
+                } = { value, phoneticCode: code };
+                if (input.includeRowData) {
+                  match.row = row;
+                }
+                matches.push(match);
+              }
+            }
+
+            return {
+              success: true,
+              searchCode,
+              matchCount: matches.length,
+              matches: matches.slice(0, input.limit),
+            };
+          }
+          throw error;
+        }
       } else {
         // Metaphone in JS
         sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
