@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **MCP Resource Template Registration** — Fixed `sqlite_table_schema` templated resource not matching client requests
+  - Updated `registerResource()` in `NativeSqliteAdapter` to detect URI templates (containing `{param}` placeholders)
+  - Template resources now use MCP SDK's `ResourceTemplate` class for proper URI matching
+  - Static resources continue using simple string URI registration
+  - Allows clients to request resources like `sqlite://table/test_products/schema` and have them matched correctly
+
+- **Missing `getAllIndexes()` Method** — Added `getAllIndexes()` to `NativeSqliteAdapter`
+  - Required by `sqlite_indexes` resource but was missing in native adapter
+  - Returns all user-created indexes with table name, column list, and uniqueness info
+  - Queries `sqlite_master` and `PRAGMA index_info()` for complete index metadata
+
 ### Added
 
 - **PRAGMA Compile Options Filter** — `sqlite_pragma_compile_options` now supports `filter` parameter

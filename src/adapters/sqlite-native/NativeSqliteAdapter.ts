@@ -15,6 +15,7 @@ import type {
   DatabaseConfig,
   DatabaseType as DbType,
   HealthStatus,
+  IndexInfo,
   QueryResult,
   SchemaInfo,
   TableInfo,
@@ -500,6 +501,44 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Get all indexes in the database
+   * Required by sqlite_indexes resource
+   */
+  getAllIndexes(): IndexInfo[] {
+    this.ensureConnected();
+    const db = this.ensureDb();
+
+    // Get all user-created indexes from sqlite_master
+    const indexes = db
+      .prepare(
+        `SELECT name, tbl_name, sql 
+         FROM sqlite_master 
+         WHERE type = 'index' AND sql IS NOT NULL
+         ORDER BY tbl_name, name`,
+      )
+      .all() as { name: string; tbl_name: string; sql: string }[];
+
+    // Build index info with column details
+    return indexes.map((idx) => {
+      // Get columns for this index
+      const indexInfo = db
+        .prepare(`PRAGMA index_info("${idx.name}")`)
+        .all() as {
+        seqno: number;
+        cid: number;
+        name: string;
+      }[];
+
+      return {
+        name: idx.name,
+        tableName: idx.tbl_name,
+        columns: indexInfo.map((col) => col.name),
+        unique: idx.sql?.toUpperCase().includes("UNIQUE") ?? false,
+      };
+    });
+  }
+
+  /**
    * Get capabilities
    */
   override getCapabilities(): AdapterCapabilities {
@@ -657,38 +696,95 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
 
   /**
    * Register a resource with the MCP server
+   * Handles both static resources and URI templates
    */
   protected override registerResource(
     server: McpServer,
     resource: ResourceDefinition,
   ): void {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    server.resource(
-      resource.name,
-      resource.uri,
-      {
-        mimeType: resource.mimeType ?? "application/json",
-        description: resource.description,
-      },
-      async (resourceUri: URL) => {
-        const content = await resource.handler(resourceUri.toString(), {
-          timestamp: new Date(),
-          requestId: crypto.randomUUID(),
-        });
-        return {
-          contents: [
-            {
-              uri: resourceUri.toString(),
-              mimeType: resource.mimeType ?? "application/json",
-              text:
-                typeof content === "string"
-                  ? content
-                  : JSON.stringify(content, null, 2),
+    // Check if URI contains template placeholders like {tableName}
+    const isTemplate = /\{[^}]+\}/.test(resource.uri);
+
+    if (isTemplate) {
+      // Import ResourceTemplate dynamically for template URIs
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { ResourceTemplate } =
+        require("@modelcontextprotocol/sdk/server/mcp.js") as {
+          ResourceTemplate: new (
+            uriTemplate: string,
+            callbacks: {
+              list?: () => Promise<{
+                resources: { uri: string; name: string }[];
+              }>;
             },
-          ],
+          ) => unknown;
         };
-      },
-    );
+
+      // Create ResourceTemplate for parameterized URIs
+      const template = new ResourceTemplate(resource.uri, {});
+
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      server.resource(
+        resource.name,
+        template as never, // Type cast for SDK compatibility
+        {
+          mimeType: resource.mimeType ?? "application/json",
+          description: resource.description,
+        },
+        // Callback receives URL and extracted template variables
+        async (
+          resourceUri: URL,
+          _variables: Record<string, string | string[]>,
+        ) => {
+          // Pass full URI to handler so it can extract variables
+          const content = await resource.handler(resourceUri.toString(), {
+            timestamp: new Date(),
+            requestId: crypto.randomUUID(),
+          });
+          return {
+            contents: [
+              {
+                uri: resourceUri.toString(),
+                mimeType: resource.mimeType ?? "application/json",
+                text:
+                  typeof content === "string"
+                    ? content
+                    : JSON.stringify(content, null, 2),
+              },
+            ],
+          };
+        },
+      );
+    } else {
+      // Static resource registration
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      server.resource(
+        resource.name,
+        resource.uri,
+        {
+          mimeType: resource.mimeType ?? "application/json",
+          description: resource.description,
+        },
+        async (resourceUri: URL) => {
+          const content = await resource.handler(resourceUri.toString(), {
+            timestamp: new Date(),
+            requestId: crypto.randomUUID(),
+          });
+          return {
+            contents: [
+              {
+                uri: resourceUri.toString(),
+                mimeType: resource.mimeType ?? "application/json",
+                text:
+                  typeof content === "string"
+                    ? content
+                    : JSON.stringify(content, null, 2),
+              },
+            ],
+          };
+        },
+      );
+    }
   }
 
   /**
