@@ -125,6 +125,8 @@ sqlite_stats_percentile({ table: "sales", column: "revenue", percentiles: [25, 5
 sqlite_stats_histogram({ table: "products", column: "price", buckets: 10 })
 sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue" }) // linear
 sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue", degree: 2 }) // quadratic
+sqlite_stats_outliers({ table: "sales", column: "amount", method: "iqr" }) // or "zscore"
+sqlite_stats_hypothesis({ table: "samples", column: "value", testType: "ttest_one", expectedMean: 100 })
 \`\`\`
 
 ## Geospatial Operations

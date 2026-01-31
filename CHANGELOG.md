@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **ServerInstructions.ts Statistical Analysis Examples** — Added missing stats tool examples to TOOL_REFERENCE
+  - Added `sqlite_stats_outliers` example with IQR/Z-score method options
+  - Added `sqlite_stats_hypothesis` example with one-sample t-test usage
+
 - **ServerInstructions.ts Text Processing Examples** — Updated TOOL_REFERENCE section
   - Fixed `sqlite_fuzzy_search` example to correct tool name `sqlite_fuzzy_match` with proper parameters
   - Replaced generic `sqlite_text_similarity` example with practical `sqlite_text_validate` (email/phone/url/uuid/ipv4)
