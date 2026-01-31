@@ -71,7 +71,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | SpatiaLite GIS (7 tools) | ✅ | ❌ | None |
 | Backup/Restore (3 tools) | ✅ | ❌ | Graceful error |
 | R-Tree spatial indexing | ✅ | ❌ | None |
-| CSV virtual tables | ✅ | ❌ | None |
+| CSV virtual tables | ✅ | ❌ | None (requires absolute paths) |
 | generate_series | ✅ native | ❌ | JS |
 | dbstat | ✅ native | ❌ | JS (basic) |
 | soundex() | ✅ native | ❌ | JS |
@@ -187,6 +187,10 @@ sqlite_vacuum() // Reclaim space
 sqlite_pragma_settings({ pragma: "journal_mode" }) // Get/set PRAGMA values
 sqlite_pragma_table_info({ table: "users" }) // Get column details
 sqlite_backup({ targetPath: "/path/to/backup.db" }) // Native only
+
+// CSV Virtual Tables (Native only - requires ABSOLUTE paths)
+sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" })
+sqlite_create_csv_table({ tableName: "csv_data", filePath: "/absolute/path/to/data.csv" })
 \`\`\`
 `;
 

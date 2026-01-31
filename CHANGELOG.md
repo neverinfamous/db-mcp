@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **ServerInstructions.ts CSV Path Documentation** — Added absolute path requirement note for CSV tools
+  - Updated WASM vs Native table: CSV virtual tables now note "(requires absolute paths)"
+  - Added CSV Virtual Tables examples to Database Administration section showing `sqlite_analyze_csv_schema` and `sqlite_create_csv_table` with absolute path usage
+
 - **ServerInstructions.ts Statistical Analysis Examples** — Added missing stats tool examples to TOOL_REFERENCE
   - Added `sqlite_stats_outliers` example with IQR/Z-score method options
   - Added `sqlite_stats_hypothesis` example with one-sample t-test usage
