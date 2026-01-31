@@ -152,18 +152,46 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       this.db.pragma(`cache_size = ${options.cacheSize}`);
     }
     if (options.spatialite) {
-      try {
-        this.db.loadExtension("mod_spatialite");
-        log.info("Loaded SpatiaLite extension", { code: "SQLITE_EXTENSION" });
-      } catch {
-        log.warning("SpatiaLite extension not available", {
-          code: "SQLITE_EXTENSION",
-        });
+      const spatialitePaths = [
+        process.env["SPATIALITE_PATH"],
+        "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite",
+        "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite.dll",
+        "mod_spatialite",
+        "mod_spatialite.dll",
+        "/usr/lib/x86_64-linux-gnu/mod_spatialite.so",
+        "/usr/local/lib/mod_spatialite.so",
+        "/usr/local/lib/mod_spatialite.dylib",
+      ].filter((p): p is string => Boolean(p));
+
+      let loaded = false;
+      for (const path of spatialitePaths) {
+        try {
+          this.db.loadExtension(path);
+          log.info(`Loaded SpatiaLite extension from ${path}`, {
+            code: "SQLITE_EXTENSION",
+          });
+          loaded = true;
+          break;
+        } catch {
+          // Try next path
+        }
+      }
+      if (!loaded) {
+        log.warning(
+          "SpatiaLite extension not available. Set SPATIALITE_PATH env var.",
+          { code: "SQLITE_EXTENSION" },
+        );
       }
     }
     if (options.csv) {
       const csvPaths = [
         process.env["CSV_EXTENSION_PATH"],
+        // sqlite-xsv extension (popular alternative)
+        "./extensions/xsv0.dll",
+        "./extensions/xsv0",
+        "xsv0",
+        "xsv0.dll",
+        // Official SQLite CSV extension
         "csv",
         "csv.dll",
         "csv.so",
@@ -652,11 +680,11 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
           role: "user" | "assistant";
           content: { type: "text"; text: string };
         }[] = Array.isArray(result)
-          ? (result as {
+            ? (result as {
               role: "user" | "assistant";
               content: { type: "text"; text: string };
             }[])
-          : [
+            : [
               {
                 role: "assistant" as const,
                 content: {

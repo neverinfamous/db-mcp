@@ -79,3 +79,4 @@ data/
 
 # Test database (local development only)
 test-database/
+extensions/
