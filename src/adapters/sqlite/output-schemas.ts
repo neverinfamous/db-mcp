@@ -496,8 +496,8 @@ export const FtsCreateOutputSchema = z.object({
  */
 const FtsResultSchema = z
   .object({
-    rank: z.number().optional(),
-    bm25: z.number().optional(),
+    rank: z.number().nullable().optional(),
+    bm25: z.number().nullable().optional(),
   })
   .loose();
 
