@@ -53,7 +53,16 @@ export class SqliteAdapter extends DatabaseAdapter {
   override readonly name = "SQLite Adapter";
   override readonly version = "1.0.0";
 
+  /**
+   * Check if this adapter uses native (better-sqlite3) backend.
+   * Returns false for WASM/sql.js adapter.
+   */
+  isNativeBackend(): boolean {
+    return false;
+  }
+
   private db: Database | null = null;
+
   protected override config: SqliteConfig | null = null;
   private sqlJsInstance: Awaited<ReturnType<typeof initSqlJs>> | null = null;
   private schemaManager: SchemaManager | null = null;

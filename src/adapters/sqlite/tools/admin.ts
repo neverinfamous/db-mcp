@@ -145,11 +145,12 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
           durationMs: duration,
         };
       } catch (error) {
-        // Detect WASM file system limitation
+        // Detect WASM file system limitation (only in WASM mode)
         const errMsg = error instanceof Error ? error.message : String(error);
         if (
-          errMsg.includes("unable to open database") ||
-          errMsg.includes("not supported")
+          !adapter.isNativeBackend() &&
+          (errMsg.includes("unable to open database") ||
+            errMsg.includes("not supported"))
         ) {
           return {
             success: false,
@@ -350,11 +351,12 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           true,
         );
       } catch (error) {
-        // Detect WASM file system limitation
+        // Detect WASM file system limitation (only in WASM mode)
         const errMsg = error instanceof Error ? error.message : String(error);
         if (
-          errMsg.includes("unable to open database") ||
-          errMsg.includes("not supported")
+          !adapter.isNativeBackend() &&
+          (errMsg.includes("unable to open database") ||
+            errMsg.includes("not supported"))
         ) {
           return {
             success: false,
@@ -542,11 +544,12 @@ function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
         );
       } catch (error) {
-        // Detect WASM file system limitation
+        // Detect WASM file system limitation (only in WASM mode)
         const errMsg = error instanceof Error ? error.message : String(error);
         if (
-          errMsg.includes("unable to open database") ||
-          errMsg.includes("not supported")
+          !adapter.isNativeBackend() &&
+          (errMsg.includes("unable to open database") ||
+            errMsg.includes("not supported"))
         ) {
           return {
             success: false,

@@ -66,6 +66,14 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   readonly name = "Native SQLite Adapter (better-sqlite3)";
   readonly version = "1.0.0";
 
+  /**
+   * Check if this adapter uses native (better-sqlite3) backend.
+   * Returns true for native adapter.
+   */
+  isNativeBackend(): boolean {
+    return true;
+  }
+
   private db: DatabaseType | null = null;
 
   /**
