@@ -29,6 +29,13 @@ const FtsCreateSchema = z.object({
     .enum(["unicode61", "ascii", "porter"])
     .optional()
     .default("unicode61"),
+  createTriggers: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Create INSERT/UPDATE/DELETE triggers for auto-sync (only for external content tables)",
+    ),
 });
 
 const FtsSearchSchema = z.object({
@@ -93,22 +100,91 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
       const columnList = input.columns.join(", ");
       let options = `tokenize="${input.tokenizer}"`;
 
-      if (input.contentTable) {
-        sanitizeIdentifier(input.contentTable);
-        options += `, content="${input.contentTable}"`;
-      }
+      // Use contentTable if specified, otherwise use sourceTable
+      const effectiveContentTable = input.contentTable ?? input.sourceTable;
+      sanitizeIdentifier(effectiveContentTable);
+      options += `, content="${effectiveContentTable}"`;
 
       const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${input.tableName}" USING fts5(${columnList}, ${options})`;
 
       await adapter.executeQuery(sql);
 
+      // Create sync triggers for external content FTS tables
+      let triggersCreated: string[] = [];
+      if (input.createTriggers) {
+        triggersCreated = await createSyncTriggers(
+          adapter,
+          input.tableName,
+          effectiveContentTable,
+          input.columns,
+        );
+      }
+
+      // Populate the FTS index with existing data
+      await adapter.executeQuery(
+        `INSERT INTO "${input.tableName}"("${input.tableName}") VALUES('rebuild')`,
+      );
+
+      const message = triggersCreated.length
+        ? `FTS5 table '${input.tableName}' created with ${triggersCreated.length} sync triggers`
+        : `FTS5 table '${input.tableName}' created`;
+
       return {
         success: true,
-        message: `FTS5 table '${input.tableName}' created`,
+        message,
         tableName: input.tableName,
+        triggersCreated: triggersCreated.length ? triggersCreated : undefined,
       };
     },
   };
+}
+
+/**
+ * Create INSERT/UPDATE/DELETE triggers to keep FTS5 index in sync with content table
+ */
+async function createSyncTriggers(
+  adapter: SqliteAdapter,
+  ftsTable: string,
+  contentTable: string,
+  columns: string[],
+): Promise<string[]> {
+  const triggersCreated: string[] = [];
+  const colList = columns.map((c) => `"${c}"`).join(", ");
+  const newColList = columns.map((c) => `NEW."${c}"`).join(", ");
+  const oldColList = columns.map((c) => `OLD."${c}"`).join(", ");
+
+  // INSERT trigger - add new row to FTS index
+  const insertTriggerName = `${ftsTable}_ai`;
+  const insertTrigger = `
+    CREATE TRIGGER IF NOT EXISTS "${insertTriggerName}" AFTER INSERT ON "${contentTable}" BEGIN
+      INSERT INTO "${ftsTable}"(rowid, ${colList}) VALUES (NEW.rowid, ${newColList});
+    END;
+  `;
+  await adapter.executeQuery(insertTrigger);
+  triggersCreated.push(insertTriggerName);
+
+  // DELETE trigger - remove row from FTS index
+  const deleteTriggerName = `${ftsTable}_ad`;
+  const deleteTrigger = `
+    CREATE TRIGGER IF NOT EXISTS "${deleteTriggerName}" AFTER DELETE ON "${contentTable}" BEGIN
+      INSERT INTO "${ftsTable}"("${ftsTable}", rowid, ${colList}) VALUES('delete', OLD.rowid, ${oldColList});
+    END;
+  `;
+  await adapter.executeQuery(deleteTrigger);
+  triggersCreated.push(deleteTriggerName);
+
+  // UPDATE trigger - delete old entry and insert new one
+  const updateTriggerName = `${ftsTable}_au`;
+  const updateTrigger = `
+    CREATE TRIGGER IF NOT EXISTS "${updateTriggerName}" AFTER UPDATE ON "${contentTable}" BEGIN
+      INSERT INTO "${ftsTable}"("${ftsTable}", rowid, ${colList}) VALUES('delete', OLD.rowid, ${oldColList});
+      INSERT INTO "${ftsTable}"(rowid, ${colList}) VALUES (NEW.rowid, ${newColList});
+    END;
+  `;
+  await adapter.executeQuery(updateTrigger);
+  triggersCreated.push(updateTriggerName);
+
+  return triggersCreated;
 }
 
 /**

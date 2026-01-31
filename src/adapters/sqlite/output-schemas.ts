@@ -488,6 +488,7 @@ export const FtsCreateOutputSchema = z.object({
   success: z.boolean(),
   message: z.string(),
   tableName: z.string(),
+  triggersCreated: z.array(z.string()).optional(),
 });
 
 /**

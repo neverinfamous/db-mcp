@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **FTS5 Auto-Sync Triggers** — `sqlite_fts_create` now automatically creates sync triggers
+  - INSERT/UPDATE/DELETE triggers keep FTS5 index synchronized with source table in real-time
+  - New `createTriggers` option (default: `true`) to control trigger creation
+  - FTS tables are automatically populated with existing data on creation via `rebuild`
+  - Trigger naming convention: `{ftsTable}_ai` (insert), `{ftsTable}_ad` (delete), `{ftsTable}_au` (update)
+  - Response includes `triggersCreated` array listing created trigger names
+
 - **SQLite Extension Support** — Added CLI flags and configuration for loadable SQLite extensions
   - `--csv` flag to load CSV extension for CSV virtual tables
   - `--spatialite` flag to load SpatiaLite extension for GIS capabilities
