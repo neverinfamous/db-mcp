@@ -696,11 +696,16 @@ export const StatsCorrelationOutputSchema = z.object({
  */
 export const StatsRegressionOutputSchema = z.object({
   success: z.boolean(),
-  xColumn: z.string(),
-  yColumn: z.string(),
-  slope: z.number().nullable(),
-  intercept: z.number().nullable(),
-  rSquared: z.number().nullable(),
+  type: z.string(),
+  sampleSize: z.number(),
+  coefficients: z.object({
+    intercept: z.number(),
+    linear: z.number().optional(),
+    quadratic: z.number().optional(),
+    cubic: z.number().optional(),
+  }),
+  rSquared: z.number(),
+  equation: z.string(),
 });
 
 /**

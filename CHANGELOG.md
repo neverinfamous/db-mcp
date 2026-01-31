@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Lists FTS5, transactions, window functions, SpatiaLite, and soundex availability
   - Token-efficient format optimized for AI agent consumption
 
+- **Polynomial Regression Support** — `sqlite_stats_regression` now supports degree 1-3 polynomial fits
+  - Linear (degree=1), quadratic (degree=2), and cubic (degree=3) regression via OLS normal equation
+  - Matrix operations (transpose, multiply, Gauss-Jordan inverse) implemented in pure TypeScript
+  - Output includes named coefficients (`intercept`, `linear`, `quadratic`, `cubic`) instead of generic `slope`
+  - R² calculation uses sum of squared residuals for accurate goodness-of-fit measurement
+  - Equation string displays polynomial terms (e.g., `y = 2.0000x² + 3.0000x + 5.0000`)
+
+
 - **WASM Mode Core Tool Compatibility** — Fixed issues discovered during WASM mode testing
   - `server_health` now correctly reports `filePath` from `connectionString` when `filePath` is not set
   - `sqlite_list_tables` now gracefully handles FTS5 virtual tables in WASM mode (sql.js lacks FTS5 module)

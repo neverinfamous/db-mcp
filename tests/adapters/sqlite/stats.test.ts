@@ -246,4 +246,91 @@ describe("Stats Tools", () => {
       expect(p50?.value).toBeDefined();
     });
   });
+
+  describe("sqlite_stats_regression", () => {
+    beforeEach(async () => {
+      // Create quadratic test data: y = 2x² + 3x + 5
+      await adapter.executeWriteQuery(`
+        CREATE TABLE IF NOT EXISTS quadratic (
+          id INTEGER PRIMARY KEY,
+          x REAL,
+          y REAL
+        )
+      `);
+      await adapter.executeWriteQuery(`
+        INSERT INTO quadratic (x, y) VALUES 
+          (0, 5), (1, 10), (2, 19), (3, 32), (4, 49), (5, 70)
+      `);
+    });
+
+    it("should perform linear regression (degree 1)", async () => {
+      const result = (await tools.get("sqlite_stats_regression")?.({
+        table: "sales",
+        xColumn: "id",
+        yColumn: "amount",
+      })) as {
+        success: boolean;
+        type: string;
+        coefficients: { intercept: number; linear?: number };
+        rSquared: number;
+        equation: string;
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.type).toBe("linear");
+      expect(result.coefficients.intercept).toBeDefined();
+      expect(result.coefficients.linear).toBeDefined();
+      expect(result.equation).toContain("y =");
+    });
+
+    it("should perform quadratic regression (degree 2)", async () => {
+      const result = (await tools.get("sqlite_stats_regression")?.({
+        table: "quadratic",
+        xColumn: "x",
+        yColumn: "y",
+        degree: 2,
+      })) as {
+        success: boolean;
+        type: string;
+        coefficients: {
+          intercept: number;
+          linear?: number;
+          quadratic?: number;
+        };
+        rSquared: number;
+        equation: string;
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.type).toBe("polynomial_2");
+      expect(result.coefficients.quadratic).toBeCloseTo(2, 0);
+      expect(result.coefficients.linear).toBeCloseTo(3, 0);
+      expect(result.coefficients.intercept).toBeCloseTo(5, 0);
+      expect(result.rSquared).toBeGreaterThan(0.99);
+    });
+
+    it("should handle cubic regression (degree 3)", async () => {
+      const result = (await tools.get("sqlite_stats_regression")?.({
+        table: "quadratic",
+        xColumn: "x",
+        yColumn: "y",
+        degree: 3,
+      })) as {
+        success: boolean;
+        type: string;
+        coefficients: {
+          intercept: number;
+          linear?: number;
+          quadratic?: number;
+          cubic?: number;
+        };
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.type).toBe("polynomial_3");
+      expect(result.coefficients.cubic).toBeDefined();
+      // Cubic term should be near 0 since data is quadratic
+      expect(Math.abs(result.coefficients.cubic ?? 0)).toBeLessThan(0.1);
+    });
+  });
 });

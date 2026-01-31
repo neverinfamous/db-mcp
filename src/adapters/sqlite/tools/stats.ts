@@ -915,6 +915,99 @@ function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Linear/polynomial regression analysis
  */
+
+// Matrix utility functions for polynomial regression
+function matrixTranspose(A: number[][]): number[][] {
+  const rows = A.length;
+  const cols = A[0]?.length ?? 0;
+  const result: number[][] = [];
+  for (let j = 0; j < cols; j++) {
+    const row: number[] = [];
+    for (let i = 0; i < rows; i++) {
+      row.push(A[i]?.[j] ?? 0);
+    }
+    result.push(row);
+  }
+  return result;
+}
+
+function matrixMultiply(A: number[][], B: number[][]): number[][] {
+  const rowsA = A.length;
+  const colsA = A[0]?.length ?? 0;
+  const colsB = B[0]?.length ?? 0;
+  const result: number[][] = [];
+  for (let i = 0; i < rowsA; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < colsB; j++) {
+      let sum = 0;
+      for (let k = 0; k < colsA; k++) {
+        sum += (A[i]?.[k] ?? 0) * (B[k]?.[j] ?? 0);
+      }
+      row.push(sum);
+    }
+    result.push(row);
+  }
+  return result;
+}
+
+function matrixInverse(A: number[][]): number[][] {
+  const n = A.length;
+  // Create augmented matrix [A|I]
+  const aug: number[][] = A.map((row, i) => [
+    ...row,
+    ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)),
+  ]);
+
+  // Gauss-Jordan elimination
+  for (let col = 0; col < n; col++) {
+    // Find pivot
+    let maxRow = col;
+    for (let row = col + 1; row < n; row++) {
+      const currentVal = Math.abs(aug[row]?.[col] ?? 0);
+      const maxVal = Math.abs(aug[maxRow]?.[col] ?? 0);
+      if (currentVal > maxVal) {
+        maxRow = row;
+      }
+    }
+
+    // Swap rows
+    const temp = aug[col];
+    const swapRow = aug[maxRow];
+    if (temp && swapRow) {
+      aug[col] = swapRow;
+      aug[maxRow] = temp;
+    }
+
+    const pivotRow = aug[col];
+    if (!pivotRow) continue;
+
+    const pivot = pivotRow[col] ?? 0;
+    if (Math.abs(pivot) < 1e-10) {
+      throw new Error("Matrix is singular, cannot compute inverse");
+    }
+
+    // Scale pivot row
+    for (let j = 0; j < 2 * n; j++) {
+      pivotRow[j] = (pivotRow[j] ?? 0) / pivot;
+    }
+
+    // Eliminate column
+    for (let row = 0; row < n; row++) {
+      if (row !== col) {
+        const currentRow = aug[row];
+        if (!currentRow) continue;
+        const factor = currentRow[col] ?? 0;
+        for (let j = 0; j < 2 * n; j++) {
+          currentRow[j] = (currentRow[j] ?? 0) - factor * (pivotRow[j] ?? 0);
+        }
+      }
+    }
+  }
+
+  // Extract inverse from augmented matrix
+  return aug.map((row) => row.slice(n));
+}
+
 function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_stats_regression",
@@ -927,11 +1020,12 @@ function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
       type: z.string(),
       sampleSize: z.number(),
       coefficients: z.object({
-        slope: z.number(),
         intercept: z.number(),
+        linear: z.number().optional(),
+        quadratic: z.number().optional(),
+        cubic: z.number().optional(),
       }),
       rSquared: z.number(),
-      correlation: z.number(),
       equation: z.string(),
     }),
     requiredScopes: ["read"],
@@ -945,53 +1039,95 @@ function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
       sanitizeIdentifier(input.yColumn);
 
       const andClause = input.whereClause ? ` AND ${input.whereClause}` : "";
+      const degree = input.degree ?? 1;
 
-      // For now, only implement linear regression (degree=1)
-      // Get regression statistics using SQL
+      // Fetch data points
       const sql = `
-        SELECT 
-          COUNT(*) as n,
-          AVG("${input.xColumn}") as mean_x,
-          AVG("${input.yColumn}") as mean_y,
-          SUM(("${input.xColumn}" - (SELECT AVG("${input.xColumn}") FROM "${input.table}" WHERE "${input.xColumn}" IS NOT NULL AND "${input.yColumn}" IS NOT NULL${andClause})) * 
-              ("${input.yColumn}" - (SELECT AVG("${input.yColumn}") FROM "${input.table}" WHERE "${input.xColumn}" IS NOT NULL AND "${input.yColumn}" IS NOT NULL${andClause}))) as sum_xy,
-          SUM(("${input.xColumn}" - (SELECT AVG("${input.xColumn}") FROM "${input.table}" WHERE "${input.xColumn}" IS NOT NULL AND "${input.yColumn}" IS NOT NULL${andClause})) * 
-              ("${input.xColumn}" - (SELECT AVG("${input.xColumn}") FROM "${input.table}" WHERE "${input.xColumn}" IS NOT NULL AND "${input.yColumn}" IS NOT NULL${andClause}))) as sum_xx,
-          SUM(("${input.yColumn}" - (SELECT AVG("${input.yColumn}") FROM "${input.table}" WHERE "${input.xColumn}" IS NOT NULL AND "${input.yColumn}" IS NOT NULL${andClause})) * 
-              ("${input.yColumn}" - (SELECT AVG("${input.yColumn}") FROM "${input.table}" WHERE "${input.xColumn}" IS NOT NULL AND "${input.yColumn}" IS NOT NULL${andClause}))) as sum_yy
+        SELECT "${input.xColumn}" as x, "${input.yColumn}" as y
         FROM "${input.table}"
         WHERE "${input.xColumn}" IS NOT NULL AND "${input.yColumn}" IS NOT NULL${andClause}
       `;
 
       const result = await adapter.executeReadQuery(sql);
-      const row = result.rows?.[0];
+      const pairs = (result.rows ?? []).map((r) => ({
+        x: Number(r["x"]),
+        y: Number(r["y"]),
+      }));
 
-      const n = Number(row?.["n"] ?? 0);
-      const meanX = Number(row?.["mean_x"] ?? 0);
-      const meanY = Number(row?.["mean_y"] ?? 0);
-      const sumXY = Number(row?.["sum_xy"] ?? 0);
-      const sumXX = Number(row?.["sum_xx"] ?? 0);
-      const sumYY = Number(row?.["sum_yy"] ?? 0);
-
-      if (n < 2 || sumXX === 0) {
-        throw new Error("Insufficient data for regression analysis");
+      if (pairs.length < degree + 1) {
+        throw new Error(
+          `Insufficient data for degree ${degree} regression (need at least ${degree + 1} points, got ${pairs.length})`,
+        );
       }
 
-      const slope = sumXY / sumXX;
-      const intercept = meanY - slope * meanX;
-      const correlation = sumXY / Math.sqrt(sumXX * sumYY);
-      const rSquared = correlation * correlation;
+      // Build design matrix X = [[1, x, x², ...], ...]
+      const X = pairs.map((p) =>
+        Array.from({ length: degree + 1 }, (_, i) => Math.pow(p.x, i)),
+      );
+      const y = pairs.map((p) => [p.y]);
 
-      const interceptSign = intercept >= 0 ? "+" : "-";
-      const equation = `y = ${slope.toFixed(4)}x ${interceptSign} ${Math.abs(intercept).toFixed(4)}`;
+      // Solve β = (XᵀX)⁻¹Xᵀy using normal equation
+      const Xt = matrixTranspose(X);
+      const XtX = matrixMultiply(Xt, X);
+      const XtXInv = matrixInverse(XtX);
+      const XtY = matrixMultiply(Xt, y);
+      const beta = matrixMultiply(XtXInv, XtY).map((r) => r[0] ?? 0);
+
+      // Calculate R² (coefficient of determination)
+      const meanY = pairs.reduce((s, p) => s + p.y, 0) / pairs.length;
+      let ssRes = 0; // Sum of squared residuals
+      let ssTot = 0; // Total sum of squares
+
+      for (const p of pairs) {
+        // Predicted value: β₀ + β₁x + β₂x² + ...
+        let predicted = 0;
+        for (let i = 0; i <= degree; i++) {
+          predicted += (beta[i] ?? 0) * Math.pow(p.x, i);
+        }
+        ssRes += Math.pow(p.y - predicted, 2);
+        ssTot += Math.pow(p.y - meanY, 2);
+      }
+      const rSquared = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+
+      // Build coefficients object
+      const coefficients: {
+        intercept: number;
+        linear?: number;
+        quadratic?: number;
+        cubic?: number;
+      } = {
+        intercept: beta[0] ?? 0,
+      };
+
+      if (degree >= 1) coefficients.linear = beta[1] ?? 0;
+      if (degree >= 2) coefficients.quadratic = beta[2] ?? 0;
+      if (degree >= 3) coefficients.cubic = beta[3] ?? 0;
+
+      // Build equation string
+      const terms: string[] = [];
+      if (degree >= 3 && beta[3] !== undefined) {
+        terms.push(`${beta[3].toFixed(4)}x³`);
+      }
+      if (degree >= 2 && beta[2] !== undefined) {
+        const sign = terms.length > 0 && beta[2] >= 0 ? " + " : "";
+        terms.push(`${sign}${beta[2].toFixed(4)}x²`);
+      }
+      if (degree >= 1 && beta[1] !== undefined) {
+        const sign = terms.length > 0 && beta[1] >= 0 ? " + " : "";
+        terms.push(`${sign}${beta[1].toFixed(4)}x`);
+      }
+      const interceptSign =
+        terms.length > 0 && (beta[0] ?? 0) >= 0 ? " + " : "";
+      terms.push(`${interceptSign}${(beta[0] ?? 0).toFixed(4)}`);
+
+      const equation = `y = ${terms.join("").replace(/^\s*\+\s*/, "")}`;
 
       return {
         success: true,
-        type: input.degree === 1 ? "linear" : `polynomial_${input.degree}`,
-        sampleSize: n,
-        coefficients: { slope, intercept },
-        rSquared,
-        correlation,
+        type: degree === 1 ? "linear" : `polynomial_${degree}`,
+        sampleSize: pairs.length,
+        coefficients,
+        rSquared: Math.round(rSquared * 10000) / 10000,
         equation,
       };
     },
