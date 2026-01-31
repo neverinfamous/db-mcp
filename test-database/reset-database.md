@@ -144,50 +144,54 @@ If verification shows unexpected row counts:
 
 Copy and paste this prompt to test the JSON tool group:
 
-Please conduct a comprehensive test of the db-mcp SQLite MCP server "text" tool group (17 + 3 built-in tools) using the live MCP server tool calls. Use the MCP tools directly for testing, not scripts/terminal.
+Please conduct a comprehensive test of the db-mcp SQLite MCP server "stats" tool group (19 + 3 built-in tools) using the live MCP server tool calls. Use the MCP tools directly for testing, not scripts/terminal.
 
-## Text Tool Group's Tools
+## stats Tool Group's Tools
 
 1. server_info
-   Get information about the db-mcp server and registered adapters
+Get information about the db-mcp server and registered adapters
 2. server_health
-   Check health status of all database connections
+Check health status of all database connections
 3. list_adapters
-   List all registered database adapters
-4. sqlite_regex_extract
-   Extract text matching a regex pattern. Processed in JavaScript after fetching data.
-5. sqlite_regex_match
-   Find rows where column matches a regex pattern. Processed in JavaScript.
-6. sqlite_text_split
-   Split a text column by delimiter into array results.
-7. sqlite_text_concat
-   Concatenate multiple columns with optional separator.
-8. sqlite_text_replace
-   Replace text in a column using SQLite replace() function.
-9. sqlite_text_trim
-   Trim whitespace from text column values.
-10. sqlite_text_case
-    Convert text to uppercase or lowercase.
-11. sqlite_text_substring
-    Extract a substring from text column using substr().
-12. sqlite_fuzzy_match
-    Find fuzzy matches using Levenshtein distance. Returns values within max edit distance.
-13. sqlite_phonetic_match
-    Find phonetically similar values using Soundex (SQLite native) or Metaphone algorithm.
-14. sqlite_text_normalize
-    Normalize text using Unicode normalization (NFC, NFD, NFKC, NFKD) or strip accents.
-15. sqlite_text_validate
-    Validate text values against patterns: email, phone, URL, UUID, IPv4, or custom regex.
-16. sqlite_advanced_search
-    Advanced search combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching
-17. sqlite_fts_create
-    Create an FTS5 full-text search virtual table.
-18. sqlite_fts_search
-    Search an FTS5 table using full-text query syntax.
-19. sqlite_fts_rebuild
-    Rebuild an FTS5 index to optimize search performance.
-20. sqlite_fts_match_info
-    Get FTS5 match ranking information using bm25.
+List all registered database adapters
+4. sqlite_stats_basic
+Get basic statistics (count, sum, avg, min, max) for a numeric column.
+5. sqlite_stats_count
+Count rows, optionally distinct values in a column.
+6. sqlite_stats_group_by
+Aggregate statistics grouped by a column.
+7. sqlite_stats_histogram
+Create a histogram with specified number of buckets.
+8. sqlite_stats_percentile
+Calculate percentiles (median, quartiles, etc.) for a column.
+9. sqlite_stats_correlation
+Calculate Pearson correlation coefficient between two numeric columns.
+10. sqlite_stats_top_n
+Get top N values from a column.
+11. sqlite_stats_distinct
+Get distinct values from a column.
+12. sqlite_stats_summary
+Get summary statistics for multiple columns at once.
+13. sqlite_stats_frequency
+Get frequency distribution of values in a column.
+14. sqlite_stats_outliers
+Detect outliers using IQR (Interquartile Range) or Z-score method.
+15. sqlite_stats_regression
+Perform linear or polynomial regression analysis between two columns.
+16. sqlite_stats_hypothesis
+Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.
+17. sqlite_window_row_number
+Assign sequential row numbers based on ordering. Useful for pagination and ranking.
+18. sqlite_window_rank
+Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0-1 range.
+19. sqlite_window_lag_lead
+Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows.
+20. sqlite_window_running_total
+Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics.
+21. sqlite_window_moving_avg
+Calculate moving (rolling) average. Useful for smoothing time series data.
+22. sqlite_window_ntile
+Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles.
 
 ### Test Database Schema
 
