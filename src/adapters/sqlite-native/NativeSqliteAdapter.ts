@@ -527,10 +527,10 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       const indexInfo = db
         .prepare(`PRAGMA index_info("${idx.name}")`)
         .all() as {
-        seqno: number;
-        cid: number;
-        name: string;
-      }[];
+          seqno: number;
+          cid: number;
+          name: string;
+        }[];
 
       return {
         name: idx.name,
@@ -799,11 +799,11 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
           role: "user" | "assistant";
           content: { type: "text"; text: string };
         }[] = Array.isArray(result)
-          ? (result as {
+            ? (result as {
               role: "user" | "assistant";
               content: { type: "text"; text: string };
             }[])
-          : [
+            : [
               {
                 role: "assistant" as const,
                 content: {

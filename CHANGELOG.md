@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_list_tables` now handles FTS5 virtual tables gracefully in WASM mode (sql.js lacks FTS5 module)
   - FTS5 tables show `rowCount: 0` instead of failing the entire operation
 
+
 - **MCP Resource Template Registration** — Fixed `sqlite_table_schema` templated resource not matching client requests
   - Updated `registerResource()` in `NativeSqliteAdapter` to detect URI templates (containing `{param}` placeholders)
   - Template resources now use MCP SDK's `ResourceTemplate` class for proper URI matching
