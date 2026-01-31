@@ -197,7 +197,7 @@ Choose between two SQLite backends based on your needs:
 
 | Feature                   | WASM (sql.js)     | Native (better-sqlite3)       |
 | ------------------------- | ----------------- | ----------------------------- |
-| **Tools Available**       | 100               | **113**                       |
+| **Tools Available**       | 102               | **122**                       |
 | **Transactions**          | ❌                | ✅ 7 tools                    |
 | **Window Functions**      | ❌                | ✅ 6 tools                    |
 | **FTS5 Full-Text Search** | ⚠️ Limited        | ✅ Full                       |
@@ -544,7 +544,7 @@ node dist/cli.js --transport http --port 3000 --stateless --sqlite-native :memor
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 113 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 122 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Quick Start: Recommended Configurations
 
@@ -630,12 +630,12 @@ Specify exactly the groups you need:
 
 | Shortcut    | WASM   | Native | + Built-in | What's Included    |
 | ----------- | ------ | ------ | ---------- | ------------------ |
-| `starter`   | **47** | **47** | +3         | Core, JSON, Text   |
+| `starter`   | **48** | **48** | +3         | Core, JSON, Text   |
 | `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
-| `search`    | 35     | 35     | +3         | Core, Text, Vector |
+| `search`    | 36     | 36     | +3         | Core, Text, Vector |
 | `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
 | `minimal`   | 8      | 8      | +3         | Core only          |
-| `full`      | 100    | 120    | +3         | Everything enabled |
+| `full`      | 102    | 122    | +3         | Everything enabled |
 
 ---
 
@@ -701,7 +701,7 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 - 🧠 **Vector/Semantic Search** - AI-native embeddings, cosine similarity, hybrid search
 - 🗺️ **Geospatial Operations** - Distance calculations, bounding boxes, spatial queries
 - 🔐 **Transaction Safety** - Full ACID compliance with savepoints (native backend)
-- 🎛️ **113 Specialized Tools** - Complete database administration and analytics suite
+- 🎛️ **122 Specialized Tools** - Complete database administration and analytics suite
 
 ### 🏢 Enterprise Features
 
@@ -786,7 +786,7 @@ curl -X POST "http://localhost:3000/mcp" \
 ## 🏆 Why Choose db-mcp?
 
 ✅ **TypeScript Native** - Full type safety with strict mode, no `any` types  
-✅ **113 Specialized Tools** - Most comprehensive SQLite MCP server available  
+✅ **122 Specialized Tools** - Most comprehensive SQLite MCP server available  
 ✅ **OAuth 2.1 Built-in** - Enterprise-grade authentication out of the box  
 ✅ **Dual Backends** - WASM for portability, native for performance  
 ✅ **Tool Filtering** - Stay within AI IDE tool limits with preset configurations  
@@ -801,7 +801,7 @@ curl -X POST "http://localhost:3000/mcp" \
 
 ## 📈 Project Stats
 
-- **113 Tools** in native backend (100 in WASM)
+- **122 Tools** in native backend (102 in WASM)
 - **13 Tool Groups** for flexible filtering
 - **Strict TypeScript** with full type coverage
 - **Multi-platform** support (Windows, Linux, macOS)

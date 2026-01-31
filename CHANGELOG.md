@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `sqlite_stats_outliers` example with IQR/Z-score method options
   - Added `sqlite_stats_hypothesis` example with one-sample t-test usage
 
+- **Tool Count Documentation Accuracy** — Fixed tool counts across all documentation files
+  - `text` group: 16 → 17 (added fuzzy_match, phonetic_match, text_normalize, text_validate, advanced_search, fts_rebuild, fts_match_info)
+  - `admin` group: 32 → 33
+  - `starter` preset: 47 → 48
+  - `search` preset: 35 → 36
+  - `full` preset: 120 → 122 Native, 100 → 102 WASM
+  - Updated ToolConstants.ts, ServerInstructions.ts, and README.md
+
 - **ServerInstructions.ts Text Processing Examples** — Updated TOOL_REFERENCE section
   - Fixed `sqlite_fuzzy_search` example to correct tool name `sqlite_fuzzy_match` with proper parameters
   - Replaced generic `sqlite_text_similarity` example with practical `sqlite_text_validate` (email/phone/url/uuid/ipv4)
