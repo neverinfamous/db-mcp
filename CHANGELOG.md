@@ -80,6 +80,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `StatsCorrelationOutputSchema` with optional `n` and `message` fields
   - Tools fixed: `sqlite_stats_basic`, `sqlite_stats_count`, `sqlite_stats_group_by`, `sqlite_stats_percentile`, `sqlite_stats_top_n`, `sqlite_stats_distinct`, `sqlite_stats_summary`, `sqlite_stats_frequency`
 
+- **Vector Tool Output Schema Fixes** — Fixed 10 tools with output validation errors
+  - Created dedicated output schemas: `VectorStoreOutputSchema`, `VectorBatchStoreOutputSchema`, `VectorGetOutputSchema`, `VectorDeleteOutputSchema`, `VectorCountOutputSchema`, `VectorStatsOutputSchema`, `VectorDimensionsOutputSchema`, `VectorNormalizeOutputSchema`, `VectorDistanceOutputSchema`
+  - Updated `VectorSearchOutputSchema` to match handler return structure (`metric`, `count`, `results` with `_similarity`)
+  - Tools fixed: `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_get`, `sqlite_vector_search`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_stats`, `sqlite_vector_dimensions`, `sqlite_vector_normalize`, `sqlite_vector_distance`
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

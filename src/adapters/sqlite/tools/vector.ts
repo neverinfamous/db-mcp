@@ -21,9 +21,16 @@ import {
 } from "../../../utils/index.js";
 import {
   CreateTableOutputSchema,
-  WriteQueryOutputSchema,
+  VectorStoreOutputSchema,
+  VectorBatchStoreOutputSchema,
+  VectorGetOutputSchema,
   VectorSearchOutputSchema,
-  ReadQueryOutputSchema,
+  VectorDeleteOutputSchema,
+  VectorCountOutputSchema,
+  VectorStatsOutputSchema,
+  VectorDimensionsOutputSchema,
+  VectorNormalizeOutputSchema,
+  VectorDistanceOutputSchema,
 } from "../output-schemas.js";
 
 // Vector schemas
@@ -245,7 +252,7 @@ function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Store or update a vector in the database.",
     group: "vector",
     inputSchema: VectorStoreSchema,
-    outputSchema: WriteQueryOutputSchema,
+    outputSchema: VectorStoreOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Store Vector"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -286,7 +293,7 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Store multiple vectors in a batch operation.",
     group: "vector",
     inputSchema: VectorBatchStoreSchema,
-    outputSchema: WriteQueryOutputSchema,
+    outputSchema: VectorBatchStoreOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Batch Store Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -404,7 +411,7 @@ function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Retrieve a vector by its ID.",
     group: "vector",
     inputSchema: VectorGetSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: VectorGetOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Get Vector"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -451,7 +458,7 @@ function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Delete vectors by their IDs.",
     group: "vector",
     inputSchema: VectorDeleteSchema,
-    outputSchema: WriteQueryOutputSchema,
+    outputSchema: VectorDeleteOutputSchema,
     requiredScopes: ["write"],
     annotations: destructive("Delete Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -485,7 +492,7 @@ function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Count vectors in a table.",
     group: "vector",
     inputSchema: VectorCountSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: VectorCountOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Count Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -514,7 +521,7 @@ function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get statistics about vectors in a table.",
     group: "vector",
     inputSchema: VectorStatsSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: VectorStatsOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Vector Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -583,7 +590,7 @@ function createVectorDimensionsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get the dimensions of vectors in a table.",
     group: "vector",
     inputSchema: VectorDimensionsSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: VectorDimensionsOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Vector Dimensions"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -623,7 +630,7 @@ function createVectorNormalizeTool(): ToolDefinition {
     description: "Normalize a vector to unit length.",
     group: "vector",
     inputSchema: VectorNormalizeSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: VectorNormalizeOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Normalize Vector"),
     handler: (params: unknown, _context: RequestContext) => {
@@ -652,7 +659,7 @@ function createVectorDistanceTool(): ToolDefinition {
     description: "Calculate distance or similarity between two vectors.",
     group: "vector",
     inputSchema: VectorDistanceSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: VectorDistanceOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Vector Distance"),
     handler: (params: unknown, _context: RequestContext) => {
