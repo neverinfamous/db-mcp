@@ -7,6 +7,8 @@
 
 import Database from "better-sqlite3";
 import type { Database as DatabaseType } from "better-sqlite3";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { z } from "zod";
 import { DatabaseAdapter } from "../DatabaseAdapter.js";
 import type {
@@ -152,10 +154,17 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       this.db.pragma(`cache_size = ${options.cacheSize}`);
     }
     if (options.spatialite) {
+      // Compute absolute path to extensions directory
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const extensionsDir = path.resolve(__dirname, "../../../extensions");
+
       const spatialitePaths = [
         process.env["SPATIALITE_PATH"],
-        "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite",
-        "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite.dll",
+        // Absolute paths to local extensions
+        path.join(extensionsDir, "mod_spatialite-5.1.0-win-amd64", "mod_spatialite"),
+        path.join(extensionsDir, "mod_spatialite-5.1.0-win-amd64", "mod_spatialite.dll"),
+        // System paths
         "mod_spatialite",
         "mod_spatialite.dll",
         "/usr/lib/x86_64-linux-gnu/mod_spatialite.so",
@@ -164,10 +173,10 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       ].filter((p): p is string => Boolean(p));
 
       let loaded = false;
-      for (const path of spatialitePaths) {
+      for (const extPath of spatialitePaths) {
         try {
-          this.db.loadExtension(path);
-          log.info(`Loaded SpatiaLite extension from ${path}`, {
+          this.db.loadExtension(extPath);
+          log.info(`Loaded SpatiaLite extension from ${extPath}`, {
             code: "SQLITE_EXTENSION",
           });
           loaded = true;
@@ -184,27 +193,31 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       }
     }
     if (options.csv) {
+      // Compute absolute path to extensions directory
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const extensionsDir = path.resolve(__dirname, "../../../extensions");
+
       const csvPaths = [
         process.env["CSV_EXTENSION_PATH"],
-        // sqlite-xsv extension (popular alternative)
-        "./extensions/xsv0.dll",
-        "./extensions/xsv0",
+        // sqlite-xsv extension with absolute paths
+        path.join(extensionsDir, "xsv0.dll"),
+        path.join(extensionsDir, "xsv0"),
+        // System paths
         "xsv0",
         "xsv0.dll",
-        // Official SQLite CSV extension
         "csv",
         "csv.dll",
         "csv.so",
-        "./csv",
         "/usr/local/lib/csv.so",
         "/usr/local/lib/csv.dylib",
       ].filter((p): p is string => Boolean(p));
 
       let loaded = false;
-      for (const path of csvPaths) {
+      for (const extPath of csvPaths) {
         try {
-          this.db.loadExtension(path);
-          log.info(`Loaded CSV extension from ${path}`, {
+          this.db.loadExtension(extPath);
+          log.info(`Loaded CSV extension from ${extPath}`, {
             code: "SQLITE_EXTENSION",
           });
           loaded = true;
