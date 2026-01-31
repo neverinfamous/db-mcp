@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_create_table` SQL Expression Default Values** — Fixed syntax error when using SQL expressions as default values
+  - Expressions like `datetime('now')`, `CURRENT_TIMESTAMP`, `CURRENT_DATE`, `CURRENT_TIME` now wrapped in parentheses
+  - Literal string values continue to be properly single-quoted with escape handling for embedded quotes
+  - Added regex detection for function calls (pattern `function_name(...)`) and SQL keywords
+
+- **ServerInstructions.ts Core Tools Table** — Added missing tools to documentation
+  - Added `sqlite_drop_table` and `sqlite_get_indexes` to Core Tools table (was only showing 6 of 8 tools)
+
+### Fixed
+
 - **WASM Mode Admin Tool Graceful Handling** — 4 admin tools now return structured errors instead of throwing in WASM mode
   - `sqlite_virtual_table_info`: Returns `moduleAvailable: false` with partial metadata when module unavailable (e.g., FTS5)
   - `sqlite_backup`: Returns `wasmLimitation: true` when file system access unavailable

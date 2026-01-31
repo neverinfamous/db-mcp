@@ -140,7 +140,20 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
         if (col.defaultValue !== undefined) {
           let defaultVal: string;
           if (typeof col.defaultValue === "string") {
-            defaultVal = `'${col.defaultValue}'`;
+            // Check if it's a SQL expression (contains function call or keywords)
+            // Expressions like datetime('now'), CURRENT_TIMESTAMP, etc.
+            const isSqlExpression =
+              /^[a-zA-Z_]+\s*\(/.test(col.defaultValue) || // function call: datetime(...)
+              /^(CURRENT_TIMESTAMP|CURRENT_DATE|CURRENT_TIME|NULL)$/i.test(
+                col.defaultValue,
+              );
+            if (isSqlExpression) {
+              // Wrap SQL expressions in parentheses
+              defaultVal = `(${col.defaultValue})`;
+            } else {
+              // Literal string value - quote it
+              defaultVal = `'${col.defaultValue.replace(/'/g, "''")}'`;
+            }
           } else if (
             typeof col.defaultValue === "number" ||
             typeof col.defaultValue === "boolean"
@@ -150,7 +163,7 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
             defaultVal = "NULL";
           } else {
             // For objects and other types, use JSON
-            defaultVal = `'${JSON.stringify(col.defaultValue)}'`;
+            defaultVal = `'${JSON.stringify(col.defaultValue).replace(/'/g, "''")}'`;
           }
           parts.push(`DEFAULT ${defaultVal}`);
         }

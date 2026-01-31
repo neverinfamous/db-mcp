@@ -58,6 +58,8 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | \`sqlite_list_tables\` | List all tables |
 | \`sqlite_describe_table\` | Get table schema |
 | \`sqlite_create_table\` | Create new table |
+| \`sqlite_drop_table\` | Drop (delete) a table |
+| \`sqlite_get_indexes\` | List indexes |
 | \`sqlite_create_index\` | Create index |
 
 ## WASM vs Native
