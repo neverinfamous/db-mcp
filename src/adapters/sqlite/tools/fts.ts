@@ -17,13 +17,24 @@ import {
 } from "../output-schemas.js";
 
 /**
- * Error message for FTS5 unavailability in WASM mode
+ * Build error response for FTS5 unavailability in WASM mode
+ * Includes required schema fields to pass output validation
  */
-const FTS5_UNAVAILABLE_ERROR = {
-  success: false,
-  error: "FTS5 module unavailable",
-  hint: "FTS5 requires native SQLite backend (--sqlite-native). WASM mode (sql.js) does not include this module.",
-};
+function buildFts5UnavailableError(tableName?: string): {
+  success: false;
+  message: string;
+  tableName: string;
+  error: string;
+  hint: string;
+} {
+  return {
+    success: false,
+    message: "FTS5 module unavailable",
+    tableName: tableName ?? "",
+    error: "FTS5 module unavailable",
+    hint: "FTS5 requires native SQLite backend (--sqlite-native). WASM mode (sql.js) does not include this module.",
+  };
+}
 
 /**
  * Check if an error is due to FTS5 module being unavailable
@@ -33,6 +44,26 @@ function isFts5UnavailableError(error: unknown): boolean {
     error instanceof Error &&
     error.message.toLowerCase().includes("no such module: fts5")
   );
+}
+
+/**
+ * Build error response for FTS5 search unavailability in WASM mode
+ * Includes required schema fields for FtsSearchOutputSchema
+ */
+function buildFts5SearchUnavailableError(): {
+  success: false;
+  rowCount: number;
+  results: never[];
+  error: string;
+  hint: string;
+} {
+  return {
+    success: false,
+    rowCount: 0,
+    results: [],
+    error: "FTS5 module unavailable",
+    hint: "FTS5 requires native SQLite backend (--sqlite-native). WASM mode (sql.js) does not include this module.",
+  };
 }
 
 // FTS schemas
@@ -157,7 +188,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return FTS5_UNAVAILABLE_ERROR;
+          return buildFts5UnavailableError(input.tableName);
         }
         throw error;
       }
@@ -274,7 +305,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return FTS5_UNAVAILABLE_ERROR;
+          return buildFts5SearchUnavailableError();
         }
         throw error;
       }
@@ -313,7 +344,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return FTS5_UNAVAILABLE_ERROR;
+          return buildFts5UnavailableError(input.table);
         }
         throw error;
       }
@@ -361,7 +392,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return FTS5_UNAVAILABLE_ERROR;
+          return buildFts5SearchUnavailableError();
         }
         throw error;
       }

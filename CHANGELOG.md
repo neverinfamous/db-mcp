@@ -27,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Token-efficient format optimized for AI agent consumption
 
 - **WASM Mode Core Tool Compatibility** — Fixed issues discovered during WASM mode testing
-
   - `server_health` now correctly reports `filePath` from `connectionString` when `filePath` is not set
   - `sqlite_list_tables` now gracefully handles FTS5 virtual tables in WASM mode (sql.js lacks FTS5 module)
   - FTS5 shadow tables (`_fts_*`) are automatically skipped in table listings
