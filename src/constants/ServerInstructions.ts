@@ -61,16 +61,18 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | \`sqlite_create_index\` | Create index |
 
 ## WASM vs Native
-| Feature | Native | WASM |
-|---------|--------|------|
-| FTS5 full-text search | ✅ | ❌ |
-| Transactions (7 tools) | ✅ | ❌ |
-| Window functions (6 tools) | ✅ | ❌ |
-| SpatiaLite GIS (7 tools) | ✅ | ❌ |
-| Backup/Restore (3 tools) | ✅ | ❌ |
-| R-Tree spatial indexing | ✅ | ❌ |
-| CSV virtual tables | ✅ | ❌ |
-| soundex() | ✅ native | JS fallback |
+| Feature | Native | WASM | Fallback |
+|---------|--------|------|----------|
+| FTS5 full-text search | ✅ | ❌ | None |
+| Transactions (7 tools) | ✅ | ❌ | None |
+| Window functions (6 tools) | ✅ | ❌ | None |
+| SpatiaLite GIS (7 tools) | ✅ | ❌ | None |
+| Backup/Restore (3 tools) | ✅ | ❌ | Graceful error |
+| R-Tree spatial indexing | ✅ | ❌ | None |
+| CSV virtual tables | ✅ | ❌ | None |
+| generate_series | ✅ native | ❌ | JS |
+| dbstat | ✅ native | ❌ | JS (basic) |
+| soundex() | ✅ native | ❌ | JS |
 `;
 
 /**
@@ -79,15 +81,16 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 const FILTERING_INSTRUCTIONS = `
 ## Tool Filtering
 Available presets via \`--tool-filter\`:
-| Shortcut | Tools | Use Case |
-|----------|-------|----------|
-| \`starter\` | 38 | ⭐ Recommended: Core + JSON + Text |
-| \`analytics\` | 42 | Core + JSON + Stats |
-| \`search\` | 31 | Core + Text + Vector |
-| \`minimal\` | 8 | Core only |
-| \`full\` | 86 | All tools |
+| Shortcut | WASM | Native | Use Case |
+|----------|------|--------|----------|
+| \`starter\` | 47 | 47 | ⭐ Recommended: Core + JSON + Text |
+| \`analytics\` | 44 | 50 | Core + JSON + Stats |
+| \`search\` | 35 | 35 | Core + Text + Vector |
+| \`spatial\` | 23 | 30 | Core + Geo + Vector |
+| \`minimal\` | 8 | 8 | Core only |
+| \`full\` | 100 | 120 | All tools |
 
-**Groups**: \`core\`, \`json\`, \`text\`, \`stats\`, \`vector\`, \`admin\`
+**Groups**: \`core\`, \`json\`, \`text\`, \`stats\`, \`vector\`, \`admin\`, \`geo\`
 **Syntax**: \`"core,json"\` (whitelist), \`"+stats"\` (add), \`"-admin"\` (remove)
 `;
 
@@ -169,6 +172,16 @@ sqlite_transaction_commit()
 sqlite_regex_match({ table: "logs", column: "message", pattern: "ERROR:\\\\s+(\\\\w+)" })
 sqlite_fuzzy_search({ table: "products", column: "name", query: "laptp", threshold: 0.6 })
 sqlite_text_similarity({ text1: "machine learning", text2: "deep learning", algorithm: "levenshtein" })
+\`\`\`
+
+## Database Administration
+\`\`\`javascript
+sqlite_integrity_check({ maxErrors: 10 }) // Check for corruption
+sqlite_optimize({ analyze: true, reindex: true }) // Optimize performance
+sqlite_vacuum() // Reclaim space
+sqlite_pragma_settings({ pragma: "journal_mode" }) // Get/set PRAGMA values
+sqlite_pragma_table_info({ table: "users" }) // Get column details
+sqlite_backup({ targetPath: "/path/to/backup.db" }) // Native only
 \`\`\`
 `;
 
