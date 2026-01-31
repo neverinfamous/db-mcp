@@ -104,6 +104,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_optimize`: Added required `message` field to handler return object
   - `sqlite_restore`: Fixed PRAGMA query that caused "no such table: 1" error (simplified to `PRAGMA integrity_check(1)`)
 
+- **Geo Tool Output Schema Fixes** — Fixed 3 tools with output validation errors
+  - `sqlite_geo_nearby`: Changed `count` field to `rowCount`, removed extra metadata fields
+  - `sqlite_geo_bounding_box`: Changed `count` field to `rowCount`, removed extra metadata fields  
+  - `sqlite_geo_cluster`: Restructured return to match schema with `clusterId`, `center: {latitude, longitude}`, `pointCount`
+
+- **SpatiaLite Windows DLL Loading** — Fixed extension loading on Windows
+  - Added runtime PATH modification to prepend SpatiaLite directory before `loadExtension()` call
+  - Windows requires dependency DLLs (libgeos, libproj, etc.) to be discoverable via PATH
+  - Applied to both `NativeSqliteAdapter.ts` (startup) and `spatialite.ts` (on-demand loading)
+  - Following pattern from Python sqlite-mcp-server implementation
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

@@ -208,10 +208,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
 
       return {
         success: true,
-        center: { lat: input.centerLat, lon: input.centerLon },
-        radius: input.radius,
-        unit: input.unit,
-        count: nearby.length,
+        rowCount: nearby.length,
         results: nearby,
       };
     },
@@ -253,14 +250,8 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
 
       return {
         success: true,
-        bounds: {
-          minLat: input.minLat,
-          maxLat: input.maxLat,
-          minLon: input.minLon,
-          maxLon: input.maxLon,
-        },
-        count: result.rows?.length ?? 0,
-        results: result.rows,
+        rowCount: result.rows?.length ?? 0,
+        results: result.rows ?? [],
       };
     },
   };
@@ -306,11 +297,19 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
 
       const result = await adapter.executeReadQuery(sql);
 
+      // Transform raw SQL results to match output schema
+      const clusters = (result.rows ?? []).map((row, index) => ({
+        clusterId: index + 1,
+        center: {
+          latitude: Number(row["center_lat"]) || 0,
+          longitude: Number(row["center_lon"]) || 0,
+        },
+        pointCount: Number(row["point_count"]) || 0,
+      }));
+
       return {
         success: true,
-        gridSize: input.gridSize,
-        clusterCount: result.rows?.length ?? 0,
-        clusters: result.rows,
+        clusters,
       };
     },
   };

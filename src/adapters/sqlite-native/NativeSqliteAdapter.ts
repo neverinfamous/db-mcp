@@ -180,6 +180,18 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         "/usr/local/lib/mod_spatialite.dylib",
       ].filter((p): p is string => Boolean(p));
 
+      // On Windows, SpatiaLite DLL has many dependencies (libgeos, libproj, etc.)
+      // These must be in PATH for Windows to find them when loading the extension.
+      // Prepend the extension directory to PATH before attempting to load.
+      const envSpatialitePath = process.env["SPATIALITE_PATH"];
+      if (envSpatialitePath && process.platform === "win32") {
+        const spatialiteExtDir = path.dirname(envSpatialitePath);
+        const currentPath = process.env["PATH"] ?? "";
+        if (!currentPath.includes(spatialiteExtDir)) {
+          process.env["PATH"] = spatialiteExtDir + ";" + currentPath;
+        }
+      }
+
       let loaded = false;
       for (const extPath of spatialitePaths) {
         try {

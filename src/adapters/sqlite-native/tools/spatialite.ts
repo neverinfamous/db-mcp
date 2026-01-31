@@ -182,6 +182,18 @@ function tryLoadSpatialite(
     ? [customPath, ...SPATIALITE_PATHS]
     : SPATIALITE_PATHS;
 
+  // On Windows, SpatiaLite DLL has many dependencies (libgeos, libproj, etc.)
+  // These must be in PATH for Windows to find them when loading the extension.
+  // Prepend the extension directory to PATH before attempting to load.
+  const envPath = process.env["SPATIALITE_PATH"];
+  if (envPath && process.platform === "win32") {
+    const extensionDir = envPath.replace(/[/\\][^/\\]+$/, ""); // Get directory from DLL path
+    const currentPath = process.env["PATH"] ?? "";
+    if (!currentPath.includes(extensionDir)) {
+      process.env["PATH"] = extensionDir + ";" + currentPath;
+    }
+  }
+
   for (const path of paths) {
     try {
       db.loadExtension(path);
