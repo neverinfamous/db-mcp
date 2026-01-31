@@ -16,10 +16,16 @@ import {
   sanitizeIdentifier,
 } from "../../../utils/index.js";
 import {
-  ReadQueryOutputSchema,
+  StatsBasicOutputSchema,
+  StatsCountOutputSchema,
+  StatsGroupByOutputSchema,
   StatsHistogramOutputSchema,
   StatsPercentileOutputSchema,
   StatsCorrelationOutputSchema,
+  StatsTopNOutputSchema,
+  StatsDistinctOutputSchema,
+  StatsSummaryOutputSchema,
+  StatsFrequencyOutputSchema,
 } from "../output-schemas.js";
 
 // Stats schemas
@@ -177,7 +183,7 @@ function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
       "Get basic statistics (count, sum, avg, min, max) for a numeric column.",
     group: "stats",
     inputSchema: BasicStatsSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: StatsBasicOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -221,7 +227,7 @@ function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Count rows, optionally distinct values in a column.",
     group: "stats",
     inputSchema: CountSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: StatsCountOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -266,7 +272,7 @@ function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Aggregate statistics grouped by a column.",
     group: "stats",
     inputSchema: GroupByStatsSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: StatsGroupByOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Group By Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -522,7 +528,7 @@ function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get top N values from a column.",
     group: "stats",
     inputSchema: TopNSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: StatsTopNOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Top N Values"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -563,7 +569,7 @@ function createDistinctValuesTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get distinct values from a column.",
     group: "stats",
     inputSchema: DistinctValuesSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: StatsDistinctOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Distinct Values"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -601,7 +607,7 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get summary statistics for multiple columns at once.",
     group: "stats",
     inputSchema: SummaryStatsSchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: StatsSummaryOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Summary Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -669,7 +675,7 @@ function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get frequency distribution of values in a column.",
     group: "stats",
     inputSchema: FrequencySchema,
-    outputSchema: ReadQueryOutputSchema,
+    outputSchema: StatsFrequencyOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Frequency"),
     handler: async (params: unknown, _context: RequestContext) => {

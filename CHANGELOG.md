@@ -73,6 +73,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `JsonPrettyOutputSchema` for `sqlite_json_pretty`
   - Updated `ToolConstants.ts` with correct list of all 23 JSON tool names
 
+- **Stats Tool Output Schema Fixes** — Fixed 8 tools with output validation errors
+  - Created dedicated output schemas: `StatsBasicOutputSchema`, `StatsCountOutputSchema`, `StatsGroupByOutputSchema`, `StatsTopNOutputSchema`, `StatsDistinctOutputSchema`, `StatsSummaryOutputSchema`, `StatsFrequencyOutputSchema`
+  - Updated `StatsPercentileOutputSchema` to support array of percentiles (was single value)
+  - Updated `StatsHistogramOutputSchema` with optional `range`, `bucketSize`, and `bucket` fields
+  - Updated `StatsCorrelationOutputSchema` with optional `n` and `message` fields
+  - Tools fixed: `sqlite_stats_basic`, `sqlite_stats_count`, `sqlite_stats_group_by`, `sqlite_stats_percentile`, `sqlite_stats_top_n`, `sqlite_stats_distinct`, `sqlite_stats_summary`, `sqlite_stats_frequency`
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

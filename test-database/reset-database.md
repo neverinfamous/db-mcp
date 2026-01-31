@@ -149,49 +149,49 @@ Please conduct a comprehensive test of the db-mcp SQLite MCP server "stats" tool
 ## stats Tool Group's Tools
 
 1. server_info
-Get information about the db-mcp server and registered adapters
+   Get information about the db-mcp server and registered adapters
 2. server_health
-Check health status of all database connections
+   Check health status of all database connections
 3. list_adapters
-List all registered database adapters
+   List all registered database adapters
 4. sqlite_stats_basic
-Get basic statistics (count, sum, avg, min, max) for a numeric column.
+   Get basic statistics (count, sum, avg, min, max) for a numeric column.
 5. sqlite_stats_count
-Count rows, optionally distinct values in a column.
+   Count rows, optionally distinct values in a column.
 6. sqlite_stats_group_by
-Aggregate statistics grouped by a column.
+   Aggregate statistics grouped by a column.
 7. sqlite_stats_histogram
-Create a histogram with specified number of buckets.
+   Create a histogram with specified number of buckets.
 8. sqlite_stats_percentile
-Calculate percentiles (median, quartiles, etc.) for a column.
+   Calculate percentiles (median, quartiles, etc.) for a column.
 9. sqlite_stats_correlation
-Calculate Pearson correlation coefficient between two numeric columns.
+   Calculate Pearson correlation coefficient between two numeric columns.
 10. sqlite_stats_top_n
-Get top N values from a column.
+    Get top N values from a column.
 11. sqlite_stats_distinct
-Get distinct values from a column.
+    Get distinct values from a column.
 12. sqlite_stats_summary
-Get summary statistics for multiple columns at once.
+    Get summary statistics for multiple columns at once.
 13. sqlite_stats_frequency
-Get frequency distribution of values in a column.
+    Get frequency distribution of values in a column.
 14. sqlite_stats_outliers
-Detect outliers using IQR (Interquartile Range) or Z-score method.
+    Detect outliers using IQR (Interquartile Range) or Z-score method.
 15. sqlite_stats_regression
-Perform linear or polynomial regression analysis between two columns.
+    Perform linear or polynomial regression analysis between two columns.
 16. sqlite_stats_hypothesis
-Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.
+    Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.
 17. sqlite_window_row_number
-Assign sequential row numbers based on ordering. Useful for pagination and ranking.
+    Assign sequential row numbers based on ordering. Useful for pagination and ranking.
 18. sqlite_window_rank
-Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0-1 range.
+    Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0-1 range.
 19. sqlite_window_lag_lead
-Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows.
+    Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows.
 20. sqlite_window_running_total
-Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics.
+    Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics.
 21. sqlite_window_moving_avg
-Calculate moving (rolling) average. Useful for smoothing time series data.
+    Calculate moving (rolling) average. Useful for smoothing time series data.
 22. sqlite_window_ntile
-Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles.
+    Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles.
 
 ### Test Database Schema
 

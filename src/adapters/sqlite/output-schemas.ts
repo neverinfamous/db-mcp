@@ -527,8 +527,102 @@ export const FtsOptimizeOutputSchema = z.object({
 });
 
 // =============================================================================
-// Statistical Analysis Tool Output Schemas (8 tools)
+// Statistical Analysis Tool Output Schemas (16 tools)
 // =============================================================================
+
+/**
+ * Generic row record for stats query results
+ */
+const StatsRowRecordSchema = z.record(z.string(), z.unknown());
+
+/**
+ * sqlite_stats_basic output
+ */
+export const StatsBasicOutputSchema = z.object({
+  success: z.boolean(),
+  column: z.string(),
+  stats: z.object({
+    count: z.number(),
+    sum: z.number().nullable(),
+    avg: z.number().nullable(),
+    min: z.number().nullable(),
+    max: z.number().nullable(),
+    range: z.number().nullable(),
+  }),
+});
+
+/**
+ * sqlite_stats_count output
+ */
+export const StatsCountOutputSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  distinct: z.boolean().optional(),
+});
+
+/**
+ * sqlite_stats_group_by output
+ */
+export const StatsGroupByOutputSchema = z.object({
+  success: z.boolean(),
+  statistic: z.string(),
+  rowCount: z.number(),
+  results: z.array(StatsRowRecordSchema),
+});
+
+/**
+ * sqlite_stats_top_n output
+ */
+export const StatsTopNOutputSchema = z.object({
+  success: z.boolean(),
+  column: z.string(),
+  direction: z.string(),
+  count: z.number(),
+  rows: z.array(StatsRowRecordSchema),
+});
+
+/**
+ * sqlite_stats_distinct output
+ */
+export const StatsDistinctOutputSchema = z.object({
+  success: z.boolean(),
+  column: z.string(),
+  distinctCount: z.number(),
+  values: z.array(z.unknown()),
+});
+
+/**
+ * sqlite_stats_summary output
+ */
+export const StatsSummaryOutputSchema = z.object({
+  success: z.boolean(),
+  table: z.string(),
+  summaries: z.array(
+    z.object({
+      column: z.string(),
+      count: z.number().optional(),
+      avg: z.number().nullable().optional(),
+      min: z.number().nullable().optional(),
+      max: z.number().nullable().optional(),
+      error: z.string().optional(),
+    }),
+  ),
+});
+
+/**
+ * sqlite_stats_frequency output
+ */
+export const StatsFrequencyOutputSchema = z.object({
+  success: z.boolean(),
+  column: z.string(),
+  distinctValues: z.number(),
+  distribution: z.array(
+    z.object({
+      value: z.unknown(),
+      frequency: z.number(),
+    }),
+  ),
+});
 
 /**
  * sqlite_stats_describe output
@@ -546,13 +640,18 @@ export const StatsDescribeOutputSchema = z.object({
 });
 
 /**
- * sqlite_stats_percentile output
+ * sqlite_stats_percentile output (array version for multiple percentiles)
  */
 export const StatsPercentileOutputSchema = z.object({
   success: z.boolean(),
-  column: z.string(),
-  percentile: z.number(),
-  value: z.number().nullable(),
+  column: z.string().optional(),
+  count: z.number().optional(),
+  percentiles: z.array(
+    z.object({
+      percentile: z.number(),
+      value: z.number().nullable(),
+    }),
+  ),
 });
 
 /**
@@ -560,9 +659,17 @@ export const StatsPercentileOutputSchema = z.object({
  */
 export const StatsHistogramOutputSchema = z.object({
   success: z.boolean(),
-  column: z.string(),
+  column: z.string().optional(),
+  range: z
+    .object({
+      min: z.number(),
+      max: z.number(),
+    })
+    .optional(),
+  bucketSize: z.number().optional(),
   buckets: z.array(
     z.object({
+      bucket: z.number().optional(),
       min: z.number(),
       max: z.number(),
       count: z.number(),
@@ -575,9 +682,11 @@ export const StatsHistogramOutputSchema = z.object({
  */
 export const StatsCorrelationOutputSchema = z.object({
   success: z.boolean(),
-  column1: z.string(),
-  column2: z.string(),
+  column1: z.string().optional(),
+  column2: z.string().optional(),
+  n: z.number().optional(),
   correlation: z.number().nullable(),
+  message: z.string().optional(),
 });
 
 /**
@@ -618,7 +727,7 @@ export const StatsOutliersOutputSchema = z.object({
   success: z.boolean(),
   column: z.string(),
   method: z.string(),
-  outliers: z.array(RowRecordSchema),
+  outliers: z.array(StatsRowRecordSchema),
   count: z.number(),
 });
 
