@@ -321,9 +321,20 @@ function createSpatialTableTool(adapter: NativeSqliteAdapter): ToolDefinition {
       );
 
       // Add geometry column using SpatiaLite
-      await adapter.executeWriteQuery(
+      // NOTE: AddGeometryColumn is a SELECT function, must use executeReadQuery
+      const addResult = await adapter.executeReadQuery(
         `SELECT AddGeometryColumn('${input.tableName}', '${input.geometryColumn}', ${input.srid}, '${input.geometryType}', 'XY')`,
       );
+
+      // Verify the geometry column was created
+      const verifyResult = await adapter.executeReadQuery(
+        `SELECT name FROM pragma_table_info('${input.tableName}') WHERE name = '${input.geometryColumn}'`,
+      );
+      if (!verifyResult.rows || verifyResult.rows.length === 0) {
+        throw new Error(
+          `Failed to create geometry column '${input.geometryColumn}'. AddGeometryColumn returned: ${JSON.stringify(addResult.rows)}`,
+        );
+      }
 
       return {
         success: true,
@@ -470,7 +481,8 @@ function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
       switch (input.action) {
         case "create":
-          await adapter.executeWriteQuery(
+          // NOTE: CreateSpatialIndex is a SELECT function, must use executeReadQuery
+          await adapter.executeReadQuery(
             `SELECT CreateSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
           );
           return {
@@ -480,7 +492,8 @@ function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
           };
 
         case "drop":
-          await adapter.executeWriteQuery(
+          // NOTE: DisableSpatialIndex is a SELECT function, must use executeReadQuery
+          await adapter.executeReadQuery(
             `SELECT DisableSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
           );
           return {

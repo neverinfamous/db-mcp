@@ -106,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Geo Tool Output Schema Fixes** — Fixed 3 tools with output validation errors
   - `sqlite_geo_nearby`: Changed `count` field to `rowCount`, removed extra metadata fields
-  - `sqlite_geo_bounding_box`: Changed `count` field to `rowCount`, removed extra metadata fields  
+  - `sqlite_geo_bounding_box`: Changed `count` field to `rowCount`, removed extra metadata fields
   - `sqlite_geo_cluster`: Restructured return to match schema with `clusterId`, `center: {latitude, longitude}`, `pointCount`
 
 - **SpatiaLite Windows DLL Loading** — Fixed extension loading on Windows
@@ -114,6 +114,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Windows requires dependency DLLs (libgeos, libproj, etc.) to be discoverable via PATH
   - Applied to both `NativeSqliteAdapter.ts` (startup) and `spatialite.ts` (on-demand loading)
   - Following pattern from Python sqlite-mcp-server implementation
+
+- **SpatiaLite Tool Bug Fixes** — Fixed 3 tools that silently failed due to incorrect method usage
+  - `sqlite_spatialite_create_table`: Changed `executeWriteQuery` to `executeReadQuery` for `AddGeometryColumn()` call
+  - `sqlite_spatialite_index` (create/drop): Changed to `executeReadQuery` for `CreateSpatialIndex()` and `DisableSpatialIndex()` calls
+  - Root cause: better-sqlite3's `.run()` method only works for INSERT/UPDATE/DELETE, not SELECT statements
+  - Added verification step after geometry column creation to ensure column exists before reporting success
+  - Cascading fix enables `sqlite_spatialite_import` and `sqlite_spatialite_analyze` to work correctly
 
 ### Added
 
