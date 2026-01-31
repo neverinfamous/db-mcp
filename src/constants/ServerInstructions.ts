@@ -112,9 +112,11 @@ sqlite_fts_search({ table: "articles", query: "machine learning", limit: 10 })
 
 ## Statistical Analysis
 \`\`\`javascript
-sqlite_describe_stats({ table: "employees", column: "salary" }) // count, mean, std, percentiles
-sqlite_percentile({ table: "sales", column: "revenue", percentiles: [25, 50, 75, 90] })
-sqlite_histogram({ table: "products", column: "price", bins: 10 })
+sqlite_stats_basic({ table: "employees", column: "salary" }) // count, sum, avg, min, max
+sqlite_stats_percentile({ table: "sales", column: "revenue", percentiles: [25, 50, 75, 90] })
+sqlite_stats_histogram({ table: "products", column: "price", buckets: 10 })
+sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue" }) // linear
+sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue", degree: 2 }) // quadratic
 \`\`\`
 
 ## Geospatial Operations
