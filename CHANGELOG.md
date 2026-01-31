@@ -85,6 +85,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `VectorSearchOutputSchema` to match handler return structure (`metric`, `count`, `results` with `_similarity`)
   - Tools fixed: `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_get`, `sqlite_vector_search`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_stats`, `sqlite_vector_dimensions`, `sqlite_vector_normalize`, `sqlite_vector_distance`
 
+- **Admin Tool Bug Fixes** — Fixed 4 tools with output schema and logic errors
+  - `sqlite_create_view`: Fixed syntax error by using DROP+CREATE pattern (SQLite doesn't support `CREATE OR REPLACE VIEW`)
+  - `sqlite_list_views`: Created dedicated `ListViewsOutputSchema` (was using `ListTablesOutputSchema` expecting `tables` instead of `views`)
+  - `sqlite_optimize`: Added required `message` field to handler return object
+  - `sqlite_restore`: Fixed PRAGMA query that caused "no such table: 1" error (simplified to `PRAGMA integrity_check(1)`)
+
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing

@@ -736,6 +736,23 @@ export const StatsOutliersOutputSchema = z.object({
 // =============================================================================
 
 /**
+ * View entry for list_views
+ */
+const ViewEntrySchema = z.object({
+  name: z.string(),
+  sql: z.string().nullable(),
+});
+
+/**
+ * sqlite_list_views output
+ */
+export const ListViewsOutputSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  views: z.array(ViewEntrySchema),
+});
+
+/**
  * sqlite_generate_series output
  */
 export const GenerateSeriesOutputSchema = z.object({

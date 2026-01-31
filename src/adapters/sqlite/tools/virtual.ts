@@ -22,7 +22,7 @@ import { sanitizeIdentifier } from "../../../utils/index.js";
 import {
   GenerateSeriesOutputSchema,
   CreateTableOutputSchema,
-  ListTablesOutputSchema,
+  ListViewsOutputSchema,
   DropTableOutputSchema,
   VacuumOutputSchema,
 } from "../output-schemas.js";
@@ -205,10 +205,12 @@ function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
         throw new Error("View definition must be a SELECT query");
       }
 
-      const createOrReplace = input.replace
-        ? "CREATE OR REPLACE VIEW"
-        : "CREATE VIEW";
-      const sql = `${createOrReplace} ${viewName} AS ${input.selectQuery}`;
+      // SQLite doesn't support CREATE OR REPLACE VIEW
+      // Use DROP IF EXISTS + CREATE VIEW pattern instead
+      if (input.replace) {
+        await adapter.executeQuery(`DROP VIEW IF EXISTS ${viewName}`);
+      }
+      const sql = `CREATE VIEW ${viewName} AS ${input.selectQuery}`;
 
       await adapter.executeQuery(sql);
 
@@ -230,7 +232,7 @@ function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
     description: "List all views in the database.",
     group: "admin",
     inputSchema: ListViewsSchema,
-    outputSchema: ListTablesOutputSchema,
+    outputSchema: ListViewsOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("List Views"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -245,10 +247,15 @@ function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
 
       const result = await adapter.executeReadQuery(sql);
 
+      const views = (result.rows ?? []).map((row) => ({
+        name: typeof row["name"] === "string" ? row["name"] : "",
+        sql: typeof row["sql"] === "string" ? row["sql"] : null,
+      }));
+
       return {
         success: true,
-        count: result.rows?.length ?? 0,
-        views: result.rows,
+        count: views.length,
+        views,
       };
     },
   };

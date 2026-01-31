@@ -288,6 +288,7 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
 
       return {
         success: true,
+        message: `Optimization complete: ${operations.length > 0 ? operations.join(", ") : "no operations performed"}`,
         operations,
         durationMs: duration,
       };
@@ -314,34 +315,90 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       const start = Date.now();
 
       // Phase 1: Preparing restore
-      await sendProgress(progress, 1, 3, "Preparing restore...");
+      await sendProgress(progress, 1, 4, "Preparing restore...");
 
-      // Attach the backup, copy data, detach
       const escapedPath = input.sourcePath.replace(/'/g, "''");
 
       // Verify current database is valid before overwriting
-      await adapter.executeReadQuery(
-        `SELECT * FROM pragma_integrity_check((SELECT 1)) LIMIT 1`,
+      await adapter.executeReadQuery("PRAGMA integrity_check(1)");
+
+      // Phase 2: Attach backup database
+      await sendProgress(progress, 2, 4, "Attaching backup database...");
+      await adapter.executeWriteQuery(
+        `ATTACH DATABASE '${escapedPath}' AS backup_source`,
       );
 
-      // Phase 2: Restoring database
-      await sendProgress(progress, 2, 3, "Restoring database from backup...");
+      try {
+        // Phase 3: Copy tables from backup
+        await sendProgress(progress, 3, 4, "Restoring tables from backup...");
 
-      // Use VACUUM FROM to restore (reverse of VACUUM INTO)
-      // Note: This approach requires SQLite 3.27.0+
-      await adapter.executeQuery(`VACUUM main FROM '${escapedPath}'`);
+        // Disable foreign key constraints during restore
+        await adapter.executeWriteQuery("PRAGMA foreign_keys = OFF");
 
-      const duration = Date.now() - start;
+        // Get list of regular tables from backup (excluding FTS shadow tables)
+        // FTS5 shadow tables end with _data, _idx, _content, _docsize, _config
+        const tablesResult = await adapter.executeReadQuery(
+          `SELECT name, sql FROM backup_source.sqlite_master 
+           WHERE type='table' 
+           AND name NOT LIKE 'sqlite_%'
+           AND name NOT LIKE '%_data'
+           AND name NOT LIKE '%_idx'
+           AND name NOT LIKE '%_content'
+           AND name NOT LIKE '%_docsize'
+           AND name NOT LIKE '%_config'
+           ORDER BY name`,
+        );
 
-      // Phase 3: Complete
-      await sendProgress(progress, 3, 3, "Restore complete");
+        // Drop existing tables and copy from backup
+        for (const row of tablesResult.rows ?? []) {
+          const tableName = row["name"] as string;
+          const createSql = row["sql"] as string;
+          const quotedName = `"${tableName.replace(/"/g, '""')}"`;
 
-      return {
-        success: true,
-        message: `Database restored from '${input.sourcePath}'`,
-        sourcePath: input.sourcePath,
-        durationMs: duration,
-      };
+          // Skip if no CREATE statement (shouldn't happen for regular tables)
+          if (!createSql) continue;
+
+          // Drop existing table
+          await adapter.executeWriteQuery(
+            `DROP TABLE IF EXISTS main.${quotedName}`,
+          );
+
+          // Create the table in main
+          await adapter.executeWriteQuery(createSql);
+
+          // Copy data
+          await adapter.executeWriteQuery(
+            `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
+          );
+        }
+
+        // Re-enable foreign key constraints
+        await adapter.executeWriteQuery("PRAGMA foreign_keys = ON");
+
+        const duration = Date.now() - start;
+
+        // Phase 4: Complete
+        await sendProgress(progress, 4, 4, "Restore complete");
+
+        return {
+          success: true,
+          message: `Database restored from '${input.sourcePath}'`,
+          sourcePath: input.sourcePath,
+          durationMs: duration,
+        };
+      } finally {
+        // Always detach backup and re-enable FK constraints
+        await adapter
+          .executeWriteQuery("PRAGMA foreign_keys = ON")
+          .catch(() => {
+            // Ignore errors
+          });
+        await adapter
+          .executeWriteQuery("DETACH DATABASE backup_source")
+          .catch(() => {
+            // Ignore detach errors - backup may not have been attached
+          });
+      }
     },
   };
 }
