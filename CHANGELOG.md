@@ -100,6 +100,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Works seamlessly with both text JSON (no-op) and JSONB (converts to text)
   - API consumers now receive readable JSON instead of raw binary buffers
 
+- **JSONB Schema Analysis Fix** — Fixed `sqlite_analyze_json_schema` returning byte indexes for JSONB columns
+  - Wrapped column with `json()` function to decode JSONB binary before schema inference
+  - Was returning numeric keys (0, 1, 2, ..., 100) representing blob bytes instead of actual JSON structure
+  - Now correctly infers object properties, types, and nullability for JSONB-formatted data
+
 - **Core Tool Bug Fixes** — Resolved 3 issues discovered during comprehensive MCP tool testing
   - `sqlite_describe_table` now correctly returns an error for non-existent tables (was returning `success: true` with empty columns)
   - `sqlite_write_query` and other query methods now auto-convert boolean parameters (`true`/`false`) to integers (`1`/`0`) since SQLite doesn't have native boolean type

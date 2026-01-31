@@ -415,8 +415,8 @@ function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinition {
       sanitizeIdentifier(input.table);
       sanitizeIdentifier(input.column);
 
-      // Sample rows
-      const sql = `SELECT "${input.column}" as json_data FROM "${input.table}" LIMIT ${input.sampleSize}`;
+      // Sample rows - wrap column with json() to handle both text JSON and JSONB binary data
+      const sql = `SELECT json("${input.column}") as json_data FROM "${input.table}" LIMIT ${input.sampleSize}`;
       const result = await adapter.executeReadQuery(sql);
 
       // Infer schema
