@@ -145,11 +145,18 @@ export class SchemaManager {
       defaultValue: row["dflt_value"],
     }));
 
-    // Get row count
-    const countResult = await this.executor.executeReadQuery(
-      `SELECT COUNT(*) as count FROM "${tableName}"`,
-    );
-    const rowCount = (countResult.rows?.[0]?.["count"] as number) ?? 0;
+    // Get row count (wrapped in try-catch for FTS5/virtual tables in WASM mode)
+    let rowCount = 0;
+    try {
+      const countResult = await this.executor.executeReadQuery(
+        `SELECT COUNT(*) as count FROM "${tableName}"`,
+      );
+      rowCount = (countResult.rows?.[0]?.["count"] as number) ?? 0;
+    } catch {
+      // FTS5 virtual tables may fail in WASM mode (no FTS5 module)
+      // Return 0 for row count rather than failing the entire operation
+      rowCount = 0;
+    }
 
     const tableInfo: TableInfo = {
       name: tableName,

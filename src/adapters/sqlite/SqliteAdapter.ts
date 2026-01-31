@@ -234,7 +234,10 @@ export class SqliteAdapter extends DatabaseAdapter {
         latencyMs,
         version,
         details: {
-          filePath: this.config?.filePath ?? ":memory:",
+          filePath:
+            this.config?.filePath ??
+            this.config?.connectionString ??
+            ":memory:",
           walMode: this.config?.options?.walMode ?? false,
         },
       });

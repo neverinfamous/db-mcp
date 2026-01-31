@@ -50,14 +50,27 @@ Build and run:
 
 ```bash
 npm run build
+
+# Option 1: Native backend (better-sqlite3)
 node dist/cli.js --transport stdio --sqlite-native :memory:
+
+# Option 2: WASM backend (sql.js)
+node dist/cli.js --transport stdio --sqlite :memory:
 ```
 
-Expected output:
+Expected output (native):
 
 ```
 [db-mcp] Starting MCP server...
 [db-mcp] Registered adapter: Native SQLite Adapter (better-sqlite3) (sqlite:default)
+[db-mcp] Server started successfully
+```
+
+Expected output (WASM):
+
+```
+[db-mcp] Starting MCP server...
+[db-mcp] Registered adapter: WASM SQLite Adapter (sql.js) (sqlite:default)
 [db-mcp] Server started successfully
 ```
 
@@ -126,8 +139,14 @@ npm run build
 Run the server:
 
 ```bash
+# Native backend (better-sqlite3) - Full features, requires Node.js native build
 node dist/cli.js --transport stdio --sqlite-native ./database.db
+
+# WASM backend (sql.js) - Cross-platform, no compilation required
+node dist/cli.js --transport stdio --sqlite ./database.db
 ```
+
+> **Backend Choice:** Use `--sqlite-native` for full features (122 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (102 tools, no native dependencies).
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 
@@ -318,7 +337,7 @@ Schema metadata is cached to reduce repeated queries during tool/resource invoca
 
 ## 📚 MCP Client Configuration
 
-### Cursor IDE
+### Cursor IDE (Native Backend)
 
 ```json
 {
@@ -337,7 +356,26 @@ Schema metadata is cached to reduce repeated queries during tool/resource invoca
 }
 ```
 
-### Claude Desktop
+### Cursor IDE (WASM Backend)
+
+```json
+{
+  "mcpServers": {
+    "db-mcp-sqlite": {
+      "command": "node",
+      "args": [
+        "C:/path/to/db-mcp/dist/cli.js",
+        "--transport",
+        "stdio",
+        "--sqlite",
+        "C:/path/to/your/database.db"
+      ]
+    }
+  }
+}
+```
+
+### Claude Desktop (Native)
 
 ```json
 {
@@ -355,6 +393,84 @@ Schema metadata is cached to reduce repeated queries during tool/resource invoca
   }
 }
 ```
+
+### Claude Desktop (WASM)
+
+```json
+{
+  "mcpServers": {
+    "db-mcp-sqlite": {
+      "command": "node",
+      "args": [
+        "/path/to/db-mcp/dist/cli.js",
+        "--transport",
+        "stdio",
+        "--sqlite",
+        "/path/to/database.db"
+      ]
+    }
+  }
+}
+```
+
+### Native with Extensions (CSV + SpatiaLite)
+
+To enable loadable extensions, add CLI flags and set environment variables for extension paths:
+
+**Windows:**
+
+```json
+{
+  "mcpServers": {
+    "db-mcp-sqlite": {
+      "command": "node",
+      "args": [
+        "C:/path/to/db-mcp/dist/cli.js",
+        "--transport",
+        "stdio",
+        "--sqlite-native",
+        "C:/path/to/database.db",
+        "--csv",
+        "--spatialite",
+        "--tool-filter",
+        "starter"
+      ],
+      "env": {
+        "SPATIALITE_PATH": "C:/path/to/extensions/mod_spatialite.dll"
+      }
+    }
+  }
+}
+```
+
+**Linux/macOS:**
+
+```json
+{
+  "mcpServers": {
+    "db-mcp-sqlite": {
+      "command": "node",
+      "args": [
+        "/path/to/db-mcp/dist/cli.js",
+        "--transport",
+        "stdio",
+        "--sqlite-native",
+        "/path/to/database.db",
+        "--csv",
+        "--spatialite",
+        "--tool-filter",
+        "starter"
+      ],
+      "env": {
+        "CSV_EXTENSION_PATH": "/path/to/extensions/csv.so",
+        "SPATIALITE_PATH": "/usr/lib/x86_64-linux-gnu/mod_spatialite.so"
+      }
+    }
+  }
+}
+```
+
+> **Note:** Extension flags (`--csv`, `--spatialite`) are only available with the native backend (`--sqlite-native`). Set environment variables if extensions are not in standard system paths.
 
 ### Docker with Claude Desktop
 
