@@ -409,6 +409,27 @@ async function isModuleAvailable(
 }
 
 /**
+ * Check if any CSV module is available (standard csv or sqlite-xsv variant)
+ */
+async function isCsvModuleAvailable(
+  adapter: SqliteAdapter,
+): Promise<{ available: boolean; variant: "csv" | "xsv" | null }> {
+  // Check for standard csv module
+  if (await isModuleAvailable(adapter, "csv")) {
+    return { available: true, variant: "csv" };
+  }
+  // Check for sqlite-xsv module (registers as xsv_reader)
+  if (await isModuleAvailable(adapter, "xsv_reader")) {
+    return { available: true, variant: "xsv" };
+  }
+  // Check for xsv (alternative name)
+  if (await isModuleAvailable(adapter, "xsv")) {
+    return { available: true, variant: "xsv" };
+  }
+  return { available: false, variant: null };
+}
+
+/**
  * List all virtual tables
  */
 function createListVirtualTablesTool(adapter: SqliteAdapter): ToolDefinition {
@@ -584,11 +605,11 @@ function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate table name (we'll use it with double quotes in SQL)
       sanitizeIdentifier(input.tableName);
 
-      // Check if csv module is available
-      const csvAvailable = await isModuleAvailable(adapter, "csv");
+      // Check if csv module is available (supports standard csv and sqlite-xsv)
+      const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
         throw new Error(
-          "CSV extension not available. Load the csv extension or use a SQLite build with csv support.",
+          "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
         );
       }
 
@@ -655,11 +676,11 @@ function createAnalyzeCsvSchemaTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = AnalyzeCsvSchemaSchema.parse(params);
 
-      // Check if csv module is available
-      const csvAvailable = await isModuleAvailable(adapter, "csv");
+      // Check if csv module is available (supports standard csv and sqlite-xsv)
+      const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
         throw new Error(
-          "CSV extension not available. Cannot analyze CSV schema.",
+          "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
         );
       }
 
