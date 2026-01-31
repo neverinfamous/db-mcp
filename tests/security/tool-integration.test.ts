@@ -10,15 +10,15 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { SqliteAdapter } from "../../src/adapters/sqlite/SqliteAdapter.js";
+import { createTestAdapter, type TestAdapter } from "../utils/test-adapter.js";
 import { UnsafeWhereClauseError } from "../../src/utils/index.js";
 
 describe("Security: Tool Handler Integration", () => {
-  let adapter: SqliteAdapter;
+  let adapter: TestAdapter;
   let tools: Map<string, (params: unknown) => Promise<unknown>>;
 
   beforeEach(async () => {
-    adapter = new SqliteAdapter();
+    adapter = createTestAdapter();
     await adapter.connect({
       type: "sqlite",
       connectionString: ":memory:",

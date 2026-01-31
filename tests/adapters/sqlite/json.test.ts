@@ -5,14 +5,17 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { SqliteAdapter } from "../../../src/adapters/sqlite/SqliteAdapter.js";
+import {
+  createTestAdapter,
+  type TestAdapter,
+} from "../../utils/test-adapter.js";
 
 describe("JSON Tools", () => {
-  let adapter: SqliteAdapter;
+  let adapter: TestAdapter;
   let tools: Map<string, (params: unknown) => Promise<unknown>>;
 
   beforeEach(async () => {
-    adapter = new SqliteAdapter();
+    adapter = createTestAdapter();
     await adapter.connect({
       type: "sqlite",
       connectionString: ":memory:",

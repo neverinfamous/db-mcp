@@ -162,8 +162,16 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       const spatialitePaths = [
         process.env["SPATIALITE_PATH"],
         // Absolute paths to local extensions
-        path.join(extensionsDir, "mod_spatialite-5.1.0-win-amd64", "mod_spatialite"),
-        path.join(extensionsDir, "mod_spatialite-5.1.0-win-amd64", "mod_spatialite.dll"),
+        path.join(
+          extensionsDir,
+          "mod_spatialite-5.1.0-win-amd64",
+          "mod_spatialite",
+        ),
+        path.join(
+          extensionsDir,
+          "mod_spatialite-5.1.0-win-amd64",
+          "mod_spatialite.dll",
+        ),
         // System paths
         "mod_spatialite",
         "mod_spatialite.dll",
@@ -693,11 +701,11 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
           role: "user" | "assistant";
           content: { type: "text"; text: string };
         }[] = Array.isArray(result)
-            ? (result as {
+          ? (result as {
               role: "user" | "assistant";
               content: { type: "text"; text: string };
             }[])
-            : [
+          : [
               {
                 role: "assistant" as const,
                 content: {

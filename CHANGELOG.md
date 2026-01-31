@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `CSV_EXTENSION_PATH` and `SPATIALITE_PATH` environment variables for custom extension paths
   - Platform-aware extension binary detection (Windows/Linux/macOS)
   - README documentation for built-in vs loadable extensions with installation instructions
+- **Test Infrastructure** — Migrated tests to native SQLite adapter for full feature coverage
+  - Added `tests/utils/test-adapter.ts` factory for centralized adapter instantiation
+  - All 9 SQLite test files now use `NativeSqliteAdapter` (better-sqlite3) instead of sql.js WASM
+  - FTS5 tests now execute properly (previously skipped due to WASM limitations)
 
 ### Changed
 

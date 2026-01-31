@@ -5,13 +5,16 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { SqliteAdapter } from "../../../src/adapters/sqlite/SqliteAdapter.js";
+import {
+  createTestAdapter,
+  type TestAdapter,
+} from "../../utils/test-adapter.js";
 
 describe("SqliteAdapter", () => {
-  let adapter: SqliteAdapter;
+  let adapter: TestAdapter;
 
   beforeEach(async () => {
-    adapter = new SqliteAdapter();
+    adapter = createTestAdapter();
     await adapter.connect({
       type: "sqlite",
       connectionString: ":memory:",
@@ -33,7 +36,8 @@ describe("SqliteAdapter", () => {
     });
 
     it("should report correct adapter name", () => {
-      expect(adapter.name).toBe("SQLite Adapter");
+      // Native adapter has different name than sql.js adapter
+      expect(adapter.name).toMatch(/SQLite.*Adapter/);
     });
 
     it("should get adapter info", () => {
@@ -208,8 +212,8 @@ describe("SqliteAdapter", () => {
       const tools = adapter.getToolDefinitions();
 
       expect(tools.length).toBeGreaterThan(0);
-      // Should have 102 tools (WASM variant)
-      expect(tools.length).toBe(102);
+      // Native adapter has 106 tools, WASM has 102
+      expect(tools.length).toBeGreaterThanOrEqual(102);
     });
 
     it("should have required tool properties", () => {
