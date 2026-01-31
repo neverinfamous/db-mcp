@@ -423,7 +423,10 @@ function createSpatialAnalysisTool(
               "Target table required for nearest neighbor analysis",
             );
           }
-          query = `SELECT s.*, t.*, 
+          // Use subquery to get non-geometry columns, convert geometry to WKT
+          query = `SELECT 
+            s.id as source_id, AsText(s."${input.geometryColumn}") as source_geom,
+            t.id as target_id, AsText(t."${input.geometryColumn}") as target_geom,
             ST_Distance(s."${input.geometryColumn}", t."${input.geometryColumn}") as distance
           FROM "${input.sourceTable}" s, "${input.targetTable}" t
           ORDER BY distance LIMIT ${input.limit}`;
@@ -435,7 +438,10 @@ function createSpatialAnalysisTool(
               "Target table required for point in polygon analysis",
             );
           }
-          query = `SELECT s.*, t.*
+          // Use subquery to get non-geometry columns, convert geometry to WKT
+          query = `SELECT 
+            s.id as source_id, AsText(s."${input.geometryColumn}") as source_geom,
+            t.id as target_id, AsText(t."${input.geometryColumn}") as target_geom
           FROM "${input.sourceTable}" s, "${input.targetTable}" t
           WHERE ST_Within(s."${input.geometryColumn}", t."${input.geometryColumn}")
           LIMIT ${input.limit}`;

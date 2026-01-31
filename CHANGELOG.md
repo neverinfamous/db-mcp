@@ -67,6 +67,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SpatiaLite Analyze WKT Output** — Fixed `sqlite_spatialite_analyze` binary geometry output
+  - `nearest_neighbor` and `point_in_polygon` analysis types now return WKT via `AsText()` instead of raw binary blobs
+  - Changed from `s.*` wildcard select to explicit `source_id`, `source_geom`, `target_id`, `target_geom` columns
+  - Reduces payload size and improves readability (binary arrays → human-readable WKT strings)
+
 - **Restore Virtual Table Handling** — Fixed `sqlite_restore` failing with virtual table shadow tables
   - Added pre-restore phase to drop existing virtual tables before attempting restore
   - Virtual table deletion automatically cleans up associated shadow tables (R-Tree: `_node`, `_rowid`, `_parent`)
