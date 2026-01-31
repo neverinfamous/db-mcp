@@ -107,8 +107,20 @@ export class SchemaManager {
     for (const row of result.rows ?? []) {
       const name = row["name"] as string;
       const type = row["type"] as "table" | "view";
-      const tableInfo = await this.describeTable(name);
-      tables.push({ ...tableInfo, type });
+
+      // Skip FTS5 shadow tables (they're internal implementation details)
+      if (name.includes("_fts_")) {
+        continue;
+      }
+
+      try {
+        const tableInfo = await this.describeTable(name);
+        tables.push({ ...tableInfo, type });
+      } catch {
+        // FTS5 virtual tables fail PRAGMA table_info in WASM mode (no FTS5 module)
+        // Skip these tables rather than failing the entire operation
+        continue;
+      }
     }
 
     this.setCache("tables", tables);
