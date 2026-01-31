@@ -315,7 +315,7 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       const start = Date.now();
 
       // Phase 1: Preparing restore
-      await sendProgress(progress, 1, 4, "Preparing restore...");
+      await sendProgress(progress, 1, 5, "Preparing restore...");
 
       const escapedPath = input.sourcePath.replace(/'/g, "''");
 
@@ -323,20 +323,43 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       await adapter.executeReadQuery("PRAGMA integrity_check(1)");
 
       // Phase 2: Attach backup database
-      await sendProgress(progress, 2, 4, "Attaching backup database...");
+      await sendProgress(progress, 2, 5, "Attaching backup database...");
       await adapter.executeWriteQuery(
         `ATTACH DATABASE '${escapedPath}' AS backup_source`,
       );
 
       try {
-        // Phase 3: Copy tables from backup
-        await sendProgress(progress, 3, 4, "Restoring tables from backup...");
+        // Phase 3: Drop virtual tables first (prevents shadow table errors)
+        await sendProgress(progress, 3, 5, "Cleaning up virtual tables...");
+
+        // Get list of virtual tables in main database
+        const virtualTablesResult = await adapter.executeReadQuery(
+          `SELECT name FROM sqlite_master 
+           WHERE type='table' 
+           AND sql LIKE 'CREATE VIRTUAL TABLE%'
+           AND name NOT LIKE 'sqlite_%'`,
+        );
+
+        // Drop virtual tables first - this also drops their shadow tables
+        for (const row of virtualTablesResult.rows ?? []) {
+          const tableName = row["name"] as string;
+          const quotedName = `"${tableName.replace(/"/g, '""')}"`;
+          await adapter
+            .executeWriteQuery(`DROP TABLE IF EXISTS main.${quotedName}`)
+            .catch(() => {
+              // Ignore errors - table may already be gone
+            });
+        }
+
+        // Phase 4: Copy tables from backup
+        await sendProgress(progress, 4, 5, "Restoring tables from backup...");
 
         // Disable foreign key constraints during restore
         await adapter.executeWriteQuery("PRAGMA foreign_keys = OFF");
 
-        // Get list of regular tables from backup (excluding FTS shadow tables)
-        // FTS5 shadow tables end with _data, _idx, _content, _docsize, _config
+        // Get list of regular tables from backup (excluding shadow tables)
+        // FTS5 shadow tables: _data, _idx, _content, _docsize, _config
+        // R-Tree shadow tables: _node, _rowid, _parent
         const tablesResult = await adapter.executeReadQuery(
           `SELECT name, sql FROM backup_source.sqlite_master 
            WHERE type='table' 
@@ -346,6 +369,9 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
            AND name NOT LIKE '%_content'
            AND name NOT LIKE '%_docsize'
            AND name NOT LIKE '%_config'
+           AND name NOT LIKE '%_node'
+           AND name NOT LIKE '%_rowid'
+           AND name NOT LIKE '%_parent'
            ORDER BY name`,
         );
 
@@ -377,8 +403,8 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         const duration = Date.now() - start;
 
-        // Phase 4: Complete
-        await sendProgress(progress, 4, 4, "Restore complete");
+        // Phase 5: Complete
+        await sendProgress(progress, 5, 5, "Restore complete");
 
         return {
           success: true,
@@ -537,6 +563,15 @@ function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
   };
 }
 
+const PragmaCompileOptionsSchema = z.object({
+  filter: z
+    .string()
+    .optional()
+    .describe(
+      "Optional filter pattern (case-insensitive substring match) to limit returned options",
+    ),
+});
+
 /**
  * Get SQLite compile options
  */
@@ -547,15 +582,24 @@ function createPragmaCompileOptionsTool(
     name: "sqlite_pragma_compile_options",
     description: "Get the compile-time options used to build SQLite.",
     group: "admin",
-    inputSchema: z.object({}),
+    inputSchema: PragmaCompileOptionsSchema,
     outputSchema: PragmaCompileOptionsOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Compile Options"),
-    handler: async (_params: unknown, _context: RequestContext) => {
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = PragmaCompileOptionsSchema.parse(params);
       const result = await adapter.executeReadQuery("PRAGMA compile_options");
-      const options = (result.rows ?? []).map(
+      let options = (result.rows ?? []).map(
         (r) => r["compile_options"] as string,
       );
+
+      // Apply filter if provided
+      if (input.filter) {
+        const filterLower = input.filter.toLowerCase();
+        options = options.filter((opt) =>
+          opt.toLowerCase().includes(filterLower),
+        );
+      }
 
       return {
         success: true,

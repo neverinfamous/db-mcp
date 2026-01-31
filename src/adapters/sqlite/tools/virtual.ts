@@ -54,6 +54,13 @@ const DropViewSchema = z.object({
 
 const DbStatSchema = z.object({
   table: z.string().optional().describe("Optional table name to filter"),
+  summarize: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "If true, return aggregated per-table stats instead of raw page-level data",
+    ),
 });
 
 const VacuumSchema = z.object({
@@ -307,6 +314,42 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
       const input = DbStatSchema.parse(params);
 
       try {
+        // Summarize mode: aggregate per-table stats
+        if (input.summarize) {
+          let sql = `SELECT 
+              name,
+              COUNT(*) as page_count,
+              SUM(payload) as total_payload,
+              SUM(unused) as total_unused,
+              SUM(ncell) as total_cells,
+              MAX(mx_payload) as max_payload
+            FROM dbstat`;
+
+          if (input.table) {
+            sanitizeIdentifier(input.table);
+            sql += ` WHERE name = '${input.table.replace(/'/g, "''")}'`;
+          }
+
+          sql += ` GROUP BY name ORDER BY name`;
+
+          const result = await adapter.executeReadQuery(sql);
+
+          return {
+            success: true,
+            summarized: true,
+            tableCount: result.rows?.length ?? 0,
+            tables: result.rows?.map((row) => ({
+              name: row["name"] as string,
+              pageCount: row["page_count"] as number,
+              totalPayload: row["total_payload"] as number,
+              totalUnused: row["total_unused"] as number,
+              totalCells: row["total_cells"] as number,
+              maxPayload: row["max_payload"] as number,
+            })),
+          };
+        }
+
+        // Default mode: raw page-level stats
         let sql = `SELECT name, path, pageno, pagetype, ncell, payload, unused, mx_payload 
                     FROM dbstat`;
 

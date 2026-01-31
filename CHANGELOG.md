@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **PRAGMA Compile Options Filter** — `sqlite_pragma_compile_options` now supports `filter` parameter
+  - Case-insensitive substring match to limit returned options (e.g., `filter: "FTS"` returns only FTS-related options)
+  - Reduces payload size for targeted queries (58 options → filtered subset)
+
+- **Database Stats Summarize Mode** — `sqlite_dbstat` now supports `summarize` parameter
+  - When `summarize: true`, returns aggregated per-table stats instead of raw page-level data
+  - Summary includes: `pageCount`, `totalPayload`, `totalUnused`, `totalCells`, `maxPayload` per table
+  - Reduces response size (27 rows → 1 row per table) while providing actionable storage metrics
+
 - **Stats Tool Column Selection** — `sqlite_stats_top_n` now supports `selectColumns` parameter
   - Limits returned columns to only those specified (reduces payload size for large tables)
   - Default behavior unchanged: returns all columns when `selectColumns` is not provided
@@ -57,6 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated security tests to expect new error message format
 
 ### Fixed
+
+- **Restore Virtual Table Handling** — Fixed `sqlite_restore` failing with virtual table shadow tables
+  - Added pre-restore phase to drop existing virtual tables before attempting restore
+  - Virtual table deletion automatically cleans up associated shadow tables (R-Tree: `_node`, `_rowid`, `_parent`)
+  - Excludes R-Tree shadow tables from copy list in addition to FTS5 shadow tables
+  - Prevents \"may not be dropped\" error when backup contains virtual table artifacts
 
 - **Custom Regex Validation Double-Escaping Fix** — Fixed `sqlite_text_validate` custom pattern handling
   - Normalizes double-escaped backslashes (`\\\\` → `\\`) from JSON transport
