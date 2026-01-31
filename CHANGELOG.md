@@ -36,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **JSON Each Ambiguous Column Fix** — Fixed `sqlite_json_each` "ambiguous column name: id" error
+  - Added table alias (`t`) and `CROSS JOIN` syntax to prevent column name conflicts with `json_each()` TVF output
+  - `json_each()` returns columns: `key`, `value`, `type`, `atom`, `id`, `parent`, `fullkey`, `path`
+  - Source table columns (especially `id`) now properly qualified with table alias
+  - Added automatic `id =` → `t.id =` rewriting for user-provided WHERE clauses
+  - Updated `JsonEachOutputSchema` to include optional `row_id` field for row identification
+
 - **Core Tool Bug Fixes** — Resolved 3 issues discovered during comprehensive MCP tool testing
   - `sqlite_describe_table` now correctly returns an error for non-existent tables (was returning `success: true` with empty columns)
   - `sqlite_write_query` and other query methods now auto-convert boolean parameters (`true`/`false`) to integers (`1`/`0`) since SQLite doesn't have native boolean type

@@ -463,9 +463,19 @@ function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
         throw new Error("JSON path must start with $");
       }
 
-      let sql = `SELECT je.key, je.value, je.type FROM ${table}, json_each(${column}, '${path}') as je`;
+      // Use table alias and CROSS JOIN to avoid ambiguity with json_each() output columns
+      // json_each() returns: key, value, type, atom, id, parent, fullkey, path
+      // If the source table has any of these columns (e.g., 'id'), they must be qualified
+      let sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
       if (input.whereClause) {
-        sql += ` WHERE ${input.whereClause}`;
+        // Qualify unqualified 'id' column references with table alias 't.'
+        // This handles: id = X, id IN (...), id BETWEEN, id IS NULL, etc.
+        // Won't match already-qualified refs like 't.id' or 'je.id'
+        const qualifiedWhere = input.whereClause.replace(
+          /(?<![.\w])id(?=\s*[=<>!]|\s+(?:IN|BETWEEN|IS|LIKE)\b)/gi,
+          "t.id",
+        );
+        sql += ` WHERE ${qualifiedWhere}`;
       }
       sql += ` LIMIT ${input.limit}`;
 

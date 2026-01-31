@@ -306,6 +306,7 @@ export const JsonEachOutputSchema = z.object({
   rowCount: z.number(),
   elements: z.array(
     z.object({
+      row_id: z.number().optional(),
       key: z.union([z.string(), z.number()]),
       value: z.unknown(),
       type: z.string(),
