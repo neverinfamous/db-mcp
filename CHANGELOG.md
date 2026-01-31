@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Literal string values continue to be properly single-quoted with escape handling for embedded quotes
   - Added regex detection for function calls (pattern `function_name(...)`) and SQL keywords
 
+- **JSONB Normalize Corruption Fix** — Fixed `sqlite_json_normalize_column` corrupting JSONB columns
+  - Changed query to use `json(${column})` SQL function to convert JSONB binary to text before JavaScript processing
+  - Previously, JSONB binary blobs were being serialized as numbered-key objects (`{"0":204,"1":95,...}`)
+  - Now properly handles both text JSON and JSONB binary format without data loss
+
 - **ServerInstructions.ts Core Tools Table** — Added missing tools to documentation
   - Added `sqlite_drop_table` and `sqlite_get_indexes` to Core Tools table (was only showing 6 of 8 tools)
 

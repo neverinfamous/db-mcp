@@ -780,6 +780,9 @@ function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
 
 /**
  * Normalize JSON data in a column for consistent storage
+ *
+ * Handles both text JSON and JSONB binary format by using SQL's json()
+ * function to read the data as text before JavaScript processing.
  */
 function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -798,8 +801,10 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
       const table = sanitizeIdentifier(input.table);
       const column = sanitizeIdentifier(input.column);
 
-      // First, read all rows
-      let selectSql = `SELECT rowid, ${column} as json_data FROM ${table}`;
+      // Use SQLite's json() function to ensure we get text output regardless
+      // of whether the column contains text JSON or JSONB binary format.
+      // This prevents corruption when JSONB blobs are read and re-processed.
+      let selectSql = `SELECT rowid, json(${column}) as json_data FROM ${table}`;
       if (input.whereClause) {
         selectSql += ` WHERE ${input.whereClause}`;
       }
