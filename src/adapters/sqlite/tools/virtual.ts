@@ -371,13 +371,16 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch {
         // dbstat may not be available
-        // Fallback to basic page count
-        const sql = "PRAGMA page_count";
-        const result = await adapter.executeReadQuery(sql);
+        // Fallback to basic page count using PRAGMA
+        const result = await adapter.executeReadQuery("PRAGMA page_count");
+        // PRAGMA page_count returns a single row with the count value
+        const pageCount =
+          result.rows?.[0]?.["page_count"] ?? result.rows?.[0]?.[0];
 
         return {
           success: true,
-          pageCount: result.rows?.[0]?.["page_count"],
+          pageCount:
+            typeof pageCount === "number" ? pageCount : Number(pageCount),
           note: "dbstat virtual table not available, showing basic stats",
         };
       }

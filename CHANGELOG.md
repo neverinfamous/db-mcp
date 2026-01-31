@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_dbstat` Page Count Inconsistency** — Fixed JS fallback returning inconsistent page counts
+  - Properly extracts page_count from PRAGMA result (handles both named and indexed column access)
+  - Ensures consistent numeric return value via explicit type coercion
+
 - **False WASM Limitation Detection in Native Mode** — Fixed backup/restore/verify tools incorrectly reporting WASM limitations when running in native mode
   - Added `isNativeBackend()` method to both `SqliteAdapter` (returns false) and `NativeSqliteAdapter` (returns true)
   - `sqlite_backup`, `sqlite_restore`, `sqlite_verify_backup` now only return `wasmLimitation: true` when actually running in WASM mode
