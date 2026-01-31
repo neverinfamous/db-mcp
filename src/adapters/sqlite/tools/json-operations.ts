@@ -87,10 +87,24 @@ const JsonGroupArraySchema = z.object({
 
 const JsonGroupObjectSchema = z.object({
   table: z.string().describe("Table name"),
-  keyColumn: z.string().describe("Column for object keys"),
-  valueColumn: z.string().describe("Column for object values"),
+  keyColumn: z
+    .string()
+    .describe(
+      "Column for object keys (or SQL expression if allowExpressions is true)",
+    ),
+  valueColumn: z
+    .string()
+    .describe(
+      "Column for object values (or SQL expression if allowExpressions is true)",
+    ),
   groupByColumn: z.string().optional().describe("Column to group by"),
   whereClause: z.string().optional(),
+  allowExpressions: z
+    .boolean()
+    .optional()
+    .describe(
+      "Allow SQL expressions like json_extract() instead of plain column names",
+    ),
 });
 
 const JsonPrettySchema = z.object({
@@ -552,10 +566,22 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupObjectSchema.parse(params);
 
-      // Validate and quote identifiers
+      // Validate table name (always required)
       const table = sanitizeIdentifier(input.table);
-      const keyColumn = sanitizeIdentifier(input.keyColumn);
-      const valueColumn = sanitizeIdentifier(input.valueColumn);
+
+      // Allow raw SQL expressions when allowExpressions is true
+      // This enables use cases like: json_extract(data, '$.name')
+      let keyColumn: string;
+      let valueColumn: string;
+      if (input.allowExpressions) {
+        // Use expressions directly (user takes responsibility for SQL safety)
+        keyColumn = input.keyColumn;
+        valueColumn = input.valueColumn;
+      } else {
+        // Validate as identifiers (default, safe behavior)
+        keyColumn = sanitizeIdentifier(input.keyColumn);
+        valueColumn = sanitizeIdentifier(input.valueColumn);
+      }
 
       let selectClause = `json_group_object(${keyColumn}, ${valueColumn}) as object_result`;
       let groupByClause = "";

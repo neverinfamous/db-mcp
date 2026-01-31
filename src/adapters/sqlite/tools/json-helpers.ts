@@ -231,7 +231,9 @@ function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
         });
         selectClause = extracts.join(", ");
       } else {
-        selectClause = `"${input.column}"`;
+        // Wrap with json() to ensure JSONB binary data is returned as readable text
+        // This handles both text JSON (no-op) and JSONB (converts to text)
+        selectClause = `json("${input.column}") as "${input.column}"`;
       }
 
       let sql = `SELECT ${selectClause} FROM "${input.table}"`;

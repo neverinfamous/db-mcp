@@ -43,6 +43,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added automatic `id =` → `t.id =` rewriting for user-provided WHERE clauses
   - Updated `JsonEachOutputSchema` to include optional `row_id` field for row identification
 
+- **JSON Group Object Expression Support** — Added `allowExpressions` option to `sqlite_json_group_object`
+  - When `allowExpressions: true`, SQL expressions like `json_extract(data, '$.name')` are accepted for `keyColumn` and `valueColumn`
+  - Default behavior unchanged (validates as simple column identifiers for security)
+  - Enables advanced aggregation patterns combining JSON extraction with grouping
+
+- **JSONB Text Serialization Fix** — Fixed `sqlite_json_select` returning binary Buffer for JSONB data
+  - Wrapped column selection with `json()` function to convert JSONB binary to readable text JSON
+  - Works seamlessly with both text JSON (no-op) and JSONB (converts to text)
+  - API consumers now receive readable JSON instead of raw binary buffers
+
 - **Core Tool Bug Fixes** — Resolved 3 issues discovered during comprehensive MCP tool testing
   - `sqlite_describe_table` now correctly returns an error for non-existent tables (was returning `success: true` with empty columns)
   - `sqlite_write_query` and other query methods now auto-convert boolean parameters (`true`/`false`) to integers (`1`/`0`) since SQLite doesn't have native boolean type
