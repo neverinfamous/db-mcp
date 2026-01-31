@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **ServerInstructions.ts Text Processing Examples** — Updated TOOL_REFERENCE section
+  - Fixed `sqlite_fuzzy_search` example to correct tool name `sqlite_fuzzy_match` with proper parameters
+  - Replaced generic `sqlite_text_similarity` example with practical `sqlite_text_validate` (email/phone/url/uuid/ipv4)
+  - Added `sqlite_advanced_search` example demonstrating multi-technique search (exact/fuzzy/phonetic)
+
 ### Fixed
 
 - **`sqlite_create_table` SQL Expression Default Values** — Fixed syntax error when using SQL expressions as default values

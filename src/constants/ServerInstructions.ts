@@ -172,8 +172,9 @@ sqlite_transaction_commit()
 ## Text Processing
 \`\`\`javascript
 sqlite_regex_match({ table: "logs", column: "message", pattern: "ERROR:\\\\s+(\\\\w+)" })
-sqlite_fuzzy_search({ table: "products", column: "name", query: "laptp", threshold: 0.6 })
-sqlite_text_similarity({ text1: "machine learning", text2: "deep learning", algorithm: "levenshtein" })
+sqlite_fuzzy_match({ table: "products", column: "name", search: "laptp", maxDistance: 3 })
+sqlite_text_validate({ table: "users", column: "email", pattern: "email" }) // email, phone, url, uuid, ipv4
+sqlite_advanced_search({ table: "products", column: "name", searchTerm: "laptop", techniques: ["exact", "fuzzy", "phonetic"] })
 \`\`\`
 
 ## Database Administration
