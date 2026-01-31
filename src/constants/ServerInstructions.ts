@@ -100,8 +100,8 @@ sqlite_json_extract({ table: "t", column: "data", path: "$.a" })
 
 ## Vector/Semantic Search
 \`\`\`javascript
-sqlite_vector_store({ table: "docs", id_column: "id", embedding_column: "emb", id: 1, embedding: [...] })
-sqlite_vector_search({ table: "docs", embedding_column: "emb", query_embedding: [...], top_k: 10 })
+sqlite_vector_store({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1, vector: [...] })
+sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10 })
 \`\`\`
 
 ## Full-Text Search (FTS5)
