@@ -46,14 +46,14 @@ if (-not $DatabasePath) {
 
 # Colors for output
 function Write-Step { param($Step, $Total, $Message) Write-Host "`n[$Step/$Total] " -ForegroundColor Cyan -NoNewline; Write-Host $Message -ForegroundColor White }
-function Write-Success { param($Message) Write-Host "  ✓ " -ForegroundColor Green -NoNewline; Write-Host $Message }
-function Write-Info { param($Message) Write-Host "  → " -ForegroundColor DarkGray -NoNewline; Write-Host $Message -ForegroundColor DarkGray }
-function Write-Warn { param($Message) Write-Host "  ⚠ " -ForegroundColor Yellow -NoNewline; Write-Host $Message -ForegroundColor Yellow }
-function Write-Err { param($Message) Write-Host "  ✗ " -ForegroundColor Red -NoNewline; Write-Host $Message -ForegroundColor Red }
+function Write-Success { param($Message) Write-Host "  [OK] " -ForegroundColor Green -NoNewline; Write-Host $Message }
+function Write-Info { param($Message) Write-Host "  --> " -ForegroundColor DarkGray -NoNewline; Write-Host $Message -ForegroundColor DarkGray }
+function Write-Warn { param($Message) Write-Host "  [!] " -ForegroundColor Yellow -NoNewline; Write-Host $Message -ForegroundColor Yellow }
+function Write-Err { param($Message) Write-Host "  [X] " -ForegroundColor Red -NoNewline; Write-Host $Message -ForegroundColor Red }
 
-Write-Host "`n╔════════════════════════════════════════════════════════════╗" -ForegroundColor Magenta
-Write-Host "║            DB-MCP Test Database Reset                      ║" -ForegroundColor Magenta
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Magenta
+Write-Host "`n========================================================" -ForegroundColor Magenta
+Write-Host "            DB-MCP Test Database Reset                   " -ForegroundColor Magenta
+Write-Host "========================================================" -ForegroundColor Magenta
 
 # Verify prerequisites
 if (-not (Test-Path $SqlFile)) {
@@ -244,13 +244,13 @@ db.close();
             if ($expectedTables.ContainsKey($tableName)) {
                 $expectedCount = $expectedTables[$tableName]
                 if ($actualCount -eq $expectedCount) {
-                    Write-Host "    ✓ " -ForegroundColor Green -NoNewline
+                    Write-Host "    [pass] " -ForegroundColor Green -NoNewline
                     Write-Host "$tableName" -NoNewline
-                    Write-Host " ($actualCount rows)" -ForegroundColor Gray
+                    Write-Host " ($($actualCount) rows)" -ForegroundColor Gray
                 } else {
-                    Write-Host "    ✗ " -ForegroundColor Red -NoNewline
+                    Write-Host "    [fail] " -ForegroundColor Red -NoNewline
                     Write-Host "$tableName" -NoNewline
-                    Write-Host " (expected $expectedCount, got $actualCount)" -ForegroundColor Red
+                    Write-Host " (expected $($expectedCount), got $($actualCount))" -ForegroundColor Red
                     $allPassed = $false
                 }
             }
@@ -268,10 +268,10 @@ db.close();
     }
 }
 
-Write-Host "`n╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║                    Reset Complete! ✓                       ║" -ForegroundColor Green
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "`n========================================================" -ForegroundColor Green
+Write-Host "                    Reset Complete!                      " -ForegroundColor Green
+Write-Host "========================================================" -ForegroundColor Green
 
 Write-Host "`nTo start testing, run:" -ForegroundColor Gray
-Write-Host "  node dist/cli.js --transport stdio --sqlite-native `"$DatabasePath`"" -ForegroundColor Cyan
+Write-Host ("  node dist/cli.js --transport stdio --sqlite-native " + [char]34 + "$DatabasePath" + [char]34) -ForegroundColor Cyan
 Write-Host ""

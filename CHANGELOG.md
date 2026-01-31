@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_fts_create`: Changed `sql` to `tableName` in response to match schema
   - `sqlite_fts_rebuild`: Added missing `tableName` field to response
 
+- **Text Tool Bug Fixes** — Resolved issues discovered during comprehensive MCP tool testing
+  - `sqlite_text_concat`: Fixed SQL generation to use `||` operator for concatenation (was generating comma-separated SELECT which only returns last column)
+  - `sqlite_regex_extract`, `sqlite_regex_match`, `sqlite_advanced_search`: Fixed rowid extraction by aliasing `rowid as id` in SQL queries (was returning 0 for all rows)
+
 - **Test Database FTS5 Table** — Added pre-built FTS5 table for testing
   - `test_articles_fts`: FTS5 virtual table indexing `test_articles` (title, body)
   - Updated `test-database.sql` to create and populate the FTS index

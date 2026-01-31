@@ -196,7 +196,7 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
       const table = sanitizeIdentifier(input.table);
       const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
+      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -216,7 +216,7 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
               : JSON.stringify(rawValue ?? "");
           const match = regex.exec(value);
           // Safely coerce rowid to number, defaulting to row index or 0
-          const rawRowid = row["rowid"];
+          const rawRowid = row["id"];
           const rowid =
             typeof rawRowid === "number"
               ? rawRowid
@@ -260,7 +260,7 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
       const table = sanitizeIdentifier(input.table);
       const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
+      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -282,7 +282,7 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
         })
         .map((row) => {
           // Ensure rowid is a number for output schema compliance
-          const rawRowid = row["rowid"];
+          const rawRowid = row["id"];
           const rowid =
             typeof rawRowid === "number"
               ? rawRowid
@@ -374,11 +374,12 @@ function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
       const table = sanitizeIdentifier(input.table);
       const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
 
-      // Build concatenation expression
+      // Build concatenation expression using || operator
       const sep = input.separator.replace(/'/g, "''");
+      // Build: COALESCE(col1, '') || 'sep' || COALESCE(col2, '') || ...
       const concatExpr = quotedCols
         .map((c) => `COALESCE(${c}, '')`)
-        .join(`, '${sep}', `);
+        .join(` || '${sep}' || `);
 
       let sql = `SELECT ${concatExpr} as concatenated FROM ${table}`;
       if (input.whereClause) {
@@ -1087,7 +1088,7 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
         validateWhereClause(input.whereClause);
         whereClause = ` AND ${input.whereClause}`;
       }
-      const query = `SELECT rowid, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 1000`;
+      const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 1000`;
       const result = await adapter.executeQuery(query);
 
       if (!result.rows || result.rows.length === 0) {
@@ -1155,7 +1156,7 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
         if (matches.length > 0) {
           const best = matches.reduce((a, b) => (a.score > b.score ? a : b));
           // Safely coerce rowid to number, defaulting to 0 if undefined/null
-          const rawRowid = row["rowid"];
+          const rawRowid = row["id"];
           const rowid =
             typeof rawRowid === "number"
               ? rawRowid

@@ -144,24 +144,69 @@ If verification shows unexpected row counts:
 
 Copy and paste this prompt to test the JSON tool group:
 
-Please conduct a comprehensive test of the db-mcp SQLite MCP server "json" tool group (23 + 3 built-in tools) using the live MCP server tool calls. Use the MCP tools directly for testing, not scripts/terminal.
+Please conduct a comprehensive test of the db-mcp SQLite MCP server "text" tool group (17 + 3 built-in tools) using the live MCP server tool calls. Use the MCP tools directly for testing, not scripts/terminal.
+
+## Text Tool Group's Tools
+
+1. server_info
+   Get information about the db-mcp server and registered adapters
+2. server_health
+   Check health status of all database connections
+3. list_adapters
+   List all registered database adapters
+4. sqlite_regex_extract
+   Extract text matching a regex pattern. Processed in JavaScript after fetching data.
+5. sqlite_regex_match
+   Find rows where column matches a regex pattern. Processed in JavaScript.
+6. sqlite_text_split
+   Split a text column by delimiter into array results.
+7. sqlite_text_concat
+   Concatenate multiple columns with optional separator.
+8. sqlite_text_replace
+   Replace text in a column using SQLite replace() function.
+9. sqlite_text_trim
+   Trim whitespace from text column values.
+10. sqlite_text_case
+    Convert text to uppercase or lowercase.
+11. sqlite_text_substring
+    Extract a substring from text column using substr().
+12. sqlite_fuzzy_match
+    Find fuzzy matches using Levenshtein distance. Returns values within max edit distance.
+13. sqlite_phonetic_match
+    Find phonetically similar values using Soundex (SQLite native) or Metaphone algorithm.
+14. sqlite_text_normalize
+    Normalize text using Unicode normalization (NFC, NFD, NFKC, NFKD) or strip accents.
+15. sqlite_text_validate
+    Validate text values against patterns: email, phone, URL, UUID, IPv4, or custom regex.
+16. sqlite_advanced_search
+    Advanced search combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching
+17. sqlite_fts_create
+    Create an FTS5 full-text search virtual table.
+18. sqlite_fts_search
+    Search an FTS5 table using full-text query syntax.
+19. sqlite_fts_rebuild
+    Rebuild an FTS5 index to optimize search performance.
+20. sqlite_fts_match_info
+    Get FTS5 match ranking information using bm25.
 
 ### Test Database Schema
 
 The test database (test-database/test.db) contains these tables with JSON-relevant columns:
 
-| Table             | Rows | Columns                                                           | JSON Columns                                          |
-| ----------------- | ---- | ----------------------------------------------------------------- | ----------------------------------------------------- |
-| test_products     | 15   | id, name, description, price, category                            | —                                                     |
-| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, status | —                                                     |
-| test_jsonb_docs   | 6    | id, title, content, metadata, tags                                | **metadata** (nested object), **tags** (string array) |
-| test_articles     | 8    | id, title, content, author, published_at                          | —                                                     |
-| test_users        | 8    | id, username, email, phone, bio                                   | —                                                     |
-| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, recorded_at       | —                                                     |
-| test_embeddings   | 20   | id, label, category, embedding                                    | **embedding** (8-dim float array)                     |
-| test_locations    | 15   | id, name, latitude, longitude, country                            | —                                                     |
-| test_categories   | 17   | id, name, path                                                    | —                                                     |
-| test_events       | 100  | id, type, user_id, payload, created_at                            | **payload** (event-specific JSON)                     |
+| Table             | Rows | Columns                                                           | JSON Columns                                                            |
+| ----------------- | ---- | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| test_products     | 15   | id, name, description, price, category                            | —                                                                       |
+| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, status | —                                                                       |
+| test_jsonb_docs   | 6    | id, doc, metadata, tags                                           | **doc** (JSON document), **metadata** (nested object), **tags** (array) |
+| test_articles     | 8    | id, title, body, author, category                                 | —                                                                       |
+| test_articles_fts | FTS5 | title, body                                                       | — (FTS5 virtual table)                                                  |
+| test_users        | 8    | id, username, email, phone, bio                                   | —                                                                       |
+| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, measured_at       | —                                                                       |
+| test_embeddings   | 20   | id, content, category, embedding                                  | **embedding** (8-dim float array)                                       |
+| test_locations    | 15   | id, name, city, latitude, longitude, type                         | —                                                                       |
+| test_categories   | 17   | id, name, path, level                                             | —                                                                       |
+| test_events       | 100  | id, event_type, user_id, payload, event_date                      | **payload** (JSON)                                                      |
+| temp_text_test    | 5    | id, name, description                                             | — (for write operations)                                                |
 
 **Primary JSON test tables:**
 
@@ -173,8 +218,8 @@ The test database (test-database/test.db) contains these tables with JSON-releva
 
 1. Use existing `test_*` tables for read operations (SELECT, COUNT, queries)
 2. Create temporary tables with `temp_*` prefix for write operations
-3. Clean up any `temp_*` tables after testing
-4. Test each tool with realistic inputs based on the schema above
+3. Test each tool with realistic inputs based on the schema above
+4. Clean up any `temp_*` tables after testing with 'sqlite3 test-database/test.db "DROP TABLE IF EXISTS temp_json_test;"'
 5. Report all: failures, unexpected behaviors, improvement opportunities, or overly large payloads
 
 ### Reporting Format
