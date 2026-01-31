@@ -336,9 +336,12 @@ export class SqliteAdapter extends DatabaseAdapter {
   override executeWriteQuery(
     sql: string,
     params?: unknown[],
+    skipValidation = false,
   ): Promise<QueryResult> {
     this.ensureConnected();
-    this.validateQuery(sql, false);
+    if (!skipValidation) {
+      this.validateQuery(sql, false);
+    }
 
     const db = this.ensureDb();
     const start = Date.now();

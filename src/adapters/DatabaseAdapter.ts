@@ -88,10 +88,12 @@ export abstract class DatabaseAdapter {
    * Execute a write query (INSERT, UPDATE, DELETE)
    * @param sql - SQL query string
    * @param params - Query parameters for prepared statements
+   * @param skipValidation - Skip security validation (for trusted internal operations)
    */
   abstract executeWriteQuery(
     sql: string,
     params?: unknown[],
+    skipValidation?: boolean,
   ): Promise<QueryResult>;
 
   /**

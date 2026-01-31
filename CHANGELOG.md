@@ -17,13 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `wasmLimitation` field to `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`
   - Updated `ServerInstructions.ts` WASM vs Native table with backup/restore, R-Tree, CSV limitations
 
+- **Restore Tool Security Bypass** — `sqlite_restore` now bypasses SQL validation for internal operations
+  - Added `skipValidation` optional parameter to `executeWriteQuery()` method signature
+  - Internal restore operations (ATTACH, DROP, CREATE, INSERT, DETACH, PRAGMA) pass `skipValidation=true`
+  - Prevents false-positive "dangerous patterns" errors from internal SQL comments or multi-statement patterns
+  - Security remains intact: bypass only applies to trusted internal operations, not user-provided queries
+
 - **WASM Mode R-Tree/CSV/Restore Graceful Handling** — 4 additional admin tools now return structured errors instead of throwing
   - `sqlite_create_rtree_table`: Returns `success: false` with `wasmLimitation: true` when R-Tree module unavailable
   - `sqlite_analyze_csv_schema`: Returns `success: false` with `wasmLimitation: true` when CSV extension not loaded
   - `sqlite_create_csv_table`: Returns `success: false` with `wasmLimitation: true` when CSV extension not loaded
   - `sqlite_restore`: Now skips virtual tables with unavailable modules (FTS5, R-Tree) instead of failing entire restore
   - Added `skippedTables` and `note` fields to `RestoreOutputSchema` for partial restore reporting
-
 
 ### Changed
 

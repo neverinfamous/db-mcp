@@ -346,6 +346,8 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         await adapter.executeWriteQuery(
           `ATTACH DATABASE '${escapedPath}' AS backup_source`,
+          undefined,
+          true,
         );
       } catch (error) {
         // Detect WASM file system limitation
@@ -385,7 +387,11 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             const tableName = row["name"] as string;
             const quotedName = `"${tableName.replace(/"/g, '""')}"`;
             await adapter
-              .executeWriteQuery(`DROP TABLE IF EXISTS main.${quotedName}`)
+              .executeWriteQuery(
+                `DROP TABLE IF EXISTS main.${quotedName}`,
+                undefined,
+                true,
+              )
               .catch(() => {
                 // Ignore errors - table may already be gone or module unavailable
               });
@@ -398,8 +404,11 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         // Phase 4: Copy tables from backup
         await sendProgress(progress, 4, 5, "Restoring tables from backup...");
 
-        // Disable foreign key constraints during restore
-        await adapter.executeWriteQuery("PRAGMA foreign_keys = OFF");
+        await adapter.executeWriteQuery(
+          "PRAGMA foreign_keys = OFF",
+          undefined,
+          true,
+        );
 
         // Get list of regular tables from backup (excluding shadow tables and virtual tables)
         // FTS5 shadow tables: _data, _idx, _content, _docsize, _config
@@ -453,19 +462,27 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           // Drop existing table
           await adapter.executeWriteQuery(
             `DROP TABLE IF EXISTS main.${quotedName}`,
+            undefined,
+            true,
           );
 
           // Create the table in main
-          await adapter.executeWriteQuery(createSql);
+          await adapter.executeWriteQuery(createSql, undefined, true);
 
           // Copy data
           await adapter.executeWriteQuery(
             `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
+            undefined,
+            true,
           );
         }
 
         // Re-enable foreign key constraints
-        await adapter.executeWriteQuery("PRAGMA foreign_keys = ON");
+        await adapter.executeWriteQuery(
+          "PRAGMA foreign_keys = ON",
+          undefined,
+          true,
+        );
 
         const duration = Date.now() - start;
 
@@ -489,12 +506,12 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       } finally {
         // Always detach backup and re-enable FK constraints
         await adapter
-          .executeWriteQuery("PRAGMA foreign_keys = ON")
+          .executeWriteQuery("PRAGMA foreign_keys = ON", undefined, true)
           .catch(() => {
             // Ignore errors
           });
         await adapter
-          .executeWriteQuery("DETACH DATABASE backup_source")
+          .executeWriteQuery("DETACH DATABASE backup_source", undefined, true)
           .catch(() => {
             // Ignore detach errors - backup may not have been attached
           });
