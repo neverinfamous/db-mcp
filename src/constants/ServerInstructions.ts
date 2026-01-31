@@ -110,9 +110,30 @@ sqlite_histogram({ table: "products", column: "price", bins: 10 })
 
 ## Geospatial Operations
 \`\`\`javascript
+// Basic geo (always available - Haversine formula)
 sqlite_geo_distance({ lat1: 40.7128, lon1: -74.006, lat2: 34.0522, lon2: -118.2437 }) // km
-sqlite_geo_bounding_box({ table: "stores", lat_column: "lat", lon_column: "lon", min_lat: 40, max_lat: 41, min_lon: -75, max_lon: -73 })
-sqlite_geo_cluster({ table: "customers", lat_column: "lat", lon_column: "lon", distance_km: 5 })
+sqlite_geo_bounding_box({ table: "stores", latColumn: "lat", lonColumn: "lon", minLat: 40, maxLat: 41, minLon: -75, maxLon: -73 })
+sqlite_geo_nearby({ table: "stores", latColumn: "lat", lonColumn: "lon", centerLat: 40.7, centerLon: -74, radius: 10, unit: "km" })
+sqlite_geo_cluster({ table: "customers", latColumn: "lat", lonColumn: "lon", gridSize: 0.1 })
+\`\`\`
+
+## SpatiaLite (Advanced GIS)
+**⚠️ IMPORTANT**: Always call \`sqlite_spatialite_load\` first - it initializes spatial metadata required for table creation.
+\`\`\`javascript
+// Step 1: Load extension (required before other SpatiaLite tools)
+sqlite_spatialite_load() // Initializes spatial metadata
+
+// Step 2: Create spatial table
+sqlite_spatialite_create_table({ tableName: "places", geometryColumn: "geom", geometryType: "POINT", srid: 4326 })
+
+// Step 3: Import data (WKT or GeoJSON)
+sqlite_spatialite_import({ tableName: "places", format: "wkt", data: "POINT(-73.99 40.75)", additionalData: { name: "NYC" } })
+
+// Spatial queries and analysis
+sqlite_spatialite_query({ query: "SELECT name, AsText(geom) FROM places WHERE ST_Within(geom, ...)" })
+sqlite_spatialite_analyze({ analysisType: "spatial_extent", sourceTable: "places", geometryColumn: "geom" })
+sqlite_spatialite_transform({ operation: "buffer", geometry1: "POINT(-73.99 40.75)", distance: 0.01 })
+sqlite_spatialite_index({ tableName: "places", geometryColumn: "geom", action: "create" })
 \`\`\`
 
 ## Window Functions (Native Only)
