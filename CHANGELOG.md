@@ -36,8 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Duplicate path segments get numeric suffixes (e.g., `name`, `name_2`)
 
 - **Text Tool Output Schema Fixes** — Fixed 6 tools with output validation errors
-  - `sqlite_regex_extract`: Changed `matchCount`/`results` to `rowCount`/`matches` to match schema
-  - `sqlite_regex_match`: Changed `matchCount`/`rows` to `rowCount`/`matches` to match schema
+  - `sqlite_regex_extract`: Added safe rowid coercion (Number/String/undefined → Number) to prevent NaN in output
+  - `sqlite_regex_match`: Added safe rowid coercion (Number/String/undefined → Number) to prevent NaN in output
   - `sqlite_text_split`: Changed `rowCount`/`results` to `parts`/`count` to match schema
   - `sqlite_advanced_search`: Fixed NaN bug when coercing rowid to number
   - `sqlite_fts_create`: Changed `sql` to `tableName` in response to match schema

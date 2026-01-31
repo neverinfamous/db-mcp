@@ -215,8 +215,16 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
               ? rawValue
               : JSON.stringify(rawValue ?? "");
           const match = regex.exec(value);
+          // Safely coerce rowid to number, defaulting to row index or 0
+          const rawRowid = row["rowid"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
           return {
-            rowid: row["rowid"],
+            rowid,
             original: value,
             extracted: match ? (match[input.groupIndex] ?? match[0]) : null,
           };
@@ -263,14 +271,26 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Apply regex in JavaScript
       const regex = new RegExp(input.pattern);
-      const matches = (result.rows ?? []).filter((row) => {
-        const rawValue = row["value"];
-        const value =
-          typeof rawValue === "string"
-            ? rawValue
-            : JSON.stringify(rawValue ?? "");
-        return regex.test(value);
-      });
+      const matches = (result.rows ?? [])
+        .filter((row) => {
+          const rawValue = row["value"];
+          const value =
+            typeof rawValue === "string"
+              ? rawValue
+              : JSON.stringify(rawValue ?? "");
+          return regex.test(value);
+        })
+        .map((row) => {
+          // Ensure rowid is a number for output schema compliance
+          const rawRowid = row["rowid"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
+          return { ...row, rowid };
+        });
 
       return {
         success: true,
