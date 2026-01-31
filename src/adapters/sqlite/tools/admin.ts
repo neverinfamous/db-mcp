@@ -394,13 +394,14 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         // Disable foreign key constraints during restore
         await adapter.executeWriteQuery("PRAGMA foreign_keys = OFF");
 
-        // Get list of regular tables from backup (excluding shadow tables)
+        // Get list of regular tables from backup (excluding shadow tables and virtual tables)
         // FTS5 shadow tables: _data, _idx, _content, _docsize, _config
         // R-Tree shadow tables: _node, _rowid, _parent
         const tablesResult = await adapter.executeReadQuery(
           `SELECT name, sql FROM backup_source.sqlite_master 
            WHERE type='table' 
            AND name NOT LIKE 'sqlite_%'
+           AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
            AND name NOT LIKE '%_data'
            AND name NOT LIKE '%_idx'
            AND name NOT LIKE '%_content'
@@ -412,8 +413,28 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
            ORDER BY name`,
         );
 
-        // Drop existing tables and copy from backup
+        // Get list of virtual tables that will be skipped
+        const backupVirtualTables = await adapter.executeReadQuery(
+          `SELECT name, sql FROM backup_source.sqlite_master 
+           WHERE type='table' 
+           AND sql LIKE 'CREATE VIRTUAL TABLE%'
+           AND name NOT LIKE 'sqlite_%'`,
+        );
+
+        // Track skipped virtual tables upfront
         const skippedTables: string[] = [];
+        for (const row of backupVirtualTables.rows ?? []) {
+          const tableName = row["name"] as string;
+          const createSql = row["sql"] as string;
+          // Extract module name for better error message
+          const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
+          const moduleName = moduleMatch?.[1] ?? "unknown";
+          skippedTables.push(
+            `${tableName} (${moduleName} module unavailable in WASM)`,
+          );
+        }
+
+        // Drop existing tables and copy from backup
         for (const row of tablesResult.rows ?? []) {
           const tableName = row["name"] as string;
           const createSql = row["sql"] as string;
@@ -422,44 +443,18 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           // Skip if no CREATE statement (shouldn't happen for regular tables)
           if (!createSql) continue;
 
-          // Check if this is a virtual table that might use unavailable modules
-          const isVirtualTable = createSql
-            .toUpperCase()
-            .includes("CREATE VIRTUAL TABLE");
+          // Drop existing table
+          await adapter.executeWriteQuery(
+            `DROP TABLE IF EXISTS main.${quotedName}`,
+          );
 
-          try {
-            // Drop existing table
-            await adapter.executeWriteQuery(
-              `DROP TABLE IF EXISTS main.${quotedName}`,
-            );
+          // Create the table in main
+          await adapter.executeWriteQuery(createSql);
 
-            // Create the table in main
-            await adapter.executeWriteQuery(createSql);
-
-            // Copy data
-            await adapter.executeWriteQuery(
-              `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
-            );
-          } catch (error) {
-            // Handle virtual table module errors gracefully
-            const errMsg =
-              error instanceof Error ? error.message : String(error);
-            if (
-              isVirtualTable &&
-              (errMsg.includes("no such module") ||
-                errMsg.includes("unknown module"))
-            ) {
-              // Extract module name for better error message
-              const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
-              const moduleName = moduleMatch?.[1] ?? "unknown";
-              skippedTables.push(
-                `${tableName} (${moduleName} module unavailable)`,
-              );
-              continue; // Skip this table but continue with others
-            }
-            // Re-throw unexpected errors
-            throw error;
-          }
+          // Copy data
+          await adapter.executeWriteQuery(
+            `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
+          );
         }
 
         // Re-enable foreign key constraints
