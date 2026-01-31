@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **SQLite Extension Support** — Added CLI flags and configuration for loadable SQLite extensions
+  - `--csv` flag to load CSV extension for CSV virtual tables
+  - `--spatialite` flag to load SpatiaLite extension for GIS capabilities
+  - `CSV_EXTENSION_PATH` and `SPATIALITE_PATH` environment variables for custom extension paths
+  - Platform-aware extension binary detection (Windows/Linux/macOS)
+  - README documentation for built-in vs loadable extensions with installation instructions
+
 ### Changed
 
 - **SQLite-Focused Branding** — Updated project descriptions to reflect SQLite-only focus

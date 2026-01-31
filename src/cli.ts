@@ -20,6 +20,10 @@ function parseArgs(): Partial<McpServerConfig> {
   const config: Partial<McpServerConfig> = {};
   const databases: DatabaseConfig[] = [];
 
+  // Track extension flags (apply to last native sqlite database)
+  let enableCsv = false;
+  let enableSpatialite = false;
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
@@ -65,8 +69,26 @@ function parseArgs(): Partial<McpServerConfig> {
         databases.push({
           type: "sqlite",
           connectionString: dbPath,
-          options: { backend: "better-sqlite3" },
+          options: {
+            backend: "better-sqlite3",
+            csv: enableCsv,
+            spatialite: enableSpatialite,
+          },
         } as DatabaseConfig);
+      }
+    } else if (arg === "--csv") {
+      enableCsv = true;
+      // Apply to already-added native database if exists
+      const lastDb = databases[databases.length - 1];
+      if (lastDb?.options && "backend" in lastDb.options) {
+        lastDb.options["csv"] = true;
+      }
+    } else if (arg === "--spatialite") {
+      enableSpatialite = true;
+      // Apply to already-added native database if exists
+      const lastDb = databases[databases.length - 1];
+      if (lastDb?.options && "backend" in lastDb.options) {
+        lastDb.options["spatialite"] = true;
       }
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
@@ -101,6 +123,10 @@ Database Options:
   --sqlite <path>           Add SQLite database (WASM/sql.js)
   --sqlite-native <path>    Add SQLite database (native/better-sqlite3)
 
+Extension Options (Native only):
+  --csv                     Load CSV extension for CSV virtual tables
+  --spatialite              Load SpatiaLite extension for GIS capabilities
+
 Server Options:
   --name <name>             Server name (default: db-mcp)
   --version <version>       Server version (default: 0.1.0)
@@ -113,6 +139,8 @@ Server Options:
 Environment Variables:
   DB_MCP_TOOL_FILTER        Tool filter string
   SQLITE_DATABASE           SQLite database path
+  CSV_EXTENSION_PATH        Custom path to CSV extension binary
+  SPATIALITE_PATH           Custom path to SpatiaLite extension binary
 
 Examples:
   db-mcp --sqlite-native ./data.db

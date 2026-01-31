@@ -210,6 +210,61 @@ Window Function Tools (6) - Native Only
 | `sqlite_window_moving_avg`    | Calculate rolling averages                            |
 | `sqlite_window_ntile`         | Divide rows into N buckets (quartiles, deciles, etc.) |
 
+### SQLite Extensions
+
+SQLite supports both **built-in** extensions (compiled into better-sqlite3) and **loadable** extensions (require separate binaries).
+
+#### Built-in Extensions (work out of box)
+
+| Extension  | Purpose                             | Status           |
+| ---------- | ----------------------------------- | ---------------- |
+| **FTS5**   | Full-text search with BM25 ranking  | ✅ Always loaded |
+| **JSON1**  | JSON functions (json_extract, etc.) | ✅ Always loaded |
+| **R-Tree** | Spatial indexing for bounding boxes | ✅ Always loaded |
+
+#### Loadable Extensions (require installation)
+
+| Extension      | Purpose                   | Tools | CLI Flag       |
+| -------------- | ------------------------- | ----- | -------------- |
+| **CSV**        | CSV virtual tables        | 2     | `--csv`        |
+| **SpatiaLite** | Advanced GIS capabilities | 7     | `--spatialite` |
+
+#### Installing Extensions
+
+**CSV Extension:**
+
+```bash
+# Download precompiled binary or compile from SQLite source:
+# https://www.sqlite.org/csv.html
+
+# Set environment variable:
+export CSV_EXTENSION_PATH=/path/to/csv.so  # Linux
+export CSV_EXTENSION_PATH=/path/to/csv.dll # Windows
+
+# Or use CLI flag:
+db-mcp --sqlite-native ./data.db --csv
+```
+
+**SpatiaLite Extension:**
+
+```bash
+# Linux (apt):
+sudo apt install libspatialite-dev
+
+# macOS (Homebrew):
+brew install libspatialite
+
+# Windows: Download from https://www.gaia-gis.it/gaia-sins/
+
+# Set environment variable:
+export SPATIALITE_PATH=/path/to/mod_spatialite.so
+
+# Or use CLI flag:
+db-mcp --sqlite-native ./data.db --spatialite
+```
+
+> **Note:** Extension binaries must match your platform and architecture. The server searches common paths automatically, or use the `CSV_EXTENSION_PATH` / `SPATIALITE_PATH` environment variables for custom locations.
+
 ### 📁 Resources (8)
 
 MCP resources provide read-only access to database metadata:

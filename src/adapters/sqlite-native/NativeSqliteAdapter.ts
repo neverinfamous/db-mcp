@@ -161,6 +161,37 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         });
       }
     }
+    if (options.csv) {
+      const csvPaths = [
+        process.env["CSV_EXTENSION_PATH"],
+        "csv",
+        "csv.dll",
+        "csv.so",
+        "./csv",
+        "/usr/local/lib/csv.so",
+        "/usr/local/lib/csv.dylib",
+      ].filter((p): p is string => Boolean(p));
+
+      let loaded = false;
+      for (const path of csvPaths) {
+        try {
+          this.db.loadExtension(path);
+          log.info(`Loaded CSV extension from ${path}`, {
+            code: "SQLITE_EXTENSION",
+          });
+          loaded = true;
+          break;
+        } catch {
+          // Try next path
+        }
+      }
+      if (!loaded) {
+        log.warning(
+          "CSV extension not available. Set CSV_EXTENSION_PATH env var.",
+          { code: "SQLITE_EXTENSION" },
+        );
+      }
+    }
   }
 
   /**

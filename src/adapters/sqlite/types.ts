@@ -31,6 +31,9 @@ export interface SqliteOptions {
   /** Enable SpatiaLite extension if available */
   spatialite?: boolean;
 
+  /** Enable CSV extension for CSV virtual tables */
+  csv?: boolean;
+
   /**
    * JSON storage format:
    * - 'text': Always use text JSON (compatible with all SQLite versions)
