@@ -370,22 +370,29 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         await sendProgress(progress, 3, 5, "Cleaning up virtual tables...");
 
         // Get list of virtual tables in main database
-        const virtualTablesResult = await adapter.executeReadQuery(
-          `SELECT name FROM sqlite_master 
-           WHERE type='table' 
-           AND sql LIKE 'CREATE VIRTUAL TABLE%'
-           AND name NOT LIKE 'sqlite_%'`,
-        );
+        // Note: In WASM mode, this query may fail if the database contains
+        // virtual tables using unavailable modules (FTS5, R-Tree, etc.)
+        try {
+          const virtualTablesResult = await adapter.executeReadQuery(
+            `SELECT name FROM sqlite_master 
+             WHERE type='table' 
+             AND sql LIKE 'CREATE VIRTUAL TABLE%'
+             AND name NOT LIKE 'sqlite_%'`,
+          );
 
-        // Drop virtual tables first - this also drops their shadow tables
-        for (const row of virtualTablesResult.rows ?? []) {
-          const tableName = row["name"] as string;
-          const quotedName = `"${tableName.replace(/"/g, '""')}"`;
-          await adapter
-            .executeWriteQuery(`DROP TABLE IF EXISTS main.${quotedName}`)
-            .catch(() => {
-              // Ignore errors - table may already be gone
-            });
+          // Drop virtual tables first - this also drops their shadow tables
+          for (const row of virtualTablesResult.rows ?? []) {
+            const tableName = row["name"] as string;
+            const quotedName = `"${tableName.replace(/"/g, '""')}"`;
+            await adapter
+              .executeWriteQuery(`DROP TABLE IF EXISTS main.${quotedName}`)
+              .catch(() => {
+                // Ignore errors - table may already be gone or module unavailable
+              });
+          }
+        } catch {
+          // WASM mode may fail to query/drop virtual tables due to missing modules
+          // Continue with restore - virtual tables will remain as-is
         }
 
         // Phase 4: Copy tables from backup
