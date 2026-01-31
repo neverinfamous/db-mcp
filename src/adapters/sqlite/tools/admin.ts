@@ -441,15 +441,53 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Track skipped virtual tables upfront
         const skippedTables: string[] = [];
-        for (const row of backupVirtualTables.rows ?? []) {
-          const tableName = row["name"] as string;
-          const createSql = row["sql"] as string;
-          // Extract module name for better error message
-          const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
-          const moduleName = moduleMatch?.[1] ?? "unknown";
-          skippedTables.push(
-            `${tableName} (${moduleName} module unavailable in WASM)`,
-          );
+
+        // In Native mode, attempt to recreate virtual tables
+        // In WASM mode, skip them since modules like FTS5/R-Tree aren't available
+        if (adapter.isNativeBackend()) {
+          // Native mode: try to recreate virtual tables
+          for (const row of backupVirtualTables.rows ?? []) {
+            const tableName = row["name"] as string;
+            const createSql = row["sql"] as string;
+            const quotedName = `"${tableName.replace(/"/g, '""')}"`;
+
+            try {
+              // Drop existing virtual table first
+              await adapter
+                .executeWriteQuery(
+                  `DROP TABLE IF EXISTS main.${quotedName}`,
+                  undefined,
+                  true,
+                )
+                .catch(() => {
+                  // Ignore drop errors - table may already exist or not
+                });
+
+              // Recreate the virtual table
+              await adapter.executeWriteQuery(createSql, undefined, true);
+            } catch (error) {
+              // If recreation fails, add to skipped list
+              const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
+              const moduleName = moduleMatch?.[1] ?? "unknown";
+              const errMsg =
+                error instanceof Error ? error.message : String(error);
+              skippedTables.push(
+                `${tableName} (${moduleName}: ${errMsg.substring(0, 50)})`,
+              );
+            }
+          }
+        } else {
+          // WASM mode: skip all virtual tables
+          for (const row of backupVirtualTables.rows ?? []) {
+            const tableName = row["name"] as string;
+            const createSql = row["sql"] as string;
+            // Extract module name for better error message
+            const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
+            const moduleName = moduleMatch?.[1] ?? "unknown";
+            skippedTables.push(
+              `${tableName} (${moduleName} module unavailable in WASM)`,
+            );
+          }
         }
 
         // Drop existing tables and copy from backup

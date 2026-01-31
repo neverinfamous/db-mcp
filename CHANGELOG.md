@@ -12,10 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **False WASM Limitation Detection in Native Mode** — Fixed backup/restore/verify tools incorrectly reporting WASM limitations when running in native mode
   - Added `isNativeBackend()` method to both `SqliteAdapter` (returns false) and `NativeSqliteAdapter` (returns true)
   - `sqlite_backup`, `sqlite_restore`, `sqlite_verify_backup` now only return `wasmLimitation: true` when actually running in WASM mode
+  - `sqlite_restore` now attempts to recreate virtual tables (FTS5, R-Tree) in native mode instead of unconditionally skipping them
   - In native mode, actual file system errors are now properly thrown instead of being masked as WASM limitations
 
 ### Changed
-
 
 - **ServerInstructions.ts Statistical Analysis Examples** — Added missing stats tool examples to TOOL_REFERENCE
   - Added `sqlite_stats_outliers` example with IQR/Z-score method options
