@@ -205,6 +205,22 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate FTS table name
       sanitizeIdentifier(input.table);
 
+      let selectClause = "*";
+      if (input.highlight) {
+        selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
+      }
+
+      // Handle wildcard/list-all query - skip MATCH and return all rows
+      if (input.query === "*" || input.query.trim() === "") {
+        const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit}`;
+        const result = await adapter.executeReadQuery(sql);
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          results: result.rows,
+        };
+      }
+
       // Build query - use single quotes for FTS5 MATCH strings (not double quotes which are identifiers)
       const queryEscaped = input.query.replace(/'/g, "''");
       let matchExpr = `"${input.table}" MATCH '${queryEscaped}'`;
@@ -218,11 +234,6 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
           .map((c) => `${c}:${queryEscaped}`)
           .join(" OR ");
         matchExpr = `"${input.table}" MATCH '${colFilter}'`;
-      }
-
-      let selectClause = "*";
-      if (input.highlight) {
-        selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
       }
 
       const sql = `SELECT ${selectClause}, rank FROM "${input.table}" WHERE ${matchExpr} ORDER BY rank LIMIT ${input.limit}`;

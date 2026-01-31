@@ -110,6 +110,11 @@ const PhoneticMatchSchema = z.object({
   search: z.string().describe("Search string"),
   algorithm: z.enum(["soundex", "metaphone"]).optional().default("soundex"),
   limit: z.number().optional().default(100),
+  includeRowData: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Include full row data in results (default: true)"),
 });
 
 const TextNormalizeSchema = z.object({
@@ -815,7 +820,7 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
         z.object({
           value: z.string(),
           phoneticCode: z.string(),
-          row: z.record(z.string(), z.unknown()),
+          row: z.record(z.string(), z.unknown()).optional(),
         }),
       ),
     }),
@@ -842,14 +847,21 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
         const matches = (result.rows ?? []).map((row) => {
           const rawValue = row[input.column];
           const rawPhonetic = row["_phonetic"];
-          return {
+          const match: {
+            value: string;
+            phoneticCode: string;
+            row?: Record<string, unknown>;
+          } = {
             value:
               typeof rawValue === "string"
                 ? rawValue
                 : JSON.stringify(rawValue ?? ""),
             phoneticCode: typeof rawPhonetic === "string" ? rawPhonetic : "",
-            row,
           };
+          if (input.includeRowData) {
+            match.row = row;
+          }
+          return match;
         });
 
         return {
@@ -866,7 +878,7 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
         const matches: {
           value: string;
           phoneticCode: string;
-          row: Record<string, unknown>;
+          row?: Record<string, unknown>;
         }[] = [];
 
         for (const row of result.rows ?? []) {
@@ -877,7 +889,15 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
               : JSON.stringify(rawValue ?? "");
           const code = metaphone(value);
           if (code === searchCode) {
-            matches.push({ value, phoneticCode: code, row });
+            const match: {
+              value: string;
+              phoneticCode: string;
+              row?: Record<string, unknown>;
+            } = { value, phoneticCode: code };
+            if (input.includeRowData) {
+              match.row = row;
+            }
+            matches.push(match);
           }
         }
 
@@ -995,7 +1015,17 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
         if (!input.customPattern) {
           throw new Error("customPattern is required when pattern='custom'");
         }
-        pattern = new RegExp(input.customPattern);
+        // Normalize pattern: handle common JSON double-escaping issues
+        // e.g., "\\." in JSON becomes "\." in JavaScript string, but some clients
+        // may send "\\\\." which becomes "\\" - normalize excessive backslashes
+        const normalizedPattern = input.customPattern.replace(/\\\\/g, "\\");
+        try {
+          pattern = new RegExp(normalizedPattern);
+        } catch {
+          throw new Error(
+            `Invalid regex pattern: ${input.customPattern} (normalized to: ${normalizedPattern})`,
+          );
+        }
       } else {
         const foundPattern = VALIDATION_PATTERNS[input.pattern];
         if (!foundPattern) {

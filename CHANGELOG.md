@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Trigger naming convention: `{ftsTable}_ai` (insert), `{ftsTable}_ad` (delete), `{ftsTable}_au` (update)
   - Response includes `triggersCreated` array listing created trigger names
 
+- **FTS5 Wildcard Query Support** — `sqlite_fts_search` now supports list-all queries
+  - Query `*` or empty string returns all FTS table contents without MATCH filtering
+  - Useful for browsing FTS index contents or debugging FTS configuration
+  - Returns rows ordered by rowid with `rank: null`
+
+- **Phonetic Match Verbosity Control** — `sqlite_phonetic_match` now supports `includeRowData` option
+  - New `includeRowData` parameter (default: `true`) to control full row data inclusion
+  - Set to `false` for compact responses with only `value` and `phoneticCode` per match
+  - Backward compatible: existing calls behave identically
+
 - **SQLite Extension Support** — Added CLI flags and configuration for loadable SQLite extensions
   - `--csv` flag to load CSV extension for CSV virtual tables
   - `--spatialite` flag to load SpatiaLite extension for GIS capabilities
@@ -42,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated security tests to expect new error message format
 
 ### Fixed
+
+- **Custom Regex Validation Double-Escaping Fix** — Fixed `sqlite_text_validate` custom pattern handling
+  - Normalizes double-escaped backslashes (`\\\\` → `\\`) from JSON transport
+  - Patterns like `.*@.*\.com$` now work correctly as expected
+  - Added error message with both original and normalized pattern for debugging invalid regex
 
 - **JSON Each Ambiguous Column Fix** — Fixed `sqlite_json_each` "ambiguous column name: id" error
   - Added table alias (`t`) and `CROSS JOIN` syntax to prevent column name conflicts with `json_each()` TVF output
