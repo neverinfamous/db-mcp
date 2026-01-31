@@ -829,7 +829,9 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
       const column = sanitizeIdentifier(input.column);
 
       const searchCode =
-        input.algorithm === "metaphone" ? metaphone(input.search) : ""; // Soundex done in SQL
+        input.algorithm === "metaphone"
+          ? metaphone(input.search)
+          : soundex(input.search); // Compute locally to ensure it's always available
 
       let sql: string;
       if (input.algorithm === "soundex") {
@@ -852,7 +854,7 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          searchCode: matches[0]?.phoneticCode ?? "",
+          searchCode, // Use pre-computed local soundex code
           matchCount: matches.length,
           matches,
         };
