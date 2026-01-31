@@ -1159,6 +1159,8 @@ export const RestoreOutputSchema = z.object({
   sourcePath: z.string().optional(),
   durationMs: z.number().optional(),
   wasmLimitation: z.boolean().optional(),
+  skippedTables: z.array(z.string()).optional(),
+  note: z.string().optional(),
 });
 
 /**

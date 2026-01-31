@@ -678,9 +678,14 @@ function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Check if csv module is available (supports standard csv and sqlite-xsv)
       const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
-        throw new Error(
-          "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
-        );
+        return {
+          success: false,
+          message:
+            "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+          sql: "",
+          columns: [],
+          wasmLimitation: true,
+        };
       }
 
       // Build CREATE VIRTUAL TABLE statement
@@ -749,9 +754,15 @@ function createAnalyzeCsvSchemaTool(adapter: SqliteAdapter): ToolDefinition {
       // Check if csv module is available (supports standard csv and sqlite-xsv)
       const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
-        throw new Error(
-          "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
-        );
+        return {
+          success: false,
+          message:
+            "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+          hasHeader: false,
+          rowCount: 0,
+          columns: [],
+          wasmLimitation: true,
+        };
       }
 
       // Create temporary table name
@@ -870,9 +881,14 @@ function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Check if rtree module is available
       const rtreeAvailable = await isModuleAvailable(adapter, "rtree");
       if (!rtreeAvailable) {
-        throw new Error(
-          "R-Tree extension not available. Use a SQLite build with rtree support.",
-        );
+        return {
+          success: false,
+          message:
+            "R-Tree extension not available. Use a SQLite build with rtree support.",
+          sql: "",
+          columns: [],
+          wasmLimitation: true,
+        };
       }
 
       // Build column list based on dimensions

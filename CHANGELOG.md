@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `wasmLimitation` field to `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`
   - Updated `ServerInstructions.ts` WASM vs Native table with backup/restore, R-Tree, CSV limitations
 
+- **WASM Mode R-Tree/CSV/Restore Graceful Handling** — 4 additional admin tools now return structured errors instead of throwing
+  - `sqlite_create_rtree_table`: Returns `success: false` with `wasmLimitation: true` when R-Tree module unavailable
+  - `sqlite_analyze_csv_schema`: Returns `success: false` with `wasmLimitation: true` when CSV extension not loaded
+  - `sqlite_create_csv_table`: Returns `success: false` with `wasmLimitation: true` when CSV extension not loaded
+  - `sqlite_restore`: Now skips virtual tables with unavailable modules (FTS5, R-Tree) instead of failing entire restore
+  - Added `skippedTables` and `note` fields to `RestoreOutputSchema` for partial restore reporting
+
+
 ### Changed
 
 - **ServerInstructions.ts Documentation Improvements** — Updated tool filtering reference for accuracy
@@ -27,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added Fallback column to WASM vs Native table documenting JS fallback availability
   - Documented `generate_series`, `dbstat`, `soundex` JS fallbacks vs extension tools with no fallback
   - Added Database Administration examples section with 6 common admin tools
-
 
 - **WASM Mode FTS5 Graceful Handling** — FTS5 tools now return helpful errors instead of crashes in WASM mode
   - All 4 FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) detect "no such module: fts5" errors

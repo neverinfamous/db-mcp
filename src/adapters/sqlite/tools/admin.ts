@@ -413,6 +413,7 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         );
 
         // Drop existing tables and copy from backup
+        const skippedTables: string[] = [];
         for (const row of tablesResult.rows ?? []) {
           const tableName = row["name"] as string;
           const createSql = row["sql"] as string;
@@ -421,18 +422,44 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           // Skip if no CREATE statement (shouldn't happen for regular tables)
           if (!createSql) continue;
 
-          // Drop existing table
-          await adapter.executeWriteQuery(
-            `DROP TABLE IF EXISTS main.${quotedName}`,
-          );
+          // Check if this is a virtual table that might use unavailable modules
+          const isVirtualTable = createSql
+            .toUpperCase()
+            .includes("CREATE VIRTUAL TABLE");
 
-          // Create the table in main
-          await adapter.executeWriteQuery(createSql);
+          try {
+            // Drop existing table
+            await adapter.executeWriteQuery(
+              `DROP TABLE IF EXISTS main.${quotedName}`,
+            );
 
-          // Copy data
-          await adapter.executeWriteQuery(
-            `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
-          );
+            // Create the table in main
+            await adapter.executeWriteQuery(createSql);
+
+            // Copy data
+            await adapter.executeWriteQuery(
+              `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
+            );
+          } catch (error) {
+            // Handle virtual table module errors gracefully
+            const errMsg =
+              error instanceof Error ? error.message : String(error);
+            if (
+              isVirtualTable &&
+              (errMsg.includes("no such module") ||
+                errMsg.includes("unknown module"))
+            ) {
+              // Extract module name for better error message
+              const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
+              const moduleName = moduleMatch?.[1] ?? "unknown";
+              skippedTables.push(
+                `${tableName} (${moduleName} module unavailable)`,
+              );
+              continue; // Skip this table but continue with others
+            }
+            // Re-throw unexpected errors
+            throw error;
+          }
         }
 
         // Re-enable foreign key constraints
@@ -445,9 +472,17 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          message: `Database restored from '${input.sourcePath}'`,
+          message:
+            skippedTables.length > 0
+              ? `Database restored from '${input.sourcePath}' with ${skippedTables.length} virtual table(s) skipped`
+              : `Database restored from '${input.sourcePath}'`,
           sourcePath: input.sourcePath,
           durationMs: duration,
+          skippedTables: skippedTables.length > 0 ? skippedTables : undefined,
+          note:
+            skippedTables.length > 0
+              ? "Some virtual tables could not be restored because their modules are not available in this environment (e.g., FTS5, R-Tree in WASM mode)."
+              : undefined,
         };
       } finally {
         // Always detach backup and re-enable FK constraints
