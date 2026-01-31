@@ -83,6 +83,10 @@ const TopNSchema = z.object({
   n: z.number().optional().default(10).describe("Number of top values"),
   orderDirection: z.enum(["asc", "desc"]).optional().default("desc"),
   whereClause: z.string().optional(),
+  selectColumns: z
+    .array(z.string())
+    .optional()
+    .describe("Columns to include in result (default: all columns)"),
 });
 
 const DistinctValuesSchema = z.object({
@@ -540,7 +544,15 @@ function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
 
       const order = input.orderDirection.toUpperCase();
 
-      let sql = `SELECT * FROM ${table}`;
+      // Build column list - use specified columns or default to all
+      let columnList = "*";
+      if (input.selectColumns && input.selectColumns.length > 0) {
+        columnList = input.selectColumns
+          .map((col) => sanitizeIdentifier(col))
+          .join(", ");
+      }
+
+      let sql = `SELECT ${columnList} FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;

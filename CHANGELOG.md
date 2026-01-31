@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stats Tool Column Selection** — `sqlite_stats_top_n` now supports `selectColumns` parameter
+  - Limits returned columns to only those specified (reduces payload size for large tables)
+  - Default behavior unchanged: returns all columns when `selectColumns` is not provided
+  - Columns are validated and sanitized for SQL injection protection
+
 - **FTS5 Auto-Sync Triggers** — `sqlite_fts_create` now automatically creates sync triggers
   - INSERT/UPDATE/DELETE triggers keep FTS5 index synchronized with source table in real-time
   - New `createTriggers` option (default: `true`) to control trigger creation
