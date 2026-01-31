@@ -621,14 +621,34 @@ function createSpatialImportTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
       let wkt: string;
       if (input.format === "geojson") {
-        // Parse GeoJSON and convert to WKT
+        // Parse GeoJSON and convert with SRID
         try {
           // Validate JSON to ensure it's valid GeoJSON
           JSON.parse(input.data);
-          // Use SpatiaLite's GeomFromGeoJSON
-          const insertResult = await adapter.executeWriteQuery(
-            `INSERT INTO "${input.tableName}" (geom) VALUES (GeomFromGeoJSON('${input.data}'))`,
-          );
+
+          // Build INSERT with additional columns (matching WKT path)
+          // Use SetSRID(GeomFromGeoJSON(...), srid) to ensure SRID is set correctly
+          const columns = ["geom"];
+          const values = [
+            `SetSRID(GeomFromGeoJSON('${input.data}'), ${input.srid})`,
+          ];
+
+          if (input.additionalData) {
+            for (const [key, value] of Object.entries(input.additionalData)) {
+              if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
+                throw new Error(`Invalid column name: ${key}`);
+              }
+              columns.push(`"${key}"`);
+              values.push(
+                typeof value === "string"
+                  ? `'${value.replace(/'/g, "''")}'`
+                  : String(value),
+              );
+            }
+          }
+
+          const sql = `INSERT INTO "${input.tableName}" (${columns.join(", ")}) VALUES (${values.join(", ")})`;
+          const insertResult = await adapter.executeWriteQuery(sql);
           return {
             success: true,
             message: "GeoJSON geometry imported",

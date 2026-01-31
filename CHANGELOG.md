@@ -128,6 +128,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixes `sqlite_spatialite_analyze` "no such table: geometry_columns" error
   - Fixes `sqlite_spatialite_create_table` returning 0 from `AddGeometryColumn()` call
 
+- **SpatiaLite GeoJSON Import Fix** — Fixed SRID constraint violation when importing GeoJSON data
+  - Wrapped `GeomFromGeoJSON()` with `SetSRID(..., srid)` to ensure SRID is set correctly
+  - GeoJSON import now supports `additionalData` columns (was only available for WKT import)
+  - Fixes "geom violates Geometry constraint [geom-type or SRID not allowed]" error
+
+### Changed
+
+- **Simplified SpatiaLite Instructions** — Removed manual `sqlite_spatialite_load` step requirement
+  - SpatiaLite extension and metadata tables are now auto-initialized on first use of any spatial tool
+  - Removed "IMPORTANT" warning and step numbering from `ServerInstructions.ts`
+  - Added GeoJSON import example to instructions
 
 ### Added
 

@@ -118,16 +118,13 @@ sqlite_geo_cluster({ table: "customers", latColumn: "lat", lonColumn: "lon", gri
 \`\`\`
 
 ## SpatiaLite (Advanced GIS)
-**⚠️ IMPORTANT**: Always call \`sqlite_spatialite_load\` first - it initializes spatial metadata required for table creation.
 \`\`\`javascript
-// Step 1: Load extension (required before other SpatiaLite tools)
-sqlite_spatialite_load() // Initializes spatial metadata
-
-// Step 2: Create spatial table
+// Create spatial table with geometry column
 sqlite_spatialite_create_table({ tableName: "places", geometryColumn: "geom", geometryType: "POINT", srid: 4326 })
 
-// Step 3: Import data (WKT or GeoJSON)
+// Import data (WKT or GeoJSON)
 sqlite_spatialite_import({ tableName: "places", format: "wkt", data: "POINT(-73.99 40.75)", additionalData: { name: "NYC" } })
+sqlite_spatialite_import({ tableName: "places", format: "geojson", data: '{"type":"Point","coordinates":[-73.99,40.75]}' })
 
 // Spatial queries and analysis
 sqlite_spatialite_query({ query: "SELECT name, AsText(geom) FROM places WHERE ST_Within(geom, ...)" })
