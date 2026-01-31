@@ -29,21 +29,22 @@ This directory contains scripts and documentation for testing the db-mcp SQLite 
 
 ## Test Tables
 
-The seed data creates 10 test tables with 409 total rows:
+The seed data creates 11 test tables with 414 total rows:
 
-| Table               | Rows | Columns                                                                  | Tool Groups  |
-| ------------------- | ---- | ------------------------------------------------------------------------ | ------------ |
-| `test_products`     | 15   | id, name, description, price, category                                   | Core, Stats  |
-| `test_orders`       | 20   | id, product_id (FK), customer_name, quantity, total_price, status        | Core, Stats  |
-| `test_jsonb_docs`   | 6    | id, title, content, **metadata** (JSON), **tags** (JSON array)           | JSON         |
-| `test_articles`     | 8    | id, title, content, author, published_at                                 | Text, FTS    |
-| `test_articles_fts` | 8    | FTS5 virtual table indexing test_articles (title, body)                  | FTS, Text    |
-| `test_users`        | 8    | id, username, email, phone, bio                                          | Text, Core   |
-| `test_measurements` | 200  | id, sensor_id, temperature, humidity, pressure, recorded_at              | Stats        |
-| `test_embeddings`   | 20   | id, label, category, **embedding** (8-dim vector as JSON array)          | Vector       |
-| `test_locations`    | 15   | id, name, latitude, longitude, country                                   | Geo          |
-| `test_categories`   | 17   | id, name, **path** (dot-separated hierarchy, e.g., "electronics.phones") | Text         |
-| `test_events`       | 100  | id, type, user_id, **payload** (JSON), created_at                        | Stats, Admin |
+| Table               | Rows | Columns                                                                  | Tool Groups   |
+| ------------------- | ---- | ------------------------------------------------------------------------ | ------------- |
+| `test_products`     | 15   | id, name, description, price, category                                   | Core, Stats   |
+| `test_orders`       | 20   | id, product_id (FK), customer_name, quantity, total_price, status        | Core, Stats   |
+| `test_jsonb_docs`   | 6    | id, title, content, **metadata** (JSON), **tags** (JSON array)           | JSON          |
+| `test_articles`     | 8    | id, title, content, author, published_at                                 | Text, FTS     |
+| `test_articles_fts` | 8    | FTS5 virtual table indexing test_articles (title, body)                  | FTS, Text     |
+| `test_users`        | 8    | id, username, email, phone, bio                                          | Text, Core    |
+| `test_measurements` | 200  | id, sensor_id, temperature, humidity, pressure, recorded_at              | Stats         |
+| `test_embeddings`   | 20   | id, label, category, **embedding** (8-dim vector as JSON array)          | Vector        |
+| `test_locations`    | 15   | id, name, latitude, longitude, country                                   | Geo           |
+| `test_categories`   | 17   | id, name, **path** (dot-separated hierarchy, e.g., "electronics.phones") | Text          |
+| `test_events`       | 100  | id, type, user_id, **payload** (JSON), created_at                        | Stats, Admin  |
+| `temp_text_test`    | 5    | id, name, description                                                    | Text (writes) |
 
 **JSON columns for JSON tool testing:**
 

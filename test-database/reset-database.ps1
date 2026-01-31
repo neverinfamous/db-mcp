@@ -203,6 +203,7 @@ if (-not $SkipVerify) {
         "test_locations" = 15
         "test_categories" = 17
         "test_events" = 100
+        "temp_text_test" = 5
     }
     
     $verifyScript = @"

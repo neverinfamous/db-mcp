@@ -345,16 +345,35 @@ FROM (
 );
 
 -- =============================================================================
+-- TEXT: Temporary Table for Write Operation Testing
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS temp_text_test (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    description TEXT
+);
+
+INSERT INTO temp_text_test (name, description) VALUES
+    ('hello world', 'A simple greeting'),
+    ('world peace', 'A noble goal'),
+    ('goodbye world', 'A farewell message'),
+    ('new world order', 'A controversial phrase'),
+    ('world champion', 'A title of achievement');
+
+-- =============================================================================
 -- Summary: Test Tables Created
 -- =============================================================================
 -- test_products      - 15 rows (Core, Stats)
 -- test_orders        - 20 rows (Core, Stats)
 -- test_jsonb_docs    - 6 rows  (JSON)
 -- test_articles      - 8 rows  (Text, FTS)
+-- test_articles_fts  - FTS5 virtual table (Text, FTS)
 -- test_users         - 8 rows  (Text, Core)
 -- test_measurements  - 200 rows (Stats)
 -- test_embeddings    - 20 rows (Vector)
 -- test_locations     - 15 rows (Geo)
 -- test_categories    - 17 rows (Text)
 -- test_events        - 100 rows (Stats, Admin)
+-- temp_text_test     - 5 rows  (Text - write operations)
 -- =============================================================================
