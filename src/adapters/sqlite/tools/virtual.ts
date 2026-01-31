@@ -537,13 +537,17 @@ function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
       success: z.boolean(),
       name: z.string(),
       module: z.string(),
-      columns: z.array(
-        z.object({
-          name: z.string(),
-          type: z.string(),
-        }),
-      ),
+      moduleAvailable: z.boolean().optional(),
+      columns: z
+        .array(
+          z.object({
+            name: z.string(),
+            type: z.string(),
+          }),
+        )
+        .optional(),
       sql: z.string(),
+      note: z.string().optional(),
     }),
     requiredScopes: ["read"],
     annotations: readOnly("Virtual Table Info"),
@@ -567,24 +571,47 @@ function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
           ? sqlResult.rows[0]["sql"]
           : "";
       const match = /USING\s+(\w+)/i.exec(sqlStr);
+      const moduleName = match?.[1] ?? "unknown";
 
-      // Get column info
-      const colResult = await adapter.executeReadQuery(
-        `PRAGMA table_info("${input.tableName}")`,
-      );
+      // Get column info - may fail if module is unavailable (e.g., FTS5 in WASM)
+      try {
+        const colResult = await adapter.executeReadQuery(
+          `PRAGMA table_info("${input.tableName}")`,
+        );
 
-      const columns = (colResult.rows ?? []).map((row) => ({
-        name: typeof row["name"] === "string" ? row["name"] : "",
-        type: typeof row["type"] === "string" ? row["type"] : "TEXT",
-      }));
+        const columns = (colResult.rows ?? []).map((row) => ({
+          name: typeof row["name"] === "string" ? row["name"] : "",
+          type: typeof row["type"] === "string" ? row["type"] : "TEXT",
+        }));
 
-      return {
-        success: true,
-        name: input.tableName,
-        module: match?.[1] ?? "unknown",
-        columns,
-        sql: sqlStr,
-      };
+        return {
+          success: true,
+          name: input.tableName,
+          module: moduleName,
+          moduleAvailable: true,
+          columns,
+          sql: sqlStr,
+        };
+      } catch (error) {
+        // Module unavailable (e.g., FTS5 in WASM) - return partial info
+        const errMsg = error instanceof Error ? error.message : String(error);
+        const isModuleError =
+          errMsg.includes("no such module") ||
+          errMsg.includes("unknown module");
+
+        if (isModuleError) {
+          return {
+            success: true,
+            name: input.tableName,
+            module: moduleName,
+            moduleAvailable: false,
+            sql: sqlStr,
+            note: `Module '${moduleName}' not available in this environment. Column info cannot be retrieved.`,
+          };
+        }
+        // Re-throw unexpected errors
+        throw error;
+      }
     },
   };
 }

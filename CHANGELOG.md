@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WASM Mode Admin Tool Graceful Handling** — 4 admin tools now return structured errors instead of throwing in WASM mode
+  - `sqlite_virtual_table_info`: Returns `moduleAvailable: false` with partial metadata when module unavailable (e.g., FTS5)
+  - `sqlite_backup`: Returns `wasmLimitation: true` when file system access unavailable
+  - `sqlite_restore`: Returns `wasmLimitation: true` when file system access unavailable
+  - `sqlite_verify_backup`: Returns `wasmLimitation: true` when file system access unavailable
+  - Added `wasmLimitation` field to `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`
+  - Updated `ServerInstructions.ts` WASM vs Native table with backup/restore, R-Tree, CSV limitations
+
 - **WASM Mode FTS5 Graceful Handling** — FTS5 tools now return helpful errors instead of crashes in WASM mode
   - All 4 FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) detect "no such module: fts5" errors
   - Returns structured error with `hint` directing to native SQLite backend (`--sqlite-native`)
@@ -32,7 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Output includes named coefficients (`intercept`, `linear`, `quadratic`, `cubic`) instead of generic `slope`
   - R² calculation uses sum of squared residuals for accurate goodness-of-fit measurement
   - Equation string displays polynomial terms (e.g., `y = 2.0000x² + 3.0000x + 5.0000`)
-
 
 - **WASM Mode Core Tool Compatibility** — Fixed issues discovered during WASM mode testing
   - `server_health` now correctly reports `filePath` from `connectionString` when `filePath` is not set

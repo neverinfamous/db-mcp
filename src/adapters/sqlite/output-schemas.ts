@@ -1118,6 +1118,8 @@ export const BackupOutputSchema = z.object({
   message: z.string(),
   path: z.string(),
   sizeBytes: z.number().optional(),
+  durationMs: z.number().optional(),
+  wasmLimitation: z.boolean().optional(),
 });
 
 /**
@@ -1154,8 +1156,9 @@ export const IntegrityCheckOutputSchema = z.object({
 export const RestoreOutputSchema = z.object({
   success: z.boolean(),
   message: z.string(),
-  sourcePath: z.string(),
-  durationMs: z.number(),
+  sourcePath: z.string().optional(),
+  durationMs: z.number().optional(),
+  wasmLimitation: z.boolean().optional(),
 });
 
 /**
@@ -1163,11 +1166,13 @@ export const RestoreOutputSchema = z.object({
  */
 export const VerifyBackupOutputSchema = z.object({
   success: z.boolean(),
-  valid: z.boolean(),
+  valid: z.boolean().optional(),
   pageCount: z.number().optional(),
   pageSize: z.number().optional(),
-  integrity: z.enum(["ok", "errors_found"]),
+  integrity: z.enum(["ok", "errors_found"]).optional(),
   messages: z.array(z.string()).optional(),
+  wasmLimitation: z.boolean().optional(),
+  backupPath: z.string().optional(),
 });
 
 /**

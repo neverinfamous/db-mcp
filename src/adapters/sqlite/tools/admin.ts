@@ -134,15 +134,33 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
       const sql = `VACUUM INTO '${escapedPath}'`;
 
       const start = Date.now();
-      await adapter.executeQuery(sql);
-      const duration = Date.now() - start;
+      try {
+        await adapter.executeQuery(sql);
+        const duration = Date.now() - start;
 
-      return {
-        success: true,
-        message: `Database backed up to '${input.targetPath}'`,
-        path: input.targetPath,
-        durationMs: duration,
-      };
+        return {
+          success: true,
+          message: `Database backed up to '${input.targetPath}'`,
+          path: input.targetPath,
+          durationMs: duration,
+        };
+      } catch (error) {
+        // Detect WASM file system limitation
+        const errMsg = error instanceof Error ? error.message : String(error);
+        if (
+          errMsg.includes("unable to open database") ||
+          errMsg.includes("not supported")
+        ) {
+          return {
+            success: false,
+            message:
+              "Backup not available: file system access is not supported in WASM mode.",
+            wasmLimitation: true,
+            path: input.targetPath,
+          };
+        }
+        throw error;
+      }
     },
   };
 }
@@ -324,9 +342,28 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Phase 2: Attach backup database
       await sendProgress(progress, 2, 5, "Attaching backup database...");
-      await adapter.executeWriteQuery(
-        `ATTACH DATABASE '${escapedPath}' AS backup_source`,
-      );
+
+      try {
+        await adapter.executeWriteQuery(
+          `ATTACH DATABASE '${escapedPath}' AS backup_source`,
+        );
+      } catch (error) {
+        // Detect WASM file system limitation
+        const errMsg = error instanceof Error ? error.message : String(error);
+        if (
+          errMsg.includes("unable to open database") ||
+          errMsg.includes("not supported")
+        ) {
+          return {
+            success: false,
+            message:
+              "Restore not available: file system access is not supported in WASM mode.",
+            wasmLimitation: true,
+            sourcePath: input.sourcePath,
+          };
+        }
+        throw error;
+      }
 
       try {
         // Phase 3: Drop virtual tables first (prevents shadow table errors)
@@ -445,10 +482,28 @@ function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
       const input = VerifyBackupSchema.parse(params);
       const escapedPath = input.backupPath.replace(/'/g, "''");
 
-      // Attach backup database temporarily
-      await adapter.executeQuery(
-        `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
-      );
+      // Attach backup database temporarily - may fail in WASM
+      try {
+        await adapter.executeQuery(
+          `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
+        );
+      } catch (error) {
+        // Detect WASM file system limitation
+        const errMsg = error instanceof Error ? error.message : String(error);
+        if (
+          errMsg.includes("unable to open database") ||
+          errMsg.includes("not supported")
+        ) {
+          return {
+            success: false,
+            message:
+              "Verify backup not available: file system access is not supported in WASM mode.",
+            wasmLimitation: true,
+            backupPath: input.backupPath,
+          };
+        }
+        throw error;
+      }
 
       try {
         // Get page info

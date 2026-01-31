@@ -67,6 +67,9 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | Transactions (7 tools) | ✅ | ❌ |
 | Window functions (6 tools) | ✅ | ❌ |
 | SpatiaLite GIS (7 tools) | ✅ | ❌ |
+| Backup/Restore (3 tools) | ✅ | ❌ |
+| R-Tree spatial indexing | ✅ | ❌ |
+| CSV virtual tables | ✅ | ❌ |
 | soundex() | ✅ native | JS fallback |
 `;
 
