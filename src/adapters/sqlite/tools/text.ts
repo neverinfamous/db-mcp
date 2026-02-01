@@ -1094,18 +1094,27 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
 
       for (const row of result.rows ?? []) {
         const rawValue = row["value"];
+        // Handle null/empty values with user-friendly display
         const value =
-          typeof rawValue === "string"
-            ? rawValue
-            : JSON.stringify(rawValue ?? "");
+          rawValue === null || rawValue === undefined
+            ? ""
+            : typeof rawValue === "string"
+              ? rawValue
+              : JSON.stringify(rawValue);
+        const displayValue =
+          value === ""
+            ? "(empty)"
+            : value.length > 100
+              ? value.slice(0, 100) + "..."
+              : value;
         if (pattern.test(value)) {
           validCount++;
         } else {
           const rowid = row["rowid"];
           if (typeof rowid === "number") {
-            invalidRows.push({ value, rowid });
+            invalidRows.push({ value: displayValue, rowid });
           } else {
-            invalidRows.push({ value });
+            invalidRows.push({ value: displayValue });
           }
         }
       }

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_text_validate` Empty Value Display** — Improved UX for invalid empty values
+  - Empty/null values now display as "(empty)" instead of confusing `"\"\""`
+  - Long values (>100 chars) are truncated with "..." for readability
+
+### Changed
+
+- **ServerInstructions.ts WASM Tool Count** — Corrected `starter` preset count for WASM mode
+  - Changed from 48 to 44 (4 FTS5 tools unavailable in WASM)
+  - Added footnote: "*17* = 13 in WASM (4 FTS5 tools require native)"
+
+### Fixed
+
 - **`sqlite_json_group_array` and `sqlite_json_group_object` groupByColumn Expressions** — Extended `allowExpressions` to also apply to `groupByColumn` parameter
   - Previously `allowExpressions: true` only bypassed validation for `valueColumn`/`keyColumn`, not `groupByColumn`
   - Now enables grouping by JSON path expressions like `json_extract(data, '$.type')`

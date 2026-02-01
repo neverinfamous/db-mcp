@@ -85,7 +85,7 @@ const FILTERING_INSTRUCTIONS = `
 Available presets via \`--tool-filter\`:
 | Shortcut | WASM | Native | Use Case |
 |----------|------|--------|----------|
-| \`starter\` | 48 | 48 | ⭐ Recommended: Core(8) + JSON(23) + Text(17) |
+| \`starter\` | 44 | 48 | ⭐ Recommended: Core(8) + JSON(23) + Text(17*) |
 | \`analytics\` | 44 | 50 | Core(8) + JSON(23) + Stats(13-19) |
 | \`search\` | 36 | 36 | Core(8) + Text(17) + Vector(11) |
 | \`spatial\` | 23 | 30 | Core(8) + Geo(4-11) + Vector(11) |
@@ -94,6 +94,7 @@ Available presets via \`--tool-filter\`:
 
 **Groups**: \`core\`, \`json\`, \`text\`, \`stats\`, \`vector\`, \`admin\`, \`geo\`
 **Syntax**: \`"core,json"\` (whitelist), \`"+stats"\` (add), \`"-admin"\` (remove)
+*17* = 13 in WASM (4 FTS5 tools require native)
 `;
 
 /**
