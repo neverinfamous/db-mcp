@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`sqlite_fuzzy_match` Documentation** — Clarified that Levenshtein distance is computed against entire column values
+  - Updated description to note comparison is against whole values, not word tokens
+  - Added guidance to use maxDistance 1-3 for similar-length strings
+  - This is expected behavior; documentation now makes it explicit
+
+- **`sqlite_advanced_search` Parameter Guidance** — Added threshold tuning guidance for `fuzzyThreshold`
+  - Parameter description now includes: "0.3-0.4 for loose matching, 0.6-0.8 for strict matching"
+  - Helps users understand how to tune the similarity threshold for their use case
+
+
+
 - **`sqlite_spatialite_analyze` Self-Match Filtering** — Added `excludeSelf` parameter (default: true)
   - When sourceTable equals targetTable in nearest_neighbor analysis, self-matches (distance=0) are now filtered
   - Set `excludeSelf: false` to include self-matches in results

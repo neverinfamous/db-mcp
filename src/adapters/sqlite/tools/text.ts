@@ -154,7 +154,9 @@ const AdvancedSearchSchema = z.object({
     .number()
     .optional()
     .default(0.6)
-    .describe("Fuzzy match threshold (0-1)"),
+    .describe(
+      "Fuzzy match similarity threshold (0-1). Lower values are more lenient: 0.3-0.4 for loose matching, 0.6-0.8 for strict matching.",
+    ),
   whereClause: z.string().optional(),
   limit: z.number().optional().default(100),
 });
@@ -745,7 +747,7 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_fuzzy_match",
     description:
-      "Find fuzzy matches using Levenshtein distance. Returns values within max edit distance.",
+      "Find fuzzy matches using Levenshtein distance. Compares search term against entire column values (not word tokens). Use maxDistance 1-3 for similar-length strings.",
     group: "text",
     inputSchema: FuzzyMatchSchema,
     outputSchema: z.object({
