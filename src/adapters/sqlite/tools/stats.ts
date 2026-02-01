@@ -1300,8 +1300,16 @@ function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const df = (rowTotals.size - 1) * (colTotals.size - 1);
+
+        // Validate sufficient categories for chi-square test
+        if (df === 0) {
+          throw new Error(
+            `Insufficient categories for chi-square test: "${input.column}" has ${rowTotals.size} category(s), "${input.groupColumn}" has ${colTotals.size} category(s). Both columns must have at least 2 distinct values.`,
+          );
+        }
+
         // Approximate p-value using chi-square distribution
-        const pValue = df > 0 ? Math.exp(-chiSquare / 2) : 1;
+        const pValue = Math.exp(-chiSquare / 2);
 
         return {
           success: true,

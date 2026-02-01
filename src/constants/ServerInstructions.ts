@@ -164,6 +164,7 @@ sqlite_stats_histogram({ table: "products", column: "price", buckets: 10 })
 sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue" }) // linear
 sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue", degree: 2 }) // quadratic
 sqlite_stats_outliers({ table: "sales", column: "amount", method: "iqr" }) // or "zscore"
+sqlite_stats_top_n({ table: "products", column: "price", n: 10, selectColumns: ["id", "name", "price"] }) // optimize payload
 sqlite_stats_hypothesis({ table: "samples", column: "value", testType: "ttest_one", expectedMean: 100 })
 \`\`\`
 

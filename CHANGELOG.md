@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Example: `sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" })`
   - `allowExpressions` parameter clarified: supports column extraction only, NOT aggregate functions
 
+### Fixed
+
+- **`sqlite_stats_hypothesis` Chi-Square Validation** — Added validation for insufficient categories
+  - Chi-square test now throws descriptive error when df=0 (fewer than 2 categories in either column)
+  - Previously returned mathematically meaningless results (p=1, df=0) without warning
+  - Error message includes actual category counts for both columns to help users diagnose the issue
+
 ### Changed
 
 - **`sqlite_transaction_execute` SELECT Row Data** — SELECT statements now return actual row data
@@ -38,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Parameter description now includes: "0.3-0.4 for loose matching, 0.6-0.8 for strict matching"
   - Added inline example: "e.g., 'laptob' matches 'laptop'"
   - Helps users understand how to tune the similarity threshold for their use case
+
+- **ServerInstructions.ts Stats Tool Documentation** — Added `selectColumns` example for `sqlite_stats_top_n`
+  - Documents payload optimization pattern for retrieving only required columns
+  - Helps reduce response size when querying tables with large text fields
 
 - **ServerInstructions.ts Text Processing Documentation** — Expanded TOOL_REFERENCE examples
   - Added `sqlite_regex_extract` example with capture groups
