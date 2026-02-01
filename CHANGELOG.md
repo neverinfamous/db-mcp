@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **ServerInstructions.ts Vector Tool Documentation** — Expanded vector section with utility tool examples
+  - Added `sqlite_vector_normalize`, `sqlite_vector_distance`, and `sqlite_vector_stats` examples
+  - Utility tools help with pre-processing embeddings before storage
+
 ### Fixed
 
 - **`sqlite_list_tables` FTS5 Table Visibility** — FTS5 virtual tables and shadow tables now hidden

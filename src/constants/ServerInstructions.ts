@@ -136,8 +136,14 @@ sqlite_jsonb_convert({ table: "docs", column: "data" }) // convert to JSONB for 
 
 ## Vector/Semantic Search
 \`\`\`javascript
+// Store and search vectors
 sqlite_vector_store({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1, vector: [...] })
 sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10 })
+
+// Utility tools for preprocessing
+sqlite_vector_normalize({ vector: [3, 4, 0, 0] }) // returns unit vector [0.6, 0.8, 0, 0]
+sqlite_vector_distance({ vector1: [...], vector2: [...], metric: "cosine" }) // or "euclidean", "dot"
+sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }) // magnitude min/max/avg
 \`\`\`
 
 ## Full-Text Search (FTS5)
