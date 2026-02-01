@@ -92,6 +92,8 @@ Available presets via \`--tool-filter\`:
 | \`minimal\` | 8 | 8 | Core only |
 | \`full\` | 102 | 122 | All tools |
 
+*+3 built-in tools (\`server_info\`, \`server_health\`, \`list_adapters\`) always included*
+
 **Groups**: \`core\`, \`json\`, \`text\`, \`stats\`, \`vector\`, \`admin\`, \`geo\`
 **Syntax**: \`"core,json"\` (whitelist), \`"+stats"\` (add), \`"-admin"\` (remove)
 *17* = 13 in WASM (4 FTS5 tools require native)
