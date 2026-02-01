@@ -47,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `sqlite_stats_outliers` example with IQR/Z-score method options
   - Added `sqlite_stats_hypothesis` example with one-sample t-test usage
 
+- **JSON Aggregation Tool Documentation** — Clarified `groupByColumn` usage for JSON collection tables
+  - Updated `sqlite_json_group_array` and `sqlite_json_group_object` parameter descriptions
+  - For JSON collections, must use `allowExpressions: true` with `json_extract(data, '$.field')` for groupByColumn
+  - Updated ServerInstructions.ts examples to show both regular table and JSON collection patterns
+
 - **Tool Count Documentation Accuracy** — Fixed tool counts across all documentation files
   - `text` group: 16 → 17 (added fuzzy_match, phonetic_match, text_normalize, text_validate, advanced_search, fts_rebuild, fts_match_info)
   - `admin` group: 32 → 33

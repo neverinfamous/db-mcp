@@ -119,8 +119,10 @@ sqlite_json_array_append({ table: "docs", column: "data", path: "$.tags", value:
 sqlite_json_each({ table: "docs", column: "data", path: "$.tags" }) // expand array to rows
 
 // Aggregation and analysis
+// Regular tables: use column names directly for groupByColumn
 sqlite_json_group_array({ table: "events", valueColumn: "user_id", groupByColumn: "event_type" })
-sqlite_json_group_array({ table: "docs", valueColumn: "json_extract(data, '$.name')", groupByColumn: "type", allowExpressions: true })
+// JSON collections: use allowExpressions with json_extract for both value and group columns
+sqlite_json_group_array({ table: "docs", valueColumn: "json_extract(data, '$.author')", groupByColumn: "json_extract(data, '$.type')", allowExpressions: true })
 sqlite_analyze_json_schema({ table: "docs", column: "data" }) // infer schema types
 
 // JSONB optimization (SQLite 3.45+)

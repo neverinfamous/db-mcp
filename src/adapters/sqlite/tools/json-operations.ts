@@ -85,7 +85,12 @@ const JsonGroupArraySchema = z.object({
     .describe(
       "Column to aggregate (or SQL expression if allowExpressions is true)",
     ),
-  groupByColumn: z.string().optional().describe("Column to group by"),
+  groupByColumn: z
+    .string()
+    .optional()
+    .describe(
+      "Column to group by. For JSON collection tables, use allowExpressions with json_extract(data, '$.field') instead.",
+    ),
   whereClause: z.string().optional(),
   allowExpressions: z
     .boolean()
@@ -107,7 +112,12 @@ const JsonGroupObjectSchema = z.object({
     .describe(
       "Column for object values (or SQL expression if allowExpressions is true)",
     ),
-  groupByColumn: z.string().optional().describe("Column to group by"),
+  groupByColumn: z
+    .string()
+    .optional()
+    .describe(
+      "Column to group by. For JSON collection tables, use allowExpressions with json_extract(data, '$.field') instead.",
+    ),
   whereClause: z.string().optional(),
   allowExpressions: z
     .boolean()
