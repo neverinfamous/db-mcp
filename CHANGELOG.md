@@ -64,6 +64,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `sqlite_vector_normalize`, `sqlite_vector_distance`, and `sqlite_vector_stats` examples
   - Utility tools help with pre-processing embeddings before storage
 
+- **`sqlite_text_split` Per-Row Output Structure** — Improved output for row traceability
+  - Changed from flat `parts[]` array to structured per-row results
+  - Each row now includes `rowid`, `original` value, and `parts` array
+  - Enables correlation between split results and source rows
+
 ### Fixed
 
 - **`sqlite_list_tables` FTS5 Table Visibility** — FTS5 virtual tables and shadow tables now hidden

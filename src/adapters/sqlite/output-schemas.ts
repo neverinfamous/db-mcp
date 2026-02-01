@@ -470,11 +470,18 @@ export const TextNormalizeOutputSchema = z.object({
 
 /**
  * sqlite_text_split output
+ * Returns per-row results with original value and split parts for traceability
  */
 export const TextSplitOutputSchema = z.object({
   success: z.boolean(),
-  parts: z.array(z.string()),
-  count: z.number(),
+  rowCount: z.number(),
+  rows: z.array(
+    z.object({
+      rowid: z.number(),
+      original: z.string().nullable(),
+      parts: z.array(z.string()),
+    }),
+  ),
 });
 
 // =============================================================================

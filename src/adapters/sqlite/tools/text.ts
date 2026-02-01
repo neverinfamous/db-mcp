@@ -336,28 +336,34 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
 
       const result = await adapter.executeReadQuery(sql);
 
-      // Split in JavaScript
-      const splits = (result.rows ?? []).map((row) => {
+      // Split in JavaScript - return per-row results for traceability
+      const rows = (result.rows ?? []).map((row) => {
+        const rawRowid = row["rowid"];
+        const rowid =
+          typeof rawRowid === "number"
+            ? rawRowid
+            : typeof rawRowid === "string"
+              ? parseInt(rawRowid, 10) || 0
+              : 0;
         const rawValue = row["value"];
-        const valueStr =
+        const original =
           typeof rawValue === "string"
             ? rawValue
-            : JSON.stringify(rawValue ?? "");
+            : rawValue === null || rawValue === undefined
+              ? ""
+              : JSON.stringify(rawValue);
+        const parts = original.split(input.delimiter);
         return {
-          rowid: row["rowid"],
-          original: row["value"],
-          parts: valueStr.split(input.delimiter),
+          rowid,
+          original: rawValue === null ? null : original,
+          parts,
         };
       });
 
-      // Output schema expects parts and count for a single split result
-      // But this tool returns per-row splits, so we need to align with actual usage
-      // Return format matching the actual operation which is row-based splits
-      const allParts = splits.flatMap((s) => s.parts);
       return {
         success: true,
-        parts: allParts,
-        count: allParts.length,
+        rowCount: rows.length,
+        rows,
       };
     },
   };
