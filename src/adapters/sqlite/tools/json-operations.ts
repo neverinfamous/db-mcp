@@ -549,7 +549,8 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (input.groupByColumn) {
         const groupByCol = sanitizeIdentifier(input.groupByColumn);
-        selectClause = `${groupByCol}, ${selectClause}`;
+        // Use alias to ensure clean column name in output (without quotes)
+        selectClause = `${groupByCol} AS ${input.groupByColumn}, ${selectClause}`;
         groupByClause = ` GROUP BY ${groupByCol}`;
       }
 
@@ -608,7 +609,8 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (input.groupByColumn) {
         const groupByCol = sanitizeIdentifier(input.groupByColumn);
-        selectClause = `${groupByCol}, ${selectClause}`;
+        // Use alias to ensure clean column name in output (without quotes)
+        selectClause = `${groupByCol} AS ${input.groupByColumn}, ${selectClause}`;
         groupByClause = ` GROUP BY ${groupByCol}`;
       }
 

@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Changed "Target table required" to "Missing required parameter 'targetTable'" for `nearest_neighbor` and `point_in_polygon` analysis types
   - Clearer messaging helps users identify which parameter they need to provide
 
+- **`sqlite_json_group_array` and `sqlite_json_group_object` Column Naming** — Fixed quoted identifier names appearing in output
+  - When using `groupByColumn`, the result column was showing `"type"` (with escaped quotes) instead of `type`
+  - Added explicit column aliases (e.g., `"type" AS type`) to produce clean column names in output
+  - Affects both tools when `groupByColumn` is specified
+
 - **`sqlite_dbstat` Page Count Inconsistency** — Fixed JS fallback returning inconsistent page counts
   - Properly extracts page_count from PRAGMA result (handles both named and indexed column access)
   - Ensures consistent numeric return value via explicit type coercion
