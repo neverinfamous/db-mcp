@@ -109,6 +109,7 @@ const JsonGroupObjectSchema = z.object({
     ),
   valueColumn: z
     .string()
+    .optional()
     .describe(
       "Column for object values (or SQL expression if allowExpressions is true). For aggregates like COUNT(*), use aggregateFunction instead.",
     ),
@@ -653,7 +654,18 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      // Standard mode: Allow raw SQL expressions when allowExpressions is true
+      // Standard mode: valueColumn is required when not using aggregateFunction
+      if (!input.valueColumn) {
+        return {
+          success: false,
+          error:
+            "valueColumn is required unless using aggregateFunction parameter",
+          rowCount: 0,
+          rows: [],
+        };
+      }
+
+      // Allow raw SQL expressions when allowExpressions is true
       // This enables use cases like: json_extract(data, '$.name')
       let keyColumn: string;
       let valueColumn: string;
