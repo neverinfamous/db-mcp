@@ -80,9 +80,19 @@ const JsonEachSchema = z.object({
 
 const JsonGroupArraySchema = z.object({
   table: z.string().describe("Table name"),
-  valueColumn: z.string().describe("Column to aggregate"),
+  valueColumn: z
+    .string()
+    .describe(
+      "Column to aggregate (or SQL expression if allowExpressions is true)",
+    ),
   groupByColumn: z.string().optional().describe("Column to group by"),
   whereClause: z.string().optional(),
+  allowExpressions: z
+    .boolean()
+    .optional()
+    .describe(
+      "Allow SQL expressions like json_extract() instead of plain column names",
+    ),
 });
 
 const JsonGroupObjectSchema = z.object({
@@ -520,9 +530,19 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupArraySchema.parse(params);
 
-      // Validate and quote identifiers
+      // Validate table name (always required)
       const table = sanitizeIdentifier(input.table);
-      const valueColumn = sanitizeIdentifier(input.valueColumn);
+
+      // Allow raw SQL expressions when allowExpressions is true
+      // This enables use cases like: json_extract(data, '$.name')
+      let valueColumn: string;
+      if (input.allowExpressions) {
+        // Use expression directly (user takes responsibility for SQL safety)
+        valueColumn = input.valueColumn;
+      } else {
+        // Validate as identifier (default, safe behavior)
+        valueColumn = sanitizeIdentifier(input.valueColumn);
+      }
 
       let selectClause = `json_group_array(${valueColumn}) as array_result`;
       let groupByClause = "";
