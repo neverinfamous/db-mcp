@@ -182,9 +182,11 @@ function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
         throw new Error("JSON path must start with $");
       }
 
+      // String values must be JSON-stringified to produce valid JSON
+      // e.g., "New Title" -> '"New Title"' (with JSON quotes inside SQL quotes)
       const valueStr =
         typeof input.value === "string"
-          ? `'${input.value.replace(/'/g, "''")}'`
+          ? `'${JSON.stringify(input.value).replace(/'/g, "''")}'`
           : JSON.stringify(input.value);
 
       const sql = `UPDATE "${input.table}" SET "${input.column}" = json_set("${input.column}", '${input.path}', json(${valueStr})) WHERE ${input.whereClause}`;

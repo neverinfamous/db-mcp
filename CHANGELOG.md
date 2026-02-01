@@ -14,8 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Default behavior unchanged (validates as simple column identifier for security)
   - Enables advanced aggregation patterns combining JSON extraction with grouping
 
-- **`sqlite_spatialite_analyze` Error Message Clarity** — Improved error messages for required parameter validation
+- **`sqlite_json_update` String Value Escaping** — Fixed "malformed JSON" error when updating string values
+  - String values now wrapped with `JSON.stringify()` before SQL escaping to produce valid JSON
+  - Previously `'New Title'` (invalid JSON) was passed to `json()` instead of `'"New Title"'`
 
+- **`sqlite_spatialite_analyze` Error Message Clarity** — Improved error messages for required parameter validation
   - Changed "Target table required" to "Missing required parameter 'targetTable'" for `nearest_neighbor` and `point_in_polygon` analysis types
   - Clearer messaging helps users identify which parameter they need to provide
 
