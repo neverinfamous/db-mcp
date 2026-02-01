@@ -9,15 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`sqlite_text_validate` Empty Value Display** — Improved UX for invalid empty values
-  - Empty/null values now display as "(empty)" instead of confusing `"\"\""`
+- **`sqlite_text_validate` Null Value Display** — Improved accuracy for invalid null/empty values
+  - Null/undefined values now display as `null` instead of artificial `"(empty)"` placeholder
   - Long values (>100 chars) are truncated with "..." for readability
 
 ### Changed
 
 - **ServerInstructions.ts WASM Tool Count** — Corrected `starter` preset count for WASM mode
   - Changed from 48 to 44 (4 FTS5 tools unavailable in WASM)
-  - Added footnote: "*17* = 13 in WASM (4 FTS5 tools require native)"
+  - Added footnote: "_17_ = 13 in WASM (4 FTS5 tools require native)"
 
 ### Fixed
 

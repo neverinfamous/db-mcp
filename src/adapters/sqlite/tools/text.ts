@@ -1041,7 +1041,7 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
       invalidCount: z.number(),
       invalidRows: z.array(
         z.object({
-          value: z.string(),
+          value: z.string().nullable(),
           rowid: z.number().optional(),
         }),
       ),
@@ -1089,7 +1089,7 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
 
       const result = await adapter.executeReadQuery(sql);
 
-      const invalidRows: { value: string; rowid?: number }[] = [];
+      const invalidRows: { value: string | null; rowid?: number }[] = [];
       let validCount = 0;
 
       for (const row of result.rows ?? []) {
@@ -1101,9 +1101,10 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
             : typeof rawValue === "string"
               ? rawValue
               : JSON.stringify(rawValue);
+        // Display actual value: null for null/undefined, otherwise the value (truncated if long)
         const displayValue =
-          value === ""
-            ? "(empty)"
+          rawValue === null || rawValue === undefined
+            ? null
             : value.length > 100
               ? value.slice(0, 100) + "..."
               : value;
