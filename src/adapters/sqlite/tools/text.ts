@@ -155,7 +155,7 @@ const AdvancedSearchSchema = z.object({
     .optional()
     .default(0.6)
     .describe(
-      "Fuzzy match similarity threshold (0-1). Lower values are more lenient: 0.3-0.4 for loose matching, 0.6-0.8 for strict matching.",
+      "Fuzzy match similarity threshold (0-1). Lower values are more lenient: 0.3-0.4 for loose matching (e.g., 'laptob' matches 'laptop'), 0.6-0.8 for strict matching.",
     ),
   whereClause: z.string().optional(),
   limit: z.number().optional().default(100),

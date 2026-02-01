@@ -209,9 +209,27 @@ sqlite_transaction_commit()
 \`\`\`javascript
 // Regex patterns: Double-escape backslashes (\\\\) when passing through JSON/MCP
 sqlite_regex_match({ table: "logs", column: "message", pattern: "ERROR:\\\\s+(\\\\w+)" })
+sqlite_regex_extract({ table: "users", column: "email", pattern: "@([a-zA-Z0-9.-]+)", groupIndex: 1 })
+
+// Text manipulation
+sqlite_text_split({ table: "users", column: "email", delimiter: "@" }) // Split into parts array
+sqlite_text_concat({ table: "users", columns: ["first_name", "last_name"], separator: " " })
+sqlite_text_normalize({ table: "docs", column: "content", mode: "strip_accents" }) // or nfc, nfd, nfkc, nfkd
+
+// Validation patterns: email, phone, url, uuid, ipv4, custom
+sqlite_text_validate({ table: "users", column: "email", pattern: "email" })
+sqlite_text_validate({ table: "data", column: "field", pattern: "custom", customPattern: "^[A-Z]{2}[0-9]{4}$" })
+
+// Fuzzy matching - compares against ENTIRE column value, not word tokens
+// Use maxDistance 1-3 for similar-length strings; for "Laptop Pro 15", search "laptop" won't match
 sqlite_fuzzy_match({ table: "products", column: "name", search: "laptp", maxDistance: 3 })
-sqlite_text_validate({ table: "users", column: "email", pattern: "email" }) // email, phone, url, uuid, ipv4
-sqlite_advanced_search({ table: "products", column: "name", searchTerm: "laptop", techniques: ["exact", "fuzzy", "phonetic"] })
+
+// Phonetic matching - finds words that sound alike
+sqlite_phonetic_match({ table: "products", column: "name", search: "laptop", algorithm: "soundex" })
+
+// Advanced search - combines exact, fuzzy, and phonetic techniques
+// fuzzyThreshold: 0.3-0.4 = loose matching (more results), 0.6-0.8 = strict matching (fewer results)
+sqlite_advanced_search({ table: "products", column: "name", searchTerm: "laptop", techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold: 0.4 })
 \`\`\`
 
 ## Database Administration

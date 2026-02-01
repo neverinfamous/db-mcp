@@ -16,9 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`sqlite_advanced_search` Parameter Guidance** — Added threshold tuning guidance for `fuzzyThreshold`
   - Parameter description now includes: "0.3-0.4 for loose matching, 0.6-0.8 for strict matching"
+  - Added inline example: "e.g., 'laptob' matches 'laptop'"
   - Helps users understand how to tune the similarity threshold for their use case
 
-
+- **ServerInstructions.ts Text Processing Documentation** — Expanded TOOL_REFERENCE examples
+  - Added `sqlite_regex_extract` example with capture groups
+  - Added `sqlite_text_split`, `sqlite_text_concat`, `sqlite_text_normalize` examples
+  - Added `sqlite_phonetic_match` example with soundex algorithm
+  - Clarified fuzzy match behavior: "compares against ENTIRE column value, not word tokens"
+  - Added `fuzzyThreshold` tuning guidance comment in `sqlite_advanced_search` example
 
 - **`sqlite_spatialite_analyze` Self-Match Filtering** — Added `excludeSelf` parameter (default: true)
   - When sourceTable equals targetTable in nearest_neighbor analysis, self-matches (distance=0) are now filtered
