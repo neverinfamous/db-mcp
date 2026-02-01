@@ -61,6 +61,11 @@ const DbStatSchema = z.object({
     .describe(
       "If true, return aggregated per-table stats instead of raw page-level data",
     ),
+  limit: z
+    .number()
+    .optional()
+    .default(100)
+    .describe("Maximum number of tables/pages to return (default: 100)"),
 });
 
 const VacuumSchema = z.object({
@@ -330,7 +335,7 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
             sql += ` WHERE name = '${input.table.replace(/'/g, "''")}'`;
           }
 
-          sql += ` GROUP BY name ORDER BY name`;
+          sql += ` GROUP BY name ORDER BY name LIMIT ${input.limit}`;
 
           const result = await adapter.executeReadQuery(sql);
 
@@ -360,7 +365,7 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
           sql += ` WHERE name = '${input.table.replace(/'/g, "''")}'`;
         }
 
-        sql += ` LIMIT 100`;
+        sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql);
 

@@ -236,6 +236,8 @@ function createExecuteInTransactionTool(
       const results: {
         statement: string;
         rowsAffected?: number;
+        rowCount?: number;
+        rows?: Record<string, unknown>[];
         error?: string;
       }[] = [];
       let success = true;
@@ -245,13 +247,38 @@ function createExecuteInTransactionTool(
 
         for (const statement of input.statements) {
           try {
-            const result = await adapter.executeWriteQuery(statement);
-            results.push({
-              statement:
-                statement.substring(0, 100) +
-                (statement.length > 100 ? "..." : ""),
-              rowsAffected: result.rowsAffected ?? 0,
-            });
+            // Detect SELECT statements to return row data
+            const isSelect = statement
+              .trim()
+              .toUpperCase()
+              .startsWith("SELECT");
+
+            if (isSelect) {
+              const result = await adapter.executeReadQuery(statement);
+              const rowCount = result.rows?.length ?? 0;
+              const statementResult: {
+                statement: string;
+                rowCount: number;
+                rows?: Record<string, unknown>[];
+              } = {
+                statement:
+                  statement.substring(0, 100) +
+                  (statement.length > 100 ? "..." : ""),
+                rowCount,
+              };
+              if (result.rows) {
+                statementResult.rows = result.rows;
+              }
+              results.push(statementResult);
+            } else {
+              const result = await adapter.executeWriteQuery(statement);
+              results.push({
+                statement:
+                  statement.substring(0, 100) +
+                  (statement.length > 100 ? "..." : ""),
+                rowsAffected: result.rowsAffected ?? 0,
+              });
+            }
           } catch (error) {
             const message =
               error instanceof Error ? error.message : String(error);

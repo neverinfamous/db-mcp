@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`sqlite_transaction_execute` SELECT Row Data** — SELECT statements now return actual row data
+  - Results include `rowCount` and `rows` fields for SELECT statements instead of just `rowsAffected: 0`
+  - Enables read-modify-read patterns within atomic transactions
+  - Write statements continue to return `rowsAffected` as before
+
+- **`sqlite_dbstat` Limit Parameter** — Added configurable `limit` parameter (default: 100)
+  - Controls maximum number of tables/pages returned in both summarized and raw modes
+  - Helps reduce payload size for large databases
+  - Previously hardcoded to 100; now user-configurable
+
+### Changed
+
 - **`sqlite_fuzzy_match` Documentation** — Clarified that Levenshtein distance is computed against entire column values
   - Updated description to note comparison is against whole values, not word tokens
   - Added guidance to use maxDistance 1-3 for similar-length strings
