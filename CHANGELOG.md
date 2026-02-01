@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_spatialite_analyze` Error Message Clarity** — Improved error messages for required parameter validation
+  - Changed "Target table required" to "Missing required parameter 'targetTable'" for `nearest_neighbor` and `point_in_polygon` analysis types
+  - Clearer messaging helps users identify which parameter they need to provide
+
 - **`sqlite_dbstat` Page Count Inconsistency** — Fixed JS fallback returning inconsistent page counts
   - Properly extracts page_count from PRAGMA result (handles both named and indexed column access)
   - Ensures consistent numeric return value via explicit type coercion

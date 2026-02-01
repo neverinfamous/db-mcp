@@ -420,7 +420,7 @@ function createSpatialAnalysisTool(
         case "nearest_neighbor":
           if (!input.targetTable) {
             throw new Error(
-              "Target table required for nearest neighbor analysis",
+              "Missing required parameter 'targetTable' for nearest neighbor analysis",
             );
           }
           // Use subquery to get non-geometry columns, convert geometry to WKT
@@ -435,7 +435,7 @@ function createSpatialAnalysisTool(
         case "point_in_polygon":
           if (!input.targetTable) {
             throw new Error(
-              "Target table required for point in polygon analysis",
+              "Missing required parameter 'targetTable' for point in polygon analysis",
             );
           }
           // Use subquery to get non-geometry columns, convert geometry to WKT
