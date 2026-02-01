@@ -120,7 +120,12 @@ sqlite_json_each({ table: "docs", column: "data", path: "$.tags" }) // expand ar
 
 // Aggregation and analysis
 sqlite_json_group_array({ table: "events", valueColumn: "user_id", groupByColumn: "event_type" })
+sqlite_json_group_array({ table: "docs", valueColumn: "json_extract(data, '$.name')", groupByColumn: "type", allowExpressions: true })
 sqlite_analyze_json_schema({ table: "docs", column: "data" }) // infer schema types
+
+// JSONB optimization (SQLite 3.45+)
+sqlite_json_storage_info({ table: "docs", column: "data" }) // check text vs JSONB format
+sqlite_jsonb_convert({ table: "docs", column: "data" }) // convert to JSONB for faster queries
 \`\`\`
 
 ## Vector/Semantic Search
