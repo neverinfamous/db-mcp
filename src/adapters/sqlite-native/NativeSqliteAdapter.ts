@@ -450,25 +450,36 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       .all() as { name: string; type: string; sql: string }[];
 
     // Build tables with column info from PRAGMA table_info()
-    const tables = result.map((row) => {
-      const columns = db.prepare(`PRAGMA table_info("${row.name}")`).all() as {
-        name: string;
-        type: string;
-        notnull: number;
-        pk: number;
-      }[];
+    // Filter out FTS5 virtual tables and shadow tables
+    const tables = result
+      .filter((row) => {
+        // Skip FTS5 virtual tables (end with "_fts") and shadow tables (contain "_fts_")
+        if (row.name.endsWith("_fts") || row.name.includes("_fts_")) {
+          return false;
+        }
+        return true;
+      })
+      .map((row) => {
+        const columns = db
+          .prepare(`PRAGMA table_info("${row.name}")`)
+          .all() as {
+          name: string;
+          type: string;
+          notnull: number;
+          pk: number;
+        }[];
 
-      return {
-        name: row.name,
-        type: row.type as "table" | "view",
-        columns: columns.map((c) => ({
-          name: c.name,
-          type: c.type,
-          nullable: c.notnull === 0,
-          primaryKey: c.pk > 0,
-        })),
-      };
-    });
+        return {
+          name: row.name,
+          type: row.type as "table" | "view",
+          columns: columns.map((c) => ({
+            name: c.name,
+            type: c.type,
+            nullable: c.notnull === 0,
+            primaryKey: c.pk > 0,
+          })),
+        };
+      });
 
     return Promise.resolve(tables);
   }
