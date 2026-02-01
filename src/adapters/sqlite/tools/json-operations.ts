@@ -558,9 +558,15 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
       let groupByClause = "";
 
       if (input.groupByColumn) {
-        const groupByCol = sanitizeIdentifier(input.groupByColumn);
-        // Use alias to ensure clean column name in output (without quotes)
-        selectClause = `${groupByCol} AS ${input.groupByColumn}, ${selectClause}`;
+        // Apply allowExpressions to groupByColumn as well
+        const groupByCol = input.allowExpressions
+          ? input.groupByColumn
+          : sanitizeIdentifier(input.groupByColumn);
+        // Use alias for clean output; for expressions use 'group_key' alias
+        const groupAlias = input.allowExpressions
+          ? "group_key"
+          : input.groupByColumn;
+        selectClause = `${groupByCol} AS ${groupAlias}, ${selectClause}`;
         groupByClause = ` GROUP BY ${groupByCol}`;
       }
 
@@ -618,9 +624,15 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
       let groupByClause = "";
 
       if (input.groupByColumn) {
-        const groupByCol = sanitizeIdentifier(input.groupByColumn);
-        // Use alias to ensure clean column name in output (without quotes)
-        selectClause = `${groupByCol} AS ${input.groupByColumn}, ${selectClause}`;
+        // Apply allowExpressions to groupByColumn as well
+        const groupByCol = input.allowExpressions
+          ? input.groupByColumn
+          : sanitizeIdentifier(input.groupByColumn);
+        // Use alias for clean output; for expressions use 'group_key' alias
+        const groupAlias = input.allowExpressions
+          ? "group_key"
+          : input.groupByColumn;
+        selectClause = `${groupByCol} AS ${groupAlias}, ${selectClause}`;
         groupByClause = ` GROUP BY ${groupByCol}`;
       }
 

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_json_group_array` and `sqlite_json_group_object` groupByColumn Expressions** — Extended `allowExpressions` to also apply to `groupByColumn` parameter
+  - Previously `allowExpressions: true` only bypassed validation for `valueColumn`/`keyColumn`, not `groupByColumn`
+  - Now enables grouping by JSON path expressions like `json_extract(data, '$.type')`
+  - When using expressions for `groupByColumn`, output uses `group_key` alias for clarity
+
+### Changed
+
+- **ServerInstructions.ts JSONB Documentation** — Added note that `sqlite_json_normalize_column` converts JSONB back to text format
+  - The `json()` function used for normalization returns text JSON, not JSONB binary
+  - Users should run `sqlite_jsonb_convert` after normalization if JSONB format is desired
+
+### Fixed
+
 - **`sqlite_json_group_array` Expression Support** — Added `allowExpressions` option for consistency with `sqlite_json_group_object`
   - When `allowExpressions: true`, SQL expressions like `json_extract(data, '$.name')` are accepted for `valueColumn`
   - Default behavior unchanged (validates as simple column identifier for security)
