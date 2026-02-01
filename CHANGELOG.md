@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Previously returned mathematically meaningless results (p=1, df=0) without warning
   - Error message includes actual category counts for both columns to help users diagnose the issue
 
+- **`sqlite_json_storage_info` Mixed Format Recommendation** — Fixed misleading recommendation when column has both text and JSONB rows
+  - Now detects mixed format scenarios and recommends running `sqlite_jsonb_convert` to unify storage
+  - Previously reported "Column already uses JSONB format" even when 50% of rows were still text JSON
+
 ### Changed
 
 - **`sqlite_transaction_execute` SELECT Row Data** — SELECT statements now return actual row data

@@ -879,11 +879,17 @@ function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
           unknown: unknownCount,
         },
         recommendation:
-          jsonbCount === 0 && textCount > 0 && isJsonbSupported()
-            ? "Column uses text JSON. Consider converting to JSONB for better performance."
-            : jsonbCount > 0
-              ? "Column already uses JSONB format."
-              : "No JSON data found in sample.",
+          // Mixed format: both text and JSONB rows exist
+          textCount > 0 && jsonbCount > 0
+            ? `Column has mixed formats (${textCount} text, ${jsonbCount} JSONB). Run sqlite_jsonb_convert to unify.`
+            : // All text, JSONB supported: recommend conversion
+              jsonbCount === 0 && textCount > 0 && isJsonbSupported()
+              ? "Column uses text JSON. Consider converting to JSONB for better performance."
+              : // All JSONB: already optimal
+                jsonbCount > 0
+                ? "Column already uses JSONB format."
+                : // No JSON data found
+                  "No JSON data found in sample.",
       };
     },
   };
