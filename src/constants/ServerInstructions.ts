@@ -126,6 +126,7 @@ sqlite_json_each({ table: "docs", column: "data", path: "$.tags" }) // expand ar
 sqlite_json_group_array({ table: "events", valueColumn: "user_id", groupByColumn: "event_type" })
 // JSON collections: use allowExpressions with json_extract for both value and group columns
 // Note: allowExpressions is for column extraction ONLY, NOT aggregate functions
+// Note: Without groupByColumn, each row creates a key-value pair; duplicate keys result if key values aren't unique
 sqlite_json_group_array({ table: "docs", valueColumn: "json_extract(data, '$.author')", groupByColumn: "json_extract(data, '$.type')", allowExpressions: true })
 // For aggregate values (COUNT, SUM, AVG), use aggregateFunction parameter instead
 sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" })

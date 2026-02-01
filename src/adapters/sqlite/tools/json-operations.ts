@@ -665,6 +665,13 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      // Warn when allowExpressions is used without groupByColumn - can produce duplicate keys
+      // Each row creates a key-value pair; if multiple rows have the same key, duplicates result
+      const duplicateKeyWarning =
+        input.allowExpressions && !input.groupByColumn
+          ? "Warning: Using allowExpressions without groupByColumn may produce duplicate keys if key values aren't unique. Consider using groupByColumn, aggregateFunction, or ensuring key uniqueness."
+          : undefined;
+
       // Allow raw SQL expressions when allowExpressions is true
       // This enables use cases like: json_extract(data, '$.name')
       let keyColumn: string;
@@ -707,6 +714,7 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
         success: true,
         rowCount: result.rows?.length ?? 0,
         rows: result.rows ?? [],
+        ...(duplicateKeyWarning && { hint: duplicateKeyWarning }),
       };
     },
   };

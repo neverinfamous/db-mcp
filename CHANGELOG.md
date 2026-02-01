@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses subquery pattern to pre-aggregate results before wrapping in `json_group_object()`
   - Example: `sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" })`
   - `allowExpressions` parameter clarified: supports column extraction only, NOT aggregate functions
+  - **New**: Returns `hint` warning when using `allowExpressions` without `groupByColumn` (duplicate keys may result if key values aren't unique)
 
 ### Fixed
 
