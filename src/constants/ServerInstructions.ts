@@ -102,8 +102,25 @@ Available presets via \`--tool-filter\`:
 const TOOL_REFERENCE = `
 ## JSON Operations
 \`\`\`javascript
-sqlite_write_query({ query: "INSERT INTO t (data) VALUES (?)", params: [JSON.stringify({a:1})] })
-sqlite_json_extract({ table: "t", column: "data", path: "$.a" })
+// Create optimized JSON collection with indexes
+sqlite_create_json_collection({ tableName: "docs", indexes: [{ path: "$.type" }, { path: "$.author" }] })
+
+// Insert and query JSON documents
+sqlite_json_insert({ table: "docs", column: "data", data: { type: "article", title: "Hello", tags: ["news"] } })
+sqlite_json_query({ table: "docs", column: "data", filterPaths: { "$.type": "article" }, selectPaths: ["$.title"] })
+
+// Path operations (extract, set, merge, remove)
+sqlite_json_extract({ table: "docs", column: "data", path: "$.title" })
+sqlite_json_set({ table: "docs", column: "data", path: "$.views", value: 100, whereClause: "id = 1" })
+sqlite_json_merge({ table: "docs", column: "data", mergeData: { featured: true }, whereClause: "id = 1" })
+
+// Array operations
+sqlite_json_array_append({ table: "docs", column: "data", path: "$.tags", value: "featured", whereClause: "id = 1" })
+sqlite_json_each({ table: "docs", column: "data", path: "$.tags" }) // expand array to rows
+
+// Aggregation and analysis
+sqlite_json_group_array({ table: "events", valueColumn: "user_id", groupByColumn: "event_type" })
+sqlite_analyze_json_schema({ table: "docs", column: "data" }) // infer schema types
 \`\`\`
 
 ## Vector/Semantic Search
