@@ -198,6 +198,7 @@ sqlite_transaction_commit()
 
 ## Text Processing
 \`\`\`javascript
+// Regex patterns: Double-escape backslashes (\\\\) when passing through JSON/MCP
 sqlite_regex_match({ table: "logs", column: "message", pattern: "ERROR:\\\\s+(\\\\w+)" })
 sqlite_fuzzy_match({ table: "products", column: "name", search: "laptp", maxDistance: 3 })
 sqlite_text_validate({ table: "users", column: "email", pattern: "email" }) // email, phone, url, uuid, ipv4

@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The `json()` function used for normalization returns text JSON, not JSONB binary
   - Users should run `sqlite_jsonb_convert` after normalization if JSONB format is desired
 
+- **ServerInstructions.ts Text Processing Documentation** — Added inline comment for regex escaping clarity
+  - Explains that regex patterns require double-escaping backslashes (`\\\\`) when passing through JSON/MCP transport
+
 ### Fixed
 
 - **`sqlite_json_group_array` Expression Support** — Added `allowExpressions` option for consistency with `sqlite_json_group_object`
