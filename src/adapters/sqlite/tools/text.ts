@@ -327,7 +327,7 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
       const table = sanitizeIdentifier(input.table);
       const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
+      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
         sql += ` WHERE ${input.whereClause}`;
@@ -338,7 +338,7 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Split in JavaScript - return per-row results for traceability
       const rows = (result.rows ?? []).map((row) => {
-        const rawRowid = row["rowid"];
+        const rawRowid = row["id"];
         const rowid =
           typeof rawRowid === "number"
             ? rawRowid

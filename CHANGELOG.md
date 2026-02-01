@@ -71,6 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_text_split` WASM Rowid Bug** — Fixed rows returning `rowid: 0` for all results
+  - Changed SQL query from `SELECT rowid, column` to `SELECT rowid as id, column` for consistent behavior
+  - SQL.js (WASM) does not handle unaliased `rowid` column correctly; aliasing ensures proper value retrieval
+  - Native SQLite (better-sqlite3) was unaffected, but now uses consistent query pattern
+
 - **`sqlite_list_tables` FTS5 Table Visibility** — FTS5 virtual tables and shadow tables now hidden
   - Virtual tables ending with `_fts` (e.g., `articles_fts`) are now filtered from output
   - Shadow tables containing `_fts_` (e.g., `articles_fts_config`, `articles_fts_data`) already filtered
