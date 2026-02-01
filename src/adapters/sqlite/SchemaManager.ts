@@ -108,8 +108,10 @@ export class SchemaManager {
       const name = row["name"] as string;
       const type = row["type"] as "table" | "view";
 
-      // Skip FTS5 shadow tables (they're internal implementation details)
-      if (name.includes("_fts_")) {
+      // Skip FTS5 virtual tables and shadow tables (they're internal implementation details)
+      // - Virtual tables: end with "_fts" (e.g., "articles_fts")
+      // - Shadow tables: contain "_fts_" (e.g., "articles_fts_config", "articles_fts_data")
+      if (name.endsWith("_fts") || name.includes("_fts_")) {
         continue;
       }
 

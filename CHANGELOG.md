@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_list_tables` FTS5 Table Visibility** — FTS5 virtual tables and shadow tables now hidden
+  - Virtual tables ending with `_fts` (e.g., `articles_fts`) are now filtered from output
+  - Shadow tables containing `_fts_` (e.g., `articles_fts_config`, `articles_fts_data`) already filtered
+  - Internal FTS5 implementation details no longer clutter table listings in native mode
+
 - **`sqlite_text_validate` Null Value Display** — Improved accuracy for invalid null/empty values
   - Null/undefined values now display as `null` instead of artificial `"(empty)"` placeholder
   - Long values (>100 chars) are truncated with "..." for readability
