@@ -110,7 +110,7 @@ const JsonGroupObjectSchema = z.object({
   valueColumn: z
     .string()
     .describe(
-      "Column for object values (or SQL expression if allowExpressions is true)",
+      "Column for object values (or SQL expression if allowExpressions is true). For aggregates like COUNT(*), use aggregateFunction instead.",
     ),
   groupByColumn: z
     .string()
@@ -123,7 +123,13 @@ const JsonGroupObjectSchema = z.object({
     .boolean()
     .optional()
     .describe(
-      "Allow SQL expressions like json_extract() instead of plain column names",
+      "Allow SQL expressions like json_extract() instead of plain column names. NOTE: Does NOT support aggregate functions - use aggregateFunction parameter instead.",
+    ),
+  aggregateFunction: z
+    .string()
+    .optional()
+    .describe(
+      "Aggregate function to use for values (e.g., 'COUNT(*)', 'SUM(amount)', 'AVG(price)'). When provided, builds object from pre-aggregated subquery results.",
     ),
 });
 
@@ -606,7 +612,48 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate table name (always required)
       const table = sanitizeIdentifier(input.table);
 
-      // Allow raw SQL expressions when allowExpressions is true
+      // Handle aggregate function mode - uses subquery pattern
+      // This enables COUNT(*), SUM(x), AVG(x), etc. as values
+      if (input.aggregateFunction) {
+        // Build the key column expression
+        const keyCol = input.allowExpressions
+          ? input.keyColumn
+          : sanitizeIdentifier(input.keyColumn);
+
+        // Build subquery that computes the aggregate grouped by key
+        let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
+        if (input.whereClause) {
+          subquery += ` WHERE ${input.whereClause}`;
+        }
+        subquery += ` GROUP BY ${keyCol}`;
+
+        // Outer query wraps the aggregates into a JSON object
+        const outerSelect = `json_group_object(agg_key, agg_value) as object_result`;
+        const outerGroupBy = "";
+
+        if (input.groupByColumn) {
+          // For nested grouping, we need a more complex approach with window functions or correlated subqueries
+          // For now, outer grouping with aggregates is not supported - return error with guidance
+          return {
+            success: false,
+            error:
+              "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
+            rowCount: 0,
+            rows: [],
+          };
+        }
+
+        const sql = `SELECT ${outerSelect} FROM (${subquery})${outerGroupBy}`;
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          rows: result.rows ?? [],
+        };
+      }
+
+      // Standard mode: Allow raw SQL expressions when allowExpressions is true
       // This enables use cases like: json_extract(data, '$.name')
       let keyColumn: string;
       let valueColumn: string;

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`sqlite_json_group_object` Aggregate Function Support** — New `aggregateFunction` parameter for aggregate values
+  - Enables `COUNT(*)`, `SUM(amount)`, `AVG(price)`, and other aggregate functions as object values
+  - Uses subquery pattern to pre-aggregate results before wrapping in `json_group_object()`
+  - Example: `sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" })`
+  - `allowExpressions` parameter clarified: supports column extraction only, NOT aggregate functions
+
 ### Changed
 
 - **`sqlite_transaction_execute` SELECT Row Data** — SELECT statements now return actual row data
