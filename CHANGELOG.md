@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`sqlite_spatialite_analyze` Self-Match Filtering** — Added `excludeSelf` parameter (default: true)
+  - When sourceTable equals targetTable in nearest_neighbor analysis, self-matches (distance=0) are now filtered
+  - Set `excludeSelf: false` to include self-matches in results
+  - Reduces noise in proximity analysis results
+
+- **`sqlite_spatialite_transform` Buffer Simplification** — Added `simplifyTolerance` parameter
+  - Optional simplification applied to buffer operation output to reduce vertex count
+  - Recommended values: 0.0001-0.001 for lat/lon coordinates
+  - Reduces payload size for large buffer polygons (96+ vertices → fewer)
+
+- **`sqlite_spatialite_analyze` Documentation** — Improved tool description
+  - Clarified that point_in_polygon requires POINTs in sourceTable and POLYGONs in targetTable
+  - Updated targetTable parameter description with geometry type guidance
+
 - **ServerInstructions.ts Vector Tool Documentation** — Expanded vector section with utility tool examples
   - Added `sqlite_vector_normalize`, `sqlite_vector_distance`, and `sqlite_vector_stats` examples
   - Utility tools help with pre-processing embeddings before storage

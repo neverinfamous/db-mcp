@@ -93,13 +93,25 @@ const SpatialAnalysisSchema = z.object({
     ])
     .describe("Type of spatial analysis"),
   sourceTable: z.string().describe("Source table for analysis"),
-  targetTable: z.string().optional().describe("Target table for operations"),
+  targetTable: z
+    .string()
+    .optional()
+    .describe(
+      "Target table for operations. For point_in_polygon, this should contain POLYGON geometries while sourceTable contains POINTs",
+    ),
   geometryColumn: z
     .string()
     .optional()
     .default("geom")
     .describe("Geometry column name"),
   limit: z.number().optional().default(100).describe("Limit results"),
+  excludeSelf: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "For nearest_neighbor: exclude self-matches when source and target tables are the same (default: true)",
+    ),
 });
 
 const SpatialIndexSchema = z.object({
@@ -134,8 +146,14 @@ const GeometryTransformSchema = z.object({
     .number()
     .optional()
     .default(0.001)
-    .describe("Distance for buffer"),
+    .describe("Distance for buffer or simplify tolerance"),
   srid: z.number().optional().default(4326).describe("SRID for result"),
+  simplifyTolerance: z
+    .number()
+    .optional()
+    .describe(
+      "For buffer operation: apply ST_Simplify to reduce vertices in output polygon. Recommended: 0.0001-0.001 for lat/lon",
+    ),
 });
 
 const SpatialImportSchema = z.object({
@@ -386,7 +404,7 @@ function createSpatialAnalysisTool(
   return {
     name: "sqlite_spatialite_analyze",
     description:
-      "Perform spatial analysis: nearest neighbor, point in polygon, distance matrix.",
+      "Perform spatial analysis: nearest neighbor, point in polygon, distance matrix. For point_in_polygon, sourceTable should contain POINTs and targetTable should contain POLYGONs.",
     group: "geo",
     inputSchema: SpatialAnalysisSchema,
     requiredScopes: ["read"],
@@ -417,20 +435,26 @@ function createSpatialAnalysisTool(
           FROM "${input.sourceTable}"`;
           break;
 
-        case "nearest_neighbor":
+        case "nearest_neighbor": {
           if (!input.targetTable) {
             throw new Error(
               "Missing required parameter 'targetTable' for nearest neighbor analysis",
             );
           }
+          // Exclude self-matches when tables are the same and excludeSelf is true
+          const sameTable = input.sourceTable === input.targetTable;
+          const selfFilter =
+            sameTable && input.excludeSelf ? "WHERE s.id != t.id" : "";
           // Use subquery to get non-geometry columns, convert geometry to WKT
           query = `SELECT 
             s.id as source_id, AsText(s."${input.geometryColumn}") as source_geom,
             t.id as target_id, AsText(t."${input.geometryColumn}") as target_geom,
             ST_Distance(s."${input.geometryColumn}", t."${input.geometryColumn}") as distance
           FROM "${input.sourceTable}" s, "${input.targetTable}" t
+          ${selfFilter}
           ORDER BY distance LIMIT ${input.limit}`;
           break;
+        }
 
         case "point_in_polygon":
           if (!input.targetTable) {
@@ -546,9 +570,16 @@ function createGeometryTransformTool(
 
       let query: string;
       switch (input.operation) {
-        case "buffer":
-          query = `SELECT AsText(Buffer(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})) as result`;
+        case "buffer": {
+          const bufferGeom = `Buffer(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})`;
+          // Optionally simplify the buffer to reduce vertex count in output
+          const finalGeom =
+            input.simplifyTolerance !== undefined
+              ? `Simplify(${bufferGeom}, ${input.simplifyTolerance})`
+              : bufferGeom;
+          query = `SELECT AsText(${finalGeom}) as result`;
           break;
+        }
 
         case "intersection":
           if (!input.geometry2) {
