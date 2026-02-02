@@ -96,7 +96,7 @@ Available presets via \`--tool-filter\`:
 
 **Groups**: \`core\`, \`json\`, \`text\`, \`stats\`, \`vector\`, \`admin\`, \`geo\`
 **Syntax**: \`"core,json"\` (whitelist), \`"+stats"\` (add), \`"-admin"\` (remove)
-*17* = 13 in WASM (4 FTS5 tools require native)
+*Text group: 17 native, 13 in WASM (4 FTS5 tools require native)*
 `;
 
 /**
