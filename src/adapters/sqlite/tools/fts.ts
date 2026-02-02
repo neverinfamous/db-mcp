@@ -47,6 +47,14 @@ function isFts5UnavailableError(error: unknown): boolean {
 }
 
 /**
+ * Check if FTS5 is available (native backend only)
+ * FTS5 is not bundled with sql.js (WASM)
+ */
+function isFts5Available(adapter: SqliteAdapter): boolean {
+  return adapter.isNativeBackend();
+}
+
+/**
  * Build error response for FTS5 search unavailability in WASM mode
  * Includes required schema fields for FtsSearchOutputSchema
  */
@@ -259,6 +267,11 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsSearchSchema.parse(params);
 
+      // Upfront FTS5 availability check
+      if (!isFts5Available(adapter)) {
+        return buildFts5SearchUnavailableError();
+      }
+
       // Validate FTS table name
       sanitizeIdentifier(input.table);
 
@@ -328,6 +341,11 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsRebuildSchema.parse(params);
 
+      // Upfront FTS5 availability check
+      if (!isFts5Available(adapter)) {
+        return buildFts5UnavailableError(input.table);
+      }
+
       // Validate FTS table name
       sanitizeIdentifier(input.table);
 
@@ -366,6 +384,11 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("FTS Match Info"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FtsMatchInfoSchema.parse(params);
+
+      // Upfront FTS5 availability check
+      if (!isFts5Available(adapter)) {
+        return buildFts5SearchUnavailableError();
+      }
 
       // Validate FTS table name
       sanitizeIdentifier(input.table);

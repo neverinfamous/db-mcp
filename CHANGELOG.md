@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **FTS5 Tools WASM Upfront Check** — `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info` now check FTS5 availability upfront
+  - Previously, these tools threw raw "no such table" SQL errors in WASM mode when FTS tables couldn't be created
+  - Now return graceful error response with hint before attempting any SQL execution
+  - Consistent with `sqlite_fts_create` which already had upfront FTS5 detection
+
 - **WASM Adapter Templated Resource Support** — Fixed `sqlite://table/{name}/schema` resource returning "not found" in WASM mode
   - Ported `ResourceTemplate` handling from `NativeSqliteAdapter` to `SqliteAdapter`
   - Templated resources now properly register with MCP SDK's `ResourceTemplate` class
@@ -29,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **ServerInstructions.ts FTS5 Documentation** — Added note that FTS5 virtual tables and shadow tables are hidden from `sqlite_list_tables` for cleaner output
-
 
 - **`sqlite_fuzzy_match` Token-Based Matching** — Now matches against word tokens by default instead of entire column value
   - New `tokenize` parameter (default: `true`) splits column values into words for per-token comparison
