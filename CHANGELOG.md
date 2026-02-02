@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ServerInstructions.ts CSV Documentation** — Added WASM limitation note to CSV tool examples
   - Comment now reads "Native only - not available in WASM" for clarity
 
+- **ServerInstructions.ts `sqlite_list_tables` Documentation** — Clarified that views are listed via `sqlite_list_views`
+  - Updated description to note that views require `sqlite_list_views` from admin group
+
 ### Changed
 
 - **`sqlite_vector_search` Payload Optimization** — Vector data now excluded from results when not explicitly requested
