@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`sqlite_phonetic_match` Documentation** — Clarified first-word matching behavior
   - Added comment noting that Soundex compares only the first word of multi-word values
 
+- **ServerInstructions.ts Stats Group Documentation** — Clarified window function grouping
+  - Line 70: Changed "Window functions (6 tools)" to "Window functions (6 tools in stats group)"
+  - Line 89: Changed "Stats(13-19)" to "Stats(19: 13 core + 6 window)" for clearer tool count breakdown
+
 ### Added
 
 - **`sqlite_get_indexes` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite indexes

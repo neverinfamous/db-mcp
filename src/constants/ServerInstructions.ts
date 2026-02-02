@@ -67,7 +67,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 |---------|--------|------|----------|
 | FTS5 full-text search | ✅ | ❌ | None |
 | Transactions (7 tools) | ✅ | ❌ | None |
-| Window functions (6 tools) | ✅ | ❌ | None |
+| Window functions (6 tools in stats group) | ✅ | ❌ | None |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅ | ❌ | None |
 | Backup/Restore (3 tools) | ✅ | ❌ | Graceful error |
 | R-Tree spatial indexing | ✅ | ❌ | None |
@@ -86,7 +86,7 @@ Available presets via \`--tool-filter\`:
 | Shortcut | WASM | Native | Use Case |
 |----------|------|--------|----------|
 | \`starter\` | 44 | 48 | ⭐ Recommended: Core(8) + JSON(23) + Text(17*) |
-| \`analytics\` | 44 | 50 | Core(8) + JSON(23) + Stats(13-19) |
+| \`analytics\` | 44 | 50 | Core(8) + JSON(23) + Stats(19: 13 core + 6 window) |
 | \`search\` | 36 | 36 | Core(8) + Text(17) + Vector(11) |
 | \`spatial\` | 23 | 30 | Core(8) + Geo(4-11) + Vector(11) |
 | \`minimal\` | 8 | 8 | Core only |
