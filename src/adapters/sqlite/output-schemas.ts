@@ -388,6 +388,7 @@ export const JsonNormalizeColumnOutputSchema = z.object({
   unchanged: z.number(),
   errors: z.number(),
   total: z.number(),
+  outputFormat: z.enum(["text", "jsonb", "preserve"]).optional(),
 });
 
 // =============================================================================

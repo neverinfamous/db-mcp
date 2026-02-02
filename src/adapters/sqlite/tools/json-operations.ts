@@ -780,6 +780,13 @@ const JsonNormalizeColumnSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to normalize"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
+  outputFormat: z
+    .enum(["text", "jsonb", "preserve"])
+    .optional()
+    .default("text")
+    .describe(
+      "Output format: 'text' (default), 'jsonb', or 'preserve' original format",
+    ),
 });
 
 /**
@@ -955,9 +962,25 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
             rawData !== undefined &&
             typeof rawData !== "string";
 
-          // Update if content was modified OR if converting from JSONB to text
-          if (wasModified || wasJsonb) {
-            const updateSql = `UPDATE ${table} SET ${column} = ? WHERE rowid = ?`;
+          // Determine target format based on outputFormat parameter
+          const targetFormat = input.outputFormat ?? "text";
+          const shouldOutputJsonb =
+            targetFormat === "jsonb" ||
+            (targetFormat === "preserve" && wasJsonb);
+
+          // Determine if update is needed:
+          // - Content was modified (keys reordered, normalized)
+          // - Converting from JSONB to text (when outputFormat is 'text')
+          // - Converting from text to JSONB (when outputFormat is 'jsonb')
+          const needsFormatChange =
+            (wasJsonb && targetFormat === "text") ||
+            (!wasJsonb && targetFormat === "jsonb");
+
+          if (wasModified || needsFormatChange) {
+            // Use jsonb() wrapper if target is JSONB, otherwise plain text
+            const updateSql = shouldOutputJsonb
+              ? `UPDATE ${table} SET ${column} = jsonb(?) WHERE rowid = ?`
+              : `UPDATE ${table} SET ${column} = ? WHERE rowid = ?`;
             await adapter.executeWriteQuery(updateSql, [normalized, rowid]);
             normalizedCount++;
           } else {
@@ -975,6 +998,7 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
         unchanged: unchangedCount,
         errors: errorCount,
         total: selectResult.rows?.length ?? 0,
+        outputFormat: input.outputFormat ?? "text",
       };
     },
   };

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`sqlite_json_normalize_column` Output Format Control** — New `outputFormat` parameter for normalization output
+  - `text` (default): Always outputs normalized JSON as text (previous behavior)
+  - `jsonb`: Outputs normalized JSON in JSONB binary format
+  - `preserve`: Keeps original format (text→text, JSONB→JSONB)
+  - Enables normalizing JSONB columns without losing binary format efficiency
+  - Response includes `outputFormat` field indicating which format was applied
+
 ### Changed
 
 - **`sqlite_vector_search` Payload Optimization** — Vector data now excluded from results when not explicitly requested

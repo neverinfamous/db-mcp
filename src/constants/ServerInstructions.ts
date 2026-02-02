@@ -143,7 +143,7 @@ sqlite_analyze_json_schema({ table: "docs", column: "data" }) // infer schema ty
 // JSONB optimization (SQLite 3.45+)
 sqlite_json_storage_info({ table: "docs", column: "data" }) // check text vs JSONB format
 sqlite_jsonb_convert({ table: "docs", column: "data" }) // convert to JSONB for faster queries
-// Note: sqlite_json_normalize_column always converts JSONB to normalized text format
+// Note: sqlite_json_normalize_column defaults to text output; use outputFormat: 'preserve' to keep JSONB
 \`\`\`
 
 ## Vector/Semantic Search
