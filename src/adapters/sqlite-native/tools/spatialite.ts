@@ -233,8 +233,9 @@ function tryLoadSpatialite(
 
 /**
  * Check if SpatiaLite is loaded
+ * Exported for health check access
  */
-function isSpatialiteLoaded(adapter: NativeSqliteAdapter): boolean {
+export function isSpatialiteLoaded(adapter: NativeSqliteAdapter): boolean {
   const db = adapter.getDatabase();
   if (db === null) return false;
 
@@ -572,10 +573,13 @@ function createGeometryTransformTool(
       switch (input.operation) {
         case "buffer": {
           const bufferGeom = `Buffer(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})`;
-          // Optionally simplify the buffer to reduce vertex count in output
+          // Auto-simplify buffer output by default to reduce verbose WKT (~2KB -> ~200 bytes)
+          // Default tolerance 0.0001 is suitable for lat/lon coordinates
+          // Use simplifyTolerance: 0 to disable, or specify custom tolerance
+          const tolerance = input.simplifyTolerance ?? 0.0001;
           const finalGeom =
-            input.simplifyTolerance !== undefined
-              ? `Simplify(${bufferGeom}, ${input.simplifyTolerance})`
+            tolerance > 0
+              ? `Simplify(${bufferGeom}, ${tolerance})`
               : bufferGeom;
           query = `SELECT AsText(${finalGeom}) as result`;
           break;

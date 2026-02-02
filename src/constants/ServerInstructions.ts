@@ -190,7 +190,10 @@ sqlite_spatialite_import({ tableName: "places", format: "geojson", data: '{"type
 // Spatial queries and analysis
 sqlite_spatialite_query({ query: "SELECT name, AsText(geom) FROM places WHERE ST_Within(geom, ...)" })
 sqlite_spatialite_analyze({ analysisType: "spatial_extent", sourceTable: "places", geometryColumn: "geom" })
+// transform: buffer uses 'distance' param for radius; simplify uses 'distance' as tolerance (0.0001 for lat/lon)
+// Buffer now auto-simplifies output by default (tolerance=0.0001). Use simplifyTolerance: 0 to disable.
 sqlite_spatialite_transform({ operation: "buffer", geometry1: "POINT(-73.99 40.75)", distance: 0.01 })
+sqlite_spatialite_transform({ operation: "simplify", geometry1: "...", distance: 0.001 })
 sqlite_spatialite_index({ tableName: "places", geometryColumn: "geom", action: "create" })
 \`\`\`
 

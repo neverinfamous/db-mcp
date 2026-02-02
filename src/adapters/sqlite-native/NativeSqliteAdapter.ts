@@ -54,7 +54,7 @@ import {
 // Import native-specific tools
 import { getTransactionTools } from "./tools/transactions.js";
 import { getWindowTools } from "./tools/window.js";
-import { getSpatialiteTools } from "./tools/spatialite.js";
+import { getSpatialiteTools, isSpatialiteLoaded } from "./tools/spatialite.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
@@ -302,7 +302,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         details: {
           backend: "better-sqlite3",
           fts5: this.hasFts5(),
-          spatialite: false,
+          spatialite: isSpatialiteLoaded(this),
         },
       });
     } catch {

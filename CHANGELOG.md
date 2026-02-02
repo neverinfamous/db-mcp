@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`server_health` SpatiaLite Status** — Health check now reports accurate SpatiaLite extension status
+  - Previously hardcoded `spatialite: false` regardless of actual extension state
+  - Now calls exported `isSpatialiteLoaded()` to reflect runtime extension status
+  - Helps users confirm SpatiaLite is loaded before using spatial tools
+
 - **`sqlite_json_normalize_column` JSONB Conversion Consistency** — JSONB rows now always converted to normalized text format
   - Previously, JSONB rows with already-normalized content were left unchanged (still in JSONB binary format)
   - Handler now detects original storage format and forces text output for all JSONB rows
@@ -33,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Previously reported "Column already uses JSONB format" even when 50% of rows were still text JSON
 
 ### Changed
+
+- **`sqlite_spatialite_transform` Buffer Auto-Simplification** — Buffer operation now auto-simplifies output by default
+  - Reduces verbose WKT payload from ~2KB (64-point circle) to ~200 bytes
+  - Default tolerance 0.0001 is suitable for lat/lon coordinates
+  - Set `simplifyTolerance: 0` to disable auto-simplification for full precision output
+  - Updated `ServerInstructions.ts` with clarified documentation on distance parameter usage
 
 - **`sqlite_transaction_execute` SELECT Row Data** — SELECT statements now return actual row data
   - Results include `rowCount` and `rows` fields for SELECT statements instead of just `rowsAffected: 0`
