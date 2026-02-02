@@ -344,6 +344,12 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
       const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
       // Build select clause
+      // Determine if vector column should be included in final results
+      const includeVectorInResults =
+        !input.returnColumns ||
+        input.returnColumns.length === 0 ||
+        input.returnColumns.includes(input.vectorColumn);
+
       let selectCols = "*";
       if (input.returnColumns && input.returnColumns.length > 0) {
         const quotedCols = input.returnColumns.map((c) =>
@@ -352,6 +358,7 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
         selectCols = quotedCols.join(", ");
       }
 
+      // Always fetch vector column for similarity calculation, but may remove from results
       let sql = `SELECT ${selectCols}, ${vectorColumn} FROM ${table}`;
       if (input.whereClause) {
         validateWhereClause(input.whereClause);
@@ -392,11 +399,20 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
       scored.sort((a, b) => b._similarity - a._similarity);
       const limited = scored.slice(0, input.limit);
 
+      // Remove vector data from results if not explicitly requested (payload optimization)
+      const results = includeVectorInResults
+        ? limited
+        : limited.map((row) =>
+            Object.fromEntries(
+              Object.entries(row).filter(([key]) => key !== input.vectorColumn),
+            ),
+          );
+
       return {
         success: true,
         metric: input.metric,
-        count: limited.length,
-        results: limited,
+        count: results.length,
+        results,
       };
     },
   };

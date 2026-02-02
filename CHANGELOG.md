@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`sqlite_vector_search` Payload Optimization** — Vector data now excluded from results when not explicitly requested
+  - When `returnColumns` is specified without the vector column, results omit vector data for smaller payloads
+  - Reduces response size significantly for high-dimensional vectors (e.g., 384+ dimensions)
+  - Vector data still included when `returnColumns` is empty or explicitly includes the vector column
+
+- **ServerInstructions.ts Vector Tool Documentation** — Expanded vector section with all 11 tool examples
+  - Added missing tools: `sqlite_vector_batch_store`, `sqlite_vector_get`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_dimensions`
+  - Added documentation note about `returnColumns` payload optimization
+
 ### Fixed
 
 - **Stats Tool Group Bug Fixes** — Resolved 6 issues from comprehensive tool testing
