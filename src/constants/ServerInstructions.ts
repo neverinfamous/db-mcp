@@ -156,6 +156,8 @@ sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }) // magnitude min/max
 // Create FTS5 table with triggers for auto-sync on future changes
 sqlite_fts_create({ tableName: "articles_fts", sourceTable: "articles", columns: ["title", "content"] })
 sqlite_fts_rebuild({ table: "articles_fts" })  // Required: populate index with existing data
+// FTS5 uses AND by default: "machine learning" = rows containing BOTH words
+// Use OR explicitly: "machine OR learning" for rows containing EITHER word
 sqlite_fts_search({ table: "articles_fts", query: "machine learning", limit: 10 })
 \`\`\`
 
