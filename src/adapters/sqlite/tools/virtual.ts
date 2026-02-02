@@ -170,8 +170,8 @@ function createGenerateSeriesTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GenerateSeriesSchema.parse(params);
 
-      // SQLite 3.40+ has built-in generate_series
-      // For older versions, we generate in JS
+      // SQLite 3.40+ can have built-in generate_series if compiled with SQLITE_ENABLE_SERIES
+      // better-sqlite3's bundled SQLite doesn't include this, so we fallback to JS
       const sql = `SELECT value FROM generate_series(${input.start}, ${input.stop}, ${input.step})`;
 
       try {
