@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added missing tools: `sqlite_vector_batch_store`, `sqlite_vector_get`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_dimensions`
   - Added documentation note about `returnColumns` payload optimization
 
+- **ServerInstructions.ts Admin Tool Documentation** — Expanded Database Administration section with all admin tool examples
+  - Added 20+ missing examples: views (`sqlite_create_view/drop_view/list_views`), virtual tables, backup/restore/verify
+  - Added PRAGMA utilities (`sqlite_pragma_compile_options/database_list/optimize`), `sqlite_index_stats`, `sqlite_dbstat`
+  - Added `sqlite_generate_series`, `sqlite_create_series_table`, `sqlite_create_rtree_table`, `sqlite_append_insight`
+
 ### Fixed
 
 - **Stats Tool Group Bug Fixes** — Resolved 6 issues from comprehensive tool testing

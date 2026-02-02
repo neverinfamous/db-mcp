@@ -159,6 +159,7 @@ sqlite_vector_batch_store({ table: "docs", idColumn: "id", vectorColumn: "emb", 
 sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10, returnColumns: ["id", "title"] })
 
 // Retrieve and delete vectors
+// Note: sqlite_vector_get returns parsed 'vector' array + raw JSON string in 'metadata' for flexibility
 sqlite_vector_get({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1 })
 sqlite_vector_delete({ table: "docs", idColumn: "id", ids: [1, 2, 3] })
 
@@ -270,16 +271,53 @@ sqlite_advanced_search({ table: "products", column: "name", searchTerm: "laptop"
 
 ## Database Administration
 \`\`\`javascript
+// Database maintenance
 sqlite_integrity_check({ maxErrors: 10 }) // Check for corruption
 sqlite_optimize({ analyze: true, reindex: true }) // Optimize performance
 sqlite_vacuum() // Reclaim space
-sqlite_pragma_settings({ pragma: "journal_mode" }) // Get/set PRAGMA values
-sqlite_pragma_table_info({ table: "users" }) // Get column details
-sqlite_backup({ targetPath: "/path/to/backup.db" }) // Native only
+sqlite_analyze({ table: "orders" }) // Update statistics for query planner
+sqlite_dbstat({ summarize: true }) // Storage statistics (JS fallback in WASM)
+
+// Backup and restore (Native only)
+sqlite_backup({ targetPath: "/path/to/backup.db" })
+sqlite_verify_backup({ backupPath: "/path/to/backup.db" }) // Check integrity without restoring
+sqlite_restore({ sourcePath: "/path/to/backup.db" }) // WARNING: Replaces current database
+
+// PRAGMA utilities
+sqlite_pragma_settings({ pragma: "journal_mode" }) // Get value
+sqlite_pragma_settings({ pragma: "cache_size", value: 10000 }) // Set value
+sqlite_pragma_table_info({ table: "users" }) // Column details
+sqlite_pragma_compile_options({ filter: "FTS" }) // Filter compile options
+sqlite_pragma_database_list() // List attached databases
+sqlite_pragma_optimize() // Run PRAGMA optimize
+
+// Index statistics
+sqlite_index_stats({ table: "orders" }) // Stats for explicit indexes
+
+// Views (SELECT-based virtual tables)
+sqlite_create_view({ viewName: "active_orders", selectQuery: "SELECT * FROM orders WHERE status = 'active'" })
+sqlite_create_view({ viewName: "v", selectQuery: "...", replace: true }) // CREATE OR REPLACE
+sqlite_list_views() // List all views
+sqlite_drop_view({ viewName: "active_orders" })
+
+// Virtual tables
+sqlite_list_virtual_tables() // List FTS5, R-Tree, CSV tables
+sqlite_virtual_table_info({ tableName: "articles_fts" }) // Module and column info
+sqlite_drop_virtual_table({ tableName: "old_fts", ifExists: true })
+
+// Generate series (JS fallback in WASM)
+sqlite_generate_series({ start: 1, stop: 100, step: 5 }) // Returns array of values
+sqlite_create_series_table({ tableName: "numbers", start: 1, stop: 1000 }) // Persistent table
+
+// R-Tree spatial indexing (Native only)
+sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }) // 2D: minX, maxX, minY, maxY
 
 // CSV Virtual Tables (Native only - requires ABSOLUTE paths)
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" })
 sqlite_create_csv_table({ tableName: "csv_data", filePath: "/absolute/path/to/data.csv" })
+
+// Business insights capture
+sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }) // Add to memo://insights
 \`\`\`
 `;
 
