@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+
+- **Dependency Updates** — Updated npm dependencies to latest versions
+  - `@types/node`: 25.1.0 → 25.2.0
+  - `globals`: 17.2.0 → 17.3.0
+  - `pg`: 8.17.2 → 8.18.0
+
 ### Changed
 
 - **`sqlite_fuzzy_match` Token-Based Matching** — Now matches against word tokens by default instead of entire column value
