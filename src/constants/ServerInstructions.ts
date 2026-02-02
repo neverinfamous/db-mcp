@@ -196,10 +196,10 @@ sqlite_spatialite_index({ tableName: "places", geometryColumn: "geom", action: "
 
 ## Window Functions (Native Only)
 \`\`\`javascript
-sqlite_window_row_number({ table: "employees", order_by: "hire_date", partition_by: "department" })
-sqlite_window_rank({ table: "sales", value_column: "revenue", partition_by: "region", rank_type: "dense_rank" })
-sqlite_window_running_total({ table: "transactions", value_column: "amount", order_by: "date" })
-sqlite_window_moving_avg({ table: "stock_prices", value_column: "close_price", order_by: "date", window_size: 7 })
+sqlite_window_row_number({ table: "employees", orderBy: "hire_date", partitionBy: "department" })
+sqlite_window_rank({ table: "sales", orderBy: "revenue DESC", partitionBy: "region", rankType: "dense_rank" })
+sqlite_window_running_total({ table: "transactions", valueColumn: "amount", orderBy: "date" })
+sqlite_window_moving_avg({ table: "stock_prices", valueColumn: "close_price", orderBy: "date", windowSize: 7 })
 \`\`\`
 
 ## Transactions (Native Only)
