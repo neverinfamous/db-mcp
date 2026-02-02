@@ -212,11 +212,27 @@ function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const result = await adapter.executeReadQuery(sql);
+      const row = result.rows?.[0];
+
+      // Helper to safely convert to number or null
+      const toNumberOrNull = (val: unknown): number | null => {
+        if (val === null || val === undefined) return null;
+        if (typeof val === "number") return val;
+        const num = Number(val);
+        return Number.isNaN(num) ? null : num;
+      };
 
       return {
         success: true,
         column: input.column,
-        stats: result.rows?.[0],
+        stats: {
+          count: Number(row?.["count"] ?? 0),
+          sum: toNumberOrNull(row?.["sum"]),
+          avg: toNumberOrNull(row?.["avg"]),
+          min: toNumberOrNull(row?.["min"]),
+          max: toNumberOrNull(row?.["max"]),
+          range: toNumberOrNull(row?.["range"]),
+        },
       };
     },
   };
@@ -287,6 +303,23 @@ function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
       const valueColumn = sanitizeIdentifier(input.valueColumn);
       const groupByColumn = sanitizeIdentifier(input.groupByColumn);
 
+      // Validate that columns exist to prevent SQLite from treating non-existent columns as string literals
+      const tableInfo = await adapter.describeTable(input.table);
+      const columnNames = new Set(
+        (tableInfo.columns ?? []).map((c) => c.name.toLowerCase()),
+      );
+
+      if (!columnNames.has(input.valueColumn.toLowerCase())) {
+        throw new Error(
+          `Column "${input.valueColumn}" not found in table "${input.table}"`,
+        );
+      }
+      if (!columnNames.has(input.groupByColumn.toLowerCase())) {
+        throw new Error(
+          `Column "${input.groupByColumn}" not found in table "${input.table}"`,
+        );
+      }
+
       const statFunc = input.stat.toUpperCase();
       const orderCol = input.orderBy === "value" ? "stat_value" : groupByColumn;
 
@@ -352,12 +385,14 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       // Build histogram using CASE expressions
+      // Final bucket uses <= to include the max value
       const bucketCases = [];
       for (let i = 0; i < input.buckets; i++) {
         const bucketMin = minVal + i * bucketSize;
         const bucketMax = minVal + (i + 1) * bucketSize;
+        const upperOp = i === input.buckets - 1 ? "<=" : "<";
         bucketCases.push(
-          `SUM(CASE WHEN ${column} >= ${bucketMin} AND ${column} < ${bucketMax} THEN 1 ELSE 0 END) as bucket_${i}`,
+          `SUM(CASE WHEN ${column} >= ${bucketMin} AND ${column} ${upperOp} ${bucketMax} THEN 1 ELSE 0 END) as bucket_${i}`,
         );
       }
 
@@ -512,12 +547,17 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
 
       const correlation = denominator === 0 ? 0 : numerator / denominator;
 
+      // Handle NaN case (e.g., all values are the same or data issues)
+      const roundedCorrelation = Number.isNaN(correlation)
+        ? null
+        : Math.round(correlation * 10000) / 10000;
+
       return {
         success: true,
         column1: input.column1,
         column2: input.column2,
         n: pairs.length,
-        correlation: Math.round(correlation * 10000) / 10000,
+        correlation: roundedCorrelation,
       };
     },
   };
@@ -614,6 +654,22 @@ function createDistinctValuesTool(adapter: SqliteAdapter): ToolDefinition {
  * Summary statistics for all numeric columns
  */
 function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
+  // Numeric SQLite column types
+  const numericTypes = new Set([
+    "integer",
+    "int",
+    "real",
+    "float",
+    "double",
+    "numeric",
+    "decimal",
+    "number",
+    "smallint",
+    "bigint",
+    "tinyint",
+    "mediumint",
+  ]);
+
   return {
     name: "sqlite_stats_summary",
     description: "Get summary statistics for multiple columns at once.",
@@ -631,17 +687,44 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
       // Get table info to find columns
       const tableInfo = await adapter.describeTable(input.table);
 
-      // Filter to requested columns or all columns from table
-      let columns = (tableInfo.columns ?? []).map((c) => c.name);
+      // Filter to requested columns or auto-detect numeric columns
+      let columns: string[] = [];
       if (input.columns && input.columns.length > 0) {
+        // User-specified columns - validate them
         columns = input.columns.map((col) => {
           sanitizeIdentifier(col); // Validate
           return col;
         });
+      } else {
+        // Auto-detect: only include numeric columns
+        columns = (tableInfo.columns ?? [])
+          .filter((c) => {
+            const typeLower = (c.type ?? "").toLowerCase();
+            // Check if type starts with a known numeric type
+            return [...numericTypes].some(
+              (nt) => typeLower === nt || typeLower.startsWith(nt),
+            );
+          })
+          .map((c) => c.name);
+      }
+
+      if (columns.length === 0) {
+        return {
+          success: true,
+          table: input.table,
+          summaries: [],
+        };
       }
 
       // Build summary query for each column
-      const summaries: Record<string, unknown>[] = [];
+      const summaries: {
+        column: string;
+        count?: number;
+        avg?: number | null;
+        min?: number | null;
+        max?: number | null;
+        error?: string;
+      }[] = [];
 
       for (const col of columns) {
         const quotedCol = sanitizeIdentifier(col);
@@ -659,9 +742,35 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
 
         try {
           const result = await adapter.executeReadQuery(sql);
+          const row = result.rows?.[0];
+
+          // Ensure numeric types - convert strings to numbers if needed
+          const count = Number(row?.["count"] ?? 0);
+          const avg = row?.["avg"];
+          const min = row?.["min"];
+          const max = row?.["max"];
+
           summaries.push({
             column: col,
-            ...result.rows?.[0],
+            count,
+            avg:
+              typeof avg === "number"
+                ? avg
+                : avg === null
+                  ? null
+                  : Number(avg) || null,
+            min:
+              typeof min === "number"
+                ? min
+                : min === null
+                  ? null
+                  : Number(min) || null,
+            max:
+              typeof max === "number"
+                ? max
+                : max === null
+                  ? null
+                  : Number(max) || null,
           });
         } catch {
           // Column may not be numeric, skip
@@ -1186,6 +1295,15 @@ function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const tStatistic = (mean - expectedMean) / (stdDev / Math.sqrt(n));
+
+        // Validate result - Infinity or NaN indicates data issues (zero variance, non-numeric column, etc.)
+        if (!Number.isFinite(tStatistic)) {
+          throw new Error(
+            `Cannot compute t-statistic: stdDev=${stdDev.toFixed(4)}, n=${n}. ` +
+              `This may indicate zero variance, non-numeric data, or that column "${input.column}" does not exist.`,
+          );
+        }
+
         const pValue = tDistPValue(tStatistic, df);
 
         return {
@@ -1235,10 +1353,19 @@ function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Welch's t-test
         const tStatistic = (mean1 - mean2) / Math.sqrt(var1 / n1 + var2 / n2);
+
+        // Validate result - Infinity or NaN indicates data issues
+        if (!Number.isFinite(tStatistic)) {
+          throw new Error(
+            `Cannot compute t-statistic: var1=${var1.toFixed(4)}, var2=${var2.toFixed(4)}. ` +
+              `This may indicate zero variance or non-numeric data.`,
+          );
+        }
+
         const dfNum = Math.pow(var1 / n1 + var2 / n2, 2);
         const dfDen =
           Math.pow(var1 / n1, 2) / (n1 - 1) + Math.pow(var2 / n2, 2) / (n2 - 1);
-        const df = dfNum / dfDen;
+        const df = Number.isFinite(dfNum / dfDen) ? dfNum / dfDen : n1 + n2 - 2;
         const pValue = tDistPValue(tStatistic, df);
 
         return {

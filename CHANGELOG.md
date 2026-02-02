@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Stats Tool Group Bug Fixes** — Resolved 6 issues from comprehensive tool testing
+  - `sqlite_stats_histogram`: Fixed off-by-one bucket boundary that excluded max values (now uses `<=` for final bucket)
+  - `sqlite_stats_summary`: Auto-filters to numeric columns when no columns specified (prevents string min/max errors)
+  - `sqlite_stats_correlation`: Returns `null` instead of `NaN` for invalid correlations (schema-safe)
+  - `sqlite_stats_hypothesis`: Validates t-statistic is finite before returning (catches zero variance/non-numeric columns)
+  - `sqlite_stats_basic`: Ensures numeric type coercion for all stat values (converts strings to numbers or null)
+  - `sqlite_stats_group_by`: Validates both `valueColumn` and `groupByColumn` exist in table before execution
+
+- **NativeSqliteAdapter Missing Method** — Added `getConfiguredPath()` to match SqliteAdapter interface
+  - `sqlite_pragma_database_list` tool was failing in native mode due to missing method
+  - Now returns configured database path consistently across WASM and Native adapters
+
 - **`sqlite_dbstat` Table-Specific WASM Fallback** — Improved fallback when dbstat virtual table unavailable
   - Previously, the `table` parameter was ignored in WASM mode, returning only total database page count
   - Now provides table-specific estimates: `rowCount`, `estimatedPages` (~100 rows/page), and `totalDatabasePages`
