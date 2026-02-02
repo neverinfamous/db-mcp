@@ -162,6 +162,13 @@ export const CreateIndexSchema = z.object({
 
 export const GetIndexesSchema = z.object({
   tableName: z.string().optional().describe("Filter indexes by table name"),
+  excludeSystemIndexes: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Exclude SpatiaLite system indexes (idx_spatial_ref_sys, idx_srid_geocols, etc.)",
+    ),
 });
 
 export const ListTablesSchema = z.object({

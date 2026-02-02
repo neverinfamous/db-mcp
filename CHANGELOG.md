@@ -9,10 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`sqlite_get_indexes` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite indexes
+  - When `true`, filters out SpatiaLite system indexes (`idx_spatial_ref_sys`, `idx_srid_geocols`, `idx_viewsjoin`, `idx_virtssrid`, etc.)
+  - Provides parity with `sqlite_list_tables` parameter `excludeSystemTables`
+  - Default is `false` to preserve backward compatibility
+
 - **`sqlite_list_tables` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
   - When `true`, filters out SpatiaLite system tables (`geometry_columns`, `spatial_ref_sys`, `spatialite_history`, `vector_layers`, etc.)
   - Reduces noise in table listings for spatial databases (38 tables → 12 user tables)
   - Default is `false` to preserve backward compatibility
+
+### Fixed
+
+- **`sqlite_list_tables` KNN2 Virtual Table** — KNN2 SpatiaLite virtual table now filtered by `excludeSystemTables`
+  - Added "KNN2" to the SpatiaLite system table exclusion list
+  - Previously KNN2 was shown despite `excludeSystemTables=true`
 
 - **`sqlite_json_group_object` Aggregate Function Support** — New `aggregateFunction` parameter for aggregate values
   - Enables `COUNT(*)`, `SUM(amount)`, `AVG(price)`, and other aggregate functions as object values

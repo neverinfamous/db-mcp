@@ -203,7 +203,30 @@ const SPATIALITE_SYSTEM_PREFIXES = [
   "ElementaryGeometries",
   "SpatialIndex",
   "KNN",
+  "KNN2",
 ];
+
+/**
+ * SpatiaLite system index prefixes to exclude when filtering
+ */
+const SPATIALITE_SYSTEM_INDEX_PREFIXES = [
+  "idx_spatial_ref_sys",
+  "idx_srid_geocols",
+  "idx_viewsjoin",
+  "idx_virtssrid",
+  "idx_vector_layers",
+  "idx_geometry_columns",
+  "sqlite_autoindex_",
+];
+
+/**
+ * Check if an index name is a SpatiaLite system index
+ */
+function isSpatialiteSystemIndex(name: string): boolean {
+  return SPATIALITE_SYSTEM_INDEX_PREFIXES.some(
+    (prefix) => name === prefix || name.startsWith(prefix),
+  );
+}
 
 /**
  * Check if a table name is a SpatiaLite system table
@@ -336,12 +359,17 @@ function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
 
       const result = await adapter.executeReadQuery(sql);
 
-      const indexes = (result.rows ?? []).map((row) => ({
+      let indexes = (result.rows ?? []).map((row) => ({
         name: row["name"] as string,
         table: row["tbl_name"] as string,
         unique: (row["sql"] as string)?.includes("UNIQUE") ?? false,
         sql: row["sql"] as string,
       }));
+
+      // Filter out SpatiaLite system indexes if requested
+      if (input.excludeSystemIndexes) {
+        indexes = indexes.filter((idx) => !isSpatialiteSystemIndex(idx.name));
+      }
 
       return {
         success: true,
