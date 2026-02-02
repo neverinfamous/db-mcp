@@ -141,6 +141,9 @@ sqlite_jsonb_convert({ table: "docs", column: "data" }) // convert to JSONB for 
 
 ## Vector/Semantic Search
 \`\`\`javascript
+// Create vector table with metadata columns
+sqlite_vector_create_table({ tableName: "docs", dimensions: 384, additionalColumns: [{ name: "content", type: "TEXT" }] })
+
 // Store and search vectors
 sqlite_vector_store({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1, vector: [...] })
 sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10, returnColumns: ["id", "title"] })
