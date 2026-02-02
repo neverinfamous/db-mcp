@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`sqlite_fuzzy_match` Token-Based Matching** — Now matches against word tokens by default instead of entire column value
+  - New `tokenize` parameter (default: `true`) splits column values into words for per-token comparison
+  - "laptop" now matches "Laptop Pro 15" (distance 0 on first token)
+  - Output includes `matchedToken` and `tokenDistance` for transparency
+  - Set `tokenize: false` to restore legacy behavior (match entire column value)
+  - Removed full row data from output for token efficiency (just `value` and match info)
+  - Updated `ServerInstructions.ts` documentation with new behavior
+
+- **`sqlite_phonetic_match` Documentation** — Clarified first-word matching behavior
+  - Added comment noting that Soundex compares only the first word of multi-word values
+
 ### Added
 
 - **`sqlite_get_indexes` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite indexes

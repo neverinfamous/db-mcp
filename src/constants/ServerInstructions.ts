@@ -231,11 +231,12 @@ sqlite_text_normalize({ table: "docs", column: "content", mode: "strip_accents" 
 sqlite_text_validate({ table: "users", column: "email", pattern: "email" })
 sqlite_text_validate({ table: "data", column: "field", pattern: "custom", customPattern: "^[A-Z]{2}[0-9]{4}$" })
 
-// Fuzzy matching - compares against ENTIRE column value, not word tokens
-// Use maxDistance 1-3 for similar-length strings; for "Laptop Pro 15", search "laptop" won't match
-sqlite_fuzzy_match({ table: "products", column: "name", search: "laptp", maxDistance: 3 })
+// Fuzzy matching - matches against WORD TOKENS by default (not entire value)
+// "laptop" now matches "Laptop Pro 15" (distance 0 on first token). Use tokenize:false for legacy behavior.
+sqlite_fuzzy_match({ table: "products", column: "name", search: "laptp", maxDistance: 2 })
 
-// Phonetic matching - finds words that sound alike
+// Phonetic matching - finds words that sound alike (matches FIRST word only)
+// Soundex compares only the first word: "laptop" matches "Laptop Pro 15", but "pro" won't
 sqlite_phonetic_match({ table: "products", column: "name", search: "laptop", algorithm: "soundex" })
 
 // Advanced search - combines exact, fuzzy, and phonetic techniques

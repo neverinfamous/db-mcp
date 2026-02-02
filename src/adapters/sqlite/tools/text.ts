@@ -101,6 +101,13 @@ const FuzzyMatchSchema = z.object({
     .optional()
     .default(3)
     .describe("Maximum Levenshtein distance"),
+  tokenize: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Split column values into words and match against tokens (default: true). Set false to match entire column value.",
+    ),
   limit: z.number().optional().default(10),
 });
 
@@ -753,17 +760,19 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_fuzzy_match",
     description:
-      "Find fuzzy matches using Levenshtein distance. Compares search term against entire column values (not word tokens). Use maxDistance 1-3 for similar-length strings.",
+      "Find fuzzy matches using Levenshtein distance. By default, splits values into tokens and matches against each word (use tokenize:false to match entire value). Use maxDistance 1-3 for similar-length strings.",
     group: "text",
     inputSchema: FuzzyMatchSchema,
     outputSchema: z.object({
       success: z.boolean(),
       matchCount: z.number(),
+      tokenized: z.boolean(),
       matches: z.array(
         z.object({
           value: z.string(),
+          matchedToken: z.string().optional(),
+          tokenDistance: z.number().optional(),
           distance: z.number(),
-          row: z.record(z.string(), z.unknown()),
         }),
       ),
     }),
@@ -776,13 +785,14 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
       const table = sanitizeIdentifier(input.table);
       const column = sanitizeIdentifier(input.column);
 
-      const sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+      const sql = `SELECT ${column} FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
       const result = await adapter.executeReadQuery(sql);
 
       const matches: {
         value: string;
+        matchedToken?: string;
+        tokenDistance?: number;
         distance: number;
-        row: Record<string, unknown>;
       }[] = [];
 
       for (const row of result.rows ?? []) {
@@ -791,9 +801,35 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
           typeof rawValue === "string"
             ? rawValue
             : JSON.stringify(rawValue ?? "");
-        const distance = levenshtein(input.search, value);
-        if (distance <= input.maxDistance) {
-          matches.push({ value, distance, row });
+
+        if (input.tokenize) {
+          // Token-based matching: split into words and find best match
+          const tokens = value.split(/\s+/).filter((t) => t.length > 0);
+          let bestToken = "";
+          let bestDistance = Infinity;
+
+          for (const token of tokens) {
+            const dist = levenshtein(input.search, token);
+            if (dist < bestDistance) {
+              bestDistance = dist;
+              bestToken = token;
+            }
+          }
+
+          if (bestDistance <= input.maxDistance) {
+            matches.push({
+              value,
+              matchedToken: bestToken,
+              tokenDistance: bestDistance,
+              distance: bestDistance,
+            });
+          }
+        } else {
+          // Legacy behavior: match against entire column value
+          const distance = levenshtein(input.search, value);
+          if (distance <= input.maxDistance) {
+            matches.push({ value, distance });
+          }
         }
       }
 
@@ -804,6 +840,7 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
       return {
         success: true,
         matchCount: limited.length,
+        tokenized: input.tokenize,
         matches: limited,
       };
     },
