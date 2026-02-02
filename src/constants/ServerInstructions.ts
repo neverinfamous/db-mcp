@@ -50,7 +50,14 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | Database schema | \`sqlite://schema\` resource |
 | List tables | \`sqlite://tables\` resource |
 
-## Core Tools
+## Built-in Tools (always available)
+| Tool | Description |
+|------|-------------|
+| \`server_info\` | Get server name, version, adapters, tool filter config |
+| \`server_health\` | Check adapter connections, latency, SQLite version |
+| \`list_adapters\` | List registered database adapters |
+
+## Core Tools (8)
 | Tool | Description |
 |------|-------------|
 | \`sqlite_read_query\` | Execute SELECT queries |
@@ -70,8 +77,8 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | Window functions (6 tools in stats group) | ✅ | ❌ | None |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅ | ❌ | None |
 | Backup/Restore (3 tools) | ✅ | ❌ | Graceful error |
-| R-Tree spatial indexing | ✅ | ❌ | None |
-| CSV virtual tables | ✅ | ❌ | None (requires absolute paths) |
+| R-Tree spatial indexing | ✅ | ❌ | Graceful error |
+| CSV virtual tables | ✅ | ❌ | Graceful error |
 | generate_series | JS fallback | JS fallback | — |
 | dbstat | ✅ native | ❌ | JS (basic) |
 | soundex() | ✅ native | ❌ | JS |
