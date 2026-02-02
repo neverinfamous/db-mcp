@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **ServerInstructions.ts FTS5 Documentation** — Added note that FTS5 virtual tables and shadow tables are hidden from `sqlite_list_tables` for cleaner output
+
+
 - **`sqlite_fuzzy_match` Token-Based Matching** — Now matches against word tokens by default instead of entire column value
   - New `tokenize` parameter (default: `true`) splits column values into words for per-token comparison
   - "laptop" now matches "Laptop Pro 15" (distance 0 on first token)
