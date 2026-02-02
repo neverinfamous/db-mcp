@@ -68,7 +68,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | FTS5 full-text search | ✅ | ❌ | None |
 | Transactions (7 tools) | ✅ | ❌ | None |
 | Window functions (6 tools) | ✅ | ❌ | None |
-| SpatiaLite GIS (7 of 11 geo tools) | ✅ | ❌ | None |
+| SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅ | ❌ | None |
 | Backup/Restore (3 tools) | ✅ | ❌ | Graceful error |
 | R-Tree spatial indexing | ✅ | ❌ | None |
 | CSV virtual tables | ✅ | ❌ | None (requires absolute paths) |

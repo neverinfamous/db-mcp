@@ -33,9 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`sqlite_list_tables` Documentation** — Updated tool description in ServerInstructions.ts
   - Now mentions `excludeSystemTables` parameter for filtering SpatiaLite metadata
 
-- **ServerInstructions.ts SpatiaLite Tool Count** — Fixed tool count accuracy
-  - Changed "SpatiaLite GIS (7 tools)" to "SpatiaLite GIS (7 of 11 geo tools)"
-  - Clarifies that 7 SpatiaLite tools are part of the larger 11-tool geo group
+- **ServerInstructions.ts SpatiaLite Tool Count** — Improved documentation clarity
+  - Changed "SpatiaLite GIS (7 of 11 geo tools)" to "SpatiaLite GIS (7 tools; 4 basic geo always work)"
+  - Clarifies that 7 tools require SpatiaLite while 4 basic Haversine-based tools work in any mode
 
 - **`sqlite_json_normalize_column` JSONB Conversion Consistency** — JSONB rows now always converted to normalized text format
   - Previously, JSONB rows with already-normalized content were left unchanged (still in JSONB binary format)
