@@ -124,9 +124,9 @@ sqlite_json_extract({ table: "docs", column: "data", path: "$.title" })
 sqlite_json_set({ table: "docs", column: "data", path: "$.views", value: 100, whereClause: "id = 1" })
 sqlite_json_merge({ table: "docs", column: "data", mergeData: { featured: true }, whereClause: "id = 1" })
 
-// Array operations
+// Array operations (Note: json_each multiplies output rows—use limit param for large arrays)
 sqlite_json_array_append({ table: "docs", column: "data", path: "$.tags", value: "featured", whereClause: "id = 1" })
-sqlite_json_each({ table: "docs", column: "data", path: "$.tags" }) // expand array to rows
+sqlite_json_each({ table: "docs", column: "data", path: "$.tags", limit: 50 }) // expand array to rows
 
 // Aggregation and analysis
 // Regular tables: use column names directly for groupByColumn

@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **ServerInstructions.ts `sqlite_json_each` Payload Warning** — Added explicit warning about output row multiplication
+  - Comment now reads: "Note: json_each multiplies output rows—use limit param for large arrays"
+  - Example updated to include `limit: 50` parameter to demonstrate payload control
+
+### Changed
+
 - **`sqlite_drop_virtual_table` Regular Table Validation** — Now validates target is actually a virtual table
   - Returns helpful error message if attempting to drop a regular table, directing to use `sqlite_drop_table` instead
   - Prevents accidental misuse of virtual table drop tool on regular tables
