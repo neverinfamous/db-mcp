@@ -138,11 +138,19 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
         await adapter.executeQuery(sql);
         const duration = Date.now() - start;
 
+        // In WASM mode, backup goes to virtual filesystem (ephemeral)
+        const isWasm = !adapter.isNativeBackend();
         return {
           success: true,
-          message: `Database backed up to '${input.targetPath}'`,
+          message: isWasm
+            ? `Database backed up to WASM virtual filesystem (ephemeral)`
+            : `Database backed up to '${input.targetPath}'`,
           path: input.targetPath,
           durationMs: duration,
+          wasmLimitation: isWasm ? true : undefined,
+          note: isWasm
+            ? "In WASM mode, backups are stored in an ephemeral virtual filesystem and will NOT persist after the session ends. Use native SQLite for persistent backups."
+            : undefined,
         };
       } catch (error) {
         // Detect WASM file system limitation (only in WASM mode)

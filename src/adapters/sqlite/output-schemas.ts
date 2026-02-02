@@ -1128,6 +1128,7 @@ export const BackupOutputSchema = z.object({
   sizeBytes: z.number().optional(),
   durationMs: z.number().optional(),
   wasmLimitation: z.boolean().optional(),
+  note: z.string().optional(),
 });
 
 /**
