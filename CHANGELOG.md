@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_dbstat` Table-Specific WASM Fallback** — Improved fallback when dbstat virtual table unavailable
+  - Previously, the `table` parameter was ignored in WASM mode, returning only total database page count
+  - Now provides table-specific estimates: `rowCount`, `estimatedPages` (~100 rows/page), and `totalDatabasePages`
+  - Returns `success: false` with appropriate message if specified table doesn't exist
+
+- **`sqlite_drop_virtual_table` Accurate Messaging** — Fixed misleading success message for non-existent tables
+  - Previously, dropping a non-existent table with `ifExists: true` reported "Dropped virtual table 'x'"
+  - Now returns accurate message: "Virtual table 'x' did not exist (no action taken)"
+  - Helps distinguish between actual drops and no-op operations
+
 - **FTS5 Tools WASM Upfront Check** — `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info` now check FTS5 availability upfront
   - Previously, these tools threw raw "no such table" SQL errors in WASM mode when FTS tables couldn't be created
   - Now return graceful error response with hint before attempting any SQL execution

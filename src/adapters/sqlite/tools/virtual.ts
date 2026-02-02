@@ -390,16 +390,55 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch {
         // dbstat may not be available
-        // Fallback to basic page count using PRAGMA
-        const result = await adapter.executeReadQuery("PRAGMA page_count");
-        // PRAGMA page_count returns a single row with the count value
-        const pageCount =
-          result.rows?.[0]?.["page_count"] ?? result.rows?.[0]?.[0];
+        // Fallback to basic stats with optional table-specific estimates
+        const pageCountResult =
+          await adapter.executeReadQuery("PRAGMA page_count");
+        const totalPageCount =
+          pageCountResult.rows?.[0]?.["page_count"] ??
+          pageCountResult.rows?.[0]?.[0];
+        const totalPages =
+          typeof totalPageCount === "number"
+            ? totalPageCount
+            : Number(totalPageCount);
+
+        // If a specific table is requested, provide table-specific estimate
+        if (input.table) {
+          sanitizeIdentifier(input.table);
+          const escapedTable = input.table.replace(/'/g, "''");
+
+          // Check if table exists
+          const tableCheck = await adapter.executeReadQuery(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name='${escapedTable}'`,
+          );
+          if (!tableCheck.rows || tableCheck.rows.length === 0) {
+            return {
+              success: false,
+              message: `Table '${input.table}' not found`,
+            };
+          }
+
+          // Get row count for the specific table
+          const countResult = await adapter.executeReadQuery(
+            `SELECT COUNT(*) as count FROM "${input.table}"`,
+          );
+          const rowCount = Number(countResult.rows?.[0]?.["count"] ?? 0);
+
+          // Estimate pages: ~100 rows per page for typical data
+          const estimatedPages = Math.max(1, Math.ceil(rowCount / 100));
+
+          return {
+            success: true,
+            table: input.table,
+            rowCount,
+            estimatedPages,
+            totalDatabasePages: totalPages,
+            note: "dbstat virtual table not available; page count is estimated from row count (~100 rows/page)",
+          };
+        }
 
         return {
           success: true,
-          pageCount:
-            typeof pageCount === "number" ? pageCount : Number(pageCount),
+          pageCount: totalPages,
           note: "dbstat virtual table not available, showing basic stats",
         };
       }
@@ -659,16 +698,38 @@ function createDropVirtualTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate and quote table name
       const tableName = sanitizeIdentifier(input.tableName);
 
+      // Check if the table exists before attempting to drop
+      const escapedName = input.tableName.replace(/'/g, "''");
+      const existsResult = await adapter.executeReadQuery(
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='${escapedName}'`,
+      );
+      const tableExists =
+        existsResult.rows !== undefined && existsResult.rows.length > 0;
+
       const sql = input.ifExists
         ? `DROP TABLE IF EXISTS ${tableName}`
         : `DROP TABLE ${tableName}`;
 
       await adapter.executeWriteQuery(sql);
 
-      return {
-        success: true,
-        message: `Dropped virtual table '${input.tableName}'`,
-      };
+      // Return accurate message based on whether table existed
+      if (tableExists) {
+        return {
+          success: true,
+          message: `Dropped virtual table '${input.tableName}'`,
+        };
+      } else if (input.ifExists) {
+        return {
+          success: true,
+          message: `Virtual table '${input.tableName}' did not exist (no action taken)`,
+        };
+      } else {
+        // This shouldn't be reached as DROP TABLE without IF EXISTS would throw
+        return {
+          success: true,
+          message: `Dropped virtual table '${input.tableName}'`,
+        };
+      }
     },
   };
 }
