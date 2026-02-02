@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduces noise in table listings for spatial databases (38 tables → 12 user tables)
   - Default is `false` to preserve backward compatibility
 
+### Changed
+
+- **ServerInstructions.ts FTS5 Documentation** — Fixed incomplete FTS5 example
+  - Added required `sqlite_fts_rebuild` call after `sqlite_fts_create` (indexes are empty until rebuild)
+  - Fixed parameter names: `table` → `tableName`/`sourceTable` to match actual tool schema
+  - Added clarifying comment explaining that triggers sync future changes but don't populate existing data
+
 ### Fixed
 
 - **`sqlite_list_tables` KNN2 Virtual Table** — KNN2 SpatiaLite virtual table now filtered by `excludeSystemTables`

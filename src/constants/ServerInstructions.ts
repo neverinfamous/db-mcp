@@ -153,8 +153,10 @@ sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }) // magnitude min/max
 
 ## Full-Text Search (FTS5)
 \`\`\`javascript
-sqlite_fts_create({ table: "articles", columns: ["title", "content"] })
-sqlite_fts_search({ table: "articles", query: "machine learning", limit: 10 })
+// Create FTS5 table with triggers for auto-sync on future changes
+sqlite_fts_create({ tableName: "articles_fts", sourceTable: "articles", columns: ["title", "content"] })
+sqlite_fts_rebuild({ table: "articles_fts" })  // Required: populate index with existing data
+sqlite_fts_search({ table: "articles_fts", query: "machine learning", limit: 10 })
 \`\`\`
 
 ## Statistical Analysis
