@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`sqlite_list_tables` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
+  - When `true`, filters out SpatiaLite system tables (`geometry_columns`, `spatial_ref_sys`, `spatialite_history`, `vector_layers`, etc.)
+  - Reduces noise in table listings for spatial databases (38 tables → 12 user tables)
+  - Default is `false` to preserve backward compatibility
+
 - **`sqlite_json_group_object` Aggregate Function Support** — New `aggregateFunction` parameter for aggregate values
   - Enables `COUNT(*)`, `SUM(amount)`, `AVG(price)`, and other aggregate functions as object values
   - Uses subquery pattern to pre-aggregate results before wrapping in `json_group_object()`
@@ -25,9 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **`sqlite_list_tables` SpatiaLite System Tables Note** — Documentation clarified for spatial databases
-  - Tool description now notes that SpatiaLite system tables (`geometry_columns`, `spatial_ref_sys`, etc.) are included in listings when spatial metadata exists
-  - Helps agents understand why table counts may be higher than expected in spatial databases
+- **`sqlite_list_tables` Documentation** — Updated tool description in ServerInstructions.ts
+  - Now mentions `excludeSystemTables` parameter for filtering SpatiaLite metadata
+
+- **ServerInstructions.ts SpatiaLite Tool Count** — Fixed tool count accuracy
+  - Changed "SpatiaLite GIS (7 tools)" to "SpatiaLite GIS (7 of 11 geo tools)"
+  - Clarifies that 7 SpatiaLite tools are part of the larger 11-tool geo group
 
 - **`sqlite_json_normalize_column` JSONB Conversion Consistency** — JSONB rows now always converted to normalized text format
   - Previously, JSONB rows with already-normalized content were left unchanged (still in JSONB binary format)

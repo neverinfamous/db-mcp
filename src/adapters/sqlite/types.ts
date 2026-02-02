@@ -164,6 +164,16 @@ export const GetIndexesSchema = z.object({
   tableName: z.string().optional().describe("Filter indexes by table name"),
 });
 
+export const ListTablesSchema = z.object({
+  excludeSystemTables: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Exclude SpatiaLite system tables (geometry_columns, spatial_ref_sys, etc.)",
+    ),
+});
+
 // JSON Helper Schemas
 export const JsonInsertSchema = z.object({
   table: z.string().describe("Table name"),

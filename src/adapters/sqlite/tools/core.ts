@@ -18,6 +18,7 @@ import {
   ReadQuerySchema,
   WriteQuerySchema,
   CreateTableSchema,
+  ListTablesSchema,
   DescribeTableSchema,
   DropTableSchema,
   CreateIndexSchema,
@@ -187,6 +188,33 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
 }
 
 /**
+ * SpatiaLite system table prefixes to exclude when filtering
+ */
+const SPATIALITE_SYSTEM_PREFIXES = [
+  "geometry_columns",
+  "spatial_ref_sys",
+  "spatialite_history",
+  "sql_statements_log",
+  "views_geometry_columns",
+  "virts_geometry_columns",
+  "vector_layers",
+  "data_licenses",
+  "geom_cols_ref_sys",
+  "ElementaryGeometries",
+  "SpatialIndex",
+  "KNN",
+];
+
+/**
+ * Check if a table name is a SpatiaLite system table
+ */
+function isSpatialiteSystemTable(name: string): boolean {
+  return SPATIALITE_SYSTEM_PREFIXES.some(
+    (prefix) => name === prefix || name.startsWith(`${prefix}_`),
+  );
+}
+
+/**
  * List all tables in the database
  */
 function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
@@ -195,12 +223,18 @@ function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
     description:
       "List all tables and views in the database with their row counts.",
     group: "core",
-    inputSchema: {},
+    inputSchema: ListTablesSchema,
     outputSchema: ListTablesOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("List Tables"),
-    handler: async (_params: unknown, _context: RequestContext) => {
-      const tables = await adapter.listTables();
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = ListTablesSchema.parse(params);
+      let tables = await adapter.listTables();
+
+      // Filter out SpatiaLite system tables if requested
+      if (input.excludeSystemTables) {
+        tables = tables.filter((t) => !isSpatialiteSystemTable(t.name));
+      }
 
       return {
         success: true,

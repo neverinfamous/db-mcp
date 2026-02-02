@@ -55,7 +55,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 |------|-------------|
 | \`sqlite_read_query\` | Execute SELECT queries |
 | \`sqlite_write_query\` | Execute INSERT/UPDATE/DELETE |
-| \`sqlite_list_tables\` | List all tables (includes SpatiaLite system tables if spatial metadata exists) |
+| \`sqlite_list_tables\` | List all tables (use excludeSystemTables to hide SpatiaLite metadata) |
 | \`sqlite_describe_table\` | Get table schema |
 | \`sqlite_create_table\` | Create new table |
 | \`sqlite_drop_table\` | Drop (delete) a table |
@@ -68,7 +68,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | FTS5 full-text search | ✅ | ❌ | None |
 | Transactions (7 tools) | ✅ | ❌ | None |
 | Window functions (6 tools) | ✅ | ❌ | None |
-| SpatiaLite GIS (7 tools) | ✅ | ❌ | None |
+| SpatiaLite GIS (7 of 11 geo tools) | ✅ | ❌ | None |
 | Backup/Restore (3 tools) | ✅ | ❌ | Graceful error |
 | R-Tree spatial indexing | ✅ | ❌ | None |
 | CSV virtual tables | ✅ | ❌ | None (requires absolute paths) |

@@ -64,6 +64,38 @@ describe("Core Tools", () => {
       expect(result.tables.map((t) => t.name)).toContain("products");
       expect(result.tables.map((t) => t.name)).toContain("orders");
     });
+
+    it("should filter SpatiaLite system tables when excludeSystemTables is true", async () => {
+      // Create a user table and simulate SpatiaLite metadata tables
+      await adapter.executeWriteQuery("CREATE TABLE my_data (id INTEGER)");
+      await adapter.executeWriteQuery(
+        "CREATE TABLE geometry_columns (id INTEGER)",
+      );
+      await adapter.executeWriteQuery(
+        "CREATE TABLE spatial_ref_sys (id INTEGER)",
+      );
+
+      // Without filter: should include all tables
+      const allResult = (await tools.get("sqlite_list_tables")?.({})) as {
+        tables: { name: string }[];
+      };
+      expect(allResult.tables.map((t) => t.name)).toContain("geometry_columns");
+      expect(allResult.tables.map((t) => t.name)).toContain("spatial_ref_sys");
+
+      // With filter: should exclude SpatiaLite tables
+      const filteredResult = (await tools.get("sqlite_list_tables")?.({
+        excludeSystemTables: true,
+      })) as {
+        tables: { name: string }[];
+      };
+      expect(filteredResult.tables.map((t) => t.name)).toContain("my_data");
+      expect(filteredResult.tables.map((t) => t.name)).not.toContain(
+        "geometry_columns",
+      );
+      expect(filteredResult.tables.map((t) => t.name)).not.toContain(
+        "spatial_ref_sys",
+      );
+    });
   });
 
   describe("sqlite_describe_table", () => {
