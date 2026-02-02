@@ -196,12 +196,32 @@ export class SchemaManager {
        WHERE type = 'index' AND sql IS NOT NULL`,
     );
 
-    const indexes: IndexInfo[] = (result.rows ?? []).map((row) => ({
-      name: row["name"] as string,
-      tableName: row["tbl_name"] as string,
-      columns: [], // Would need to parse SQL to get columns
-      unique: (row["sql"] as string)?.includes("UNIQUE") ?? false,
-    }));
+    const indexes: IndexInfo[] = [];
+
+    for (const row of result.rows ?? []) {
+      const indexName = row["name"] as string;
+      const tableName = row["tbl_name"] as string;
+      const sql = row["sql"] as string;
+
+      // Get column info for this index via PRAGMA index_info
+      let columns: string[] = [];
+      try {
+        const indexInfo = await this.executor.executeReadQuery(
+          `PRAGMA index_info("${indexName}")`,
+        );
+        columns = (indexInfo.rows ?? []).map((col) => col["name"] as string);
+      } catch {
+        // If PRAGMA fails, fall back to empty columns
+        columns = [];
+      }
+
+      indexes.push({
+        name: indexName,
+        tableName,
+        columns,
+        unique: sql?.toUpperCase().includes("UNIQUE") ?? false,
+      });
+    }
 
     this.setCache("all_indexes", indexes);
     return indexes;

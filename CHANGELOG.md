@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Templated resources now properly register with MCP SDK's `ResourceTemplate` class
   - Both static and templated resources now work consistently across WASM and Native backends
 
+- **Index Column Population in WASM Adapter** — Fixed `sqlite://indexes` resource returning empty `columns` array
+  - Added `PRAGMA index_info()` queries to populate column names for each index
+  - Updated both `SchemaManager.getAllIndexes()` and `SqliteAdapter.getIndexes()` fallback
+  - Index metadata now matches Native adapter behavior
+
 ### Dependencies
 
 - **Dependency Updates** — Updated npm dependencies to latest versions
@@ -22,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `pg`: 8.17.2 → 8.18.0
 
 ### Changed
-
 
 - **`sqlite_fuzzy_match` Token-Based Matching** — Now matches against word tokens by default instead of entire column value
   - New `tokenize` parameter (default: `true`) splits column values into words for per-token comparison
