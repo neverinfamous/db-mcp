@@ -34,6 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated both `SchemaManager.getAllIndexes()` and `SqliteAdapter.getIndexes()` fallback
   - Index metadata now matches Native adapter behavior
 
+### Changed
+
+- **`sqlite_pragma_database_list` Configured Path Visibility** — Added `configuredPath` field to output
+  - WASM mode shows internal virtual filesystem paths (e.g., `/dbfile_3503536817`) which can confuse users
+  - Now includes `configuredPath` showing the user's original database file path
+  - Adds explanatory `note` when internal path differs from configured path
+
 ### Dependencies
 
 - **Dependency Updates** — Updated npm dependencies to latest versions

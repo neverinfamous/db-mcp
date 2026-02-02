@@ -779,9 +779,22 @@ function createPragmaDatabaseListTool(adapter: SqliteAdapter): ToolDefinition {
         file: r["file"] as string,
       }));
 
+      // Get the user's configured path
+      const configuredPath = adapter.getConfiguredPath();
+
+      // Check if internal path differs from configured path (common in WASM mode)
+      const mainDb = databases.find((db) => db.name === "main");
+      const internalPathDiffers = Boolean(
+        mainDb?.file && mainDb.file !== configuredPath,
+      );
+
       return {
         success: true,
         databases,
+        configuredPath,
+        note: internalPathDiffers
+          ? "Internal file paths shown above are WASM virtual filesystem paths. The configuredPath shows the original database location."
+          : undefined,
       };
     },
   };

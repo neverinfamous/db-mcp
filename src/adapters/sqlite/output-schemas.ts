@@ -1234,6 +1234,8 @@ const DatabaseListEntrySchema = z.object({
 export const PragmaDatabaseListOutputSchema = z.object({
   success: z.boolean(),
   databases: z.array(DatabaseListEntrySchema),
+  configuredPath: z.string().optional(),
+  note: z.string().optional(),
 });
 
 /**
