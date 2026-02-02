@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **WASM Adapter Templated Resource Support** — Fixed `sqlite://table/{name}/schema` resource returning "not found" in WASM mode
+  - Ported `ResourceTemplate` handling from `NativeSqliteAdapter` to `SqliteAdapter`
+  - Templated resources now properly register with MCP SDK's `ResourceTemplate` class
+  - Both static and templated resources now work consistently across WASM and Native backends
+
 ### Dependencies
 
 - **Dependency Updates** — Updated npm dependencies to latest versions
@@ -15,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `pg`: 8.17.2 → 8.18.0
 
 ### Changed
+
 
 - **`sqlite_fuzzy_match` Token-Based Matching** — Now matches against word tokens by default instead of entire column value
   - New `tokenize` parameter (default: `true`) splits column values into words for per-token comparison

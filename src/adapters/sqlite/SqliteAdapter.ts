@@ -8,6 +8,7 @@
 
 import initSqlJs, { type Database } from "sql.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { z } from "zod";
 import { DatabaseAdapter } from "../DatabaseAdapter.js";
 import type {
@@ -742,36 +743,84 @@ export class SqliteAdapter extends DatabaseAdapter {
 
   /**
    * Register a single resource with the MCP server
+   * Handles both static resources and URI templates
    */
   protected override registerResource(
     server: McpServer,
     resource: ResourceDefinition,
   ): void {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    server.resource(
-      resource.name,
-      resource.uri,
-      {
-        mimeType: resource.mimeType ?? "application/json",
-        description: resource.description,
-      },
-      async (resourceUri: URL) => {
-        const context = this.createContext();
-        const content = await resource.handler(resourceUri.toString(), context);
-        return {
-          contents: [
-            {
-              uri: resourceUri.toString(),
-              mimeType: resource.mimeType ?? "application/json",
-              text:
-                typeof content === "string"
-                  ? content
-                  : JSON.stringify(content, null, 2),
-            },
-          ],
-        };
-      },
-    );
+    // Check if URI contains template placeholders like {tableName}
+    const isTemplate = /\{[^}]+\}/.test(resource.uri);
+
+    if (isTemplate) {
+      // Create ResourceTemplate for parameterized URIs
+      // list: undefined signals no enumeration callback for this template
+      const template = new ResourceTemplate(resource.uri, { list: undefined });
+
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      server.resource(
+        resource.name,
+        template as never, // Type cast for SDK compatibility
+        {
+          mimeType: resource.mimeType ?? "application/json",
+          description: resource.description,
+        },
+        // Callback receives URL and extracted template variables
+        async (
+          resourceUri: URL,
+          _variables: Record<string, string | string[]>,
+        ) => {
+          // Pass full URI to handler so it can extract variables
+          const context = this.createContext();
+          const content = await resource.handler(
+            resourceUri.toString(),
+            context,
+          );
+          return {
+            contents: [
+              {
+                uri: resourceUri.toString(),
+                mimeType: resource.mimeType ?? "application/json",
+                text:
+                  typeof content === "string"
+                    ? content
+                    : JSON.stringify(content, null, 2),
+              },
+            ],
+          };
+        },
+      );
+    } else {
+      // Static resource registration
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      server.resource(
+        resource.name,
+        resource.uri,
+        {
+          mimeType: resource.mimeType ?? "application/json",
+          description: resource.description,
+        },
+        async (resourceUri: URL) => {
+          const context = this.createContext();
+          const content = await resource.handler(
+            resourceUri.toString(),
+            context,
+          );
+          return {
+            contents: [
+              {
+                uri: resourceUri.toString(),
+                mimeType: resource.mimeType ?? "application/json",
+                text:
+                  typeof content === "string"
+                    ? content
+                    : JSON.stringify(content, null, 2),
+              },
+            ],
+          };
+        },
+      );
+    }
   }
 
   /**
