@@ -72,7 +72,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | Backup/Restore (3 tools) | ✅ | ❌ | Graceful error |
 | R-Tree spatial indexing | ✅ | ❌ | None |
 | CSV virtual tables | ✅ | ❌ | None (requires absolute paths) |
-| generate_series | ✅ native | ❌ | JS |
+| generate_series | JS fallback | JS fallback | — |
 | dbstat | ✅ native | ❌ | JS (basic) |
 | soundex() | ✅ native | ❌ | JS |
 `;

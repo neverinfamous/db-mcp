@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed full row data from output for token efficiency (just `value` and match info)
   - Updated `ServerInstructions.ts` documentation with new behavior
 
+- **ServerInstructions.ts `generate_series` Documentation** — Clarified JS fallback behavior
+  - Changed WASM vs Native table entry from "✅ native | ❌ | JS" to "JS fallback | JS fallback | —"
+  - The generate_series extension is not compiled into SQLite, so both environments use the JavaScript fallback
+
 - **`sqlite_phonetic_match` Documentation** — Clarified first-word matching behavior
   - Added comment noting that Soundex compares only the first word of multi-word values
 
