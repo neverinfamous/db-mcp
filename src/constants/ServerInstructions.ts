@@ -312,7 +312,7 @@ sqlite_create_series_table({ tableName: "numbers", start: 1, stop: 1000 }) // Pe
 // R-Tree spatial indexing (Native only)
 sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }) // 2D: minX, maxX, minY, maxY
 
-// CSV Virtual Tables (Native only - requires ABSOLUTE paths)
+// CSV Virtual Tables (Native only - not available in WASM; requires ABSOLUTE paths)
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" })
 sqlite_create_csv_table({ tableName: "csv_data", filePath: "/absolute/path/to/data.csv" })
 

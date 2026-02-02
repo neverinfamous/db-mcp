@@ -436,9 +436,16 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
+        // Get table count for additional context
+        const tableCountResult = await adapter.executeReadQuery(
+          `SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`,
+        );
+        const tableCount = Number(tableCountResult.rows?.[0]?.["cnt"] ?? 0);
+
         return {
           success: true,
           pageCount: totalPages,
+          tableCount,
           note: "dbstat virtual table not available, showing basic stats",
         };
       }
@@ -698,13 +705,26 @@ function createDropVirtualTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate and quote table name
       const tableName = sanitizeIdentifier(input.tableName);
 
-      // Check if the table exists before attempting to drop
+      // Check if the table exists and is a virtual table
       const escapedName = input.tableName.replace(/'/g, "''");
       const existsResult = await adapter.executeReadQuery(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name='${escapedName}'`,
+        `SELECT name, sql FROM sqlite_master WHERE type='table' AND name='${escapedName}'`,
       );
       const tableExists =
         existsResult.rows !== undefined && existsResult.rows.length > 0;
+      const sqlValue = existsResult.rows?.[0]?.["sql"];
+      const isVirtualTable =
+        tableExists &&
+        typeof sqlValue === "string" &&
+        sqlValue.toUpperCase().includes("CREATE VIRTUAL TABLE");
+
+      // Validate that it's actually a virtual table if it exists
+      if (tableExists && !isVirtualTable) {
+        return {
+          success: false,
+          message: `'${input.tableName}' is a regular table, not a virtual table. Use sqlite_drop_table instead.`,
+        };
+      }
 
       const sql = input.ifExists
         ? `DROP TABLE IF EXISTS ${tableName}`
@@ -771,13 +791,16 @@ function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Check if csv module is available (supports standard csv and sqlite-xsv)
       const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
+        // Check if we're in WASM mode by testing for a WASM-specific limitation
+        const isWasm = !(await isModuleAvailable(adapter, "rtree"));
         return {
           success: false,
-          message:
-            "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+          message: isWasm
+            ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
+            : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
           sql: "",
           columns: [],
-          wasmLimitation: true,
+          wasmLimitation: isWasm,
         };
       }
 
@@ -858,14 +881,17 @@ function createAnalyzeCsvSchemaTool(adapter: SqliteAdapter): ToolDefinition {
       // Check if csv module is available (supports standard csv and sqlite-xsv)
       const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
+        // Check if we're in WASM mode by testing for a WASM-specific limitation
+        const isWasm = !(await isModuleAvailable(adapter, "rtree"));
         return {
           success: false,
-          message:
-            "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+          message: isWasm
+            ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
+            : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
           hasHeader: false,
           rowCount: 0,
           columns: [],
-          wasmLimitation: true,
+          wasmLimitation: isWasm,
         };
       }
 

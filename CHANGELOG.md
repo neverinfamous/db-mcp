@@ -18,6 +18,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`sqlite_drop_virtual_table` Regular Table Validation** — Now validates target is actually a virtual table
+  - Returns helpful error message if attempting to drop a regular table, directing to use `sqlite_drop_table` instead
+  - Prevents accidental misuse of virtual table drop tool on regular tables
+
+- **`sqlite_dbstat` WASM Fallback Enhancement** — Added table count to basic stats in WASM mode
+  - When dbstat virtual table is unavailable, now returns `tableCount` in addition to `pageCount`
+  - Provides more useful context about database contents
+
+- **CSV Tool Messages WASM Clarity** — Improved error messages for `sqlite_create_csv_table` and `sqlite_analyze_csv_schema`
+  - When running in WASM mode, now explicitly states "CSV extension not available in WASM mode"
+  - Previously showed generic message about loading extension, which was misleading in WASM context
+  - `wasmLimitation` flag is now dynamic based on actual runtime environment
+
+- **ServerInstructions.ts CSV Documentation** — Added WASM limitation note to CSV tool examples
+  - Comment now reads "Native only - not available in WASM" for clarity
+
+### Changed
+
 - **`sqlite_vector_search` Payload Optimization** — Vector data now excluded from results when not explicitly requested
   - When `returnColumns` is specified without the vector column, results omit vector data for smaller payloads
   - Reduces response size significantly for high-dimensional vectors (e.g., 384+ dimensions)
