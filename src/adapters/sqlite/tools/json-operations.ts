@@ -918,10 +918,11 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
       const table = sanitizeIdentifier(input.table);
       const column = sanitizeIdentifier(input.column);
 
-      // Use SQLite's json() function to ensure we get text output regardless
-      // of whether the column contains text JSON or JSONB binary format.
-      // This prevents corruption when JSONB blobs are read and re-processed.
-      let selectSql = `SELECT rowid, json(${column}) as json_data FROM ${table}`;
+      // Select both the raw column value (to detect JSONB format) and the text
+      // representation via json(). This allows us to:
+      // 1. Detect if original storage is JSONB (binary blob)
+      // 2. Get text JSON for normalization processing
+      let selectSql = `SELECT rowid, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
       if (input.whereClause) {
         selectSql += ` WHERE ${input.whereClause}`;
       }
@@ -934,6 +935,7 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
       // Normalize each row
       for (const row of selectResult.rows ?? []) {
         const rowid = row["rowid"];
+        const rawData = row["raw_data"];
         const jsonData = row["json_data"];
 
         if (jsonData === null || jsonData === undefined) {
@@ -944,7 +946,16 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
         try {
           const { normalized, wasModified } = normalizeJson(jsonData);
 
-          if (wasModified) {
+          // Detect if original was stored as JSONB (binary blob)
+          // If rawData is not a string, it's likely JSONB binary data
+          // better-sqlite3 returns JSONB blobs as Buffer objects
+          const wasJsonb =
+            rawData !== null &&
+            rawData !== undefined &&
+            typeof rawData !== "string";
+
+          // Update if content was modified OR if converting from JSONB to text
+          if (wasModified || wasJsonb) {
             const updateSql = `UPDATE ${table} SET ${column} = ? WHERE rowid = ?`;
             await adapter.executeWriteQuery(updateSql, [normalized, rowid]);
             normalizedCount++;

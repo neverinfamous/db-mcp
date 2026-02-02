@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_json_normalize_column` JSONB Conversion Consistency** — JSONB rows now always converted to normalized text format
+  - Previously, JSONB rows with already-normalized content were left unchanged (still in JSONB binary format)
+  - Handler now detects original storage format and forces text output for all JSONB rows
+  - Ensures uniform text JSON format after normalization, avoiding mixed format scenarios
+
 - **`sqlite_stats_hypothesis` Chi-Square Validation** — Added validation for insufficient categories
   - Chi-square test now throws descriptive error when df=0 (fewer than 2 categories in either column)
   - Previously returned mathematically meaningless results (p=1, df=0) without warning
