@@ -647,7 +647,7 @@ Specify exactly the groups you need:
 | -------- | ---- | ------ | ---------- | ---------------------------------------- |
 | `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables               |
 | `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis          |
-| `text`   | 17   | 17     | +3         | Text processing + FTS5 + advanced search |
+| `text`   | 13   | 17     | +3         | Text processing + FTS5 + advanced search |
 | `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)    |
 | `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
 | `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
