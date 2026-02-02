@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now calls exported `isSpatialiteLoaded()` to reflect runtime extension status
   - Helps users confirm SpatiaLite is loaded before using spatial tools
 
+### Changed
+
+- **`sqlite_list_tables` SpatiaLite System Tables Note** — Documentation clarified for spatial databases
+  - Tool description now notes that SpatiaLite system tables (`geometry_columns`, `spatial_ref_sys`, etc.) are included in listings when spatial metadata exists
+  - Helps agents understand why table counts may be higher than expected in spatial databases
+
 - **`sqlite_json_normalize_column` JSONB Conversion Consistency** — JSONB rows now always converted to normalized text format
   - Previously, JSONB rows with already-normalized content were left unchanged (still in JSONB binary format)
   - Handler now detects original storage format and forces text output for all JSONB rows
