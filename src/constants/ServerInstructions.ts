@@ -143,7 +143,7 @@ sqlite_jsonb_convert({ table: "docs", column: "data" }) // convert to JSONB for 
 \`\`\`javascript
 // Store and search vectors
 sqlite_vector_store({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1, vector: [...] })
-sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10 })
+sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10, returnColumns: ["id", "title"] })
 
 // Utility tools for preprocessing
 sqlite_vector_normalize({ vector: [3, 4, 0, 0] }) // returns unit vector [0.6, 0.8, 0, 0]
