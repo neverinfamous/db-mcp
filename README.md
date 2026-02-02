@@ -834,6 +834,14 @@ See `config/db-mcp.keycloak.json` for a complete example.
 
 ---
 
+## 🚧 Planned Improvements
+
+| Tool                            | Enhancement                                                                                                                                         | Priority |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `sqlite_json_normalize_column`  | Add `outputFormat` parameter (`preserve` / `text` / `jsonb`) to optionally preserve JSONB binary format after normalization. Currently always outputs text. | Low      |
+
+---
+
 ## Contributing
 
 Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
