@@ -238,6 +238,25 @@ function isSpatialiteSystemTable(name: string): boolean {
 }
 
 /**
+ * SpatiaLite system views to exclude when filtering
+ */
+const SPATIALITE_SYSTEM_VIEWS = [
+  "geom_cols_ref_sys",
+  "spatial_ref_sys_all",
+  "vector_layers",
+  "vector_layers_auth",
+  "vector_layers_field_infos",
+  "vector_layers_statistics",
+];
+
+/**
+ * Check if a view name is a SpatiaLite system view
+ */
+export function isSpatialiteSystemView(name: string): boolean {
+  return SPATIALITE_SYSTEM_VIEWS.includes(name);
+}
+
+/**
  * List all tables in the database
  */
 function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {

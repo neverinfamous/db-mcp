@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`sqlite_list_views` System View Filter** — New `excludeSystemViews` parameter to hide SpatiaLite views
+  - When `true` (default), filters out SpatiaLite system views (`geom_cols_ref_sys`, `spatial_ref_sys_all`, `vector_layers`, etc.)
+  - Reduces noise in view listings for spatial databases (7 views → 1 user view)
+  - Set to `false` to include all views
+
 - **`sqlite_get_indexes` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite indexes
   - When `true`, filters out SpatiaLite system indexes (`idx_spatial_ref_sys`, `idx_srid_geocols`, `idx_viewsjoin`, `idx_virtssrid`, etc.)
   - Provides parity with `sqlite_list_tables` parameter `excludeSystemTables`
@@ -37,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Default is `false` to preserve backward compatibility
 
 ### Changed
+
+- **CSV Tools Path Validation** — Improved error messages for `sqlite_create_csv_table` and `sqlite_analyze_csv_schema`
+  - Now validates that file paths are absolute before attempting to create virtual table
+  - Returns helpful error message with suggested absolute path when relative path is provided
+  - Example: `"Relative path not supported. Please use an absolute path. Example: C:\\path\\to\\file.csv"`
 
 - **ServerInstructions.ts FTS5 Documentation** — Fixed incomplete FTS5 example
   - Added required `sqlite_fts_rebuild` call after `sqlite_fts_create` (indexes are empty until rebuild)

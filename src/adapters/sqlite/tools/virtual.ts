@@ -5,6 +5,7 @@
  * 13 tools total.
  */
 
+import * as path from "node:path";
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
@@ -26,6 +27,7 @@ import {
   DropTableOutputSchema,
   VacuumOutputSchema,
 } from "../output-schemas.js";
+import { isSpatialiteSystemView } from "./core.js";
 
 // Virtual table schemas
 const GenerateSeriesSchema = z.object({
@@ -45,6 +47,13 @@ const ListViewsSchema = z.object({
     .string()
     .optional()
     .describe("Optional LIKE pattern to filter views"),
+  excludeSystemViews: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Exclude SpatiaLite system views (default: true). Set to false to include all views.",
+    ),
 });
 
 const DropViewSchema = z.object({
@@ -259,10 +268,15 @@ function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
 
       const result = await adapter.executeReadQuery(sql);
 
-      const views = (result.rows ?? []).map((row) => ({
+      let views = (result.rows ?? []).map((row) => ({
         name: typeof row["name"] === "string" ? row["name"] : "",
         sql: typeof row["sql"] === "string" ? row["sql"] : null,
       }));
+
+      // Filter out SpatiaLite system views if requested (default: true)
+      if (input.excludeSystemViews) {
+        views = views.filter((v) => !isSpatialiteSystemView(v.name));
+      }
 
       return {
         success: true,
@@ -683,6 +697,16 @@ function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate table name (we'll use it with double quotes in SQL)
       sanitizeIdentifier(input.tableName);
 
+      // Validate that the file path is absolute (required by SQLite CSV extension)
+      if (!path.isAbsolute(input.filePath)) {
+        return {
+          success: false,
+          message: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
+          sql: "",
+          columns: [],
+        };
+      }
+
       // Check if csv module is available (supports standard csv and sqlite-xsv)
       const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
@@ -758,6 +782,17 @@ function createAnalyzeCsvSchemaTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Analyze CSV Schema"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = AnalyzeCsvSchemaSchema.parse(params);
+
+      // Validate that the file path is absolute (required by SQLite CSV extension)
+      if (!path.isAbsolute(input.filePath)) {
+        return {
+          success: false,
+          message: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
+          hasHeader: false,
+          rowCount: 0,
+          columns: [],
+        };
+      }
 
       // Check if csv module is available (supports standard csv and sqlite-xsv)
       const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
