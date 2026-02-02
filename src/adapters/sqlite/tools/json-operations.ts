@@ -433,7 +433,8 @@ function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinition {
 function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_keys",
-    description: "Get the keys of a JSON object at the specified path.",
+    description:
+      "Get the distinct keys of JSON objects at the specified path (returns unique keys across all matching rows).",
     group: "json",
     inputSchema: JsonKeysSchema,
     outputSchema: JsonKeysOutputSchema,
