@@ -159,6 +159,7 @@ sqlite_fts_rebuild({ table: "articles_fts" })  // Required: populate index with 
 // FTS5 uses AND by default: "machine learning" = rows containing BOTH words
 // Use OR explicitly: "machine OR learning" for rows containing EITHER word
 sqlite_fts_search({ table: "articles_fts", query: "machine learning", limit: 10 })
+// Note: FTS5 virtual tables (*_fts) and shadow tables (*_fts_*) are hidden from sqlite_list_tables for cleaner output
 \`\`\`
 
 ## Statistical Analysis
