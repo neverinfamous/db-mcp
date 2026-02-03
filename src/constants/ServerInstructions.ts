@@ -62,7 +62,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 |------|-------------|
 | \`sqlite_read_query\` | Execute SELECT queries |
 | \`sqlite_write_query\` | Execute INSERT/UPDATE/DELETE |
-| \`sqlite_list_tables\` | List tables with column counts (excludeSystemTables hides SpatiaLite; views via sqlite_list_views) |
+| \`sqlite_list_tables\` | List tables with column counts (excludeSystemTables hides SpatiaLite tables) |
 | \`sqlite_describe_table\` | Get table schema |
 | \`sqlite_create_table\` | Create new table |
 | \`sqlite_drop_table\` | Drop (delete) a table |

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Aligns with the `sqlite_json_*` prefix pattern used by all other tools in the JSON group
   - Updated ToolConstants.ts, ServerInstructions.ts, json-helpers.ts, and output-schemas.ts
 
+- **ServerInstructions.ts Core Tools Documentation** — Removed confusing `sqlite_list_views` reference from `sqlite_list_tables` description
+  - `sqlite_list_views` is in the admin group, not core; reference was misleading in core tools table
+  - Simplified description to: "List tables with column counts (excludeSystemTables hides SpatiaLite tables)"
+
 - **Modern MCP SDK API Migration** — Removed all `eslint-disable` comments
   - `McpServer.ts`: Migrated built-in tools (`server_info`, `server_health`, `list_adapters`) from deprecated `server.tool()` to `server.registerTool()` API
   - `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`: Migrated from deprecated `server.resource()` and `server.prompt()` to modern `server.registerResource()` and `server.registerPrompt()` APIs
