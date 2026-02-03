@@ -310,7 +310,7 @@ sqlite_list_virtual_tables() // List FTS5, R-Tree, CSV tables
 sqlite_virtual_table_info({ tableName: "articles_fts" }) // Module and column info
 sqlite_drop_virtual_table({ tableName: "old_fts", ifExists: true })
 
-// Generate series (JS fallback in WASM)
+// Generate series (pure JS - native generate_series extension not compiled into SQLite)
 sqlite_generate_series({ start: 1, stop: 100, step: 5 }) // Returns array of values
 sqlite_create_series_table({ tableName: "numbers", start: 1, stop: 1000 }) // Persistent table
 

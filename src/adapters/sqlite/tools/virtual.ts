@@ -165,8 +165,10 @@ export function getVirtualTools(adapter: SqliteAdapter): ToolDefinition[] {
 
 /**
  * Generate series of numbers
+ * Note: Uses pure JS implementation since better-sqlite3's bundled SQLite
+ * is not compiled with SQLITE_ENABLE_SERIES (required for native generate_series).
  */
-function createGenerateSeriesTool(adapter: SqliteAdapter): ToolDefinition {
+function createGenerateSeriesTool(_adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_generate_series",
     description:
@@ -176,38 +178,25 @@ function createGenerateSeriesTool(adapter: SqliteAdapter): ToolDefinition {
     outputSchema: GenerateSeriesOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Generate Series"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: (params: unknown, _context: RequestContext) => {
       const input = GenerateSeriesSchema.parse(params);
 
-      // SQLite 3.40+ can have built-in generate_series if compiled with SQLITE_ENABLE_SERIES
-      // better-sqlite3's bundled SQLite doesn't include this, so we fallback to JS
-      const sql = `SELECT value FROM generate_series(${input.start}, ${input.stop}, ${input.step})`;
-
-      try {
-        const result = await adapter.executeReadQuery(sql);
-        return {
-          success: true,
-          count: result.rows?.length ?? 0,
-          values: result.rows?.map((r) => r["value"]),
-        };
-      } catch {
-        // Fallback: generate in JS
-        const values: number[] = [];
-        for (
-          let i = input.start;
-          input.step > 0 ? i <= input.stop : i >= input.stop;
-          i += input.step
-        ) {
-          values.push(i);
-          if (values.length > 10000) break; // Safety limit
-        }
-        return {
-          success: true,
-          count: values.length,
-          values,
-          note: "Generated in JavaScript (generate_series not available)",
-        };
+      // Generate in JS - better-sqlite3 doesn't include SQLITE_ENABLE_SERIES
+      const values: number[] = [];
+      for (
+        let i = input.start;
+        input.step > 0 ? i <= input.stop : i >= input.stop;
+        i += input.step
+      ) {
+        values.push(i);
+        if (values.length > 10000) break; // Safety limit
       }
+
+      return Promise.resolve({
+        success: true,
+        count: values.length,
+        values,
+      });
     },
   };
 }

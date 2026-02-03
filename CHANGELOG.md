@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `progress-utils.ts`: Replaced deprecated `Server` type import with structural interface (`NotificationSender`)
   - `logger.ts`: Replaced control character regex literals with dynamically constructed `RegExp` using `String.fromCharCode()` to satisfy `no-control-regex` rule
 
+- **`sqlite_generate_series` Pure JS Implementation** — Removed unnecessary native SQLite attempt
+  - better-sqlite3's bundled SQLite lacks `SQLITE_ENABLE_SERIES` compile option
+  - Native `generate_series()` virtual table was always failing, wasting a database call
+  - Now generates directly in JavaScript, eliminating the failed native attempt overhead
+
 ### Fixed
 
 - **`sqlite_vector_search` returnColumns Consistency** — Fixed `returnColumns` being ignored for euclidean/dot metrics
