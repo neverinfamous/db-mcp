@@ -288,16 +288,18 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 MCP resources provide read-only access to database metadata:
 
-| Resource              | URI                            | Description                            |
-| --------------------- | ------------------------------ | -------------------------------------- |
-| `sqlite_schema`       | `sqlite://schema`              | Full database schema (tables, indexes) |
-| `sqlite_tables`       | `sqlite://tables`              | List all tables in the database        |
-| `sqlite_table_schema` | `sqlite://table/{name}/schema` | Schema for a specific table            |
-| `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database            |
-| `sqlite_views`        | `sqlite://views`               | All views in the database              |
-| `sqlite_health`       | `sqlite://health`              | Database health and connection status  |
-| `sqlite_meta`         | `sqlite://meta`                | Database metadata and configuration    |
-| `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis)      |
+| Resource              | URI                            | Description                       | Shortcuts | Tool Groups |
+| --------------------- | ------------------------------ | --------------------------------- | --------- | ----------- |
+| `sqlite_schema`       | `sqlite://schema`              | Full database schema              | Any       | `core`      |
+| `sqlite_tables`       | `sqlite://tables`              | List all tables                   | Any       | `core`      |
+| `sqlite_table_schema` | `sqlite://table/{name}/schema` | Schema for a specific table       | Any       | `core`      |
+| `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database       | Any       | `core`      |
+| `sqlite_views`        | `sqlite://views`               | All views in the database         | `full`    | `admin`     |
+| `sqlite_health`       | `sqlite://health`              | Database health and status        | Any       | None        |
+| `sqlite_meta`         | `sqlite://meta`                | Database metadata and PRAGMAs     | `full`    | `admin`     |
+| `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis) | `full`    | `admin`     |
+
+> **Note:** Resources are always **readable** regardless of tool configuration. The columns show which shortcuts/groups provide tools to **act on** or **modify** what the resource exposes. All shortcuts include `core`.
 
 ### 💬 Prompts (10)
 

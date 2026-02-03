@@ -783,9 +783,9 @@ const JsonNormalizeColumnSchema = z.object({
   outputFormat: z
     .enum(["text", "jsonb", "preserve"])
     .optional()
-    .default("text")
+    .default("preserve")
     .describe(
-      "Output format: 'text' (default), 'jsonb', or 'preserve' original format",
+      "Output format: 'preserve' original format (default), 'text', or 'jsonb'",
     ),
 });
 
@@ -963,7 +963,7 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
             typeof rawData !== "string";
 
           // Determine target format based on outputFormat parameter
-          const targetFormat = input.outputFormat ?? "text";
+          const targetFormat = input.outputFormat ?? "preserve";
           const shouldOutputJsonb =
             targetFormat === "jsonb" ||
             (targetFormat === "preserve" && wasJsonb);
@@ -998,7 +998,7 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
         unchanged: unchangedCount,
         errors: errorCount,
         total: selectResult.rows?.length ?? 0,
-        outputFormat: input.outputFormat ?? "text",
+        outputFormat: input.outputFormat ?? "preserve",
       };
     },
   };

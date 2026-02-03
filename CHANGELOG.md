@@ -20,11 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tool returns `columnCount` per table, not row counts
 
 - **`sqlite_json_normalize_column` Output Format Control** — New `outputFormat` parameter for normalization output
-  - `text` (default): Always outputs normalized JSON as text (previous behavior)
+  - `preserve` (default): Keeps original format (text→text, JSONB→JSONB)
+  - `text`: Always outputs normalized JSON as text
   - `jsonb`: Outputs normalized JSON in JSONB binary format
-  - `preserve`: Keeps original format (text→text, JSONB→JSONB)
   - Enables normalizing JSONB columns without losing binary format efficiency
   - Response includes `outputFormat` field indicating which format was applied
+
+### Changed
+
+- **`sqlite_json_normalize_column` Default Behavior** — Changed default `outputFormat` from `text` to `preserve`
+  - Prevents accidental JSONB-to-text conversion when normalizing columns that were previously converted to JSONB
+  - Use explicit `outputFormat: "text"` when text output is specifically needed
 
 ### Changed
 
