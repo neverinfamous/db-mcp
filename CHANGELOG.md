@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`sqlite_dbstat` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
+  - When `true`, filters out SpatiaLite system tables from storage statistics (57 tables → ~12 user tables)
+  - Applies to both summarize mode and default raw page-level mode
+  - Provides parity with `sqlite_list_tables` and `sqlite_get_indexes` system table filtering
+  - Default is `false` to preserve backward compatibility
+
+
 - **`sqlite_json_normalize_column` Output Format Control** — New `outputFormat` parameter for normalization output
   - `text` (default): Always outputs normalized JSON as text (previous behavior)
   - `jsonb`: Outputs normalized JSON in JSONB binary format

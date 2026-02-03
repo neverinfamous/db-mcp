@@ -27,7 +27,7 @@ import {
   DropTableOutputSchema,
   VacuumOutputSchema,
 } from "../output-schemas.js";
-import { isSpatialiteSystemView } from "./core.js";
+import { isSpatialiteSystemView, isSpatialiteSystemTable } from "./core.js";
 
 // Virtual table schemas
 const GenerateSeriesSchema = z.object({
@@ -75,6 +75,11 @@ const DbStatSchema = z.object({
     .optional()
     .default(100)
     .describe("Maximum number of tables/pages to return (default: 100)"),
+  excludeSystemTables: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Exclude SpatiaLite system tables from results (default: false)"),
 });
 
 const VacuumSchema = z.object({
@@ -353,18 +358,25 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
 
           const result = await adapter.executeReadQuery(sql);
 
+          // Filter out SpatiaLite system tables if requested
+          let tables = (result.rows ?? []).map((row) => ({
+            name: row["name"] as string,
+            pageCount: row["page_count"] as number,
+            totalPayload: row["total_payload"] as number,
+            totalUnused: row["total_unused"] as number,
+            totalCells: row["total_cells"] as number,
+            maxPayload: row["max_payload"] as number,
+          }));
+
+          if (input.excludeSystemTables) {
+            tables = tables.filter((t) => !isSpatialiteSystemTable(t.name));
+          }
+
           return {
             success: true,
             summarized: true,
-            tableCount: result.rows?.length ?? 0,
-            tables: result.rows?.map((row) => ({
-              name: row["name"] as string,
-              pageCount: row["page_count"] as number,
-              totalPayload: row["total_payload"] as number,
-              totalUnused: row["total_unused"] as number,
-              totalCells: row["total_cells"] as number,
-              maxPayload: row["max_payload"] as number,
-            })),
+            tableCount: tables.length,
+            tables,
           };
         }
 
@@ -383,10 +395,18 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
+        // Filter out SpatiaLite system tables if requested
+        let stats = result.rows ?? [];
+        if (input.excludeSystemTables) {
+          stats = stats.filter(
+            (row) => !isSpatialiteSystemTable(row["name"] as string),
+          );
+        }
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          stats: result.rows,
+          rowCount: stats.length,
+          stats,
         };
       } catch {
         // dbstat may not be available

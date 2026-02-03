@@ -231,7 +231,7 @@ function isSpatialiteSystemIndex(name: string): boolean {
 /**
  * Check if a table name is a SpatiaLite system table
  */
-function isSpatialiteSystemTable(name: string): boolean {
+export function isSpatialiteSystemTable(name: string): boolean {
   return SPATIALITE_SYSTEM_PREFIXES.some(
     (prefix) => name === prefix || name.startsWith(`${prefix}_`),
   );
