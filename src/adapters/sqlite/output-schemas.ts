@@ -191,7 +191,7 @@ const JsonPropertySchemaSchema = z.object({
 });
 
 /**
- * sqlite_analyze_json_schema output
+ * sqlite_json_analyze_schema output
  */
 export const AnalyzeJsonSchemaOutputSchema = z.object({
   success: z.boolean(),

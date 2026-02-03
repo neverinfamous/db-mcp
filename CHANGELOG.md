@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **JSON Tool Naming Consistency** — Renamed `sqlite_analyze_json_schema` to `sqlite_json_analyze_schema`
+  - Aligns with the `sqlite_json_*` prefix pattern used by all other tools in the JSON group
+  - Updated ToolConstants.ts, ServerInstructions.ts, json-helpers.ts, and output-schemas.ts
+
 - **Modern MCP SDK API Migration** — Removed all `eslint-disable` comments
   - `McpServer.ts`: Migrated built-in tools (`server_info`, `server_health`, `list_adapters`) from deprecated `server.tool()` to `server.registerTool()` API
   - `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`: Migrated from deprecated `server.resource()` and `server.prompt()` to modern `server.registerResource()` and `server.registerPrompt()` APIs

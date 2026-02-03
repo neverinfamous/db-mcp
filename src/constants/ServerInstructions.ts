@@ -138,7 +138,7 @@ sqlite_json_group_array({ table: "docs", valueColumn: "json_extract(data, '$.aut
 // For aggregate values (COUNT, SUM, AVG), use aggregateFunction parameter instead
 sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" })
 sqlite_json_group_object({ table: "orders", keyColumn: "status", aggregateFunction: "SUM(total)" })
-sqlite_analyze_json_schema({ table: "docs", column: "data" }) // infer schema types
+sqlite_json_analyze_schema({ table: "docs", column: "data" }) // infer schema types
 
 // JSONB optimization (SQLite 3.45+)
 sqlite_json_storage_info({ table: "docs", column: "data" }) // check text vs JSONB format

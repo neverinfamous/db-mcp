@@ -402,7 +402,7 @@ function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
  */
 function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinition {
   return {
-    name: "sqlite_analyze_json_schema",
+    name: "sqlite_json_analyze_schema",
     description:
       "Analyze JSON data in a column to infer its schema (types, nullability, counts).",
     group: "json",

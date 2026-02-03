@@ -55,7 +55,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "json_query",
     "json_validate_path",
     "json_merge",
-    "analyze_json_schema",
+    "json_analyze_schema",
     "create_json_collection",
     // JSON Operation Tools (12)
     "json_valid",
