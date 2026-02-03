@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`sqlite_pragma_compile_options` Description** — Enhanced tool description to mention filter parameter
+  - Description now notes "Use the filter parameter to reduce output (~50+ options by default)"
+  - Helps agents know upfront how to avoid large payloads
+
+- **`sqlite_dbstat` Parameter Clarification** — Updated `excludeSystemTables` description for accuracy
+  - Description now clarifies it filters "SpatiaLite system tables and indexes" (not just tables)
+  - Reflects actual filtering behavior which includes SpatiaLite indexes in dbstat output
+
 - **`sqlite_dbstat` FTS5 Shadow Table Filtering** — Now filters FTS5 shadow tables when `excludeSystemTables: true`
   - Previously `excludeSystemTables` only filtered SpatiaLite system tables/indexes
   - Now also filters FTS5 shadow tables (`*_fts_data`, `*_fts_config`, `*_fts_docsize`, `*_fts_idx`, etc.)

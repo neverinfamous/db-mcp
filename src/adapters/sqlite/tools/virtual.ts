@@ -83,7 +83,9 @@ const DbStatSchema = z.object({
     .boolean()
     .optional()
     .default(false)
-    .describe("Exclude SpatiaLite system tables from results (default: false)"),
+    .describe(
+      "Exclude SpatiaLite system tables and indexes from results (default: false)",
+    ),
 });
 
 const VacuumSchema = z.object({

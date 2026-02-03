@@ -754,7 +754,8 @@ function createPragmaCompileOptionsTool(
 ): ToolDefinition {
   return {
     name: "sqlite_pragma_compile_options",
-    description: "Get the compile-time options used to build SQLite.",
+    description:
+      "Get the compile-time options used to build SQLite. Use the filter parameter to reduce output (~50+ options by default).",
     group: "admin",
     inputSchema: PragmaCompileOptionsSchema,
     outputSchema: PragmaCompileOptionsOutputSchema,
