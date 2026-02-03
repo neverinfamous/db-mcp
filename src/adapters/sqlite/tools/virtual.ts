@@ -27,7 +27,11 @@ import {
   DropTableOutputSchema,
   VacuumOutputSchema,
 } from "../output-schemas.js";
-import { isSpatialiteSystemView, isSpatialiteSystemTable } from "./core.js";
+import {
+  isSpatialiteSystemView,
+  isSpatialiteSystemTable,
+  isSpatialiteSystemIndex,
+} from "./core.js";
 
 // Virtual table schemas
 const GenerateSeriesSchema = z.object({
@@ -369,7 +373,11 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
           }));
 
           if (input.excludeSystemTables) {
-            tables = tables.filter((t) => !isSpatialiteSystemTable(t.name));
+            tables = tables.filter(
+              (t) =>
+                !isSpatialiteSystemTable(t.name) &&
+                !isSpatialiteSystemIndex(t.name),
+            );
           }
 
           return {
@@ -395,11 +403,13 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        // Filter out SpatiaLite system tables if requested
+        // Filter out SpatiaLite system tables/indexes if requested
         let stats = result.rows ?? [];
         if (input.excludeSystemTables) {
           stats = stats.filter(
-            (row) => !isSpatialiteSystemTable(row["name"] as string),
+            (row) =>
+              !isSpatialiteSystemTable(row["name"] as string) &&
+              !isSpatialiteSystemIndex(row["name"] as string),
           );
         }
 

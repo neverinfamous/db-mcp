@@ -222,7 +222,7 @@ const SPATIALITE_SYSTEM_INDEX_PREFIXES = [
 /**
  * Check if an index name is a SpatiaLite system index
  */
-function isSpatialiteSystemIndex(name: string): boolean {
+export function isSpatialiteSystemIndex(name: string): boolean {
   return SPATIALITE_SYSTEM_INDEX_PREFIXES.some(
     (prefix) => name === prefix || name.startsWith(prefix),
   );
