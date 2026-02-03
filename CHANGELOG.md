@@ -14,10 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `includeRowData:false` tip for phonetic matching to reduce payload size
   - Fixed example search term ("laptop" instead of "laptp" for clearer demonstration)
 
+- **`sqlite_dbstat` Response Field Naming** — Renamed response fields for clarity when using `summarize: true`
+  - Changed `tableCount` to `objectCount` and `tables` to `objects`
+  - dbstat returns storage stats for all database objects (tables and indexes), not just tables
+  - More accurately reflects the actual content of the response
+
 ### Added
 
 - **`sqlite_spatialite_analyze` Geometry Output Control** — New `includeGeometry` parameter to reduce payload size
-
   - When `false` (default), omits full WKT geometry from `nearest_neighbor` and `point_in_polygon` results
   - When `true`, includes `source_geom` and `target_geom` WKT fields as before
   - Significantly reduces payload size for proximity analysis (geometry can be 100+ characters per row)

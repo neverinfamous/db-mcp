@@ -376,8 +376,8 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
           return {
             success: true,
             summarized: true,
-            tableCount: tables.length,
-            tables,
+            objectCount: tables.length,
+            objects: tables,
           };
         }
 
