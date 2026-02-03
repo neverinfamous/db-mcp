@@ -263,7 +263,7 @@ function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_list_tables",
     description:
-      "List all tables and views in the database with their row counts.",
+      "List all tables and views in the database with their column counts.",
     group: "core",
     inputSchema: ListTablesSchema,
     outputSchema: ListTablesOutputSchema,
