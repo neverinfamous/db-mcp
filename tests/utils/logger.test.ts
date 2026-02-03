@@ -371,6 +371,69 @@ describe("Logger Security", () => {
 
       expect(moduleLogger).toBeInstanceOf(ModuleLogger);
     });
+
+    it("should support debug level via ModuleLogger", () => {
+      const dbLogger = logger.forModule("DB");
+      dbLogger.debug("Debug from module");
+
+      const output = stderrOutput.join("\n");
+      expect(output).toContain("[DEBUG]");
+      expect(output).toContain("[DB]");
+    });
+
+    it("should support notice level via ModuleLogger", () => {
+      const dbLogger = logger.forModule("DB");
+      dbLogger.notice("Notice from module");
+
+      const output = stderrOutput.join("\n");
+      expect(output).toContain("[NOTICE]");
+      expect(output).toContain("[DB]");
+    });
+
+    it("should support warn level via ModuleLogger", () => {
+      const dbLogger = logger.forModule("DB");
+      dbLogger.warn("Warning from module");
+
+      const output = stderrOutput.join("\n");
+      expect(output).toContain("[WARNING]");
+      expect(output).toContain("[DB]");
+    });
+
+    it("should support warning level via ModuleLogger", () => {
+      const dbLogger = logger.forModule("DB");
+      dbLogger.warning("Warning from module");
+
+      const output = stderrOutput.join("\n");
+      expect(output).toContain("[WARNING]");
+      expect(output).toContain("[DB]");
+    });
+
+    it("should support critical level via ModuleLogger", () => {
+      const dbLogger = logger.forModule("DB");
+      dbLogger.critical("Critical from module");
+
+      const output = stderrOutput.join("\n");
+      expect(output).toContain("[CRITICAL]");
+      expect(output).toContain("[DB]");
+    });
+
+    it("should support alert level via ModuleLogger", () => {
+      const dbLogger = logger.forModule("DB");
+      dbLogger.alert("Alert from module");
+
+      const output = stderrOutput.join("\n");
+      expect(output).toContain("[ALERT]");
+      expect(output).toContain("[DB]");
+    });
+
+    it("should support emergency level via ModuleLogger", () => {
+      const dbLogger = logger.forModule("DB");
+      dbLogger.emergency("Emergency from module");
+
+      const output = stderrOutput.join("\n");
+      expect(output).toContain("[EMERGENCY]");
+      expect(output).toContain("[DB]");
+    });
   });
 
   // ==========================================================================
