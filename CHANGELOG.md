@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comment now reads: "Note: json_each multiplies output rows—use limit param for large arrays"
   - Example updated to include `limit: 50` parameter to demonstrate payload control
 
+- **ServerInstructions.ts SpatiaLite Analyze Documentation** — Improved tool documentation clarity
+  - Added explicit `analysisType` options: `spatial_extent | point_in_polygon | nearest_neighbor | distance_matrix`
+  - Documented `excludeSelf` parameter for same-table nearest_neighbor/distance_matrix queries
+  - Added note clarifying that distances are returned in **Cartesian (degrees)**, not geodetic (km/miles)
+
 ### Changed
 
 - **`sqlite_drop_virtual_table` Regular Table Validation** — Now validates target is actually a virtual table

@@ -216,7 +216,11 @@ sqlite_spatialite_import({ tableName: "places", format: "geojson", data: '{"type
 
 // Spatial queries and analysis
 sqlite_spatialite_query({ query: "SELECT name, AsText(geom) FROM places WHERE ST_Within(geom, ...)" })
+// analysisType: "spatial_extent" | "point_in_polygon" | "nearest_neighbor" | "distance_matrix"
+// Note: nearest_neighbor/distance_matrix return CARTESIAN distance (degrees), not geodetic (km/miles)
+// For same source/target table, use excludeSelf: true to avoid self-matches
 sqlite_spatialite_analyze({ analysisType: "spatial_extent", sourceTable: "places", geometryColumn: "geom" })
+sqlite_spatialite_analyze({ analysisType: "nearest_neighbor", sourceTable: "pts", targetTable: "pts", excludeSelf: true })
 // transform: buffer uses 'distance' param for radius; simplify uses 'distance' as tolerance (0.0001 for lat/lon)
 // Buffer now auto-simplifies output by default (tolerance=0.0001). Use simplifyTolerance: 0 to disable.
 sqlite_spatialite_transform({ operation: "buffer", geometry1: "POINT(-73.99 40.75)", distance: 0.01 })
