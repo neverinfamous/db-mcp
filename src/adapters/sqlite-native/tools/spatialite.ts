@@ -112,6 +112,13 @@ const SpatialAnalysisSchema = z.object({
     .describe(
       "For nearest_neighbor: exclude self-matches when source and target tables are the same (default: true)",
     ),
+  includeGeometry: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Include full WKT geometry in results (default: false to reduce payload size)",
+    ),
 });
 
 const SpatialIndexSchema = z.object({
@@ -446,31 +453,36 @@ function createSpatialAnalysisTool(
           const sameTable = input.sourceTable === input.targetTable;
           const selfFilter =
             sameTable && input.excludeSelf ? "WHERE s.id != t.id" : "";
-          // Use subquery to get non-geometry columns, convert geometry to WKT
+          // Conditionally include WKT geometry based on includeGeometry param
+          const geomColumns = input.includeGeometry
+            ? `, AsText(s."${input.geometryColumn}") as source_geom, AsText(t."${input.geometryColumn}") as target_geom`
+            : "";
           query = `SELECT 
-            s.id as source_id, AsText(s."${input.geometryColumn}") as source_geom,
-            t.id as target_id, AsText(t."${input.geometryColumn}") as target_geom,
-            ST_Distance(s."${input.geometryColumn}", t."${input.geometryColumn}") as distance
+            s.id as source_id, t.id as target_id,
+            ST_Distance(s."${input.geometryColumn}", t."${input.geometryColumn}") as distance${geomColumns}
           FROM "${input.sourceTable}" s, "${input.targetTable}" t
           ${selfFilter}
           ORDER BY distance LIMIT ${input.limit}`;
           break;
         }
 
-        case "point_in_polygon":
+        case "point_in_polygon": {
           if (!input.targetTable) {
             throw new Error(
               "Missing required parameter 'targetTable' for point in polygon analysis",
             );
           }
-          // Use subquery to get non-geometry columns, convert geometry to WKT
+          // Conditionally include WKT geometry based on includeGeometry param
+          const geomCols = input.includeGeometry
+            ? `, AsText(s."${input.geometryColumn}") as source_geom, AsText(t."${input.geometryColumn}") as target_geom`
+            : "";
           query = `SELECT 
-            s.id as source_id, AsText(s."${input.geometryColumn}") as source_geom,
-            t.id as target_id, AsText(t."${input.geometryColumn}") as target_geom
+            s.id as source_id, t.id as target_id${geomCols}
           FROM "${input.sourceTable}" s, "${input.targetTable}" t
           WHERE ST_Within(s."${input.geometryColumn}", t."${input.geometryColumn}")
           LIMIT ${input.limit}`;
           break;
+        }
 
         case "distance_matrix":
           query = `SELECT a.id as id1, b.id as id2,
@@ -573,10 +585,11 @@ function createGeometryTransformTool(
       switch (input.operation) {
         case "buffer": {
           const bufferGeom = `Buffer(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})`;
-          // Auto-simplify buffer output by default to reduce verbose WKT (~2KB -> ~200 bytes)
-          // Default tolerance 0.0001 is suitable for lat/lon coordinates
+          // Auto-simplify buffer output with adaptive tolerance based on buffer distance
+          // Tolerance scales with distance (1% of buffer distance) for effective vertex reduction
           // Use simplifyTolerance: 0 to disable, or specify custom tolerance
-          const tolerance = input.simplifyTolerance ?? 0.0001;
+          const defaultTolerance = Math.max(0.0001, input.distance * 0.01);
+          const tolerance = input.simplifyTolerance ?? defaultTolerance;
           const finalGeom =
             tolerance > 0
               ? `Simplify(${bufferGeom}, ${tolerance})`

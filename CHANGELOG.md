@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`sqlite_spatialite_analyze` Geometry Output Control** — New `includeGeometry` parameter to reduce payload size
+  - When `false` (default), omits full WKT geometry from `nearest_neighbor` and `point_in_polygon` results
+  - When `true`, includes `source_geom` and `target_geom` WKT fields as before
+  - Significantly reduces payload size for proximity analysis (geometry can be 100+ characters per row)
+
+### Changed
+
+- **`sqlite_spatialite_transform` Adaptive Buffer Simplification** — Buffer tolerance now scales with buffer distance
+  - Default tolerance changed from fixed 0.0001 to adaptive `max(0.0001, distance * 0.01)`
+  - Larger buffers (e.g., 0.1 degrees) now produce ~50 vertices instead of 96+ for more compact WKT
+  - Smaller buffers retain precision with the 0.0001 floor
+
 - **`sqlite_index_stats` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite system indexes
   - When `true` (default), filters out SpatiaLite system indexes (`idx_spatial_ref_sys`, `idx_srid_geocols`, `idx_viewsjoin`, `idx_virtssrid`)
   - Provides parity with `sqlite_dbstat` and `sqlite_list_tables` system table filtering
