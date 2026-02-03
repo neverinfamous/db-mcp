@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **ServerInstructions.ts Text Tool Documentation** — Improved fuzzy_match and phonetic_match examples
+  - Clarified tokenize behavior: `tokenize:false` for full-string matching vs default token mode
+  - Added `includeRowData:false` tip for phonetic matching to reduce payload size
+  - Fixed example search term ("laptop" instead of "laptp" for clearer demonstration)
+
 ### Added
 
 - **`sqlite_spatialite_analyze` Geometry Output Control** — New `includeGeometry` parameter to reduce payload size
+
   - When `false` (default), omits full WKT geometry from `nearest_neighbor` and `point_in_polygon` results
   - When `true`, includes `source_geom` and `target_geom` WKT fields as before
   - Significantly reduces payload size for proximity analysis (geometry can be 100+ characters per row)

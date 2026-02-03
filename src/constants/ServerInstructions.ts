@@ -261,13 +261,15 @@ sqlite_text_normalize({ table: "docs", column: "content", mode: "strip_accents" 
 sqlite_text_validate({ table: "users", column: "email", pattern: "email" })
 sqlite_text_validate({ table: "data", column: "field", pattern: "custom", customPattern: "^[A-Z]{2}[0-9]{4}$" })
 
-// Fuzzy matching - matches against WORD TOKENS by default (not entire value)
-// "laptop" now matches "Laptop Pro 15" (distance 0 on first token). Use tokenize:false for legacy behavior.
-sqlite_fuzzy_match({ table: "products", column: "name", search: "laptp", maxDistance: 2 })
+// Fuzzy matching - matches WORD TOKENS by default (not entire value)
+// "laptop" matches "Laptop Pro 15" (distance 0 on first token). Use tokenize:false for full-string matching.
+sqlite_fuzzy_match({ table: "products", column: "name", search: "laptop", maxDistance: 2 })
+sqlite_fuzzy_match({ table: "products", column: "name", search: "laptob", maxDistance: 2, tokenize: false }) // matches full value
 
-// Phonetic matching - finds words that sound alike (matches FIRST word only)
-// Soundex compares only the first word: "laptop" matches "Laptop Pro 15", but "pro" won't
+// Phonetic matching - finds words that sound alike (compares FIRST word only)
+// Use includeRowData:false for lighter payloads when only matching values are needed
 sqlite_phonetic_match({ table: "products", column: "name", search: "laptop", algorithm: "soundex" })
+sqlite_phonetic_match({ table: "products", column: "name", search: "laptop", includeRowData: false }) // lighter response
 
 // Advanced search - combines exact, fuzzy, and phonetic techniques
 // fuzzyThreshold: 0.3-0.4 = loose matching (more results), 0.6-0.8 = strict matching (fewer results)
