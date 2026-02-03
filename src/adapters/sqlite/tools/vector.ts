@@ -399,14 +399,32 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
       scored.sort((a, b) => b._similarity - a._similarity);
       const limited = scored.slice(0, input.limit);
 
-      // Remove vector data from results if not explicitly requested (payload optimization)
-      const results = includeVectorInResults
-        ? limited
-        : limited.map((row) =>
-            Object.fromEntries(
-              Object.entries(row).filter(([key]) => key !== input.vectorColumn),
+      // Apply returnColumns filtering (payload optimization)
+      // If returnColumns specified, only include those columns plus _similarity
+      const results = limited.map((row) => {
+        // Cast row for proper indexing since it's a spread of result row + _similarity
+        const rowData = row as Record<string, unknown>;
+        if (input.returnColumns && input.returnColumns.length > 0) {
+          // Build filtered result with only requested columns
+          const filtered: Record<string, unknown> = {};
+          for (const col of input.returnColumns) {
+            if (col in rowData) {
+              filtered[col] = rowData[col];
+            }
+          }
+          filtered["_similarity"] = row._similarity;
+          return filtered;
+        }
+        // No returnColumns specified: include all except vector column (for cleaner output)
+        if (!includeVectorInResults) {
+          return Object.fromEntries(
+            Object.entries(rowData).filter(
+              ([key]) => key !== input.vectorColumn,
             ),
           );
+        }
+        return row;
+      });
 
       return {
         success: true,

@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`sqlite_vector_search` returnColumns Consistency** — Fixed `returnColumns` being ignored for euclidean/dot metrics
+  - Previously, `returnColumns` only filtered output when using cosine similarity; euclidean and dot returned all columns
+  - Now consistently applies column filtering after similarity calculation for all three metrics
+  - Reduces payload size for non-cosine searches (previously ~3x larger due to full embedding vectors in output)
+
 ### Changed
 
 - **ServerInstructions.ts `sqlite_stats_top_n` Documentation** — Strengthened payload optimization guidance
   - Changed comment from passive note to explicit ⚠️ warning: "Always use selectColumns to avoid returning all columns (large payloads with text fields)"
   - Emphasizes importance of column selection to reduce token usage
-
 
 ### Added
 
