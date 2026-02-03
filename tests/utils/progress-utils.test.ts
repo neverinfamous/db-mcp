@@ -14,22 +14,30 @@ import {
 } from "../../src/utils/progress-utils.js";
 import type { RequestContext } from "../../src/types/index.js";
 
+/** Type for a mock notification function */
+type MockNotificationFn = ReturnType<typeof vi.fn<[], Promise<void>>>;
+
+/** Type for a mock server with notification method */
+interface MockServer {
+  notification: MockNotificationFn;
+}
+
 /** Helper to create mock server with notification spy */
-function createMockServer() {
+function createMockServer(): MockServer {
   return {
-    notification: vi.fn().mockResolvedValue(undefined),
+    notification: vi.fn<[], Promise<void>>().mockResolvedValue(undefined),
   };
 }
 
-/** Helper to create ProgressContext with mock server */
-function createTestProgressContext(
-  progressToken: string | number,
-): ProgressContext & { server: { notification: ReturnType<typeof vi.fn> } } {
-  const server = createMockServer();
+/** Helper to create ProgressContext with mock server for testing */
+function createTestContext(
+  progressToken: string | number | undefined,
+  server: MockServer,
+): ProgressContext {
   return {
     server: server as unknown as ProgressContext["server"],
     progressToken,
-  } as ProgressContext & { server: { notification: ReturnType<typeof vi.fn> } };
+  };
 }
 
 describe("Progress Utilities", () => {
@@ -51,7 +59,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should return undefined when progressToken is undefined", () => {
-      const mockServer = { notification: vi.fn() };
+      const mockServer = createMockServer();
       const ctx: RequestContext = {
         timestamp: new Date(),
         requestId: "test-id",
@@ -63,7 +71,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should return ProgressContext when both server and progressToken exist", () => {
-      const mockServer = { notification: vi.fn() };
+      const mockServer = createMockServer();
       const ctx: RequestContext = {
         timestamp: new Date(),
         requestId: "test-id",
@@ -78,7 +86,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should handle numeric progressToken", () => {
-      const mockServer = { notification: vi.fn() };
+      const mockServer = createMockServer();
       const ctx: RequestContext = {
         timestamp: new Date(),
         requestId: "test-id",
@@ -93,10 +101,10 @@ describe("Progress Utilities", () => {
   });
 
   describe("sendProgress", () => {
-    let mockServer: { notification: ReturnType<typeof vi.fn> };
+    let mockServer: MockServer;
 
     beforeEach(() => {
-      mockServer = { notification: vi.fn().mockResolvedValue(undefined) };
+      mockServer = createMockServer();
     });
 
     it("should not send when context is undefined", async () => {
@@ -105,19 +113,13 @@ describe("Progress Utilities", () => {
     });
 
     it("should not send when progressToken is undefined", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: undefined,
-      };
+      const ctx = createTestContext(undefined, mockServer);
       await sendProgress(ctx, 50, 100, "Processing...");
       expect(mockServer.notification).not.toHaveBeenCalled();
     });
 
     it("should send progress notification with all parameters", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "token-789",
-      };
+      const ctx = createTestContext("token-789", mockServer);
       await sendProgress(ctx, 50, 100, "Halfway done");
 
       expect(mockServer.notification).toHaveBeenCalledWith({
@@ -132,10 +134,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should omit total when undefined", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "token-abc",
-      };
+      const ctx = createTestContext("token-abc", mockServer);
       await sendProgress(ctx, 25, undefined, "In progress");
 
       expect(mockServer.notification).toHaveBeenCalledWith({
@@ -149,10 +148,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should omit message when undefined", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "token-def",
-      };
+      const ctx = createTestContext("token-def", mockServer);
       await sendProgress(ctx, 75, 100);
 
       expect(mockServer.notification).toHaveBeenCalledWith({
@@ -166,10 +162,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should omit message when empty string", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "token-ghi",
-      };
+      const ctx = createTestContext("token-ghi", mockServer);
       await sendProgress(ctx, 10, 50, "");
 
       expect(mockServer.notification).toHaveBeenCalledWith({
@@ -184,10 +177,7 @@ describe("Progress Utilities", () => {
 
     it("should handle notification errors gracefully", async () => {
       mockServer.notification.mockRejectedValue(new Error("Network error"));
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "token-err",
-      };
+      const ctx = createTestContext("token-err", mockServer);
 
       // Should not throw
       await expect(sendProgress(ctx, 50, 100, "Test")).resolves.toBeUndefined();
@@ -195,17 +185,14 @@ describe("Progress Utilities", () => {
   });
 
   describe("createBatchProgressReporter", () => {
-    let mockServer: { notification: ReturnType<typeof vi.fn> };
+    let mockServer: MockServer;
 
     beforeEach(() => {
-      mockServer = { notification: vi.fn().mockResolvedValue(undefined) };
+      mockServer = createMockServer();
     });
 
     it("should throttle progress reports", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "batch-token",
-      };
+      const ctx = createTestContext("batch-token", mockServer);
       const reporter = createBatchProgressReporter(ctx, 100, 10);
 
       // Process items 1-9 (no reports due to throttle)
@@ -220,10 +207,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should always report completion", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "batch-token-2",
-      };
+      const ctx = createTestContext("batch-token-2", mockServer);
       const reporter = createBatchProgressReporter(ctx, 15, 10);
 
       // Process item 15 (completion)
@@ -232,10 +216,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should include message in progress report", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "batch-token-3",
-      };
+      const ctx = createTestContext("batch-token-3", mockServer);
       const reporter = createBatchProgressReporter(ctx, 50, 10);
 
       await reporter(10, "Processing batch 1");
@@ -256,10 +237,7 @@ describe("Progress Utilities", () => {
     });
 
     it("should use default throttle of 10", async () => {
-      const ctx: ProgressContext = {
-        server: mockServer,
-        progressToken: "batch-token-4",
-      };
+      const ctx = createTestContext("batch-token-4", mockServer);
       const reporter = createBatchProgressReporter(ctx, 100);
 
       await reporter(5);
