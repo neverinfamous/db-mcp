@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **ServerInstructions.ts `sqlite_stats_top_n` Documentation** — Clarified payload optimization behavior
+  - Updated comment to explicitly state that `selectColumns` limits returned columns for smaller payloads
+  - Improved parity with `sqlite_vector_search` documentation pattern
+
 ### Added
 
 - **`sqlite_dbstat` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
