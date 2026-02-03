@@ -312,7 +312,8 @@ sqlite_drop_virtual_table({ tableName: "old_fts", ifExists: true })
 
 // Generate series (pure JS - native generate_series extension not compiled into SQLite)
 sqlite_generate_series({ start: 1, stop: 100, step: 5 }) // Returns array of values
-sqlite_create_series_table({ tableName: "numbers", start: 1, stop: 1000 }) // Persistent table
+// Creates a REGULAR table (not virtual) - use sqlite_drop_table to remove
+sqlite_create_series_table({ tableName: "numbers", start: 1, stop: 1000 })
 
 // R-Tree spatial indexing (Native only)
 sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }) // 2D: minX, maxX, minY, maxY
