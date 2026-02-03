@@ -787,10 +787,9 @@ export class SqliteAdapter extends DatabaseAdapter {
       // list: undefined signals no enumeration callback for this template
       const template = new ResourceTemplate(resource.uri, { list: undefined });
 
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      server.resource(
+      server.registerResource(
         resource.name,
-        template as never, // Type cast for SDK compatibility
+        template,
         {
           mimeType: resource.mimeType ?? "application/json",
           description: resource.description,
@@ -822,8 +821,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       );
     } else {
       // Static resource registration
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      server.resource(
+      server.registerResource(
         resource.name,
         resource.uri,
         {
@@ -860,11 +858,10 @@ export class SqliteAdapter extends DatabaseAdapter {
     server: McpServer,
     prompt: PromptDefinition,
   ): void {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    server.prompt(
+    server.registerPrompt(
       prompt.name,
-      prompt.description,
-      {}, // MCP SDK expects Zod schema, use empty object for no-arg prompts
+      { description: prompt.description },
+
       async (args: Record<string, string>) => {
         const context = this.createContext();
         const result = await prompt.handler(args, context);

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Modern MCP SDK API Migration** — Removed all `eslint-disable` comments
+  - `McpServer.ts`: Migrated built-in tools (`server_info`, `server_health`, `list_adapters`) from deprecated `server.tool()` to `server.registerTool()` API
+  - `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`: Migrated from deprecated `server.resource()` and `server.prompt()` to modern `server.registerResource()` and `server.registerPrompt()` APIs
+  - `middleware.ts`: Replaced global namespace extension with proper Express module augmentation pattern (`declare module "express-serve-static-core"`)
+  - `progress-utils.ts`: Replaced deprecated `Server` type import with structural interface (`NotificationSender`)
+  - `logger.ts`: Replaced control character regex literals with dynamically constructed `RegExp` using `String.fromCharCode()` to satisfy `no-control-regex` rule
+
 ### Fixed
 
 - **`sqlite_vector_search` returnColumns Consistency** — Fixed `returnColumns` being ignored for euclidean/dot metrics

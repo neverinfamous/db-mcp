@@ -122,12 +122,12 @@ export class DbMcpServer {
    */
   private registerBuiltInTools(): void {
     // Server info tool
-    // Using server.tool pattern (deprecated but registerTool API differs)
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    this.server.tool(
+    this.server.registerTool(
       "server_info",
-      "Get information about the db-mcp server and registered adapters",
-      {},
+      {
+        description:
+          "Get information about the db-mcp server and registered adapters",
+      },
       () => {
         const adapterInfo = [];
         for (const [id, adapter] of this.adapters) {
@@ -162,11 +162,9 @@ export class DbMcpServer {
     );
 
     // Health check tool
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    this.server.tool(
+    this.server.registerTool(
       "server_health",
-      "Check health status of all database connections",
-      {},
+      { description: "Check health status of all database connections" },
       async () => {
         const health: Record<string, unknown> = {
           server: "healthy",
@@ -198,11 +196,9 @@ export class DbMcpServer {
     );
 
     // List adapters tool
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    this.server.tool(
+    this.server.registerTool(
       "list_adapters",
-      "List all registered database adapters",
-      {},
+      { description: "List all registered database adapters" },
       () => {
         const adapters = [];
         for (const [id, adapter] of this.adapters) {

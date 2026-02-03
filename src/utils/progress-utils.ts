@@ -5,17 +5,26 @@
  * Follows MCP 2025-11-25 specification for notifications/progress.
  */
 
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import type { RequestContext } from "../types/index.js";
 
 /** Progress token from client request _meta */
 export type ProgressToken = string | number;
 
+/**
+ * Interface for server notification capability.
+ * Uses structural typing to avoid deprecated Server import.
+ */
+interface NotificationSender {
+  notification: (message: {
+    method: string;
+    params: Record<string, unknown>;
+  }) => Promise<void>;
+}
+
 /** Context required to send progress notifications */
 export interface ProgressContext {
-  /** MCP Server instance for sending notifications */
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
-  server: Server;
+  /** Server instance with notification capability */
+  server: NotificationSender;
   /** Progress token from request _meta (if client requested progress) */
   progressToken?: ProgressToken;
 }
@@ -31,8 +40,7 @@ export function buildProgressContext(
     return undefined;
   }
   return {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    server: ctx.server as Server,
+    server: ctx.server as NotificationSender,
     progressToken: ctx.progressToken,
   };
 }

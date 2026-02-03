@@ -26,18 +26,16 @@ const logger = createModuleLogger("AUTH");
 
 /**
  * Extended Express Request with auth context
+ * Uses module augmentation to extend Express.Request interface
  */
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      /** Authenticated user claims */
-      auth?: TokenClaims;
-      /** Raw access token */
-      accessToken?: string;
-      /** Request ID for tracing */
-      requestId?: string;
-    }
+declare module "express-serve-static-core" {
+  interface Request {
+    /** Authenticated user claims */
+    auth?: TokenClaims;
+    /** Raw access token */
+    accessToken?: string;
+    /** Request ID for tracing */
+    requestId?: string;
   }
 }
 

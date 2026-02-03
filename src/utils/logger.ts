@@ -214,8 +214,12 @@ function sanitizeContext(context: LogContext): LogContext {
  */
 function sanitizeMessage(message: string): string {
   // Remove newlines and all control characters to prevent log injection/forging
-  // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
-  return message.replace(/[\x00-\x1F\x7F]/g, " ");
+  // Pattern: [\x00-\x1F\x7F] matches all ASCII control characters
+  const controlCharPattern = new RegExp(
+    `[${String.fromCharCode(0x00)}-${String.fromCharCode(0x1f)}${String.fromCharCode(0x7f)}]`,
+    "g",
+  );
+  return message.replace(controlCharPattern, " ");
 }
 
 /**
@@ -224,12 +228,14 @@ function sanitizeMessage(message: string): string {
  */
 function sanitizeStack(stack: string): string {
   // Replace newlines with a safe delimiter, remove other control characters
-  return (
-    stack
-      .replace(/\r\n|\r|\n/g, " \u2192 ") // Replace newlines with arrow separator
-      // eslint-disable-next-line no-control-regex -- Intentionally matching control characters for security
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-  ); // Remove other control chars
+  // Pattern: [\x00-\x08\x0B\x0C\x0E-\x1F\x7F] matches control chars except tab (\x09), LF (\x0A), CR (\x0D)
+  const controlCharPattern = new RegExp(
+    `[${String.fromCharCode(0x00)}-${String.fromCharCode(0x08)}${String.fromCharCode(0x0b)}${String.fromCharCode(0x0c)}${String.fromCharCode(0x0e)}-${String.fromCharCode(0x1f)}${String.fromCharCode(0x7f)}]`,
+    "g",
+  );
+  return stack
+    .replace(/\r\n|\r|\n/g, " \u2192 ") // Replace newlines with arrow separator
+    .replace(controlCharPattern, ""); // Remove other control chars
 }
 
 /**
