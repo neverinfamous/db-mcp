@@ -409,4 +409,32 @@ describe("edge cases", () => {
     expect(config.enabledGroups.has("json")).toBe(true);
     expect(config.enabledGroups.has("text")).toBe(true);
   });
+
+  it("should handle comma-only string (no valid parts)", () => {
+    const config = parseToolFilter(",,,");
+
+    // All groups enabled (no valid parts = same as empty)
+    expect(config.enabledGroups.size).toBe(ALL_TOOL_GROUPS.length);
+  });
+
+  it("should exclude meta-group correctly", () => {
+    // Start with all, exclude starter meta-group
+    const config = parseToolFilter("-starter");
+
+    // core, json, text should be excluded
+    expect(config.enabledGroups.has("core")).toBe(false);
+    expect(config.enabledGroups.has("json")).toBe(false);
+    expect(config.enabledGroups.has("text")).toBe(false);
+    // Other groups should remain
+    expect(config.enabledGroups.has("vector")).toBe(true);
+    expect(config.enabledGroups.has("geo")).toBe(true);
+  });
+
+  it("should include summary with included tools", () => {
+    const config = parseToolFilter("core,+some_specific_tool");
+    const summary = getFilterSummary(config);
+
+    expect(summary).toContain("Included tools");
+    expect(summary).toContain("some_specific_tool");
+  });
 });

@@ -8,6 +8,7 @@
 import { describe, it, expect } from "vitest";
 import {
   validateWhereClause,
+  sanitizeWhereClause,
   UnsafeWhereClauseError,
   validateIdentifier,
   InvalidIdentifierError,
@@ -220,6 +221,33 @@ describe("Security: WHERE Clause Validation", () => {
           UnsafeWhereClauseError,
         );
       });
+    });
+  });
+
+  describe("sanitizeWhereClause", () => {
+    it("should return the same clause if safe", () => {
+      expect(sanitizeWhereClause("id = 1")).toBe("id = 1");
+      expect(sanitizeWhereClause("status = 'active'")).toBe(
+        "status = 'active'",
+      );
+    });
+
+    it("should preserve complex safe clauses", () => {
+      const clause = "id > 0 AND status = 'active' OR name LIKE '%test%'";
+      expect(sanitizeWhereClause(clause)).toBe(clause);
+    });
+
+    it("should throw for dangerous clauses", () => {
+      expect(() => sanitizeWhereClause("1=1; DROP TABLE users;")).toThrow(
+        UnsafeWhereClauseError,
+      );
+      expect(() => sanitizeWhereClause("id = 1 -- comment")).toThrow(
+        UnsafeWhereClauseError,
+      );
+    });
+
+    it("should throw for empty string", () => {
+      expect(() => sanitizeWhereClause("")).toThrow(UnsafeWhereClauseError);
     });
   });
 });

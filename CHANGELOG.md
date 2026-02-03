@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Security Test Coverage Expansion** — 5 new/enhanced test files improving coverage for security-critical utilities
+  - `tests/utils/quoteIdentifier.test.ts`: 32 tests for identifier sanitization edge cases (empty, whitespace, control chars, quotes)
+  - `tests/security/validateQuery.test.ts`: 23 tests for `DatabaseAdapter.validateQuery` security patterns
+  - `tests/adapters/sqlite/resources.test.ts`: 10 tests for all 8 MCP resource handlers
+  - Enhanced `security-injection.test.ts` with `sanitizeWhereClause` tests
+  - Enhanced `ToolFilter.test.ts` with edge case tests (comma-only strings, meta-group exclusion, summary generation)
+  - Coverage improvements: `identifiers.ts` 65→97%, `where-clause.ts` 80→100%, `ToolFilter.ts` 91→96%, `resources.ts` 22→97%
+
 ### Changed
 
 - **ServerInstructions.ts Admin Tool Documentation** — Improved admin tool documentation clarity
