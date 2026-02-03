@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`sqlite_index_stats` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite system indexes
+  - When `true` (default), filters out SpatiaLite system indexes (`idx_spatial_ref_sys`, `idx_srid_geocols`, `idx_viewsjoin`, `idx_virtssrid`)
+  - Provides parity with `sqlite_dbstat` and `sqlite_list_tables` system table filtering
+  - Set to `false` to include all indexes
+
 ### Changed
+
+- **`sqlite_dbstat` FTS5 Shadow Table Filtering** — Now filters FTS5 shadow tables when `excludeSystemTables: true`
+  - Previously `excludeSystemTables` only filtered SpatiaLite system tables/indexes
+  - Now also filters FTS5 shadow tables (`*_fts_data`, `*_fts_config`, `*_fts_docsize`, `*_fts_idx`, etc.)
+  - Applies to both summarize mode and raw page-level mode
 
 - **JSON Tool Naming Consistency** — Renamed `sqlite_analyze_json_schema` to `sqlite_json_analyze_schema`
   - Aligns with the `sqlite_json_*` prefix pattern used by all other tools in the JSON group

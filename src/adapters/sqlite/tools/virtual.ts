@@ -365,7 +365,9 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
             tables = tables.filter(
               (t) =>
                 !isSpatialiteSystemTable(t.name) &&
-                !isSpatialiteSystemIndex(t.name),
+                !isSpatialiteSystemIndex(t.name) &&
+                // Also filter FTS5 shadow tables (e.g., articles_fts_config, articles_fts_data)
+                !t.name.includes("_fts_"),
             );
           }
 
@@ -398,7 +400,9 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
           stats = stats.filter(
             (row) =>
               !isSpatialiteSystemTable(row["name"] as string) &&
-              !isSpatialiteSystemIndex(row["name"] as string),
+              !isSpatialiteSystemIndex(row["name"] as string) &&
+              // Also filter FTS5 shadow tables (e.g., articles_fts_config, articles_fts_data)
+              !(row["name"] as string).includes("_fts_"),
           );
         }
 

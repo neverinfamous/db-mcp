@@ -70,6 +70,13 @@ const IndexStatsSchema = z.object({
     .string()
     .optional()
     .describe("Filter indexes by table name (default: all tables)"),
+  excludeSystemIndexes: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Exclude SpatiaLite system indexes (default: true). Set to false to include all indexes.",
+    ),
 });
 
 const PragmaOptimizeSchema = z.object({
@@ -690,6 +697,15 @@ function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
         const indexName = row["name"] as string;
         const tableName = row["table"] as string;
         const sqlDef = (row["sql"] as string) ?? "";
+
+        // Filter out SpatiaLite system indexes if requested (default: true)
+        if (input.excludeSystemIndexes) {
+          // Import isSpatialiteSystemIndex from core
+          const { isSpatialiteSystemIndex } = await import("./core.js");
+          if (isSpatialiteSystemIndex(indexName)) {
+            continue;
+          }
+        }
 
         // Check if unique from CREATE statement
         const unique = sqlDef.toUpperCase().includes("UNIQUE");
