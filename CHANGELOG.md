@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **ServerInstructions.ts `sqlite_stats_top_n` Documentation** — Clarified payload optimization behavior
-  - Updated comment to explicitly state that `selectColumns` limits returned columns for smaller payloads
-  - Improved parity with `sqlite_vector_search` documentation pattern
+- **ServerInstructions.ts `sqlite_stats_top_n` Documentation** — Strengthened payload optimization guidance
+  - Changed comment from passive note to explicit ⚠️ warning: "Always use selectColumns to avoid returning all columns (large payloads with text fields)"
+  - Emphasizes importance of column selection to reduce token usage
+
 
 ### Added
 
