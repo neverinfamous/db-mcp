@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **ServerInstructions.ts Admin Tool Documentation** — Improved admin tool documentation clarity
+  - `sqlite_dbstat`: Clarified JS fallback provides counts only (not per-table stats); updated WASM vs Native table
+  - `sqlite_pragma_compile_options`: Added note that WASM may show FTS3, not FTS5
+  - R-Tree and CSV tools: Clarified these return graceful errors with `wasmLimitation: true` in WASM mode
+
 - **ServerInstructions.ts Text Tool Documentation** — Improved fuzzy_match and phonetic_match examples
   - Clarified tokenize behavior: `tokenize:false` for full-string matching vs default token mode
   - Added `includeRowData:false` tip for phonetic matching to reduce payload size

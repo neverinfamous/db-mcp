@@ -80,7 +80,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | R-Tree spatial indexing | ✅ | ❌ | Graceful error |
 | CSV virtual tables | ✅ | ❌ | Graceful error |
 | generate_series | JS fallback | JS fallback | — |
-| dbstat | ✅ native | ❌ | JS (basic) |
+| dbstat | ✅ native (per-table) | ❌ | JS (counts only) |
 | soundex() | ✅ native | ❌ | JS |
 `;
 
@@ -283,7 +283,7 @@ sqlite_integrity_check({ maxErrors: 10 }) // Check for corruption
 sqlite_optimize({ analyze: true, reindex: true }) // Optimize performance
 sqlite_vacuum() // Reclaim space
 sqlite_analyze({ table: "orders" }) // Update statistics for query planner
-sqlite_dbstat({ summarize: true }) // Storage statistics (JS fallback in WASM)
+sqlite_dbstat({ summarize: true }) // Storage statistics (summarize only works in native; WASM returns counts only)
 
 // Backup and restore (Native only)
 sqlite_backup({ targetPath: "/path/to/backup.db" })
@@ -294,7 +294,7 @@ sqlite_restore({ sourcePath: "/path/to/backup.db" }) // WARNING: Replaces curren
 sqlite_pragma_settings({ pragma: "journal_mode" }) // Get value
 sqlite_pragma_settings({ pragma: "cache_size", value: 10000 }) // Set value
 sqlite_pragma_table_info({ table: "users" }) // Column details
-sqlite_pragma_compile_options({ filter: "FTS" }) // Filter compile options
+sqlite_pragma_compile_options({ filter: "FTS" }) // Filter compile options (note: WASM may show FTS3, not FTS5)
 sqlite_pragma_database_list() // List attached databases
 sqlite_pragma_optimize() // Run PRAGMA optimize
 
@@ -317,10 +317,10 @@ sqlite_generate_series({ start: 1, stop: 100, step: 5 }) // Returns array of val
 // Creates a REGULAR table (not virtual) - use sqlite_drop_table to remove
 sqlite_create_series_table({ tableName: "numbers", start: 1, stop: 1000 })
 
-// R-Tree spatial indexing (Native only)
+// R-Tree spatial indexing (Native only - returns graceful error with wasmLimitation: true in WASM)
 sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }) // 2D: minX, maxX, minY, maxY
 
-// CSV Virtual Tables (Native only - not available in WASM; requires ABSOLUTE paths)
+// CSV Virtual Tables (Native only - returns graceful error in WASM; requires ABSOLUTE paths)
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" })
 sqlite_create_csv_table({ tableName: "csv_data", filePath: "/absolute/path/to/data.csv" })
 
