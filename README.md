@@ -25,20 +25,18 @@
 - [✅ Quick Test - Verify Everything Works](#-quick-test---verify-everything-works)
 - [🚀 Quick Start](#-quick-start)
 - [⚡ Install to Cursor IDE](#-install-to-cursor-ide)
+- [🎛️ Tool Filtering](#️-tool-filtering) ⭐ **Important for IDE users**
 
 ### Configuration & Usage
 
-- [📚 MCP Client Configuration](#-mcp-client-configuration)
-- [🎛️ Tool Filtering Presets](#️-tool-filtering-presets)
-- [🎨 Usage Examples](#-usage-examples)
 - [📊 Tool Categories](#-tool-categories)
+- [📚 MCP Client Configuration](#-mcp-client-configuration)
 
 ### Features & Resources
 
 - [🔥 Core Capabilities](#-core-capabilities)
-- [🔐 OAuth 2.1 Implementation](#-oauth-20-implementation)
+- [🔐 OAuth 2.1 Implementation](#-oauth-21-implementation)
 - [🏆 Why Choose db-mcp?](#-why-choose-db-mcp)
-- [📈 Project Stats](#-project-stats)
 
 ---
 
@@ -175,6 +173,159 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 
 ---
 
+## 🎛️ Tool Filtering
+
+> [!IMPORTANT]
+> **AI-enabled IDEs like Cursor have tool limits.** With 122 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+
+### Quick Start: Recommended Configurations
+
+#### Option 1: Starter (48 tools) ⭐ Recommended
+
+Core + JSON + Text. Best for general development.
+
+```json
+{
+  "mcpServers": {
+    "db-mcp-sqlite": {
+      "command": "node",
+      "args": [
+        "C:/path/to/db-mcp/dist/cli.js",
+        "--transport",
+        "stdio",
+        "--sqlite-native",
+        "C:/path/to/database.db",
+        "--tool-filter",
+        "starter"
+      ]
+    }
+  }
+}
+```
+
+#### Option 2: Analytics (50 tools)
+
+Core + JSON + Stats + Window functions. For data analysis.
+
+```json
+{
+  "args": [
+    "--transport",
+    "stdio",
+    "--sqlite-native",
+    "C:/path/to/database.db",
+    "--tool-filter",
+    "analytics"
+  ]
+}
+```
+
+#### Option 3: Search (36 tools)
+
+Core + Text + FTS5 + Vector. For search workloads.
+
+```json
+{
+  "args": [
+    "--transport",
+    "stdio",
+    "--sqlite-native",
+    "C:/path/to/database.db",
+    "--tool-filter",
+    "search"
+  ]
+}
+```
+
+#### Option 4: Custom Groups
+
+Specify exactly the groups you need:
+
+```json
+{
+  "args": [
+    "--transport",
+    "stdio",
+    "--sqlite-native",
+    "C:/path/to/database.db",
+    "--tool-filter",
+    "core,json,stats"
+  ]
+}
+```
+
+---
+
+### Shortcuts (Predefined Bundles)
+
+> **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
+
+| Shortcut    | WASM   | Native | + Built-in | What's Included    |
+| ----------- | ------ | ------ | ---------- | ------------------ |
+| `starter`   | **48** | **48** | +3         | Core, JSON, Text   |
+| `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
+| `search`    | 36     | 36     | +3         | Core, Text, Vector |
+| `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
+| `minimal`   | 8      | 8      | +3         | Core only          |
+| `full`      | 102    | 122    | +3         | Everything enabled |
+
+---
+
+### Tool Groups (7 Available)
+
+> **Note:** +3 built-in tools (server_info, server_health, list_adapters) are always included.
+
+| Group    | WASM | Native | + Built-in | Description                              |
+| -------- | ---- | ------ | ---------- | ---------------------------------------- |
+| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables               |
+| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis          |
+| `text`   | 13   | 17     | +3         | Text processing + FTS5 + advanced search |
+| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)    |
+| `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
+| `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
+| `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
+
+---
+
+### Syntax Reference
+
+| Prefix   | Target   | Example         | Effect                                        |
+| -------- | -------- | --------------- | --------------------------------------------- |
+| _(none)_ | Shortcut | `starter`       | **Whitelist Mode:** Enable ONLY this shortcut |
+| _(none)_ | Group    | `core`          | **Whitelist Mode:** Enable ONLY this group    |
+| `+`      | Group    | `+vector`       | Add tools from this group to current set      |
+| `-`      | Group    | `-admin`        | Remove tools in this group from current set   |
+| `+`      | Tool     | `+fuzzy_search` | Add one specific tool                         |
+| `-`      | Tool     | `-drop_table`   | Remove one specific tool                      |
+
+**Examples:**
+
+```bash
+# Use a shortcut
+--tool-filter "starter"
+
+# Combine groups (whitelist mode)
+--tool-filter "core,json,text,fts5"
+
+# Extend a shortcut
+--tool-filter "starter,+stats"
+
+# Exclude from a shortcut
+--tool-filter "starter,-fts5"
+```
+
+**Legacy Syntax (still supported):**
+If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want to start with _all_ tools enabled and then subtract.
+
+```bash
+# Legacy: start with all, exclude some
+--tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
+```
+
+[⬆️ Back to Table of Contents](#-table-of-contents)
+
+---
+
 ## 📊 Tool Categories
 
 | Category              | WASM    | Native  | Description                                    |
@@ -288,18 +439,18 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 MCP resources provide read-only access to database metadata:
 
-| Resource              | URI                            | Description                       | Shortcuts | Tool Groups |
-| --------------------- | ------------------------------ | --------------------------------- | --------- | ----------- |
-| `sqlite_schema`       | `sqlite://schema`              | Full database schema              | Any       | `core`      |
-| `sqlite_tables`       | `sqlite://tables`              | List all tables                   | Any       | `core`      |
-| `sqlite_table_schema` | `sqlite://table/{name}/schema` | Schema for a specific table       | Any       | `core`      |
-| `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database       | Any       | `core`      |
-| `sqlite_views`        | `sqlite://views`               | All views in the database         | `full`    | `admin`     |
-| `sqlite_health`       | `sqlite://health`              | Database health and status        | Any       | None        |
-| `sqlite_meta`         | `sqlite://meta`                | Database metadata and PRAGMAs     | `full`    | `admin`     |
-| `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis) | `full`    | `admin`     |
+| Resource              | URI                            | Description                       | Min Config    |
+| --------------------- | ------------------------------ | --------------------------------- | ------------- |
+| `sqlite_schema`       | `sqlite://schema`              | Full database schema              | `minimal`     |
+| `sqlite_tables`       | `sqlite://tables`              | List all tables                   | `minimal`     |
+| `sqlite_table_schema` | `sqlite://table/{name}/schema` | Schema for a specific table       | `minimal`     |
+| `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database       | `minimal`     |
+| `sqlite_views`        | `sqlite://views`               | All views in the database         | `core,admin`  |
+| `sqlite_health`       | `sqlite://health`              | Database health and status        | _(read-only)_ |
+| `sqlite_meta`         | `sqlite://meta`                | Database metadata and PRAGMAs     | `core,admin`  |
+| `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis) | `core,admin`  |
 
-> **Note:** Resources are always **readable** regardless of tool configuration. The columns show which shortcuts/groups provide tools to **act on** or **modify** what the resource exposes. All shortcuts include `core`.
+> **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "core,admin"` (~18 tools) instead of `full` (102+) when you only need resource-related functionality.
 
 ### 💬 Prompts (10)
 
@@ -538,159 +689,6 @@ node dist/cli.js --transport http --port 3000 --stateless --sqlite-native :memor
 | ------------------------- | ---------------------- | ------------- | ---------- |
 | Stateful (default)        | ✅ Yes                 | ✅ Yes        | ⚠️ Complex |
 | Stateless (`--stateless`) | ❌ No                  | ❌ No         | ✅ Native  |
-
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
-## 🎛️ Tool Filtering
-
-> [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 122 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
-
-### Quick Start: Recommended Configurations
-
-#### Option 1: Starter (18 tools) ⭐ Recommended
-
-Core + JSON + Text. Best for general development.
-
-```json
-{
-  "mcpServers": {
-    "db-mcp-sqlite": {
-      "command": "node",
-      "args": [
-        "C:/path/to/db-mcp/dist/cli.js",
-        "--transport",
-        "stdio",
-        "--sqlite-native",
-        "C:/path/to/database.db",
-        "--tool-filter",
-        "starter"
-      ]
-    }
-  }
-}
-```
-
-#### Option 2: Analytics (23 tools)
-
-Core + JSON + Stats + Window functions. For data analysis.
-
-```json
-{
-  "args": [
-    "--transport",
-    "stdio",
-    "--sqlite-native",
-    "C:/path/to/database.db",
-    "--tool-filter",
-    "analytics"
-  ]
-}
-```
-
-#### Option 3: Search (14 tools)
-
-Core + Text + FTS5 + Vector. For search workloads.
-
-```json
-{
-  "args": [
-    "--transport",
-    "stdio",
-    "--sqlite-native",
-    "C:/path/to/database.db",
-    "--tool-filter",
-    "search"
-  ]
-}
-```
-
-#### Option 4: Custom Groups
-
-Specify exactly the groups you need:
-
-```json
-{
-  "args": [
-    "--transport",
-    "stdio",
-    "--sqlite-native",
-    "C:/path/to/database.db",
-    "--tool-filter",
-    "core,json,stats"
-  ]
-}
-```
-
----
-
-### Shortcuts (Predefined Bundles)
-
-> **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
-
-| Shortcut    | WASM   | Native | + Built-in | What's Included    |
-| ----------- | ------ | ------ | ---------- | ------------------ |
-| `starter`   | **48** | **48** | +3         | Core, JSON, Text   |
-| `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
-| `search`    | 36     | 36     | +3         | Core, Text, Vector |
-| `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
-| `minimal`   | 8      | 8      | +3         | Core only          |
-| `full`      | 102    | 122    | +3         | Everything enabled |
-
----
-
-### Tool Groups (7 Available)
-
-> **Note:** +3 built-in tools (server_info, server_health, list_adapters) are always included.
-
-| Group    | WASM | Native | + Built-in | Description                              |
-| -------- | ---- | ------ | ---------- | ---------------------------------------- |
-| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables               |
-| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis          |
-| `text`   | 13   | 17     | +3         | Text processing + FTS5 + advanced search |
-| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)    |
-| `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
-| `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
-| `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
-
----
-
-### Syntax Reference
-
-| Prefix   | Target   | Example         | Effect                                        |
-| -------- | -------- | --------------- | --------------------------------------------- |
-| _(none)_ | Shortcut | `starter`       | **Whitelist Mode:** Enable ONLY this shortcut |
-| _(none)_ | Group    | `core`          | **Whitelist Mode:** Enable ONLY this group    |
-| `+`      | Group    | `+vector`       | Add tools from this group to current set      |
-| `-`      | Group    | `-admin`        | Remove tools in this group from current set   |
-| `+`      | Tool     | `+fuzzy_search` | Add one specific tool                         |
-| `-`      | Tool     | `-drop_table`   | Remove one specific tool                      |
-
-**Examples:**
-
-```bash
-# Use a shortcut
---tool-filter "starter"
-
-# Combine groups (whitelist mode)
---tool-filter "core,json,text,fts5"
-
-# Extend a shortcut
---tool-filter "starter,+stats"
-
-# Exclude from a shortcut
---tool-filter "starter,-fts5"
-```
-
-**Legacy Syntax (still supported):**
-If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want to start with _all_ tools enabled and then subtract.
-
-```bash
-# Legacy: start with all, exclude some
---tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
-```
 
 [⬆️ Back to Table of Contents](#-table-of-contents)
 
