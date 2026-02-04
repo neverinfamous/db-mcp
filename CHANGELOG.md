@@ -11,6 +11,14 @@ _No unreleased changes._
 
 ---
 
+## [1.0.2] - 2026-02-04
+
+### Added
+
+- GitHub Release badge to READMEs (dynamic version display)
+
+---
+
 ## [1.0.1] - 2026-02-04
 
 ### Added
