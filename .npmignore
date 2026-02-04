@@ -1,0 +1,41 @@
+# Source files (dist is used instead)
+src/
+tests/
+
+# Development files
+.github/
+.env*
+.vscode/
+.idea/
+
+# Build configuration
+tsconfig.json
+eslint.config.js
+vitest.config.ts
+.prettierrc
+.prettierignore
+
+# Docker (separate distribution)
+Dockerfile
+.dockerignore
+DOCKER_README.md
+
+# Documentation (GitHub only)
+docs/
+releases/
+*.md
+!README.md
+!LICENSE
+
+# Config examples
+config/
+
+# Database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Test artifacts
+coverage/
+test-database/
