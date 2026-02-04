@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No unreleased changes._
+
+---
+
+## [1.0.0] - 2026-02-04
+
 ### Added
 
 - **Docker Release Infrastructure** — Complete CI/CD pipeline for Docker Hub publishing
