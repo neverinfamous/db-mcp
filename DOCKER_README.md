@@ -92,38 +92,151 @@ Click the button below to install directly into Cursor:
 
 ## 🎛️ Tool Filtering
 
-> **Important:** AI IDEs like Cursor have tool limits. With 122 tools, use filtering!
+> [!IMPORTANT]
+> **AI-enabled IDEs like Cursor have tool limits.** With 122 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
-### Recommended Configurations
+### Quick Start: Recommended Configurations
 
-**Starter (48 tools)** - Core + JSON + Text:
+#### Option 1: Starter (48 tools) ⭐ Recommended
 
-```bash
-docker run -i --rm -v ./data:/app/data writenotenow/db-mcp:latest \
-  --sqlite-native /app/data/database.db --tool-filter starter
+Core + JSON + Text. Best for general development.
+
+```json
+{
+  "mcpServers": {
+    "db-mcp-sqlite": {
+      "command": "node",
+      "args": [
+        "C:/path/to/db-mcp/dist/cli.js",
+        "--transport",
+        "stdio",
+        "--sqlite-native",
+        "C:/path/to/database.db",
+        "--tool-filter",
+        "starter"
+      ]
+    }
+  }
+}
 ```
 
-**Analytics (50 tools)** - Core + JSON + Stats:
+#### Option 2: Analytics (50 tools)
 
-```bash
---tool-filter analytics
+Core + JSON + Stats + Window functions. For data analysis.
+
+```json
+{
+  "args": [
+    "--transport",
+    "stdio",
+    "--sqlite-native",
+    "C:/path/to/database.db",
+    "--tool-filter",
+    "analytics"
+  ]
+}
 ```
 
-**Search (36 tools)** - Core + Text + Vector:
+#### Option 3: Search (36 tools)
 
-```bash
---tool-filter search
+Core + Text + FTS5 + Vector. For search workloads.
+
+```json
+{
+  "args": [
+    "--transport",
+    "stdio",
+    "--sqlite-native",
+    "C:/path/to/database.db",
+    "--tool-filter",
+    "search"
+  ]
+}
 ```
 
-### Available Shortcuts
+#### Option 4: Custom Groups
 
-| Shortcut    | Tools  | What's Included    |
-| ----------- | ------ | ------------------ |
-| `starter`   | **48** | Core, JSON, Text   |
-| `analytics` | 50     | Core, JSON, Stats  |
-| `search`    | 36     | Core, Text, Vector |
-| `minimal`   | 8      | Core only          |
-| `full`      | 122    | Everything         |
+Specify exactly the groups you need:
+
+```json
+{
+  "args": [
+    "--transport",
+    "stdio",
+    "--sqlite-native",
+    "C:/path/to/database.db",
+    "--tool-filter",
+    "core,json,stats"
+  ]
+}
+```
+
+---
+
+### Shortcuts (Predefined Bundles)
+
+> **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
+
+| Shortcut    | WASM   | Native | + Built-in | What's Included    |
+| ----------- | ------ | ------ | ---------- | ------------------ |
+| `starter`   | **48** | **48** | +3         | Core, JSON, Text   |
+| `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
+| `search`    | 36     | 36     | +3         | Core, Text, Vector |
+| `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
+| `minimal`   | 8      | 8      | +3         | Core only          |
+| `full`      | 102    | 122    | +3         | Everything enabled |
+
+---
+
+### Tool Groups (7 Available)
+
+> **Note:** +3 built-in tools (server_info, server_health, list_adapters) are always included.
+
+| Group    | WASM | Native | + Built-in | Description                              |
+| -------- | ---- | ------ | ---------- | ---------------------------------------- |
+| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables               |
+| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis          |
+| `text`   | 13   | 17     | +3         | Text processing + FTS5 + advanced search |
+| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)    |
+| `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
+| `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
+| `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
+
+---
+
+### Syntax Reference
+
+| Prefix   | Target   | Example         | Effect                                        |
+| -------- | -------- | --------------- | --------------------------------------------- |
+| _(none)_ | Shortcut | `starter`       | **Whitelist Mode:** Enable ONLY this shortcut |
+| _(none)_ | Group    | `core`          | **Whitelist Mode:** Enable ONLY this group    |
+| `+`      | Group    | `+vector`       | Add tools from this group to current set      |
+| `-`      | Group    | `-admin`        | Remove tools in this group from current set   |
+| `+`      | Tool     | `+fuzzy_search` | Add one specific tool                         |
+| `-`      | Tool     | `-drop_table`   | Remove one specific tool                      |
+
+**Examples:**
+
+```bash
+# Use a shortcut
+--tool-filter "starter"
+
+# Combine groups (whitelist mode)
+--tool-filter "core,json,text,fts5"
+
+# Extend a shortcut
+--tool-filter "starter,+stats"
+
+# Exclude from a shortcut
+--tool-filter "starter,-fts5"
+```
+
+**Legacy Syntax (still supported):**
+If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want to start with _all_ tools enabled and then subtract.
+
+````bash
+# Legacy: start with all, exclude some
+--tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
 
 ---
 
@@ -139,7 +252,7 @@ docker pull writenotenow/db-mcp:sha256-<manifest-digest>
 
 # Direct digest (maximum security)
 docker pull writenotenow/db-mcp@sha256:<manifest-digest>
-```
+````
 
 **Security Features:**
 

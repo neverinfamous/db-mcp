@@ -21,13 +21,22 @@ RUN cd /usr/local/lib/node_modules/npm && \
     mv package node_modules/diff && \
     rm diff-8.0.3.tgz
 
-# Fix CVE-2026-23950: Manually update npm's bundled tar@7.5.3 to 7.5.4
+# Fix CVE-2026-24842: Manually update npm's bundled tar to 7.5.7
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.4 && \
+    npm pack tar@7.5.7 && \
     rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.4.tgz && \
+    tar -xzf tar-7.5.7.tgz && \
     mv package node_modules/tar && \
-    rm tar-7.5.4.tgz
+    rm tar-7.5.7.tgz
+
+# Fix GHSA-7h2j-956f-4vf2: Manually update npm's bundled @isaacs/brace-expansion to 5.0.1
+RUN cd /usr/local/lib/node_modules/npm && \
+    npm pack @isaacs/brace-expansion@5.0.1 && \
+    rm -rf node_modules/@isaacs/brace-expansion && \
+    mkdir -p node_modules/@isaacs && \
+    tar -xzf isaacs-brace-expansion-5.0.1.tgz && \
+    mv package node_modules/@isaacs/brace-expansion && \
+    rm isaacs-brace-expansion-5.0.1.tgz
 
 # Copy package files first for better layer caching
 COPY package*.json ./
@@ -46,6 +55,9 @@ COPY src/ ./src/
 
 # Build TypeScript
 RUN npm run build
+
+# Prune devDependencies after build (removes vulnerable rimraf -> @isaacs/brace-expansion chain)
+RUN npm prune --omit=dev
 
 # Production stage
 FROM node:24-alpine
@@ -66,13 +78,22 @@ RUN cd /usr/local/lib/node_modules/npm && \
     mv package node_modules/diff && \
     rm diff-8.0.3.tgz
 
-# Fix CVE-2026-23950: Manually update npm's bundled tar@7.5.3 to 7.5.4
+# Fix CVE-2026-24842: Manually update npm's bundled tar to 7.5.7
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.4 && \
+    npm pack tar@7.5.7 && \
     rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.4.tgz && \
+    tar -xzf tar-7.5.7.tgz && \
     mv package node_modules/tar && \
-    rm tar-7.5.4.tgz
+    rm tar-7.5.7.tgz
+
+# Fix GHSA-7h2j-956f-4vf2: Manually update npm's bundled @isaacs/brace-expansion to 5.0.1
+RUN cd /usr/local/lib/node_modules/npm && \
+    npm pack @isaacs/brace-expansion@5.0.1 && \
+    rm -rf node_modules/@isaacs/brace-expansion && \
+    mkdir -p node_modules/@isaacs && \
+    tar -xzf isaacs-brace-expansion-5.0.1.tgz && \
+    mv package node_modules/@isaacs/brace-expansion && \
+    rm isaacs-brace-expansion-5.0.1.tgz
 
 # Copy built artifacts and production dependencies
 COPY --from=builder /app/dist ./dist

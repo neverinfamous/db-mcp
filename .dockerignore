@@ -47,7 +47,6 @@ Thumbs.db
 
 # Config files not needed in container
 eslint.config.js
-tsconfig.json
 .prettierrc
 .prettierignore
 

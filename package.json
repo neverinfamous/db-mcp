@@ -2,6 +2,7 @@
   "name": "db-mcp",
   "version": "1.0.0",
   "description": "SQLite MCP server with OAuth 2.1 authentication, HTTP/SSE transport, and smart tool filtering",
+  "mcpName": "io.github.neverinfamous/db-mcp",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.neverinfamous/db-mcp",
+  "title": "db-mcp (SQLite MCP Server)",
+  "description": "SQLite MCP server with OAuth 2.1, HTTP/SSE, 122 tools, and smart tool filtering",
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "docker.io/writenotenow/db-mcp:v1.0.0",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "database",
+    "sqlite",
+    "sql",
+    "oauth",
+    "ai",
+    "llm",
+    "developer-tools",
+    "json",
+    "fts5",
+    "vector-search",
+    "geospatial",
+    "spatialite",
+    "statistical-analysis"
+  ],
+  "author": {
+    "name": "Chris LeRoux",
+    "email": "writenotenow@gmail.com"
+  },
+  "homepage": "https://github.com/neverinfamous/db-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neverinfamous/db-mcp.git",
+    "source": "github"
+  },
+  "license": "MIT"
+}
