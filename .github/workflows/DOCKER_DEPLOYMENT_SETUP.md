@@ -38,6 +38,11 @@ Before the Docker deployment workflow can run, add these secrets to your GitHub 
 - **Value**: Docker Hub access token (NOT your password)
 - **Description**: Docker Hub access token for secure authentication
 
+#### `NPM_TOKEN`
+
+- **Value**: npm access token (for npm publishing)
+- **Description**: Required for `publish-npm.yml` workflow on GitHub releases
+
 ### 3. Generate Docker Hub Access Token (If Needed)
 
 1. Go to [Docker Hub](https://hub.docker.com)
@@ -47,6 +52,12 @@ Before the Docker deployment workflow can run, add these secrets to your GitHub 
 5. Name: `GitHub-Actions-db-mcp`
 6. Permissions: **Read, Write, Delete**
 7. Copy the token and use it as `DOCKER_PASSWORD`
+
+### 4. Generate npm Access Token (If Needed)
+
+1. Go to [npmjs.com](https://www.npmjs.com) → **Access Tokens**
+2. Click **Generate New Token** → **Automation**
+3. Copy the token and use it as `NPM_TOKEN`
 
 ## 🏗️ What Gets Built
 
