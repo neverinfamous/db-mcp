@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Docker Release Infrastructure** — Complete CI/CD pipeline for Docker Hub publishing
+  - `lint-and-test.yml`: CI workflow with Node.js 22/24/25 matrix testing, ESLint, TypeScript checks
+  - `docker-publish.yml`: Docker deploy workflow with security scanning, multi-platform builds (amd64/arm64), manifest merge
+  - `Dockerfile`: Multi-stage build with better-sqlite3 native compilation, non-root user, security patches
+  - `.dockerignore`: Excludes dev files, tests, and databases from image
+  - `DOCKER_README.md`: Docker Hub README with quick start, tool filtering, security documentation
+  - `DOCKER_DEPLOYMENT_SETUP.md`: Setup guide for GitHub secrets and deployment workflow
+
+### Added
+
 - **Security Test Coverage Expansion** — 12 new/enhanced test files improving coverage for security-critical utilities
   - `tests/utils/quoteIdentifier.test.ts`: 32 tests for identifier sanitization edge cases (empty, whitespace, control chars, quotes)
   - `tests/security/validateQuery.test.ts`: 23 tests for `DatabaseAdapter.validateQuery` security patterns

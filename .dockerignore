@@ -1,0 +1,55 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# GitHub
+.github/
+
+# Development
+.env
+.env.*
+.vscode/
+.idea/
+*.log
+
+# Dependencies (rebuilt in container)
+node_modules/
+
+# Build artifacts (rebuilt in container)
+dist/
+
+# Test files
+tests/
+test-database/
+coverage/
+*.test.ts
+*.spec.ts
+vitest.config.ts
+
+# Database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Documentation (not needed in image)
+docs/
+*.md
+!README.md
+!LICENSE
+
+# IDE/Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Config files not needed in container
+eslint.config.js
+tsconfig.json
+.prettierrc
+.prettierignore
+
+# Extensions (user provides these)
+extensions/
