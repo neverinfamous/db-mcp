@@ -3,20 +3,20 @@
   "name": "io.github.neverinfamous/db-mcp",
   "title": "db-mcp (SQLite MCP Server)",
   "description": "SQLite MCP server with OAuth 2.1, HTTP/SSE, 122 tools, and smart tool filtering",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "db-mcp",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "transport": {
         "type": "stdio"
       }
     },
     {
       "registryType": "oci",
-      "identifier": "docker.io/writenotenow/db-mcp:v1.0.0",
-      "version": "1.0.0",
+      "identifier": "docker.io/writenotenow/db-mcp:v1.0.1",
+      "version": "1.0.1",
       "transport": {
         "type": "stdio"
       }

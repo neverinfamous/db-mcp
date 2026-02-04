@@ -11,6 +11,22 @@ _No unreleased changes._
 
 ---
 
+## [1.0.1] - 2026-02-04
+
+### Added
+
+- **npm Publishing** — Automated npm publishing workflow on GitHub releases
+  - `publish-npm.yml`: NPM publish workflow triggered on release events
+  - `.npmignore`: Reduces npm package size from 2.5MB to ~200KB
+- **README Badges** — npm version, Docker pulls, MCP Registry badges
+- **MCP Registry Integration** — `server.json` with npm + Docker packages
+
+### Fixed
+
+- MIT license badge color (yellow → blue) for consistency
+
+---
+
 ## [1.0.0] - 2026-02-04
 
 ### Added
