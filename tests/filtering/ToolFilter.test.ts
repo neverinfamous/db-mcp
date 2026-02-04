@@ -10,7 +10,7 @@
  * Phase 3 of db-mcp Security Test Coverage Improvement Plan
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   parseToolFilter,
   isToolEnabled,

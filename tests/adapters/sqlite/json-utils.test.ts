@@ -5,7 +5,7 @@
  * Target: 43% → 80%+ coverage
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
   normalizeJson,
   isJsonbSupportedVersion,
@@ -130,9 +130,8 @@ describe("JSON Utilities", () => {
     });
 
     it("should return unusual types as-is (line 184)", () => {
-      // Symbol and Function are unusual types that reach line 184
+      // Symbol is an unusual type that reaches line 184
       const sym = Symbol("test");
-      const fn = () => {};
       // normalizeValue is internal, but we can test via normalizeJson
       // with an object containing unusual types
       const input = { normal: "value" };
