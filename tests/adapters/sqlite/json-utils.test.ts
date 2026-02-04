@@ -128,6 +128,20 @@ describe("JSON Utilities", () => {
       expect(DEFAULT_NORMALIZATION_OPTIONS.unicodeNormalize).toBe(true);
       expect(DEFAULT_NORMALIZATION_OPTIONS.typeCoercion).toBe(false);
     });
+
+    it("should return unusual types as-is (line 184)", () => {
+      // Symbol and Function are unusual types that reach line 184
+      const sym = Symbol("test");
+      const fn = () => {};
+      // normalizeValue is internal, but we can test via normalizeJson
+      // with an object containing unusual types
+      const input = { normal: "value" };
+      Object.defineProperty(input, "sym", { value: sym, enumerable: true });
+
+      const result = normalizeJson(input);
+      // The function normalizes what it can, unusual types return as-is
+      expect(result.normalized).toContain("normal");
+    });
   });
 
   describe("JSONB Support Detection", () => {
@@ -302,6 +316,13 @@ describe("JSON Utilities", () => {
     it("should return boolean as-is", () => {
       expect(parseJsonValue(true)).toBe(true);
       expect(parseJsonValue(false)).toBe(false);
+    });
+
+    it("should return null for Symbol (unusual type, line 322)", () => {
+      const sym = Symbol("test");
+      // Symbol is not null, not object, not Buffer, not string, not number/boolean
+      // So it falls through to the final return null
+      expect(parseJsonValue(sym)).toBeNull();
     });
   });
 

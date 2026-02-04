@@ -9,6 +9,11 @@ import {
   createTestAdapter,
   type TestAdapter,
 } from "../../utils/test-adapter.js";
+import {
+  isSpatialiteSystemIndex,
+  isSpatialiteSystemTable,
+  isSpatialiteSystemView,
+} from "../../../src/adapters/sqlite/tools/core.js";
 
 describe("Core Tools", () => {
   let adapter: TestAdapter;
@@ -38,7 +43,7 @@ describe("Core Tools", () => {
   describe("sqlite_create_table", () => {
     it("should create a table", async () => {
       const result = await tools.get("sqlite_create_table")?.({
-        tableName: "users", // Correct property name
+        tableName: "users",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "name", type: "TEXT" },
@@ -49,6 +54,130 @@ describe("Core Tools", () => {
 
       const tables = await adapter.listTables();
       expect(tables.map((t) => t.name)).toContain("users");
+    });
+
+    it("should handle SQL expression default values", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "events",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "created_at", type: "TEXT", defaultValue: "datetime('now')" },
+          {
+            name: "updated_at",
+            type: "TEXT",
+            defaultValue: "CURRENT_TIMESTAMP",
+          },
+        ],
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      // SQL expressions should be wrapped in parentheses
+      expect(result.sql).toContain("(datetime('now'))");
+      expect(result.sql).toContain("(CURRENT_TIMESTAMP)");
+    });
+
+    it("should handle string literal default values", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "configs",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "status", type: "TEXT", defaultValue: "pending" },
+        ],
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      // String literals should be quoted
+      expect(result.sql).toContain("DEFAULT 'pending'");
+    });
+
+    it("should handle numeric default values", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "limits",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "max_count", type: "INTEGER", defaultValue: 100 },
+          { name: "ratio", type: "REAL", defaultValue: 0.5 },
+        ],
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain("DEFAULT 100");
+      expect(result.sql).toContain("DEFAULT 0.5");
+    });
+
+    it("should handle boolean default values", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "flags",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "enabled", type: "INTEGER", defaultValue: true },
+          { name: "visible", type: "INTEGER", defaultValue: false },
+        ],
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain("DEFAULT true");
+      expect(result.sql).toContain("DEFAULT false");
+    });
+
+    it("should handle null default values", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "optionals",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "optional_field", type: "TEXT", defaultValue: null },
+        ],
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain("DEFAULT NULL");
+    });
+
+    it("should handle object default values as JSON", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "jsondata",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "metadata", type: "TEXT", defaultValue: { key: "value" } },
+        ],
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      // Objects should be JSON stringified and quoted
+      expect(result.sql).toContain('DEFAULT \'{"key":"value"}\'');
+    });
+
+    it("should escape quotes in string default values", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "quoted",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "message", type: "TEXT", defaultValue: "it's working" },
+        ],
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      // Single quotes should be escaped
+      expect(result.sql).toContain("DEFAULT 'it''s working'");
+    });
+
+    it("should report existing table when using IF NOT EXISTS", async () => {
+      // Create table first
+      await tools.get("sqlite_create_table")?.({
+        tableName: "existing",
+        columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
+        ifNotExists: true,
+      });
+
+      // Try to create again with IF NOT EXISTS
+      const result = (await tools.get("sqlite_create_table")?.({
+        tableName: "existing",
+        columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
+        ifNotExists: true,
+      })) as { success: boolean; message: string };
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain("already exists");
     });
   });
 
@@ -105,7 +234,7 @@ describe("Core Tools", () => {
       );
 
       const result = (await tools.get("sqlite_describe_table")?.({
-        tableName: "items", // Correct property name
+        tableName: "items",
       })) as { columns: { name: string }[] };
 
       expect(result.columns.map((c) => c.name)).toContain("id");
@@ -119,7 +248,7 @@ describe("Core Tools", () => {
       await adapter.executeWriteQuery("INSERT INTO data VALUES (1), (2), (3)");
 
       const result = (await tools.get("sqlite_read_query")?.({
-        query: "SELECT SUM(value) as total FROM data", // Correct property name
+        query: "SELECT SUM(value) as total FROM data",
       })) as { rows: Record<string, unknown>[] };
 
       expect(result.rows[0]?.["total"]).toBe(6);
@@ -139,7 +268,7 @@ describe("Core Tools", () => {
       await adapter.executeWriteQuery("CREATE TABLE counter (n INTEGER)");
 
       const result = (await tools.get("sqlite_write_query")?.({
-        query: "INSERT INTO counter VALUES (42)", // Correct property name
+        query: "INSERT INTO counter VALUES (42)",
       })) as { rowsAffected: number };
 
       expect(result.rowsAffected).toBe(1);
@@ -153,8 +282,8 @@ describe("Core Tools", () => {
       );
 
       const result = await tools.get("sqlite_create_index")?.({
-        indexName: "idx_name", // Correct property name
-        tableName: "indexed", // Correct property name
+        indexName: "idx_name",
+        tableName: "indexed",
         columns: ["name"],
       });
 
@@ -175,6 +304,36 @@ describe("Core Tools", () => {
 
       expect(result.indexes.length).toBeGreaterThan(0);
     });
+
+    it("should filter system indexes when excludeSystemIndexes is true", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE test_tbl (id INTEGER, name TEXT)",
+      );
+      await adapter.executeWriteQuery(
+        "CREATE INDEX idx_user ON test_tbl(name)",
+      );
+      // Simulate SpatiaLite system index
+      await adapter.executeWriteQuery(
+        "CREATE INDEX idx_spatial_ref_sys_test ON test_tbl(id)",
+      );
+
+      // Without filter
+      const allResult = (await tools.get("sqlite_get_indexes")?.({
+        tableName: "test_tbl",
+      })) as { indexes: { name: string }[] };
+      const allNames = allResult.indexes.map((i) => i.name);
+      expect(allNames).toContain("idx_user");
+      expect(allNames).toContain("idx_spatial_ref_sys_test");
+
+      // With filter
+      const filteredResult = (await tools.get("sqlite_get_indexes")?.({
+        tableName: "test_tbl",
+        excludeSystemIndexes: true,
+      })) as { indexes: { name: string }[] };
+      const filteredNames = filteredResult.indexes.map((i) => i.name);
+      expect(filteredNames).toContain("idx_user");
+      expect(filteredNames).not.toContain("idx_spatial_ref_sys_test");
+    });
   });
 
   describe("sqlite_drop_table", () => {
@@ -184,10 +343,62 @@ describe("Core Tools", () => {
       let tables = await adapter.listTables();
       expect(tables.map((t) => t.name)).toContain("todrop");
 
-      await tools.get("sqlite_drop_table")?.({ tableName: "todrop" }); // Correct property name
+      await tools.get("sqlite_drop_table")?.({ tableName: "todrop" });
 
       tables = await adapter.listTables();
       expect(tables.map((t) => t.name)).not.toContain("todrop");
+    });
+  });
+});
+
+describe("SpatiaLite System Helpers", () => {
+  describe("isSpatialiteSystemIndex", () => {
+    it("should identify SpatiaLite system indexes", () => {
+      expect(isSpatialiteSystemIndex("idx_spatial_ref_sys")).toBe(true);
+      expect(isSpatialiteSystemIndex("idx_srid_geocols")).toBe(true);
+      expect(isSpatialiteSystemIndex("idx_viewsjoin")).toBe(true);
+      expect(isSpatialiteSystemIndex("idx_virtssrid")).toBe(true);
+      expect(isSpatialiteSystemIndex("sqlite_autoindex_users_1")).toBe(true);
+    });
+
+    it("should identify indexes starting with system prefixes", () => {
+      expect(isSpatialiteSystemIndex("idx_spatial_ref_sys_test")).toBe(true);
+      expect(isSpatialiteSystemIndex("sqlite_autoindex_test")).toBe(true);
+    });
+
+    it("should not flag user indexes", () => {
+      expect(isSpatialiteSystemIndex("idx_users_name")).toBe(false);
+      expect(isSpatialiteSystemIndex("my_index")).toBe(false);
+      expect(isSpatialiteSystemIndex("idx_custom")).toBe(false);
+    });
+  });
+
+  describe("isSpatialiteSystemTable", () => {
+    it("should identify SpatiaLite system tables", () => {
+      expect(isSpatialiteSystemTable("geometry_columns")).toBe(true);
+      expect(isSpatialiteSystemTable("spatial_ref_sys")).toBe(true);
+      expect(isSpatialiteSystemTable("spatialite_history")).toBe(true);
+    });
+
+    it("should not flag user tables", () => {
+      expect(isSpatialiteSystemTable("users")).toBe(false);
+      expect(isSpatialiteSystemTable("my_geometry")).toBe(false);
+    });
+  });
+
+  describe("isSpatialiteSystemView", () => {
+    it("should identify SpatiaLite system views", () => {
+      expect(isSpatialiteSystemView("geom_cols_ref_sys")).toBe(true);
+      expect(isSpatialiteSystemView("spatial_ref_sys_all")).toBe(true);
+      expect(isSpatialiteSystemView("vector_layers")).toBe(true);
+      expect(isSpatialiteSystemView("vector_layers_auth")).toBe(true);
+      expect(isSpatialiteSystemView("vector_layers_field_infos")).toBe(true);
+      expect(isSpatialiteSystemView("vector_layers_statistics")).toBe(true);
+    });
+
+    it("should not flag user views", () => {
+      expect(isSpatialiteSystemView("my_view")).toBe(false);
+      expect(isSpatialiteSystemView("user_layers")).toBe(false);
     });
   });
 });

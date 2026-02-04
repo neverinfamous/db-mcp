@@ -307,6 +307,14 @@ describe("Security: Identifier Validation", () => {
         // SQLite doesn't enforce a strict limit like PostgreSQL
         expect(() => validateIdentifier(longName)).not.toThrow();
       });
+
+      it("should reject identifiers exceeding 255 characters", () => {
+        const tooLongName = "a".repeat(256);
+        expect(() => validateIdentifier(tooLongName)).toThrow(
+          InvalidIdentifierError,
+        );
+      });
+
       it("should reject SQL injection attempts in identifiers", () => {
         expect(() => validateIdentifier("users; DROP TABLE--")).toThrow(
           InvalidIdentifierError,

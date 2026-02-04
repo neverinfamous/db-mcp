@@ -9,6 +9,8 @@
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CodeQL](https://github.com/neverinfamous/db-mcp/actions/workflows/codeql.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/codeql.yml)
+![Tests](https://img.shields.io/badge/tests-941%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-80.52%25-brightgreen)
 ![Version](https://img.shields.io/badge/version-0.1.0-green)
 ![Status](https://img.shields.io/badge/status-Under%20Development-orange)
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)

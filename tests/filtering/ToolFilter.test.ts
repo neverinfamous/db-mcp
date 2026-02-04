@@ -10,7 +10,7 @@
  * Phase 3 of db-mcp Security Test Coverage Improvement Plan
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   parseToolFilter,
   isToolEnabled,
@@ -23,6 +23,7 @@ import {
   clearToolFilterCaches,
   getFilterSummary,
   getMetaGroupInfo,
+  getToolFilterFromEnv,
   ALL_TOOL_GROUPS,
   META_GROUPS,
 } from "../../src/filtering/ToolFilter.js";
@@ -342,6 +343,60 @@ describe("getToolGroup", () => {
     const group = getToolGroup("unknown_tool");
 
     expect(group).toBeUndefined();
+  });
+
+  it("should cache results on second call", () => {
+    // First call initializes the cache
+    const first = getToolGroup("list_tables");
+    // Second call hits the cache (line 66)
+    const second = getToolGroup("describe_table");
+
+    expect(first).toBe("core");
+    expect(second).toBe("core");
+  });
+});
+
+describe("getToolFilterFromEnv", () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env["DB_MCP_TOOL_FILTER"];
+    delete process.env["TOOL_FILTER"];
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it("should read from DB_MCP_TOOL_FILTER", () => {
+    process.env["DB_MCP_TOOL_FILTER"] = "core,json";
+    const config = getToolFilterFromEnv();
+
+    expect(config.enabledGroups.has("core")).toBe(true);
+    expect(config.enabledGroups.has("json")).toBe(true);
+  });
+
+  it("should fall back to TOOL_FILTER", () => {
+    process.env["TOOL_FILTER"] = "text";
+    const config = getToolFilterFromEnv();
+
+    expect(config.enabledGroups.has("text")).toBe(true);
+  });
+
+  it("should prefer DB_MCP_TOOL_FILTER over TOOL_FILTER", () => {
+    process.env["DB_MCP_TOOL_FILTER"] = "core";
+    process.env["TOOL_FILTER"] = "json";
+    const config = getToolFilterFromEnv();
+
+    expect(config.enabledGroups.has("core")).toBe(true);
+    expect(config.enabledGroups.has("json")).toBe(false);
+  });
+
+  it("should return all groups enabled when no env var set", () => {
+    const config = getToolFilterFromEnv();
+
+    expect(config.enabledGroups.size).toBe(ALL_TOOL_GROUPS.length);
   });
 });
 

@@ -243,4 +243,27 @@ describe("SqliteAdapter", () => {
       expect(prompts.length).toBe(10);
     });
   });
+
+  describe("getAllIndexes", () => {
+    it("should get all indexes", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE idx_test (id INTEGER, val TEXT)",
+      );
+      await adapter.executeWriteQuery("CREATE INDEX idx_val ON idx_test(val)");
+
+      const indexes = await adapter.getAllIndexes();
+
+      expect(indexes.length).toBeGreaterThan(0);
+      const names = indexes.map((i) => i.name);
+      expect(names).toContain("idx_val");
+    });
+  });
+
+  describe("listSchemas", () => {
+    it("should list schemas (returns main)", async () => {
+      const schemas = await adapter.listSchemas();
+
+      expect(schemas).toEqual(["main"]);
+    });
+  });
 });
