@@ -80,3 +80,7 @@ data/
 # Test database (local development only)
 test-database/
 extensions/
+
+# MCP Registry tokens
+.mcpregistry_github_token
+.mcpregistry_registry_token

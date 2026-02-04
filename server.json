@@ -16,7 +16,6 @@
     {
       "registryType": "oci",
       "identifier": "docker.io/writenotenow/db-mcp:v1.0.2",
-      "version": "1.0.2",
       "transport": {
         "type": "stdio"
       }
