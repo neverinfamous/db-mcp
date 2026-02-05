@@ -52,3 +52,7 @@ eslint.config.js
 
 # Extensions (user provides these)
 extensions/
+
+# MCP Registry tokens
+.mcpregistry_github_token
+.mcpregistry_registry_token
