@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 - `@modelcontextprotocol/sdk`: 1.25.3 → 1.26.0
+- `@types/node`: 25.2.0 → 25.2.3
+- `dotenv`: 17.2.3 → 17.2.4
+- `typescript-eslint`: 8.54.0 → 8.55.0
 
 ---
 
