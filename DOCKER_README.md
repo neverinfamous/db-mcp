@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-**Last Updated February 10, 2026**
+**Last Updated February 13, 2026**
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
