@@ -292,6 +292,9 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 -e METADATA_CACHE_TTL_MS=5000   # Schema cache TTL (default: 5000ms)
 -e LOG_LEVEL=info               # Log verbosity: debug, info, warning, error
 
+# Server binding
+-e MCP_HOST=0.0.0.0             # Host/IP to bind to (default: 0.0.0.0)
+
 # OAuth 2.1 (HTTP transport only)
 -e KEYCLOAK_URL=http://localhost:8080
 -e KEYCLOAK_REALM=db-mcp
@@ -306,8 +309,11 @@ For remote access or web-based clients:
 docker run --rm -p 3000:3000 \
   -v ./data:/app/data \
   writenotenow/db-mcp:latest \
-  --transport http --port 3000 --sqlite-native /app/data/database.db
+  --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native /app/data/database.db
 ```
+
+> [!IMPORTANT]
+> When running in Docker with HTTP transport, use `--server-host 0.0.0.0` to bind to all interfaces. Without this, the server may only listen on `localhost` inside the container, making it unreachable from the host.
 
 **Endpoints:**
 

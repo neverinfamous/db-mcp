@@ -37,6 +37,11 @@ function parseArgs(): Partial<McpServerConfig> {
       if (portValue) {
         config.port = parseInt(portValue, 10);
       }
+    } else if (arg === "--server-host") {
+      const hostValue = args[++i];
+      if (hostValue) {
+        config.host = hostValue;
+      }
     } else if (arg === "--stateless") {
       // Enable stateless HTTP mode (no session management, no SSE)
       config.statelessHttp = true;
@@ -116,6 +121,8 @@ Usage: db-mcp [options]
 Transport Options:
   --transport, -t <type>    Transport type: stdio (default), http, sse
   --port, -p <port>         HTTP port (default: 3000)
+  --server-host <host>      Host/IP to bind to (default: 0.0.0.0)
+                            Use 127.0.0.1 to restrict to local connections
   --stateless               Use stateless HTTP mode (no session management, no SSE)
                             Ideal for serverless deployments (Lambda, Workers)
 
@@ -137,6 +144,7 @@ Server Options:
                               Legacy: -vector,-geo (exclusion from all)
 
 Environment Variables:
+  MCP_HOST                  Host/IP to bind to (default: 0.0.0.0)
   DB_MCP_TOOL_FILTER        Tool filter string
   SQLITE_DATABASE           SQLite database path
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
@@ -147,7 +155,7 @@ Examples:
   db-mcp --sqlite-native ./data.db --tool-filter "starter"
   db-mcp --sqlite-native ./data.db --tool-filter "core,json,text"
   db-mcp --sqlite-native ./data.db --tool-filter "-vector,-stats"
-  db-mcp --transport http --port 3000 --sqlite ./data.db
+  db-mcp --transport http --port 3000 --server-host 0.0.0.0 --sqlite ./data.db
 
 For more information, visit: https://github.com/neverinfamous/db-mcp
 `);
@@ -159,6 +167,12 @@ For more information, visit: https://github.com/neverinfamous/db-mcp
 function loadEnvConfig(): Partial<McpServerConfig> {
   const config: Partial<McpServerConfig> = {};
   const databases: DatabaseConfig[] = [];
+
+  // Host from environment
+  const host = process.env["MCP_HOST"] ?? process.env["HOST"];
+  if (host) {
+    config.host = host;
+  }
 
   // Tool filter from environment
   const toolFilter =
