@@ -287,6 +287,7 @@ export class DbMcpServer {
 
     const transport = new HttpTransport({
       port: this.config.port ?? 3000,
+      ...(this.config.host !== undefined && { host: this.config.host }),
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
     });
@@ -298,8 +299,10 @@ export class DbMcpServer {
     await transport.start();
 
     const mode = this.config.statelessHttp ? "stateless" : "stateful";
+    const host = this.config.host ?? "0.0.0.0";
+    const port = String(this.config.port ?? 3000);
     logger.info(
-      `db-mcp server started (HTTP transport on port ${String(this.config.port ?? 3000)}, ${mode} mode)`,
+      `db-mcp server started (HTTP transport on ${host}:${port}, ${mode} mode)`,
       { module: "TRANSPORT", mode },
     );
   }

@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-**Last Updated February 10, 2026**
+**Last Updated February 13, 2026**
 
 **SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 
@@ -479,10 +479,11 @@ MCP prompts provide AI-assisted database workflows:
 
 Schema metadata is cached to reduce repeated queries during tool/resource invocations.
 
-| Variable                | Default | Description                                        |
-| ----------------------- | ------- | -------------------------------------------------- |
-| `METADATA_CACHE_TTL_MS` | `5000`  | Cache TTL for schema metadata (milliseconds)       |
-| `LOG_LEVEL`             | `info`  | Log verbosity: `debug`, `info`, `warning`, `error` |
+| Variable                | Default   | Description                                        |
+| ----------------------- | --------- | -------------------------------------------------- |
+| `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (HTTP transport)                |
+| `METADATA_CACHE_TTL_MS` | `5000`    | Cache TTL for schema metadata (milliseconds)       |
+| `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error` |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
@@ -664,7 +665,7 @@ Use `:memory:` for a temporary in-memory database:
 For remote access, web-based clients, or MCP Inspector testing, run the server in HTTP mode:
 
 ```bash
-node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
+node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native ./database.db
 ```
 
 **Endpoints:**
@@ -684,7 +685,7 @@ node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
 For serverless deployments (AWS Lambda, Cloudflare Workers, Vercel), use stateless mode:
 
 ```bash
-node dist/cli.js --transport http --port 3000 --stateless --sqlite-native :memory:
+node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --stateless --sqlite-native :memory:
 ```
 
 | Mode                      | Progress Notifications | SSE Streaming | Serverless |
@@ -752,7 +753,7 @@ export KEYCLOAK_REALM=db-mcp
 export KEYCLOAK_CLIENT_ID=db-mcp-server
 
 # Start server with HTTP transport and OAuth
-node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
+node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native ./database.db
 ```
 
 **2. Get an access token from Keycloak:**
