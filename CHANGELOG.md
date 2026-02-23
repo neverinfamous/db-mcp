@@ -33,6 +33,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added performance tuning tip for schema cache TTL configuration
   - Expanded HTTP endpoints from bullet list to table format with session management details
   - Fixed formatting bug: unclosed 4-backtick code block in legacy syntax section
+- **README Streamlining** — Removed redundant sections to reduce README from 712 to ~590 lines
+  - Removed Table of Contents (GitHub renders one natively)
+  - Merged Quick Test into Quick Start as a "Verify It Works" substep
+  - Removed Security Features checklist (duplicated by "What Sets Us Apart" table)
+  - Removed Tool Categories table (redundant with Tool Groups table in Tool Filtering)
+  - Removed Backend Options table and Transaction/Window tool listings (reference-level detail for Wiki)
+  - Merged standalone Configuration section into OAuth section as a one-liner
+  - Promoted Extensions, Resources, and Prompts to top-level sections
 - **ESLint v10 Compatibility** — Fixed 11 new lint errors introduced by the ESLint v10 major upgrade
   - Added `{ cause }` to re-thrown errors in `NativeSqliteAdapter.ts`, `spatialite.ts`, `SqliteAdapter.ts` (`preserve-caught-error`)
   - Removed useless initial assignments in `SchemaManager.ts`, `SqliteAdapter.ts`, `admin.ts`, `stats.ts` (`no-useless-assignment`)
