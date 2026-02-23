@@ -10,41 +10,8 @@ RUN apk add --no-cache python3 make g++ && \
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl && \
     apk upgrade --no-cache
 
-# Upgrade npm globally to get fixed versions of bundled packages
+# Upgrade npm globally (no patches here — builder is discarded, only production stage is scanned)
 RUN npm install -g npm@latest --force && npm cache clean --force
-
-# Fix GHSA-73rr-hh4g-fpgx: Manually update npm's bundled diff to 8.0.3
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack diff@8.0.3 && \
-    rm -rf node_modules/diff && \
-    tar -xzf diff-8.0.3.tgz && \
-    mv package node_modules/diff && \
-    rm diff-8.0.3.tgz
-
-# Fix CVE-2026-25547: Manually update npm's bundled @isaacs/brace-expansion to 5.0.1
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack @isaacs/brace-expansion@5.0.1 && \
-    rm -rf node_modules/@isaacs/brace-expansion && \
-    mkdir -p node_modules/@isaacs/brace-expansion && \
-    tar -xzf isaacs-brace-expansion-5.0.1.tgz && \
-    mv package/* node_modules/@isaacs/brace-expansion/ && \
-    rm -rf package isaacs-brace-expansion-5.0.1.tgz
-
-# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.8
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.8 && \
-    rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.8.tgz && \
-    mv package node_modules/tar && \
-    rm tar-7.5.8.tgz
-
-# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.1
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack minimatch@10.2.1 && \
-    rm -rf node_modules/minimatch && \
-    tar -xzf minimatch-10.2.1.tgz && \
-    mv package node_modules/minimatch && \
-    rm minimatch-10.2.1.tgz
 
 # Copy package files first for better layer caching
 COPY package*.json ./
@@ -77,6 +44,9 @@ RUN apk add --no-cache ca-certificates && \
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl && \
     apk upgrade --no-cache && \
     npm install -g npm@latest --force && npm cache clean --force
+
+# Patch npm-bundled transitive dependencies for Docker Scout compliance.
+# These only matter in the production image (what gets scanned and deployed).
 
 # Fix GHSA-73rr-hh4g-fpgx: Manually update npm's bundled diff to 8.0.3
 RUN cd /usr/local/lib/node_modules/npm && \
