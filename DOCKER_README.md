@@ -80,8 +80,6 @@ Add to your `~/.cursor/mcp.json` or Claude Desktop config:
 
 Restart Cursor or your MCP client and start querying SQLite databases!
 
----
-
 ## ⚡ Install to Cursor IDE
 
 ### One-Click Installation
@@ -94,8 +92,6 @@ Click the button below to install directly into Cursor:
 
 - ✅ Docker installed and running
 - ✅ ~200MB disk space available
-
----
 
 ## 🎛️ Tool Filtering
 
@@ -146,8 +142,6 @@ Specify exactly the groups you need:
 }
 ```
 
----
-
 ### Shortcuts (Predefined Bundles)
 
 > **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
@@ -160,8 +154,6 @@ Specify exactly the groups you need:
 | `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
 | `minimal`   | 8      | 8      | +3         | Core only          |
 | `full`      | 102    | 122    | +3         | Everything enabled |
-
----
 
 ### Tool Groups (7 Available)
 
@@ -176,8 +168,6 @@ Specify exactly the groups you need:
 | `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
 | `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
 | `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
-
----
 
 ### Syntax Reference
 
@@ -214,8 +204,6 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 --tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
 ```
 
----
-
 ## 🛡️ Supply Chain Security
 
 For enhanced security, use SHA-pinned images:
@@ -236,8 +224,6 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 - ✅ **SBOM Available** - Complete software bill of materials
 - ✅ **Non-root Execution** - Minimal attack surface
 - ✅ **Security Scanned** - Docker Scout blocks critical/high CVEs
-
----
 
 ## 📊 Tool Categories
 
@@ -314,8 +300,6 @@ docker run -i --rm \
   writenotenow/db-mcp:latest \
   --sqlite-native /app/data/database.db --csv
 ```
-
----
 
 ## 🔧 Configuration
 
@@ -408,8 +392,6 @@ docker run --rm -p 3000:3000 \
 
 See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for configuring your OAuth provider.
 
----
-
 ## 📦 Image Details
 
 | Platform                  | Features                            |
@@ -429,8 +411,6 @@ See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYC
 - `1.0.0` - Specific version (recommended for production)
 - `latest` - Always the newest version
 - `sha-<commit>` - Git commit pinned
-
----
 
 ## 🏗️ Build from Source
 
@@ -461,8 +441,6 @@ Update your MCP config:
   }
 }
 ```
-
----
 
 ## 📚 Documentation & Resources
 

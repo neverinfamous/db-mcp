@@ -34,8 +34,6 @@
 | **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types                                                                                                                 |
 | **MCP 2025-11-25 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                            |
 
----
-
 ## 🚀 Quick Start
 
 ### Option 1: Docker (Recommended)
@@ -113,8 +111,6 @@ Run the test suite:
 npm run test
 ```
 
----
-
 ## ⚡ Install to Cursor IDE
 
 ### One-Click Installation
@@ -133,8 +129,6 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 
 - ✅ Docker installed and running (for Docker method)
 - ✅ Node.js 24+ (LTS) (for local installation)
-
----
 
 ## 🎛️ Tool Filtering
 
@@ -185,8 +179,6 @@ Specify exactly the groups you need:
 }
 ```
 
----
-
 ### Shortcuts (Predefined Bundles)
 
 > **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
@@ -199,8 +191,6 @@ Specify exactly the groups you need:
 | `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
 | `minimal`   | 8      | 8      | +3         | Core only          |
 | `full`      | 102    | 122    | +3         | Everything enabled |
-
----
 
 ### Tool Groups (7 Available)
 
@@ -215,8 +205,6 @@ Specify exactly the groups you need:
 | `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
 | `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
 | `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
-
----
 
 ### Syntax Reference
 
@@ -252,8 +240,6 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 # Legacy: start with all, exclude some
 --tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
 ```
-
----
 
 ## � SQLite Extensions
 
@@ -310,8 +296,6 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 > **Note:** Extension binaries must match your platform and architecture. The server searches common paths automatically, or use the `CSV_EXTENSION_PATH` / `SPATIALITE_PATH` environment variables for custom locations.
 
----
-
 ## 📁 Resources (8)
 
 MCP resources provide read-only access to database metadata:
@@ -328,8 +312,6 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis) | `core,admin`  |
 
 > **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "core,admin"` (~18 tools) instead of `full` (102+) when you only need resource-related functionality.
-
----
 
 ## 💬 Prompts (10)
 
@@ -348,8 +330,6 @@ MCP prompts provide AI-assisted database workflows:
 | `sqlite_hybrid_search_workflow` | Hybrid FTS5 + vector search workflow             |
 | `sqlite_demo`                   | Interactive demo of MCP capabilities             |
 
----
-
 ## ⚡ Performance Tuning
 
 Schema metadata is cached to reduce repeated queries during tool/resource invocations.
@@ -361,8 +341,6 @@ Schema metadata is cached to reduce repeated queries during tool/resource invoca
 | `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error` |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
-
----
 
 ## 📚 MCP Client Configuration
 
@@ -489,8 +467,6 @@ node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --stateless 
 | ------------------------- | ---------------------- | ------------- | ---------- |
 | Stateful (default)        | ✅ Yes                 | ✅ Yes        | ⚠️ Complex |
 | Stateless (`--stateless`) | ❌ No                  | ❌ No         | ✅ Native  |
-
----
 
 ## 🔐 OAuth 2.1 Implementation
 
