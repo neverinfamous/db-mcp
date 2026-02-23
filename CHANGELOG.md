@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
   - Essential for containerized deployments where binding to all interfaces is required
 
+### Security
+
+- **Docker CVE Remediation** — Patched npm-bundled transitive dependencies in Dockerfile (both stages)
+  - `tar`: 7.5.7 → 7.5.8 (CVE-2026-26960: path traversal, HIGH 7.1)
+  - `minimatch`: 10.1.2 → 10.2.1 (CVE-2026-26996: ReDoS, HIGH 8.7)
+
 ### Dependencies
 
 - `@eslint/js`: 9.39.2 → 10.0.1 (major)
@@ -46,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed useless initial assignments in `SchemaManager.ts`, `SqliteAdapter.ts`, `admin.ts`, `stats.ts` (`no-useless-assignment`)
   - Fixed unsafe `express.json()` call in `http.ts` (`no-unsafe-call`)
 - Added `lint:json` npm script for agent-readable ESLint output (`eslint-results.json`)
+- Added `.gitattributes` to normalize line endings to LF on all platforms
+- Added test suite badges (941 tests, 80% coverage) to both READMEs
 
 ---
 
