@@ -13,38 +13,42 @@ RUN apk add --no-cache python3 make g++ && \
 # Upgrade npm globally to get fixed versions of bundled packages
 RUN npm install -g npm@latest --force && npm cache clean --force
 
-# Fix GHSA-73rr-hh4g-fpgx: Manually update npm's bundled diff@8.0.2 to 8.0.3
+# Patch npm-bundled transitive dependencies (conditional — skips if already fixed upstream)
+# Each patch checks the installed version before applying, so they become no-ops
+# as npm releases include the fixes natively.
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack diff@8.0.3 && \
-    rm -rf node_modules/diff && \
-    tar -xzf diff-8.0.3.tgz && \
-    mv package node_modules/diff && \
-    rm diff-8.0.3.tgz
-
-# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.8
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.8 && \
-    rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.8.tgz && \
-    mv package node_modules/tar && \
-    rm tar-7.5.8.tgz
-
-# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.1
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack minimatch@10.2.1 && \
-    rm -rf node_modules/minimatch && \
-    tar -xzf minimatch-10.2.1.tgz && \
-    mv package node_modules/minimatch && \
-    rm minimatch-10.2.1.tgz
-
-# Fix GHSA-7h2j-956f-4vf2: Manually update npm's bundled @isaacs/brace-expansion to 5.0.1
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack @isaacs/brace-expansion@5.0.1 && \
-    rm -rf node_modules/@isaacs/brace-expansion && \
-    mkdir -p node_modules/@isaacs && \
-    tar -xzf isaacs-brace-expansion-5.0.1.tgz && \
-    mv package node_modules/@isaacs/brace-expansion && \
-    rm isaacs-brace-expansion-5.0.1.tgz
+    # Fix GHSA-73rr-hh4g-fpgx: diff < 8.0.3 \
+    DIFF_VER=$(node -p "try{require('./node_modules/diff/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "8.0.3" "$DIFF_VER" | sort -V | head -n1)" != "8.0.3" ]; then \
+      echo "Patching diff $DIFF_VER -> 8.0.3" && \
+      npm pack diff@8.0.3 && rm -rf node_modules/diff && \
+      tar -xzf diff-8.0.3.tgz && mv package node_modules/diff && rm diff-8.0.3.tgz; \
+    else echo "diff $DIFF_VER already fixed, skipping"; fi && \
+    # Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: tar < 7.5.8 \
+    TAR_VER=$(node -p "try{require('./node_modules/tar/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "7.5.8" "$TAR_VER" | sort -V | head -n1)" != "7.5.8" ]; then \
+      echo "Patching tar $TAR_VER -> 7.5.8" && \
+      npm pack tar@7.5.8 && rm -rf node_modules/tar && \
+      tar -xzf tar-7.5.8.tgz && mv package node_modules/tar && rm tar-7.5.8.tgz; \
+    else echo "tar $TAR_VER already fixed, skipping"; fi && \
+    # Fix CVE-2026-26996: minimatch < 10.2.1 \
+    MM_VER=$(node -p "try{require('./node_modules/minimatch/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "10.2.1" "$MM_VER" | sort -V | head -n1)" != "10.2.1" ]; then \
+      echo "Patching minimatch $MM_VER -> 10.2.1" && \
+      npm pack minimatch@10.2.1 && rm -rf node_modules/minimatch && \
+      tar -xzf minimatch-10.2.1.tgz && mv package node_modules/minimatch && rm minimatch-10.2.1.tgz; \
+    else echo "minimatch $MM_VER already fixed, skipping"; fi && \
+    # Fix CVE-2026-25547: @isaacs/brace-expansion < 5.0.1 \
+    BE_VER=$(node -p "try{require('./node_modules/@isaacs/brace-expansion/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "5.0.1" "$BE_VER" | sort -V | head -n1)" != "5.0.1" ]; then \
+      echo "Patching @isaacs/brace-expansion $BE_VER -> 5.0.1" && \
+      npm pack @isaacs/brace-expansion@5.0.1 && \
+      rm -rf node_modules/@isaacs/brace-expansion && \
+      mkdir -p node_modules/@isaacs/brace-expansion && \
+      tar -xzf isaacs-brace-expansion-5.0.1.tgz && \
+      mv package/* node_modules/@isaacs/brace-expansion/ && \
+      rm -rf package isaacs-brace-expansion-5.0.1.tgz; \
+    else echo "@isaacs/brace-expansion $BE_VER already fixed, skipping"; fi
 
 # Copy package files first for better layer caching
 COPY package*.json ./
@@ -78,38 +82,36 @@ RUN apk add --no-cache ca-certificates && \
     apk upgrade --no-cache && \
     npm install -g npm@latest --force && npm cache clean --force
 
-# Fix GHSA-73rr-hh4g-fpgx: Manually update npm's bundled diff@8.0.2 to 8.0.3
+# Patch npm-bundled transitive dependencies (conditional — same as builder stage)
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack diff@8.0.3 && \
-    rm -rf node_modules/diff && \
-    tar -xzf diff-8.0.3.tgz && \
-    mv package node_modules/diff && \
-    rm diff-8.0.3.tgz
-
-# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.8
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.8 && \
-    rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.8.tgz && \
-    mv package node_modules/tar && \
-    rm tar-7.5.8.tgz
-
-# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.1
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack minimatch@10.2.1 && \
-    rm -rf node_modules/minimatch && \
-    tar -xzf minimatch-10.2.1.tgz && \
-    mv package node_modules/minimatch && \
-    rm minimatch-10.2.1.tgz
-
-# Fix GHSA-7h2j-956f-4vf2: Manually update npm's bundled @isaacs/brace-expansion to 5.0.1
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack @isaacs/brace-expansion@5.0.1 && \
-    rm -rf node_modules/@isaacs/brace-expansion && \
-    mkdir -p node_modules/@isaacs && \
-    tar -xzf isaacs-brace-expansion-5.0.1.tgz && \
-    mv package node_modules/@isaacs/brace-expansion && \
-    rm isaacs-brace-expansion-5.0.1.tgz
+    DIFF_VER=$(node -p "try{require('./node_modules/diff/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "8.0.3" "$DIFF_VER" | sort -V | head -n1)" != "8.0.3" ]; then \
+      echo "Patching diff $DIFF_VER -> 8.0.3" && \
+      npm pack diff@8.0.3 && rm -rf node_modules/diff && \
+      tar -xzf diff-8.0.3.tgz && mv package node_modules/diff && rm diff-8.0.3.tgz; \
+    else echo "diff $DIFF_VER already fixed, skipping"; fi && \
+    TAR_VER=$(node -p "try{require('./node_modules/tar/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "7.5.8" "$TAR_VER" | sort -V | head -n1)" != "7.5.8" ]; then \
+      echo "Patching tar $TAR_VER -> 7.5.8" && \
+      npm pack tar@7.5.8 && rm -rf node_modules/tar && \
+      tar -xzf tar-7.5.8.tgz && mv package node_modules/tar && rm tar-7.5.8.tgz; \
+    else echo "tar $TAR_VER already fixed, skipping"; fi && \
+    MM_VER=$(node -p "try{require('./node_modules/minimatch/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "10.2.1" "$MM_VER" | sort -V | head -n1)" != "10.2.1" ]; then \
+      echo "Patching minimatch $MM_VER -> 10.2.1" && \
+      npm pack minimatch@10.2.1 && rm -rf node_modules/minimatch && \
+      tar -xzf minimatch-10.2.1.tgz && mv package node_modules/minimatch && rm minimatch-10.2.1.tgz; \
+    else echo "minimatch $MM_VER already fixed, skipping"; fi && \
+    BE_VER=$(node -p "try{require('./node_modules/@isaacs/brace-expansion/package.json').version}catch(e){'0.0.0'}") && \
+    if [ "$(printf '%s\n' "5.0.1" "$BE_VER" | sort -V | head -n1)" != "5.0.1" ]; then \
+      echo "Patching @isaacs/brace-expansion $BE_VER -> 5.0.1" && \
+      npm pack @isaacs/brace-expansion@5.0.1 && \
+      rm -rf node_modules/@isaacs/brace-expansion && \
+      mkdir -p node_modules/@isaacs/brace-expansion && \
+      tar -xzf isaacs-brace-expansion-5.0.1.tgz && \
+      mv package/* node_modules/@isaacs/brace-expansion/ && \
+      rm -rf package isaacs-brace-expansion-5.0.1.tgz; \
+    else echo "@isaacs/brace-expansion $BE_VER already fixed, skipping"; fi
 
 # Copy built artifacts and production dependencies
 COPY --from=builder /app/dist ./dist
