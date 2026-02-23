@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-**Last Updated February 13, 2026**
+**Last Updated February 23, 2026**
 
 **SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 

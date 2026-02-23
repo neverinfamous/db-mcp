@@ -299,7 +299,7 @@ function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Analyze if requested
       if (input.analyze) {
-        await sendProgress(progress, ++step, totalSteps, "Analyzing...");
+        await sendProgress(progress, step + 1, totalSteps, "Analyzing...");
         if (input.table) {
           const table = sanitizeIdentifier(input.table);
           await adapter.executeQuery(`ANALYZE ${table}`);

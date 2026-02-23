@@ -17,6 +17,7 @@
     "start:http": "node dist/cli.js --transport=http",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:json": "eslint . --format json --output-file eslint-results.json",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
     "test": "vitest run",
@@ -58,20 +59,20 @@
     "zod": "^3.25.0 || ^4.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.2.3",
+    "@types/node": "^25.3.0",
     "@types/pg": "^8.16.0",
     "@types/sql.js": "^1.4.9",
     "@vitest/coverage-v8": "^4.0.18",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.1",
     "globals": "^17.3.0",
-    "rimraf": "^6.1.2",
+    "rimraf": "^6.1.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.55.0",
+    "typescript-eslint": "^8.56.1",
     "vitest": "^4.0.17"
   },
   "peerDependencies": {

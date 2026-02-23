@@ -150,7 +150,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       log.error(`Failed to connect to native SQLite: ${message}`, {
         code: ERROR_CODES.DB.CONNECT_FAILED.full,
       });
-      throw new Error(`Native SQLite connection failed: ${message}`);
+      throw new Error(`Native SQLite connection failed: ${message}`, {
+        cause: error,
+      });
     }
 
     return Promise.resolve();
@@ -377,7 +379,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Query failed: ${message}`);
+      throw new Error(`Query failed: ${message}`, { cause: error });
     }
   }
 
@@ -406,7 +408,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Write query failed: ${message}`);
+      throw new Error(`Write query failed: ${message}`, { cause: error });
     }
   }
 

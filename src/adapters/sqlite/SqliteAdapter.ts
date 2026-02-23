@@ -467,7 +467,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Query failed: ${message}`);
+      throw new Error(`Query failed: ${message}`, { cause: error });
     }
   }
 
@@ -577,7 +577,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       const sqlDef = row["sql"] as string;
 
       // Get column info for this index via PRAGMA index_info
-      let columns: string[] = [];
+      let columns: string[];
       try {
         const indexInfo = await this.executeReadQuery(
           `PRAGMA index_info("${indexName}")`,

@@ -155,8 +155,8 @@ export class HttpTransport {
     // Configure CORS with SSE-compatible headers
     this.setupCors();
 
-    // Parse JSON bodies
-    this.app.use(express.json());
+    const jsonParser = express.json as () => RequestHandler;
+    this.app.use(jsonParser());
 
     // Determine resource URI
     const resourceUri =
