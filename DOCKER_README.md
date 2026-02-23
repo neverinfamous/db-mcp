@@ -16,17 +16,21 @@
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
-## 🎯 What This Does
+## 🎯 What Sets Us Apart
 
-### Key Benefits
-
-- 🔐 **OAuth 2.1 Authentication** - RFC 9728/8414 compliant enterprise security
-- 🔥 **122 Specialized Tools** - The most comprehensive SQLite MCP server available
-- 🎛️ **Smart Tool Filtering** - Stay within AI IDE tool limits with presets
-- 📊 **Statistical Analysis** - Descriptive stats, percentiles, time series
-- 🧠 **Vector/Semantic Search** - AI-native embeddings, cosine similarity
-- 🗺️ **Geospatial Operations** - Distance calculations, SpatiaLite support
-- 🔐 **Transaction Safety** - Full ACID compliance with savepoints
+| Feature                          | Description                                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **122 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, and admin |
+| **8 Resources**                  | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                               |
+| **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                              |
+| **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                   |
+| **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                       |
+| **Smart Tool Filtering**         | 7 tool groups + 6 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                          |
+| **HTTP Streaming Transport**     | SSE-based streaming with `/mcp` and `/health` endpoints for remote deployments, plus stateless mode for serverless                                                       |
+| **Deterministic Error Handling** | Every tool returns structured `{success, error}` responses — no raw exceptions, no silent failures. Agents get actionable context instead of cryptic error codes         |
+| **Production-Ready Security**    | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                        |
+| **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types                                                                                                                 |
+| **MCP 2025-11-25 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                            |
 
 ### Backend Options
 
@@ -102,7 +106,7 @@ Click the button below to install directly into Cursor:
 
 ### Quick Start: Recommended Configurations
 
-#### Option 1: Starter (48 tools) ⭐ Recommended
+#### ⭐ Recommended: Starter (48 tools)
 
 Core + JSON + Text. Best for general development.
 
@@ -125,41 +129,7 @@ Core + JSON + Text. Best for general development.
 }
 ```
 
-#### Option 2: Analytics (50 tools)
-
-Core + JSON + Stats + Window functions. For data analysis.
-
-```json
-{
-  "args": [
-    "--transport",
-    "stdio",
-    "--sqlite-native",
-    "C:/path/to/database.db",
-    "--tool-filter",
-    "analytics"
-  ]
-}
-```
-
-#### Option 3: Search (36 tools)
-
-Core + Text + FTS5 + Vector. For search workloads.
-
-```json
-{
-  "args": [
-    "--transport",
-    "stdio",
-    "--sqlite-native",
-    "C:/path/to/database.db",
-    "--tool-filter",
-    "search"
-  ]
-}
-```
-
-#### Option 4: Custom Groups
+#### Custom Groups
 
 Specify exactly the groups you need:
 
@@ -239,9 +209,10 @@ Specify exactly the groups you need:
 **Legacy Syntax (still supported):**
 If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want to start with _all_ tools enabled and then subtract.
 
-````bash
+```bash
 # Legacy: start with all, exclude some
 --tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
+```
 
 ---
 
@@ -257,7 +228,7 @@ docker pull writenotenow/db-mcp:sha256-<manifest-digest>
 
 # Direct digest (maximum security)
 docker pull writenotenow/db-mcp@sha256:<manifest-digest>
-````
+```
 
 **Security Features:**
 
@@ -281,6 +252,69 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Admin/Backup         | 33      | Backup, restore, virtual tables |
 | **Total**            | **122** |                                 |
 
+### 📁 Resources (8)
+
+MCP resources provide read-only access to database metadata:
+
+| Resource              | URI                            | Description                       | Min Config    |
+| --------------------- | ------------------------------ | --------------------------------- | ------------- |
+| `sqlite_schema`       | `sqlite://schema`              | Full database schema              | `minimal`     |
+| `sqlite_tables`       | `sqlite://tables`              | List all tables                   | `minimal`     |
+| `sqlite_table_schema` | `sqlite://table/{name}/schema` | Schema for a specific table       | `minimal`     |
+| `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database       | `minimal`     |
+| `sqlite_views`        | `sqlite://views`               | All views in the database         | `core,admin`  |
+| `sqlite_health`       | `sqlite://health`              | Database health and status        | _(read-only)_ |
+| `sqlite_meta`         | `sqlite://meta`                | Database metadata and PRAGMAs     | `core,admin`  |
+| `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis) | `core,admin`  |
+
+> **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "core,admin"` (~18 tools) instead of `full` (102+) when you only need resource-related functionality.
+
+### 💬 Prompts (10)
+
+MCP prompts provide AI-assisted database workflows:
+
+| Prompt                          | Description                                      |
+| ------------------------------- | ------------------------------------------------ |
+| `sqlite_explain_schema`         | Explain database structure and relationships     |
+| `sqlite_query_builder`          | Help construct SQL queries for common operations |
+| `sqlite_data_analysis`          | Analyze data patterns and provide insights       |
+| `sqlite_optimization`           | Analyze and suggest database optimizations       |
+| `sqlite_migration`              | Help create database migration scripts           |
+| `sqlite_debug_query`            | Debug SQL queries that aren't working            |
+| `sqlite_documentation`          | Generate documentation for the database schema   |
+| `sqlite_summarize_table`        | Intelligent table analysis and summary           |
+| `sqlite_hybrid_search_workflow` | Hybrid FTS5 + vector search workflow             |
+| `sqlite_demo`                   | Interactive demo of MCP capabilities             |
+
+### SQLite Extensions
+
+The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Loadable extensions require additional setup:
+
+| Extension      | Purpose                   | Tools | CLI Flag       |
+| -------------- | ------------------------- | ----- | -------------- |
+| **CSV**        | CSV virtual tables        | 2     | `--csv`        |
+| **SpatiaLite** | Advanced GIS capabilities | 7     | `--spatialite` |
+
+**SpatiaLite** is pre-installed in the Docker image (AMD64 only). Enable it with:
+
+```bash
+docker run -i --rm \
+  -v ./data:/app/data \
+  writenotenow/db-mcp:latest \
+  --sqlite-native /app/data/database.db --spatialite
+```
+
+**CSV** requires setting `CSV_EXTENSION_PATH` to a compiled binary inside the container:
+
+```bash
+docker run -i --rm \
+  -v ./data:/app/data \
+  -v /path/to/csv.so:/app/extensions/csv.so \
+  -e CSV_EXTENSION_PATH=/app/extensions/csv.so \
+  writenotenow/db-mcp:latest \
+  --sqlite-native /app/data/database.db --csv
+```
+
 ---
 
 ## 🔧 Configuration
@@ -301,6 +335,8 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 -e KEYCLOAK_CLIENT_ID=db-mcp-server
 ```
 
+> **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
+
 ### HTTP/SSE Transport
 
 For remote access or web-based clients:
@@ -317,10 +353,60 @@ docker run --rm -p 3000:3000 \
 
 **Endpoints:**
 
-- `POST /mcp` — JSON-RPC requests
-- `GET /mcp` — SSE stream for notifications
-- `DELETE /mcp` — Session termination
-- `GET /health` — Health check
+| Endpoint      | Description                                   |
+| ------------- | --------------------------------------------- |
+| `GET /`       | Server info and available endpoints           |
+| `POST /mcp`   | JSON-RPC requests (initialize, tools/call)    |
+| `GET /mcp`    | SSE stream for server-to-client notifications |
+| `DELETE /mcp` | Session termination                           |
+| `GET /health` | Health check (always public)                  |
+
+**Session Management:** The server uses stateful sessions by default. Include the `mcp-session-id` header (returned from initialization) in subsequent requests for session continuity.
+
+#### Stateless Mode (Serverless)
+
+For serverless deployments (AWS Lambda, Cloudflare Workers, Vercel), use stateless mode:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -v ./data:/app/data \
+  writenotenow/db-mcp:latest \
+  --transport http --port 3000 --server-host 0.0.0.0 --stateless --sqlite-native /app/data/database.db
+```
+
+| Mode                      | Progress Notifications | SSE Streaming | Serverless |
+| ------------------------- | ---------------------- | ------------- | ---------- |
+| Stateful (default)        | ✅ Yes                 | ✅ Yes        | ⚠️ Complex |
+| Stateless (`--stateless`) | ❌ No                  | ❌ No         | ✅ Native  |
+
+### 🔐 OAuth 2.1
+
+OAuth is automatically enabled when running in HTTP mode with OAuth environment variables configured.
+
+**Supported Scopes:**
+
+| Scope                | Description                            |
+| -------------------- | -------------------------------------- |
+| `read`               | Read-only access to all databases      |
+| `write`              | Read and write access to all databases |
+| `admin`              | Full administrative access             |
+| `db:{name}`          | Access to specific database only       |
+| `table:{db}:{table}` | Access to specific table only          |
+
+**Quick Start with OAuth:**
+
+```bash
+# Run with OAuth enabled
+docker run --rm -p 3000:3000 \
+  -v ./data:/app/data \
+  -e KEYCLOAK_URL=http://localhost:8080 \
+  -e KEYCLOAK_REALM=db-mcp \
+  -e KEYCLOAK_CLIENT_ID=db-mcp-server \
+  writenotenow/db-mcp:latest \
+  --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native /app/data/database.db
+```
+
+See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for configuring your OAuth provider.
 
 ---
 

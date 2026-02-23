@@ -25,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **DOCKER_README Documentation Sync** — Synchronized Docker Hub README with main README content
+  - Added Resources (8) table with efficiency tip and Prompts (10) table
+  - Added SQLite Extensions section with Docker-specific SpatiaLite/CSV instructions
+  - Added OAuth 2.1 supported scopes table and Docker quick start example
+  - Added stateless mode section for serverless Docker deployments
+  - Added performance tuning tip for schema cache TTL configuration
+  - Expanded HTTP endpoints from bullet list to table format with session management details
+  - Fixed formatting bug: unclosed 4-backtick code block in legacy syntax section
 - **ESLint v10 Compatibility** — Fixed 11 new lint errors introduced by the ESLint v10 major upgrade
   - Added `{ cause }` to re-thrown errors in `NativeSqliteAdapter.ts`, `spatialite.ts`, `SqliteAdapter.ts` (`preserve-caught-error`)
   - Removed useless initial assignments in `SchemaManager.ts`, `SqliteAdapter.ts`, `admin.ts`, `stats.ts` (`no-useless-assignment`)
