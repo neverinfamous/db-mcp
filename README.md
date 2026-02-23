@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-**Last Updated February 13, 2026**
+**Last Updated February 23, 2026**
 
 **SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 
@@ -13,81 +13,28 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-Published-green)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.neverinfamous/db-mcp)
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
+![Tests](https://img.shields.io/badge/Tests-941%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-80%25-yellow)
 
-**[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)** • **[Security](SECURITY.md)**
-
----
-
-## 📋 Table of Contents
-
-### Quick Start
-
-- [✅ Quick Test - Verify Everything Works](#-quick-test---verify-everything-works)
-- [🚀 Quick Start](#-quick-start)
-- [⚡ Install to Cursor IDE](#-install-to-cursor-ide)
-- [🎛️ Tool Filtering](#️-tool-filtering) ⭐ **Important for IDE users**
-
-### Configuration & Usage
-
-- [📊 Tool Categories](#-tool-categories)
-- [📚 MCP Client Configuration](#-mcp-client-configuration)
-
-### Features & Resources
-
-- [🔥 Core Capabilities](#-core-capabilities)
-- [🔐 OAuth 2.1 Implementation](#-oauth-21-implementation)
-- [🏆 Why Choose db-mcp?](#-why-choose-db-mcp)
+**[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
 ---
 
-## ✅ Quick Test - Verify Everything Works
+## 🎯 What Sets Us Apart
 
-**Test the server in 30 seconds!**
-
-Build and run:
-
-```bash
-npm run build
-
-# Option 1: Native backend (better-sqlite3)
-node dist/cli.js --transport stdio --sqlite-native :memory:
-
-# Option 2: WASM backend (sql.js)
-node dist/cli.js --transport stdio --sqlite :memory:
-```
-
-Expected output (native):
-
-```
-[db-mcp] Starting MCP server...
-[db-mcp] Registered adapter: Native SQLite Adapter (better-sqlite3) (sqlite:default)
-[db-mcp] Server started successfully
-```
-
-Expected output (WASM):
-
-```
-[db-mcp] Starting MCP server...
-[db-mcp] Registered adapter: WASM SQLite Adapter (sql.js) (sqlite:default)
-[db-mcp] Server started successfully
-```
-
-Run the test suite:
-
-```bash
-npm run test
-```
-
-### 🛡️ Security Features
-
-- ✅ **SQL Injection Prevention** - Parameter binding on all queries
-- ✅ **OAuth 2.1 Authentication** - RFC 9728/8414 compliant
-- ✅ **Scope-based Authorization** - Granular read/write/admin access
-- ✅ **Strict TypeScript** - Full type safety with no `any` types
-
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
+| Feature                        | Description                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **122 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, and admin |
+| **8 Resources**                | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                               |
+| **10 AI-Powered Prompts**      | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                              |
+| **Dual SQLite Backends**       | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                   |
+| **OAuth 2.1 + Access Control** | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                       |
+| **Smart Tool Filtering**       | 7 tool groups + 6 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                          |
+| **HTTP Streaming Transport**   | SSE-based streaming with `/mcp` and `/health` endpoints for remote deployments, plus stateless mode for serverless                                                       |
+| **Structured Error Handling**  | Tools return `{success, error}` responses with actionable context — designed for agent consumption rather than cryptic error codes                                       |
+| **Production-Ready Security**  | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                        |
+| **Strict TypeScript**          | 100% type-safe codebase with strict mode, no `any` types                                                                                                                 |
+| **MCP 2025-11-25 Compliant**   | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                            |
 
 ## 🚀 Quick Start
 
@@ -146,9 +93,25 @@ node dist/cli.js --transport stdio --sqlite ./database.db
 
 > **Backend Choice:** Use `--sqlite-native` for full features (122 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (102 tools, no native dependencies).
 
-[⬆️ Back to Table of Contents](#-table-of-contents)
+### Verify It Works
 
----
+```bash
+node dist/cli.js --transport stdio --sqlite-native :memory:
+```
+
+Expected output:
+
+```
+[db-mcp] Starting MCP server...
+[db-mcp] Registered adapter: Native SQLite Adapter (better-sqlite3) (sqlite:default)
+[db-mcp] Server started successfully
+```
+
+Run the test suite:
+
+```bash
+npm run test
+```
 
 ## ⚡ Install to Cursor IDE
 
@@ -169,10 +132,6 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 - ✅ Docker installed and running (for Docker method)
 - ✅ Node.js 24+ (LTS) (for local installation)
 
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
@@ -182,7 +141,7 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 
 ### Quick Start: Recommended Configurations
 
-#### Option 1: Starter (48 tools) ⭐ Recommended
+#### ⭐ Recommended: Starter (48 tools)
 
 Core + JSON + Text. Best for general development.
 
@@ -205,41 +164,7 @@ Core + JSON + Text. Best for general development.
 }
 ```
 
-#### Option 2: Analytics (50 tools)
-
-Core + JSON + Stats + Window functions. For data analysis.
-
-```json
-{
-  "args": [
-    "--transport",
-    "stdio",
-    "--sqlite-native",
-    "C:/path/to/database.db",
-    "--tool-filter",
-    "analytics"
-  ]
-}
-```
-
-#### Option 3: Search (36 tools)
-
-Core + Text + FTS5 + Vector. For search workloads.
-
-```json
-{
-  "args": [
-    "--transport",
-    "stdio",
-    "--sqlite-native",
-    "C:/path/to/database.db",
-    "--tool-filter",
-    "search"
-  ]
-}
-```
-
-#### Option 4: Custom Groups
+#### Custom Groups
 
 Specify exactly the groups you need:
 
@@ -256,8 +181,6 @@ Specify exactly the groups you need:
 }
 ```
 
----
-
 ### Shortcuts (Predefined Bundles)
 
 > **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
@@ -270,8 +193,6 @@ Specify exactly the groups you need:
 | `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
 | `minimal`   | 8      | 8      | +3         | Core only          |
 | `full`      | 102    | 122    | +3         | Everything enabled |
-
----
 
 ### Tool Groups (7 Available)
 
@@ -286,8 +207,6 @@ Specify exactly the groups you need:
 | `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
 | `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
 | `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
-
----
 
 ### Syntax Reference
 
@@ -324,65 +243,7 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 --tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
 ```
 
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
-## 📊 Tool Categories
-
-| Category              | WASM    | Native  | Description                                    |
-| --------------------- | ------- | ------- | ---------------------------------------------- |
-| Core Database         | 8       | 8       | CRUD, schema, indexes, views                   |
-| JSON Helpers          | 8       | 8       | Simplified JSON operations, schema analysis    |
-| JSON Operations       | 15      | 15      | Full JSON manipulation, JSONB support          |
-| Text Processing       | 13      | 13      | Regex, fuzzy, phonetic, advanced search        |
-| FTS5 Full-Text Search | 4       | 4       | Create, search, rebuild, optimize              |
-| Statistical Analysis  | 13      | 19      | Stats, outliers, regression + window functions |
-| Virtual Tables        | 13      | 13      | CSV, R-Tree, series, views, vacuum, dbstat     |
-| Vector/Semantic       | 11      | 11      | Embeddings, similarity search                  |
-| Geospatial            | 4       | 11      | Distance, bounding box + SpatiaLite GIS        |
-| Admin/PRAGMA          | 13      | 20      | Backup, restore, pragmas, transactions         |
-| **Total**             | **102** | **122** |                                                |
-
-### SQLite Backend Options
-
-Choose between two SQLite backends based on your needs:
-
-| Feature                   | WASM (sql.js)     | Native (better-sqlite3)       |
-| ------------------------- | ----------------- | ----------------------------- |
-| **Tools Available**       | 102               | **122**                       |
-| **Transactions**          | ❌                | ✅ 7 tools                    |
-| **Window Functions**      | ❌                | ✅ 6 tools                    |
-| **FTS5 Full-Text Search** | ⚠️ Limited        | ✅ Full                       |
-| **JSON1 Extension**       | ⚠️ Limited        | ✅ Full                       |
-| **Cross-platform**        | ✅ No compilation | Requires Node.js native build |
-| **In-memory DBs**         | ✅                | ✅                            |
-| **File-based DBs**        | ✅                | ✅                            |
-
-Transaction Tools (7) - Native Only
-
-| Tool                             | Description                                           |
-| -------------------------------- | ----------------------------------------------------- |
-| `sqlite_transaction_begin`       | Start transaction (deferred/immediate/exclusive mode) |
-| `sqlite_transaction_commit`      | Commit current transaction                            |
-| `sqlite_transaction_rollback`    | Rollback current transaction                          |
-| `sqlite_transaction_savepoint`   | Create a savepoint                                    |
-| `sqlite_transaction_release`     | Release a savepoint                                   |
-| `sqlite_transaction_rollback_to` | Rollback to a savepoint                               |
-| `sqlite_transaction_execute`     | Execute multiple statements atomically                |
-
-Window Function Tools (6) - Native Only
-
-| Tool                          | Description                                           |
-| ----------------------------- | ----------------------------------------------------- |
-| `sqlite_window_row_number`    | Assign sequential row numbers                         |
-| `sqlite_window_rank`          | Calculate RANK/DENSE_RANK/PERCENT_RANK                |
-| `sqlite_window_lag_lead`      | Access previous or next row values                    |
-| `sqlite_window_running_total` | Calculate cumulative sums                             |
-| `sqlite_window_moving_avg`    | Calculate rolling averages                            |
-| `sqlite_window_ntile`         | Divide rows into N buckets (quartiles, deciles, etc.) |
-
-### SQLite Extensions
+## � SQLite Extensions
 
 SQLite supports both **built-in** extensions (compiled into better-sqlite3) and **loadable** extensions (require separate binaries).
 
@@ -437,7 +298,7 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 > **Note:** Extension binaries must match your platform and architecture. The server searches common paths automatically, or use the `CSV_EXTENSION_PATH` / `SPATIALITE_PATH` environment variables for custom locations.
 
-### 📁 Resources (8)
+## 📁 Resources (8)
 
 MCP resources provide read-only access to database metadata:
 
@@ -454,7 +315,7 @@ MCP resources provide read-only access to database metadata:
 
 > **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "core,admin"` (~18 tools) instead of `full` (102+) when you only need resource-related functionality.
 
-### 💬 Prompts (10)
+## 💬 Prompts (10)
 
 MCP prompts provide AI-assisted database workflows:
 
@@ -471,10 +332,6 @@ MCP prompts provide AI-assisted database workflows:
 | `sqlite_hybrid_search_workflow` | Hybrid FTS5 + vector search workflow             |
 | `sqlite_demo`                   | Interactive demo of MCP capabilities             |
 
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
 ## ⚡ Performance Tuning
 
 Schema metadata is cached to reduce repeated queries during tool/resource invocations.
@@ -487,13 +344,9 @@ Schema metadata is cached to reduce repeated queries during tool/resource invoca
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
 ## 📚 MCP Client Configuration
 
-### Cursor IDE (Native Backend)
+### Cursor IDE / Claude Desktop
 
 ```json
 {
@@ -505,75 +358,22 @@ Schema metadata is cached to reduce repeated queries during tool/resource invoca
         "--transport",
         "stdio",
         "--sqlite-native",
-        "C:/path/to/your/database.db"
+        "C:/path/to/your/database.db",
+        "--tool-filter",
+        "starter"
       ]
     }
   }
 }
 ```
 
-### Cursor IDE (WASM Backend)
+**Notes:**
 
-```json
-{
-  "mcpServers": {
-    "db-mcp-sqlite": {
-      "command": "node",
-      "args": [
-        "C:/path/to/db-mcp/dist/cli.js",
-        "--transport",
-        "stdio",
-        "--sqlite",
-        "C:/path/to/your/database.db"
-      ]
-    }
-  }
-}
-```
-
-### Claude Desktop (Native)
-
-```json
-{
-  "mcpServers": {
-    "db-mcp-sqlite": {
-      "command": "node",
-      "args": [
-        "/path/to/db-mcp/dist/cli.js",
-        "--transport",
-        "stdio",
-        "--sqlite-native",
-        "/path/to/database.db"
-      ]
-    }
-  }
-}
-```
-
-### Claude Desktop (WASM)
-
-```json
-{
-  "mcpServers": {
-    "db-mcp-sqlite": {
-      "command": "node",
-      "args": [
-        "/path/to/db-mcp/dist/cli.js",
-        "--transport",
-        "stdio",
-        "--sqlite",
-        "/path/to/database.db"
-      ]
-    }
-  }
-}
-```
+- For **WASM backend**, replace `--sqlite-native` with `--sqlite`
+- For **Linux/macOS**, use forward-slash Unix paths (e.g., `/path/to/db-mcp/dist/cli.js`)
+- See [Tool Filtering](#️-tool-filtering) to customize which tools are exposed
 
 ### Native with Extensions (CSV + SpatiaLite)
-
-To enable loadable extensions, add CLI flags and set environment variables for extension paths:
-
-**Windows:**
 
 ```json
 {
@@ -599,36 +399,13 @@ To enable loadable extensions, add CLI flags and set environment variables for e
 }
 ```
 
-**Linux/macOS:**
+**Notes:**
 
-```json
-{
-  "mcpServers": {
-    "db-mcp-sqlite": {
-      "command": "node",
-      "args": [
-        "/path/to/db-mcp/dist/cli.js",
-        "--transport",
-        "stdio",
-        "--sqlite-native",
-        "/path/to/database.db",
-        "--csv",
-        "--spatialite",
-        "--tool-filter",
-        "starter"
-      ],
-      "env": {
-        "CSV_EXTENSION_PATH": "/path/to/extensions/csv.so",
-        "SPATIALITE_PATH": "/usr/lib/x86_64-linux-gnu/mod_spatialite.so"
-      }
-    }
-  }
-}
-```
+- Extension flags (`--csv`, `--spatialite`) require the native backend (`--sqlite-native`)
+- Set `CSV_EXTENSION_PATH` and/or `SPATIALITE_PATH` env vars if extensions are not in standard system paths
+- For **Linux/macOS**, use Unix paths and `.so` extensions (e.g., `SPATIALITE_PATH=/usr/lib/x86_64-linux-gnu/mod_spatialite.so`)
 
-> **Note:** Extension flags (`--csv`, `--spatialite`) are only available with the native backend (`--sqlite-native`). Set environment variables if extensions are not in standard system paths.
-
-### Docker with Claude Desktop
+### Docker
 
 ```json
 {
@@ -692,31 +469,6 @@ node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --stateless 
 | ------------------------- | ---------------------- | ------------- | ---------- |
 | Stateful (default)        | ✅ Yes                 | ✅ Yes        | ⚠️ Complex |
 | Stateless (`--stateless`) | ❌ No                  | ❌ No         | ✅ Native  |
-
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
-## 🔥 Core Capabilities
-
-- 📊 **Statistical Analysis** - Descriptive stats, percentiles, time series analysis
-- 🔍 **Advanced Text Processing** - Regex, fuzzy matching, phonetic search, similarity
-- 🧠 **Vector/Semantic Search** - AI-native embeddings, cosine similarity, hybrid search
-- 🗺️ **Geospatial Operations** - Distance calculations, bounding boxes, spatial queries
-- 🔐 **Transaction Safety** - Full ACID compliance with savepoints (native backend)
-- 🎛️ **122 Specialized Tools** - Complete database administration and analytics suite
-
-### 🏢 Enterprise Features
-
-- 🔐 **OAuth 2.1 Authentication** - RFC 9728/8414 compliant token-based authentication
-- 🛡️ **Tool Filtering** - Control which database operations are exposed
-- 👥 **Access Control** - Granular scopes for read-only, write, and admin access
-- 🎯 **Full-Text Search (FTS5)** - Advanced search with BM25 ranking
-- ⚡ **Window Functions** - Row numbers, rankings, running totals, moving averages
-
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
 
 ## 🔐 OAuth 2.1 Implementation
 
@@ -782,64 +534,7 @@ curl -X POST "http://localhost:3000/mcp" \
 
 > **Note:** OAuth is automatically enabled when running in HTTP mode with OAuth environment variables configured. The `/.well-known/oauth-protected-resource` endpoint provides RFC 9728 metadata for client discovery.
 
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
-## 🏆 Why Choose db-mcp?
-
-✅ **TypeScript Native** - Full type safety with strict mode, no `any` types  
-✅ **122 Specialized Tools** - Most comprehensive SQLite MCP server available  
-✅ **OAuth 2.1 Built-in** - Enterprise-grade authentication out of the box  
-✅ **Dual Backends** - WASM for portability, native for performance  
-✅ **Tool Filtering** - Stay within AI IDE tool limits with preset configurations  
-✅ **Window Functions** - Advanced analytics with ROW_NUMBER, RANK, LAG/LEAD  
-✅ **Transaction Support** - Full ACID compliance with savepoints  
-✅ **Modern Architecture** - Built on MCP SDK with clean, modular design  
-✅ **Active Development** - Regular updates and improvements
-
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
-## 📈 Project Stats
-
-- **122 Tools** in native backend (102 in WASM)
-- **13 Tool Groups** for flexible filtering
-- **Strict TypeScript** with full type coverage
-- **Multi-platform** support (Windows, Linux, macOS)
-- **Docker images** available for easy deployment
-- **OAuth 2.1** RFC-compliant authentication
-- **Active development** with regular updates
-
-[⬆️ Back to Table of Contents](#-table-of-contents)
-
----
-
-## Configuration
-
-### Environment Variables
-
-Copy `.env.example` to `.env` and configure:
-
-```bash
-KEYCLOAK_URL=http://localhost:8080
-KEYCLOAK_REALM=db-mcp
-KEYCLOAK_CLIENT_ID=db-mcp-server
-KEYCLOAK_CLIENT_SECRET=your_secret_here
-DBMCP_PORT=3000
-DBMCP_OAUTH_ENABLED=true
-```
-
-### JSON Configuration
-
-See `config/db-mcp.keycloak.json` for a complete example.
-
----
-
-## 🚧 Planned Improvements
-
-_No pending improvements. All features are up-to-date._
+> **Configuration files:** Copy `.env.example` for a quick-start template. See `config/db-mcp.keycloak.json` for a complete Keycloak configuration example.
 
 ---
 

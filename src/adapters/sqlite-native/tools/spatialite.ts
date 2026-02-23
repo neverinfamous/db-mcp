@@ -711,6 +711,7 @@ function createSpatialImportTool(adapter: NativeSqliteAdapter): ToolDefinition {
         } catch (e) {
           throw new Error(
             `Invalid GeoJSON: ${e instanceof Error ? e.message : String(e)}`,
+            { cause: e },
           );
         }
       } else {

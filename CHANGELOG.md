@@ -17,6 +17,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
+- `@eslint/js`: 9.39.2 → 10.0.1 (major)
+- `eslint`: 9.39.2 → 10.0.1 (major)
+- `@types/node`: 25.2.3 → 25.3.0
+- `rimraf`: 6.1.2 → 6.1.3
+- `typescript-eslint`: 8.55.0 → 8.56.1
+
+### Changed
+
+- **DOCKER_README Documentation Sync** — Synchronized Docker Hub README with main README content
+  - Added Resources (8) table with efficiency tip and Prompts (10) table
+  - Added SQLite Extensions section with Docker-specific SpatiaLite/CSV instructions
+  - Added OAuth 2.1 supported scopes table and Docker quick start example
+  - Added stateless mode section for serverless Docker deployments
+  - Added performance tuning tip for schema cache TTL configuration
+  - Expanded HTTP endpoints from bullet list to table format with session management details
+  - Fixed formatting bug: unclosed 4-backtick code block in legacy syntax section
+- **README Streamlining** — Removed redundant sections to reduce README from 712 to ~590 lines
+  - Removed Table of Contents (GitHub renders one natively)
+  - Merged Quick Test into Quick Start as a "Verify It Works" substep
+  - Removed Security Features checklist (duplicated by "What Sets Us Apart" table)
+  - Removed Tool Categories table (redundant with Tool Groups table in Tool Filtering)
+  - Removed Backend Options table and Transaction/Window tool listings (reference-level detail for Wiki)
+  - Merged standalone Configuration section into OAuth section as a one-liner
+  - Promoted Extensions, Resources, and Prompts to top-level sections
+- **ESLint v10 Compatibility** — Fixed 11 new lint errors introduced by the ESLint v10 major upgrade
+  - Added `{ cause }` to re-thrown errors in `NativeSqliteAdapter.ts`, `spatialite.ts`, `SqliteAdapter.ts` (`preserve-caught-error`)
+  - Removed useless initial assignments in `SchemaManager.ts`, `SqliteAdapter.ts`, `admin.ts`, `stats.ts` (`no-useless-assignment`)
+  - Fixed unsafe `express.json()` call in `http.ts` (`no-unsafe-call`)
+- Added `lint:json` npm script for agent-readable ESLint output (`eslint-results.json`)
+
+---
+
+## [Unreleased — Prior]
+
+### Added
+
+- **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
+  - Configures which host/IP the HTTP transport binds to (default: `0.0.0.0`)
+  - Use `--server-host 127.0.0.1` to restrict to local connections only
+  - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
+  - Essential for containerized deployments where binding to all interfaces is required
+
+### Dependencies
+
 - `@modelcontextprotocol/sdk`: 1.25.3 → 1.26.0
 - `@types/node`: 25.2.0 → 25.2.3
 - `dotenv`: 17.2.3 → 17.3.1

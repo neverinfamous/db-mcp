@@ -160,7 +160,7 @@ export class SchemaManager {
     }));
 
     // Get row count (wrapped in try-catch for FTS5/virtual tables in WASM mode)
-    let rowCount = 0;
+    let rowCount: number;
     try {
       const countResult = await this.executor.executeReadQuery(
         `SELECT COUNT(*) as count FROM "${tableName}"`,
@@ -204,7 +204,7 @@ export class SchemaManager {
       const sql = row["sql"] as string;
 
       // Get column info for this index via PRAGMA index_info
-      let columns: string[] = [];
+      let columns: string[];
       try {
         const indexInfo = await this.executor.executeReadQuery(
           `PRAGMA index_info("${indexName}")`,

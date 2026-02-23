@@ -688,7 +688,7 @@ function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
       const tableInfo = await adapter.describeTable(input.table);
 
       // Filter to requested columns or auto-detect numeric columns
-      let columns: string[] = [];
+      let columns: string[];
       if (input.columns && input.columns.length > 0) {
         // User-specified columns - validate them
         columns = input.columns.map((col) => {

@@ -48,6 +48,7 @@ coverage/
 
 # Optional eslint cache
 .eslintcache
+eslint-results.json
 
 # Keycloak (development server)
 keycloak-*/
