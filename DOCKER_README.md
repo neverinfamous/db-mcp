@@ -12,25 +12,27 @@
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](https://github.com/neverinfamous/db-mcp/blob/main/SECURITY.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 
+---
+
 🎯 **SQLite MCP Server** with OAuth 2.1 authentication, HTTP/SSE transport, smart tool filtering, 122 specialized tools, 8 resources, and 10 prompts.
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
 ## 🎯 What Sets Us Apart
 
-| Feature                          | Description                                                                                                                                                              |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **122 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, and admin |
-| **8 Resources**                  | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                               |
-| **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                              |
-| **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                   |
-| **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                       |
-| **Smart Tool Filtering**         | 7 tool groups + 6 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                          |
-| **HTTP Streaming Transport**     | SSE-based streaming with `/mcp` and `/health` endpoints for remote deployments, plus stateless mode for serverless                                                       |
-| **Deterministic Error Handling** | Every tool returns structured `{success, error}` responses — no raw exceptions, no silent failures. Agents get actionable context instead of cryptic error codes         |
-| **Production-Ready Security**    | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                        |
-| **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types                                                                                                                 |
-| **MCP 2025-11-25 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                            |
+| Feature                        | Description                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **122 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, and admin |
+| **8 Resources**                | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                               |
+| **10 AI-Powered Prompts**      | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                              |
+| **Dual SQLite Backends**       | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                   |
+| **OAuth 2.1 + Access Control** | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                       |
+| **Smart Tool Filtering**       | 7 tool groups + 6 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                          |
+| **HTTP Streaming Transport**   | SSE-based streaming with `/mcp` and `/health` endpoints for remote deployments, plus stateless mode for serverless                                                       |
+| **Structured Error Handling**  | Tools return `{success, error}` responses with actionable context — designed for agent consumption rather than cryptic error codes                                       |
+| **Production-Ready Security**  | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                        |
+| **Strict TypeScript**          | 100% type-safe codebase with strict mode, no `any` types                                                                                                                 |
+| **MCP 2025-11-25 Compliant**   | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                            |
 
 ### Backend Options
 
@@ -41,8 +43,6 @@
 | **Window Functions** | ❌                 | ✅ 6 tools                 |
 | **SpatiaLite GIS**   | ❌                 | ✅ 7 tools                 |
 | **Cross-platform**   | ✅ Pure JavaScript | Compiled natively in image |
-
----
 
 ## 🚀 Quick Start (2 Minutes)
 
@@ -446,8 +446,6 @@ Update your MCP config:
 
 - **[GitHub Wiki](https://github.com/neverinfamous/db-mcp/wiki)** - Complete documentation
 - **[Issues](https://github.com/neverinfamous/db-mcp/issues)** - Bug reports & feature requests
-
----
 
 ## 📄 License
 
