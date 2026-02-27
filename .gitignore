@@ -30,7 +30,8 @@ Thumbs.db
 
 # Editor directories and files
 .gemini/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
