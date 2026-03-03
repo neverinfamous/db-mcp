@@ -238,6 +238,19 @@ export function parseToolFilter(
     }
   }
 
+  // Auto-inject codemode group in whitelist mode.
+  // In blacklist mode (starts with -), codemode is already in the initial set.
+  // In whitelist mode, raw group filters (e.g., "core") would otherwise miss
+  // codemode — every meta-group already includes it.
+  if (!startsWithExclude && enabledGroups.size > 0) {
+    const codemodeExplicitlyExcluded = parts.some(
+      (p) => p === "-codemode" || p === "-sqlite_execute_code",
+    );
+    if (!codemodeExplicitlyExcluded) {
+      enabledGroups.add("codemode");
+    }
+  }
+
   return {
     raw: filterString,
     rules,

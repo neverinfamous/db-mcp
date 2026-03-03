@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Environment variable `CODEMODE_ISOLATION=vm|worker` to select sandbox mode (default: `worker`)
   - New files: `src/codemode/` (types, security, sandbox, worker-sandbox, worker-script, sandbox-factory, api, index)
   - Updated: `ToolGroup` type, `LogModule`, `ToolConstants`, `ServerInstructions`, tool index
+  - Auto-injected into all tool filter configurations (whitelist mode) — opt out with `-codemode`
 
 ### Changed
 

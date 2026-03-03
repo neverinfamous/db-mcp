@@ -69,11 +69,12 @@ describe("parseToolFilter", () => {
   });
 
   describe("whitelist mode", () => {
-    it("should enable only specified group", () => {
+    it("should enable only specified group (plus codemode auto-inject)", () => {
       const config = parseToolFilter("core");
 
       expect(config.enabledGroups.has("core")).toBe(true);
-      expect(config.enabledGroups.size).toBe(1);
+      expect(config.enabledGroups.has("codemode")).toBe(true);
+      expect(config.enabledGroups.size).toBe(2); // core + codemode
     });
 
     it("should enable multiple groups", () => {
@@ -82,7 +83,8 @@ describe("parseToolFilter", () => {
       expect(config.enabledGroups.has("core")).toBe(true);
       expect(config.enabledGroups.has("json")).toBe(true);
       expect(config.enabledGroups.has("text")).toBe(true);
-      expect(config.enabledGroups.size).toBe(3);
+      expect(config.enabledGroups.has("codemode")).toBe(true);
+      expect(config.enabledGroups.size).toBe(4); // core + json + text + codemode
     });
 
     it("should expand meta-groups", () => {
@@ -429,8 +431,9 @@ describe("edge cases", () => {
   it("should handle duplicate groups gracefully", () => {
     const config = parseToolFilter("core,core,core");
 
-    expect(config.enabledGroups.size).toBe(1);
+    expect(config.enabledGroups.size).toBe(2); // core + codemode (auto-injected)
     expect(config.enabledGroups.has("core")).toBe(true);
+    expect(config.enabledGroups.has("codemode")).toBe(true);
   });
 
   it("should handle conflicting include/exclude", () => {
@@ -445,7 +448,8 @@ describe("edge cases", () => {
 
     // Unknown names are treated as individual tools
     expect(config.includedTools.has("unknown_thing")).toBe(true);
-    expect(config.enabledGroups.size).toBe(0); // Whitelist mode, nothing enabled
+    // No valid groups enabled, so codemode auto-injection doesn't trigger
+    expect(config.enabledGroups.size).toBe(0);
   });
 
   it("should handle special characters in filter string", () => {
@@ -491,5 +495,27 @@ describe("edge cases", () => {
 
     expect(summary).toContain("Included tools");
     expect(summary).toContain("some_specific_tool");
+  });
+
+  it("should auto-inject codemode when using a raw group filter", () => {
+    const config = parseToolFilter("core");
+
+    expect(config.enabledGroups.has("core")).toBe(true);
+    expect(config.enabledGroups.has("codemode")).toBe(true);
+    expect(config.enabledGroups.size).toBe(2); // core + codemode
+  });
+
+  it("should not inject codemode when explicitly excluded with -codemode", () => {
+    const config = parseToolFilter("core,-codemode");
+
+    expect(config.enabledGroups.has("core")).toBe(true);
+    expect(config.enabledGroups.has("codemode")).toBe(false);
+  });
+
+  it("should not inject codemode when sqlite_execute_code explicitly excluded", () => {
+    const config = parseToolFilter("core,-sqlite_execute_code");
+
+    expect(config.enabledGroups.has("core")).toBe(true);
+    expect(config.enabledGroups.has("codemode")).toBe(false);
   });
 });
