@@ -21,6 +21,7 @@ import {
   type SandboxMode,
 } from "../../../codemode/sandbox-factory.js";
 import { logger } from "../../../utils/logger.js";
+import { formatError } from "../../../utils/errors.js";
 
 // =============================================================================
 // Module State
@@ -63,6 +64,26 @@ const ExecuteCodeOutputSchema = z.object({
   success: z.boolean().describe("Whether execution completed successfully"),
   result: z.unknown().optional().describe("Return value from the code"),
   error: z.string().optional().describe("Error message if execution failed"),
+  code: z
+    .string()
+    .optional()
+    .describe(
+      "Error code for programmatic handling (e.g., CODEMODE_VALIDATION_FAILED)",
+    ),
+  category: z
+    .string()
+    .optional()
+    .describe(
+      "Error category: validation, permission, query, resource, internal",
+    ),
+  suggestion: z
+    .string()
+    .optional()
+    .describe("Actionable suggestion for resolving the error"),
+  recoverable: z
+    .boolean()
+    .optional()
+    .describe("Whether the error is recoverable by retrying"),
   consoleOutput: z
     .array(z.string())
     .optional()
@@ -124,6 +145,11 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: false,
           error: `Code validation failed: ${validation.errors.join("; ")}`,
+          code: "CODEMODE_VALIDATION_FAILED",
+          category: "validation",
+          suggestion:
+            "Review blocked patterns: require(), process., eval(), Function(), import(). Use sqlite.* API instead.",
+          recoverable: false,
           metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
         };
       }
@@ -134,6 +160,11 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: false,
           error: "Rate limit exceeded. Maximum 60 executions per minute.",
+          code: "CODEMODE_RATE_LIMITED",
+          category: "permission",
+          suggestion:
+            "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
+          recoverable: true,
           metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
         };
       }
@@ -199,9 +230,17 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           error: error instanceof Error ? error : undefined,
         });
 
+        const structured = formatError(error);
         return {
           success: false,
           error: errorMsg,
+          code:
+            structured.code === "UNKNOWN_ERROR"
+              ? "CODEMODE_EXECUTION_FAILED"
+              : structured.code,
+          category: structured.category,
+          suggestion: structured.suggestion,
+          recoverable: structured.recoverable,
           metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
         };
       }
