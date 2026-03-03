@@ -2,8 +2,9 @@
  * SQLite Adapter
  *
  * MCP adapter for SQLite databases using sql.js (WebAssembly).
- * Provides 73 tools for database operations, JSON, text processing,
+ * Provides tools for database operations, JSON, text processing,
  * statistics, vector search, and geospatial features.
+ * FTS5 tools are excluded (WASM mode does not support FTS5).
  */
 
 import initSqlJs, { type Database } from "sql.js";
@@ -495,7 +496,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     }
     // Fallback if SchemaManager not initialized
     const result = await this.executeReadQuery(
-      `SELECT name, type FROM sqlite_master 
+      `SELECT name, type FROM sqlite_master
              WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
              ORDER BY name`,
     );
@@ -563,7 +564,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       return this.schemaManager.getAllIndexes();
     }
     // Fallback if SchemaManager not initialized
-    let sql = `SELECT name, tbl_name, sql FROM sqlite_master 
+    let sql = `SELECT name, tbl_name, sql FROM sqlite_master
              WHERE type = 'index' AND sql IS NOT NULL`;
     if (table) {
       sql += ` AND tbl_name = '${table.replace(/'/g, "''")}'`;

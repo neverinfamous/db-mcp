@@ -35,7 +35,7 @@ describe("Tools Index", () => {
     it("should return all tool definitions", () => {
       const tools = getAllToolDefinitions(adapter as unknown as SqliteAdapter);
 
-      expect(tools.length).toBeGreaterThan(100);
+      expect(tools.length).toBeGreaterThan(90);
       expect(tools.every((t) => t.name && t.handler)).toBe(true);
     });
   });

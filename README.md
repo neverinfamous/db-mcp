@@ -91,7 +91,7 @@ node dist/cli.js --transport stdio --sqlite-native ./database.db
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (122 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (102 tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (122 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (98 tools, no native dependencies).
 
 ### Verify It Works
 
@@ -187,12 +187,12 @@ Specify exactly the groups you need:
 
 | Shortcut    | WASM   | Native | + Built-in | What's Included    |
 | ----------- | ------ | ------ | ---------- | ------------------ |
-| `starter`   | **48** | **48** | +3         | Core, JSON, Text   |
+| `starter`   | **44** | **48** | +3         | Core, JSON, Text   |
 | `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
-| `search`    | 36     | 36     | +3         | Core, Text, Vector |
+| `search`    | 32     | 36     | +3         | Core, Text, Vector |
 | `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
 | `minimal`   | 8      | 8      | +3         | Core only          |
-| `full`      | 102    | 122    | +3         | Everything enabled |
+| `full`      | 98     | 122    | +3         | Everything enabled |
 
 ### Tool Groups (7 Available)
 

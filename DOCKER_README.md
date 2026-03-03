@@ -40,7 +40,7 @@
 
 | Feature              | WASM (sql.js)      | Native (better-sqlite3)    |
 | -------------------- | ------------------ | -------------------------- |
-| **Tools Available**  | 102                | **122**                    |
+| **Tools Available**  | 98                 | **122**                    |
 | **Transactions**     | ❌                 | ✅ 7 tools                 |
 | **Window Functions** | ❌                 | ✅ 6 tools                 |
 | **SpatiaLite GIS**   | ❌                 | ✅ 7 tools                 |
@@ -150,12 +150,12 @@ Specify exactly the groups you need:
 
 | Shortcut    | WASM   | Native | + Built-in | What's Included    |
 | ----------- | ------ | ------ | ---------- | ------------------ |
-| `starter`   | **48** | **48** | +3         | Core, JSON, Text   |
+| `starter`   | **44** | **48** | +3         | Core, JSON, Text   |
 | `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
-| `search`    | 36     | 36     | +3         | Core, Text, Vector |
+| `search`    | 32     | 36     | +3         | Core, Text, Vector |
 | `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
 | `minimal`   | 8      | 8      | +3         | Core only          |
-| `full`      | 102    | 122    | +3         | Everything enabled |
+| `full`      | 98     | 122    | +3         | Everything enabled |
 
 ### Tool Groups (7 Available)
 

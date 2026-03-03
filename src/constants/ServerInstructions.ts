@@ -92,12 +92,12 @@ const FILTERING_INSTRUCTIONS = `
 Available presets via \`--tool-filter\`:
 | Shortcut | WASM | Native | Use Case |
 |----------|------|--------|----------|
-| \`starter\` | 44 | 48 | ⭐ Recommended: Core(8) + JSON(23) + Text(17*) |
+| \`starter\` | 44 | 48 | ⭐ Recommended: Core(8) + JSON(23) + Text(13-17*) |
 | \`analytics\` | 44 | 50 | Core(8) + JSON(23) + Stats(19: 13 core + 6 window) |
-| \`search\` | 36 | 36 | Core(8) + Text(17) + Vector(11) |
+| \`search\` | 32 | 36 | Core(8) + Text(13-17*) + Vector(11) |
 | \`spatial\` | 23 | 30 | Core(8) + Geo(4-11) + Vector(11) |
 | \`minimal\` | 8 | 8 | Core only |
-| \`full\` | 102 | 122 | All tools |
+| \`full\` | 98 | 122 | All tools |
 
 *+3 built-in tools (\`server_info\`, \`server_health\`, \`list_adapters\`) always included*
 

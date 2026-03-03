@@ -10,7 +10,7 @@ import { getCoreTools } from "./core.js";
 import { getJsonHelperTools } from "./json-helpers.js";
 import { getJsonOperationTools } from "./json-operations.js";
 import { getTextTools } from "./text.js";
-import { getFtsTools } from "./fts.js";
+
 import { getStatsTools } from "./stats.js";
 import { getVirtualTools } from "./virtual.js";
 import { getVectorTools } from "./vector.js";
@@ -28,7 +28,7 @@ export function getAllToolDefinitions(
     ...getJsonHelperTools(adapter),
     ...getJsonOperationTools(adapter),
     ...getTextTools(adapter),
-    ...getFtsTools(adapter),
+
     ...getStatsTools(adapter),
     ...getVirtualTools(adapter),
     ...getVectorTools(adapter),
@@ -68,7 +68,7 @@ export { getCoreTools } from "./core.js";
 export { getJsonHelperTools } from "./json-helpers.js";
 export { getJsonOperationTools } from "./json-operations.js";
 export { getTextTools } from "./text.js";
-export { getFtsTools } from "./fts.js";
+
 export { getStatsTools } from "./stats.js";
 export { getVirtualTools } from "./virtual.js";
 export { getVectorTools } from "./vector.js";

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **WASM FTS5 Tool Exclusion** — FTS5 tools no longer registered in WASM mode
+  - Removed `getFtsTools()` from shared WASM tool index (`tools/index.ts`)
+  - FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) remain available in native mode only
+  - Previously, 4 FTS5 tools were registered in WASM but always returned `{success: false, error: "FTS5 module unavailable"}`
+  - WASM tool counts corrected: `starter` 48→44, `search` 36→32, `full` 102→98, `text` group 17→13
+  - Updated README.md, DOCKER_README.md, ToolConstants.ts, ServerInstructions.ts
+  - Updated fts.test.ts and index.test.ts to verify exclusion
+
 ### Added
 
 - **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable

@@ -6,12 +6,12 @@
  * Actual tool groups (from code audit):
  *   core: 8 tools (from core.ts)
  *   json: 23 tools (from json-helpers.ts + json-operations.ts)
- *   text: 17 tools (from text.ts + fts.ts)
+ *   text: 13 tools (from text.ts) WASM / 17 tools (text.ts + fts.ts) Native
  *   stats: 19 tools (from stats.ts + window.ts)
  *   vector: 11 tools (from vector.ts)
  *   admin: 33 tools (from admin.ts + virtual.ts + transactions.ts)
  *   geo: 11 tools (from geo.ts + spatialite.ts) - Native: 11, WASM: 4
- *   Total: 122 Native / 102 WASM tools
+ *   Total: 122 Native / 98 WASM tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
