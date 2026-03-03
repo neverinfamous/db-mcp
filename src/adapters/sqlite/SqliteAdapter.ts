@@ -31,6 +31,7 @@ import {
   QueryError,
   ConnectionError,
   ConfigurationError,
+  formatError,
 } from "../../utils/errors.js";
 import type { SqliteConfig, SqliteOptions } from "./types.js";
 import { SchemaManager } from "./SchemaManager.js";
@@ -758,11 +759,12 @@ export class SqliteAdapter extends DatabaseAdapter {
             ],
           };
         } catch (error) {
+          const structured = formatError(error);
           return {
             content: [
               {
                 type: "text" as const,
-                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                text: JSON.stringify(structured, null, 2),
               },
             ],
             isError: true,

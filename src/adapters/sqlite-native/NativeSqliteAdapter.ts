@@ -30,6 +30,7 @@ import {
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { logger, ERROR_CODES } from "../../utils/logger.js";
+import { formatError } from "../../utils/errors.js";
 import type { SqliteConfig, SqliteOptions } from "../sqlite/types.js";
 import type { SqliteAdapter } from "../sqlite/SqliteAdapter.js";
 
@@ -713,11 +714,12 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
             ],
           };
         } catch (error) {
+          const structured = formatError(error);
           return {
             content: [
               {
                 type: "text" as const,
-                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                text: JSON.stringify(structured, null, 2),
               },
             ],
             isError: true,

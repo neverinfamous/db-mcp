@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Deterministic Error Handling** — Structured error responses across all tools
+  - `registerTool()` catch block now uses `formatError()` to surface `code`, `category`, `suggestion`, `recoverable` fields
+  - Applies to both WASM (`SqliteAdapter`) and native (`NativeSqliteAdapter`) adapters
+  - Codemode error paths enriched: `CODEMODE_VALIDATION_FAILED`, `CODEMODE_RATE_LIMITED`, `CODEMODE_EXECUTION_FAILED`
+  - Added 4 codemode-specific patterns to `ERROR_SUGGESTIONS` for auto-suggestion matching
 - **WASM FTS5 Tool Exclusion** — FTS5 tools no longer registered in WASM mode
   - Removed `getFtsTools()` from shared WASM tool index (`tools/index.ts`)
   - FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) remain available in native mode only

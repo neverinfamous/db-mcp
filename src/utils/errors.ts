@@ -152,6 +152,31 @@ const ERROR_SUGGESTIONS: {
       "Write operations are not allowed. Check database configuration.",
     category: ErrorCategory.PERMISSION,
   },
+
+  // Codemode errors
+  {
+    pattern: /code validation failed/i,
+    suggestion:
+      "Check for blocked patterns: require(), process., eval(), Function(), import(). Use sqlite.* API instead.",
+    category: ErrorCategory.VALIDATION,
+  },
+  {
+    pattern: /rate limit exceeded/i,
+    suggestion:
+      "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
+    category: ErrorCategory.PERMISSION,
+  },
+  {
+    pattern: /execution timed out/i,
+    suggestion:
+      "Reduce code complexity or increase timeout (max 30s). Break into smaller operations.",
+    category: ErrorCategory.QUERY,
+  },
+  {
+    pattern: /sandbox.*not initialized/i,
+    suggestion: "Internal sandbox error. Retry the operation.",
+    category: ErrorCategory.INTERNAL,
+  },
 ];
 
 /**
