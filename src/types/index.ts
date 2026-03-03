@@ -290,7 +290,8 @@ export type ToolGroup =
   | "stats" // Statistical analysis (13 WASM / 19 Native)
   | "vector" // Vector/semantic search (11 tools)
   | "admin" // Administration (25 WASM / 32 Native)
-  | "geo"; // Geospatial (4 WASM / 11 Native)
+  | "geo" // Geospatial (4 WASM / 11 Native)
+  | "codemode"; // Sandboxed code execution (1 tool)
 
 /**
  * Meta-group identifiers for common multi-group selections.

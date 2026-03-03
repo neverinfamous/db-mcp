@@ -16,6 +16,7 @@ import { getVirtualTools } from "./virtual.js";
 import { getVectorTools } from "./vector.js";
 import { getGeoTools } from "./geo.js";
 import { getAdminTools } from "./admin.js";
+import { getCodeModeTools } from "./codemode.js";
 
 /**
  * Get all tool definitions for the SQLite adapter
@@ -34,6 +35,7 @@ export function getAllToolDefinitions(
     ...getVectorTools(adapter),
     ...getGeoTools(adapter),
     ...getAdminTools(adapter),
+    ...getCodeModeTools(adapter),
   ];
 }
 
@@ -74,3 +76,4 @@ export { getVirtualTools } from "./virtual.js";
 export { getVectorTools } from "./vector.js";
 export { getGeoTools } from "./geo.js";
 export { getAdminTools } from "./admin.js";
+export { getCodeModeTools } from "./codemode.js";

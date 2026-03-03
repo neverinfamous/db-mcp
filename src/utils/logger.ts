@@ -42,7 +42,8 @@ export type LogModule =
   | "FILTER" // Tool filtering
   | "SQLITE" // SQLite-specific
   | "DB" // Generic database
-  | "CLI"; // Command line interface
+  | "CLI" // Command line interface
+  | "CODEMODE"; // Sandboxed code execution
 
 /**
  * Structured log context following MCP logging standards

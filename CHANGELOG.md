@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Code Mode (Sandboxed Execution)** — New `sqlite_execute_code` tool for executing JavaScript in a sandboxed environment
+  - Agents write code using `sqlite.*` API to access all 7 tool groups (core, json, text, stats, vector, admin, geo)
+  - 70-90% token reduction by replacing multiple sequential tool calls with a single code execution
+  - Dual sandbox support: `worker_threads` (default, enhanced isolation) and `vm` module
+  - Worker sandbox uses MessagePort RPC bridge for secure API proxy between threads
+  - Security: code validation against blocked patterns, rate limiting (60 exec/min), result sanitization (10MB cap), audit logging
+  - Built-in `help()` for discoverability: `sqlite.help()` for groups, `sqlite.<group>.help()` for methods
+  - Positional parameter support: `sqlite.core.readQuery("SELECT 1")` maps to `{ sql: "SELECT 1" }`
+  - Method aliases for ergonomic use (e.g., `sqlite.core.query()` → `readQuery`)
+  - New `codemode` tool group added to all meta-group shortcuts (starter, analytics, search, spatial, minimal, full)
+  - Environment variable `CODEMODE_ISOLATION=vm|worker` to select sandbox mode (default: `worker`)
+  - New files: `src/codemode/` (types, security, sandbox, worker-sandbox, worker-script, sandbox-factory, api, index)
+  - Updated: `ToolGroup` type, `LogModule`, `ToolConstants`, `ServerInstructions`, tool index
+
 ### Changed
 
 - **WASM FTS5 Tool Exclusion** — FTS5 tools no longer registered in WASM mode
