@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_drop_table`: Checks table existence before DROP; returns `"does not exist (no changes made)"` when `ifExists` is true and table is absent, or `{success: false}` when `ifExists` is false
   - `sqlite_describe_table`: Pre-checks table existence and returns `TABLE_NOT_FOUND` error code instead of generic `UNKNOWN_ERROR`
   - `sqlite_get_indexes`: Validates table existence when `tableName` is specified; returns `{success: false, code: "TABLE_NOT_FOUND"}` instead of empty `{success: true}`
+- **Text Tool Handler-Level Error Handling** — All 13 text tool handlers now catch errors locally and return `{success: false}` responses
+  - `sqlite_regex_match`, `sqlite_regex_extract`, `sqlite_text_split`, `sqlite_text_concat`, `sqlite_text_replace`, `sqlite_text_trim`, `sqlite_text_case`, `sqlite_text_substring`, `sqlite_fuzzy_match`, `sqlite_phonetic_match`, `sqlite_text_normalize`, `sqlite_text_validate`, `sqlite_advanced_search`: Catch errors with `formatError()` and return structured `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
+  - Mirrors the same pattern already applied to core and JSON tool groups
 
 ### Added
 

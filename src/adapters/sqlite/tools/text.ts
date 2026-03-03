@@ -14,6 +14,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../utils/index.js";
+import { formatError } from "../../../utils/errors.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
@@ -206,50 +207,62 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = RegexExtractSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        // Apply regex in JavaScript
+        const regex = new RegExp(input.pattern);
+        const extracts = (result.rows ?? [])
+          .map((row) => {
+            const rawValue = row["value"];
+            const value =
+              typeof rawValue === "string"
+                ? rawValue
+                : JSON.stringify(rawValue ?? "");
+            const match = regex.exec(value);
+            // Safely coerce rowid to number, defaulting to row index or 0
+            const rawRowid = row["id"];
+            const rowid =
+              typeof rawRowid === "number"
+                ? rawRowid
+                : typeof rawRowid === "string"
+                  ? parseInt(rawRowid, 10) || 0
+                  : 0;
+            return {
+              rowid,
+              original: value,
+              extracted: match ? (match[input.groupIndex] ?? match[0]) : null,
+            };
+          })
+          .filter((r) => r.extracted !== null);
+
+        return {
+          success: true,
+          rowCount: extracts.length,
+          matches: extracts,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          matches: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      // Apply regex in JavaScript
-      const regex = new RegExp(input.pattern);
-      const extracts = (result.rows ?? [])
-        .map((row) => {
-          const rawValue = row["value"];
-          const value =
-            typeof rawValue === "string"
-              ? rawValue
-              : JSON.stringify(rawValue ?? "");
-          const match = regex.exec(value);
-          // Safely coerce rowid to number, defaulting to row index or 0
-          const rawRowid = row["id"];
-          const rowid =
-            typeof rawRowid === "number"
-              ? rawRowid
-              : typeof rawRowid === "string"
-                ? parseInt(rawRowid, 10) || 0
-                : 0;
-          return {
-            rowid,
-            original: value,
-            extracted: match ? (match[input.groupIndex] ?? match[0]) : null,
-          };
-        })
-        .filter((r) => r.extracted !== null);
-
-      return {
-        success: true,
-        rowCount: extracts.length,
-        matches: extracts,
-      };
     },
   };
 }
@@ -270,47 +283,59 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = RegexMatchSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        // Apply regex in JavaScript
+        const regex = new RegExp(input.pattern);
+        const matches = (result.rows ?? [])
+          .filter((row) => {
+            const rawValue = row["value"];
+            const value =
+              typeof rawValue === "string"
+                ? rawValue
+                : JSON.stringify(rawValue ?? "");
+            return regex.test(value);
+          })
+          .map((row) => {
+            // Ensure rowid is a number for output schema compliance
+            const rawRowid = row["id"];
+            const rowid =
+              typeof rawRowid === "number"
+                ? rawRowid
+                : typeof rawRowid === "string"
+                  ? parseInt(rawRowid, 10) || 0
+                  : 0;
+            return { ...row, rowid };
+          });
+
+        return {
+          success: true,
+          rowCount: matches.length,
+          matches,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          matches: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      // Apply regex in JavaScript
-      const regex = new RegExp(input.pattern);
-      const matches = (result.rows ?? [])
-        .filter((row) => {
-          const rawValue = row["value"];
-          const value =
-            typeof rawValue === "string"
-              ? rawValue
-              : JSON.stringify(rawValue ?? "");
-          return regex.test(value);
-        })
-        .map((row) => {
-          // Ensure rowid is a number for output schema compliance
-          const rawRowid = row["id"];
-          const rowid =
-            typeof rawRowid === "number"
-              ? rawRowid
-              : typeof rawRowid === "string"
-                ? parseInt(rawRowid, 10) || 0
-                : 0;
-          return { ...row, rowid };
-        });
-
-      return {
-        success: true,
-        rowCount: matches.length,
-        matches,
-      };
     },
   };
 }
@@ -330,48 +355,60 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextSplitSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
-      }
-      sql += ` LIMIT ${input.limit}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
 
-      const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql);
 
-      // Split in JavaScript - return per-row results for traceability
-      const rows = (result.rows ?? []).map((row) => {
-        const rawRowid = row["id"];
-        const rowid =
-          typeof rawRowid === "number"
-            ? rawRowid
-            : typeof rawRowid === "string"
-              ? parseInt(rawRowid, 10) || 0
-              : 0;
-        const rawValue = row["value"];
-        const original =
-          typeof rawValue === "string"
-            ? rawValue
-            : rawValue === null || rawValue === undefined
-              ? ""
-              : JSON.stringify(rawValue);
-        const parts = original.split(input.delimiter);
+        // Split in JavaScript - return per-row results for traceability
+        const rows = (result.rows ?? []).map((row) => {
+          const rawRowid = row["id"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
+          const rawValue = row["value"];
+          const original =
+            typeof rawValue === "string"
+              ? rawValue
+              : rawValue === null || rawValue === undefined
+                ? ""
+                : JSON.stringify(rawValue);
+          const parts = original.split(input.delimiter);
+          return {
+            rowid,
+            original: rawValue === null ? null : original,
+            parts,
+          };
+        });
+
         return {
-          rowid,
-          original: rawValue === null ? null : original,
-          parts,
+          success: true,
+          rowCount: rows.length,
+          rows,
         };
-      });
-
-      return {
-        success: true,
-        rowCount: rows.length,
-        rows,
-      };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }
@@ -390,31 +427,43 @@ function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextConcatSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
 
-      // Build concatenation expression using || operator
-      const sep = input.separator.replace(/'/g, "''");
-      // Build: COALESCE(col1, '') || 'sep' || COALESCE(col2, '') || ...
-      const concatExpr = quotedCols
-        .map((c) => `COALESCE(${c}, '')`)
-        .join(` || '${sep}' || `);
+        // Build concatenation expression using || operator
+        const sep = input.separator.replace(/'/g, "''");
+        // Build: COALESCE(col1, '') || 'sep' || COALESCE(col2, '') || ...
+        const concatExpr = quotedCols
+          .map((c) => `COALESCE(${c}, '')`)
+          .join(` || '${sep}' || `);
 
-      let sql = `SELECT ${concatExpr} as concatenated FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
+        let sql = `SELECT ${concatExpr} as concatenated FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          values: result.rows?.map((r) => r["concatenated"]),
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          values: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        values: result.rows?.map((r) => r["concatenated"]),
-      };
     },
   };
 }
@@ -434,22 +483,33 @@ function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextReplaceSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const search = input.searchPattern.replace(/'/g, "''");
-      const replace = input.replaceWith.replace(/'/g, "''");
+        const search = input.searchPattern.replace(/'/g, "''");
+        const replace = input.replaceWith.replace(/'/g, "''");
 
-      validateWhereClause(input.whereClause);
-      const sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}') WHERE ${input.whereClause}`;
+        validateWhereClause(input.whereClause);
+        const sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}') WHERE ${input.whereClause}`;
 
-      const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql);
 
-      return {
-        success: true,
-        rowsAffected: result.rowsAffected,
-      };
+        return {
+          success: true,
+          rowsAffected: result.rowsAffected,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }
@@ -468,36 +528,48 @@ function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextTrimSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      let trimFunc: string;
-      switch (input.mode) {
-        case "left":
-          trimFunc = "ltrim";
-          break;
-        case "right":
-          trimFunc = "rtrim";
-          break;
-        default:
-          trimFunc = "trim";
+        let trimFunc: string;
+        switch (input.mode) {
+          case "left":
+            trimFunc = "ltrim";
+            break;
+          case "right":
+            trimFunc = "rtrim";
+            break;
+          default:
+            trimFunc = "trim";
+        }
+
+        let sql = `SELECT rowid, ${column} as original, ${trimFunc}(${column}) as trimmed FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          results: result.rows,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          results: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      let sql = `SELECT rowid, ${column} as original, ${trimFunc}(${column}) as trimmed FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
-      }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        results: result.rows,
-      };
     },
   };
 }
@@ -516,26 +588,38 @@ function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextCaseSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const caseFunc = input.mode === "upper" ? "upper" : "lower";
+        const caseFunc = input.mode === "upper" ? "upper" : "lower";
 
-      let sql = `SELECT rowid, ${column} as original, ${caseFunc}(${column}) as transformed FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
+        let sql = `SELECT rowid, ${column} as original, ${caseFunc}(${column}) as transformed FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          results: result.rows,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          results: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        results: result.rows,
-      };
     },
   };
 }
@@ -554,29 +638,41 @@ function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextSubstringSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const substrExpr =
-        input.length !== undefined
-          ? `substr(${column}, ${input.start}, ${input.length})`
-          : `substr(${column}, ${input.start})`;
+        const substrExpr =
+          input.length !== undefined
+            ? `substr(${column}, ${input.start}, ${input.length})`
+            : `substr(${column}, ${input.start})`;
 
-      let sql = `SELECT rowid, ${column} as original, ${substrExpr} as substring FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
+        let sql = `SELECT rowid, ${column} as original, ${substrExpr} as substring FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          results: result.rows,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          results: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        results: result.rows,
-      };
     },
   };
 }
@@ -781,68 +877,81 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = FuzzyMatchSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const sql = `SELECT ${column} FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
-      const result = await adapter.executeReadQuery(sql);
+        const sql = `SELECT ${column} FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+        const result = await adapter.executeReadQuery(sql);
 
-      const matches: {
-        value: string;
-        matchedToken?: string;
-        tokenDistance?: number;
-        distance: number;
-      }[] = [];
+        const matches: {
+          value: string;
+          matchedToken?: string;
+          tokenDistance?: number;
+          distance: number;
+        }[] = [];
 
-      for (const row of result.rows ?? []) {
-        const rawValue = row[input.column];
-        const value =
-          typeof rawValue === "string"
-            ? rawValue
-            : JSON.stringify(rawValue ?? "");
+        for (const row of result.rows ?? []) {
+          const rawValue = row[input.column];
+          const value =
+            typeof rawValue === "string"
+              ? rawValue
+              : JSON.stringify(rawValue ?? "");
 
-        if (input.tokenize) {
-          // Token-based matching: split into words and find best match
-          const tokens = value.split(/\s+/).filter((t) => t.length > 0);
-          let bestToken = "";
-          let bestDistance = Infinity;
+          if (input.tokenize) {
+            // Token-based matching: split into words and find best match
+            const tokens = value.split(/\s+/).filter((t) => t.length > 0);
+            let bestToken = "";
+            let bestDistance = Infinity;
 
-          for (const token of tokens) {
-            const dist = levenshtein(input.search, token);
-            if (dist < bestDistance) {
-              bestDistance = dist;
-              bestToken = token;
+            for (const token of tokens) {
+              const dist = levenshtein(input.search, token);
+              if (dist < bestDistance) {
+                bestDistance = dist;
+                bestToken = token;
+              }
+            }
+
+            if (bestDistance <= input.maxDistance) {
+              matches.push({
+                value,
+                matchedToken: bestToken,
+                tokenDistance: bestDistance,
+                distance: bestDistance,
+              });
+            }
+          } else {
+            // Legacy behavior: match against entire column value
+            const distance = levenshtein(input.search, value);
+            if (distance <= input.maxDistance) {
+              matches.push({ value, distance });
             }
           }
-
-          if (bestDistance <= input.maxDistance) {
-            matches.push({
-              value,
-              matchedToken: bestToken,
-              tokenDistance: bestDistance,
-              distance: bestDistance,
-            });
-          }
-        } else {
-          // Legacy behavior: match against entire column value
-          const distance = levenshtein(input.search, value);
-          if (distance <= input.maxDistance) {
-            matches.push({ value, distance });
-          }
         }
+
+        // Sort by distance (ascending) and limit
+        matches.sort((a, b) => a.distance - b.distance);
+        const limited = matches.slice(0, input.limit);
+
+        return {
+          success: true,
+          matchCount: limited.length,
+          tokenized: input.tokenize,
+          matches: limited,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          matchCount: 0,
+          tokenized: input.tokenize,
+          matches: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      // Sort by distance (ascending) and limit
-      matches.sort((a, b) => a.distance - b.distance);
-      const limited = matches.slice(0, input.limit);
-
-      return {
-        success: true,
-        matchCount: limited.length,
-        tokenized: input.tokenize,
-        matches: limited,
-      };
     },
   };
 }
@@ -874,129 +983,143 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = PhoneticMatchSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const searchCode =
-        input.algorithm === "metaphone"
-          ? metaphone(input.search)
-          : soundex(input.search); // Compute locally to ensure it's always available
+        const searchCode =
+          input.algorithm === "metaphone"
+            ? metaphone(input.search)
+            : soundex(input.search); // Compute locally to ensure it's always available
 
-      let sql: string;
-      if (input.algorithm === "soundex") {
-        // Try SQLite's native soundex function first, fall back to JS implementation
-        sql = `SELECT *, soundex(${column}) as _phonetic FROM ${table} WHERE soundex(${column}) = soundex('${input.search.replace(/'/g, "''")}') LIMIT ${input.limit}`;
-        try {
-          const result = await adapter.executeReadQuery(sql);
-
-          const matches = (result.rows ?? []).map((row) => {
-            const rawValue = row[input.column];
-            const rawPhonetic = row["_phonetic"];
-            const match: {
-              value: string;
-              phoneticCode: string;
-              row?: Record<string, unknown>;
-            } = {
-              value:
-                typeof rawValue === "string"
-                  ? rawValue
-                  : JSON.stringify(rawValue ?? ""),
-              phoneticCode: typeof rawPhonetic === "string" ? rawPhonetic : "",
-            };
-            if (input.includeRowData) {
-              match.row = row;
-            }
-            return match;
-          });
-
-          return {
-            success: true,
-            searchCode, // Use pre-computed local soundex code
-            matchCount: matches.length,
-            matches,
-          };
-        } catch (error) {
-          // If SQLite soundex() is unavailable (WASM mode), fall back to JS implementation
-          if (
-            error instanceof Error &&
-            error.message.toLowerCase().includes("no such function: soundex")
-          ) {
-            // Fall through to JS-based soundex matching below
-            sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+        let sql: string;
+        if (input.algorithm === "soundex") {
+          // Try SQLite's native soundex function first, fall back to JS implementation
+          sql = `SELECT *, soundex(${column}) as _phonetic FROM ${table} WHERE soundex(${column}) = soundex('${input.search.replace(/'/g, "''")}') LIMIT ${input.limit}`;
+          try {
             const result = await adapter.executeReadQuery(sql);
 
-            const matches: {
-              value: string;
-              phoneticCode: string;
-              row?: Record<string, unknown>;
-            }[] = [];
-
-            for (const row of result.rows ?? []) {
+            const matches = (result.rows ?? []).map((row) => {
               const rawValue = row[input.column];
-              const value =
-                typeof rawValue === "string"
-                  ? rawValue
-                  : JSON.stringify(rawValue ?? "");
-              const code = soundex(value); // Use JS-based soundex
-              if (code === searchCode) {
-                const match: {
-                  value: string;
-                  phoneticCode: string;
-                  row?: Record<string, unknown>;
-                } = { value, phoneticCode: code };
-                if (input.includeRowData) {
-                  match.row = row;
-                }
-                matches.push(match);
+              const rawPhonetic = row["_phonetic"];
+              const match: {
+                value: string;
+                phoneticCode: string;
+                row?: Record<string, unknown>;
+              } = {
+                value:
+                  typeof rawValue === "string"
+                    ? rawValue
+                    : JSON.stringify(rawValue ?? ""),
+                phoneticCode:
+                  typeof rawPhonetic === "string" ? rawPhonetic : "",
+              };
+              if (input.includeRowData) {
+                match.row = row;
               }
-            }
+              return match;
+            });
 
             return {
               success: true,
-              searchCode,
+              searchCode, // Use pre-computed local soundex code
               matchCount: matches.length,
-              matches: matches.slice(0, input.limit),
+              matches,
             };
-          }
-          throw error;
-        }
-      } else {
-        // Metaphone in JS
-        sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
-        const result = await adapter.executeReadQuery(sql);
+          } catch (error) {
+            // If SQLite soundex() is unavailable (WASM mode), fall back to JS implementation
+            if (
+              error instanceof Error &&
+              error.message.toLowerCase().includes("no such function: soundex")
+            ) {
+              // Fall through to JS-based soundex matching below
+              sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+              const result = await adapter.executeReadQuery(sql);
 
-        const matches: {
-          value: string;
-          phoneticCode: string;
-          row?: Record<string, unknown>;
-        }[] = [];
+              const matches: {
+                value: string;
+                phoneticCode: string;
+                row?: Record<string, unknown>;
+              }[] = [];
 
-        for (const row of result.rows ?? []) {
-          const rawValue = row[input.column];
-          const value =
-            typeof rawValue === "string"
-              ? rawValue
-              : JSON.stringify(rawValue ?? "");
-          const code = metaphone(value);
-          if (code === searchCode) {
-            const match: {
-              value: string;
-              phoneticCode: string;
-              row?: Record<string, unknown>;
-            } = { value, phoneticCode: code };
-            if (input.includeRowData) {
-              match.row = row;
+              for (const row of result.rows ?? []) {
+                const rawValue = row[input.column];
+                const value =
+                  typeof rawValue === "string"
+                    ? rawValue
+                    : JSON.stringify(rawValue ?? "");
+                const code = soundex(value); // Use JS-based soundex
+                if (code === searchCode) {
+                  const match: {
+                    value: string;
+                    phoneticCode: string;
+                    row?: Record<string, unknown>;
+                  } = { value, phoneticCode: code };
+                  if (input.includeRowData) {
+                    match.row = row;
+                  }
+                  matches.push(match);
+                }
+              }
+
+              return {
+                success: true,
+                searchCode,
+                matchCount: matches.length,
+                matches: matches.slice(0, input.limit),
+              };
             }
-            matches.push(match);
+            throw error;
           }
-        }
+        } else {
+          // Metaphone in JS
+          sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+          const result = await adapter.executeReadQuery(sql);
 
+          const matches: {
+            value: string;
+            phoneticCode: string;
+            row?: Record<string, unknown>;
+          }[] = [];
+
+          for (const row of result.rows ?? []) {
+            const rawValue = row[input.column];
+            const value =
+              typeof rawValue === "string"
+                ? rawValue
+                : JSON.stringify(rawValue ?? "");
+            const code = metaphone(value);
+            if (code === searchCode) {
+              const match: {
+                value: string;
+                phoneticCode: string;
+                row?: Record<string, unknown>;
+              } = { value, phoneticCode: code };
+              if (input.includeRowData) {
+                match.row = row;
+              }
+              matches.push(match);
+            }
+          }
+
+          return {
+            success: true,
+            searchCode,
+            matchCount: matches.length,
+            matches: matches.slice(0, input.limit),
+          };
+        }
+      } catch (error) {
+        const structured = formatError(error);
         return {
-          success: true,
-          searchCode,
-          matchCount: matches.length,
-          matches: matches.slice(0, input.limit),
+          success: false,
+          searchCode: "",
+          matchCount: 0,
+          matches: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
         };
       }
     },
@@ -1028,43 +1151,55 @@ function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextNormalizeSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      let sql = `SELECT ${column} as original FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
-      }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      const rows = (result.rows ?? []).map((row) => {
-        const rawOriginal = row["original"];
-        const original =
-          typeof rawOriginal === "string"
-            ? rawOriginal
-            : JSON.stringify(rawOriginal ?? "");
-        let normalized: string;
-
-        if (input.mode === "strip_accents") {
-          normalized = stripAccents(original);
-        } else {
-          normalized = original.normalize(
-            input.mode.toUpperCase() as "NFC" | "NFD" | "NFKC" | "NFKD",
-          );
+        let sql = `SELECT ${column} as original FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
         }
+        sql += ` LIMIT ${input.limit}`;
 
-        return { original, normalized };
-      });
+        const result = await adapter.executeReadQuery(sql);
 
-      return {
-        success: true,
-        rowCount: rows.length,
-        rows,
-      };
+        const rows = (result.rows ?? []).map((row) => {
+          const rawOriginal = row["original"];
+          const original =
+            typeof rawOriginal === "string"
+              ? rawOriginal
+              : JSON.stringify(rawOriginal ?? "");
+          let normalized: string;
+
+          if (input.mode === "strip_accents") {
+            normalized = stripAccents(original);
+          } else {
+            normalized = original.normalize(
+              input.mode.toUpperCase() as "NFC" | "NFD" | "NFKC" | "NFKD",
+            );
+          }
+
+          return { original, normalized };
+        });
+
+        return {
+          success: true,
+          rowCount: rows.length,
+          rows,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }
@@ -1096,82 +1231,96 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = TextValidateSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      // Get validation pattern
-      let pattern: RegExp;
-      if (input.pattern === "custom") {
-        if (!input.customPattern) {
-          throw new Error("customPattern is required when pattern='custom'");
-        }
-        // Normalize pattern: handle common JSON double-escaping issues
-        // e.g., "\\." in JSON becomes "\." in JavaScript string, but some clients
-        // may send "\\\\." which becomes "\\" - normalize excessive backslashes
-        const normalizedPattern = input.customPattern.replace(/\\\\/g, "\\");
-        try {
-          pattern = new RegExp(normalizedPattern);
-        } catch {
-          throw new Error(
-            `Invalid regex pattern: ${input.customPattern} (normalized to: ${normalizedPattern})`,
-          );
-        }
-      } else {
-        const foundPattern = VALIDATION_PATTERNS[input.pattern];
-        if (!foundPattern) {
-          throw new Error(`Unknown pattern: ${input.pattern}`);
-        }
-        pattern = foundPattern;
-      }
-
-      let sql = `SELECT rowid, ${column} as value FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
-      }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      const invalidRows: { value: string | null; rowid?: number }[] = [];
-      let validCount = 0;
-
-      for (const row of result.rows ?? []) {
-        const rawValue = row["value"];
-        // Handle null/empty values with user-friendly display
-        const value =
-          rawValue === null || rawValue === undefined
-            ? ""
-            : typeof rawValue === "string"
-              ? rawValue
-              : JSON.stringify(rawValue);
-        // Display actual value: null for null/undefined, otherwise the value (truncated if long)
-        const displayValue =
-          rawValue === null || rawValue === undefined
-            ? null
-            : value.length > 100
-              ? value.slice(0, 100) + "..."
-              : value;
-        if (pattern.test(value)) {
-          validCount++;
+        // Get validation pattern
+        let pattern: RegExp;
+        if (input.pattern === "custom") {
+          if (!input.customPattern) {
+            throw new Error("customPattern is required when pattern='custom'");
+          }
+          // Normalize pattern: handle common JSON double-escaping issues
+          // e.g., "\\." in JSON becomes "\." in JavaScript string, but some clients
+          // may send "\\\\." which becomes "\\" - normalize excessive backslashes
+          const normalizedPattern = input.customPattern.replace(/\\\\/g, "\\");
+          try {
+            pattern = new RegExp(normalizedPattern);
+          } catch {
+            throw new Error(
+              `Invalid regex pattern: ${input.customPattern} (normalized to: ${normalizedPattern})`,
+            );
+          }
         } else {
-          const rowid = row["rowid"];
-          if (typeof rowid === "number") {
-            invalidRows.push({ value: displayValue, rowid });
+          const foundPattern = VALIDATION_PATTERNS[input.pattern];
+          if (!foundPattern) {
+            throw new Error(`Unknown pattern: ${input.pattern}`);
+          }
+          pattern = foundPattern;
+        }
+
+        let sql = `SELECT rowid, ${column} as value FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        const invalidRows: { value: string | null; rowid?: number }[] = [];
+        let validCount = 0;
+
+        for (const row of result.rows ?? []) {
+          const rawValue = row["value"];
+          // Handle null/empty values with user-friendly display
+          const value =
+            rawValue === null || rawValue === undefined
+              ? ""
+              : typeof rawValue === "string"
+                ? rawValue
+                : JSON.stringify(rawValue);
+          // Display actual value: null for null/undefined, otherwise the value (truncated if long)
+          const displayValue =
+            rawValue === null || rawValue === undefined
+              ? null
+              : value.length > 100
+                ? value.slice(0, 100) + "..."
+                : value;
+          if (pattern.test(value)) {
+            validCount++;
           } else {
-            invalidRows.push({ value: displayValue });
+            const rowid = row["rowid"];
+            if (typeof rowid === "number") {
+              invalidRows.push({ value: displayValue, rowid });
+            } else {
+              invalidRows.push({ value: displayValue });
+            }
           }
         }
-      }
 
-      return {
-        success: true,
-        totalRows: result.rows?.length ?? 0,
-        validCount,
-        invalidCount: invalidRows.length,
-        invalidRows,
-      };
+        return {
+          success: true,
+          totalRows: result.rows?.length ?? 0,
+          validCount,
+          invalidCount: invalidRows.length,
+          invalidRows,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          totalRows: 0,
+          validCount: 0,
+          invalidCount: 0,
+          invalidRows: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }
@@ -1211,112 +1360,126 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = AdvancedSearchSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      // Fetch candidate rows
-      let whereClause = "";
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        whereClause = ` AND ${input.whereClause}`;
-      }
-      const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 1000`;
-      const result = await adapter.executeQuery(query);
+        // Fetch candidate rows
+        let whereClause = "";
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          whereClause = ` AND ${input.whereClause}`;
+        }
+        const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 1000`;
+        const result = await adapter.executeQuery(query);
 
-      if (!result.rows || result.rows.length === 0) {
+        if (!result.rows || result.rows.length === 0) {
+          return {
+            success: true,
+            searchTerm: input.searchTerm,
+            techniques: input.techniques,
+            matchCount: 0,
+            matches: [],
+          };
+        }
+
+        const searchLower = input.searchTerm.toLowerCase();
+        const searchSoundex = soundex(input.searchTerm);
+
+        interface Match {
+          rowid: number;
+          text: string;
+          matchTypes: string[];
+          bestScore: number;
+          bestType: string;
+        }
+
+        const allMatches: Match[] = [];
+
+        for (const row of result.rows) {
+          const rawValue: unknown = row["value"];
+          const text =
+            typeof rawValue === "string"
+              ? rawValue
+              : typeof rawValue === "number"
+                ? String(rawValue)
+                : "";
+          const textLower = text.toLowerCase();
+          const matches: { type: string; score: number }[] = [];
+
+          // Exact match (case-insensitive substring)
+          if (input.techniques.includes("exact")) {
+            if (textLower.includes(searchLower)) {
+              matches.push({ type: "exact", score: 1.0 });
+            }
+          }
+
+          // Fuzzy match (Levenshtein ratio)
+          if (input.techniques.includes("fuzzy")) {
+            const distance = levenshtein(input.searchTerm, text);
+            const maxLen = Math.max(input.searchTerm.length, text.length);
+            const similarity = maxLen === 0 ? 1 : 1 - distance / maxLen;
+            if (similarity >= input.fuzzyThreshold) {
+              matches.push({ type: "fuzzy", score: similarity });
+            }
+          }
+
+          // Phonetic match (Soundex)
+          if (input.techniques.includes("phonetic")) {
+            const words = text.split(/\s+/);
+            for (const word of words) {
+              if (soundex(word) === searchSoundex) {
+                matches.push({ type: "phonetic", score: 0.8 });
+                break;
+              }
+            }
+          }
+
+          if (matches.length > 0) {
+            const best = matches.reduce((a, b) => (a.score > b.score ? a : b));
+            // Safely coerce rowid to number, defaulting to 0 if undefined/null
+            const rawRowid = row["id"];
+            const rowid =
+              typeof rawRowid === "number"
+                ? rawRowid
+                : typeof rawRowid === "string"
+                  ? parseInt(rawRowid, 10) || 0
+                  : 0;
+            allMatches.push({
+              rowid,
+              text: text.length > 100 ? text.slice(0, 100) + "..." : text,
+              matchTypes: matches.map((m) => m.type),
+              bestScore: Math.round(best.score * 1000) / 1000,
+              bestType: best.type,
+            });
+          }
+        }
+
+        // Sort by score and limit
+        allMatches.sort((a, b) => b.bestScore - a.bestScore);
+        const limited = allMatches.slice(0, input.limit);
+
         return {
           success: true,
           searchTerm: input.searchTerm,
           techniques: input.techniques,
+          matchCount: limited.length,
+          matches: limited,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          searchTerm: input.searchTerm,
+          techniques: input.techniques,
           matchCount: 0,
           matches: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
         };
       }
-
-      const searchLower = input.searchTerm.toLowerCase();
-      const searchSoundex = soundex(input.searchTerm);
-
-      interface Match {
-        rowid: number;
-        text: string;
-        matchTypes: string[];
-        bestScore: number;
-        bestType: string;
-      }
-
-      const allMatches: Match[] = [];
-
-      for (const row of result.rows) {
-        const rawValue: unknown = row["value"];
-        const text =
-          typeof rawValue === "string"
-            ? rawValue
-            : typeof rawValue === "number"
-              ? String(rawValue)
-              : "";
-        const textLower = text.toLowerCase();
-        const matches: { type: string; score: number }[] = [];
-
-        // Exact match (case-insensitive substring)
-        if (input.techniques.includes("exact")) {
-          if (textLower.includes(searchLower)) {
-            matches.push({ type: "exact", score: 1.0 });
-          }
-        }
-
-        // Fuzzy match (Levenshtein ratio)
-        if (input.techniques.includes("fuzzy")) {
-          const distance = levenshtein(input.searchTerm, text);
-          const maxLen = Math.max(input.searchTerm.length, text.length);
-          const similarity = maxLen === 0 ? 1 : 1 - distance / maxLen;
-          if (similarity >= input.fuzzyThreshold) {
-            matches.push({ type: "fuzzy", score: similarity });
-          }
-        }
-
-        // Phonetic match (Soundex)
-        if (input.techniques.includes("phonetic")) {
-          const words = text.split(/\s+/);
-          for (const word of words) {
-            if (soundex(word) === searchSoundex) {
-              matches.push({ type: "phonetic", score: 0.8 });
-              break;
-            }
-          }
-        }
-
-        if (matches.length > 0) {
-          const best = matches.reduce((a, b) => (a.score > b.score ? a : b));
-          // Safely coerce rowid to number, defaulting to 0 if undefined/null
-          const rawRowid = row["id"];
-          const rowid =
-            typeof rawRowid === "number"
-              ? rawRowid
-              : typeof rawRowid === "string"
-                ? parseInt(rawRowid, 10) || 0
-                : 0;
-          allMatches.push({
-            rowid,
-            text: text.length > 100 ? text.slice(0, 100) + "..." : text,
-            matchTypes: matches.map((m) => m.type),
-            bestScore: Math.round(best.score * 1000) / 1000,
-            bestType: best.type,
-          });
-        }
-      }
-
-      // Sort by score and limit
-      allMatches.sort((a, b) => b.bestScore - a.bestScore);
-      const limited = allMatches.slice(0, input.limit);
-
-      return {
-        success: true,
-        searchTerm: input.searchTerm,
-        techniques: input.techniques,
-        matchCount: limited.length,
-        matches: limited,
-      };
     },
   };
 }

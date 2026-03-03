@@ -35,7 +35,7 @@ describe("Text Processing Tools", () => {
 
     // Insert test data
     await adapter.executeWriteQuery(`
-      INSERT INTO texts (id, name, email, description) VALUES 
+      INSERT INTO texts (id, name, email, description) VALUES
       (1, 'Alice Smith', 'alice@example.com', 'Hello World'),
       (2, 'Bob Johnson', 'bob@test.org', 'Testing 123'),
       (3, 'Charlie Brown', 'charlie@demo.net', 'Sample Text Here'),
@@ -355,7 +355,7 @@ describe("Text Processing Tools", () => {
     it("should strip accents", async () => {
       // Insert accented text
       await adapter.executeWriteQuery(`
-        INSERT INTO texts (id, name, email, description) VALUES 
+        INSERT INTO texts (id, name, email, description) VALUES
         (6, 'Café', 'cafe@test.com', 'Résumé')
       `);
 
@@ -422,6 +422,151 @@ describe("Text Processing Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.matchCount).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Error path testing", () => {
+    it("should return structured error for regex_match on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_regex_match")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        pattern: ".",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for regex_extract on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_regex_extract")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        pattern: ".",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_split on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_split")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        delimiter: ",",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_concat on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_concat")?.({
+        table: "nonexistent_xyz",
+        columns: ["x", "y"],
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_replace on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_replace")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        searchPattern: "a",
+        replaceWith: "b",
+        whereClause: "id = 1",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_trim on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_trim")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_case on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_case")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        mode: "upper",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_substring on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_substring")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        start: 1,
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for fuzzy_match on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_fuzzy_match")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        search: "test",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for phonetic_match on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_phonetic_match")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        search: "test",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_normalize on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_normalize")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        mode: "nfc",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for text_validate on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_text_validate")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        pattern: "email",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for advanced_search on nonexistent table", async () => {
+      const result = (await tools.get("sqlite_advanced_search")?.({
+        table: "nonexistent_xyz",
+        column: "x",
+        searchTerm: "test",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 });
