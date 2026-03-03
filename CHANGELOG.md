@@ -54,6 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `createTable`, `createIndex` first positional param mapped to `"table"` instead of `"tableName"` — corrected
   - `ServerInstructions.ts` examples updated to match corrected mappings
 
+- **Codemode JSON Positional Parameter Mapping** — Fixed 16 incorrect parameter mappings for JSON code mode methods
+  - `validatePath`, `pretty`, `valid` were mismapped to `["table", "column", ...]` instead of `"path"`, `"json"`, `"json"` respectively
+  - `extract`, `set`, `remove`, `type`, `arrayLength`, `arrayAppend`, `keys`, `each`, `update`, `merge` were missing `whereClause` positional param
+  - `insert` missing `data`, `select` missing `paths`, `query` missing `filterPaths` params
+  - Calling `sqlite.json.extract("table", "col", "$.path", "id = 1")` now correctly maps the 4th arg to `whereClause`
+
 - **`sqlite_create_index` Misleading Message for Duplicate Index Name** — Fixed IF NOT EXISTS returning false "created" message
   - When an index name already exists, `CREATE INDEX IF NOT EXISTS` silently does nothing but the handler always reported "created on table(column)"
   - Now checks index existence before executing and returns `"already exists (no changes made)"` when the index is pre-existing
