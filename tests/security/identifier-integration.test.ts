@@ -132,54 +132,55 @@ describe("Security: Identifier Integration", () => {
 
   describe("text tools - identifier injection", () => {
     it("should reject table name with injection in regex_extract", async () => {
-      await expect(
-        getTool("sqlite_regex_extract")({
-          table: "users'; DROP TABLE--",
-          column: "name",
-          pattern: ".*",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_regex_extract")({
+        table: "users'; DROP TABLE--",
+        column: "name",
+        pattern: ".*",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject column name with injection in regex_extract", async () => {
-      await expect(
-        getTool("sqlite_regex_extract")({
-          table: "users",
-          column: "name; DROP TABLE--",
-          pattern: ".*",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_regex_extract")({
+        table: "users",
+        column: "name; DROP TABLE--",
+        pattern: ".*",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in regex_match", async () => {
-      await expect(
-        getTool("sqlite_regex_match")({
-          table: 'users"; DELETE--',
-          column: "name",
-          pattern: "test",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_regex_match")({
+        table: 'users"; DELETE--',
+        column: "name",
+        pattern: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in text_split", async () => {
-      await expect(
-        getTool("sqlite_text_split")({
-          table: "users' OR '1'='1",
-          column: "name",
-          delimiter: " ",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_text_split")({
+        table: "users' OR '1'='1",
+        column: "name",
+        delimiter: " ",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in text_replace", async () => {
-      await expect(
-        getTool("sqlite_text_replace")({
-          table: "users; ATTACH DATABASE--",
-          column: "name",
-          search: "a",
-          replace: "b",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_text_replace")({
+        table: "users; ATTACH DATABASE--",
+        column: "name",
+        searchPattern: "a",
+        replaceWith: "b",
+        whereClause: "1=1",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 

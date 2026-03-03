@@ -40,6 +40,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_regex_match`, `sqlite_regex_extract`, `sqlite_text_split`, `sqlite_text_concat`, `sqlite_text_replace`, `sqlite_text_trim`, `sqlite_text_case`, `sqlite_text_substring`, `sqlite_fuzzy_match`, `sqlite_phonetic_match`, `sqlite_text_normalize`, `sqlite_text_validate`, `sqlite_advanced_search`: Catch errors with `formatError()` and return structured `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
   - Mirrors the same pattern already applied to core and JSON tool groups
 
+### Fixed
+
+- **Text Tool Code Mode Positional Parameters** — Fixed 8 broken positional parameter mappings for text tools in `api.ts`
+  - `textSplit`, `textConcat`, `textReplace` renamed to `split`, `concat`, `replace` (matching actual method names after prefix stripping)
+  - Added 5 missing entries: `trim`, `case`, `substring`, `validate`, `normalize`
+  - All text tools now support positional arg syntax in `sqlite_execute_code` (e.g., `sqlite.text.split("table", "col", "@")`)
+- **Text Tool Code Mode Alias** — Removed broken `normalize → textNormalize` alias from `METHOD_ALIASES`
+  - The canonical method name is `normalize` (not `textNormalize`), so the alias was a no-op pointing to nothing
+- **`sqlite_advanced_search` Error Code** — Changed from `executeQuery` to `executeReadQuery` for consistent error codes
+  - Nonexistent table errors now return `DB_QUERY_FAILED` code instead of `UNKNOWN_ERROR`
+- **Security Integration Tests** — Updated 4 text tool injection tests in `identifier-integration.test.ts`
+  - Tests now check for `{success: false, error: /invalid/i}` pattern instead of `.rejects.toThrow()`
+  - Consistent with structured error handling across all tool groups
+  - Fixed `text_replace` test to use correct parameter names (`searchPattern`/`replaceWith` instead of `search`/`replace`)
+
 ### Added
 
 - **`sqlite_drop_index` Tool** — New core tool to drop indexes from the database

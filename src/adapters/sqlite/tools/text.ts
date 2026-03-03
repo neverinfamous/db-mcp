@@ -1372,7 +1372,7 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
           whereClause = ` AND ${input.whereClause}`;
         }
         const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 1000`;
-        const result = await adapter.executeQuery(query);
+        const result = await adapter.executeReadQuery(query);
 
         if (!result.rows || result.rows.length === 0) {
           return {

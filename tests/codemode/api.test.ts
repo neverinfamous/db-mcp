@@ -68,8 +68,33 @@ describe("Code Mode API", () => {
       expect(toolNameToMethodName("sqlite_regex_match", "text")).toBe(
         "regexMatch",
       );
+      expect(toolNameToMethodName("sqlite_regex_extract", "text")).toBe(
+        "regexExtract",
+      );
       expect(toolNameToMethodName("sqlite_fuzzy_match", "text")).toBe(
         "fuzzyMatch",
+      );
+      expect(toolNameToMethodName("sqlite_phonetic_match", "text")).toBe(
+        "phoneticMatch",
+      );
+      expect(toolNameToMethodName("sqlite_advanced_search", "text")).toBe(
+        "advancedSearch",
+      );
+      expect(toolNameToMethodName("sqlite_text_split", "text")).toBe("split");
+      expect(toolNameToMethodName("sqlite_text_concat", "text")).toBe("concat");
+      expect(toolNameToMethodName("sqlite_text_replace", "text")).toBe(
+        "replace",
+      );
+      expect(toolNameToMethodName("sqlite_text_trim", "text")).toBe("trim");
+      expect(toolNameToMethodName("sqlite_text_case", "text")).toBe("case");
+      expect(toolNameToMethodName("sqlite_text_substring", "text")).toBe(
+        "substring",
+      );
+      expect(toolNameToMethodName("sqlite_text_validate", "text")).toBe(
+        "validate",
+      );
+      expect(toolNameToMethodName("sqlite_text_normalize", "text")).toBe(
+        "normalize",
       );
     });
 
