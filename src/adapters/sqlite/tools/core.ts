@@ -575,6 +575,16 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       const ifNotExists = input.ifNotExists ? "IF NOT EXISTS " : "";
       const columns = input.columns.map((c) => `"${c}"`).join(", ");
 
+      // Check if index already exists (when using IF NOT EXISTS)
+      let indexExisted = false;
+      if (input.ifNotExists) {
+        const checkResult = await adapter.executeReadQuery(
+          `SELECT 1 FROM sqlite_master WHERE type='index' AND name=?`,
+          [input.indexName],
+        );
+        indexExisted = (checkResult.rows?.length ?? 0) > 0;
+      }
+
       const sql = `CREATE ${unique}INDEX ${ifNotExists}"${input.indexName}" ON "${input.tableName}" (${columns})`;
 
       try {
@@ -582,7 +592,9 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          message: `Index '${input.indexName}' created on ${input.tableName}(${input.columns.join(", ")})`,
+          message: indexExisted
+            ? `Index '${input.indexName}' already exists (no changes made)`
+            : `Index '${input.indexName}' created on ${input.tableName}(${input.columns.join(", ")})`,
           sql,
         };
       } catch (error) {

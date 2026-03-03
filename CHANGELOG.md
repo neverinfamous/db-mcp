@@ -54,6 +54,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `createTable`, `createIndex` first positional param mapped to `"table"` instead of `"tableName"` — corrected
   - `ServerInstructions.ts` examples updated to match corrected mappings
 
+- **`sqlite_create_index` Misleading Message for Duplicate Index Name** — Fixed IF NOT EXISTS returning false "created" message
+  - When an index name already exists, `CREATE INDEX IF NOT EXISTS` silently does nothing but the handler always reported "created on table(column)"
+  - Now checks index existence before executing and returns `"already exists (no changes made)"` when the index is pre-existing
+  - Mirrors the pattern already used by `sqlite_create_table` for duplicate table names
+
+- **`sqlite_execute_code` Negative `memoryUsedMb` Values** — Clamped memory metric to `Math.max(0, ...)`
+  - Both `worker-sandbox.ts` and `sandbox.ts` measured heap delta on the main thread, which could go negative due to GC during worker execution
+  - Values like `-4.76 MB` are now reported as `0 MB` instead
+
 - **`sqlite_write_query` Statement Type Validation** — Now rejects non-DML statements with structured errors
   - Only allows INSERT, UPDATE, DELETE, and REPLACE statements
   - SELECT, PRAGMA, EXPLAIN, and DDL (CREATE, ALTER, DROP, TRUNCATE) are rejected with clear error messages
