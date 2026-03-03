@@ -141,8 +141,12 @@ export const DropIndexOutputSchema = z.object({
  */
 export const JsonInsertOutputSchema = z.object({
   success: z.boolean(),
-  rowsAffected: z.number(),
+  message: z.string().optional(),
+  rowsAffected: z.number().optional(),
   lastInsertRowid: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -150,7 +154,11 @@ export const JsonInsertOutputSchema = z.object({
  */
 export const JsonUpdateOutputSchema = z.object({
   success: z.boolean(),
-  rowsAffected: z.number(),
+  message: z.string().optional(),
+  rowsAffected: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -158,8 +166,11 @@ export const JsonUpdateOutputSchema = z.object({
  */
 export const JsonSelectOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(RowRecordSchema),
+  rowCount: z.number().optional(),
+  rows: z.array(RowRecordSchema).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -167,8 +178,11 @@ export const JsonSelectOutputSchema = z.object({
  */
 export const JsonQueryOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(RowRecordSchema),
+  rowCount: z.number().optional(),
+  rows: z.array(RowRecordSchema).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -185,7 +199,11 @@ export const JsonValidatePathOutputSchema = z.object({
  */
 export const JsonMergeOutputSchema = z.object({
   success: z.boolean(),
-  rowsAffected: z.number(),
+  message: z.string().optional(),
+  rowsAffected: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -203,13 +221,18 @@ const JsonPropertySchemaSchema = z.object({
  */
 export const AnalyzeJsonSchemaOutputSchema = z.object({
   success: z.boolean(),
-  schema: z.object({
-    type: z.string(),
-    properties: z.record(z.string(), JsonPropertySchemaSchema),
-    sampleSize: z.number(),
-    nullCount: z.number(),
-    errorCount: z.number(),
-  }),
+  schema: z
+    .object({
+      type: z.string(),
+      properties: z.record(z.string(), JsonPropertySchemaSchema),
+      sampleSize: z.number(),
+      nullCount: z.number(),
+      errorCount: z.number(),
+    })
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -217,9 +240,12 @@ export const AnalyzeJsonSchemaOutputSchema = z.object({
  */
 export const CreateJsonCollectionOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
-  sql: z.array(z.string()),
-  indexCount: z.number(),
+  message: z.string().optional(),
+  sql: z.array(z.string()).optional(),
+  indexCount: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 // =============================================================================
@@ -231,8 +257,11 @@ export const CreateJsonCollectionOutputSchema = z.object({
  */
 export const JsonExtractOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  values: z.array(z.unknown()),
+  rowCount: z.number().optional(),
+  values: z.array(z.unknown()).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -240,7 +269,10 @@ export const JsonExtractOutputSchema = z.object({
  */
 export const JsonSetOutputSchema = z.object({
   success: z.boolean(),
-  rowsAffected: z.number(),
+  rowsAffected: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -248,7 +280,10 @@ export const JsonSetOutputSchema = z.object({
  */
 export const JsonRemoveOutputSchema = z.object({
   success: z.boolean(),
-  rowsAffected: z.number(),
+  rowsAffected: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -256,8 +291,11 @@ export const JsonRemoveOutputSchema = z.object({
  */
 export const JsonTypeOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  types: z.array(z.string().nullable()),
+  rowCount: z.number().optional(),
+  types: z.array(z.string().nullable()).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -265,8 +303,11 @@ export const JsonTypeOutputSchema = z.object({
  */
 export const JsonArrayLengthOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  lengths: z.array(z.number().nullable()),
+  rowCount: z.number().optional(),
+  lengths: z.array(z.number().nullable()).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -274,8 +315,11 @@ export const JsonArrayLengthOutputSchema = z.object({
  */
 export const JsonKeysOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  keys: z.array(z.union([z.string(), z.number()]).nullable()),
+  rowCount: z.number().optional(),
+  keys: z.array(z.union([z.string(), z.number()]).nullable()).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -292,8 +336,11 @@ export const JsonValidOutputSchema = z.object({
  */
 export const JsonGroupArrayOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(z.record(z.string(), z.unknown())),
+  rowCount: z.number().optional(),
+  rows: z.array(z.record(z.string(), z.unknown())).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -302,8 +349,12 @@ export const JsonGroupArrayOutputSchema = z.object({
  */
 export const JsonGroupObjectOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(z.record(z.string(), z.unknown())),
+  rowCount: z.number().optional(),
+  rows: z.array(z.record(z.string(), z.unknown())).optional(),
+  hint: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -311,15 +362,20 @@ export const JsonGroupObjectOutputSchema = z.object({
  */
 export const JsonEachOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  elements: z.array(
-    z.object({
-      row_id: z.number().optional(),
-      key: z.union([z.string(), z.number()]),
-      value: z.unknown(),
-      type: z.string(),
-    }),
-  ),
+  rowCount: z.number().optional(),
+  elements: z
+    .array(
+      z.object({
+        row_id: z.number().optional(),
+        key: z.union([z.string(), z.number()]),
+        value: z.unknown(),
+        type: z.string(),
+      }),
+    )
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -343,7 +399,10 @@ export const JsonTreeOutputSchema = z.object({
  */
 export const JsonPatchOutputSchema = z.object({
   success: z.boolean(),
-  rowsAffected: z.number(),
+  rowsAffected: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -368,6 +427,8 @@ export const JsonbConvertOutputSchema = z.object({
   rowsAffected: z.number().optional(),
   error: z.string().optional(),
   hint: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -375,15 +436,20 @@ export const JsonbConvertOutputSchema = z.object({
  */
 export const JsonStorageInfoOutputSchema = z.object({
   success: z.boolean(),
-  jsonbSupported: z.boolean(),
-  sampleSize: z.number(),
-  formats: z.object({
-    text: z.number(),
-    jsonb: z.number(),
-    null: z.number(),
-    unknown: z.number(),
-  }),
-  recommendation: z.string(),
+  jsonbSupported: z.boolean().optional(),
+  sampleSize: z.number().optional(),
+  formats: z
+    .object({
+      text: z.number(),
+      jsonb: z.number(),
+      null: z.number(),
+      unknown: z.number(),
+    })
+    .optional(),
+  recommendation: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -391,12 +457,15 @@ export const JsonStorageInfoOutputSchema = z.object({
  */
 export const JsonNormalizeColumnOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
-  normalized: z.number(),
-  unchanged: z.number(),
-  errors: z.number(),
-  total: z.number(),
+  message: z.string().optional(),
+  normalized: z.number().optional(),
+  unchanged: z.number().optional(),
+  errors: z.number().optional(),
+  total: z.number().optional(),
   outputFormat: z.enum(["text", "jsonb", "preserve"]).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 // =============================================================================

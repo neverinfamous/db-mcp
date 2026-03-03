@@ -11,6 +11,7 @@ import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, write } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
+import { formatError } from "../../../utils/errors.js";
 import {
   ValidateJsonSchema,
   JsonExtractSchema,
@@ -213,25 +214,42 @@ function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonExtractSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
-      if (!input.path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
+        if (!input.path.startsWith("$")) {
+          return {
+            success: false,
+            rowCount: 0,
+            values: [],
+            error: "JSON path must start with $",
+          };
+        }
+
+        let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
+        if (input.whereClause) {
+          sql += ` WHERE ${input.whereClause}`;
+        }
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          values: result.rows?.map((r) => r["value"]),
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          values: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
-      if (input.whereClause) {
-        sql += ` WHERE ${input.whereClause}`;
-      }
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        values: result.rows?.map((r) => r["value"]),
-      };
     },
   };
 }
@@ -252,22 +270,37 @@ function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonSetSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
-      if (!input.path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
+        if (!input.path.startsWith("$")) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "JSON path must start with $",
+          };
+        }
+
+        const valueJson = JSON.stringify(input.value);
+        const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+
+        const result = await adapter.executeWriteQuery(sql);
+
+        return {
+          success: true,
+          rowsAffected: result.rowsAffected,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      const valueJson = JSON.stringify(input.value);
-      const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
-
-      const result = await adapter.executeWriteQuery(sql);
-
-      return {
-        success: true,
-        rowsAffected: result.rowsAffected,
-      };
     },
   };
 }
@@ -287,21 +320,36 @@ function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonRemoveSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
-      if (!input.path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
+        if (!input.path.startsWith("$")) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "JSON path must start with $",
+          };
+        }
+
+        const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}') WHERE ${input.whereClause}`;
+
+        const result = await adapter.executeWriteQuery(sql);
+
+        return {
+          success: true,
+          rowsAffected: result.rowsAffected,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}') WHERE ${input.whereClause}`;
-
-      const result = await adapter.executeWriteQuery(sql);
-
-      return {
-        success: true,
-        rowsAffected: result.rowsAffected,
-      };
     },
   };
 }
@@ -322,27 +370,44 @@ function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonTypeSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const path = input.path ?? "$";
-      if (!path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+        const path = input.path ?? "$";
+        if (!path.startsWith("$")) {
+          return {
+            success: false,
+            rowCount: 0,
+            types: [],
+            error: "JSON path must start with $",
+          };
+        }
+
+        let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
+        if (input.whereClause) {
+          sql += ` WHERE ${input.whereClause}`;
+        }
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          types: result.rows?.map((r) => r["type"]),
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          types: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
-      if (input.whereClause) {
-        sql += ` WHERE ${input.whereClause}`;
-      }
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        types: result.rows?.map((r) => r["type"]),
-      };
     },
   };
 }
@@ -362,27 +427,44 @@ function createJsonArrayLengthTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonArrayLengthSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const path = input.path ?? "$";
-      if (!path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+        const path = input.path ?? "$";
+        if (!path.startsWith("$")) {
+          return {
+            success: false,
+            rowCount: 0,
+            lengths: [],
+            error: "JSON path must start with $",
+          };
+        }
+
+        let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
+        if (input.whereClause) {
+          sql += ` WHERE ${input.whereClause}`;
+        }
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          lengths: result.rows?.map((r) => r["length"]),
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          lengths: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
-      if (input.whereClause) {
-        sql += ` WHERE ${input.whereClause}`;
-      }
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        lengths: result.rows?.map((r) => r["length"]),
-      };
     },
   };
 }
@@ -402,27 +484,42 @@ function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonArrayAppendSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
-      if (!input.path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
+        if (!input.path.startsWith("$")) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "JSON path must start with $",
+          };
+        }
+
+        const valueJson = JSON.stringify(input.value);
+        // Append by using [#] which means "end of array"
+        const appendPath = input.path.endsWith("]")
+          ? input.path.replace(/\]$/, "#]")
+          : `${input.path}[#]`;
+
+        const sql = `UPDATE ${table} SET ${column} = json_insert(${column}, '${appendPath}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+
+        const result = await adapter.executeWriteQuery(sql);
+
+        return {
+          success: true,
+          rowsAffected: result.rowsAffected,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      const valueJson = JSON.stringify(input.value);
-      // Append by using [#] which means "end of array"
-      const appendPath = input.path.endsWith("]")
-        ? input.path.replace(/\]$/, "#]")
-        : `${input.path}[#]`;
-
-      const sql = `UPDATE ${table} SET ${column} = json_insert(${column}, '${appendPath}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
-
-      const result = await adapter.executeWriteQuery(sql);
-
-      return {
-        success: true,
-        rowsAffected: result.rowsAffected,
-      };
     },
   };
 }
@@ -443,40 +540,57 @@ function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonKeysSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const path = input.path ?? "$";
-      if (!path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+        const path = input.path ?? "$";
+        if (!path.startsWith("$")) {
+          return {
+            success: false,
+            rowCount: 0,
+            keys: [],
+            error: "JSON path must start with $",
+          };
+        }
+
+        // Use subquery to avoid ambiguous column when table has a 'key' or 'id' column
+        // json_each returns: key, value, type, atom, id, parent, fullkey, path
+        let sql: string;
+        if (input.whereClause) {
+          // With WHERE clause, use subquery to isolate table columns from json_each columns
+          // This avoids ambiguity between e.g. table.id and json_each.id
+          sql = `SELECT DISTINCT json_each.key
+                      FROM json_each(
+                          (SELECT ${column} FROM ${table} WHERE ${input.whereClause} LIMIT 1),
+                          '${path}'
+                      )`;
+        } else {
+          // Without WHERE, simpler subquery avoids 'key' column ambiguity
+          sql = `SELECT DISTINCT json_each.key FROM ${table} AS t, json_each(t.${column}, '${path}')`;
+        }
+
+        const result = await adapter.executeReadQuery(sql);
+
+        const keys = result.rows?.map((r) => r["key"]) ?? [];
+
+        return {
+          success: true,
+          rowCount: keys.length,
+          keys: keys,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          keys: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      // Use subquery to avoid ambiguous column when table has a 'key' or 'id' column
-      // json_each returns: key, value, type, atom, id, parent, fullkey, path
-      let sql: string;
-      if (input.whereClause) {
-        // With WHERE clause, use subquery to isolate table columns from json_each columns
-        // This avoids ambiguity between e.g. table.id and json_each.id
-        sql = `SELECT DISTINCT json_each.key 
-                    FROM json_each(
-                        (SELECT ${column} FROM ${table} WHERE ${input.whereClause} LIMIT 1),
-                        '${path}'
-                    )`;
-      } else {
-        // Without WHERE, simpler subquery avoids 'key' column ambiguity
-        sql = `SELECT DISTINCT json_each.key FROM ${table} AS t, json_each(t.${column}, '${path}')`;
-      }
-
-      const result = await adapter.executeReadQuery(sql);
-
-      const keys = result.rows?.map((r) => r["key"]) ?? [];
-
-      return {
-        success: true,
-        rowCount: keys.length,
-        keys: keys,
-      };
     },
   };
 }
@@ -496,38 +610,55 @@ function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonEachSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      const path = input.path ?? "$";
-      if (!path.startsWith("$")) {
-        throw new Error("JSON path must start with $");
+        const path = input.path ?? "$";
+        if (!path.startsWith("$")) {
+          return {
+            success: false,
+            rowCount: 0,
+            elements: [],
+            error: "JSON path must start with $",
+          };
+        }
+
+        // Use table alias and CROSS JOIN to avoid ambiguity with json_each() output columns
+        // json_each() returns: key, value, type, atom, id, parent, fullkey, path
+        // If the source table has any of these columns (e.g., 'id'), they must be qualified
+        let sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
+        if (input.whereClause) {
+          // Qualify unqualified 'id' column references with table alias 't.'
+          // This handles: id = X, id IN (...), id BETWEEN, id IS NULL, etc.
+          // Won't match already-qualified refs like 't.id' or 'je.id'
+          const qualifiedWhere = input.whereClause.replace(
+            /(?<![.\w])id(?=\s*[=<>!]|\s+(?:IN|BETWEEN|IS|LIKE)\b)/gi,
+            "t.id",
+          );
+          sql += ` WHERE ${qualifiedWhere}`;
+        }
+        sql += ` LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          elements: result.rows,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          elements: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      // Use table alias and CROSS JOIN to avoid ambiguity with json_each() output columns
-      // json_each() returns: key, value, type, atom, id, parent, fullkey, path
-      // If the source table has any of these columns (e.g., 'id'), they must be qualified
-      let sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
-      if (input.whereClause) {
-        // Qualify unqualified 'id' column references with table alias 't.'
-        // This handles: id = X, id IN (...), id BETWEEN, id IS NULL, etc.
-        // Won't match already-qualified refs like 't.id' or 'je.id'
-        const qualifiedWhere = input.whereClause.replace(
-          /(?<![.\w])id(?=\s*[=<>!]|\s+(?:IN|BETWEEN|IS|LIKE)\b)/gi,
-          "t.id",
-        );
-        sql += ` WHERE ${qualifiedWhere}`;
-      }
-      sql += ` LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        elements: result.rows,
-      };
     },
   };
 }
@@ -548,49 +679,61 @@ function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupArraySchema.parse(params);
 
-      // Validate table name (always required)
-      const table = sanitizeIdentifier(input.table);
+      try {
+        // Validate table name (always required)
+        const table = sanitizeIdentifier(input.table);
 
-      // Allow raw SQL expressions when allowExpressions is true
-      // This enables use cases like: json_extract(data, '$.name')
-      let valueColumn: string;
-      if (input.allowExpressions) {
-        // Use expression directly (user takes responsibility for SQL safety)
-        valueColumn = input.valueColumn;
-      } else {
-        // Validate as identifier (default, safe behavior)
-        valueColumn = sanitizeIdentifier(input.valueColumn);
+        // Allow raw SQL expressions when allowExpressions is true
+        // This enables use cases like: json_extract(data, '$.name')
+        let valueColumn: string;
+        if (input.allowExpressions) {
+          // Use expression directly (user takes responsibility for SQL safety)
+          valueColumn = input.valueColumn;
+        } else {
+          // Validate as identifier (default, safe behavior)
+          valueColumn = sanitizeIdentifier(input.valueColumn);
+        }
+
+        let selectClause = `json_group_array(${valueColumn}) as array_result`;
+        let groupByClause = "";
+
+        if (input.groupByColumn) {
+          // Apply allowExpressions to groupByColumn as well
+          const groupByCol = input.allowExpressions
+            ? input.groupByColumn
+            : sanitizeIdentifier(input.groupByColumn);
+          // Use alias for clean output; for expressions use 'group_key' alias
+          const groupAlias = input.allowExpressions
+            ? "group_key"
+            : input.groupByColumn;
+          selectClause = `${groupByCol} AS ${groupAlias}, ${selectClause}`;
+          groupByClause = ` GROUP BY ${groupByCol}`;
+        }
+
+        let sql = `SELECT ${selectClause} FROM ${table}`;
+        if (input.whereClause) {
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += groupByClause;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          rows: result.rows ?? [],
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      let selectClause = `json_group_array(${valueColumn}) as array_result`;
-      let groupByClause = "";
-
-      if (input.groupByColumn) {
-        // Apply allowExpressions to groupByColumn as well
-        const groupByCol = input.allowExpressions
-          ? input.groupByColumn
-          : sanitizeIdentifier(input.groupByColumn);
-        // Use alias for clean output; for expressions use 'group_key' alias
-        const groupAlias = input.allowExpressions
-          ? "group_key"
-          : input.groupByColumn;
-        selectClause = `${groupByCol} AS ${groupAlias}, ${selectClause}`;
-        groupByClause = ` GROUP BY ${groupByCol}`;
-      }
-
-      let sql = `SELECT ${selectClause} FROM ${table}`;
-      if (input.whereClause) {
-        sql += ` WHERE ${input.whereClause}`;
-      }
-      sql += groupByClause;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        rows: result.rows ?? [],
-      };
     },
   };
 }
@@ -611,112 +754,124 @@ function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonGroupObjectSchema.parse(params);
 
-      // Validate table name (always required)
-      const table = sanitizeIdentifier(input.table);
+      try {
+        // Validate table name (always required)
+        const table = sanitizeIdentifier(input.table);
 
-      // Handle aggregate function mode - uses subquery pattern
-      // This enables COUNT(*), SUM(x), AVG(x), etc. as values
-      if (input.aggregateFunction) {
-        // Build the key column expression
-        const keyCol = input.allowExpressions
-          ? input.keyColumn
-          : sanitizeIdentifier(input.keyColumn);
+        // Handle aggregate function mode - uses subquery pattern
+        // This enables COUNT(*), SUM(x), AVG(x), etc. as values
+        if (input.aggregateFunction) {
+          // Build the key column expression
+          const keyCol = input.allowExpressions
+            ? input.keyColumn
+            : sanitizeIdentifier(input.keyColumn);
 
-        // Build subquery that computes the aggregate grouped by key
-        let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
-        if (input.whereClause) {
-          subquery += ` WHERE ${input.whereClause}`;
+          // Build subquery that computes the aggregate grouped by key
+          let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
+          if (input.whereClause) {
+            subquery += ` WHERE ${input.whereClause}`;
+          }
+          subquery += ` GROUP BY ${keyCol}`;
+
+          // Outer query wraps the aggregates into a JSON object
+          const outerSelect = `json_group_object(agg_key, agg_value) as object_result`;
+          const outerGroupBy = "";
+
+          if (input.groupByColumn) {
+            // For nested grouping, we need a more complex approach with window functions or correlated subqueries
+            // For now, outer grouping with aggregates is not supported - return error with guidance
+            return {
+              success: false,
+              error:
+                "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
+              rowCount: 0,
+              rows: [],
+            };
+          }
+
+          const sql = `SELECT ${outerSelect} FROM (${subquery})${outerGroupBy}`;
+          const result = await adapter.executeReadQuery(sql);
+
+          return {
+            success: true,
+            rowCount: result.rows?.length ?? 0,
+            rows: result.rows ?? [],
+          };
         }
-        subquery += ` GROUP BY ${keyCol}`;
 
-        // Outer query wraps the aggregates into a JSON object
-        const outerSelect = `json_group_object(agg_key, agg_value) as object_result`;
-        const outerGroupBy = "";
-
-        if (input.groupByColumn) {
-          // For nested grouping, we need a more complex approach with window functions or correlated subqueries
-          // For now, outer grouping with aggregates is not supported - return error with guidance
+        // Standard mode: valueColumn is required when not using aggregateFunction
+        if (!input.valueColumn) {
           return {
             success: false,
             error:
-              "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
+              "valueColumn is required unless using aggregateFunction parameter",
             rowCount: 0,
             rows: [],
           };
         }
 
-        const sql = `SELECT ${outerSelect} FROM (${subquery})${outerGroupBy}`;
+        // Warn when allowExpressions is used without groupByColumn - can produce duplicate keys
+        // Each row creates a key-value pair; if multiple rows have the same key, duplicates result
+        const duplicateKeyWarning =
+          input.allowExpressions && !input.groupByColumn
+            ? "Warning: Using allowExpressions without groupByColumn may produce duplicate keys if key values aren't unique. Consider using groupByColumn, aggregateFunction, or ensuring key uniqueness."
+            : undefined;
+
+        // Allow raw SQL expressions when allowExpressions is true
+        // This enables use cases like: json_extract(data, '$.name')
+        let keyColumn: string;
+        let valueColumn: string;
+        if (input.allowExpressions) {
+          // Use expressions directly (user takes responsibility for SQL safety)
+          keyColumn = input.keyColumn;
+          valueColumn = input.valueColumn;
+        } else {
+          // Validate as identifiers (default, safe behavior)
+          keyColumn = sanitizeIdentifier(input.keyColumn);
+          valueColumn = sanitizeIdentifier(input.valueColumn);
+        }
+
+        let selectClause = `json_group_object(${keyColumn}, ${valueColumn}) as object_result`;
+        let groupByClause = "";
+
+        if (input.groupByColumn) {
+          // Apply allowExpressions to groupByColumn as well
+          const groupByCol = input.allowExpressions
+            ? input.groupByColumn
+            : sanitizeIdentifier(input.groupByColumn);
+          // Use alias for clean output; for expressions use 'group_key' alias
+          const groupAlias = input.allowExpressions
+            ? "group_key"
+            : input.groupByColumn;
+          selectClause = `${groupByCol} AS ${groupAlias}, ${selectClause}`;
+          groupByClause = ` GROUP BY ${groupByCol}`;
+        }
+
+        let sql = `SELECT ${selectClause} FROM ${table}`;
+        if (input.whereClause) {
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += groupByClause;
+
         const result = await adapter.executeReadQuery(sql);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows ?? [],
+          ...(duplicateKeyWarning && { hint: duplicateKeyWarning }),
         };
-      }
-
-      // Standard mode: valueColumn is required when not using aggregateFunction
-      if (!input.valueColumn) {
+      } catch (error) {
+        const structured = formatError(error);
         return {
           success: false,
-          error:
-            "valueColumn is required unless using aggregateFunction parameter",
           rowCount: 0,
           rows: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
         };
       }
-
-      // Warn when allowExpressions is used without groupByColumn - can produce duplicate keys
-      // Each row creates a key-value pair; if multiple rows have the same key, duplicates result
-      const duplicateKeyWarning =
-        input.allowExpressions && !input.groupByColumn
-          ? "Warning: Using allowExpressions without groupByColumn may produce duplicate keys if key values aren't unique. Consider using groupByColumn, aggregateFunction, or ensuring key uniqueness."
-          : undefined;
-
-      // Allow raw SQL expressions when allowExpressions is true
-      // This enables use cases like: json_extract(data, '$.name')
-      let keyColumn: string;
-      let valueColumn: string;
-      if (input.allowExpressions) {
-        // Use expressions directly (user takes responsibility for SQL safety)
-        keyColumn = input.keyColumn;
-        valueColumn = input.valueColumn;
-      } else {
-        // Validate as identifiers (default, safe behavior)
-        keyColumn = sanitizeIdentifier(input.keyColumn);
-        valueColumn = sanitizeIdentifier(input.valueColumn);
-      }
-
-      let selectClause = `json_group_object(${keyColumn}, ${valueColumn}) as object_result`;
-      let groupByClause = "";
-
-      if (input.groupByColumn) {
-        // Apply allowExpressions to groupByColumn as well
-        const groupByCol = input.allowExpressions
-          ? input.groupByColumn
-          : sanitizeIdentifier(input.groupByColumn);
-        // Use alias for clean output; for expressions use 'group_key' alias
-        const groupAlias = input.allowExpressions
-          ? "group_key"
-          : input.groupByColumn;
-        selectClause = `${groupByCol} AS ${groupAlias}, ${selectClause}`;
-        groupByClause = ` GROUP BY ${groupByCol}`;
-      }
-
-      let sql = `SELECT ${selectClause} FROM ${table}`;
-      if (input.whereClause) {
-        sql += ` WHERE ${input.whereClause}`;
-      }
-      sql += groupByClause;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        rows: result.rows ?? [],
-        ...(duplicateKeyWarning && { hint: duplicateKeyWarning }),
-      };
     },
   };
 }
@@ -805,31 +960,42 @@ function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonbConvertSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      // Check JSONB support
-      if (!isJsonbSupported()) {
+        // Check JSONB support
+        if (!isJsonbSupported()) {
+          return {
+            success: false,
+            error: "JSONB not supported (requires SQLite 3.45+)",
+            hint: "Current SQLite version does not support JSONB. Data remains as text JSON.",
+          };
+        }
+
+        let sql = `UPDATE ${table} SET ${column} = jsonb(${column})`;
+        if (input.whereClause) {
+          sql += ` WHERE ${input.whereClause}`;
+        }
+
+        const result = await adapter.executeWriteQuery(sql);
+
+        return {
+          success: true,
+          message: `Converted ${result.rowsAffected} rows to JSONB format`,
+          rowsAffected: result.rowsAffected,
+        };
+      } catch (error) {
+        const structured = formatError(error);
         return {
           success: false,
-          error: "JSONB not supported (requires SQLite 3.45+)",
-          hint: "Current SQLite version does not support JSONB. Data remains as text JSON.",
+          rowsAffected: 0,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
         };
       }
-
-      let sql = `UPDATE ${table} SET ${column} = jsonb(${column})`;
-      if (input.whereClause) {
-        sql += ` WHERE ${input.whereClause}`;
-      }
-
-      const result = await adapter.executeWriteQuery(sql);
-
-      return {
-        success: true,
-        message: `Converted ${result.rowsAffected} rows to JSONB format`,
-        rowsAffected: result.rowsAffected,
-      };
     },
   };
 }
@@ -850,55 +1016,65 @@ function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonStorageInfoSchema.parse(params);
 
-      // Validate identifiers
-      const table = sanitizeIdentifier(input.table);
+      try {
+        // Validate identifiers
+        const table = sanitizeIdentifier(input.table);
 
-      // Sample rows to detect format
-      const sql = `SELECT ${sanitizeIdentifier(input.column)} FROM ${table} LIMIT ${input.sampleSize}`;
-      const result = await adapter.executeReadQuery(sql);
+        // Sample rows to detect format
+        const sql = `SELECT ${sanitizeIdentifier(input.column)} FROM ${table} LIMIT ${input.sampleSize}`;
+        const result = await adapter.executeReadQuery(sql);
 
-      let textCount = 0;
-      let jsonbCount = 0;
-      let nullCount = 0;
-      let unknownCount = 0;
+        let textCount = 0;
+        let jsonbCount = 0;
+        let nullCount = 0;
+        let unknownCount = 0;
 
-      for (const row of result.rows ?? []) {
-        const value = row[input.column];
-        if (value === null || value === undefined) {
-          nullCount++;
-        } else {
-          const format = detectJsonStorageFormat(value);
-          if (format === "text") textCount++;
-          else if (format === "jsonb") jsonbCount++;
-          else unknownCount++;
+        for (const row of result.rows ?? []) {
+          const value = row[input.column];
+          if (value === null || value === undefined) {
+            nullCount++;
+          } else {
+            const format = detectJsonStorageFormat(value);
+            if (format === "text") textCount++;
+            else if (format === "jsonb") jsonbCount++;
+            else unknownCount++;
+          }
         }
+
+        const total = result.rows?.length ?? 0;
+
+        return {
+          success: true,
+          jsonbSupported: isJsonbSupported(),
+          sampleSize: total,
+          formats: {
+            text: textCount,
+            jsonb: jsonbCount,
+            null: nullCount,
+            unknown: unknownCount,
+          },
+          recommendation:
+            // Mixed format: both text and JSONB rows exist
+            textCount > 0 && jsonbCount > 0
+              ? `Column has mixed formats (${textCount} text, ${jsonbCount} JSONB). Run sqlite_jsonb_convert to unify.`
+              : // All text, JSONB supported: recommend conversion
+                jsonbCount === 0 && textCount > 0 && isJsonbSupported()
+                ? "Column uses text JSON. Consider converting to JSONB for better performance."
+                : // All JSONB: already optimal
+                  jsonbCount > 0
+                  ? "Column already uses JSONB format."
+                  : // No JSON data found
+                    "No JSON data found in sample.",
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
-
-      const total = result.rows?.length ?? 0;
-
-      return {
-        success: true,
-        jsonbSupported: isJsonbSupported(),
-        sampleSize: total,
-        formats: {
-          text: textCount,
-          jsonb: jsonbCount,
-          null: nullCount,
-          unknown: unknownCount,
-        },
-        recommendation:
-          // Mixed format: both text and JSONB rows exist
-          textCount > 0 && jsonbCount > 0
-            ? `Column has mixed formats (${textCount} text, ${jsonbCount} JSONB). Run sqlite_jsonb_convert to unify.`
-            : // All text, JSONB supported: recommend conversion
-              jsonbCount === 0 && textCount > 0 && isJsonbSupported()
-              ? "Column uses text JSON. Consider converting to JSONB for better performance."
-              : // All JSONB: already optimal
-                jsonbCount > 0
-                ? "Column already uses JSONB format."
-                : // No JSON data found
-                  "No JSON data found in sample.",
-      };
     },
   };
 }
@@ -922,84 +1098,94 @@ function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = JsonNormalizeColumnSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const column = sanitizeIdentifier(input.column);
+      try {
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const column = sanitizeIdentifier(input.column);
 
-      // Select both the raw column value (to detect JSONB format) and the text
-      // representation via json(). This allows us to:
-      // 1. Detect if original storage is JSONB (binary blob)
-      // 2. Get text JSON for normalization processing
-      let selectSql = `SELECT rowid, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
-      if (input.whereClause) {
-        selectSql += ` WHERE ${input.whereClause}`;
-      }
-
-      const selectResult = await adapter.executeReadQuery(selectSql);
-      let normalizedCount = 0;
-      let unchangedCount = 0;
-      let errorCount = 0;
-
-      // Normalize each row
-      for (const row of selectResult.rows ?? []) {
-        const rowid = row["rowid"];
-        const rawData = row["raw_data"];
-        const jsonData = row["json_data"];
-
-        if (jsonData === null || jsonData === undefined) {
-          unchangedCount++;
-          continue;
+        // Select both the raw column value (to detect JSONB format) and the text
+        // representation via json(). This allows us to:
+        // 1. Detect if original storage is JSONB (binary blob)
+        // 2. Get text JSON for normalization processing
+        let selectSql = `SELECT rowid, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
+        if (input.whereClause) {
+          selectSql += ` WHERE ${input.whereClause}`;
         }
 
-        try {
-          const { normalized, wasModified } = normalizeJson(jsonData);
+        const selectResult = await adapter.executeReadQuery(selectSql);
+        let normalizedCount = 0;
+        let unchangedCount = 0;
+        let errorCount = 0;
 
-          // Detect if original was stored as JSONB (binary blob)
-          // If rawData is not a string, it's likely JSONB binary data
-          // better-sqlite3 returns JSONB blobs as Buffer objects
-          const wasJsonb =
-            rawData !== null &&
-            rawData !== undefined &&
-            typeof rawData !== "string";
+        // Normalize each row
+        for (const row of selectResult.rows ?? []) {
+          const rowid = row["rowid"];
+          const rawData = row["raw_data"];
+          const jsonData = row["json_data"];
 
-          // Determine target format based on outputFormat parameter
-          const targetFormat = input.outputFormat ?? "preserve";
-          const shouldOutputJsonb =
-            targetFormat === "jsonb" ||
-            (targetFormat === "preserve" && wasJsonb);
-
-          // Determine if update is needed:
-          // - Content was modified (keys reordered, normalized)
-          // - Converting from JSONB to text (when outputFormat is 'text')
-          // - Converting from text to JSONB (when outputFormat is 'jsonb')
-          const needsFormatChange =
-            (wasJsonb && targetFormat === "text") ||
-            (!wasJsonb && targetFormat === "jsonb");
-
-          if (wasModified || needsFormatChange) {
-            // Use jsonb() wrapper if target is JSONB, otherwise plain text
-            const updateSql = shouldOutputJsonb
-              ? `UPDATE ${table} SET ${column} = jsonb(?) WHERE rowid = ?`
-              : `UPDATE ${table} SET ${column} = ? WHERE rowid = ?`;
-            await adapter.executeWriteQuery(updateSql, [normalized, rowid]);
-            normalizedCount++;
-          } else {
+          if (jsonData === null || jsonData === undefined) {
             unchangedCount++;
+            continue;
           }
-        } catch {
-          errorCount++;
-        }
-      }
 
-      return {
-        success: true,
-        message: `Normalized ${normalizedCount} rows`,
-        normalized: normalizedCount,
-        unchanged: unchangedCount,
-        errors: errorCount,
-        total: selectResult.rows?.length ?? 0,
-        outputFormat: input.outputFormat ?? "preserve",
-      };
+          try {
+            const { normalized, wasModified } = normalizeJson(jsonData);
+
+            // Detect if original was stored as JSONB (binary blob)
+            // If rawData is not a string, it's likely JSONB binary data
+            // better-sqlite3 returns JSONB blobs as Buffer objects
+            const wasJsonb =
+              rawData !== null &&
+              rawData !== undefined &&
+              typeof rawData !== "string";
+
+            // Determine target format based on outputFormat parameter
+            const targetFormat = input.outputFormat ?? "preserve";
+            const shouldOutputJsonb =
+              targetFormat === "jsonb" ||
+              (targetFormat === "preserve" && wasJsonb);
+
+            // Determine if update is needed:
+            // - Content was modified (keys reordered, normalized)
+            // - Converting from JSONB to text (when outputFormat is 'text')
+            // - Converting from text to JSONB (when outputFormat is 'jsonb')
+            const needsFormatChange =
+              (wasJsonb && targetFormat === "text") ||
+              (!wasJsonb && targetFormat === "jsonb");
+
+            if (wasModified || needsFormatChange) {
+              // Use jsonb() wrapper if target is JSONB, otherwise plain text
+              const updateSql = shouldOutputJsonb
+                ? `UPDATE ${table} SET ${column} = jsonb(?) WHERE rowid = ?`
+                : `UPDATE ${table} SET ${column} = ? WHERE rowid = ?`;
+              await adapter.executeWriteQuery(updateSql, [normalized, rowid]);
+              normalizedCount++;
+            } else {
+              unchangedCount++;
+            }
+          } catch {
+            errorCount++;
+          }
+        }
+
+        return {
+          success: true,
+          message: `Normalized ${normalizedCount} rows`,
+          normalized: normalizedCount,
+          unchanged: unchangedCount,
+          errors: errorCount,
+          total: selectResult.rows?.length ?? 0,
+          outputFormat: input.outputFormat ?? "preserve",
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }

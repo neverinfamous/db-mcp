@@ -157,22 +157,26 @@ describe("JSON Helper Tools", () => {
     });
 
     it("should reject paths not starting with $", async () => {
-      await expect(
-        tools.get("sqlite_json_update")?.({
-          table: "documents",
-          column: "data",
-          path: "title",
-          value: "Bad",
-          whereClause: "id = 1",
-        }),
-      ).rejects.toThrow("JSON path must start with $");
+      const result = (await tools.get("sqlite_json_update")?.({
+        table: "documents",
+        column: "data",
+        path: "title",
+        value: "Bad",
+        whereClause: "id = 1",
+      })) as {
+        success: boolean;
+        error: string;
+      };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("JSON path must start with $");
     });
   });
 
   describe("sqlite_json_select", () => {
     beforeEach(async () => {
       await adapter.executeWriteQuery(
-        `INSERT INTO documents (id, data) VALUES 
+        `INSERT INTO documents (id, data) VALUES
          (1, '{"user": {"name": "Alice", "email": "alice@test.com"}, "active": true}'),
          (2, '{"user": {"name": "Bob", "email": "bob@test.com"}, "active": false}')`,
       );
@@ -228,13 +232,17 @@ describe("JSON Helper Tools", () => {
     });
 
     it("should reject invalid paths", async () => {
-      await expect(
-        tools.get("sqlite_json_select")?.({
-          table: "documents",
-          column: "data",
-          paths: ["user.name"],
-        }),
-      ).rejects.toThrow("JSON path must start with $");
+      const result = (await tools.get("sqlite_json_select")?.({
+        table: "documents",
+        column: "data",
+        paths: ["user.name"],
+      })) as {
+        success: boolean;
+        error: string;
+      };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("JSON path must start with $");
     });
 
     it("should handle duplicate path column names", async () => {
@@ -259,7 +267,7 @@ describe("JSON Helper Tools", () => {
     it("should handle array index paths", async () => {
       // Insert data with array
       await adapter.executeWriteQuery(
-        `INSERT INTO documents (id, data) VALUES 
+        `INSERT INTO documents (id, data) VALUES
          (3, '{"items": [{"n": "first"}, {"n": "second"}]}')`,
       );
 
@@ -281,7 +289,7 @@ describe("JSON Helper Tools", () => {
   describe("sqlite_json_query", () => {
     beforeEach(async () => {
       await adapter.executeWriteQuery(
-        `INSERT INTO documents (id, data) VALUES 
+        `INSERT INTO documents (id, data) VALUES
          (1, '{"category": "tech", "price": 100}'),
          (2, '{"category": "books", "price": 25}'),
          (3, '{"category": "tech", "price": 200}')`,
@@ -335,23 +343,31 @@ describe("JSON Helper Tools", () => {
     });
 
     it("should reject invalid selectPaths", async () => {
-      await expect(
-        tools.get("sqlite_json_query")?.({
-          table: "documents",
-          column: "data",
-          selectPaths: ["price"], // missing $ prefix
-        }),
-      ).rejects.toThrow("JSON path must start with $");
+      const result = (await tools.get("sqlite_json_query")?.({
+        table: "documents",
+        column: "data",
+        selectPaths: ["price"], // missing $ prefix
+      })) as {
+        success: boolean;
+        error: string;
+      };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("JSON path must start with $");
     });
 
     it("should reject invalid filterPaths", async () => {
-      await expect(
-        tools.get("sqlite_json_query")?.({
-          table: "documents",
-          column: "data",
-          filterPaths: { category: "tech" }, // missing $ prefix
-        }),
-      ).rejects.toThrow("JSON path must start with $");
+      const result = (await tools.get("sqlite_json_query")?.({
+        table: "documents",
+        column: "data",
+        filterPaths: { category: "tech" }, // missing $ prefix
+      })) as {
+        success: boolean;
+        error: string;
+      };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("JSON path must start with $");
     });
   });
 
@@ -456,7 +472,7 @@ describe("JSON Helper Tools", () => {
   describe("sqlite_json_analyze_schema", () => {
     beforeEach(async () => {
       await adapter.executeWriteQuery(
-        `INSERT INTO documents (id, data) VALUES 
+        `INSERT INTO documents (id, data) VALUES
          (1, '{"name": "Alice", "age": 30, "tags": ["a", "b"]}'),
          (2, '{"name": "Bob", "age": 25, "email": "bob@test.com"}'),
          (3, '{"name": "Charlie", "age": null}')`,
@@ -500,7 +516,7 @@ describe("JSON Helper Tools", () => {
       await adapter.executeWriteQuery("DELETE FROM documents");
       // Insert data where 'value' has different types
       await adapter.executeWriteQuery(
-        `INSERT INTO documents (id, data) VALUES 
+        `INSERT INTO documents (id, data) VALUES
          (1, '{"value": "string"}'),
          (2, '{"value": 42}'),
          (3, '{"value": true}')`,
@@ -526,7 +542,7 @@ describe("JSON Helper Tools", () => {
       await adapter.executeWriteQuery("DELETE FROM documents");
       // Null data and valid data
       await adapter.executeWriteQuery(
-        `INSERT INTO documents (id, data) VALUES 
+        `INSERT INTO documents (id, data) VALUES
          (1, null),
          (2, null),
          (3, '{"name": "Valid"}')`,
@@ -619,12 +635,16 @@ describe("JSON Helper Tools", () => {
     });
 
     it("should reject invalid index paths", async () => {
-      await expect(
-        tools.get("sqlite_create_json_collection")?.({
-          tableName: "bad",
-          indexes: [{ path: "name" }],
-        }),
-      ).rejects.toThrow("JSON path must start with $");
+      const result = (await tools.get("sqlite_create_json_collection")?.({
+        tableName: "bad",
+        indexes: [{ path: "name" }],
+      })) as {
+        success: boolean;
+        error: string;
+      };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("JSON path must start with $");
     });
   });
 });

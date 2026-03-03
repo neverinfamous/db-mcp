@@ -161,6 +161,10 @@ const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   groupArray: ["table", "valueColumn"],
   groupObject: ["table", "keyColumn"],
   pretty: "json",
+  storageInfo: ["table", "column"],
+  normalizeColumn: ["table", "column"],
+  jsonbConvert: ["table", "column"],
+  createJsonCollection: "tableName",
 
   // Text
   regexExtract: ["table", "column", "pattern"],
