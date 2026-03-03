@@ -604,6 +604,18 @@ function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition {
         const dataCol = input.dataColumn ?? "data";
         const sqls: string[] = [];
 
+        // Validate all index paths upfront before creating anything
+        if (input.indexes) {
+          for (const idx of input.indexes) {
+            if (!idx.path.startsWith("$")) {
+              return {
+                success: false,
+                error: `JSON path must start with $: ${idx.path}`,
+              };
+            }
+          }
+        }
+
         // Build CREATE TABLE
         const columns = [
           `"${idCol}" TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))))`,
@@ -622,19 +634,13 @@ function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition {
         // Execute CREATE TABLE
         await adapter.executeWriteQuery(createSql);
 
-        // Create indexes
+        // Create indexes (all paths already validated above)
         let indexCount = 0;
         if (input.indexes) {
           for (const idx of input.indexes) {
-            if (!idx.path.startsWith("$")) {
-              return {
-                success: false,
-                error: `JSON path must start with $: ${idx.path}`,
-              };
-            }
             const indexName =
               idx.name ??
-              `idx_${input.tableName}_${idx.path.replace(/[$.[\]]/g, "_")}`;
+              `idx_${input.tableName}_${idx.path.replace(/[$.[\\]]/g, "_")}`;
             const indexSql = `CREATE INDEX IF NOT EXISTS "${indexName}" ON "${input.tableName}"(json_extract("${dataCol}", '${idx.path}'))`;
             sqls.push(indexSql);
             await adapter.executeWriteQuery(indexSql);

@@ -81,6 +81,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated README.md, DOCKER_README.md, ToolConstants.ts, ServerInstructions.ts
   - Updated fts.test.ts and index.test.ts to verify exclusion
 
+- **`sqlite_create_json_collection` Non-Atomic Table Creation** — Index path validation now runs before table creation
+  - Previously, the table was created first, then index paths were validated one-by-one
+  - An invalid index path returned `{success: false}` but left the table behind (partial creation)
+  - Now validates all index paths upfront before executing `CREATE TABLE`
+
 ### Added
 
 - **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
