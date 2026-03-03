@@ -14,6 +14,7 @@ import {
   destructive,
 } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
+import { formatError } from "../../../utils/errors.js";
 import {
   ReadQuerySchema,
   WriteQuerySchema,
@@ -67,14 +68,29 @@ function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = ReadQuerySchema.parse(params);
 
-      const result = await adapter.executeReadQuery(input.query, input.params);
+      try {
+        const result = await adapter.executeReadQuery(
+          input.query,
+          input.params,
+        );
 
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        rows: result.rows,
-        executionTimeMs: result.executionTimeMs,
-      };
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          rows: result.rows,
+          executionTimeMs: result.executionTimeMs,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }
@@ -95,13 +111,70 @@ function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = WriteQuerySchema.parse(params);
 
-      const result = await adapter.executeWriteQuery(input.query, input.params);
+      // Validate statement type: only allow DML statements
+      const trimmedUpper = input.query.trim().toUpperCase();
+      const allowedPrefixes = [
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "REPLACE",
+        "UPSERT",
+      ];
+      const rejectedPrefixes = [
+        "SELECT",
+        "PRAGMA",
+        "EXPLAIN",
+        "CREATE",
+        "ALTER",
+        "DROP",
+        "TRUNCATE",
+        "ATTACH",
+        "DETACH",
+        "VACUUM",
+        "REINDEX",
+        "ANALYZE",
+      ];
 
-      return {
-        success: true,
-        rowsAffected: result.rowsAffected,
-        executionTimeMs: result.executionTimeMs,
-      };
+      const isAllowed = allowedPrefixes.some((p) => trimmedUpper.startsWith(p));
+      if (!isAllowed) {
+        const rejectedPrefix = rejectedPrefixes.find((p) =>
+          trimmedUpper.startsWith(p),
+        );
+        if (rejectedPrefix) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: `Statement type not allowed: ${rejectedPrefix} is not a DML statement. Use sqlite_read_query for SELECT, or appropriate admin tools for DDL.`,
+          };
+        }
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: `Unrecognized statement type. sqlite_write_query only accepts INSERT, UPDATE, DELETE, or REPLACE statements.`,
+        };
+      }
+
+      try {
+        const result = await adapter.executeWriteQuery(
+          input.query,
+          input.params,
+        );
+
+        return {
+          success: true,
+          rowsAffected: result.rowsAffected,
+          executionTimeMs: result.executionTimeMs,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }
@@ -308,14 +381,26 @@ function createDescribeTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DescribeTableSchema.parse(params);
 
-      const tableInfo = await adapter.describeTable(input.tableName);
+      try {
+        const tableInfo = await adapter.describeTable(input.tableName);
 
-      return {
-        success: true,
-        table: tableInfo.name,
-        rowCount: tableInfo.rowCount,
-        columns: tableInfo.columns,
-      };
+        return {
+          success: true,
+          table: tableInfo.name,
+          rowCount: tableInfo.rowCount,
+          columns: tableInfo.columns,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          table: input.tableName,
+          columns: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
     },
   };
 }
@@ -339,15 +424,41 @@ function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate table name
       sanitizeIdentifier(input.tableName);
 
-      const ifExists = input.ifExists ? "IF EXISTS " : "";
-      const sql = `DROP TABLE ${ifExists}"${input.tableName}"`;
+      // Check if table exists before dropping
+      const checkResult = await adapter.executeReadQuery(
+        `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
+        [input.tableName],
+      );
+      const tableExists = (checkResult.rows?.length ?? 0) > 0;
 
-      await adapter.executeQuery(sql);
+      if (!tableExists) {
+        if (input.ifExists) {
+          return {
+            success: true,
+            message: `Table '${input.tableName}' does not exist (no changes made)`,
+          };
+        }
+        return {
+          success: false,
+          message: `Table '${input.tableName}' does not exist`,
+        };
+      }
 
-      return {
-        success: true,
-        message: `Table '${input.tableName}' dropped successfully`,
-      };
+      try {
+        const sql = `DROP TABLE "${input.tableName}"`;
+        await adapter.executeQuery(sql);
+
+        return {
+          success: true,
+          message: `Table '${input.tableName}' dropped successfully`,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          message: structured.error,
+        };
+      }
     },
   };
 }
@@ -428,13 +539,22 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
 
       const sql = `CREATE ${unique}INDEX ${ifNotExists}"${input.indexName}" ON "${input.tableName}" (${columns})`;
 
-      await adapter.executeQuery(sql);
+      try {
+        await adapter.executeQuery(sql);
 
-      return {
-        success: true,
-        message: `Index '${input.indexName}' created on ${input.tableName}(${input.columns.join(", ")})`,
-        sql,
-      };
+        return {
+          success: true,
+          message: `Index '${input.indexName}' created on ${input.tableName}(${input.columns.join(", ")})`,
+          sql,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          message: structured.error,
+          sql,
+        };
+      }
     },
   };
 }

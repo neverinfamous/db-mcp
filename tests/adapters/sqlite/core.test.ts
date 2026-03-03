@@ -255,11 +255,12 @@ describe("Core Tools", () => {
     });
 
     it("should reject write queries", async () => {
-      await expect(
-        tools.get("sqlite_read_query")?.({
-          query: "DROP TABLE users",
-        }),
-      ).rejects.toThrow();
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "DROP TABLE users",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
@@ -347,6 +348,117 @@ describe("Core Tools", () => {
 
       tables = await adapter.listTables();
       expect(tables.map((t) => t.name)).not.toContain("todrop");
+    });
+  });
+
+  // =========================================================================
+  // Error Path Tests
+  // =========================================================================
+
+  describe("error paths", () => {
+    describe("sqlite_describe_table errors", () => {
+      it("should return structured error for nonexistent table", async () => {
+        const result = (await tools.get("sqlite_describe_table")?.({
+          tableName: "nonexistent_table_xyz",
+        })) as { success: boolean; error?: string; columns: unknown[] };
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
+        expect(result.columns).toEqual([]);
+      });
+    });
+
+    describe("sqlite_read_query errors", () => {
+      it("should return structured error for nonexistent table", async () => {
+        const result = (await tools.get("sqlite_read_query")?.({
+          query: "SELECT * FROM nonexistent_table_xyz",
+        })) as { success: boolean; error?: string; rows: unknown[] };
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
+        expect(result.rows).toEqual([]);
+      });
+    });
+
+    describe("sqlite_write_query errors", () => {
+      it("should reject SELECT statements", async () => {
+        const result = (await tools.get("sqlite_write_query")?.({
+          query: "SELECT * FROM sqlite_master",
+        })) as { success: boolean; error?: string; rowsAffected: number };
+
+        expect(result.success).toBe(false);
+        expect(result.error).toContain("SELECT");
+        expect(result.rowsAffected).toBe(0);
+      });
+
+      it("should reject DDL statements", async () => {
+        await adapter.executeWriteQuery("CREATE TABLE ddl_test (id INTEGER)");
+
+        const result = (await tools.get("sqlite_write_query")?.({
+          query: "DROP TABLE ddl_test",
+        })) as { success: boolean; error?: string; rowsAffected: number };
+
+        expect(result.success).toBe(false);
+        expect(result.error).toContain("DROP");
+        expect(result.rowsAffected).toBe(0);
+
+        // Table should still exist
+        const tables = await adapter.listTables();
+        expect(tables.map((t) => t.name)).toContain("ddl_test");
+      });
+
+      it("should reject CREATE statements", async () => {
+        const result = (await tools.get("sqlite_write_query")?.({
+          query: "CREATE TABLE hack (id INTEGER)",
+        })) as { success: boolean; error?: string };
+
+        expect(result.success).toBe(false);
+        expect(result.error).toContain("CREATE");
+      });
+
+      it("should return structured error for invalid DML", async () => {
+        const result = (await tools.get("sqlite_write_query")?.({
+          query: "INSERT INTO nonexistent_xyz VALUES (1)",
+        })) as { success: boolean; error?: string };
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
+      });
+    });
+
+    describe("sqlite_create_index errors", () => {
+      it("should return structured error for nonexistent table", async () => {
+        const result = (await tools.get("sqlite_create_index")?.({
+          indexName: "idx_bad",
+          tableName: "nonexistent_table_xyz",
+          columns: ["col"],
+        })) as { success: boolean; message: string };
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBeDefined();
+      });
+    });
+
+    describe("sqlite_drop_table errors", () => {
+      it("should return informative message when table does not exist with ifExists", async () => {
+        const result = (await tools.get("sqlite_drop_table")?.({
+          tableName: "nonexistent_table_xyz",
+          ifExists: true,
+        })) as { success: boolean; message: string };
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain("does not exist");
+      });
+
+      it("should return error when table does not exist without ifExists", async () => {
+        const result = (await tools.get("sqlite_drop_table")?.({
+          tableName: "nonexistent_table_xyz",
+          ifExists: false,
+        })) as { success: boolean; message: string };
+
+        expect(result.success).toBe(false);
+        expect(result.message).toContain("does not exist");
+      });
     });
   });
 });

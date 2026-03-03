@@ -31,6 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Applies to both WASM (`SqliteAdapter`) and native (`NativeSqliteAdapter`) adapters
   - Codemode error paths enriched: `CODEMODE_VALIDATION_FAILED`, `CODEMODE_RATE_LIMITED`, `CODEMODE_EXECUTION_FAILED`
   - Added 4 codemode-specific patterns to `ERROR_SUGGESTIONS` for auto-suggestion matching
+- **Core Tool Handler-Level Error Handling** — 5 core tool handlers now catch errors locally and return `{success: false}` responses
+  - `sqlite_read_query`, `sqlite_write_query`, `sqlite_describe_table`, `sqlite_create_index`: Catch errors with `formatError()` and return structured `{success: false, error, code, suggestion}` instead of propagating as `isError: true` MCP exceptions
+  - `sqlite_drop_table`: Checks table existence before DROP; returns `"does not exist (no changes made)"` when `ifExists` is true and table is absent, or `{success: false}` when `ifExists` is false
+
+### Fixed
+
+- **`sqlite_write_query` Statement Type Validation** — Now rejects non-DML statements with structured errors
+  - Only allows INSERT, UPDATE, DELETE, and REPLACE statements
+  - SELECT, PRAGMA, EXPLAIN, and DDL (CREATE, ALTER, DROP, TRUNCATE) are rejected with clear error messages
+  - Prevents accidental data loss from DDL via write_query (previously accepted and executed `DROP TABLE`)
 - **WASM FTS5 Tool Exclusion** — FTS5 tools no longer registered in WASM mode
   - Removed `getFtsTools()` from shared WASM tool index (`tools/index.ts`)
   - FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) remain available in native mode only
