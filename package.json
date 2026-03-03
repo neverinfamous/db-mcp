@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "clean": "rimraf dist",
+    "generate:instructions": "node scripts/generate-server-instructions.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
