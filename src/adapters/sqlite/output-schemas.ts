@@ -17,7 +17,7 @@ import { z } from "zod";
 const RowRecordSchema = z.record(z.string(), z.unknown());
 
 // =============================================================================
-// Core Tool Output Schemas (8 tools)
+// Core Tool Output Schemas (9 tools)
 // =============================================================================
 
 /**
@@ -122,6 +122,14 @@ export const CreateIndexOutputSchema = z.object({
   success: z.boolean(),
   message: z.string(),
   sql: z.string(),
+});
+
+/**
+ * sqlite_drop_index output
+ */
+export const DropIndexOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
 });
 
 // =============================================================================

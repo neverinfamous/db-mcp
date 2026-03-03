@@ -351,19 +351,51 @@ describe("Core Tools", () => {
     });
   });
 
+  describe("sqlite_drop_index", () => {
+    it("should drop an index", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE idx_test (id INTEGER, name TEXT)",
+      );
+      await adapter.executeWriteQuery(
+        "CREATE INDEX idx_to_drop ON idx_test(name)",
+      );
+
+      const result = (await tools.get("sqlite_drop_index")?.({
+        indexName: "idx_to_drop",
+      })) as { success: boolean; message: string };
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain("dropped successfully");
+
+      // Verify index is gone
+      const indexes = (await tools.get("sqlite_get_indexes")?.({
+        tableName: "idx_test",
+      })) as { indexes: { name: string }[] };
+      expect(indexes.indexes.map((i) => i.name)).not.toContain("idx_to_drop");
+    });
+  });
+
   // =========================================================================
   // Error Path Tests
   // =========================================================================
 
   describe("error paths", () => {
     describe("sqlite_describe_table errors", () => {
-      it("should return structured error for nonexistent table", async () => {
+      it("should return TABLE_NOT_FOUND code for nonexistent table", async () => {
         const result = (await tools.get("sqlite_describe_table")?.({
           tableName: "nonexistent_table_xyz",
-        })) as { success: boolean; error?: string; columns: unknown[] };
+        })) as {
+          success: boolean;
+          error?: string;
+          code?: string;
+          suggestion?: string;
+          columns: unknown[];
+        };
 
         expect(result.success).toBe(false);
-        expect(result.error).toBeDefined();
+        expect(result.error).toContain("does not exist");
+        expect(result.code).toBe("TABLE_NOT_FOUND");
+        expect(result.suggestion).toBeDefined();
         expect(result.columns).toEqual([]);
       });
     });
@@ -453,6 +485,46 @@ describe("Core Tools", () => {
       it("should return error when table does not exist without ifExists", async () => {
         const result = (await tools.get("sqlite_drop_table")?.({
           tableName: "nonexistent_table_xyz",
+          ifExists: false,
+        })) as { success: boolean; message: string };
+
+        expect(result.success).toBe(false);
+        expect(result.message).toContain("does not exist");
+      });
+    });
+
+    describe("sqlite_get_indexes errors", () => {
+      it("should return TABLE_NOT_FOUND for nonexistent table", async () => {
+        const result = (await tools.get("sqlite_get_indexes")?.({
+          tableName: "nonexistent_table_xyz",
+        })) as {
+          success: boolean;
+          error?: string;
+          code?: string;
+          indexes: unknown[];
+        };
+
+        expect(result.success).toBe(false);
+        expect(result.error).toContain("does not exist");
+        expect(result.code).toBe("TABLE_NOT_FOUND");
+        expect(result.indexes).toEqual([]);
+      });
+    });
+
+    describe("sqlite_drop_index errors", () => {
+      it("should return informative message when index does not exist with ifExists", async () => {
+        const result = (await tools.get("sqlite_drop_index")?.({
+          indexName: "nonexistent_index_xyz",
+          ifExists: true,
+        })) as { success: boolean; message: string };
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain("does not exist");
+      });
+
+      it("should return error when index does not exist without ifExists", async () => {
+        const result = (await tools.get("sqlite_drop_index")?.({
+          indexName: "nonexistent_index_xyz",
           ifExists: false,
         })) as { success: boolean; message: string };
 

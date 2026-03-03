@@ -4,7 +4,7 @@
  * Defines the tool groups and meta-groups used for filtering.
  *
  * Actual tool groups (from code audit):
- *   core: 8 tools (from core.ts)
+ *   core: 9 tools (from core.ts)
  *   json: 23 tools (from json-helpers.ts + json-operations.ts)
  *   text: 13 tools (from text.ts) WASM / 17 tools (text.ts + fts.ts) Native
  *   stats: 19 tools (from stats.ts + window.ts)
@@ -48,6 +48,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "drop_table",
     "get_indexes",
     "create_index",
+    "drop_index",
   ],
   json: [
     // JSON Helper Tools (8)
@@ -178,7 +179,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Geospatial workloads - Core + Geo + Vector + Codemode (31 tools Native, 24 WASM)
   spatial: ["core", "geo", "vector", "codemode"],
 
-  // Bare minimum - Core + Codemode (9 tools)
+  // Bare minimum - Core + Codemode (10 tools)
   minimal: ["core", "codemode"],
 
   // All tools enabled (123 Native / 99 WASM tools)

@@ -171,6 +171,15 @@ export const GetIndexesSchema = z.object({
     ),
 });
 
+export const DropIndexSchema = z.object({
+  indexName: z.string().describe("Name of the index to drop"),
+  ifExists: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Add IF EXISTS clause"),
+});
+
 export const ListTablesSchema = z.object({
   excludeSystemTables: z
     .boolean()
@@ -313,6 +322,7 @@ export type DescribeTableInput = z.infer<typeof DescribeTableSchema>;
 export type DropTableInput = z.infer<typeof DropTableSchema>;
 export type CreateIndexInput = z.infer<typeof CreateIndexSchema>;
 export type GetIndexesInput = z.infer<typeof GetIndexesSchema>;
+export type DropIndexInput = z.infer<typeof DropIndexSchema>;
 export type JsonInsertInput = z.infer<typeof JsonInsertSchema>;
 export type JsonUpdateInput = z.infer<typeof JsonUpdateSchema>;
 export type JsonSelectInput = z.infer<typeof JsonSelectSchema>;

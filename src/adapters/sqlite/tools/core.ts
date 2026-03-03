@@ -24,6 +24,7 @@ import {
   DropTableSchema,
   CreateIndexSchema,
   GetIndexesSchema,
+  DropIndexSchema,
 } from "../types.js";
 import {
   ReadQueryOutputSchema,
@@ -34,6 +35,7 @@ import {
   DropTableOutputSchema,
   GetIndexesOutputSchema,
   CreateIndexOutputSchema,
+  DropIndexOutputSchema,
 } from "../output-schemas.js";
 
 /**
@@ -49,6 +51,7 @@ export function getCoreTools(adapter: SqliteAdapter): ToolDefinition[] {
     createDropTableTool(adapter),
     createGetIndexesTool(adapter),
     createCreateIndexTool(adapter),
+    createDropIndexTool(adapter),
   ];
 }
 
@@ -381,6 +384,23 @@ function createDescribeTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = DescribeTableSchema.parse(params);
 
+      // Check table existence first for a specific error code
+      const checkResult = await adapter.executeReadQuery(
+        `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
+        [input.tableName],
+      );
+      if ((checkResult.rows?.length ?? 0) === 0) {
+        return {
+          success: false,
+          table: input.tableName,
+          columns: [],
+          error: `Table '${input.tableName}' does not exist`,
+          code: "TABLE_NOT_FOUND",
+          suggestion:
+            "Table not found. Run sqlite_list_tables to see available tables.",
+        };
+      }
+
       try {
         const tableInfo = await adapter.describeTable(input.tableName);
 
@@ -484,6 +504,24 @@ function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.tableName) {
         // Validate table name
         sanitizeIdentifier(input.tableName);
+
+        // Check table existence when a specific table is requested
+        const checkResult = await adapter.executeReadQuery(
+          `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
+          [input.tableName],
+        );
+        if ((checkResult.rows?.length ?? 0) === 0) {
+          return {
+            success: false,
+            count: 0,
+            indexes: [],
+            error: `Table '${input.tableName}' does not exist`,
+            code: "TABLE_NOT_FOUND",
+            suggestion:
+              "Table not found. Run sqlite_list_tables to see available tables.",
+          };
+        }
+
         sql += ` AND tbl_name = '${input.tableName}'`;
       }
 
@@ -553,6 +591,63 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
           success: false,
           message: structured.error,
           sql,
+        };
+      }
+    },
+  };
+}
+
+/**
+ * Drop an index
+ */
+function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_drop_index",
+    description: "Drop (delete) an index from the database.",
+    group: "core",
+    inputSchema: DropIndexSchema,
+    outputSchema: DropIndexOutputSchema,
+    requiredScopes: ["admin"],
+    annotations: destructive("Drop Index"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      const input = DropIndexSchema.parse(params);
+
+      // Validate index name
+      sanitizeIdentifier(input.indexName);
+
+      // Check if index exists before dropping
+      const checkResult = await adapter.executeReadQuery(
+        `SELECT 1 FROM sqlite_master WHERE type='index' AND name=?`,
+        [input.indexName],
+      );
+      const indexExists = (checkResult.rows?.length ?? 0) > 0;
+
+      if (!indexExists) {
+        if (input.ifExists) {
+          return {
+            success: true,
+            message: `Index '${input.indexName}' does not exist (no changes made)`,
+          };
+        }
+        return {
+          success: false,
+          message: `Index '${input.indexName}' does not exist`,
+        };
+      }
+
+      try {
+        const sql = `DROP INDEX "${input.indexName}"`;
+        await adapter.executeQuery(sql);
+
+        return {
+          success: true,
+          message: `Index '${input.indexName}' dropped successfully`,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          message: structured.error,
         };
       }
     },

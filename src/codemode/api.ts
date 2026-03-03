@@ -79,10 +79,10 @@ const METHOD_ALIASES: Record<string, Record<string, string>> = {
  */
 const GROUP_EXAMPLES: Record<string, string[]> = {
   core: [
-    'sqlite.core.readQuery("SELECT * FROM users LIMIT 10")',
-    'sqlite.core.describeTable("users")',
+    'sqlite.core.readQuery({ query: "SELECT * FROM users LIMIT 10" })',
+    'sqlite.core.describeTable({ tableName: "users" })',
     "sqlite.core.listTables()",
-    "sqlite.core.writeQuery(\"INSERT INTO users (name) VALUES ('Alice')\")",
+    "sqlite.core.writeQuery({ query: \"INSERT INTO users (name) VALUES ('Alice')\" })",
   ],
   json: [
     'sqlite.json.extract({ table: "docs", column: "data", path: "$.title" })',
@@ -127,18 +127,19 @@ const GROUP_EXAMPLES: Record<string, string[]> = {
  * Array = multiple positional args map to these keys in order.
  *
  * Enables:
- * - `sqlite.core.readQuery("SELECT...")` → `{ sql: "SELECT..." }`
- * - `sqlite.core.describeTable("users")` → `{ table: "users" }`
+ * - `sqlite.core.readQuery("SELECT...")` → `{ query: "SELECT..." }`
+ * - `sqlite.core.describeTable("users")` → `{ tableName: "users" }`
  */
 const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   // Core
-  readQuery: "sql",
-  writeQuery: "sql",
-  describeTable: "table",
-  dropTable: "table",
-  getIndexes: "table",
-  createTable: ["table", "columns"],
-  createIndex: ["table", "columns"],
+  readQuery: "query",
+  writeQuery: "query",
+  describeTable: "tableName",
+  dropTable: "tableName",
+  getIndexes: "tableName",
+  dropIndex: "indexName",
+  createTable: ["tableName", "columns"],
+  createIndex: ["tableName", "columns"],
 
   // JSON
   extract: ["table", "column", "path"],

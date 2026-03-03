@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Worker sandbox uses MessagePort RPC bridge for secure API proxy between threads
   - Security: code validation against blocked patterns, rate limiting (60 exec/min), result sanitization (10MB cap), audit logging
   - Built-in `help()` for discoverability: `sqlite.help()` for groups, `sqlite.<group>.help()` for methods
-  - Positional parameter support: `sqlite.core.readQuery("SELECT 1")` maps to `{ sql: "SELECT 1" }`
+  - Positional parameter support: `sqlite.core.readQuery("SELECT 1")` maps to `{ query: "SELECT 1" }`
   - Method aliases for ergonomic use (e.g., `sqlite.core.query()` → `readQuery`)
   - New `codemode` tool group added to all meta-group shortcuts (starter, analytics, search, spatial, minimal, full)
   - Environment variable `CODEMODE_ISOLATION=vm|worker` to select sandbox mode (default: `worker`)
@@ -34,8 +34,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Core Tool Handler-Level Error Handling** — 5 core tool handlers now catch errors locally and return `{success: false}` responses
   - `sqlite_read_query`, `sqlite_write_query`, `sqlite_describe_table`, `sqlite_create_index`: Catch errors with `formatError()` and return structured `{success: false, error, code, suggestion}` instead of propagating as `isError: true` MCP exceptions
   - `sqlite_drop_table`: Checks table existence before DROP; returns `"does not exist (no changes made)"` when `ifExists` is true and table is absent, or `{success: false}` when `ifExists` is false
+  - `sqlite_describe_table`: Pre-checks table existence and returns `TABLE_NOT_FOUND` error code instead of generic `UNKNOWN_ERROR`
+  - `sqlite_get_indexes`: Validates table existence when `tableName` is specified; returns `{success: false, code: "TABLE_NOT_FOUND"}` instead of empty `{success: true}`
+
+### Added
+
+- **`sqlite_drop_index` Tool** — New core tool to drop indexes from the database
+  - Validates index existence before dropping
+  - Supports `ifExists` flag (default `true`) for graceful no-op when index doesn't exist
+  - Registered in core group with `DropIndexSchema` / `DropIndexOutputSchema`
+  - Added to `ToolConstants.ts`, `ServerInstructions.ts`, and positional param map
+  - Core tool count: 8 → 9 (minimal meta-group: 9 → 10)
 
 ### Fixed
+
+- **Codemode Positional Parameter Mapping** — Fixed incorrect parameter name mappings in `api.ts`
+  - `readQuery` and `writeQuery` mapped to `"sql"` but actual schema uses `"query"` — corrected
+  - `describeTable`, `dropTable`, `getIndexes` mapped to `"table"` but actual schema uses `"tableName"` — corrected
+  - `createTable`, `createIndex` first positional param mapped to `"table"` instead of `"tableName"` — corrected
+  - `ServerInstructions.ts` examples updated to match corrected mappings
 
 - **`sqlite_write_query` Statement Type Validation** — Now rejects non-DML statements with structured errors
   - Only allows INSERT, UPDATE, DELETE, and REPLACE statements

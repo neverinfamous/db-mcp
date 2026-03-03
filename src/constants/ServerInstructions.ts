@@ -57,7 +57,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | \`server_health\` | Check adapter connections, latency, SQLite version |
 | \`list_adapters\` | List registered database adapters |
 
-## Core Tools (8)
+## Core Tools (9)
 | Tool | Description |
 |------|-------------|
 | \`sqlite_read_query\` | Execute SELECT queries |
@@ -68,6 +68,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | \`sqlite_drop_table\` | Drop (delete) a table |
 | \`sqlite_get_indexes\` | List indexes (use excludeSystemIndexes to hide SpatiaLite indexes) |
 | \`sqlite_create_index\` | Create index |
+| \`sqlite_drop_index\` | Drop (delete) an index |
 
 ## WASM vs Native
 | Feature | Native | WASM | Fallback |
