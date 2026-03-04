@@ -254,8 +254,9 @@ describe("Geo Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.results[0]).toHaveProperty("name");
-      expect(result.results[0]).toHaveProperty("latitude");
-      expect(result.results[0]).toHaveProperty("longitude");
+      expect(result.results[0]).toHaveProperty("_distance");
+      expect(result.results[0]).not.toHaveProperty("latitude");
+      expect(result.results[0]).not.toHaveProperty("longitude");
     });
   });
 

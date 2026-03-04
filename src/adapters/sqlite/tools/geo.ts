@@ -256,10 +256,30 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
           .sort((a, b) => a._distance - b._distance)
           .slice(0, input.limit);
 
+        // Strip internally-added lat/lon columns when returnColumns was specified
+        // and user didn't explicitly request them
+        let results = nearby;
+        if (input.returnColumns && input.returnColumns.length > 0) {
+          const requested = new Set(input.returnColumns);
+          const stripLat = !requested.has(input.latColumn);
+          const stripLon = !requested.has(input.lonColumn);
+          if (stripLat || stripLon) {
+            const keysToStrip = new Set<string>();
+            if (stripLat) keysToStrip.add(input.latColumn);
+            if (stripLon) keysToStrip.add(input.lonColumn);
+            results = nearby.map(
+              (row) =>
+                Object.fromEntries(
+                  Object.entries(row).filter(([k]) => !keysToStrip.has(k)),
+                ) as (typeof nearby)[number],
+            );
+          }
+        }
+
         return {
           success: true,
-          rowCount: nearby.length,
-          results: nearby,
+          rowCount: results.length,
+          results,
         };
       } catch (error) {
         return formatError(error);

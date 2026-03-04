@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_geo_nearby` `returnColumns` Column Leakage** — Lat/lon columns no longer leak into results when `returnColumns` is specified
+  - Previously, internally-added lat/lon columns (needed for Haversine distance calculation) were included in the response even when the user didn't request them
+  - Now strips lat/lon columns from results unless the user explicitly includes them in `returnColumns`
+  - Consistent with `sqlite_geo_bounding_box` which already respected `returnColumns` exactly
 - **Geo Tool Structured Error Responses** — All 3 database-accessing geo handlers now return structured errors instead of throwing raw MCP errors
   - `sqlite_geo_nearby`, `sqlite_geo_bounding_box`, `sqlite_geo_cluster`: Wrap handler logic in try-catch with `formatError()` for consistent `{success: false, error: "..."}` responses
   - Added `validateColumnExists()` to validate lat/lon column existence before query execution; previously nonexistent columns silently returned 0 results
