@@ -63,6 +63,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_stats_correlation` Non-Numeric Column Validation** — Now returns structured error for non-numeric columns
+  - Previously returned `{success: true, correlation: null}` when correlating text columns (e.g., `name`, `description`)
+  - Now validates column types via `PRAGMA table_info()` and returns `{success: false, code: "INVALID_INPUT"}` with suggestion to use numeric columns
+  - Correlation description says "numeric columns" — behavior now enforces this
+- **`sqlite_stats_histogram` Bucket Validation** — Added `.min(1)` constraint to `buckets` schema parameter
+  - Previously, `buckets: 0` generated invalid SQL (`SELECT FROM table`) causing a syntax error
+  - Now rejects at Zod validation level with clear "Too small: expected number to be >=1" message
+- **Stats Code Mode Positional Parameters** — Fixed `statsGroupBy` and added 5 missing entries in `api.ts`
+  - `statsGroupBy`: Was mapped to `["table", "column"]` but actual params are `["table", "valueColumn", "groupByColumn", "stat"]`
+  - Added missing positional mappings for `statsDistinct`, `statsSummary`, `statsFrequency`, `statsOutliers`, `statsHypothesis`
+  - All 13 stats methods now support positional arg syntax in `sqlite_execute_code`
+
 - **Code Mode `help()` Write Method Discoverability** — `help()` now lists all methods regardless of `readonly` flag
   - Previously, `readonly: true` filtered write tools before API construction, hiding them from `help()` output
   - Now builds full API surface first, then wraps write methods with readonly guards returning `CODEMODE_READONLY_VIOLATION` errors

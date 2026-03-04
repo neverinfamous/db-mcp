@@ -183,12 +183,17 @@ const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   // Stats
   statsBasic: ["table", "column"],
   statsCount: ["table"],
-  statsGroupBy: ["table", "column"],
+  statsGroupBy: ["table", "valueColumn", "groupByColumn", "stat"],
   statsHistogram: ["table", "column", "buckets"],
   statsPercentile: ["table", "column", "percentiles"],
   statsCorrelation: ["table", "column1", "column2"],
   statsRegression: ["table", "xColumn", "yColumn"],
   statsTopN: ["table", "column"],
+  statsDistinct: ["table", "column"],
+  statsSummary: ["table", "columns"],
+  statsFrequency: ["table", "column"],
+  statsOutliers: ["table", "column"],
+  statsHypothesis: ["table", "testType", "column"],
 
   // Vector
   vectorCreateTable: ["tableName", "dimensions"],

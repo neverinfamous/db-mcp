@@ -102,7 +102,12 @@ const GroupByStatsSchema = z.object({
 const HistogramSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column"),
-  buckets: z.number().optional().default(10).describe("Number of buckets"),
+  buckets: z
+    .number()
+    .min(1)
+    .optional()
+    .default(10)
+    .describe("Number of buckets"),
   whereClause: z.string().optional(),
 });
 
@@ -592,6 +597,48 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.column1);
         await validateColumnExists(adapter, input.table, input.column2);
+
+        // Validate columns are numeric
+        const tableInfo = await adapter.describeTable(input.table);
+        const numericTypes = new Set([
+          "integer",
+          "int",
+          "real",
+          "float",
+          "double",
+          "numeric",
+          "decimal",
+          "number",
+          "smallint",
+          "bigint",
+          "tinyint",
+          "mediumint",
+        ]);
+        const columnMap = new Map(
+          (tableInfo.columns ?? []).map((c) => [
+            c.name.toLowerCase(),
+            (c.type ?? "").toLowerCase(),
+          ]),
+        );
+        const col1Type = columnMap.get(input.column1.toLowerCase()) ?? "";
+        const col2Type = columnMap.get(input.column2.toLowerCase()) ?? "";
+        const isNumericType = (t: string): boolean =>
+          [...numericTypes].some((nt) => t === nt || t.startsWith(nt));
+
+        if (!isNumericType(col1Type) || !isNumericType(col2Type)) {
+          const nonNumeric = !isNumericType(col1Type)
+            ? input.column1
+            : input.column2;
+          return {
+            success: false,
+            error: `Column '${nonNumeric}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
+            code: "INVALID_INPUT",
+            category: "validation",
+            suggestion:
+              "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for correlation analysis.",
+            recoverable: false,
+          };
+        }
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
