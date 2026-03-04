@@ -118,6 +118,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `statsTopN`: Was `["table", "column"]`, missing `n` and `orderDirection` — fixed to `["table", "column", "n", "orderDirection"]`
   - `statsHypothesis`: Had `column` and `testType` swapped — fixed to `["table", "column", "testType"]`
   - `statsHypothesis`: Added missing `expectedMean` as 4th positional param — enables `sqlite.stats.statsHypothesis("table", "col", "ttest_one", 25)` without object syntax
+- **Stats Code Mode Positional Parameters (Round 3)** — Added `whereClause` and `selectColumns` to positional parameter mappings in `api.ts`
+  - 12 stats methods (`statsBasic`, `statsCount`, `statsGroupBy`, `statsHistogram`, `statsPercentile`, `statsCorrelation`, `statsRegression`, `statsDistinct`, `statsSummary`, `statsFrequency`, `statsOutliers`, `statsHypothesis`) now accept trailing `whereClause` positional arg
+  - `statsTopN`: Added `selectColumns` as 5th positional param — enables `sqlite.stats.statsTopN("table", "col", 3, "desc", ["id", "name"])` without object syntax
+  - Previously, trailing positional args for `whereClause` and `selectColumns` were silently dropped
 - **Stats Code Mode Help Examples** — Fixed incorrect method names in `GROUP_EXAMPLES` for stats group
   - `sqlite.stats.basic()` → `sqlite.stats.statsBasic()`, `.histogram()` → `.statsHistogram()`, `.percentile()` → `.statsPercentile()`
   - Stats group uses `KEEP_PREFIX_GROUPS` so methods retain the `stats` prefix; examples now match actual API
