@@ -327,16 +327,17 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
-   * Check if FTS5 is available
+   * Check if FTS5 is available via compile options.
+   * Uses PRAGMA compile_options instead of creating a virtual table probe,
+   * which can fail when SpatiaLite extensions are loaded.
    */
   private hasFts5(): boolean {
     if (!this.db) return false;
     try {
-      this.db.exec(
-        "CREATE VIRTUAL TABLE IF NOT EXISTS _fts5_test USING fts5(content)",
-      );
-      this.db.exec("DROP TABLE IF EXISTS _fts5_test");
-      return true;
+      const rows = this.db.prepare("PRAGMA compile_options").all() as {
+        compile_options: string;
+      }[];
+      return rows.some((r) => r.compile_options === "ENABLE_FTS5");
     } catch {
       return false;
     }

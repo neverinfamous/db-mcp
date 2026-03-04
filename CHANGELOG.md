@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`server_health` FTS5 Detection False Negative** — Health check now correctly reports `fts5: true` when FTS5 is compiled in
+  - `hasFts5()` previously created a `_fts5_test` virtual table as a probe, which silently failed when SpatiaLite extensions were loaded
+  - Replaced with lightweight `PRAGMA compile_options` check for `ENABLE_FTS5` flag
+  - More reliable and efficient than the virtual table creation/drop approach
+
 - **FTS5 Tool Structured Error Responses** — All 4 FTS5 handlers now return structured errors instead of throwing raw MCP exceptions
   - `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`: Errors like nonexistent tables, bad SQL, and invalid columns now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
   - Previously, only `isFts5UnavailableError` (WASM mode) was caught; all other errors were re-thrown
