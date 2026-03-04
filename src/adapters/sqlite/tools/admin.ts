@@ -136,6 +136,18 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = BackupSchema.parse(params);
 
+      // WASM mode: backup is not available since file system access is limited
+      // Return early to avoid inconsistent VACUUM INTO behavior across WASM VFS implementations
+      if (!adapter.isNativeBackend()) {
+        return {
+          success: false,
+          message:
+            "Backup not available: file system access is not supported in WASM mode.",
+          wasmLimitation: true,
+          path: input.targetPath,
+        };
+      }
+
       // Use VACUUM INTO to create backup
       const escapedPath = input.targetPath.replace(/'/g, "''");
       const sql = `VACUUM INTO '${escapedPath}'`;
@@ -145,37 +157,18 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
         await adapter.executeQuery(sql);
         const duration = Date.now() - start;
 
-        // In WASM mode, backup goes to virtual filesystem (ephemeral)
-        const isWasm = !adapter.isNativeBackend();
         return {
           success: true,
-          message: isWasm
-            ? `Database backed up to WASM virtual filesystem (ephemeral)`
-            : `Database backed up to '${input.targetPath}'`,
+          message: `Database backed up to '${input.targetPath}'`,
           path: input.targetPath,
           durationMs: duration,
-          wasmLimitation: isWasm ? true : undefined,
-          note: isWasm
-            ? "In WASM mode, backups are stored in an ephemeral virtual filesystem and will NOT persist after the session ends. Use native SQLite for persistent backups."
-            : undefined,
         };
       } catch (error) {
-        // Detect WASM file system limitation (only in WASM mode)
-        const errMsg = error instanceof Error ? error.message : String(error);
-        if (
-          !adapter.isNativeBackend() &&
-          (errMsg.includes("unable to open database") ||
-            errMsg.includes("not supported"))
-        ) {
-          return {
-            success: false,
-            message:
-              "Backup not available: file system access is not supported in WASM mode.",
-            wasmLimitation: true,
-            path: input.targetPath,
-          };
-        }
-        throw error;
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          path: input.targetPath,
+        };
       }
     },
   };

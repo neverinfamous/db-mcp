@@ -495,11 +495,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`sqlite_backup` WASM Limitation Clarification** — Backup now clearly indicates ephemeral storage in WASM mode
-  - When running in WASM mode, backup success response now includes `wasmLimitation: true` and explanatory `note`
-  - Message changed from path-based to "Database backed up to WASM virtual filesystem (ephemeral)"
-  - Clarifies that WASM backups go to ephemeral virtual filesystem and won't persist after session ends
-  - Previously returned success with user-provided path, misleadingly implying file was saved to host filesystem
+- **`sqlite_backup` WASM Consistent Error Response** — Backup now returns `success: false` upfront in WASM mode
+  - Previously, backup attempted `VACUUM INTO` then caught errors, leading to inconsistent behavior: sometimes succeeding to ephemeral VFS, sometimes failing on path resolution
+  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
+  - Consistent with `sqlite_restore` and `sqlite_verify_backup` which already had upfront WASM checks
+  - Native mode behavior unchanged: backup still uses `VACUUM INTO` and returns structured errors on failure
 
 - **Stats Tool Group Bug Fixes** — Resolved 6 issues from comprehensive tool testing
   - `sqlite_stats_histogram`: Fixed off-by-one bucket boundary that excluded max values (now uses `<=` for final bucket)
