@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_vector_count` Dimensions Filter** — `dimensions` parameter now filters results instead of being silently ignored
+  - Previously `sqlite_vector_count({table: "t", dimensions: 8})` returned total row count regardless of dimensions value
+  - Now adds `WHERE dimensions = N` clause when dimensions parameter is specified
+- **`sqlite_vector_normalize` Error Handling** — Handler now wrapped in try/catch with `formatError()`
+  - Previously threw raw Zod validation errors instead of returning structured error responses
+  - Now consistent with all other vector tool handlers
+- **`sqlite_vector_batch_store` Empty Items Validation** — Returns early with `{stored: 0, message: "No items provided"}` for empty items array
+  - Previously, empty items array on a nonexistent table silently returned `{success: true, stored: 0}` without touching the database
+  - Now short-circuits before any SQL execution, preventing misleading success responses
+
 - **Vector Tool Structured Error Responses** — All 11 vector handlers now return structured errors instead of throwing raw MCP exceptions
   - `sqlite_vector_create_table`, `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_search`, `sqlite_vector_get`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_stats`, `sqlite_vector_dimensions`, `sqlite_vector_normalize`, `sqlite_vector_distance`: Errors like nonexistent tables, invalid identifiers, and invalid input now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
   - Added `formatError` import from `utils/errors.js` and wrapped all 11 handlers in try/catch blocks

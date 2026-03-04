@@ -317,6 +317,14 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const input = VectorBatchStoreSchema.parse(params);
 
+        if (input.items.length === 0) {
+          return {
+            success: true,
+            stored: 0,
+            message: "No items provided",
+          };
+        }
+
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const idColumn = sanitizeIdentifier(input.idColumn);
@@ -575,7 +583,10 @@ function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate and quote table name
         const table = sanitizeIdentifier(input.table);
 
-        const sql = `SELECT COUNT(*) as count FROM ${table}`;
+        let sql = `SELECT COUNT(*) as count FROM ${table}`;
+        if (input.dimensions !== undefined) {
+          sql += ` WHERE dimensions = ${input.dimensions}`;
+        }
         const result = await adapter.executeReadQuery(sql);
 
         return {
@@ -727,18 +738,22 @@ function createVectorNormalizeTool(): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Normalize Vector"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = VectorNormalizeSchema.parse(params);
+      try {
+        const input = VectorNormalizeSchema.parse(params);
 
-      const normalized = normalizeVector(input.vector);
+        const normalized = normalizeVector(input.vector);
 
-      return Promise.resolve({
-        success: true,
-        original: input.vector,
-        normalized,
-        originalMagnitude: Math.sqrt(
-          input.vector.reduce((s, x) => s + x * x, 0),
-        ),
-      });
+        return Promise.resolve({
+          success: true,
+          original: input.vector,
+          normalized,
+          originalMagnitude: Math.sqrt(
+            input.vector.reduce((s, x) => s + x * x, 0),
+          ),
+        });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
+      }
     },
   };
 }
