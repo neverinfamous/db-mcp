@@ -46,6 +46,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `validateColumnsExist()` handles multi-column tools (`sqlite_text_concat`)
   - Identifier validation (`sanitizeIdentifier`) runs first for security, then column existence check
   - 12 new error path tests added for nonexistent column on valid table scenarios
+- **Stats Tool Handler-Level Error Handling** — All 13 stats tool handlers now catch errors locally and return `{success: false}` responses
+  - `sqlite_stats_basic`, `sqlite_stats_count`, `sqlite_stats_group_by`, `sqlite_stats_histogram`, `sqlite_stats_percentile`, `sqlite_stats_correlation`, `sqlite_stats_top_n`, `sqlite_stats_distinct`, `sqlite_stats_summary`, `sqlite_stats_frequency`, `sqlite_stats_outliers`, `sqlite_stats_regression`, `sqlite_stats_hypothesis`: Catch errors with `formatError()` and return structured `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
+  - Mirrors the same pattern already applied to core, JSON, and text tool groups
+- **Stats Tool Column Existence Validation** — All 13 stats tools now validate column existence before query execution
+  - Prevents silent success on nonexistent columns (SQLite treats double-quoted nonexistent identifiers as string literals)
+  - Returns `{success: false, code: "COLUMN_NOT_FOUND"}` with suggestion to use `sqlite_describe_table`
+  - `sqlite_stats_summary` validates user-specified columns; auto-detected columns skip validation
+  - `sqlite_stats_correlation` validates both `column1` and `column2`; `sqlite_stats_regression` validates both `xColumn` and `yColumn`
+  - `sqlite_stats_hypothesis` validates `column`, `column2` (ttest_two), and `groupColumn` (chi_square)
+  - 15 new error path tests added for nonexistent table and column scenarios
+- **Security Test Pattern Update** — Updated security integration tests for stats tool structured error handling
+  - `tool-integration.test.ts`: 57 stats injection tests now use `assertRejectsInjection()` helper accepting either throws or `{success: false}` responses
+  - `identifier-integration.test.ts`: 4 stats identifier injection tests updated from `rejects.toThrow()` to structured error assertions
+  - Fixed `stats_group_by` identifier test using wrong parameter names (`column`/`groupColumn` → `valueColumn`/`groupByColumn`/`stat`)
 
 ### Fixed
 

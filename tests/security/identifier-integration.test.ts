@@ -308,41 +308,42 @@ describe("Security: Identifier Integration", () => {
 
   describe("stats tools - identifier injection", () => {
     it("should reject table name with injection in stats_basic", async () => {
-      await expect(
-        getTool("sqlite_stats_basic")({
-          table: "users'; DROP TABLE--",
-          column: "id",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_basic")({
+        table: "users'; DROP TABLE--",
+        column: "id",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should reject column name with injection in stats_basic", async () => {
-      await expect(
-        getTool("sqlite_stats_basic")({
-          table: "users",
-          column: "id; DROP TABLE users--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_basic")({
+        table: "users",
+        column: "id; DROP TABLE users--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should reject table name with injection in stats_histogram", async () => {
-      await expect(
-        getTool("sqlite_stats_histogram")({
-          table: 'users"; DELETE--',
-          column: "id",
-          buckets: 10,
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_histogram")({
+        table: 'users"; DELETE--',
+        column: "id",
+        buckets: 10,
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should reject table name with injection in stats_group_by", async () => {
-      await expect(
-        getTool("sqlite_stats_group_by")({
-          table: "users' OR 1=1--",
-          column: "id",
-          groupColumn: "name",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_group_by")({
+        table: "users' OR 1=1--",
+        valueColumn: "id",
+        groupByColumn: "name",
+        stat: "count",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
