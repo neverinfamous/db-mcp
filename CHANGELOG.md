@@ -218,7 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 - `@eslint/js`: 9.39.2 → 10.0.1 (major)
-- `eslint`: 9.39.2 → 10.0.1 (major)
+- `eslint`: 9.39.2 → 10.0.2 (major/patch)
 - `@types/node`: 25.3.0 → 25.3.3
 - `rimraf`: 6.1.2 → 6.1.3
 - `typescript-eslint`: 8.55.0 → 8.56.1
