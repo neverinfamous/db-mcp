@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`formatError` Category-Based Error Codes** — Native SQLite errors now get category-specific codes instead of generic `UNKNOWN_ERROR`
+  - `no such table` errors now return `RESOURCE_ERROR` code (previously `UNKNOWN_ERROR` despite correct category detection)
+  - Maps detected `ErrorCategory` to descriptive codes: `VALIDATION_ERROR`, `CONNECTION_ERROR`, `QUERY_ERROR`, `PERMISSION_ERROR`, `CONFIG_ERROR`, `RESOURCE_ERROR`
+  - Only applies to plain `Error` objects caught from SQLite; `DbMcpError` subclasses retain their explicit codes
+
 - **`sqlite_read_query` Statement Type Validation** — Now rejects non-SELECT statements with clear error messages
   - Previously, INSERT/UPDATE/DELETE/DDL passed to `read_query` leaked internal better-sqlite3 message: `"This statement does not return data. Use run() instead"`
   - Now validates upfront and returns: `"Statement type not allowed: INSERT is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL."`

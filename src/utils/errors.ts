@@ -435,8 +435,18 @@ export interface ErrorResponse {
 // =============================================================================
 
 /**
- * Convert any error to a structured error response
+ * Default error codes by category (used when error is not a DbMcpError)
  */
+const CATEGORY_DEFAULT_CODES: Record<ErrorCategory, string> = {
+  [ErrorCategory.VALIDATION]: "VALIDATION_ERROR",
+  [ErrorCategory.CONNECTION]: "CONNECTION_ERROR",
+  [ErrorCategory.QUERY]: "QUERY_ERROR",
+  [ErrorCategory.PERMISSION]: "PERMISSION_ERROR",
+  [ErrorCategory.CONFIGURATION]: "CONFIG_ERROR",
+  [ErrorCategory.RESOURCE]: "RESOURCE_ERROR",
+  [ErrorCategory.INTERNAL]: "UNKNOWN_ERROR",
+};
+
 export function formatError(error: unknown): ErrorResponse {
   if (error instanceof DbMcpError) {
     return error.toResponse();
@@ -444,11 +454,12 @@ export function formatError(error: unknown): ErrorResponse {
 
   if (error instanceof Error) {
     const match = findSuggestion(error.message);
+    const category = match?.category ?? ErrorCategory.INTERNAL;
     return {
       success: false,
       error: error.message,
-      code: "UNKNOWN_ERROR",
-      category: match?.category ?? ErrorCategory.INTERNAL,
+      code: CATEGORY_DEFAULT_CODES[category],
+      category,
       suggestion: match?.suggestion,
       recoverable: false,
       details: undefined,
