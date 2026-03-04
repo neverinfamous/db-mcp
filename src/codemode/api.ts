@@ -95,9 +95,9 @@ const GROUP_EXAMPLES: Record<string, string[]> = {
     'sqlite.text.advancedSearch({ table: "products", column: "name", searchTerm: "laptop" })',
   ],
   stats: [
-    'sqlite.stats.basic({ table: "orders", column: "amount" })',
-    'sqlite.stats.histogram({ table: "products", column: "price", buckets: 10 })',
-    'sqlite.stats.percentile({ table: "sales", column: "revenue", percentiles: [25, 50, 75] })',
+    'sqlite.stats.statsBasic({ table: "orders", column: "amount" })',
+    'sqlite.stats.statsHistogram({ table: "products", column: "price", buckets: 10 })',
+    'sqlite.stats.statsPercentile({ table: "sales", column: "revenue", percentiles: [25, 50, 75] })',
   ],
   vector: [
     'sqlite.vector.createTable({ tableName: "docs", dimensions: 384 })',
