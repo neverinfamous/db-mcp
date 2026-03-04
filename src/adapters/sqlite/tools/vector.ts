@@ -317,7 +317,18 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const input = VectorBatchStoreSchema.parse(params);
 
+        // Validate table exists before early-returning for empty items
+        const table = sanitizeIdentifier(input.table);
         if (input.items.length === 0) {
+          // Verify the table exists even with no items to avoid silent success on nonexistent tables
+          const checkSql = `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.table}'`;
+          const checkResult = await adapter.executeReadQuery(checkSql);
+          if (!checkResult.rows || checkResult.rows.length === 0) {
+            return {
+              success: false,
+              error: `Table '${input.table}' does not exist`,
+            };
+          }
           return {
             success: true,
             stored: 0,
@@ -325,8 +336,6 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
-        // Validate and quote identifiers
-        const table = sanitizeIdentifier(input.table);
         const idColumn = sanitizeIdentifier(input.idColumn);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
@@ -510,7 +519,16 @@ function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
         if (!row) {
           return { success: false, error: "Vector not found" };
         }
-        const vectorData = parseVector(row[input.vectorColumn]);
+
+        // Check if the vector column exists in the row data
+        const rawVector = row[input.vectorColumn];
+        if (rawVector === undefined || rawVector === null) {
+          return {
+            success: false,
+            error: `Column '${input.vectorColumn}' not found or contains NULL. Available columns: ${Object.keys(row).join(", ")}`,
+          };
+        }
+        const vectorData = parseVector(rawVector);
 
         return {
           success: true,
@@ -771,33 +789,37 @@ function createVectorDistanceTool(): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Vector Distance"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = VectorDistanceSchema.parse(params);
+      try {
+        const input = VectorDistanceSchema.parse(params);
 
-      if (input.vector1.length !== input.vector2.length) {
+        if (input.vector1.length !== input.vector2.length) {
+          return Promise.resolve({
+            success: false,
+            error: "Vector dimensions must match",
+          });
+        }
+
+        let result: number;
+        switch (input.metric) {
+          case "euclidean":
+            result = euclideanDistance(input.vector1, input.vector2);
+            break;
+          case "dot":
+            result = dotProduct(input.vector1, input.vector2);
+            break;
+          case "cosine":
+          default:
+            result = 1 - cosineSimilarity(input.vector1, input.vector2);
+        }
+
         return Promise.resolve({
-          success: false,
-          error: "Vector dimensions must match",
+          success: true,
+          metric: input.metric,
+          value: Math.round(result * 10000) / 10000,
         });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
       }
-
-      let result: number;
-      switch (input.metric) {
-        case "euclidean":
-          result = euclideanDistance(input.vector1, input.vector2);
-          break;
-        case "dot":
-          result = dotProduct(input.vector1, input.vector2);
-          break;
-        case "cosine":
-        default:
-          result = 1 - cosineSimilarity(input.vector1, input.vector2);
-      }
-
-      return Promise.resolve({
-        success: true,
-        metric: input.metric,
-        value: Math.round(result * 10000) / 10000,
-      });
     },
   };
 }

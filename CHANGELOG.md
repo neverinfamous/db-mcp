@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_vector_distance` Missing Error Handling** — Handler now wrapped in try/catch with `formatError()`
+  - Previously, Zod validation errors from malformed input threw raw MCP exceptions instead of structured error responses
+  - Now consistent with `sqlite_vector_normalize` and all other vector tool handlers
+- **`sqlite_vector_batch_store` Empty Items Table Validation** — Now validates table existence even when items array is empty
+  - Previously, `batch_store({table: "nonexistent", items: []})` returned `{success: true, stored: 0}` without checking if the table exists
+  - Now queries `sqlite_master` to verify table existence before returning the empty-items early response
+  - Returns `{success: false, error: "Table 'x' does not exist"}` for nonexistent tables
+- **`sqlite_vector_get` Column Not Found Error** — Provides clear error when vector column doesn't exist in row data
+  - Previously returned misleading `"Invalid vector format"` with `UNKNOWN_ERROR` code when the specified vector column was not found in the row
+  - Now returns descriptive error: `"Column 'x' not found or contains NULL. Available columns: ..."` listing actual column names
 - **`sqlite_vector_count` Dimensions Filter** — `dimensions` parameter now filters results instead of being silently ignored
   - Previously `sqlite_vector_count({table: "t", dimensions: 8})` returned total row count regardless of dimensions value
   - Now adds `WHERE dimensions = N` clause when dimensions parameter is specified
