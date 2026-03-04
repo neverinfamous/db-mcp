@@ -138,7 +138,7 @@ const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   getIndexes: "tableName",
   dropIndex: "indexName",
   createTable: ["tableName", "columns"],
-  createIndex: ["tableName", "columns"],
+  createIndex: ["tableName", "columns", "indexName"],
 
   // JSON
   extract: ["table", "column", "path", "whereClause"],

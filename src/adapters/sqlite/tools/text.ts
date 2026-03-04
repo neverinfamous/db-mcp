@@ -178,6 +178,24 @@ async function validateColumnExists(
   tableName: string,
   columnName: string,
 ): Promise<void> {
+  // First check if the table exists
+  const tableCheck = await adapter.executeReadQuery(
+    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${tableName.replace(/'/g, "''")}'`,
+  );
+  if (!tableCheck.rows || tableCheck.rows.length === 0) {
+    throw new ResourceNotFoundError(
+      `Table '${tableName}' does not exist`,
+      "TABLE_NOT_FOUND",
+      {
+        suggestion:
+          "Table not found. Run sqlite_list_tables to see available tables.",
+        resourceType: "table",
+        resourceName: tableName,
+      },
+    );
+  }
+
+  // Then check if the column exists
   const result = await adapter.executeReadQuery(
     `SELECT name FROM pragma_table_info('${tableName.replace(/'/g, "''")}') WHERE name = '${columnName.replace(/'/g, "''")}' LIMIT 1`,
   );

@@ -66,6 +66,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tests now check for `{success: false, error: /invalid/i}` pattern instead of `.rejects.toThrow()`
   - Consistent with structured error handling across all tool groups
   - Fixed `text_replace` test to use correct parameter names (`searchPattern`/`replaceWith` instead of `search`/`replace`)
+- **`createIndex` Code Mode Positional Parameter** — Added missing `indexName` to positional parameter mapping
+  - `createIndex` was mapped as `["tableName", "columns"]` but `indexName` is required
+  - Code mode calls like `sqlite.core.createIndex("table", ["col"], "idx_name")` now work correctly
+- **Text Tool `TABLE_NOT_FOUND` Error Priority** — `validateColumnExists` now checks table existence before column existence
+  - Previously returned `COLUMN_NOT_FOUND` when table didn't exist (because `pragma_table_info` returns empty for nonexistent tables)
+  - Now returns `TABLE_NOT_FOUND` with suggestion to run `sqlite_list_tables`
+  - Gives users a more actionable error message for the root cause
 
 ### Added
 
