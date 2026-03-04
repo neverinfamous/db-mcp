@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **FTS5 Tool Structured Error Responses** — All 4 FTS5 handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`: Errors like nonexistent tables, bad SQL, and invalid columns now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - Previously, only `isFts5UnavailableError` (WASM mode) was caught; all other errors were re-thrown
+  - Consistent with the structured error pattern already used by all 13 text tools, core tools, stats tools, and JSON tools
+  - Security tests in `fts-injection.test.ts` updated to assert structured error responses instead of `.rejects.toThrow()`
+
 - **`sqlite_execute_code` Per-Call Timeout Enforcement** — The `timeout` parameter is now respected per-call instead of being silently ignored
   - Previously, `timeout` was parsed from input but never passed to the sandbox pool; all executions used the fixed 30000ms default
   - Added `timeoutMs?: number` parameter to `ISandbox.execute()` and `ISandboxPool.execute()` interfaces

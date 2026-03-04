@@ -182,29 +182,30 @@ describe("Security: FTS Injection Prevention", () => {
     it("should handle single quotes in search query safely", async () => {
       if (skipIfNoFts5()) return;
       // FTS5 uses single quotes for MATCH strings - they should be escaped
-      // If FTS5 rejects the query, that's also safe behavior (prevents injection)
-      try {
-        const result = await getTool("sqlite_fts_search")({
-          table: "documents_fts",
-          query: "test' OR '1'='1",
-        });
-        // Should not throw, but may return no results due to escaping
-        expect(result).toHaveProperty("success", true);
-      } catch (e) {
-        // FTS5 syntax error on malformed query is expected safe behavior
-        expect(String(e)).toMatch(/syntax|parse|Query failed/i);
+      // If FTS5 rejects the query, it returns a structured error (prevents injection)
+      const result = (await getTool("sqlite_fts_search")({
+        table: "documents_fts",
+        query: "test' OR '1'='1",
+      })) as Record<string, unknown>;
+      // Either succeeds with escaped query (no results) or returns structured error
+      if (result.success) {
+        expect(result).toHaveProperty("rowCount");
+      } else {
+        // Structured error for FTS5 syntax error is safe behavior
+        expect(result).toHaveProperty("error");
+        expect(String(result.error)).toMatch(/syntax|parse|Query failed/i);
       }
     });
 
     it("should reject column names with injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_search")({
-          table: "documents_fts",
-          query: "test",
-          columns: ["title", "content; DROP TABLE--"],
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_search")({
+        table: "documents_fts",
+        query: "test",
+        columns: ["title", "content; DROP TABLE--"],
+      })) as Record<string, unknown>;
+      expect(result).toHaveProperty("success", false);
+      expect(String(result.error)).toMatch(/Invalid/i);
     });
 
     it("should allow legitimate FTS queries", async () => {
@@ -269,17 +270,19 @@ describe("Security: FTS Injection Prevention", () => {
     it("should safely escape query strings", async () => {
       if (skipIfNoFts5()) return;
       // FTS5 MATCH syntax doesn't support SQL-style quote escaping
-      // Queries with unbalanced quotes will throw syntax errors, which is safe behavior
+      // Queries with unbalanced quotes return structured errors, which is safe behavior
       // (prevents injection by rejecting malformed input)
-      try {
-        const result = await getTool("sqlite_fts_match_info")({
-          table: "documents_fts",
-          query: "test' OR 'x'='x",
-        });
-        expect(result).toHaveProperty("success", true);
-      } catch (e) {
-        // FTS5 syntax error on malformed query is expected safe behavior
-        expect(String(e)).toMatch(/syntax|parse|Query failed/i);
+      const result = (await getTool("sqlite_fts_match_info")({
+        table: "documents_fts",
+        query: "test' OR 'x'='x",
+      })) as Record<string, unknown>;
+      // Either succeeds with escaped query or returns structured error
+      if (result.success) {
+        expect(result).toHaveProperty("rowCount");
+      } else {
+        // Structured error for FTS5 syntax error is safe behavior
+        expect(result).toHaveProperty("error");
+        expect(String(result.error)).toMatch(/syntax|parse|Query failed/i);
       }
     });
   });

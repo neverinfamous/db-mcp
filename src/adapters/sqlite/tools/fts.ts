@@ -10,6 +10,7 @@ import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
+import { formatError } from "../../../utils/errors.js";
 import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
@@ -198,7 +199,15 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5UnavailableError(input.tableName);
         }
-        throw error;
+        const structured = formatError(error);
+        return {
+          success: false as const,
+          message: structured.error,
+          tableName: input.tableName,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
     },
   };
@@ -320,7 +329,15 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        throw error;
+        const structured = formatError(error);
+        return {
+          success: false as const,
+          rowCount: 0,
+          results: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
     },
   };
@@ -364,7 +381,15 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5UnavailableError(input.table);
         }
-        throw error;
+        const structured = formatError(error);
+        return {
+          success: false as const,
+          message: structured.error,
+          tableName: input.table,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
     },
   };
@@ -417,7 +442,15 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        throw error;
+        const structured = formatError(error);
+        return {
+          success: false as const,
+          rowCount: 0,
+          results: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
       }
     },
   };
