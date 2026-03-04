@@ -117,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stats Code Mode Positional Parameters (Round 2)** — Fixed 2 remaining positional parameter mappings in `api.ts`
   - `statsTopN`: Was `["table", "column"]`, missing `n` and `orderDirection` — fixed to `["table", "column", "n", "orderDirection"]`
   - `statsHypothesis`: Had `column` and `testType` swapped — fixed to `["table", "column", "testType"]`
+  - `statsHypothesis`: Added missing `expectedMean` as 4th positional param — enables `sqlite.stats.statsHypothesis("table", "col", "ttest_one", 25)` without object syntax
 
 ### Added
 

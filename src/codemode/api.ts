@@ -193,7 +193,7 @@ const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   statsSummary: ["table", "columns"],
   statsFrequency: ["table", "column"],
   statsOutliers: ["table", "column"],
-  statsHypothesis: ["table", "column", "testType"],
+  statsHypothesis: ["table", "column", "testType", "expectedMean"],
 
   // Vector
   vectorCreateTable: ["tableName", "dimensions"],
