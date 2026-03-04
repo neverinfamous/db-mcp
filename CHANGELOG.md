@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Core Tool Input Validation** — 5 core tool handlers now return structured errors for invalid identifiers instead of throwing raw MCP exceptions
+  - `sqlite_create_table`: Added `sanitizeIdentifier` validation for table names and empty columns array check (previously accepted empty string names and empty columns, causing orphaned tables or SQL syntax errors)
+  - `sqlite_drop_table`, `sqlite_drop_index`: Wrapped existing `sanitizeIdentifier` calls in try/catch to return `{success: false, message: "..."}` instead of propagating `InvalidIdentifierError`
+  - `sqlite_get_indexes`, `sqlite_create_index`: Same try/catch wrapping for identifier validation
+  - All 5 handlers now follow the structured error response pattern: `{success: false, message: "Invalid ... name"}`
+
 - **`sqlite_geo_nearby` `returnColumns` Column Leakage** — Lat/lon columns no longer leak into results when `returnColumns` is specified
   - Previously, internally-added lat/lon columns (needed for Haversine distance calculation) were included in the response even when the user didn't request them
   - Now strips lat/lon columns from results unless the user explicitly includes them in `returnColumns`

@@ -198,6 +198,26 @@ function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = CreateTableSchema.parse(params);
 
+      // Validate table name
+      try {
+        sanitizeIdentifier(input.tableName);
+      } catch {
+        return {
+          success: false,
+          message: `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
+          sql: "",
+        };
+      }
+
+      // Validate columns
+      if (input.columns.length === 0) {
+        return {
+          success: false,
+          message: "At least one column definition is required",
+          sql: "",
+        };
+      }
+
       // Check if table already exists (when using IF NOT EXISTS)
       let tableExisted = false;
       if (input.ifNotExists) {
@@ -442,7 +462,14 @@ function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       const input = DropTableSchema.parse(params);
 
       // Validate table name
-      sanitizeIdentifier(input.tableName);
+      try {
+        sanitizeIdentifier(input.tableName);
+      } catch {
+        return {
+          success: false,
+          message: `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
+        };
+      }
 
       // Check if table exists before dropping
       const checkResult = await adapter.executeReadQuery(
@@ -503,7 +530,16 @@ function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (input.tableName) {
         // Validate table name
-        sanitizeIdentifier(input.tableName);
+        try {
+          sanitizeIdentifier(input.tableName);
+        } catch {
+          return {
+            success: false,
+            count: 0,
+            indexes: [],
+            error: `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
+          };
+        }
 
         // Check table existence when a specific table is requested
         const checkResult = await adapter.executeReadQuery(
@@ -565,10 +601,18 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       const input = CreateIndexSchema.parse(params);
 
       // Validate names
-      sanitizeIdentifier(input.indexName);
-      sanitizeIdentifier(input.tableName);
-      for (const col of input.columns) {
-        sanitizeIdentifier(col);
+      try {
+        sanitizeIdentifier(input.indexName);
+        sanitizeIdentifier(input.tableName);
+        for (const col of input.columns) {
+          sanitizeIdentifier(col);
+        }
+      } catch {
+        return {
+          success: false,
+          message: `Invalid identifier: index, table, and column names must be non-empty strings starting with a letter or underscore`,
+          sql: "",
+        };
       }
 
       const unique = input.unique ? "UNIQUE " : "";
@@ -625,7 +669,14 @@ function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
       const input = DropIndexSchema.parse(params);
 
       // Validate index name
-      sanitizeIdentifier(input.indexName);
+      try {
+        sanitizeIdentifier(input.indexName);
+      } catch {
+        return {
+          success: false,
+          message: `Invalid index name '${input.indexName}': must be a non-empty string starting with a letter or underscore`,
+        };
+      }
 
       // Check if index exists before dropping
       const checkResult = await adapter.executeReadQuery(
