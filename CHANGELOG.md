@@ -49,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Code Mode `help()` Write Method Discoverability** — `help()` now lists all methods regardless of `readonly` flag
+  - Previously, `readonly: true` filtered write tools before API construction, hiding them from `help()` output
+  - Now builds full API surface first, then wraps write methods with readonly guards returning `CODEMODE_READONLY_VIOLATION` errors
+  - Users can discover all available methods via `sqlite.core.help()` and get clear error messages when invoking write methods in readonly mode
+
 - **Text Tool Code Mode Positional Parameters** — Fixed 8 broken positional parameter mappings for text tools in `api.ts`
   - `textSplit`, `textConcat`, `textReplace` renamed to `split`, `concat`, `replace` (matching actual method names after prefix stripping)
   - Added 5 missing entries: `trim`, `case`, `substring`, `validate`, `normalize`

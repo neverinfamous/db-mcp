@@ -12,7 +12,11 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
-import { createSqliteApi } from "../../../codemode/api.js";
+import {
+  createSqliteApi,
+  toolNameToMethodName,
+  type SqliteApi,
+} from "../../../codemode/api.js";
 import { CodeModeSecurityManager } from "../../../codemode/security.js";
 import {
   createSandboxPool,
@@ -176,25 +180,16 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
 
       try {
         // Build API bindings from adapter's tool definitions
+        // Always use all tools so help() shows the complete API surface
         const allTools = adapter.getToolDefinitions();
-
-        // If readonly, filter out write tools
-        const tools = isReadonly
-          ? allTools.filter(
-              (t) =>
-                t.annotations?.readOnlyHint !== false ||
-                t.name.includes("read") ||
-                t.name.includes("list") ||
-                t.name.includes("describe") ||
-                t.name.includes("get") ||
-                t.name.includes("search") ||
-                t.name.includes("stats") ||
-                t.name.includes("count"),
-            )
-          : allTools;
-
-        const api = createSqliteApi(tools);
+        const api = createSqliteApi(allTools);
         const bindings = api.createSandboxBindings();
+
+        // If readonly, wrap write methods with guards that return
+        // structured errors instead of executing
+        if (isReadonly) {
+          wrapReadonlyGuards(api, allTools, bindings);
+        }
 
         // Execute in sandbox
         if (!pool) {
@@ -246,6 +241,87 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
       }
     },
   };
+}
+
+// =============================================================================
+// Readonly Guards
+// =============================================================================
+
+/**
+ * Read-safe tool name patterns.
+ * Tools matching these patterns are considered read-only even if
+ * their readOnlyHint annotation is not explicitly set.
+ */
+const READ_SAFE_PATTERNS = [
+  "read",
+  "list",
+  "describe",
+  "get",
+  "search",
+  "stats",
+  "count",
+];
+
+/**
+ * Check if a tool is a write tool (not read-safe).
+ */
+function isWriteTool(tool: ToolDefinition): boolean {
+  // Explicitly marked as read-only → not a write tool
+  if (tool.annotations?.readOnlyHint !== false) return false;
+
+  // Check if tool name matches any read-safe pattern
+  return !READ_SAFE_PATTERNS.some((pattern) => tool.name.includes(pattern));
+}
+
+/**
+ * Create a readonly guard stub that returns a structured error.
+ */
+function createReadonlyGuard(
+  methodName: string,
+): (...args: unknown[]) => Promise<unknown> {
+  return () =>
+    Promise.resolve({
+      success: false,
+      error: `Method '${methodName}' is not available in readonly mode. Set readonly: false to use write operations.`,
+      code: "CODEMODE_READONLY_VIOLATION",
+      category: "permission",
+      suggestion:
+        "Remove readonly: true or set readonly: false to access write operations.",
+      recoverable: false,
+    });
+}
+
+/**
+ * Wrap write methods in the API with readonly guards.
+ * Methods are kept in help() output for discoverability but return
+ * structured errors when invoked in readonly mode.
+ */
+function wrapReadonlyGuards(
+  api: SqliteApi,
+  allTools: ToolDefinition[],
+  bindings: Record<string, unknown>,
+): void {
+  const writeTools = allTools.filter(isWriteTool);
+
+  for (const tool of writeTools) {
+    const methodName = toolNameToMethodName(tool.name, tool.group);
+    const guard = createReadonlyGuard(methodName);
+
+    // Replace on the group API object
+    const groupApi = api[tool.group as keyof SqliteApi];
+    if (
+      groupApi !== undefined &&
+      typeof groupApi === "object" &&
+      methodName in groupApi
+    ) {
+      (groupApi as Record<string, unknown>)[methodName] = guard;
+    }
+
+    // Replace on top-level bindings if aliased there
+    if (methodName in bindings) {
+      bindings[methodName] = guard;
+    }
+  }
 }
 
 // =============================================================================
