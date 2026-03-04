@@ -124,6 +124,24 @@ const ERROR_SUGGESTIONS: {
       "The value does not meet the column's check constraint requirements.",
     category: ErrorCategory.QUERY,
   },
+  {
+    pattern: /incomplete input/i,
+    suggestion:
+      "SQL statement is incomplete. Check for missing clauses, closing parentheses, or semicolons.",
+    category: ErrorCategory.QUERY,
+  },
+  {
+    pattern: /more than one statement/i,
+    suggestion:
+      "Only one SQL statement per call is allowed. Split multiple statements into separate calls or use sqlite_execute_code for multi-step operations.",
+    category: ErrorCategory.QUERY,
+  },
+  {
+    pattern: /too few parameter/i,
+    suggestion:
+      "Not enough parameter values provided for the prepared statement placeholders (?). Ensure params array matches the number of ? placeholders in the query.",
+    category: ErrorCategory.QUERY,
+  },
 
   // Connection errors
   {

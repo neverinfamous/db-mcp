@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `no such table` errors now return `RESOURCE_ERROR` code (previously `UNKNOWN_ERROR` despite correct category detection)
   - Maps detected `ErrorCategory` to descriptive codes: `VALIDATION_ERROR`, `CONNECTION_ERROR`, `QUERY_ERROR`, `PERMISSION_ERROR`, `CONFIG_ERROR`, `RESOURCE_ERROR`
   - Only applies to plain `Error` objects caught from SQLite; `DbMcpError` subclasses retain their explicit codes
+- **`ERROR_SUGGESTIONS` Query Error Pattern Coverage** — 3 new patterns added for query errors that previously fell through to `UNKNOWN_ERROR`
+  - `incomplete input` → `QUERY_ERROR` with suggestion to check for missing clauses or closing parentheses
+  - `more than one statement` → `QUERY_ERROR` with suggestion to split into separate calls or use `sqlite_execute_code`
+  - `too few parameter` → `QUERY_ERROR` with suggestion to match params array to placeholder count
 
 - **`sqlite_read_query` Statement Type Validation** — Now rejects non-SELECT statements with clear error messages
   - Previously, INSERT/UPDATE/DELETE/DDL passed to `read_query` leaked internal better-sqlite3 message: `"This statement does not return data. Use run() instead"`
