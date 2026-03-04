@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_execute_code` Per-Call Timeout Enforcement** — The `timeout` parameter is now respected per-call instead of being silently ignored
+  - Previously, `timeout` was parsed from input but never passed to the sandbox pool; all executions used the fixed 30000ms default
+  - Added `timeoutMs?: number` parameter to `ISandbox.execute()` and `ISandboxPool.execute()` interfaces
+  - All 4 implementations updated: `CodeModeSandbox`, `SandboxPool`, `WorkerSandbox`, `WorkerSandboxPool`
+  - `codemode.ts` now passes the user-specified timeout through to `pool.execute(code, bindings, timeoutMs)`
+- **`sqlite_create_index` Table Existence Pre-Validation** — Now returns `TABLE_NOT_FOUND` error instead of raw SQL error for nonexistent tables
+  - Previously returned `{success: false, message: "Write query failed: no such table: main.xyz"}` (leaking implementation detail)
+  - Now pre-validates table existence and returns `{success: false, message: "Table 'xyz' does not exist", code: "TABLE_NOT_FOUND"}`
+  - Consistent with `sqlite_describe_table` and `sqlite_get_indexes` which already pre-validate table existence
+- **`sqlite_create_index` Empty Columns Validation** — `CreateIndexSchema.columns` now requires `.min(1)`
+  - Previously, an empty columns array passed Zod validation and produced invalid SQL `CREATE INDEX ... ON table ()`
+  - Now rejected at schema validation level with clear "Array must contain at least 1 element(s)" message
+
 - **`formatError` Category-Based Error Codes** — Native SQLite errors now get category-specific codes instead of generic `UNKNOWN_ERROR`
   - `no such table` errors now return `RESOURCE_ERROR` code (previously `UNKNOWN_ERROR` despite correct category detection)
   - Maps detected `ErrorCategory` to descriptive codes: `VALIDATION_ERROR`, `CONNECTION_ERROR`, `QUERY_ERROR`, `PERMISSION_ERROR`, `CONFIG_ERROR`, `RESOURCE_ERROR`

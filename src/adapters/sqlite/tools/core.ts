@@ -650,6 +650,22 @@ function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      // Validate table existence
+      const tableCheck = await adapter.executeReadQuery(
+        `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
+        [input.tableName],
+      );
+      if ((tableCheck.rows?.length ?? 0) === 0) {
+        return {
+          success: false,
+          message: `Table '${input.tableName}' does not exist`,
+          code: "TABLE_NOT_FOUND",
+          suggestion:
+            "Table not found. Run sqlite_list_tables to see available tables.",
+          sql: "",
+        };
+      }
+
       const unique = input.unique ? "UNIQUE " : "";
       const ifNotExists = input.ifNotExists ? "IF NOT EXISTS " : "";
       const columns = input.columns.map((c) => `"${c}"`).join(", ");

@@ -134,6 +134,7 @@ export class CodeModeSandbox {
   async execute(
     code: string,
     apiBindings: Record<string, unknown>,
+    timeoutMs?: number,
   ): Promise<SandboxResult> {
     if (this.disposed) {
       return {
@@ -145,6 +146,7 @@ export class CodeModeSandbox {
 
     const startTime = performance.now();
     const startMemory = process.memoryUsage().heapUsed;
+    const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
 
     try {
       // Inject API bindings into context
@@ -158,7 +160,7 @@ export class CodeModeSandbox {
       });
 
       const result: unknown = await (script.runInContext(this.context, {
-        timeout: this.options.timeoutMs,
+        timeout: effectiveTimeout,
         displayErrors: true,
       }) as Promise<unknown>);
 
@@ -315,16 +317,14 @@ export class SandboxPool {
     }
   }
 
-  /**
-   * Execute code using a pooled sandbox
-   */
   async execute(
     code: string,
     apiBindings: Record<string, unknown>,
+    timeoutMs?: number,
   ): Promise<SandboxResult> {
     const sandbox = this.acquire();
     try {
-      return await sandbox.execute(code, apiBindings);
+      return await sandbox.execute(code, apiBindings, timeoutMs);
     } finally {
       this.release(sandbox);
     }

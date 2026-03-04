@@ -141,7 +141,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
       _context: RequestContext,
     ): Promise<unknown> => {
       const parsed = ExecuteCodeSchema.parse(params);
-      const { code, readonly: isReadonly } = parsed;
+      const { code, timeout: timeoutMs, readonly: isReadonly } = parsed;
 
       // Validate code
       const validation = security.validateCode(code);
@@ -195,7 +195,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         if (!pool) {
           throw new Error("Sandbox pool not initialized");
         }
-        const result = await pool.execute(code, bindings);
+        const result = await pool.execute(code, bindings, timeoutMs);
 
         // Sanitize result
         const sanitizedResult = result.success

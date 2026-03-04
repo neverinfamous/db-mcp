@@ -22,6 +22,7 @@ export interface ISandbox {
   execute(
     code: string,
     apiBindings: Record<string, unknown>,
+    timeoutMs?: number,
   ): Promise<SandboxResult>;
   isHealthy(): boolean;
   dispose(): void;
@@ -35,6 +36,7 @@ export interface ISandboxPool {
   execute(
     code: string,
     apiBindings: Record<string, unknown>,
+    timeoutMs?: number,
   ): Promise<SandboxResult>;
   getStats(): { available: number; inUse: number; max: number };
   dispose(): void;

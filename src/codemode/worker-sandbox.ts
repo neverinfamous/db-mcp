@@ -59,6 +59,7 @@ export class WorkerSandbox {
   async execute(
     code: string,
     apiBindings: Record<string, unknown>,
+    timeoutMs?: number,
   ): Promise<SandboxResult> {
     if (this.disposed) {
       return {
@@ -102,12 +103,14 @@ export class WorkerSandbox {
         // Serialize API bindings for worker transfer
         const serializedBindings = this.serializeBindings(apiBindings);
 
+        const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
+
         // Create worker
         worker = new Worker(WORKER_SCRIPT_PATH, {
           workerData: {
             code,
             apiBindings: serializedBindings,
-            timeout: this.options.timeoutMs,
+            timeout: effectiveTimeout,
             rpcPort: workerPort,
           },
           transferList: [workerPort],
@@ -232,7 +235,7 @@ export class WorkerSandbox {
 
           respond({
             success: false,
-            error: `Execution timed out after ${String(this.options.timeoutMs)}ms`,
+            error: `Execution timed out after ${String(effectiveTimeout)}ms`,
             metrics: this.calculateMetrics(
               startTime,
               endTime,
@@ -240,7 +243,7 @@ export class WorkerSandbox {
               endMemory,
             ),
           });
-        }, this.options.timeoutMs + 1000); // Extra 1s grace for cleanup
+        }, effectiveTimeout + 1000); // Extra 1s grace for cleanup
       } catch (error) {
         const endTime = performance.now();
         const endMemory = process.memoryUsage().heapUsed;
@@ -360,6 +363,7 @@ export class WorkerSandboxPool {
   async execute(
     code: string,
     apiBindings: Record<string, unknown>,
+    timeoutMs?: number,
   ): Promise<SandboxResult> {
     if (this.activeCount >= this.options.maxInstances) {
       return {
@@ -372,7 +376,7 @@ export class WorkerSandboxPool {
     this.activeCount++;
     try {
       const sandbox = WorkerSandbox.create(this.sandboxOptions);
-      return await sandbox.execute(code, apiBindings);
+      return await sandbox.execute(code, apiBindings, timeoutMs);
     } finally {
       this.activeCount--;
     }

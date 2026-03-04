@@ -155,7 +155,7 @@ export const DropTableSchema = z.object({
 export const CreateIndexSchema = z.object({
   indexName: z.string().describe("Name of the index"),
   tableName: z.string().describe("Table to create index on"),
-  columns: z.array(z.string()).describe("Columns to index"),
+  columns: z.array(z.string()).min(1).describe("Columns to index"),
   unique: z.boolean().optional().default(false).describe("Create unique index"),
   ifNotExists: z.boolean().optional().default(true),
 });
