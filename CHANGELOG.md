@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_read_query` Statement Type Validation** — Now rejects non-SELECT statements with clear error messages
+  - Previously, INSERT/UPDATE/DELETE/DDL passed to `read_query` leaked internal better-sqlite3 message: `"This statement does not return data. Use run() instead"`
+  - Now validates upfront and returns: `"Statement type not allowed: INSERT is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL."`
+  - Allows SELECT, PRAGMA, EXPLAIN, and WITH statements; mirrors `write_query` validation pattern
+- **`reset-database.ps1` Verification Table List** — Removed orphaned `temp_text_test` entry from expected tables map
+  - `temp_text_test` is not created by the seed SQL and was dead code (verification query only checks `test_%` tables)
+
 - **Core Tool Input Validation** — 5 core tool handlers now return structured errors for invalid identifiers instead of throwing raw MCP exceptions
   - `sqlite_create_table`: Added `sanitizeIdentifier` validation for table names and empty columns array check (previously accepted empty string names and empty columns, causing orphaned tables or SQL syntax errors)
   - `sqlite_drop_table`, `sqlite_drop_index`: Wrapped existing `sanitizeIdentifier` calls in try/catch to return `{success: false, message: "..."}` instead of propagating `InvalidIdentifierError`

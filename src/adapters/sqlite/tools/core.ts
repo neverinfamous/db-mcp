@@ -71,6 +71,41 @@ function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = ReadQuerySchema.parse(params);
 
+      // Validate statement type: only allow SELECT/PRAGMA/EXPLAIN/WITH
+      const trimmedUpper = input.query.trim().toUpperCase();
+      const allowedPrefixes = ["SELECT", "PRAGMA", "EXPLAIN", "WITH"];
+      const rejectedPrefixes = [
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "REPLACE",
+        "CREATE",
+        "ALTER",
+        "DROP",
+        "TRUNCATE",
+        "VACUUM",
+        "REINDEX",
+        "ANALYZE",
+        "ATTACH",
+        "DETACH",
+      ];
+
+      const isAllowed = allowedPrefixes.some((p) => trimmedUpper.startsWith(p));
+      if (!isAllowed) {
+        const rejectedPrefix = rejectedPrefixes.find((p) =>
+          trimmedUpper.startsWith(p),
+        );
+        if (rejectedPrefix) {
+          return {
+            success: false,
+            rowCount: 0,
+            rows: [],
+            error: `Statement type not allowed: ${rejectedPrefix} is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL.`,
+          };
+        }
+        // Fall through to let the adapter handle unrecognized statements
+      }
+
       try {
         const result = await adapter.executeReadQuery(
           input.query,
