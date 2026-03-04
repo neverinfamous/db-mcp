@@ -545,9 +545,10 @@ function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextReplaceSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         const search = input.searchPattern.replace(/'/g, "''");
         const replace = input.replaceWith.replace(/'/g, "''");
