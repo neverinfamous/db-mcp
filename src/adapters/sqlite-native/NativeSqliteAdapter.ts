@@ -45,6 +45,7 @@ import { getVirtualTools } from "../sqlite/tools/virtual.js";
 import { getVectorTools } from "../sqlite/tools/vector.js";
 import { getGeoTools } from "../sqlite/tools/geo.js";
 import { getAdminTools } from "../sqlite/tools/admin.js";
+import { getCodeModeTools } from "../sqlite/tools/codemode.js";
 import { getResourceDefinitions } from "../sqlite/resources.js";
 import { getPromptDefinitions } from "../sqlite/prompts.js";
 import {
@@ -452,9 +453,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     const result = db
       .prepare(
         `
-            SELECT name, type, sql 
-            FROM sqlite_master 
-            WHERE type IN ('table', 'view') 
+            SELECT name, type, sql
+            FROM sqlite_master
+            WHERE type IN ('table', 'view')
             AND name NOT LIKE 'sqlite_%'
             ORDER BY name
         `,
@@ -545,8 +546,8 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     // Get all user-created indexes from sqlite_master
     const indexes = db
       .prepare(
-        `SELECT name, tbl_name, sql 
-         FROM sqlite_master 
+        `SELECT name, tbl_name, sql
+         FROM sqlite_master
          WHERE type = 'index' AND sql IS NOT NULL
          ORDER BY tbl_name, name`,
       )
@@ -613,6 +614,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       ...getVectorTools(self),
       ...getGeoTools(self),
       ...getAdminTools(self),
+      ...getCodeModeTools(self),
       // Native-only tools
       ...getTransactionTools(this),
       ...getWindowTools(this),

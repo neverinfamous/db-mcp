@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Allows SELECT, PRAGMA, EXPLAIN, and WITH statements; mirrors `write_query` validation pattern
 - **`reset-database.ps1` Verification Table List** — Removed orphaned `temp_text_test` entry from expected tables map
   - `temp_text_test` is not created by the seed SQL and was dead code (verification query only checks `test_%` tables)
+- **Native Adapter Missing Codemode Tool** — `sqlite_execute_code` was not registered in Native mode
+  - `NativeSqliteAdapter.getToolDefinitions()` was missing `getCodeModeTools()` from its tool list
+  - WASM adapter (`SqliteAdapter`) already included it via `getAllToolDefinitions()`
+  - Tool filter correctly auto-injected `codemode` into enabled groups, but the tool definition was never produced so it couldn't be registered
 
 - **Core Tool Input Validation** — 5 core tool handlers now return structured errors for invalid identifiers instead of throwing raw MCP exceptions
   - `sqlite_create_table`: Added `sanitizeIdentifier` validation for table names and empty columns array check (previously accepted empty string names and empty columns, causing orphaned tables or SQL syntax errors)
