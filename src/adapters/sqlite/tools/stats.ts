@@ -313,6 +313,14 @@ function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate column exists
         await validateColumnExists(adapter, input.table, input.column);
 
+        // Validate column is numeric
+        const numericError = await validateNumericColumn(
+          adapter,
+          input.table,
+          input.column,
+        );
+        if (numericError) return numericError;
+
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -452,6 +460,16 @@ function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.valueColumn);
         await validateColumnExists(adapter, input.table, input.groupByColumn);
 
+        // Validate value column is numeric for non-count aggregations
+        if (input.stat !== "count") {
+          const numericError = await validateNumericColumn(
+            adapter,
+            input.table,
+            input.valueColumn,
+          );
+          if (numericError) return numericError;
+        }
+
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const valueColumn = sanitizeIdentifier(input.valueColumn);
@@ -504,6 +522,14 @@ function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         // Validate column exists
         await validateColumnExists(adapter, input.table, input.column);
+
+        // Validate column is numeric
+        const numericError = await validateNumericColumn(
+          adapter,
+          input.table,
+          input.column,
+        );
+        if (numericError) return numericError;
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
@@ -1429,6 +1455,20 @@ function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.xColumn);
         await validateColumnExists(adapter, input.table, input.yColumn);
+
+        // Validate columns are numeric
+        const xNumericError = await validateNumericColumn(
+          adapter,
+          input.table,
+          input.xColumn,
+        );
+        if (xNumericError) return xNumericError;
+        const yNumericError = await validateNumericColumn(
+          adapter,
+          input.table,
+          input.yColumn,
+        );
+        if (yNumericError) return yNumericError;
 
         // Validate identifiers
         sanitizeIdentifier(input.table);

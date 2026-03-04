@@ -125,6 +125,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stats Code Mode Help Examples** — Fixed incorrect method names in `GROUP_EXAMPLES` for stats group
   - `sqlite.stats.basic()` → `sqlite.stats.statsBasic()`, `.histogram()` → `.statsHistogram()`, `.percentile()` → `.statsPercentile()`
   - Stats group uses `KEEP_PREFIX_GROUPS` so methods retain the `stats` prefix; examples now match actual API
+- **Stats Tools Numeric Column Validation (Round 2)** — Added `validateNumericColumn` to 4 additional stats tools
+  - `sqlite_stats_basic`: Previously returned meaningless results (sum: 0, avg: 0, min/max: null) for text columns; now returns structured `INVALID_INPUT` error
+  - `sqlite_stats_histogram`: Previously generated corrupt SQL with NaN bucket boundaries for text columns; now returns structured error before query execution
+  - `sqlite_stats_regression`: Previously returned raw MCP output validation error (NaN coefficients) for text columns; now validates both xColumn and yColumn upfront
+  - `sqlite_stats_group_by`: Previously returned `stat_value: 0` for AVG/SUM/MIN/MAX on text columns; now validates valueColumn is numeric for non-count aggregations (count stat remains unrestricted)
+- **Stats Code Mode Positional Parameters (Round 4)** — Fixed `statsCount` missing `distinct` in positional parameter mapping
+  - Was `["table", "column", "whereClause"]` — `distinct` boolean passed as 3rd arg was mapped to `whereClause`, causing Zod validation error
+  - Fixed to `["table", "column", "distinct", "whereClause"]` — enables `sqlite.stats.statsCount("table", "col", true)` syntax
 
 ### Added
 

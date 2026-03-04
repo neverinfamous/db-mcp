@@ -182,7 +182,7 @@ const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
 
   // Stats
   statsBasic: ["table", "column", "whereClause"],
-  statsCount: ["table", "column", "whereClause"],
+  statsCount: ["table", "column", "distinct", "whereClause"],
   statsGroupBy: [
     "table",
     "valueColumn",
