@@ -482,7 +482,7 @@ sqlite_fuzzy_match({
   tokenize: false,
 }); // matches full value
 
-// Phonetic matching - finds words that sound alike (compares FIRST word only)
+// Phonetic matching - finds words that sound alike (matches against any word in value)
 // Use includeRowData:false for lighter payloads when only matching values are needed
 sqlite_phonetic_match({
   table: "products",

@@ -73,6 +73,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Previously returned `COLUMN_NOT_FOUND` when table didn't exist (because `pragma_table_info` returns empty for nonexistent tables)
   - Now returns `TABLE_NOT_FOUND` with suggestion to run `sqlite_list_tables`
   - Gives users a more actionable error message for the root cause
+- **`sqlite_phonetic_match` Word-Level Matching** — Now splits column values into words and matches any word
+  - Previously computed soundex/metaphone on the entire column value, missing multi-word matches (e.g., "Mouse" didn't match "Mouse Pad XL")
+  - Now consistent with `sqlite_advanced_search` phonetic behavior which already matched per-word
+  - Both Soundex and Metaphone paths updated; native SQLite soundex query replaced with JS-based word splitting
+  - Documentation updated from "compares FIRST word only" to "matches against any word in value"
 
 ### Added
 
@@ -478,8 +483,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Changed WASM vs Native table entry from "✅ native | ❌ | JS" to "JS fallback | JS fallback | —"
   - The generate_series extension is not compiled into SQLite, so both environments use the JavaScript fallback
 
-- **`sqlite_phonetic_match` Documentation** — Clarified first-word matching behavior
-  - Added comment noting that Soundex compares only the first word of multi-word values
+- **`sqlite_phonetic_match` Documentation** — Updated matching behavior description
+  - Changed from "compares FIRST word only" to "matches against any word in value"
 
 - **`sqlite_json_keys` Documentation** — Clarified distinct key behavior
   - Updated description to note tool returns unique keys across all matching rows, not per-row keys

@@ -1059,88 +1059,12 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
             ? metaphone(input.search)
             : soundex(input.search); // Compute locally to ensure it's always available
 
-        let sql: string;
+        // Use JS-based word splitting for both native and WASM to match
+        // against individual words (consistent with advanced_search behavior).
+        // SQLite's native soundex() computes on the full string, which doesn't
+        // support per-word matching.
+        const sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
         if (input.algorithm === "soundex") {
-          // Try SQLite's native soundex function first, fall back to JS implementation
-          sql = `SELECT *, soundex(${column}) as _phonetic FROM ${table} WHERE soundex(${column}) = soundex('${input.search.replace(/'/g, "''")}') LIMIT ${input.limit}`;
-          try {
-            const result = await adapter.executeReadQuery(sql);
-
-            const matches = (result.rows ?? []).map((row) => {
-              const rawValue = row[input.column];
-              const rawPhonetic = row["_phonetic"];
-              const match: {
-                value: string;
-                phoneticCode: string;
-                row?: Record<string, unknown>;
-              } = {
-                value:
-                  typeof rawValue === "string"
-                    ? rawValue
-                    : JSON.stringify(rawValue ?? ""),
-                phoneticCode:
-                  typeof rawPhonetic === "string" ? rawPhonetic : "",
-              };
-              if (input.includeRowData) {
-                match.row = row;
-              }
-              return match;
-            });
-
-            return {
-              success: true,
-              searchCode, // Use pre-computed local soundex code
-              matchCount: matches.length,
-              matches,
-            };
-          } catch (error) {
-            // If SQLite soundex() is unavailable (WASM mode), fall back to JS implementation
-            if (
-              error instanceof Error &&
-              error.message.toLowerCase().includes("no such function: soundex")
-            ) {
-              // Fall through to JS-based soundex matching below
-              sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
-              const result = await adapter.executeReadQuery(sql);
-
-              const matches: {
-                value: string;
-                phoneticCode: string;
-                row?: Record<string, unknown>;
-              }[] = [];
-
-              for (const row of result.rows ?? []) {
-                const rawValue = row[input.column];
-                const value =
-                  typeof rawValue === "string"
-                    ? rawValue
-                    : JSON.stringify(rawValue ?? "");
-                const code = soundex(value); // Use JS-based soundex
-                if (code === searchCode) {
-                  const match: {
-                    value: string;
-                    phoneticCode: string;
-                    row?: Record<string, unknown>;
-                  } = { value, phoneticCode: code };
-                  if (input.includeRowData) {
-                    match.row = row;
-                  }
-                  matches.push(match);
-                }
-              }
-
-              return {
-                success: true,
-                searchCode,
-                matchCount: matches.length,
-                matches: matches.slice(0, input.limit),
-              };
-            }
-            throw error;
-          }
-        } else {
-          // Metaphone in JS
-          sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
           const result = await adapter.executeReadQuery(sql);
 
           const matches: {
@@ -1155,17 +1079,63 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
               typeof rawValue === "string"
                 ? rawValue
                 : JSON.stringify(rawValue ?? "");
-            const code = metaphone(value);
-            if (code === searchCode) {
-              const match: {
-                value: string;
-                phoneticCode: string;
-                row?: Record<string, unknown>;
-              } = { value, phoneticCode: code };
-              if (input.includeRowData) {
-                match.row = row;
+            const words = value.split(/\s+/).filter((w) => w.length > 0);
+
+            for (const word of words) {
+              const code = soundex(word);
+              if (code === searchCode) {
+                const match: {
+                  value: string;
+                  phoneticCode: string;
+                  row?: Record<string, unknown>;
+                } = { value, phoneticCode: code };
+                if (input.includeRowData) {
+                  match.row = row;
+                }
+                matches.push(match);
+                break; // Only match once per row
               }
-              matches.push(match);
+            }
+          }
+
+          return {
+            success: true,
+            searchCode,
+            matchCount: matches.length,
+            matches: matches.slice(0, input.limit),
+          };
+        } else {
+          // Metaphone in JS — split by words like soundex path
+          const result = await adapter.executeReadQuery(sql);
+
+          const matches: {
+            value: string;
+            phoneticCode: string;
+            row?: Record<string, unknown>;
+          }[] = [];
+
+          for (const row of result.rows ?? []) {
+            const rawValue = row[input.column];
+            const value =
+              typeof rawValue === "string"
+                ? rawValue
+                : JSON.stringify(rawValue ?? "");
+            const words = value.split(/\s+/).filter((w) => w.length > 0);
+
+            for (const word of words) {
+              const code = metaphone(word);
+              if (code === searchCode) {
+                const match: {
+                  value: string;
+                  phoneticCode: string;
+                  row?: Record<string, unknown>;
+                } = { value, phoneticCode: code };
+                if (input.includeRowData) {
+                  match.row = row;
+                }
+                matches.push(match);
+                break; // Only match once per row
+              }
             }
           }
 
