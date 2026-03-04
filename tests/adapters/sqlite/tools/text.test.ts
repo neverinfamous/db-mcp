@@ -568,5 +568,137 @@ describe("Text Processing Tools", () => {
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
+
+    // Nonexistent column on valid table tests
+    it("should return structured error for regex_match on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_regex_match")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        pattern: ".",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("not found");
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for regex_extract on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_regex_extract")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        pattern: ".",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for text_split on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_text_split")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        delimiter: ",",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for text_concat on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_text_concat")?.({
+        table: "texts",
+        columns: ["name", "nonexistent_col"],
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for text_trim on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_text_trim")?.({
+        table: "texts",
+        column: "nonexistent_col",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for text_case on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_text_case")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        mode: "upper",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for text_substring on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_text_substring")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        start: 1,
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for fuzzy_match on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_fuzzy_match")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        search: "test",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for phonetic_match on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_phonetic_match")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        search: "test",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for text_normalize on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_text_normalize")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        mode: "nfc",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for text_validate on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_text_validate")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        pattern: "email",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return structured error for advanced_search on nonexistent column", async () => {
+      const result = (await tools.get("sqlite_advanced_search")?.({
+        table: "texts",
+        column: "nonexistent_col",
+        searchTerm: "test",
+      })) as { success: boolean; error?: string; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
   });
 });

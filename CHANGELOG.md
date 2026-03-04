@@ -39,6 +39,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Text Tool Handler-Level Error Handling** — All 13 text tool handlers now catch errors locally and return `{success: false}` responses
   - `sqlite_regex_match`, `sqlite_regex_extract`, `sqlite_text_split`, `sqlite_text_concat`, `sqlite_text_replace`, `sqlite_text_trim`, `sqlite_text_case`, `sqlite_text_substring`, `sqlite_fuzzy_match`, `sqlite_phonetic_match`, `sqlite_text_normalize`, `sqlite_text_validate`, `sqlite_advanced_search`: Catch errors with `formatError()` and return structured `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
   - Mirrors the same pattern already applied to core and JSON tool groups
+- **Text Tool Column Existence Validation** — All 12 text tools (excluding `sqlite_text_replace`) now validate column existence before query execution
+  - Prevents silent success on nonexistent columns (SQLite treats double-quoted nonexistent identifiers as string literals)
+  - Returns `{success: false, code: "COLUMN_NOT_FOUND"}` with suggestion to use `sqlite_describe_table`
+  - `validateColumnExists()` uses `PRAGMA table_info()` to verify column presence
+  - `validateColumnsExist()` handles multi-column tools (`sqlite_text_concat`)
+  - Identifier validation (`sanitizeIdentifier`) runs first for security, then column existence check
+  - 12 new error path tests added for nonexistent column on valid table scenarios
 
 ### Fixed
 

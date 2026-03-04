@@ -14,7 +14,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../utils/index.js";
-import { formatError } from "../../../utils/errors.js";
+import { formatError, ResourceNotFoundError } from "../../../utils/errors.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
@@ -170,6 +170,45 @@ const AdvancedSearchSchema = z.object({
 });
 
 /**
+ * Validate that a column exists in a table.
+ * Prevents silent success when SQLite treats quoted nonexistent identifiers as string literals.
+ */
+async function validateColumnExists(
+  adapter: SqliteAdapter,
+  tableName: string,
+  columnName: string,
+): Promise<void> {
+  const result = await adapter.executeReadQuery(
+    `SELECT name FROM pragma_table_info('${tableName.replace(/'/g, "''")}') WHERE name = '${columnName.replace(/'/g, "''")}' LIMIT 1`,
+  );
+  if (!result.rows || result.rows.length === 0) {
+    throw new ResourceNotFoundError(
+      `Column '${columnName}' not found in table '${tableName}'`,
+      "COLUMN_NOT_FOUND",
+      {
+        suggestion:
+          "Column not found. Use sqlite_describe_table to see available columns.",
+        resourceType: "column",
+        resourceName: columnName,
+      },
+    );
+  }
+}
+
+/**
+ * Validate that multiple columns exist in a table.
+ */
+async function validateColumnsExist(
+  adapter: SqliteAdapter,
+  tableName: string,
+  columnNames: string[],
+): Promise<void> {
+  for (const col of columnNames) {
+    await validateColumnExists(adapter, tableName, col);
+  }
+}
+
+/**
  * Get all text processing tools
  */
 export function getTextTools(adapter: SqliteAdapter): ToolDefinition[] {
@@ -208,9 +247,10 @@ function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
       const input = RegexExtractSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.whereClause) {
@@ -284,9 +324,10 @@ function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
       const input = RegexMatchSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.whereClause) {
@@ -356,9 +397,10 @@ function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextSplitSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.whereClause) {
@@ -428,9 +470,10 @@ function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextConcatSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify columns exist
         const table = sanitizeIdentifier(input.table);
         const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
+        await validateColumnsExist(adapter, input.table, input.columns);
 
         // Build concatenation expression using || operator
         const sep = input.separator.replace(/'/g, "''");
@@ -529,9 +572,10 @@ function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextTrimSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         let trimFunc: string;
         switch (input.mode) {
@@ -589,9 +633,10 @@ function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextCaseSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         const caseFunc = input.mode === "upper" ? "upper" : "lower";
 
@@ -639,9 +684,10 @@ function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextSubstringSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         const substrExpr =
           input.length !== undefined
@@ -878,9 +924,10 @@ function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
       const input = FuzzyMatchSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         const sql = `SELECT ${column} FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
         const result = await adapter.executeReadQuery(sql);
@@ -984,9 +1031,10 @@ function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
       const input = PhoneticMatchSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         const searchCode =
           input.algorithm === "metaphone"
@@ -1152,9 +1200,10 @@ function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextNormalizeSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT ${column} as original FROM ${table}`;
         if (input.whereClause) {
@@ -1232,9 +1281,10 @@ function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
       const input = TextValidateSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         // Get validation pattern
         let pattern: RegExp;
@@ -1361,9 +1411,10 @@ function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
       const input = AdvancedSearchSchema.parse(params);
 
       try {
-        // Validate and quote identifiers
+        // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
+        await validateColumnExists(adapter, input.table, input.column);
 
         // Fetch candidate rows
         let whereClause = "";
