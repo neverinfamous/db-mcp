@@ -1027,24 +1027,31 @@ function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: OutlierSchema,
     outputSchema: z.object({
       success: z.boolean(),
-      method: z.string(),
-      stats: z.object({
-        mean: z.number().optional(),
-        stdDev: z.number().optional(),
-        q1: z.number().optional(),
-        q3: z.number().optional(),
-        iqr: z.number().optional(),
-        lowerBound: z.number(),
-        upperBound: z.number(),
-      }),
-      outlierCount: z.number(),
-      totalRows: z.number(),
-      outliers: z.array(
-        z.object({
-          value: z.number(),
-          rowid: z.number().optional(),
-        }),
-      ),
+      method: z.string().optional(),
+      stats: z
+        .object({
+          mean: z.number().optional(),
+          stdDev: z.number().optional(),
+          q1: z.number().optional(),
+          q3: z.number().optional(),
+          iqr: z.number().optional(),
+          lowerBound: z.number(),
+          upperBound: z.number(),
+        })
+        .optional(),
+      outlierCount: z.number().optional(),
+      totalRows: z.number().optional(),
+      outliers: z
+        .array(
+          z.object({
+            value: z.number(),
+            rowid: z.number().optional(),
+          }),
+        )
+        .optional(),
+      error: z.string().optional(),
+      code: z.string().optional(),
+      suggestion: z.string().optional(),
     }),
     requiredScopes: ["read"],
     annotations: readOnly("Outlier Detection"),
@@ -1284,16 +1291,21 @@ function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: RegressionSchema,
     outputSchema: z.object({
       success: z.boolean(),
-      type: z.string(),
-      sampleSize: z.number(),
-      coefficients: z.object({
-        intercept: z.number(),
-        linear: z.number().optional(),
-        quadratic: z.number().optional(),
-        cubic: z.number().optional(),
-      }),
-      rSquared: z.number(),
-      equation: z.string(),
+      type: z.string().optional(),
+      sampleSize: z.number().optional(),
+      coefficients: z
+        .object({
+          intercept: z.number(),
+          linear: z.number().optional(),
+          quadratic: z.number().optional(),
+          cubic: z.number().optional(),
+        })
+        .optional(),
+      rSquared: z.number().optional(),
+      equation: z.string().optional(),
+      error: z.string().optional(),
+      code: z.string().optional(),
+      suggestion: z.string().optional(),
     }),
     requiredScopes: ["read"],
     annotations: readOnly("Regression Analysis"),
@@ -1425,12 +1437,15 @@ function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: HypothesisSchema,
     outputSchema: z.object({
       success: z.boolean(),
-      testType: z.string(),
-      statistic: z.number(),
-      pValue: z.number(),
-      degreesOfFreedom: z.number(),
-      significant: z.boolean(),
-      details: z.record(z.string(), z.unknown()),
+      testType: z.string().optional(),
+      statistic: z.number().optional(),
+      pValue: z.number().optional(),
+      degreesOfFreedom: z.number().optional(),
+      significant: z.boolean().optional(),
+      details: z.record(z.string(), z.unknown()).optional(),
+      error: z.string().optional(),
+      code: z.string().optional(),
+      suggestion: z.string().optional(),
     }),
     requiredScopes: ["read"],
     annotations: readOnly("Hypothesis Testing"),

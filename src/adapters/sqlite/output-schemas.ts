@@ -627,15 +627,20 @@ const StatsRowRecordSchema = z.record(z.string(), z.unknown());
  */
 export const StatsBasicOutputSchema = z.object({
   success: z.boolean(),
-  column: z.string(),
-  stats: z.object({
-    count: z.number(),
-    sum: z.number().nullable(),
-    avg: z.number().nullable(),
-    min: z.number().nullable(),
-    max: z.number().nullable(),
-    range: z.number().nullable(),
-  }),
+  column: z.string().optional(),
+  stats: z
+    .object({
+      count: z.number(),
+      sum: z.number().nullable(),
+      avg: z.number().nullable(),
+      min: z.number().nullable(),
+      max: z.number().nullable(),
+      range: z.number().nullable(),
+    })
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -643,8 +648,11 @@ export const StatsBasicOutputSchema = z.object({
  */
 export const StatsCountOutputSchema = z.object({
   success: z.boolean(),
-  count: z.number(),
+  count: z.number().optional(),
   distinct: z.boolean().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -652,9 +660,12 @@ export const StatsCountOutputSchema = z.object({
  */
 export const StatsGroupByOutputSchema = z.object({
   success: z.boolean(),
-  statistic: z.string(),
-  rowCount: z.number(),
-  results: z.array(StatsRowRecordSchema),
+  statistic: z.string().optional(),
+  rowCount: z.number().optional(),
+  results: z.array(StatsRowRecordSchema).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -662,10 +673,13 @@ export const StatsGroupByOutputSchema = z.object({
  */
 export const StatsTopNOutputSchema = z.object({
   success: z.boolean(),
-  column: z.string(),
-  direction: z.string(),
-  count: z.number(),
-  rows: z.array(StatsRowRecordSchema),
+  column: z.string().optional(),
+  direction: z.string().optional(),
+  count: z.number().optional(),
+  rows: z.array(StatsRowRecordSchema).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -673,9 +687,12 @@ export const StatsTopNOutputSchema = z.object({
  */
 export const StatsDistinctOutputSchema = z.object({
   success: z.boolean(),
-  column: z.string(),
-  distinctCount: z.number(),
-  values: z.array(z.unknown()),
+  column: z.string().optional(),
+  distinctCount: z.number().optional(),
+  values: z.array(z.unknown()).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -683,17 +700,22 @@ export const StatsDistinctOutputSchema = z.object({
  */
 export const StatsSummaryOutputSchema = z.object({
   success: z.boolean(),
-  table: z.string(),
-  summaries: z.array(
-    z.object({
-      column: z.string(),
-      count: z.number().optional(),
-      avg: z.number().nullable().optional(),
-      min: z.number().nullable().optional(),
-      max: z.number().nullable().optional(),
-      error: z.string().optional(),
-    }),
-  ),
+  table: z.string().optional(),
+  summaries: z
+    .array(
+      z.object({
+        column: z.string(),
+        count: z.number().optional(),
+        avg: z.number().nullable().optional(),
+        min: z.number().nullable().optional(),
+        max: z.number().nullable().optional(),
+        error: z.string().optional(),
+      }),
+    )
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -701,14 +723,19 @@ export const StatsSummaryOutputSchema = z.object({
  */
 export const StatsFrequencyOutputSchema = z.object({
   success: z.boolean(),
-  column: z.string(),
-  distinctValues: z.number(),
-  distribution: z.array(
-    z.object({
-      value: z.unknown(),
-      frequency: z.number(),
-    }),
-  ),
+  column: z.string().optional(),
+  distinctValues: z.number().optional(),
+  distribution: z
+    .array(
+      z.object({
+        value: z.unknown(),
+        frequency: z.number(),
+      }),
+    )
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -733,12 +760,17 @@ export const StatsPercentileOutputSchema = z.object({
   success: z.boolean(),
   column: z.string().optional(),
   count: z.number().optional(),
-  percentiles: z.array(
-    z.object({
-      percentile: z.number(),
-      value: z.number().nullable(),
-    }),
-  ),
+  percentiles: z
+    .array(
+      z.object({
+        percentile: z.number(),
+        value: z.number().nullable(),
+      }),
+    )
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -754,14 +786,19 @@ export const StatsHistogramOutputSchema = z.object({
     })
     .optional(),
   bucketSize: z.number().optional(),
-  buckets: z.array(
-    z.object({
-      bucket: z.number().optional(),
-      min: z.number(),
-      max: z.number(),
-      count: z.number(),
-    }),
-  ),
+  buckets: z
+    .array(
+      z.object({
+        bucket: z.number().optional(),
+        min: z.number(),
+        max: z.number(),
+        count: z.number(),
+      }),
+    )
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -772,8 +809,11 @@ export const StatsCorrelationOutputSchema = z.object({
   column1: z.string().optional(),
   column2: z.string().optional(),
   n: z.number().optional(),
-  correlation: z.number().nullable(),
+  correlation: z.number().nullable().optional(),
   message: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -781,16 +821,21 @@ export const StatsCorrelationOutputSchema = z.object({
  */
 export const StatsRegressionOutputSchema = z.object({
   success: z.boolean(),
-  type: z.string(),
-  sampleSize: z.number(),
-  coefficients: z.object({
-    intercept: z.number(),
-    linear: z.number().optional(),
-    quadratic: z.number().optional(),
-    cubic: z.number().optional(),
-  }),
-  rSquared: z.number(),
-  equation: z.string(),
+  type: z.string().optional(),
+  sampleSize: z.number().optional(),
+  coefficients: z
+    .object({
+      intercept: z.number(),
+      linear: z.number().optional(),
+      quadratic: z.number().optional(),
+      cubic: z.number().optional(),
+    })
+    .optional(),
+  rSquared: z.number().optional(),
+  equation: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -817,10 +862,13 @@ export const StatsMedianOutputSchema = z.object({
  */
 export const StatsOutliersOutputSchema = z.object({
   success: z.boolean(),
-  column: z.string(),
-  method: z.string(),
-  outliers: z.array(StatsRowRecordSchema),
-  count: z.number(),
+  column: z.string().optional(),
+  method: z.string().optional(),
+  outliers: z.array(StatsRowRecordSchema).optional(),
+  count: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 // =============================================================================

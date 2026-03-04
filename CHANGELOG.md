@@ -92,6 +92,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now consistent with `sqlite_advanced_search` phonetic behavior which already matched per-word
   - Both Soundex and Metaphone paths updated; native SQLite soundex query replaced with JS-based word splitting
   - Documentation updated from "compares FIRST word only" to "matches against any word in value"
+- **Stats Tool Output Schema Error Responses** — All 13 stats output schemas now accommodate `{success: false}` error responses
+  - 10 exported schemas in `output-schemas.ts` and 3 inline schemas in `stats.ts` (outliers, regression, hypothesis) updated
+  - Success-specific fields made optional; `error`, `code`, `suggestion` fields added
+  - Previously, `formatError()` responses failed Zod output validation because required fields like `column`, `stats`, `count` were missing
+  - Mirrors the pattern already used by JSON tool schemas for structured error handling
 
 ### Added
 
