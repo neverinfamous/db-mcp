@@ -458,5 +458,111 @@ describe("Geo Tools", () => {
         );
       }
     });
+
+    it("should return structured error for nonexistent table", async () => {
+      const result = (await getTool().handler(
+        {
+          table: "nonexistent_table",
+          latColumn: "latitude",
+          lonColumn: "longitude",
+          gridSize: 0.1,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("nonexistent_table");
+    });
+
+    it("should return structured error for nonexistent column", async () => {
+      const result = (await getTool().handler(
+        {
+          table: "locations",
+          latColumn: "nonexistent_lat",
+          lonColumn: "longitude",
+          gridSize: 0.1,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("nonexistent_lat");
+    });
+  });
+
+  describe("error handling", () => {
+    it("should return structured error for nearby with nonexistent table", async () => {
+      const tool = tools.find((t) => t.name === "sqlite_geo_nearby")!;
+      const result = (await tool.handler(
+        {
+          table: "nonexistent_table",
+          latColumn: "latitude",
+          lonColumn: "longitude",
+          centerLat: 40.758,
+          centerLon: -73.985,
+          radius: 10,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("nonexistent_table");
+    });
+
+    it("should return structured error for nearby with nonexistent column", async () => {
+      const tool = tools.find((t) => t.name === "sqlite_geo_nearby")!;
+      const result = (await tool.handler(
+        {
+          table: "locations",
+          latColumn: "bad_col",
+          lonColumn: "longitude",
+          centerLat: 40.758,
+          centerLon: -73.985,
+          radius: 10,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("bad_col");
+    });
+
+    it("should return structured error for bounding_box with nonexistent table", async () => {
+      const tool = tools.find((t) => t.name === "sqlite_geo_bounding_box")!;
+      const result = (await tool.handler(
+        {
+          table: "nonexistent_table",
+          latColumn: "latitude",
+          lonColumn: "longitude",
+          minLat: 40,
+          maxLat: 41,
+          minLon: -75,
+          maxLon: -73,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("nonexistent_table");
+    });
+
+    it("should return structured error for bounding_box with nonexistent column", async () => {
+      const tool = tools.find((t) => t.name === "sqlite_geo_bounding_box")!;
+      const result = (await tool.handler(
+        {
+          table: "locations",
+          latColumn: "bad_lat",
+          lonColumn: "longitude",
+          minLat: 40,
+          maxLat: 41,
+          minLon: -75,
+          maxLon: -73,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("bad_lat");
+    });
   });
 });

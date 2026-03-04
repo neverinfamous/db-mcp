@@ -15,6 +15,7 @@ import {
   sanitizeIdentifier,
   createColumnList,
 } from "../../../utils/index.js";
+import { formatError, ResourceNotFoundError } from "../../../utils/errors.js";
 import {
   GeoDistanceOutputSchema,
   GeoWithinRadiusOutputSchema,
@@ -62,6 +63,50 @@ const GeoClusterSchema = z.object({
   gridSize: z.number().optional().default(0.1).describe("Grid size in degrees"),
   whereClause: z.string().optional(),
 });
+
+/**
+ * Validate that a column exists in a table.
+ * Prevents silent success when SQLite treats quoted nonexistent identifiers as string literals.
+ */
+async function validateColumnExists(
+  adapter: SqliteAdapter,
+  tableName: string,
+  columnName: string,
+): Promise<void> {
+  // First check if the table exists
+  const tableCheck = await adapter.executeReadQuery(
+    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${tableName.replace(/'/g, "''")}'`,
+  );
+  if (!tableCheck.rows || tableCheck.rows.length === 0) {
+    throw new ResourceNotFoundError(
+      `Table '${tableName}' does not exist`,
+      "TABLE_NOT_FOUND",
+      {
+        suggestion:
+          "Table not found. Run sqlite_list_tables to see available tables.",
+        resourceType: "table",
+        resourceName: tableName,
+      },
+    );
+  }
+
+  // Then check if the column exists
+  const result = await adapter.executeReadQuery(
+    `SELECT name FROM pragma_table_info('${tableName.replace(/'/g, "''")}') WHERE name = '${columnName.replace(/'/g, "''")}' LIMIT 1`,
+  );
+  if (!result.rows || result.rows.length === 0) {
+    throw new ResourceNotFoundError(
+      `Column '${columnName}' not found in table '${tableName}'`,
+      "COLUMN_NOT_FOUND",
+      {
+        suggestion:
+          "Column not found. Use sqlite_describe_table to see available columns.",
+        resourceType: "column",
+        resourceName: columnName,
+      },
+    );
+  }
+}
 
 /**
  * Get all geo tools
@@ -155,62 +200,70 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoNearbySchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const latColumn = sanitizeIdentifier(input.latColumn);
-      const lonColumn = sanitizeIdentifier(input.lonColumn);
+      try {
+        // Validate columns exist
+        await validateColumnExists(adapter, input.table, input.latColumn);
+        await validateColumnExists(adapter, input.table, input.lonColumn);
 
-      // Build select
-      let selectCols = "*";
-      if (input.returnColumns && input.returnColumns.length > 0) {
-        const allCols = [
-          ...input.returnColumns,
-          input.latColumn,
-          input.lonColumn,
-        ];
-        selectCols = createColumnList(allCols);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const latColumn = sanitizeIdentifier(input.latColumn);
+        const lonColumn = sanitizeIdentifier(input.lonColumn);
+
+        // Build select
+        let selectCols = "*";
+        if (input.returnColumns && input.returnColumns.length > 0) {
+          const allCols = [
+            ...input.returnColumns,
+            input.latColumn,
+            input.lonColumn,
+          ];
+          selectCols = createColumnList(allCols);
+        }
+
+        // Calculate rough bounding box for pre-filtering
+        const radiusKm =
+          input.unit === "miles"
+            ? input.radius * 1.60934
+            : input.unit === "meters"
+              ? input.radius / 1000
+              : input.radius;
+        const latDelta = radiusKm / 111; // ~111km per degree latitude
+        const lonDelta =
+          radiusKm / (111 * Math.cos((input.centerLat * Math.PI) / 180));
+
+        const sql = `SELECT ${selectCols} FROM ${table}
+                  WHERE ${latColumn} BETWEEN ${input.centerLat - latDelta} AND ${input.centerLat + latDelta}
+                  AND ${lonColumn} BETWEEN ${input.centerLon - lonDelta} AND ${input.centerLon + lonDelta}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        // Filter by exact distance
+        const nearby = (result.rows ?? [])
+          .map((row) => {
+            const lat = Number(row[input.latColumn]);
+            const lon = Number(row[input.lonColumn]);
+            const distance = haversineDistance(
+              input.centerLat,
+              input.centerLon,
+              lat,
+              lon,
+              input.unit,
+            );
+            return { ...row, _distance: Math.round(distance * 1000) / 1000 };
+          })
+          .filter((r) => r._distance <= input.radius)
+          .sort((a, b) => a._distance - b._distance)
+          .slice(0, input.limit);
+
+        return {
+          success: true,
+          rowCount: nearby.length,
+          results: nearby,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      // Calculate rough bounding box for pre-filtering
-      const radiusKm =
-        input.unit === "miles"
-          ? input.radius * 1.60934
-          : input.unit === "meters"
-            ? input.radius / 1000
-            : input.radius;
-      const latDelta = radiusKm / 111; // ~111km per degree latitude
-      const lonDelta =
-        radiusKm / (111 * Math.cos((input.centerLat * Math.PI) / 180));
-
-      const sql = `SELECT ${selectCols} FROM ${table}
-                WHERE ${latColumn} BETWEEN ${input.centerLat - latDelta} AND ${input.centerLat + latDelta}
-                AND ${lonColumn} BETWEEN ${input.centerLon - lonDelta} AND ${input.centerLon + lonDelta}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      // Filter by exact distance
-      const nearby = (result.rows ?? [])
-        .map((row) => {
-          const lat = Number(row[input.latColumn]);
-          const lon = Number(row[input.lonColumn]);
-          const distance = haversineDistance(
-            input.centerLat,
-            input.centerLon,
-            lat,
-            lon,
-            input.unit,
-          );
-          return { ...row, _distance: Math.round(distance * 1000) / 1000 };
-        })
-        .filter((r) => r._distance <= input.radius)
-        .sort((a, b) => a._distance - b._distance)
-        .slice(0, input.limit);
-
-      return {
-        success: true,
-        rowCount: nearby.length,
-        results: nearby,
-      };
     },
   };
 }
@@ -230,29 +283,37 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoBoundingBoxSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const latColumn = sanitizeIdentifier(input.latColumn);
-      const lonColumn = sanitizeIdentifier(input.lonColumn);
+      try {
+        // Validate columns exist
+        await validateColumnExists(adapter, input.table, input.latColumn);
+        await validateColumnExists(adapter, input.table, input.lonColumn);
 
-      // Build select
-      let selectCols = "*";
-      if (input.returnColumns && input.returnColumns.length > 0) {
-        selectCols = createColumnList(input.returnColumns);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const latColumn = sanitizeIdentifier(input.latColumn);
+        const lonColumn = sanitizeIdentifier(input.lonColumn);
+
+        // Build select
+        let selectCols = "*";
+        if (input.returnColumns && input.returnColumns.length > 0) {
+          selectCols = createColumnList(input.returnColumns);
+        }
+
+        const sql = `SELECT ${selectCols} FROM ${table}
+                  WHERE ${latColumn} BETWEEN ${input.minLat} AND ${input.maxLat}
+                  AND ${lonColumn} BETWEEN ${input.minLon} AND ${input.maxLon}
+                  LIMIT ${input.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          results: result.rows ?? [],
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      const sql = `SELECT ${selectCols} FROM ${table}
-                WHERE ${latColumn} BETWEEN ${input.minLat} AND ${input.maxLat}
-                AND ${lonColumn} BETWEEN ${input.minLon} AND ${input.maxLon}
-                LIMIT ${input.limit}`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      return {
-        success: true,
-        rowCount: result.rows?.length ?? 0,
-        results: result.rows ?? [],
-      };
     },
   };
 }
@@ -272,45 +333,53 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const input = GeoClusterSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const latColumn = sanitizeIdentifier(input.latColumn);
-      const lonColumn = sanitizeIdentifier(input.lonColumn);
+      try {
+        // Validate columns exist
+        await validateColumnExists(adapter, input.table, input.latColumn);
+        await validateColumnExists(adapter, input.table, input.lonColumn);
 
-      // Security: Validate WHERE clause if provided
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const latColumn = sanitizeIdentifier(input.latColumn);
+        const lonColumn = sanitizeIdentifier(input.lonColumn);
+
+        // Security: Validate WHERE clause if provided
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+        }
+
+        // Use ROUND to create grid cells
+        const gridSize = input.gridSize;
+        const sql = `SELECT
+                  ROUND(${latColumn} / ${gridSize}) * ${gridSize} as grid_lat,
+                  ROUND(${lonColumn} / ${gridSize}) * ${gridSize} as grid_lon,
+                  COUNT(*) as point_count,
+                  AVG(${latColumn}) as center_lat,
+                  AVG(${lonColumn}) as center_lon
+              FROM ${table}
+              ${input.whereClause ? `WHERE ${input.whereClause}` : ""}
+              GROUP BY grid_lat, grid_lon
+              ORDER BY point_count DESC`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        // Transform raw SQL results to match output schema
+        const clusters = (result.rows ?? []).map((row, index) => ({
+          clusterId: index + 1,
+          center: {
+            latitude: Number(row["center_lat"]) || 0,
+            longitude: Number(row["center_lon"]) || 0,
+          },
+          pointCount: Number(row["point_count"]) || 0,
+        }));
+
+        return {
+          success: true,
+          clusters,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      // Use ROUND to create grid cells
-      const gridSize = input.gridSize;
-      const sql = `SELECT 
-                ROUND(${latColumn} / ${gridSize}) * ${gridSize} as grid_lat,
-                ROUND(${lonColumn} / ${gridSize}) * ${gridSize} as grid_lon,
-                COUNT(*) as point_count,
-                AVG(${latColumn}) as center_lat,
-                AVG(${lonColumn}) as center_lon
-            FROM ${table}
-            ${input.whereClause ? `WHERE ${input.whereClause}` : ""}
-            GROUP BY grid_lat, grid_lon
-            ORDER BY point_count DESC`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      // Transform raw SQL results to match output schema
-      const clusters = (result.rows ?? []).map((row, index) => ({
-        clusterId: index + 1,
-        center: {
-          latitude: Number(row["center_lat"]) || 0,
-          longitude: Number(row["center_lon"]) || 0,
-        },
-        pointCount: Number(row["point_count"]) || 0,
-      }));
-
-      return {
-        success: true,
-        clusters,
-      };
     },
   };
 }

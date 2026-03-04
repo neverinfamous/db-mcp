@@ -1149,8 +1149,11 @@ export const GeoDistanceOutputSchema = z.object({
  */
 export const GeoBoundingBoxOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  results: z.array(RowRecordSchema),
+  rowCount: z.number().optional(),
+  results: z.array(RowRecordSchema).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1167,8 +1170,11 @@ const GeoDistanceResultSchema = z
  */
 export const GeoWithinRadiusOutputSchema = z.object({
   success: z.boolean(),
-  rowCount: z.number(),
-  results: z.array(GeoDistanceResultSchema),
+  rowCount: z.number().optional(),
+  results: z.array(GeoDistanceResultSchema).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1176,17 +1182,22 @@ export const GeoWithinRadiusOutputSchema = z.object({
  */
 export const GeoClusterOutputSchema = z.object({
   success: z.boolean(),
-  clusters: z.array(
-    z.object({
-      clusterId: z.number(),
-      center: z.object({
-        latitude: z.number(),
-        longitude: z.number(),
+  clusters: z
+    .array(
+      z.object({
+        clusterId: z.number(),
+        center: z.object({
+          latitude: z.number(),
+          longitude: z.number(),
+        }),
+        pointCount: z.number(),
+        points: z.array(RowRecordSchema).optional(),
       }),
-      pointCount: z.number(),
-      points: z.array(RowRecordSchema).optional(),
-    }),
-  ),
+    )
+    .optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**

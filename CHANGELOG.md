@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Geo Tool Structured Error Responses** — All 3 database-accessing geo handlers now return structured errors instead of throwing raw MCP errors
+  - `sqlite_geo_nearby`, `sqlite_geo_bounding_box`, `sqlite_geo_cluster`: Wrap handler logic in try-catch with `formatError()` for consistent `{success: false, error: "..."}` responses
+  - Added `validateColumnExists()` to validate lat/lon column existence before query execution; previously nonexistent columns silently returned 0 results
+  - 6 new error path tests added for nonexistent table and column scenarios
 - **Admin Tool Structured Error Responses** — 4 admin tool handlers now return structured errors instead of throwing raw MCP errors
   - `sqlite_virtual_table_info`: Returns `{success: false, error: "Virtual table 'x' not found"}` instead of throwing for nonexistent virtual tables
   - `sqlite_create_view`: Catches duplicate view errors, invalid SQL, and identifier validation failures; returns `{success: false, message: "..."}` with context
