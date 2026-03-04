@@ -217,10 +217,21 @@ const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   analyze: "table",
   backup: "targetPath",
   restore: "sourcePath",
+  verifyBackup: "backupPath",
   indexStats: "table",
   pragmaSettings: "pragma",
   pragmaTableInfo: "table",
+  pragmaCompileOptions: "filter",
   appendInsight: "insight",
+  generateSeries: ["start", "stop", "step"],
+  createView: ["viewName", "selectQuery"],
+  dropView: "viewName",
+  createSeriesTable: ["tableName", "start", "stop", "step"],
+  virtualTableInfo: "tableName",
+  dropVirtualTable: "tableName",
+  createRtreeTable: "tableName",
+  createCsvTable: ["tableName", "filePath"],
+  analyzeCsvSchema: "filePath",
 };
 
 // =============================================================================
@@ -298,8 +309,12 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
       return arg;
     }
 
-    // String arg — use positional mapping
-    if (typeof arg === "string") {
+    // Primitive arg (string, number, boolean) — use positional mapping
+    if (
+      typeof arg === "string" ||
+      typeof arg === "number" ||
+      typeof arg === "boolean"
+    ) {
       const paramMapping = POSITIONAL_PARAM_MAP[methodName];
       if (typeof paramMapping === "string") {
         return { [paramMapping]: arg };
@@ -307,8 +322,11 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
       if (Array.isArray(paramMapping) && paramMapping[0] !== undefined) {
         return { [paramMapping[0]]: arg };
       }
-      // Fallback: try common names
-      return { sql: arg, query: arg, table: arg, name: arg };
+      // Fallback: try common names (only for strings)
+      if (typeof arg === "string") {
+        return { sql: arg, query: arg, table: arg, name: arg };
+      }
+      return arg;
     }
 
     return arg;

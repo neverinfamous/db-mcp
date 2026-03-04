@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`sqlite_pragma_table_info` Nonexistent Table Detection** — Returns `{success: false}` for nonexistent tables
   - Previously returned `{success: true, columns: []}` for tables that don't exist
   - Now checks if columns array is empty and returns `{success: false, error: "Table 'x' not found or has no columns"}`
+- **Admin Code Mode Positional Parameters** — Added 12 missing entries in `api.ts` for admin group methods
+  - `generateSeries`, `createView`, `dropView`, `createSeriesTable`, `virtualTableInfo`, `dropVirtualTable`, `verifyBackup`, `pragmaCompileOptions`, `createRtreeTable`, `createCsvTable`, `analyzeCsvSchema` now support positional arg syntax
+  - Example: `sqlite.admin.createView("my_view", "SELECT 1")` now works instead of requiring object syntax
+- **Code Mode `normalizeParams` Primitive Type Handling** — Fixed single number/boolean args being passed raw to tool handlers
+  - Previously, `sqlite.admin.generateSeries(1, 5, 1)` passed `1` directly instead of `{start: 1, stop: 5, step: 1}`
+  - `normalizeParams` now wraps number and boolean single args using the positional parameter mapping, same as strings
+  - Affects any method with non-string first positional params (e.g., `generateSeries`, `dbstat`)
 
 ### Added
 
