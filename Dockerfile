@@ -73,13 +73,13 @@ RUN cd /usr/local/lib/node_modules/npm && \
     mv package node_modules/tar && \
     rm tar-7.5.8.tgz
 
-# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.1
+# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.4
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack minimatch@10.2.1 && \
+    npm pack minimatch@10.2.4 && \
     rm -rf node_modules/minimatch && \
-    tar -xzf minimatch-10.2.1.tgz && \
+    tar -xzf minimatch-10.2.4.tgz && \
     mv package node_modules/minimatch && \
-    rm minimatch-10.2.1.tgz
+    rm minimatch-10.2.4.tgz
 
 # Copy built artifacts and production dependencies
 COPY --from=builder /app/dist ./dist

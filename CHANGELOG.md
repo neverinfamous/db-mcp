@@ -213,15 +213,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docker CVE Remediation** — Patched npm-bundled transitive dependencies in Dockerfile (both stages)
   - `tar`: 7.5.7 → 7.5.8 (CVE-2026-26960: path traversal, HIGH 7.1)
-  - `minimatch`: 10.1.2 → 10.2.1 (CVE-2026-26996: ReDoS, HIGH 8.7)
+  - `minimatch`: 10.1.2 → 10.2.4 (CVE-2026-26996: ReDoS, HIGH 8.7)
 
 ### Dependencies
 
 - `@eslint/js`: 9.39.2 → 10.0.1 (major)
 - `eslint`: 9.39.2 → 10.0.1 (major)
-- `@types/node`: 25.2.3 → 25.3.0
+- `@types/node`: 25.3.0 → 25.3.3
 - `rimraf`: 6.1.2 → 6.1.3
 - `typescript-eslint`: 8.55.0 → 8.56.1
+- `@modelcontextprotocol/sdk`: 1.27.0 → 1.27.1
+- `@types/pg`: 8.16.0 → 8.18.0
+- `globals`: 17.3.0 → 17.4.0
+- `pg`: 8.18.0 → 8.19.0
+- `sql.js`: 1.14.0 → 1.14.1
 
 ### Changed
 
