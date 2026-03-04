@@ -109,6 +109,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Success-specific fields made optional; `error`, `code`, `suggestion` fields added
   - Previously, `formatError()` responses failed Zod output validation because required fields like `column`, `stats`, `count` were missing
   - Mirrors the pattern already used by JSON tool schemas for structured error handling
+- **Stats Tools Non-Numeric Column Validation** — `sqlite_stats_percentile`, `sqlite_stats_outliers`, and `sqlite_stats_hypothesis` now validate column types upfront
+  - `sqlite_stats_percentile`: Previously produced raw MCP output validation error (string values in numeric schema); now returns `{success: false, code: "INVALID_INPUT"}`
+  - `sqlite_stats_outliers`: Previously generated SQL with `NaN` values causing `DB_QUERY_FAILED`; now returns structured error before query execution
+  - `sqlite_stats_hypothesis`: Previously returned `UNKNOWN_ERROR` with vague message; now returns `INVALID_INPUT` with clear suggestion
+  - Shared `validateNumericColumn()` helper extracted from `createCorrelationTool` for reuse across all three handlers
+- **Stats Code Mode Positional Parameters (Round 2)** — Fixed 2 remaining positional parameter mappings in `api.ts`
+  - `statsTopN`: Was `["table", "column"]`, missing `n` and `orderDirection` — fixed to `["table", "column", "n", "orderDirection"]`
+  - `statsHypothesis`: Had `column` and `testType` swapped — fixed to `["table", "column", "testType"]`
 
 ### Added
 

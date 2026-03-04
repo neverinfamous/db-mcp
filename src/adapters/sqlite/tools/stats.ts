@@ -73,6 +73,72 @@ async function validateColumnExists(
   }
 }
 
+/**
+ * Numeric column types for validation.
+ */
+const NUMERIC_TYPES = new Set([
+  "integer",
+  "int",
+  "real",
+  "float",
+  "double",
+  "numeric",
+  "decimal",
+  "number",
+  "smallint",
+  "bigint",
+  "tinyint",
+  "mediumint",
+]);
+
+/**
+ * Check if a column type string matches a known numeric type.
+ */
+function isNumericType(typeStr: string): boolean {
+  const lower = typeStr.toLowerCase();
+  return [...NUMERIC_TYPES].some((nt) => lower === nt || lower.startsWith(nt));
+}
+
+/**
+ * Validate that a column is a numeric type.
+ * Returns a structured error object if not numeric, or null if validation passes.
+ */
+async function validateNumericColumn(
+  adapter: SqliteAdapter,
+  tableName: string,
+  columnName: string,
+): Promise<{
+  success: false;
+  error: string;
+  code: string;
+  category: string;
+  suggestion: string;
+  recoverable: false;
+} | null> {
+  const tableInfo = await adapter.describeTable(tableName);
+  const columnMap = new Map(
+    (tableInfo.columns ?? []).map((c) => [
+      c.name.toLowerCase(),
+      (c.type ?? "").toLowerCase(),
+    ]),
+  );
+  const colType = columnMap.get(columnName.toLowerCase()) ?? "";
+
+  if (!isNumericType(colType)) {
+    return {
+      success: false,
+      error: `Column '${columnName}' is not numeric (type: ${colType || "unknown"}). This operation requires a numeric column.`,
+      code: "INVALID_INPUT",
+      category: "validation",
+      suggestion:
+        "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for statistical analysis.",
+      recoverable: false,
+    };
+  }
+
+  return null;
+}
+
 // Stats schemas
 const BasicStatsSchema = z.object({
   table: z.string().describe("Table name"),
@@ -530,6 +596,14 @@ function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate column exists
         await validateColumnExists(adapter, input.table, input.column);
 
+        // Validate column is numeric
+        const numericError = await validateNumericColumn(
+          adapter,
+          input.table,
+          input.column,
+        );
+        if (numericError) return numericError;
+
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -600,20 +674,6 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Validate columns are numeric
         const tableInfo = await adapter.describeTable(input.table);
-        const numericTypes = new Set([
-          "integer",
-          "int",
-          "real",
-          "float",
-          "double",
-          "numeric",
-          "decimal",
-          "number",
-          "smallint",
-          "bigint",
-          "tinyint",
-          "mediumint",
-        ]);
         const columnMap = new Map(
           (tableInfo.columns ?? []).map((c) => [
             c.name.toLowerCase(),
@@ -622,8 +682,6 @@ function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
         );
         const col1Type = columnMap.get(input.column1.toLowerCase()) ?? "";
         const col2Type = columnMap.get(input.column2.toLowerCase()) ?? "";
-        const isNumericType = (t: string): boolean =>
-          [...numericTypes].some((nt) => t === nt || t.startsWith(nt));
 
         if (!isNumericType(col1Type) || !isNumericType(col2Type)) {
           const nonNumeric = !isNumericType(col1Type)
@@ -1109,6 +1167,14 @@ function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate column exists
         await validateColumnExists(adapter, input.table, input.column);
 
+        // Validate column is numeric
+        const numericError = await validateNumericColumn(
+          adapter,
+          input.table,
+          input.column,
+        );
+        if (numericError) return numericError;
+
         // Validate identifiers
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);
@@ -1502,6 +1568,14 @@ function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         // Validate column exists
         await validateColumnExists(adapter, input.table, input.column);
+
+        // Validate column is numeric
+        const numericError = await validateNumericColumn(
+          adapter,
+          input.table,
+          input.column,
+        );
+        if (numericError) return numericError;
 
         // Validate identifiers
         sanitizeIdentifier(input.table);
