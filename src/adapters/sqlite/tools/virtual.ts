@@ -216,30 +216,42 @@ function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("Create View"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CreateViewSchema.parse(params);
+      try {
+        const input = CreateViewSchema.parse(params);
 
-      // Validate and quote view name
-      const viewName = sanitizeIdentifier(input.viewName);
+        // Validate and quote view name
+        const viewName = sanitizeIdentifier(input.viewName);
 
-      // Basic validation that it's a SELECT
-      if (!input.selectQuery.trim().toUpperCase().startsWith("SELECT")) {
-        throw new Error("View definition must be a SELECT query");
+        // Basic validation that it's a SELECT
+        if (!input.selectQuery.trim().toUpperCase().startsWith("SELECT")) {
+          return {
+            success: false,
+            message: "View definition must be a SELECT query",
+            sql: "",
+          };
+        }
+
+        // SQLite doesn't support CREATE OR REPLACE VIEW
+        // Use DROP IF EXISTS + CREATE VIEW pattern instead
+        if (input.replace) {
+          await adapter.executeQuery(`DROP VIEW IF EXISTS ${viewName}`);
+        }
+        const sql = `CREATE VIEW ${viewName} AS ${input.selectQuery}`;
+
+        await adapter.executeQuery(sql);
+
+        return {
+          success: true,
+          message: `View '${input.viewName}' created`,
+          sql,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          sql: "",
+        };
       }
-
-      // SQLite doesn't support CREATE OR REPLACE VIEW
-      // Use DROP IF EXISTS + CREATE VIEW pattern instead
-      if (input.replace) {
-        await adapter.executeQuery(`DROP VIEW IF EXISTS ${viewName}`);
-      }
-      const sql = `CREATE VIEW ${viewName} AS ${input.selectQuery}`;
-
-      await adapter.executeQuery(sql);
-
-      return {
-        success: true,
-        message: `View '${input.viewName}' created`,
-        sql,
-      };
     },
   };
 }
@@ -300,20 +312,27 @@ function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: destructive("Drop View"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DropViewSchema.parse(params);
+      try {
+        const input = DropViewSchema.parse(params);
 
-      // Validate and quote view name
-      const viewName = sanitizeIdentifier(input.viewName);
+        // Validate and quote view name
+        const viewName = sanitizeIdentifier(input.viewName);
 
-      const ifExists = input.ifExists ? "IF EXISTS " : "";
-      const sql = `DROP VIEW ${ifExists}${viewName}`;
+        const ifExists = input.ifExists ? "IF EXISTS " : "";
+        const sql = `DROP VIEW ${ifExists}${viewName}`;
 
-      await adapter.executeQuery(sql);
+        await adapter.executeQuery(sql);
 
-      return {
-        success: true,
-        message: `View '${input.viewName}' dropped`,
-      };
+        return {
+          success: true,
+          message: `View '${input.viewName}' dropped`,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+        };
+      }
     },
   };
 }
@@ -335,7 +354,7 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         // Summarize mode: aggregate per-table stats
         if (input.summarize) {
-          let sql = `SELECT 
+          let sql = `SELECT
               name,
               COUNT(*) as page_count,
               SUM(payload) as total_payload,
@@ -382,7 +401,7 @@ function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Default mode: raw page-level stats
-        let sql = `SELECT name, path, pageno, pagetype, ncell, payload, unused, mx_payload 
+        let sql = `SELECT name, path, pageno, pagetype, ncell, payload, unused, mx_payload
                     FROM dbstat`;
 
         if (input.table) {
@@ -656,7 +675,13 @@ function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
       );
 
       if (!sqlResult.rows || sqlResult.rows.length === 0) {
-        throw new Error(`Virtual table '${input.tableName}' not found`);
+        return {
+          success: false,
+          name: input.tableName,
+          module: "unknown",
+          sql: "",
+          error: `Virtual table '${input.tableName}' not found`,
+        };
       }
 
       const sqlStr =
@@ -725,54 +750,61 @@ function createDropVirtualTableTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: destructive("Drop Virtual Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DropVirtualTableSchema.parse(params);
+      try {
+        const input = DropVirtualTableSchema.parse(params);
 
-      // Validate and quote table name
-      const tableName = sanitizeIdentifier(input.tableName);
+        // Validate and quote table name
+        const tableName = sanitizeIdentifier(input.tableName);
 
-      // Check if the table exists and is a virtual table
-      const escapedName = input.tableName.replace(/'/g, "''");
-      const existsResult = await adapter.executeReadQuery(
-        `SELECT name, sql FROM sqlite_master WHERE type='table' AND name='${escapedName}'`,
-      );
-      const tableExists =
-        existsResult.rows !== undefined && existsResult.rows.length > 0;
-      const sqlValue = existsResult.rows?.[0]?.["sql"];
-      const isVirtualTable =
-        tableExists &&
-        typeof sqlValue === "string" &&
-        sqlValue.toUpperCase().includes("CREATE VIRTUAL TABLE");
+        // Check if the table exists and is a virtual table
+        const escapedName = input.tableName.replace(/'/g, "''");
+        const existsResult = await adapter.executeReadQuery(
+          `SELECT name, sql FROM sqlite_master WHERE type='table' AND name='${escapedName}'`,
+        );
+        const tableExists =
+          existsResult.rows !== undefined && existsResult.rows.length > 0;
+        const sqlValue = existsResult.rows?.[0]?.["sql"];
+        const isVirtualTable =
+          tableExists &&
+          typeof sqlValue === "string" &&
+          sqlValue.toUpperCase().includes("CREATE VIRTUAL TABLE");
 
-      // Validate that it's actually a virtual table if it exists
-      if (tableExists && !isVirtualTable) {
+        // Validate that it's actually a virtual table if it exists
+        if (tableExists && !isVirtualTable) {
+          return {
+            success: false,
+            message: `'${input.tableName}' is a regular table, not a virtual table. Use sqlite_drop_table instead.`,
+          };
+        }
+
+        const sql = input.ifExists
+          ? `DROP TABLE IF EXISTS ${tableName}`
+          : `DROP TABLE ${tableName}`;
+
+        await adapter.executeWriteQuery(sql);
+
+        // Return accurate message based on whether table existed
+        if (tableExists) {
+          return {
+            success: true,
+            message: `Dropped virtual table '${input.tableName}'`,
+          };
+        } else if (input.ifExists) {
+          return {
+            success: true,
+            message: `Virtual table '${input.tableName}' did not exist (no action taken)`,
+          };
+        } else {
+          // This shouldn't be reached as DROP TABLE without IF EXISTS would throw
+          return {
+            success: true,
+            message: `Dropped virtual table '${input.tableName}'`,
+          };
+        }
+      } catch (error) {
         return {
           success: false,
-          message: `'${input.tableName}' is a regular table, not a virtual table. Use sqlite_drop_table instead.`,
-        };
-      }
-
-      const sql = input.ifExists
-        ? `DROP TABLE IF EXISTS ${tableName}`
-        : `DROP TABLE ${tableName}`;
-
-      await adapter.executeWriteQuery(sql);
-
-      // Return accurate message based on whether table existed
-      if (tableExists) {
-        return {
-          success: true,
-          message: `Dropped virtual table '${input.tableName}'`,
-        };
-      } else if (input.ifExists) {
-        return {
-          success: true,
-          message: `Virtual table '${input.tableName}' did not exist (no action taken)`,
-        };
-      } else {
-        // This shouldn't be reached as DROP TABLE without IF EXISTS would throw
-        return {
-          success: true,
-          message: `Dropped virtual table '${input.tableName}'`,
+          message: error instanceof Error ? error.message : String(error),
         };
       }
     },

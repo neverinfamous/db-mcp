@@ -351,6 +351,18 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       // Phase 1: Preparing restore
       await sendProgress(progress, 1, 5, "Preparing restore...");
 
+      // WASM mode: backup/restore are not available since file system
+      // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
+      if (!adapter.isNativeBackend()) {
+        return {
+          success: false,
+          message:
+            "Restore not available: file system access is not supported in WASM mode.",
+          wasmLimitation: true,
+          sourcePath: input.sourcePath,
+        };
+      }
+
       const escapedPath = input.sourcePath.replace(/'/g, "''");
 
       // Verify current database is valid before overwriting
@@ -366,22 +378,11 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           true,
         );
       } catch (error) {
-        // Detect WASM file system limitation (only in WASM mode)
-        const errMsg = error instanceof Error ? error.message : String(error);
-        if (
-          !adapter.isNativeBackend() &&
-          (errMsg.includes("unable to open database") ||
-            errMsg.includes("not supported"))
-        ) {
-          return {
-            success: false,
-            message:
-              "Restore not available: file system access is not supported in WASM mode.",
-            wasmLimitation: true,
-            sourcePath: input.sourcePath,
-          };
-        }
-        throw error;
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          sourcePath: input.sourcePath,
+        };
       }
 
       try {
@@ -393,8 +394,8 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         // virtual tables using unavailable modules (FTS5, R-Tree, etc.)
         try {
           const virtualTablesResult = await adapter.executeReadQuery(
-            `SELECT name FROM sqlite_master 
-             WHERE type='table' 
+            `SELECT name FROM sqlite_master
+             WHERE type='table'
              AND sql LIKE 'CREATE VIRTUAL TABLE%'
              AND name NOT LIKE 'sqlite_%'`,
           );
@@ -431,8 +432,8 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         // FTS5 shadow tables: _data, _idx, _content, _docsize, _config
         // R-Tree shadow tables: _node, _rowid, _parent
         const tablesResult = await adapter.executeReadQuery(
-          `SELECT name, sql FROM backup_source.sqlite_master 
-           WHERE type='table' 
+          `SELECT name, sql FROM backup_source.sqlite_master
+           WHERE type='table'
            AND name NOT LIKE 'sqlite_%'
            AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
            AND name NOT LIKE '%_data'
@@ -448,8 +449,8 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Get list of virtual tables that will be skipped
         const backupVirtualTables = await adapter.executeReadQuery(
-          `SELECT name, sql FROM backup_source.sqlite_master 
-           WHERE type='table' 
+          `SELECT name, sql FROM backup_source.sqlite_master
+           WHERE type='table'
            AND sql LIKE 'CREATE VIRTUAL TABLE%'
            AND name NOT LIKE 'sqlite_%'`,
         );
@@ -589,30 +590,31 @@ function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Verify Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
       const input = VerifyBackupSchema.parse(params);
+      // WASM mode: backup/restore/verify are not available since file system
+      // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
+      if (!adapter.isNativeBackend()) {
+        return {
+          success: false,
+          message:
+            "Verify backup not available: file system access is not supported in WASM mode.",
+          wasmLimitation: true,
+          backupPath: input.backupPath,
+        };
+      }
+
       const escapedPath = input.backupPath.replace(/'/g, "''");
 
-      // Attach backup database temporarily - may fail in WASM
+      // Attach backup database temporarily
       try {
         await adapter.executeQuery(
           `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
         );
       } catch (error) {
-        // Detect WASM file system limitation (only in WASM mode)
-        const errMsg = error instanceof Error ? error.message : String(error);
-        if (
-          !adapter.isNativeBackend() &&
-          (errMsg.includes("unable to open database") ||
-            errMsg.includes("not supported"))
-        ) {
-          return {
-            success: false,
-            message:
-              "Verify backup not available: file system access is not supported in WASM mode.",
-            wasmLimitation: true,
-            backupPath: input.backupPath,
-          };
-        }
-        throw error;
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          backupPath: input.backupPath,
+        };
       }
 
       try {
@@ -947,6 +949,16 @@ function createPragmaTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
         defaultValue: r["dflt_value"],
         pk: r["pk"] as number,
       }));
+
+      // If no columns returned, the table likely doesn't exist
+      if (columns.length === 0) {
+        return {
+          success: false,
+          table: input.table,
+          columns: [],
+          error: `Table '${input.table}' not found or has no columns`,
+        };
+      }
 
       return {
         success: true,

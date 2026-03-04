@@ -247,20 +247,20 @@ describe("Security: Identifier Integration", () => {
 
   describe("virtual table tools - identifier injection", () => {
     it("should reject view name with injection in create_view", async () => {
-      await expect(
-        getTool("sqlite_create_view")({
-          viewName: "my_view'; DROP TABLE--",
-          query: "SELECT * FROM users",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_create_view")({
+        viewName: "my_view'; DROP TABLE--",
+        query: "SELECT * FROM users",
+      })) as { success: boolean; message?: string };
+      expect(result.success).toBe(false);
+      expect(result.message).toMatch(/invalid/i);
     });
 
     it("should reject view name with injection in drop_view", async () => {
-      await expect(
-        getTool("sqlite_drop_view")({
-          viewName: 'my_view"; DELETE FROM users--',
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_drop_view")({
+        viewName: 'my_view"; DELETE FROM users--',
+      })) as { success: boolean; message?: string };
+      expect(result.success).toBe(false);
+      expect(result.message).toMatch(/invalid/i);
     });
   });
 

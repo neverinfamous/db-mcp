@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Admin Tool Structured Error Responses** — 4 admin tool handlers now return structured errors instead of throwing raw MCP errors
+  - `sqlite_virtual_table_info`: Returns `{success: false, error: "Virtual table 'x' not found"}` instead of throwing for nonexistent virtual tables
+  - `sqlite_create_view`: Catches duplicate view errors, invalid SQL, and identifier validation failures; returns `{success: false, message: "..."}` with context
+  - `sqlite_drop_view`: Catches nonexistent view errors (when `ifExists: false`) and identifier validation failures
+  - `sqlite_drop_virtual_table`: Catches nonexistent table errors (when `ifExists: false`) and returns structured response
+  - Security tests updated to assert `{success: false, message: /invalid/i}` instead of `.rejects.toThrow()`
+- **`sqlite_verify_backup` WASM False Positive** — Now returns WASM limitation error upfront before attempting ATTACH
+  - Previously, ATTACH succeeded silently in WASM (creating empty DB in virtual filesystem), causing verify to return `{success: true, valid: true}` for any path including nonexistent files
+  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
+- **`sqlite_restore` WASM False Positive** — Now returns WASM limitation error upfront before attempting ATTACH
+  - Previously, ATTACH succeeded silently in WASM, causing restore to "succeed" by copying empty tables from a nonexistent backup
+  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
+- **`sqlite_pragma_table_info` Nonexistent Table Detection** — Returns `{success: false}` for nonexistent tables
+  - Previously returned `{success: true, columns: []}` for tables that don't exist
+  - Now checks if columns array is empty and returns `{success: false, error: "Table 'x' not found or has no columns"}`
+
 ### Added
 
 - **Code Mode (Sandboxed Execution)** — New `sqlite_execute_code` tool for executing JavaScript in a sandboxed environment
