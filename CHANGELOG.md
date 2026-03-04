@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Window Function Structured Error Responses** — All 6 window function handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`: Errors like nonexistent tables, invalid identifiers, and bad SQL now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - Added `formatError` import from `utils/errors.js` and wrapped all 6 handlers in try/catch blocks
+  - Window function tests updated to assert structured error responses instead of `.rejects.toThrow()`
+  - Consistent with the structured error pattern already used by all 13 stats tools
+
 - **`server_health` FTS5 Detection False Negative** — Health check now correctly reports `fts5: true` when FTS5 is compiled in
   - `hasFts5()` previously created a `_fts5_test` virtual table as a probe, which silently failed when SpatiaLite extensions were loaded
   - Replaced with lightweight `PRAGMA compile_options` check for `ENABLE_FTS5` flag

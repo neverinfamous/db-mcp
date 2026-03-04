@@ -176,12 +176,13 @@ describe("Window Function Tools", () => {
 
     it("should reject invalid table names", async () => {
       // "DROP TABLE sales" contains space so it's invalid
-      await expect(
-        getTool().handler(
-          { table: "DROP TABLE sales", orderBy: "id" },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid table name");
+      const result = (await getTool().handler(
+        { table: "DROP TABLE sales", orderBy: "id" },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
     });
   });
 
@@ -245,9 +246,13 @@ describe("Window Function Tools", () => {
 
     it("should reject invalid table names", async () => {
       // Starts with number, invalid
-      await expect(
-        getTool().handler({ table: "1invalid", orderBy: "id" }, mockContext),
-      ).rejects.toThrow("Invalid table name");
+      const result = (await getTool().handler(
+        { table: "1invalid", orderBy: "id" },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
     });
   });
 
@@ -341,32 +346,34 @@ describe("Window Function Tools", () => {
 
     it("should reject invalid table name", async () => {
       // Contains space, invalid
-      await expect(
-        getTool().handler(
-          {
-            table: "bad table",
-            column: "amount",
-            orderBy: "id",
-            direction: "lag",
-          },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid table name");
+      const result = (await getTool().handler(
+        {
+          table: "bad table",
+          column: "amount",
+          orderBy: "id",
+          direction: "lag",
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
     });
 
     it("should reject invalid column name", async () => {
       // Contains space, invalid
-      await expect(
-        getTool().handler(
-          {
-            table: "sales",
-            column: "bad column",
-            orderBy: "id",
-            direction: "lag",
-          },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid column name");
+      const result = (await getTool().handler(
+        {
+          table: "sales",
+          column: "bad column",
+          orderBy: "id",
+          direction: "lag",
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid column name");
     });
   });
 
@@ -433,22 +440,24 @@ describe("Window Function Tools", () => {
 
     it("should reject invalid table name", async () => {
       // Starts with number, invalid
-      await expect(
-        getTool().handler(
-          { table: "123", valueColumn: "amount", orderBy: "id" },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid table name");
+      const result = (await getTool().handler(
+        { table: "123", valueColumn: "amount", orderBy: "id" },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
     });
 
     it("should reject invalid column name", async () => {
       // Contains dash, invalid
-      await expect(
-        getTool().handler(
-          { table: "sales", valueColumn: "bad-col", orderBy: "id" },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid column name");
+      const result = (await getTool().handler(
+        { table: "sales", valueColumn: "bad-col", orderBy: "id" },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid column name");
     });
   });
 
@@ -511,32 +520,34 @@ describe("Window Function Tools", () => {
 
     it("should reject invalid table name", async () => {
       // Starts with number (1invalid), invalid
-      await expect(
-        getTool().handler(
-          {
-            table: "1DROP",
-            valueColumn: "amount",
-            orderBy: "id",
-            windowSize: 3,
-          },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid table name");
+      const result = (await getTool().handler(
+        {
+          table: "1DROP",
+          valueColumn: "amount",
+          orderBy: "id",
+          windowSize: 3,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
     });
 
     it("should reject invalid column name", async () => {
       // Contains space, invalid
-      await expect(
-        getTool().handler(
-          {
-            table: "sales",
-            valueColumn: "SELECT *",
-            orderBy: "id",
-            windowSize: 3,
-          },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid column name");
+      const result = (await getTool().handler(
+        {
+          table: "sales",
+          valueColumn: "SELECT *",
+          orderBy: "id",
+          windowSize: 3,
+        },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid column name");
     });
   });
 
@@ -598,12 +609,13 @@ describe("Window Function Tools", () => {
 
     it("should reject invalid table name", async () => {
       // Contains dash, invalid
-      await expect(
-        getTool().handler(
-          { table: "bad-table", orderBy: "id", buckets: 4 },
-          mockContext,
-        ),
-      ).rejects.toThrow("Invalid table name");
+      const result = (await getTool().handler(
+        { table: "bad-table", orderBy: "id", buckets: 4 },
+        mockContext,
+      )) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
     });
   });
 });
