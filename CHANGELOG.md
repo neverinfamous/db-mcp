@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now filters only rows where vector parsing failed (returns `null`), preserving all valid similarity scores
 - **`sqlite_vector_create_table` Dimensions Validation** — Now rejects dimensions < 1 with structured error
   - Previously accepted `dimensions: 0` creating a table with meaningless `DEFAULT 0` dimension column
+- **`sqlite_vector_distance` Cosine Metric** — Now returns cosine distance (`1 - similarity`) instead of raw cosine similarity
+  - Previously returned cosine similarity (0 for orthogonal, 1 for identical) despite the tool being named "distance"
+  - Now returns cosine distance (1.0 for orthogonal, 0 for identical) consistent with euclidean distance semantics
+  - Does not affect `sqlite_vector_search` which correctly uses `_similarity` as a ranking score
 
 - **Window Function Structured Error Responses** — All 6 window function handlers now return structured errors instead of throwing raw MCP exceptions
   - `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`: Errors like nonexistent tables, invalid identifiers, and bad SQL now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions

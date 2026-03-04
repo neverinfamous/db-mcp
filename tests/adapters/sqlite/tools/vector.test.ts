@@ -323,7 +323,7 @@ describe("Vector Tools", () => {
       expect(result.value).toBeCloseTo(Math.sqrt(2), 3);
     });
 
-    it("should calculate cosine similarity", async () => {
+    it("should calculate cosine distance", async () => {
       const result = (await tools.get("sqlite_vector_distance")?.({
         vector1: [1.0, 0.0],
         vector2: [1.0, 0.0],
@@ -334,7 +334,7 @@ describe("Vector Tools", () => {
       };
 
       expect(result.success).toBe(true);
-      expect(result.value).toBe(1); // Identical vectors
+      expect(result.value).toBe(0); // Identical vectors = zero distance
     });
 
     it("should calculate dot product", async () => {

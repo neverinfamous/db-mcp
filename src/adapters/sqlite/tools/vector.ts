@@ -775,7 +775,7 @@ function createVectorDistanceTool(): ToolDefinition {
           break;
         case "cosine":
         default:
-          result = cosineSimilarity(input.vector1, input.vector2);
+          result = 1 - cosineSimilarity(input.vector1, input.vector2);
       }
 
       return Promise.resolve({
