@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Vector Tool Structured Error Responses** — All 11 vector handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_vector_create_table`, `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_search`, `sqlite_vector_get`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_stats`, `sqlite_vector_dimensions`, `sqlite_vector_normalize`, `sqlite_vector_distance`: Errors like nonexistent tables, invalid identifiers, and invalid input now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - Added `formatError` import from `utils/errors.js` and wrapped all 11 handlers in try/catch blocks
+  - Security tests in `identifier-integration.test.ts` updated to assert structured error responses instead of `.rejects.toThrow()`
+  - Consistent with the structured error pattern already used by all other tool groups
+- **`sqlite_vector_search` Negative Cosine Similarity Filter** — Search no longer silently drops results with negative cosine similarity
+  - Previously, the search filter `_similarity >= 0` excluded rows with negative cosine similarity (dissimilar vectors)
+  - Negative cosine similarity is valid (ranges from -1 to 1) and should be returned when within the limit
+  - Now filters only rows where vector parsing failed (returns `null`), preserving all valid similarity scores
+- **`sqlite_vector_create_table` Dimensions Validation** — Now rejects dimensions < 1 with structured error
+  - Previously accepted `dimensions: 0` creating a table with meaningless `DEFAULT 0` dimension column
+
 - **Window Function Structured Error Responses** — All 6 window function handlers now return structured errors instead of throwing raw MCP exceptions
   - `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`: Errors like nonexistent tables, invalid identifiers, and bad SQL now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
   - Added `formatError` import from `utils/errors.js` and wrapped all 6 handlers in try/catch blocks

@@ -44,8 +44,11 @@ export const WriteQueryOutputSchema = z.object({
  */
 export const CreateTableOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
-  sql: z.string(),
+  message: z.string().optional(),
+  sql: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -938,8 +941,11 @@ export const PivotTableOutputSchema = z.object({
  */
 export const VectorStoreOutputSchema = z.object({
   success: z.boolean(),
-  id: z.union([z.string(), z.number()]),
-  dimensions: z.number(),
+  id: z.union([z.string(), z.number()]).optional(),
+  dimensions: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -947,8 +953,11 @@ export const VectorStoreOutputSchema = z.object({
  */
 export const VectorBatchStoreOutputSchema = z.object({
   success: z.boolean(),
-  stored: z.number(),
+  stored: z.number().optional(),
   dimensions: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -977,9 +986,12 @@ const VectorSearchResultSchema = z
  */
 export const VectorSearchOutputSchema = z.object({
   success: z.boolean(),
-  metric: z.string(),
-  count: z.number(),
-  results: z.array(VectorSearchResultSchema),
+  metric: z.string().optional(),
+  count: z.number().optional(),
+  results: z.array(VectorSearchResultSchema).optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -987,7 +999,10 @@ export const VectorSearchOutputSchema = z.object({
  */
 export const VectorDeleteOutputSchema = z.object({
   success: z.boolean(),
-  deleted: z.number(),
+  deleted: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -995,7 +1010,10 @@ export const VectorDeleteOutputSchema = z.object({
  */
 export const VectorCountOutputSchema = z.object({
   success: z.boolean(),
-  count: z.number(),
+  count: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1024,8 +1042,11 @@ export const VectorStatsOutputSchema = z.object({
  */
 export const VectorDimensionsOutputSchema = z.object({
   success: z.boolean(),
-  dimensions: z.number().nullable(),
+  dimensions: z.number().nullable().optional(),
   message: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1033,9 +1054,12 @@ export const VectorDimensionsOutputSchema = z.object({
  */
 export const VectorNormalizeOutputSchema = z.object({
   success: z.boolean(),
-  original: z.array(z.number()),
-  normalized: z.array(z.number()),
-  originalMagnitude: z.number(),
+  original: z.array(z.number()).optional(),
+  normalized: z.array(z.number()).optional(),
+  originalMagnitude: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**

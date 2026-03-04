@@ -19,6 +19,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../utils/index.js";
+import { formatError } from "../../../utils/errors.js";
 import {
   CreateTableOutputSchema,
   VectorStoreOutputSchema,
@@ -212,33 +213,44 @@ function createVectorCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("Create Vector Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorCreateTableSchema.parse(params);
+      try {
+        const input = VectorCreateTableSchema.parse(params);
 
-      // Validate and quote table name
-      const tableName = sanitizeIdentifier(input.tableName);
-
-      const columns = [
-        "id INTEGER PRIMARY KEY",
-        "vector TEXT NOT NULL", // JSON array
-        `dimensions INTEGER DEFAULT ${input.dimensions}`,
-      ];
-
-      if (input.additionalColumns) {
-        for (const col of input.additionalColumns) {
-          const colName = sanitizeIdentifier(col.name);
-          columns.push(`${colName} ${col.type}`);
+        if (input.dimensions < 1) {
+          return {
+            success: false,
+            error: "Dimensions must be at least 1",
+          };
         }
+
+        // Validate and quote table name
+        const tableName = sanitizeIdentifier(input.tableName);
+
+        const columns = [
+          "id INTEGER PRIMARY KEY",
+          "vector TEXT NOT NULL", // JSON array
+          `dimensions INTEGER DEFAULT ${input.dimensions}`,
+        ];
+
+        if (input.additionalColumns) {
+          for (const col of input.additionalColumns) {
+            const colName = sanitizeIdentifier(col.name);
+            columns.push(`${colName} ${col.type}`);
+          }
+        }
+
+        const sql = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns.join(", ")})`;
+
+        await adapter.executeQuery(sql);
+
+        return {
+          success: true,
+          message: `Vector table '${input.tableName}' created with ${input.dimensions} dimensions`,
+          sql,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      const sql = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns.join(", ")})`;
-
-      await adapter.executeQuery(sql);
-
-      return {
-        success: true,
-        message: `Vector table '${input.tableName}' created with ${input.dimensions} dimensions`,
-        sql,
-      };
     },
   };
 }
@@ -256,30 +268,35 @@ function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Store Vector"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorStoreSchema.parse(params);
+      try {
+        const input = VectorStoreSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const idColumn = sanitizeIdentifier(input.idColumn);
-      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const idColumn = sanitizeIdentifier(input.idColumn);
+        const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-      const vectorJson = JSON.stringify(input.vector);
-      const idValue = typeof input.id === "string" ? `'${input.id}'` : input.id;
+        const vectorJson = JSON.stringify(input.vector);
+        const idValue =
+          typeof input.id === "string" ? `'${input.id}'` : input.id;
 
-      // Try update first, then insert
-      const updateSql = `UPDATE ${table} SET ${vectorColumn} = '${vectorJson}' WHERE ${idColumn} = ${idValue}`;
-      const updateResult = await adapter.executeWriteQuery(updateSql);
+        // Try update first, then insert
+        const updateSql = `UPDATE ${table} SET ${vectorColumn} = '${vectorJson}' WHERE ${idColumn} = ${idValue}`;
+        const updateResult = await adapter.executeWriteQuery(updateSql);
 
-      if (updateResult.rowsAffected === 0) {
-        const insertSql = `INSERT INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
-        await adapter.executeWriteQuery(insertSql);
+        if (updateResult.rowsAffected === 0) {
+          const insertSql = `INSERT INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
+          await adapter.executeWriteQuery(insertSql);
+        }
+
+        return {
+          success: true,
+          id: input.id,
+          dimensions: input.vector.length,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      return {
-        success: true,
-        id: input.id,
-        dimensions: input.vector.length,
-      };
     },
   };
 }
@@ -297,28 +314,33 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Batch Store Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorBatchStoreSchema.parse(params);
+      try {
+        const input = VectorBatchStoreSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const idColumn = sanitizeIdentifier(input.idColumn);
-      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const idColumn = sanitizeIdentifier(input.idColumn);
+        const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-      let stored = 0;
-      for (const item of input.items) {
-        const vectorJson = JSON.stringify(item.vector);
-        const idValue = typeof item.id === "string" ? `'${item.id}'` : item.id;
+        let stored = 0;
+        for (const item of input.items) {
+          const vectorJson = JSON.stringify(item.vector);
+          const idValue =
+            typeof item.id === "string" ? `'${item.id}'` : item.id;
 
-        const sql = `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
-        await adapter.executeWriteQuery(sql);
-        stored++;
+          const sql = `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
+          await adapter.executeWriteQuery(sql);
+          stored++;
+        }
+
+        return {
+          success: true,
+          stored,
+          dimensions: input.items[0]?.vector.length,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      return {
-        success: true,
-        stored,
-        dimensions: input.items[0]?.vector.length,
-      };
     },
   };
 }
@@ -337,101 +359,109 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Vector Search"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorSearchSchema.parse(params);
+      try {
+        const input = VectorSearchSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-      // Build select clause
-      // Determine if vector column should be included in final results
-      const includeVectorInResults =
-        !input.returnColumns ||
-        input.returnColumns.length === 0 ||
-        input.returnColumns.includes(input.vectorColumn);
+        // Build select clause
+        // Determine if vector column should be included in final results
+        const includeVectorInResults =
+          !input.returnColumns ||
+          input.returnColumns.length === 0 ||
+          input.returnColumns.includes(input.vectorColumn);
 
-      let selectCols = "*";
-      if (input.returnColumns && input.returnColumns.length > 0) {
-        const quotedCols = input.returnColumns.map((c) =>
-          sanitizeIdentifier(c),
-        );
-        selectCols = quotedCols.join(", ");
-      }
-
-      // Always fetch vector column for similarity calculation, but may remove from results
-      let sql = `SELECT ${selectCols}, ${vectorColumn} FROM ${table}`;
-      if (input.whereClause) {
-        validateWhereClause(input.whereClause);
-        sql += ` WHERE ${input.whereClause}`;
-      }
-
-      const result = await adapter.executeReadQuery(sql);
-
-      // Calculate similarities in JavaScript
-      const queryVector = input.queryVector;
-      const scored = (result.rows ?? [])
-        .map((row) => {
-          try {
-            const storedVector = parseVector(row[input.vectorColumn]);
-            let score: number;
-
-            switch (input.metric) {
-              case "euclidean":
-                // Invert so lower distance = higher score
-                score = 1 / (1 + euclideanDistance(queryVector, storedVector));
-                break;
-              case "dot":
-                score = dotProduct(queryVector, storedVector);
-                break;
-              case "cosine":
-              default:
-                score = cosineSimilarity(queryVector, storedVector);
-            }
-
-            return { ...row, _similarity: Math.round(score * 10000) / 10000 };
-          } catch {
-            return { ...row, _similarity: -1 };
-          }
-        })
-        .filter((r) => r._similarity >= 0);
-
-      // Sort by similarity (descending) and limit
-      scored.sort((a, b) => b._similarity - a._similarity);
-      const limited = scored.slice(0, input.limit);
-
-      // Apply returnColumns filtering (payload optimization)
-      // If returnColumns specified, only include those columns plus _similarity
-      const results = limited.map((row) => {
-        // Cast row for proper indexing since it's a spread of result row + _similarity
-        const rowData = row as Record<string, unknown>;
+        let selectCols = "*";
         if (input.returnColumns && input.returnColumns.length > 0) {
-          // Build filtered result with only requested columns
-          const filtered: Record<string, unknown> = {};
-          for (const col of input.returnColumns) {
-            if (col in rowData) {
-              filtered[col] = rowData[col];
-            }
-          }
-          filtered["_similarity"] = row._similarity;
-          return filtered;
-        }
-        // No returnColumns specified: include all except vector column (for cleaner output)
-        if (!includeVectorInResults) {
-          return Object.fromEntries(
-            Object.entries(rowData).filter(
-              ([key]) => key !== input.vectorColumn,
-            ),
+          const quotedCols = input.returnColumns.map((c) =>
+            sanitizeIdentifier(c),
           );
+          selectCols = quotedCols.join(", ");
         }
-        return row;
-      });
 
-      return {
-        success: true,
-        metric: input.metric,
-        count: results.length,
-        results,
-      };
+        // Always fetch vector column for similarity calculation, but may remove from results
+        let sql = `SELECT ${selectCols}, ${vectorColumn} FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          sql += ` WHERE ${input.whereClause}`;
+        }
+
+        const result = await adapter.executeReadQuery(sql);
+
+        // Calculate similarities in JavaScript
+        const queryVector = input.queryVector;
+        const scored = (result.rows ?? [])
+          .map((row) => {
+            try {
+              const storedVector = parseVector(row[input.vectorColumn]);
+              let score: number;
+
+              switch (input.metric) {
+                case "euclidean":
+                  // Invert so lower distance = higher score
+                  score =
+                    1 / (1 + euclideanDistance(queryVector, storedVector));
+                  break;
+                case "dot":
+                  score = dotProduct(queryVector, storedVector);
+                  break;
+                case "cosine":
+                default:
+                  score = cosineSimilarity(queryVector, storedVector);
+              }
+
+              return {
+                ...row,
+                _similarity: Math.round(score * 10000) / 10000,
+              };
+            } catch {
+              return null;
+            }
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+
+        // Sort by similarity (descending) and limit
+        scored.sort((a, b) => b._similarity - a._similarity);
+        const limited = scored.slice(0, input.limit);
+
+        // Apply returnColumns filtering (payload optimization)
+        // If returnColumns specified, only include those columns plus _similarity
+        const results = limited.map((row) => {
+          // Cast row for proper indexing since it's a spread of result row + _similarity
+          const rowData = row as Record<string, unknown>;
+          if (input.returnColumns && input.returnColumns.length > 0) {
+            // Build filtered result with only requested columns
+            const filtered: Record<string, unknown> = {};
+            for (const col of input.returnColumns) {
+              if (col in rowData) {
+                filtered[col] = rowData[col];
+              }
+            }
+            filtered["_similarity"] = row._similarity;
+            return filtered;
+          }
+          // No returnColumns specified: include all except vector column (for cleaner output)
+          if (!includeVectorInResults) {
+            return Object.fromEntries(
+              Object.entries(rowData).filter(
+                ([key]) => key !== input.vectorColumn,
+              ),
+            );
+          }
+          return row;
+        });
+
+        return {
+          success: true,
+          metric: input.metric,
+          count: results.length,
+          results,
+        };
+      } catch (error) {
+        return formatError(error);
+      }
     },
   };
 }
@@ -449,36 +479,41 @@ function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Get Vector"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorGetSchema.parse(params);
+      try {
+        const input = VectorGetSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const idColumn = sanitizeIdentifier(input.idColumn);
-      // Keep vectorColumn raw for JS object access, but validate
-      sanitizeIdentifier(input.vectorColumn);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const idColumn = sanitizeIdentifier(input.idColumn);
+        // Keep vectorColumn raw for JS object access, but validate
+        sanitizeIdentifier(input.vectorColumn);
 
-      const idValue = typeof input.id === "string" ? `'${input.id}'` : input.id;
-      const sql = `SELECT * FROM ${table} WHERE ${idColumn} = ${idValue}`;
+        const idValue =
+          typeof input.id === "string" ? `'${input.id}'` : input.id;
+        const sql = `SELECT * FROM ${table} WHERE ${idColumn} = ${idValue}`;
 
-      const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql);
 
-      if (!result.rows || result.rows.length === 0) {
-        return { success: false, error: "Vector not found" };
+        if (!result.rows || result.rows.length === 0) {
+          return { success: false, error: "Vector not found" };
+        }
+
+        const row = result.rows[0];
+        if (!row) {
+          return { success: false, error: "Vector not found" };
+        }
+        const vectorData = parseVector(row[input.vectorColumn]);
+
+        return {
+          success: true,
+          id: input.id,
+          dimensions: vectorData.length,
+          vector: vectorData,
+          metadata: row,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      const row = result.rows[0];
-      if (!row) {
-        return { success: false, error: "Vector not found" };
-      }
-      const vectorData = parseVector(row[input.vectorColumn]);
-
-      return {
-        success: true,
-        id: input.id,
-        dimensions: vectorData.length,
-        vector: vectorData,
-        metadata: row,
-      };
     },
   };
 }
@@ -496,23 +531,27 @@ function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: destructive("Delete Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorDeleteSchema.parse(params);
+      try {
+        const input = VectorDeleteSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const idColumn = sanitizeIdentifier(input.idColumn);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const idColumn = sanitizeIdentifier(input.idColumn);
 
-      const idValues = input.ids
-        .map((id) => (typeof id === "string" ? `'${id}'` : String(id)))
-        .join(", ");
+        const idValues = input.ids
+          .map((id) => (typeof id === "string" ? `'${id}'` : String(id)))
+          .join(", ");
 
-      const sql = `DELETE FROM ${table} WHERE ${idColumn} IN (${idValues})`;
-      const result = await adapter.executeWriteQuery(sql);
+        const sql = `DELETE FROM ${table} WHERE ${idColumn} IN (${idValues})`;
+        const result = await adapter.executeWriteQuery(sql);
 
-      return {
-        success: true,
-        deleted: result.rowsAffected,
-      };
+        return {
+          success: true,
+          deleted: result.rowsAffected,
+        };
+      } catch (error) {
+        return formatError(error);
+      }
     },
   };
 }
@@ -530,18 +569,22 @@ function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Count Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorCountSchema.parse(params);
+      try {
+        const input = VectorCountSchema.parse(params);
 
-      // Validate and quote table name
-      const table = sanitizeIdentifier(input.table);
+        // Validate and quote table name
+        const table = sanitizeIdentifier(input.table);
 
-      const sql = `SELECT COUNT(*) as count FROM ${table}`;
-      const result = await adapter.executeReadQuery(sql);
+        const sql = `SELECT COUNT(*) as count FROM ${table}`;
+        const result = await adapter.executeReadQuery(sql);
 
-      return {
-        success: true,
-        count: result.rows?.[0]?.["count"] ?? 0,
-      };
+        return {
+          success: true,
+          count: result.rows?.[0]?.["count"] ?? 0,
+        };
+      } catch (error) {
+        return formatError(error);
+      }
     },
   };
 }
@@ -559,58 +602,62 @@ function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Vector Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorStatsSchema.parse(params);
+      try {
+        const input = VectorStatsSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-      // Get sample of vectors
-      const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT ${input.sampleSize}`;
-      const result = await adapter.executeReadQuery(sql);
+        // Get sample of vectors
+        const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT ${input.sampleSize}`;
+        const result = await adapter.executeReadQuery(sql);
 
-      const vectors = (result.rows ?? [])
-        .map((row) => {
-          try {
-            return parseVector(row[input.vectorColumn]);
-          } catch {
-            return null;
-          }
-        })
-        .filter((v): v is number[] => v !== null);
+        const vectors = (result.rows ?? [])
+          .map((row) => {
+            try {
+              return parseVector(row[input.vectorColumn]);
+            } catch {
+              return null;
+            }
+          })
+          .filter((v): v is number[] => v !== null);
 
-      if (vectors.length === 0) {
+        if (vectors.length === 0) {
+          return {
+            success: true,
+            count: 0,
+            message: "No valid vectors found",
+          };
+        }
+
+        const firstVector = vectors[0];
+        if (!firstVector) {
+          return {
+            success: true,
+            count: 0,
+            message: "No valid vectors found",
+          };
+        }
+
+        const dimensions = firstVector.length;
+        const magnitudes = vectors.map((v) =>
+          Math.sqrt(v.reduce((s, x) => s + x * x, 0)),
+        );
+
         return {
           success: true,
-          count: 0,
-          message: "No valid vectors found",
+          sampleSize: vectors.length,
+          dimensions,
+          magnitudeStats: {
+            min: Math.min(...magnitudes),
+            max: Math.max(...magnitudes),
+            avg: magnitudes.reduce((s, m) => s + m, 0) / magnitudes.length,
+          },
         };
+      } catch (error) {
+        return formatError(error);
       }
-
-      const firstVector = vectors[0];
-      if (!firstVector) {
-        return {
-          success: true,
-          count: 0,
-          message: "No valid vectors found",
-        };
-      }
-
-      const dimensions = firstVector.length;
-      const magnitudes = vectors.map((v) =>
-        Math.sqrt(v.reduce((s, x) => s + x * x, 0)),
-      );
-
-      return {
-        success: true,
-        sampleSize: vectors.length,
-        dimensions,
-        magnitudeStats: {
-          min: Math.min(...magnitudes),
-          max: Math.max(...magnitudes),
-          avg: magnitudes.reduce((s, m) => s + m, 0) / magnitudes.length,
-        },
-      };
     },
   };
 }
@@ -628,29 +675,41 @@ function createVectorDimensionsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Vector Dimensions"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VectorDimensionsSchema.parse(params);
+      try {
+        const input = VectorDimensionsSchema.parse(params);
 
-      // Validate and quote identifiers
-      const table = sanitizeIdentifier(input.table);
-      const vectorColumn = sanitizeIdentifier(input.vectorColumn);
+        // Validate and quote identifiers
+        const table = sanitizeIdentifier(input.table);
+        const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-      const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT 1`;
-      const result = await adapter.executeReadQuery(sql);
+        const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT 1`;
+        const result = await adapter.executeReadQuery(sql);
 
-      if (!result.rows || result.rows.length === 0) {
-        return { success: true, dimensions: null, message: "No vectors found" };
+        if (!result.rows || result.rows.length === 0) {
+          return {
+            success: true,
+            dimensions: null,
+            message: "No vectors found",
+          };
+        }
+
+        const firstRow = result.rows[0];
+        if (!firstRow) {
+          return {
+            success: true,
+            dimensions: null,
+            message: "No vectors found",
+          };
+        }
+        const vector = parseVector(firstRow[input.vectorColumn]);
+
+        return {
+          success: true,
+          dimensions: vector.length,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      const firstRow = result.rows[0];
-      if (!firstRow) {
-        return { success: true, dimensions: null, message: "No vectors found" };
-      }
-      const vector = parseVector(firstRow[input.vectorColumn]);
-
-      return {
-        success: true,
-        dimensions: vector.length,
-      };
     },
   };
 }

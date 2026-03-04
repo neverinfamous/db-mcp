@@ -190,54 +190,59 @@ describe("Security: Identifier Integration", () => {
 
   describe("vector tools - identifier injection", () => {
     it("should reject table name with injection in vector_create_table", async () => {
-      await expect(
-        getTool("sqlite_vector_create_table")({
-          table: "vectors'; DROP TABLE users--",
-          dimensions: 128,
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_create_table")({
+        tableName: "vectors'; DROP TABLE users--",
+        dimensions: 128,
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in vector_store", async () => {
-      await expect(
-        getTool("sqlite_vector_store")({
-          table: 'vectors"; DELETE FROM--',
-          id: "1",
-          vector: [0.1, 0.2, 0.3],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_store")({
+        table: 'vectors"; DELETE FROM--',
+        id: "1",
+        vector: [0.1, 0.2, 0.3],
+        idColumn: "id",
+        vectorColumn: "embedding",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject idColumn name with injection in vector_store", async () => {
-      await expect(
-        getTool("sqlite_vector_store")({
-          table: "vectors",
-          id: "1",
-          vector: [0.1, 0.2, 0.3],
-          idColumn: "id'; DROP TABLE--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_store")({
+        table: "vectors",
+        id: "1",
+        vector: [0.1, 0.2, 0.3],
+        idColumn: "id'; DROP TABLE--",
+        vectorColumn: "embedding",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject vectorColumn name with injection in vector_store", async () => {
-      await expect(
-        getTool("sqlite_vector_store")({
-          table: "vectors",
-          id: "1",
-          vector: [0.1, 0.2, 0.3],
-          vectorColumn: 'embedding"; DELETE--',
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_store")({
+        table: "vectors",
+        id: "1",
+        vector: [0.1, 0.2, 0.3],
+        idColumn: "id",
+        vectorColumn: 'embedding"; DELETE--',
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in vector_search", async () => {
-      await expect(
-        getTool("sqlite_vector_search")({
-          table: "vectors' UNION SELECT--",
-          queryVector: [0.1, 0.2, 0.3],
-          limit: 10,
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_search")({
+        table: "vectors' UNION SELECT--",
+        queryVector: [0.1, 0.2, 0.3],
+        vectorColumn: "embedding",
+        limit: 10,
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
