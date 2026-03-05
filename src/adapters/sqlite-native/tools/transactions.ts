@@ -7,6 +7,7 @@
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../NativeSqliteAdapter.js";
+import { formatError } from "../../../utils/errors.js";
 
 // Schemas
 const BeginTransactionSchema = z.object({
@@ -65,16 +66,20 @@ function createBeginTransactionTool(
     inputSchema: BeginTransactionSchema,
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = BeginTransactionSchema.parse(params);
+      try {
+        const input = BeginTransactionSchema.parse(params);
 
-      const mode = input.mode.toUpperCase();
-      await adapter.executeWriteQuery(`BEGIN ${mode} TRANSACTION`);
+        const mode = input.mode.toUpperCase();
+        await adapter.executeWriteQuery(`BEGIN ${mode} TRANSACTION`);
 
-      return {
-        success: true,
-        message: `Transaction started (${input.mode} mode)`,
-        mode: input.mode,
-      };
+        return {
+          success: true,
+          message: `Transaction started (${input.mode} mode)`,
+          mode: input.mode,
+        };
+      } catch (error) {
+        return formatError(error);
+      }
     },
   };
 }
@@ -93,12 +98,16 @@ function createCommitTransactionTool(
     inputSchema: z.object({}),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
-      adapter.commitTransaction();
+      try {
+        adapter.commitTransaction();
 
-      return Promise.resolve({
-        success: true,
-        message: "Transaction committed",
-      });
+        return Promise.resolve({
+          success: true,
+          message: "Transaction committed",
+        });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
+      }
     },
   };
 }
@@ -116,12 +125,16 @@ function createRollbackTransactionTool(
     inputSchema: z.object({}),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
-      adapter.rollbackTransaction();
+      try {
+        adapter.rollbackTransaction();
 
-      return Promise.resolve({
-        success: true,
-        message: "Transaction rolled back",
-      });
+        return Promise.resolve({
+          success: true,
+          message: "Transaction rolled back",
+        });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
+      }
     },
   };
 }
@@ -138,19 +151,26 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     inputSchema: SavepointSchema,
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
-      const input = SavepointSchema.parse(params);
+      try {
+        const input = SavepointSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-        throw new Error("Invalid savepoint name");
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
+          return Promise.resolve({
+            success: false,
+            error: "Invalid savepoint name",
+          });
+        }
+
+        adapter.savepoint(input.name);
+
+        return Promise.resolve({
+          success: true,
+          message: `Savepoint '${input.name}' created`,
+          savepoint: input.name,
+        });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
       }
-
-      adapter.savepoint(input.name);
-
-      return Promise.resolve({
-        success: true,
-        message: `Savepoint '${input.name}' created`,
-        savepoint: input.name,
-      });
     },
   };
 }
@@ -169,19 +189,26 @@ function createReleaseSavepointTool(
     inputSchema: SavepointSchema,
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
-      const input = SavepointSchema.parse(params);
+      try {
+        const input = SavepointSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-        throw new Error("Invalid savepoint name");
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
+          return Promise.resolve({
+            success: false,
+            error: "Invalid savepoint name",
+          });
+        }
+
+        adapter.releaseSavepoint(input.name);
+
+        return Promise.resolve({
+          success: true,
+          message: `Savepoint '${input.name}' released`,
+          savepoint: input.name,
+        });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
       }
-
-      adapter.releaseSavepoint(input.name);
-
-      return Promise.resolve({
-        success: true,
-        message: `Savepoint '${input.name}' released`,
-        savepoint: input.name,
-      });
     },
   };
 }
@@ -200,19 +227,26 @@ function createRollbackToSavepointTool(
     inputSchema: SavepointSchema,
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
-      const input = SavepointSchema.parse(params);
+      try {
+        const input = SavepointSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-        throw new Error("Invalid savepoint name");
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
+          return Promise.resolve({
+            success: false,
+            error: "Invalid savepoint name",
+          });
+        }
+
+        adapter.rollbackToSavepoint(input.name);
+
+        return Promise.resolve({
+          success: true,
+          message: `Rolled back to savepoint '${input.name}'`,
+          savepoint: input.name,
+        });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
       }
-
-      adapter.rollbackToSavepoint(input.name);
-
-      return Promise.resolve({
-        success: true,
-        message: `Rolled back to savepoint '${input.name}'`,
-        savepoint: input.name,
-      });
     },
   };
 }

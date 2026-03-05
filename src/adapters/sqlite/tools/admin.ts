@@ -6,10 +6,12 @@
  * 13 tools total.
  */
 
+import fs from "node:fs";
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { admin, readOnly } from "../../../utils/annotations.js";
+import { formatError } from "../../../utils/errors.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
 import { insightsManager } from "../../../utils/insightsManager.js";
 import {
@@ -356,6 +358,15 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
+      if (!fs.existsSync(input.sourcePath)) {
+        return {
+          success: false,
+          message: `Source file not found: ${input.sourcePath}`,
+          sourcePath: input.sourcePath,
+        };
+      }
+
       const escapedPath = input.sourcePath.replace(/'/g, "''");
 
       // Verify current database is valid before overwriting
@@ -582,69 +593,82 @@ function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Verify Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VerifyBackupSchema.parse(params);
-      // WASM mode: backup/restore/verify are not available since file system
-      // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
-      if (!adapter.isNativeBackend()) {
-        return {
-          success: false,
-          message:
-            "Verify backup not available: file system access is not supported in WASM mode.",
-          wasmLimitation: true,
-          backupPath: input.backupPath,
-        };
-      }
-
-      const escapedPath = input.backupPath.replace(/'/g, "''");
-
-      // Attach backup database temporarily
       try {
-        await adapter.executeQuery(
-          `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
-        );
+        const input = VerifyBackupSchema.parse(params);
+        // WASM mode: backup/restore/verify are not available since file system
+        // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
+        if (!adapter.isNativeBackend()) {
+          return {
+            success: false,
+            message:
+              "Verify backup not available: file system access is not supported in WASM mode.",
+            wasmLimitation: true,
+            backupPath: input.backupPath,
+          };
+        }
+
+        // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
+        if (!fs.existsSync(input.backupPath)) {
+          return {
+            success: false,
+            message: `Backup file not found: ${input.backupPath}`,
+            backupPath: input.backupPath,
+          };
+        }
+
+        const escapedPath = input.backupPath.replace(/'/g, "''");
+
+        // Attach backup database temporarily
+        try {
+          await adapter.executeQuery(
+            `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
+          );
+        } catch (error) {
+          return {
+            success: false,
+            message: error instanceof Error ? error.message : String(error),
+            backupPath: input.backupPath,
+          };
+        }
+
+        try {
+          // Get page info
+          const pageCountResult = await adapter.executeReadQuery(
+            "PRAGMA backup_verify.page_count",
+          );
+          const pageSizeResult = await adapter.executeReadQuery(
+            "PRAGMA backup_verify.page_size",
+          );
+
+          const pageCount =
+            (pageCountResult.rows?.[0]?.["page_count"] as number) ?? 0;
+          const pageSize =
+            (pageSizeResult.rows?.[0]?.["page_size"] as number) ?? 0;
+
+          // Run integrity check on backup
+          const integrityResult = await adapter.executeReadQuery(
+            "PRAGMA backup_verify.integrity_check(10)",
+          );
+
+          const messages = (integrityResult.rows ?? []).map(
+            (r) => r["integrity_check"],
+          ) as string[];
+          const isOk = messages.length === 1 && messages[0] === "ok";
+
+          return {
+            success: true,
+            valid: isOk,
+            pageCount,
+            pageSize,
+            integrity: isOk ? "ok" : "errors_found",
+            messages: isOk ? undefined : messages,
+          };
+        } finally {
+          // Always detach
+          await adapter.executeQuery("DETACH DATABASE backup_verify");
+        }
       } catch (error) {
-        return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
-          backupPath: input.backupPath,
-        };
-      }
-
-      try {
-        // Get page info
-        const pageCountResult = await adapter.executeReadQuery(
-          "PRAGMA backup_verify.page_count",
-        );
-        const pageSizeResult = await adapter.executeReadQuery(
-          "PRAGMA backup_verify.page_size",
-        );
-
-        const pageCount =
-          (pageCountResult.rows?.[0]?.["page_count"] as number) ?? 0;
-        const pageSize =
-          (pageSizeResult.rows?.[0]?.["page_size"] as number) ?? 0;
-
-        // Run integrity check on backup
-        const integrityResult = await adapter.executeReadQuery(
-          "PRAGMA backup_verify.integrity_check(10)",
-        );
-
-        const messages = (integrityResult.rows ?? []).map(
-          (r) => r["integrity_check"],
-        ) as string[];
-        const isOk = messages.length === 1 && messages[0] === "ok";
-
-        return {
-          success: true,
-          valid: isOk,
-          pageCount,
-          pageSize,
-          integrity: isOk ? "ok" : "errors_found",
-          messages: isOk ? undefined : messages,
-        };
-      } finally {
-        // Always detach
-        await adapter.executeQuery("DETACH DATABASE backup_verify");
+        return formatError(error);
       }
     },
   };
@@ -867,46 +891,55 @@ function createPragmaSettingsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("PRAGMA Settings"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PragmaSettingsSchema.parse(params);
+      try {
+        const input = PragmaSettingsSchema.parse(params);
 
-      // Validate pragma name (alphanumeric + underscore only)
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.pragma)) {
-        throw new Error("Invalid PRAGMA name");
-      }
+        // Validate pragma name (alphanumeric + underscore only)
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.pragma)) {
+          return {
+            success: false,
+            error: "Invalid PRAGMA name",
+          };
+        }
 
-      if (input.value !== undefined) {
-        // Get old value first
-        const oldResult = await adapter.executeReadQuery(
-          `PRAGMA ${input.pragma}`,
-        );
-        const oldValue = oldResult.rows?.[0]?.[input.pragma];
+        if (input.value !== undefined) {
+          // Get old value first
+          const oldResult = await adapter.executeReadQuery(
+            `PRAGMA ${input.pragma}`,
+          );
+          const oldValue = oldResult.rows?.[0]?.[input.pragma];
 
-        // Set new value
-        await adapter.executeQuery(`PRAGMA ${input.pragma} = ${input.value}`);
+          // Set new value
+          await adapter.executeQuery(`PRAGMA ${input.pragma} = ${input.value}`);
 
-        // Verify new value
-        const newResult = await adapter.executeReadQuery(
-          `PRAGMA ${input.pragma}`,
-        );
-        const newValue = newResult.rows?.[0]?.[input.pragma];
+          // Verify new value
+          const newResult = await adapter.executeReadQuery(
+            `PRAGMA ${input.pragma}`,
+          );
+          const newValue = newResult.rows?.[0]?.[input.pragma];
 
-        return {
-          success: true,
-          pragma: input.pragma,
-          value: newValue,
-          oldValue,
-          newValue,
-        };
-      } else {
-        // Just read value
-        const result = await adapter.executeReadQuery(`PRAGMA ${input.pragma}`);
-        const value = result.rows?.[0]?.[input.pragma];
+          return {
+            success: true,
+            pragma: input.pragma,
+            value: newValue,
+            oldValue,
+            newValue,
+          };
+        } else {
+          // Just read value
+          const result = await adapter.executeReadQuery(
+            `PRAGMA ${input.pragma}`,
+          );
+          const value = result.rows?.[0]?.[input.pragma];
 
-        return {
-          success: true,
-          pragma: input.pragma,
-          value,
-        };
+          return {
+            success: true,
+            pragma: input.pragma,
+            value,
+          };
+        }
+      } catch (error) {
+        return formatError(error);
       }
     },
   };

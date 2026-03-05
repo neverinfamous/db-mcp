@@ -275,11 +275,11 @@ describe("Security: Identifier Integration", () => {
 
   describe("admin tools - identifier injection", () => {
     it("should reject PRAGMA name with injection", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "cache_size; DROP TABLE users--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "cache_size; DROP TABLE users--",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in pragma_table_info", async () => {

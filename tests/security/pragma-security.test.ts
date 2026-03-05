@@ -60,43 +60,43 @@ describe("Security: PRAGMA Operations", () => {
 
   describe("sqlite_pragma_settings - name validation", () => {
     it("should reject PRAGMA name with SQL injection (semicolon)", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "cache_size; DROP TABLE users--",
-        }),
-      ).rejects.toThrow("Invalid PRAGMA name");
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "cache_size; DROP TABLE users--",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
 
     it("should reject PRAGMA name with quotes", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "cache_size'",
-        }),
-      ).rejects.toThrow("Invalid PRAGMA name");
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "cache_size'",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
 
     it("should reject PRAGMA name with parentheses", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "table_info(users)",
-        }),
-      ).rejects.toThrow("Invalid PRAGMA name");
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "table_info(users)",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
 
     it("should reject PRAGMA name with spaces", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "cache size",
-        }),
-      ).rejects.toThrow("Invalid PRAGMA name");
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "cache size",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
 
     it("should reject PRAGMA name starting with number", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "1cache_size",
-        }),
-      ).rejects.toThrow("Invalid PRAGMA name");
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "1cache_size",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
 
     it("should allow valid PRAGMA names to read", async () => {
@@ -221,11 +221,11 @@ describe("Security: PRAGMA Operations", () => {
 
   describe("edge cases", () => {
     it("should handle empty PRAGMA name", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "",
-        }),
-      ).rejects.toThrow();
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
 
     it("should handle PRAGMA value injection attempt", async () => {

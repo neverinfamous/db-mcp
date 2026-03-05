@@ -353,19 +353,21 @@ describe("Admin Tools", () => {
     });
 
     it("should reject invalid PRAGMA names", async () => {
-      await expect(
-        tools.get("sqlite_pragma_settings")?.({
-          pragma: "DROP TABLE; --",
-        }),
-      ).rejects.toThrow("Invalid PRAGMA name");
+      const result = (await tools.get("sqlite_pragma_settings")?.({
+        pragma: "DROP TABLE; --",
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
 
     it("should reject PRAGMA names with special characters", async () => {
-      await expect(
-        tools.get("sqlite_pragma_settings")?.({
-          pragma: "cache-size",
-        }),
-      ).rejects.toThrow("Invalid PRAGMA name");
+      const result = (await tools.get("sqlite_pragma_settings")?.({
+        pragma: "cache-size",
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Invalid PRAGMA name");
     });
   });
 

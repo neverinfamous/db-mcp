@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_pragma_settings` Structured Error Response** — Handler now wrapped in try/catch with `formatError()`
+  - Previously, invalid PRAGMA names threw raw MCP exceptions instead of structured error responses
+  - Now returns `{success: false, error: "Invalid PRAGMA name"}` for validation failures
+  - Catches all SQLite errors and returns structured `{success: false, error, code, suggestion}` responses
+- **`sqlite_verify_backup` Nonexistent File Validation** — Now pre-validates file existence before ATTACH
+  - Previously, ATTACH silently created an empty DB for nonexistent files, returning false-positive `{success: true, valid: true, pageCount: 0}`
+  - Now returns `{success: false, message: "Backup file not found: ..."}` when file doesn't exist
+  - Outer try/catch with `formatError()` added for unexpected errors
+- **`sqlite_restore` Nonexistent File Validation** — Now pre-validates source file existence before ATTACH
+  - Previously, ATTACH silently created an empty DB for nonexistent files, returning false-positive `{success: true}`
+  - Now returns `{success: false, message: "Source file not found: ..."}` when file doesn't exist
+- **Transaction Tool Structured Error Responses** — All 6 transaction handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_transaction_begin`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`: Errors like double-begin and no-active-transaction now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`: Invalid savepoint names return `{success: false, error: "Invalid savepoint name"}` instead of throwing; nonexistent savepoint errors return structured responses
+  - Added `formatError` import to `transactions.ts`
+  - Security tests updated to assert structured error responses instead of `.rejects.toThrow()`
+
 - **`sqlite_vector_distance` Missing Error Handling** — Handler now wrapped in try/catch with `formatError()`
   - Previously, Zod validation errors from malformed input threw raw MCP exceptions instead of structured error responses
   - Now consistent with `sqlite_vector_normalize` and all other vector tool handlers

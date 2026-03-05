@@ -1324,12 +1324,16 @@ export const IntegrityCheckOutputSchema = z.object({
  */
 export const RestoreOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
+  message: z.string().optional(),
   sourcePath: z.string().optional(),
   durationMs: z.number().optional(),
   wasmLimitation: z.boolean().optional(),
   skippedTables: z.array(z.string()).optional(),
   note: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1342,8 +1346,13 @@ export const VerifyBackupOutputSchema = z.object({
   pageSize: z.number().optional(),
   integrity: z.enum(["ok", "errors_found"]).optional(),
   messages: z.array(z.string()).optional(),
+  message: z.string().optional(),
   wasmLimitation: z.boolean().optional(),
   backupPath: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1414,10 +1423,14 @@ export const PragmaOptimizeOutputSchema = z.object({
  */
 export const PragmaSettingsOutputSchema = z.object({
   success: z.boolean(),
-  pragma: z.string(),
-  value: z.unknown(),
+  pragma: z.string().optional(),
+  value: z.unknown().optional(),
   oldValue: z.unknown().optional(),
   newValue: z.unknown().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1450,8 +1463,12 @@ export const PragmaTableInfoOutputSchema = z.object({
  */
 export const TransactionBeginOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
+  message: z.string().optional(),
   mode: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1459,7 +1476,11 @@ export const TransactionBeginOutputSchema = z.object({
  */
 export const TransactionCommitOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
+  message: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1467,7 +1488,11 @@ export const TransactionCommitOutputSchema = z.object({
  */
 export const TransactionRollbackOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
+  message: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1475,8 +1500,13 @@ export const TransactionRollbackOutputSchema = z.object({
  */
 export const TransactionSavepointOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
-  name: z.string(),
+  message: z.string().optional(),
+  name: z.string().optional(),
+  savepoint: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1484,8 +1514,13 @@ export const TransactionSavepointOutputSchema = z.object({
  */
 export const TransactionReleaseOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
-  name: z.string(),
+  message: z.string().optional(),
+  name: z.string().optional(),
+  savepoint: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
@@ -1493,8 +1528,13 @@ export const TransactionReleaseOutputSchema = z.object({
  */
 export const TransactionRollbackToOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
-  name: z.string(),
+  message: z.string().optional(),
+  name: z.string().optional(),
+  savepoint: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
