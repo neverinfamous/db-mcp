@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_spatialite_create_table` Misleading Success on Existing Table** — Now returns `alreadyExists: true` when table already exists
+  - Previously used `CREATE TABLE IF NOT EXISTS` and always reported `"Spatial table 'X' created"` even when table already existed
+  - Now pre-checks table existence and returns accurate message: `"Spatial table 'X' already exists"` with `alreadyExists: true` flag
+  - Prevents confusion about whether data was reset or preserved
+- **`sqlite_spatialite_index` Create/Drop/Check Idempotency** — All 3 index actions now report accurate state
+  - `create`: Returns `alreadyExists: true` when index already exists instead of silently running `CreateSpatialIndex` again
+  - `drop`: Returns `alreadyDropped: true` when no index exists instead of misleadingly reporting `"Spatial index dropped"`
+  - `check`: Returns `{ indexed: false }` when no index exists, or `{ indexed: true, valid: true/false }` when index exists — previously returned raw `{ result: [{ "CheckSpatialIndex(...)": null }] }`
+  - Index existence checked via `idx_{table}_{column}` in `sqlite_master`
+- **`sqlite_spatialite_analyze` Distance Matrix `targetTable` Support** — Now uses `targetTable` parameter when provided
+  - Previously, the `distance_matrix` analysis type always used `sourceTable` for both sides of the cross-join, ignoring `targetTable`
+  - Now uses `targetTable` (defaulting to `sourceTable` when omitted) and only applies `a.id < b.id` dedup filter for same-table queries
 - **SpatiaLite Tool Structured Error Responses** — All 7 SpatiaLite handlers now return structured errors instead of throwing raw MCP exceptions
   - Added `formatError` import and try/catch blocks to all 7 handlers: `sqlite_spatialite_load`, `sqlite_spatialite_create_table`, `sqlite_spatialite_query`, `sqlite_spatialite_analyze`, `sqlite_spatialite_index`, `sqlite_spatialite_transform`, `sqlite_spatialite_import`
   - `sqlite_spatialite_query`: Nonexistent table errors now return `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions

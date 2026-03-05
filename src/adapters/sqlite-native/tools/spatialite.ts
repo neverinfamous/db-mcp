@@ -341,6 +341,22 @@ function createSpatialTableTool(adapter: NativeSqliteAdapter): ToolDefinition {
           return { success: false, error: "Invalid table name" };
         }
 
+        // Check if table already exists
+        const existsCheck = await adapter.executeReadQuery(
+          `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.tableName}'`,
+        );
+        const alreadyExists =
+          existsCheck.rows != null && existsCheck.rows.length > 0;
+
+        if (alreadyExists) {
+          return {
+            success: true,
+            message: `Spatial table '${input.tableName}' already exists`,
+            alreadyExists: true,
+            tableName: input.tableName,
+          };
+        }
+
         // Build column definitions
         const columns = ["id INTEGER PRIMARY KEY AUTOINCREMENT"];
         for (const col of input.additionalColumns) {
@@ -355,7 +371,7 @@ function createSpatialTableTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         // Create base table
         await adapter.executeWriteQuery(
-          `CREATE TABLE IF NOT EXISTS "${input.tableName}" (${columns.join(", ")})`,
+          `CREATE TABLE "${input.tableName}" (${columns.join(", ")})`,
         );
 
         // Add geometry column using SpatiaLite
@@ -506,13 +522,17 @@ function createSpatialAnalysisTool(
             break;
           }
 
-          case "distance_matrix":
+          case "distance_matrix": {
+            const dmTarget = input.targetTable ?? input.sourceTable;
+            const dmSameTable = dmTarget === input.sourceTable;
+            const dmFilter = dmSameTable ? "WHERE a.id < b.id" : "";
             query = `SELECT a.id as id1, b.id as id2,
               ST_Distance(a."${input.geometryColumn}", b."${input.geometryColumn}") as distance
-            FROM "${input.sourceTable}" a, "${input.sourceTable}" b
-            WHERE a.id < b.id
+            FROM "${input.sourceTable}" a, "${dmTarget}" b
+            ${dmFilter}
             ORDER BY distance LIMIT ${input.limit}`;
             break;
+          }
         }
 
         const result = await adapter.executeReadQuery(query);
@@ -562,8 +582,24 @@ function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
           };
         }
 
+        // Helper: check if spatial index exists for this table/column
+        const indexExists = async (): Promise<boolean> => {
+          const idxCheck = await adapter.executeReadQuery(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name='idx_${input.tableName}_${input.geometryColumn}'`,
+          );
+          return (idxCheck.rows?.length ?? 0) > 0;
+        };
+
         switch (input.action) {
-          case "create":
+          case "create": {
+            if (await indexExists()) {
+              return {
+                success: true,
+                message: `Spatial index already exists on ${input.tableName}.${input.geometryColumn}`,
+                alreadyExists: true,
+                action: "create",
+              };
+            }
             // NOTE: CreateSpatialIndex is a SELECT function, must use executeReadQuery
             await adapter.executeReadQuery(
               `SELECT CreateSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
@@ -573,8 +609,17 @@ function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
               message: `Spatial index created on ${input.tableName}.${input.geometryColumn}`,
               action: "create",
             };
+          }
 
-          case "drop":
+          case "drop": {
+            if (!(await indexExists())) {
+              return {
+                success: true,
+                message: `No spatial index exists on ${input.tableName}.${input.geometryColumn}`,
+                alreadyDropped: true,
+                action: "drop",
+              };
+            }
             // NOTE: DisableSpatialIndex is a SELECT function, must use executeReadQuery
             await adapter.executeReadQuery(
               `SELECT DisableSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
@@ -584,16 +629,32 @@ function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
               message: `Spatial index dropped from ${input.tableName}.${input.geometryColumn}`,
               action: "drop",
             };
+          }
 
           case "check": {
+            const hasIndex = await indexExists();
+            if (!hasIndex) {
+              return {
+                success: true,
+                message: "No spatial index found",
+                action: "check",
+                indexed: false,
+              };
+            }
             const checkResult = await adapter.executeReadQuery(
               `SELECT CheckSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
             );
+            const checkValue = checkResult.rows?.[0];
+            const isValid =
+              checkValue != null ? Object.values(checkValue)[0] === 1 : false;
             return {
               success: true,
-              message: "Spatial index check completed",
+              message: isValid
+                ? "Spatial index is valid"
+                : "Spatial index exists but may be invalid",
               action: "check",
-              result: checkResult.rows,
+              indexed: true,
+              valid: isValid,
             };
           }
         }
