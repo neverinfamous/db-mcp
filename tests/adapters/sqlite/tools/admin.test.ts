@@ -369,6 +369,16 @@ describe("Admin Tools", () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe("Invalid PRAGMA name");
     });
+
+    it("should return structured error for nonexistent pragma", async () => {
+      const result = (await tools.get("sqlite_pragma_settings")?.({
+        pragma: "nonexistent_pragma_xyz",
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Unknown or write-only PRAGMA");
+      expect(result.error).toContain("nonexistent_pragma_xyz");
+    });
   });
 
   describe("sqlite_pragma_table_info", () => {
@@ -485,21 +495,18 @@ describe("Admin Tools", () => {
 
   describe("sqlite_verify_backup", () => {
     it("should handle verify backup request", async () => {
-      try {
-        const result = (await tools.get("sqlite_verify_backup")?.({
-          backupPath: "/tmp/nonexistent.db",
-        })) as {
-          success: boolean;
-          message?: string;
-          wasmLimitation?: boolean;
-        };
+      const result = (await tools.get("sqlite_verify_backup")?.({
+        backupPath: "/this/path/definitely/does/not/exist/backup.db",
+      })) as {
+        success: boolean;
+        message?: string;
+        wasmLimitation?: boolean;
+      };
 
-        // Will fail but should return structured error
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if file doesn't exist
-        expect(error).toBeDefined();
-      }
+      // Should return structured error (not throw)
+      expect(typeof result.success).toBe("boolean");
+      // In WASM mode: wasmLimitation error; in Native: file not found error
+      expect(result.success).toBe(false);
     });
   });
 });

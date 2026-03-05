@@ -7,6 +7,7 @@
  */
 
 import fs from "node:fs";
+import nodePath from "node:path";
 import { z } from "zod";
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
@@ -608,7 +609,9 @@ function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
-        if (!fs.existsSync(input.backupPath)) {
+        // Resolve to absolute path to avoid CWD-relative false positives
+        const resolvedPath = nodePath.resolve(input.backupPath);
+        if (!fs.existsSync(resolvedPath)) {
           return {
             success: false,
             message: `Backup file not found: ${input.backupPath}`,
@@ -616,7 +619,7 @@ function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
-        const escapedPath = input.backupPath.replace(/'/g, "''");
+        const escapedPath = resolvedPath.replace(/'/g, "''");
 
         // Attach backup database temporarily
         try {
@@ -891,17 +894,17 @@ function createPragmaSettingsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("PRAGMA Settings"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const input = PragmaSettingsSchema.parse(params);
+
+      // Validate pragma name (alphanumeric + underscore only)
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.pragma)) {
+        return {
+          success: false,
+          error: "Invalid PRAGMA name",
+        };
+      }
+
       try {
-        const input = PragmaSettingsSchema.parse(params);
-
-        // Validate pragma name (alphanumeric + underscore only)
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.pragma)) {
-          return {
-            success: false,
-            error: "Invalid PRAGMA name",
-          };
-        }
-
         if (input.value !== undefined) {
           // Get old value first
           const oldResult = await adapter.executeReadQuery(
@@ -939,6 +942,15 @@ function createPragmaSettingsTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
       } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        // Unknown PRAGMAs: better-sqlite3 treats them as statements (no cursor),
+        // so executeReadQuery throws "does not return data"
+        if (msg.includes("does not return data")) {
+          return {
+            success: false,
+            error: `Unknown or write-only PRAGMA: '${input.pragma}'`,
+          };
+        }
         return formatError(error);
       }
     },

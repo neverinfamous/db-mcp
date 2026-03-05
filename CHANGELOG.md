@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_verify_backup` Relative Path False Positive** — Now resolves relative paths to absolute before `fs.existsSync` check
+  - Previously, relative paths like `"nonexistent_file.db"` bypassed the file existence check (resolved against MCP server CWD, not database directory) and `ATTACH DATABASE` silently created an empty DB, returning `{success: true, valid: true, pageCount: 0}`
+  - Now uses `nodePath.resolve()` to convert to absolute path before checking, ensuring consistent behavior regardless of server CWD
+- **`sqlite_pragma_settings` Nonexistent PRAGMA Error Message** — Returns user-friendly error for unknown PRAGMAs
+  - Previously, querying a nonexistent PRAGMA like `nonexistent_pragma_xyz` returned the confusing better-sqlite3 internal error: `"This statement does not return data. Use run() instead"` with `UNKNOWN_ERROR` code
+  - Now detects this specific error pattern and returns `{success: false, error: "Unknown or write-only PRAGMA: 'nonexistent_pragma_xyz'"}`
+  - `input` parsing moved before try/catch block to ensure PRAGMA name is accessible in error handler
+
 - **`sqlite_pragma_settings` Structured Error Response** — Handler now wrapped in try/catch with `formatError()`
   - Previously, invalid PRAGMA names threw raw MCP exceptions instead of structured error responses
   - Now returns `{success: false, error: "Invalid PRAGMA name"}` for validation failures
