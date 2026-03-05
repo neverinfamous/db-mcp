@@ -1296,8 +1296,13 @@ export const BackupOutputSchema = z.object({
  */
 export const AnalyzeOutputSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
+  message: z.string().optional(),
   tablesAnalyzed: z.number().optional(),
+  durationMs: z.number().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  category: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**

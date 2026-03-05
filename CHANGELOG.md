@@ -9,10 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`sqlite_analyze` Structured Error Response** — Handler now wrapped in try/catch with `formatError()`
+- **SpatiaLite Tool Structured Error Responses** — All 7 SpatiaLite handlers now return structured errors instead of throwing raw MCP exceptions
+  - Added `formatError` import and try/catch blocks to all 7 handlers: `sqlite_spatialite_load`, `sqlite_spatialite_create_table`, `sqlite_spatialite_query`, `sqlite_spatialite_analyze`, `sqlite_spatialite_index`, `sqlite_spatialite_transform`, `sqlite_spatialite_import`
+  - `sqlite_spatialite_query`: Nonexistent table errors now return `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
+  - `sqlite_spatialite_analyze`: Same fix — structured error response for nonexistent tables and invalid table names
+  - `sqlite_spatialite_index`: Added table existence validation — previously returned `{success: true}` for nonexistent tables; now returns `{success: false, error: "Table 'x' does not exist"}`
+  - `sqlite_spatialite_transform`: Added null-result validation — previously returned `{success: true, result: null}` for invalid WKT geometry; now returns `{success: false, error: "Invalid geometry..."}`
+  - `sqlite_spatialite_import`: Added WKT pre-validation via `GeomFromText()` — previously silently accepted invalid WKT strings like `"INVALID_WKT"`; now returns `{success: false, error: "Invalid WKT geometry..."}`
+  - `sqlite_spatialite_create_table`: Validation errors (invalid table/column names) now return structured responses instead of throwing
+  - Tests updated to expect structured error responses instead of catching thrown errors; 11 tests covering all 7 tools
+
   - Previously threw raw MCP exception when called with a nonexistent table
   - Now returns `{success: false, error, code, suggestion}` consistent with all other tool groups
   - Security test updated to assert structured error response instead of `.rejects.toThrow()`
+
 - **`sqlite_restore` Relative Path Resolution** — Now resolves relative paths to absolute before file existence check
   - Previously used raw `input.sourcePath` with `fs.existsSync`, which resolved against the MCP server's CWD (e.g., Antigravity IDE directory)
   - Stale 0-byte files left by SQLite `ATTACH DATABASE` at the server CWD could cause false-positive `{success: true}` responses

@@ -38,137 +38,139 @@ describe("SpatiaLite Tools", () => {
 
   describe("sqlite_spatialite_load", () => {
     it("should attempt to load SpatiaLite extension", async () => {
-      // SpatiaLite may or may not be available
-      try {
-        const result = (await tools.get("sqlite_spatialite_load")?.({})) as {
-          success: boolean;
-          message?: string;
-          loaded?: boolean;
-        };
+      const result = (await tools.get("sqlite_spatialite_load")?.({})) as {
+        success: boolean;
+        message?: string;
+        loaded?: boolean;
+      };
 
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if SpatiaLite extension not available
-        expect(error).toBeDefined();
-      }
+      // Whether load succeeds or fails depends on SpatiaLite availability,
+      // but it should always return a structured response
+      expect(typeof result.success).toBe("boolean");
     });
   });
 
   describe("sqlite_spatialite_create_table", () => {
     it("should handle create table request", async () => {
-      try {
-        const result = (await tools.get("sqlite_spatialite_create_table")?.({
-          tableName: "locations",
-          geometryColumn: "geom",
-          geometryType: "POINT",
-          srid: 4326,
-        })) as {
-          success: boolean;
-          message?: string;
-        };
+      const result = (await tools.get("sqlite_spatialite_create_table")?.({
+        tableName: "locations",
+        geometryColumn: "geom",
+        geometryType: "POINT",
+        srid: 4326,
+      })) as {
+        success: boolean;
+        message?: string;
+      };
 
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if SpatiaLite not loaded
-        expect(error).toBeDefined();
-      }
+      // Returns structured response whether SpatiaLite is loaded or not
+      expect(typeof result.success).toBe("boolean");
+    });
+
+    it("should return structured error for invalid table name", async () => {
+      const result = (await tools.get("sqlite_spatialite_create_table")?.({
+        tableName: "invalid-name!",
+        geometryColumn: "geom",
+        geometryType: "POINT",
+        srid: 4326,
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
     });
   });
 
   describe("sqlite_spatialite_query", () => {
-    it("should handle spatial query request", async () => {
-      try {
-        const result = (await tools.get("sqlite_spatialite_query")?.({
-          query:
-            "SELECT MakePoint(0, 0, 4326) as geom, 1 as id FROM sqlite_master LIMIT 1",
-        })) as {
-          success: boolean;
-          rows?: Record<string, unknown>[];
-        };
+    it("should return structured error for nonexistent table", async () => {
+      const result = (await tools.get("sqlite_spatialite_query")?.({
+        query: "SELECT * FROM nonexistent_table",
+      })) as { success: boolean; error?: string };
 
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if SpatiaLite not loaded
-        expect(error).toBeDefined();
-      }
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
   describe("sqlite_spatialite_analyze", () => {
-    it("should handle analyze geometry request", async () => {
-      try {
-        const result = (await tools.get("sqlite_spatialite_analyze")?.({
-          tableName: "nonexistent_table",
-          geometryColumn: "geom",
-        })) as {
-          success: boolean;
-          message?: string;
-        };
+    it("should return structured error for nonexistent table", async () => {
+      const result = (await tools.get("sqlite_spatialite_analyze")?.({
+        analysisType: "spatial_extent",
+        sourceTable: "nonexistent_table",
+        geometryColumn: "geom",
+      })) as { success: boolean; error?: string };
 
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if table doesn't exist or SpatiaLite not loaded
-        expect(error).toBeDefined();
-      }
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for invalid table name", async () => {
+      const result = (await tools.get("sqlite_spatialite_analyze")?.({
+        analysisType: "spatial_extent",
+        sourceTable: "invalid-name!",
+        geometryColumn: "geom",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
     });
   });
 
   describe("sqlite_spatialite_index", () => {
-    it("should handle spatial index creation request", async () => {
-      try {
-        const result = (await tools.get("sqlite_spatialite_index")?.({
-          tableName: "locations",
-          geometryColumn: "geom",
-        })) as {
-          success: boolean;
-          message?: string;
-        };
+    it("should return structured error for nonexistent table", async () => {
+      const result = (await tools.get("sqlite_spatialite_index")?.({
+        tableName: "nonexistent_table",
+        geometryColumn: "geom",
+        action: "create",
+      })) as { success: boolean; error?: string };
 
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if table doesn't exist or SpatiaLite not loaded
-        expect(error).toBeDefined();
-      }
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for invalid table name", async () => {
+      const result = (await tools.get("sqlite_spatialite_index")?.({
+        tableName: "invalid-name!",
+        geometryColumn: "geom",
+        action: "create",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
     });
   });
 
   describe("sqlite_spatialite_transform", () => {
-    it("should handle coordinate transform request", async () => {
-      try {
-        const result = (await tools.get("sqlite_spatialite_transform")?.({
-          tableName: "locations",
-          geometryColumn: "geom",
-          targetSrid: 3857,
-        })) as {
-          success: boolean;
-          message?: string;
-        };
+    it("should return structured error for invalid geometry", async () => {
+      const result = (await tools.get("sqlite_spatialite_transform")?.({
+        operation: "centroid",
+        geometry1: "INVALID_GEOMETRY",
+      })) as { success: boolean; error?: string };
 
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if table doesn't exist or SpatiaLite not loaded
-        expect(error).toBeDefined();
-      }
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
   describe("sqlite_spatialite_import", () => {
-    it("should handle import request with missing file", async () => {
-      try {
-        const result = (await tools.get("sqlite_spatialite_import")?.({
-          tableName: "imported_data",
-          filePath: "/nonexistent/file.geojson",
-          format: "geojson",
-        })) as {
-          success: boolean;
-          message?: string;
-        };
+    it("should return structured error for nonexistent table", async () => {
+      const result = (await tools.get("sqlite_spatialite_import")?.({
+        tableName: "nonexistent_spatial_table",
+        format: "wkt",
+        data: "POINT(0 0)",
+      })) as { success: boolean; error?: string };
 
-        expect(typeof result.success).toBe("boolean");
-      } catch (error) {
-        // Expected if file doesn't exist or SpatiaLite not loaded
-        expect(error).toBeDefined();
-      }
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should return structured error for invalid WKT", async () => {
+      // First need a table to import into — the WKT validation should fail
+      // before reaching the insert, so the table doesn't need to exist
+      // for this specific test path
+      const result = (await tools.get("sqlite_spatialite_import")?.({
+        tableName: "nonexistent_spatial_table",
+        format: "wkt",
+        data: "INVALID_WKT_DATA",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 });
