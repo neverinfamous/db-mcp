@@ -385,6 +385,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **NPM Audit Remediation** — Patched high severity vulnerabilities in transitive dependencies
+  - `@hono/node-server`: updated to 1.19.11
+  - `hono`: updated to 4.12.5
 - **Docker CVE Remediation** — Patched npm-bundled transitive dependencies in Dockerfile (both stages)
   - `tar`: 7.5.7 → 7.5.8 (CVE-2026-26960: path traversal, HIGH 7.1)
   - `minimatch`: 10.1.2 → 10.2.4 (CVE-2026-26996: ReDoS, HIGH 8.7)
@@ -399,7 +402,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@modelcontextprotocol/sdk`: 1.27.0 → 1.27.1
 - `@types/pg`: 8.16.0 → 8.18.0
 - `globals`: 17.3.0 → 17.4.0
-- `pg`: 8.18.0 → 8.19.0
+- `pg`: 8.18.0 → 8.20.0
 - `sql.js`: 1.14.0 → 1.14.1
 
 ### Changed
