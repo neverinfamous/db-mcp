@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-deprecated -- Intentional: SSEServerTransport provides backward compatibility for MCP 2024-11-05 clients */
 /**
  * db-mcp - HTTP Transport
  *
- * Streamable HTTP transport with OAuth 2.0 integration and SSE support.
- * Provides secure HTTP endpoints for MCP communication with optional
- * session management and server-sent events for notifications.
+ * Dual-protocol HTTP transport with OAuth 2.0 integration.
+ * Supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE
+ * (MCP 2024-11-05) simultaneously, with security headers, CORS,
+ * rate limiting, and body size enforcement.
  *
  * Modes:
  * - Stateful (default): Multi-session management with SSE streaming
@@ -15,6 +17,7 @@ import type { Request, Response } from "express";
 import cors from "cors";
 import { randomUUID } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -27,6 +30,19 @@ import { createModuleLogger, ERROR_CODES } from "../utils/logger.js";
 import type http from "node:http";
 
 const logger = createModuleLogger("HTTP");
+
+// =============================================================================
+// Rate Limiting
+// =============================================================================
+
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
+const DEFAULT_RATE_LIMIT_MAX = 100;
+const DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MB
 
 // =============================================================================
 // Types
@@ -91,6 +107,15 @@ export interface HttpTransportConfig {
     credentials?: boolean;
   };
 
+  /**
+   * Allowed CORS origins. Defaults to ["*"] (all origins).
+   * Set to specific origins for production deployments.
+   */
+  corsOrigins?: string[];
+
+  /** Maximum request body size in bytes (default: 1 MB) */
+  maxBodyBytes?: number;
+
   /** Resource URI (defaults to http://localhost:{port}) */
   resourceUri?: string;
 }
@@ -100,9 +125,12 @@ export interface HttpTransportConfig {
 // =============================================================================
 
 /**
- * HTTP Transport for MCP with OAuth 2.0 integration and SSE support.
+ * HTTP Transport for MCP with OAuth 2.0 integration.
  *
- * Supports two modes:
+ * Supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE
+ * (MCP 2024-11-05) protocols simultaneously.
+ *
+ * Modes:
  * - Stateful (default): Multi-session management with SSE streaming for notifications
  * - Stateless: Single transport, no session management - ideal for serverless
  */
@@ -111,8 +139,11 @@ export class HttpTransport {
   private app: Express | null = null;
   private httpServer: http.Server | null = null;
 
-  // Session storage for stateful mode
+  // Streamable HTTP session storage (stateful mode)
   private transports = new Map<string, StreamableHTTPServerTransport>();
+
+  // Legacy SSE session storage
+  private sseTransports = new Map<string, SSEServerTransport>();
 
   // Single transport for stateless mode
   private statelessTransport: StreamableHTTPServerTransport | null = null;
@@ -124,6 +155,10 @@ export class HttpTransport {
 
   // Reference to the MCP server for stateful connections
   private mcpServer: McpServer | null = null;
+
+  // Rate limiting state
+  private rateLimitMap = new Map<string, RateLimitEntry>();
+  private rateLimitCleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: HttpTransportConfig) {
     this.config = {
@@ -152,11 +187,20 @@ export class HttpTransport {
     // Create Express app
     this.app = express();
 
-    // Configure CORS with SSE-compatible headers
+    // Security headers on all responses
+    this.setupSecurityHeaders();
+
+    // Configure CORS
     this.setupCors();
 
-    const jsonParser = express.json as () => RequestHandler;
-    this.app.use(jsonParser());
+    // Rate limiting
+    this.setupRateLimiting();
+
+    // Body size enforcement via express.json limit
+    const maxBodyBytes = this.config.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+    this.app.use(
+      express.json({ limit: maxBodyBytes }) as unknown as RequestHandler,
+    );
 
     // Determine resource URI
     const resourceUri =
@@ -182,15 +226,17 @@ export class HttpTransport {
     this.app.get("/", (_req, res) => {
       res.json({
         name: "db-mcp",
-        description: "SQLite MCP Server with HTTP/SSE transport",
+        description: "SQLite MCP Server with dual HTTP transport",
         mode: this.config.stateless ? "stateless" : "stateful",
         endpoints: {
-          "POST /mcp": "JSON-RPC requests (MCP protocol)",
+          "POST /mcp": "JSON-RPC requests (Streamable HTTP, MCP 2025-03-26)",
           "GET /mcp":
             this.config.stateless === true
               ? "Not available in stateless mode"
               : "SSE stream for server-to-client notifications",
           "DELETE /mcp": "Session termination",
+          "GET /sse": "Legacy SSE connection (MCP 2024-11-05)",
+          "POST /messages": "Legacy SSE message endpoint",
           "GET /health": "Health check",
         },
         documentation: "https://github.com/neverinfamous/db-mcp",
@@ -204,8 +250,18 @@ export class HttpTransport {
       this.setupStatefulEndpoints();
     }
 
+    // Legacy SSE endpoints (always available in stateful mode)
+    if (!this.config.stateless) {
+      this.setupLegacySSEEndpoints();
+    }
+
     // Error handler
     this.app.use(oauthErrorHandler);
+
+    // 404 handler for unknown paths (must be last)
+    this.app.use((_req: Request, res: Response) => {
+      res.status(404).json({ error: "Not found" });
+    });
 
     logger.info("HTTP transport initialized", {
       code: "HTTP_INIT_COMPLETE",
@@ -217,15 +273,50 @@ export class HttpTransport {
   }
 
   /**
-   * Configure CORS with SSE-compatible headers
+   * Set security headers on all responses
+   */
+  private setupSecurityHeaders(): void {
+    if (!this.app) return;
+
+    this.app.use((_req: Request, res: Response, next: () => void) => {
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("X-Frame-Options", "DENY");
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'none'; frame-ancestors 'none'",
+      );
+      res.setHeader(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=()",
+      );
+      next();
+    });
+  }
+
+  /**
+   * Configure CORS with configurable origins
    */
   private setupCors(): void {
     if (!this.app) return;
 
-    // Manual CORS middleware for browser-based clients (e.g., MCP Inspector)
+    const corsOrigins = this.config.corsOrigins ?? ["*"];
+    const isWildcard = corsOrigins.includes("*");
+
+    // CORS middleware
     this.app.use((req: Request, res: Response, next: () => void) => {
-      // Set CORS headers on all responses
-      res.setHeader("Access-Control-Allow-Origin", "*");
+      const origin = req.headers.origin;
+
+      // Set Access-Control-Allow-Origin
+      if (isWildcard) {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+      } else if (origin && corsOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Vary", "Origin");
+        // Only set credentials for explicit origins (not wildcard)
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+      }
+
       res.setHeader(
         "Access-Control-Allow-Methods",
         "GET, POST, DELETE, OPTIONS",
@@ -249,28 +340,57 @@ export class HttpTransport {
     if (this.config.cors) {
       this.app.use(cors(this.config.cors) as RequestHandler);
     }
+  }
 
-    // Explicit OPTIONS handler for /mcp - MUST be before other /mcp routes
-    this.app.all("/mcp", (req: Request, res: Response, next: () => void) => {
-      // Set CORS headers on ALL responses
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, DELETE, OPTIONS",
-      );
-      res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Accept, Authorization, mcp-session-id, Last-Event-ID, mcp-protocol-version",
-      );
-      res.setHeader("Access-Control-Expose-Headers", "mcp-session-id");
+  /**
+   * Set up per-IP sliding-window rate limiting
+   */
+  private setupRateLimiting(): void {
+    if (!this.app) return;
 
-      // For OPTIONS, respond immediately with CORS headers
-      if (req.method === "OPTIONS") {
-        res.status(204).end();
+    const windowMs = DEFAULT_RATE_LIMIT_WINDOW_MS;
+    const maxRequests = DEFAULT_RATE_LIMIT_MAX;
+
+    // Periodic cleanup of expired entries
+    this.rateLimitCleanupTimer = setInterval(() => {
+      const now = Date.now();
+      for (const [ip, entry] of this.rateLimitMap) {
+        if (now >= entry.resetAt) {
+          this.rateLimitMap.delete(ip);
+        }
+      }
+    }, windowMs);
+    // Don't block process exit
+    this.rateLimitCleanupTimer.unref();
+
+    this.app.use((req: Request, res: Response, next: () => void) => {
+      // Skip rate limiting for health checks
+      if (req.path === "/health") {
+        next();
         return;
       }
 
-      // For other methods, continue to next handler
+      const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+      const now = Date.now();
+      let entry = this.rateLimitMap.get(ip);
+
+      if (!entry || now >= entry.resetAt) {
+        entry = { count: 0, resetAt: now + windowMs };
+        this.rateLimitMap.set(ip, entry);
+      }
+
+      entry.count++;
+
+      if (entry.count > maxRequests) {
+        const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+        res.setHeader("Retry-After", String(retryAfter));
+        res.status(429).json({
+          error: "Too Many Requests",
+          retryAfter,
+        });
+        return;
+      }
+
       next();
     });
   }
@@ -354,6 +474,20 @@ export class HttpTransport {
     this.app.post("/mcp", (req: Request, res: Response): void => {
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
+      // Cross-protocol guard: reject SSE session IDs on /mcp
+      if (sessionId && this.sseTransports.has(sessionId)) {
+        res.status(400).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message:
+              "Bad Request: Session exists but uses a different transport protocol",
+          },
+          id: null,
+        });
+        return;
+      }
+
       // Helper: Check if this is an initialize request (single or in batch)
       const isNewSessionRequest = (body: unknown): boolean => {
         // Single request
@@ -400,10 +534,18 @@ export class HttpTransport {
             };
 
             // Connect transport to server before handling request
-            // Type assertion for SDK 1.25.2+ exact optional types
-            await server.connect(
-              newTransport as Parameters<typeof server.connect>[0],
-            );
+            // SDK McpServer only supports one active transport — close first
+            try {
+              await server.connect(
+                newTransport as Parameters<typeof server.connect>[0],
+              );
+            } catch {
+              // Close existing connection and retry
+              await server.close();
+              await server.connect(
+                newTransport as Parameters<typeof server.connect>[0],
+              );
+            }
             await newTransport.handleRequest(
               req as unknown as IncomingMessage,
               res as unknown as ServerResponse,
@@ -495,6 +637,106 @@ export class HttpTransport {
           res as unknown as ServerResponse,
         );
       }
+    });
+  }
+
+  /**
+   * Set up Legacy SSE endpoints for backward compatibility (MCP 2024-11-05)
+   */
+  private setupLegacySSEEndpoints(): void {
+    if (!this.app || !this.mcpServer) return;
+
+    const server = this.mcpServer;
+
+    // GET /sse — Open SSE connection, returns /messages?sessionId=<id>
+    this.app.get("/sse", (req: Request, res: Response): void => {
+      logger.info("Legacy SSE connection requested", {
+        code: "SSE_CONNECT",
+      });
+
+      const sseTransport = new SSEServerTransport(
+        "/messages",
+        res as unknown as ServerResponse,
+      );
+
+      void (async () => {
+        try {
+          // Store the transport by session ID
+          this.sseTransports.set(sseTransport.sessionId, sseTransport);
+
+          sseTransport.onclose = () => {
+            logger.info("Legacy SSE transport closed", {
+              code: "SSE_CLOSE",
+              sessionId: sseTransport.sessionId,
+            });
+            this.sseTransports.delete(sseTransport.sessionId);
+          };
+
+          // Connect SSE transport to server
+          // SDK McpServer only supports one active transport — close first
+          try {
+            await server.connect(
+              sseTransport as unknown as Parameters<typeof server.connect>[0],
+            );
+          } catch {
+            // Close existing connection and retry
+            await server.close();
+            await server.connect(
+              sseTransport as unknown as Parameters<typeof server.connect>[0],
+            );
+          }
+          await sseTransport.start();
+        } catch (error) {
+          logger.error("Error starting SSE transport", {
+            code: ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
+            error: error instanceof Error ? error : undefined,
+          });
+          if (!res.headersSent) {
+            res.status(500).end();
+          }
+        }
+      })();
+
+      // Clean up when client disconnects
+      req.on("close", () => {
+        this.sseTransports.delete(sseTransport.sessionId);
+      });
+    });
+
+    // POST /messages?sessionId=<id> — Route messages to the correct SSE transport
+    this.app.post("/messages", (req: Request, res: Response): void => {
+      const sessionId =
+        typeof req.query["sessionId"] === "string"
+          ? req.query["sessionId"]
+          : undefined;
+
+      if (!sessionId) {
+        res.status(400).json({
+          jsonrpc: "2.0",
+          error: { code: -32000, message: "Missing sessionId parameter" },
+          id: null,
+        });
+        return;
+      }
+
+      const sseTransport = this.sseTransports.get(sessionId);
+      if (!sseTransport) {
+        res.status(404).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: "No transport found for sessionId",
+          },
+          id: null,
+        });
+        return;
+      }
+
+      void sseTransport.handlePostMessage(
+        req as unknown as IncomingMessage,
+        res as unknown as ServerResponse,
+        req.body as unknown,
+      );
     });
   }
 
@@ -625,7 +867,13 @@ export class HttpTransport {
    * Stop the server and close all active sessions
    */
   async stop(): Promise<void> {
-    // Close all active transports in stateful mode
+    // Stop rate limit cleanup timer
+    if (this.rateLimitCleanupTimer) {
+      clearInterval(this.rateLimitCleanupTimer);
+      this.rateLimitCleanupTimer = null;
+    }
+
+    // Close all active Streamable HTTP transports
     for (const [sessionId, transport] of this.transports) {
       try {
         logger.debug("Closing transport", {
@@ -642,6 +890,24 @@ export class HttpTransport {
       }
     }
     this.transports.clear();
+
+    // Close all active SSE transports
+    for (const [sessionId, transport] of this.sseTransports) {
+      try {
+        logger.debug("Closing SSE transport", {
+          code: "SSE_SESSION_CLEANUP",
+          sessionId,
+        });
+        await transport.close();
+      } catch (error) {
+        logger.error("Error closing SSE transport", {
+          code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full,
+          sessionId,
+          error: error instanceof Error ? error : undefined,
+        });
+      }
+    }
+    this.sseTransports.clear();
 
     // Close stateless transport if in use
     if (this.statelessTransport) {

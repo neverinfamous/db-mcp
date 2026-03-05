@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Dual HTTP Transport** — HTTP transport now supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE (MCP 2024-11-05) protocols simultaneously
+  - `GET /sse` — Opens Legacy SSE connection for backward-compatible clients
+  - `POST /messages?sessionId=<id>` — Routes messages to Legacy SSE transport
+  - Cross-protocol guard: SSE session IDs rejected on `/mcp` and vice versa
+- **Security Headers** — All HTTP responses now include 5 security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, `Content-Security-Policy`, `Permissions-Policy`
+- **Rate Limiting** — Per-IP sliding-window rate limiting (100 requests/minute, health endpoint exempt)
+- **Body Size Enforcement** — JSON body limited to 1 MB via `express.json({ limit })`, returns 413 for oversized payloads
+- **404 Handler** — Unknown paths now return `404 { error: "Not found" }` instead of Express default HTML
+
+### Changed
+
+- **Configurable CORS Origins** — CORS refactored from hardcoded `Access-Control-Allow-Origin: *` to configurable `corsOrigins` array; supports explicit origins with `Access-Control-Allow-Credentials: true`; removed duplicated CORS middleware
+- **Root Endpoint** — `GET /` now lists Legacy SSE endpoints and updated description to "dual HTTP transport"
+
+### Fixed
+
+- **Multi-Session Streamable HTTP Crash** — Fixed `Already connected to a transport` error when creating 2+ concurrent sessions
+  - SDK's `McpServer.connect()` only supports one active transport; second `connect()` threw
+  - Added close-before-reconnect pattern wrapping `server.connect()` in try-catch
+
 ### Fixed
 
 - **`sqlite_spatialite_index` Check Returns `valid: false` for Valid Indexes** — Now treats `CheckSpatialIndex` null result as indeterminate
