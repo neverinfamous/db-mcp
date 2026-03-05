@@ -30,7 +30,7 @@
 | **Dual SQLite Backends**       | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                   |
 | **OAuth 2.1 + Access Control** | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                       |
 | **Smart Tool Filtering**       | 7 tool groups + 6 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                          |
-| **HTTP Streaming Transport**   | SSE-based streaming with `/mcp` and `/health` endpoints for remote deployments, plus stateless mode for serverless                                                       |
+| **HTTP Streaming Transport**   | Dual-protocol HTTP with Streamable HTTP + Legacy SSE, security headers, rate limiting, health check, and stateless mode for serverless                                   |
 | **Structured Error Handling**  | Tools return `{success, error}` responses with actionable context — designed for agent consumption rather than cryptic error codes                                       |
 | **Production-Ready Security**  | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                        |
 | **Strict TypeScript**          | 100% type-safe codebase with strict mode, no `any` types                                                                                                                 |
@@ -340,15 +340,26 @@ docker run --rm -p 3000:3000 \
 
 **Endpoints:**
 
-| Endpoint      | Description                                   |
-| ------------- | --------------------------------------------- |
-| `GET /`       | Server info and available endpoints           |
-| `POST /mcp`   | JSON-RPC requests (initialize, tools/call)    |
-| `GET /mcp`    | SSE stream for server-to-client notifications |
-| `DELETE /mcp` | Session termination                           |
-| `GET /health` | Health check (always public)                  |
+| Endpoint         | Description                                      | Mode     |
+| ---------------- | ------------------------------------------------ | -------- |
+| `GET /`          | Server info and available endpoints              | Both     |
+| `POST /mcp`      | JSON-RPC requests (initialize, tools/call, etc.) | Both     |
+| `GET /mcp`       | SSE stream for server-to-client notifications    | Stateful |
+| `DELETE /mcp`    | Session termination                              | Stateful |
+| `GET /sse`       | Legacy SSE connection (MCP 2024-11-05)           | Stateful |
+| `POST /messages` | Legacy SSE message endpoint                      | Stateful |
+| `GET /health`    | Health check (always public)                     | Both     |
 
 **Session Management:** The server uses stateful sessions by default. Include the `mcp-session-id` header (returned from initialization) in subsequent requests for session continuity.
+
+**Security Features:**
+
+- **6 Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy`, `Permissions-Policy`
+- **Rate Limiting** — 100 requests/minute per IP (429 on excess, health checks exempt)
+- **CORS** — Configurable via `--cors-origins` (default: `*`)
+- **Body Size Limit** — Configurable via `--max-body-bytes` (default: 1 MB)
+- **404 Handler** — Unknown paths return `{ error: "Not found" }`
+- **Cross-Protocol Guard** — SSE session IDs rejected on `/mcp` and vice versa
 
 #### Stateless Mode (Serverless)
 
@@ -361,10 +372,10 @@ docker run --rm -p 3000:3000 \
   --transport http --port 3000 --server-host 0.0.0.0 --stateless --sqlite-native /app/data/database.db
 ```
 
-| Mode                      | Progress Notifications | SSE Streaming | Serverless |
-| ------------------------- | ---------------------- | ------------- | ---------- |
-| Stateful (default)        | ✅ Yes                 | ✅ Yes        | ⚠️ Complex |
-| Stateless (`--stateless`) | ❌ No                  | ❌ No         | ✅ Native  |
+| Mode                      | Progress Notifications | Legacy SSE | Serverless |
+| ------------------------- | ---------------------- | ---------- | ---------- |
+| Stateful (default)        | ✅ Yes                 | ✅ Yes     | ⚠️ Complex |
+| Stateless (`--stateless`) | ❌ No                  | ❌ No      | ✅ Native  |
 
 ### 🔐 OAuth 2.1
 
