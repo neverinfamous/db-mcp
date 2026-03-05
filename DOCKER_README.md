@@ -2,7 +2,7 @@
 
 **Last Updated March 4, 2026**
 
-**SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 122 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 124 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -24,7 +24,7 @@
 
 | Feature                        | Description                                                                                                                                                              |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **122 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, and admin |
+| **124 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, and admin |
 | **8 Resources**                | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                               |
 | **10 AI-Powered Prompts**      | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                              |
 | **Dual SQLite Backends**       | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                   |
@@ -40,7 +40,7 @@
 
 | Feature              | WASM (sql.js)      | Native (better-sqlite3)    |
 | -------------------- | ------------------ | -------------------------- |
-| **Tools Available**  | 98                 | **122**                    |
+| **Tools Available**  | 100                | **124**                    |
 | **Transactions**     | ❌                 | ✅ 7 tools                 |
 | **Window Functions** | ❌                 | ✅ 6 tools                 |
 | **SpatiaLite GIS**   | ❌                 | ✅ 7 tools                 |
@@ -98,13 +98,13 @@ Click the button below to install directly into Cursor:
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 122 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 124 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 > **AntiGravity Users:** Server instructions are automatically sent to MCP clients during initialization. However, AntiGravity does not currently support MCP server instructions. For optimal usage in AntiGravity, manually provide the contents of [`src/constants/ServerInstructions.ts`](src/constants/ServerInstructions.ts) to the agent in your prompt or user rules.
 
 ### Quick Start: Recommended Configurations
 
-#### ⭐ Recommended: Starter (48 tools)
+#### ⭐ Recommended: Starter (50 tools)
 
 Core + JSON + Text. Best for general development.
 
@@ -146,30 +146,30 @@ Specify exactly the groups you need:
 
 ### Shortcuts (Predefined Bundles)
 
-> **Note:** Native includes transactions (7), window functions (6), and SpatiaLite (7) not available in WASM.
+> **Note:** Native includes FTS5 (4), window functions (6), transactions (7), and SpatiaLite (7) not available in WASM.
 
 | Shortcut    | WASM   | Native | + Built-in | What's Included    |
 | ----------- | ------ | ------ | ---------- | ------------------ |
-| `starter`   | **44** | **48** | +3         | Core, JSON, Text   |
-| `analytics` | 44     | 50     | +3         | Core, JSON, Stats  |
-| `search`    | 32     | 36     | +3         | Core, Text, Vector |
-| `spatial`   | 23     | 30     | +3         | Core, Geo, Vector  |
-| `minimal`   | 8      | 8      | +3         | Core only          |
-| `full`      | 98     | 122    | +3         | Everything enabled |
+| `starter`   | **46** | **50** | +3         | Core, JSON, Text   |
+| `analytics` | 46     | 52     | +3         | Core, JSON, Stats  |
+| `search`    | 34     | 38     | +3         | Core, Text, Vector |
+| `spatial`   | 25     | 32     | +3         | Core, Geo, Vector  |
+| `minimal`   | 10     | 10     | +3         | Core only          |
+| `full`      | 100    | 124    | +3         | Everything enabled |
 
 ### Tool Groups (7 Available)
 
-> **Note:** +3 built-in tools (server_info, server_health, list_adapters) are always included.
+> **Note:** +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
 
 | Group    | WASM | Native | + Built-in | Description                              |
 | -------- | ---- | ------ | ---------- | ---------------------------------------- |
-| `core`   | 8    | 8      | +3         | Basic CRUD, schema, tables               |
-| `json`   | 23   | 23     | +3         | JSON/JSONB operations, analysis          |
-| `text`   | 13   | 17     | +3         | Text processing + FTS5 + advanced search |
-| `stats`  | 13   | 19     | +3         | Statistical analysis (+ window funcs)    |
-| `vector` | 11   | 11     | +3         | Embeddings, similarity search            |
-| `admin`  | 26   | 33     | +3         | Backup, restore, virtual tables, pragma  |
-| `geo`    | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)    |
+| `core`   | 10   | 10     | +3         | Basic CRUD, schema, tables               |
+| `json`   | 24   | 24     | +3         | JSON/JSONB operations, analysis          |
+| `text`   | 14   | 18     | +3         | Text processing + FTS5 + advanced search |
+| `stats`  | 14   | 20     | +3         | Statistical analysis (+ window funcs)    |
+| `vector` | 12   | 12     | +3         | Embeddings, similarity search            |
+| `admin`  | 27   | 34     | +3         | Backup, restore, virtual tables, pragma  |
+| `geo`    | 5    | 12     | +3         | Geospatial + SpatiaLite (Native only)    |
 
 ### Syntax Reference
 
@@ -231,14 +231,15 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 
 | Category             | Native  | Description                     |
 | -------------------- | ------- | ------------------------------- |
-| Core Database        | 8       | CRUD, schema, indexes, views    |
+| Core Database        | 9       | CRUD, schema, indexes, views    |
 | JSON Operations      | 23      | JSON/JSONB, schema analysis     |
 | Text Processing      | 17      | Regex, fuzzy, phonetic, FTS5    |
 | Statistical Analysis | 19      | Stats, outliers, window funcs   |
 | Vector/Semantic      | 11      | Embeddings, similarity search   |
 | Geospatial           | 11      | Distance, SpatiaLite GIS        |
 | Admin/Backup         | 33      | Backup, restore, virtual tables |
-| **Total**            | **122** |                                 |
+| Code Mode            | 1       | Sandboxed JavaScript execution  |
+| **Total**            | **124** |                                 |
 
 ### 📁 Resources (8)
 
@@ -398,8 +399,8 @@ See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYC
 
 | Platform                  | Features                            |
 | ------------------------- | ----------------------------------- |
-| **AMD64** (x86_64)        | Full: 122 tools, native, SpatiaLite |
-| **ARM64** (Apple Silicon) | Full: 122 tools, native             |
+| **AMD64** (x86_64)        | Full: 124 tools, native, SpatiaLite |
+| **ARM64** (Apple Silicon) | Full: 124 tools, native             |
 
 **Image Benefits:**
 

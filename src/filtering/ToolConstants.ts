@@ -6,13 +6,13 @@
  * Actual tool groups (from code audit):
  *   core: 9 tools (from core.ts)
  *   json: 23 tools (from json-helpers.ts + json-operations.ts)
- *   text: 13 tools (from text.ts) WASM / 17 tools (text.ts + fts.ts) Native
- *   stats: 19 tools (from stats.ts + window.ts)
+ *   text: 13 WASM / 17 Native (text.ts + fts.ts)
+ *   stats: 13 WASM / 19 Native (stats.ts + window.ts)
  *   vector: 11 tools (from vector.ts)
- *   admin: 33 tools (from admin.ts + virtual.ts + transactions.ts)
- *   geo: 11 tools (from geo.ts + spatialite.ts) - Native: 11, WASM: 4
+ *   admin: 26 WASM / 33 Native (admin.ts + virtual.ts + transactions.ts)
+ *   geo: 4 WASM / 11 Native (geo.ts + spatialite.ts)
  *   codemode: 1 tool (from codemode.ts)
- *   Total: 123 Native / 99 WASM tools
+ *   Total: 100 WASM / 124 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -167,21 +167,21 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text + Codemode (49 tools)
+  // General development - Core + JSON + Text + Codemode (46 WASM / 50 Native)
   starter: ["core", "json", "text", "codemode"],
 
-  // Data analysis - Core + JSON + Stats + Codemode (51 tools Native, 45 WASM)
+  // Data analysis - Core + JSON + Stats + Codemode (46 WASM / 52 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector + Codemode (37 tools)
+  // Search workloads - Core + Text + Vector + Codemode (34 WASM / 38 Native)
   search: ["core", "text", "vector", "codemode"],
 
-  // Geospatial workloads - Core + Geo + Vector + Codemode (31 tools Native, 24 WASM)
+  // Geospatial workloads - Core + Geo + Vector + Codemode (25 WASM / 32 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
   // Bare minimum - Core + Codemode (10 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (123 Native / 99 WASM tools)
+  // All tools enabled (100 WASM / 124 Native)
   full: ["core", "json", "text", "stats", "vector", "admin", "geo", "codemode"],
 };
