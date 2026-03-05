@@ -645,17 +645,38 @@ function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
               `SELECT CheckSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
             );
             const checkValue = checkResult.rows?.[0];
-            const isValid =
-              checkValue != null ? Object.values(checkValue)[0] === 1 : false;
-            return {
-              success: true,
-              message: isValid
-                ? "Spatial index is valid"
-                : "Spatial index exists but may be invalid",
-              action: "check",
-              indexed: true,
-              valid: isValid,
-            };
+            const rawResult =
+              checkValue != null ? Object.values(checkValue)[0] : null;
+
+            // CheckSpatialIndex returns: 1 = valid, 0 = invalid, null = inconclusive
+            // null is common in SpatiaLite 5.x and means the check couldn't be performed
+            if (rawResult === 1) {
+              return {
+                success: true,
+                message: "Spatial index is valid",
+                action: "check",
+                indexed: true,
+                valid: true,
+              };
+            } else if (rawResult === 0) {
+              return {
+                success: true,
+                message:
+                  "Spatial index exists but is invalid (rebuild recommended)",
+                action: "check",
+                indexed: true,
+                valid: false,
+              };
+            } else {
+              return {
+                success: true,
+                message:
+                  "Spatial index exists (validation inconclusive — common in SpatiaLite 5.x)",
+                action: "check",
+                indexed: true,
+                valid: null,
+              };
+            }
           }
         }
       } catch (error) {

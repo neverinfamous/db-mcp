@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_spatialite_index` Check Returns `valid: false` for Valid Indexes** — Now treats `CheckSpatialIndex` null result as indeterminate
+  - SpatiaLite 5.x's `CheckSpatialIndex()` commonly returns `null` instead of `1` for valid indexes
+  - Previously interpreted `null` as `false`, producing misleading message "Spatial index exists but may be invalid"
+  - Now returns `valid: null` with message "Spatial index exists (validation inconclusive — common in SpatiaLite 5.x)"
+  - Explicit `valid: false` now only shown when `CheckSpatialIndex` returns `0` (actually invalid index)
 - **`sqlite_spatialite_create_table` Misleading Success on Existing Table** — Now returns `alreadyExists: true` when table already exists
   - Previously used `CREATE TABLE IF NOT EXISTS` and always reported `"Spatial table 'X' created"` even when table already existed
   - Now pre-checks table existence and returns accurate message: `"Spatial table 'X' already exists"` with `alreadyExists: true` flag
