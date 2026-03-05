@@ -318,10 +318,30 @@ function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate and quote view name
         const viewName = sanitizeIdentifier(input.viewName);
 
+        // Check if the view exists before dropping
+        const escapedName = input.viewName.replace(/'/g, "''");
+        const existsResult = await adapter.executeReadQuery(
+          `SELECT name FROM sqlite_master WHERE type='view' AND name='${escapedName}'`,
+        );
+        const viewExists = (existsResult.rows?.length ?? 0) > 0;
+
         const ifExists = input.ifExists ? "IF EXISTS " : "";
         const sql = `DROP VIEW ${ifExists}${viewName}`;
 
         await adapter.executeQuery(sql);
+
+        // Return accurate message based on whether view existed
+        if (viewExists) {
+          return {
+            success: true,
+            message: `View '${input.viewName}' dropped`,
+          };
+        } else if (input.ifExists) {
+          return {
+            success: true,
+            message: `View '${input.viewName}' did not exist (no action taken)`,
+          };
+        }
 
         return {
           success: true,

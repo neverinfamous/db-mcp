@@ -69,6 +69,15 @@ describe("Admin Tools", () => {
       expect(result.success).toBe(true);
       expect(result.message).toBe("Table 'specific' analyzed");
     });
+
+    it("should return structured error for nonexistent table", async () => {
+      const result = (await tools.get("sqlite_analyze")?.({
+        table: "nonexistent_table_xyz",
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
   });
 
   describe("sqlite_integrity_check", () => {

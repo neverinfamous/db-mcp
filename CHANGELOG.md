@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_analyze` Structured Error Response** — Handler now wrapped in try/catch with `formatError()`
+  - Previously threw raw MCP exception when called with a nonexistent table
+  - Now returns `{success: false, error, code, suggestion}` consistent with all other tool groups
+  - Security test updated to assert structured error response instead of `.rejects.toThrow()`
+- **`sqlite_restore` Relative Path Resolution** — Now resolves relative paths to absolute before file existence check
+  - Previously used raw `input.sourcePath` with `fs.existsSync`, which resolved against the MCP server's CWD (e.g., Antigravity IDE directory)
+  - Stale 0-byte files left by SQLite `ATTACH DATABASE` at the server CWD could cause false-positive `{success: true}` responses
+  - Now uses `nodePath.resolve()` consistent with the existing `sqlite_verify_backup` handler
+- **`sqlite_backup` Relative Path Resolution** — Now resolves relative paths to absolute before `VACUUM INTO`
+  - Previously used raw `input.targetPath` for `VACUUM INTO`, causing backups to be written to the MCP server's CWD instead of the expected location
+  - Now uses `nodePath.resolve()` consistent with `sqlite_verify_backup` and `sqlite_restore`
+- **`sqlite_drop_view` Misleading Success Message** — Now reports "did not exist (no action taken)" for nonexistent views
+  - Previously always returned `View 'x' dropped` regardless of whether the view existed (when `ifExists: true`)
+  - Now checks view existence before dropping, consistent with `sqlite_drop_virtual_table` pattern
+
 - **`sqlite_verify_backup` Relative Path False Positive** — Now resolves relative paths to absolute before `fs.existsSync` check
   - Previously, relative paths like `"nonexistent_file.db"` bypassed the file existence check (resolved against MCP server CWD, not database directory) and `ATTACH DATABASE` silently created an empty DB, returning `{success: true, valid: true, pageCount: 0}`
   - Now uses `nodePath.resolve()` to convert to absolute path before checking, ensuring consistent behavior regardless of server CWD

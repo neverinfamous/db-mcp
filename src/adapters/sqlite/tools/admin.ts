@@ -151,8 +151,11 @@ function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      // Resolve to absolute path to avoid CWD-relative issues
+      const resolvedPath = nodePath.resolve(input.targetPath);
+
       // Use VACUUM INTO to create backup
-      const escapedPath = input.targetPath.replace(/'/g, "''");
+      const escapedPath = resolvedPath.replace(/'/g, "''");
       const sql = `VACUUM INTO '${escapedPath}'`;
 
       const start = Date.now();
@@ -190,27 +193,31 @@ function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("Analyze Tables"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = AnalyzeSchema.parse(params);
+      try {
+        const input = AnalyzeSchema.parse(params);
 
-      let sql: string;
-      if (input.table) {
-        const table = sanitizeIdentifier(input.table);
-        sql = `ANALYZE ${table}`;
-      } else {
-        sql = "ANALYZE";
+        let sql: string;
+        if (input.table) {
+          const table = sanitizeIdentifier(input.table);
+          sql = `ANALYZE ${table}`;
+        } else {
+          sql = "ANALYZE";
+        }
+
+        const start = Date.now();
+        await adapter.executeQuery(sql);
+        const duration = Date.now() - start;
+
+        return {
+          success: true,
+          message: input.table
+            ? `Table '${input.table}' analyzed`
+            : "All tables analyzed",
+          durationMs: duration,
+        };
+      } catch (error) {
+        return formatError(error);
       }
-
-      const start = Date.now();
-      await adapter.executeQuery(sql);
-      const duration = Date.now() - start;
-
-      return {
-        success: true,
-        message: input.table
-          ? `Table '${input.table}' analyzed`
-          : "All tables analyzed",
-        durationMs: duration,
-      };
     },
   };
 }
@@ -360,7 +367,9 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
-      if (!fs.existsSync(input.sourcePath)) {
+      // Resolve to absolute path to avoid CWD-relative false positives
+      const resolvedPath = nodePath.resolve(input.sourcePath);
+      if (!fs.existsSync(resolvedPath)) {
         return {
           success: false,
           message: `Source file not found: ${input.sourcePath}`,
@@ -368,7 +377,7 @@ function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      const escapedPath = input.sourcePath.replace(/'/g, "''");
+      const escapedPath = resolvedPath.replace(/'/g, "''");
 
       // Verify current database is valid before overwriting
       await adapter.executeReadQuery("PRAGMA integrity_check(1)");

@@ -299,11 +299,11 @@ describe("Security: Identifier Integration", () => {
     });
 
     it("should reject table name with injection in analyze", async () => {
-      await expect(
-        getTool("sqlite_analyze")({
-          table: "users'; DROP TABLE--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_analyze")({
+        table: "users'; DROP TABLE--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
