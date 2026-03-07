@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+
+- `@types/node`: 25.3.3 → 25.3.5
+- `eslint`: 10.0.2 → 10.0.3
+- `jose`: 6.1.3 → 6.2.0
+- Dockerfile `tar` dependency pinned to `7.5.10` for security compliance
+
 ### Added
 
 - **Dual HTTP Transport** — HTTP transport now supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE (MCP 2024-11-05) protocols simultaneously
