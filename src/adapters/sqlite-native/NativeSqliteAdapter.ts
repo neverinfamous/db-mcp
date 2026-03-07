@@ -33,6 +33,7 @@ import { logger, ERROR_CODES } from "../../utils/logger.js";
 import { formatError } from "../../utils/errors.js";
 import type { SqliteConfig, SqliteOptions } from "../sqlite/types.js";
 import type { SqliteAdapter } from "../sqlite/SqliteAdapter.js";
+import { SchemaManager } from "../sqlite/SchemaManager.js";
 
 // Import shared tools from sql.js adapter
 import { getCoreTools } from "../sqlite/tools/core.js";
@@ -86,6 +87,8 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   private db: DatabaseType | null = null;
+  private schemaManager: SchemaManager | null = null;
+  private cachedToolDefinitions: ToolDefinition[] | null = null;
 
   /**
    * Connect to a SQLite database using better-sqlite3
@@ -145,6 +148,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       } catch {
         setJsonbSupported(false);
       }
+
+      // Initialize SchemaManager with this adapter as the executor
+      this.schemaManager = new SchemaManager(this);
 
       this.connected = true;
     } catch (error) {
@@ -404,6 +410,16 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         ? stmt.run(...normalizedParams)
         : stmt.run();
 
+      // Auto-invalidate schema cache on DDL operations
+      const normalizedSql = sql.trim().toUpperCase();
+      if (
+        normalizedSql.startsWith("CREATE") ||
+        normalizedSql.startsWith("ALTER") ||
+        normalizedSql.startsWith("DROP")
+      ) {
+        this.clearSchemaCache();
+      }
+
       return Promise.resolve({
         rows: [],
         rowsAffected: info.changes,
@@ -431,102 +447,67 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
-   * Get schema information
+   * Get schema information (cached via SchemaManager)
    */
   override async getSchema(): Promise<SchemaInfo> {
     this.ensureConnected();
+    if (this.schemaManager) {
+      return this.schemaManager.getSchema();
+    }
+    // Fallback if SchemaManager not initialized
     const tables = await this.listTables();
-
-    return {
-      tables,
-      indexes: [],
-      views: [],
-    };
+    return { tables, indexes: [] };
   }
 
   /**
-   * List all tables
+   * List all tables (cached via SchemaManager)
    */
-  override listTables(): Promise<TableInfo[]> {
+  override async listTables(): Promise<TableInfo[]> {
     this.ensureConnected();
-
-    const db = this.ensureDb();
-    const result = db
-      .prepare(
-        `
-            SELECT name, type, sql
-            FROM sqlite_master
-            WHERE type IN ('table', 'view')
-            AND name NOT LIKE 'sqlite_%'
-            ORDER BY name
-        `,
-      )
-      .all() as { name: string; type: string; sql: string }[];
-
-    // Build tables with column info from PRAGMA table_info()
-    // Filter out FTS5 virtual tables and shadow tables
-    const tables = result
-      .filter((row) => {
-        // Skip FTS5 virtual tables (end with "_fts") and shadow tables (contain "_fts_")
-        if (row.name.endsWith("_fts") || row.name.includes("_fts_")) {
-          return false;
-        }
-        return true;
-      })
-      .map((row) => {
-        const columns = db
-          .prepare(`PRAGMA table_info("${row.name}")`)
-          .all() as {
-          name: string;
-          type: string;
-          notnull: number;
-          pk: number;
-        }[];
-
-        return {
-          name: row.name,
-          type: row.type as "table" | "view",
-          columns: columns.map((c) => ({
-            name: c.name,
-            type: c.type,
-            nullable: c.notnull === 0,
-            primaryKey: c.pk > 0,
-          })),
-        };
-      });
-
-    return Promise.resolve(tables);
+    if (this.schemaManager) {
+      return this.schemaManager.listTables();
+    }
+    // Fallback: direct query without caching
+    const result = await this.executeReadQuery(
+      `SELECT name, type FROM sqlite_master
+       WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
+       ORDER BY name`,
+    );
+    const tables: TableInfo[] = [];
+    for (const row of result.rows ?? []) {
+      const name = row["name"] as string;
+      const type = row["type"] as "table" | "view";
+      const tableInfo = await this.describeTable(name);
+      tables.push({ ...tableInfo, type });
+    }
+    return tables;
   }
 
   /**
-   * Describe a table
+   * Describe a table (cached via SchemaManager)
    */
-  override describeTable(tableName: string): Promise<TableInfo> {
+  override async describeTable(tableName: string): Promise<TableInfo> {
     this.ensureConnected();
-
-    const db = this.ensureDb();
-    const columns = db.prepare(`PRAGMA table_info("${tableName}")`).all() as {
-      name: string;
-      type: string;
-      notnull: number;
-      pk: number;
-    }[];
-
-    // Check if table exists (PRAGMA returns empty for non-existent tables)
-    if (columns.length === 0) {
+    if (this.schemaManager) {
+      return this.schemaManager.describeTable(tableName);
+    }
+    // Fallback: direct query without caching
+    const result = await this.executeReadQuery(
+      `PRAGMA table_info("${tableName}")`,
+    );
+    if (!result.rows || result.rows.length === 0) {
       throw new Error(`Table '${tableName}' does not exist`);
     }
-
-    return Promise.resolve({
+    return {
       name: tableName,
       type: "table",
-      columns: columns.map((c) => ({
-        name: c.name,
-        type: c.type,
-        nullable: c.notnull === 0 ? true : false,
-        primaryKey: c.pk > 0 ? true : false,
+      columns: (result.rows ?? []).map((c) => ({
+        name: c["name"] as string,
+        type: c["type"] as string,
+        nullable: c["notnull"] === 0,
+        primaryKey: (c["pk"] as number) > 0,
       })),
-    });
+    };
   }
 
   /**
@@ -537,14 +518,16 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
-   * Get all indexes in the database
+   * Get all indexes in the database (cached via SchemaManager)
    * Required by sqlite_indexes resource
    */
-  getAllIndexes(): IndexInfo[] {
+  async getAllIndexes(): Promise<IndexInfo[]> {
     this.ensureConnected();
+    if (this.schemaManager) {
+      return this.schemaManager.getAllIndexes();
+    }
+    // Fallback: direct query without caching
     const db = this.ensureDb();
-
-    // Get all user-created indexes from sqlite_master
     const indexes = db
       .prepare(
         `SELECT name, tbl_name, sql
@@ -554,17 +537,10 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       )
       .all() as { name: string; tbl_name: string; sql: string }[];
 
-    // Build index info with column details
     return indexes.map((idx) => {
-      // Get columns for this index
       const indexInfo = db
         .prepare(`PRAGMA index_info("${idx.name}")`)
-        .all() as {
-        seqno: number;
-        cid: number;
-        name: string;
-      }[];
-
+        .all() as { seqno: number; cid: number; name: string }[];
       return {
         name: idx.name,
         tableName: idx.tbl_name,
@@ -572,6 +548,16 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         unique: idx.sql?.toUpperCase().includes("UNIQUE") ?? false,
       };
     });
+  }
+
+  /**
+   * Clear the schema metadata cache.
+   * Called automatically after DDL operations.
+   */
+  clearSchemaCache(): void {
+    if (this.schemaManager) {
+      this.schemaManager.clearCache();
+    }
   }
 
   /**
@@ -599,12 +585,14 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
-   * Get all tool definitions
+   * Get all tool definitions (cached — immutable per adapter instance)
    */
   override getToolDefinitions(): ToolDefinition[] {
+    if (this.cachedToolDefinitions) return this.cachedToolDefinitions;
+
     // Type assertion needed due to interface compatibility
     const self = this as unknown as SqliteAdapter;
-    return [
+    this.cachedToolDefinitions = [
       ...getCoreTools(self),
       ...getJsonOperationTools(self),
       ...getJsonHelperTools(self),
@@ -621,6 +609,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       ...getWindowTools(this),
       ...getSpatialiteTools(this),
     ];
+    return this.cachedToolDefinitions;
   }
 
   /**

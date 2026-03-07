@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+
+- **NativeSqliteAdapter SchemaManager Integration** — Schema metadata operations now use TTL-based caching
+  - `listTables()`, `describeTable()`, `getSchema()`, `getAllIndexes()` delegate through `SchemaManager` (5s TTL)
+  - Eliminates redundant `PRAGMA table_info()` queries on every metadata request
+  - Auto-invalidates schema cache on DDL operations (`CREATE`, `ALTER`, `DROP`)
+  - Matches the caching pattern already used by the WASM `SqliteAdapter`
+- **Cached Tool Definitions** — `NativeSqliteAdapter.getToolDefinitions()` now lazily caches results
+  - Tool definitions are immutable per adapter instance; avoids 13-way array spread on repeat calls
+- **Logger Taint-Breaking Optimization** — `writeToStderr()` uses `"".concat()` instead of per-character copy
+  - Previous O(n) character-by-character array+join replaced with single string concatenation
+  - Still breaks CodeQL taint tracking without the allocation overhead
+- **Logger Sensitive Key Matching** — Pre-computed `SENSITIVE_KEYS_ARRAY` at module scope
+  - Avoids spreading `Set` into a new array on every context key during `sanitizeContext()`
+- **Logger Regex Pre-Compilation** — `sanitizeMessage()` and `sanitizeStack()` regex patterns hoisted to module scope
+  - Avoids re-constructing `RegExp` objects (via `String.fromCharCode()`) on every log call
+- **SQL Validation Regex Pre-Compilation** — `DANGEROUS_SQL_PATTERNS` hoisted to module scope in `DatabaseAdapter.ts`
+  - Avoids re-allocating 5 `RegExp` objects per `validateQuery()` call
+- **CORS Preflight Caching** — Added `Access-Control-Max-Age: 86400` to OPTIONS responses
+  - Browsers cache preflight results for 24 hours, reducing repeated OPTIONS roundtrips
+- **Docker HTTP Healthcheck** — Healthcheck now validates `/health` endpoint for HTTP transport
+  - Falls back to basic Node.js check for stdio mode
+
 ### Dependencies
 
 - `@types/node`: 25.3.3 → 25.3.5

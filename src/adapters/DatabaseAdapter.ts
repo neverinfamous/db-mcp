@@ -25,6 +25,18 @@ import type {
 import { isToolEnabled } from "../filtering/ToolFilter.js";
 
 /**
+ * Pre-compiled dangerous SQL patterns for injection detection (L2 optimization).
+ * Hoisted to module scope to avoid re-allocating RegExp objects per query.
+ */
+const DANGEROUS_SQL_PATTERNS: RegExp[] = [
+  /;\s*DROP\s+/i,
+  /;\s*DELETE\s+/i,
+  /;\s*TRUNCATE\s+/i,
+  /--.*$/m, // SQL comments (potential injection)
+  /\/\*.*\*\//s, // Block comments
+];
+
+/**
  * Abstract base class for database adapters
  */
 export abstract class DatabaseAdapter {
@@ -259,15 +271,7 @@ export abstract class DatabaseAdapter {
 
     // Block obvious SQL injection patterns
     // Note: This is a basic check; parameterized queries are the primary defense
-    const dangerousPatterns = [
-      /;\s*DROP\s+/i,
-      /;\s*DELETE\s+/i,
-      /;\s*TRUNCATE\s+/i,
-      /--.*$/m, // SQL comments (potential injection)
-      /\/\*.*\*\//s, // Block comments
-    ];
-
-    for (const pattern of dangerousPatterns) {
+    for (const pattern of DANGEROUS_SQL_PATTERNS) {
       if (pattern.test(sql)) {
         throw new Error("Query contains potentially dangerous patterns");
       }

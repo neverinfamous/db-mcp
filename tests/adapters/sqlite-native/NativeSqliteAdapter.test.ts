@@ -302,15 +302,14 @@ describe("NativeSqliteAdapter", () => {
       ]);
     });
 
-    it("should throw for non-existent table", () => {
-      // describeTable throws synchronously before returning Promise
-      expect(() => adapter.describeTable("nonexistent")).toThrow(
+    it("should throw for non-existent table", async () => {
+      await expect(adapter.describeTable("nonexistent")).rejects.toThrow(
         "does not exist",
       );
     });
 
-    it("should get all indexes", () => {
-      const indexes = adapter.getAllIndexes();
+    it("should get all indexes", async () => {
+      const indexes = await adapter.getAllIndexes();
       const indexNames = indexes.map((i) => i.name);
       expect(indexNames).toContain("idx_posts_user");
     });

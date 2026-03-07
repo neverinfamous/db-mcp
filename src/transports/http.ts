@@ -329,6 +329,8 @@ export class HttpTransport {
 
       // Handle OPTIONS preflight requests
       if (req.method === "OPTIONS") {
+        // Cache preflight for 24 hours to reduce repeated OPTIONS roundtrips
+        res.setHeader("Access-Control-Max-Age", "86400");
         res.status(204).end();
         return;
       }

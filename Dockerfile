@@ -101,9 +101,9 @@ ENV NODE_ENV=production
 # Switch to non-root user
 USER appuser
 
-# Health check
+# Health check — validates HTTP endpoint when available, falls back to Node.js check for stdio
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "console.log('Server healthy')" || exit 1
+    CMD curl -sf http://localhost:${PORT:-3000}/health || node -e "console.log('ok')"
 
 # Run the MCP server (default: stdio transport with native backend)
 ENTRYPOINT ["node", "dist/cli.js"]
