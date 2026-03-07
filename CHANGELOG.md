@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `eslint`: 10.0.2 → 10.0.3
 - `jose`: 6.1.3 → 6.2.0
 - Dockerfile `tar` dependency pinned to `7.5.10` for security compliance
+- Removed unused `pg` and `@types/pg` dependencies (never imported in source)
 
 ### Added
 
@@ -43,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `GET /sse` — Opens Legacy SSE connection for backward-compatible clients
   - `POST /messages?sessionId=<id>` — Routes messages to Legacy SSE transport
   - Cross-protocol guard: SSE session IDs rejected on `/mcp` and vice versa
-- **Security Headers** — All HTTP responses now include 5 security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, `Content-Security-Policy`, `Permissions-Policy`
+- **Security Headers** — All HTTP responses now include 7 security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, `Content-Security-Policy`, `Permissions-Policy`, `Referrer-Policy`, `Strict-Transport-Security`
 - **Rate Limiting** — Per-IP sliding-window rate limiting (100 requests/minute, health endpoint exempt)
 - **Body Size Enforcement** — JSON body limited to 1 MB via `express.json({ limit })`, returns 413 for oversized payloads
 - **404 Handler** — Unknown paths now return `404 { error: "Not found" }` instead of Express default HTML
@@ -443,6 +444,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Docker CVE Remediation** — Patched npm-bundled transitive dependencies in Dockerfile (both stages)
   - `tar`: 7.5.7 → 7.5.8 (CVE-2026-26960: path traversal, HIGH 7.1)
   - `minimatch`: 10.1.2 → 10.2.4 (CVE-2026-26996: ReDoS, HIGH 8.7)
+- **Security Audit Remediation** — Addressed findings from exhaustive codebase security audit
+  - CI `npm audit` gate now hard-fails on moderate+ vulnerabilities (removed `continue-on-error`)
+  - Added `Referrer-Policy` and `Strict-Transport-Security` HTTP security headers (5 → 7 total)
+  - WHERE clause validation now blocks `; SELECT` stacked query injection
+  - Removed dead `new InvalidTokenError()` construction in auth middleware
+  - Updated `SECURITY.md` supported versions to `1.x.x`
+  - Fixed Dockerfile labels (version `1.0.2`, tool count `124`)
 
 ### Dependencies
 

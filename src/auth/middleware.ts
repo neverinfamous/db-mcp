@@ -11,7 +11,6 @@ import type { TokenValidator } from "./TokenValidator.js";
 import type { OAuthResourceServer } from "./OAuthResourceServer.js";
 import {
   TokenMissingError,
-  InvalidTokenError,
   InsufficientScopeError,
   isOAuthError,
 } from "./errors.js";
@@ -190,9 +189,6 @@ export function createAuthMiddleware(
     const result = await tokenValidator.validate(token);
 
     if (!result.valid) {
-      // Create error for logging (variable intentionally used only for type check)
-      new InvalidTokenError(result.error);
-
       logger.warning(
         `Token validation failed: ${result.error ?? "Unknown error"}`,
         {

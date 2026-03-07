@@ -188,6 +188,15 @@ describe("Security: WHERE Clause Validation", () => {
           UnsafeWhereClauseError,
         );
       });
+
+      it("should reject stacked queries with SELECT (data exfiltration)", () => {
+        expect(() =>
+          validateWhereClause("1=1; SELECT * FROM sqlite_master"),
+        ).toThrow(UnsafeWhereClauseError);
+        expect(() =>
+          validateWhereClause("id = 1; SELECT password FROM users"),
+        ).toThrow(UnsafeWhereClauseError);
+      });
     });
 
     describe("SQL injection prevention - UNION-based Attacks", () => {

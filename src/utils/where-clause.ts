@@ -26,7 +26,7 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
   // Statement terminators and new statements
   {
     pattern:
-      /;\s*(DROP|DELETE|TRUNCATE|INSERT|UPDATE|CREATE|ALTER|ATTACH|DETACH)/i,
+      /;\s*(DROP|DELETE|TRUNCATE|INSERT|UPDATE|CREATE|ALTER|ATTACH|DETACH|SELECT)/i,
     reason: "contains statement terminator followed by dangerous keyword",
   },
   // Trailing semicolons (potential statement injection)

@@ -290,6 +290,11 @@ export class HttpTransport {
         "Permissions-Policy",
         "camera=(), microphone=(), geolocation=()",
       );
+      res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      res.setHeader(
+        "Strict-Transport-Security",
+        "max-age=31536000; includeSubDomains",
+      );
       next();
     });
   }
