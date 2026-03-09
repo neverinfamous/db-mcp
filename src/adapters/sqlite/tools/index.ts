@@ -6,6 +6,7 @@
 
 import type { SqliteAdapter } from "../SqliteAdapter.js";
 import type { ToolDefinition, ToolGroup } from "../../../types/index.js";
+import { getToolGroupIcon } from "../../../utils/icons.js";
 import { getCoreTools } from "./core.js";
 import { getJsonHelperTools } from "./json-helpers.js";
 import { getJsonOperationTools } from "./json-operations.js";
@@ -19,12 +20,13 @@ import { getAdminTools } from "./admin.js";
 import { getCodeModeTools } from "./codemode.js";
 
 /**
- * Get all tool definitions for the SQLite adapter
+ * Get all tool definitions for the SQLite adapter.
+ * Attaches group-level icons to each tool.
  */
 export function getAllToolDefinitions(
   adapter: SqliteAdapter,
 ): ToolDefinition[] {
-  return [
+  const tools = [
     ...getCoreTools(adapter),
     ...getJsonHelperTools(adapter),
     ...getJsonOperationTools(adapter),
@@ -37,6 +39,18 @@ export function getAllToolDefinitions(
     ...getAdminTools(adapter),
     ...getCodeModeTools(adapter),
   ];
+
+  // Attach group-level icons to each tool definition
+  for (const tool of tools) {
+    if (!tool.icons) {
+      const icons = getToolGroupIcon(tool.group);
+      if (icons) {
+        tool.icons = icons;
+      }
+    }
+  }
+
+  return tools;
 }
 
 /**

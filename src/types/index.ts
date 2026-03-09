@@ -340,6 +340,30 @@ export interface ToolFilterConfig {
 }
 
 // =============================================================================
+// MCP Icons (2025-11-25 spec)
+// =============================================================================
+
+/**
+ * MCP Icon Definition (MCP Spec 2025-11-25)
+ *
+ * Icons can be added to servers, tools, resources, and prompts for
+ * visual representation in client interfaces.
+ */
+export interface McpIcon {
+  /** Icon source — URL or data URI */
+  src: string;
+
+  /** MIME type (e.g., 'image/svg+xml', 'image/png') */
+  mimeType?: string;
+
+  /** Size descriptors (e.g., ['48x48'], ['any']) */
+  sizes?: string[];
+
+  /** Theme hint: 'light' or 'dark' */
+  theme?: "light" | "dark";
+}
+
+// =============================================================================
 // MCP Tool Annotations (2025-11-25 spec)
 // =============================================================================
 
@@ -419,6 +443,9 @@ export interface ToolDefinition {
   /** MCP tool annotations (behavioral hints) */
   annotations?: ToolAnnotations;
 
+  /** MCP icons for visual representation (MCP 2025-11-25) */
+  icons?: McpIcon[];
+
   /** Tool handler function */
   handler: (params: unknown, context: RequestContext) => Promise<unknown>;
 }
@@ -458,6 +485,9 @@ export interface ResourceDefinition {
   /** MCP Resource Annotations for behavior hints */
   annotations?: ResourceAnnotations;
 
+  /** MCP icons for visual representation (MCP 2025-11-25) */
+  icons?: McpIcon[];
+
   /** Resource handler */
   handler: (uri: string, context: RequestContext) => Promise<unknown>;
 }
@@ -478,6 +508,9 @@ export interface PromptDefinition {
     description: string;
     required?: boolean;
   }[];
+
+  /** MCP icons for visual representation (MCP 2025-11-25) */
+  icons?: McpIcon[];
 
   /** Prompt handler */
   handler: (

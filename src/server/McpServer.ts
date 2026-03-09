@@ -20,6 +20,7 @@ import {
 } from "../filtering/ToolFilter.js";
 import { generateInstructions } from "../constants/ServerInstructions.js";
 import { logger } from "../utils/logger.js";
+import { SERVER_ICONS } from "../utils/icons.js";
 
 /**
  * Main db-mcp server class
@@ -121,13 +122,17 @@ export class DbMcpServer {
    * Register built-in server tools (health, info, etc.)
    */
   private registerBuiltInTools(): void {
+    // Build options with icons (SDK type doesn't include icons, so we cast)
+    const serverInfoOpts: Record<string, unknown> = {
+      description:
+        "Get information about the db-mcp server and registered adapters",
+      icons: SERVER_ICONS,
+    };
+
     // Server info tool
     this.server.registerTool(
       "server_info",
-      {
-        description:
-          "Get information about the db-mcp server and registered adapters",
-      },
+      serverInfoOpts as { description?: string },
       () => {
         const adapterInfo = [];
         for (const [id, adapter] of this.adapters) {
@@ -162,9 +167,14 @@ export class DbMcpServer {
     );
 
     // Health check tool
+    const healthOpts: Record<string, unknown> = {
+      description: "Check health status of all database connections",
+      icons: SERVER_ICONS,
+    };
+
     this.server.registerTool(
       "server_health",
-      { description: "Check health status of all database connections" },
+      healthOpts as { description?: string },
       async () => {
         const health: Record<string, unknown> = {
           server: "healthy",
@@ -196,9 +206,14 @@ export class DbMcpServer {
     );
 
     // List adapters tool
+    const listAdaptersOpts: Record<string, unknown> = {
+      description: "List all registered database adapters",
+      icons: SERVER_ICONS,
+    };
+
     this.server.registerTool(
       "list_adapters",
-      { description: "List all registered database adapters" },
+      listAdaptersOpts as { description?: string },
       () => {
         const adapters = [];
         for (const [id, adapter] of this.adapters) {

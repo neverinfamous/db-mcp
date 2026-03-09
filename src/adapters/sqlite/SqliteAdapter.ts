@@ -707,6 +707,11 @@ export class SqliteAdapter extends DatabaseAdapter {
       toolOptions["annotations"] = tool.annotations;
     }
 
+    // MCP 2025-11-25: Pass icons for visual representation
+    if (tool.icons) {
+      toolOptions["icons"] = tool.icons;
+    }
+
     // Track whether tool has outputSchema for response handling
     const hasOutputSchema = Boolean(tool.outputSchema);
 
@@ -796,6 +801,7 @@ export class SqliteAdapter extends DatabaseAdapter {
         {
           mimeType: resource.mimeType ?? "application/json",
           description: resource.description,
+          ...(resource.icons ? { icons: resource.icons } : {}),
         },
         // Callback receives URL and extracted template variables
         async (
@@ -830,6 +836,7 @@ export class SqliteAdapter extends DatabaseAdapter {
         {
           mimeType: resource.mimeType ?? "application/json",
           description: resource.description,
+          ...(resource.icons ? { icons: resource.icons } : {}),
         },
         async (resourceUri: URL) => {
           const context = this.createContext();
@@ -863,7 +870,10 @@ export class SqliteAdapter extends DatabaseAdapter {
   ): void {
     server.registerPrompt(
       prompt.name,
-      { description: prompt.description },
+      {
+        description: prompt.description,
+        ...(prompt.icons ? { icons: prompt.icons } : {}),
+      },
 
       async (args: Record<string, string>) => {
         const context = this.createContext();

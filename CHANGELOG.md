@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Tool Icons (MCP 2025-11-25)** — All tools, resources, and prompts now include visual icons
+  - 8 group-level icons from Material Design Icons (CDN-hosted SVG via jsDelivr)
+  - Built-in server tools (`server_info`, `server_health`, `list_adapters`) get a server icon
+  - New `src/utils/icons.ts` utility with `getToolGroupIcon()` and `SERVER_ICONS`
+  - Icon passthrough in both WASM and Native adapter `registerTool()`/`registerResource()`/`registerPrompt()` methods
+  - `McpIcon` type added to `types/index.ts`; `icons` field added to `ToolDefinition`, `ResourceDefinition`, `PromptDefinition`
+
 ### Performance
 
 - **NativeSqliteAdapter SchemaManager Integration** — Schema metadata operations now use TTL-based caching

@@ -58,6 +58,7 @@ import {
 import { getTransactionTools } from "./tools/transactions.js";
 import { getWindowTools } from "./tools/window.js";
 import { getSpatialiteTools, isSpatialiteLoaded } from "./tools/spatialite.js";
+import { getToolGroupIcon } from "../../utils/icons.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
@@ -609,6 +610,17 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       ...getWindowTools(this),
       ...getSpatialiteTools(this),
     ];
+
+    // Attach group-level icons to each tool definition
+    for (const tool of this.cachedToolDefinitions) {
+      if (!tool.icons) {
+        const icons = getToolGroupIcon(tool.group);
+        if (icons) {
+          tool.icons = icons;
+        }
+      }
+    }
+
     return this.cachedToolDefinitions;
   }
 
@@ -652,6 +664,11 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     // MCP 2025-11-25: Pass annotations for behavioral hints
     if (tool.annotations) {
       toolOptions["annotations"] = tool.annotations;
+    }
+
+    // MCP 2025-11-25: Pass icons for visual representation
+    if (tool.icons) {
+      toolOptions["icons"] = tool.icons;
     }
 
     // Track whether tool has outputSchema for response handling
@@ -743,6 +760,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         {
           mimeType: resource.mimeType ?? "application/json",
           description: resource.description,
+          ...(resource.icons ? { icons: resource.icons } : {}),
         },
         // Callback receives URL and extracted template variables
         async (
@@ -776,6 +794,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         {
           mimeType: resource.mimeType ?? "application/json",
           description: resource.description,
+          ...(resource.icons ? { icons: resource.icons } : {}),
         },
         async (resourceUri: URL) => {
           const content = await resource.handler(resourceUri.toString(), {
@@ -808,7 +827,10 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   ): void {
     server.registerPrompt(
       prompt.name,
-      { description: prompt.description },
+      {
+        description: prompt.description,
+        ...(prompt.icons ? { icons: prompt.icons } : {}),
+      },
 
       async (args: Record<string, string>) => {
         const result = await prompt.handler(args, {
