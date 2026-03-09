@@ -93,3 +93,6 @@ releases/
 tmp/
 temp/
 *.tmp
+
+# Assets
+social-preview.png
