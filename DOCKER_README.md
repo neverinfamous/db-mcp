@@ -171,8 +171,8 @@ Specify exactly the groups you need:
 | `vector` | 12   | 12     | +3         | Embeddings, similarity search            |
 | `admin`         | 27   | 34     | +3         | Backup, restore, virtual tables, pragma     |
 | `geo`           | 5    | 12     | +3         | Geospatial + SpatiaLite (Native only)       |
-| `introspection` | 9    | 9      | +3         | FK graph, cascade sim, storage/index audit |
-| `migration`     | 6    | 6      | +3         | Migration tracking, apply, rollback (opt-in)|
+| `introspection` | 10   | 10     | +3         | FK graph, cascade sim, storage/index audit |
+| `migration`     | 7    | 7      | +3         | Migration tracking, apply, rollback (opt-in)|
 
 ### Syntax Reference
 
@@ -261,7 +261,7 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_meta`         | `sqlite://meta`                | Database metadata and PRAGMAs     | `core,admin`  |
 | `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis) | `core,admin`  |
 
-> **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "core,admin"` (~18 tools) instead of `full` (102+) when you only need resource-related functionality.
+> **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "core,admin"` (~37 WASM / ~44 Native tools) instead of `full` (115 / 139) when you only need resource-related functionality.
 
 ### 💬 Prompts (10)
 
