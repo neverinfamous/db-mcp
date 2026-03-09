@@ -17,6 +17,8 @@ import { getVirtualTools } from "./virtual.js";
 import { getVectorTools } from "./vector.js";
 import { getGeoTools } from "./geo.js";
 import { getAdminTools } from "./admin.js";
+import { getIntrospectionTools } from "./introspection/index.js";
+import { getMigrationTools } from "./migration/index.js";
 import { getCodeModeTools } from "./codemode.js";
 
 /**
@@ -37,6 +39,8 @@ export function getAllToolDefinitions(
     ...getVectorTools(adapter),
     ...getGeoTools(adapter),
     ...getAdminTools(adapter),
+    ...getIntrospectionTools(adapter),
+    ...getMigrationTools(adapter),
     ...getCodeModeTools(adapter),
   ];
 
@@ -90,4 +94,7 @@ export { getVirtualTools } from "./virtual.js";
 export { getVectorTools } from "./vector.js";
 export { getGeoTools } from "./geo.js";
 export { getAdminTools } from "./admin.js";
+export { getIntrospectionTools } from "./introspection/index.js";
+export { getMigrationTools } from "./migration/index.js";
 export { getCodeModeTools } from "./codemode.js";
+

@@ -67,6 +67,20 @@ const METHOD_ALIASES: Record<string, Record<string, string>> = {
     near: "nearby",
     bbox: "boundingBox",
   },
+  introspection: {
+    deps: "dependencyGraph",
+    toposort: "topologicalSort",
+    cascade: "cascadeSimulator",
+    snapshot: "schemaSnapshot",
+    constraints: "constraintAnalysis",
+    risks: "migrationRisks",
+  },
+  migration: {
+    setup: "migrationInit",
+    log: "migrationRecord",
+    run: "migrationApply",
+    undo: "migrationRollback",
+  },
 };
 
 // =============================================================================
@@ -113,6 +127,18 @@ const GROUP_EXAMPLES: Record<string, string[]> = {
   geo: [
     "sqlite.geo.distance({ lat1: 40.7128, lon1: -74.006, lat2: 34.0522, lon2: -118.2437 })",
     'sqlite.geo.nearby({ table: "stores", latColumn: "lat", lonColumn: "lon", centerLat: 40.7, centerLon: -74, radius: 10 })',
+  ],
+  introspection: [
+    "sqlite.introspection.dependencyGraph()",
+    'sqlite.introspection.cascadeSimulator({ table: "users" })',
+    'sqlite.introspection.schemaSnapshot({ sections: ["tables", "indexes"] })',
+    'sqlite.introspection.constraintAnalysis({ table: "orders" })',
+  ],
+  migration: [
+    "sqlite.migration.migrationInit()",
+    'sqlite.migration.migrationApply({ version: "1.0.0", migrationSql: "ALTER TABLE users ADD COLUMN email TEXT" })',
+    "sqlite.migration.migrationStatus()",
+    'sqlite.migration.migrationHistory({ status: "applied" })',
   ],
 };
 
@@ -232,6 +258,14 @@ const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   createRtreeTable: "tableName",
   createCsvTable: ["tableName", "filePath"],
   analyzeCsvSchema: "filePath",
+
+  // Introspection
+  cascadeSimulator: "table",
+  constraintAnalysis: "table",
+  migrationRisks: "statements",
+
+  // Migration
+  migrationRollback: "id",
 };
 
 // =============================================================================
@@ -250,6 +284,8 @@ const GROUP_PREFIX_MAP: Record<string, string> = {
   vector: "vector_",
   geo: "geo_",
   admin: "", // Admin tools have varied prefixes — handled case-by-case
+  introspection: "", // Introspection tools have varied prefixes
+  migration: "migration_", // sqlite_migration_* → migration*
   codemode: "execute_",
 };
 
@@ -257,7 +293,7 @@ const GROUP_PREFIX_MAP: Record<string, string> = {
  * Groups where the prefix should be kept in the method name
  * (because it's semantically part of the method identity)
  */
-const KEEP_PREFIX_GROUPS = new Set(["stats", "admin"]);
+const KEEP_PREFIX_GROUPS = new Set(["stats", "admin", "migration"]);
 
 /**
  * Convert tool name to camelCase method name.
@@ -454,6 +490,8 @@ export class SqliteApi {
   readonly vector: GroupApiRecord;
   readonly admin: GroupApiRecord;
   readonly geo: GroupApiRecord;
+  readonly introspection: GroupApiRecord;
+  readonly migration: GroupApiRecord;
 
   private readonly toolsByGroup: Map<string, ToolDefinition[]>;
 
@@ -469,7 +507,7 @@ export class SqliteApi {
       this.toolsByGroup.set(tool.group, existing);
     }
 
-    // Create group-specific APIs for all 7 groups
+    // Create group-specific APIs for all 9 groups
     this.core = createGroupApi("core", this.toolsByGroup.get("core") ?? []);
     this.json = createGroupApi("json", this.toolsByGroup.get("json") ?? []);
     this.text = createGroupApi("text", this.toolsByGroup.get("text") ?? []);
@@ -480,6 +518,14 @@ export class SqliteApi {
     );
     this.admin = createGroupApi("admin", this.toolsByGroup.get("admin") ?? []);
     this.geo = createGroupApi("geo", this.toolsByGroup.get("geo") ?? []);
+    this.introspection = createGroupApi(
+      "introspection",
+      this.toolsByGroup.get("introspection") ?? [],
+    );
+    this.migration = createGroupApi(
+      "migration",
+      this.toolsByGroup.get("migration") ?? [],
+    );
   }
 
   /**
@@ -517,6 +563,8 @@ export class SqliteApi {
       vector: this.vector,
       admin: this.admin,
       geo: this.geo,
+      introspection: this.introspection,
+      migration: this.migration,
 
       // Top-level convenience aliases
       readQuery: this.core["readQuery"],

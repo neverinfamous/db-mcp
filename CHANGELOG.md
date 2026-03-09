@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Introspection Tool Group (6 tools)** — Read-only schema analysis and dependency mapping
+  - `sqlite_dependency_graph`: Build directed FK dependency graphs with depth/direction control
+  - `sqlite_topological_sort`: Determine safe creation/drop order for tables
+  - `sqlite_cascade_simulator`: Preview cascade effects before running DELETE/DROP
+  - `sqlite_schema_snapshot`: Capture full or partial schema with SHA-256 fingerprinting
+  - `sqlite_constraint_analysis`: Analyze FK constraints, detect orphans, unindexed FKs
+  - `sqlite_migration_risks`: Assess risk levels for DDL migration statements
+  - All tools are strictly read-only (no database modifications)
+- **Migration Tool Group (6 tools)** — Opt-in schema migration lifecycle management
+  - `sqlite_migration_init`: Create `_mcp_migrations` tracking table
+  - `sqlite_migration_record`: Record a migration without executing (audit/tracking)
+  - `sqlite_migration_apply`: Execute + record migration atomically with rollback SQL
+  - `sqlite_migration_rollback`: Reverse a migration using stored rollback SQL
+  - `sqlite_migration_history`: Query migration history with status/version filters
+  - `sqlite_migration_status`: Dashboard summary of migration state
+  - SHA-256 deduplication prevents accidental re-application
+  - All tools require `write` or `admin` scope
+- **`dev-schema` Meta-Group Shortcut** — New shortcut enabling `core + introspection + migration + codemode` for schema development workflows
+- **Code Mode Introspection/Migration Support** — `sqlite.introspection.*` and `sqlite.migration.*` groups added to sandbox API
+  - Method aliases: `deps`, `toposort`, `cascade`, `snapshot`, `constraints`, `risks`, `setup`, `log`, `run`, `undo`
+  - Positional parameter support and help() examples for both groups
+  - Groups listed in `sqlite_execute_code` tool description and `ServerInstructions.ts`
+
 - **Tool Icons (MCP 2025-11-25)** — All tools, resources, and prompts now include visual icons
   - 8 group-level icons from Material Design Icons (CDN-hosted SVG via jsDelivr)
   - Built-in server tools (`server_info`, `server_health`, `list_adapters`) get a server icon

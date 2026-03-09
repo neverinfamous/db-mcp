@@ -291,6 +291,8 @@ export type ToolGroup =
   | "vector" // Vector/semantic search (11 tools)
   | "admin" // Administration (25 WASM / 32 Native)
   | "geo" // Geospatial (4 WASM / 11 Native)
+  | "introspection" // Schema analysis, dependency graphs (6 tools)
+  | "migration" // Migration tracking (6 tools, opt-in)
   | "codemode"; // Sandboxed code execution (1 tool)
 
 /**
@@ -302,8 +304,9 @@ export type MetaGroup =
   | "analytics" // Core + JSON + Stats (44 WASM / 50 Native)
   | "search" // Core + Text + Vector (35 tools)
   | "spatial" // Core + Geo + Vector (23 WASM / 30 Native)
+  | "dev-schema" // Core + Introspection + Migration (22 tools)
   | "minimal" // Core only (8 tools)
-  | "full"; // All tools (100 WASM / 120 Native)
+  | "full"; // All tools (112 WASM / 136 Native)
 
 /**
  * Tool filter rule

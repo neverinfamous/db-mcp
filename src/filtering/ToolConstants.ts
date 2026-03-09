@@ -11,8 +11,10 @@
  *   vector: 11 tools (from vector.ts)
  *   admin: 26 WASM / 33 Native (admin.ts + virtual.ts + transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts + spatialite.ts)
+ *   introspection: 6 tools (from introspection/graph.ts + introspection/analysis.ts)
+ *   migration: 6 tools (from migration/tracking.ts) — opt-in
  *   codemode: 1 tool (from codemode.ts)
- *   Total: 100 WASM / 124 Native tools
+ *   Total: 112 WASM / 136 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -31,6 +33,8 @@ export const ALL_TOOL_GROUPS: ToolGroup[] = [
   "vector",
   "admin",
   "geo",
+  "introspection",
+  "migration",
   "codemode",
 ];
 
@@ -186,6 +190,25 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "spatialite_transform",
     "spatialite_import",
   ],
+  introspection: [
+    // Graph Analysis (3 from introspection/graph.ts)
+    "dependency_graph",
+    "topological_sort",
+    "cascade_simulator",
+    // Schema Analysis (3 from introspection/analysis.ts)
+    "schema_snapshot",
+    "constraint_analysis",
+    "migration_risks",
+  ],
+  migration: [
+    // Migration Tracking (6 from migration/tracking.ts) — opt-in
+    "migration_init",
+    "migration_record",
+    "migration_apply",
+    "migration_rollback",
+    "migration_history",
+    "migration_status",
+  ],
   codemode: ["execute_code"],
 };
 
@@ -206,9 +229,23 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Geospatial workloads - Core + Geo + Vector + Codemode (25 WASM / 32 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
+  // Schema development - Core + Introspection + Migration + Codemode (22 tools)
+  "dev-schema": ["core", "introspection", "migration", "codemode"],
+
   // Bare minimum - Core + Codemode (10 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (100 WASM / 124 Native)
-  full: ["core", "json", "text", "stats", "vector", "admin", "geo", "codemode"],
+  // All tools enabled (112 WASM / 136 Native)
+  full: [
+    "core",
+    "json",
+    "text",
+    "stats",
+    "vector",
+    "admin",
+    "geo",
+    "introspection",
+    "migration",
+    "codemode",
+  ],
 };
