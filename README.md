@@ -13,6 +13,7 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-Published-green)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.neverinfamous/db-mcp)
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
+[![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 ![Tests](https://img.shields.io/badge/Tests-941%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/Coverage-80%25-yellow)
 
