@@ -11,10 +11,10 @@
  *   vector: 11 tools (from vector.ts)
  *   admin: 26 WASM / 33 Native (admin.ts + virtual.ts + transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts + spatialite.ts)
- *   introspection: 6 tools (from introspection/graph.ts + introspection/analysis.ts)
+ *   introspection: 9 tools (from introspection/graph.ts + introspection/analysis.ts + introspection/diagnostics.ts)
  *   migration: 6 tools (from migration/tracking.ts) — opt-in
  *   codemode: 1 tool (from codemode.ts)
- *   Total: 112 WASM / 136 Native tools
+ *   Total: 115 WASM / 139 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -199,6 +199,10 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "schema_snapshot",
     "constraint_analysis",
     "migration_risks",
+    // Diagnostics (3 from introspection/diagnostics.ts)
+    "storage_analysis",
+    "index_audit",
+    "query_plan",
   ],
   migration: [
     // Migration Tracking (6 from migration/tracking.ts) — opt-in
@@ -229,13 +233,13 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Geospatial workloads - Core + Geo + Vector + Codemode (25 WASM / 32 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
-  // Schema development - Core + Introspection + Migration + Codemode (22 tools)
+  // Schema development - Core + Introspection + Migration + Codemode (25 tools)
   "dev-schema": ["core", "introspection", "migration", "codemode"],
 
   // Bare minimum - Core + Codemode (10 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (112 WASM / 136 Native)
+  // All tools enabled (115 WASM / 139 Native)
   full: [
     "core",
     "json",
