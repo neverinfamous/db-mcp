@@ -6,4 +6,4 @@ export {
   HttpTransport,
   createHttpTransport,
   type HttpTransportConfig,
-} from "./http.js";
+} from "./http/index.js";

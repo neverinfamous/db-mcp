@@ -11,7 +11,7 @@ import type { ToolDefinition, RequestContext } from "../../../../types/index.js"
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatError } from "../../../../utils/errors.js";
-import { isSpatialiteSystemIndex } from "../core.js";
+import { isSpatialiteSystemIndex } from "../core/index.js";
 import {
   VerifyBackupOutputSchema,
   IndexStatsOutputSchema,

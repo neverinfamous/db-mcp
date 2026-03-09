@@ -16,7 +16,7 @@ import {
 } from "../../output-schemas/index.js";
 import {
   isSpatialiteSystemView,
-} from "../core.js";
+} from "../core/index.js";
 import {
   GenerateSeriesSchema,
   CreateViewSchema,

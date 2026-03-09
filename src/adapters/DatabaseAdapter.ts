@@ -4,9 +4,15 @@
  * Abstract base class for SQLite database adapters.
  * Provides a consistent interface for SQLite database operations
  * across WASM and native backend variants.
+ *
+ * Includes concrete default implementations for MCP registration
+ * (registerTool, registerResource, registerPrompt) that subclasses
+ * inherit. Override only if the adapter needs custom behavior.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { z } from "zod";
 import type {
   DatabaseConfig,
   DatabaseType,
@@ -23,6 +29,7 @@ import type {
   ToolFilterConfig,
 } from "../types/index.js";
 import { isToolEnabled } from "../filtering/ToolFilter.js";
+import { formatError } from "../utils/errors.js";
 
 /**
  * Pre-compiled dangerous SQL patterns for injection detection (L2 optimization).
@@ -192,12 +199,102 @@ export abstract class DatabaseAdapter {
   }
 
   /**
-   * Register a single tool with the MCP server
+   * Register a single tool with the MCP server.
+   * Uses modern registerTool() API for MCP 2025-11-25 compliance.
+   * Subclasses may override for custom behavior.
    */
-  protected abstract registerTool(
-    server: McpServer,
-    tool: ToolDefinition,
-  ): void;
+  protected registerTool(server: McpServer, tool: ToolDefinition): void {
+    // Build tool options for registerTool()
+    const toolOptions: Record<string, unknown> = {
+      description: tool.description,
+    };
+
+    // Pass full inputSchema (not just .shape) for proper validation
+    if (tool.inputSchema !== undefined) {
+      toolOptions["inputSchema"] = tool.inputSchema;
+    }
+
+    // MCP 2025-11-25: Pass outputSchema for structured responses
+    if (tool.outputSchema !== undefined) {
+      toolOptions["outputSchema"] = tool.outputSchema;
+    }
+
+    // MCP 2025-11-25: Pass annotations for behavioral hints
+    if (tool.annotations) {
+      toolOptions["annotations"] = tool.annotations;
+    }
+
+    // MCP 2025-11-25: Pass icons for visual representation
+    if (tool.icons) {
+      toolOptions["icons"] = tool.icons;
+    }
+
+    // Track whether tool has outputSchema for response handling
+    const hasOutputSchema = Boolean(tool.outputSchema);
+
+    server.registerTool(
+      tool.name,
+      toolOptions as {
+        description?: string;
+        inputSchema?: z.ZodType;
+        outputSchema?: z.ZodType;
+      },
+      async (args: unknown, extra: unknown) => {
+        try {
+          // Extract progressToken from extra._meta (SDK passes RequestHandlerExtra)
+          const extraMeta = extra as {
+            _meta?: { progressToken?: string | number };
+          };
+          const progressToken = extraMeta?._meta?.progressToken;
+
+          // Create context with progress support
+          const context = this.createContext(
+            undefined,
+            server.server,
+            progressToken,
+          );
+          const result = await tool.handler(args, context);
+
+          // MCP 2025-11-25: Return structuredContent if outputSchema present
+          if (hasOutputSchema) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: JSON.stringify(result, null, 2),
+                },
+              ],
+              structuredContent: result as Record<string, unknown>,
+            };
+          }
+
+          // Standard text content response
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  typeof result === "string"
+                    ? result
+                    : JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          const structured = formatError(error);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(structured, null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
+      },
+    );
+  }
 
   /**
    * Register resources with the MCP server
@@ -211,12 +308,87 @@ export abstract class DatabaseAdapter {
   }
 
   /**
-   * Register a single resource with the MCP server
+   * Register a single resource with the MCP server.
+   * Handles both static resources and URI templates.
+   * Subclasses may override for custom behavior.
    */
-  protected abstract registerResource(
+  protected registerResource(
     server: McpServer,
     resource: ResourceDefinition,
-  ): void;
+  ): void {
+    // Check if URI contains template placeholders like {tableName}
+    const isTemplate = /\{[^}]+\}/.test(resource.uri);
+
+    if (isTemplate) {
+      // Create ResourceTemplate for parameterized URIs
+      // list: undefined signals no enumeration callback for this template
+      const template = new ResourceTemplate(resource.uri, { list: undefined });
+
+      server.registerResource(
+        resource.name,
+        template,
+        {
+          mimeType: resource.mimeType ?? "application/json",
+          description: resource.description,
+          ...(resource.icons ? { icons: resource.icons } : {}),
+        },
+        // Callback receives URL and extracted template variables
+        async (
+          resourceUri: URL,
+          _variables: Record<string, string | string[]>,
+        ) => {
+          // Pass full URI to handler so it can extract variables
+          const context = this.createContext();
+          const content = await resource.handler(
+            resourceUri.toString(),
+            context,
+          );
+          return {
+            contents: [
+              {
+                uri: resourceUri.toString(),
+                mimeType: resource.mimeType ?? "application/json",
+                text:
+                  typeof content === "string"
+                    ? content
+                    : JSON.stringify(content, null, 2),
+              },
+            ],
+          };
+        },
+      );
+    } else {
+      // Static resource registration
+      server.registerResource(
+        resource.name,
+        resource.uri,
+        {
+          mimeType: resource.mimeType ?? "application/json",
+          description: resource.description,
+          ...(resource.icons ? { icons: resource.icons } : {}),
+        },
+        async (resourceUri: URL) => {
+          const context = this.createContext();
+          const content = await resource.handler(
+            resourceUri.toString(),
+            context,
+          );
+          return {
+            contents: [
+              {
+                uri: resourceUri.toString(),
+                mimeType: resource.mimeType ?? "application/json",
+                text:
+                  typeof content === "string"
+                    ? content
+                    : JSON.stringify(content, null, 2),
+              },
+            ],
+          };
+        },
+      );
+    }
+  }
 
   /**
    * Register prompts with the MCP server
@@ -230,12 +402,48 @@ export abstract class DatabaseAdapter {
   }
 
   /**
-   * Register a single prompt with the MCP server
+   * Register a single prompt with the MCP server.
+   * Subclasses may override for custom behavior.
    */
-  protected abstract registerPrompt(
+  protected registerPrompt(
     server: McpServer,
     prompt: PromptDefinition,
-  ): void;
+  ): void {
+    server.registerPrompt(
+      prompt.name,
+      {
+        description: prompt.description,
+        ...(prompt.icons ? { icons: prompt.icons } : {}),
+      },
+
+      async (args: Record<string, string>) => {
+        const context = this.createContext();
+        const result = await prompt.handler(args, context);
+        // Type-safe message construction
+        const messages: {
+          role: "user" | "assistant";
+          content: { type: "text"; text: string };
+        }[] = Array.isArray(result)
+          ? (result as {
+              role: "user" | "assistant";
+              content: { type: "text"; text: string };
+            }[])
+          : [
+              {
+                role: "assistant" as const,
+                content: {
+                  type: "text" as const,
+                  text:
+                    typeof result === "string"
+                      ? result
+                      : JSON.stringify(result),
+                },
+              },
+            ];
+        return { messages };
+      },
+    );
+  }
 
   // ===========================================================================
   // Utility Methods

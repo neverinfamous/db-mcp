@@ -9,7 +9,6 @@ import Database from "better-sqlite3";
 import type { Database as DatabaseType } from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { z } from "zod";
 import { DatabaseAdapter } from "../DatabaseAdapter.js";
 import type {
   DatabaseConfig,
@@ -25,25 +24,20 @@ import type {
   PromptDefinition,
   ToolGroup,
 } from "../../types/index.js";
-import {
-  type McpServer,
-  ResourceTemplate,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
 import { logger, ERROR_CODES } from "../../utils/logger.js";
-import { formatError } from "../../utils/errors.js";
 import type { SqliteConfig, SqliteOptions } from "../sqlite/types.js";
 import type { SqliteAdapter } from "../sqlite/SqliteAdapter.js";
 import { SchemaManager } from "../sqlite/SchemaManager.js";
 
 // Import shared tools from sql.js adapter
-import { getCoreTools } from "../sqlite/tools/core.js";
+import { getCoreTools } from "../sqlite/tools/core/index.js";
 import { getJsonOperationTools } from "../sqlite/tools/json-operations/index.js";
 import { getJsonHelperTools } from "../sqlite/tools/json-helpers.js";
 import { getTextTools } from "../sqlite/tools/text/index.js";
 import { getFtsTools } from "../sqlite/tools/fts.js";
 import { getStatsTools } from "../sqlite/tools/stats/index.js";
 import { getVirtualTools } from "../sqlite/tools/virtual/index.js";
-import { getVectorTools } from "../sqlite/tools/vector.js";
+import { getVectorTools } from "../sqlite/tools/vector/index.js";
 import { getGeoTools } from "../sqlite/tools/geo.js";
 import { getAdminTools } from "../sqlite/tools/admin/index.js";
 import { getIntrospectionTools } from "../sqlite/tools/introspection/index.js";
@@ -59,7 +53,7 @@ import {
 // Import native-specific tools
 import { getTransactionTools } from "./tools/transactions.js";
 import { getWindowTools } from "./tools/window.js";
-import { getSpatialiteTools, isSpatialiteLoaded } from "./tools/spatialite.js";
+import { getSpatialiteTools, isSpatialiteLoaded } from "./tools/spatialite/index.js";
 import { getToolGroupIcon } from "../../utils/icons.js";
 
 const log = logger.child("NATIVE_SQLITE");
@@ -642,230 +636,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     return getPromptDefinitions(this as unknown as SqliteAdapter);
   }
 
-  /**
-   * Register a tool with the MCP server
-   * Uses modern registerTool() API for MCP 2025-11-25 compliance
-   */
-  protected override registerTool(
-    server: McpServer,
-    tool: ToolDefinition,
-  ): void {
-    // Build tool options for registerTool()
-    const toolOptions: Record<string, unknown> = {
-      description: tool.description,
-    };
 
-    // Pass full inputSchema (not just .shape) for proper validation
-    if (tool.inputSchema !== undefined) {
-      toolOptions["inputSchema"] = tool.inputSchema;
-    }
-
-    // MCP 2025-11-25: Pass outputSchema for structured responses
-    if (tool.outputSchema !== undefined) {
-      toolOptions["outputSchema"] = tool.outputSchema;
-    }
-
-    // MCP 2025-11-25: Pass annotations for behavioral hints
-    if (tool.annotations) {
-      toolOptions["annotations"] = tool.annotations;
-    }
-
-    // MCP 2025-11-25: Pass icons for visual representation
-    if (tool.icons) {
-      toolOptions["icons"] = tool.icons;
-    }
-
-    // Track whether tool has outputSchema for response handling
-    const hasOutputSchema = Boolean(tool.outputSchema);
-
-    server.registerTool(
-      tool.name,
-      toolOptions as {
-        description?: string;
-        inputSchema?: z.ZodType;
-        outputSchema?: z.ZodType;
-      },
-      async (args: unknown, extra: unknown) => {
-        try {
-          // Extract progressToken from extra._meta (SDK passes RequestHandlerExtra)
-          const extraMeta = extra as {
-            _meta?: { progressToken?: string | number };
-          };
-          const progressToken = extraMeta?._meta?.progressToken;
-
-          // Create context with progress support
-          const context = this.createContext(
-            undefined,
-            server.server,
-            progressToken,
-          );
-          const result = await tool.handler(args, context);
-
-          // MCP 2025-11-25: Return structuredContent if outputSchema present
-          if (hasOutputSchema) {
-            return {
-              content: [
-                {
-                  type: "text" as const,
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-              structuredContent: result as Record<string, unknown>,
-            };
-          }
-
-          // Standard text content response
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text:
-                  typeof result === "string"
-                    ? result
-                    : JSON.stringify(result, null, 2),
-              },
-            ],
-          };
-        } catch (error) {
-          const structured = formatError(error);
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify(structured, null, 2),
-              },
-            ],
-            isError: true,
-          };
-        }
-      },
-    );
-  }
-
-  /**
-   * Register a resource with the MCP server
-   * Handles both static resources and URI templates
-   */
-  protected override registerResource(
-    server: McpServer,
-    resource: ResourceDefinition,
-  ): void {
-    // Check if URI contains template placeholders like {tableName}
-    const isTemplate = /\{[^}]+\}/.test(resource.uri);
-
-    if (isTemplate) {
-      // Create ResourceTemplate for parameterized URIs
-      // list: undefined signals no enumeration callback for this template
-      const template = new ResourceTemplate(resource.uri, { list: undefined });
-
-      server.registerResource(
-        resource.name,
-        template,
-        {
-          mimeType: resource.mimeType ?? "application/json",
-          description: resource.description,
-          ...(resource.icons ? { icons: resource.icons } : {}),
-        },
-        // Callback receives URL and extracted template variables
-        async (
-          resourceUri: URL,
-          _variables: Record<string, string | string[]>,
-        ) => {
-          // Pass full URI to handler so it can extract variables
-          const content = await resource.handler(resourceUri.toString(), {
-            timestamp: new Date(),
-            requestId: crypto.randomUUID(),
-          });
-          return {
-            contents: [
-              {
-                uri: resourceUri.toString(),
-                mimeType: resource.mimeType ?? "application/json",
-                text:
-                  typeof content === "string"
-                    ? content
-                    : JSON.stringify(content, null, 2),
-              },
-            ],
-          };
-        },
-      );
-    } else {
-      // Static resource registration
-      server.registerResource(
-        resource.name,
-        resource.uri,
-        {
-          mimeType: resource.mimeType ?? "application/json",
-          description: resource.description,
-          ...(resource.icons ? { icons: resource.icons } : {}),
-        },
-        async (resourceUri: URL) => {
-          const content = await resource.handler(resourceUri.toString(), {
-            timestamp: new Date(),
-            requestId: crypto.randomUUID(),
-          });
-          return {
-            contents: [
-              {
-                uri: resourceUri.toString(),
-                mimeType: resource.mimeType ?? "application/json",
-                text:
-                  typeof content === "string"
-                    ? content
-                    : JSON.stringify(content, null, 2),
-              },
-            ],
-          };
-        },
-      );
-    }
-  }
-
-  /**
-   * Register a prompt with the MCP server
-   */
-  protected override registerPrompt(
-    server: McpServer,
-    prompt: PromptDefinition,
-  ): void {
-    server.registerPrompt(
-      prompt.name,
-      {
-        description: prompt.description,
-        ...(prompt.icons ? { icons: prompt.icons } : {}),
-      },
-
-      async (args: Record<string, string>) => {
-        const result = await prompt.handler(args, {
-          timestamp: new Date(),
-          requestId: crypto.randomUUID(),
-        });
-        // Type-safe message construction
-        const messages: {
-          role: "user" | "assistant";
-          content: { type: "text"; text: string };
-        }[] = Array.isArray(result)
-          ? (result as {
-              role: "user" | "assistant";
-              content: { type: "text"; text: string };
-            }[])
-          : [
-              {
-                role: "assistant" as const,
-                content: {
-                  type: "text" as const,
-                  text:
-                    typeof result === "string"
-                      ? result
-                      : JSON.stringify(result),
-                },
-              },
-            ];
-        return { messages };
-      },
-    );
-  }
 
   /**
    * Ensure database is connected

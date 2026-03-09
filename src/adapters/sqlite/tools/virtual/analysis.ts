@@ -18,7 +18,7 @@ import {
 import {
   isSpatialiteSystemTable,
   isSpatialiteSystemIndex,
-} from "../core.js";
+} from "../core/index.js";
 import {
   DbStatSchema,
   VacuumSchema,

@@ -1,282 +1,39 @@
 /**
- * SpatiaLite Geospatial Tools for Native SQLite Adapter
+ * SpatiaLite Tool Implementations
  *
- * Provides true GIS capabilities via SpatiaLite extension.
- * These tools gracefully fail if SpatiaLite is not installed.
- * 7 tools total (Native-only).
+ * All 7 SpatiaLite tool creator functions:
+ * - sqlite_spatialite_load
+ * - sqlite_spatialite_create_table
+ * - sqlite_spatialite_query
+ * - sqlite_spatialite_analyze
+ * - sqlite_spatialite_index
+ * - sqlite_spatialite_transform
+ * - sqlite_spatialite_import
  */
 
-import { z } from "zod";
-import type { ToolDefinition, RequestContext } from "../../../types/index.js";
-import type { NativeSqliteAdapter } from "../NativeSqliteAdapter.js";
-import { formatError } from "../../../utils/errors.js";
-
-// SpatiaLite extension paths to try (platform-aware)
-const SPATIALITE_PATHS = [
-  process.env["SPATIALITE_PATH"],
-  "mod_spatialite",
-  "mod_spatialite.dll",
-  "mod_spatialite.so",
-  "/usr/lib/x86_64-linux-gnu/mod_spatialite.so",
-  "/usr/local/lib/mod_spatialite.so",
-  "/usr/local/lib/mod_spatialite.dylib",
-].filter((p): p is string => Boolean(p));
-
-// Track loaded state per database
-const loadedDatabases = new WeakSet();
-
-// Schemas
-const LoadSpatialiteSchema = z.object({
-  extensionPath: z
-    .string()
-    .optional()
-    .describe("Custom path to mod_spatialite extension"),
-  forceReload: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("Force reload if already loaded"),
-});
-
-const CreateSpatialTableSchema = z.object({
-  tableName: z.string().describe("Name of the spatial table to create"),
-  geometryColumn: z
-    .string()
-    .optional()
-    .default("geom")
-    .describe("Name of the geometry column"),
-  geometryType: z
-    .enum([
-      "POINT",
-      "LINESTRING",
-      "POLYGON",
-      "MULTIPOINT",
-      "MULTILINESTRING",
-      "MULTIPOLYGON",
-      "GEOMETRY",
-    ])
-    .optional()
-    .default("POINT")
-    .describe("Type of geometry to store"),
-  srid: z
-    .number()
-    .optional()
-    .default(4326)
-    .describe("Spatial Reference System ID (4326 for WGS84)"),
-  additionalColumns: z
-    .array(
-      z.object({
-        name: z.string(),
-        type: z.string(),
-      }),
-    )
-    .optional()
-    .default([])
-    .describe("Additional non-spatial columns"),
-});
-
-const SpatialQuerySchema = z.object({
-  query: z.string().describe("Spatial SQL query using SpatiaLite functions"),
-  params: z
-    .array(z.unknown())
-    .optional()
-    .default([])
-    .describe("Query parameters"),
-});
-
-const SpatialAnalysisSchema = z.object({
-  analysisType: z
-    .enum([
-      "nearest_neighbor",
-      "point_in_polygon",
-      "distance_matrix",
-      "spatial_extent",
-    ])
-    .describe("Type of spatial analysis"),
-  sourceTable: z.string().describe("Source table for analysis"),
-  targetTable: z
-    .string()
-    .optional()
-    .describe(
-      "Target table for operations. For point_in_polygon, this should contain POLYGON geometries while sourceTable contains POINTs",
-    ),
-  geometryColumn: z
-    .string()
-    .optional()
-    .default("geom")
-    .describe("Geometry column name"),
-  limit: z.number().optional().default(100).describe("Limit results"),
-  excludeSelf: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe(
-      "For nearest_neighbor: exclude self-matches when source and target tables are the same (default: true)",
-    ),
-  includeGeometry: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe(
-      "Include full WKT geometry in results (default: false to reduce payload size)",
-    ),
-});
-
-const SpatialIndexSchema = z.object({
-  tableName: z.string().describe("Name of the spatial table"),
-  geometryColumn: z
-    .string()
-    .optional()
-    .default("geom")
-    .describe("Geometry column name"),
-  action: z
-    .enum(["create", "drop", "check"])
-    .optional()
-    .default("create")
-    .describe("Action to perform"),
-});
-
-const GeometryTransformSchema = z.object({
-  operation: z
-    .enum([
-      "buffer",
-      "intersection",
-      "union",
-      "difference",
-      "centroid",
-      "envelope",
-      "simplify",
-    ])
-    .describe("Geometry operation to perform"),
-  geometry1: z.string().describe("First geometry (WKT format)"),
-  geometry2: z.string().optional().describe("Second geometry for binary ops"),
-  distance: z
-    .number()
-    .optional()
-    .default(0.001)
-    .describe("Distance for buffer or simplify tolerance"),
-  srid: z.number().optional().default(4326).describe("SRID for result"),
-  simplifyTolerance: z
-    .number()
-    .optional()
-    .describe(
-      "For buffer operation: apply ST_Simplify to reduce vertices in output polygon. Recommended: 0.0001-0.001 for lat/lon",
-    ),
-});
-
-const SpatialImportSchema = z.object({
-  tableName: z.string().describe("Target table name"),
-  format: z.enum(["wkt", "geojson"]).describe("Input format"),
-  data: z.string().describe("Geometry data (WKT string or GeoJSON)"),
-  srid: z.number().optional().default(4326).describe("SRID of input data"),
-  additionalData: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe("Additional column values"),
-});
-
-/**
- * Get all SpatiaLite tools
- */
-export function getSpatialiteTools(
-  adapter: NativeSqliteAdapter,
-): ToolDefinition[] {
-  return [
-    createLoadSpatialiteTool(adapter),
-    createSpatialTableTool(adapter),
-    createSpatialQueryTool(adapter),
-    createSpatialAnalysisTool(adapter),
-    createSpatialIndexTool(adapter),
-    createGeometryTransformTool(adapter),
-    createSpatialImportTool(adapter),
-  ];
-}
-
-/**
- * Try to load SpatiaLite extension
- */
-function tryLoadSpatialite(
-  adapter: NativeSqliteAdapter,
-  customPath?: string,
-): { success: boolean; path?: string; error?: string } {
-  const db = adapter.getDatabase();
-  if (db === null) {
-    return { success: false, error: "Database not connected" };
-  }
-
-  const paths = customPath
-    ? [customPath, ...SPATIALITE_PATHS]
-    : SPATIALITE_PATHS;
-
-  // On Windows, SpatiaLite DLL has many dependencies (libgeos, libproj, etc.)
-  // These must be in PATH for Windows to find them when loading the extension.
-  // Prepend the extension directory to PATH before attempting to load.
-  const envPath = process.env["SPATIALITE_PATH"];
-  if (envPath && process.platform === "win32") {
-    const extensionDir = envPath.replace(/[/\\][^/\\]+$/, ""); // Get directory from DLL path
-    const currentPath = process.env["PATH"] ?? "";
-    if (!currentPath.includes(extensionDir)) {
-      process.env["PATH"] = extensionDir + ";" + currentPath;
-    }
-  }
-
-  for (const path of paths) {
-    try {
-      db.loadExtension(path);
-      // Initialize spatial metadata
-      db.exec("SELECT InitSpatialMetaData(1)");
-      loadedDatabases.add(db);
-      return { success: true, path };
-    } catch {
-      // Try next path
-    }
-  }
-
-  return {
-    success: false,
-    error:
-      "SpatiaLite extension not found. Install mod_spatialite and set SPATIALITE_PATH environment variable.",
-  };
-}
-
-/**
- * Check if SpatiaLite is loaded
- * Exported for health check access
- */
-export function isSpatialiteLoaded(adapter: NativeSqliteAdapter): boolean {
-  const db = adapter.getDatabase();
-  if (db === null) return false;
-
-  if (loadedDatabases.has(db)) return true;
-
-  try {
-    db.exec("SELECT spatialite_version()");
-    // Extension is loaded but not tracked - ensure metadata tables exist
-    // InitSpatialMetaData(1) safely skips if already initialized
-    db.exec("SELECT InitSpatialMetaData(1)");
-    loadedDatabases.add(db);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Ensure SpatiaLite is loaded, throw if not
- */
-function ensureSpatialite(adapter: NativeSqliteAdapter): void {
-  if (!isSpatialiteLoaded(adapter)) {
-    const result = tryLoadSpatialite(adapter);
-    if (!result.success) {
-      throw new Error(result.error ?? "Failed to load SpatiaLite");
-    }
-  }
-}
+import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type { NativeSqliteAdapter } from "../../NativeSqliteAdapter.js";
+import { formatError } from "../../../../utils/errors.js";
+import {
+  LoadSpatialiteSchema,
+  CreateSpatialTableSchema,
+  SpatialQuerySchema,
+  SpatialAnalysisSchema,
+  SpatialIndexSchema,
+  GeometryTransformSchema,
+  SpatialImportSchema,
+} from "./schemas.js";
+import {
+  tryLoadSpatialite,
+  isSpatialiteLoaded,
+  ensureSpatialite,
+  SPATIALITE_PATHS,
+} from "./loader.js";
 
 /**
  * Load SpatiaLite extension
  */
-function createLoadSpatialiteTool(
+export function createLoadSpatialiteTool(
   adapter: NativeSqliteAdapter,
 ): ToolDefinition {
   return {
@@ -323,7 +80,9 @@ function createLoadSpatialiteTool(
 /**
  * Create spatial table
  */
-function createSpatialTableTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createSpatialTableTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_spatialite_create_table",
     description:
@@ -409,7 +168,9 @@ function createSpatialTableTool(adapter: NativeSqliteAdapter): ToolDefinition {
 /**
  * Execute spatial query
  */
-function createSpatialQueryTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createSpatialQueryTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_spatialite_query",
     description:
@@ -439,7 +200,7 @@ function createSpatialQueryTool(adapter: NativeSqliteAdapter): ToolDefinition {
 /**
  * Spatial analysis
  */
-function createSpatialAnalysisTool(
+export function createSpatialAnalysisTool(
   adapter: NativeSqliteAdapter,
 ): ToolDefinition {
   return {
@@ -553,7 +314,9 @@ function createSpatialAnalysisTool(
 /**
  * Spatial index management
  */
-function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createSpatialIndexTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_spatialite_index",
     description:
@@ -689,7 +452,7 @@ function createSpatialIndexTool(adapter: NativeSqliteAdapter): ToolDefinition {
 /**
  * Geometry transformation operations
  */
-function createGeometryTransformTool(
+export function createGeometryTransformTool(
   adapter: NativeSqliteAdapter,
 ): ToolDefinition {
   return {
@@ -799,7 +562,9 @@ function createGeometryTransformTool(
 /**
  * Import spatial data
  */
-function createSpatialImportTool(adapter: NativeSqliteAdapter): ToolDefinition {
+export function createSpatialImportTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_spatialite_import",
     description:

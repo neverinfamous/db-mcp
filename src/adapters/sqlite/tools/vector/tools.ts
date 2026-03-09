@@ -1,25 +1,22 @@
 /**
- * SQLite Vector Search Tools
+ * Vector Search Tool Implementations
  *
- * Vector similarity search and embedding operations.
- * Uses JSON arrays for vector storage (no external extensions needed).
- * 11 tools total.
+ * All 11 vector tool creator functions.
  */
 
-import { z } from "zod";
-import type { SqliteAdapter } from "../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../types/index.js";
+import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import {
   readOnly,
   write,
   idempotent,
   destructive,
-} from "../../../utils/annotations.js";
+} from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
   sanitizeIdentifier,
-} from "../../../utils/index.js";
-import { formatError } from "../../../utils/errors.js";
+} from "../../../../utils/index.js";
+import { formatError } from "../../../../utils/errors.js";
 import {
   CreateTableOutputSchema,
   VectorStoreOutputSchema,
@@ -32,177 +29,34 @@ import {
   VectorDimensionsOutputSchema,
   VectorNormalizeOutputSchema,
   VectorDistanceOutputSchema,
-} from "../output-schemas/index.js";
-
-// Vector schemas
-const VectorStoreSchema = z.object({
-  table: z.string().describe("Table name"),
-  idColumn: z.string().describe("ID column name"),
-  vectorColumn: z.string().describe("Column to store vector (as JSON)"),
-  id: z.union([z.string(), z.number()]).describe("Row identifier"),
-  vector: z.array(z.number()).describe("Vector as array of numbers"),
-});
-
-const VectorSearchSchema = z.object({
-  table: z.string().describe("Table name"),
-  vectorColumn: z.string().describe("Vector column name"),
-  queryVector: z.array(z.number()).describe("Query vector"),
-  metric: z.enum(["cosine", "euclidean", "dot"]).optional().default("cosine"),
-  limit: z.number().optional().default(10),
-  whereClause: z.string().optional(),
-  returnColumns: z.array(z.string()).optional().describe("Columns to return"),
-});
-
-const VectorCreateTableSchema = z.object({
-  tableName: z.string().describe("Table name"),
-  dimensions: z.number().describe("Vector dimensions"),
-  additionalColumns: z
-    .array(
-      z.object({
-        name: z.string(),
-        type: z.string(),
-      }),
-    )
-    .optional(),
-});
-
-const VectorNormalizeSchema = z.object({
-  vector: z.array(z.number()).describe("Vector to normalize"),
-});
-
-const VectorDistanceSchema = z.object({
-  vector1: z.array(z.number()).describe("First vector"),
-  vector2: z.array(z.number()).describe("Second vector"),
-  metric: z.enum(["cosine", "euclidean", "dot"]).optional().default("cosine"),
-});
-
-const VectorBatchStoreSchema = z.object({
-  table: z.string().describe("Table name"),
-  idColumn: z.string().describe("ID column name"),
-  vectorColumn: z.string().describe("Vector column name"),
-  items: z
-    .array(
-      z.object({
-        id: z.union([z.string(), z.number()]),
-        vector: z.array(z.number()),
-      }),
-    )
-    .describe("Items to store"),
-});
-
-const VectorDeleteSchema = z.object({
-  table: z.string().describe("Table name"),
-  idColumn: z.string().describe("ID column name"),
-  ids: z.array(z.union([z.string(), z.number()])).describe("IDs to delete"),
-});
-
-const VectorGetSchema = z.object({
-  table: z.string().describe("Table name"),
-  idColumn: z.string().describe("ID column name"),
-  vectorColumn: z.string().describe("Vector column name"),
-  id: z.union([z.string(), z.number()]).describe("Row identifier"),
-});
-
-const VectorCountSchema = z.object({
-  table: z.string().describe("Table name"),
-  dimensions: z.number().optional().describe("Filter by dimension count"),
-});
-
-const VectorStatsSchema = z.object({
-  table: z.string().describe("Table name"),
-  vectorColumn: z.string().describe("Vector column name"),
-  sampleSize: z.number().optional().default(100),
-});
-
-const VectorDimensionsSchema = z.object({
-  table: z.string().describe("Table name"),
-  vectorColumn: z.string().describe("Vector column name"),
-});
-
-/**
- * Get all vector tools
- */
-export function getVectorTools(adapter: SqliteAdapter): ToolDefinition[] {
-  return [
-    createVectorCreateTableTool(adapter),
-    createVectorStoreTool(adapter),
-    createVectorBatchStoreTool(adapter),
-    createVectorSearchTool(adapter),
-    createVectorGetTool(adapter),
-    createVectorDeleteTool(adapter),
-    createVectorCountTool(adapter),
-    createVectorStatsTool(adapter),
-    createVectorDimensionsTool(adapter),
-    createVectorNormalizeTool(),
-    createVectorDistanceTool(),
-  ];
-}
-
-// Helper functions for vector operations
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) throw new Error("Vector dimensions must match");
-  let dotProd = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    const aVal = a[i] ?? 0;
-    const bVal = b[i] ?? 0;
-    dotProd += aVal * bVal;
-    normA += aVal * aVal;
-    normB += bVal * bVal;
-  }
-  const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
-  return magnitude === 0 ? 0 : dotProd / magnitude;
-}
-
-function euclideanDistance(a: number[], b: number[]): number {
-  if (a.length !== b.length) throw new Error("Vector dimensions must match");
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) {
-    const aVal = a[i] ?? 0;
-    const bVal = b[i] ?? 0;
-    const diff = aVal - bVal;
-    sum += diff * diff;
-  }
-  return Math.sqrt(sum);
-}
-
-function dotProduct(a: number[], b: number[]): number {
-  if (a.length !== b.length) throw new Error("Vector dimensions must match");
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) {
-    sum += (a[i] ?? 0) * (b[i] ?? 0);
-  }
-  return sum;
-}
-
-function normalizeVector(v: number[]): number[] {
-  const norm = Math.sqrt(v.reduce((sum, x) => sum + x * x, 0));
-  if (norm === 0) return v;
-  return v.map((x) => x / norm);
-}
-
-function parseVector(value: unknown): number[] {
-  if (Array.isArray(value)) {
-    return value.map(Number);
-  }
-  if (typeof value === "string") {
-    try {
-      const parsed: unknown = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        return parsed.map(Number);
-      }
-    } catch {
-      // Not valid JSON
-    }
-  }
-  throw new Error("Invalid vector format");
-}
+} from "../../output-schemas/index.js";
+import {
+  VectorStoreSchema,
+  VectorSearchSchema,
+  VectorCreateTableSchema,
+  VectorNormalizeSchema,
+  VectorDistanceSchema,
+  VectorBatchStoreSchema,
+  VectorDeleteSchema,
+  VectorGetSchema,
+  VectorCountSchema,
+  VectorStatsSchema,
+  VectorDimensionsSchema,
+} from "./schemas.js";
+import {
+  cosineSimilarity,
+  euclideanDistance,
+  dotProduct,
+  normalizeVector,
+  parseVector,
+} from "./helpers.js";
 
 /**
  * Create a table for vector storage
  */
-function createVectorCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorCreateTableTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_create_table",
     description:
@@ -232,7 +86,7 @@ function createVectorCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
           `dimensions INTEGER DEFAULT ${input.dimensions}`,
         ];
 
-        if (input.additionalColumns) {
+        if (input.additionalColumns.length > 0) {
           for (const col of input.additionalColumns) {
             const colName = sanitizeIdentifier(col.name);
             columns.push(`${colName} ${col.type}`);
@@ -258,7 +112,9 @@ function createVectorCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Store a vector
  */
-function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorStoreTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_store",
     description: "Store or update a vector in the database.",
@@ -304,7 +160,9 @@ function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Batch store vectors
  */
-function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorBatchStoreTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_batch_store",
     description: "Store multiple vectors in a batch operation.",
@@ -365,7 +223,9 @@ function createVectorBatchStoreTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Vector similarity search
  */
-function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorSearchTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_search",
     description:
@@ -486,7 +346,9 @@ function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Get a vector by ID
  */
-function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorGetTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_get",
     description: "Retrieve a vector by its ID.",
@@ -547,7 +409,9 @@ function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Delete vectors by ID
  */
-function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorDeleteTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_delete",
     description: "Delete vectors by their IDs.",
@@ -585,7 +449,9 @@ function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Count vectors
  */
-function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorCountTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_count",
     description: "Count vectors in a table.",
@@ -621,7 +487,9 @@ function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Vector statistics
  */
-function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorStatsTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_stats",
     description: "Get statistics about vectors in a table.",
@@ -694,7 +562,9 @@ function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Get vector dimensions
  */
-function createVectorDimensionsTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVectorDimensionsTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_vector_dimensions",
     description: "Get the dimensions of vectors in a table.",
@@ -746,7 +616,7 @@ function createVectorDimensionsTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Normalize a vector
  */
-function createVectorNormalizeTool(): ToolDefinition {
+export function createVectorNormalizeTool(): ToolDefinition {
   return {
     name: "sqlite_vector_normalize",
     description: "Normalize a vector to unit length.",
@@ -779,7 +649,7 @@ function createVectorNormalizeTool(): ToolDefinition {
 /**
  * Calculate distance between two vectors
  */
-function createVectorDistanceTool(): ToolDefinition {
+export function createVectorDistanceTool(): ToolDefinition {
   return {
     name: "sqlite_vector_distance",
     description: "Calculate distance or similarity between two vectors.",

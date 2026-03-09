@@ -131,6 +131,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Tier 2 File Refactoring** — Split 4 large files (700–986 lines) into modular directory structures
+  - **Phase 1 — Adapter Deduplication**: Extracted shared `registerTool`/`registerResource`/`registerPrompt` logic into `DatabaseAdapter` base class, reducing `NativeSqliteAdapter.ts` (956→727) and `SqliteAdapter.ts` (945→721)
+  - **Phase 2 — Transport Split**: Split `http.ts` (986 lines) into `http/` directory with 6 files: `types.ts`, `middleware.ts`, `session.ts`, `oauth.ts`, `transport.ts`, `index.ts`
+  - **Phase 3 — Tool File Splits**: Split 3 tool files into directory modules:
+    - `spatialite.ts` (915) → `spatialite/` (4 files: `schemas.ts`, `loader.ts`, `tools.ts`, `index.ts`)
+    - `vector.ts` (826) → `vector/` (4 files: `schemas.ts`, `helpers.ts`, `tools.ts`, `index.ts`)
+    - `core.ts` (770) → `core/` (4 files: `queries.ts`, `tables.ts`, `indexes.ts`, `index.ts`)
+  - All consumer imports updated (6 source files + 1 test); no public API changes
+
 - **Configurable CORS Origins** — CORS refactored from hardcoded `Access-Control-Allow-Origin: *` to configurable `corsOrigins` array; supports explicit origins with `Access-Control-Allow-Credentials: true`; removed duplicated CORS middleware
 - **Root Endpoint** — `GET /` now lists Legacy SSE endpoints and updated description to "dual HTTP transport"
 - **Deterministic Error Handling** — Structured error responses across all tools

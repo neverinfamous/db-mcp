@@ -13,6 +13,7 @@ import type {
   ToolFilterConfig,
 } from "../types/index.js";
 import { type DatabaseAdapter } from "../adapters/DatabaseAdapter.js";
+import type { HttpTransportConfig } from "../transports/http/types.js";
 import {
   parseToolFilter,
   getFilterSummary,
@@ -269,18 +270,11 @@ export class DbMcpServer {
    * Start server with HTTP transport (Streamable HTTP with SSE support)
    */
   private async startHttp(): Promise<void> {
-    const { HttpTransport } = await import("../transports/http.js");
+    // Dynamic import to avoid loading Express in stdio mode
+    const { HttpTransport } = await import("../transports/http/index.js");
 
     // Build OAuth config, only including defined optional properties
-    const oauthConfig: {
-      enabled: boolean;
-      authorizationServerUrl: string;
-      audience: string;
-      issuer?: string;
-      jwksUri?: string;
-      clockTolerance?: number;
-      publicPaths?: string[];
-    } = {
+    const oauthConfig: HttpTransportConfig["oauth"] = {
       enabled: this.config.oauth?.enabled ?? false,
       authorizationServerUrl: this.config.oauth?.authorizationServerUrl ?? "",
       audience: this.config.oauth?.audience ?? this.config.name,

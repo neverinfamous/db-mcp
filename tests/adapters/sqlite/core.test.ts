@@ -13,7 +13,7 @@ import {
   isSpatialiteSystemIndex,
   isSpatialiteSystemTable,
   isSpatialiteSystemView,
-} from "../../../src/adapters/sqlite/tools/core.js";
+} from "../../../src/adapters/sqlite/tools/core/index.js";
 
 describe("Core Tools", () => {
   let adapter: TestAdapter;
