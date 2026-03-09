@@ -31,13 +31,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Method aliases: `deps`, `toposort`, `cascade`, `snapshot`, `constraints`, `risks`, `setup`, `log`, `run`, `undo`
   - Positional parameter support and help() examples for both groups
   - Groups listed in `sqlite_execute_code` tool description and `ServerInstructions.ts`
-
 - **Tool Icons (MCP 2025-11-25)** — All tools, resources, and prompts now include visual icons
   - 8 group-level icons from Material Design Icons (CDN-hosted SVG via jsDelivr)
   - Built-in server tools (`server_info`, `server_health`, `list_adapters`) get a server icon
   - New `src/utils/icons.ts` utility with `getToolGroupIcon()` and `SERVER_ICONS`
   - Icon passthrough in both WASM and Native adapter `registerTool()`/`registerResource()`/`registerPrompt()` methods
   - `McpIcon` type added to `types/index.ts`; `icons` field added to `ToolDefinition`, `ResourceDefinition`, `PromptDefinition`
+  - **Dual HTTP Transport** — HTTP transport now supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE (MCP 2024-11-05) protocols simultaneously
+  - `GET /sse` — Opens Legacy SSE connection for backward-compatible clients
+  - `POST /messages?sessionId=<id>` — Routes messages to Legacy SSE transport
+  - Cross-protocol guard: SSE session IDs rejected on `/mcp` and vice versa
+- **Security Headers** — All HTTP responses now include 7 security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, `Content-Security-Policy`, `Permissions-Policy`, `Referrer-Policy`, `Strict-Transport-Security`
+- **Rate Limiting** — Per-IP sliding-window rate limiting (100 requests/minute, health endpoint exempt)
+- **Body Size Enforcement** — JSON body limited to 1 MB via `express.json({ limit })`, returns 413 for oversized payloads
+- **404 Handler** — Unknown paths now return `404 { error: "Not found" }` instead of Express default HTML
+- **Code Mode (Sandboxed Execution)** — New `sqlite_execute_code` tool for executing JavaScript in a sandboxed environment
+  - Agents write code using `sqlite.*` API to access all 7 tool groups (core, json, text, stats, vector, admin, geo)
+  - 70-90% token reduction by replacing multiple sequential tool calls with a single code execution
+  - Dual sandbox support: `worker_threads` (default, enhanced isolation) and `vm` module
+  - Worker sandbox uses MessagePort RPC bridge for secure API proxy between threads
+  - Security: code validation against blocked patterns, rate limiting (60 exec/min), result sanitization (10MB cap), audit logging
+  - Built-in `help()` for discoverability: `sqlite.help()` for groups, `sqlite.<group>.help()` for methods
+  - Positional parameter support: `sqlite.core.readQuery("SELECT 1")` maps to `{ query: "SELECT 1" }`
+  - Method aliases for ergonomic use (e.g., `sqlite.core.query()` → `readQuery`)
+  - New `codemode` tool group added to all meta-group shortcuts (starter, analytics, search, spatial, minimal, full)
+  - Environment variable `CODEMODE_ISOLATION=vm|worker` to select sandbox mode (default: `worker`)
+  - New files: `src/codemode/` (types, security, sandbox, worker-sandbox, worker-script, sandbox-factory, api, index)
+  - Updated: `ToolGroup` type, `LogModule`, `ToolConstants`, `ServerInstructions`, tool index
+  - Auto-injected into all tool filter configurations (whitelist mode) — opt out with `-codemode`
+  - **`sqlite_drop_index` Tool** — New core tool to drop indexes from the database
+  - Validates index existence before dropping
+  - Supports `ifExists` flag (default `true`) for graceful no-op when index doesn't exist
+  - Registered in core group with `DropIndexSchema` / `DropIndexOutputSchema`
+  - Added to `ToolConstants.ts`, `ServerInstructions.ts`, and positional param map
+  - Core tool count: 8 → 9 (minimal meta-group: 9 → 10)
+- **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
+  - Configures which host/IP the HTTP transport binds to (default: `0.0.0.0`)
+  - Use `--server-host 127.0.0.1` to restrict to local connections only
+  - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
+  - Essential for containerized deployments where binding to all interfaces is required
+  - **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
+  - Configures which host/IP the HTTP transport binds to (default: `0.0.0.0`)
+  - Use `--server-host 127.0.0.1` to restrict to local connections only
+  - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
+  - Essential for containerized deployments where binding to all interfaces is required
 
 ### Performance
 
@@ -69,240 +106,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `jose`: 6.1.3 → 6.2.0
 - Dockerfile `tar` dependency pinned to `7.5.10` for security compliance
 - Removed unused `pg` and `@types/pg` dependencies (never imported in source)
-
-### Added
-
-- **Dual HTTP Transport** — HTTP transport now supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE (MCP 2024-11-05) protocols simultaneously
-  - `GET /sse` — Opens Legacy SSE connection for backward-compatible clients
-  - `POST /messages?sessionId=<id>` — Routes messages to Legacy SSE transport
-  - Cross-protocol guard: SSE session IDs rejected on `/mcp` and vice versa
-- **Security Headers** — All HTTP responses now include 7 security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, `Content-Security-Policy`, `Permissions-Policy`, `Referrer-Policy`, `Strict-Transport-Security`
-- **Rate Limiting** — Per-IP sliding-window rate limiting (100 requests/minute, health endpoint exempt)
-- **Body Size Enforcement** — JSON body limited to 1 MB via `express.json({ limit })`, returns 413 for oversized payloads
-- **404 Handler** — Unknown paths now return `404 { error: "Not found" }` instead of Express default HTML
+- `@eslint/js`: 9.39.2 → 10.0.1 (major)
+- `eslint`: 9.39.2 → 10.0.2 (major/patch)
+- `@types/node`: 25.3.0 → 25.3.3
+- `rimraf`: 6.1.2 → 6.1.3
+- `typescript-eslint`: 8.55.0 → 8.56.1
+- `@modelcontextprotocol/sdk`: 1.27.0 → 1.27.1
+- `@types/pg`: 8.16.0 → 8.18.0
+- `globals`: 17.3.0 → 17.4.0
+- `pg`: 8.18.0 → 8.20.0
+- `sql.js`: 1.14.0 → 1.14.1
+- `@modelcontextprotocol/sdk`: 1.25.3 → 1.26.0
+- `@types/node`: 25.2.0 → 25.2.3
+- `dotenv`: 17.2.3 → 17.3.1
+- `sql.js`: 1.13.0 → 1.14.0
+- `typescript-eslint`: 8.54.0 → 8.55.0
 
 ### Changed
 
 - **Configurable CORS Origins** — CORS refactored from hardcoded `Access-Control-Allow-Origin: *` to configurable `corsOrigins` array; supports explicit origins with `Access-Control-Allow-Credentials: true`; removed duplicated CORS middleware
 - **Root Endpoint** — `GET /` now lists Legacy SSE endpoints and updated description to "dual HTTP transport"
-
-### Fixed
-
-- **Multi-Session Streamable HTTP Crash** — Fixed `Already connected to a transport` error when creating 2+ concurrent sessions
-  - SDK's `McpServer.connect()` only supports one active transport; second `connect()` threw
-  - Added close-before-reconnect pattern wrapping `server.connect()` in try-catch
-
-### Fixed
-
-- **`sqlite_spatialite_index` Check Returns `valid: false` for Valid Indexes** — Now treats `CheckSpatialIndex` null result as indeterminate
-  - SpatiaLite 5.x's `CheckSpatialIndex()` commonly returns `null` instead of `1` for valid indexes
-  - Previously interpreted `null` as `false`, producing misleading message "Spatial index exists but may be invalid"
-  - Now returns `valid: null` with message "Spatial index exists (validation inconclusive — common in SpatiaLite 5.x)"
-  - Explicit `valid: false` now only shown when `CheckSpatialIndex` returns `0` (actually invalid index)
-- **`sqlite_spatialite_create_table` Misleading Success on Existing Table** — Now returns `alreadyExists: true` when table already exists
-  - Previously used `CREATE TABLE IF NOT EXISTS` and always reported `"Spatial table 'X' created"` even when table already existed
-  - Now pre-checks table existence and returns accurate message: `"Spatial table 'X' already exists"` with `alreadyExists: true` flag
-  - Prevents confusion about whether data was reset or preserved
-- **`sqlite_spatialite_index` Create/Drop/Check Idempotency** — All 3 index actions now report accurate state
-  - `create`: Returns `alreadyExists: true` when index already exists instead of silently running `CreateSpatialIndex` again
-  - `drop`: Returns `alreadyDropped: true` when no index exists instead of misleadingly reporting `"Spatial index dropped"`
-  - `check`: Returns `{ indexed: false }` when no index exists, or `{ indexed: true, valid: true/false }` when index exists — previously returned raw `{ result: [{ "CheckSpatialIndex(...)": null }] }`
-  - Index existence checked via `idx_{table}_{column}` in `sqlite_master`
-- **`sqlite_spatialite_analyze` Distance Matrix `targetTable` Support** — Now uses `targetTable` parameter when provided
-  - Previously, the `distance_matrix` analysis type always used `sourceTable` for both sides of the cross-join, ignoring `targetTable`
-  - Now uses `targetTable` (defaulting to `sourceTable` when omitted) and only applies `a.id < b.id` dedup filter for same-table queries
-- **SpatiaLite Tool Structured Error Responses** — All 7 SpatiaLite handlers now return structured errors instead of throwing raw MCP exceptions
-  - Added `formatError` import and try/catch blocks to all 7 handlers: `sqlite_spatialite_load`, `sqlite_spatialite_create_table`, `sqlite_spatialite_query`, `sqlite_spatialite_analyze`, `sqlite_spatialite_index`, `sqlite_spatialite_transform`, `sqlite_spatialite_import`
-  - `sqlite_spatialite_query`: Nonexistent table errors now return `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
-  - `sqlite_spatialite_analyze`: Same fix — structured error response for nonexistent tables and invalid table names
-  - `sqlite_spatialite_index`: Added table existence validation — previously returned `{success: true}` for nonexistent tables; now returns `{success: false, error: "Table 'x' does not exist"}`
-  - `sqlite_spatialite_transform`: Added null-result validation — previously returned `{success: true, result: null}` for invalid WKT geometry; now returns `{success: false, error: "Invalid geometry..."}`
-  - `sqlite_spatialite_import`: Added WKT pre-validation via `GeomFromText()` — previously silently accepted invalid WKT strings like `"INVALID_WKT"`; now returns `{success: false, error: "Invalid WKT geometry..."}`
-  - `sqlite_spatialite_create_table`: Validation errors (invalid table/column names) now return structured responses instead of throwing
-  - Tests updated to expect structured error responses instead of catching thrown errors; 11 tests covering all 7 tools
-
-  - Previously threw raw MCP exception when called with a nonexistent table
-  - Now returns `{success: false, error, code, suggestion}` consistent with all other tool groups
-  - Security test updated to assert structured error response instead of `.rejects.toThrow()`
-
-- **`sqlite_restore` Relative Path Resolution** — Now resolves relative paths to absolute before file existence check
-  - Previously used raw `input.sourcePath` with `fs.existsSync`, which resolved against the MCP server's CWD (e.g., Antigravity IDE directory)
-  - Stale 0-byte files left by SQLite `ATTACH DATABASE` at the server CWD could cause false-positive `{success: true}` responses
-  - Now uses `nodePath.resolve()` consistent with the existing `sqlite_verify_backup` handler
-- **`sqlite_backup` Relative Path Resolution** — Now resolves relative paths to absolute before `VACUUM INTO`
-  - Previously used raw `input.targetPath` for `VACUUM INTO`, causing backups to be written to the MCP server's CWD instead of the expected location
-  - Now uses `nodePath.resolve()` consistent with `sqlite_verify_backup` and `sqlite_restore`
-- **`sqlite_drop_view` Misleading Success Message** — Now reports "did not exist (no action taken)" for nonexistent views
-  - Previously always returned `View 'x' dropped` regardless of whether the view existed (when `ifExists: true`)
-  - Now checks view existence before dropping, consistent with `sqlite_drop_virtual_table` pattern
-
-- **`sqlite_verify_backup` Relative Path False Positive** — Now resolves relative paths to absolute before `fs.existsSync` check
-  - Previously, relative paths like `"nonexistent_file.db"` bypassed the file existence check (resolved against MCP server CWD, not database directory) and `ATTACH DATABASE` silently created an empty DB, returning `{success: true, valid: true, pageCount: 0}`
-  - Now uses `nodePath.resolve()` to convert to absolute path before checking, ensuring consistent behavior regardless of server CWD
-- **`sqlite_pragma_settings` Nonexistent PRAGMA Error Message** — Returns user-friendly error for unknown PRAGMAs
-  - Previously, querying a nonexistent PRAGMA like `nonexistent_pragma_xyz` returned the confusing better-sqlite3 internal error: `"This statement does not return data. Use run() instead"` with `UNKNOWN_ERROR` code
-  - Now detects this specific error pattern and returns `{success: false, error: "Unknown or write-only PRAGMA: 'nonexistent_pragma_xyz'"}`
-  - `input` parsing moved before try/catch block to ensure PRAGMA name is accessible in error handler
-
-- **`sqlite_pragma_settings` Structured Error Response** — Handler now wrapped in try/catch with `formatError()`
-  - Previously, invalid PRAGMA names threw raw MCP exceptions instead of structured error responses
-  - Now returns `{success: false, error: "Invalid PRAGMA name"}` for validation failures
-  - Catches all SQLite errors and returns structured `{success: false, error, code, suggestion}` responses
-- **`sqlite_verify_backup` Nonexistent File Validation** — Now pre-validates file existence before ATTACH
-  - Previously, ATTACH silently created an empty DB for nonexistent files, returning false-positive `{success: true, valid: true, pageCount: 0}`
-  - Now returns `{success: false, message: "Backup file not found: ..."}` when file doesn't exist
-  - Outer try/catch with `formatError()` added for unexpected errors
-- **`sqlite_restore` Nonexistent File Validation** — Now pre-validates source file existence before ATTACH
-  - Previously, ATTACH silently created an empty DB for nonexistent files, returning false-positive `{success: true}`
-  - Now returns `{success: false, message: "Source file not found: ..."}` when file doesn't exist
-- **Transaction Tool Structured Error Responses** — All 6 transaction handlers now return structured errors instead of throwing raw MCP exceptions
-  - `sqlite_transaction_begin`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`: Errors like double-begin and no-active-transaction now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
-  - `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`: Invalid savepoint names return `{success: false, error: "Invalid savepoint name"}` instead of throwing; nonexistent savepoint errors return structured responses
-  - Added `formatError` import to `transactions.ts`
-  - Security tests updated to assert structured error responses instead of `.rejects.toThrow()`
-
-- **`sqlite_vector_distance` Missing Error Handling** — Handler now wrapped in try/catch with `formatError()`
-  - Previously, Zod validation errors from malformed input threw raw MCP exceptions instead of structured error responses
-  - Now consistent with `sqlite_vector_normalize` and all other vector tool handlers
-- **`sqlite_vector_batch_store` Empty Items Table Validation** — Now validates table existence even when items array is empty
-  - Previously, `batch_store({table: "nonexistent", items: []})` returned `{success: true, stored: 0}` without checking if the table exists
-  - Now queries `sqlite_master` to verify table existence before returning the empty-items early response
-  - Returns `{success: false, error: "Table 'x' does not exist"}` for nonexistent tables
-- **`sqlite_vector_get` Column Not Found Error** — Provides clear error when vector column doesn't exist in row data
-  - Previously returned misleading `"Invalid vector format"` with `UNKNOWN_ERROR` code when the specified vector column was not found in the row
-  - Now returns descriptive error: `"Column 'x' not found or contains NULL. Available columns: ..."` listing actual column names
-- **`sqlite_vector_count` Dimensions Filter** — `dimensions` parameter now filters results instead of being silently ignored
-  - Previously `sqlite_vector_count({table: "t", dimensions: 8})` returned total row count regardless of dimensions value
-  - Now adds `WHERE dimensions = N` clause when dimensions parameter is specified
-- **`sqlite_vector_normalize` Error Handling** — Handler now wrapped in try/catch with `formatError()`
-  - Previously threw raw Zod validation errors instead of returning structured error responses
-  - Now consistent with all other vector tool handlers
-- **`sqlite_vector_batch_store` Empty Items Validation** — Returns early with `{stored: 0, message: "No items provided"}` for empty items array
-  - Previously, empty items array on a nonexistent table silently returned `{success: true, stored: 0}` without touching the database
-  - Now short-circuits before any SQL execution, preventing misleading success responses
-
-- **Vector Tool Structured Error Responses** — All 11 vector handlers now return structured errors instead of throwing raw MCP exceptions
-  - `sqlite_vector_create_table`, `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_search`, `sqlite_vector_get`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_stats`, `sqlite_vector_dimensions`, `sqlite_vector_normalize`, `sqlite_vector_distance`: Errors like nonexistent tables, invalid identifiers, and invalid input now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
-  - Added `formatError` import from `utils/errors.js` and wrapped all 11 handlers in try/catch blocks
-  - Security tests in `identifier-integration.test.ts` updated to assert structured error responses instead of `.rejects.toThrow()`
-  - Consistent with the structured error pattern already used by all other tool groups
-- **`sqlite_vector_search` Negative Cosine Similarity Filter** — Search no longer silently drops results with negative cosine similarity
-  - Previously, the search filter `_similarity >= 0` excluded rows with negative cosine similarity (dissimilar vectors)
-  - Negative cosine similarity is valid (ranges from -1 to 1) and should be returned when within the limit
-  - Now filters only rows where vector parsing failed (returns `null`), preserving all valid similarity scores
-- **`sqlite_vector_create_table` Dimensions Validation** — Now rejects dimensions < 1 with structured error
-  - Previously accepted `dimensions: 0` creating a table with meaningless `DEFAULT 0` dimension column
-- **`sqlite_vector_distance` Cosine Metric** — Now returns cosine distance (`1 - similarity`) instead of raw cosine similarity
-  - Previously returned cosine similarity (0 for orthogonal, 1 for identical) despite the tool being named "distance"
-  - Now returns cosine distance (1.0 for orthogonal, 0 for identical) consistent with euclidean distance semantics
-  - Does not affect `sqlite_vector_search` which correctly uses `_similarity` as a ranking score
-
-- **Window Function Structured Error Responses** — All 6 window function handlers now return structured errors instead of throwing raw MCP exceptions
-  - `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`: Errors like nonexistent tables, invalid identifiers, and bad SQL now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
-  - Added `formatError` import from `utils/errors.js` and wrapped all 6 handlers in try/catch blocks
-  - Window function tests updated to assert structured error responses instead of `.rejects.toThrow()`
-  - Consistent with the structured error pattern already used by all 13 stats tools
-
-- **`server_health` FTS5 Detection False Negative** — Health check now correctly reports `fts5: true` when FTS5 is compiled in
-  - `hasFts5()` previously created a `_fts5_test` virtual table as a probe, which silently failed when SpatiaLite extensions were loaded
-  - Replaced with lightweight `PRAGMA compile_options` check for `ENABLE_FTS5` flag
-  - More reliable and efficient than the virtual table creation/drop approach
-
-- **FTS5 Tool Structured Error Responses** — All 4 FTS5 handlers now return structured errors instead of throwing raw MCP exceptions
-  - `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`: Errors like nonexistent tables, bad SQL, and invalid columns now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
-  - Previously, only `isFts5UnavailableError` (WASM mode) was caught; all other errors were re-thrown
-  - Consistent with the structured error pattern already used by all 13 text tools, core tools, stats tools, and JSON tools
-  - Security tests in `fts-injection.test.ts` updated to assert structured error responses instead of `.rejects.toThrow()`
-
-- **`sqlite_execute_code` Per-Call Timeout Enforcement** — The `timeout` parameter is now respected per-call instead of being silently ignored
-  - Previously, `timeout` was parsed from input but never passed to the sandbox pool; all executions used the fixed 30000ms default
-  - Added `timeoutMs?: number` parameter to `ISandbox.execute()` and `ISandboxPool.execute()` interfaces
-  - All 4 implementations updated: `CodeModeSandbox`, `SandboxPool`, `WorkerSandbox`, `WorkerSandboxPool`
-  - `codemode.ts` now passes the user-specified timeout through to `pool.execute(code, bindings, timeoutMs)`
-- **`sqlite_create_index` Table Existence Pre-Validation** — Now returns `TABLE_NOT_FOUND` error instead of raw SQL error for nonexistent tables
-  - Previously returned `{success: false, message: "Write query failed: no such table: main.xyz"}` (leaking implementation detail)
-  - Now pre-validates table existence and returns `{success: false, message: "Table 'xyz' does not exist", code: "TABLE_NOT_FOUND"}`
-  - Consistent with `sqlite_describe_table` and `sqlite_get_indexes` which already pre-validate table existence
-- **`sqlite_create_index` Empty Columns Validation** — `CreateIndexSchema.columns` now requires `.min(1)`
-  - Previously, an empty columns array passed Zod validation and produced invalid SQL `CREATE INDEX ... ON table ()`
-  - Now rejected at schema validation level with clear "Array must contain at least 1 element(s)" message
-
-- **`formatError` Category-Based Error Codes** — Native SQLite errors now get category-specific codes instead of generic `UNKNOWN_ERROR`
-  - `no such table` errors now return `RESOURCE_ERROR` code (previously `UNKNOWN_ERROR` despite correct category detection)
-  - Maps detected `ErrorCategory` to descriptive codes: `VALIDATION_ERROR`, `CONNECTION_ERROR`, `QUERY_ERROR`, `PERMISSION_ERROR`, `CONFIG_ERROR`, `RESOURCE_ERROR`
-  - Only applies to plain `Error` objects caught from SQLite; `DbMcpError` subclasses retain their explicit codes
-- **`ERROR_SUGGESTIONS` Query Error Pattern Coverage** — 3 new patterns added for query errors that previously fell through to `UNKNOWN_ERROR`
-  - `incomplete input` → `QUERY_ERROR` with suggestion to check for missing clauses or closing parentheses
-  - `more than one statement` → `QUERY_ERROR` with suggestion to split into separate calls or use `sqlite_execute_code`
-  - `too few parameter` → `QUERY_ERROR` with suggestion to match params array to placeholder count
-
-- **`sqlite_read_query` Statement Type Validation** — Now rejects non-SELECT statements with clear error messages
-  - Previously, INSERT/UPDATE/DELETE/DDL passed to `read_query` leaked internal better-sqlite3 message: `"This statement does not return data. Use run() instead"`
-  - Now validates upfront and returns: `"Statement type not allowed: INSERT is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL."`
-  - Allows SELECT, PRAGMA, EXPLAIN, and WITH statements; mirrors `write_query` validation pattern
-- **`reset-database.ps1` Verification Table List** — Removed orphaned `temp_text_test` entry from expected tables map
-  - `temp_text_test` is not created by the seed SQL and was dead code (verification query only checks `test_%` tables)
-- **Native Adapter Missing Codemode Tool** — `sqlite_execute_code` was not registered in Native mode
-  - `NativeSqliteAdapter.getToolDefinitions()` was missing `getCodeModeTools()` from its tool list
-  - WASM adapter (`SqliteAdapter`) already included it via `getAllToolDefinitions()`
-  - Tool filter correctly auto-injected `codemode` into enabled groups, but the tool definition was never produced so it couldn't be registered
-
-- **Core Tool Input Validation** — 5 core tool handlers now return structured errors for invalid identifiers instead of throwing raw MCP exceptions
-  - `sqlite_create_table`: Added `sanitizeIdentifier` validation for table names and empty columns array check (previously accepted empty string names and empty columns, causing orphaned tables or SQL syntax errors)
-  - `sqlite_drop_table`, `sqlite_drop_index`: Wrapped existing `sanitizeIdentifier` calls in try/catch to return `{success: false, message: "..."}` instead of propagating `InvalidIdentifierError`
-  - `sqlite_get_indexes`, `sqlite_create_index`: Same try/catch wrapping for identifier validation
-  - All 5 handlers now follow the structured error response pattern: `{success: false, message: "Invalid ... name"}`
-
-- **`sqlite_geo_nearby` `returnColumns` Column Leakage** — Lat/lon columns no longer leak into results when `returnColumns` is specified
-  - Previously, internally-added lat/lon columns (needed for Haversine distance calculation) were included in the response even when the user didn't request them
-  - Now strips lat/lon columns from results unless the user explicitly includes them in `returnColumns`
-  - Consistent with `sqlite_geo_bounding_box` which already respected `returnColumns` exactly
-- **Geo Tool Structured Error Responses** — All 3 database-accessing geo handlers now return structured errors instead of throwing raw MCP errors
-  - `sqlite_geo_nearby`, `sqlite_geo_bounding_box`, `sqlite_geo_cluster`: Wrap handler logic in try-catch with `formatError()` for consistent `{success: false, error: "..."}` responses
-  - Added `validateColumnExists()` to validate lat/lon column existence before query execution; previously nonexistent columns silently returned 0 results
-  - 6 new error path tests added for nonexistent table and column scenarios
-- **Admin Tool Structured Error Responses** — 4 admin tool handlers now return structured errors instead of throwing raw MCP errors
-  - `sqlite_virtual_table_info`: Returns `{success: false, error: "Virtual table 'x' not found"}` instead of throwing for nonexistent virtual tables
-  - `sqlite_create_view`: Catches duplicate view errors, invalid SQL, and identifier validation failures; returns `{success: false, message: "..."}` with context
-  - `sqlite_drop_view`: Catches nonexistent view errors (when `ifExists: false`) and identifier validation failures
-  - `sqlite_drop_virtual_table`: Catches nonexistent table errors (when `ifExists: false`) and returns structured response
-  - Security tests updated to assert `{success: false, message: /invalid/i}` instead of `.rejects.toThrow()`
-- **`sqlite_verify_backup` WASM False Positive** — Now returns WASM limitation error upfront before attempting ATTACH
-  - Previously, ATTACH succeeded silently in WASM (creating empty DB in virtual filesystem), causing verify to return `{success: true, valid: true}` for any path including nonexistent files
-  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
-- **`sqlite_restore` WASM False Positive** — Now returns WASM limitation error upfront before attempting ATTACH
-  - Previously, ATTACH succeeded silently in WASM, causing restore to "succeed" by copying empty tables from a nonexistent backup
-  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
-- **`sqlite_pragma_table_info` Nonexistent Table Detection** — Returns `{success: false}` for nonexistent tables
-  - Previously returned `{success: true, columns: []}` for tables that don't exist
-  - Now checks if columns array is empty and returns `{success: false, error: "Table 'x' not found or has no columns"}`
-- **Admin Code Mode Positional Parameters** — Added 12 missing entries in `api.ts` for admin group methods
-  - `generateSeries`, `createView`, `dropView`, `createSeriesTable`, `virtualTableInfo`, `dropVirtualTable`, `verifyBackup`, `pragmaCompileOptions`, `createRtreeTable`, `createCsvTable`, `analyzeCsvSchema` now support positional arg syntax
-  - Example: `sqlite.admin.createView("my_view", "SELECT 1")` now works instead of requiring object syntax
-- **Code Mode `normalizeParams` Primitive Type Handling** — Fixed single number/boolean args being passed raw to tool handlers
-  - Previously, `sqlite.admin.generateSeries(1, 5, 1)` passed `1` directly instead of `{start: 1, stop: 5, step: 1}`
-  - `normalizeParams` now wraps number and boolean single args using the positional parameter mapping, same as strings
-  - Affects any method with non-string first positional params (e.g., `generateSeries`, `dbstat`)
-
-### Added
-
-- **Code Mode (Sandboxed Execution)** — New `sqlite_execute_code` tool for executing JavaScript in a sandboxed environment
-  - Agents write code using `sqlite.*` API to access all 7 tool groups (core, json, text, stats, vector, admin, geo)
-  - 70-90% token reduction by replacing multiple sequential tool calls with a single code execution
-  - Dual sandbox support: `worker_threads` (default, enhanced isolation) and `vm` module
-  - Worker sandbox uses MessagePort RPC bridge for secure API proxy between threads
-  - Security: code validation against blocked patterns, rate limiting (60 exec/min), result sanitization (10MB cap), audit logging
-  - Built-in `help()` for discoverability: `sqlite.help()` for groups, `sqlite.<group>.help()` for methods
-  - Positional parameter support: `sqlite.core.readQuery("SELECT 1")` maps to `{ query: "SELECT 1" }`
-  - Method aliases for ergonomic use (e.g., `sqlite.core.query()` → `readQuery`)
-  - New `codemode` tool group added to all meta-group shortcuts (starter, analytics, search, spatial, minimal, full)
-  - Environment variable `CODEMODE_ISOLATION=vm|worker` to select sandbox mode (default: `worker`)
-  - New files: `src/codemode/` (types, security, sandbox, worker-sandbox, worker-script, sandbox-factory, api, index)
-  - Updated: `ToolGroup` type, `LogModule`, `ToolConstants`, `ServerInstructions`, tool index
-  - Auto-injected into all tool filter configurations (whitelist mode) — opt out with `-codemode`
-
-### Changed
-
 - **Deterministic Error Handling** — Structured error responses across all tools
   - `registerTool()` catch block now uses `formatError()` to surface `code`, `category`, `suggestion`, `recoverable` fields
   - Applies to both WASM (`SqliteAdapter`) and native (`NativeSqliteAdapter`) adapters
@@ -340,7 +163,185 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`sqlite_stats_correlation` Non-Numeric Column Validation** — Now returns structured error for non-numeric columns
+- **Multi-Session Streamable HTTP Crash** — Fixed `Already connected to a transport` error when creating 2+ concurrent sessions
+  - SDK's `McpServer.connect()` only supports one active transport; second `connect()` threw
+  - Added close-before-reconnect pattern wrapping `server.connect()` in try-catch
+- **`sqlite_spatialite_index` Check Returns `valid: false` for Valid Indexes** — Now treats `CheckSpatialIndex` null result as indeterminate
+  - SpatiaLite 5.x's `CheckSpatialIndex()` commonly returns `null` instead of `1` for valid indexes
+  - Previously interpreted `null` as `false`, producing misleading message "Spatial index exists but may be invalid"
+  - Now returns `valid: null` with message "Spatial index exists (validation inconclusive — common in SpatiaLite 5.x)"
+  - Explicit `valid: false` now only shown when `CheckSpatialIndex` returns `0` (actually invalid index)
+- **`sqlite_spatialite_create_table` Misleading Success on Existing Table** — Now returns `alreadyExists: true` when table already exists
+  - Previously used `CREATE TABLE IF NOT EXISTS` and always reported `"Spatial table 'X' created"` even when table already existed
+  - Now pre-checks table existence and returns accurate message: `"Spatial table 'X' already exists"` with `alreadyExists: true` flag
+  - Prevents confusion about whether data was reset or preserved
+- **`sqlite_spatialite_index` Create/Drop/Check Idempotency** — All 3 index actions now report accurate state
+  - `create`: Returns `alreadyExists: true` when index already exists instead of silently running `CreateSpatialIndex` again
+  - `drop`: Returns `alreadyDropped: true` when no index exists instead of misleadingly reporting `"Spatial index dropped"`
+  - `check`: Returns `{ indexed: false }` when no index exists, or `{ indexed: true, valid: true/false }` when index exists — previously returned raw `{ result: [{ "CheckSpatialIndex(...)": null }] }`
+  - Index existence checked via `idx_{table}_{column}` in `sqlite_master`
+- **`sqlite_spatialite_analyze` Distance Matrix `targetTable` Support** — Now uses `targetTable` parameter when provided
+  - Previously, the `distance_matrix` analysis type always used `sourceTable` for both sides of the cross-join, ignoring `targetTable`
+  - Now uses `targetTable` (defaulting to `sourceTable` when omitted) and only applies `a.id < b.id` dedup filter for same-table queries
+- **SpatiaLite Tool Structured Error Responses** — All 7 SpatiaLite handlers now return structured errors instead of throwing raw MCP exceptions
+  - Added `formatError` import and try/catch blocks to all 7 handlers: `sqlite_spatialite_load`, `sqlite_spatialite_create_table`, `sqlite_spatialite_query`, `sqlite_spatialite_analyze`, `sqlite_spatialite_index`, `sqlite_spatialite_transform`, `sqlite_spatialite_import`
+  - `sqlite_spatialite_query`: Nonexistent table errors now return `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
+  - `sqlite_spatialite_analyze`: Same fix — structured error response for nonexistent tables and invalid table names
+  - `sqlite_spatialite_index`: Added table existence validation — previously returned `{success: true}` for nonexistent tables; now returns `{success: false, error: "Table 'x' does not exist"}`
+  - `sqlite_spatialite_transform`: Added null-result validation — previously returned `{success: true, result: null}` for invalid WKT geometry; now returns `{success: false, error: "Invalid geometry..."}`
+  - `sqlite_spatialite_import`: Added WKT pre-validation via `GeomFromText()` — previously silently accepted invalid WKT strings like `"INVALID_WKT"`; now returns `{success: false, error: "Invalid WKT geometry..."}`
+  - `sqlite_spatialite_create_table`: Validation errors (invalid table/column names) now return structured responses instead of throwing
+  - Tests updated to expect structured error responses instead of catching thrown errors; 11 tests covering all 7 tools
+  - Previously threw raw MCP exception when called with a nonexistent table
+  - Now returns `{success: false, error, code, suggestion}` consistent with all other tool groups
+  - Security test updated to assert structured error response instead of `.rejects.toThrow()`
+- **`sqlite_restore` Relative Path Resolution** — Now resolves relative paths to absolute before file existence check
+  - Previously used raw `input.sourcePath` with `fs.existsSync`, which resolved against the MCP server's CWD (e.g., Antigravity IDE directory)
+  - Stale 0-byte files left by SQLite `ATTACH DATABASE` at the server CWD could cause false-positive `{success: true}` responses
+  - Now uses `nodePath.resolve()` consistent with the existing `sqlite_verify_backup` handler
+- **`sqlite_backup` Relative Path Resolution** — Now resolves relative paths to absolute before `VACUUM INTO`
+  - Previously used raw `input.targetPath` for `VACUUM INTO`, causing backups to be written to the MCP server's CWD instead of the expected location
+  - Now uses `nodePath.resolve()` consistent with `sqlite_verify_backup` and `sqlite_restore`
+- **`sqlite_drop_view` Misleading Success Message** — Now reports "did not exist (no action taken)" for nonexistent views
+  - Previously always returned `View 'x' dropped` regardless of whether the view existed (when `ifExists: true`)
+  - Now checks view existence before dropping, consistent with `sqlite_drop_virtual_table` pattern
+- **`sqlite_verify_backup` Relative Path False Positive** — Now resolves relative paths to absolute before `fs.existsSync` check
+  - Previously, relative paths like `"nonexistent_file.db"` bypassed the file existence check (resolved against MCP server CWD, not database directory) and `ATTACH DATABASE` silently created an empty DB, returning `{success: true, valid: true, pageCount: 0}`
+  - Now uses `nodePath.resolve()` to convert to absolute path before checking, ensuring consistent behavior regardless of server CWD
+- **`sqlite_pragma_settings` Nonexistent PRAGMA Error Message** — Returns user-friendly error for unknown PRAGMAs
+  - Previously, querying a nonexistent PRAGMA like `nonexistent_pragma_xyz` returned the confusing better-sqlite3 internal error: `"This statement does not return data. Use run() instead"` with `UNKNOWN_ERROR` code
+  - Now detects this specific error pattern and returns `{success: false, error: "Unknown or write-only PRAGMA: 'nonexistent_pragma_xyz'"}`
+  - `input` parsing moved before try/catch block to ensure PRAGMA name is accessible in error handler
+- **`sqlite_pragma_settings` Structured Error Response** — Handler now wrapped in try/catch with `formatError()`
+  - Previously, invalid PRAGMA names threw raw MCP exceptions instead of structured error responses
+  - Now returns `{success: false, error: "Invalid PRAGMA name"}` for validation failures
+  - Catches all SQLite errors and returns structured `{success: false, error, code, suggestion}` responses
+- **`sqlite_verify_backup` Nonexistent File Validation** — Now pre-validates file existence before ATTACH
+  - Previously, ATTACH silently created an empty DB for nonexistent files, returning false-positive `{success: true, valid: true, pageCount: 0}`
+  - Now returns `{success: false, message: "Backup file not found: ..."}` when file doesn't exist
+  - Outer try/catch with `formatError()` added for unexpected errors
+- **`sqlite_restore` Nonexistent File Validation** — Now pre-validates source file existence before ATTACH
+  - Previously, ATTACH silently created an empty DB for nonexistent files, returning false-positive `{success: true}`
+  - Now returns `{success: false, message: "Source file not found: ..."}` when file doesn't exist
+- **Transaction Tool Structured Error Responses** — All 6 transaction handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_transaction_begin`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`: Errors like double-begin and no-active-transaction now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`: Invalid savepoint names return `{success: false, error: "Invalid savepoint name"}` instead of throwing; nonexistent savepoint errors return structured responses
+  - Added `formatError` import to `transactions.ts`
+  - Security tests updated to assert structured error responses instead of `.rejects.toThrow()`
+- **`sqlite_vector_distance` Missing Error Handling** — Handler now wrapped in try/catch with `formatError()`
+  - Previously, Zod validation errors from malformed input threw raw MCP exceptions instead of structured error responses
+  - Now consistent with `sqlite_vector_normalize` and all other vector tool handlers
+- **`sqlite_vector_batch_store` Empty Items Table Validation** — Now validates table existence even when items array is empty
+  - Previously, `batch_store({table: "nonexistent", items: []})` returned `{success: true, stored: 0}` without checking if the table exists
+  - Now queries `sqlite_master` to verify table existence before returning the empty-items early response
+  - Returns `{success: false, error: "Table 'x' does not exist"}` for nonexistent tables
+- **`sqlite_vector_get` Column Not Found Error** — Provides clear error when vector column doesn't exist in row data
+  - Previously returned misleading `"Invalid vector format"` with `UNKNOWN_ERROR` code when the specified vector column was not found in the row
+  - Now returns descriptive error: `"Column 'x' not found or contains NULL. Available columns: ..."` listing actual column names
+- **`sqlite_vector_count` Dimensions Filter** — `dimensions` parameter now filters results instead of being silently ignored
+  - Previously `sqlite_vector_count({table: "t", dimensions: 8})` returned total row count regardless of dimensions value
+  - Now adds `WHERE dimensions = N` clause when dimensions parameter is specified
+- **`sqlite_vector_normalize` Error Handling** — Handler now wrapped in try/catch with `formatError()`
+  - Previously threw raw Zod validation errors instead of returning structured error responses
+  - Now consistent with all other vector tool handlers
+- **`sqlite_vector_batch_store` Empty Items Validation** — Returns early with `{stored: 0, message: "No items provided"}` for empty items array
+  - Previously, empty items array on a nonexistent table silently returned `{success: true, stored: 0}` without touching the database
+  - Now short-circuits before any SQL execution, preventing misleading success responses
+- **Vector Tool Structured Error Responses** — All 11 vector handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_vector_create_table`, `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_search`, `sqlite_vector_get`, `sqlite_vector_delete`, `sqlite_vector_count`, `sqlite_vector_stats`, `sqlite_vector_dimensions`, `sqlite_vector_normalize`, `sqlite_vector_distance`: Errors like nonexistent tables, invalid identifiers, and invalid input now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - Added `formatError` import from `utils/errors.js` and wrapped all 11 handlers in try/catch blocks
+  - Security tests in `identifier-integration.test.ts` updated to assert structured error responses instead of `.rejects.toThrow()`
+  - Consistent with the structured error pattern already used by all other tool groups
+- **`sqlite_vector_search` Negative Cosine Similarity Filter** — Search no longer silently drops results with negative cosine similarity
+  - Previously, the search filter `_similarity >= 0` excluded rows with negative cosine similarity (dissimilar vectors)
+  - Negative cosine similarity is valid (ranges from -1 to 1) and should be returned when within the limit
+  - Now filters only rows where vector parsing failed (returns `null`), preserving all valid similarity scores
+- **`sqlite_vector_create_table` Dimensions Validation** — Now rejects dimensions < 1 with structured error
+  - Previously accepted `dimensions: 0` creating a table with meaningless `DEFAULT 0` dimension column
+- **`sqlite_vector_distance` Cosine Metric** — Now returns cosine distance (`1 - similarity`) instead of raw cosine similarity
+  - Previously returned cosine similarity (0 for orthogonal, 1 for identical) despite the tool being named "distance"
+  - Now returns cosine distance (1.0 for orthogonal, 0 for identical) consistent with euclidean distance semantics
+  - Does not affect `sqlite_vector_search` which correctly uses `_similarity` as a ranking score
+- **Window Function Structured Error Responses** — All 6 window function handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`: Errors like nonexistent tables, invalid identifiers, and bad SQL now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - Added `formatError` import from `utils/errors.js` and wrapped all 6 handlers in try/catch blocks
+  - Window function tests updated to assert structured error responses instead of `.rejects.toThrow()`
+  - Consistent with the structured error pattern already used by all 13 stats tools
+- **`server_health` FTS5 Detection False Negative** — Health check now correctly reports `fts5: true` when FTS5 is compiled in
+  - `hasFts5()` previously created a `_fts5_test` virtual table as a probe, which silently failed when SpatiaLite extensions were loaded
+  - Replaced with lightweight `PRAGMA compile_options` check for `ENABLE_FTS5` flag
+  - More reliable and efficient than the virtual table creation/drop approach
+- **FTS5 Tool Structured Error Responses** — All 4 FTS5 handlers now return structured errors instead of throwing raw MCP exceptions
+  - `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`: Errors like nonexistent tables, bad SQL, and invalid columns now return `{success: false, error, code, suggestion}` instead of propagating as unhandled exceptions
+  - Previously, only `isFts5UnavailableError` (WASM mode) was caught; all other errors were re-thrown
+  - Consistent with the structured error pattern already used by all 13 text tools, core tools, stats tools, and JSON tools
+  - Security tests in `fts-injection.test.ts` updated to assert structured error responses instead of `.rejects.toThrow()`
+- **`sqlite_execute_code` Per-Call Timeout Enforcement** — The `timeout` parameter is now respected per-call instead of being silently ignored
+  - Previously, `timeout` was parsed from input but never passed to the sandbox pool; all executions used the fixed 30000ms default
+  - Added `timeoutMs?: number` parameter to `ISandbox.execute()` and `ISandboxPool.execute()` interfaces
+  - All 4 implementations updated: `CodeModeSandbox`, `SandboxPool`, `WorkerSandbox`, `WorkerSandboxPool`
+  - `codemode.ts` now passes the user-specified timeout through to `pool.execute(code, bindings, timeoutMs)`
+- **`sqlite_create_index` Table Existence Pre-Validation** — Now returns `TABLE_NOT_FOUND` error instead of raw SQL error for nonexistent tables
+  - Previously returned `{success: false, message: "Write query failed: no such table: main.xyz"}` (leaking implementation detail)
+  - Now pre-validates table existence and returns `{success: false, message: "Table 'xyz' does not exist", code: "TABLE_NOT_FOUND"}`
+  - Consistent with `sqlite_describe_table` and `sqlite_get_indexes` which already pre-validate table existence
+- **`sqlite_create_index` Empty Columns Validation** — `CreateIndexSchema.columns` now requires `.min(1)`
+  - Previously, an empty columns array passed Zod validation and produced invalid SQL `CREATE INDEX ... ON table ()`
+  - Now rejected at schema validation level with clear "Array must contain at least 1 element(s)" message
+- **`formatError` Category-Based Error Codes** — Native SQLite errors now get category-specific codes instead of generic `UNKNOWN_ERROR`
+  - `no such table` errors now return `RESOURCE_ERROR` code (previously `UNKNOWN_ERROR` despite correct category detection)
+  - Maps detected `ErrorCategory` to descriptive codes: `VALIDATION_ERROR`, `CONNECTION_ERROR`, `QUERY_ERROR`, `PERMISSION_ERROR`, `CONFIG_ERROR`, `RESOURCE_ERROR`
+  - Only applies to plain `Error` objects caught from SQLite; `DbMcpError` subclasses retain their explicit codes
+- **`ERROR_SUGGESTIONS` Query Error Pattern Coverage** — 3 new patterns added for query errors that previously fell through to `UNKNOWN_ERROR`
+  - `incomplete input` → `QUERY_ERROR` with suggestion to check for missing clauses or closing parentheses
+  - `more than one statement` → `QUERY_ERROR` with suggestion to split into separate calls or use `sqlite_execute_code`
+  - `too few parameter` → `QUERY_ERROR` with suggestion to match params array to placeholder count
+- **`sqlite_read_query` Statement Type Validation** — Now rejects non-SELECT statements with clear error messages
+  - Previously, INSERT/UPDATE/DELETE/DDL passed to `read_query` leaked internal better-sqlite3 message: `"This statement does not return data. Use run() instead"`
+  - Now validates upfront and returns: `"Statement type not allowed: INSERT is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL."`
+  - Allows SELECT, PRAGMA, EXPLAIN, and WITH statements; mirrors `write_query` validation pattern
+- **`reset-database.ps1` Verification Table List** — Removed orphaned `temp_text_test` entry from expected tables map
+  - `temp_text_test` is not created by the seed SQL and was dead code (verification query only checks `test_%` tables)
+- **Native Adapter Missing Codemode Tool** — `sqlite_execute_code` was not registered in Native mode
+  - `NativeSqliteAdapter.getToolDefinitions()` was missing `getCodeModeTools()` from its tool list
+  - WASM adapter (`SqliteAdapter`) already included it via `getAllToolDefinitions()`
+  - Tool filter correctly auto-injected `codemode` into enabled groups, but the tool definition was never produced so it couldn't be registered
+- **Core Tool Input Validation** — 5 core tool handlers now return structured errors for invalid identifiers instead of throwing raw MCP exceptions
+  - `sqlite_create_table`: Added `sanitizeIdentifier` validation for table names and empty columns array check (previously accepted empty string names and empty columns, causing orphaned tables or SQL syntax errors)
+  - `sqlite_drop_table`, `sqlite_drop_index`: Wrapped existing `sanitizeIdentifier` calls in try/catch to return `{success: false, message: "..."}` instead of propagating `InvalidIdentifierError`
+  - `sqlite_get_indexes`, `sqlite_create_index`: Same try/catch wrapping for identifier validation
+  - All 5 handlers now follow the structured error response pattern: `{success: false, message: "Invalid ... name"}`
+- **`sqlite_geo_nearby` `returnColumns` Column Leakage** — Lat/lon columns no longer leak into results when `returnColumns` is specified
+  - Previously, internally-added lat/lon columns (needed for Haversine distance calculation) were included in the response even when the user didn't request them
+  - Now strips lat/lon columns from results unless the user explicitly includes them in `returnColumns`
+  - Consistent with `sqlite_geo_bounding_box` which already respected `returnColumns` exactly
+- **Geo Tool Structured Error Responses** — All 3 database-accessing geo handlers now return structured errors instead of throwing raw MCP errors
+  - `sqlite_geo_nearby`, `sqlite_geo_bounding_box`, `sqlite_geo_cluster`: Wrap handler logic in try-catch with `formatError()` for consistent `{success: false, error: "..."}` responses
+  - Added `validateColumnExists()` to validate lat/lon column existence before query execution; previously nonexistent columns silently returned 0 results
+  - 6 new error path tests added for nonexistent table and column scenarios
+- **Admin Tool Structured Error Responses** — 4 admin tool handlers now return structured errors instead of throwing raw MCP errors
+  - `sqlite_virtual_table_info`: Returns `{success: false, error: "Virtual table 'x' not found"}` instead of throwing for nonexistent virtual tables
+  - `sqlite_create_view`: Catches duplicate view errors, invalid SQL, and identifier validation failures; returns `{success: false, message: "..."}` with context
+  - `sqlite_drop_view`: Catches nonexistent view errors (when `ifExists: false`) and identifier validation failures
+  - `sqlite_drop_virtual_table`: Catches nonexistent table errors (when `ifExists: false`) and returns structured response
+  - Security tests updated to assert `{success: false, message: /invalid/i}` instead of `.rejects.toThrow()`
+- **`sqlite_verify_backup` WASM False Positive** — Now returns WASM limitation error upfront before attempting ATTACH
+  - Previously, ATTACH succeeded silently in WASM (creating empty DB in virtual filesystem), causing verify to return `{success: true, valid: true}` for any path including nonexistent files
+  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
+- **`sqlite_restore` WASM False Positive** — Now returns WASM limitation error upfront before attempting ATTACH
+  - Previously, ATTACH succeeded silently in WASM, causing restore to "succeed" by copying empty tables from a nonexistent backup
+  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
+- **`sqlite_pragma_table_info` Nonexistent Table Detection** — Returns `{success: false}` for nonexistent tables
+  - Previously returned `{success: true, columns: []}` for tables that don't exist
+  - Now checks if columns array is empty and returns `{success: false, error: "Table 'x' not found or has no columns"}`
+- **Admin Code Mode Positional Parameters** — Added 12 missing entries in `api.ts` for admin group methods
+  - `generateSeries`, `createView`, `dropView`, `createSeriesTable`, `virtualTableInfo`, `dropVirtualTable`, `verifyBackup`, `pragmaCompileOptions`, `createRtreeTable`, `createCsvTable`, `analyzeCsvSchema` now support positional arg syntax
+  - Example: `sqlite.admin.createView("my_view", "SELECT 1")` now works instead of requiring object syntax
+- **Code Mode `normalizeParams` Primitive Type Handling** — Fixed single number/boolean args being passed raw to tool handlers
+  - Previously, `sqlite.admin.generateSeries(1, 5, 1)` passed `1` directly instead of `{start: 1, stop: 5, step: 1}`
+  - `normalizeParams` now wraps number and boolean single args using the positional parameter mapping, same as strings
+  - Affects any method with non-string first positional params (e.g., `generateSeries`, `dbstat`)
+  - **`sqlite_stats_correlation` Non-Numeric Column Validation** — Now returns structured error for non-numeric columns
   - Previously returned `{success: true, correlation: null}` when correlating text columns (e.g., `name`, `description`)
   - Now validates column types via `PRAGMA table_info()` and returns `{success: false, code: "INVALID_INPUT"}` with suggestion to use numeric columns
   - Correlation description says "numeric columns" — behavior now enforces this
@@ -351,12 +352,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `statsGroupBy`: Was mapped to `["table", "column"]` but actual params are `["table", "valueColumn", "groupByColumn", "stat"]`
   - Added missing positional mappings for `statsDistinct`, `statsSummary`, `statsFrequency`, `statsOutliers`, `statsHypothesis`
   - All 13 stats methods now support positional arg syntax in `sqlite_execute_code`
-
 - **Code Mode `help()` Write Method Discoverability** — `help()` now lists all methods regardless of `readonly` flag
   - Previously, `readonly: true` filtered write tools before API construction, hiding them from `help()` output
   - Now builds full API surface first, then wraps write methods with readonly guards returning `CODEMODE_READONLY_VIOLATION` errors
   - Users can discover all available methods via `sqlite.core.help()` and get clear error messages when invoking write methods in readonly mode
-
 - **Text Tool Code Mode Positional Parameters** — Fixed 8 broken positional parameter mappings for text tools in `api.ts`
   - `textSplit`, `textConcat`, `textReplace` renamed to `split`, `concat`, `replace` (matching actual method names after prefix stripping)
   - Added 5 missing entries: `trim`, `case`, `substring`, `validate`, `normalize`
@@ -410,39 +409,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stats Code Mode Positional Parameters (Round 4)** — Fixed `statsCount` missing `distinct` in positional parameter mapping
   - Was `["table", "column", "whereClause"]` — `distinct` boolean passed as 3rd arg was mapped to `whereClause`, causing Zod validation error
   - Fixed to `["table", "column", "distinct", "whereClause"]` — enables `sqlite.stats.statsCount("table", "col", true)` syntax
-
-### Added
-
-- **`sqlite_drop_index` Tool** — New core tool to drop indexes from the database
-  - Validates index existence before dropping
-  - Supports `ifExists` flag (default `true`) for graceful no-op when index doesn't exist
-  - Registered in core group with `DropIndexSchema` / `DropIndexOutputSchema`
-  - Added to `ToolConstants.ts`, `ServerInstructions.ts`, and positional param map
-  - Core tool count: 8 → 9 (minimal meta-group: 9 → 10)
-
-### Fixed
-
 - **Codemode Positional Parameter Mapping** — Fixed incorrect parameter name mappings in `api.ts`
   - `readQuery` and `writeQuery` mapped to `"sql"` but actual schema uses `"query"` — corrected
   - `describeTable`, `dropTable`, `getIndexes` mapped to `"table"` but actual schema uses `"tableName"` — corrected
   - `createTable`, `createIndex` first positional param mapped to `"table"` instead of `"tableName"` — corrected
   - `ServerInstructions.ts` examples updated to match corrected mappings
-
 - **Codemode JSON Positional Parameter Mapping** — Fixed 16 incorrect parameter mappings for JSON code mode methods
   - `validatePath`, `pretty`, `valid` were mismapped to `["table", "column", ...]` instead of `"path"`, `"json"`, `"json"` respectively
   - `extract`, `set`, `remove`, `type`, `arrayLength`, `arrayAppend`, `keys`, `each`, `update`, `merge` were missing `whereClause` positional param
   - `insert` missing `data`, `select` missing `paths`, `query` missing `filterPaths` params
   - Calling `sqlite.json.extract("table", "col", "$.path", "id = 1")` now correctly maps the 4th arg to `whereClause`
-
 - **`sqlite_create_index` Misleading Message for Duplicate Index Name** — Fixed IF NOT EXISTS returning false "created" message
   - When an index name already exists, `CREATE INDEX IF NOT EXISTS` silently does nothing but the handler always reported "created on table(column)"
   - Now checks index existence before executing and returns `"already exists (no changes made)"` when the index is pre-existing
   - Mirrors the pattern already used by `sqlite_create_table` for duplicate table names
-
 - **`sqlite_execute_code` Negative `memoryUsedMb` Values** — Clamped memory metric to `Math.max(0, ...)`
   - Both `worker-sandbox.ts` and `sandbox.ts` measured heap delta on the main thread, which could go negative due to GC during worker execution
   - Values like `-4.76 MB` are now reported as `0 MB` instead
-
 - **`sqlite_write_query` Statement Type Validation** — Now rejects non-DML statements with structured errors
   - Only allows INSERT, UPDATE, DELETE, and REPLACE statements
   - SELECT, PRAGMA, EXPLAIN, and DDL (CREATE, ALTER, DROP, TRUNCATE) are rejected with clear error messages
@@ -454,52 +437,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - WASM tool counts corrected: `starter` 48→44, `search` 36→32, `full` 102→98, `text` group 17→13
   - Updated README.md, DOCKER_README.md, ToolConstants.ts, ServerInstructions.ts
   - Updated fts.test.ts and index.test.ts to verify exclusion
-
 - **`sqlite_create_json_collection` Non-Atomic Table Creation** — Index path validation now runs before table creation
   - Previously, the table was created first, then index paths were validated one-by-one
   - An invalid index path returned `{success: false}` but left the table behind (partial creation)
   - Now validates all index paths upfront before executing `CREATE TABLE`
-
-### Added
-
-- **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
-  - Configures which host/IP the HTTP transport binds to (default: `0.0.0.0`)
-  - Use `--server-host 127.0.0.1` to restrict to local connections only
-  - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
-  - Essential for containerized deployments where binding to all interfaces is required
-
-### Security
-
-- **NPM Audit Remediation** — Patched high severity vulnerabilities in transitive dependencies
-  - `@hono/node-server`: updated to 1.19.11
-  - `hono`: updated to 4.12.5
-- **Docker CVE Remediation** — Patched npm-bundled transitive dependencies in Dockerfile (both stages)
-  - `tar`: 7.5.7 → 7.5.8 (CVE-2026-26960: path traversal, HIGH 7.1)
-  - `minimatch`: 10.1.2 → 10.2.4 (CVE-2026-26996: ReDoS, HIGH 8.7)
-- **Security Audit Remediation** — Addressed findings from exhaustive codebase security audit
-  - CI `npm audit` gate now hard-fails on moderate+ vulnerabilities (removed `continue-on-error`)
-  - Added `Referrer-Policy` and `Strict-Transport-Security` HTTP security headers (5 → 7 total)
-  - WHERE clause validation now blocks `; SELECT` stacked query injection
-  - Removed dead `new InvalidTokenError()` construction in auth middleware
-  - Updated `SECURITY.md` supported versions to `1.x.x`
-  - Fixed Dockerfile labels (version `1.0.2`, tool count `124`)
-
-### Dependencies
-
-- `@eslint/js`: 9.39.2 → 10.0.1 (major)
-- `eslint`: 9.39.2 → 10.0.2 (major/patch)
-- `@types/node`: 25.3.0 → 25.3.3
-- `rimraf`: 6.1.2 → 6.1.3
-- `typescript-eslint`: 8.55.0 → 8.56.1
-- `@modelcontextprotocol/sdk`: 1.27.0 → 1.27.1
-- `@types/pg`: 8.16.0 → 8.18.0
-- `globals`: 17.3.0 → 17.4.0
-- `pg`: 8.18.0 → 8.20.0
-- `sql.js`: 1.14.0 → 1.14.1
-
-### Changed
-
-- **DOCKER_README Documentation Sync** — Synchronized Docker Hub README with main README content
+  - **DOCKER_README Documentation Sync** — Synchronized Docker Hub README with main README content
   - Added Resources (8) table with efficiency tip and Prompts (10) table
   - Added SQLite Extensions section with Docker-specific SpatiaLite/CSV instructions
   - Added OAuth 2.1 supported scopes table and Docker quick start example
@@ -523,25 +465,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `.gitattributes` to normalize line endings to LF on all platforms
 - Added test suite badges (941 tests, 80% coverage) to both READMEs
 
----
+### Security
 
-## [Unreleased — Prior]
-
-### Added
-
-- **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
-  - Configures which host/IP the HTTP transport binds to (default: `0.0.0.0`)
-  - Use `--server-host 127.0.0.1` to restrict to local connections only
-  - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
-  - Essential for containerized deployments where binding to all interfaces is required
-
-### Dependencies
-
-- `@modelcontextprotocol/sdk`: 1.25.3 → 1.26.0
-- `@types/node`: 25.2.0 → 25.2.3
-- `dotenv`: 17.2.3 → 17.3.1
-- `sql.js`: 1.13.0 → 1.14.0
-- `typescript-eslint`: 8.54.0 → 8.55.0
+- **NPM Audit Remediation** — Patched high severity vulnerabilities in transitive dependencies
+  - `@hono/node-server`: updated to 1.19.11
+  - `hono`: updated to 4.12.5
+- **Docker CVE Remediation** — Patched npm-bundled transitive dependencies in Dockerfile (both stages)
+  - `tar`: 7.5.7 → 7.5.8 (CVE-2026-26960: path traversal, HIGH 7.1)
+  - `minimatch`: 10.1.2 → 10.2.4 (CVE-2026-26996: ReDoS, HIGH 8.7)
+- **Security Audit Remediation** — Addressed findings from exhaustive codebase security audit
+  - CI `npm audit` gate now hard-fails on moderate+ vulnerabilities (removed `continue-on-error`)
+  - Added `Referrer-Policy` and `Strict-Transport-Security` HTTP security headers (5 → 7 total)
+  - WHERE clause validation now blocks `; SELECT` stacked query injection
+  - Removed dead `new InvalidTokenError()` construction in auth middleware
+  - Updated `SECURITY.md` supported versions to `1.x.x`
+  - Fixed Dockerfile labels (version `1.0.2`, tool count `124`)
 
 ---
 

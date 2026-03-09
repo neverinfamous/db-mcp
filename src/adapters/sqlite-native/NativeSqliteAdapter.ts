@@ -46,6 +46,8 @@ import { getVirtualTools } from "../sqlite/tools/virtual.js";
 import { getVectorTools } from "../sqlite/tools/vector.js";
 import { getGeoTools } from "../sqlite/tools/geo.js";
 import { getAdminTools } from "../sqlite/tools/admin.js";
+import { getIntrospectionTools } from "../sqlite/tools/introspection/index.js";
+import { getMigrationTools } from "../sqlite/tools/migration/index.js";
 import { getCodeModeTools } from "../sqlite/tools/codemode.js";
 import { getResourceDefinitions } from "../sqlite/resources.js";
 import { getPromptDefinitions } from "../sqlite/prompts.js";
@@ -582,7 +584,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Get supported tool groups
    */
   override getSupportedToolGroups(): ToolGroup[] {
-    return ["core", "json", "text", "stats", "vector", "admin", "geo"];
+    return ["core", "json", "text", "stats", "vector", "admin", "geo", "introspection", "migration"];
   }
 
   /**
@@ -604,6 +606,8 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       ...getVectorTools(self),
       ...getGeoTools(self),
       ...getAdminTools(self),
+      ...getIntrospectionTools(self),
+      ...getMigrationTools(self),
       ...getCodeModeTools(self),
       // Native-only tools
       ...getTransactionTools(this),

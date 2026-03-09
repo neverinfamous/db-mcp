@@ -638,7 +638,7 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Get supported tool groups
    */
   override getSupportedToolGroups(): ToolGroup[] {
-    return ["core", "json", "text", "stats", "vector", "admin", "geo"];
+    return ["core", "json", "text", "stats", "vector", "admin", "geo", "introspection", "migration"];
   }
 
   /**

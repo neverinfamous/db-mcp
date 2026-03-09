@@ -2,7 +2,7 @@
 
 **Last Updated March 4, 2026**
 
-**SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 124 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 136 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -24,12 +24,12 @@
 
 | Feature                        | Description                                                                                                                                                              |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **124 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, and admin |
+| **136 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin |
 | **8 Resources**                | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                               |
 | **10 AI-Powered Prompts**      | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                              |
 | **Dual SQLite Backends**       | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                   |
 | **OAuth 2.1 + Access Control** | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                       |
-| **Smart Tool Filtering**       | 7 tool groups + 6 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                          |
+| **Smart Tool Filtering**       | 9 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                          |
 | **HTTP Streaming Transport**   | Dual-protocol HTTP with Streamable HTTP + Legacy SSE, security headers, rate limiting, health check, and stateless mode for serverless                                   |
 | **Structured Error Handling**  | Tools return `{success, error}` responses with actionable context — designed for agent consumption rather than cryptic error codes                                       |
 | **Production-Ready Security**  | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                        |
@@ -91,7 +91,7 @@ node dist/cli.js --transport stdio --sqlite-native ./database.db
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (124 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (100 tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (136 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (112 tools, no native dependencies).
 
 ### Verify It Works
 
@@ -135,7 +135,7 @@ cursor://anysphere.cursor-deeplink/mcp/install?name=db-mcp-sqlite&config=eyJkYi1
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 124 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 136 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 > **AntiGravity Users:** Server instructions are automatically sent to MCP clients during initialization. However, AntiGravity does not currently support MCP server instructions. For optimal usage in AntiGravity, manually provide the contents of [`src/constants/ServerInstructions.ts`](src/constants/ServerInstructions.ts) to the agent in your prompt or user rules.
 
@@ -190,11 +190,12 @@ Specify exactly the groups you need:
 | `starter`   | **46** | **50** | +3         | Core, JSON, Text   |
 | `analytics` | 46     | 52     | +3         | Core, JSON, Stats  |
 | `search`    | 34     | 38     | +3         | Core, Text, Vector |
-| `spatial`   | 25     | 32     | +3         | Core, Geo, Vector  |
-| `minimal`   | 10     | 10     | +3         | Core only          |
-| `full`      | 100    | 124    | +3         | Everything enabled |
+| `spatial`   | 25     | 32     | +3         | Core, Geo, Vector              |
+| `dev-schema`| 22     | 22     | +3         | Core, Introspection, Migration |
+| `minimal`   | 10     | 10     | +3         | Core only                      |
+| `full`      | 112    | 136    | +3         | Everything enabled             |
 
-### Tool Groups (7 Available)
+### Tool Groups (9 Available)
 
 > **Note:** +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
 
@@ -205,8 +206,10 @@ Specify exactly the groups you need:
 | `text`   | 14   | 18     | +3         | Text processing + FTS5 + advanced search |
 | `stats`  | 14   | 20     | +3         | Statistical analysis (+ window funcs)    |
 | `vector` | 12   | 12     | +3         | Embeddings, similarity search            |
-| `admin`  | 27   | 34     | +3         | Backup, restore, virtual tables, pragma  |
-| `geo`    | 5    | 12     | +3         | Geospatial + SpatiaLite (Native only)    |
+| `admin`         | 27   | 34     | +3         | Backup, restore, virtual tables, pragma     |
+| `geo`           | 5    | 12     | +3         | Geospatial + SpatiaLite (Native only)       |
+| `introspection` | 6    | 6      | +3         | Dependency graph, cascade sim, schema audit |
+| `migration`     | 6    | 6      | +3         | Migration tracking, apply, rollback (opt-in)|
 
 ### Syntax Reference
 
