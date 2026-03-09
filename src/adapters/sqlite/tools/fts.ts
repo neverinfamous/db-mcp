@@ -15,7 +15,7 @@ import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
   FtsRebuildOutputSchema,
-} from "../output-schemas.js";
+} from "../output-schemas/index.js";
 
 /**
  * Build error response for FTS5 unavailability in WASM mode

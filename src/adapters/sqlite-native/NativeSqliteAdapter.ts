@@ -37,15 +37,15 @@ import { SchemaManager } from "../sqlite/SchemaManager.js";
 
 // Import shared tools from sql.js adapter
 import { getCoreTools } from "../sqlite/tools/core.js";
-import { getJsonOperationTools } from "../sqlite/tools/json-operations.js";
+import { getJsonOperationTools } from "../sqlite/tools/json-operations/index.js";
 import { getJsonHelperTools } from "../sqlite/tools/json-helpers.js";
-import { getTextTools } from "../sqlite/tools/text.js";
+import { getTextTools } from "../sqlite/tools/text/index.js";
 import { getFtsTools } from "../sqlite/tools/fts.js";
-import { getStatsTools } from "../sqlite/tools/stats.js";
-import { getVirtualTools } from "../sqlite/tools/virtual.js";
+import { getStatsTools } from "../sqlite/tools/stats/index.js";
+import { getVirtualTools } from "../sqlite/tools/virtual/index.js";
 import { getVectorTools } from "../sqlite/tools/vector.js";
 import { getGeoTools } from "../sqlite/tools/geo.js";
-import { getAdminTools } from "../sqlite/tools/admin.js";
+import { getAdminTools } from "../sqlite/tools/admin/index.js";
 import { getIntrospectionTools } from "../sqlite/tools/introspection/index.js";
 import { getMigrationTools } from "../sqlite/tools/migration/index.js";
 import { getCodeModeTools } from "../sqlite/tools/codemode.js";
@@ -595,25 +595,25 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
 
     // Type assertion needed due to interface compatibility
     const self = this as unknown as SqliteAdapter;
-    this.cachedToolDefinitions = [
-      ...getCoreTools(self),
-      ...getJsonOperationTools(self),
-      ...getJsonHelperTools(self),
-      ...getTextTools(self),
-      ...getFtsTools(self),
-      ...getStatsTools(self),
-      ...getVirtualTools(self),
-      ...getVectorTools(self),
-      ...getGeoTools(self),
-      ...getAdminTools(self),
-      ...getIntrospectionTools(self),
-      ...getMigrationTools(self),
-      ...getCodeModeTools(self),
+    this.cachedToolDefinitions = ([] as ToolDefinition[]).concat(
+      getCoreTools(self),
+      getJsonOperationTools(self),
+      getJsonHelperTools(self),
+      getTextTools(self),
+      getFtsTools(self),
+      getStatsTools(self),
+      getVirtualTools(self),
+      getVectorTools(self),
+      getGeoTools(self),
+      getAdminTools(self),
+      getIntrospectionTools(self),
+      getMigrationTools(self),
+      getCodeModeTools(self),
       // Native-only tools
-      ...getTransactionTools(this),
-      ...getWindowTools(this),
-      ...getSpatialiteTools(this),
-    ];
+      getTransactionTools(this),
+      getWindowTools(this),
+      getSpatialiteTools(this),
+    );
 
     // Attach group-level icons to each tool definition
     for (const tool of this.cachedToolDefinitions) {

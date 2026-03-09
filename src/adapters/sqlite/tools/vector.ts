@@ -32,7 +32,7 @@ import {
   VectorDimensionsOutputSchema,
   VectorNormalizeOutputSchema,
   VectorDistanceOutputSchema,
-} from "../output-schemas.js";
+} from "../output-schemas/index.js";
 
 // Vector schemas
 const VectorStoreSchema = z.object({

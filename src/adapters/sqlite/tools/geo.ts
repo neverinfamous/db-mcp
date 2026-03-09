@@ -21,7 +21,7 @@ import {
   GeoWithinRadiusOutputSchema,
   GeoBoundingBoxOutputSchema,
   GeoClusterOutputSchema,
-} from "../output-schemas.js";
+} from "../output-schemas/index.js";
 
 // Geo schemas
 const GeoDistanceSchema = z.object({

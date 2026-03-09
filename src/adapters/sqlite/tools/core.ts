@@ -36,7 +36,7 @@ import {
   GetIndexesOutputSchema,
   CreateIndexOutputSchema,
   DropIndexOutputSchema,
-} from "../output-schemas.js";
+} from "../output-schemas/index.js";
 
 /**
  * Get all core database tools

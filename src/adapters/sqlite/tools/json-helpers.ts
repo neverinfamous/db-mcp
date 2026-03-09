@@ -30,7 +30,7 @@ import {
   JsonMergeOutputSchema,
   AnalyzeJsonSchemaOutputSchema,
   CreateJsonCollectionOutputSchema,
-} from "../output-schemas.js";
+} from "../output-schemas/index.js";
 import { normalizeJson } from "../json-utils.js";
 
 /**
