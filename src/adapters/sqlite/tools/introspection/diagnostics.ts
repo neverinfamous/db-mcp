@@ -44,7 +44,7 @@ const IndexAuditSchema = z
   .default({});
 
 const QueryPlanSchema = z.object({
-  sql: z.string().min(1).describe("SQL query to analyze (SELECT only)"),
+  sql: z.string().describe("SQL query to analyze (SELECT only)"),
 });
 
 // =============================================================================
@@ -582,7 +582,14 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = QueryPlanSchema.parse(params);
-        const sql = input.sql.trim();
+        const sql = (input.sql ?? "").trim();
+
+        if (!sql) {
+          return {
+            success: false,
+            error: "Parameter 'sql' is required and must be a non-empty string",
+          };
+        }
 
         // Only allow read-only queries
         const upper = sql.toUpperCase();
