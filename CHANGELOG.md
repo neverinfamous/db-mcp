@@ -197,6 +197,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Geo Tool Zod Validation Error Handling** — All 4 Haversine geo tool handlers now catch Zod validation errors as structured `{success: false}` responses
   - `sqlite_geo_distance`, `sqlite_geo_nearby`, `sqlite_geo_bounding_box`, `sqlite_geo_cluster`: Moved `Schema.parse(params)` inside try/catch blocks with `formatError()`
   - Previously, calling these tools with empty or invalid parameters returned raw MCP error frames instead of structured handler errors
+- **Geo Tool Coordinate Range Validation** — Moved `.min(-90).max(90)` / `.min(-180).max(180)` refinements from Zod schemas to handler-level validation
+  - `sqlite_geo_distance`: lat1, lon1, lat2, lon2 range validation via `validateCoordinates()` helper
+  - `sqlite_geo_nearby`: centerLat, centerLon range validation
+  - `sqlite_geo_bounding_box`: minLat, maxLat, minLon, maxLon range validation
+  - Previously, out-of-range coordinates (e.g., `lat1: 91`) triggered raw MCP `-32602` errors at the SDK boundary before the handler ran
+  - Now returns structured `{success: false, error: "Invalid lat1: 91. Must be between -90 and 90."}`
 - **Admin Tool Zod Validation Error Handling** — 11 admin tool handlers now catch Zod/sanitizeIdentifier errors as structured `{success: false}` responses
   - `sqlite_pragma_table_info`, `sqlite_virtual_table_info`, `sqlite_create_csv_table`, `sqlite_create_rtree_table`, `sqlite_create_series_table`, `sqlite_append_insight`: Added try/catch around `Schema.parse(params)` and `sanitizeIdentifier()` calls
   - `sqlite_backup`, `sqlite_restore`, `sqlite_generate_series`, `sqlite_analyze_csv_schema`, `sqlite_transaction_execute`: Added try/catch around `Schema.parse(params)` calls

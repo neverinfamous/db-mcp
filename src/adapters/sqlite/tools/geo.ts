@@ -25,10 +25,10 @@ import {
 
 // Geo schemas
 const GeoDistanceSchema = z.object({
-  lat1: z.number().min(-90).max(90).describe("Latitude of point 1"),
-  lon1: z.number().min(-180).max(180).describe("Longitude of point 1"),
-  lat2: z.number().min(-90).max(90).describe("Latitude of point 2"),
-  lon2: z.number().min(-180).max(180).describe("Longitude of point 2"),
+  lat1: z.number().describe("Latitude of point 1"),
+  lon1: z.number().describe("Longitude of point 1"),
+  lat2: z.number().describe("Latitude of point 2"),
+  lon2: z.number().describe("Longitude of point 2"),
   unit: z.enum(["km", "miles", "meters"]).optional().default("km"),
 });
 
@@ -36,8 +36,8 @@ const GeoNearbySchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  centerLat: z.number().min(-90).max(90).describe("Center latitude"),
-  centerLon: z.number().min(-180).max(180).describe("Center longitude"),
+  centerLat: z.number().describe("Center latitude"),
+  centerLon: z.number().describe("Center longitude"),
   radius: z.number().describe("Radius"),
   unit: z.enum(["km", "miles", "meters"]).optional().default("km"),
   limit: z.number().optional().default(100),
@@ -48,10 +48,10 @@ const GeoBoundingBoxSchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  minLat: z.number().min(-90).max(90),
-  maxLat: z.number().min(-90).max(90),
-  minLon: z.number().min(-180).max(180),
-  maxLon: z.number().min(-180).max(180),
+  minLat: z.number(),
+  maxLat: z.number(),
+  minLon: z.number(),
+  maxLon: z.number(),
   limit: z.number().optional().default(100),
   returnColumns: z.array(z.string()).optional(),
 });
@@ -105,6 +105,21 @@ async function validateColumnExists(
         resourceName: columnName,
       },
     );
+  }
+}
+
+/**
+ * Validate coordinate ranges (handler-level, not schema-level to avoid raw MCP errors)
+ */
+function validateCoordinates(
+  coords: { name: string; value: number; min: number; max: number }[],
+): void {
+  for (const { name, value, min, max } of coords) {
+    if (value < min || value > max) {
+      throw new Error(
+        `Invalid ${name}: ${String(value)}. Must be between ${String(min)} and ${String(max)}.`,
+      );
+    }
   }
 }
 
@@ -167,6 +182,13 @@ function createGeoDistanceTool(): ToolDefinition {
       try {
         const input = GeoDistanceSchema.parse(params);
 
+        validateCoordinates([
+          { name: "lat1", value: input.lat1, min: -90, max: 90 },
+          { name: "lon1", value: input.lon1, min: -180, max: 180 },
+          { name: "lat2", value: input.lat2, min: -90, max: 90 },
+          { name: "lon2", value: input.lon2, min: -180, max: 180 },
+        ]);
+
         const distance = haversineDistance(
           input.lat1,
           input.lon1,
@@ -204,6 +226,11 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoNearbySchema.parse(params);
+
+        validateCoordinates([
+          { name: "centerLat", value: input.centerLat, min: -90, max: 90 },
+          { name: "centerLon", value: input.centerLon, min: -180, max: 180 },
+        ]);
 
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
@@ -307,6 +334,13 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoBoundingBoxSchema.parse(params);
+
+        validateCoordinates([
+          { name: "minLat", value: input.minLat, min: -90, max: 90 },
+          { name: "maxLat", value: input.maxLat, min: -90, max: 90 },
+          { name: "minLon", value: input.minLon, min: -180, max: 180 },
+          { name: "maxLon", value: input.maxLon, min: -180, max: 180 },
+        ]);
 
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
