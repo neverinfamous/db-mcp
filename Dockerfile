@@ -65,13 +65,13 @@ RUN cd /usr/local/lib/node_modules/npm && \
     mv package/* node_modules/@isaacs/brace-expansion/ && \
     rm -rf package isaacs-brace-expansion-5.0.1.tgz
 
-# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.10
+# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.11
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.10 && \
+    npm pack tar@7.5.11 && \
     rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.10.tgz && \
+    tar -xzf tar-7.5.11.tgz && \
     mv package node_modules/tar && \
-    rm tar-7.5.10.tgz
+    rm tar-7.5.11.tgz
 
 # Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.4
 RUN cd /usr/local/lib/node_modules/npm && \

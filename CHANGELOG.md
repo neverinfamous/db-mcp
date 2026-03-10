@@ -108,6 +108,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
+- `@types/node`: 25.3.5 → 25.4.0
+- `jose`: 6.2.0 → 6.2.1
+- `typescript-eslint`: 8.56.1 → 8.57.0
+- Dockerfile `tar` dependency pinned to `7.5.11` for security compliance
 - `@types/node`: 25.3.3 → 25.3.5
 - `eslint`: 10.0.2 → 10.0.3
 - `jose`: 6.1.3 → 6.2.0
