@@ -110,47 +110,47 @@ describe("Security: FTS Injection Prevention", () => {
   describe("sqlite_fts_create - identifier injection", () => {
     it("should reject table name with SQL injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "test'; DROP TABLE documents--",
-          sourceTable: "documents",
-          columns: ["title", "content"],
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "test'; DROP TABLE documents--",
+        sourceTable: "documents",
+        columns: ["title", "content"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject source table with injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "valid_fts",
-          sourceTable: "documents'; DROP TABLE--",
-          columns: ["title", "content"],
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "valid_fts",
+        sourceTable: "documents'; DROP TABLE--",
+        columns: ["title", "content"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject column names with injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "valid_fts",
-          sourceTable: "documents",
-          columns: ["title", "content; DROP TABLE--"],
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "valid_fts",
+        sourceTable: "documents",
+        columns: ["title", "content; DROP TABLE--"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject content table with injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "valid_fts",
-          sourceTable: "documents",
-          columns: ["title"],
-          contentTable: "external'; ATTACH DATABASE--",
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "valid_fts",
+        sourceTable: "documents",
+        columns: ["title"],
+        contentTable: "external'; ATTACH DATABASE--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should allow valid FTS table creation", async () => {
@@ -171,12 +171,12 @@ describe("Security: FTS Injection Prevention", () => {
   describe("sqlite_fts_search - query injection", () => {
     it("should reject table name with injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_search")({
-          table: "documents_fts'; DROP TABLE--",
-          query: "test",
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_search")({
+        table: "documents_fts'; DROP TABLE--",
+        query: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should handle single quotes in search query safely", async () => {
@@ -236,11 +236,11 @@ describe("Security: FTS Injection Prevention", () => {
   describe("sqlite_fts_rebuild - identifier injection", () => {
     it("should reject table name with injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_rebuild")({
-          table: "documents_fts'); DELETE FROM documents--",
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_rebuild")({
+        table: "documents_fts'); DELETE FROM documents--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should allow valid table names", async () => {
@@ -259,12 +259,12 @@ describe("Security: FTS Injection Prevention", () => {
   describe("sqlite_fts_match_info - injection", () => {
     it("should reject table name with injection", async () => {
       if (skipIfNoFts5()) return;
-      await expect(
-        getTool("sqlite_fts_match_info")({
-          table: "documents_fts' UNION SELECT--",
-          query: "test",
-        }),
-      ).rejects.toThrow(/Invalid/i);
+      const result = (await getTool("sqlite_fts_match_info")({
+        table: "documents_fts' UNION SELECT--",
+        query: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should safely escape query strings", async () => {

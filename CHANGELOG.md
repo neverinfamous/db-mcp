@@ -192,6 +192,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `pragma-security.test.ts`: 3 `sqlite_pragma_table_info` injection tests now assert `{success: false, error: /invalid/i}`
   - `identifier-integration.test.ts`: 6 FTS tool injection tests and 2 admin tool injection tests (`pragma_table_info`, `index_stats`) updated
   - These tests were stale after handlers were migrated to return structured `{success: false}` instead of throwing
+- **`sqlite_index_stats` Structured Error Handling** — Handler now wrapped in try/catch with `formatError()`
+  - `sanitizeIdentifier()` and `Schema.parse()` were outside any try/catch, causing raw `InvalidIdentifierError` throws
+  - Now returns `{success: false, indexes: [], error: "Invalid identifier..."}` consistent with all other admin tools
+- **FTS Security Test Assertion Migration** — Updated 7 FTS injection tests from `.rejects.toThrow()` to structured error assertions
+  - `fts-injection.test.ts`: 4 `sqlite_fts_create`, 1 `sqlite_fts_search`, 1 `sqlite_fts_rebuild`, 1 `sqlite_fts_match_info` injection tests updated
 - **Core Query Tool Validation Hardening** — `sqlite_read_query` and `sqlite_write_query` handlers now catch Zod validation errors as structured `{success: false}` responses
   - Wrapped `Schema.parse(params)` inside try/catch blocks in both `createReadQueryTool` and `createWriteQueryTool` handlers
   - `sqlite_read_query`: Added empty query guard — empty string `""` previously returned `{success: true, rowCount: 0}` instead of a validation error

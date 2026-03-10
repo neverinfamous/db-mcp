@@ -195,11 +195,11 @@ describe("Security: PRAGMA Operations", () => {
 
   describe("sqlite_index_stats - table filter validation", () => {
     it("should reject table filter with SQL injection", async () => {
-      await expect(
-        getTool("sqlite_index_stats")({
-          table: "users' OR '1'='1",
-        }),
-      ).rejects.toThrow("Invalid identifier");
+      const result = (await getTool("sqlite_index_stats")({
+        table: "users' OR '1'='1",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should allow valid table filter", async () => {

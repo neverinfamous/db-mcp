@@ -127,69 +127,78 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Index Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = IndexStatsSchema.parse(params);
+      try {
+        const input = IndexStatsSchema.parse(params);
 
-      // Query for indexes
-      let sql = `
-        SELECT name, tbl_name as "table", sql
-        FROM sqlite_master
-        WHERE type = 'index' AND sql IS NOT NULL
-      `;
-      if (input.table) {
-        // Validate table name using centralized utility
-        sanitizeIdentifier(input.table);
-        sql += ` AND tbl_name = '${input.table}'`;
-      }
-      sql += " ORDER BY tbl_name, name";
+        // Query for indexes
+        let sql = `
+          SELECT name, tbl_name as "table", sql
+          FROM sqlite_master
+          WHERE type = 'index' AND sql IS NOT NULL
+        `;
+        if (input.table) {
+          // Validate table name using centralized utility
+          sanitizeIdentifier(input.table);
+          sql += ` AND tbl_name = '${input.table}'`;
+        }
+        sql += " ORDER BY tbl_name, name";
 
-      const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql);
 
-      const indexes: {
-        name: string;
-        table: string;
-        unique: boolean;
-        partial: boolean;
-        columns: { name: string; seqno: number }[];
-      }[] = [];
+        const indexes: {
+          name: string;
+          table: string;
+          unique: boolean;
+          partial: boolean;
+          columns: { name: string; seqno: number }[];
+        }[] = [];
 
-      for (const row of result.rows ?? []) {
-        const indexName = row["name"] as string;
-        const tableName = row["table"] as string;
-        const sqlDef = (row["sql"] as string) ?? "";
+        for (const row of result.rows ?? []) {
+          const indexName = row["name"] as string;
+          const tableName = row["table"] as string;
+          const sqlDef = (row["sql"] as string) ?? "";
 
-        // Filter out SpatiaLite system indexes if requested (default: true)
-        if (input.excludeSystemIndexes) {
-          if (isSpatialiteSystemIndex(indexName)) {
-            continue;
+          // Filter out SpatiaLite system indexes if requested (default: true)
+          if (input.excludeSystemIndexes) {
+            if (isSpatialiteSystemIndex(indexName)) {
+              continue;
+            }
           }
+
+          // Check if unique from CREATE statement
+          const unique = sqlDef.toUpperCase().includes("UNIQUE");
+          const partial = sqlDef.toUpperCase().includes("WHERE");
+
+          // Get column info
+          const indexInfoResult = await adapter.executeReadQuery(
+            `PRAGMA index_info("${indexName}")`,
+          );
+          const columns = (indexInfoResult.rows ?? []).map((col) => ({
+            name: col["name"] as string,
+            seqno: col["seqno"] as number,
+          }));
+
+          indexes.push({
+            name: indexName,
+            table: tableName,
+            unique,
+            partial,
+            columns,
+          });
         }
 
-        // Check if unique from CREATE statement
-        const unique = sqlDef.toUpperCase().includes("UNIQUE");
-        const partial = sqlDef.toUpperCase().includes("WHERE");
-
-        // Get column info
-        const indexInfoResult = await adapter.executeReadQuery(
-          `PRAGMA index_info("${indexName}")`,
-        );
-        const columns = (indexInfoResult.rows ?? []).map((col) => ({
-          name: col["name"] as string,
-          seqno: col["seqno"] as number,
-        }));
-
-        indexes.push({
-          name: indexName,
-          table: tableName,
-          unique,
-          partial,
-          columns,
-        });
+        return {
+          success: true,
+          indexes,
+        };
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          ...structured,
+          success: false,
+          indexes: [],
+        };
       }
-
-      return {
-        success: true,
-        indexes,
-      };
     },
   };
 }
