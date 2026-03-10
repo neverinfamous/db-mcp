@@ -164,23 +164,27 @@ function createGeoDistanceTool(): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Geo Distance"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = GeoDistanceSchema.parse(params);
+      try {
+        const input = GeoDistanceSchema.parse(params);
 
-      const distance = haversineDistance(
-        input.lat1,
-        input.lon1,
-        input.lat2,
-        input.lon2,
-        input.unit,
-      );
+        const distance = haversineDistance(
+          input.lat1,
+          input.lon1,
+          input.lat2,
+          input.lon2,
+          input.unit,
+        );
 
-      return Promise.resolve({
-        success: true,
-        distance: Math.round(distance * 1000) / 1000,
-        unit: input.unit,
-        from: { lat: input.lat1, lon: input.lon1 },
-        to: { lat: input.lat2, lon: input.lon2 },
-      });
+        return Promise.resolve({
+          success: true,
+          distance: Math.round(distance * 1000) / 1000,
+          unit: input.unit,
+          from: { lat: input.lat1, lon: input.lon1 },
+          to: { lat: input.lat2, lon: input.lon2 },
+        });
+      } catch (error) {
+        return Promise.resolve(formatError(error));
+      }
     },
   };
 }
@@ -198,9 +202,9 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Geo Nearby"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = GeoNearbySchema.parse(params);
-
       try {
+        const input = GeoNearbySchema.parse(params);
+
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
         await validateColumnExists(adapter, input.table, input.lonColumn);
@@ -301,9 +305,9 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Geo Bounding Box"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = GeoBoundingBoxSchema.parse(params);
-
       try {
+        const input = GeoBoundingBoxSchema.parse(params);
+
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
         await validateColumnExists(adapter, input.table, input.lonColumn);
@@ -351,9 +355,9 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Geo Cluster"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = GeoClusterSchema.parse(params);
-
       try {
+        const input = GeoClusterSchema.parse(params);
+
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
         await validateColumnExists(adapter, input.table, input.lonColumn);
