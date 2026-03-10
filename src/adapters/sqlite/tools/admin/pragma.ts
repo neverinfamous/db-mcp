@@ -300,6 +300,15 @@ export function createAppendInsightTool(): ToolDefinition {
       try {
         const input = AppendInsightSchema.parse(params);
 
+        // Validate non-empty (can't use .min(1) on schema — SDK validates before handler)
+        if (!input.insight || input.insight.trim().length === 0) {
+          return Promise.resolve({
+            success: false,
+            message: "Insight must be a non-empty string",
+            insightCount: insightsManager.count(),
+          });
+        }
+
         insightsManager.append(input.insight);
 
         return Promise.resolve({
