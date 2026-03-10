@@ -188,6 +188,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Root cause: MCP SDK validates `inputSchema` at the transport layer before the handler runs, rejecting required-field violations as `-32602`
   - Fix: `DatabaseAdapter.registerTool()` now wraps inputSchema with `.partial()` so the SDK accepts any param subset; handler-level `Schema.parse()` validates strictly and returns structured errors via `formatError()`
   - Added try/catch around `Schema.parse(params)` in all 23 JSON handlers across 4 files: `crud.ts` (7), `query.ts` (4), `transform.ts` (4), `json-helpers.ts` (8)
+- **Core Table Tool Zod Validation Error Handling** — 3 table handlers (`sqlite_create_table`, `sqlite_describe_table`, `sqlite_drop_table`) now catch Zod validation errors as structured `{success: false}` responses
+  - Previously, calling these tools with missing required parameters (e.g., empty `{}`) threw raw MCP errors instead of returning structured handler errors
+  - Added try/catch around `Schema.parse(params)` in all 3 handlers in `tables.ts` with `formatError()` for consistent error responses
 - **Index Tool Zod Validation Error Handling** — All 3 index handlers (`sqlite_get_indexes`, `sqlite_create_index`, `sqlite_drop_index`) now catch Zod validation errors as structured `{success: false}` responses
   - Root cause: `CreateIndexSchema.columns` had `.min(1)` which the MCP SDK validates before the handler runs, surfacing as raw MCP error `-32602`
   - Moved `min(1)` check to handler-level validation returning `{success: false, message: "At least one column is required..."}`

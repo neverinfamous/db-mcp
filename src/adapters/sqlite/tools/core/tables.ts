@@ -6,8 +6,15 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
-import { readOnly, idempotent, destructive } from "../../../../utils/annotations.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
+import {
+  readOnly,
+  idempotent,
+  destructive,
+} from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatError } from "../../../../utils/errors.js";
 import {
@@ -114,7 +121,17 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("Create Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CreateTableSchema.parse(params);
+      let input;
+      try {
+        input = CreateTableSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          message: structured.error,
+          sql: "",
+        };
+      }
 
       // Validate table name
       try {
@@ -240,7 +257,9 @@ export function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Describe a table's structure
  */
-export function createDescribeTableTool(adapter: SqliteAdapter): ToolDefinition {
+export function createDescribeTableTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_describe_table",
     description:
@@ -251,7 +270,20 @@ export function createDescribeTableTool(adapter: SqliteAdapter): ToolDefinition 
     requiredScopes: ["read"],
     annotations: readOnly("Describe Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DescribeTableSchema.parse(params);
+      let input;
+      try {
+        input = DescribeTableSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          table: "",
+          columns: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: "Check parameter types and try again.",
+        };
+      }
 
       // Check table existence first for a specific error code
       const checkResult = await adapter.executeReadQuery(
@@ -308,7 +340,16 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: destructive("Drop Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DropTableSchema.parse(params);
+      let input;
+      try {
+        input = DropTableSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          message: structured.error,
+        };
+      }
 
       // Validate table name
       try {
