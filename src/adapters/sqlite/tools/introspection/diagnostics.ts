@@ -94,7 +94,11 @@ const IndexAuditOutputSchema = z.object({
   findings: z
     .array(
       z.object({
-        type: z.enum(["redundant", "missing_fk_index", "unindexed_large_table"]),
+        type: z.enum([
+          "redundant",
+          "missing_fk_index",
+          "unindexed_large_table",
+        ]),
         severity: z.enum(["info", "warning", "error"]),
         table: z.string(),
         index: z.string().optional(),
@@ -196,18 +200,18 @@ export function createStorageAnalysisTool(
     requiredScopes: ["read"],
     annotations: readOnly("Storage Analysis"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = StorageAnalysisSchema.parse(params);
-      const includeDetails = input.includeTableDetails !== false;
-      const limit = input.limit ?? 50;
-
       try {
+        const input = StorageAnalysisSchema.parse(params);
+        const includeDetails = input.includeTableDetails !== false;
+        const limit = input.limit ?? 50;
         // Gather database-level metrics
         const pageSize = await getPragmaNumber(adapter, "page_size");
         const totalPages = await getPragmaNumber(adapter, "page_count");
         const freePages = await getPragmaNumber(adapter, "freelist_count");
         const journalMode = await getPragmaValue(adapter, "journal_mode");
         const autoVacuumRaw = await getPragmaNumber(adapter, "auto_vacuum");
-        const autoVacuum = ["none", "full", "incremental"][autoVacuumRaw] ?? "unknown";
+        const autoVacuum =
+          ["none", "full", "incremental"][autoVacuumRaw] ?? "unknown";
 
         const totalSizeBytes = totalPages * pageSize;
         const fragmentationPct =
@@ -263,7 +267,8 @@ export function createStorageAnalysisTool(
                     : 0,
                 pageCount,
                 rowCount,
-                avgRowBytes: rowCount > 0 ? Math.round(sizeBytes / rowCount) : 0,
+                avgRowBytes:
+                  rowCount > 0 ? Math.round(sizeBytes / rowCount) : 0,
               });
             }
           } catch {
@@ -380,9 +385,8 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Index Audit"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = IndexAuditSchema.parse(params);
-
       try {
+        const input = IndexAuditSchema.parse(params);
         // Get all user-created indexes
         let indexQuery = `SELECT name, tbl_name, sql FROM sqlite_master
                           WHERE type = 'index' AND sql IS NOT NULL`;
@@ -423,7 +427,10 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
           });
         }
 
-        type FindingType = "redundant" | "missing_fk_index" | "unindexed_large_table";
+        type FindingType =
+          | "redundant"
+          | "missing_fk_index"
+          | "unindexed_large_table";
         const findings: {
           type: FindingType;
           severity: "info" | "warning" | "error";
@@ -518,9 +525,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
             const countResult = await adapter.executeReadQuery(
               `SELECT COUNT(*) as cnt FROM "${tableName}"`,
             );
-            const rowCount = Number(
-              countResult.rows?.[0]?.["cnt"] ?? 0,
-            );
+            const rowCount = Number(countResult.rows?.[0]?.["cnt"] ?? 0);
 
             if (rowCount >= 1000) {
               findings.push({
@@ -575,24 +580,21 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Query Plan"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = QueryPlanSchema.parse(params);
-      const sql = input.sql.trim();
-
-      // Only allow read-only queries
-      const upper = sql.toUpperCase();
-      if (
-        !upper.startsWith("SELECT") &&
-        !upper.startsWith("WITH")
-      ) {
-        return {
-          success: false,
-          error:
-            "Only SELECT and WITH (CTE) queries can be analyzed. Received: " +
-            upper.substring(0, 20),
-        };
-      }
-
       try {
+        const input = QueryPlanSchema.parse(params);
+        const sql = input.sql.trim();
+
+        // Only allow read-only queries
+        const upper = sql.toUpperCase();
+        if (!upper.startsWith("SELECT") && !upper.startsWith("WITH")) {
+          return {
+            success: false,
+            error:
+              "Only SELECT and WITH (CTE) queries can be analyzed. Received: " +
+              upper.substring(0, 20),
+          };
+        }
+
         const result = await adapter.executeReadQuery(
           `EXPLAIN QUERY PLAN ${sql}`,
         );
@@ -673,7 +675,13 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
             scanType = "compound";
           }
 
-          plan.push({ id, parent, detail, scanType, ...(table ? { table } : {}) });
+          plan.push({
+            id,
+            parent,
+            detail,
+            scanType,
+            ...(table ? { table } : {}),
+          });
         }
 
         // Deduplicate scan lists

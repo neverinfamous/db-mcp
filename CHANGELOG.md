@@ -183,6 +183,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Introspection Tool Zod Validation Error Handling** — All 9 introspection tool handlers now catch Zod validation errors as structured `{success: false}` responses
+  - `sqlite_dependency_graph`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_schema_snapshot`, `sqlite_constraint_analysis`, `sqlite_migration_risks`, `sqlite_storage_analysis`, `sqlite_index_audit`, `sqlite_query_plan`: Moved `Schema.parse(params)` inside try/catch blocks with `formatError()`
+  - Previously, calling tools with invalid parameters (wrong types, missing required fields, out-of-range values) returned raw MCP error frames instead of structured handler errors
 - **Geo Tool Zod Validation Error Handling** — All 4 Haversine geo tool handlers now catch Zod validation errors as structured `{success: false}` responses
   - `sqlite_geo_distance`, `sqlite_geo_nearby`, `sqlite_geo_bounding_box`, `sqlite_geo_cluster`: Moved `Schema.parse(params)` inside try/catch blocks with `formatError()`
   - Previously, calling these tools with empty or invalid parameters returned raw MCP error frames instead of structured handler errors

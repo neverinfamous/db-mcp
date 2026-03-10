@@ -7,7 +7,10 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { formatError } from "../../../../utils/errors.js";
 import { z } from "zod";
@@ -45,14 +48,16 @@ interface GraphEdge {
  */
 async function buildForeignKeyGraph(
   adapter: SqliteAdapter,
-): Promise<{ nodes: GraphNode[]; edges: GraphEdge[]; fkInfo: ForeignKeyInfo[] }> {
+): Promise<{
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  fkInfo: ForeignKeyInfo[];
+}> {
   // Get all user tables (exclude internal/system)
   const tablesResult = await adapter.executeReadQuery(
     `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
   );
-  const tableNames = (tablesResult.rows ?? []).map(
-    (r) => r["name"] as string,
-  );
+  const tableNames = (tablesResult.rows ?? []).map((r) => r["name"] as string);
 
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
@@ -266,10 +271,9 @@ export function createDependencyGraphTool(
     requiredScopes: ["read"],
     annotations: readOnly("Dependency Graph"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DependencyGraphSchema.parse(params);
-      const includeRowCounts = input.includeRowCounts !== false;
-
       try {
+        const input = DependencyGraphSchema.parse(params);
+        const includeRowCounts = input.includeRowCounts !== false;
         const { nodes, edges } = await buildForeignKeyGraph(adapter);
 
         // Build adjacency for cycle detection
@@ -332,10 +336,9 @@ export function createTopologicalSortTool(
     requiredScopes: ["read"],
     annotations: readOnly("Topological Sort"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TopologicalSortSchema.parse(params);
-      const direction = input.direction ?? "create";
-
       try {
+        const input = TopologicalSortSchema.parse(params);
+        const direction = input.direction ?? "create";
         const { nodes, edges } = await buildForeignKeyGraph(adapter);
 
         // Build adjacency + in-degree for Kahn's algorithm
@@ -362,7 +365,11 @@ export function createTopologicalSortTool(
           if (degree === 0) queue.push(table);
         }
 
-        const sorted: { table: string; level: number; dependencies: string[] }[] = [];
+        const sorted: {
+          table: string;
+          level: number;
+          dependencies: string[];
+        }[] = [];
         let level = 0;
 
         while (queue.length > 0) {
@@ -427,10 +434,9 @@ export function createCascadeSimulatorTool(
     requiredScopes: ["read"],
     annotations: readOnly("Cascade Simulator"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CascadeSimulatorSchema.parse(params);
-      const operation = input.operation ?? "DELETE";
-
       try {
+        const input = CascadeSimulatorSchema.parse(params);
+        const operation = input.operation ?? "DELETE";
         // Verify table exists
         const tableCheck = await adapter.executeReadQuery(
           `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
@@ -527,10 +533,7 @@ export function createCascadeSimulatorTool(
             affected.push(entry);
 
             // Continue BFS for CASCADE actions
-            if (
-              action.startsWith("CASCADE") ||
-              action.startsWith("ORPHANED")
-            ) {
+            if (action.startsWith("CASCADE") || action.startsWith("ORPHANED")) {
               queue.push({
                 table: fk.fromTable,
                 path: entry.path,

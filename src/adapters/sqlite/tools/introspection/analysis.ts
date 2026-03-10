@@ -7,7 +7,10 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { formatError } from "../../../../utils/errors.js";
 import { z } from "zod";
@@ -185,16 +188,15 @@ export function createSchemaSnapshotTool(
     requiredScopes: ["read"],
     annotations: readOnly("Schema Snapshot"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = SchemaSnapshotSchema.parse(params);
-      const sections = input.sections ?? [
-        "tables",
-        "views",
-        "indexes",
-        "triggers",
-      ];
-      const compact = input.compact ?? false;
-
       try {
+        const input = SchemaSnapshotSchema.parse(params);
+        const sections = input.sections ?? [
+          "tables",
+          "views",
+          "indexes",
+          "triggers",
+        ];
+        const compact = input.compact ?? false;
         const snapshot: Record<string, unknown> = {};
         const stats = { tables: 0, views: 0, indexes: 0, triggers: 0 };
 
@@ -308,15 +310,14 @@ export function createConstraintAnalysisTool(
     requiredScopes: ["read"],
     annotations: readOnly("Constraint Analysis"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = ConstraintAnalysisSchema.parse(params);
-      const checksToRun = input.checks ?? [
-        "missing_pk",
-        "missing_not_null",
-        "unindexed_fk",
-        "missing_fk",
-      ];
-
       try {
+        const input = ConstraintAnalysisSchema.parse(params);
+        const checksToRun = input.checks ?? [
+          "missing_pk",
+          "missing_not_null",
+          "unindexed_fk",
+          "missing_fk",
+        ];
         // Get tables to analyze
         let tableQuery = `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%'`;
         const queryParams: unknown[] = [];
@@ -505,9 +506,8 @@ export function createMigrationRisksTool(
     requiredScopes: ["read"],
     annotations: readOnly("Migration Risks"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = MigrationRisksSchema.parse(params);
-
       try {
+        const input = MigrationRisksSchema.parse(params);
         interface Risk {
           statement: string;
           statementIndex: number;
@@ -542,7 +542,8 @@ export function createMigrationRisksTool(
             mitigation?: string,
           ): void => {
             risks.push({
-              statement: stmt.substring(0, 100) + (stmt.length > 100 ? "..." : ""),
+              statement:
+                stmt.substring(0, 100) + (stmt.length > 100 ? "..." : ""),
               statementIndex: i,
               riskLevel,
               category,
@@ -602,7 +603,8 @@ export function createMigrationRisksTool(
 
           // DROP TABLE risks
           if (upper.startsWith("DROP TABLE")) {
-            const dropTableRegex = /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"([^"]+)"|(\w+))/i;
+            const dropTableRegex =
+              /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"([^"]+)"|(\w+))/i;
             const tableMatch = dropTableRegex.exec(stmt);
             const tableName = tableMatch?.[1] ?? tableMatch?.[2];
             if (tableName && existingTables.has(tableName)) {
@@ -623,10 +625,7 @@ export function createMigrationRisksTool(
           }
 
           // DELETE without WHERE
-          if (
-            upper.startsWith("DELETE") &&
-            !upper.includes("WHERE")
-          ) {
+          if (upper.startsWith("DELETE") && !upper.includes("WHERE")) {
             addRisk(
               "critical",
               "destructive",
@@ -659,7 +658,11 @@ export function createMigrationRisksTool(
           }
 
           // Transaction-wrapped DDL
-          if (upper.startsWith("BEGIN") || upper === "COMMIT" || upper === "ROLLBACK") {
+          if (
+            upper.startsWith("BEGIN") ||
+            upper === "COMMIT" ||
+            upper === "ROLLBACK"
+          ) {
             addRisk(
               "low",
               "transaction",
