@@ -5,8 +5,15 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
-import { readOnly, idempotent, destructive } from "../../../../utils/annotations.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
+import {
+  readOnly,
+  idempotent,
+  destructive,
+} from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   GenerateSeriesOutputSchema,
@@ -14,9 +21,7 @@ import {
   ListViewsOutputSchema,
   DropTableOutputSchema,
 } from "../../output-schemas/index.js";
-import {
-  isSpatialiteSystemView,
-} from "../core/index.js";
+import { isSpatialiteSystemView } from "../core/index.js";
 import {
   GenerateSeriesSchema,
   CreateViewSchema,
@@ -24,7 +29,9 @@ import {
   DropViewSchema,
 } from "./helpers.js";
 
-export function createGenerateSeriesTool(_adapter: SqliteAdapter): ToolDefinition {
+export function createGenerateSeriesTool(
+  _adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_generate_series",
     description:
@@ -35,7 +42,17 @@ export function createGenerateSeriesTool(_adapter: SqliteAdapter): ToolDefinitio
     requiredScopes: ["read"],
     annotations: readOnly("Generate Series"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = GenerateSeriesSchema.parse(params);
+      let input;
+      try {
+        input = GenerateSeriesSchema.parse(params);
+      } catch (error) {
+        return Promise.resolve({
+          success: false,
+          count: 0,
+          values: [],
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
 
       // Generate in JS - better-sqlite3 doesn't include SQLITE_ENABLE_SERIES
       const values: number[] = [];

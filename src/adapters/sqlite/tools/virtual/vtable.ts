@@ -388,7 +388,18 @@ export function createAnalyzeCsvSchemaTool(
     requiredScopes: ["read"],
     annotations: readOnly("Analyze CSV Schema"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = AnalyzeCsvSchemaSchema.parse(params);
+      let input;
+      try {
+        input = AnalyzeCsvSchemaSchema.parse(params);
+      } catch (error) {
+        return {
+          success: false,
+          hasHeader: false,
+          rowCount: 0,
+          columns: [],
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
 
       // Validate that the file path is absolute (required by SQLite CSV extension)
       if (!path.isAbsolute(input.filePath)) {

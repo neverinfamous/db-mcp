@@ -7,7 +7,10 @@
 import fs from "node:fs";
 import nodePath from "node:path";
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { admin, readOnly } from "../../../../utils/annotations.js";
 import { formatError } from "../../../../utils/errors.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
@@ -43,7 +46,16 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("Database Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = BackupSchema.parse(params);
+      let input;
+      try {
+        input = BackupSchema.parse(params);
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          path: "",
+        };
+      }
 
       // WASM mode: backup is not available since file system access is limited
       // Return early to avoid inconsistent VACUUM INTO behavior across WASM VFS implementations
@@ -131,7 +143,9 @@ export function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Check database integrity
  */
-export function createIntegrityCheckTool(adapter: SqliteAdapter): ToolDefinition {
+export function createIntegrityCheckTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_integrity_check",
     description: "Check database integrity for corruption or errors.",
@@ -253,7 +267,16 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("Restore Database"),
     handler: async (params: unknown, context: RequestContext) => {
-      const input = RestoreSchema.parse(params);
+      let input;
+      try {
+        input = RestoreSchema.parse(params);
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          sourcePath: "",
+        };
+      }
       const progress = buildProgressContext(context);
       const start = Date.now();
 

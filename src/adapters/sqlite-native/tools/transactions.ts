@@ -265,7 +265,17 @@ function createExecuteInTransactionTool(
     inputSchema: ExecuteInTransactionSchema,
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = ExecuteInTransactionSchema.parse(params);
+      let input;
+      try {
+        input = ExecuteInTransactionSchema.parse(params);
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          statementsExecuted: 0,
+          results: [],
+        };
+      }
 
       const results: {
         statement: string;
