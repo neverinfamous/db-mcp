@@ -5,11 +5,22 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
-import { readOnly, idempotent, destructive } from "../../../../utils/annotations.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
+import {
+  readOnly,
+  idempotent,
+  destructive,
+} from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatError } from "../../../../utils/errors.js";
-import { GetIndexesSchema, CreateIndexSchema, DropIndexSchema } from "../../types.js";
+import {
+  GetIndexesSchema,
+  CreateIndexSchema,
+  DropIndexSchema,
+} from "../../types.js";
 import {
   GetIndexesOutputSchema,
   CreateIndexOutputSchema,
@@ -31,7 +42,18 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Get Indexes"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = GetIndexesSchema.parse(params);
+      let input;
+      try {
+        input = GetIndexesSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          count: 0,
+          indexes: [],
+          error: structured.error,
+        };
+      }
 
       let sql = `SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL`;
 
@@ -105,7 +127,17 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("Create Index"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CreateIndexSchema.parse(params);
+      let input;
+      try {
+        input = CreateIndexSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          message: structured.error,
+          sql: "",
+        };
+      }
 
       // Validate names
       try {
@@ -189,7 +221,16 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: destructive("Drop Index"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DropIndexSchema.parse(params);
+      let input;
+      try {
+        input = DropIndexSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          message: structured.error,
+        };
+      }
 
       // Validate index name
       try {
