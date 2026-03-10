@@ -5,7 +5,10 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatError } from "../../../../utils/errors.js";
@@ -33,7 +36,18 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Keys"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonKeysSchema.parse(params);
+      let input;
+      try {
+        input = JsonKeysSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          keys: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -103,7 +117,18 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Each"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonEachSchema.parse(params);
+      let input;
+      try {
+        input = JsonEachSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          elements: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -161,7 +186,9 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Aggregate values into JSON array
  */
-export function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition {
+export function createJsonGroupArrayTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_json_group_array",
     description:
@@ -172,7 +199,18 @@ export function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition
     requiredScopes: ["read"],
     annotations: readOnly("Group Array"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonGroupArraySchema.parse(params);
+      let input;
+      try {
+        input = JsonGroupArraySchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate table name (always required)
@@ -236,7 +274,9 @@ export function createJsonGroupArrayTool(adapter: SqliteAdapter): ToolDefinition
 /**
  * Aggregate key-value pairs into JSON object
  */
-export function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinition {
+export function createJsonGroupObjectTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_json_group_object",
     description:
@@ -247,7 +287,18 @@ export function createJsonGroupObjectTool(adapter: SqliteAdapter): ToolDefinitio
     requiredScopes: ["read"],
     annotations: readOnly("Group Object"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonGroupObjectSchema.parse(params);
+      let input;
+      try {
+        input = JsonGroupObjectSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate table name (always required)

@@ -209,9 +209,25 @@ export abstract class DatabaseAdapter {
       description: tool.description,
     };
 
-    // Pass full inputSchema (not just .shape) for proper validation
+    // Pass inputSchema for tool discovery, but make it lenient for SDK validation.
+    // Uses .partial() so the SDK accepts any subset of params (including {}).
+    // Handler-level Schema.parse() catches missing required fields and returns
+    // structured {success: false} errors instead of raw MCP -32602.
     if (tool.inputSchema !== undefined) {
-      toolOptions["inputSchema"] = tool.inputSchema;
+      const schema = tool.inputSchema;
+      // Duck-type check for ZodObject.partial() — type-only import prevents instanceof
+      if (
+        typeof schema === "object" &&
+        schema !== null &&
+        "partial" in schema &&
+        typeof (schema as { partial: unknown }).partial === "function"
+      ) {
+        toolOptions["inputSchema"] = (
+          schema as { partial: () => z.ZodType }
+        ).partial();
+      } else {
+        toolOptions["inputSchema"] = schema;
+      }
     }
 
     // MCP 2025-11-25: Pass outputSchema for structured responses
@@ -405,10 +421,7 @@ export abstract class DatabaseAdapter {
    * Register a single prompt with the MCP server.
    * Subclasses may override for custom behavior.
    */
-  protected registerPrompt(
-    server: McpServer,
-    prompt: PromptDefinition,
-  ): void {
+  protected registerPrompt(server: McpServer, prompt: PromptDefinition): void {
     server.registerPrompt(
       prompt.name,
       {

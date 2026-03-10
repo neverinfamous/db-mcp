@@ -5,7 +5,10 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatError } from "../../../../utils/errors.js";
@@ -42,7 +45,17 @@ export function createValidateJsonTool(): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Validate JSON"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = ValidateJsonSchema.parse(params);
+      let input;
+      try {
+        input = ValidateJsonSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return Promise.resolve({
+          success: false,
+          valid: false,
+          message: structured.error,
+        });
+      }
 
       try {
         JSON.parse(input.json);
@@ -76,7 +89,18 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonExtractSchema.parse(params);
+      let input;
+      try {
+        input = JsonExtractSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          values: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -132,7 +156,17 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Set"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonSetSchema.parse(params);
+      let input;
+      try {
+        input = JsonSetSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -182,7 +216,17 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Remove"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonRemoveSchema.parse(params);
+      let input;
+      try {
+        input = JsonRemoveSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -232,7 +276,18 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Type"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonTypeSchema.parse(params);
+      let input;
+      try {
+        input = JsonTypeSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          types: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -279,7 +334,9 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Get JSON array length
  */
-export function createJsonArrayLengthTool(adapter: SqliteAdapter): ToolDefinition {
+export function createJsonArrayLengthTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_json_array_length",
     description: "Get the length of a JSON array at the specified path.",
@@ -289,7 +346,18 @@ export function createJsonArrayLengthTool(adapter: SqliteAdapter): ToolDefinitio
     requiredScopes: ["read"],
     annotations: readOnly("Array Length"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonArrayLengthSchema.parse(params);
+      let input;
+      try {
+        input = JsonArrayLengthSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          lengths: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -336,7 +404,9 @@ export function createJsonArrayLengthTool(adapter: SqliteAdapter): ToolDefinitio
 /**
  * Append to JSON array
  */
-export function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinition {
+export function createJsonArrayAppendTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_json_array_append",
     description: "Append a value to a JSON array using json_insert().",
@@ -346,7 +416,17 @@ export function createJsonArrayAppendTool(adapter: SqliteAdapter): ToolDefinitio
     requiredScopes: ["write"],
     annotations: write("Array Append"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonArrayAppendSchema.parse(params);
+      let input;
+      try {
+        input = JsonArrayAppendSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers

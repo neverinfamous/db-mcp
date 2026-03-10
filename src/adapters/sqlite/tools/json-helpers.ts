@@ -118,7 +118,17 @@ function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Insert"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonInsertSchema.parse(params);
+      let input;
+      try {
+        input = JsonInsertSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+        };
+      }
 
       try {
         // Normalize JSON data for consistent storage
@@ -183,7 +193,17 @@ function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Update"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonUpdateSchema.parse(params);
+      let input;
+      try {
+        input = JsonUpdateSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate table and column names
@@ -242,7 +262,18 @@ function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Select"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonSelectSchema.parse(params);
+      let input;
+      try {
+        input = JsonSelectSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate names
@@ -306,7 +337,18 @@ function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Query"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonQuerySchema.parse(params);
+      let input;
+      try {
+        input = JsonQuerySchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate names
@@ -386,7 +428,18 @@ function createJsonValidatePathTool(): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Validate JSON Path"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = JsonValidatePathSchema.parse(params);
+      let input;
+      try {
+        input = JsonValidatePathSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return Promise.resolve({
+          success: false,
+          path: "",
+          valid: false,
+          error: structured.error,
+        });
+      }
 
       const path = input.path;
       const issues: string[] = [];
@@ -426,7 +479,17 @@ function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Merge"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonMergeSchema.parse(params);
+      let input;
+      try {
+        input = JsonMergeSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate names
@@ -473,7 +536,16 @@ function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Analyze JSON Schema"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = AnalyzeJsonSchemaSchema.parse(params);
+      let input;
+      try {
+        input = AnalyzeJsonSchemaSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate names
@@ -594,7 +666,16 @@ function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Create JSON Collection"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CreateJsonCollectionSchema.parse(params);
+      let input;
+      try {
+        input = CreateJsonCollectionSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate table name

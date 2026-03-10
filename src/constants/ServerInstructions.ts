@@ -100,7 +100,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 
 **Usage**: \`sqlite_execute_code({ code: "const tables = await sqlite.core.listTables(); return tables;" })\`
 **Discover**: \`sqlite.help()\` for all groups, \`sqlite.<group>.help()\` for methods.
-**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
+**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.geo\`
 `;
 
 /**
@@ -120,7 +120,7 @@ Available presets via \`--tool-filter\`:
 
 _+3 built-in tools (\`server_info\`, \`server_health\`, \`list_adapters\`) always included_
 
-**Groups**: \`core\`, \`json\`, \`text\`, \`stats\`, \`vector\`, \`admin\`, \`geo\`, \`introspection\`, \`migration\`, \`codemode\`
+**Groups**: \`core\`, \`json\`, \`text\`, \`stats\`, \`vector\`, \`admin\`, \`geo\`, \`codemode\`
 **Syntax**: \`"core,json"\` (whitelist), \`"+stats"\` (add), \`"-admin"\` (remove)
 _Text group: 17 native, 13 in WASM (4 FTS5 tools require native)_
 `;

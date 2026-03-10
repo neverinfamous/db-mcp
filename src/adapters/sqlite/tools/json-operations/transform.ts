@@ -5,7 +5,10 @@
  */
 
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatError } from "../../../../utils/errors.js";
@@ -37,7 +40,16 @@ export function createJsonPrettyTool(): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Pretty"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = JsonPrettySchema.parse(params);
+      let input;
+      try {
+        input = JsonPrettySchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return Promise.resolve({
+          success: false,
+          error: structured.error,
+        });
+      }
 
       try {
         const parsed: unknown = JSON.parse(input.json);
@@ -74,7 +86,17 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSONB Convert"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonbConvertSchema.parse(params);
+      let input;
+      try {
+        input = JsonbConvertSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
@@ -119,7 +141,9 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Get storage format info for a JSON column
  */
-export function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinition {
+export function createJsonStorageInfoTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_json_storage_info",
     description:
@@ -130,7 +154,16 @@ export function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinitio
     requiredScopes: ["read"],
     annotations: readOnly("JSON Storage Info"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonStorageInfoSchema.parse(params);
+      let input;
+      try {
+        input = JsonStorageInfoSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate identifiers
@@ -201,7 +234,9 @@ export function createJsonStorageInfoTool(adapter: SqliteAdapter): ToolDefinitio
  * Handles both text JSON and JSONB binary format by using SQL's json()
  * function to read the data as text before JavaScript processing.
  */
-export function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefinition {
+export function createJsonNormalizeColumnTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_json_normalize_column",
     description:
@@ -212,7 +247,16 @@ export function createJsonNormalizeColumnTool(adapter: SqliteAdapter): ToolDefin
     requiredScopes: ["write"],
     annotations: write("Normalize JSON Column"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = JsonNormalizeColumnSchema.parse(params);
+      let input;
+      try {
+        input = JsonNormalizeColumnSchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          error: structured.error,
+        };
+      }
 
       try {
         // Validate and quote identifiers
