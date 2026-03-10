@@ -351,6 +351,16 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
       const input = RegressionSchema.parse(params);
 
       try {
+        if (input.degree < 1 || input.degree > 3) {
+          return {
+            success: false,
+            error: `'degree' must be between 1 and 3 (got ${input.degree})`,
+            code: "INVALID_INPUT",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+
         await validateColumnExists(adapter, input.table, input.xColumn);
         await validateColumnExists(adapter, input.table, input.yColumn);
 

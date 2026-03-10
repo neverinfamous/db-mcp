@@ -152,7 +152,6 @@ export const HistogramSchema = z.object({
   column: z.string().describe("Numeric column"),
   buckets: z
     .number()
-    .min(1)
     .optional()
     .default(10)
     .describe("Number of buckets"),
@@ -163,7 +162,7 @@ export const PercentileSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column"),
   percentiles: z
-    .array(z.number().min(0).max(100))
+    .array(z.number())
     .describe("Percentiles to compute"),
   whereClause: z.string().optional(),
 });
@@ -228,8 +227,6 @@ export const RegressionSchema = z.object({
   yColumn: z.string().describe("Dependent variable column"),
   degree: z
     .number()
-    .min(1)
-    .max(3)
     .optional()
     .default(1)
     .describe("Polynomial degree (1=linear)"),

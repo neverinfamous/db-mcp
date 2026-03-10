@@ -247,6 +247,16 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
       const input = HistogramSchema.parse(params);
 
       try {
+        if (input.buckets < 1) {
+          return {
+            success: false,
+            error: "'buckets' must be at least 1",
+            code: "INVALID_INPUT",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+
         await validateColumnExists(adapter, input.table, input.column);
         const numericError = await validateNumericColumn(
           adapter,
@@ -338,6 +348,19 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
       const input = PercentileSchema.parse(params);
 
       try {
+        const invalidPercentiles = input.percentiles.filter(
+          (p) => p < 0 || p > 100,
+        );
+        if (invalidPercentiles.length > 0) {
+          return {
+            success: false,
+            error: `Percentile values must be between 0 and 100. Invalid: ${invalidPercentiles.join(", ")}`,
+            code: "INVALID_INPUT",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+
         await validateColumnExists(adapter, input.table, input.column);
         const numericError = await validateNumericColumn(
           adapter,

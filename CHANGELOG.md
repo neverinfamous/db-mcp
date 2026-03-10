@@ -408,9 +408,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Previously returned `{success: true, correlation: null}` when correlating text columns (e.g., `name`, `description`)
   - Now validates column types via `PRAGMA table_info()` and returns `{success: false, code: "INVALID_INPUT"}` with suggestion to use numeric columns
   - Correlation description says "numeric columns" — behavior now enforces this
-- **`sqlite_stats_histogram` Bucket Validation** — Added `.min(1)` constraint to `buckets` schema parameter
-  - Previously, `buckets: 0` generated invalid SQL (`SELECT FROM table`) causing a syntax error
-  - Now rejects at Zod validation level with clear "Too small: expected number to be >=1" message
+- **Stats Tool Zod Refinement Leak Fixes** — Moved `.min()/.max()` refinements from Zod schemas to handler-level validation for 3 tools
+  - `sqlite_stats_histogram`: Removed `.min(1)` from `buckets` schema parameter; handler now returns `{success: false, error: "'buckets' must be at least 1"}` for invalid values
+  - `sqlite_stats_percentile`: Removed `.min(0).max(100)` from `percentiles` array element schema; handler now validates each percentile value is between 0 and 100
+  - `sqlite_stats_regression`: Removed `.min(1).max(3)` from `degree` schema parameter; handler now returns structured error for values outside 1-3 range
+  - Previously, out-of-range values triggered raw MCP `-32602` errors at the SDK boundary before the handler ran
 - **Stats Code Mode Positional Parameters** — Fixed `statsGroupBy` and added 5 missing entries in `api.ts`
   - `statsGroupBy`: Was mapped to `["table", "column"]` but actual params are `["table", "valueColumn", "groupByColumn", "stat"]`
   - Added missing positional mappings for `statsDistinct`, `statsSummary`, `statsFrequency`, `statsOutliers`, `statsHypothesis`
