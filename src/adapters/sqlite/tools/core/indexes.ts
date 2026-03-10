@@ -138,6 +138,15 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
           sql: "",
         };
       }
+      // Validate required: at least 1 column
+      // (moved from schema min(1) to handler for structured error response)
+      if (input.columns.length === 0) {
+        return {
+          success: false,
+          message: "At least one column is required to create an index",
+          sql: "",
+        };
+      }
 
       // Validate names
       try {

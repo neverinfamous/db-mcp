@@ -184,8 +184,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Index Tool Zod Validation Error Handling** — All 3 index handlers (`sqlite_get_indexes`, `sqlite_create_index`, `sqlite_drop_index`) now catch Zod validation errors as structured `{success: false}` responses
-  - Previously, `CreateIndexSchema.parse()` outside try/catch caused `columns: []` (with `minItems: 1`) to propagate as raw MCP error `-32602`
-  - Wrapped all `Schema.parse()` calls in try/catch blocks with `formatError()` for consistency
+  - Root cause: `CreateIndexSchema.columns` had `.min(1)` which the MCP SDK validates before the handler runs, surfacing as raw MCP error `-32602`
+  - Moved `min(1)` check to handler-level validation returning `{success: false, message: "At least one column is required..."}`
+  - Wrapped all `Schema.parse()` calls in try/catch blocks with `formatError()` for defense-in-depth
 - **Multi-Session Streamable HTTP Crash** — Fixed `Already connected to a transport` error when creating 2+ concurrent sessions
   - SDK's `McpServer.connect()` only supports one active transport; second `connect()` threw
   - Added close-before-reconnect pattern wrapping `server.connect()` in try-catch
