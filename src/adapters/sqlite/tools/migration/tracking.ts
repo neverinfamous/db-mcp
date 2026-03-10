@@ -259,9 +259,8 @@ export function createMigrationRecordTool(
     requiredScopes: ["write"],
     annotations: write("Migration Record"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = MigrationRecordSchema.parse(params);
-
       try {
+        const input = MigrationRecordSchema.parse(params);
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
@@ -343,9 +342,8 @@ export function createMigrationApplyTool(
     requiredScopes: ["admin"],
     annotations: write("Migration Apply"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = MigrationApplySchema.parse(params);
-
       try {
+        const input = MigrationApplySchema.parse(params);
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,

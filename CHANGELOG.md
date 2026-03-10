@@ -198,6 +198,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_backup`, `sqlite_restore`, `sqlite_generate_series`, `sqlite_analyze_csv_schema`, `sqlite_transaction_execute`: Added try/catch around `Schema.parse(params)` calls
   - Previously, calling these tools with empty or invalid parameters returned raw MCP error frames instead of structured handler errors
   - `AppendInsightSchema.insight` now requires `.min(1)` to reject empty strings (previously accepted `""` silently)
+- **Migration Tool Zod Validation Error Handling** — `sqlite_migration_record` and `sqlite_migration_apply` handlers now catch Zod validation errors as structured `{success: false}` responses
+  - Moved `Schema.parse(params)` inside existing try/catch blocks in `tracking.ts`
+  - Previously, calling these tools with empty `{}` params returned raw MCP error frames instead of structured handler errors
+- **Code Mode `log` Alias Mapping** — Fixed `sqlite.migration.log()` pointing to `migrationRecord` instead of `migrationHistory`
+  - `log` semantically means "show the log of migrations", not "record a new migration"
+  - Calling `sqlite.migration.log()` previously required `version` and `migrationSql` params (record) — now correctly returns migration history with no required params
 - **JSON Tool Zod Validation Error Handling** — All 23 JSON tool handlers now catch Zod validation errors as structured `{success: false}` responses
   - Previously, calling any JSON tool with empty or invalid parameters returned raw MCP error `-32602` instead of a structured handler error
   - Root cause: MCP SDK validates `inputSchema` at the transport layer before the handler runs, rejecting required-field violations as `-32602`

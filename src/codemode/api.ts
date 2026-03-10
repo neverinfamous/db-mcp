@@ -77,7 +77,7 @@ const METHOD_ALIASES: Record<string, Record<string, string>> = {
   },
   migration: {
     setup: "migrationInit",
-    log: "migrationRecord",
+    log: "migrationHistory",
     run: "migrationApply",
     undo: "migrationRollback",
   },
