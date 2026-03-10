@@ -121,27 +121,27 @@ describe("Security: PRAGMA Operations", () => {
 
   describe("sqlite_pragma_table_info - table name validation", () => {
     it("should reject table name with SQL injection", async () => {
-      await expect(
-        getTool("sqlite_pragma_table_info")({
-          table: "users; DROP TABLE users--",
-        }),
-      ).rejects.toThrow("Invalid identifier");
+      const result = (await getTool("sqlite_pragma_table_info")({
+        table: "users; DROP TABLE users--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with quotes", async () => {
-      await expect(
-        getTool("sqlite_pragma_table_info")({
-          table: 'users")',
-        }),
-      ).rejects.toThrow("Invalid identifier");
+      const result = (await getTool("sqlite_pragma_table_info")({
+        table: 'users")',
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with parentheses", async () => {
-      await expect(
-        getTool("sqlite_pragma_table_info")({
-          table: "users()",
-        }),
-      ).rejects.toThrow("Invalid identifier");
+      const result = (await getTool("sqlite_pragma_table_info")({
+        table: "users()",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should allow valid table names", async () => {

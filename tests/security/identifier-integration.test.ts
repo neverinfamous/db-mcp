@@ -70,59 +70,59 @@ describe("Security: Identifier Integration", () => {
 
   describe("FTS tools - identifier injection", () => {
     it("should reject FTS table name with SQL injection in create", async () => {
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "fts'; DROP TABLE users--",
-          sourceTable: "users",
-          columns: ["name", "email"],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "fts'; DROP TABLE users--",
+        sourceTable: "users",
+        columns: ["name", "email"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject source table name with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "valid_fts",
-          sourceTable: "users'; ATTACH DATABASE--",
-          columns: ["name"],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "valid_fts",
+        sourceTable: "users'; ATTACH DATABASE--",
+        columns: ["name"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject column name with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "valid_fts",
-          sourceTable: "users",
-          columns: ["name; DROP TABLE--"],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "valid_fts",
+        sourceTable: "users",
+        columns: ["name; DROP TABLE--"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject FTS search table with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_search")({
-          table: "fts_table' UNION SELECT--",
-          query: "test",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_search")({
+        table: "fts_table' UNION SELECT--",
+        query: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject FTS rebuild table with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_rebuild")({
-          table: "fts_table'; DELETE FROM users--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_rebuild")({
+        table: "fts_table'; DELETE FROM users--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject FTS match_info table with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_match_info")({
-          table: "fts_table'); DROP TABLE--",
-          query: "test",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_match_info")({
+        table: "fts_table'); DROP TABLE--",
+        query: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
@@ -283,19 +283,19 @@ describe("Security: Identifier Integration", () => {
     });
 
     it("should reject table name with injection in pragma_table_info", async () => {
-      await expect(
-        getTool("sqlite_pragma_table_info")({
-          table: "users'; ATTACH DATABASE--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_pragma_table_info")({
+        table: "users'; ATTACH DATABASE--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in index_stats", async () => {
-      await expect(
-        getTool("sqlite_index_stats")({
-          table: "users' UNION SELECT--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_index_stats")({
+        table: "users' UNION SELECT--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in analyze", async () => {
