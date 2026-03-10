@@ -183,6 +183,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Admin Tool Zod Validation Error Handling** — 6 admin tool handlers now catch Zod/sanitizeIdentifier errors as structured `{success: false}` responses
+  - `sqlite_pragma_table_info`, `sqlite_virtual_table_info`, `sqlite_create_csv_table`, `sqlite_create_rtree_table`, `sqlite_create_series_table`, `sqlite_append_insight`: Added try/catch around `Schema.parse(params)` and `sanitizeIdentifier()` calls
+  - Previously, calling these tools with empty or invalid parameters returned raw MCP error frames instead of structured handler errors
+  - `AppendInsightSchema.insight` now requires `.min(1)` to reject empty strings (previously accepted `""` silently)
 - **JSON Tool Zod Validation Error Handling** — All 23 JSON tool handlers now catch Zod validation errors as structured `{success: false}` responses
   - Previously, calling any JSON tool with empty or invalid parameters returned raw MCP error `-32602` instead of a structured handler error
   - Root cause: MCP SDK validates `inputSchema` at the transport layer before the handler runs, rejecting required-field violations as `-32602`

@@ -6,7 +6,10 @@
 
 import { z } from "zod";
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { admin, readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatError } from "../../../../utils/errors.js";
@@ -65,7 +68,9 @@ export function createPragmaCompileOptionsTool(
 /**
  * List attached databases
  */
-export function createPragmaDatabaseListTool(adapter: SqliteAdapter): ToolDefinition {
+export function createPragmaDatabaseListTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_pragma_database_list",
     description: "List all attached databases.",
@@ -106,7 +111,9 @@ export function createPragmaDatabaseListTool(adapter: SqliteAdapter): ToolDefini
 /**
  * Run PRAGMA optimize
  */
-export function createPragmaOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
+export function createPragmaOptimizeTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_pragma_optimize",
     description:
@@ -140,7 +147,9 @@ export function createPragmaOptimizeTool(adapter: SqliteAdapter): ToolDefinition
 /**
  * Get or set PRAGMA values
  */
-export function createPragmaSettingsTool(adapter: SqliteAdapter): ToolDefinition {
+export function createPragmaSettingsTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_pragma_settings",
     description: "Get or set a PRAGMA value.",
@@ -216,7 +225,9 @@ export function createPragmaSettingsTool(adapter: SqliteAdapter): ToolDefinition
 /**
  * Get table column information
  */
-export function createPragmaTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
+export function createPragmaTableInfoTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_pragma_table_info",
     description: "Get detailed column information for a table.",
@@ -226,39 +237,48 @@ export function createPragmaTableInfoTool(adapter: SqliteAdapter): ToolDefinitio
     requiredScopes: ["read"],
     annotations: readOnly("Table Info"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PragmaTableInfoSchema.parse(params);
+      try {
+        const input = PragmaTableInfoSchema.parse(params);
 
-      // Validate and quote table name
-      const table = sanitizeIdentifier(input.table);
+        // Validate and quote table name
+        const table = sanitizeIdentifier(input.table);
 
-      const result = await adapter.executeReadQuery(
-        `PRAGMA table_info(${table})`,
-      );
+        const result = await adapter.executeReadQuery(
+          `PRAGMA table_info(${table})`,
+        );
 
-      const columns = (result.rows ?? []).map((r) => ({
-        cid: r["cid"] as number,
-        name: r["name"] as string,
-        type: r["type"] as string,
-        notNull: (r["notnull"] as number) === 1,
-        defaultValue: r["dflt_value"],
-        pk: r["pk"] as number,
-      }));
+        const columns = (result.rows ?? []).map((r) => ({
+          cid: r["cid"] as number,
+          name: r["name"] as string,
+          type: r["type"] as string,
+          notNull: (r["notnull"] as number) === 1,
+          defaultValue: r["dflt_value"],
+          pk: r["pk"] as number,
+        }));
 
-      // If no columns returned, the table likely doesn't exist
-      if (columns.length === 0) {
+        // If no columns returned, the table likely doesn't exist
+        if (columns.length === 0) {
+          return {
+            success: false,
+            table: input.table,
+            columns: [],
+            error: `Table '${input.table}' not found or has no columns`,
+          };
+        }
+
+        return {
+          success: true,
+          table: input.table,
+          columns,
+        };
+      } catch (error) {
         return {
           success: false,
-          table: input.table,
+          table: "",
           columns: [],
-          error: `Table '${input.table}' not found or has no columns`,
+          error: error instanceof Error ? error.message : String(error),
         };
       }
-
-      return {
-        success: true,
-        table: input.table,
-        columns,
-      };
     },
   };
 }
@@ -277,15 +297,23 @@ export function createAppendInsightTool(): ToolDefinition {
     requiredScopes: ["write"],
     annotations: admin("Append Insight"),
     handler: (params: unknown, _context: RequestContext) => {
-      const input = AppendInsightSchema.parse(params);
+      try {
+        const input = AppendInsightSchema.parse(params);
 
-      insightsManager.append(input.insight);
+        insightsManager.append(input.insight);
 
-      return Promise.resolve({
-        success: true,
-        message: "Insight added to memo",
-        insightCount: insightsManager.count(),
-      });
+        return Promise.resolve({
+          success: true,
+          message: "Insight added to memo",
+          insightCount: insightsManager.count(),
+        });
+      } catch (error) {
+        return Promise.resolve({
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          insightCount: insightsManager.count(),
+        });
+      }
     },
   };
 }

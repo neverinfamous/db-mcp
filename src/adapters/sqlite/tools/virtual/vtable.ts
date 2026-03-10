@@ -7,13 +7,17 @@
 import * as path from "node:path";
 import { z } from "zod";
 import type { SqliteAdapter } from "../../SqliteAdapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
-import { readOnly, idempotent, destructive } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import {
-  isModuleAvailable,
-  isCsvModuleAvailable,
-} from "./analysis.js";
+  readOnly,
+  idempotent,
+  destructive,
+} from "../../../../utils/annotations.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { isModuleAvailable, isCsvModuleAvailable } from "./analysis.js";
 import {
   ListVirtualTablesSchema,
   VirtualTableInfoSchema,
@@ -22,7 +26,9 @@ import {
   AnalyzeCsvSchemaSchema,
 } from "./helpers.js";
 
-export function createListVirtualTablesTool(adapter: SqliteAdapter): ToolDefinition {
+export function createListVirtualTablesTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_list_virtual_tables",
     description: "List all virtual tables in the database.",
@@ -74,7 +80,9 @@ export function createListVirtualTablesTool(adapter: SqliteAdapter): ToolDefinit
 /**
  * Get virtual table info
  */
-export function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefinition {
+export function createVirtualTableInfoTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_virtual_table_info",
     description: "Get metadata about a specific virtual table.",
@@ -99,71 +107,81 @@ export function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefiniti
     requiredScopes: ["read"],
     annotations: readOnly("Virtual Table Info"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = VirtualTableInfoSchema.parse(params);
-
-      // Validate table name (we need raw name for queries)
-      sanitizeIdentifier(input.tableName);
-
-      // Get the CREATE statement
-      const sqlResult = await adapter.executeReadQuery(
-        `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '${input.tableName.replace(/'/g, "''")}' AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
-      );
-
-      if (!sqlResult.rows || sqlResult.rows.length === 0) {
-        return {
-          success: false,
-          name: input.tableName,
-          module: "unknown",
-          sql: "",
-          error: `Virtual table '${input.tableName}' not found`,
-        };
-      }
-
-      const sqlStr =
-        typeof sqlResult.rows[0]?.["sql"] === "string"
-          ? sqlResult.rows[0]["sql"]
-          : "";
-      const match = /USING\s+(\w+)/i.exec(sqlStr);
-      const moduleName = match?.[1] ?? "unknown";
-
-      // Get column info - may fail if module is unavailable (e.g., FTS5 in WASM)
       try {
-        const colResult = await adapter.executeReadQuery(
-          `PRAGMA table_info("${input.tableName}")`,
+        const input = VirtualTableInfoSchema.parse(params);
+
+        // Validate table name (we need raw name for queries)
+        sanitizeIdentifier(input.tableName);
+
+        // Get the CREATE statement
+        const sqlResult = await adapter.executeReadQuery(
+          `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '${input.tableName.replace(/'/g, "''")}' AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
         );
 
-        const columns = (colResult.rows ?? []).map((row) => ({
-          name: typeof row["name"] === "string" ? row["name"] : "",
-          type: typeof row["type"] === "string" ? row["type"] : "TEXT",
-        }));
+        if (!sqlResult.rows || sqlResult.rows.length === 0) {
+          return {
+            success: false,
+            name: input.tableName,
+            module: "unknown",
+            sql: "",
+            error: `Virtual table '${input.tableName}' not found`,
+          };
+        }
 
-        return {
-          success: true,
-          name: input.tableName,
-          module: moduleName,
-          moduleAvailable: true,
-          columns,
-          sql: sqlStr,
-        };
-      } catch (error) {
-        // Module unavailable (e.g., FTS5 in WASM) - return partial info
-        const errMsg = error instanceof Error ? error.message : String(error);
-        const isModuleError =
-          errMsg.includes("no such module") ||
-          errMsg.includes("unknown module");
+        const sqlStr =
+          typeof sqlResult.rows[0]?.["sql"] === "string"
+            ? sqlResult.rows[0]["sql"]
+            : "";
+        const match = /USING\s+(\w+)/i.exec(sqlStr);
+        const moduleName = match?.[1] ?? "unknown";
 
-        if (isModuleError) {
+        // Get column info - may fail if module is unavailable (e.g., FTS5 in WASM)
+        try {
+          const colResult = await adapter.executeReadQuery(
+            `PRAGMA table_info("${input.tableName}")`,
+          );
+
+          const columns = (colResult.rows ?? []).map((row) => ({
+            name: typeof row["name"] === "string" ? row["name"] : "",
+            type: typeof row["type"] === "string" ? row["type"] : "TEXT",
+          }));
+
           return {
             success: true,
             name: input.tableName,
             module: moduleName,
-            moduleAvailable: false,
+            moduleAvailable: true,
+            columns,
             sql: sqlStr,
-            note: `Module '${moduleName}' not available in this environment. Column info cannot be retrieved.`,
           };
+        } catch (error) {
+          // Module unavailable (e.g., FTS5 in WASM) - return partial info
+          const errMsg = error instanceof Error ? error.message : String(error);
+          const isModuleError =
+            errMsg.includes("no such module") ||
+            errMsg.includes("unknown module");
+
+          if (isModuleError) {
+            return {
+              success: true,
+              name: input.tableName,
+              module: moduleName,
+              moduleAvailable: false,
+              sql: sqlStr,
+              note: `Module '${moduleName}' not available in this environment. Column info cannot be retrieved.`,
+            };
+          }
+          // Re-throw unexpected errors
+          throw error;
         }
-        // Re-throw unexpected errors
-        throw error;
+      } catch (error) {
+        return {
+          success: false,
+          name: "",
+          module: "unknown",
+          sql: "",
+          error: error instanceof Error ? error.message : String(error),
+        };
       }
     },
   };
@@ -172,7 +190,9 @@ export function createVirtualTableInfoTool(adapter: SqliteAdapter): ToolDefiniti
 /**
  * Drop virtual table
  */
-export function createDropVirtualTableTool(adapter: SqliteAdapter): ToolDefinition {
+export function createDropVirtualTableTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_drop_virtual_table",
     description: "Drop a virtual table.",
@@ -265,68 +285,77 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("Create CSV Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CreateCsvTableSchema.parse(params);
+      try {
+        const input = CreateCsvTableSchema.parse(params);
 
-      // Validate table name (we'll use it with double quotes in SQL)
-      sanitizeIdentifier(input.tableName);
+        // Validate table name (we'll use it with double quotes in SQL)
+        sanitizeIdentifier(input.tableName);
 
-      // Validate that the file path is absolute (required by SQLite CSV extension)
-      if (!path.isAbsolute(input.filePath)) {
+        // Validate that the file path is absolute (required by SQLite CSV extension)
+        if (!path.isAbsolute(input.filePath)) {
+          return {
+            success: false,
+            message: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
+            sql: "",
+            columns: [],
+          };
+        }
+
+        // Check if csv module is available (supports standard csv and sqlite-xsv)
+        const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
+        if (!csvAvailable) {
+          // Check if we're in WASM mode by testing for a WASM-specific limitation
+          const isWasm = !(await isModuleAvailable(adapter, "rtree"));
+          return {
+            success: false,
+            message: isWasm
+              ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
+              : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+            sql: "",
+            columns: [],
+            wasmLimitation: isWasm,
+          };
+        }
+
+        // Build CREATE VIRTUAL TABLE statement
+        const options: string[] = [
+          `filename='${input.filePath.replace(/'/g, "''")}'`,
+        ];
+        if (!input.header) {
+          options.push("header=false");
+        }
+        if (input.delimiter !== ",") {
+          options.push(`delimiter='${input.delimiter}'`);
+        }
+        if (input.columns && input.columns.length > 0) {
+          options.push(`columns=${String(input.columns.length)}`);
+        }
+
+        const sql = `CREATE VIRTUAL TABLE "${input.tableName}" USING csv(${options.join(", ")})`;
+        await adapter.executeWriteQuery(sql);
+
+        // Get column names
+        const colResult = await adapter.executeReadQuery(
+          `PRAGMA table_info("${input.tableName}")`,
+        );
+        const columns = (colResult.rows ?? []).map((row) =>
+          typeof row["name"] === "string" ? row["name"] : "",
+        );
+
+        return {
+          success: true,
+          message: `Created CSV virtual table '${input.tableName}'`,
+          sql,
+          columns,
+        };
+      } catch (error) {
         return {
           success: false,
-          message: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
+          message: error instanceof Error ? error.message : String(error),
           sql: "",
           columns: [],
         };
       }
-
-      // Check if csv module is available (supports standard csv and sqlite-xsv)
-      const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
-      if (!csvAvailable) {
-        // Check if we're in WASM mode by testing for a WASM-specific limitation
-        const isWasm = !(await isModuleAvailable(adapter, "rtree"));
-        return {
-          success: false,
-          message: isWasm
-            ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
-            : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
-          sql: "",
-          columns: [],
-          wasmLimitation: isWasm,
-        };
-      }
-
-      // Build CREATE VIRTUAL TABLE statement
-      const options: string[] = [
-        `filename='${input.filePath.replace(/'/g, "''")}'`,
-      ];
-      if (!input.header) {
-        options.push("header=false");
-      }
-      if (input.delimiter !== ",") {
-        options.push(`delimiter='${input.delimiter}'`);
-      }
-      if (input.columns && input.columns.length > 0) {
-        options.push(`columns=${String(input.columns.length)}`);
-      }
-
-      const sql = `CREATE VIRTUAL TABLE "${input.tableName}" USING csv(${options.join(", ")})`;
-      await adapter.executeWriteQuery(sql);
-
-      // Get column names
-      const colResult = await adapter.executeReadQuery(
-        `PRAGMA table_info("${input.tableName}")`,
-      );
-      const columns = (colResult.rows ?? []).map((row) =>
-        typeof row["name"] === "string" ? row["name"] : "",
-      );
-
-      return {
-        success: true,
-        message: `Created CSV virtual table '${input.tableName}'`,
-        sql,
-        columns,
-      };
     },
   };
 }
@@ -334,7 +363,9 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Analyze CSV schema
  */
-export function createAnalyzeCsvSchemaTool(adapter: SqliteAdapter): ToolDefinition {
+export function createAnalyzeCsvSchemaTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_analyze_csv_schema",
     description:

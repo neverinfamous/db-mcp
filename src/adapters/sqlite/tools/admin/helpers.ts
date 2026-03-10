@@ -97,6 +97,7 @@ export const PragmaCompileOptionsSchema = z.object({
 export const AppendInsightSchema = z.object({
   insight: z
     .string()
+    .min(1, "Insight must be a non-empty string")
     .describe("Business insight discovered from data analysis"),
 });
 
