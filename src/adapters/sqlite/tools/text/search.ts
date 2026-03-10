@@ -122,7 +122,7 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: false,
           matchCount: 0,
-          tokenized: input.tokenize,
+          tokenized: ((params as { tokenize?: boolean } | null)?.tokenize) ?? true,
           matches: [],
           error: structured.error,
           code: structured.code,
@@ -616,10 +616,11 @@ export function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition
         };
       } catch (error) {
         const structured = formatError(error);
+        const rawParams = params as { searchTerm?: string; techniques?: string[] } | null;
         return {
           success: false,
-          searchTerm: input.searchTerm,
-          techniques: input.techniques,
+          searchTerm: rawParams?.searchTerm ?? "",
+          techniques: rawParams?.techniques ?? [],
           matchCount: 0,
           matches: [],
           error: structured.error,

@@ -196,13 +196,17 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return buildFts5UnavailableError(input.tableName);
+          return buildFts5UnavailableError(
+            (params as { tableName?: string } | null)?.tableName,
+          );
         }
         const structured = formatError(error);
+        const parsedName =
+          (params as { tableName?: string } | null)?.tableName ?? "";
         return {
           success: false as const,
           message: structured.error,
-          tableName: input.tableName,
+          tableName: parsedName,
           error: structured.error,
           code: structured.code,
           suggestion: structured.suggestion,
@@ -377,13 +381,17 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return buildFts5UnavailableError(input.table);
+          return buildFts5UnavailableError(
+            (params as { table?: string } | null)?.table,
+          );
         }
         const structured = formatError(error);
+        const parsedTable =
+          (params as { table?: string } | null)?.table ?? "";
         return {
           success: false as const,
           message: structured.error,
-          tableName: input.table,
+          tableName: parsedTable,
           error: structured.error,
           code: structured.code,
           suggestion: structured.suggestion,
