@@ -34,9 +34,8 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Text Concat"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextConcatSchema.parse(params);
-
       try {
+        const input = TextConcatSchema.parse(params);
         // Validate and quote identifiers, then verify columns exist
         const table = sanitizeIdentifier(input.table);
         const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
@@ -91,9 +90,8 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Text Replace"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextReplaceSchema.parse(params);
-
       try {
+        const input = TextReplaceSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -137,9 +135,8 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Text Trim"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextTrimSchema.parse(params);
-
       try {
+        const input = TextTrimSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -198,9 +195,8 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Text Case"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextCaseSchema.parse(params);
-
       try {
+        const input = TextCaseSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -249,9 +245,8 @@ export function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition 
     requiredScopes: ["read"],
     annotations: readOnly("Text Substring"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextSubstringSchema.parse(params);
-
       try {
+        const input = TextSubstringSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

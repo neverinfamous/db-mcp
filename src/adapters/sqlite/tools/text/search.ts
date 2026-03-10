@@ -52,9 +52,8 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Fuzzy Match"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FuzzyMatchSchema.parse(params);
-
       try {
+        const input = FuzzyMatchSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -159,9 +158,8 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
     requiredScopes: ["read"],
     annotations: readOnly("Phonetic Match"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PhoneticMatchSchema.parse(params);
-
       try {
+        const input = PhoneticMatchSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -298,9 +296,8 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
     requiredScopes: ["read"],
     annotations: readOnly("Text Normalize"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextNormalizeSchema.parse(params);
-
       try {
+        const input = TextNormalizeSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -379,9 +376,8 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Text Validate"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextValidateSchema.parse(params);
-
       try {
+        const input = TextValidateSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -509,9 +505,8 @@ export function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition
     requiredScopes: ["read"],
     annotations: readOnly("Advanced Search"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = AdvancedSearchSchema.parse(params);
-
       try {
+        const input = AdvancedSearchSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

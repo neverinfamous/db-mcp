@@ -183,6 +183,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Text/FTS Tool Zod Validation Error Handling** — All 17 text and FTS tool handlers now catch Zod validation errors as structured `{success: false}` responses
+  - 13 text tools (`regex.ts`, `formatting.ts`, `search.ts`): Moved `Schema.parse(params)` inside try/catch blocks with `formatError()`
+  - 4 FTS tools (`fts.ts`): Moved `Schema.parse(params)` plus FTS5 availability checks and identifier validation inside try/catch blocks
+  - Previously, calling these tools with invalid parameters returned raw MCP error frames instead of structured handler errors
 - **Introspection Tool Zod Validation Error Handling** — All 9 introspection tool handlers now catch Zod validation errors as structured `{success: false}` responses
   - `sqlite_dependency_graph`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_schema_snapshot`, `sqlite_constraint_analysis`, `sqlite_migration_risks`, `sqlite_storage_analysis`, `sqlite_index_audit`, `sqlite_query_plan`: Moved `Schema.parse(params)` inside try/catch blocks with `formatError()`
   - Previously, calling tools with invalid parameters (wrong types, missing required fields, out-of-range values) returned raw MCP error frames instead of structured handler errors

@@ -38,9 +38,8 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Regex Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = RegexExtractSchema.parse(params);
-
       try {
+        const input = RegexExtractSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -115,9 +114,8 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Regex Match"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = RegexMatchSchema.parse(params);
-
       try {
+        const input = RegexMatchSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -188,9 +186,8 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Text Split"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TextSplitSchema.parse(params);
-
       try {
+        const input = TextSplitSchema.parse(params);
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

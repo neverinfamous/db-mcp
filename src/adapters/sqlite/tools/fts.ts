@@ -147,26 +147,25 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("FTS Create"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsCreateSchema.parse(params);
-
-      // Validate identifiers (FTS5 uses raw column names, not quoted)
-      sanitizeIdentifier(input.tableName);
-      sanitizeIdentifier(input.sourceTable);
-      for (const col of input.columns) {
-        sanitizeIdentifier(col);
-      }
-
-      const columnList = input.columns.join(", ");
-      let options = `tokenize="${input.tokenizer}"`;
-
-      // Use contentTable if specified, otherwise use sourceTable
-      const effectiveContentTable = input.contentTable ?? input.sourceTable;
-      sanitizeIdentifier(effectiveContentTable);
-      options += `, content="${effectiveContentTable}"`;
-
-      const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${input.tableName}" USING fts5(${columnList}, ${options})`;
-
       try {
+        const input = FtsCreateSchema.parse(params);
+
+        // Validate identifiers (FTS5 uses raw column names, not quoted)
+        sanitizeIdentifier(input.tableName);
+        sanitizeIdentifier(input.sourceTable);
+        for (const col of input.columns) {
+          sanitizeIdentifier(col);
+        }
+
+        const columnList = input.columns.join(", ");
+        let options = `tokenize="${input.tokenizer}"`;
+
+        // Use contentTable if specified, otherwise use sourceTable
+        const effectiveContentTable = input.contentTable ?? input.sourceTable;
+        sanitizeIdentifier(effectiveContentTable);
+        options += `, content="${effectiveContentTable}"`;
+
+        const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${input.tableName}" USING fts5(${columnList}, ${options})`;
         await adapter.executeQuery(sql);
 
         // Create sync triggers for external content FTS tables
@@ -274,22 +273,22 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("FTS Search"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsSearchSchema.parse(params);
-
-      // Upfront FTS5 availability check
-      if (!isFts5Available(adapter)) {
-        return buildFts5SearchUnavailableError();
-      }
-
-      // Validate FTS table name
-      sanitizeIdentifier(input.table);
-
-      let selectClause = "*";
-      if (input.highlight) {
-        selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
-      }
-
       try {
+        const input = FtsSearchSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5SearchUnavailableError();
+        }
+
+        // Validate FTS table name
+        sanitizeIdentifier(input.table);
+
+        let selectClause = "*";
+        if (input.highlight) {
+          selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
+        }
+
         // Handle wildcard/list-all query - skip MATCH and return all rows
         if (input.query === "*" || input.query.trim() === "") {
           const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit}`;
@@ -356,20 +355,19 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("FTS Rebuild"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsRebuildSchema.parse(params);
-
-      // Upfront FTS5 availability check
-      if (!isFts5Available(adapter)) {
-        return buildFts5UnavailableError(input.table);
-      }
-
-      // Validate FTS table name
-      sanitizeIdentifier(input.table);
-
-      // Rebuild = drop shadow tables and recreate
-      const sql = `INSERT INTO "${input.table}"("${input.table}") VALUES('rebuild')`;
-
       try {
+        const input = FtsRebuildSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5UnavailableError(input.table);
+        }
+
+        // Validate FTS table name
+        sanitizeIdentifier(input.table);
+
+        // Rebuild = drop shadow tables and recreate
+        const sql = `INSERT INTO "${input.table}"("${input.table}") VALUES('rebuild')`;
         await adapter.executeQuery(sql);
 
         return {
@@ -408,29 +406,28 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("FTS Match Info"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsMatchInfoSchema.parse(params);
-
-      // Upfront FTS5 availability check
-      if (!isFts5Available(adapter)) {
-        return buildFts5SearchUnavailableError();
-      }
-
-      // Validate FTS table name
-      sanitizeIdentifier(input.table);
-
-      // Use single quotes for FTS5 MATCH strings
-      const queryEscaped = input.query.replace(/'/g, "''");
-
-      let rankExpr: string;
-      if (input.format === "bm25") {
-        rankExpr = `bm25("${input.table}")`;
-      } else {
-        rankExpr = "rank";
-      }
-
-      const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
-
       try {
+        const input = FtsMatchInfoSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5SearchUnavailableError();
+        }
+
+        // Validate FTS table name
+        sanitizeIdentifier(input.table);
+
+        // Use single quotes for FTS5 MATCH strings
+        const queryEscaped = input.query.replace(/'/g, "''");
+
+        let rankExpr: string;
+        if (input.format === "bm25") {
+          rankExpr = `bm25("${input.table}")`;
+        } else {
+          rankExpr = "rank";
+        }
+
+        const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
         const result = await adapter.executeReadQuery(sql);
 
         return {
