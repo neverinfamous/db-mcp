@@ -10,8 +10,11 @@ import { RowRecordSchema } from "./common.js";
  */
 export const GeoDistanceOutputSchema = z.object({
   success: z.boolean(),
-  distance: z.number(),
-  unit: z.string(),
+  distance: z.number().optional(),
+  unit: z.string().optional(),
+  error: z.string().optional(),
+  code: z.string().optional(),
+  suggestion: z.string().optional(),
 });
 
 /**
