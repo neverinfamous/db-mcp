@@ -28,10 +28,35 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Read Query"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = ReadQuerySchema.parse(params);
+      let input: { query: string; params?: unknown[] | undefined };
+      try {
+        input = ReadQuerySchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
+
+      // Reject empty queries
+      const trimmedQuery = input.query.trim();
+      if (trimmedQuery.length === 0) {
+        return {
+          success: false,
+          rowCount: 0,
+          rows: [],
+          error:
+            "Query cannot be empty. Provide a valid SELECT, PRAGMA, EXPLAIN, or WITH statement.",
+        };
+      }
 
       // Validate statement type: only allow SELECT/PRAGMA/EXPLAIN/WITH
-      const trimmedUpper = input.query.trim().toUpperCase();
+      const trimmedUpper = trimmedQuery.toUpperCase();
       const allowedPrefixes = ["SELECT", "PRAGMA", "EXPLAIN", "WITH"];
       const rejectedPrefixes = [
         "INSERT",
@@ -106,7 +131,19 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Write Query"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = WriteQuerySchema.parse(params);
+      let input: { query: string; params?: unknown[] | undefined };
+      try {
+        input = WriteQuerySchema.parse(params);
+      } catch (error) {
+        const structured = formatError(error);
+        return {
+          success: false,
+          rowsAffected: 0,
+          error: structured.error,
+          code: structured.code,
+          suggestion: structured.suggestion,
+        };
+      }
 
       // Validate statement type: only allow DML statements
       const trimmedUpper = input.query.trim().toUpperCase();

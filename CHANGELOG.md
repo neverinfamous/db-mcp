@@ -183,6 +183,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Core Query Tool Validation Hardening** — `sqlite_read_query` and `sqlite_write_query` handlers now catch Zod validation errors as structured `{success: false}` responses
+  - Wrapped `Schema.parse(params)` inside try/catch blocks in both `createReadQueryTool` and `createWriteQueryTool` handlers
+  - `sqlite_read_query`: Added empty query guard — empty string `""` previously returned `{success: true, rowCount: 0}` instead of a validation error
+  - Now returns `{success: false, error: "Query cannot be empty. Provide a valid SELECT, PRAGMA, EXPLAIN, or WITH statement."}`
 - **Text/FTS Tool Zod Validation Error Handling** — All 17 text and FTS tool handlers now catch Zod validation errors as structured `{success: false}` responses
   - 13 text tools (`regex.ts`, `formatting.ts`, `search.ts`): Moved `Schema.parse(params)` inside try/catch blocks with `formatError()`
   - 4 FTS tools (`fts.ts`): Moved `Schema.parse(params)` plus FTS5 availability checks and identifier validation inside try/catch blocks
