@@ -183,6 +183,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_json_normalize_column` WASM Compatibility** — Fixed all rows silently failing in WASM mode
+  - Root cause: `SELECT rowid, ...` doesn't expose `rowid` as a named column in sql-js when the table has an INTEGER PRIMARY KEY
+  - Handler received `undefined` for `row["rowid"]`, causing all per-row UPDATE queries to fail in the inner try/catch
+  - Fix: Changed to `SELECT _rowid_ AS _rid_` which SQLite guarantees to work across all backends
+  - Added `firstErrorDetail` field to response when errors occur, making per-row failures diagnosable without reading source code
 - **Core Query Tool Validation Hardening** — `sqlite_read_query` and `sqlite_write_query` handlers now catch Zod validation errors as structured `{success: false}` responses
   - Wrapped `Schema.parse(params)` inside try/catch blocks in both `createReadQueryTool` and `createWriteQueryTool` handlers
   - `sqlite_read_query`: Added empty query guard — empty string `""` previously returned `{success: true, rowCount: 0}` instead of a validation error

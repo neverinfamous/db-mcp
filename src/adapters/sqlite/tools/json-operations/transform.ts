@@ -267,7 +267,7 @@ export function createJsonNormalizeColumnTool(
         // representation via json(). This allows us to:
         // 1. Detect if original storage is JSONB (binary blob)
         // 2. Get text JSON for normalization processing
-        let selectSql = `SELECT rowid, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
+        let selectSql = `SELECT _rowid_ AS _rid_, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
         if (input.whereClause) {
           selectSql += ` WHERE ${input.whereClause}`;
         }
@@ -276,10 +276,11 @@ export function createJsonNormalizeColumnTool(
         let normalizedCount = 0;
         let unchangedCount = 0;
         let errorCount = 0;
+        let firstError: string | undefined;
 
         // Normalize each row
         for (const row of selectResult.rows ?? []) {
-          const rowid = row["rowid"];
+          const rowid = row["_rid_"];
           const rawData = row["raw_data"];
           const jsonData = row["json_data"];
 
@@ -323,12 +324,18 @@ export function createJsonNormalizeColumnTool(
             } else {
               unchangedCount++;
             }
-          } catch {
+          } catch (rowError) {
             errorCount++;
+            if (errorCount === 1) {
+              firstError =
+                rowError instanceof Error
+                  ? rowError.message
+                  : String(rowError);
+            }
           }
         }
 
-        return {
+        const result: Record<string, unknown> = {
           success: true,
           message: `Normalized ${normalizedCount} rows`,
           normalized: normalizedCount,
@@ -337,6 +344,10 @@ export function createJsonNormalizeColumnTool(
           total: selectResult.rows?.length ?? 0,
           outputFormat: input.outputFormat ?? "preserve",
         };
+        if (firstError) {
+          result["firstErrorDetail"] = firstError;
+        }
+        return result;
       } catch (error) {
         const structured = formatError(error);
         return {
