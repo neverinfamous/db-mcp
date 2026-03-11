@@ -6,13 +6,13 @@
  */
 
 import Database from "better-sqlite3";
-import type { Database as DatabaseType } from "better-sqlite3";
+import type { Database as BetterSqliteDb } from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseAdapter } from "../database-adapter.js";
 import type {
   DatabaseConfig,
-  DatabaseType as DbType,
+  DatabaseType,
   HealthStatus,
   IndexInfo,
   QueryResult,
@@ -25,6 +25,11 @@ import type {
   ToolGroup,
 } from "../../types/index.js";
 import { logger, ERROR_CODES } from "../../utils/logger.js";
+import {
+  QueryError,
+  ConnectionError,
+  ConfigurationError,
+} from "../../utils/errors/index.js";
 import type { SqliteConfig, SqliteOptions } from "../sqlite/types.js";
 import type { SqliteAdapter } from "../sqlite/sqlite-adapter.js";
 import { SchemaManager } from "../sqlite/schema-manager.js";
@@ -58,13 +63,13 @@ import { getToolGroupIcon } from "../../utils/icons.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
-import { isDDL } from "../sqlite-helpers.js";
+import { isDDL, normalizeSqliteParams } from "../sqlite-helpers.js";
 
 /**
  * Native SQLite Adapter using better-sqlite3
  */
 export class NativeSqliteAdapter extends DatabaseAdapter {
-  readonly type: DbType = "sqlite";
+  readonly type: DatabaseType = "sqlite";
   readonly name = "Native SQLite Adapter (better-sqlite3)";
   readonly version = "1.0.0";
 
@@ -85,7 +90,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     return config?.filePath ?? config?.connectionString ?? ":memory:";
   }
 
-  private db: DatabaseType | null = null;
+  private db: BetterSqliteDb | null = null;
   private schemaManager: SchemaManager | null = null;
   private cachedToolDefinitions: ToolDefinition[] | null = null;
 
@@ -94,8 +99,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    */
   override connect(config: DatabaseConfig): Promise<void> {
     if (config.type !== "sqlite") {
-      throw new Error(
+      throw new ConfigurationError(
         `Invalid database type: expected 'sqlite', got '${config.type as string}'`,
+        "DB_TYPE_MISMATCH",
       );
     }
 
@@ -157,9 +163,13 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       log.error(`Failed to connect to native SQLite: ${message}`, {
         code: ERROR_CODES.DB.CONNECT_FAILED.full,
       });
-      throw new Error(`Native SQLite connection failed: ${message}`, {
-        cause: error,
-      });
+      throw new ConnectionError(
+        `Native SQLite connection failed: ${message}`,
+        "DB_CONNECT_FAILED",
+        {
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
 
     return Promise.resolve();
@@ -348,17 +358,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     }
   }
 
-  /**
-   * Normalize parameters for SQLite binding
-   * Converts booleans to integers since SQLite doesn't have native boolean type
-   */
-  private normalizeParams(params?: unknown[]): unknown[] | undefined {
-    if (!params) return undefined;
-    return params.map((p) => {
-      if (typeof p === "boolean") return p ? 1 : 0;
-      return p;
-    });
-  }
+
 
   /**
    * Execute a read query
@@ -373,7 +373,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     try {
       const db = this.ensureDb();
       const stmt = db.prepare(sql);
-      const normalizedParams = this.normalizeParams(params);
+      const normalizedParams = normalizeSqliteParams(params);
       const rows = normalizedParams
         ? stmt.all(...normalizedParams)
         : stmt.all();
@@ -387,7 +387,17 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Query failed: ${message}`, { cause: error });
+      log.error(`Query failed: ${message}`, {
+        code: ERROR_CODES.DB.QUERY_FAILED.full,
+      });
+      throw new QueryError(
+        `Query execution failed: ${message}`,
+        "DB_QUERY_FAILED",
+        {
+          sql,
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
   }
 
@@ -404,7 +414,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     try {
       const db = this.ensureDb();
       const stmt = db.prepare(sql);
-      const normalizedParams = this.normalizeParams(params);
+      const normalizedParams = normalizeSqliteParams(params);
       const info = normalizedParams
         ? stmt.run(...normalizedParams)
         : stmt.run();
@@ -421,7 +431,17 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Write query failed: ${message}`, { cause: error });
+      log.error(`Write query failed: ${message}`, {
+        code: ERROR_CODES.DB.QUERY_FAILED.full,
+      });
+      throw new QueryError(
+        `Write query failed: ${message}`,
+        "DB_WRITE_FAILED",
+        {
+          sql,
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
   }
 
@@ -645,7 +665,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   /**
    * Ensure database is connected and return database instance
    */
-  private ensureDb(): DatabaseType {
+  private ensureDb(): BetterSqliteDb {
     if (!this.db || !this.connected) {
       throw new Error("Not connected to database");
     }
@@ -655,7 +675,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   /**
    * Get the raw database instance (for tools)
    */
-  getDatabase(): DatabaseType {
+  getDatabase(): BetterSqliteDb {
     return this.ensureDb();
   }
 

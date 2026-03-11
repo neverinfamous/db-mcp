@@ -41,7 +41,7 @@ import { isJsonbSupportedVersion, setJsonbSupported } from "./json-utils.js";
 // Module logger
 const log = createModuleLogger("SQLITE");
 
-import { isDDL } from "../sqlite-helpers.js";
+import { isDDL, normalizeSqliteParams } from "../sqlite-helpers.js";
 
 /**
  * SQLite Database Adapter
@@ -267,19 +267,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     }
   }
 
-  /**
-   * Normalize parameters for SQLite binding
-   * Converts booleans to integers since SQLite doesn't have native boolean type
-   */
-  private normalizeParams(
-    params?: unknown[],
-  ): (string | number | null | Uint8Array)[] | undefined {
-    if (!params) return undefined;
-    return params.map((p) => {
-      if (typeof p === "boolean") return p ? 1 : 0;
-      return p as string | number | null | Uint8Array;
-    });
-  }
+
 
   /**
    * Execute a read-only query
@@ -295,7 +283,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     const start = Date.now();
 
     try {
-      const normalizedParams = this.normalizeParams(params);
+      const normalizedParams = normalizeSqliteParams(params) as (string | number | null | Uint8Array)[] | undefined;
       const results = normalizedParams
         ? db.exec(sql, normalizedParams)
         : db.exec(sql);
@@ -365,7 +353,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     const start = Date.now();
 
     try {
-      const normalizedParams = this.normalizeParams(params);
+      const normalizedParams = normalizeSqliteParams(params) as (string | number | null | Uint8Array)[] | undefined;
       if (normalizedParams) {
         db.run(sql, normalizedParams);
       } else {
@@ -409,7 +397,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     const start = Date.now();
 
     try {
-      const normalizedParams = this.normalizeParams(params);
+      const normalizedParams = normalizeSqliteParams(params) as (string | number | null | Uint8Array)[] | undefined;
       const results = normalizedParams
         ? db.exec(sql, normalizedParams)
         : db.exec(sql);

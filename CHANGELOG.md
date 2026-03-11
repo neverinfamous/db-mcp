@@ -12,12 +12,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Code Quality Audit** — Removed unused `dotenv` production dependency (never imported in source)
 - **Code Quality Audit** — Fixed stale `--postgresql` reference in CLI no-database warning; server only supports SQLite
 - **Code Quality Audit** — Removed extraneous blank lines in `sqlite-adapter.ts`
+- **Code Quality Audit — Native Adapter Error Handling** — Replaced plain `Error` throws with typed error classes in `native-sqlite-adapter.ts`
+  - `connect()`: `ConfigurationError` for type mismatch, `ConnectionError` for connection failures
+  - `executeReadQuery()` / `executeWriteQuery()`: `QueryError` with SQL context and module-prefixed error codes
+  - Matches the WASM adapter's error handling, which already used typed errors
 
 ### Changed
 
 - **Code Quality Audit — `validateColumnExists` Deduplication** — Extracted shared `validateColumnExists()` and `validateColumnsExist()` into `adapters/sqlite/tools/column-validation.ts`
   - Removed identical 40-line copies from `geo.ts`, `text/helpers.ts`, and `stats/helpers.ts`
   - All three modules now re-export from the shared utility; no consumer import changes needed
+- **Code Quality Audit — `normalizeParams` Deduplication** — Extracted shared `normalizeSqliteParams()` into `adapters/sqlite-helpers.ts`
+  - Removed identical copies from `sqlite-adapter.ts` and `native-sqlite-adapter.ts`
+  - Both adapters now import from the shared module
+  - Also removed unnecessary `DatabaseType as DbType` alias in native adapter
 - **Code Quality Audit — `DatabaseType` Narrowing** — Narrowed `DatabaseType` union from 6 variants (`sqlite | postgresql | mysql | mongodb | redis | sqlserver`) to `"sqlite"` only
   - Other database types would require separate MCP server projects; unused variants were dead code
 - **Code Quality Audit — `DatabaseConfig` Cleanup** — Removed unused `host`, `port`, `database`, `username`, `password` fields

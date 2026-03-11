@@ -16,3 +16,18 @@ export function isDDL(sql: string): boolean {
     normalized.startsWith("DROP")
   );
 }
+
+/**
+ * Normalize parameters for SQLite binding.
+ * Converts booleans to integers since SQLite doesn't have native boolean type.
+ * Shared between WASM and native adapters.
+ */
+export function normalizeSqliteParams(
+  params?: unknown[],
+): unknown[] | undefined {
+  if (!params) return undefined;
+  return params.map((p) => {
+    if (typeof p === "boolean") return p ? 1 : 0;
+    return p;
+  });
+}
