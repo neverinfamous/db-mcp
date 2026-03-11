@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Code Quality Audit — Row Mapping Deduplication** — Extracted `rowsFromSqlJsResult()` helper in `sqlite-adapter.ts`
   - Replaced 2 identical row-mapping closures in `executeReadQuery` and `executeQuery`
+- **Code Quality Audit — Query Executor Extraction** — Extracted `executeRead`, `executeWrite`, `executeGeneral` into `adapters/sqlite/query-executor.ts`
+  - `sqlite-adapter.ts` reduced from 679 to ~510 lines; adapter retains validation, connection, and schema cache responsibility
 - **Code Quality Audit — HTTP Timeout Constants** — Named magic timeout values in `transports/http/types.ts`
   - `HTTP_REQUEST_TIMEOUT_MS` (120s), `HTTP_KEEP_ALIVE_TIMEOUT_MS` (65s), `HTTP_HEADERS_TIMEOUT_MS` (66s)
   - `transport.ts` now imports named constants instead of using inline numbers

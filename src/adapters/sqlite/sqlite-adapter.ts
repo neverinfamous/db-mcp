@@ -25,7 +25,6 @@ import type {
 } from "../../types/index.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
 import {
-  QueryError,
   ConnectionError,
   ConfigurationError,
 } from "../../utils/errors/index.js";
@@ -38,27 +37,15 @@ import { getResourceDefinitions } from "./resources.js";
 import { getPromptDefinitions } from "./prompts/index.js";
 import { isJsonbSupportedVersion, setJsonbSupported } from "./json-utils.js";
 
+// Query execution logic (extracted for modularity)
+import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
+
 // Module logger
 const log = createModuleLogger("SQLITE");
 
-import { isDDL, normalizeSqliteParams } from "../sqlite-helpers.js";
+import { isDDL } from "../sqlite-helpers.js";
 
-/**
- * Convert sql.js query results to row objects.
- * Shared between executeReadQuery and executeQuery to eliminate duplication.
- */
-function rowsFromSqlJsResult(result: {
-  columns: string[];
-  values: unknown[][];
-}): Record<string, unknown>[] {
-  return result.values.map((row) => {
-    const obj: Record<string, unknown> = {};
-    result.columns.forEach((col, i) => {
-      obj[col] = row[i];
-    });
-    return obj;
-  });
-}
+
 
 /**
  * SQLite Database Adapter
@@ -284,8 +271,6 @@ export class SqliteAdapter extends DatabaseAdapter {
     }
   }
 
-
-
   /**
    * Execute a read-only query
    */
@@ -295,62 +280,13 @@ export class SqliteAdapter extends DatabaseAdapter {
   ): Promise<QueryResult> {
     this.ensureConnected();
     this.validateQuery(sql, true);
-
-    const db = this.ensureDb();
-    const start = Date.now();
-
-    try {
-      const normalizedParams = normalizeSqliteParams(params) as (string | number | null | Uint8Array)[] | undefined;
-      const results = normalizedParams
-        ? db.exec(sql, normalizedParams)
-        : db.exec(sql);
-
-      if (results.length === 0) {
-        return Promise.resolve({
-          rows: [],
-          executionTimeMs: Date.now() - start,
-        });
-      }
-
-      const firstResult = results[0];
-      if (!firstResult) {
-        return Promise.resolve({
-          rows: [],
-          executionTimeMs: Date.now() - start,
-        });
-      }
-
-      const columns: ColumnInfo[] = firstResult.columns.map((name) => ({
-        name,
-        type: "unknown",
-      }));
-      const rows = rowsFromSqlJsResult(firstResult);
-
-      return Promise.resolve({
-        rows,
-        columns,
-        executionTimeMs: Date.now() - start,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error(`Query failed: ${message}`, {
-        code: ERROR_CODES.DB.QUERY_FAILED.full,
-      });
-      throw new QueryError(
-        `Query execution failed: ${message}`,
-        "DB_QUERY_FAILED",
-        {
-          sql,
-          cause: error instanceof Error ? error : undefined,
-        },
-      );
-    }
+    return executeRead(this.ensureDb(), sql, params);
   }
 
   /**
    * Execute a write query
    */
-  override executeWriteQuery(
+  override async executeWriteQuery(
     sql: string,
     params?: unknown[],
     skipValidation = false,
@@ -360,92 +296,33 @@ export class SqliteAdapter extends DatabaseAdapter {
       this.validateQuery(sql, false);
     }
 
-    const db = this.ensureDb();
-    const start = Date.now();
+    const result = await executeWrite(this.ensureDb(), sql, params);
 
-    try {
-      const normalizedParams = normalizeSqliteParams(params) as (string | number | null | Uint8Array)[] | undefined;
-      if (normalizedParams) {
-        db.run(sql, normalizedParams);
-      } else {
-        db.run(sql);
-      }
-
-      const changes = db.getRowsModified();
-
-      // Auto-invalidate schema cache on DDL operations
-      if (isDDL(sql)) {
-        this.clearSchemaCache();
-      }
-
-      return Promise.resolve({
-        rowsAffected: changes,
-        executionTimeMs: Date.now() - start,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error(`Write query failed: ${message}`, {
-        code: ERROR_CODES.DB.QUERY_FAILED.full,
-      });
-      throw new QueryError(
-        `Write query failed: ${message}`,
-        "DB_WRITE_FAILED",
-        {
-          sql,
-          cause: error instanceof Error ? error : undefined,
-        },
-      );
+    // Auto-invalidate schema cache on DDL operations
+    if (isDDL(sql)) {
+      this.clearSchemaCache();
     }
+
+    return result;
   }
 
   /**
    * Execute any query (for admin operations)
    */
-  override executeQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
+  override async executeQuery(
+    sql: string,
+    params?: unknown[],
+  ): Promise<QueryResult> {
     this.ensureConnected();
 
-    const db = this.ensureDb();
-    const start = Date.now();
+    const result = await executeGeneral(this.ensureDb(), sql, params);
 
-    try {
-      const normalizedParams = normalizeSqliteParams(params) as (string | number | null | Uint8Array)[] | undefined;
-      const results = normalizedParams
-        ? db.exec(sql, normalizedParams)
-        : db.exec(sql);
-
-      if (results.length === 0) {
-        if (isDDL(sql)) {
-          this.clearSchemaCache();
-        }
-        return Promise.resolve({
-          rowsAffected: db.getRowsModified(),
-          executionTimeMs: Date.now() - start,
-        });
-      }
-
-      const firstResult = results[0];
-      if (!firstResult) {
-        return Promise.resolve({
-          rowsAffected: db.getRowsModified(),
-          executionTimeMs: Date.now() - start,
-        });
-      }
-
-      const rows = rowsFromSqlJsResult(firstResult);
-
-      // Auto-invalidate schema cache on DDL operations
-      if (isDDL(sql)) {
-        this.clearSchemaCache();
-      }
-
-      return Promise.resolve({
-        rows,
-        executionTimeMs: Date.now() - start,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Query failed: ${message}`, { cause: error });
+    // Auto-invalidate schema cache on DDL operations
+    if (isDDL(sql)) {
+      this.clearSchemaCache();
     }
+
+    return result;
   }
 
   /**

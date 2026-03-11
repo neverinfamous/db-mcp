@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getClientIp, matchesCorsOrigin } from "../src/transports/http/middleware.js";
+import { getClientIp, matchesCorsOrigin } from "../../src/transports/http/middleware.js";
 
 // =============================================================================
 // getClientIp
