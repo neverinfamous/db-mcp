@@ -2,7 +2,7 @@
 
 **Last Updated March 10, 2026**
 
-**SQLite MCP Server** with HTTP/SSE Transport, OAuth 2.1 authentication, smart tool filtering, granular access control, 139 specialized tools, 8 resources, and 10 prompts. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 139 specialized tools, 8 resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control and deterministic error handling. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -309,14 +309,14 @@ docker run -i --rm \
 
 ### Environment Variables
 
-| Variable                 | Default   | Description                                        |
-| ------------------------ | --------- | -------------------------------------------------- |
-| `METADATA_CACHE_TTL_MS`  | `5000`    | Schema cache TTL (milliseconds)                    |
-| `LOG_LEVEL`              | `info`    | Log verbosity: `debug`, `info`, `warning`, `error` |
-| `MCP_HOST`               | `0.0.0.0` | Host/IP to bind to                                 |
-| `KEYCLOAK_URL`           | —         | Keycloak base URL (HTTP transport, enables OAuth)  |
-| `KEYCLOAK_REALM`         | —         | Keycloak realm name                                |
-| `KEYCLOAK_CLIENT_ID`     | —         | Keycloak client ID                                 |
+| Variable                | Default   | Description                                        |
+| ----------------------- | --------- | -------------------------------------------------- |
+| `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL (milliseconds)                    |
+| `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error` |
+| `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to                                 |
+| `KEYCLOAK_URL`          | —         | Keycloak base URL (HTTP transport, enables OAuth)  |
+| `KEYCLOAK_REALM`        | —         | Keycloak realm name                                |
+| `KEYCLOAK_CLIENT_ID`    | —         | Keycloak client ID                                 |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
