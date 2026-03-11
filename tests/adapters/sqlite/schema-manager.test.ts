@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
-import { SchemaManager } from "../../../src/adapters/sqlite/SchemaManager.js";
+import { SchemaManager } from "../../../src/adapters/sqlite/schema-manager.js";
 import type { QueryResult } from "../../../src/types/index.js";
 
 describe("SchemaManager", () => {

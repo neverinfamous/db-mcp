@@ -4,7 +4,7 @@
  * Pretty print, JSONB conversion, storage analysis, column normalization.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,

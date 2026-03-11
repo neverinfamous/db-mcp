@@ -4,7 +4,7 @@
  * Pattern matching: regex-extract, regex-match, text-split.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {

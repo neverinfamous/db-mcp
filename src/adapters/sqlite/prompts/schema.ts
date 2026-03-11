@@ -4,7 +4,7 @@
  * Prompts for database schema explanation, optimization, and documentation.
  */
 
-import type { SqliteAdapter } from "../SqliteAdapter.js";
+import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { PromptDefinition } from "../../../types/index.js";
 
 /**

@@ -5,7 +5,7 @@
  */
 
 import { z } from "zod";
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,
@@ -75,7 +75,7 @@ export function createPragmaDatabaseListTool(
     name: "sqlite_pragma_database_list",
     description: "List all attached databases.",
     group: "admin",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     outputSchema: PragmaDatabaseListOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Database List"),

@@ -4,7 +4,7 @@
  * Core statistical tools: basic stats, count, group-by, histogram, percentile.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {

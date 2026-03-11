@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { NativeSqliteAdapter } from "../../../src/adapters/sqlite-native/NativeSqliteAdapter.js";
+import { NativeSqliteAdapter } from "../../../src/adapters/sqlite-native/native-sqlite-adapter.js";
 import type { SqliteConfig } from "../../../src/adapters/sqlite/types.js";
 
 describe("NativeSqliteAdapter", () => {

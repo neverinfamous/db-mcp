@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { DatabaseAdapter } from "../../src/adapters/DatabaseAdapter.js";
+import { DatabaseAdapter } from "../../src/adapters/database-adapter.js";
 import type {
   DatabaseConfig,
   QueryResult,

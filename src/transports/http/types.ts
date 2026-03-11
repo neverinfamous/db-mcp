@@ -8,9 +8,9 @@
 import type { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { OAuthResourceServer } from "../../auth/OAuthResourceServer.js";
-import type { AuthorizationServerDiscovery } from "../../auth/AuthorizationServerDiscovery.js";
-import type { TokenValidator } from "../../auth/TokenValidator.js";
+import type { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
+import type { AuthorizationServerDiscovery } from "../../auth/authorization-server-discovery.js";
+import type { TokenValidator } from "../../auth/token-validator.js";
 import type http from "node:http";
 import type { Express } from "express";
 

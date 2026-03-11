@@ -8,7 +8,7 @@
  */
 
 import initSqlJs, { type Database } from "sql.js";
-import { DatabaseAdapter } from "../DatabaseAdapter.js";
+import { DatabaseAdapter } from "../database-adapter.js";
 import type {
   DatabaseConfig,
   QueryResult,
@@ -30,7 +30,7 @@ import {
   ConfigurationError,
 } from "../../utils/errors.js";
 import type { SqliteConfig, SqliteOptions } from "./types.js";
-import { SchemaManager } from "./SchemaManager.js";
+import { SchemaManager } from "./schema-manager.js";
 
 // Tool definitions from modular files
 import { getAllToolDefinitions } from "./tools/index.js";

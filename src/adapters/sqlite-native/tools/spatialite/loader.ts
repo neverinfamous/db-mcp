@@ -4,7 +4,7 @@
  * Utilities for loading, checking, and ensuring the SpatiaLite extension.
  */
 
-import type { NativeSqliteAdapter } from "../../NativeSqliteAdapter.js";
+import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 
 // SpatiaLite extension paths to try (platform-aware)
 const SPATIALITE_PATHS = [

@@ -14,7 +14,7 @@ import {
   getToolsByGroup,
   getToolCountByGroup,
 } from "../../../../src/adapters/sqlite/tools/index.js";
-import type { SqliteAdapter } from "../../../../src/adapters/sqlite/SqliteAdapter.js";
+import type { SqliteAdapter } from "../../../../src/adapters/sqlite/sqlite-adapter.js";
 
 describe("Tools Index", () => {
   let adapter: TestAdapter;

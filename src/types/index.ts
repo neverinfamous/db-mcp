@@ -526,66 +526,16 @@ export interface PromptDefinition {
 // Error Types
 // =============================================================================
 
-/**
- * Base error class for db-mcp
- */
-export class DbMcpError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-    public readonly details?: Record<string, unknown>,
-  ) {
-    super(message);
-    this.name = "DbMcpError";
-  }
-}
-
-/**
- * Database connection error
- */
-export class ConnectionError extends DbMcpError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "CONNECTION_ERROR", details);
-    this.name = "ConnectionError";
-  }
-}
-
-/**
- * Query execution error
- */
-export class QueryError extends DbMcpError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "QUERY_ERROR", details);
-    this.name = "QueryError";
-  }
-}
-
-/**
- * Authentication error
- */
-export class AuthenticationError extends DbMcpError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "AUTHENTICATION_ERROR", details);
-    this.name = "AuthenticationError";
-  }
-}
-
-/**
- * Authorization error (insufficient permissions)
- */
-export class AuthorizationError extends DbMcpError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "AUTHORIZATION_ERROR", details);
-    this.name = "AuthorizationError";
-  }
-}
-
-/**
- * Validation error for input parameters
- */
-export class ValidationError extends DbMcpError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "VALIDATION_ERROR", details);
-    this.name = "ValidationError";
-  }
-}
+// =============================================================================
+// Error Classes — re-exported from utils/errors.ts (single source of truth)
+// =============================================================================
+// Import and re-export so downstream consumers who import from types/index.ts
+// continue to work transparently.
+export {
+  DbMcpError,
+  ConnectionError,
+  QueryError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+} from "../utils/errors.js";

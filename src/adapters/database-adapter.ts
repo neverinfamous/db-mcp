@@ -28,7 +28,7 @@ import type {
   ToolGroup,
   ToolFilterConfig,
 } from "../types/index.js";
-import { isToolEnabled } from "../filtering/ToolFilter.js";
+import { isToolEnabled } from "../filtering/tool-filter.js";
 import { formatError } from "../utils/errors.js";
 
 /**

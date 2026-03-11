@@ -5,7 +5,7 @@
  * Entry point for running the db-mcp server from the command line.
  */
 
-import { createServer, DEFAULT_CONFIG } from "./server/McpServer.js";
+import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
 import type {
   McpServerConfig,
   TransportType,
@@ -136,7 +136,7 @@ Extension Options (Native only):
 
 Server Options:
   --name <name>             Server name (default: db-mcp)
-  --version <version>       Server version (default: 0.1.0)
+  --version <version>       Server version (default: 1.0.2)
   --tool-filter <filter>    Tool filter string. Supports:
                               Shortcuts: starter, analytics, search, spatial, minimal, full
                               Groups: core, json, text, fts5, stats, vector, geo, ...

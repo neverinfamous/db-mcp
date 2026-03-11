@@ -5,7 +5,7 @@
  * Includes SpatiaLite system table/view/index filtering.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,

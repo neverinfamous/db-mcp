@@ -5,7 +5,7 @@
  * 9 read-only tools for schema analysis, dependency mapping, and diagnostics.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition } from "../../../../types/index.js";
 
 import {

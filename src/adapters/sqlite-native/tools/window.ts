@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
-import type { NativeSqliteAdapter } from "../NativeSqliteAdapter.js";
+import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { validateWhereClause } from "../../../utils/index.js";
 import { formatError } from "../../../utils/errors.js";
 

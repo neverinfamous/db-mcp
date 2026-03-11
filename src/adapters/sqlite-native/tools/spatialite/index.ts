@@ -7,7 +7,7 @@
  */
 
 import type { ToolDefinition } from "../../../../types/index.js";
-import type { NativeSqliteAdapter } from "../../NativeSqliteAdapter.js";
+import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import {
   createLoadSpatialiteTool,
   createSpatialTableTool,

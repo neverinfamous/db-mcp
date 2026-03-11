@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import { createHash } from "node:crypto";
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
 // =============================================================================
 // Constants
@@ -18,7 +18,7 @@ export const MIGRATIONS_TABLE = "_mcp_migrations";
 // Input Schemas
 // =============================================================================
 
-export const MigrationInitSchema = z.object({}).default({});
+export const MigrationInitSchema = z.object({}).strict().default({});
 
 export const MigrationRecordSchema = z.object({
   version: z
@@ -78,7 +78,7 @@ export const MigrationHistorySchema = z
   })
   .default({});
 
-export const MigrationStatusSchema = z.object({}).default({});
+export const MigrationStatusSchema = z.object({}).strict().default({});
 
 // =============================================================================
 // Output Schemas

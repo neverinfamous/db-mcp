@@ -12,7 +12,7 @@
  */
 
 import type { ToolGroup } from "../types/index.js";
-import { TOOL_GROUPS, ALL_TOOL_GROUPS } from "../filtering/ToolConstants.js";
+import { TOOL_GROUPS, ALL_TOOL_GROUPS } from "../filtering/tool-constants.js";
 
 /**
  * Resource definition for instruction generation

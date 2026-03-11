@@ -4,7 +4,7 @@
  * Aggregates and exports all tool definitions from category modules.
  */
 
-import type { SqliteAdapter } from "../SqliteAdapter.js";
+import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, ToolGroup } from "../../../types/index.js";
 import { getToolGroupIcon } from "../../../utils/icons.js";
 import { getCoreTools } from "./core/index.js";

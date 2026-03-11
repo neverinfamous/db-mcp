@@ -4,7 +4,7 @@
  * Read and write query execution.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { formatError } from "../../../../utils/errors.js";

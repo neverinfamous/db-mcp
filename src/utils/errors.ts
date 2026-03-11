@@ -25,6 +25,10 @@ export enum ErrorCategory {
   CONFIGURATION = "config",
   /** Missing resources (tables, columns, views) */
   RESOURCE = "resource",
+  /** Authentication failures (invalid credentials, expired tokens) */
+  AUTHENTICATION = "authentication",
+  /** Authorization failures (insufficient scope/permissions) */
+  AUTHORIZATION = "authorization",
   /** Unexpected internal errors */
   INTERNAL = "internal",
 }
@@ -451,6 +455,46 @@ export class InternalError extends DbMcpError {
   }
 }
 
+/**
+ * Authentication error (401-type: invalid credentials, expired tokens)
+ */
+export class AuthenticationError extends DbMcpError {
+  constructor(
+    message: string,
+    code = "AUTHENTICATION_ERROR",
+    options?: {
+      suggestion?: string | undefined;
+      details?: Record<string, unknown> | undefined;
+      cause?: Error | undefined;
+    },
+  ) {
+    super(message, code, ErrorCategory.AUTHENTICATION, {
+      ...options,
+      recoverable: false,
+    });
+  }
+}
+
+/**
+ * Authorization error (403-type: insufficient permissions)
+ */
+export class AuthorizationError extends DbMcpError {
+  constructor(
+    message: string,
+    code = "AUTHORIZATION_ERROR",
+    options?: {
+      suggestion?: string | undefined;
+      details?: Record<string, unknown> | undefined;
+      cause?: Error | undefined;
+    },
+  ) {
+    super(message, code, ErrorCategory.AUTHORIZATION, {
+      ...options,
+      recoverable: false,
+    });
+  }
+}
+
 // =============================================================================
 // Error Response Type
 // =============================================================================
@@ -482,6 +526,8 @@ const CATEGORY_DEFAULT_CODES: Record<ErrorCategory, string> = {
   [ErrorCategory.PERMISSION]: "PERMISSION_ERROR",
   [ErrorCategory.CONFIGURATION]: "CONFIG_ERROR",
   [ErrorCategory.RESOURCE]: "RESOURCE_ERROR",
+  [ErrorCategory.AUTHENTICATION]: "AUTHENTICATION_ERROR",
+  [ErrorCategory.AUTHORIZATION]: "AUTHORIZATION_ERROR",
   [ErrorCategory.INTERNAL]: "UNKNOWN_ERROR",
 };
 

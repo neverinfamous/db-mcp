@@ -2,7 +2,7 @@
  * SQLite JSON Operations â€” Barrel Index
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition } from "../../../../types/index.js";
 import {
   createValidateJsonTool,

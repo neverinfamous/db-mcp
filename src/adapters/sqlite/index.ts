@@ -4,7 +4,7 @@
  * Public exports for the SQLite database adapter.
  */
 
-export { SqliteAdapter, createSqliteAdapter } from "./SqliteAdapter.js";
+export { SqliteAdapter, createSqliteAdapter } from "./sqlite-adapter.js";
 export type {
   SqliteConfig,
   SqliteOptions,

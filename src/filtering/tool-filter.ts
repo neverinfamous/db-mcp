@@ -30,10 +30,10 @@ import type {
   ToolDefinition,
 } from "../types/index.js";
 
-import { META_GROUPS, ALL_TOOL_GROUPS, TOOL_GROUPS } from "./ToolConstants.js";
+import { META_GROUPS, ALL_TOOL_GROUPS, TOOL_GROUPS } from "./tool-constants.js";
 
 // Re-export for backwards compatibility
-export { META_GROUPS, TOOL_GROUPS, ALL_TOOL_GROUPS } from "./ToolConstants.js";
+export { META_GROUPS, TOOL_GROUPS, ALL_TOOL_GROUPS } from "./tool-constants.js";
 
 /**
  * Cached list of all tool names

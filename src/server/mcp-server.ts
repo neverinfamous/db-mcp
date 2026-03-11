@@ -12,14 +12,14 @@ import type {
   DatabaseConfig,
   ToolFilterConfig,
 } from "../types/index.js";
-import { type DatabaseAdapter } from "../adapters/DatabaseAdapter.js";
+import { type DatabaseAdapter } from "../adapters/database-adapter.js";
 import type { HttpTransportConfig } from "../transports/http/types.js";
 import {
   parseToolFilter,
   getFilterSummary,
   getToolFilterFromEnv,
-} from "../filtering/ToolFilter.js";
-import { generateInstructions } from "../constants/ServerInstructions.js";
+} from "../filtering/tool-filter.js";
+import { generateInstructions } from "../constants/server-instructions.js";
 import { logger } from "../utils/logger.js";
 import { SERVER_ICONS } from "../utils/icons.js";
 
@@ -353,7 +353,7 @@ export function createServer(config: McpServerConfig): DbMcpServer {
  */
 export const DEFAULT_CONFIG: Partial<McpServerConfig> = {
   name: "db-mcp",
-  version: "0.1.0",
+  version: "1.0.2",
   transport: "stdio",
   databases: [],
 };

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Version SSoT Mismatch** — Synced hardcoded `0.1.0` to `1.0.2` (matching `package.json`) in `index.ts`, `McpServer.ts`, and `cli.ts`
+- **Duplicate Error Class Hierarchy** — Removed 6 duplicate error classes from `types/index.ts` (simple constructor) and consolidated into `utils/errors.ts` (enhanced: category, suggestions, recoverable, `toResponse()`); `types/index.ts` now re-exports from `utils/errors.ts`; `auth/errors.ts` updated to extend enhanced `DbMcpError`; added `AUTHENTICATION`/`AUTHORIZATION` to `ErrorCategory` enum
+- **Bare `z.object({})` Schemas** — Added `.strict()` to 5 schemas (`transaction_commit`, `transaction_rollback`, `MigrationInitSchema`, `MigrationStatusSchema`, `pragma_database_list`) to reject extraneous properties
+
+### Changed
+
+- **File Naming Convention** — Renamed 16 PascalCase files (11 source + 5 test) to lowercase-with-dashes per project convention
+  - Source: `DatabaseAdapter.ts`, `McpServer.ts`, `SqliteAdapter.ts`, `NativeSqliteAdapter.ts`, `SchemaManager.ts`, `ToolFilter.ts`, `ToolConstants.ts`, `ServerInstructions.ts`, `OAuthResourceServer.ts`, `AuthorizationServerDiscovery.ts`, `TokenValidator.ts`
+  - Tests: `DatabaseAdapter.test.ts`, `SchemaManager.test.ts`, `SqliteAdapter.test.ts`, `NativeSqliteAdapter.test.ts`, `ToolFilter.test.ts`
+  - Updated 82 files with corrected import paths
+- **Dead Code Cleanup** — Removed extra blank lines in `native-sqlite-adapter.ts`
+
 ### Security
 
 - **Security Audit Remediation** — Addressed 4 findings from comprehensive security audit

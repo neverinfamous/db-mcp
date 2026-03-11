@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { getTransactionTools } from "../../../../src/adapters/sqlite-native/tools/transactions.js";
-import { NativeSqliteAdapter } from "../../../../src/adapters/sqlite-native/NativeSqliteAdapter.js";
+import { NativeSqliteAdapter } from "../../../../src/adapters/sqlite-native/native-sqlite-adapter.js";
 import type {
   RequestContext,
   ToolDefinition,

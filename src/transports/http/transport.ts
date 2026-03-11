@@ -33,7 +33,7 @@ import {
   setupLegacySSEEndpoints,
 } from "./session.js";
 import { applyAuthMiddleware, setupOAuth } from "./oauth.js";
-import type { OAuthResourceServer } from "../../auth/OAuthResourceServer.js";
+import type { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 
 const logger = createModuleLogger("HTTP");
 

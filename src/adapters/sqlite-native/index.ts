@@ -8,7 +8,7 @@
 export {
   NativeSqliteAdapter,
   createNativeSqliteAdapter,
-} from "./NativeSqliteAdapter.js";
+} from "./native-sqlite-adapter.js";
 export { getTransactionTools } from "./tools/transactions.js";
 export { getWindowTools } from "./tools/window.js";
 export { getSpatialiteTools } from "./tools/spatialite/index.js";

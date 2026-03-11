@@ -9,7 +9,7 @@ import Database from "better-sqlite3";
 import type { Database as DatabaseType } from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { DatabaseAdapter } from "../DatabaseAdapter.js";
+import { DatabaseAdapter } from "../database-adapter.js";
 import type {
   DatabaseConfig,
   DatabaseType as DbType,
@@ -26,8 +26,8 @@ import type {
 } from "../../types/index.js";
 import { logger, ERROR_CODES } from "../../utils/logger.js";
 import type { SqliteConfig, SqliteOptions } from "../sqlite/types.js";
-import type { SqliteAdapter } from "../sqlite/SqliteAdapter.js";
-import { SchemaManager } from "../sqlite/SchemaManager.js";
+import type { SqliteAdapter } from "../sqlite/sqlite-adapter.js";
+import { SchemaManager } from "../sqlite/schema-manager.js";
 
 // Import shared tools from sql.js adapter
 import { getCoreTools } from "../sqlite/tools/core/index.js";
@@ -643,8 +643,6 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   override getPromptDefinitions(): PromptDefinition[] {
     return getPromptDefinitions(this as unknown as SqliteAdapter);
   }
-
-
 
   /**
    * Ensure database is connected

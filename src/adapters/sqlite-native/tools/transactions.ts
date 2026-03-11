@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
-import type { NativeSqliteAdapter } from "../NativeSqliteAdapter.js";
+import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { formatError } from "../../../utils/errors.js";
 
 // Schemas
@@ -95,7 +95,7 @@ function createCommitTransactionTool(
     description:
       "Commit the current transaction, making all changes permanent.",
     group: "admin",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {
@@ -122,7 +122,7 @@ function createRollbackTransactionTool(
     name: "sqlite_transaction_rollback",
     description: "Rollback the current transaction, discarding all changes.",
     group: "admin",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {

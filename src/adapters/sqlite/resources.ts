@@ -5,7 +5,7 @@
  * 8 resources total.
  */
 
-import type { SqliteAdapter } from "./SqliteAdapter.js";
+import type { SqliteAdapter } from "./sqlite-adapter.js";
 import type { ResourceDefinition } from "../../types/index.js";
 import {
   HIGH_PRIORITY,

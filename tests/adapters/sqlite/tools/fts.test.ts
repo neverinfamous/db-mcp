@@ -54,7 +54,7 @@ describe("FTS Tools", () => {
       const { getAllToolDefinitions } =
         await import("../../../../src/adapters/sqlite/tools/index.js");
       const sharedTools = getAllToolDefinitions(
-        adapter as unknown as import("../../../../src/adapters/sqlite/SqliteAdapter.js").SqliteAdapter,
+        adapter as unknown as import("../../../../src/adapters/sqlite/sqlite-adapter.js").SqliteAdapter,
       );
       const ftsTools = sharedTools.filter((t: { name: string }) =>
         t.name.includes("fts"),

@@ -1,5 +1,5 @@
 /**
- * Generates src/constants/ServerInstructions.ts from a single markdown source.
+ * Generates src/constants/server-instructions.ts from a single markdown source.
  *
  * Reads server-instructions.md, splits by section markers
  * (<!-- SECTION: essential/filtering/reference -->), escapes for template
@@ -88,7 +88,7 @@ lines.push(" */");
 lines.push("");
 lines.push('import type { ToolGroup } from "../types/index.js";');
 lines.push(
-  'import { TOOL_GROUPS, ALL_TOOL_GROUPS } from "../filtering/ToolConstants.js";',
+  'import { TOOL_GROUPS, ALL_TOOL_GROUPS } from "../filtering/tool-constants.js";',
 );
 lines.push("");
 lines.push("/**");
@@ -253,13 +253,13 @@ lines.push("  ESSENTIAL_INSTRUCTIONS + FILTERING_INSTRUCTIONS;");
 lines.push("");
 
 const tsContent = lines.join("\n");
-const tsPath = resolve(constantsDir, "ServerInstructions.ts");
+const tsPath = resolve(constantsDir, "server-instructions.ts");
 writeFileSync(tsPath, tsContent, "utf-8");
 
 process.stderr.write(
   [
     "",
-    "\u2705 Generated ServerInstructions.ts (" +
+    "\u2705 Generated server-instructions.ts (" +
       tsContent.length.toLocaleString() +
       " bytes) from server-instructions.md (" +
       sourceMd.length.toLocaleString() +

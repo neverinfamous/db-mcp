@@ -5,7 +5,7 @@
  * and authorization failures.
  */
 
-import { DbMcpError } from "../types/index.js";
+import { DbMcpError, ErrorCategory } from "../utils/errors.js";
 import { ERROR_CODES } from "../utils/logger.js";
 
 // =============================================================================
@@ -29,7 +29,7 @@ export class OAuthError extends DbMcpError {
     details?: Record<string, unknown>,
     wwwAuthenticate?: string,
   ) {
-    super(message, code, details);
+    super(message, code, ErrorCategory.AUTHENTICATION, { details });
     this.name = "OAuthError";
     this.httpStatus = httpStatus;
     this.wwwAuthenticate = wwwAuthenticate;

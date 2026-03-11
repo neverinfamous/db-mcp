@@ -4,7 +4,7 @@
  * Array append, keys, each/tree, group-array, group-object.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,

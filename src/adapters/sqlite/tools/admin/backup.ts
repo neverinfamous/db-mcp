@@ -6,7 +6,7 @@
 
 import fs from "node:fs";
 import nodePath from "node:path";
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,

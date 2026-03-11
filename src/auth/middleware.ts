@@ -7,8 +7,8 @@
 
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import type { TokenClaims } from "./types.js";
-import type { TokenValidator } from "./TokenValidator.js";
-import type { OAuthResourceServer } from "./OAuthResourceServer.js";
+import type { TokenValidator } from "./token-validator.js";
+import type { OAuthResourceServer } from "./oauth-resource-server.js";
 import {
   TokenMissingError,
   InsufficientScopeError,

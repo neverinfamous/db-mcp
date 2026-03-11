@@ -26,7 +26,7 @@ import {
   getToolFilterFromEnv,
   ALL_TOOL_GROUPS,
   META_GROUPS,
-} from "../../src/filtering/ToolFilter.js";
+} from "../../src/filtering/tool-filter.js";
 import type { ToolDefinition, ToolGroup } from "../../src/types/index.js";
 
 // Mock tool for testing

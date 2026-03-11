@@ -15,7 +15,7 @@ import {
   TOOL_GROUPS,
   META_GROUPS,
   getMetaGroupInfo,
-} from "../../src/filtering/ToolFilter.js";
+} from "../../src/filtering/tool-filter.js";
 import type { ToolGroup, MetaGroup } from "../../src/types/index.js";
 
 // Suppress logger output

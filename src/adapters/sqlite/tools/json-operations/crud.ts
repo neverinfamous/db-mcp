@@ -4,7 +4,7 @@
  * Basic JSON operations: validate, extract, set, remove, type, array-length.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,

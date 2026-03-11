@@ -4,7 +4,7 @@
  * Re-exports all statistics tool creators and the main entry point.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition } from "../../../../types/index.js";
 import {
   createBasicStatsTool,

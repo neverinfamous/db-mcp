@@ -5,7 +5,7 @@
  * 6 opt-in write tools for schema migration tracking.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition } from "../../../../types/index.js";
 
 import {

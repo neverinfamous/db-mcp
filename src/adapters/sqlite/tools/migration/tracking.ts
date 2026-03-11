@@ -7,7 +7,7 @@
  * 6 tools total.
  */
 
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly, write, idempotent } from "../../../../utils/annotations.js";
 import { formatError } from "../../../../utils/errors.js";

@@ -6,7 +6,7 @@
 
 import * as path from "node:path";
 import { z } from "zod";
-import type { SqliteAdapter } from "../../SqliteAdapter.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,

@@ -4,9 +4,9 @@
  * OAuth 2.0 component initialization and auth middleware application.
  */
 
-import { OAuthResourceServer } from "../../auth/OAuthResourceServer.js";
-import { AuthorizationServerDiscovery } from "../../auth/AuthorizationServerDiscovery.js";
-import { TokenValidator } from "../../auth/TokenValidator.js";
+import { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
+import { AuthorizationServerDiscovery } from "../../auth/authorization-server-discovery.js";
+import { TokenValidator } from "../../auth/token-validator.js";
 import { createAuthMiddleware } from "../../auth/middleware.js";
 import { SUPPORTED_SCOPES } from "../../auth/scopes.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";

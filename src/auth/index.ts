@@ -15,12 +15,12 @@ export * from "./scopes.js";
 export {
   OAuthResourceServer,
   createOAuthResourceServer,
-} from "./OAuthResourceServer.js";
+} from "./oauth-resource-server.js";
 export {
   AuthorizationServerDiscovery,
   createAuthServerDiscovery,
-} from "./AuthorizationServerDiscovery.js";
-export { TokenValidator, createTokenValidator } from "./TokenValidator.js";
+} from "./authorization-server-discovery.js";
+export { TokenValidator, createTokenValidator } from "./token-validator.js";
 
 // Middleware
 export {

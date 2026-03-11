@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { getGeoTools } from "../../../../src/adapters/sqlite/tools/geo.js";
-import { SqliteAdapter } from "../../../../src/adapters/sqlite/SqliteAdapter.js";
+import { SqliteAdapter } from "../../../../src/adapters/sqlite/sqlite-adapter.js";
 import type {
   RequestContext,
   ToolDefinition,
