@@ -188,6 +188,12 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: true,
           rowsAffected: result.rowsAffected,
+          ...(result.rowsAffected === 0
+            ? {
+                warning:
+                  "No rows matched the WHERE clause — no changes were made",
+              }
+            : {}),
         };
       } catch (error) {
         const structured = formatError(error);
@@ -247,6 +253,12 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: true,
           rowsAffected: result.rowsAffected,
+          ...(result.rowsAffected === 0
+            ? {
+                warning:
+                  "No rows matched the WHERE clause — no changes were made",
+              }
+            : {}),
         };
       } catch (error) {
         const structured = formatError(error);

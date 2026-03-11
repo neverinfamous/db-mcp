@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`ERROR_SUGGESTIONS` Insufficient Data Pattern** — Regression tool's "Insufficient data" error now returns `VALIDATION_ERROR` instead of `UNKNOWN_ERROR`
+  - `sqlite_stats_regression` throws `Error("Insufficient data for degree N regression")` when data points < degree+1
+  - Message didn't match any `ERROR_SUGGESTIONS` pattern and fell through to `ErrorCategory.INTERNAL` → `UNKNOWN_ERROR`
+  - Added `/insufficient data/i` pattern mapping to `ErrorCategory.VALIDATION` with actionable suggestion
+- **`sqlite_json_set` / `sqlite_json_remove` No-Match Warning** — Returns `warning` field when `rowsAffected: 0`
+  - Previously returned `{success: true, rowsAffected: 0}` with no indication that nothing was changed
+  - Now includes `warning: "No rows matched the WHERE clause — no changes were made"`
+  - Mirrors the same pattern already applied to `sqlite_json_update` and `sqlite_json_merge`
 - **`ERROR_SUGGESTIONS` Column Name Pattern Coverage** — Added `has no column named` pattern for INSERT/UPDATE column errors
   - SQLite uses "has no column named X" for INSERT/UPDATE column errors, distinct from "no such column" used by SELECT
   - Previously classified as `UNKNOWN_ERROR` (no pattern match); now returns `RESOURCE_ERROR` with actionable suggestion

@@ -74,6 +74,12 @@ const ERROR_SUGGESTIONS: {
       "All vectors in comparison must have the same number of dimensions.",
     category: ErrorCategory.VALIDATION,
   },
+  {
+    pattern: /insufficient data/i,
+    suggestion:
+      "Not enough data points for the requested analysis. Add more data or reduce the degree.",
+    category: ErrorCategory.VALIDATION,
+  },
 
   // Resource errors — specific codes for table/column not found
   {
