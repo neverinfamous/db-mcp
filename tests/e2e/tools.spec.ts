@@ -82,4 +82,53 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       await client.close();
     }
   });
+
+  test("should execute a write tool successfully (sqlite_write_query)", async () => {
+    const client = await createClient();
+    try {
+      // Create a temporary table
+      const createResponse = await client.callTool({
+        name: "sqlite_write_query",
+        arguments: {
+          query:
+            "CREATE TABLE IF NOT EXISTS _e2e_test_write (id INTEGER PRIMARY KEY, name TEXT)",
+        },
+      });
+
+      expect(createResponse.isError).toBeUndefined();
+      expect(Array.isArray(createResponse.content)).toBe(true);
+
+      // Clean up
+      await client.callTool({
+        name: "sqlite_write_query",
+        arguments: { query: "DROP TABLE IF EXISTS _e2e_test_write" },
+      });
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("should execute code mode (sqlite_execute_code)", async () => {
+    const client = await createClient();
+    try {
+      const response = await client.callTool({
+        name: "sqlite_execute_code",
+        arguments: {
+          code: 'const tables = await sqlite.core.listTables(); return tables;',
+        },
+      });
+
+      expect(response.isError).toBeUndefined();
+      expect(Array.isArray(response.content)).toBe(true);
+      expect(response.content.length).toBeGreaterThan(0);
+      expect(response.content[0].type).toBe("text");
+
+      const textOutput = (response.content[0] as any).text as string;
+      const parsed = JSON.parse(textOutput);
+      expect(parsed).toHaveProperty("result");
+      expect(parsed.result).toHaveProperty("tables");
+    } finally {
+      await client.close();
+    }
+  });
 });

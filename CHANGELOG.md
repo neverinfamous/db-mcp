@@ -16,11 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Playwright E2E Test Suite** — 4 spec files verifying dual HTTP/SSE transport layer
+- **Playwright E2E Test Suite** — 7 spec files verifying dual HTTP/SSE transport layer (39 tests)
   - `health.spec.ts`: Health endpoint and MCP initialization handshake
   - `protocols.spec.ts`: Streamable HTTP and Legacy SSE protocol validation (session IDs, invalid JSON, missing params)
-  - `tools.spec.ts`: Tool listing, execution (`sqlite_list_tables`), and P154 structured error validation via MCP SDK Client
+  - `tools.spec.ts`: Tool listing, read/write execution, validation errors, and Code Mode (`sqlite_execute_code`) via MCP SDK Client
   - `security.spec.ts`: 404 handler, 413 payload limit, security headers, CORS preflight, OAuth status, Referrer-Policy
+  - `sessions.spec.ts`: Full Streamable HTTP session lifecycle — init, notifications, tool calls with session ID, SSE/DELETE rejection, termination
+  - `stateless.spec.ts`: Stateless mode (`--stateless`) — session-free POST, SSE 405, DELETE no-op, legacy SSE 404, health
+  - `resources.spec.ts`: All 7 static MCP resources (`sqlite://schema`, `tables`, `health`, `indexes`, `views`, `meta`, `memo://insights`) and resource templates via SDK Client
   - `playwright.config.ts` with webServer auto-launch, `test:e2e` npm script, dedicated `e2e.yml` CI workflow
   - E2E badge added to README
 - **Introspection Tool Group (6 tools)** — Read-only schema analysis and dependency mapping
