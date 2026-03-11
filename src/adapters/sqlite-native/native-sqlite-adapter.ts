@@ -22,7 +22,7 @@ import type {
   PromptDefinition,
   ToolGroup,
 } from "../../types/index.js";
-import { logger, ERROR_CODES } from "../../utils/logger.js";
+import { logger, ERROR_CODES } from "../../utils/logger/index.js";
 import {
   ConnectionError,
   ConfigurationError,
@@ -344,6 +344,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       return this.schemaManager.describeTable(tableName);
     }
     // Fallback: direct query without caching
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+      throw new Error("Invalid table name");
+    }
     const result = await this.executeReadQuery(
       `PRAGMA table_info("${tableName}")`,
     );

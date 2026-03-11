@@ -8,8 +8,8 @@
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import type { QueryResult } from "../../types/index.js";
 import { QueryError } from "../../utils/errors/index.js";
-import { ERROR_CODES } from "../../utils/logger.js";
-import type { ModuleLogger } from "../../utils/logger.js";
+import { ERROR_CODES } from "../../utils/logger/index.js";
+import type { ModuleLogger } from "../../utils/logger/index.js";
 import { normalizeSqliteParams } from "../sqlite-helpers.js";
 
 /**

@@ -18,7 +18,7 @@ import {
   JwksFetchError,
 } from "./errors.js";
 import { parseScopes } from "./scopes.js";
-import { createModuleLogger, ERROR_CODES } from "../utils/logger.js";
+import { createModuleLogger, ERROR_CODES } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");
 

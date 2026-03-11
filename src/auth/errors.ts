@@ -6,7 +6,7 @@
  */
 
 import { DbMcpError, ErrorCategory } from "../utils/errors/index.js";
-import { ERROR_CODES } from "../utils/logger.js";
+import { ERROR_CODES } from "../utils/logger/index.js";
 
 // =============================================================================
 // Base OAuth Error

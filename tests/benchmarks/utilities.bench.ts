@@ -22,7 +22,7 @@ import {
 } from "../../src/utils/where-clause.js";
 
 // Suppress logger output
-vi.mock("../../src/utils/logger.js", () => ({
+vi.mock("../../src/utils/logger/index.js", () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),

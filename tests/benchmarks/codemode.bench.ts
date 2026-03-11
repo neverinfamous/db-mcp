@@ -12,7 +12,7 @@ import { CodeModeSandbox, SandboxPool } from "../../src/codemode/sandbox.js";
 import { CodeModeSecurityManager } from "../../src/codemode/security.js";
 
 // Suppress logger stderr output during benchmarks
-vi.mock("../../src/utils/logger.js", () => ({
+vi.mock("../../src/utils/logger/index.js", () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),

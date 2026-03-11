@@ -21,7 +21,7 @@ import {
   getToolFilterFromEnv,
 } from "../filtering/tool-filter.js";
 import { generateInstructions } from "../constants/server-instructions.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/logger/index.js";
 import { SERVER_ICONS } from "../utils/icons.js";
 
 /**

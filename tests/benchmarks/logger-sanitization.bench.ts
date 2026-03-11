@@ -21,7 +21,7 @@ beforeAll(() => {
 });
 
 // Import the real logger
-import { logger } from "../../src/utils/logger.js";
+import { logger } from "../../src/utils/logger/index.js";
 
 // ---------------------------------------------------------------------------
 // Test data

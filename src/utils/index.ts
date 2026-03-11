@@ -13,7 +13,7 @@ export {
   type LogContext,
   type LogModule,
   type ErrorCode,
-} from "./logger.js";
+} from "./logger/index.js";
 
 export {
   UnsafeWhereClauseError,

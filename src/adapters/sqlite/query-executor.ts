@@ -8,7 +8,7 @@
 import type { Database } from "sql.js";
 import type { QueryResult, ColumnInfo } from "../../types/index.js";
 import { QueryError } from "../../utils/errors/index.js";
-import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
+import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import { normalizeSqliteParams } from "../sqlite-helpers.js";
 
 const log = createModuleLogger("SQLITE");

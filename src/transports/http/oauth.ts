@@ -9,7 +9,7 @@ import { AuthorizationServerDiscovery } from "../../auth/authorization-server-di
 import { TokenValidator } from "../../auth/token-validator.js";
 import { createAuthMiddleware } from "../../auth/middleware.js";
 import { SUPPORTED_SCOPES } from "../../auth/scopes.js";
-import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
+import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
 
 const logger = createModuleLogger("HTTP");

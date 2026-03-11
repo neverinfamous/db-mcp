@@ -8,7 +8,7 @@
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ModuleLogger } from "../../utils/logger.js";
+import type { ModuleLogger } from "../../utils/logger/index.js";
 
 // =============================================================================
 // Extension Directory

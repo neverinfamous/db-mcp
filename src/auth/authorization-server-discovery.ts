@@ -12,7 +12,7 @@ import type {
   AuthServerDiscoveryConfig,
 } from "./types.js";
 import { AuthServerDiscoveryError } from "./errors.js";
-import { createModuleLogger, ERROR_CODES } from "../utils/logger.js";
+import { createModuleLogger, ERROR_CODES } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");
 

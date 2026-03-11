@@ -13,7 +13,7 @@ import type {
   ResourceServerConfig,
 } from "./types.js";
 import { SUPPORTED_SCOPES } from "./scopes.js";
-import { createModuleLogger } from "../utils/logger.js";
+import { createModuleLogger } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");
 

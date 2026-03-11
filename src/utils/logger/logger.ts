@@ -8,126 +8,11 @@
  * Example: [2025-12-18T01:30:00Z] [ERROR] [DB] [CONNECT_FAILED] Failed to connect {"host":"localhost"}
  */
 
-// =============================================================================
-// Types
-// =============================================================================
-
-/**
- * RFC 5424 syslog severity levels
- * @see https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.1
- */
-export type LogLevel =
-  | "debug" // 7 - Debug-level messages
-  | "info" // 6 - Informational messages
-  | "notice" // 5 - Normal but significant condition
-  | "warning" // 4 - Warning conditions
-  | "error" // 3 - Error conditions
-  | "critical" // 2 - Critical conditions
-  | "alert" // 1 - Action must be taken immediately
-  | "emergency"; // 0 - System is unusable
-
-/**
- * Module identifiers for log categorization
- */
-export type LogModule =
-  | "SERVER" // MCP server lifecycle
-  | "ADAPTER" // Database adapter operations
-  | "AUTH" // OAuth/authentication
-  | "TOOLS" // Tool execution
-  | "RESOURCES" // Resource handlers
-  | "PROMPTS" // Prompt handlers
-  | "TRANSPORT" // HTTP/SSE/stdio transport
-  | "QUERY" // SQL query execution
-  | "POOL" // Connection pool
-  | "FILTER" // Tool filtering
-  | "SQLITE" // SQLite-specific
-  | "NATIVE_SQLITE" // Native better-sqlite3
-  | "HTTP" // HTTP transport
-  | "DB" // Generic database
-  | "CLI" // Command line interface
-  | "CODEMODE"; // Sandboxed code execution
-
-/**
- * Structured log context following MCP logging standards
- */
-export interface LogContext {
-  /** Module identifier */
-  module?: LogModule | undefined;
-  /** Module-prefixed error/event code (e.g., DB_CONNECT_FAILED) */
-  code?: string | undefined;
-  /** Operation being performed (e.g., executeQuery, connect) */
-  operation?: string | undefined;
-  /** Entity identifier (e.g., table name, connection id) */
-  entityId?: string | undefined;
-  /** Request identifier for tracing */
-  requestId?: string | undefined;
-  /** Error stack trace */
-  stack?: string | undefined;
-  /** Error object (stack extracted automatically) */
-  error?: Error | undefined;
-  /** Additional context fields */
-  [key: string]: unknown;
-}
-
-/**
- * Module-prefixed error code
- */
-export interface ErrorCode {
-  /** Module prefix (e.g., 'AUTH', 'DB', 'SERVER') */
-  module: string;
-  /** Error code suffix (e.g., 'TOKEN_INVALID', 'CONNECT_FAILED') */
-  code: string;
-  /** Full code string (e.g., 'AUTH_TOKEN_INVALID') */
-  full: string;
-}
+import type { LogLevel, LogModule, LogContext } from "./types.js";
+import { ModuleLogger } from "./module-logger.js";
 
 // =============================================================================
-// Error Codes
-// =============================================================================
-
-/**
- * Create a module-prefixed error code
- */
-export function createErrorCode(module: string, code: string): ErrorCode {
-  return {
-    module: module.toUpperCase(),
-    code: code.toUpperCase(),
-    full: `${module.toUpperCase()}_${code.toUpperCase()}`,
-  };
-}
-
-/**
- * Common error codes by module
- */
-export const ERROR_CODES = {
-  // Auth module
-  AUTH: {
-    TOKEN_INVALID: createErrorCode("AUTH", "TOKEN_INVALID"),
-    TOKEN_EXPIRED: createErrorCode("AUTH", "TOKEN_EXPIRED"),
-    TOKEN_MISSING: createErrorCode("AUTH", "TOKEN_MISSING"),
-    SIGNATURE_INVALID: createErrorCode("AUTH", "SIGNATURE_INVALID"),
-    SCOPE_DENIED: createErrorCode("AUTH", "SCOPE_DENIED"),
-    DISCOVERY_FAILED: createErrorCode("AUTH", "DISCOVERY_FAILED"),
-    JWKS_FETCH_FAILED: createErrorCode("AUTH", "JWKS_FETCH_FAILED"),
-    REGISTRATION_FAILED: createErrorCode("AUTH", "REGISTRATION_FAILED"),
-  },
-  // Server module
-  SERVER: {
-    START_FAILED: createErrorCode("SERVER", "START_FAILED"),
-    SHUTDOWN_FAILED: createErrorCode("SERVER", "SHUTDOWN_FAILED"),
-    TRANSPORT_ERROR: createErrorCode("SERVER", "TRANSPORT_ERROR"),
-  },
-  // Database module
-  DB: {
-    CONNECT_FAILED: createErrorCode("DB", "CONNECT_FAILED"),
-    QUERY_FAILED: createErrorCode("DB", "QUERY_FAILED"),
-    DISCONNECT_FAILED: createErrorCode("DB", "DISCONNECT_FAILED"),
-    ADAPTER_NOT_FOUND: createErrorCode("DB", "ADAPTER_NOT_FOUND"),
-  },
-} as const;
-
-// =============================================================================
-// Logger Class
+// Severity Priority
 // =============================================================================
 
 /**
@@ -143,6 +28,10 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   info: 6,
   debug: 7,
 };
+
+// =============================================================================
+// Sanitization
+// =============================================================================
 
 /**
  * Sensitive keys to redact from context objects
@@ -248,6 +137,10 @@ function sanitizeStack(stack: string): string {
     .replace(STACK_NEWLINE_PATTERN, " \u2192 ") // Replace newlines with arrow separator
     .replace(STACK_CONTROL_CHAR_PATTERN, ""); // Remove other control chars
 }
+
+// =============================================================================
+// Logger Class
+// =============================================================================
 
 /**
  * MCP-aware structured logger with dual-mode output
@@ -467,76 +360,4 @@ export class Logger {
   child(module: string): ModuleLogger {
     return new ModuleLogger(this, module as LogModule);
   }
-}
-
-/**
- * Module-scoped logger for cleaner code in specific modules
- */
-export class ModuleLogger {
-  constructor(
-    private parent: Logger,
-    private module: LogModule,
-  ) {}
-
-  private withModule(context?: LogContext): LogContext {
-    return { ...context, module: this.module };
-  }
-
-  debug(message: string, context?: LogContext): void {
-    this.parent.debug(message, this.withModule(context));
-  }
-
-  info(message: string, context?: LogContext): void {
-    this.parent.info(message, this.withModule(context));
-  }
-
-  notice(message: string, context?: LogContext): void {
-    this.parent.notice(message, this.withModule(context));
-  }
-
-  warn(message: string, context?: LogContext): void {
-    this.parent.warn(message, this.withModule(context));
-  }
-
-  warning(message: string, context?: LogContext): void {
-    this.parent.warning(message, this.withModule(context));
-  }
-
-  error(message: string, context?: LogContext): void {
-    this.parent.error(message, this.withModule(context));
-  }
-
-  critical(message: string, context?: LogContext): void {
-    this.parent.critical(message, this.withModule(context));
-  }
-
-  alert(message: string, context?: LogContext): void {
-    this.parent.alert(message, this.withModule(context));
-  }
-
-  emergency(message: string, context?: LogContext): void {
-    this.parent.emergency(message, this.withModule(context));
-  }
-}
-
-// =============================================================================
-// Default Logger Instance
-// =============================================================================
-
-/**
- * Default logger instance
- */
-export const logger = new Logger();
-
-/**
- * Create a module-specific logger
- */
-export function createModuleLogger(module: string): ModuleLogger {
-  return logger.child(module);
-}
-
-// Initialize log level from environment
-const envLevel = process.env["LOG_LEVEL"]?.toLowerCase();
-if (envLevel && envLevel in LEVEL_PRIORITY) {
-  logger.setLevel(envLevel as LogLevel);
 }

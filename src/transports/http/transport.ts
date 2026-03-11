@@ -15,7 +15,7 @@ import express, { type RequestHandler } from "express";
 import type { Request, Response } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { oauthErrorHandler } from "../../auth/middleware.js";
-import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
+import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import {
   DEFAULT_MAX_BODY_BYTES,
   HTTP_REQUEST_TIMEOUT_MS,

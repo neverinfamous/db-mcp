@@ -11,7 +11,7 @@ import type { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
+import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
 import { JSONRPC_SERVER_ERROR, JSONRPC_INTERNAL_ERROR } from "./types.js";
 import { asIncoming, asServerResponse } from "./type-adapters.js";
@@ -106,7 +106,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
       res.status(400).json({
         jsonrpc: "2.0",
         error: {
-          code: -32000,
+          code: JSONRPC_SERVER_ERROR,
           message:
             "Bad Request: Session exists but uses a different transport protocol",
         },
@@ -184,7 +184,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
           res.status(400).json({
             jsonrpc: "2.0",
             error: {
-              code: -32000,
+              code: JSONRPC_SERVER_ERROR,
               message: "Bad Request: No valid session ID provided",
             },
             id: null,
@@ -344,7 +344,7 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
     if (!sessionId) {
       res.status(400).json({
         jsonrpc: "2.0",
-        error: { code: -32000, message: "Missing sessionId parameter" },
+        error: { code: JSONRPC_SERVER_ERROR, message: "Missing sessionId parameter" },
         id: null,
       });
       return;
@@ -355,7 +355,7 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
       res.status(404).json({
         jsonrpc: "2.0",
         error: {
-          code: -32000,
+          code: JSONRPC_SERVER_ERROR,
           message: "No transport found for sessionId",
         },
         id: null,

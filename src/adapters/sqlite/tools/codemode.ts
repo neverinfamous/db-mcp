@@ -24,7 +24,7 @@ import {
   type ISandboxPool,
   type SandboxMode,
 } from "../../../codemode/sandbox-factory.js";
-import { logger } from "../../../utils/logger.js";
+import { logger } from "../../../utils/logger/index.js";
 import { formatError } from "../../../utils/errors/index.js";
 
 // =============================================================================

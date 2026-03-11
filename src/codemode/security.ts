@@ -4,7 +4,7 @@
  * Input validation, rate limiting, and audit logging for code execution.
  */
 
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/logger/index.js";
 import {
   DEFAULT_SECURITY_CONFIG,
   type SecurityConfig,

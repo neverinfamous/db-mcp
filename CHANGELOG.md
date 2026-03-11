@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Code Quality Audit — Logger Module Split** — Split monolithic `logger.ts` (543 lines) into `utils/logger/` directory
+  - `types.ts`: `LogLevel`, `LogModule`, `LogContext` type definitions
+  - `error-codes.ts`: `ErrorCode` type, `createErrorCode()`, and `ERROR_CODES` constant map
+  - `module-logger.ts`: `ModuleLogger` class for module-scoped logging
+  - `logger.ts`: Core `Logger` class with sanitization and dual-mode output
+  - `index.ts`: Barrel re-export with default logger instance and env initialization
+  - Updated 30 consumer imports across source and test files
+
+### Fixed
+
+- **Code Quality Audit — Magic JSON-RPC Error Code** — Replaced 4 remaining inline `-32000` literals with `JSONRPC_SERVER_ERROR` constant in `session.ts`
+
+### Security
+
+- **Code Quality Audit — Table Name Validation** — Added regex guard (`/^[a-zA-Z_][a-zA-Z0-9_]*$/`) to native adapter's `describeTable` fallback
+  - WASM adapter already had this guard; native adapter's fallback path was missing it
+
 ### Added
 
 - **Transport Feature Backport** — `trustProxy` config option for X-Forwarded-For client IP extraction behind reverse proxies

@@ -23,7 +23,7 @@ import type {
   PromptDefinition,
   ToolGroup,
 } from "../../types/index.js";
-import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
+import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import {
   ConnectionError,
   ConfigurationError,

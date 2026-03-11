@@ -7,7 +7,7 @@
 
 import { CodeModeSandbox, SandboxPool } from "./sandbox.js";
 import { WorkerSandbox, WorkerSandboxPool } from "./worker-sandbox.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/logger/index.js";
 import type { SandboxOptions, PoolOptions, SandboxResult } from "./types.js";
 
 /**

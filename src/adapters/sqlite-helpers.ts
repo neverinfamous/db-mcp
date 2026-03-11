@@ -9,7 +9,7 @@ import {
   isJsonbSupportedVersion,
   setJsonbSupported,
 } from "./sqlite/json-utils.js";
-import type { ModuleLogger } from "../utils/logger.js";
+import type { ModuleLogger } from "../utils/logger/index.js";
 
 /**
  * Check if SQL is a DDL statement (CREATE, ALTER, DROP).
