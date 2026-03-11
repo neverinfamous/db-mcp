@@ -631,9 +631,3 @@ function getActiveToolGroups(
   return activeGroups;
 }
 
-/**
- * Static instructions for backward compatibility
- * @deprecated Use generateInstructions() instead for dynamic content
- */
-export const SERVER_INSTRUCTIONS =
-  ESSENTIAL_INSTRUCTIONS + FILTERING_INSTRUCTIONS;

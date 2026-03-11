@@ -29,7 +29,11 @@ import type {
   ToolFilterConfig,
 } from "../types/index.js";
 import { isToolEnabled } from "../filtering/tool-filter.js";
-import { formatError } from "../utils/errors/index.js";
+import {
+  formatError,
+  ValidationError,
+  ConnectionError,
+} from "../utils/errors/index.js";
 
 /**
  * Pre-compiled dangerous SQL patterns for injection detection (L2 optimization).
@@ -485,8 +489,9 @@ export abstract class DatabaseAdapter {
       ];
       for (const prefix of writePrefixes) {
         if (trimmedSql.startsWith(prefix)) {
-          throw new Error(
+          throw new ValidationError(
             `Read-only mode: ${prefix} statements are not allowed`,
+            "DB_READ_ONLY_VIOLATION",
           );
         }
       }
@@ -496,7 +501,10 @@ export abstract class DatabaseAdapter {
     // Note: This is a basic check; parameterized queries are the primary defense
     for (const pattern of DANGEROUS_SQL_PATTERNS) {
       if (pattern.test(sql)) {
-        throw new Error("Query contains potentially dangerous patterns");
+        throw new ValidationError(
+          "Query contains potentially dangerous patterns",
+          "DB_DANGEROUS_PATTERN",
+        );
       }
     }
   }
@@ -523,6 +531,20 @@ export abstract class DatabaseAdapter {
       context.progressToken = progressToken;
     }
     return context;
+  }
+
+  /**
+   * Ensure the adapter is connected to the database.
+   * Throws ConnectionError if not connected.
+   * Subclasses may override to add additional checks (e.g., db instance null).
+   */
+  protected ensureConnected(): void {
+    if (!this.connected) {
+      throw new ConnectionError(
+        "Not connected to database",
+        "DB_NOT_CONNECTED",
+      );
+    }
   }
 
   /**

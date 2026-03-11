@@ -18,10 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Code Quality Audit** — Removed unused deprecated `SERVER_INSTRUCTIONS` export from `server-instructions.ts` (zero consumers)
 - **Code Quality Audit** — `executeGeneral()` in `query-executor.ts` now throws `QueryError` with logging (was bare `Error`)
+- **Code Quality Audit** — `validateQuery()` in `database-adapter.ts` now throws `ValidationError` instead of bare `Error`
+- **Code Quality Audit** — `ensureConnected()` / `ensureDb()` in both adapters now throw `ConnectionError` instead of bare `Error`
 - **Transport Feature Backport** — Changed `Referrer-Policy` from `strict-origin-when-cross-origin` to `no-referrer` (API server has no referrer to share)
 
 ### Changed
 
+- **Code Quality Audit — Base Class `ensureConnected()`** — Concrete `ensureConnected()` method on `DatabaseAdapter` with `ConnectionError`
+  - Both adapters override with `protected override` calling `super.ensureConnected()` + db-null check
+  - Eliminates duplicated connection-check logic between WASM and native adapters
+- **Code Quality Audit — Transaction Method Extraction** — Extracted 6 transaction functions into `transaction-methods.ts`
+  - `beginTransaction`, `commitTransaction`, `rollbackTransaction`, `savepoint`, `releaseSavepoint`, `rollbackToSavepoint`
+  - `native-sqlite-adapter.ts` delegates via thin one-liner methods; reduces file from 645 to ~605 lines
 - **Code Quality Audit — PRAGMA Deduplication** — Extracted `PragmaExecutor` interface and `applyCommonPragmas()` into `sqlite-helpers.ts`
   - Eliminates duplicated walMode/foreignKeys/busyTimeout/cacheSize PRAGMA logic between WASM and native adapters
   - Both adapters now delegate to the shared helper with a thin PragmaExecutor wrapper

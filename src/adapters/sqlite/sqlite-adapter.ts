@@ -509,9 +509,13 @@ export class SqliteAdapter extends DatabaseAdapter {
   /**
    * Ensure database is connected
    */
-  private ensureConnected(): void {
-    if (!this.db || !this.connected) {
-      throw new Error("Not connected to database");
+  protected override ensureConnected(): void {
+    super.ensureConnected();
+    if (!this.db) {
+      throw new ConnectionError(
+        "Not connected to database",
+        "DB_NOT_CONNECTED",
+      );
     }
   }
 
@@ -519,10 +523,15 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Ensure database is connected and return the database instance
    */
   private ensureDb(): Database {
-    if (!this.db || !this.connected) {
-      throw new Error("Not connected to database");
+    this.ensureConnected();
+    const db = this.db;
+    if (!db) {
+      throw new ConnectionError(
+        "Not connected to database",
+        "DB_NOT_CONNECTED",
+      );
     }
-    return this.db;
+    return db;
   }
 
   /**

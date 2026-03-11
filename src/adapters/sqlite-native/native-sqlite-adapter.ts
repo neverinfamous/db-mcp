@@ -59,6 +59,14 @@ import { getWindowTools } from "./tools/window.js";
 import { getSpatialiteTools, isSpatialiteLoaded } from "./tools/spatialite/index.js";
 import { getToolGroupIcon } from "../../utils/icons.js";
 import { loadSpatialite, loadCsvExtension } from "./extensions.js";
+import {
+  beginTransaction as txnBegin,
+  commitTransaction as txnCommit,
+  rollbackTransaction as txnRollback,
+  savepoint as txnSavepoint,
+  releaseSavepoint as txnRelease,
+  rollbackToSavepoint as txnRollbackTo,
+} from "./transaction-methods.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
@@ -556,9 +564,13 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   /**
    * Ensure database is connected
    */
-  private ensureConnected(): void {
-    if (!this.db || !this.connected) {
-      throw new Error("Not connected to database");
+  protected override ensureConnected(): void {
+    super.ensureConnected();
+    if (!this.db) {
+      throw new ConnectionError(
+        "Not connected to database",
+        "DB_NOT_CONNECTED",
+      );
     }
   }
 
@@ -566,10 +578,15 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Ensure database is connected and return database instance
    */
   private ensureDb(): BetterSqliteDb {
-    if (!this.db || !this.connected) {
-      throw new Error("Not connected to database");
+    this.ensureConnected();
+    const db = this.db;
+    if (!db) {
+      throw new ConnectionError(
+        "Not connected to database",
+        "DB_NOT_CONNECTED",
+      );
     }
-    return this.db;
+    return db;
   }
 
   /**
@@ -590,48 +607,42 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Begin a transaction
    */
   beginTransaction(): void {
-    const db = this.ensureDb();
-    db.exec("BEGIN TRANSACTION");
+    txnBegin(this.ensureDb());
   }
 
   /**
    * Commit a transaction
    */
   commitTransaction(): void {
-    const db = this.ensureDb();
-    db.exec("COMMIT");
+    txnCommit(this.ensureDb());
   }
 
   /**
    * Rollback a transaction
    */
   rollbackTransaction(): void {
-    const db = this.ensureDb();
-    db.exec("ROLLBACK");
+    txnRollback(this.ensureDb());
   }
 
   /**
    * Create a savepoint
    */
   savepoint(name: string): void {
-    const db = this.ensureDb();
-    db.exec(`SAVEPOINT "${name}"`);
+    txnSavepoint(this.ensureDb(), name);
   }
 
   /**
    * Release a savepoint
    */
   releaseSavepoint(name: string): void {
-    const db = this.ensureDb();
-    db.exec(`RELEASE SAVEPOINT "${name}"`);
+    txnRelease(this.ensureDb(), name);
   }
 
   /**
    * Rollback to a savepoint
    */
   rollbackToSavepoint(name: string): void {
-    const db = this.ensureDb();
-    db.exec(`ROLLBACK TO SAVEPOINT "${name}"`);
+    txnRollbackTo(this.ensureDb(), name);
   }
 }
 
