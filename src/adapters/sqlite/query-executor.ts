@@ -174,6 +174,16 @@ export function executeGeneral(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Query failed: ${message}`, { cause: error });
+    log.error(`Query failed: ${message}`, {
+      code: ERROR_CODES.DB.QUERY_FAILED.full,
+    });
+    throw new QueryError(
+      `Query failed: ${message}`,
+      "DB_QUERY_FAILED",
+      {
+        sql,
+        cause: error instanceof Error ? error : undefined,
+      },
+    );
   }
 }

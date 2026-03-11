@@ -43,7 +43,7 @@ import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
 // Module logger
 const log = createModuleLogger("SQLITE");
 
-import { isDDL } from "../sqlite-helpers.js";
+import { isDDL, applyCommonPragmas } from "../sqlite-helpers.js";
 
 
 
@@ -189,20 +189,11 @@ export class SqliteAdapter extends DatabaseAdapter {
   private applyOptions(options?: SqliteOptions): void {
     if (!this.db || !options) return;
 
-    if (options.walMode) {
-      this.db.run("PRAGMA journal_mode = WAL");
-    }
-    if (options.foreignKeys !== undefined) {
-      this.db.run(
-        `PRAGMA foreign_keys = ${options.foreignKeys ? "ON" : "OFF"}`,
-      );
-    }
-    if (options.busyTimeout !== undefined) {
-      this.db.run(`PRAGMA busy_timeout = ${options.busyTimeout}`);
-    }
-    if (options.cacheSize !== undefined) {
-      this.db.run(`PRAGMA cache_size = ${options.cacheSize}`);
-    }
+    const db = this.db;
+    applyCommonPragmas(
+      { runPragma: (pragma) => db.run(`PRAGMA ${pragma}`) },
+      options,
+    );
   }
 
   /**

@@ -17,9 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Code Quality Audit** — Removed unused deprecated `SERVER_INSTRUCTIONS` export from `server-instructions.ts` (zero consumers)
+- **Code Quality Audit** — `executeGeneral()` in `query-executor.ts` now throws `QueryError` with logging (was bare `Error`)
 - **Transport Feature Backport** — Changed `Referrer-Policy` from `strict-origin-when-cross-origin` to `no-referrer` (API server has no referrer to share)
 
 ### Changed
+
+- **Code Quality Audit — PRAGMA Deduplication** — Extracted `PragmaExecutor` interface and `applyCommonPragmas()` into `sqlite-helpers.ts`
+  - Eliminates duplicated walMode/foreignKeys/busyTimeout/cacheSize PRAGMA logic between WASM and native adapters
+  - Both adapters now delegate to the shared helper with a thin PragmaExecutor wrapper
+- **Code Quality Audit — Extension Loading Extraction** — Created `sqlite-native/extensions.ts` with `loadSpatialite()` and `loadCsvExtension()`
+  - Moved SpatiaLite and CSV extension loading (candidate paths, Windows PATH augmentation, try-next-path loop) out of `native-sqlite-adapter.ts`
+  - `native-sqlite-adapter.ts` reduced from 731 to 578 lines; `sqlite-adapter.ts` from 556 to 484 lines
 
 - **Code Quality Audit — Row Mapping Deduplication** — Extracted `rowsFromSqlJsResult()` helper in `sqlite-adapter.ts`
   - Replaced 2 identical row-mapping closures in `executeReadQuery` and `executeQuery`

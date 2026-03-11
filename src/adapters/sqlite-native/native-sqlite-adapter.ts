@@ -7,8 +7,6 @@
 
 import Database from "better-sqlite3";
 import type { Database as BetterSqliteDb } from "better-sqlite3";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { DatabaseAdapter } from "../database-adapter.js";
 import type {
   DatabaseConfig,
@@ -60,45 +58,11 @@ import { getTransactionTools } from "./tools/transactions.js";
 import { getWindowTools } from "./tools/window.js";
 import { getSpatialiteTools, isSpatialiteLoaded } from "./tools/spatialite/index.js";
 import { getToolGroupIcon } from "../../utils/icons.js";
+import { loadSpatialite, loadCsvExtension } from "./extensions.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
-/** Absolute path to the extensions directory (computed once at module load). */
-const __moduleFilename = fileURLToPath(import.meta.url);
-const EXTENSIONS_DIR = path.resolve(
-  path.dirname(__moduleFilename),
-  "../../../extensions",
-);
-
-/**
- * Attempt to load a SQLite extension from a list of candidate paths.
- * Tries each path in order; logs success on the first hit or a warning if none work.
- */
-function tryLoadExtension(
-  db: BetterSqliteDb,
-  name: string,
-  envVar: string,
-  candidates: string[],
-  extensionLog: ReturnType<typeof logger.child>,
-): void {
-  for (const extPath of candidates) {
-    try {
-      db.loadExtension(extPath);
-      extensionLog.info(`Loaded ${name} extension from ${extPath}`, {
-        code: "SQLITE_EXTENSION",
-      });
-      return;
-    } catch {
-      // Try next path
-    }
-  }
-  extensionLog.warning(
-    `${name} extension not available. Set ${envVar} env var.`,
-    { code: "SQLITE_EXTENSION" },
-  );
-}
-
-import { isDDL, normalizeSqliteParams } from "../sqlite-helpers.js";
+import { isDDL, normalizeSqliteParams, applyCommonPragmas } from "../sqlite-helpers.js";
 
 /**
  * Native SQLite Adapter using better-sqlite3
@@ -211,76 +175,23 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
-   * Apply SQLite PRAGMA options
+   * Apply SQLite PRAGMA options and load extensions
    */
   private applyOptions(options?: SqliteOptions): void {
     if (!this.db || !options) return;
 
-    if (options.walMode) {
-      this.db.pragma("journal_mode = WAL");
-    }
-    if (options.foreignKeys !== undefined) {
-      this.db.pragma(`foreign_keys = ${options.foreignKeys ? "ON" : "OFF"}`);
-    }
-    if (options.busyTimeout !== undefined) {
-      this.db.pragma(`busy_timeout = ${options.busyTimeout}`);
-    }
-    if (options.cacheSize !== undefined) {
-      this.db.pragma(`cache_size = ${options.cacheSize}`);
-    }
+    const db = this.db;
+    applyCommonPragmas(
+      { runPragma: (pragma) => db.pragma(pragma) },
+      options,
+    );
+
+    // Load native-only extensions
     if (options.spatialite) {
-      const spatialitePaths = [
-        process.env["SPATIALITE_PATH"],
-        // Absolute paths to local extensions
-        path.join(
-          EXTENSIONS_DIR,
-          "mod_spatialite-5.1.0-win-amd64",
-          "mod_spatialite",
-        ),
-        path.join(
-          EXTENSIONS_DIR,
-          "mod_spatialite-5.1.0-win-amd64",
-          "mod_spatialite.dll",
-        ),
-        // System paths
-        "mod_spatialite",
-        "mod_spatialite.dll",
-        "/usr/lib/x86_64-linux-gnu/mod_spatialite.so",
-        "/usr/local/lib/mod_spatialite.so",
-        "/usr/local/lib/mod_spatialite.dylib",
-      ].filter((p): p is string => Boolean(p));
-
-      // On Windows, SpatiaLite DLL has many dependencies (libgeos, libproj, etc.)
-      // These must be in PATH for Windows to find them when loading the extension.
-      // Prepend the extension directory to PATH before attempting to load.
-      const envSpatialitePath = process.env["SPATIALITE_PATH"];
-      if (envSpatialitePath && process.platform === "win32") {
-        const spatialiteExtDir = path.dirname(envSpatialitePath);
-        const currentPath = process.env["PATH"] ?? "";
-        if (!currentPath.includes(spatialiteExtDir)) {
-          process.env["PATH"] = spatialiteExtDir + ";" + currentPath;
-        }
-      }
-
-      tryLoadExtension(this.db, "SpatiaLite", "SPATIALITE_PATH", spatialitePaths, log);
+      loadSpatialite(db, log);
     }
     if (options.csv) {
-      const csvPaths = [
-        process.env["CSV_EXTENSION_PATH"],
-        // sqlite-xsv extension with absolute paths
-        path.join(EXTENSIONS_DIR, "xsv0.dll"),
-        path.join(EXTENSIONS_DIR, "xsv0"),
-        // System paths
-        "xsv0",
-        "xsv0.dll",
-        "csv",
-        "csv.dll",
-        "csv.so",
-        "/usr/local/lib/csv.so",
-        "/usr/local/lib/csv.dylib",
-      ].filter((p): p is string => Boolean(p));
-
-      tryLoadExtension(this.db, "CSV", "CSV_EXTENSION_PATH", csvPaths, log);
+      loadCsvExtension(db, log);
     }
   }
 
