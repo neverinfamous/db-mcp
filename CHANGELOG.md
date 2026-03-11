@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_migration_risks` DROP INDEX Detection** — Now returns `medium` risk for `DROP INDEX` statements
+  - Previously no risk entry was generated for `DROP INDEX` (fell through all pattern checks)
+  - Now detects `DROP INDEX` with `riskLevel: "medium"`, `category: "index_removal"`, and actionable mitigation advice
 - **`ERROR_SUGGESTIONS` Insufficient Data Pattern** — Regression tool's "Insufficient data" error now returns `VALIDATION_ERROR` instead of `UNKNOWN_ERROR`
   - `sqlite_stats_regression` throws `Error("Insufficient data for degree N regression")` when data points < degree+1
   - Message didn't match any `ERROR_SUGGESTIONS` pattern and fell through to `ErrorCategory.INTERNAL` → `UNKNOWN_ERROR`

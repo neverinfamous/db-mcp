@@ -644,6 +644,16 @@ export function createMigrationRisksTool(
             }
           }
 
+          // DROP INDEX risks
+          if (upper.startsWith("DROP INDEX")) {
+            addRisk(
+              "medium",
+              "index_removal",
+              "Dropping an index may degrade query performance for queries that relied on it.",
+              "Verify no critical queries depend on this index before dropping. Use sqlite_query_plan to check.",
+            );
+          }
+
           // DELETE without WHERE
           if (upper.startsWith("DELETE") && !upper.includes("WHERE")) {
             addRisk(
