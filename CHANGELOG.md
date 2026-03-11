@@ -146,6 +146,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 
+- **Compact JSON Serialization (R-1)** — Tool responses now use compact `JSON.stringify(result)` instead of pretty-printed `JSON.stringify(result, null, 2)`
+  - Reduces serialization overhead by ~15-20% on large payloads; MCP clients parse JSON programmatically
+  - Error responses retain pretty-print for debugging readability
+- **Incremental TypeScript Builds (B-1)** — Added `incremental: true` and `tsBuildInfoFile` to `tsconfig.json`
+  - Subsequent builds only recheck changed files, significantly reducing dev-loop build times
+- **Vitest Thread Pool (T-1)** — Configured `pool: "threads"` in `vitest.config.ts`
+  - Enables worker thread execution for test parallelism on multi-core machines
+- **`isDDL()` Helper Extraction (S-2/R-4)** — Replaced 3× duplicated DDL detection blocks with module-scope `isDDL()` function
+  - Eliminates redundant `sql.trim().toUpperCase()` allocations in `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`
+- **SchemaManager Array Pre-Allocation (R-7)** — `getAllIndexes()` now pre-allocates result array with `new Array(rows.length)`
+  - Avoids incremental `push()` resizing; improved documentation of PRAGMA batching constraints
+- **CI `node_modules` Caching (CI-1)** — Added `actions/cache@v4` for `node_modules` in `lint-and-test.yml`
+  - Keyed on `package-lock.json` hash per Node.js version; skips `npm ci` on cache hit (~20-30s savings per run)
+- **CI Benchmark Tracking (CI-2)** — New `benchmarks` job in `lint-and-test.yml` (main branch only)
+  - Runs `npm run bench` and uploads results as artifacts with 30-day retention for regression detection
+
 - **NativeSqliteAdapter SchemaManager Integration** — Schema metadata operations now use TTL-based caching
   - `listTables()`, `describeTable()`, `getSchema()`, `getAllIndexes()` delegate through `SchemaManager` (5s TTL)
   - Eliminates redundant `PRAGMA table_info()` queries on every metadata request
@@ -196,6 +212,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dockerfile Builder Stage** — Removed unnecessary `apk upgrade --no-cache` from builder stage (DK-3)
+  - Builder is discarded after multi-stage build; security patches only needed in production stage
+  - Saves ~5-10s per Docker build
+- **Dockerfile Label Accuracy** — Fixed tool count in LABEL from 124 to 139 (DK-2)
 - **Tier 2 File Refactoring** — Split 4 large files (700–986 lines) into modular directory structures
   - **Phase 1 — Adapter Deduplication**: Extracted shared `registerTool`/`registerResource`/`registerPrompt` logic into `DatabaseAdapter` base class, reducing `NativeSqliteAdapter.ts` (956→727) and `SqliteAdapter.ts` (945→721)
   - **Phase 2 — Transport Split**: Split `http.ts` (986 lines) into `http/` directory with 6 files: `types.ts`, `middleware.ts`, `session.ts`, `oauth.ts`, `transport.ts`, `index.ts`

@@ -303,7 +303,8 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
         };
 
         // Connect SSE transport to server
-        // SDK McpServer only supports one active transport — close first
+        // SDK McpServer only supports one active transport — close first if needed
+        // Note: connect() auto-calls start() on SSE transports — do NOT call start() separately
         try {
           await server.connect(
             sseTransport as unknown as Parameters<typeof server.connect>[0],
@@ -315,7 +316,6 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
             sseTransport as unknown as Parameters<typeof server.connect>[0],
           );
         }
-        await sseTransport.start();
       } catch (error) {
         logger.error("Error starting SSE transport", {
           code: ERROR_CODES.SERVER.TRANSPORT_ERROR.full,

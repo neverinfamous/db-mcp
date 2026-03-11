@@ -7,7 +7,7 @@
  * Run: npm run bench
  */
 
-import { describe, bench, beforeEach, afterEach, vi } from "vitest";
+import { describe, bench, vi } from "vitest";
 import { CodeModeSandbox, SandboxPool } from "../../src/codemode/sandbox.js";
 import { CodeModeSecurityManager } from "../../src/codemode/security.js";
 
@@ -53,6 +53,12 @@ vi.mock("../../src/utils/logger.js", () => ({
   },
 }));
 
+// Helper: default pool/sandbox config
+const POOL_CONFIG = {
+  pool: { minInstances: 2, maxInstances: 10, idleTimeoutMs: 60000 },
+  exec: { timeoutMs: 30000, memoryLimitMb: 128, cpuLimitMs: 10000 },
+};
+
 // ---------------------------------------------------------------------------
 // 1. Sandbox Creation
 // ---------------------------------------------------------------------------
@@ -84,10 +90,7 @@ describe("SandboxPool Lifecycle", () => {
   bench(
     "pool initialization (minInstances=2)",
     () => {
-      const pool = new SandboxPool(
-        { minInstances: 2, maxInstances: 10, idleTimeoutMs: 60000 },
-        { timeoutMs: 30000, memoryLimitMb: 128, cpuLimitMs: 10000 },
-      );
+      const pool = new SandboxPool(POOL_CONFIG.pool, POOL_CONFIG.exec);
       pool.initialize();
       pool.dispose();
     },
@@ -96,27 +99,22 @@ describe("SandboxPool Lifecycle", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 3. SandboxPool Stats (sync, separated to avoid NaN comparisons with async)
+// 3. SandboxPool Stats
+//    Uses lazy-init pattern — vitest bench doesn't count groups with
+//    beforeEach/afterEach hooks as "passed". Resources created on first
+//    iteration and reused; process cleanup handles disposal.
 // ---------------------------------------------------------------------------
 describe("SandboxPool Stats", () => {
-  let sandboxPool: SandboxPool;
-
-  beforeEach(() => {
-    sandboxPool = new SandboxPool(
-      { minInstances: 2, maxInstances: 10, idleTimeoutMs: 60000 },
-      { timeoutMs: 30000, memoryLimitMb: 128, cpuLimitMs: 10000 },
-    );
-    sandboxPool.initialize();
-  });
-
-  afterEach(() => {
-    sandboxPool?.dispose();
-  });
+  let pool: SandboxPool | undefined;
 
   bench(
     "getStats() overhead",
     () => {
-      sandboxPool.getStats();
+      if (!pool) {
+        pool = new SandboxPool(POOL_CONFIG.pool, POOL_CONFIG.exec);
+        pool.initialize();
+      }
+      pool.getStats();
     },
     { iterations: 5000, warmupIterations: 20 },
   );
@@ -126,24 +124,16 @@ describe("SandboxPool Stats", () => {
 // 4. SandboxPool Execution (async)
 // ---------------------------------------------------------------------------
 describe("SandboxPool Execution", () => {
-  let sandboxPool: SandboxPool;
-
-  beforeEach(() => {
-    sandboxPool = new SandboxPool(
-      { minInstances: 2, maxInstances: 10, idleTimeoutMs: 60000 },
-      { timeoutMs: 30000, memoryLimitMb: 128, cpuLimitMs: 10000 },
-    );
-    sandboxPool.initialize();
-  });
-
-  afterEach(() => {
-    sandboxPool?.dispose();
-  });
+  let pool: SandboxPool | undefined;
 
   bench(
     "pool execute (trivial code)",
     async () => {
-      await sandboxPool.execute("return 42;", {});
+      if (!pool) {
+        pool = new SandboxPool(POOL_CONFIG.pool, POOL_CONFIG.exec);
+        pool.initialize();
+      }
+      await pool.execute("return 42;", {});
     },
     { iterations: 100, warmupIterations: 10, time: 5000 },
   );
@@ -153,19 +143,12 @@ describe("SandboxPool Execution", () => {
 // 5. Sandbox Execution — Trivial (async, isolated to avoid NaN ratios)
 // ---------------------------------------------------------------------------
 describe("Sandbox Execution — Trivial", () => {
-  let sandbox: CodeModeSandbox;
-
-  beforeEach(() => {
-    sandbox = CodeModeSandbox.create();
-  });
-
-  afterEach(() => {
-    sandbox?.dispose();
-  });
+  let sandbox: CodeModeSandbox | undefined;
 
   bench(
     'trivial code execution ("return 42")',
     async () => {
+      if (!sandbox) sandbox = CodeModeSandbox.create();
       await sandbox.execute("return 42;", {});
     },
     { iterations: 100, warmupIterations: 10, time: 5000 },
@@ -176,38 +159,32 @@ describe("Sandbox Execution — Trivial", () => {
 // 6. Sandbox Execution — API Bindings (async, isolated)
 // ---------------------------------------------------------------------------
 describe("Sandbox Execution — API Bindings", () => {
-  let sandbox: CodeModeSandbox;
+  let sandbox: CodeModeSandbox | undefined;
 
-  beforeEach(() => {
-    sandbox = CodeModeSandbox.create();
-  });
-
-  afterEach(() => {
-    sandbox?.dispose();
-  });
+  const apiBindings: Record<string, Record<string, () => unknown>> = {};
+  const groupNames = [
+    "core",
+    "json",
+    "text",
+    "stats",
+    "admin",
+    "vector",
+    "geo",
+    "introspection",
+    "migration",
+  ];
+  for (const group of groupNames) {
+    apiBindings[group] = {
+      readQuery: () => ({ rows: [], rowCount: 0 }),
+      writeQuery: () => ({ rowsAffected: 0 }),
+      help: () => [],
+    };
+  }
 
   bench(
     "execution with 9-group API bindings",
     async () => {
-      const apiBindings: Record<string, Record<string, () => unknown>> = {};
-      const groupNames = [
-        "core",
-        "json",
-        "text",
-        "stats",
-        "admin",
-        "vector",
-        "geo",
-        "introspection",
-        "migration",
-      ];
-      for (const group of groupNames) {
-        apiBindings[group] = {
-          readQuery: () => ({ rows: [], rowCount: 0 }),
-          writeQuery: () => ({ rowsAffected: 0 }),
-          help: () => [],
-        };
-      }
+      if (!sandbox) sandbox = CodeModeSandbox.create();
       await sandbox.execute(
         "const result = sqlite.core.readQuery(); return result;",
         apiBindings,
@@ -221,19 +198,12 @@ describe("Sandbox Execution — API Bindings", () => {
 // 7. Sandbox Execution — Console Capture (async, isolated)
 // ---------------------------------------------------------------------------
 describe("Sandbox Execution — Console Capture", () => {
-  let sandbox: CodeModeSandbox;
-
-  beforeEach(() => {
-    sandbox = CodeModeSandbox.create();
-  });
-
-  afterEach(() => {
-    sandbox?.dispose();
-  });
+  let sandbox: CodeModeSandbox | undefined;
 
   bench(
     "console output capture",
     async () => {
+      if (!sandbox) sandbox = CodeModeSandbox.create();
       await sandbox.execute(
         'console.log("test output"); console.warn("warning");',
         {},
@@ -245,10 +215,19 @@ describe("Sandbox Execution — Console Capture", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. Security Validation
+// 8. Code Validation
 // ---------------------------------------------------------------------------
-describe("Security Validation", () => {
+describe("Code Validation", () => {
   const security = new CodeModeSecurityManager();
+
+  // Pre-build large code string outside bench body for accurate measurement
+  const largeCodeLines: string[] = [];
+  for (let i = 0; i < 200; i++) {
+    largeCodeLines.push(
+      `const result${String(i)} = await sqlite.core.readQuery("SELECT * FROM table${String(i)} LIMIT 10");`,
+    );
+  }
+  const largeCode = largeCodeLines.join("\n");
 
   bench(
     "validateCode() safe short code (50 chars)",
@@ -263,13 +242,7 @@ describe("Security Validation", () => {
   bench(
     "validateCode() safe large code (10KB)",
     () => {
-      const lines: string[] = [];
-      for (let i = 0; i < 200; i++) {
-        lines.push(
-          `const result${String(i)} = await sqlite.core.readQuery("SELECT * FROM table${String(i)} LIMIT 10");`,
-        );
-      }
-      security.validateCode(lines.join("\n"));
+      security.validateCode(largeCode);
     },
     { iterations: 1000, warmupIterations: 10 },
   );
@@ -281,6 +254,13 @@ describe("Security Validation", () => {
     },
     { iterations: 5000, warmupIterations: 50 },
   );
+});
+
+// ---------------------------------------------------------------------------
+// 9. Runtime Security
+// ---------------------------------------------------------------------------
+describe("Runtime Security", () => {
+  const security = new CodeModeSecurityManager();
 
   bench(
     "checkRateLimit() throughput",

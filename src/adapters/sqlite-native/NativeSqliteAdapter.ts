@@ -59,6 +59,19 @@ import { getToolGroupIcon } from "../../utils/icons.js";
 const log = logger.child("NATIVE_SQLITE");
 
 /**
+ * Check if SQL is a DDL statement (CREATE, ALTER, DROP)
+ * Used to auto-invalidate schema cache on structure changes.
+ */
+function isDDL(sql: string): boolean {
+  const normalized = sql.trim().toUpperCase();
+  return (
+    normalized.startsWith("CREATE") ||
+    normalized.startsWith("ALTER") ||
+    normalized.startsWith("DROP")
+  );
+}
+
+/**
  * Native SQLite Adapter using better-sqlite3
  */
 export class NativeSqliteAdapter extends DatabaseAdapter {
@@ -408,12 +421,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         : stmt.run();
 
       // Auto-invalidate schema cache on DDL operations
-      const normalizedSql = sql.trim().toUpperCase();
-      if (
-        normalizedSql.startsWith("CREATE") ||
-        normalizedSql.startsWith("ALTER") ||
-        normalizedSql.startsWith("DROP")
-      ) {
+      if (isDDL(sql)) {
         this.clearSchemaCache();
       }
 

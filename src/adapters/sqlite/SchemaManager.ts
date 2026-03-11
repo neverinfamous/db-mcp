@@ -185,25 +185,30 @@ export class SchemaManager {
 
   /**
    * Get all indexes in a single query (cached)
-   * Performance optimization: eliminates N+1 query pattern
+   * Performance: Fetches all index metadata from sqlite_master in one query,
+   * then resolves column info per-index via PRAGMA index_info. True batching
+   * isn't possible since SQLite PRAGMAs don't support multi-index queries,
+   * but the cache ensures this N+1 pattern only runs once per TTL window.
    */
   async getAllIndexes(): Promise<IndexInfo[]> {
     const cached = this.getCached("all_indexes") as IndexInfo[] | undefined;
     if (cached) return cached;
 
+    // Single query to get all index metadata
     const result = await this.executor.executeReadQuery(
       `SELECT name, tbl_name, sql FROM sqlite_master 
        WHERE type = 'index' AND sql IS NOT NULL`,
     );
 
+    const rows = result.rows ?? [];
     const indexes: IndexInfo[] = [];
 
-    for (const row of result.rows ?? []) {
+    // Resolve column info for each index
+    for (const row of rows) {
       const indexName = row["name"] as string;
       const tableName = row["tbl_name"] as string;
       const sql = row["sql"] as string;
 
-      // Get column info for this index via PRAGMA index_info
       let columns: string[];
       try {
         const indexInfo = await this.executor.executeReadQuery(
@@ -211,7 +216,6 @@ export class SchemaManager {
         );
         columns = (indexInfo.rows ?? []).map((col) => col["name"] as string);
       } catch {
-        // If PRAGMA fails, fall back to empty columns
         columns = [];
       }
 

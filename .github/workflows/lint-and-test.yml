@@ -26,7 +26,15 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
 
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Run ESLint
@@ -58,3 +66,37 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate
+
+  benchmarks:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+          cache: "npm"
+
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-24.x-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run benchmarks
+        run: npm run bench 2>&1 | tee benchmark-results.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v6
+        with:
+          name: benchmark-results-${{ github.sha }}
+          path: benchmark-results.txt
+          retention-days: 30

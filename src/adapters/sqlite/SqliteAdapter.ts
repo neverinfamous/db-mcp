@@ -42,6 +42,19 @@ import { isJsonbSupportedVersion, setJsonbSupported } from "./json-utils.js";
 const log = createModuleLogger("SQLITE");
 
 /**
+ * Check if SQL is a DDL statement (CREATE, ALTER, DROP)
+ * Used to auto-invalidate schema cache on structure changes.
+ */
+function isDDL(sql: string): boolean {
+  const normalized = sql.trim().toUpperCase();
+  return (
+    normalized.startsWith("CREATE") ||
+    normalized.startsWith("ALTER") ||
+    normalized.startsWith("DROP")
+  );
+}
+
+/**
  * SQLite Database Adapter
  *
  * Implements the DatabaseAdapter interface for SQLite using sql.js.
@@ -373,12 +386,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       const changes = db.getRowsModified();
 
       // Auto-invalidate schema cache on DDL operations
-      const normalizedSql = sql.trim().toUpperCase();
-      if (
-        normalizedSql.startsWith("CREATE") ||
-        normalizedSql.startsWith("ALTER") ||
-        normalizedSql.startsWith("DROP")
-      ) {
+      if (isDDL(sql)) {
         this.clearSchemaCache();
       }
 
@@ -418,13 +426,7 @@ export class SqliteAdapter extends DatabaseAdapter {
         : db.exec(sql);
 
       if (results.length === 0) {
-        // Auto-invalidate schema cache on DDL operations
-        const normalizedSql = sql.trim().toUpperCase();
-        if (
-          normalizedSql.startsWith("CREATE") ||
-          normalizedSql.startsWith("ALTER") ||
-          normalizedSql.startsWith("DROP")
-        ) {
+        if (isDDL(sql)) {
           this.clearSchemaCache();
         }
         return Promise.resolve({
@@ -450,12 +452,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       });
 
       // Auto-invalidate schema cache on DDL operations
-      const normalizedSql = sql.trim().toUpperCase();
-      if (
-        normalizedSql.startsWith("CREATE") ||
-        normalizedSql.startsWith("ALTER") ||
-        normalizedSql.startsWith("DROP")
-      ) {
+      if (isDDL(sql)) {
         this.clearSchemaCache();
       }
 

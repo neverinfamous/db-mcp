@@ -7,8 +7,7 @@ WORKDIR /app
 # Install build dependencies for better-sqlite3 native compilation
 # Use Alpine edge for latest security patches
 RUN apk add --no-cache python3 make g++ && \
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl && \
-    apk upgrade --no-cache
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl
 
 # Upgrade npm globally (no patches here — builder is discarded, only production stage is scanned)
 RUN npm install -g npm@latest --force && npm cache clean --force
@@ -111,7 +110,7 @@ CMD ["--transport", "stdio", "--sqlite-native", "/app/data/database.db"]
 
 # Labels for Docker Hub
 LABEL maintainer="Adamic.tech"
-LABEL description="SQLite MCP Server with OAuth 2.1, HTTP/SSE transport, 124 tools, and smart tool filtering"
+LABEL description="SQLite MCP Server with OAuth 2.1, HTTP/SSE transport, 139 tools, and smart tool filtering"
 LABEL version="1.0.2"
 LABEL org.opencontainers.image.source="https://github.com/neverinfamous/db-mcp"
 LABEL io.modelcontextprotocol.server.name="io.github.neverinfamous/db-mcp"

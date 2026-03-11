@@ -6,6 +6,8 @@
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "skipLibCheck": true,
     /* Strict Type-Checking Options */
     "strict": true,
