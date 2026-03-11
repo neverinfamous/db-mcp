@@ -200,6 +200,13 @@ export class HttpTransport {
             this.state.config.port,
             this.state.config.host ?? "0.0.0.0",
             () => {
+              // Set HTTP server timeouts to prevent slowloris-style DoS attacks
+              if (this.state.httpServer) {
+                this.state.httpServer.setTimeout(120_000); // 2 min request timeout
+                this.state.httpServer.keepAliveTimeout = 65_000; // Slightly above common LB idle timeout
+                this.state.httpServer.headersTimeout = 66_000; // Must be > keepAliveTimeout
+              }
+
               logger.info(
                 `HTTP server listening on ${this.state.config.host ?? "0.0.0.0"}:${String(this.state.config.port)}`,
                 {

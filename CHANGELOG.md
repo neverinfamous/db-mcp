@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Security Audit Remediation** — Addressed 4 findings from comprehensive security audit
+  - Fixed transitive `hono` vulnerability (GHSA-v8w9-8mx6-g223) via `npm audit fix`
+  - Added HTTP server timeouts: `setTimeout(120s)`, `keepAliveTimeout(65s)`, `headersTimeout(66s)` to prevent slowloris-style DoS attacks
+  - SHA-pinned all GitHub Actions across 4 CI workflows (`lint-and-test.yml`, `codeql.yml`, `publish-npm.yml`, `docker-publish.yml`) to prevent supply chain attacks via tag hijacking
+  - Hardened Docker Scout security gate to fail-fast on non-timeout scan errors instead of silently continuing
+
 ### Fixed
 
 - **`sqlite_migration_risks` DROP INDEX Detection** — Now returns `medium` risk for `DROP INDEX` statements
