@@ -26,7 +26,7 @@ import {
   ASSISTANT_FOCUSED,
   withPriority,
   withTimestamp,
-} from "../../src/utils/resourceAnnotations.js";
+} from "../../src/utils/resource-annotations.js";
 
 describe("Tool Annotations", () => {
   describe("Preset constants", () => {

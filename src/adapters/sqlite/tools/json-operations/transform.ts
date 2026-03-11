@@ -10,8 +10,8 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   normalizeJson,
   isJsonbSupported,
@@ -114,6 +114,7 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `UPDATE ${table} SET ${column} = jsonb(${column})`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
 
@@ -269,6 +270,7 @@ export function createJsonNormalizeColumnTool(
         // 2. Get text JSON for normalization processing
         let selectSql = `SELECT _rowid_ AS _rid_, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           selectSql += ` WHERE ${input.whereClause}`;
         }
 

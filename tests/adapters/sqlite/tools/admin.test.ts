@@ -10,7 +10,7 @@ import {
   createTestAdapter,
   type TestAdapter,
 } from "../../../utils/test-adapter.js";
-import { insightsManager } from "../../../../src/utils/insightsManager.js";
+import { insightsManager } from "../../../../src/utils/insights-manager.js";
 
 describe("Admin Tools", () => {
   let adapter: TestAdapter;

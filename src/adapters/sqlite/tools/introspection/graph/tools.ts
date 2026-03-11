@@ -1,156 +1,20 @@
 /**
- * Introspection Graph Tools
+ * Graph Tool Creators
  *
- * Dependency graph analysis, topological sort, and cascade simulation.
+ * Dependency graph, topological sort, and cascade simulation tools.
  * All tools are read-only — they only query PRAGMAs.
- * 3 tools total.
  */
 
-import type { SqliteAdapter } from "../../sqlite-adapter.js";
+import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,
-} from "../../../../types/index.js";
-import { readOnly } from "../../../../utils/annotations.js";
-import { formatError } from "../../../../utils/errors.js";
+} from "../../../../../types/index.js";
+import { readOnly } from "../../../../../utils/annotations.js";
+import { formatError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-
-// =============================================================================
-// Shared Types & Utilities
-// =============================================================================
-
-interface ForeignKeyInfo {
-  fromTable: string;
-  toTable: string;
-  fromColumn: string;
-  toColumn: string;
-  onDelete: string;
-  onUpdate: string;
-}
-
-interface GraphNode {
-  table: string;
-  rowCount: number;
-}
-
-interface GraphEdge {
-  from: string;
-  to: string;
-  fromColumn: string;
-  toColumn: string;
-  onDelete: string;
-  onUpdate: string;
-}
-
-/**
- * Build the foreign key graph from all user tables.
- * Queries `PRAGMA foreign_key_list(table)` for each table.
- */
-async function buildForeignKeyGraph(
-  adapter: SqliteAdapter,
-): Promise<{
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  fkInfo: ForeignKeyInfo[];
-}> {
-  // Get all user tables (exclude internal/system)
-  const tablesResult = await adapter.executeReadQuery(
-    `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
-  );
-  const tableNames = (tablesResult.rows ?? []).map((r) => r["name"] as string);
-
-  const nodes: GraphNode[] = [];
-  const edges: GraphEdge[] = [];
-  const fkInfo: ForeignKeyInfo[] = [];
-
-  for (const tableName of tableNames) {
-    // Get row count estimate (may fail for virtual tables like FTS5 in WASM)
-    let rowCount = 0;
-    try {
-      const countResult = await adapter.executeReadQuery(
-        `SELECT COUNT(*) as cnt FROM "${tableName}"`,
-      );
-      rowCount =
-        (countResult.rows?.[0]?.["cnt"] as number | undefined) ?? 0;
-    } catch {
-      // Skip count for tables that can't be queried (e.g., FTS5 virtual tables in WASM)
-    }
-    nodes.push({ table: tableName, rowCount });
-
-    // Get foreign keys (may fail for virtual tables in WASM)
-    try {
-      const fkResult = await adapter.executeReadQuery(
-        `PRAGMA foreign_key_list("${tableName}")`,
-      );
-      for (const fk of fkResult.rows ?? []) {
-        const info: ForeignKeyInfo = {
-          fromTable: tableName,
-          toTable: fk["table"] as string,
-          fromColumn: fk["from"] as string,
-          toColumn: fk["to"] as string,
-          onDelete: (fk["on_delete"] as string) || "NO ACTION",
-          onUpdate: (fk["on_update"] as string) || "NO ACTION",
-        };
-        fkInfo.push(info);
-        edges.push({
-          from: tableName,
-          to: fk["table"] as string,
-          fromColumn: fk["from"] as string,
-          toColumn: fk["to"] as string,
-          onDelete: info.onDelete,
-          onUpdate: info.onUpdate,
-        });
-      }
-    } catch {
-      // Skip FK analysis for tables that can't be queried
-    }
-  }
-
-  return { nodes, edges, fkInfo };
-}
-
-/**
- * Detect circular dependencies using DFS cycle detection.
- */
-function detectCycles(
-  adjacency: Map<string, string[]>,
-  tables: string[],
-): string[][] {
-  const cycles: string[][] = [];
-  const visited = new Set<string>();
-  const inStack = new Set<string>();
-
-  function dfs(node: string, path: string[]): void {
-    if (inStack.has(node)) {
-      // Found a cycle — extract it from the path
-      const cycleStart = path.indexOf(node);
-      if (cycleStart !== -1) {
-        cycles.push([...path.slice(cycleStart), node]);
-      }
-      return;
-    }
-    if (visited.has(node)) return;
-
-    visited.add(node);
-    inStack.add(node);
-    path.push(node);
-
-    for (const neighbor of adjacency.get(node) ?? []) {
-      dfs(neighbor, path);
-    }
-
-    path.pop();
-    inStack.delete(node);
-  }
-
-  for (const table of tables) {
-    if (!visited.has(table)) {
-      dfs(table, []);
-    }
-  }
-
-  return cycles;
-}
+import type { ForeignKeyInfo } from "./helpers.js";
+import { buildForeignKeyGraph, detectCycles } from "./helpers.js";
 
 // =============================================================================
 // Input Schemas

@@ -5,7 +5,7 @@
  * and authorization failures.
  */
 
-import { DbMcpError, ErrorCategory } from "../utils/errors.js";
+import { DbMcpError, ErrorCategory } from "../utils/errors/index.js";
 import { ERROR_CODES } from "../utils/logger.js";
 
 // =============================================================================

@@ -12,19 +12,19 @@ import {
   createDependencyGraphTool,
   createTopologicalSortTool,
   createCascadeSimulatorTool,
-} from "./graph.js";
+} from "./graph/index.js";
 
 import {
   createSchemaSnapshotTool,
   createConstraintAnalysisTool,
   createMigrationRisksTool,
-} from "./analysis.js";
+} from "./analysis/index.js";
 
 import {
   createStorageAnalysisTool,
   createIndexAuditTool,
   createQueryPlanTool,
-} from "./diagnostics.js";
+} from "./diagnostics/index.js";
 
 /**
  * Get all introspection tools (9 read-only tools)

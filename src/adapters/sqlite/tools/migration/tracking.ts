@@ -10,7 +10,7 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly, write, idempotent } from "../../../../utils/annotations.js";
-import { formatError } from "../../../../utils/errors.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   MIGRATIONS_TABLE,
   MigrationInitSchema,

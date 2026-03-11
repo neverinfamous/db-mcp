@@ -7,8 +7,8 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   JsonSelectSchema,
   JsonQuerySchema,
@@ -73,6 +73,7 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT ${selectClause} FROM "${input.table}"`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
 

@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError, ResourceNotFoundError } from "../../../../utils/errors.js";
+import { formatError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
 import {
   StatsBasicOutputSchema,
   StatsCountOutputSchema,

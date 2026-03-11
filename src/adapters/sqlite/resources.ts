@@ -11,8 +11,8 @@ import {
   HIGH_PRIORITY,
   MEDIUM_PRIORITY,
   LOW_PRIORITY,
-} from "../../utils/resourceAnnotations.js";
-import { insightsManager } from "../../utils/insightsManager.js";
+} from "../../utils/resource-annotations.js";
+import { insightsManager } from "../../utils/insights-manager.js";
 
 /**
  * Get all resource definitions for the SQLite adapter

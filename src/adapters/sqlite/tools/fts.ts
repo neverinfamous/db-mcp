@@ -10,7 +10,7 @@ import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
-import { formatError } from "../../../utils/errors.js";
+import { formatError } from "../../../utils/errors/index.js";
 import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,

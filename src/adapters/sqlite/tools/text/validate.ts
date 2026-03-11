@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError, ValidationError } from "../../../../utils/errors.js";
+import { formatError, ValidationError } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
 import {
   TextNormalizeSchema,

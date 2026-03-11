@@ -25,7 +25,7 @@ import {
   formatError,
   wrapError,
   isDbMcpError,
-} from "../../src/utils/errors.js";
+} from "../../src/utils/errors/index.js";
 
 // =============================================================================
 // Base DbMcpError Tests

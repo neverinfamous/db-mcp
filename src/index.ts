@@ -71,6 +71,5 @@ export {
   getFilterSummary,
 } from "./filtering/tool-filter.js";
 
-// Version info (must match package.json)
-export const VERSION = "1.0.2";
-export const NAME = "db-mcp";
+// Version info — single source of truth from package.json
+export { VERSION, NAME } from "./version.js";

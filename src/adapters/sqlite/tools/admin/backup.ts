@@ -12,7 +12,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { admin, readOnly } from "../../../../utils/annotations.js";
-import { formatError } from "../../../../utils/errors.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   buildProgressContext,

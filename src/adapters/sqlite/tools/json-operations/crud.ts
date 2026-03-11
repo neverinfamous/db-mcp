@@ -10,8 +10,8 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   JsonValidOutputSchema,
   JsonExtractOutputSchema,
@@ -117,6 +117,7 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
 
@@ -181,6 +182,7 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const valueJson = JSON.stringify(input.value);
+        validateWhereClause(input.whereClause);
         const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
 
         const result = await adapter.executeWriteQuery(sql);
@@ -246,6 +248,7 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
+        validateWhereClause(input.whereClause);
         const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}') WHERE ${input.whereClause}`;
 
         const result = await adapter.executeWriteQuery(sql);
@@ -318,6 +321,7 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
 
@@ -388,6 +392,7 @@ export function createJsonArrayLengthTool(
 
         let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
 
@@ -453,6 +458,7 @@ export function createJsonArrayAppendTool(
         }
 
         const valueJson = JSON.stringify(input.value);
+        validateWhereClause(input.whereClause);
         // Append by using [#] which means "end of array"
         const appendPath = input.path.endsWith("]")
           ? input.path.replace(/\]$/, "#]")

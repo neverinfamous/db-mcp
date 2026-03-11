@@ -10,8 +10,8 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   JsonKeysOutputSchema,
   JsonEachOutputSchema,
@@ -70,6 +70,7 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.whereClause) {
           // With WHERE clause, use subquery to isolate table columns from json_each columns
           // This avoids ambiguity between e.g. table.id and json_each.id
+          validateWhereClause(input.whereClause);
           sql = `SELECT DISTINCT json_each.key
                       FROM json_each(
                           (SELECT ${column} FROM ${table} WHERE ${input.whereClause} LIMIT 1),
@@ -153,6 +154,7 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
           // Qualify unqualified 'id' column references with table alias 't.'
           // This handles: id = X, id IN (...), id BETWEEN, id IS NULL, etc.
           // Won't match already-qualified refs like 't.id' or 'je.id'
+          validateWhereClause(input.whereClause);
           const qualifiedWhere = input.whereClause.replace(
             /(?<![.\w])id(?=\s*[=<>!]|\s+(?:IN|BETWEEN|IS|LIKE)\b)/gi,
             "t.id",
@@ -245,6 +247,7 @@ export function createJsonGroupArrayTool(
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
         sql += groupByClause;
@@ -315,6 +318,7 @@ export function createJsonGroupObjectTool(
           // Build subquery that computes the aggregate grouped by key
           let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
           if (input.whereClause) {
+            validateWhereClause(input.whereClause);
             subquery += ` WHERE ${input.whereClause}`;
           }
           subquery += ` GROUP BY ${keyCol}`;
@@ -395,6 +399,7 @@ export function createJsonGroupObjectTool(
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
         if (input.whereClause) {
+          validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
         sql += groupByClause;

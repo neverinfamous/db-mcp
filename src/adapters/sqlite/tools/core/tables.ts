@@ -16,7 +16,7 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   CreateTableSchema,
   ListTablesSchema,

@@ -12,7 +12,7 @@
 
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
-import { formatError } from "../../../../utils/errors.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   LoadSpatialiteSchema,
   CreateSpatialTableSchema,

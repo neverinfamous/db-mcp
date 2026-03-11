@@ -109,7 +109,9 @@ export function setupRateLimiting(state: HttpTransportState): void {
   if (!state.app) return;
 
   const windowMs = DEFAULT_RATE_LIMIT_WINDOW_MS;
-  const maxRequests = DEFAULT_RATE_LIMIT_MAX;
+  const maxRequests = process.env["MCP_RATE_LIMIT_MAX"]
+    ? parseInt(process.env["MCP_RATE_LIMIT_MAX"], 10)
+    : DEFAULT_RATE_LIMIT_MAX;
 
   // Periodic cleanup of expired entries
   state.rateLimitCleanupTimer = setInterval(() => {

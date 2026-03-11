@@ -7,8 +7,8 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { write } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   JsonInsertSchema,
   JsonUpdateSchema,
@@ -145,6 +145,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
             ? `'${JSON.stringify(input.value).replace(/'/g, "''")}'`
             : JSON.stringify(input.value);
 
+        validateWhereClause(input.whereClause);
         const sql = `UPDATE "${input.table}" SET "${input.column}" = json_set("${input.column}", '${input.path}', json(${valueStr})) WHERE ${input.whereClause}`;
 
         const result = await adapter.executeWriteQuery(sql);
@@ -208,6 +209,7 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
 
         const mergeJson = JSON.stringify(input.mergeData);
 
+        validateWhereClause(input.whereClause);
         // Use json_patch for merging (shallow merge)
         const sql = `UPDATE "${input.table}" SET "${input.column}" = json_patch("${input.column}", '${mergeJson.replace(/'/g, "''")}') WHERE ${input.whereClause}`;
 

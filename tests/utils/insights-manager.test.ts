@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { insightsManager } from "../../src/utils/insightsManager.js";
+import { insightsManager } from "../../src/utils/insights-manager.js";
 
 describe("InsightsManager", () => {
   beforeEach(() => {

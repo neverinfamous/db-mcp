@@ -13,10 +13,12 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
   let client: Client;
+  let resolvedBaseURL: string;
 
-  test.beforeAll(async () => {
+  test.beforeAll(async ({}, testInfo) => {
+    resolvedBaseURL = testInfo.project.use.baseURL as string;
     const transport = new SSEClientTransport(
-      new URL("http://localhost:3000/sse"),
+      new URL(`${resolvedBaseURL}/sse`),
     );
     client = new Client(
       { name: "playwright-resource-test", version: "1.0.0" },

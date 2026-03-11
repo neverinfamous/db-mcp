@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { formatError } from "../../../../utils/errors/index.js";
 import {
   levenshtein,
   metaphone,

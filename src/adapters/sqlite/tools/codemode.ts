@@ -25,7 +25,7 @@ import {
   type SandboxMode,
 } from "../../../codemode/sandbox-factory.js";
 import { logger } from "../../../utils/logger.js";
-import { formatError } from "../../../utils/errors.js";
+import { formatError } from "../../../utils/errors/index.js";
 
 // =============================================================================
 // Module State

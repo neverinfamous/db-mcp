@@ -29,7 +29,7 @@ import type {
   ToolFilterConfig,
 } from "../types/index.js";
 import { isToolEnabled } from "../filtering/tool-filter.js";
-import { formatError } from "../utils/errors.js";
+import { formatError } from "../utils/errors/index.js";
 
 /**
  * Pre-compiled dangerous SQL patterns for injection detection (L2 optimization).

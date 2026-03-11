@@ -10,22 +10,47 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3000",
     trace: "on-first-retry",
   },
   projects: [
     {
-      name: "api",
-      use: { ...devices["Desktop Chrome"] },
+      name: "wasm",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3000",
+      },
+      testIgnore: /native\./,
+    },
+    {
+      name: "native",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3001",
+      },
+      testIgnore: /wasm\./,
+      dependencies: ["wasm"],
     },
   ],
-  webServer: {
-    command:
-      "node dist/cli.js --transport http --port 3000 --sqlite ./database.db --tool-filter starter",
-    url: "http://localhost:3000/health",
-    reuseExistingServer: !process.env.CI,
-    timeout: 30000,
-    stdout: "pipe",
-    stderr: "pipe",
-  },
+  webServer: [
+    {
+      command:
+        "node dist/cli.js --transport http --port 3000 --sqlite ./database.db --tool-filter +all",
+      url: "http://localhost:3000/health",
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+      stdout: "pipe",
+      stderr: "pipe",
+      env: { ...process.env, MCP_RATE_LIMIT_MAX: "1000" },
+    },
+    {
+      command:
+        "node dist/cli.js --transport http --port 3001 --sqlite-native ./database.db --tool-filter +all",
+      url: "http://localhost:3001/health",
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+      stdout: "pipe",
+      stderr: "pipe",
+      env: { ...process.env, MCP_RATE_LIMIT_MAX: "1000" },
+    },
+  ],
 });

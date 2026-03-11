@@ -12,8 +12,8 @@ import type {
 } from "../../../../types/index.js";
 import { admin, readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
-import { insightsManager } from "../../../../utils/insightsManager.js";
+import { formatError } from "../../../../utils/errors/index.js";
+import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
   PragmaCompileOptionsOutputSchema,
   PragmaDatabaseListOutputSchema,
