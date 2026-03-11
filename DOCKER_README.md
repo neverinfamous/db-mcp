@@ -13,6 +13,7 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-Published-green)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.neverinfamous/db-mcp)
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](https://github.com/neverinfamous/db-mcp/blob/main/SECURITY.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
+[![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 ![Tests](https://img.shields.io/badge/Tests-941%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/Coverage-80%25-yellow)
 
@@ -35,7 +36,7 @@
 | **Production-Ready Security**    | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                                                  |
 | **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types                                                                                                                                           |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error}` responses — no raw exceptions, no silent failures. Agents get actionable context instead of cryptic error codes                                   |
-| **MCP 2025-11-25 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                      |
+| **MCP 2025-03-26 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                      |
 
 ### Backend Options
 
@@ -228,6 +229,8 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 
 ## 📊 Tool Categories
 
+> **Note:** Counts below show unique tools per category. The [Tool Groups](#️-tool-filtering) table shows per-group totals including the auto-injected Code Mode tool (+1).
+
 | Category             | Native  | Description                     |
 | -------------------- | ------- | ------------------------------- |
 | Core Database        | 9       | CRUD, schema, indexes, views    |
@@ -250,7 +253,7 @@ MCP resources provide read-only access to database metadata:
 | --------------------- | ------------------------------ | --------------------------------- | ------------- |
 | `sqlite_schema`       | `sqlite://schema`              | Full database schema              | `minimal`     |
 | `sqlite_tables`       | `sqlite://tables`              | List all tables                   | `minimal`     |
-| `sqlite_table_schema` | `sqlite://table/{name}/schema` | Schema for a specific table       | `minimal`     |
+| `sqlite_table_schema` | `sqlite://table/{tableName}/schema` | Schema for a specific table       | `minimal`     |
 | `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database       | `minimal`     |
 | `sqlite_views`        | `sqlite://views`               | All views in the database         | `core,admin`  |
 | `sqlite_health`       | `sqlite://health`              | Database health and status        | _(read-only)_ |

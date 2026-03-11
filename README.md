@@ -36,7 +36,7 @@
 | **Production-Ready Security**    | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                                                  |
 | **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types                                                                                                                                           |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error}` responses — no raw exceptions, no silent failures. Agents get actionable context instead of cryptic error codes                                   |
-| **MCP 2025-11-25 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                      |
+| **MCP 2025-03-26 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                      |
 
 ## 🚀 Quick Start
 
@@ -293,7 +293,7 @@ MCP resources provide read-only access to database metadata:
 | --------------------- | ------------------------------ | --------------------------------- | ------------- |
 | `sqlite_schema`       | `sqlite://schema`              | Full database schema              | `minimal`     |
 | `sqlite_tables`       | `sqlite://tables`              | List all tables                   | `minimal`     |
-| `sqlite_table_schema` | `sqlite://table/{name}/schema` | Schema for a specific table       | `minimal`     |
+| `sqlite_table_schema` | `sqlite://table/{tableName}/schema` | Schema for a specific table       | `minimal`     |
 | `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database       | `minimal`     |
 | `sqlite_views`        | `sqlite://views`               | All views in the database         | `core,admin`  |
 | `sqlite_health`       | `sqlite://health`              | Database health and status        | _(read-only)_ |
