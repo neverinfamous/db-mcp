@@ -7,8 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Transport Feature Backport** — `trustProxy` config option for X-Forwarded-For client IP extraction behind reverse proxies
+- **Transport Feature Backport** — `enableHSTS` / `hstsMaxAge` config options (HSTS now opt-in, was always-on)
+- **Transport Feature Backport** — Wildcard subdomain CORS matching (e.g., `*.example.com`)
+- **Transport Feature Backport** — New `middleware.test.ts` with 14 unit tests for `getClientIp()` and `matchesCorsOrigin()`
+
 ### Fixed
 
+- **Code Quality Audit** — Removed unused deprecated `SERVER_INSTRUCTIONS` export from `server-instructions.ts` (zero consumers)
+- **Transport Feature Backport** — Changed `Referrer-Policy` from `strict-origin-when-cross-origin` to `no-referrer` (API server has no referrer to share)
+
+### Changed
+
+- **Code Quality Audit — Row Mapping Deduplication** — Extracted `rowsFromSqlJsResult()` helper in `sqlite-adapter.ts`
+  - Replaced 2 identical row-mapping closures in `executeReadQuery` and `executeQuery`
+- **Code Quality Audit — HTTP Timeout Constants** — Named magic timeout values in `transports/http/types.ts`
+  - `HTTP_REQUEST_TIMEOUT_MS` (120s), `HTTP_KEEP_ALIVE_TIMEOUT_MS` (65s), `HTTP_HEADERS_TIMEOUT_MS` (66s)
+  - `transport.ts` now imports named constants instead of using inline numbers
+- **Code Quality Audit — Types File Split** — Split `types/index.ts` (528 lines) into 5 sub-modules
+  - `database.ts`, `server.ts`, `auth.ts`, `filtering.ts`, `adapter.ts` with barrel re-export
+  - Zero consumer import changes — all continue importing from `types/index.js`
 - **Code Quality Audit** — Removed unused `dotenv` production dependency (never imported in source)
 - **Code Quality Audit** — Fixed stale `--postgresql` reference in CLI no-database warning; server only supports SQLite
 - **Code Quality Audit** — Removed extraneous blank lines in `sqlite-adapter.ts`

@@ -10,8 +10,29 @@ import type { Request, Response, RequestHandler } from "express";
 import {
   DEFAULT_RATE_LIMIT_WINDOW_MS,
   DEFAULT_RATE_LIMIT_MAX,
+  DEFAULT_HSTS_MAX_AGE,
   type HttpTransportState,
 } from "./types.js";
+
+// =============================================================================
+// Client IP Extraction
+// =============================================================================
+
+/**
+ * Extract client IP address from the request.
+ * When trustProxy is enabled, uses the leftmost IP from X-Forwarded-For.
+ * Falls back to Express's req.ip then req.socket.remoteAddress.
+ */
+export function getClientIp(req: Request, trustProxy: boolean): string {
+  if (trustProxy) {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+      const firstIp = forwarded.split(",")[0]?.trim();
+      if (firstIp) return firstIp;
+    }
+  }
+  return req.ip ?? req.socket.remoteAddress ?? "unknown";
+}
 
 // =============================================================================
 // Security Headers
@@ -35,11 +56,17 @@ export function setupSecurityHeaders(state: HttpTransportState): void {
       "Permissions-Policy",
       "camera=(), microphone=(), geolocation=()",
     );
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.setHeader(
-      "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains",
-    );
+    res.setHeader("Referrer-Policy", "no-referrer");
+
+    // HSTS — only set when explicitly enabled (requires HTTPS)
+    if (state.config.enableHSTS) {
+      const maxAge = state.config.hstsMaxAge ?? DEFAULT_HSTS_MAX_AGE;
+      res.setHeader(
+        "Strict-Transport-Security",
+        `max-age=${String(maxAge)}; includeSubDomains`,
+      );
+    }
+
     next();
   });
 }
@@ -47,6 +74,20 @@ export function setupSecurityHeaders(state: HttpTransportState): void {
 // =============================================================================
 // CORS
 // =============================================================================
+
+/**
+ * Check if an origin matches a CORS pattern.
+ * Supports exact matches and wildcard subdomain patterns (e.g., "*.example.com").
+ */
+export function matchesCorsOrigin(origin: string, pattern: string): boolean {
+  if (pattern === "*") return true;
+  if (pattern.startsWith("*.")) {
+    // Wildcard subdomain: "*.example.com" matches "app.example.com"
+    const domain = pattern.slice(1); // ".example.com"
+    return origin.endsWith(domain) && origin.length > domain.length;
+  }
+  return origin === pattern;
+}
 
 /**
  * Configure CORS with configurable origins
@@ -64,7 +105,10 @@ export function setupCors(state: HttpTransportState): void {
     // Set Access-Control-Allow-Origin
     if (isWildcard) {
       res.setHeader("Access-Control-Allow-Origin", "*");
-    } else if (origin && corsOrigins.includes(origin)) {
+    } else if (
+      origin &&
+      corsOrigins.some((pattern) => matchesCorsOrigin(origin, pattern))
+    ) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
       // Only set credentials for explicit origins (not wildcard)
@@ -112,6 +156,7 @@ export function setupRateLimiting(state: HttpTransportState): void {
   const maxRequests = process.env["MCP_RATE_LIMIT_MAX"]
     ? parseInt(process.env["MCP_RATE_LIMIT_MAX"], 10)
     : DEFAULT_RATE_LIMIT_MAX;
+  const trustProxy = state.config.trustProxy ?? false;
 
   // Periodic cleanup of expired entries
   state.rateLimitCleanupTimer = setInterval(() => {
@@ -132,7 +177,7 @@ export function setupRateLimiting(state: HttpTransportState): void {
       return;
     }
 
-    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    const ip = getClientIp(req, trustProxy);
     const now = Date.now();
     let entry = state.rateLimitMap.get(ip);
 

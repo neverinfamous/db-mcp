@@ -413,9 +413,10 @@ node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --sqlite-nat
 
 **Security Features:**
 
-- **7 Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`
-- **Rate Limiting** — 100 requests/minute per IP (429 on excess, health checks exempt)
-- **CORS** — Configurable via `--cors-origins` (default: `*`)
+- **6 Security Headers** (always) — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy`, `Permissions-Policy` + opt-in `Strict-Transport-Security` via `enableHSTS`
+- **Rate Limiting** — 100 requests/minute per IP (429 + Retry-After on excess, health checks exempt)
+- **CORS** — Configurable via `--cors-origins` (default: `*`, supports wildcard subdomains like `*.example.com`)
+- **Trust Proxy** — Opt-in `trustProxy` for X-Forwarded-For IP extraction behind reverse proxies
 - **Body Size Limit** — Configurable via `--max-body-bytes` (default: 1 MB)
 - **404 Handler** — Unknown paths return `{ error: "Not found" }`
 - **Cross-Protocol Guard** — SSE session IDs rejected on `/mcp` and vice versa

@@ -18,6 +18,9 @@ import { oauthErrorHandler } from "../../auth/middleware.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
 import {
   DEFAULT_MAX_BODY_BYTES,
+  HTTP_REQUEST_TIMEOUT_MS,
+  HTTP_KEEP_ALIVE_TIMEOUT_MS,
+  HTTP_HEADERS_TIMEOUT_MS,
   type HttpTransportConfig,
   type HttpTransportState,
   type RateLimitEntry,
@@ -202,9 +205,9 @@ export class HttpTransport {
             () => {
               // Set HTTP server timeouts to prevent slowloris-style DoS attacks
               if (this.state.httpServer) {
-                this.state.httpServer.setTimeout(120_000); // 2 min request timeout
-                this.state.httpServer.keepAliveTimeout = 65_000; // Slightly above common LB idle timeout
-                this.state.httpServer.headersTimeout = 66_000; // Must be > keepAliveTimeout
+                this.state.httpServer.setTimeout(HTTP_REQUEST_TIMEOUT_MS);
+                this.state.httpServer.keepAliveTimeout = HTTP_KEEP_ALIVE_TIMEOUT_MS;
+                this.state.httpServer.headersTimeout = HTTP_HEADERS_TIMEOUT_MS;
               }
 
               logger.info(

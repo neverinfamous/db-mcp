@@ -44,6 +44,23 @@ const log = createModuleLogger("SQLITE");
 import { isDDL, normalizeSqliteParams } from "../sqlite-helpers.js";
 
 /**
+ * Convert sql.js query results to row objects.
+ * Shared between executeReadQuery and executeQuery to eliminate duplication.
+ */
+function rowsFromSqlJsResult(result: {
+  columns: string[];
+  values: unknown[][];
+}): Record<string, unknown>[] {
+  return result.values.map((row) => {
+    const obj: Record<string, unknown> = {};
+    result.columns.forEach((col, i) => {
+      obj[col] = row[i];
+    });
+    return obj;
+  });
+}
+
+/**
  * SQLite Database Adapter
  *
  * Implements the DatabaseAdapter interface for SQLite using sql.js.
@@ -307,13 +324,7 @@ export class SqliteAdapter extends DatabaseAdapter {
         name,
         type: "unknown",
       }));
-      const rows = firstResult.values.map((row) => {
-        const obj: Record<string, unknown> = {};
-        firstResult.columns.forEach((col, i) => {
-          obj[col] = row[i];
-        });
-        return obj;
-      });
+      const rows = rowsFromSqlJsResult(firstResult);
 
       return Promise.resolve({
         rows,
@@ -420,13 +431,7 @@ export class SqliteAdapter extends DatabaseAdapter {
         });
       }
 
-      const rows = firstResult.values.map((row) => {
-        const obj: Record<string, unknown> = {};
-        firstResult.columns.forEach((col, i) => {
-          obj[col] = row[i];
-        });
-        return obj;
-      });
+      const rows = rowsFromSqlJsResult(firstResult);
 
       // Auto-invalidate schema cache on DDL operations
       if (isDDL(sql)) {

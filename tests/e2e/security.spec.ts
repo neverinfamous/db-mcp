@@ -90,13 +90,23 @@ test.describe("HTTP Transport Security & Limits", () => {
     expect(body).toHaveProperty("status", "healthy");
   });
 
-  test("should set Referrer-Policy header to strict-origin-when-cross-origin", async ({
+  test("should set Referrer-Policy header to no-referrer", async ({
     request,
   }) => {
     const response = await request.get("/health");
     expect(response.status()).toBe(200);
 
     const headers = response.headers();
-    expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    expect(headers["referrer-policy"]).toBe("no-referrer");
+  });
+
+  test("should not set HSTS header by default (opt-in only)", async ({
+    request,
+  }) => {
+    const response = await request.get("/health");
+    expect(response.status()).toBe(200);
+
+    const headers = response.headers();
+    expect(headers["strict-transport-security"]).toBeUndefined();
   });
 });
