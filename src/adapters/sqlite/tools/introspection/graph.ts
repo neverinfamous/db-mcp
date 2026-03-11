@@ -64,36 +64,45 @@ async function buildForeignKeyGraph(
   const fkInfo: ForeignKeyInfo[] = [];
 
   for (const tableName of tableNames) {
-    // Get row count estimate
-    const countResult = await adapter.executeReadQuery(
-      `SELECT COUNT(*) as cnt FROM "${tableName}"`,
-    );
-    const rowCount =
-      (countResult.rows?.[0]?.["cnt"] as number | undefined) ?? 0;
+    // Get row count estimate (may fail for virtual tables like FTS5 in WASM)
+    let rowCount = 0;
+    try {
+      const countResult = await adapter.executeReadQuery(
+        `SELECT COUNT(*) as cnt FROM "${tableName}"`,
+      );
+      rowCount =
+        (countResult.rows?.[0]?.["cnt"] as number | undefined) ?? 0;
+    } catch {
+      // Skip count for tables that can't be queried (e.g., FTS5 virtual tables in WASM)
+    }
     nodes.push({ table: tableName, rowCount });
 
-    // Get foreign keys
-    const fkResult = await adapter.executeReadQuery(
-      `PRAGMA foreign_key_list("${tableName}")`,
-    );
-    for (const fk of fkResult.rows ?? []) {
-      const info: ForeignKeyInfo = {
-        fromTable: tableName,
-        toTable: fk["table"] as string,
-        fromColumn: fk["from"] as string,
-        toColumn: fk["to"] as string,
-        onDelete: (fk["on_delete"] as string) || "NO ACTION",
-        onUpdate: (fk["on_update"] as string) || "NO ACTION",
-      };
-      fkInfo.push(info);
-      edges.push({
-        from: tableName,
-        to: fk["table"] as string,
-        fromColumn: fk["from"] as string,
-        toColumn: fk["to"] as string,
-        onDelete: info.onDelete,
-        onUpdate: info.onUpdate,
-      });
+    // Get foreign keys (may fail for virtual tables in WASM)
+    try {
+      const fkResult = await adapter.executeReadQuery(
+        `PRAGMA foreign_key_list("${tableName}")`,
+      );
+      for (const fk of fkResult.rows ?? []) {
+        const info: ForeignKeyInfo = {
+          fromTable: tableName,
+          toTable: fk["table"] as string,
+          fromColumn: fk["from"] as string,
+          toColumn: fk["to"] as string,
+          onDelete: (fk["on_delete"] as string) || "NO ACTION",
+          onUpdate: (fk["on_update"] as string) || "NO ACTION",
+        };
+        fkInfo.push(info);
+        edges.push({
+          from: tableName,
+          to: fk["table"] as string,
+          fromColumn: fk["from"] as string,
+          toColumn: fk["to"] as string,
+          onDelete: info.onDelete,
+          onUpdate: info.onUpdate,
+        });
+      }
+    } catch {
+      // Skip FK analysis for tables that can't be queried
     }
   }
 

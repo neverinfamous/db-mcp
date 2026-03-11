@@ -207,11 +207,17 @@ export function createSchemaSnapshotTool(
           const tables = [];
           for (const row of tablesResult.rows ?? []) {
             const tableName = row["name"] as string;
-            const countResult = await adapter.executeReadQuery(
-              `SELECT COUNT(*) as cnt FROM "${tableName}"`,
-            );
-            const rowCount =
-              (countResult.rows?.[0]?.["cnt"] as number | undefined) ?? 0;
+            // May fail for virtual tables like FTS5 in WASM
+            let rowCount = 0;
+            try {
+              const countResult = await adapter.executeReadQuery(
+                `SELECT COUNT(*) as cnt FROM "${tableName}"`,
+              );
+              rowCount =
+                (countResult.rows?.[0]?.["cnt"] as number | undefined) ?? 0;
+            } catch {
+              // Skip count for tables that can't be queried
+            }
 
             const tableEntry: Record<string, unknown> = {
               name: tableName,
@@ -219,23 +225,31 @@ export function createSchemaSnapshotTool(
             };
 
             if (!compact) {
-              const colResult = await adapter.executeReadQuery(
-                `PRAGMA table_info("${tableName}")`,
-              );
-              const columns = (colResult.rows ?? []).map((c) => ({
-                name: c["name"] as string,
-                type: (c["type"] as string) || "TEXT",
-                nullable: (c["notnull"] as number) === 0,
-                primaryKey: (c["pk"] as number) > 0,
-                defaultValue: c["dflt_value"] ?? undefined,
-              }));
-              tableEntry["columnCount"] = columns.length;
-              tableEntry["columns"] = columns;
+              try {
+                const colResult = await adapter.executeReadQuery(
+                  `PRAGMA table_info("${tableName}")`,
+                );
+                const columns = (colResult.rows ?? []).map((c) => ({
+                  name: c["name"] as string,
+                  type: (c["type"] as string) || "TEXT",
+                  nullable: (c["notnull"] as number) === 0,
+                  primaryKey: (c["pk"] as number) > 0,
+                  defaultValue: c["dflt_value"] ?? undefined,
+                }));
+                tableEntry["columnCount"] = columns.length;
+                tableEntry["columns"] = columns;
+              } catch {
+                tableEntry["columnCount"] = 0;
+              }
             } else {
-              const colResult = await adapter.executeReadQuery(
-                `PRAGMA table_info("${tableName}")`,
-              );
-              tableEntry["columnCount"] = colResult.rows?.length ?? 0;
+              try {
+                const colResult = await adapter.executeReadQuery(
+                  `PRAGMA table_info("${tableName}")`,
+                );
+                tableEntry["columnCount"] = colResult.rows?.length ?? 0;
+              } catch {
+                tableEntry["columnCount"] = 0;
+              }
             }
 
             tables.push(tableEntry);
@@ -353,10 +367,16 @@ export function createConstraintAnalysisTool(
         const findings: Finding[] = [];
 
         for (const tableName of tables) {
-          const colResult = await adapter.executeReadQuery(
-            `PRAGMA table_info("${tableName}")`,
-          );
-          const columns = colResult.rows ?? [];
+          // Skip tables that can't be introspected (e.g., FTS5 virtual tables in WASM)
+          let columns: Record<string, unknown>[] = [];
+          try {
+            const colResult = await adapter.executeReadQuery(
+              `PRAGMA table_info("${tableName}")`,
+            );
+            columns = colResult.rows ?? [];
+          } catch {
+            continue; // Skip this table entirely
+          }
 
           // Check: Missing primary key
           if (checksToRun.includes("missing_pk")) {

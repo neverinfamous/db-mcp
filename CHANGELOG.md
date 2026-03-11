@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Introspection Tools WASM FTS5 Crash** — 5 introspection tools no longer crash when the database contains FTS5 virtual tables in WASM mode
+  - `sqlite_dependency_graph`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_schema_snapshot`, `sqlite_constraint_analysis` all failed with "no such module: fts5" because internal queries (`SELECT COUNT(*)`, `PRAGMA table_info`, `PRAGMA foreign_key_list`) hit FTS5 virtual tables that WASM SQLite can't resolve
+  - Added try/catch around per-table queries in `buildForeignKeyGraph()` (graph.ts) and `schemaSnapshot`/`constraintAnalysis` handlers (analysis.ts)
+  - FTS5 tables are still included in results (with rowCount 0 and columnCount 0) but no longer crash the entire operation
+
 ### Added
 
 - **Playwright E2E Test Suite** — 4 spec files verifying dual HTTP/SSE transport layer
