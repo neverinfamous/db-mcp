@@ -217,16 +217,9 @@ Specify exactly the groups you need:
 **Examples:**
 
 ```bash
-# Use a shortcut
 --tool-filter "starter"
-
-# Combine groups (whitelist mode)
 --tool-filter "core,json,text,fts5"
-
-# Extend a shortcut
 --tool-filter "starter,+stats"
-
-# Exclude from a shortcut
 --tool-filter "starter,-fts5"
 ```
 
@@ -234,7 +227,6 @@ Specify exactly the groups you need:
 If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want to start with _all_ tools enabled and then subtract.
 
 ```bash
-# Legacy: start with all, exclude some
 --tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
 ```
 

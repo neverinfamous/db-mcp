@@ -188,16 +188,9 @@ Specify exactly the groups you need:
 **Examples:**
 
 ```bash
-# Use a shortcut
 --tool-filter "starter"
-
-# Combine groups (whitelist mode)
 --tool-filter "core,json,text,fts5"
-
-# Extend a shortcut
 --tool-filter "starter,+stats"
-
-# Exclude from a shortcut
 --tool-filter "starter,-fts5"
 ```
 
@@ -205,7 +198,6 @@ Specify exactly the groups you need:
 If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want to start with _all_ tools enabled and then subtract.
 
 ```bash
-# Legacy: start with all, exclude some
 --tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
 ```
 
@@ -215,11 +207,15 @@ For enhanced security, use SHA-pinned images:
 
 **Find SHA tags:** https://hub.docker.com/r/writenotenow/db-mcp/tags
 
-```bash
-# Multi-arch manifest (recommended)
-docker pull writenotenow/db-mcp:sha256-<manifest-digest>
+**Multi-arch manifest (recommended):**
 
-# Direct digest (maximum security)
+```bash
+docker pull writenotenow/db-mcp:sha256-<manifest-digest>
+```
+
+**Direct digest (maximum security):**
+
+```bash
 docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 ```
 
@@ -313,19 +309,14 @@ docker run -i --rm \
 
 ### Environment Variables
 
-```bash
-# Performance tuning
--e METADATA_CACHE_TTL_MS=5000   # Schema cache TTL (default: 5000ms)
--e LOG_LEVEL=info               # Log verbosity: debug, info, warning, error
-
-# Server binding
--e MCP_HOST=0.0.0.0             # Host/IP to bind to (default: 0.0.0.0)
-
-# OAuth 2.1 (HTTP transport only)
--e KEYCLOAK_URL=http://localhost:8080
--e KEYCLOAK_REALM=db-mcp
--e KEYCLOAK_CLIENT_ID=db-mcp-server
-```
+| Variable                 | Default   | Description                                        |
+| ------------------------ | --------- | -------------------------------------------------- |
+| `METADATA_CACHE_TTL_MS`  | `5000`    | Schema cache TTL (milliseconds)                    |
+| `LOG_LEVEL`              | `info`    | Log verbosity: `debug`, `info`, `warning`, `error` |
+| `MCP_HOST`               | `0.0.0.0` | Host/IP to bind to                                 |
+| `KEYCLOAK_URL`           | —         | Keycloak base URL (HTTP transport, enables OAuth)  |
+| `KEYCLOAK_REALM`         | —         | Keycloak realm name                                |
+| `KEYCLOAK_CLIENT_ID`     | —         | Keycloak client ID                                 |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
@@ -399,7 +390,6 @@ OAuth is automatically enabled when running in HTTP mode with OAuth environment 
 **Quick Start with OAuth:**
 
 ```bash
-# Run with OAuth enabled
 docker run --rm -p 3000:3000 \
   -v ./data:/app/data \
   -e KEYCLOAK_URL=http://localhost:8080 \
