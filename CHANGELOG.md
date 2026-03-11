@@ -419,10 +419,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`sqlite_create_index` Empty Columns Validation** — `CreateIndexSchema.columns` now requires `.min(1)`
   - Previously, an empty columns array passed Zod validation and produced invalid SQL `CREATE INDEX ... ON table ()`
   - Now rejected at schema validation level with clear "Array must contain at least 1 element(s)" message
-- **`formatError` Category-Based Error Codes** — Native SQLite errors now get category-specific codes instead of generic `UNKNOWN_ERROR`
-  - `no such table` errors now return `RESOURCE_ERROR` code (previously `UNKNOWN_ERROR` despite correct category detection)
-  - Maps detected `ErrorCategory` to descriptive codes: `VALIDATION_ERROR`, `CONNECTION_ERROR`, `QUERY_ERROR`, `PERMISSION_ERROR`, `CONFIG_ERROR`, `RESOURCE_ERROR`
-  - Only applies to plain `Error` objects caught from SQLite; `DbMcpError` subclasses retain their explicit codes
+- **`formatError` Specific Resource Error Codes** — Native SQLite errors now return precise error codes instead of generic `RESOURCE_ERROR`
+  - `no such table` errors now return `TABLE_NOT_FOUND` code (previously `RESOURCE_ERROR`)
+  - `no such column` and `has no column named` errors now return `COLUMN_NOT_FOUND` code (previously `RESOURCE_ERROR`)
+  - Added optional `code` field to `ERROR_SUGGESTIONS` entries; `formatError` prefers `match.code` over category default
+  - Consistent across all tool groups: core `read_query`/`write_query`, text `fts_search`, vector `search`, JSON `extract`
+  - `findSuggestion` return type extended with `code?: string` field
+  - Category-level fallback codes still apply for patterns without specific `code` overrides
 - **`ERROR_SUGGESTIONS` Query Error Pattern Coverage** — 3 new patterns added for query errors that previously fell through to `UNKNOWN_ERROR`
   - `incomplete input` → `QUERY_ERROR` with suggestion to check for missing clauses or closing parentheses
   - `more than one statement` → `QUERY_ERROR` with suggestion to split into separate calls or use `sqlite_execute_code`

@@ -40,6 +40,8 @@ const ERROR_SUGGESTIONS: {
   pattern: RegExp;
   suggestion: string;
   category?: ErrorCategory | undefined;
+  /** Specific error code override (takes precedence over category default code) */
+  code?: string | undefined;
 }[] = [
   // Validation errors
   {
@@ -73,24 +75,27 @@ const ERROR_SUGGESTIONS: {
     category: ErrorCategory.VALIDATION,
   },
 
-  // Resource errors
+  // Resource errors — specific codes for table/column not found
   {
     pattern: /no such table[:\s]*(['"]?)(\w+)\1/i,
     suggestion:
       "Table not found. Run sqlite_list_tables to see available tables.",
     category: ErrorCategory.RESOURCE,
+    code: "TABLE_NOT_FOUND",
   },
   {
     pattern: /no such column[:\s]*(['"]?)(\w+)\1/i,
     suggestion:
       "Column not found. Use sqlite_describe_table to see available columns.",
     category: ErrorCategory.RESOURCE,
+    code: "COLUMN_NOT_FOUND",
   },
   {
     pattern: /has no column named/i,
     suggestion:
       "Column not found in target table. Use sqlite_describe_table to verify column names before INSERT or UPDATE.",
     category: ErrorCategory.RESOURCE,
+    code: "COLUMN_NOT_FOUND",
   },
   {
     pattern: /table .* already exists/i,
@@ -206,14 +211,17 @@ const ERROR_SUGGESTIONS: {
 /**
  * Find a suggestion for an error message
  */
-export function findSuggestion(
-  message: string,
-): { suggestion: string; category?: ErrorCategory | undefined } | null {
+export function findSuggestion(message: string): {
+  suggestion: string;
+  category?: ErrorCategory | undefined;
+  code?: string | undefined;
+} | null {
   for (const entry of ERROR_SUGGESTIONS) {
     if (entry.pattern.test(message)) {
       return {
         suggestion: entry.suggestion,
         category: entry.category,
+        code: entry.code,
       };
     }
   }
@@ -482,7 +490,7 @@ export function formatError(error: unknown): ErrorResponse {
     return {
       success: false,
       error: error.message,
-      code: CATEGORY_DEFAULT_CODES[category],
+      code: match?.code ?? CATEGORY_DEFAULT_CODES[category],
       category,
       suggestion: match?.suggestion,
       recoverable: false,
