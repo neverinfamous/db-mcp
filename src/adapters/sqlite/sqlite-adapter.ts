@@ -28,7 +28,7 @@ import {
   QueryError,
   ConnectionError,
   ConfigurationError,
-} from "../../utils/errors.js";
+} from "../../utils/errors/index.js";
 import type { SqliteConfig, SqliteOptions } from "./types.js";
 import { SchemaManager } from "./schema-manager.js";
 
@@ -41,18 +41,7 @@ import { isJsonbSupportedVersion, setJsonbSupported } from "./json-utils.js";
 // Module logger
 const log = createModuleLogger("SQLITE");
 
-/**
- * Check if SQL is a DDL statement (CREATE, ALTER, DROP)
- * Used to auto-invalidate schema cache on structure changes.
- */
-function isDDL(sql: string): boolean {
-  const normalized = sql.trim().toUpperCase();
-  return (
-    normalized.startsWith("CREATE") ||
-    normalized.startsWith("ALTER") ||
-    normalized.startsWith("DROP")
-  );
-}
+import { isDDL } from "../sqlite-helpers.js";
 
 /**
  * SQLite Database Adapter
@@ -93,7 +82,7 @@ export class SqliteAdapter extends DatabaseAdapter {
   override async connect(config: DatabaseConfig): Promise<void> {
     if (config.type !== "sqlite") {
       throw new ConfigurationError(
-        `Invalid database type: expected 'sqlite', got '${config.type}'`,
+        `Invalid database type: expected 'sqlite', got '${config.type as string}'`,
         "DB_TYPE_MISMATCH",
       );
     }
@@ -653,23 +642,6 @@ export class SqliteAdapter extends DatabaseAdapter {
    */
   override getPromptDefinitions(): PromptDefinition[] {
     return getPromptDefinitions(this);
-  }
-
-  /**
-   * Get adapter info for metadata resource
-   */
-  override getInfo(): {
-    type: string;
-    name: string;
-    version: string;
-    connected: boolean;
-  } {
-    return {
-      type: this.type,
-      name: this.name,
-      version: this.version,
-      connected: this.connected,
-    };
   }
 
 

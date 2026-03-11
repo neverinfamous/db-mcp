@@ -15,13 +15,14 @@ import {
   sanitizeIdentifier,
   createColumnList,
 } from "../../../utils/index.js";
-import { formatError, ResourceNotFoundError } from "../../../utils/errors.js";
+import { formatError } from "../../../utils/errors/index.js";
 import {
   GeoDistanceOutputSchema,
   GeoWithinRadiusOutputSchema,
   GeoBoundingBoxOutputSchema,
   GeoClusterOutputSchema,
 } from "../output-schemas/index.js";
+import { validateColumnExists } from "./column-validation.js";
 
 // Geo schemas
 const GeoDistanceSchema = z.object({
@@ -64,49 +65,7 @@ const GeoClusterSchema = z.object({
   whereClause: z.string().optional(),
 });
 
-/**
- * Validate that a column exists in a table.
- * Prevents silent success when SQLite treats quoted nonexistent identifiers as string literals.
- */
-async function validateColumnExists(
-  adapter: SqliteAdapter,
-  tableName: string,
-  columnName: string,
-): Promise<void> {
-  // First check if the table exists
-  const tableCheck = await adapter.executeReadQuery(
-    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${tableName.replace(/'/g, "''")}'`,
-  );
-  if (!tableCheck.rows || tableCheck.rows.length === 0) {
-    throw new ResourceNotFoundError(
-      `Table '${tableName}' does not exist`,
-      "TABLE_NOT_FOUND",
-      {
-        suggestion:
-          "Table not found. Run sqlite_list_tables to see available tables.",
-        resourceType: "table",
-        resourceName: tableName,
-      },
-    );
-  }
 
-  // Then check if the column exists
-  const result = await adapter.executeReadQuery(
-    `SELECT name FROM pragma_table_info('${tableName.replace(/'/g, "''")}') WHERE name = '${columnName.replace(/'/g, "''")}' LIMIT 1`,
-  );
-  if (!result.rows || result.rows.length === 0) {
-    throw new ResourceNotFoundError(
-      `Column '${columnName}' not found in table '${tableName}'`,
-      "COLUMN_NOT_FOUND",
-      {
-        suggestion:
-          "Column not found. Use sqlite_describe_table to see available columns.",
-        resourceType: "column",
-        resourceName: columnName,
-      },
-    );
-  }
-}
 
 /**
  * Validate coordinate ranges (handler-level, not schema-level to avoid raw MCP errors)
@@ -141,6 +100,9 @@ const EARTH_RADIUS = {
   miles: 3959,
   meters: 6371000,
 };
+
+/** Approximate km per degree of latitude */
+const KM_PER_DEGREE_LAT = 111;
 
 /**
  * Haversine formula for distance calculation
@@ -259,9 +221,9 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
             : input.unit === "meters"
               ? input.radius / 1000
               : input.radius;
-        const latDelta = radiusKm / 111; // ~111km per degree latitude
+        const latDelta = radiusKm / KM_PER_DEGREE_LAT;
         const lonDelta =
-          radiusKm / (111 * Math.cos((input.centerLat * Math.PI) / 180));
+          radiusKm / (KM_PER_DEGREE_LAT * Math.cos((input.centerLat * Math.PI) / 180));
 
         const sql = `SELECT ${selectCols} FROM ${table}
                   WHERE ${latColumn} BETWEEN ${input.centerLat - latDelta} AND ${input.centerLat + latDelta}

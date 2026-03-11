@@ -58,18 +58,7 @@ import { getToolGroupIcon } from "../../utils/icons.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
-/**
- * Check if SQL is a DDL statement (CREATE, ALTER, DROP)
- * Used to auto-invalidate schema cache on structure changes.
- */
-function isDDL(sql: string): boolean {
-  const normalized = sql.trim().toUpperCase();
-  return (
-    normalized.startsWith("CREATE") ||
-    normalized.startsWith("ALTER") ||
-    normalized.startsWith("DROP")
-  );
-}
+import { isDDL } from "../sqlite-helpers.js";
 
 /**
  * Native SQLite Adapter using better-sqlite3
@@ -106,7 +95,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   override connect(config: DatabaseConfig): Promise<void> {
     if (config.type !== "sqlite") {
       throw new Error(
-        `Invalid database type: expected 'sqlite', got '${config.type}'`,
+        `Invalid database type: expected 'sqlite', got '${config.type as string}'`,
       );
     }
 

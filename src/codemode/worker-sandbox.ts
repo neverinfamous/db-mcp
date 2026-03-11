@@ -29,6 +29,9 @@ import {
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const WORKER_SCRIPT_PATH = join(__dirname, "worker-script.js");
 
+/** Extra grace period (ms) added to timeout for worker cleanup */
+const TIMEOUT_GRACE_MS = 1000;
+
 /**
  * A sandboxed execution context using worker_threads
  * Provides stronger isolation than vm module with separate V8 instance
@@ -243,7 +246,7 @@ export class WorkerSandbox {
               endMemory,
             ),
           });
-        }, effectiveTimeout + 1000); // Extra 1s grace for cleanup
+        }, effectiveTimeout + TIMEOUT_GRACE_MS); // Extra grace period for cleanup
       } catch (error) {
         const endTime = performance.now();
         const endMemory = process.memoryUsage().heapUsed;

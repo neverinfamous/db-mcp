@@ -12,6 +12,7 @@ import type {
   DatabaseConfig,
   ToolFilterConfig,
 } from "../types/index.js";
+import { VERSION, NAME } from "../version.js";
 import { type DatabaseAdapter } from "../adapters/database-adapter.js";
 import type { HttpTransportConfig } from "../transports/http/types.js";
 import {
@@ -87,7 +88,7 @@ export class DbMcpServer {
     adapter: DatabaseAdapter,
     config: DatabaseConfig,
   ): Promise<void> {
-    const adapterId = `${adapter.type}:${config.database ?? "default"}`;
+    const adapterId = `${adapter.type}:${config.connectionString ?? "default"}`;
 
     // Connect to database
     await adapter.connect(config);
@@ -352,8 +353,8 @@ export function createServer(config: McpServerConfig): DbMcpServer {
  * Default server configuration
  */
 export const DEFAULT_CONFIG: Partial<McpServerConfig> = {
-  name: "db-mcp",
-  version: "1.0.2",
+  name: NAME,
+  version: VERSION,
   transport: "stdio",
   databases: [],
 };

@@ -6,6 +6,7 @@
  */
 
 import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
+import { VERSION } from "./version.js";
 import type {
   McpServerConfig,
   TransportType,
@@ -136,7 +137,7 @@ Extension Options (Native only):
 
 Server Options:
   --name <name>             Server name (default: db-mcp)
-  --version <version>       Server version (default: 1.0.2)
+  --version <version>       Server version (default: ${VERSION})
   --tool-filter <filter>    Tool filter string. Supports:
                               Shortcuts: starter, analytics, search, spatial, minimal, full
                               Groups: core, json, text, fts5, stats, vector, geo, ...
@@ -247,8 +248,6 @@ async function main(): Promise<void> {
           await server.registerAdapter(adapter, dbConfig);
         }
       }
-      // TODO: Add other database adapters as they are implemented
-      // else if (dbConfig.type === 'postgresql') { ... }
     }
 
     if (config.databases.length === 0) {

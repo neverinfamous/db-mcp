@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Code Quality Audit — `validateColumnExists` Deduplication** — Extracted shared `validateColumnExists()` and `validateColumnsExist()` into `adapters/sqlite/tools/column-validation.ts`
+  - Removed identical 40-line copies from `geo.ts`, `text/helpers.ts`, and `stats/helpers.ts`
+  - All three modules now re-export from the shared utility; no consumer import changes needed
+- **Code Quality Audit — `DatabaseType` Narrowing** — Narrowed `DatabaseType` union from 6 variants (`sqlite | postgresql | mysql | mongodb | redis | sqlserver`) to `"sqlite"` only
+  - Other database types would require separate MCP server projects; unused variants were dead code
+- **Code Quality Audit — `DatabaseConfig` Cleanup** — Removed unused `host`, `port`, `database`, `username`, `password` fields
+  - SQLite uses `connectionString` (file path) and `options`; relational connection fields were never referenced
+- **Code Quality Audit — `SqliteAdapter.getInfo()` Override Removed** — Deleted override that silently dropped `capabilities` and `toolGroups` fields from the parent `DatabaseAdapter.getInfo()`
+- **Code Quality Audit — Magic Values Named** — Replaced inline magic numbers with named constants
+  - `geo.ts`: `111` → `KM_PER_DEGREE_LAT` (km per degree of latitude for bounding box pre-filter)
+  - `worker-sandbox.ts`: `1000` → `TIMEOUT_GRACE_MS` (extra grace period for worker cleanup)
+- **Code Quality Audit — Stale TODO Removed** — Removed misleading `TODO: Add other database adapters` from `cli.ts`
+  - Additional adapters belong in separate MCP server projects, not this codebase
+
+### Security
+
+- **Code Quality Audit — Missing WHERE Clause Validation** — Added `validateWhereClause()` to 15 SQL interpolation points across 5 JSON tool files
+  - `json-operations/crud.ts` (7 handlers), `json-operations/query.ts` (5 handlers), `json-operations/transform.ts` (2 handlers)
+  - `json-helpers/read.ts` (1 handler), `json-helpers/write.ts` (2 handlers)
+  - These tools interpolated `input.whereClause` directly into SQL without validation, unlike text/stats/vector/window tools which all called `validateWhereClause()`
+
 ### Fixed
 
 - **Version SSoT Mismatch** — Synced hardcoded `0.1.0` to `1.0.2` (matching `package.json`) in `index.ts`, `McpServer.ts`, and `cli.ts`
@@ -14,6 +37,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bare `z.object({})` Schemas** — Added `.strict()` to 5 schemas (`transaction_commit`, `transaction_rollback`, `MigrationInitSchema`, `MigrationStatusSchema`, `pragma_database_list`) to reject extraneous properties
 
 ### Changed
+
+- **File Naming Convention (Round 2)** — Renamed 3 camelCase files to lowercase-with-dashes per project convention
+  - Source: `insightsManager.ts` → `insights-manager.ts`, `resourceAnnotations.ts` → `resource-annotations.ts`
+  - Test: `insightsManager.test.ts` → `insights-manager.test.ts`
+  - Updated 6 files with corrected import paths
+- **`isDDL()` Helper Deduplication** — Extracted shared `isDDL()` function into `adapters/sqlite-helpers.ts`
+  - Removed identical copies from `sqlite-adapter.ts` and `native-sqlite-adapter.ts`
+  - Both adapters now import from the shared module
+- **Version Constant Deduplication** — `VERSION` and `NAME` now read from `package.json` at runtime via new `version.ts` module
+  - Eliminated 3 hardcoded `"1.0.2"` strings in `index.ts`, `mcp-server.ts`, and `cli.ts`
+  - `index.ts` re-exports from `version.ts`; `mcp-server.ts` and `cli.ts` import directly
+  - Future version bumps only need to update `package.json`
+- **File Size Refactoring** — Split 4 oversized files into modular subdirectories
+  - `utils/errors.ts` (559 lines) → `errors/` directory (5 modules + barrel), updated 43 import paths
+  - `introspection/diagnostics.ts` (738 lines) → `diagnostics/` directory (3 tool modules + barrel)
+  - `introspection/analysis.ts` (720 lines) → `analysis/` directory (3 tool modules + barrel)
+  - `introspection/graph.ts` (590 lines) → `graph/` directory (helpers + tools + barrel)
 
 - **File Naming Convention** — Renamed 16 PascalCase files (11 source + 5 test) to lowercase-with-dashes per project convention
   - Source: `DatabaseAdapter.ts`, `McpServer.ts`, `SqliteAdapter.ts`, `NativeSqliteAdapter.ts`, `SchemaManager.ts`, `ToolFilter.ts`, `ToolConstants.ts`, `ServerInstructions.ts`, `OAuthResourceServer.ts`, `AuthorizationServerDiscovery.ts`, `TokenValidator.ts`
@@ -78,16 +118,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Playwright E2E Test Suite** — 7 spec files verifying dual HTTP/SSE transport layer (39 tests)
+- **Playwright E2E Test Suite** — 12 spec files, dual-adapter (WASM + Native) and dual-transport (SSE + Streamable HTTP) coverage
   - `health.spec.ts`: Health endpoint and MCP initialization handshake
   - `protocols.spec.ts`: Streamable HTTP and Legacy SSE protocol validation (session IDs, invalid JSON, missing params)
-  - `tools.spec.ts`: Tool listing, read/write execution, validation errors, and Code Mode (`sqlite_execute_code`) via MCP SDK Client
+  - `tools.spec.ts`: Tool listing, read/write execution, validation errors, Code Mode, and cross-group coverage (all 9 tool groups) via MCP SDK Client
   - `security.spec.ts`: 404 handler, 413 payload limit, security headers, CORS preflight, OAuth status, Referrer-Policy
   - `sessions.spec.ts`: Full Streamable HTTP session lifecycle — init, notifications, tool calls with session ID, SSE/DELETE rejection, termination
   - `stateless.spec.ts`: Stateless mode (`--stateless`) — session-free POST, SSE 405, DELETE no-op, legacy SSE 404, health
   - `resources.spec.ts`: All 7 static MCP resources (`sqlite://schema`, `tables`, `health`, `indexes`, `views`, `meta`, `memo://insights`) and resource templates via SDK Client
-  - `playwright.config.ts` with webServer auto-launch, `test:e2e` npm script, dedicated `e2e.yml` CI workflow
-  - E2E badge added to README
+  - `prompts.spec.ts`: List + get all 10 MCP prompts with representative arguments
+  - `streamable-http.spec.ts`: Streamable HTTP transport (MCP 2025-03-26) — init, tools, resources, prompts via modern transport
+  - `native.spec.ts`: Native-only tools — transactions (begin/rollback), FTS5 search, window functions (row_number)
+  - `wasm.spec.ts`: WASM graceful degradation — transactions rejected, backup/restore/verify return `wasmLimitation`
+  - `errors.spec.ts`: Structured error response contract — TABLE_NOT_FOUND, COLUMN_NOT_FOUND, statement type mismatches, coordinate validation, non-numeric column detection
+  - Dual-project `playwright.config.ts`: WASM adapter (port 3000) + Native adapter (port 3001) with `--tool-filter +all`
+  - `test:e2e` npm script, dedicated `e2e.yml` CI workflow, E2E badge added to README
 - **Performance Benchmark Suite** — 9 benchmark files measuring framework overhead on critical hot paths
   - `handler-dispatch.bench.ts`: Tool lookup, error construction, progress notification overhead
   - `utilities.bench.ts`: Identifier sanitization, WHERE clause validation, SQL validation, metadata caching

@@ -10,18 +10,11 @@
 // =============================================================================
 
 /**
- * Supported database types
- *
- * Note: This MCP server only supports SQLite. Other database types are listed
- * here for type compatibility but would require separate MCP server projects.
+ * Supported database types.
+ * This MCP server only supports SQLite. Other database types
+ * would require separate MCP server projects.
  */
-export type DatabaseType =
-  | "sqlite"
-  | "postgresql"
-  | "mysql"
-  | "mongodb"
-  | "redis"
-  | "sqlserver";
+export type DatabaseType = "sqlite";
 
 /**
  * Database connection configuration
@@ -30,15 +23,8 @@ export interface DatabaseConfig {
   /** Database type identifier */
   type: DatabaseType;
 
-  /** Connection string (format varies by database type) */
+  /** Connection string (file path or ":memory:") */
   connectionString?: string;
-
-  /** Individual connection parameters (alternative to connectionString) */
-  host?: string;
-  port?: number;
-  database?: string;
-  username?: string;
-  password?: string;
 
   /** Additional database-specific options */
   options?: Record<string, unknown>;
@@ -538,4 +524,4 @@ export {
   ValidationError,
   AuthenticationError,
   AuthorizationError,
-} from "../utils/errors.js";
+} from "../utils/errors/index.js";
