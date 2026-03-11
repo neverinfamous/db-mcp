@@ -19,10 +19,12 @@ import {
 import {
   createFuzzyMatchTool,
   createPhoneticMatchTool,
-  createTextNormalizeTool,
-  createTextValidateTool,
   createAdvancedSearchTool,
 } from "./search.js";
+import {
+  createTextNormalizeTool,
+  createTextValidateTool,
+} from "./validate.js";
 
 /**
  * Get all text processing tools

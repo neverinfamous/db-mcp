@@ -32,7 +32,7 @@ import { SchemaManager } from "../sqlite/SchemaManager.js";
 // Import shared tools from sql.js adapter
 import { getCoreTools } from "../sqlite/tools/core/index.js";
 import { getJsonOperationTools } from "../sqlite/tools/json-operations/index.js";
-import { getJsonHelperTools } from "../sqlite/tools/json-helpers.js";
+import { getJsonHelperTools } from "../sqlite/tools/json-helpers/index.js";
 import { getTextTools } from "../sqlite/tools/text/index.js";
 import { getFtsTools } from "../sqlite/tools/fts.js";
 import { getStatsTools } from "../sqlite/tools/stats/index.js";
@@ -44,7 +44,7 @@ import { getIntrospectionTools } from "../sqlite/tools/introspection/index.js";
 import { getMigrationTools } from "../sqlite/tools/migration/index.js";
 import { getCodeModeTools } from "../sqlite/tools/codemode.js";
 import { getResourceDefinitions } from "../sqlite/resources.js";
-import { getPromptDefinitions } from "../sqlite/prompts.js";
+import { getPromptDefinitions } from "../sqlite/prompts/index.js";
 import {
   isJsonbSupportedVersion,
   setJsonbSupported,

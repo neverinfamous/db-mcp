@@ -35,7 +35,7 @@ import { SchemaManager } from "./SchemaManager.js";
 // Tool definitions from modular files
 import { getAllToolDefinitions } from "./tools/index.js";
 import { getResourceDefinitions } from "./resources.js";
-import { getPromptDefinitions } from "./prompts.js";
+import { getPromptDefinitions } from "./prompts/index.js";
 import { isJsonbSupportedVersion, setJsonbSupported } from "./json-utils.js";
 
 // Module logger

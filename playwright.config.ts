@@ -22,7 +22,7 @@ export default defineConfig({
       "node dist/cli.js --transport http --port 3000 --sqlite ./database.db --tool-filter starter",
     url: "http://localhost:3000/health",
     reuseExistingServer: !process.env.CI,
-    timeout: 10000,
+    timeout: 30000,
     stdout: "pipe",
     stderr: "pipe",
   },

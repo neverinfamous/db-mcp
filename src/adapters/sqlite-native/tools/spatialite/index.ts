@@ -12,11 +12,13 @@ import {
   createLoadSpatialiteTool,
   createSpatialTableTool,
   createSpatialQueryTool,
-  createSpatialAnalysisTool,
   createSpatialIndexTool,
+} from "./tools.js";
+import {
+  createSpatialAnalysisTool,
   createGeometryTransformTool,
   createSpatialImportTool,
-} from "./tools.js";
+} from "./analysis.js";
 
 export { isSpatialiteLoaded } from "./loader.js";
 
