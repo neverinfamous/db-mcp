@@ -87,6 +87,12 @@ const ERROR_SUGGESTIONS: {
     category: ErrorCategory.RESOURCE,
   },
   {
+    pattern: /has no column named/i,
+    suggestion:
+      "Column not found in target table. Use sqlite_describe_table to verify column names before INSERT or UPDATE.",
+    category: ErrorCategory.RESOURCE,
+  },
+  {
     pattern: /table .* already exists/i,
     suggestion:
       "Table already exists. Use CREATE TABLE IF NOT EXISTS or drop the existing table first.",

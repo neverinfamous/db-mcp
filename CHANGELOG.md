@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`ERROR_SUGGESTIONS` Column Name Pattern Coverage** — Added `has no column named` pattern for INSERT/UPDATE column errors
+  - SQLite uses "has no column named X" for INSERT/UPDATE column errors, distinct from "no such column" used by SELECT
+  - Previously classified as `UNKNOWN_ERROR` (no pattern match); now returns `RESOURCE_ERROR` with actionable suggestion
+- **`sqlite_text_validate` Missing `customPattern` Error Code** — Now returns `VALIDATION_ERROR` instead of `UNKNOWN_ERROR`
+  - Handler threw generic `Error` for missing `customPattern` when `pattern='custom'`; `formatError()` classified it as `UNKNOWN_ERROR`
+  - Changed to throw `ValidationError` with proper `VALIDATION_ERROR` code and `validation` category
 - **`sqlite_vector_store` / `sqlite_vector_batch_store` DDL-Based Dimension Check** — Dimension validation now reads table schema DDL as primary source
   - Previously read `dimensions` from existing rows only — bypassed on empty tables or tables with mismatched row data
   - Now parses `DEFAULT N` from `CREATE TABLE` SQL via `sqlite_master` for authoritative validation

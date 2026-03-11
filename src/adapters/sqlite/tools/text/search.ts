@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors.js";
+import { formatError, ValidationError } from "../../../../utils/errors.js";
 import {
   levenshtein,
   metaphone,
@@ -387,7 +387,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
         let pattern: RegExp;
         if (input.pattern === "custom") {
           if (!input.customPattern) {
-            throw new Error("customPattern is required when pattern='custom'");
+            throw new ValidationError("customPattern is required when pattern='custom'");
           }
           // Normalize pattern: handle common JSON double-escaping issues
           // e.g., "\\." in JSON becomes "\." in JavaScript string, but some clients
