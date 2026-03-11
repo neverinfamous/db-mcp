@@ -353,7 +353,8 @@ docker run --rm -p 3000:3000 \
 
 **Security Features:**
 
-- **6 Security Headers** (always) — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy`, `Permissions-Policy` + opt-in `Strict-Transport-Security` via `enableHSTS`
+- **7 Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy` (no-referrer), `Permissions-Policy` + opt-in `Strict-Transport-Security` via `enableHSTS`
+- **Server Timeouts** — Request, keep-alive, and headers timeouts prevent slowloris-style DoS
 - **Rate Limiting** — 100 requests/minute per IP (429 + Retry-After on excess, health checks exempt)
 - **CORS** — Configurable via `--cors-origins` (default: `*`, supports wildcard subdomains like `*.example.com`)
 - **Trust Proxy** — Opt-in `trustProxy` for X-Forwarded-For IP extraction behind reverse proxies
