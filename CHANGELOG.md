@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Performance Audit Fix — Async File I/O** — Replaced synchronous `fs.readFileSync` and `fs.writeFileSync` with `fs.promises.readFile` and `fs.promises.writeFile` in `sqlite-adapter.ts` to prevent event loop blocking during database initialization and teardown.
+- **Code Quality Audit — Standardized Error** — Replaced an instance of generic `Error` in `sqlite_stats_regression` (inference.ts) with `DbMcpError` using `STATS_INSUFFICIENT_SAMPLE` and `VALIDATION` category.
 - **Code Quality Audit — Logger Module Split** — Split monolithic `logger.ts` (543 lines) into `utils/logger/` directory
   - `types.ts`: `LogLevel`, `LogModule`, `LogContext` type definitions
   - `error-codes.ts`: `ErrorCode` type, `createErrorCode()`, and `ERROR_CODES` constant map

@@ -114,7 +114,7 @@ export class SqliteAdapter extends DatabaseAdapter {
         try {
           const fs = await import("fs");
           if (fs.existsSync(filePath)) {
-            const buffer = fs.readFileSync(filePath);
+            const buffer = await fs.promises.readFile(filePath);
             this.db = new this.sqlJsInstance.Database(buffer);
             log.info(`Connected to SQLite database: ${filePath}`, {
               code: "SQLITE_CONNECT",
@@ -195,7 +195,7 @@ export class SqliteAdapter extends DatabaseAdapter {
         try {
           const fs = await import("fs");
           const data = this.db.export();
-          fs.writeFileSync(this.config.filePath, Buffer.from(data));
+          await fs.promises.writeFile(this.config.filePath, Buffer.from(data));
           log.info(`Saved database to: ${this.config.filePath}`, {
             code: "SQLITE_DISCONNECT",
           });

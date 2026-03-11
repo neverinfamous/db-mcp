@@ -285,8 +285,10 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         }));
 
         if (pairs.length < degree + 1) {
-          throw new Error(
+          throw new DbMcpError(
             `Insufficient data for degree ${degree} regression (need at least ${degree + 1} points, got ${pairs.length})`,
+            "STATS_INSUFFICIENT_SAMPLE",
+            ErrorCategory.VALIDATION
           );
         }
 
