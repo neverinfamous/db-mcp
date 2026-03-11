@@ -230,11 +230,18 @@ function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeWriteQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           message: `Updated ${input.path} in ${input.table}.${input.column}`,
           rowsAffected: result.rowsAffected,
         };
+
+        if (result.rowsAffected === 0) {
+          response["warning"] =
+            "No rows matched the WHERE clause — nothing was updated";
+        }
+
+        return response;
       } catch (error) {
         const structured = formatError(error);
         return {
@@ -503,11 +510,18 @@ function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeWriteQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           message: `Merged JSON into ${input.table}.${input.column}`,
           rowsAffected: result.rowsAffected,
         };
+
+        if (result.rowsAffected === 0) {
+          response["warning"] =
+            "No rows matched the WHERE clause — nothing was merged";
+        }
+
+        return response;
       } catch (error) {
         const structured = formatError(error);
         return {

@@ -132,17 +132,42 @@ export function createVectorStoreTool(
         const idColumn = sanitizeIdentifier(input.idColumn);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-        // Validate dimensions against table schema (best-effort: skip if no dimensions column)
+        // Validate dimensions against table schema
+        // Primary: check DEFAULT value from table DDL (authoritative)
+        // Fallback: check existing row data
+        let hasDimsColumn = false;
         try {
-          const dimCheck = await adapter.executeReadQuery(
-            `SELECT dimensions FROM ${table} LIMIT 1`,
+          let expectedDims: number | undefined;
+
+          // Try DDL-based check first (works even on empty tables)
+          const ddlResult = await adapter.executeReadQuery(
+            `SELECT sql FROM sqlite_master WHERE type='table' AND name='${input.table}'`,
           );
-          const expectedDims = dimCheck.rows?.[0]?.["dimensions"] as
-            | number
-            | undefined;
+          const ddlSql = ddlResult.rows?.[0]?.["sql"] as string | undefined;
+          if (ddlSql) {
+            hasDimsColumn = /\bdimensions\b/i.test(ddlSql);
+            const defaultMatch =
+              /dimensions\s+INTEGER\s+DEFAULT\s+(\d+)/i.exec(ddlSql);
+            if (defaultMatch?.[1]) {
+              expectedDims = parseInt(defaultMatch[1], 10);
+            }
+          }
+
+          // Fallback: check existing row data (only if column exists)
+          if (expectedDims === undefined && hasDimsColumn) {
+            const dimCheck = await adapter.executeReadQuery(
+              `SELECT dimensions FROM ${table} LIMIT 1`,
+            );
+            const rowDims = dimCheck.rows?.[0]?.["dimensions"] as
+              | number
+              | undefined;
+            if (rowDims !== undefined && rowDims !== null) {
+              expectedDims = rowDims;
+            }
+          }
+
           if (
             expectedDims !== undefined &&
-            expectedDims !== null &&
             input.vector.length !== expectedDims
           ) {
             return {
@@ -164,7 +189,10 @@ export function createVectorStoreTool(
         const updateResult = await adapter.executeWriteQuery(updateSql);
 
         if (updateResult.rowsAffected === 0) {
-          const insertSql = `INSERT INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
+          // Only include dimensions column if the table has it
+          const insertSql = hasDimsColumn
+            ? `INSERT INTO ${table} (${idColumn}, ${vectorColumn}, dimensions) VALUES (${idValue}, '${vectorJson}', ${input.vector.length})`
+            : `INSERT INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
           await adapter.executeWriteQuery(insertSql);
         }
 
@@ -220,17 +248,42 @@ export function createVectorBatchStoreTool(
         const idColumn = sanitizeIdentifier(input.idColumn);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
-        // Validate dimensions against table schema (best-effort: skip if no dimensions column)
+        // Validate dimensions against table schema
+        // Primary: check DEFAULT value from table DDL (authoritative)
+        // Fallback: check existing row data
+        let hasDimsColumn = false;
         try {
-          const dimCheck = await adapter.executeReadQuery(
-            `SELECT dimensions FROM ${table} LIMIT 1`,
+          let expectedDims: number | undefined;
+
+          // Try DDL-based check first (works even on empty tables)
+          const ddlResult = await adapter.executeReadQuery(
+            `SELECT sql FROM sqlite_master WHERE type='table' AND name='${input.table}'`,
           );
-          const expectedDims = dimCheck.rows?.[0]?.["dimensions"] as
-            | number
-            | undefined;
+          const ddlSql = ddlResult.rows?.[0]?.["sql"] as string | undefined;
+          if (ddlSql) {
+            hasDimsColumn = /\bdimensions\b/i.test(ddlSql);
+            const defaultMatch =
+              /dimensions\s+INTEGER\s+DEFAULT\s+(\d+)/i.exec(ddlSql);
+            if (defaultMatch?.[1]) {
+              expectedDims = parseInt(defaultMatch[1], 10);
+            }
+          }
+
+          // Fallback: check existing row data (only if column exists)
+          if (expectedDims === undefined && hasDimsColumn) {
+            const dimCheck = await adapter.executeReadQuery(
+              `SELECT dimensions FROM ${table} LIMIT 1`,
+            );
+            const rowDims = dimCheck.rows?.[0]?.["dimensions"] as
+              | number
+              | undefined;
+            if (rowDims !== undefined && rowDims !== null) {
+              expectedDims = rowDims;
+            }
+          }
+
           if (
             expectedDims !== undefined &&
-            expectedDims !== null &&
             input.items[0] &&
             input.items[0].vector.length !== expectedDims
           ) {
@@ -250,7 +303,10 @@ export function createVectorBatchStoreTool(
           const idValue =
             typeof item.id === "string" ? `'${item.id}'` : item.id;
 
-          const sql = `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
+          // Only include dimensions column if the table has it
+          const sql = hasDimsColumn
+            ? `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}, dimensions) VALUES (${idValue}, '${vectorJson}', ${item.vector.length})`
+            : `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
           await adapter.executeWriteQuery(sql);
           stored++;
         }
@@ -316,6 +372,7 @@ export function createVectorSearchTool(
 
         // Calculate similarities in JavaScript
         const queryVector = input.queryVector;
+        let skipped = 0;
         const scored = (result.rows ?? [])
           .map((row) => {
             try {
@@ -341,6 +398,7 @@ export function createVectorSearchTool(
                 _similarity: Math.round(score * 10000) / 10000,
               };
             } catch {
+              skipped++;
               return null;
             }
           })
@@ -377,12 +435,20 @@ export function createVectorSearchTool(
           return row;
         });
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           metric: input.metric,
           count: results.length,
           results,
         };
+
+        if (skipped > 0) {
+          response["skipped"] = skipped;
+          response["warning"] =
+            `${skipped} vector(s) skipped due to dimension mismatch or parse errors`;
+        }
+
+        return response;
       } catch (error) {
         return formatError(error);
       }

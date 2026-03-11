@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_vector_store` / `sqlite_vector_batch_store` DDL-Based Dimension Check** — Dimension validation now reads table schema DDL as primary source
+  - Previously read `dimensions` from existing rows only — bypassed on empty tables or tables with mismatched row data
+  - Now parses `DEFAULT N` from `CREATE TABLE` SQL via `sqlite_master` for authoritative validation
+  - Falls back to existing row data when DDL lacks a DEFAULT clause
+  - INSERT now explicitly sets `dimensions` column to actual vector length
+- **`sqlite_vector_search` Skipped Vector Reporting** — Response now includes `skipped` count and `warning` when vectors fail similarity calculation
+  - Previously, vectors with dimension mismatches or parse errors were silently dropped (try/catch returned null)
+  - Now surfaces a `warning: "N vector(s) skipped due to dimension mismatch or parse errors"` field in the response
+  - Helps callers diagnose why `count` may be less than expected
+- **`sqlite_json_update` / `sqlite_json_merge` No-Match Warning** — Returns `warning` field when `rowsAffected: 0`
+  - Previously returned `{success: true, rowsAffected: 0}` with no indication that nothing was changed
+  - Now includes `warning: "No rows matched the WHERE clause — nothing was updated/merged"`
+  - Helps callers distinguish between a successful no-op and an actual problem
 - **`sqlite_stats_histogram` Empty Table Phantom Bucket** — Histogram on empty table no longer returns a phantom `{min: 0, max: 0, count: 1}` bucket
   - Root cause: `MIN()`/`MAX()` return NULL on empty tables, which defaulted to 0 via `?? 0`, making `bucketSize === 0` and returning a hardcoded `count: 1`
   - Now counts non-null rows via `COUNT(column)` and returns empty `buckets: []` when no data exists
