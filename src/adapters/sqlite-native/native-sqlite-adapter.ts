@@ -63,6 +63,41 @@ import { getToolGroupIcon } from "../../utils/icons.js";
 
 const log = logger.child("NATIVE_SQLITE");
 
+/** Absolute path to the extensions directory (computed once at module load). */
+const __moduleFilename = fileURLToPath(import.meta.url);
+const EXTENSIONS_DIR = path.resolve(
+  path.dirname(__moduleFilename),
+  "../../../extensions",
+);
+
+/**
+ * Attempt to load a SQLite extension from a list of candidate paths.
+ * Tries each path in order; logs success on the first hit or a warning if none work.
+ */
+function tryLoadExtension(
+  db: BetterSqliteDb,
+  name: string,
+  envVar: string,
+  candidates: string[],
+  extensionLog: ReturnType<typeof logger.child>,
+): void {
+  for (const extPath of candidates) {
+    try {
+      db.loadExtension(extPath);
+      extensionLog.info(`Loaded ${name} extension from ${extPath}`, {
+        code: "SQLITE_EXTENSION",
+      });
+      return;
+    } catch {
+      // Try next path
+    }
+  }
+  extensionLog.warning(
+    `${name} extension not available. Set ${envVar} env var.`,
+    { code: "SQLITE_EXTENSION" },
+  );
+}
+
 import { isDDL, normalizeSqliteParams } from "../sqlite-helpers.js";
 
 /**
@@ -194,21 +229,16 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       this.db.pragma(`cache_size = ${options.cacheSize}`);
     }
     if (options.spatialite) {
-      // Compute absolute path to extensions directory
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const extensionsDir = path.resolve(__dirname, "../../../extensions");
-
       const spatialitePaths = [
         process.env["SPATIALITE_PATH"],
         // Absolute paths to local extensions
         path.join(
-          extensionsDir,
+          EXTENSIONS_DIR,
           "mod_spatialite-5.1.0-win-amd64",
           "mod_spatialite",
         ),
         path.join(
-          extensionsDir,
+          EXTENSIONS_DIR,
           "mod_spatialite-5.1.0-win-amd64",
           "mod_spatialite.dll",
         ),
@@ -232,37 +262,14 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         }
       }
 
-      let loaded = false;
-      for (const extPath of spatialitePaths) {
-        try {
-          this.db.loadExtension(extPath);
-          log.info(`Loaded SpatiaLite extension from ${extPath}`, {
-            code: "SQLITE_EXTENSION",
-          });
-          loaded = true;
-          break;
-        } catch {
-          // Try next path
-        }
-      }
-      if (!loaded) {
-        log.warning(
-          "SpatiaLite extension not available. Set SPATIALITE_PATH env var.",
-          { code: "SQLITE_EXTENSION" },
-        );
-      }
+      tryLoadExtension(this.db, "SpatiaLite", "SPATIALITE_PATH", spatialitePaths, log);
     }
     if (options.csv) {
-      // Compute absolute path to extensions directory
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const extensionsDir = path.resolve(__dirname, "../../../extensions");
-
       const csvPaths = [
         process.env["CSV_EXTENSION_PATH"],
         // sqlite-xsv extension with absolute paths
-        path.join(extensionsDir, "xsv0.dll"),
-        path.join(extensionsDir, "xsv0"),
+        path.join(EXTENSIONS_DIR, "xsv0.dll"),
+        path.join(EXTENSIONS_DIR, "xsv0"),
         // System paths
         "xsv0",
         "xsv0.dll",
@@ -273,25 +280,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         "/usr/local/lib/csv.dylib",
       ].filter((p): p is string => Boolean(p));
 
-      let loaded = false;
-      for (const extPath of csvPaths) {
-        try {
-          this.db.loadExtension(extPath);
-          log.info(`Loaded CSV extension from ${extPath}`, {
-            code: "SQLITE_EXTENSION",
-          });
-          loaded = true;
-          break;
-        } catch {
-          // Try next path
-        }
-      }
-      if (!loaded) {
-        log.warning(
-          "CSV extension not available. Set CSV_EXTENSION_PATH env var.",
-          { code: "SQLITE_EXTENSION" },
-        );
-      }
+      tryLoadExtension(this.db, "CSV", "CSV_EXTENSION_PATH", csvPaths, log);
     }
   }
 

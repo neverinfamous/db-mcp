@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Code Quality Audit** — Removed unused `dotenv` production dependency (never imported in source)
 - **Code Quality Audit** — Fixed stale `--postgresql` reference in CLI no-database warning; server only supports SQLite
 - **Code Quality Audit** — Removed extraneous blank lines in `sqlite-adapter.ts`
+- **Code Quality Audit** — Removed duplicate "Server Host Binding" CHANGELOG entry
 - **Code Quality Audit — Native Adapter Error Handling** — Replaced plain `Error` throws with typed error classes in `native-sqlite-adapter.ts`
   - `connect()`: `ConfigurationError` for type mismatch, `ConnectionError` for connection failures
   - `executeReadQuery()` / `executeWriteQuery()`: `QueryError` with SQL context and module-prefixed error codes
@@ -19,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Code Quality Audit — Extension Loading Deduplication** — Extracted `tryLoadExtension()` helper and `EXTENSIONS_DIR` constant in `native-sqlite-adapter.ts`
+  - SpatiaLite and CSV extension loading shared identical try-next-path loop, logging, and `__dirname` computation
+  - Both now call the shared helper; ~50 lines of duplication removed
+- **Code Quality Audit — Migration Record Mapping** — Extracted `toMigrationRecord()` into `migration/schemas.ts`
+  - Replaced 5 identical inline row→record mapping blocks in `tracking.ts`
+- **Code Quality Audit — API Constants Extraction** — Moved `METHOD_ALIASES`, `GROUP_EXAMPLES`, `POSITIONAL_PARAM_MAP`, `GROUP_PREFIX_MAP`, `KEEP_PREFIX_GROUPS` from `api.ts` to new `codemode/api-constants.ts`
+  - `api.ts` reduced from 610 to ~330 lines
 - **Code Quality Audit — `validateColumnExists` Deduplication** — Extracted shared `validateColumnExists()` and `validateColumnsExist()` into `adapters/sqlite/tools/column-validation.ts`
   - Removed identical 40-line copies from `geo.ts`, `text/helpers.ts`, and `stats/helpers.ts`
   - All three modules now re-export from the shared utility; no consumer import changes needed
@@ -215,11 +223,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added to `ToolConstants.ts`, `ServerInstructions.ts`, and positional param map
   - Core tool count: 8 → 9 (minimal meta-group: 9 → 10)
 - **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
-  - Configures which host/IP the HTTP transport binds to (default: `0.0.0.0`)
-  - Use `--server-host 127.0.0.1` to restrict to local connections only
-  - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
-  - Essential for containerized deployments where binding to all interfaces is required
-  - **Server Host Binding** — New `--server-host` CLI option and `MCP_HOST` environment variable
   - Configures which host/IP the HTTP transport binds to (default: `0.0.0.0`)
   - Use `--server-host 127.0.0.1` to restrict to local connections only
   - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)

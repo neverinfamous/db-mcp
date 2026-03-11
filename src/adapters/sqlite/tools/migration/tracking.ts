@@ -27,6 +27,7 @@ import {
   MigrationStatusOutputSchema,
   hashMigration,
   isMigrationTableInitialized,
+  toMigrationRecord,
 } from "./schemas.js";
 
 // =============================================================================
@@ -159,18 +160,7 @@ export function createMigrationRecordTool(
 
         return {
           success: true,
-          record: record
-            ? {
-                id: record["id"] as number,
-                version: record["version"] as string,
-                description: (record["description"] as string) ?? null,
-                appliedAt: record["applied_at"] as string,
-                appliedBy: (record["applied_by"] as string) ?? null,
-                migrationHash: record["migration_hash"] as string,
-                sourceSystem: (record["source_system"] as string) ?? null,
-                status: record["status"] as string,
-              }
-            : undefined,
+          record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
         const structured = formatError(error);
@@ -268,18 +258,7 @@ export function createMigrationApplyTool(
 
         return {
           success: true,
-          record: record
-            ? {
-                id: record["id"] as number,
-                version: record["version"] as string,
-                description: (record["description"] as string) ?? null,
-                appliedAt: record["applied_at"] as string,
-                appliedBy: (record["applied_by"] as string) ?? null,
-                migrationHash: record["migration_hash"] as string,
-                sourceSystem: (record["source_system"] as string) ?? null,
-                status: record["status"] as string,
-              }
-            : undefined,
+          record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
         const structured = formatError(error);
@@ -382,18 +361,7 @@ export function createMigrationRollbackTool(
           success: true,
           dryRun: false,
           rollbackSql,
-          record: record
-            ? {
-                id: record["id"] as number,
-                version: record["version"] as string,
-                description: (record["description"] as string) ?? null,
-                appliedAt: record["applied_at"] as string,
-                appliedBy: (record["applied_by"] as string) ?? null,
-                migrationHash: record["migration_hash"] as string,
-                sourceSystem: (record["source_system"] as string) ?? null,
-                status: record["status"] as string,
-              }
-            : undefined,
+          record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
         const structured = formatError(error);
@@ -464,16 +432,7 @@ export function createMigrationHistoryTool(
         queryParams.push(limit, offset);
         const result = await adapter.executeReadQuery(query, queryParams);
 
-        const records = (result.rows ?? []).map((r) => ({
-          id: r["id"] as number,
-          version: r["version"] as string,
-          description: (r["description"] as string) ?? null,
-          appliedAt: r["applied_at"] as string,
-          appliedBy: (r["applied_by"] as string) ?? null,
-          migrationHash: r["migration_hash"] as string,
-          sourceSystem: (r["source_system"] as string) ?? null,
-          status: r["status"] as string,
-        }));
+        const records = (result.rows ?? []).map(toMigrationRecord);
 
         return {
           success: true,
