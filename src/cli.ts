@@ -252,7 +252,7 @@ async function main(): Promise<void> {
 
     if (config.databases.length === 0) {
       console.error(
-        "Warning: No databases configured. Use --sqlite, --postgresql, etc. or set DATABASE_URI",
+        "Warning: No databases configured. Use --sqlite or --sqlite-native, or set SQLITE_DATABASE",
       );
     }
 

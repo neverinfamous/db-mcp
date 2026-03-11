@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Code Quality Audit** — Removed unused `dotenv` production dependency (never imported in source)
+- **Code Quality Audit** — Fixed stale `--postgresql` reference in CLI no-database warning; server only supports SQLite
+- **Code Quality Audit** — Removed extraneous blank lines in `sqlite-adapter.ts`
+
 ### Changed
 
 - **Code Quality Audit — `validateColumnExists` Deduplication** — Extracted shared `validateColumnExists()` and `validateColumnsExist()` into `adapters/sqlite/tools/column-validation.ts`

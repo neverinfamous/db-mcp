@@ -645,7 +645,6 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
 
-
   /**
    * Ensure database is connected
    */
