@@ -23,6 +23,8 @@ import {
 import { generateInstructions } from "../constants/server-instructions.js";
 import { logger } from "../utils/logger/index.js";
 import { SERVER_ICONS } from "../utils/icons.js";
+import { DbMcpError } from "../utils/errors/base.js";
+import { ErrorCategory } from "../utils/errors/categories.js";
 
 /**
  * Main db-mcp server class
@@ -252,7 +254,11 @@ export class DbMcpServer {
         await this.startHttp();
         break;
       default:
-        throw new Error(`Unsupported transport: ${this.config.transport}`);
+        throw new DbMcpError(
+          `Unsupported transport: ${this.config.transport}`,
+          "SERVER_START_FAILED",
+          ErrorCategory.CONFIGURATION
+        );
     }
   }
 

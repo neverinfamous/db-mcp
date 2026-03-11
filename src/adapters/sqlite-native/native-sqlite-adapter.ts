@@ -26,6 +26,8 @@ import { logger, ERROR_CODES } from "../../utils/logger/index.js";
 import {
   ConnectionError,
   ConfigurationError,
+  DbMcpError,
+  ErrorCategory,
 } from "../../utils/errors/index.js";
 import type { SqliteConfig, SqliteOptions } from "../sqlite/types.js";
 import type { SqliteAdapter } from "../sqlite/sqlite-adapter.js";
@@ -345,13 +347,21 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     }
     // Fallback: direct query without caching
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
-      throw new Error("Invalid table name");
+      throw new DbMcpError(
+        "Invalid table name",
+        "SQLITE_INVALID_TABLE",
+        ErrorCategory.VALIDATION
+      );
     }
     const result = await this.executeReadQuery(
       `PRAGMA table_info("${tableName}")`,
     );
     if (!result.rows || result.rows.length === 0) {
-      throw new Error(`Table '${tableName}' does not exist`);
+      throw new DbMcpError(
+        `Table '${tableName}' does not exist`,
+        "SQLITE_TABLE_NOT_FOUND",
+        ErrorCategory.RESOURCE
+      );
     }
     return {
       name: tableName,

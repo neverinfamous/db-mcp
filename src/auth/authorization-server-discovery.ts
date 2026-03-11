@@ -13,6 +13,7 @@ import type {
 } from "./types.js";
 import { AuthServerDiscoveryError } from "./errors.js";
 import { createModuleLogger, ERROR_CODES } from "../utils/logger/index.js";
+import { DbMcpError, ErrorCategory } from "../utils/errors/index.js";
 
 const logger = createModuleLogger("AUTH");
 
@@ -85,8 +86,10 @@ export class AuthorizationServerDiscovery {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(
+        throw new DbMcpError(
           `HTTP ${String(response.status)}: ${response.statusText}`,
+          ERROR_CODES.AUTH.DISCOVERY_FAILED.full,
+          ErrorCategory.CONNECTION
         );
       }
 
@@ -127,11 +130,19 @@ export class AuthorizationServerDiscovery {
    */
   private validateMetadata(metadata: AuthorizationServerMetadata): void {
     if (!metadata.issuer) {
-      throw new Error("Missing required field: issuer");
+      throw new DbMcpError(
+        "Missing required field: issuer",
+        "AUTH_DISCOVERY_INVALID",
+        ErrorCategory.VALIDATION
+      );
     }
 
     if (!metadata.token_endpoint) {
-      throw new Error("Missing required field: token_endpoint");
+      throw new DbMcpError(
+        "Missing required field: token_endpoint",
+        "AUTH_DISCOVERY_INVALID",
+        ErrorCategory.VALIDATION
+      );
     }
 
     // Validate issuer matches the expected URL
@@ -151,8 +162,10 @@ export class AuthorizationServerDiscovery {
    */
   getMetadata(): AuthorizationServerMetadata {
     if (!this.cachedMetadata) {
-      throw new Error(
+      throw new DbMcpError(
         "Authorization server metadata not yet discovered. Call discover() first.",
+        "AUTH_DISCOVERY_REQUIRED",
+        ErrorCategory.INTERNAL
       );
     }
     return this.cachedMetadata;
@@ -167,7 +180,11 @@ export class AuthorizationServerDiscovery {
     const metadata = this.getMetadata();
 
     if (!metadata.jwks_uri) {
-      throw new Error("Authorization server does not provide jwks_uri");
+      throw new DbMcpError(
+        "Authorization server does not provide jwks_uri",
+        "AUTH_DISCOVERY_INVALID",
+        ErrorCategory.VALIDATION
+      );
     }
 
     return metadata.jwks_uri;

@@ -9,6 +9,8 @@ import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { validateWhereClause } from "../../../utils/index.js";
 import { formatError } from "../../../utils/errors/index.js";
+import { DbMcpError } from "../../../utils/errors/base.js";
+import { ErrorCategory } from "../../../utils/errors/categories.js";
 
 // Schemas
 const RowNumberSchema = z.object({
@@ -148,7 +150,11 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = RowNumberSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
+          throw new DbMcpError(
+            "Invalid table name",
+            "NATIVE_WINDOW_INVALID_TABLE",
+            ErrorCategory.VALIDATION
+          );
         }
 
         const columns = formatColumns(input.selectColumns);
@@ -198,7 +204,11 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = RankSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
+          throw new DbMcpError(
+            "Invalid table name",
+            "NATIVE_WINDOW_INVALID_TABLE",
+            ErrorCategory.VALIDATION
+          );
         }
 
         const columns = formatColumns(input.selectColumns);
@@ -250,10 +260,18 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = LagLeadSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
+          throw new DbMcpError(
+            "Invalid table name",
+            "NATIVE_WINDOW_INVALID_TABLE",
+            ErrorCategory.VALIDATION
+          );
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-          throw new Error("Invalid column name");
+          throw new DbMcpError(
+            "Invalid column name",
+            "NATIVE_WINDOW_INVALID_COLUMN",
+            ErrorCategory.VALIDATION
+          );
         }
 
         const columns = formatColumns(input.selectColumns);
@@ -308,10 +326,18 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = RunningTotalSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
+          throw new DbMcpError(
+            "Invalid table name",
+            "NATIVE_WINDOW_INVALID_TABLE",
+            ErrorCategory.VALIDATION
+          );
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.valueColumn)) {
-          throw new Error("Invalid column name");
+          throw new DbMcpError(
+            "Invalid column name",
+            "NATIVE_WINDOW_INVALID_COLUMN",
+            ErrorCategory.VALIDATION
+          );
         }
 
         const columns = formatColumns(input.selectColumns);
@@ -362,10 +388,18 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = MovingAverageSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
+          throw new DbMcpError(
+            "Invalid table name",
+            "NATIVE_WINDOW_INVALID_TABLE",
+            ErrorCategory.VALIDATION
+          );
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.valueColumn)) {
-          throw new Error("Invalid column name");
+          throw new DbMcpError(
+            "Invalid column name",
+            "NATIVE_WINDOW_INVALID_COLUMN",
+            ErrorCategory.VALIDATION
+          );
         }
 
         const columns = formatColumns(input.selectColumns);
@@ -418,7 +452,11 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = NtileSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new Error("Invalid table name");
+          throw new DbMcpError(
+            "Invalid table name",
+            "NATIVE_WINDOW_INVALID_TABLE",
+            ErrorCategory.VALIDATION
+          );
         }
 
         const columns = formatColumns(input.selectColumns);

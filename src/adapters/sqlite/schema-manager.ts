@@ -12,6 +12,7 @@ import type {
   IndexInfo,
   ColumnInfo,
 } from "../../types/index.js";
+import { DbMcpError, ErrorCategory } from "../../utils/errors/index.js";
 
 export interface QueryExecutor {
   executeReadQuery(sql: string, params?: unknown[]): Promise<QueryResult>;
@@ -139,7 +140,11 @@ export class SchemaManager {
 
     // Validate table name
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
-      throw new Error("Invalid table name");
+      throw new DbMcpError(
+        "Invalid table name",
+        "SQLITE_INVALID_TABLE",
+        ErrorCategory.VALIDATION
+      );
     }
 
     const result = await this.executor.executeReadQuery(
@@ -148,7 +153,11 @@ export class SchemaManager {
 
     // Check if table exists (PRAGMA returns empty for non-existent tables)
     if (!result.rows || result.rows.length === 0) {
-      throw new Error(`Table '${tableName}' does not exist`);
+      throw new DbMcpError(
+        `Table '${tableName}' does not exist`,
+        "SQLITE_TABLE_NOT_FOUND",
+        ErrorCategory.RESOURCE
+      );
     }
 
     const columns: ColumnInfo[] = (result.rows ?? []).map((row) => ({

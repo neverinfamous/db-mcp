@@ -27,6 +27,8 @@ import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import {
   ConnectionError,
   ConfigurationError,
+  DbMcpError,
+  ErrorCategory,
 } from "../../utils/errors/index.js";
 import type { SqliteConfig, SqliteOptions } from "./types.js";
 import { SchemaManager } from "./schema-manager.js";
@@ -352,7 +354,11 @@ export class SqliteAdapter extends DatabaseAdapter {
     }
     // Fallback if SchemaManager not initialized
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
-      throw new Error("Invalid table name");
+      throw new DbMcpError(
+        "Invalid table name",
+        "SQLITE_INVALID_TABLE",
+        ErrorCategory.VALIDATION
+      );
     }
     const result = await this.executeReadQuery(
       `PRAGMA table_info("${tableName}")`,

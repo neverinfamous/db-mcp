@@ -11,6 +11,7 @@
  */
 
 import type { JsonNormalizationResult, JsonValue } from "./types.js";
+import { DbMcpError, ErrorCategory } from "../../utils/errors/index.js";
 
 // =============================================================================
 // Types
@@ -299,8 +300,10 @@ export function parseJsonValue(value: unknown): JsonValue {
   if (value instanceof Buffer || value instanceof Uint8Array) {
     // JSONB blobs cannot be parsed in JS directly
     // They must be retrieved using SQLite's json() function
-    throw new Error(
+    throw new DbMcpError(
       "JSONB blob cannot be parsed directly. Use json() in SQL query.",
+      "JSON_PARSE_ERROR",
+      ErrorCategory.VALIDATION
     );
   }
 

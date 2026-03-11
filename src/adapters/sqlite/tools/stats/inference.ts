@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatError, DbMcpError, ErrorCategory } from "../../../../utils/errors/index.js";
 import {
   validateColumnExists,
   validateNumericColumn,
@@ -426,15 +426,17 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           const df = n - 1;
 
           if (n < 2) {
-            throw new Error("Insufficient sample size for t-test");
+            throw new DbMcpError("Insufficient sample size for t-test", "STATS_INSUFFICIENT_SAMPLE", ErrorCategory.VALIDATION);
           }
 
           const tStatistic = (mean - expectedMean) / (stdDev / Math.sqrt(n));
 
           if (!Number.isFinite(tStatistic)) {
-            throw new Error(
+            throw new DbMcpError(
               `Cannot compute t-statistic: stdDev=${stdDev.toFixed(4)}, n=${n}. ` +
                 `This may indicate zero variance, non-numeric data, or that column "${input.column}" does not exist.`,
+              "STATS_COMPUTATION_FAILED",
+              ErrorCategory.VALIDATION
             );
           }
 
@@ -456,7 +458,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           };
         } else if (input.testType === "ttest_two") {
           if (!input.column2) {
-            throw new Error("column2 is required for two-sample t-test");
+            throw new DbMcpError("column2 is required for two-sample t-test", "STATS_MISSING_COLUMN", ErrorCategory.VALIDATION);
           }
           await validateColumnExists(adapter, input.table, input.column2);
           sanitizeIdentifier(input.column2);
@@ -482,15 +484,17 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           const var2 = Number(statsResult.rows?.[0]?.["var2"] ?? 0);
 
           if (n1 < 2 || n2 < 2) {
-            throw new Error("Insufficient sample size for t-test");
+            throw new DbMcpError("Insufficient sample size for t-test", "STATS_INSUFFICIENT_SAMPLE", ErrorCategory.VALIDATION);
           }
 
           const tStatistic = (mean1 - mean2) / Math.sqrt(var1 / n1 + var2 / n2);
 
           if (!Number.isFinite(tStatistic)) {
-            throw new Error(
+            throw new DbMcpError(
               `Cannot compute t-statistic: var1=${var1.toFixed(4)}, var2=${var2.toFixed(4)}. ` +
                 `This may indicate zero variance or non-numeric data.`,
+              "STATS_COMPUTATION_FAILED",
+              ErrorCategory.VALIDATION
             );
           }
 
@@ -518,7 +522,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
         } else {
           // Chi-square test
           if (!input.groupColumn) {
-            throw new Error("groupColumn is required for chi-square test");
+            throw new DbMcpError("groupColumn is required for chi-square test", "STATS_MISSING_COLUMN", ErrorCategory.VALIDATION);
           }
           await validateColumnExists(adapter, input.table, input.groupColumn);
           sanitizeIdentifier(input.groupColumn);
@@ -560,8 +564,10 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           const df = (rowTotals.size - 1) * (colTotals.size - 1);
 
           if (df === 0) {
-            throw new Error(
+            throw new DbMcpError(
               `Insufficient categories for chi-square test: "${input.column}" has ${rowTotals.size} category(s), "${input.groupColumn}" has ${colTotals.size} category(s). Both columns must have at least 2 distinct values.`,
+              "STATS_INSUFFICIENT_CATEGORIES",
+              ErrorCategory.VALIDATION
             );
           }
 

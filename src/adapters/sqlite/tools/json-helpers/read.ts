@@ -8,7 +8,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   JsonSelectSchema,
   JsonQuerySchema,
@@ -60,7 +60,7 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
           const columnNames = getUniqueColumnNames(input.paths);
           const extracts = input.paths.map((path, i) => {
             if (!path.startsWith("$")) {
-              throw new Error(`JSON path must start with $: ${path}`);
+              throw new ValidationError(`JSON path must start with $: ${path}`);
             }
             return `json_extract("${input.column}", '${path}') as "${columnNames[i]}"`;
           });
@@ -136,7 +136,7 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
           const columnNames = getUniqueColumnNames(input.selectPaths);
           const extracts = input.selectPaths.map((path, i) => {
             if (!path.startsWith("$")) {
-              throw new Error(`JSON path must start with $: ${path}`);
+              throw new ValidationError(`JSON path must start with $: ${path}`);
             }
             return `json_extract("${input.column}", '${path}') as "${columnNames[i]}"`;
           });
@@ -150,7 +150,7 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.filterPaths) {
           for (const [path, value] of Object.entries(input.filterPaths)) {
             if (!path.startsWith("$")) {
-              throw new Error(`JSON path must start with $: ${path}`);
+              throw new ValidationError(`JSON path must start with $: ${path}`);
             }
             const valueStr =
               typeof value === "string"

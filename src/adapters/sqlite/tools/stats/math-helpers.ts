@@ -4,6 +4,8 @@
  * Pure math functions for statistical inference (CDF, t-distribution, matrix operations).
  */
 
+import { DbMcpError, ErrorCategory } from "../../../../utils/errors/index.js";
+
 /**
  * Approximate normal CDF for p-value calculation
  */
@@ -100,7 +102,7 @@ export function matrixInverse(A: number[][]): number[][] {
 
     const pivot = pivotRow[col] ?? 0;
     if (Math.abs(pivot) < 1e-10) {
-      throw new Error("Matrix is singular, cannot compute inverse");
+      throw new DbMcpError("Matrix is singular, cannot compute inverse", "MATH_SINGULAR", ErrorCategory.VALIDATION);
     }
 
     for (let j = 0; j < 2 * n; j++) {

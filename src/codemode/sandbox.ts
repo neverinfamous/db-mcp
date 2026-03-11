@@ -9,6 +9,8 @@
  */
 
 import vm from "node:vm";
+import { DbMcpError } from "../utils/errors/base.js";
+import { ErrorCategory } from "../utils/errors/categories.js";
 import {
   DEFAULT_SANDBOX_OPTIONS,
   DEFAULT_POOL_OPTIONS,
@@ -297,7 +299,11 @@ export class SandboxPool {
       return sandbox;
     }
 
-    throw new Error("Sandbox pool exhausted");
+    throw new DbMcpError(
+      "Sandbox pool exhausted",
+      "CODEMODE_POOL_EXHAUSTED",
+      ErrorCategory.RESOURCE
+    );
   }
 
   /**

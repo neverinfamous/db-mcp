@@ -16,6 +16,8 @@ import type { Request, Response } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { oauthErrorHandler } from "../../auth/middleware.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
+import { DbMcpError } from "../../utils/errors/base.js";
+import { ErrorCategory } from "../../utils/errors/categories.js";
 import {
   DEFAULT_MAX_BODY_BYTES,
   HTTP_REQUEST_TIMEOUT_MS,
@@ -193,7 +195,11 @@ export class HttpTransport {
    */
   async start(): Promise<void> {
     if (!this.state.app) {
-      throw new Error("Transport not initialized. Call initialize() first.");
+      throw new DbMcpError(
+        "Transport not initialized. Call initialize() first.",
+        ERROR_CODES.SERVER.START_FAILED.full,
+        ErrorCategory.INTERNAL
+      );
     }
 
     return new Promise((resolve, reject) => {

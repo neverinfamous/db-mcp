@@ -25,7 +25,7 @@ import {
   type SandboxMode,
 } from "../../../codemode/sandbox-factory.js";
 import { logger } from "../../../utils/logger/index.js";
-import { formatError } from "../../../utils/errors/index.js";
+import { formatError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
 
 // =============================================================================
 // Module State
@@ -193,7 +193,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Execute in sandbox
         if (!pool) {
-          throw new Error("Sandbox pool not initialized");
+          throw new DbMcpError("Sandbox pool not initialized", "CODEMODE_POOL_UNINITIALIZED", ErrorCategory.INTERNAL);
         }
         const result = await pool.execute(code, bindings, timeoutMs);
 

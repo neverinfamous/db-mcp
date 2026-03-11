@@ -15,6 +15,8 @@ import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
 import { JSONRPC_SERVER_ERROR, JSONRPC_INTERNAL_ERROR } from "./types.js";
 import { asIncoming, asServerResponse } from "./type-adapters.js";
+import { DbMcpError } from "../../utils/errors/base.js";
+import { ErrorCategory } from "../../utils/errors/categories.js";
 
 const logger = createModuleLogger("HTTP");
 
@@ -29,7 +31,11 @@ export async function setupStatelessEndpoints(
   state: HttpTransportState,
 ): Promise<void> {
   if (!state.app || !state.mcpServer) {
-    throw new Error("Transport or server not initialized");
+    throw new DbMcpError(
+      "Transport or server not initialized",
+      ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
+      ErrorCategory.INTERNAL
+    );
   }
 
   // Create single stateless transport
@@ -92,7 +98,11 @@ export async function setupStatelessEndpoints(
  */
 export function setupStatefulEndpoints(state: HttpTransportState): void {
   if (!state.app || !state.mcpServer) {
-    throw new Error("Transport or server not initialized");
+    throw new DbMcpError(
+      "Transport or server not initialized",
+      ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
+      ErrorCategory.INTERNAL
+    );
   }
 
   const server = state.mcpServer;

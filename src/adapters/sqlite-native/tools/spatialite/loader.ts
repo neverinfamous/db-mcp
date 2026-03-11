@@ -5,6 +5,7 @@
  */
 
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
+import { DbMcpError, ErrorCategory } from "../../../../utils/errors/index.js";
 
 // SpatiaLite extension paths to try (platform-aware)
 const SPATIALITE_PATHS = [
@@ -99,7 +100,11 @@ export function ensureSpatialite(adapter: NativeSqliteAdapter): void {
   if (!isSpatialiteLoaded(adapter)) {
     const result = tryLoadSpatialite(adapter);
     if (!result.success) {
-      throw new Error(result.error ?? "Failed to load SpatiaLite");
+      throw new DbMcpError(
+        result.error ?? "Failed to load SpatiaLite",
+        "SPATIALITE_LOAD_FAILED",
+        ErrorCategory.CONNECTION
+      );
     }
   }
 }

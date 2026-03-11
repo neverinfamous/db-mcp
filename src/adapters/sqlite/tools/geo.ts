@@ -15,7 +15,7 @@ import {
   sanitizeIdentifier,
   createColumnList,
 } from "../../../utils/index.js";
-import { formatError } from "../../../utils/errors/index.js";
+import { formatError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
 import {
   GeoDistanceOutputSchema,
   GeoWithinRadiusOutputSchema,
@@ -75,8 +75,10 @@ function validateCoordinates(
 ): void {
   for (const { name, value, min, max } of coords) {
     if (value < min || value > max) {
-      throw new Error(
+      throw new DbMcpError(
         `Invalid ${name}: ${String(value)}. Must be between ${String(min)} and ${String(max)}.`,
+        "GEO_INVALID_COORDINATES",
+        ErrorCategory.VALIDATION
       );
     }
   }

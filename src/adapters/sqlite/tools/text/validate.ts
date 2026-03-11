@@ -143,14 +143,14 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           try {
             pattern = new RegExp(normalizedPattern);
           } catch {
-            throw new Error(
-              `Invalid regex pattern: ${input.customPattern} (normalized to: ${normalizedPattern})`,
+            throw new ValidationError(
+              `Invalid regex pattern: ${input.customPattern} (normalized to: ${normalizedPattern})`
             );
           }
         } else {
           const foundPattern = VALIDATION_PATTERNS[input.pattern];
           if (!foundPattern) {
-            throw new Error(`Unknown pattern: ${input.pattern}`);
+            throw new ValidationError(`Unknown pattern: ${input.pattern}`);
           }
           pattern = foundPattern;
         }

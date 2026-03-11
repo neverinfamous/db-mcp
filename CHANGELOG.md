@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Code Quality Audit — Magic JSON-RPC Error Code** — Replaced 4 remaining inline `-32000` literals with `JSONRPC_SERVER_ERROR` constant in `session.ts`
 
+### Changed
+
+- **Code Quality Audit — Enhanced Error Handling** — Replaced 35+ instances of generic `throw new Error()` with enhanced `DbMcpError` (and subclasses like `ValidationError`) across the codebase
+  - Affected areas: `HttpTransport`, `DbMcpServer`, `SandboxPool`, `SchemaManager`, `native-sqlite-adapter`, and numerous tool modules (`window.ts`, `geo.ts`, `inference.ts`, `validate.ts`, etc.)
+  - Ensures all errors follow the structured `DbMcpError` format with appropriate module-prefixed error codes and ErrorCategory classifications
+
 ### Security
 
 - **Code Quality Audit — Table Name Validation** — Added regex guard (`/^[a-zA-Z_][a-zA-Z0-9_]*$/`) to native adapter's `describeTable` fallback
