@@ -28,6 +28,10 @@ export const DEFAULT_RATE_LIMIT_MAX = 100;
 export const DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MB
 export const DEFAULT_HSTS_MAX_AGE = 31_536_000; // 1 year
 
+/** JSON-RPC standard error codes */
+export const JSONRPC_SERVER_ERROR = -32000;
+export const JSONRPC_INTERNAL_ERROR = -32603;
+
 /** HTTP request timeout (ms) — prevents slowloris-style DoS */
 export const HTTP_REQUEST_TIMEOUT_MS = 120_000;
 /** Keep-alive timeout (ms) — slightly above common LB idle timeout */

@@ -5,6 +5,11 @@
  */
 
 import type { SqliteOptions } from "./sqlite/types.js";
+import {
+  isJsonbSupportedVersion,
+  setJsonbSupported,
+} from "./sqlite/json-utils.js";
+import type { ModuleLogger } from "../utils/logger.js";
 
 /**
  * Check if SQL is a DDL statement (CREATE, ALTER, DROP).
@@ -72,3 +77,57 @@ export function applyCommonPragmas(
   }
 }
 
+// =============================================================================
+// Shared WAL & JSONB Helpers
+// =============================================================================
+
+/**
+ * Auto-enable WAL mode for file-based databases if not already configured.
+ * Shared between WASM and native adapters.
+ *
+ * @param executor - PragmaExecutor for the adapter's API
+ * @param filePath - Database file path (skips if ":memory:")
+ * @param options - SqliteOptions (skips if walMode already set)
+ * @param log - Module logger for info/debug output
+ */
+export function autoEnableWal(
+  executor: PragmaExecutor,
+  filePath: string,
+  options: SqliteOptions | undefined,
+  log: ModuleLogger,
+): void {
+  if (filePath === ":memory:" || options?.walMode) return;
+  try {
+    executor.runPragma("journal_mode = WAL");
+    log.info("Enabled WAL mode for better concurrency", {
+      code: "SQLITE_WAL",
+    });
+  } catch {
+    // WAL mode may not be supported (e.g., sql.js limitations)
+  }
+}
+
+/**
+ * Detect JSONB support and update the global flag.
+ * Shared between WASM and native adapters.
+ *
+ * @param getVersion - Callback that returns the SQLite version string
+ * @param log - Module logger for info output
+ */
+export function detectAndSetJsonbSupport(
+  getVersion: () => string,
+  log: ModuleLogger,
+): void {
+  try {
+    const version = getVersion();
+    const jsonbSupported = isJsonbSupportedVersion(version);
+    setJsonbSupported(jsonbSupported);
+    if (jsonbSupported) {
+      log.info(`JSONB support enabled (SQLite ${version})`, {
+        code: "SQLITE_JSONB",
+      });
+    }
+  } catch {
+    setJsonbSupported(false);
+  }
+}

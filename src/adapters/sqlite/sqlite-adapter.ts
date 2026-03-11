@@ -35,7 +35,7 @@ import { SchemaManager } from "./schema-manager.js";
 import { getAllToolDefinitions } from "./tools/index.js";
 import { getResourceDefinitions } from "./resources.js";
 import { getPromptDefinitions } from "./prompts/index.js";
-import { isJsonbSupportedVersion, setJsonbSupported } from "./json-utils.js";
+
 
 // Query execution logic (extracted for modularity)
 import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
@@ -43,7 +43,7 @@ import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
 // Module logger
 const log = createModuleLogger("SQLITE");
 
-import { isDDL, applyCommonPragmas } from "../sqlite-helpers.js";
+import { isDDL, applyCommonPragmas, autoEnableWal, detectAndSetJsonbSupport } from "../sqlite-helpers.js";
 
 
 
@@ -136,33 +136,20 @@ export class SqliteAdapter extends DatabaseAdapter {
       // Apply options
       this.applyOptions(this.config.options);
 
-      // Enable WAL mode by default for file-based databases (better concurrency)
-      // Only if not already configured and not in-memory
-      if (filePath !== ":memory:" && !this.config.options?.walMode) {
-        try {
-          this.db.run("PRAGMA journal_mode = WAL");
-          log.info("Enabled WAL mode for better concurrency", {
-            code: "SQLITE_WAL",
-          });
-        } catch {
-          // WAL mode may not be supported (e.g., sql.js limitations)
-        }
-      }
+      // Enable WAL mode by default for file-based databases
+      const db = this.db;
+      autoEnableWal(
+        { runPragma: (pragma) => db.run(`PRAGMA ${pragma}`) },
+        filePath,
+        this.config.options,
+        log,
+      );
 
       // Detect JSONB support based on SQLite version
-      try {
-        const versionResult = this.db.exec("SELECT sqlite_version()");
-        const version = (versionResult[0]?.values[0]?.[0] as string) ?? "0.0.0";
-        const jsonbSupported = isJsonbSupportedVersion(version);
-        setJsonbSupported(jsonbSupported);
-        if (jsonbSupported) {
-          log.info(`JSONB support enabled (SQLite ${version})`, {
-            code: "SQLITE_JSONB",
-          });
-        }
-      } catch {
-        setJsonbSupported(false);
-      }
+      detectAndSetJsonbSupport(() => {
+        const versionResult = db.exec("SELECT sqlite_version()");
+        return (versionResult[0]?.values[0]?.[0] as string) ?? "0.0.0";
+      }, log);
 
       // Initialize SchemaManager with this adapter as the executor
       this.schemaManager = new SchemaManager(this);

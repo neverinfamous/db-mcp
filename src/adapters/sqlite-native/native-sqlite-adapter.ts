@@ -24,7 +24,6 @@ import type {
 } from "../../types/index.js";
 import { logger, ERROR_CODES } from "../../utils/logger.js";
 import {
-  QueryError,
   ConnectionError,
   ConfigurationError,
 } from "../../utils/errors/index.js";
@@ -48,10 +47,7 @@ import { getMigrationTools } from "../sqlite/tools/migration/index.js";
 import { getCodeModeTools } from "../sqlite/tools/codemode.js";
 import { getResourceDefinitions } from "../sqlite/resources.js";
 import { getPromptDefinitions } from "../sqlite/prompts/index.js";
-import {
-  isJsonbSupportedVersion,
-  setJsonbSupported,
-} from "../sqlite/json-utils.js";
+
 
 // Import native-specific tools
 import { getTransactionTools } from "./tools/transactions.js";
@@ -70,7 +66,10 @@ import {
 
 const log = logger.child("NATIVE_SQLITE");
 
-import { isDDL, normalizeSqliteParams, applyCommonPragmas } from "../sqlite-helpers.js";
+import { isDDL, applyCommonPragmas, autoEnableWal, detectAndSetJsonbSupport } from "../sqlite-helpers.js";
+
+// Query execution logic (extracted for modularity)
+import { nativeExecuteRead, nativeExecuteWrite } from "./native-query-executor.js";
 
 /**
  * Native SQLite Adapter using better-sqlite3
@@ -132,34 +131,21 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       // Apply options
       this.applyOptions(sqliteConfig.options);
 
-      // Enable WAL mode by default for file-based databases
-      if (filePath !== ":memory:" && !sqliteConfig.options?.walMode) {
-        try {
-          this.db.pragma("journal_mode = WAL");
-          log.info("Enabled WAL mode for better concurrency", {
-            code: "SQLITE_WAL",
-          });
-        } catch {
-          // WAL mode may not be available
-        }
-      }
+      const db = this.db;
+      autoEnableWal(
+        { runPragma: (pragma) => db.pragma(pragma) },
+        filePath,
+        sqliteConfig.options,
+        log,
+      );
 
       // Detect JSONB support based on SQLite version
-      try {
-        const versionResult = this.db
+      detectAndSetJsonbSupport(() => {
+        const versionResult = db
           .prepare("SELECT sqlite_version()")
           .get() as { "sqlite_version()": string } | undefined;
-        const version = versionResult?.["sqlite_version()"] ?? "0.0.0";
-        const jsonbSupported = isJsonbSupportedVersion(version);
-        setJsonbSupported(jsonbSupported);
-        if (jsonbSupported) {
-          log.info(`JSONB support enabled (SQLite ${version})`, {
-            code: "SQLITE_JSONB",
-          });
-        }
-      } catch {
-        setJsonbSupported(false);
-      }
+        return versionResult?.["sqlite_version()"] ?? "0.0.0";
+      }, log);
 
       // Initialize SchemaManager with this adapter as the executor
       this.schemaManager = new SchemaManager(this);
@@ -276,37 +262,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
-    const start = Date.now();
-
-    try {
-      const db = this.ensureDb();
-      const stmt = db.prepare(sql);
-      const normalizedParams = normalizeSqliteParams(params);
-      const rows = normalizedParams
-        ? stmt.all(...normalizedParams)
-        : stmt.all();
-
-      return Promise.resolve({
-        rows: rows as Record<string, unknown>[],
-        columns: stmt
-          .columns()
-          .map((c) => ({ name: c.name, type: c.type ?? "unknown" })),
-        executionTimeMs: Date.now() - start,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error(`Query failed: ${message}`, {
-        code: ERROR_CODES.DB.QUERY_FAILED.full,
-      });
-      throw new QueryError(
-        `Query execution failed: ${message}`,
-        "DB_QUERY_FAILED",
-        {
-          sql,
-          cause: error instanceof Error ? error : undefined,
-        },
-      );
-    }
+    return nativeExecuteRead(this.ensureDb(), sql, params, log);
   }
 
   /**
@@ -317,40 +273,14 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
-    const start = Date.now();
+    const result = nativeExecuteWrite(this.ensureDb(), sql, params, log);
 
-    try {
-      const db = this.ensureDb();
-      const stmt = db.prepare(sql);
-      const normalizedParams = normalizeSqliteParams(params);
-      const info = normalizedParams
-        ? stmt.run(...normalizedParams)
-        : stmt.run();
-
-      // Auto-invalidate schema cache on DDL operations
-      if (isDDL(sql)) {
-        this.clearSchemaCache();
-      }
-
-      return Promise.resolve({
-        rows: [],
-        rowsAffected: info.changes,
-        executionTimeMs: Date.now() - start,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error(`Write query failed: ${message}`, {
-        code: ERROR_CODES.DB.QUERY_FAILED.full,
-      });
-      throw new QueryError(
-        `Write query failed: ${message}`,
-        "DB_WRITE_FAILED",
-        {
-          sql,
-          cause: error instanceof Error ? error : undefined,
-        },
-      );
+    // Auto-invalidate schema cache on DDL operations
+    if (isDDL(sql)) {
+      this.clearSchemaCache();
     }
+
+    return result;
   }
 
   /**

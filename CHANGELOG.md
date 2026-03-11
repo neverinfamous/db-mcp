@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Transport Feature Backport** — Wildcard subdomain CORS matching (e.g., `*.example.com`)
 - **Transport Feature Backport** — New `middleware.test.ts` with 14 unit tests for `getClientIp()` and `matchesCorsOrigin()`
 
+### Changed
+
+- **Code Quality Audit — Shared WAL/JSONB Helpers** — Extracted `autoEnableWal()` and `detectAndSetJsonbSupport()` into `sqlite-helpers.ts`
+  - Both WASM and native adapters now delegate to shared helpers instead of duplicating logic
+- **Code Quality Audit — Native Query Executor** — Extracted `nativeExecuteRead()`, `nativeExecuteWrite()`, `nativeExecuteGeneral()` into `native-query-executor.ts`
+  - Mirrors the existing WASM `query-executor.ts` pattern; `native-sqlite-adapter.ts` reduced from 653 to ~555 lines
+- **Code Quality Audit — Transport Type Adapters** — Created `type-adapters.ts` with `asIncoming()` and `asServerResponse()`
+  - Replaced 16 inline `as unknown as` casts across `session.ts`
+- **Code Quality Audit — Query Validation Extraction** — Extracted `validateQuery()` and `DANGEROUS_SQL_PATTERNS` into `query-validation.ts`
+  - `database-adapter.ts` reduced from 564 to ~520 lines
+- **Code Quality Audit — LogModule Type** — Added `NATIVE_SQLITE` and `HTTP` to the `LogModule` union type
+- **Code Quality Audit — JSON-RPC Constants** — Added `JSONRPC_SERVER_ERROR` and `JSONRPC_INTERNAL_ERROR` to `transports/http/types.ts`
+  - Replaced inline magic numbers in `session.ts`
+
 ### Fixed
 
 - **Code Quality Audit** — Removed unused deprecated `SERVER_INSTRUCTIONS` export from `server-instructions.ts` (zero consumers)

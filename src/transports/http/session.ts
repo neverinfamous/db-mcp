@@ -11,9 +11,10 @@ import type { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import type { IncomingMessage, ServerResponse } from "node:http";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger.js";
 import type { HttpTransportState } from "./types.js";
+import { JSONRPC_SERVER_ERROR, JSONRPC_INTERNAL_ERROR } from "./types.js";
+import { asIncoming, asServerResponse } from "./type-adapters.js";
 
 const logger = createModuleLogger("HTTP");
 
@@ -58,8 +59,8 @@ export async function setupStatelessEndpoints(
     }
 
     void state.statelessTransport.handleRequest(
-      req as unknown as IncomingMessage,
-      res as unknown as ServerResponse,
+      asIncoming(req),
+      asServerResponse(res),
       req.body as unknown,
     );
   });
@@ -69,7 +70,7 @@ export async function setupStatelessEndpoints(
     res.status(405).json({
       jsonrpc: "2.0",
       error: {
-        code: -32000,
+        code: JSONRPC_SERVER_ERROR,
         message: "SSE streaming not available in stateless mode",
       },
       id: null,
@@ -173,8 +174,8 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
             );
           }
           await newTransport.handleRequest(
-            req as unknown as IncomingMessage,
-            res as unknown as ServerResponse,
+            asIncoming(req),
+            asServerResponse(res),
             req.body as unknown,
           );
           return;
@@ -194,8 +195,8 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
         // Handle request with existing transport
         if (httpTransport !== undefined) {
           await httpTransport.handleRequest(
-            req as unknown as IncomingMessage,
-            res as unknown as ServerResponse,
+            asIncoming(req),
+            asServerResponse(res),
             req.body as unknown,
           );
         }
@@ -207,7 +208,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
         if (!res.headersSent) {
           res.status(500).json({
             jsonrpc: "2.0",
-            error: { code: -32603, message: "Internal server error" },
+            error: { code: JSONRPC_INTERNAL_ERROR, message: "Internal server error" },
             id: null,
           });
         }
@@ -236,8 +237,8 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
     const httpTransport = state.transports.get(sessionId);
     if (httpTransport !== undefined) {
       void httpTransport.handleRequest(
-        req as unknown as IncomingMessage,
-        res as unknown as ServerResponse,
+        asIncoming(req),
+        asServerResponse(res),
       );
     }
   });
@@ -259,8 +260,8 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
     const httpTransport = state.transports.get(sessionId);
     if (httpTransport !== undefined) {
       void httpTransport.handleRequest(
-        req as unknown as IncomingMessage,
-        res as unknown as ServerResponse,
+        asIncoming(req),
+        asServerResponse(res),
       );
     }
   });
@@ -286,7 +287,7 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
 
     const sseTransport = new SSEServerTransport(
       "/messages",
-      res as unknown as ServerResponse,
+      asServerResponse(res),
     );
 
     void (async () => {
@@ -307,13 +308,13 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
         // Note: connect() auto-calls start() on SSE transports — do NOT call start() separately
         try {
           await server.connect(
-            sseTransport as unknown as Parameters<typeof server.connect>[0],
+            sseTransport as Parameters<typeof server.connect>[0],
           );
         } catch {
           // Close existing connection and retry
           await server.close();
           await server.connect(
-            sseTransport as unknown as Parameters<typeof server.connect>[0],
+            sseTransport as Parameters<typeof server.connect>[0],
           );
         }
       } catch (error) {
@@ -363,8 +364,8 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
     }
 
     void sseTransport.handlePostMessage(
-      req as unknown as IncomingMessage,
-      res as unknown as ServerResponse,
+      asIncoming(req),
+      asServerResponse(res),
       req.body as unknown,
     );
   });

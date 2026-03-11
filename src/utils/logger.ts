@@ -41,6 +41,8 @@ export type LogModule =
   | "POOL" // Connection pool
   | "FILTER" // Tool filtering
   | "SQLITE" // SQLite-specific
+  | "NATIVE_SQLITE" // Native better-sqlite3
+  | "HTTP" // HTTP transport
   | "DB" // Generic database
   | "CLI" // Command line interface
   | "CODEMODE"; // Sandboxed code execution

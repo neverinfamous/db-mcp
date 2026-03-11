@@ -31,21 +31,9 @@ import type {
 import { isToolEnabled } from "../filtering/tool-filter.js";
 import {
   formatError,
-  ValidationError,
   ConnectionError,
 } from "../utils/errors/index.js";
-
-/**
- * Pre-compiled dangerous SQL patterns for injection detection (L2 optimization).
- * Hoisted to module scope to avoid re-allocating RegExp objects per query.
- */
-const DANGEROUS_SQL_PATTERNS: RegExp[] = [
-  /;\s*DROP\s+/i,
-  /;\s*DELETE\s+/i,
-  /;\s*TRUNCATE\s+/i,
-  /--.*$/m, // SQL comments (potential injection)
-  /\/\*.*\*\//s, // Block comments
-];
+import { validateQuery } from "./query-validation.js";
 
 /**
  * Abstract base class for database adapters
@@ -474,39 +462,7 @@ export abstract class DatabaseAdapter {
    * @param isReadOnly - Whether to enforce read-only restrictions
    */
   protected validateQuery(sql: string, isReadOnly: boolean): void {
-    const trimmedSql = sql.trim().toUpperCase();
-
-    if (isReadOnly) {
-      // For read-only queries, block mutating statements
-      const writePrefixes = [
-        "INSERT",
-        "UPDATE",
-        "DELETE",
-        "DROP",
-        "CREATE",
-        "ALTER",
-        "TRUNCATE",
-      ];
-      for (const prefix of writePrefixes) {
-        if (trimmedSql.startsWith(prefix)) {
-          throw new ValidationError(
-            `Read-only mode: ${prefix} statements are not allowed`,
-            "DB_READ_ONLY_VIOLATION",
-          );
-        }
-      }
-    }
-
-    // Block obvious SQL injection patterns
-    // Note: This is a basic check; parameterized queries are the primary defense
-    for (const pattern of DANGEROUS_SQL_PATTERNS) {
-      if (pattern.test(sql)) {
-        throw new ValidationError(
-          "Query contains potentially dangerous patterns",
-          "DB_DANGEROUS_PATTERN",
-        );
-      }
-    }
+    validateQuery(sql, isReadOnly);
   }
 
   /**
