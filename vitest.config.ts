@@ -13,5 +13,8 @@ export default defineConfig({
       provider: "v8",
       exclude: ["**/__tests__/**", "**/node_modules/**"],
     },
+    benchmark: {
+      include: ["tests/benchmarks/**/*.bench.ts"],
+    },
   },
 });

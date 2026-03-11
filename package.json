@@ -24,6 +24,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "bench": "vitest bench --run",
+    "bench:verbose": "vitest bench --run --reporter=verbose",
     "clean": "rimraf dist",
     "generate:instructions": "node scripts/generate-server-instructions.ts",
     "prepublishOnly": "npm run build"

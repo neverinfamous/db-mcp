@@ -26,6 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `resources.spec.ts`: All 7 static MCP resources (`sqlite://schema`, `tables`, `health`, `indexes`, `views`, `meta`, `memo://insights`) and resource templates via SDK Client
   - `playwright.config.ts` with webServer auto-launch, `test:e2e` npm script, dedicated `e2e.yml` CI workflow
   - E2E badge added to README
+- **Performance Benchmark Suite** — 9 benchmark files measuring framework overhead on critical hot paths
+  - `handler-dispatch.bench.ts`: Tool lookup, error construction, progress notification overhead
+  - `utilities.bench.ts`: Identifier sanitization, WHERE clause validation, SQL validation, metadata caching
+  - `tool-filtering.bench.ts`: Filter parsing, group lookups, meta-group catalog generation
+  - `schema-parsing.bench.ts`: Zod schema validation for simple/complex/large payloads and failure paths
+  - `logger-sanitization.bench.ts`: Log call overhead, message sanitization, stack trace processing, sensitive data redaction
+  - `transport-auth.bench.ts`: Token extraction, scope checking, error formatting, rate limiting
+  - `codemode.bench.ts`: Sandbox creation/disposal, pool lifecycle, security validation, execution overhead
+  - `database-operations.bench.ts`: PRAGMA operations, table metadata, query result processing, JSON path validation, schema caching
+  - `resource-prompts.bench.ts`: Resource URI matching, content assembly, prompt generation, tool index generation
+  - `npm run bench` and `npm run bench:verbose` scripts; `vitest.config.ts` benchmark configuration
 - **Introspection Tool Group (6 tools)** — Read-only schema analysis and dependency mapping
   - `sqlite_dependency_graph`: Build directed FK dependency graphs with depth/direction control
   - `sqlite_topological_sort`: Determine safe creation/drop order for tables

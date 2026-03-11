@@ -499,6 +499,34 @@ curl -X POST "http://localhost:3000/mcp" \
 
 > **Configuration files:** Copy `.env.example` for a quick-start template. See `config/db-mcp.keycloak.json` for a complete Keycloak configuration example.
 
+## 📊 Benchmarks
+
+Performance benchmarks measure framework overhead on critical hot paths using [Vitest bench](https://vitest.dev/guide/features.html#benchmarking) (tinybench). The suite validates that framework plumbing stays negligible relative to actual database I/O:
+
+- **Tool dispatch:** ~11M ops/sec — Map-based lookup is effectively zero-cost
+- **Auth scope checks:** 7–9M ops/sec — OAuth middleware adds no measurable latency
+- **Identifier validation:** 6.4M ops/sec — SQL sanitization is near-instant
+- **Schema cache hits:** 4.3M ops/sec — metadata lookups avoid redundant queries
+- **Debug log (filtered):** 9.5M ops/sec — disabled log levels are true no-ops (50× faster than actual writes)
+- **Code Mode security:** 1.2M validations/sec for typical code, blocked patterns rejected in <1 µs
+
+```bash
+npm run bench            # Run all benchmarks
+npm run bench:verbose    # Verbose mode with detailed timings
+```
+
+| Benchmark              | What It Measures                                                        |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Handler Dispatch       | Tool lookup, error construction, progress notification overhead         |
+| Utilities              | Identifier sanitization, WHERE clause validation, SQL validation        |
+| Tool Filtering         | Filter parsing, group lookups, meta-group catalog generation            |
+| Schema Parsing         | Zod schema validation for simple/complex/large payloads + failure paths |
+| Logger & Sanitization  | Log call overhead, message sanitization, sensitive data redaction        |
+| Transport & Auth       | Token extraction, scope checking, error formatting, rate limiting       |
+| Code Mode              | Sandbox creation, pool lifecycle, security validation, execution        |
+| Database Operations    | PRAGMA ops, table metadata, query result processing, schema caching     |
+| Resource & Prompts     | URI matching, content assembly, prompt generation, tool indexing        |
+
 ---
 
 ## Contributing
