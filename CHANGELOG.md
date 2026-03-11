@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`sqlite_stats_histogram` Empty Table Phantom Bucket** — Histogram on empty table no longer returns a phantom `{min: 0, max: 0, count: 1}` bucket
+  - Root cause: `MIN()`/`MAX()` return NULL on empty tables, which defaulted to 0 via `?? 0`, making `bucketSize === 0` and returning a hardcoded `count: 1`
+  - Now counts non-null rows via `COUNT(column)` and returns empty `buckets: []` when no data exists
+  - Uniform data (all values identical) now returns actual row count instead of hardcoded 1
+- **`sqlite_vector_store` / `sqlite_vector_batch_store` Dimension Mismatch Validation** — Storing vectors with wrong dimensions now returns a structured error
+  - Previously accepted any vector length regardless of table's configured `dimensions` column (e.g., storing 2-dim vector in 4-dim table succeeded silently)
+  - Now reads the table's `dimensions` column and returns `{success: false, code: "DIMENSION_MISMATCH"}` when vector length doesn't match
+  - `sqlite_vector_search` already validated dimensions at comparison time (via helper functions), so this adds write-side enforcement
+
+
 - **Introspection Tools WASM FTS5 Crash** — 5 introspection tools no longer crash when the database contains FTS5 virtual tables in WASM mode
   - `sqlite_dependency_graph`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_schema_snapshot`, `sqlite_constraint_analysis` all failed with "no such module: fts5" because internal queries (`SELECT COUNT(*)`, `PRAGMA table_info`, `PRAGMA foreign_key_list`) hit FTS5 virtual tables that WASM SQLite can't resolve
   - Added try/catch around per-table queries in `buildForeignKeyGraph()` (graph.ts) and `schemaSnapshot`/`constraintAnalysis` handlers (analysis.ts)

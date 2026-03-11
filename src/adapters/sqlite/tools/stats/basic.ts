@@ -268,22 +268,41 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
 
-        let minMaxSql = `SELECT MIN(${column}) as min_val, MAX(${column}) as max_val FROM ${table}`;
+        let minMaxSql = `SELECT MIN(${column}) as min_val, MAX(${column}) as max_val, COUNT(${column}) as cnt FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           minMaxSql += ` WHERE ${input.whereClause}`;
         }
 
         const minMaxResult = await adapter.executeReadQuery(minMaxSql);
-        const minVal = (minMaxResult.rows?.[0]?.["min_val"] as number) ?? 0;
-        const maxVal = (minMaxResult.rows?.[0]?.["max_val"] as number) ?? 0;
+        const rawMin = minMaxResult.rows?.[0]?.["min_val"];
+        const rawMax = minMaxResult.rows?.[0]?.["max_val"];
+        const rowCount = (minMaxResult.rows?.[0]?.["cnt"] as number) ?? 0;
+
+        // Empty table or no non-null values: return empty buckets
+        if (rowCount === 0 || rawMin === null || rawMin === undefined) {
+          return {
+            success: true,
+            column: input.column,
+            range: { min: 0, max: 0 },
+            bucketSize: 0,
+            buckets: [],
+          };
+        }
+
+        const minVal = rawMin as number;
+        const maxVal = (rawMax as number) ?? 0;
         const range = maxVal - minVal;
         const bucketSize = range / input.buckets;
 
         if (bucketSize === 0) {
+          // Uniform data: all values are the same — single bucket with actual count
           return {
             success: true,
-            buckets: [{ min: minVal, max: maxVal, count: 1 }],
+            column: input.column,
+            range: { min: minVal, max: maxVal },
+            bucketSize: 0,
+            buckets: [{ min: minVal, max: maxVal, count: rowCount }],
           };
         }
 

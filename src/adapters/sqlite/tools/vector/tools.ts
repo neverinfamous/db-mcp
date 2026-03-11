@@ -132,6 +132,29 @@ export function createVectorStoreTool(
         const idColumn = sanitizeIdentifier(input.idColumn);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
+        // Validate dimensions against table schema (best-effort: skip if no dimensions column)
+        try {
+          const dimCheck = await adapter.executeReadQuery(
+            `SELECT dimensions FROM ${table} LIMIT 1`,
+          );
+          const expectedDims = dimCheck.rows?.[0]?.["dimensions"] as
+            | number
+            | undefined;
+          if (
+            expectedDims !== undefined &&
+            expectedDims !== null &&
+            input.vector.length !== expectedDims
+          ) {
+            return {
+              success: false,
+              error: `Dimension mismatch: vector has ${input.vector.length} dimensions but table expects ${expectedDims}`,
+              code: "DIMENSION_MISMATCH",
+            };
+          }
+        } catch {
+          // Table lacks dimensions column — skip validation
+        }
+
         const vectorJson = JSON.stringify(input.vector);
         const idValue =
           typeof input.id === "string" ? `'${input.id}'` : input.id;
@@ -196,6 +219,30 @@ export function createVectorBatchStoreTool(
 
         const idColumn = sanitizeIdentifier(input.idColumn);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);
+
+        // Validate dimensions against table schema (best-effort: skip if no dimensions column)
+        try {
+          const dimCheck = await adapter.executeReadQuery(
+            `SELECT dimensions FROM ${table} LIMIT 1`,
+          );
+          const expectedDims = dimCheck.rows?.[0]?.["dimensions"] as
+            | number
+            | undefined;
+          if (
+            expectedDims !== undefined &&
+            expectedDims !== null &&
+            input.items[0] &&
+            input.items[0].vector.length !== expectedDims
+          ) {
+            return {
+              success: false,
+              error: `Dimension mismatch: vectors have ${input.items[0].vector.length} dimensions but table expects ${expectedDims}`,
+              code: "DIMENSION_MISMATCH",
+            };
+          }
+        } catch {
+          // Table lacks dimensions column — skip validation
+        }
 
         let stored = 0;
         for (const item of input.items) {
