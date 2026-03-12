@@ -21,7 +21,7 @@ describe("getClientIp", () => {
       headers,
       ip,
       socket: { remoteAddress },
-    }) as any;
+    }) as unknown;
 
   it("should return socket remoteAddress when trustProxy is false", () => {
     const req = makeReq(

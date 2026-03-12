@@ -86,7 +86,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
 
       expect(response.messages).toBeDefined();
       expect(response.messages.length).toBeGreaterThan(0);
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("select");
       expect(text).toContain("SQL query");
     } finally {
@@ -104,7 +104,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("Analyze the data");
     } finally {
       await client.close();
@@ -141,7 +141,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("migration");
     } finally {
       await client.close();
@@ -161,7 +161,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("debug");
     } finally {
       await client.close();
@@ -178,7 +178,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("documentation");
     } finally {
       await client.close();
@@ -195,7 +195,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("table");
     } finally {
       await client.close();
@@ -212,7 +212,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("search");
     } finally {
       await client.close();
@@ -229,7 +229,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as any).text as string;
+      const text = (response.messages[0].content as { text: string }).text as string;
       expect(text).toContain("Demo");
     } finally {
       await client.close();

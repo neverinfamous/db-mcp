@@ -33,7 +33,7 @@ test.describe("Structured Error Responses", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(typeof parsed.code).toBe("string");
       expect(parsed.error).toMatch(/nonexistent_table_xyz|no such table/i);
@@ -53,7 +53,7 @@ test.describe("Structured Error Responses", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.code).toBe("COLUMN_NOT_FOUND");
     } finally {
@@ -72,7 +72,7 @@ test.describe("Structured Error Responses", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.error).toMatch(/not allowed|not a DML/i);
     } finally {
@@ -93,7 +93,7 @@ test.describe("Structured Error Responses", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.error).toMatch(/not allowed|not a SELECT/i);
     } finally {
@@ -112,7 +112,7 @@ test.describe("Structured Error Responses", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.error).toMatch(/lat1|latitude|invalid/i);
     } finally {
@@ -131,7 +131,7 @@ test.describe("Structured Error Responses", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.code).toBe("INVALID_INPUT");
     } finally {

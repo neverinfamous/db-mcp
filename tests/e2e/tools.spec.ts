@@ -48,7 +48,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       expect(Array.isArray(response.content)).toBe(true);
       expect(response.content.length).toBeGreaterThan(0);
       expect(response.content[0].type).toBe("text");
-      const textOutput = (response.content[0] as any).text as string;
+      const textOutput = (response.content[0] as { text: string }).text as string;
       // Verify structured response format
       const parsed = JSON.parse(textOutput);
       expect(parsed).toHaveProperty("tables");
@@ -75,7 +75,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       expect(Array.isArray(response.content)).toBe(true);
       if (response.content.length > 0) {
         expect(response.content[0].type).toBe("text");
-        const errorText = (response.content[0] as any).text as string;
+        const errorText = (response.content[0] as { text: string }).text as string;
         expect(errorText.toLowerCase()).toContain("required");
       }
     } catch (error: any) {
@@ -128,7 +128,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       expect(response.content.length).toBeGreaterThan(0);
       expect(response.content[0].type).toBe("text");
 
-      const textOutput = (response.content[0] as any).text as string;
+      const textOutput = (response.content[0] as { text: string }).text as string;
       const parsed = JSON.parse(textOutput);
       expect(parsed).toHaveProperty("result");
       expect(parsed.result).toHaveProperty("tables");
@@ -150,7 +150,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed).toHaveProperty("columns");
       expect(Array.isArray(parsed.columns)).toBe(true);
     } finally {
@@ -169,7 +169,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed).toHaveProperty("indexes");
       expect(Array.isArray(parsed.indexes)).toBe(true);
     } finally {

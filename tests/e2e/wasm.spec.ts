@@ -50,7 +50,7 @@ test.describe("WASM Adapter Graceful Degradation", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.wasmLimitation).toBe(true);
     } finally {
@@ -69,7 +69,7 @@ test.describe("WASM Adapter Graceful Degradation", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.wasmLimitation).toBe(true);
     } finally {
@@ -88,7 +88,7 @@ test.describe("WASM Adapter Graceful Degradation", () => {
 
       expect(response.isError).toBeUndefined();
       expect(Array.isArray(response.content)).toBe(true);
-      const parsed = JSON.parse((response.content[0] as any).text);
+      const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
       expect(parsed.wasmLimitation).toBe(true);
     } finally {
