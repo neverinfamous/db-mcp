@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **OAuth — `FULL` Scope** — Added `full` scope that grants unrestricted access to all operations, completing the `full ⊃ admin ⊃ write ⊃ read` hierarchy
+- **OAuth — `TOOL_GROUP_SCOPES` Mapping** — Declarative `Record<ToolGroup, StandardScope>` replaces imperative `*_SCOPE_GROUPS` arrays as single source of truth
+- **OAuth — Scope Utilities** — Added `hasScope()`, `hasAnyScope()`, `hasAllScopes()`, `getScopeForToolGroup()`, `getScopeDisplayName()` for hierarchical scope checks
+- **OAuth — Scope Map** — New `scope-map.ts` with `getRequiredScope()` for O(1) tool-name-to-scope reverse lookup
+- **OAuth — Auth Context** — New `auth-context.ts` using `AsyncLocalStorage` for per-request auth context threading to tool handlers
+- **OAuth — Transport-Agnostic Auth** — Added `AuthenticatedContext`, `createAuthenticatedContext()`, `validateAuth()`, `formatOAuthError()` to decouple auth from Express
+- **OAuth — Resource Server Enhancements** — Added `isScopeSupported()`, `getWellKnownPath()`, `resource_documentation`, `resource_signing_alg_values_supported` to RFC 9728 metadata
+- **OAuth — Unit Test Coverage** — Added 8 unit test files for complete auth module coverage: scopes, scope-map, auth-context, errors, oauth-resource-server, middleware, token-validator, authorization-server-discovery
+
 ### Changed
 
 - **Performance Audit Fix — Async File I/O** — Replaced synchronous `fs.readFileSync` and `fs.writeFileSync` with `fs.promises.readFile` and `fs.promises.writeFile` in `sqlite-adapter.ts` to prevent event loop blocking during database initialization and teardown.

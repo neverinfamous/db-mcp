@@ -4,10 +4,13 @@
  * Scope definitions and enforcement utilities for
  * granular access control.
  *
+ * Scope Hierarchy:  full ⊃ admin ⊃ write ⊃ read
+ *
  * Scope Patterns:
  *   - read      : Read-only access to all databases
  *   - write     : Read and write access to all databases
- *   - admin     : Full administrative access
+ *   - admin     : Administrative access
+ *   - full      : Unrestricted access to all operations
  *   - db:{name} : Access to specific database only
  *   - table:{db}:{table} : Access to specific table only
  */
@@ -20,9 +23,25 @@ import { TOOL_GROUPS } from "../filtering/tool-filter.js";
 // =============================================================================
 
 /**
+ * Standard OAuth scopes for db-mcp
+ */
+export const SCOPES = {
+  /** Read-only access to all databases */
+  READ: "read",
+  /** Read and write access to all databases */
+  WRITE: "write",
+  /** Administrative access */
+  ADMIN: "admin",
+  /** Unrestricted access to all operations */
+  FULL: "full",
+} as const;
+
+export type StandardScope = (typeof SCOPES)[keyof typeof SCOPES];
+
+/**
  * Base scopes supported by the server
  */
-export const BASE_SCOPES = ["read", "write", "admin"] as const;
+export const BASE_SCOPES = ["read", "write", "admin", "full"] as const;
 
 /**
  * Scope patterns (regex patterns for validation)
@@ -32,8 +51,10 @@ export const SCOPE_PATTERNS = {
   READ: "read",
   /** Read and write access */
   WRITE: "write",
-  /** Full admin access */
+  /** Administrative access */
   ADMIN: "admin",
+  /** Unrestricted access */
+  FULL: "full",
   /** Database-specific access pattern */
   DATABASE: /^db:([a-zA-Z0-9_-]+)$/,
   /** Table-specific access pattern */
@@ -47,6 +68,7 @@ export const SUPPORTED_SCOPES = [
   "read",
   "write",
   "admin",
+  "full",
   "db:{database}",
   "table:{database}:{table}",
 ] as const;
@@ -56,30 +78,57 @@ export const SUPPORTED_SCOPES = [
 // =============================================================================
 
 /**
+ * Declarative mapping from tool group to required minimum scope.
+ * Single source of truth — all other scope-group arrays derive from this.
+ */
+export const TOOL_GROUP_SCOPES: Record<ToolGroup, StandardScope> = {
+  core: SCOPES.READ,
+  json: SCOPES.READ,
+  text: SCOPES.READ,
+  stats: SCOPES.READ,
+  vector: SCOPES.READ,
+  geo: SCOPES.READ,
+  introspection: SCOPES.READ,
+  migration: SCOPES.WRITE,
+  admin: SCOPES.ADMIN,
+  codemode: SCOPES.ADMIN,
+};
+
+/**
+ * Get the required scope for a tool group.
+ */
+export function getScopeForToolGroup(group: ToolGroup): StandardScope {
+  return TOOL_GROUP_SCOPES[group] ?? SCOPES.READ;
+}
+
+// Derived arrays for backward compatibility
+const groupsForScope = (maxScope: StandardScope): ToolGroup[] => {
+  const hierarchy: Record<StandardScope, number> = {
+    read: 0,
+    write: 1,
+    admin: 2,
+    full: 3,
+  };
+  const maxLevel = hierarchy[maxScope];
+  return (Object.entries(TOOL_GROUP_SCOPES) as [ToolGroup, StandardScope][])
+    .filter(([, scope]) => hierarchy[scope] <= maxLevel)
+    .map(([group]) => group);
+};
+
+/**
  * Tool groups accessible with read scope (read-only operations)
  */
-export const READ_SCOPE_GROUPS: ToolGroup[] = [
-  "core", // read_query, list_tables, describe_table, etc.
-];
+export const READ_SCOPE_GROUPS: ToolGroup[] = groupsForScope(SCOPES.READ);
 
 /**
  * Tool groups accessible with write scope (read + write operations)
  */
-export const WRITE_SCOPE_GROUPS: ToolGroup[] = [
-  ...READ_SCOPE_GROUPS,
-  "json", // JSON operations
-  "text", // Text processing
-  "stats", // Statistical analysis
-  "vector", // Vector operations
-];
+export const WRITE_SCOPE_GROUPS: ToolGroup[] = groupsForScope(SCOPES.WRITE);
 
 /**
  * Tool groups accessible with admin scope (all operations)
  */
-export const ADMIN_SCOPE_GROUPS: ToolGroup[] = [
-  ...WRITE_SCOPE_GROUPS,
-  "admin", // Administration
-];
+export const ADMIN_SCOPE_GROUPS: ToolGroup[] = groupsForScope(SCOPES.ADMIN);
 
 /**
  * Read-only tools within the core group
@@ -204,10 +253,65 @@ export function isValidScope(scope: string): boolean {
 }
 
 /**
+ * Check if granted scopes include the required scope.
+ * Respects the scope hierarchy: full ⊃ admin ⊃ write ⊃ read
+ */
+export function hasScope(
+  grantedScopes: string[],
+  requiredScope: string,
+): boolean {
+  // Full scope grants everything
+  if (grantedScopes.includes(SCOPES.FULL)) {
+    return true;
+  }
+
+  // Direct match
+  if (grantedScopes.includes(requiredScope)) {
+    return true;
+  }
+
+  // Admin scope includes write and read
+  if (requiredScope === SCOPES.READ || requiredScope === SCOPES.WRITE) {
+    if (grantedScopes.includes(SCOPES.ADMIN)) {
+      return true;
+    }
+  }
+
+  // Write scope includes read
+  if (requiredScope === SCOPES.READ) {
+    if (grantedScopes.includes(SCOPES.WRITE)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Check if granted scopes include any of the required scopes
+ */
+export function hasAnyScope(
+  grantedScopes: string[],
+  requiredScopes: string[],
+): boolean {
+  return requiredScopes.some((scope) => hasScope(grantedScopes, scope));
+}
+
+/**
+ * Check if granted scopes include all of the required scopes
+ */
+export function hasAllScopes(
+  grantedScopes: string[],
+  requiredScopes: string[],
+): boolean {
+  return requiredScopes.every((scope) => hasScope(grantedScopes, scope));
+}
+
+/**
  * Check if scopes include admin access
  */
 export function hasAdminScope(scopes: string[]): boolean {
-  return scopes.includes("admin");
+  return scopes.includes("admin") || scopes.includes("full");
 }
 
 /**
@@ -235,6 +339,11 @@ export function scopeGrantsToolAccess(
   scope: string,
   toolName: string,
 ): boolean {
+  // Full scope grants access to all tools
+  if (scope === "full") {
+    return true;
+  }
+
   // Admin scope grants access to all tools
   if (scope === "admin") {
     return true;
@@ -275,8 +384,13 @@ export function scopeGrantsDatabaseAccess(
   scope: string,
   databaseName: string,
 ): boolean {
-  // Admin and write scopes grant access to all databases
-  if (scope === "admin" || scope === "write" || scope === "read") {
+  // Full, admin, write, read scopes grant access to all databases
+  if (
+    scope === "full" ||
+    scope === "admin" ||
+    scope === "write" ||
+    scope === "read"
+  ) {
     return true;
   }
 
@@ -313,8 +427,13 @@ export function scopeGrantsTableAccess(
   databaseName: string,
   tableName: string,
 ): boolean {
-  // Admin and write scopes grant access to all tables
-  if (scope === "admin" || scope === "write" || scope === "read") {
+  // Full, admin, write, read scopes grant access to all tables
+  if (
+    scope === "full" ||
+    scope === "admin" ||
+    scope === "write" ||
+    scope === "read"
+  ) {
     return true;
   }
 
@@ -354,19 +473,7 @@ export function scopesGrantTableAccess(
  * Get the required minimum scope for a tool group
  */
 export function getRequiredScopeForGroup(group: ToolGroup): string {
-  if (
-    ADMIN_SCOPE_GROUPS.includes(group) &&
-    !WRITE_SCOPE_GROUPS.includes(group)
-  ) {
-    return "admin";
-  }
-  if (
-    WRITE_SCOPE_GROUPS.includes(group) &&
-    !READ_SCOPE_GROUPS.includes(group)
-  ) {
-    return "write";
-  }
-  return "read";
+  return TOOL_GROUP_SCOPES[group] ?? SCOPES.READ;
 }
 
 /**
@@ -386,7 +493,7 @@ export function getRequiredScopeForTool(toolName: string): string {
  * Get tool groups accessible with given scopes
  */
 export function getAccessibleToolGroups(scopes: string[]): ToolGroup[] {
-  if (hasAdminScope(scopes)) {
+  if (scopes.includes(SCOPES.FULL) || hasAdminScope(scopes)) {
     return [...ADMIN_SCOPE_GROUPS];
   }
   if (hasWriteScope(scopes)) {
@@ -420,4 +527,32 @@ export function getAccessibleTools(scopes: string[]): string[] {
   }
 
   return [...new Set(allTools)];
+}
+
+// =============================================================================
+// Display Utilities
+// =============================================================================
+
+/**
+ * Get human-readable display name for a scope
+ */
+export function getScopeDisplayName(scope: string): string {
+  switch (scope) {
+    case SCOPES.READ:
+      return "Read Only";
+    case SCOPES.WRITE:
+      return "Read/Write";
+    case SCOPES.ADMIN:
+      return "Administrative";
+    case SCOPES.FULL:
+      return "Full Access";
+    default:
+      if (scope.startsWith("db:")) {
+        return `Database: ${scope.slice(3)}`;
+      }
+      if (scope.startsWith("table:")) {
+        return `Table: ${scope.slice(6)}`;
+      }
+      return scope;
+  }
 }

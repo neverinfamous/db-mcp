@@ -12,7 +12,7 @@ import type {
   ProtectedResourceMetadata,
   ResourceServerConfig,
 } from "./types.js";
-import { SUPPORTED_SCOPES } from "./scopes.js";
+import { SUPPORTED_SCOPES, SCOPE_PATTERNS, BASE_SCOPES } from "./scopes.js";
 import { createModuleLogger } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");
@@ -66,6 +66,8 @@ export class OAuthResourceServer {
       authorization_servers: this.config.authorizationServers,
       scopes_supported: this.config.scopesSupported,
       bearer_methods_supported: this.config.bearerMethodsSupported,
+      resource_documentation: `${this.config.resource}/docs`,
+      resource_signing_alg_values_supported: ["RS256", "ES256"],
     };
   }
 
@@ -128,6 +130,39 @@ export class OAuthResourceServer {
    */
   getSupportedScopes(): string[] {
     return [...this.config.scopesSupported];
+  }
+
+  /**
+   * Check if a scope is supported by this resource server.
+   * Validates standard scopes and dynamic patterns (db:*, table:*:*).
+   */
+  isScopeSupported(scope: string): boolean {
+    // Check standard base scopes
+    if ((BASE_SCOPES as readonly string[]).includes(scope)) {
+      return true;
+    }
+
+    // Check configured scopes
+    if (this.config.scopesSupported.includes(scope)) {
+      return true;
+    }
+
+    // Check dynamic patterns
+    if (SCOPE_PATTERNS.DATABASE.test(scope)) {
+      return true;
+    }
+    if (SCOPE_PATTERNS.TABLE.test(scope)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get the well-known metadata endpoint path
+   */
+  getWellKnownPath(): string {
+    return "/.well-known/oauth-protected-resource";
   }
 
   /**

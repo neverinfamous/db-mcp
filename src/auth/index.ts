@@ -11,6 +11,12 @@ export * from "./errors.js";
 // Scopes
 export * from "./scopes.js";
 
+// Scope Map (tool → scope reverse lookup)
+export { getRequiredScope, getToolScopeMap } from "./scope-map.js";
+
+// Auth Context (AsyncLocalStorage per-request threading)
+export { runWithAuthContext, getAuthContext } from "./auth-context.js";
+
 // Core classes
 export {
   OAuthResourceServer,
@@ -22,7 +28,7 @@ export {
 } from "./authorization-server-discovery.js";
 export { TokenValidator, createTokenValidator } from "./token-validator.js";
 
-// Middleware
+// Middleware (Express-specific)
 export {
   createAuthMiddleware,
   extractBearerToken,
@@ -31,4 +37,12 @@ export {
   requireToolScope,
   oauthErrorHandler,
   type AuthMiddlewareConfig,
+} from "./middleware.js";
+
+// Middleware (transport-agnostic)
+export {
+  createAuthenticatedContext,
+  validateAuth,
+  formatOAuthError,
+  type AuthenticatedContext,
 } from "./middleware.js";

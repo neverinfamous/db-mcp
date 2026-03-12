@@ -11,10 +11,11 @@ import type { TokenValidator } from "./token-validator.js";
 import type { OAuthResourceServer } from "./oauth-resource-server.js";
 import {
   TokenMissingError,
+  InvalidTokenError,
   InsufficientScopeError,
   isOAuthError,
 } from "./errors.js";
-import { scopesGrantToolAccess } from "./scopes.js";
+import { scopesGrantToolAccess, hasScope as checkScope } from "./scopes.js";
 import { createModuleLogger, ERROR_CODES } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");
@@ -253,10 +254,12 @@ export function requireScope(scope: string): RequestHandler {
       return;
     }
 
-    const hasScope =
-      req.auth.scopes.includes(scope) || req.auth.scopes.includes("admin"); // Admin scope grants all
+    const scopeGranted =
+      req.auth.scopes.includes(scope) ||
+      req.auth.scopes.includes("admin") ||
+      req.auth.scopes.includes("full");
 
-    if (!hasScope) {
+    if (!scopeGranted) {
       const error = new InsufficientScopeError(scope, req.auth.scopes);
 
       logger.warning(`Insufficient scope: required ${scope}`, {
@@ -296,8 +299,11 @@ export function requireAnyScope(scopes: string[]): RequestHandler {
       return;
     }
 
-    // Admin scope grants all
-    if (req.auth.scopes.includes("admin")) {
+    // Full or admin scope grants all
+    if (
+      req.auth.scopes.includes("full") ||
+      req.auth.scopes.includes("admin")
+    ) {
       next();
       return;
     }
@@ -409,4 +415,143 @@ export function oauthErrorHandler(
 
   // Pass to next error handler
   next(error);
+}
+
+// =============================================================================
+// Transport-Agnostic Auth
+// =============================================================================
+
+/**
+ * Transport-agnostic authenticated request context.
+ * Usable by Express middleware, Streamable HTTP, or any future transport.
+ */
+export interface AuthenticatedContext {
+  /** Whether request is authenticated */
+  authenticated: boolean;
+
+  /** Token claims (if authenticated) */
+  claims?: TokenClaims;
+
+  /** Token scopes (convenience) */
+  scopes: string[];
+}
+
+/**
+ * Create authentication context from an Authorization header.
+ * Does not throw — returns unauthenticated context when token is missing/invalid.
+ */
+export async function createAuthenticatedContext(
+  authHeader: string | undefined,
+  tokenValidator: TokenValidator,
+): Promise<AuthenticatedContext> {
+  const token = extractBearerToken(authHeader);
+
+  if (!token) {
+    return { authenticated: false, scopes: [] };
+  }
+
+  const result = await tokenValidator.validate(token);
+
+  if (!result.valid || !result.claims) {
+    return { authenticated: false, scopes: [] };
+  }
+
+  return {
+    authenticated: true,
+    claims: result.claims,
+    scopes: result.claims.scopes,
+  };
+}
+
+/**
+ * Validate authentication and authorization.
+ * Throws OAuth errors when token missing, invalid, or insufficient scope.
+ */
+export async function validateAuth(
+  authHeader: string | undefined,
+  tokenValidator: TokenValidator,
+  options: { required?: boolean; requiredScopes?: string[] } = {},
+): Promise<AuthenticatedContext> {
+  const { required = true, requiredScopes } = options;
+  const token = extractBearerToken(authHeader);
+
+  if (!token) {
+    if (required) {
+      throw new TokenMissingError();
+    }
+    return { authenticated: false, scopes: [] };
+  }
+
+  const result = await tokenValidator.validate(token);
+
+  if (!result.valid || !result.claims) {
+    throw new InvalidTokenError(result.error ?? "Invalid token");
+  }
+
+  const context: AuthenticatedContext = {
+    authenticated: true,
+    claims: result.claims,
+    scopes: result.claims.scopes,
+  };
+
+  if (requiredScopes && requiredScopes.length > 0) {
+    const hasRequired = requiredScopes.some((scope) =>
+      checkScope(context.scopes, scope),
+    );
+    if (!hasRequired) {
+      throw new InsufficientScopeError(requiredScopes, context.scopes);
+    }
+  }
+
+  return context;
+}
+
+/**
+ * Format an OAuth error for HTTP response.
+ * Transport-agnostic — returns status and body without Express dependency.
+ */
+export function formatOAuthError(error: unknown): {
+  status: number;
+  body: object;
+} {
+  if (error instanceof TokenMissingError) {
+    return {
+      status: 401,
+      body: {
+        error: "invalid_token",
+        error_description: error.message,
+      },
+    };
+  }
+
+  if (error instanceof InvalidTokenError) {
+    return {
+      status: 401,
+      body: {
+        error: "invalid_token",
+        error_description: error.message,
+      },
+    };
+  }
+
+  if (error instanceof InsufficientScopeError) {
+    const required = error.details?.requiredScope as string[] | undefined;
+    return {
+      status: 403,
+      body: {
+        error: "insufficient_scope",
+        error_description: error.message,
+        scope: required ? required.join(" ") : undefined,
+      },
+    };
+  }
+
+  // Generic error
+  return {
+    status: 500,
+    body: {
+      error: "server_error",
+      error_description: "Internal server error",
+    },
+  };
 }
