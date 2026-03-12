@@ -90,7 +90,7 @@ export const DescribeTableOutputSchema = z
 export const DropTableOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
+    message: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -121,8 +121,8 @@ export const GetIndexesOutputSchema = z
 export const CreateIndexOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    sql: z.string(),
+    message: z.string().optional(),
+    sql: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -132,6 +132,6 @@ export const CreateIndexOutputSchema = z
 export const DropIndexOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
+    message: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);

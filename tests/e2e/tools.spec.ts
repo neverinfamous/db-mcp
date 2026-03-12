@@ -145,7 +145,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
     try {
       const response = await client.callTool({
         name: "sqlite_describe_table",
-        arguments: { table: "test_products" },
+        arguments: { tableName: "test_products" },
       });
 
       expect(response.isError).toBeUndefined();
@@ -164,7 +164,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
     try {
       const response = await client.callTool({
         name: "sqlite_get_indexes",
-        arguments: { table: "test_products" },
+        arguments: { tableName: "test_products" },
       });
 
       expect(response.isError).toBeUndefined();
