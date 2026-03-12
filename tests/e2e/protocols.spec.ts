@@ -53,6 +53,33 @@ test.describe("HTTP Transport Protocols", () => {
       const body = await response.text();
       expect(body.length).toBeGreaterThan(0);
     });
+
+    test("should accept initialization and return session ID", async ({
+      request,
+    }) => {
+      const response = await request.post("/mcp", {
+        headers: {
+          Accept: "application/json, text/event-stream",
+        },
+        data: {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: {
+            protocolVersion: "2025-03-26",
+            capabilities: {},
+            clientInfo: {
+              name: "playwright-protocol-test",
+              version: "1.0.0",
+            },
+          },
+        },
+      });
+
+      expect(response.status()).toBe(200);
+      const sessionId = response.headers()["mcp-session-id"];
+      expect(sessionId).toBeDefined();
+    });
   });
 
   test.describe("Legacy SSE (MCP 2024-11-05)", () => {
@@ -97,6 +124,36 @@ test.describe("HTTP Transport Protocols", () => {
         "message",
         "No transport found for sessionId",
       );
+    });
+
+    test("should complete full SDK client round-trip via Legacy SSE", async ({}, testInfo) => {
+      // Regression test: server.connect() auto-calls start() on SSEServerTransport,
+      // so a redundant start() call would throw "already started!" and break SSE entirely.
+      const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+      const { SSEClientTransport } = await import("@modelcontextprotocol/sdk/client/sse.js");
+
+      const baseURL = testInfo.project.use.baseURL as string;
+      const transport = new SSEClientTransport(new URL(`${baseURL}/sse`));
+      const client = new Client(
+        { name: "playwright-sse-regression", version: "1.0.0" },
+        { capabilities: {} },
+      );
+
+      try {
+        await client.connect(transport);
+
+        const response = await client.callTool({
+          name: "sqlite_list_tables",
+          arguments: {},
+        });
+
+        expect(response.isError).toBeUndefined();
+        expect(Array.isArray(response.content)).toBe(true);
+        const text = (response.content[0] as { type: string; text: string }).text;
+        expect(text.length).toBeGreaterThan(0);
+      } finally {
+        await client.close();
+      }
     });
   });
 });
