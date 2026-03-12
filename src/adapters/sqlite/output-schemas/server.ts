@@ -3,8 +3,8 @@
  */
 
 import { z } from "zod";
-import type {
 import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
+import type {
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
   CreateTableOutputSchema,

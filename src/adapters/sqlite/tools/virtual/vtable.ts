@@ -20,7 +20,7 @@ import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "./analysis.js";
 
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
-import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
+import {
   ListVirtualTablesSchema,
   VirtualTableInfoSchema,
   DropVirtualTableSchema,

@@ -21,7 +21,7 @@ import {
 } from "./formatting.js";
 
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
-import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
+import {
   FuzzyMatchSchema,
   PhoneticMatchSchema,
   AdvancedSearchSchema,
