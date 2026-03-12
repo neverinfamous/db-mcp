@@ -13,6 +13,7 @@
  */
 
 import { z } from "zod";
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 
 // Admin schemas
 export const BackupSchema = z.object({
@@ -107,4 +108,4 @@ export const AppendInsightOutputSchema = z.object({
   success: z.boolean(),
   message: z.string(),
   insightCount: z.number(),
-});
+}).extend(ErrorResponseFields.shape);

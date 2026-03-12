@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import type {
+import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
   CreateTableOutputSchema,
@@ -29,7 +30,7 @@ export const ServerInfoOutputSchema = z.object({
   ),
   toolCount: z.number(),
   toolFilter: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 /**
  * server_health output
@@ -45,7 +46,7 @@ export const ServerHealthOutputSchema = z.object({
     }),
   ),
   uptime: z.number().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 /**
  * list_adapters output
@@ -61,7 +62,7 @@ export const ListAdaptersOutputSchema = z.object({
       connected: z.boolean(),
     }),
   ),
-});
+}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Export Type Aliases

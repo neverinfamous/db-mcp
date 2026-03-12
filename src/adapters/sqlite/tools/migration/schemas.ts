@@ -7,6 +7,7 @@
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
 // Constants
@@ -107,19 +108,19 @@ export const MigrationInitOutputSchema = z.object({
   tableName: z.string().optional(),
   existingRecords: z.number().optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 export const MigrationRecordOutputSchema = z.object({
   success: z.boolean(),
   record: MigrationRecordEntry.optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 export const MigrationApplyOutputSchema = z.object({
   success: z.boolean(),
   record: MigrationRecordEntry.optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 export const MigrationRollbackOutputSchema = z.object({
   success: z.boolean(),
@@ -127,7 +128,7 @@ export const MigrationRollbackOutputSchema = z.object({
   rollbackSql: z.string().nullable().optional(),
   record: MigrationRecordEntry.optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 export const MigrationHistoryOutputSchema = z.object({
   success: z.boolean(),
@@ -136,7 +137,7 @@ export const MigrationHistoryOutputSchema = z.object({
   limit: z.number().optional(),
   offset: z.number().optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 export const MigrationStatusOutputSchema = z.object({
   success: z.boolean(),
@@ -153,7 +154,7 @@ export const MigrationStatusOutputSchema = z.object({
     .optional(),
   sourceSystems: z.array(z.string()).optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Utilities

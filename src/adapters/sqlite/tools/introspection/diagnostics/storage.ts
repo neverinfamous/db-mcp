@@ -13,6 +13,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
+import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
 // Schemas
@@ -68,7 +69,7 @@ const StorageAnalysisOutputSchema = z.object({
     )
     .optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Helper: get pragma value as string

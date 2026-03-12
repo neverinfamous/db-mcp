@@ -19,6 +19,7 @@ import {
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "./analysis.js";
 import {
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
   ListVirtualTablesSchema,
   VirtualTableInfoSchema,
   DropVirtualTableSchema,
@@ -44,7 +45,7 @@ export function createListVirtualTablesTool(
           sql: z.string(),
         }),
       ),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("List Virtual Tables"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -103,7 +104,7 @@ export function createVirtualTableInfoTool(
         .optional(),
       sql: z.string(),
       note: z.string().optional(),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Virtual Table Info"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -201,7 +202,7 @@ export function createDropVirtualTableTool(
     outputSchema: z.object({
       success: z.boolean(),
       message: z.string(),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["write"],
     annotations: destructive("Drop Virtual Table"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -281,7 +282,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
       message: z.string(),
       sql: z.string(),
       columns: z.array(z.string()),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["write"],
     annotations: idempotent("Create CSV Table"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -384,7 +385,7 @@ export function createAnalyzeCsvSchemaTool(
           sampleValues: z.array(z.string()),
         }),
       ),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Analyze CSV Schema"),
     handler: async (params: unknown, _context: RequestContext) => {

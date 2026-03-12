@@ -21,6 +21,7 @@ import {
   HypothesisSchema,
 } from "./helpers.js";
 import {
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
   tDistPValue,
   matrixTranspose,
   matrixMultiply,
@@ -68,7 +69,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
       error: z.string().optional(),
       code: z.string().optional(),
       suggestion: z.string().optional(),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Outlier Detection"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -234,7 +235,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
       error: z.string().optional(),
       code: z.string().optional(),
       suggestion: z.string().optional(),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Regression Analysis"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -390,7 +391,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
       error: z.string().optional(),
       code: z.string().optional(),
       suggestion: z.string().optional(),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Hypothesis Testing"),
     handler: async (params: unknown, _context: RequestContext) => {

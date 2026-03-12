@@ -296,15 +296,18 @@ docker run -i --rm \
 | `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (`--server-host`)                          |
 | `SQLITE_DATABASE`       | —         | SQLite database path (`--sqlite` / `--sqlite-native`)         |
 | `DB_MCP_TOOL_FILTER`    | —         | Tool filter string (`--tool-filter`)                          |
+| `MCP_AUTH_TOKEN`        | —         | Simple bearer token for HTTP auth (`--auth-token`)            |
+| `OAUTH_ENABLED`         | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                         |
+| `OAUTH_ISSUER`          | —         | Authorization server URL (`--oauth-issuer`)                   |
+| `OAUTH_AUDIENCE`        | —         | Expected token audience (`--oauth-audience`)                  |
+| `OAUTH_JWKS_URI`        | —         | JWKS URI, auto-discovered if omitted (`--oauth-jwks-uri`)     |
+| `OAUTH_CLOCK_TOLERANCE` | `60`      | Clock tolerance in seconds (`--oauth-clock-tolerance`)        |
 | `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`            |
 | `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations)   |
 | `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced isolation) or `vm`      |
 | `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                   |
 | `CSV_EXTENSION_PATH`    | —         | Custom path to CSV extension binary (native only)             |
 | `SPATIALITE_PATH`       | —         | Custom path to SpatiaLite extension binary (native only)      |
-| `KEYCLOAK_URL`          | —         | Keycloak base URL (enables OAuth when set with HTTP transport)|
-| `KEYCLOAK_REALM`        | —         | Keycloak realm name                                           |
-| `KEYCLOAK_CLIENT_ID`    | —         | Keycloak client ID                                            |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
@@ -363,9 +366,35 @@ docker run --rm -p 3000:3000 \
 | Stateful (default)        | ✅ Yes                 | ✅ Yes     | ⚠️ Complex |
 | Stateless (`--stateless`) | ❌ No                  | ❌ No      | ✅ Native  |
 
-### 🔐 OAuth 2.1
+### 🔐 Authentication
 
-OAuth is automatically enabled when running in HTTP mode with OAuth environment variables configured.
+db-mcp supports two authentication mechanisms for HTTP transport:
+
+#### Simple Bearer Token
+
+Lightweight authentication for development or single-tenant deployments:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -v ./data:/app/data \
+  writenotenow/db-mcp:latest \
+  --transport http --port 3000 --server-host 0.0.0.0 --auth-token my-secret --sqlite-native /app/data/database.db
+```
+
+Clients must include `Authorization: Bearer my-secret` on all requests. `/health` and `/` are exempt.
+
+#### OAuth 2.1 (Enterprise)
+
+Full OAuth 2.1 with RFC 9728/8414 compliance using CLI flags:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -v ./data:/app/data \
+  writenotenow/db-mcp:latest \
+  --transport http --port 3000 --server-host 0.0.0.0 \
+  --oauth-enabled --oauth-issuer http://keycloak:8080/realms/db-mcp --oauth-audience db-mcp-server \
+  --sqlite-native /app/data/database.db
+```
 
 **Supported Scopes:**
 
@@ -377,19 +406,9 @@ OAuth is automatically enabled when running in HTTP mode with OAuth environment 
 | `db:{name}`          | Access to specific database only       |
 | `table:{db}:{table}` | Access to specific table only          |
 
-**Quick Start with OAuth:**
-
-```bash
-docker run --rm -p 3000:3000 \
-  -v ./data:/app/data \
-  -e KEYCLOAK_URL=http://localhost:8080 \
-  -e KEYCLOAK_REALM=db-mcp \
-  -e KEYCLOAK_CLIENT_ID=db-mcp-server \
-  writenotenow/db-mcp:latest \
-  --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native /app/data/database.db
-```
-
 See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for configuring your OAuth provider.
+
+> **Priority:** When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence. If neither is configured, the server warns and runs without authentication.
 
 ## 📦 Image Details
 

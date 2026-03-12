@@ -13,6 +13,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
+import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
 // Schemas
@@ -62,7 +63,7 @@ const IndexAuditOutputSchema = z.object({
     })
     .optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Tool Creator

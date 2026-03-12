@@ -15,6 +15,7 @@ import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import type { ForeignKeyInfo } from "./helpers.js";
 import { buildForeignKeyGraph, detectCycles } from "./helpers.js";
+import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
 // Input Schemas
@@ -91,7 +92,7 @@ const DependencyGraphOutputSchema = z.object({
     })
     .optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 const TopologicalSortOutputSchema = z.object({
   success: z.boolean(),
@@ -109,7 +110,7 @@ const TopologicalSortOutputSchema = z.object({
   cycles: z.array(z.array(z.string())).optional(),
   hint: z.string().optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 const CascadeSimulatorOutputSchema = z.object({
   success: z.boolean(),
@@ -137,7 +138,7 @@ const CascadeSimulatorOutputSchema = z.object({
     })
     .optional(),
   error: z.string().optional(),
-});
+}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Tool Creators

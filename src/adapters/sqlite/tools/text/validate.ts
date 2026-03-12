@@ -15,6 +15,7 @@ import {
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
 import {
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
   TextNormalizeSchema,
   TextValidateSchema,
   validateColumnExists,
@@ -39,7 +40,7 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
           normalized: z.string(),
         }),
       ),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Text Normalize"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -111,7 +112,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           rowid: z.number().optional(),
         }),
       ),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Text Validate"),
     handler: async (params: unknown, _context: RequestContext) => {

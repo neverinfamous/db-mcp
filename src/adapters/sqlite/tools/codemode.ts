@@ -26,6 +26,7 @@ import {
 } from "../../../codemode/sandbox-factory.js";
 import { logger } from "../../../utils/logger/index.js";
 import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
+import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
 // Module State
@@ -99,7 +100,7 @@ const ExecuteCodeOutputSchema = z.object({
       memoryUsedMb: z.number().describe("Memory used in MB"),
     })
     .describe("Execution performance metrics"),
-});
+}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Tool Definition

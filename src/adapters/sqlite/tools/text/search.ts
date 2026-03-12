@@ -20,6 +20,7 @@ import {
   soundex,
 } from "./formatting.js";
 import {
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
   FuzzyMatchSchema,
   PhoneticMatchSchema,
   AdvancedSearchSchema,

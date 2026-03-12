@@ -14,6 +14,7 @@ import { idempotent } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { isModuleAvailable } from "./analysis.js";
 import { CreateRtreeTableSchema, CreateSeriesTableSchema } from "./helpers.js";
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 
 export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -27,7 +28,7 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
       message: z.string(),
       sql: z.string(),
       columns: z.array(z.string()),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["write"],
     annotations: idempotent("Create R-Tree Table"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -93,7 +94,7 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
       success: z.boolean(),
       message: z.string(),
       rowCount: z.number(),
-    }),
+    }).extend(ErrorResponseFields.shape),
     requiredScopes: ["write"],
     annotations: idempotent("Create Series Table"),
     handler: async (params: unknown, _context: RequestContext) => {

@@ -329,15 +329,18 @@ MCP prompts provide AI-assisted database workflows:
 | `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                     |
 | `SQLITE_DATABASE`       | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)    |
 | `DB_MCP_TOOL_FILTER`    | —         | Tool filter string (CLI: `--tool-filter`)                     |
+| `MCP_AUTH_TOKEN`        | —         | Simple bearer token for HTTP auth (CLI: `--auth-token`)       |
+| `OAUTH_ENABLED`         | `false`   | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                    |
+| `OAUTH_ISSUER`          | —         | Authorization server URL (CLI: `--oauth-issuer`)              |
+| `OAUTH_AUDIENCE`        | —         | Expected token audience (CLI: `--oauth-audience`)             |
+| `OAUTH_JWKS_URI`        | —         | JWKS URI, auto-discovered if omitted (CLI: `--oauth-jwks-uri`)|
+| `OAUTH_CLOCK_TOLERANCE` | `60`      | Clock tolerance in seconds (CLI: `--oauth-clock-tolerance`)   |
 | `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`            |
 | `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations)   |
 | `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced isolation) or `vm`      |
 | `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                   |
 | `CSV_EXTENSION_PATH`    | —         | Custom path to CSV extension binary (native only)             |
 | `SPATIALITE_PATH`       | —         | Custom path to SpatiaLite extension binary (native only)      |
-| `KEYCLOAK_URL`          | —         | Keycloak base URL- enables OAuth when set with HTTP transport |
-| `KEYCLOAK_REALM`        | —         | Keycloak realm name                                           |
-| `KEYCLOAK_CLIENT_ID`    | —         | Keycloak client ID                                            |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
@@ -347,6 +350,7 @@ MCP prompts provide AI-assisted database workflows:
 db-mcp [options]
 
 Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --stateless
+Auth:         --auth-token <token>  |  --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>
 Extensions:   --csv  --spatialite                         (native only)
 Server:       --name <name>  --version <ver>  --tool-filter <filter>
@@ -437,7 +441,28 @@ node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --stateless 
 | Stateful (default)        | ✅ Yes                 | ✅ Yes     | ⚠️ Complex |
 | Stateless (`--stateless`) | ❌ No                  | ❌ No      | ✅ Native  |
 
-## 🔐 OAuth 2.1 Implementation
+## 🔐 Authentication
+
+db-mcp supports two authentication mechanisms for HTTP transport:
+
+### Simple Bearer Token (`--auth-token`)
+
+Lightweight authentication for development or single-tenant deployments:
+
+```bash
+# CLI
+node dist/cli.js --transport http --port 3000 --auth-token my-secret --sqlite-native ./database.db
+
+# Environment variable
+export MCP_AUTH_TOKEN=my-secret
+node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
+```
+
+Clients must include `Authorization: Bearer my-secret` on all requests. `/health` and `/` are exempt. Unauthenticated requests receive `401` with `WWW-Authenticate: Bearer` headers per RFC 6750.
+
+### OAuth 2.1 (Enterprise)
+
+Full OAuth 2.1 with RFC 9728/8414 compliance for production multi-tenant deployments:
 
 | Component                   | Status | Description                                      |
 | --------------------------- | ------ | ------------------------------------------------ |
@@ -447,7 +472,7 @@ node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --stateless 
 | Scope Enforcement           | ✅     | Granular `read`, `write`, `admin` scopes         |
 | HTTP Transport              | ✅     | Streamable HTTP with OAuth middleware            |
 
-### Supported Scopes
+#### Supported Scopes
 
 | Scope                | Description                            |
 | -------------------- | -------------------------------------- |
@@ -457,51 +482,23 @@ node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --stateless 
 | `db:{name}`          | Access to specific database only       |
 | `table:{db}:{table}` | Access to specific table only          |
 
-### Keycloak Integration
+#### Quick Start with OAuth CLI Flags
+
+```bash
+node dist/cli.js --transport http --port 3000 \
+  --oauth-enabled \
+  --oauth-issuer http://localhost:8080/realms/db-mcp \
+  --oauth-audience db-mcp-server \
+  --sqlite-native ./database.db
+```
+
+> **Additional flags:** `--oauth-jwks-uri <url>` (auto-discovered if omitted), `--oauth-clock-tolerance <seconds>` (default: 60).
+
+#### Keycloak Integration
 
 See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as your OAuth provider.
 
-### Quick Start with OAuth
-
-**1. Start the server with OAuth enabled:**
-
-```bash
-# Set environment variables
-export KEYCLOAK_URL=http://localhost:8080
-export KEYCLOAK_REALM=db-mcp
-export KEYCLOAK_CLIENT_ID=db-mcp-server
-
-# Start server with HTTP transport and OAuth
-node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native ./database.db
-```
-
-**2. Get an access token from Keycloak:**
-
-```bash
-# Using cURL
-curl -X POST "http://localhost:8080/realms/db-mcp/protocol/openid-connect/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "client_id=db-mcp-server" \
-  -d "client_secret=YOUR_SECRET" \
-  -d "username=testuser" \
-  -d "password=YOUR_PASSWORD" \
-  -d "grant_type=password" \
-  -d "scope=openid read write"
-```
-
-**3. Make authenticated MCP requests:**
-
-```bash
-# Initialize session with Bearer token
-curl -X POST "http://localhost:3000/mcp" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}},"id":1}'
-```
-
-> **Note:** OAuth is automatically enabled when running in HTTP mode with OAuth environment variables configured. The `/.well-known/oauth-protected-resource` endpoint provides RFC 9728 metadata for client discovery.
-
-> **Configuration files:** Copy `.env.example` for a quick-start template. See `config/db-mcp.keycloak.json` for a complete Keycloak configuration example.
+> **Priority:** When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence. If neither is configured, the server warns and runs without authentication.
 
 ## 📊 Benchmarks
 
