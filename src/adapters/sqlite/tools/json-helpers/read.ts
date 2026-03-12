@@ -122,7 +122,8 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
           });
           selectClause = extracts.join(", ");
         } else {
-          selectClause = `"${input.column}"`;
+          // Wrap with json() to ensure JSONB binary data is returned as text
+          selectClause = `json("${input.column}") as "${input.column}"`;
         }
 
         // Build where clause from filters
