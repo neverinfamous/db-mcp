@@ -8,3 +8,4 @@
   - Extracted resource, tool, and prompt registration logic from `database-adapter.ts`.
 - **Code Quality Audit**: Addressed technical debt across the codebase by replacing generic `any` casts with type-safe structures, normalizing test file naming from `.test` to `kebab-case`, extracting massive `native-sqlite-adapter.ts` tooling logic into `registration`, and removing unsafe type imports.
 - **Code Quality Audit**: Removed dead code by deleting unused barrel files (`src/auth/index.ts` and `src/transports/index.ts`).
+- **Performance Audit**: Disabled source maps generation in the production build to significantly reduce bundle size (from 3.7MB to 1.5MB), optimized sandbox serialization to reduce runtime memory allocations, and added caching to schema introspection tools via `SchemaManager`.

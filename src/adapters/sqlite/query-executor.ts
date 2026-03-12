@@ -24,13 +24,23 @@ export function rowsFromSqlJsResult(result: {
   columns: string[];
   values: unknown[][];
 }): Record<string, unknown>[] {
-  return result.values.map((row) => {
-    const obj: Record<string, unknown> = {};
-    result.columns.forEach((col, i) => {
-      obj[col] = row[i];
-    });
-    return obj;
-  });
+  const numColumns = result.columns.length;
+  const numRows = result.values.length;
+  const rows = new Array<Record<string, unknown>>(numRows);
+  const cols = result.columns;
+
+  for (let i = 0; i < numRows; i++) {
+    const rowObj: Record<string, unknown> = {};
+    const rowValues = result.values[i];
+    if (rowValues) {
+      for (let j = 0; j < numColumns; j++) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        rowObj[cols[j]!] = rowValues[j];
+      }
+    }
+    rows[i] = rowObj;
+  }
+  return rows;
 }
 
 /**

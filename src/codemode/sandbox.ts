@@ -9,6 +9,7 @@
  */
 
 import vm from "node:vm";
+import { format } from "node:util";
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
 import {
@@ -49,26 +50,16 @@ export class CodeModeSandbox {
     const sandbox: Record<string, unknown> = {
       console: {
         log(...args: unknown[]): void {
-          logBuffer.push(
-            args
-              .map((a) => (typeof a === "string" ? a : JSON.stringify(a)))
-              .join(" "),
-          );
+          logBuffer.push(format(...args));
         },
         warn(...args: unknown[]): void {
-          logBuffer.push(
-            `[WARN] ${args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ")}`,
-          );
+          logBuffer.push(`[WARN] ${format(...args)}`);
         },
         error(...args: unknown[]): void {
-          logBuffer.push(
-            `[ERROR] ${args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ")}`,
-          );
+          logBuffer.push(`[ERROR] ${format(...args)}`);
         },
         info(...args: unknown[]): void {
-          logBuffer.push(
-            `[INFO] ${args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ")}`,
-          );
+          logBuffer.push(`[INFO] ${format(...args)}`);
         },
       },
       // Safe built-ins

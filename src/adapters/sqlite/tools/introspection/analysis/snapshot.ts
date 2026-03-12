@@ -124,12 +124,24 @@ export function createSchemaSnapshotTool(
         const stats = { tables: 0, views: 0, indexes: 0, triggers: 0 };
 
         if (sections.includes("tables")) {
-          const tablesResult = await adapter.executeReadQuery(
-            `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
-          );
+          // Ensure schema manager is initialized or fallback
+          const adapterUnknown = adapter as unknown as Record<string, unknown>;
+          const _schemaManager = "schemaManager" in adapterUnknown 
+            ? adapterUnknown.schemaManager as { getRawTableNames: () => Promise<string[]> } 
+            : undefined;
+          let tablesList: string[];
+          
+          if (_schemaManager && typeof _schemaManager.getRawTableNames === "function") {
+              tablesList = await _schemaManager.getRawTableNames();
+          } else {
+              const tablesResult = await adapter.executeReadQuery(
+                `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
+              );
+              tablesList = (tablesResult.rows ?? []).map((r) => r["name"] as string);
+          }
+          
           const tables = [];
-          for (const row of tablesResult.rows ?? []) {
-            const tableName = row["name"] as string;
+          for (const tableName of tablesList) {
             // May fail for virtual tables like FTS5 in WASM
             let rowCount = 0;
             try {

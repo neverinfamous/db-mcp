@@ -48,6 +48,9 @@
 | **Window Functions** | ❌                 | ✅ 6 tools                 |
 | **SpatiaLite GIS**   | ❌                 | ✅ 7 tools                 |
 | **Cross-platform**   | ✅ Pure JavaScript | Compiled natively in image |
+| **Performance**      | ⚠️ Synchronous execution (Blocks Node Event Loop on heavy loads) | 🚀 High-performance, concurrent |
+
+> ⚠️ **WASM Performance Note:** The WASM (`sql.js`) backend executes queries entirely in JavaScript memory, which synchronously blocks the Node.js event loop during intensive workloads. For safety, the `sqlite_read_query` tool limits unbounded queries to 1,000 rows. For high-throughput production or large datasets, use the Native (`--sqlite-native`) backend.
 
 ## 🚀 Quick Start (2 Minutes)
 

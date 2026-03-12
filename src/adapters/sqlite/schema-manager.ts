@@ -77,6 +77,22 @@ export class SchemaManager {
   }
 
   /**
+   * Get all raw user table names (cached, skips sqlite_master metadata)
+   */
+  async getRawTableNames(): Promise<string[]> {
+    const cached = this.getCached("raw_tables") as string[] | undefined;
+    if (cached) return cached;
+
+    const result = await this.executor.executeReadQuery(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
+    );
+
+    const tables = (result.rows ?? []).map((r) => r["name"] as string);
+    this.setCache("raw_tables", tables);
+    return tables;
+  }
+
+  /**
    * Get full database schema (cached)
    */
   async getSchema(): Promise<SchemaInfo> {

@@ -81,12 +81,23 @@ export function createMigrationRisksTool(
         let highestRisk: "low" | "medium" | "high" | "critical" = "low";
 
         // Get existing table info for context
-        const tablesResult = await adapter.executeReadQuery(
-          `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name`,
-        );
-        const existingTables = new Set(
-          (tablesResult.rows ?? []).map((r) => r["name"] as string),
-        );
+        // Ensure schema manager is initialized or fallback
+        const adapterUnknown = adapter as unknown as Record<string, unknown>;
+        const _schemaManager = "schemaManager" in adapterUnknown 
+          ? adapterUnknown.schemaManager as { getRawTableNames: () => Promise<string[]> } 
+          : undefined;
+        let tableNames: string[];
+        
+        if (_schemaManager && typeof _schemaManager.getRawTableNames === "function") {
+             tableNames = await _schemaManager.getRawTableNames();
+        } else {
+             const tablesResult = await adapter.executeReadQuery(
+                `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name`,
+             );
+             tableNames = (tablesResult.rows ?? []).map((r) => r["name"] as string);
+        }
+        
+        const existingTables = new Set(tableNames);
 
         for (let i = 0; i < input.statements.length; i++) {
           const rawStmt = input.statements[i];
