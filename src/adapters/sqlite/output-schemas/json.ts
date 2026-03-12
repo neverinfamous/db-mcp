@@ -60,7 +60,7 @@ export const JsonQueryOutputSchema = z
  */
 export const JsonValidatePathOutputSchema = z
   .object({
-    valid: z.boolean(),
+    valid: z.boolean().optional(),
     normalized: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -189,7 +189,7 @@ export const JsonKeysOutputSchema = z
  */
 export const JsonValidOutputSchema = z
   .object({
-    valid: z.boolean(),
+    valid: z.boolean().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

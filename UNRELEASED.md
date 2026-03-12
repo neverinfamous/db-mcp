@@ -16,4 +16,5 @@
 - **CORS Advisory**: Updated `README.md` and `DOCKER_README.md` to explicitly warn about the permissive `["*"]` default CORS property in production HTTP deployments.
 
 ## Fixed
-- **Validation Leaks**: Fixed Zod output schema errors in core tools (`sqlite_drop_table`, `sqlite_create_index`, `sqlite_drop_index`) that caused the server to return raw MCP `-32602` validation frames instead of structured domain errors, by marking conditional message fields as optional.
+- **Validation Leaks**: Fixed Zod output schema errors in JSON tools (`sqlite_json_valid`, `sqlite_json_validate_path`) and core tools (`sqlite_drop_table`, `sqlite_create_index`, `sqlite_drop_index`) that caused the server to return raw MCP `-32602` validation frames instead of structured domain errors, by marking conditional message fields as optional.
+- **Input Coercion**: Handled invalid numeric input types gracefully in JSON operations (`sqlite_json_each`, `sqlite_json_query`, `sqlite_json_analyze_schema`, `sqlite_json_storage_info`) by applying `z.coerce.number()` to `limit` and `sampleSize` parameters, enabling the SDK to pass the value instead of throwing a validation frame.
