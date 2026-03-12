@@ -27,8 +27,8 @@ test.describe("Payload Contracts: Core", () => {
       expect(typeof table.name).toBe("string");
       expect(typeof table.type).toBe("string");
       expect(typeof table.columnCount).toBe("number");
-      // rowCount may be number or null
-      expect(["number", "object"].includes(typeof table.rowCount)).toBe(true);
+      // rowCount may be undefined now that COUNT(*) scans are removed
+      expect(["number", "undefined"].includes(typeof table.rowCount)).toBe(true);
     } finally {
       await client.close();
     }
@@ -43,7 +43,7 @@ test.describe("Payload Contracts: Core", () => {
 
       expectSuccess(payload);
       expect(payload.table).toBe("test_products");
-      expect(typeof payload.rowCount).toBe("number");
+      expect(["number", "undefined"].includes(typeof payload.rowCount)).toBe(true);
       expect(Array.isArray(payload.columns)).toBe(true);
 
       // Validate column entry shape

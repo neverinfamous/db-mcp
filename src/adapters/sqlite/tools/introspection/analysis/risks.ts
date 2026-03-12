@@ -84,7 +84,7 @@ export function createMigrationRisksTool(
         // Ensure schema manager is initialized or fallback
         const adapterUnknown = adapter as unknown as Record<string, unknown>;
         const _schemaManager = "schemaManager" in adapterUnknown 
-          ? adapterUnknown.schemaManager as { getRawTableNames: () => Promise<string[]> } 
+          ? adapterUnknown["schemaManager"] as { getRawTableNames: () => Promise<string[]> } 
           : undefined;
         let tableNames: string[];
         

@@ -423,7 +423,7 @@ node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --sqlite-nat
 - **7 Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy` (no-referrer), `Permissions-Policy` + opt-in `Strict-Transport-Security` via `enableHSTS`
 - **Server Timeouts** — Request, keep-alive, and headers timeouts prevent slowloris-style DoS
 - **Rate Limiting** — 100 requests/minute per IP (429 + Retry-After on excess, health checks exempt)
-- **CORS** — Configurable via `--cors-origins` (default: `*`, supports wildcard subdomains like `*.example.com`)
+- **CORS** — Configurable via `--cors-origins` (default: `*`, supports wildcard subdomains like `*.example.com`). ⚠️ **Security Warning:** The default `*` allows requests from any origin. For production HTTP deployments, explicitly configure this to your trusted domains.
 - **Trust Proxy** — Opt-in `trustProxy` for X-Forwarded-For IP extraction behind reverse proxies
 - **Body Size Limit** — Configurable via `--max-body-bytes` (default: 1 MB)
 - **404 Handler** — Unknown paths return `{ error: "Not found" }`

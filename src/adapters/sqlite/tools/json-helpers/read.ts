@@ -244,7 +244,13 @@ export function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinit
         let nullCount = 0;
         let errorCount = 0;
 
-        for (const row of result.rows ?? []) {
+        const rows = result.rows ?? [];
+        for (let i = 0; i < rows.length; i++) {
+          if (i > 0 && i % 500 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+          const row = rows[i];
+          if (!row) continue;
           const jsonData = row["json_data"];
           if (jsonData === null || jsonData === undefined) {
             nullCount++;

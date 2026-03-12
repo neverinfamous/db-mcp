@@ -95,15 +95,23 @@ export function createVectorStatsTool(
         const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT ${input.sampleSize}`;
         const result = await adapter.executeReadQuery(sql);
 
-        const vectors = (result.rows ?? [])
-          .map((row) => {
-            try {
-              return parseVector(row[input.vectorColumn]);
-            } catch {
-              return null;
+        const vectors: number[][] = [];
+        const rows = result.rows ?? [];
+        
+        for (let i = 0; i < rows.length; i++) {
+          if (i > 0 && i % 500 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+          
+          try {
+            const row = rows[i];
+            if (row) {
+              vectors.push(parseVector(row[input.vectorColumn]));
             }
-          })
-          .filter((v): v is number[] => v !== null);
+          } catch {
+            // Skip invalid vectors
+          }
+        }
 
         if (vectors.length === 0) {
           return {

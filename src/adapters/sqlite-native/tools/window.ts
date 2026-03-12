@@ -23,7 +23,7 @@ const RowNumberSchema = z.object({
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.number().optional().default(100).describe("Maximum rows to return"),
-});
+}).strict();
 
 const RankSchema = z.object({
   table: z.string().describe("Table name"),
@@ -40,7 +40,7 @@ const RankSchema = z.object({
     .describe("Rank function type"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.number().optional().default(100).describe("Maximum rows to return"),
-});
+}).strict();
 
 const LagLeadSchema = z.object({
   table: z.string().describe("Table name"),
@@ -65,7 +65,7 @@ const LagLeadSchema = z.object({
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.number().optional().default(100).describe("Maximum rows to return"),
-});
+}).strict();
 
 const RunningTotalSchema = z.object({
   table: z.string().describe("Table name"),
@@ -81,7 +81,7 @@ const RunningTotalSchema = z.object({
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.number().optional().default(100).describe("Maximum rows to return"),
-});
+}).strict();
 
 const MovingAverageSchema = z.object({
   table: z.string().describe("Table name"),
@@ -95,7 +95,7 @@ const MovingAverageSchema = z.object({
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.number().optional().default(100).describe("Maximum rows to return"),
-});
+}).strict();
 
 const NtileSchema = z.object({
   table: z.string().describe("Table name"),
@@ -108,7 +108,7 @@ const NtileSchema = z.object({
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.number().optional().default(100).describe("Maximum rows to return"),
-});
+}).strict();
 
 /**
  * Helper to format column selection

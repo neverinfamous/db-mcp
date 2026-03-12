@@ -77,36 +77,42 @@ export function createVectorSearchTool(
         // Calculate similarities in JavaScript
         const queryVector = input.queryVector;
         let skipped = 0;
-        const scored = (result.rows ?? [])
-          .map((row) => {
-            try {
-              const storedVector = parseVector(row[input.vectorColumn]);
-              let score: number;
+        const scored: (Record<string, unknown> & { _similarity: number })[] = [];
+        const rows = result.rows ?? [];
+        
+        for (let i = 0; i < rows.length; i++) {
+          // Yield event loop every 500 rows to prevent blocking
+          if (i > 0 && i % 500 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+          
+          const row = rows[i];
+          if (!row) continue;
+          try {
+            const storedVector = parseVector(row[input.vectorColumn]);
+            let score: number;
 
-              switch (input.metric) {
-                case "euclidean":
-                  // Invert so lower distance = higher score
-                  score =
-                    1 / (1 + euclideanDistance(queryVector, storedVector));
-                  break;
-                case "dot":
-                  score = dotProduct(queryVector, storedVector);
-                  break;
-                case "cosine":
-                default:
-                  score = cosineSimilarity(queryVector, storedVector);
-              }
-
-              return {
-                ...row,
-                _similarity: Math.round(score * 10000) / 10000,
-              };
-            } catch {
-              skipped++;
-              return null;
+            switch (input.metric) {
+              case "euclidean":
+                // Invert so lower distance = higher score
+                score = 1 / (1 + euclideanDistance(queryVector, storedVector));
+                break;
+              case "dot":
+                score = dotProduct(queryVector, storedVector);
+                break;
+              case "cosine":
+              default:
+                score = cosineSimilarity(queryVector, storedVector);
             }
-          })
-          .filter((r): r is NonNullable<typeof r> => r !== null);
+
+            scored.push({
+              ...row,
+              _similarity: Math.round(score * 10000) / 10000,
+            });
+          } catch {
+            skipped++;
+          }
+        }
 
         // Sort by similarity (descending) and limit
         scored.sort((a, b) => b._similarity - a._similarity);
@@ -116,7 +122,7 @@ export function createVectorSearchTool(
         // If returnColumns specified, only include those columns plus _similarity
         const results = limited.map((row) => {
           // Cast row for proper indexing since it's a spread of result row + _similarity
-          const rowData = row as Record<string, unknown>;
+          const rowData = row;
           if (input.returnColumns && input.returnColumns.length > 0) {
             // Build filtered result with only requested columns
             const filtered: Record<string, unknown> = {};

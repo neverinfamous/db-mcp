@@ -52,7 +52,7 @@ export async function buildForeignKeyGraph(
   // Get all user tables (exclude internal/system)
   const adapterUnknown = adapter as unknown as Record<string, unknown>;
   const _schemaManager = "schemaManager" in adapterUnknown 
-    ? adapterUnknown.schemaManager as { getRawTableNames: () => Promise<string[]> } 
+    ? adapterUnknown["schemaManager"] as { getRawTableNames: () => Promise<string[]> } 
     : undefined;
   let tableNames: string[];
   
@@ -70,18 +70,7 @@ export async function buildForeignKeyGraph(
   const fkInfo: ForeignKeyInfo[] = [];
 
   for (const tableName of tableNames) {
-    // Get row count estimate (may fail for virtual tables like FTS5 in WASM)
-    let rowCount = 0;
-    try {
-      const countResult = await adapter.executeReadQuery(
-        `SELECT COUNT(*) as cnt FROM "${tableName}"`,
-      );
-      rowCount =
-        (countResult.rows?.[0]?.["cnt"] as number | undefined) ?? 0;
-    } catch {
-      // Skip count for tables that can't be queried (e.g., FTS5 virtual tables in WASM)
-    }
-    nodes.push({ table: tableName, rowCount });
+    nodes.push({ table: tableName, rowCount: 0 });
 
     // Get foreign keys (may fail for virtual tables in WASM)
     try {

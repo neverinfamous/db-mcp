@@ -60,7 +60,6 @@ describe("SchemaManager", () => {
             { name: "products", type: "table" },
           ],
         } as QueryResult)
-        // PRAGMA table_info for users
         .mockResolvedValueOnce({
           rows: [
             {
@@ -79,8 +78,6 @@ describe("SchemaManager", () => {
             },
           ],
         } as QueryResult)
-        // COUNT for users
-        .mockResolvedValueOnce({ rows: [{ count: 10 }] } as QueryResult)
         // PRAGMA table_info for products
         .mockResolvedValueOnce({
           rows: [
@@ -92,9 +89,7 @@ describe("SchemaManager", () => {
               dflt_value: null,
             },
           ],
-        } as QueryResult)
-        // COUNT for products
-        .mockResolvedValueOnce({ rows: [{ count: 5 }] } as QueryResult);
+        } as QueryResult);
 
       const tables = await schemaManager.listTables();
 
@@ -124,8 +119,7 @@ describe("SchemaManager", () => {
               dflt_value: null,
             },
           ],
-        } as QueryResult)
-        .mockResolvedValueOnce({ rows: [{ count: 100 }] } as QueryResult);
+        } as QueryResult);
 
       const tables = await schemaManager.listTables();
 
@@ -146,8 +140,7 @@ describe("SchemaManager", () => {
               dflt_value: null,
             },
           ],
-        })
-        .mockResolvedValueOnce({ rows: [{ count: 10 }] });
+        });
 
       await schemaManager.listTables();
       const callCount = mockExecuteReadQuery.mock.calls.length;
@@ -178,8 +171,7 @@ describe("SchemaManager", () => {
               dflt_value: null,
             },
           ],
-        } as QueryResult)
-        .mockResolvedValueOnce({ rows: [{ count: 25 }] } as QueryResult);
+        } as QueryResult);
 
       const tableInfo = await schemaManager.describeTable("users");
 
@@ -187,7 +179,7 @@ describe("SchemaManager", () => {
       expect(tableInfo.columns?.length).toBe(2);
       expect(tableInfo.columns?.[0]?.name).toBe("id");
       expect(tableInfo.columns?.[0]?.primaryKey).toBe(true);
-      expect(tableInfo.rowCount).toBe(25);
+      expect(tableInfo.rowCount).toBeUndefined();
     });
 
     it("should throw for non-existent table", async () => {
@@ -296,8 +288,6 @@ describe("SchemaManager", () => {
             },
           ],
         })
-        // COUNT
-        .mockResolvedValueOnce({ rows: [{ count: 10 }] })
         // getAllIndexes query
         .mockResolvedValueOnce({
           rows: [{ name: "idx_users", tbl_name: "users", sql: "CREATE INDEX" }],
@@ -334,12 +324,11 @@ describe("SchemaManager", () => {
               dflt_value: null,
             },
           ],
-        })
-        .mockResolvedValueOnce({ rows: [{ count: 10 }] });
+        });
 
       // First call - populates cache
       await schemaManager.listTables();
-      expect(mockExecuteReadQuery).toHaveBeenCalledTimes(3);
+      expect(mockExecuteReadQuery).toHaveBeenCalledTimes(2);
 
       // Second call within TTL - uses cache
       mockExecuteReadQuery.mockClear();
@@ -364,8 +353,7 @@ describe("SchemaManager", () => {
               dflt_value: null,
             },
           ],
-        })
-        .mockResolvedValueOnce({ rows: [{ count: 10 }] });
+        });
 
       await schemaManager.listTables();
       expect(mockExecuteReadQuery).toHaveBeenCalled();
@@ -397,7 +385,6 @@ describe("SchemaManager", () => {
             },
           ],
         })
-        .mockResolvedValueOnce({ rows: [{ count: 5 }] })
         // bad_table PRAGMA fails
         .mockRejectedValueOnce(new Error("PRAGMA failed"));
 
@@ -406,7 +393,7 @@ describe("SchemaManager", () => {
       expect(tables[0]?.name).toBe("good_table");
     });
 
-    it("should return 0 rowCount when COUNT fails", async () => {
+    it("should return undefined rowCount", async () => {
       mockExecuteReadQuery
         .mockResolvedValueOnce({
           rows: [
@@ -418,11 +405,10 @@ describe("SchemaManager", () => {
               dflt_value: null,
             },
           ],
-        })
-        .mockRejectedValueOnce(new Error("COUNT failed"));
+        });
 
       const tableInfo = await schemaManager.describeTable("test_table");
-      expect(tableInfo.rowCount).toBe(0);
+      expect(tableInfo.rowCount).toBeUndefined();
     });
 
     it("should return empty columns when PRAGMA index_info fails", async () => {

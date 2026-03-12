@@ -16,7 +16,7 @@ export const LoadSpatialiteSchema = z.object({
     .optional()
     .default(false)
     .describe("Force reload if already loaded"),
-});
+}).strict();
 
 export const CreateSpatialTableSchema = z.object({
   tableName: z.string().describe("Name of the spatial table to create"),
@@ -53,7 +53,7 @@ export const CreateSpatialTableSchema = z.object({
     .optional()
     .default([])
     .describe("Additional non-spatial columns"),
-});
+}).strict();
 
 export const SpatialQuerySchema = z.object({
   query: z.string().describe("Spatial SQL query using SpatiaLite functions"),
@@ -62,7 +62,7 @@ export const SpatialQuerySchema = z.object({
     .optional()
     .default([])
     .describe("Query parameters"),
-});
+}).strict();
 
 export const SpatialAnalysisSchema = z.object({
   analysisType: z
@@ -100,7 +100,7 @@ export const SpatialAnalysisSchema = z.object({
     .describe(
       "Include full WKT geometry in results (default: false to reduce payload size)",
     ),
-});
+}).strict();
 
 export const SpatialIndexSchema = z.object({
   tableName: z.string().describe("Name of the spatial table"),
@@ -114,7 +114,7 @@ export const SpatialIndexSchema = z.object({
     .optional()
     .default("create")
     .describe("Action to perform"),
-});
+}).strict();
 
 export const GeometryTransformSchema = z.object({
   operation: z
@@ -142,7 +142,7 @@ export const GeometryTransformSchema = z.object({
     .describe(
       "For buffer operation: apply ST_Simplify to reduce vertices in output polygon. Recommended: 0.0001-0.001 for lat/lon",
     ),
-});
+}).strict();
 
 export const SpatialImportSchema = z.object({
   tableName: z.string().describe("Target table name"),
@@ -153,4 +153,4 @@ export const SpatialImportSchema = z.object({
     .record(z.string(), z.unknown())
     .optional()
     .describe("Additional column values"),
-});
+}).strict();

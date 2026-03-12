@@ -127,7 +127,7 @@ export function createSchemaSnapshotTool(
           // Ensure schema manager is initialized or fallback
           const adapterUnknown = adapter as unknown as Record<string, unknown>;
           const _schemaManager = "schemaManager" in adapterUnknown 
-            ? adapterUnknown.schemaManager as { getRawTableNames: () => Promise<string[]> } 
+            ? adapterUnknown["schemaManager"] as { getRawTableNames: () => Promise<string[]> } 
             : undefined;
           let tablesList: string[];
           
@@ -142,21 +142,8 @@ export function createSchemaSnapshotTool(
           
           const tables = [];
           for (const tableName of tablesList) {
-            // May fail for virtual tables like FTS5 in WASM
-            let rowCount = 0;
-            try {
-              const countResult = await adapter.executeReadQuery(
-                `SELECT COUNT(*) as cnt FROM "${tableName}"`,
-              );
-              rowCount =
-                (countResult.rows?.[0]?.["cnt"] as number | undefined) ?? 0;
-            } catch {
-              // Skip count for tables that can't be queried
-            }
-
             const tableEntry: Record<string, unknown> = {
               name: tableName,
-              rowCount,
             };
 
             if (!compact) {

@@ -196,7 +196,7 @@ describe("Transaction Tools", () => {
         mockContext,
       )) as { success: boolean; error: string };
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Invalid savepoint name");
+      expect(result.error).toContain("Savepoint name must start with a letter/underscore");
     });
 
     it("should reject names with special characters", async () => {
@@ -205,7 +205,7 @@ describe("Transaction Tools", () => {
         mockContext,
       )) as { success: boolean; error: string };
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Invalid savepoint name");
+      expect(result.error).toContain("Savepoint name must start with a letter/underscore");
     });
   });
 
@@ -237,7 +237,7 @@ describe("Transaction Tools", () => {
         mockContext,
       )) as { success: boolean; error: string };
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Invalid savepoint name");
+      expect(result.error).toContain("Savepoint name must start with a letter/underscore");
     });
   });
 
@@ -280,7 +280,7 @@ describe("Transaction Tools", () => {
         mockContext,
       )) as { success: boolean; error: string };
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Invalid savepoint name");
+      expect(result.error).toContain("Savepoint name must start with a letter/underscore");
     });
   });
 
