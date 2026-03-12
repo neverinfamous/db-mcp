@@ -53,8 +53,8 @@ describe("extractBearerToken", () => {
     expect(extractBearerToken("Bearer abc 123")).toBeNull();
   });
 
-  it("should trim whitespace from token", () => {
-    expect(extractBearerToken("Bearer  abc123 ")).toBe("abc123");
+  it("should return null for extra spaces in header", () => {
+    expect(extractBearerToken("Bearer  abc123 ")).toBeNull();
   });
 });
 

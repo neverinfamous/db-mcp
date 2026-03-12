@@ -35,16 +35,17 @@ describe("AuthorizationServerDiscovery", () => {
   };
 
   describe("construction", () => {
-    it("should create instance with server URL", () => {
-      const discovery = new AuthorizationServerDiscovery(
-        "https://auth.example.com",
-      );
+    it("should create instance with config object", () => {
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
       expect(discovery).toBeInstanceOf(AuthorizationServerDiscovery);
     });
   });
 
   describe("createAuthServerDiscovery factory", () => {
     it("should create AuthorizationServerDiscovery instance", () => {
+      // Factory takes a plain string, not a config object
       const discovery = createAuthServerDiscovery(
         "https://auth.example.com",
       );
@@ -59,9 +60,9 @@ describe("AuthorizationServerDiscovery", () => {
         json: () => Promise.resolve(validMetadata),
       });
 
-      const discovery = new AuthorizationServerDiscovery(
-        "https://auth.example.com",
-      );
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
       const metadata = await discovery.discover();
 
       expect(metadata).toBeDefined();
@@ -77,9 +78,9 @@ describe("AuthorizationServerDiscovery", () => {
         json: () => Promise.resolve(validMetadata),
       });
 
-      const discovery = new AuthorizationServerDiscovery(
-        "https://auth.example.com",
-      );
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
       await discovery.discover();
       await discovery.discover();
 
@@ -94,9 +95,9 @@ describe("AuthorizationServerDiscovery", () => {
         statusText: "Not Found",
       });
 
-      const discovery = new AuthorizationServerDiscovery(
-        "https://auth.example.com",
-      );
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
 
       await expect(discovery.discover()).rejects.toThrow();
     });
@@ -104,43 +105,59 @@ describe("AuthorizationServerDiscovery", () => {
     it("should throw on network error", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const discovery = new AuthorizationServerDiscovery(
-        "https://auth.example.com",
-      );
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
 
       await expect(discovery.discover()).rejects.toThrow();
     });
   });
 
   describe("getJwksUri()", () => {
-    it("should return JWKS URI from discovered metadata", async () => {
+    it("should return JWKS URI after discover()", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(validMetadata),
       });
 
-      const discovery = new AuthorizationServerDiscovery(
-        "https://auth.example.com",
-      );
-      const jwksUri = await discovery.getJwksUri();
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
+
+      // Must call discover() first — getJwksUri is synchronous
+      await discovery.discover();
+      const jwksUri = discovery.getJwksUri();
 
       expect(jwksUri).toBe(
         "https://auth.example.com/.well-known/jwks.json",
       );
     });
+
+    it("should throw if discover() not called", () => {
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
+
+      expect(() => discovery.getJwksUri()).toThrow(
+        /not yet discovered/,
+      );
+    });
   });
 
   describe("getTokenEndpoint()", () => {
-    it("should return token endpoint from discovered metadata", async () => {
+    it("should return token endpoint after discover()", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(validMetadata),
       });
 
-      const discovery = new AuthorizationServerDiscovery(
-        "https://auth.example.com",
-      );
-      const endpoint = await discovery.getTokenEndpoint();
+      const discovery = new AuthorizationServerDiscovery({
+        authServerUrl: "https://auth.example.com",
+      });
+
+      // Must call discover() first — getTokenEndpoint is synchronous
+      await discovery.discover();
+      const endpoint = discovery.getTokenEndpoint();
 
       expect(endpoint).toBe("https://auth.example.com/token");
     });

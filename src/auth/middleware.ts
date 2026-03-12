@@ -535,7 +535,7 @@ export function formatOAuthError(error: unknown): {
   }
 
   if (error instanceof InsufficientScopeError) {
-    const required = error.details?.requiredScope as string[] | undefined;
+    const required = error.details?.["requiredScope"] as string[] | undefined;
     return {
       status: 403,
       body: {

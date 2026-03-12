@@ -8,7 +8,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TokenValidator, createTokenValidator } from "../token-validator.js";
 import type { TokenValidatorConfig } from "../types.js";
-import { InvalidTokenError, TokenExpiredError } from "../errors.js";
 
 // Mock jose to avoid real JWKS fetching
 vi.mock("jose", () => ({

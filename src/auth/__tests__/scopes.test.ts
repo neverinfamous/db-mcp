@@ -16,8 +16,6 @@ import {
   hasReadScope,
   isValidScope,
   getScopeForToolGroup,
-  hasDatabaseScope,
-  hasTableScope,
   getScopeDisplayName,
   scopeGrantsToolAccess,
   scopesGrantToolAccess,
