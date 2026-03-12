@@ -1,7 +1,7 @@
 /**
  * HTTP Transport
  *
- * Dual-protocol HTTP transport with OAuth 2.0 integration.
+ * Dual-protocol HTTP transport with OAuth 2.1 integration.
  * Supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE
  * (MCP 2024-11-05) simultaneously, with security headers, CORS,
  * rate limiting, and body size enforcement.
@@ -47,7 +47,7 @@ const logger = createModuleLogger("HTTP");
 // =============================================================================
 
 /**
- * HTTP Transport for MCP with OAuth 2.0 integration.
+ * HTTP Transport for MCP with OAuth 2.1 integration.
  *
  * Supports both Streamable HTTP (MCP 2025-03-26) and Legacy SSE
  * (MCP 2024-11-05) protocols simultaneously.

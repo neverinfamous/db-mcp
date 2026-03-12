@@ -1,7 +1,7 @@
 /**
  * db-mcp - Auth Module Public Exports
  *
- * OAuth 2.0 authentication and authorization components.
+ * OAuth 2.1 authentication and authorization components.
  */
 
 // Types

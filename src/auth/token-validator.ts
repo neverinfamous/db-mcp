@@ -2,7 +2,7 @@
  * db-mcp - Token Validator
  *
  * JWT access token validation using JWKS for signature verification.
- * Supports RSA and EC algorithms commonly used with OAuth 2.0.
+ * Supports RSA and EC algorithms commonly used with OAuth 2.1.
  */
 
 import * as jose from "jose";
@@ -29,7 +29,7 @@ const logger = createModuleLogger("AUTH");
 /**
  * JWT Token Validator
  *
- * Validates OAuth 2.0 access tokens using JWKS for signature verification.
+ * Validates OAuth 2.1 access tokens using JWKS for signature verification.
  */
 export class TokenValidator {
   /** Resolved configuration with all defaults applied */

@@ -60,7 +60,10 @@ export interface HttpTransportConfig {
    */
   stateless?: boolean;
 
-  /** OAuth configuration */
+  /** Simple bearer token for HTTP authentication (non-OAuth) */
+  authToken?: string;
+
+  /** OAuth 2.1 configuration */
   oauth: {
     /** Enable OAuth authentication */
     enabled: boolean;

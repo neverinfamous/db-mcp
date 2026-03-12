@@ -1,7 +1,7 @@
 /**
  * db-mcp - OAuth Types
  *
- * Type definitions for OAuth 2.0 components including
+ * Type definitions for OAuth 2.1 components including
  * RFC 9728, RFC 8414, and RFC 7591 compliance.
  */
 
@@ -10,7 +10,7 @@
 // =============================================================================
 
 /**
- * OAuth 2.0 Protected Resource Metadata (RFC 9728)
+ * OAuth 2.1 Protected Resource Metadata (RFC 9728)
  *
  * @see https://datatracker.ietf.org/doc/html/rfc9728
  */
@@ -48,7 +48,7 @@ export interface ProtectedResourceMetadata {
 // =============================================================================
 
 /**
- * OAuth 2.0 Authorization Server Metadata (RFC 8414)
+ * OAuth 2.1 Authorization Server Metadata (RFC 8414)
  *
  * @see https://datatracker.ietf.org/doc/html/rfc8414
  */
@@ -119,7 +119,7 @@ export interface AuthorizationServerMetadata {
 // =============================================================================
 
 /**
- * OAuth 2.0 Dynamic Client Registration Request (RFC 7591)
+ * OAuth 2.1 Dynamic Client Registration Request (RFC 7591)
  *
  * @see https://datatracker.ietf.org/doc/html/rfc7591
  */
@@ -174,7 +174,7 @@ export interface ClientRegistrationRequest {
 }
 
 /**
- * OAuth 2.0 Dynamic Client Registration Response (RFC 7591)
+ * OAuth 2.1 Dynamic Client Registration Response (RFC 7591)
  */
 export interface ClientRegistrationResponse {
   /** Client identifier */

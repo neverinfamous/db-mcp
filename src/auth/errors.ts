@@ -1,7 +1,7 @@
 /**
  * db-mcp - OAuth Error Classes
  *
- * Module-prefixed error classes for OAuth 2.0 authentication
+ * Module-prefixed error classes for OAuth 2.1 authentication
  * and authorization failures.
  */
 

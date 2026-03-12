@@ -304,6 +304,7 @@ export class DbMcpServer {
     const transport = new HttpTransport({
       port: this.config.port ?? 3000,
       ...(this.config.host !== undefined && { host: this.config.host }),
+      ...(this.config.authToken !== undefined && { authToken: this.config.authToken }),
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
     });

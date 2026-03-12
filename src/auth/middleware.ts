@@ -1,7 +1,7 @@
 /**
- * db-mcp - OAuth Middleware
+ * db-mcp - OAuth 2.1 Middleware
  *
- * Express middleware for OAuth 2.0 authentication and authorization.
+ * Express middleware for OAuth 2.1 authentication and authorization.
  * Extracts Bearer tokens, validates them, and enforces scope requirements.
  */
 

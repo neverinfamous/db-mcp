@@ -1,15 +1,15 @@
 /**
  * db-mcp — OAuth & Auth Types
  *
- * OAuth 2.0 configuration, scopes, token claims, and request context.
+ * OAuth 2.1 configuration, scopes, token claims, and request context.
  */
 
 // =============================================================================
-// OAuth 2.0 Types
+// OAuth 2.1 Types
 // =============================================================================
 
 /**
- * OAuth 2.0 configuration
+ * OAuth 2.1 configuration
  */
 export interface OAuthConfig {
   /** Enable OAuth authentication */

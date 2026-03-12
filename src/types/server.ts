@@ -39,8 +39,11 @@ export interface McpServerConfig {
   /** Database configurations */
   databases: DatabaseConfig[];
 
-  /** OAuth configuration */
+  /** OAuth 2.1 configuration */
   oauth?: OAuthConfig;
+
+  /** Simple bearer token for HTTP authentication (non-OAuth) */
+  authToken?: string;
 
   /** Tool filtering configuration */
   toolFilter?: string;

@@ -1,7 +1,7 @@
 /**
  * db-mcp - Authorization Server Discovery (RFC 8414)
  *
- * Discovers and caches OAuth 2.0 Authorization Server Metadata
+ * Discovers and caches OAuth 2.1 Authorization Server Metadata
  * as specified in RFC 8414.
  *
  * @see https://datatracker.ietf.org/doc/html/rfc8414
@@ -24,7 +24,7 @@ const logger = createModuleLogger("AUTH");
 /**
  * Authorization Server Metadata Discovery
  *
- * Fetches and caches OAuth 2.0 authorization server metadata
+ * Fetches and caches OAuth 2.1 authorization server metadata
  * from the /.well-known/oauth-authorization-server endpoint.
  */
 export class AuthorizationServerDiscovery {

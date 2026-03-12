@@ -1,7 +1,7 @@
 /**
  * db-mcp - OAuth Protected Resource Server (RFC 9728)
  *
- * Implements the OAuth 2.0 Protected Resource Metadata endpoint
+ * Implements the OAuth 2.1 Protected Resource Metadata endpoint
  * as specified in RFC 9728.
  *
  * @see https://datatracker.ietf.org/doc/html/rfc9728
@@ -22,7 +22,7 @@ const logger = createModuleLogger("AUTH");
 // =============================================================================
 
 /**
- * OAuth 2.0 Protected Resource Server
+ * OAuth 2.1 Protected Resource Server
  *
  * Provides Protected Resource Metadata (RFC 9728) for MCP authorization.
  */
