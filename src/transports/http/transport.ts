@@ -14,7 +14,7 @@
 import express, { type RequestHandler } from "express";
 import type { Request, Response } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { oauthErrorHandler } from "../../auth/middleware.js";
+import { oauthErrorHandler } from "../../auth/middleware/index.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import { DbMcpError } from "../../utils/errors/base.js";
 import { ErrorCategory } from "../../utils/errors/categories.js";

@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { runWithAuthContext, getAuthContext } from "../auth-context.js";
-import type { AuthenticatedContext } from "../middleware.js";
+import type { AuthenticatedContext } from "../middleware/index.js";
 
 describe("getAuthContext", () => {
   it("should return undefined outside any context", () => {

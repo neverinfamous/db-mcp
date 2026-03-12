@@ -24,7 +24,7 @@ import {
   getRequiredScopeForGroup,
   getAccessibleToolGroups,
   TOOL_GROUP_SCOPES,
-} from "../scopes.js";
+} from "../scopes/index.js";
 
 // =============================================================================
 // parseScopes

@@ -7,8 +7,8 @@
 import { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { AuthorizationServerDiscovery } from "../../auth/authorization-server-discovery.js";
 import { TokenValidator } from "../../auth/token-validator.js";
-import { createAuthMiddleware } from "../../auth/middleware.js";
-import { SUPPORTED_SCOPES } from "../../auth/scopes.js";
+import { createAuthMiddleware } from "../../auth/middleware/index.js";
+import { SUPPORTED_SCOPES } from "../../auth/scopes/index.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
 import type { RequestHandler } from "express";

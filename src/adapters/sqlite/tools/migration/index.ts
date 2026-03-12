@@ -15,7 +15,7 @@ import {
   createMigrationRollbackTool,
   createMigrationHistoryTool,
   createMigrationStatusTool,
-} from "./tracking.js";
+} from "./tracking/index.js";
 
 /**
  * Get all migration tools (6 opt-in tools)

@@ -9,7 +9,7 @@ export type * from "./types.js";
 export * from "./errors.js";
 
 // Scopes
-export * from "./scopes.js";
+export * from "./scopes/index.js";
 
 // Scope Map (tool → scope reverse lookup)
 export { getRequiredScope, getToolScopeMap } from "./scope-map.js";
@@ -37,7 +37,7 @@ export {
   requireToolScope,
   oauthErrorHandler,
   type AuthMiddlewareConfig,
-} from "./middleware.js";
+} from "./middleware/index.js";
 
 // Middleware (transport-agnostic)
 export {
@@ -45,4 +45,4 @@ export {
   validateAuth,
   formatOAuthError,
   type AuthenticatedContext,
-} from "./middleware.js";
+} from "./middleware/index.js";

@@ -17,7 +17,7 @@ import {
   InvalidSignatureError,
   JwksFetchError,
 } from "./errors.js";
-import { parseScopes } from "./scopes.js";
+import { parseScopes } from "./scopes/index.js";
 import { createModuleLogger, ERROR_CODES } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");

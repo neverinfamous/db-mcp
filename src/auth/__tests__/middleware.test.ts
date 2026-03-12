@@ -11,7 +11,7 @@ import {
   createAuthenticatedContext,
   validateAuth,
   formatOAuthError,
-} from "../middleware.js";
+} from "../middleware/index.js";
 import {
   TokenMissingError,
   InvalidTokenError,

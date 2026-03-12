@@ -20,7 +20,7 @@ import {
   createDropVirtualTableTool,
   createCsvTableTool,
   createAnalyzeCsvSchemaTool,
-} from "./vtable.js";
+} from "./vtable/index.js";
 import {
   createRtreeTableTool,
   createSeriesTableTool,

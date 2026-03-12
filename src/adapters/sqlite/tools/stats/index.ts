@@ -24,7 +24,7 @@ import {
   createOutlierTool,
   createRegressionTool,
   createHypothesisTool,
-} from "./inference.js";
+} from "./inference/index.js";
 
 /**
  * Get all statistics tools

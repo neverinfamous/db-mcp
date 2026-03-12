@@ -7,14 +7,13 @@
  * FTS5 tools are excluded (WASM mode does not support FTS5).
  */
 
-import initSqlJs, { type Database } from "sql.js";
+import type { Database } from "sql.js";
 import { DatabaseAdapter } from "../database-adapter.js";
 import type {
   DatabaseConfig,
   QueryResult,
   SchemaInfo,
   TableInfo,
-  ColumnInfo,
   IndexInfo,
   HealthStatus,
   AdapterCapabilities,
@@ -23,15 +22,11 @@ import type {
   PromptDefinition,
   ToolGroup,
 } from "../../types/index.js";
-import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import {
   ConnectionError,
-  ConfigurationError,
-  DbMcpError,
-  ErrorCategory,
 } from "../../utils/errors/index.js";
-import type { SqliteConfig, SqliteOptions } from "./types.js";
-import { SchemaManager } from "./schema-manager.js";
+import type { SqliteConfig } from "./types.js";
+import type { SchemaManager } from "./schema-manager.js";
 
 // Tool definitions from modular files
 import { getAllToolDefinitions } from "./tools/index.js";
@@ -42,10 +37,10 @@ import { getPromptDefinitions } from "./prompts/index.js";
 // Query execution logic (extracted for modularity)
 import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
 
-// Module logger
-const log = createModuleLogger("SQLITE");
+import { isDDL } from "../sqlite-helpers.js";
 
-import { isDDL, applyCommonPragmas, autoEnableWal, detectAndSetJsonbSupport } from "../sqlite-helpers.js";
+import { connectSqliteDatabase, disconnectSqliteDatabase } from "./sqlite-adapter/lifecycle.js";
+import { fallBackListTables, fallBackDescribeTable, fallBackGetIndexes, fallBackGetSchema } from "./sqlite-adapter/schema.js";
 
 
 
@@ -79,110 +74,17 @@ export class SqliteAdapter extends DatabaseAdapter {
   private db: Database | null = null;
 
   protected override config: SqliteConfig | null = null;
-  private sqlJsInstance: Awaited<ReturnType<typeof initSqlJs>> | null = null;
   private schemaManager: SchemaManager | null = null;
 
   /**
    * Connect to a SQLite database
    */
   override async connect(config: DatabaseConfig): Promise<void> {
-    if (config.type !== "sqlite") {
-      throw new ConfigurationError(
-        `Invalid database type: expected 'sqlite', got '${config.type as string}'`,
-        "DB_TYPE_MISMATCH",
-      );
-    }
-
     this.config = config as SqliteConfig;
-
-    try {
-      // Initialize sql.js
-      this.sqlJsInstance = await initSqlJs();
-
-      const filePath =
-        this.config.filePath ?? this.config.connectionString ?? ":memory:";
-
-      if (filePath === ":memory:") {
-        // Create in-memory database
-        this.db = new this.sqlJsInstance.Database();
-        log.info("Connected to in-memory SQLite database", {
-          code: "SQLITE_CONNECT",
-        });
-      } else {
-        // For file-based databases, we need to read the file
-        // sql.js works in-memory but can load/save to files
-        try {
-          const fs = await import("fs");
-          if (fs.existsSync(filePath)) {
-            const buffer = await fs.promises.readFile(filePath);
-            this.db = new this.sqlJsInstance.Database(buffer);
-            log.info(`Connected to SQLite database: ${filePath}`, {
-              code: "SQLITE_CONNECT",
-            });
-          } else {
-            // Create new database
-            this.db = new this.sqlJsInstance.Database();
-            log.info(`Created new SQLite database: ${filePath}`, {
-              code: "SQLITE_CONNECT",
-            });
-          }
-        } catch {
-          // Browser environment or no file access - create in-memory
-          this.db = new this.sqlJsInstance.Database();
-          log.warning("File access unavailable, using in-memory database", {
-            code: "SQLITE_FALLBACK",
-          });
-        }
-      }
-
-      // Apply options
-      this.applyOptions(this.config.options);
-
-      // Enable WAL mode by default for file-based databases
-      const db = this.db;
-      autoEnableWal(
-        { runPragma: (pragma) => db.run(`PRAGMA ${pragma}`) },
-        filePath,
-        this.config.options,
-        log,
-      );
-
-      // Detect JSONB support based on SQLite version
-      detectAndSetJsonbSupport(() => {
-        const versionResult = db.exec("SELECT sqlite_version()");
-        return (versionResult[0]?.values[0]?.[0] as string) ?? "0.0.0";
-      }, log);
-
-      // Initialize SchemaManager with this adapter as the executor
-      this.schemaManager = new SchemaManager(this);
-
-      this.connected = true;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error(`Failed to connect to SQLite: ${message}`, {
-        code: ERROR_CODES.DB.CONNECT_FAILED.full,
-      });
-      throw new ConnectionError(
-        `SQLite connection failed: ${message}`,
-        "DB_CONNECT_FAILED",
-        {
-          cause: error instanceof Error ? error : undefined,
-        },
-      );
-    }
-  }
-
-  /**
-   * Apply SQLite PRAGMA options
-   */
-  private applyOptions(options?: SqliteOptions): void {
-    if (!this.db || !options) return;
-
-    const db = this.db;
-    applyCommonPragmas(
-      { runPragma: (pragma) => db.run(`PRAGMA ${pragma}`) },
-      options,
-    );
+    const { db, schemaManager } = await connectSqliteDatabase(this, config);
+    this.db = db;
+    this.schemaManager = schemaManager;
+    this.connected = true;
   }
 
   /**
@@ -190,28 +92,9 @@ export class SqliteAdapter extends DatabaseAdapter {
    */
   override async disconnect(): Promise<void> {
     if (this.db) {
-      // Save to file if configured
-      if (this.config?.filePath && this.config.filePath !== ":memory:") {
-        try {
-          const fs = await import("fs");
-          const data = this.db.export();
-          await fs.promises.writeFile(this.config.filePath, Buffer.from(data));
-          log.info(`Saved database to: ${this.config.filePath}`, {
-            code: "SQLITE_DISCONNECT",
-          });
-        } catch {
-          log.warning("Could not save database to file", {
-            code: "SQLITE_SAVE_FAILED",
-          });
-        }
-      }
-
-      this.db.close();
+      await disconnectSqliteDatabase(this.db, this.config);
       this.db = null;
       this.connected = false;
-      log.info("Disconnected from SQLite database", {
-        code: "SQLITE_DISCONNECT",
-      });
     }
   }
 
@@ -313,10 +196,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     if (this.schemaManager) {
       return this.schemaManager.getSchema();
     }
-    // Fallback if SchemaManager not initialized
-    const tables = await this.listTables();
-    const indexes = await this.getIndexes();
-    return { tables, indexes };
+    return fallBackGetSchema(this);
   }
 
   /**
@@ -327,21 +207,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     if (this.schemaManager) {
       return this.schemaManager.listTables();
     }
-    // Fallback if SchemaManager not initialized
-    const result = await this.executeReadQuery(
-      `SELECT name, type FROM sqlite_master
-             WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
-             ORDER BY name`,
-    );
-
-    const tables: TableInfo[] = [];
-    for (const row of result.rows ?? []) {
-      const name = row["name"] as string;
-      const type = row["type"] as "table" | "view";
-      const tableInfo = await this.describeTable(name);
-      tables.push({ ...tableInfo, type });
-    }
-    return tables;
+    return fallBackListTables(this);
   }
 
   /**
@@ -352,34 +218,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     if (this.schemaManager) {
       return this.schemaManager.describeTable(tableName);
     }
-    // Fallback if SchemaManager not initialized
-    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
-      throw new DbMcpError(
-        "Invalid table name",
-        "SQLITE_INVALID_TABLE",
-        ErrorCategory.VALIDATION
-      );
-    }
-    const result = await this.executeReadQuery(
-      `PRAGMA table_info("${tableName}")`,
-    );
-    const columns: ColumnInfo[] = (result.rows ?? []).map((row) => ({
-      name: row["name"] as string,
-      type: row["type"] as string,
-      nullable: row["notnull"] === 0,
-      primaryKey: row["pk"] === 1,
-      defaultValue: row["dflt_value"],
-    }));
-    const countResult = await this.executeReadQuery(
-      `SELECT COUNT(*) as count FROM "${tableName}"`,
-    );
-    const rowCount = (countResult.rows?.[0]?.["count"] as number) ?? 0;
-    return {
-      name: tableName,
-      type: "table",
-      columns,
-      rowCount,
-    };
+    return fallBackDescribeTable(this, tableName);
   }
 
   /**
@@ -400,41 +239,7 @@ export class SqliteAdapter extends DatabaseAdapter {
       }
       return this.schemaManager.getAllIndexes();
     }
-    // Fallback if SchemaManager not initialized
-    let sql = `SELECT name, tbl_name, sql FROM sqlite_master
-             WHERE type = 'index' AND sql IS NOT NULL`;
-    if (table) {
-      sql += ` AND tbl_name = '${table.replace(/'/g, "''")}'`;
-    }
-    const result = await this.executeReadQuery(sql);
-
-    const indexes: IndexInfo[] = [];
-    for (const row of result.rows ?? []) {
-      const indexName = row["name"] as string;
-      const tableName = row["tbl_name"] as string;
-      const sqlDef = row["sql"] as string;
-
-      // Get column info for this index via PRAGMA index_info
-      let columns: string[];
-      try {
-        const indexInfo = await this.executeReadQuery(
-          `PRAGMA index_info("${indexName}")`,
-        );
-        columns = (indexInfo.rows ?? []).map((col) => col["name"] as string);
-      } catch {
-        // If PRAGMA fails, fall back to empty columns
-        columns = [];
-      }
-
-      indexes.push({
-        name: indexName,
-        tableName,
-        columns,
-        unique: sqlDef?.toUpperCase().includes("UNIQUE") ?? false,
-      });
-    }
-
-    return indexes;
+    return fallBackGetIndexes(this, table);
   }
 
   /**

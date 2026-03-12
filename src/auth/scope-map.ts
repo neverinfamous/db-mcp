@@ -7,8 +7,8 @@
  */
 
 import { TOOL_GROUPS } from "../filtering/tool-filter.js";
-import { TOOL_GROUP_SCOPES, SCOPES } from "./scopes.js";
-import type { StandardScope } from "./scopes.js";
+import { TOOL_GROUP_SCOPES, SCOPES } from "./scopes/index.js";
+import type { StandardScope } from "./scopes/index.js";
 import type { ToolGroup } from "../types/index.js";
 
 /**

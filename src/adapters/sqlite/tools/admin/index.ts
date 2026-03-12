@@ -10,7 +10,7 @@ import {
   createIntegrityCheckTool,
   createOptimizeTool,
   createRestoreTool,
-} from "./backup.js";
+} from "./backup/index.js";
 import {
   createVerifyBackupTool,
   createIndexStatsTool,

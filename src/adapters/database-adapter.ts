@@ -11,8 +11,7 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { z } from "zod";
+
 import type {
   DatabaseConfig,
   DatabaseType,
@@ -29,11 +28,14 @@ import type {
   ToolFilterConfig,
 } from "../types/index.js";
 import { isToolEnabled } from "../filtering/tool-filter.js";
-import {
-  formatError,
-  ConnectionError,
-} from "../utils/errors/index.js";
+import { ConnectionError } from "../utils/errors/index.js";
 import { validateQuery } from "./query-validation.js";
+
+import {
+  registerToolImpl,
+  registerResourceImpl,
+  registerPromptImpl,
+} from "./registration/index.js";
 
 /**
  * Abstract base class for database adapters
@@ -185,7 +187,6 @@ export abstract class DatabaseAdapter {
         continue;
       }
 
-      // Register with MCP server
       this.registerTool(server, tool);
     }
   }
@@ -196,114 +197,7 @@ export abstract class DatabaseAdapter {
    * Subclasses may override for custom behavior.
    */
   protected registerTool(server: McpServer, tool: ToolDefinition): void {
-    // Build tool options for registerTool()
-    const toolOptions: Record<string, unknown> = {
-      description: tool.description,
-    };
-
-    // Pass inputSchema for tool discovery, but make it lenient for SDK validation.
-    // Uses .partial() so the SDK accepts any subset of params (including {}).
-    // Handler-level Schema.parse() catches missing required fields and returns
-    // structured {success: false} errors instead of raw MCP -32602.
-    if (tool.inputSchema !== undefined) {
-      const schema = tool.inputSchema;
-      // Duck-type check for ZodObject.partial() — type-only import prevents instanceof
-      if (
-        typeof schema === "object" &&
-        schema !== null &&
-        "partial" in schema &&
-        typeof (schema as { partial: unknown }).partial === "function"
-      ) {
-        toolOptions["inputSchema"] = (
-          schema as { partial: () => z.ZodType }
-        ).partial();
-      } else {
-        toolOptions["inputSchema"] = schema;
-      }
-    }
-
-    // MCP 2025-11-25: Pass outputSchema for structured responses
-    if (tool.outputSchema !== undefined) {
-      toolOptions["outputSchema"] = tool.outputSchema;
-    }
-
-    // MCP 2025-11-25: Pass annotations for behavioral hints
-    if (tool.annotations) {
-      toolOptions["annotations"] = tool.annotations;
-    }
-
-    // MCP 2025-11-25: Pass icons for visual representation
-    if (tool.icons) {
-      toolOptions["icons"] = tool.icons;
-    }
-
-    // Track whether tool has outputSchema for response handling
-    const hasOutputSchema = Boolean(tool.outputSchema);
-
-    server.registerTool(
-      tool.name,
-      toolOptions as {
-        description?: string;
-        inputSchema?: z.ZodType;
-        outputSchema?: z.ZodType;
-      },
-      async (args: unknown, extra: unknown) => {
-        try {
-          // Extract progressToken from extra._meta (SDK passes RequestHandlerExtra)
-          const extraMeta = extra as {
-            _meta?: { progressToken?: string | number };
-          };
-          const progressToken = extraMeta?._meta?.progressToken;
-
-          // Create context with progress support
-          const context = this.createContext(
-            undefined,
-            server.server,
-            progressToken,
-          );
-          const result = await tool.handler(args, context);
-
-          // MCP 2025-11-25: Return structuredContent if outputSchema present
-          if (hasOutputSchema) {
-            return {
-              content: [
-                {
-                  type: "text" as const,
-                  text: JSON.stringify(result),
-                },
-              ],
-              structuredContent: result as Record<string, unknown>,
-            };
-          }
-
-          // Standard text content response — compact JSON (no pretty-print)
-          // reduces serialization overhead by ~15-20% on large payloads
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text:
-                  typeof result === "string"
-                    ? result
-                    : JSON.stringify(result),
-              },
-            ],
-          };
-        } catch (error) {
-          const structured = formatError(error);
-          // Keep pretty-print on error responses for debugging readability
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify(structured, null, 2),
-              },
-            ],
-            isError: true,
-          };
-        }
-      },
-    );
+    registerToolImpl(this, server, tool);
   }
 
   /**
@@ -326,78 +220,7 @@ export abstract class DatabaseAdapter {
     server: McpServer,
     resource: ResourceDefinition,
   ): void {
-    // Check if URI contains template placeholders like {tableName}
-    const isTemplate = /\{[^}]+\}/.test(resource.uri);
-
-    if (isTemplate) {
-      // Create ResourceTemplate for parameterized URIs
-      // list: undefined signals no enumeration callback for this template
-      const template = new ResourceTemplate(resource.uri, { list: undefined });
-
-      server.registerResource(
-        resource.name,
-        template,
-        {
-          mimeType: resource.mimeType ?? "application/json",
-          description: resource.description,
-          ...(resource.icons ? { icons: resource.icons } : {}),
-        },
-        // Callback receives URL and extracted template variables
-        async (
-          resourceUri: URL,
-          _variables: Record<string, string | string[]>,
-        ) => {
-          // Pass full URI to handler so it can extract variables
-          const context = this.createContext();
-          const content = await resource.handler(
-            resourceUri.toString(),
-            context,
-          );
-          return {
-            contents: [
-              {
-                uri: resourceUri.toString(),
-                mimeType: resource.mimeType ?? "application/json",
-                text:
-                  typeof content === "string"
-                    ? content
-                    : JSON.stringify(content, null, 2),
-              },
-            ],
-          };
-        },
-      );
-    } else {
-      // Static resource registration
-      server.registerResource(
-        resource.name,
-        resource.uri,
-        {
-          mimeType: resource.mimeType ?? "application/json",
-          description: resource.description,
-          ...(resource.icons ? { icons: resource.icons } : {}),
-        },
-        async (resourceUri: URL) => {
-          const context = this.createContext();
-          const content = await resource.handler(
-            resourceUri.toString(),
-            context,
-          );
-          return {
-            contents: [
-              {
-                uri: resourceUri.toString(),
-                mimeType: resource.mimeType ?? "application/json",
-                text:
-                  typeof content === "string"
-                    ? content
-                    : JSON.stringify(content, null, 2),
-              },
-            ],
-          };
-        },
-      );
-    }
+    registerResourceImpl(this, server, resource);
   }
 
   /**
@@ -416,40 +239,7 @@ export abstract class DatabaseAdapter {
    * Subclasses may override for custom behavior.
    */
   protected registerPrompt(server: McpServer, prompt: PromptDefinition): void {
-    server.registerPrompt(
-      prompt.name,
-      {
-        description: prompt.description,
-        ...(prompt.icons ? { icons: prompt.icons } : {}),
-      },
-
-      async (args: Record<string, string>) => {
-        const context = this.createContext();
-        const result = await prompt.handler(args, context);
-        // Type-safe message construction
-        const messages: {
-          role: "user" | "assistant";
-          content: { type: "text"; text: string };
-        }[] = Array.isArray(result)
-          ? (result as {
-              role: "user" | "assistant";
-              content: { type: "text"; text: string };
-            }[])
-          : [
-              {
-                role: "assistant" as const,
-                content: {
-                  type: "text" as const,
-                  text:
-                    typeof result === "string"
-                      ? result
-                      : JSON.stringify(result),
-                },
-              },
-            ];
-        return { messages };
-      },
-    );
+    registerPromptImpl(this, server, prompt);
   }
 
   // ===========================================================================
@@ -471,7 +261,7 @@ export abstract class DatabaseAdapter {
    * @param server Optional MCP Server instance for progress notifications
    * @param progressToken Optional progress token from client request _meta
    */
-  protected createContext(
+  public createContext(
     requestId?: string,
     server?: unknown,
     progressToken?: string | number,
