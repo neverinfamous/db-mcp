@@ -1,8 +1,8 @@
 # db-mcp (SQLite MCP Server)
 
-**Last Updated March 11, 2026**
+**Last Updated March 12, 2026**
 
-**SQLite MCP Server** with 139 specialized tools, 8 resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control and deterministic error handling. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 139 specialized tools, 8 resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -23,21 +23,21 @@
 
 ## 🎯 What Sets Us Apart
 
-| Feature                          | Description                                                                                                                                                                                        |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **139 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox — reducing token overhead by up to 90% while exposing all 139 capabilities locally      |
-| **Token-Optimized Payloads**     | Every tool response is audited for token efficiency. Tools with large payloads offer optional flags (`compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, `maxInvalid`) to reduce response size   |
-| **8 Resources**                  | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                                                         |
-| **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                        |
-| **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                             |
-| **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                 |
-| **Smart Tool Filtering**         | 9 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                    |
-| **HTTP Streaming Transport**     | Dual-protocol HTTP with Streamable HTTP + Legacy SSE, security headers, rate limiting, health check, and stateless mode for serverless                                                             |
-| **Production-Ready Security**    | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                                                  |
-| **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types                                                                                                                                           |
-| **Deterministic Error Handling** | Every tool returns structured `{success, error}` responses — no raw exceptions, no silent failures. Agents get actionable context instead of cryptic error codes                                   |
-| **MCP 2025-03-26 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                      |
+| Feature                        | Description                                                                                                                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **139 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin           |
+| **8 Resources**                | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                                                                   |
+| **10 AI-Powered Prompts**      | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                  |
+| **Code Mode**                  | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox — reducing token overhead by up to 90% while exposing all 139 capabilities locally                |
+| **Token-Optimized Payloads**   | Every tool response is audited for token efficiency. Tools with large payloads offer optional flags (`compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, `maxInvalid`) to reduce response size             |
+| **Dual SQLite Backends**       | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                       |
+| **OAuth 2.1 + Access Control** | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                           |
+| **Smart Tool Filtering**       | 9 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                              |
+| **HTTP Streaming Transport**   | Dual-protocol HTTP with Streamable HTTP + Legacy SSE, security headers, rate limiting, health check, and stateless mode for serverless                                                                       |
+| **Production-Ready Security**  | SQL injection prevention via parameter binding, input validation, non-root Docker execution, and build provenance                                                                                            |
+| **Strict TypeScript**          | 100% type-safe codebase with strict mode, no `any` types                                                                                                                                                     |
+| **Structured Error Handling**  | Every tool returns rich `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions. Agents get error classification, actionable remediation hints, and recoverability signals |
+| **MCP 2025-03-26 Compliant**   | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                                |
 
 ## 🚀 Quick Start
 
@@ -320,21 +320,43 @@ MCP prompts provide AI-assisted database workflows:
 | `sqlite_hybrid_search_workflow` | Hybrid FTS5 + vector search workflow             |
 | `sqlite_demo`                   | Interactive demo of MCP capabilities             |
 
-## ⚡ Performance Tuning
+## 🔧 Configuration
 
-Schema metadata is cached to reduce repeated queries during tool/resource invocations.
+### Environment Variables
 
-| Variable                | Default   | Description                                        |
-| ----------------------- | --------- | -------------------------------------------------- |
-| `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (HTTP transport)                |
-| `METADATA_CACHE_TTL_MS` | `5000`    | Cache TTL for schema metadata (milliseconds)       |
-| `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error` |
+| Variable                | Default   | Description                                                   |
+| ----------------------- | --------- | ------------------------------------------------------------- |
+| `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                     |
+| `SQLITE_DATABASE`       | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)    |
+| `DB_MCP_TOOL_FILTER`    | —         | Tool filter string (CLI: `--tool-filter`)                     |
+| `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`            |
+| `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations)   |
+| `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced isolation) or `vm`      |
+| `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                   |
+| `CSV_EXTENSION_PATH`    | —         | Custom path to CSV extension binary (native only)             |
+| `SPATIALITE_PATH`       | —         | Custom path to SpatiaLite extension binary (native only)      |
+| `KEYCLOAK_URL`          | —         | Keycloak base URL- enables OAuth when set with HTTP transport |
+| `KEYCLOAK_REALM`        | —         | Keycloak realm name                                           |
+| `KEYCLOAK_CLIENT_ID`    | —         | Keycloak client ID                                            |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
+### CLI Reference
+
+```
+db-mcp [options]
+
+Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --stateless
+Database:     --sqlite <path>  |  --sqlite-native <path>
+Extensions:   --csv  --spatialite                         (native only)
+Server:       --name <name>  --version <ver>  --tool-filter <filter>
+```
+
+> CLI flags override environment variables. Run `node dist/cli.js --help` for full details.
+
 ## 📚 MCP Client Configuration
 
-### Cursor IDE / Claude Desktop
+Add to your `~/.cursor/mcp.json`, Claude Desktop config, or equivalent:
 
 ```json
 {
@@ -357,38 +379,17 @@ Schema metadata is cached to reduce repeated queries during tool/resource invoca
 
 **Variants** (modify the `args` array above):
 
-| Variant                | Change                                                                                             |
-| ---------------------- | -------------------------------------------------------------------------------------------------- |
-| **WASM backend**       | Replace `--sqlite-native` with `--sqlite`                                                          |
-| **In-memory database** | Replace the database path with `:memory:`                                                          |
-| **Starter preset**     | Replace `"codemode"` with `"starter"` for individual tool calls                                    |
-| **CSV extension**      | Add `"--csv"` before `"--tool-filter"` (native only)                                               |
-| **SpatiaLite**         | Add `"--spatialite"` and set `env: { "SPATIALITE_PATH": "/path/to/mod_spatialite" }` (native only) |
-| **Linux/macOS**        | Use forward-slash Unix paths (e.g., `/path/to/db-mcp/dist/cli.js`)                                 |
+| Variant                | Change                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **WASM backend**       | Replace `--sqlite-native` with `--sqlite`                                                                                            |
+| **In-memory database** | Replace the database path with `:memory:`                                                                                            |
+| **Starter preset**     | Replace `"codemode"` with `"starter"` for individual tool calls                                                                      |
+| **CSV extension**      | Add `"--csv"` before `"--tool-filter"` (native only)                                                                                 |
+| **SpatiaLite**         | Add `"--spatialite"` and set `env: { "SPATIALITE_PATH": "/path/to/mod_spatialite" }` (native only)                                   |
+| **Linux/macOS**        | Use forward-slash Unix paths (e.g., `/path/to/db-mcp/dist/cli.js`)                                                                   |
+| **Docker**             | Replace `"command": "node"` with `"command": "docker"` and wrap args in `run -i --rm -v ./data:/app/data writenotenow/db-mcp:latest` |
 
 > See [Tool Filtering](#️-tool-filtering) to customize which tools are exposed.
-
-### Docker
-
-```json
-{
-  "mcpServers": {
-    "db-mcp-sqlite": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-v",
-        "/path/to/project:/workspace",
-        "writenotenow/db-mcp:latest",
-        "--sqlite-native",
-        "/workspace/database.db"
-      ]
-    }
-  }
-}
-```
 
 ### HTTP/SSE Transport (Remote Access)
 

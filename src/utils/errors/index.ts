@@ -17,5 +17,14 @@ export {
   InternalError,
   AuthenticationError,
   AuthorizationError,
+  TransactionError,
 } from "./classes.js";
-export { type ErrorResponse, formatError, wrapError, isDbMcpError } from "./format.js";
+export {
+  type ErrorResponse,
+  type ErrorContext,
+  formatHandlerError,
+  formatError,
+  wrapError,
+  isDbMcpError,
+} from "./format.js";
+

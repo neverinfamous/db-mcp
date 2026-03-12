@@ -198,3 +198,24 @@ export class AuthorizationError extends DbMcpError {
     });
   }
 }
+
+/**
+ * Transaction error for commit/rollback/savepoint failures
+ */
+export class TransactionError extends DbMcpError {
+  constructor(
+    message: string,
+    code = "TRANSACTION_ERROR",
+    options?: {
+      suggestion?: string | undefined;
+      details?: Record<string, unknown> | undefined;
+      cause?: Error | undefined;
+    },
+  ) {
+    super(message, code, ErrorCategory.QUERY, {
+      ...options,
+      recoverable: true, // Transaction errors are often retriable
+    });
+  }
+}
+

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Error Handling — `TransactionError` Subclass** — New `TransactionError` class in `utils/errors/classes.ts` for commit/rollback/savepoint failures, using `QUERY` category with `recoverable: true`
+- **Error Handling — `ErrorContext` Interface** — New `ErrorContext` interface in `utils/errors/format.ts` for optional tool/table/sql context on error formatting calls
+- **Error Handling — `formatHandlerError` Export** — Canonical cross-project name for the primary error formatter; `formatError` remains as an alias
+- **Error Handling — Zod Path Extraction** — `formatHandlerError` now extracts field paths from ZodErrors (e.g., `table: Required` instead of raw JSON issue arrays)
 - **OAuth — `FULL` Scope** — Added `full` scope that grants unrestricted access to all operations, completing the `full ⊃ admin ⊃ write ⊃ read` hierarchy
 - **OAuth — `TOOL_GROUP_SCOPES` Mapping** — Declarative `Record<ToolGroup, StandardScope>` replaces imperative `*_SCOPE_GROUPS` arrays as single source of truth
 - **OAuth — Scope Utilities** — Added `hasScope()`, `hasAnyScope()`, `hasAllScopes()`, `getScopeForToolGroup()`, `getScopeDisplayName()` for hierarchical scope checks

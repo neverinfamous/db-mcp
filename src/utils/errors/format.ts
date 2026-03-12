@@ -2,12 +2,42 @@
  * Error Response Type and Formatting Utilities
  *
  * Converts errors (typed or untyped) into structured ErrorResponse objects.
+ * Harmonized standard: combines rich ErrorResponse (db-mcp), Zod path
+ * extraction (memory-journal-mcp), and ErrorContext (postgres-mcp).
  */
 
 import { ErrorCategory, type ErrorResponse } from "./categories.js";
 export type { ErrorResponse };
 import { DbMcpError } from "./base.js";
 import { findSuggestion } from "./suggestions.js";
+
+// =============================================================================
+// ErrorContext — optional tool context for richer error messages
+// =============================================================================
+
+/**
+ * Context about the operation that triggered the error.
+ * Adapted from postgres-mcp's ErrorContext pattern for contextual
+ * error intelligence.
+ */
+export interface ErrorContext {
+  /** Tool name that triggered the error */
+  tool?: string;
+  /** SQL statement that was being executed */
+  sql?: string;
+  /** Target table name */
+  table?: string;
+  /** Target index name */
+  index?: string;
+  /** Target database/schema */
+  database?: string;
+  /** Generic target identifier */
+  target?: string;
+}
+
+// =============================================================================
+// Default category → code mapping
+// =============================================================================
 
 /**
  * Default error codes by category (used when error is not a DbMcpError)
@@ -24,11 +54,97 @@ const CATEGORY_DEFAULT_CODES: Record<ErrorCategory, string> = {
   [ErrorCategory.INTERNAL]: "UNKNOWN_ERROR",
 };
 
-export function formatError(error: unknown): ErrorResponse {
+// =============================================================================
+// Zod Error Formatting
+// =============================================================================
+
+/**
+ * Extract human-readable messages from a ZodError with path information.
+ * Adapted from memory-journal-mcp pattern for clear validation feedback.
+ *
+ * Duck-typed to avoid importing zod in this shared module —
+ * detects ZodError via `.issues` array presence.
+ */
+function formatZodError(error: Error): string | null {
+  if (
+    !("issues" in error) ||
+    !Array.isArray((error as Record<string, unknown>)["issues"])
+  ) {
+    return null;
+  }
+
+  const issues = (error as Record<string, unknown>)["issues"] as {
+    message?: string;
+    path?: unknown[];
+  }[];
+
+  return issues
+    .map((issue) => {
+      const pathStr =
+        Array.isArray(issue.path) && issue.path.length > 0
+          ? `${issue.path.join(".")}: `
+          : "";
+      return `${pathStr}${issue.message ?? "Unknown validation error"}`;
+    })
+    .join("; ");
+}
+
+// =============================================================================
+// Primary Formatter
+// =============================================================================
+
+/**
+ * Format any caught error into a structured handler error response.
+ *
+ * Handles:
+ * 1. `DbMcpError` — converts via `.toResponse()`
+ * 2. `ZodError` — extracts path + message for clear validation feedback
+ * 3. `Error` — maps message to suggestion via regex patterns
+ * 4. Non-Error values — stringified with INTERNAL category
+ *
+ * Use as the single catch block for all tool handlers:
+ *
+ * ```typescript
+ * handler: async (params) => {
+ *   try {
+ *     const parsed = Schema.parse(params);
+ *     // ... domain logic ...
+ *     return { success: true, ... };
+ *   } catch (err) {
+ *     return formatHandlerError(err);
+ *   }
+ * }
+ * ```
+ *
+ * @param error - The caught error value
+ * @param context - Optional tool context for richer error messages
+ */
+export function formatHandlerError(
+  error: unknown,
+  _context?: ErrorContext,
+): ErrorResponse {
+  // 1. Already a typed DbMcpError — use its built-in conversion
   if (error instanceof DbMcpError) {
     return error.toResponse();
   }
 
+  // 2. ZodError — extract path + message for clear validation feedback
+  if (error instanceof Error) {
+    const zodMessage = formatZodError(error);
+    if (zodMessage !== null) {
+      return {
+        success: false,
+        error: zodMessage,
+        code: "VALIDATION_ERROR",
+        category: ErrorCategory.VALIDATION,
+        suggestion: undefined,
+        recoverable: false,
+        details: undefined,
+      };
+    }
+  }
+
+  // 3. Standard Error — match against suggestion patterns
   if (error instanceof Error) {
     const match = findSuggestion(error.message);
     const category = match?.category ?? ErrorCategory.INTERNAL;
@@ -43,6 +159,7 @@ export function formatError(error: unknown): ErrorResponse {
     };
   }
 
+  // 4. Non-Error value
   return {
     success: false,
     error: String(error),
@@ -53,6 +170,16 @@ export function formatError(error: unknown): ErrorResponse {
     details: undefined,
   };
 }
+
+/**
+ * Alias for `formatHandlerError`.
+ * Prefer `formatHandlerError` in new code for consistency across MCP projects.
+ */
+export const formatError = formatHandlerError;
+
+// =============================================================================
+// Utilities
+// =============================================================================
 
 /**
  * Wrap an error with enhanced diagnostics
