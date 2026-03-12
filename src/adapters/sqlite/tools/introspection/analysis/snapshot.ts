@@ -11,7 +11,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import { formatHandlerError } from "../../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 
@@ -227,7 +227,7 @@ export function createSchemaSnapshotTool(
           generatedAt: new Date().toISOString(),
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

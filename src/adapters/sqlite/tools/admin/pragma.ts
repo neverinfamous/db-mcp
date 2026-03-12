@@ -12,7 +12,7 @@ import type {
 } from "../../../../types/index.js";
 import { admin, readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
   PragmaCompileOptionsOutputSchema,
@@ -216,7 +216,7 @@ export function createPragmaSettingsTool(
             error: `Unknown or write-only PRAGMA: '${input.pragma}'`,
           };
         }
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

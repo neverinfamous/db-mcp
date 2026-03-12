@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse, DbMcpError, ErrorCategory } from "../../../../utils/errors/index.js";
 import {
   validateColumnExists,
   validateNumericColumn,
@@ -203,7 +203,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -365,7 +365,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
           equation,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -598,7 +598,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

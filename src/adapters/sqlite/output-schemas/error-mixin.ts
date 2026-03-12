@@ -1,7 +1,7 @@
 /**
  * Error Fields Mixin
  *
- * Shared Zod schema for enriched error fields returned by formatHandlerError().
+ * Shared Zod schema for enriched error fields returned by formatHandlerErrorResponse().
  * Merge into any output schema: `MySchema.merge(ErrorFieldsMixin)`.
  */
 

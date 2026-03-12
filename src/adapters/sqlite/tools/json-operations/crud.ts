@@ -11,7 +11,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import {
   JsonValidOutputSchema,
   JsonExtractOutputSchema,
@@ -49,7 +49,7 @@ export function createValidateJsonTool(): ToolDefinition {
       try {
         input = ValidateJsonSchema.parse(params);
       } catch (error) {
-        return Promise.resolve(formatHandlerError(error));
+        return Promise.resolve(formatHandlerErrorResponse(error));
       }
 
       try {
@@ -88,7 +88,7 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonExtractSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -118,7 +118,7 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
           values: result.rows?.map((r) => r["value"]),
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -142,7 +142,7 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonSetSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -174,7 +174,7 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
             : {}),
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -197,7 +197,7 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonRemoveSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -228,7 +228,7 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
             : {}),
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -252,7 +252,7 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonTypeSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -284,7 +284,7 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
           types: result.rows?.map((r) => r["type"]),
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -309,7 +309,7 @@ export function createJsonArrayLengthTool(
       try {
         input = JsonArrayLengthSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -341,7 +341,7 @@ export function createJsonArrayLengthTool(
           lengths: result.rows?.map((r) => r["length"]),
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -366,7 +366,7 @@ export function createJsonArrayAppendTool(
       try {
         input = JsonArrayAppendSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -397,7 +397,7 @@ export function createJsonArrayAppendTool(
           rowsAffected: result.rowsAffected,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

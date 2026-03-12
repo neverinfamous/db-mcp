@@ -8,7 +8,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { write, idempotent, destructive } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import {
   CreateTableOutputSchema,
   VectorStoreOutputSchema,
@@ -74,7 +74,7 @@ export function createVectorCreateTableTool(
           sql,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -190,7 +190,7 @@ export function createVectorStoreTool(
           dimensions: input.vector.length,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -277,7 +277,7 @@ export function createVectorBatchStoreTool(
           dimensions: input.items[0]?.vector.length,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -317,7 +317,7 @@ export function createVectorDeleteTool(
           deleted: result.rowsAffected,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

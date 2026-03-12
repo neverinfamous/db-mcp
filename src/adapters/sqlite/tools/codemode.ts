@@ -25,7 +25,7 @@ import {
   type SandboxMode,
 } from "../../../codemode/sandbox-factory.js";
 import { logger } from "../../../utils/logger/index.js";
-import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
+import { formatHandlerErrorResponse, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
 import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
@@ -226,7 +226,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           error: error instanceof Error ? error : undefined,
         });
 
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

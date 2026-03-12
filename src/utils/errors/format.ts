@@ -111,7 +111,7 @@ function formatZodError(error: Error): string | null {
  *     // ... domain logic ...
  *     return { success: true, ... };
  *   } catch (err) {
- *     return formatHandlerError(err);
+ *     return formatHandlerErrorResponse(err);
  *   }
  * }
  * ```
@@ -119,7 +119,7 @@ function formatZodError(error: Error): string | null {
  * @param error - The caught error value
  * @param context - Optional tool context for richer error messages
  */
-export function formatHandlerError(
+export function formatHandlerErrorResponse(
   error: unknown,
   _context?: ErrorContext,
 ): ErrorResponse {
@@ -172,10 +172,10 @@ export function formatHandlerError(
 }
 
 /**
- * Alias for `formatHandlerError`.
- * Prefer `formatHandlerError` in new code for consistency across MCP projects.
+ * Alias for `formatHandlerErrorResponse`.
+ * Prefer `formatHandlerErrorResponse` in new code for consistency across MCP projects.
  */
-export const formatError = formatHandlerError;
+export const formatError = formatHandlerErrorResponse;
 
 // =============================================================================
 // Utilities

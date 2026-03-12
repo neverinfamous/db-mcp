@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse, ResourceNotFoundError } from "../../../../utils/errors/index.js";
 import {
   StatsBasicOutputSchema,
   StatsCountOutputSchema,
@@ -94,7 +94,7 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
           },
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -162,7 +162,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
           distinct: input.distinct,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -225,7 +225,7 @@ export function createGroupByStatsTool(
           results: result.rows,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -344,7 +344,7 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
           buckets,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -427,7 +427,7 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
           percentiles,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import {
   VectorSearchOutputSchema,
   VectorGetOutputSchema,
@@ -154,7 +154,7 @@ export function createVectorSearchTool(
 
         return response;
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -217,7 +217,7 @@ export function createVectorGetTool(
           metadata: row,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

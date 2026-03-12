@@ -8,7 +8,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import {
   VectorCountOutputSchema,
   VectorStatsOutputSchema,
@@ -63,7 +63,7 @@ export function createVectorCountTool(
           count: result.rows?.[0]?.["count"] ?? 0,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -138,7 +138,7 @@ export function createVectorStatsTool(
           },
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -192,7 +192,7 @@ export function createVectorDimensionsTool(
           dimensions: vector.length,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -225,7 +225,7 @@ export function createVectorNormalizeTool(): ToolDefinition {
           ),
         });
       } catch (error) {
-        return Promise.resolve(formatHandlerError(error));
+        return Promise.resolve(formatHandlerErrorResponse(error));
       }
     },
   };
@@ -273,7 +273,7 @@ export function createVectorDistanceTool(): ToolDefinition {
           value: Math.round(result * 10000) / 10000,
         });
       } catch (error) {
-        return Promise.resolve(formatHandlerError(error));
+        return Promise.resolve(formatHandlerErrorResponse(error));
       }
     },
   };

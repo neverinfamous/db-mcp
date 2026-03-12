@@ -22,7 +22,7 @@ export {
 export {
   type ErrorResponse,
   type ErrorContext,
-  formatHandlerError,
+  formatHandlerErrorResponse,
   formatError,
   wrapError,
   isDbMcpError,

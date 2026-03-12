@@ -10,7 +10,7 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly, write, idempotent } from "../../../../utils/annotations.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import {
   MIGRATIONS_TABLE,
   MigrationInitSchema,
@@ -91,7 +91,7 @@ export function createMigrationInitTool(
           existingRecords: count,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -162,7 +162,7 @@ export function createMigrationRecordTool(
           record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -224,7 +224,7 @@ export function createMigrationApplyTool(
               input.appliedBy ?? null,
             ],
           );
-          const structured = formatHandlerError(execError);
+          const structured = formatHandlerErrorResponse(execError);
           return {
             success: false,
             error: `Migration execution failed: ${structured.error}`,
@@ -259,7 +259,7 @@ export function createMigrationApplyTool(
           record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -361,7 +361,7 @@ export function createMigrationRollbackTool(
           record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -444,7 +444,7 @@ export function createMigrationHistoryTool(
           offset,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -516,7 +516,7 @@ export function createMigrationStatusTool(
           sourceSystems,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

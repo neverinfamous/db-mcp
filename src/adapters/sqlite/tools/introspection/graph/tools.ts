@@ -11,7 +11,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import { formatHandlerError } from "../../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import type { ForeignKeyInfo } from "./helpers.js";
 import { buildForeignKeyGraph, detectCycles } from "./helpers.js";
@@ -203,7 +203,7 @@ export function createDependencyGraphTool(
           },
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -300,7 +300,7 @@ export function createTopologicalSortTool(
             : {}),
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -459,7 +459,7 @@ export function createCascadeSimulatorTool(
           },
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

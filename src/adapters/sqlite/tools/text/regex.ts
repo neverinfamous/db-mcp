@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
@@ -86,7 +86,7 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
           matches: extracts,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -151,7 +151,7 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
           matches,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -216,7 +216,7 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
           rows,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };

@@ -11,7 +11,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
 import {
   normalizeJson,
   isJsonbSupported,
@@ -44,7 +44,7 @@ export function createJsonPrettyTool(): ToolDefinition {
       try {
         input = JsonPrettySchema.parse(params);
       } catch (error) {
-        return Promise.resolve(formatHandlerError(error));
+        return Promise.resolve(formatHandlerErrorResponse(error));
       }
 
       try {
@@ -86,7 +86,7 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonbConvertSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -117,7 +117,7 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
           rowsAffected: result.rowsAffected,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -143,7 +143,7 @@ export function createJsonStorageInfoTool(
       try {
         input = JsonStorageInfoSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -197,7 +197,7 @@ export function createJsonStorageInfoTool(
                     "No JSON data found in sample.",
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
@@ -226,7 +226,7 @@ export function createJsonNormalizeColumnTool(
       try {
         input = JsonNormalizeColumnSchema.parse(params);
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
 
       try {
@@ -321,7 +321,7 @@ export function createJsonNormalizeColumnTool(
         }
         return result;
       } catch (error) {
-        return formatHandlerError(error);
+        return formatHandlerErrorResponse(error);
       }
     },
   };
