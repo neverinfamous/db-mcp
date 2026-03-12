@@ -20,7 +20,8 @@ import {
   RegressionSchema,
   HypothesisSchema,
 } from "./helpers.js";
-import {
+
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
   tDistPValue,
   matrixTranspose,

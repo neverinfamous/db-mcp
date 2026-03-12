@@ -14,7 +14,8 @@ import {
 } from "../../../../utils/index.js";
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
-import {
+
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
   TextNormalizeSchema,
   TextValidateSchema,

@@ -18,7 +18,8 @@ import {
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "./analysis.js";
-import {
+
+import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
   ListVirtualTablesSchema,
   VirtualTableInfoSchema,
