@@ -5,6 +5,7 @@
  */
 
 export { RowRecordSchema } from "./common.js";
+export { ErrorFieldsMixin } from "./error-mixin.js";
 export * from "./core.js";
 export * from "./json.js";
 export * from "./text.js";

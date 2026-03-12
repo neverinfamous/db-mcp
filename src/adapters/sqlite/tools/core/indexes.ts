@@ -15,7 +15,7 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   GetIndexesSchema,
   CreateIndexSchema,
@@ -46,12 +46,10 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = GetIndexesSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
         return {
-          success: false,
+          ...formatHandlerError(error),
           count: 0,
           indexes: [],
-          error: structured.error,
         };
       }
 
@@ -63,10 +61,13 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
           sanitizeIdentifier(input.tableName);
         } catch {
           return {
-            success: false,
+            ...formatHandlerError(
+              new ValidationError(
+                `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
+              ),
+            ),
             count: 0,
             indexes: [],
-            error: `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
           };
         }
 
@@ -77,13 +78,18 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         );
         if ((checkResult.rows?.length ?? 0) === 0) {
           return {
-            success: false,
+            ...formatHandlerError(
+              new ValidationError(
+                `Table '${input.tableName}' does not exist`,
+                "TABLE_NOT_FOUND",
+                {
+                  suggestion:
+                    "Table not found. Run sqlite_list_tables to see available tables.",
+                },
+              ),
+            ),
             count: 0,
             indexes: [],
-            error: `Table '${input.tableName}' does not exist`,
-            code: "TABLE_NOT_FOUND",
-            suggestion:
-              "Table not found. Run sqlite_list_tables to see available tables.",
           };
         }
 
@@ -131,19 +137,17 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = CreateIndexSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          message: structured.error,
-          sql: "",
-        };
+        return { ...formatHandlerError(error), sql: "" };
       }
       // Validate required: at least 1 column
       // (moved from schema min(1) to handler for structured error response)
       if (input.columns.length === 0) {
         return {
-          success: false,
-          message: "At least one column is required to create an index",
+          ...formatHandlerError(
+            new ValidationError(
+              "At least one column is required to create an index",
+            ),
+          ),
           sql: "",
         };
       }
@@ -157,8 +161,11 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
         }
       } catch {
         return {
-          success: false,
-          message: `Invalid identifier: index, table, and column names must be non-empty strings starting with a letter or underscore`,
+          ...formatHandlerError(
+            new ValidationError(
+              `Invalid identifier: index, table, and column names must be non-empty strings starting with a letter or underscore`,
+            ),
+          ),
           sql: "",
         };
       }
@@ -170,11 +177,16 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       );
       if ((tableCheck.rows?.length ?? 0) === 0) {
         return {
-          success: false,
-          message: `Table '${input.tableName}' does not exist`,
-          code: "TABLE_NOT_FOUND",
-          suggestion:
-            "Table not found. Run sqlite_list_tables to see available tables.",
+          ...formatHandlerError(
+            new ValidationError(
+              `Table '${input.tableName}' does not exist`,
+              "TABLE_NOT_FOUND",
+              {
+                suggestion:
+                  "Table not found. Run sqlite_list_tables to see available tables.",
+              },
+            ),
+          ),
           sql: "",
         };
       }
@@ -206,12 +218,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
           sql,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          message: structured.error,
-          sql,
-        };
+        return { ...formatHandlerError(error), sql };
       }
     },
   };
@@ -234,21 +241,18 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = DropIndexSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          message: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       // Validate index name
       try {
         sanitizeIdentifier(input.indexName);
       } catch {
-        return {
-          success: false,
-          message: `Invalid index name '${input.indexName}': must be a non-empty string starting with a letter or underscore`,
-        };
+        return formatHandlerError(
+          new ValidationError(
+            `Invalid index name '${input.indexName}': must be a non-empty string starting with a letter or underscore`,
+          ),
+        );
       }
 
       // Check if index exists before dropping
@@ -265,10 +269,9 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
             message: `Index '${input.indexName}' does not exist (no changes made)`,
           };
         }
-        return {
-          success: false,
-          message: `Index '${input.indexName}' does not exist`,
-        };
+        return formatHandlerError(
+          new ValidationError(`Index '${input.indexName}' does not exist`),
+        );
       }
 
       try {
@@ -280,11 +283,7 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
           message: `Index '${input.indexName}' dropped successfully`,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          message: structured.error,
-        };
+        return formatHandlerError(error);
       }
     },
   };

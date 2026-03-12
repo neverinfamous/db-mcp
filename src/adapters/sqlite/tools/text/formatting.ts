@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   RegexReplaceOutputSchema,
 } from "../../output-schemas/index.js";
@@ -63,15 +63,7 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
           values: result.rows?.map((r) => r["concatenated"]),
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          values: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -110,14 +102,7 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
           rowsAffected: result.rowsAffected,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -169,15 +154,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
           results: result.rows,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          results: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -219,15 +196,7 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
           results: result.rows,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          results: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -272,15 +241,7 @@ export function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition 
           results: result.rows,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          results: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };

@@ -8,7 +8,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatError, ValidationError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   JsonSelectSchema,
   JsonQuerySchema,
@@ -40,13 +40,7 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonSelectSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          rows: [],
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -85,15 +79,7 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          rows: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -116,13 +102,7 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonQuerySchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          rows: [],
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -176,15 +156,7 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          rows: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -207,13 +179,7 @@ export function createJsonValidatePathTool(): ToolDefinition {
       try {
         input = JsonValidatePathSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return Promise.resolve({
-          success: false,
-          path: "",
-          valid: false,
-          error: structured.error,
-        });
+        return Promise.resolve(formatHandlerError(error));
       }
 
       const path = input.path;
@@ -258,11 +224,7 @@ export function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinit
       try {
         input = AnalyzeJsonSchemaSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -358,13 +320,7 @@ export function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinit
           },
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };

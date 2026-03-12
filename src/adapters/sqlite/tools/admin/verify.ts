@@ -10,7 +10,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { isSpatialiteSystemIndex } from "../core/index.js";
 import {
   VerifyBackupOutputSchema,
@@ -108,7 +108,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           await adapter.executeQuery("DETACH DATABASE backup_verify");
         }
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -192,12 +192,7 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
           indexes,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          ...structured,
-          success: false,
-          indexes: [],
-        };
+        return formatHandlerError(error);
       }
     },
   };

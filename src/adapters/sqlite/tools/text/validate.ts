@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError, ValidationError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
 import {
   TextNormalizeSchema,
@@ -84,15 +84,7 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
           rows,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          rows: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -210,17 +202,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           ...(truncated ? { truncated: true } : {}),
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          totalRows: 0,
-          validCount: 0,
-          invalidCount: 0,
-          invalidRows: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Error Handling — Output Schema Migration** — All 10 output schema files (~115 schemas) now include `ErrorFieldsMixin` via `.extend(ErrorFieldsMixin.shape)`
+  - New `error-mixin.ts` defines shared mixin with all 6 `ErrorResponse` fields (`error`, `code`, `category`, `suggestion`, `recoverable`, `details`)
+  - Replaces inconsistent inline error fields (some schemas had `error`+`code`+`suggestion`, others had none)
+  - Ensures every tool's output schema can accommodate structured error responses
+- **Error Handling — Handler Migration to `formatHandlerError`** — ~108 catch blocks across ~25 handler files migrated to use `formatHandlerError()` directly
+  - Eliminates Pattern A re-wrapping (`const structured = formatError(error); return { success: false, message: structured.error }`)
+  - Eliminates Pattern B inline error construction
+  - All handler catch blocks now use `return formatHandlerError(error)` for consistent structured error responses
+  - Affected groups: core, admin, text, json-helpers, json-operations, introspection, fts, codemode, stats, vector, geo, migration
+  - 3 synchronous handlers wrapped with `Promise.resolve()` to satisfy `handler: () => Promise<unknown>` type constraint
+
 ### Added
 
 - **Error Handling — `TransactionError` Subclass** — New `TransactionError` class in `utils/errors/classes.ts` for commit/rollback/savepoint failures, using `QUERY` category with `recoverable: true`

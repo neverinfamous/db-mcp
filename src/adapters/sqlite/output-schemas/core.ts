@@ -4,37 +4,41 @@
 
 import { z } from "zod";
 import { RowRecordSchema } from "./common.js";
+import { ErrorFieldsMixin } from "./error-mixin.js";
 
 /**
  * sqlite_read_query output
  */
-export const ReadQueryOutputSchema = z.object({
-  success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(RowRecordSchema),
-  executionTimeMs: z.number().optional(),
-});
+export const ReadQueryOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number(),
+    rows: z.array(RowRecordSchema),
+    executionTimeMs: z.number().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_write_query output
  */
-export const WriteQueryOutputSchema = z.object({
-  success: z.boolean(),
-  rowsAffected: z.number(),
-  executionTimeMs: z.number().optional(),
-});
+export const WriteQueryOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowsAffected: z.number(),
+    executionTimeMs: z.number().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_create_table output
  */
-export const CreateTableOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  sql: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const CreateTableOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Table entry for list_tables
@@ -49,11 +53,13 @@ const TableEntrySchema = z.object({
 /**
  * sqlite_list_tables output
  */
-export const ListTablesOutputSchema = z.object({
-  success: z.boolean(),
-  count: z.number(),
-  tables: z.array(TableEntrySchema),
-});
+export const ListTablesOutputSchema = z
+  .object({
+    success: z.boolean(),
+    count: z.number(),
+    tables: z.array(TableEntrySchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Column info for describe_table
@@ -69,20 +75,24 @@ const ColumnInfoSchema = z.object({
 /**
  * sqlite_describe_table output
  */
-export const DescribeTableOutputSchema = z.object({
-  success: z.boolean(),
-  table: z.string(),
-  rowCount: z.number().optional(),
-  columns: z.array(ColumnInfoSchema),
-});
+export const DescribeTableOutputSchema = z
+  .object({
+    success: z.boolean(),
+    table: z.string(),
+    rowCount: z.number().optional(),
+    columns: z.array(ColumnInfoSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_drop_table output
  */
-export const DropTableOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
+export const DropTableOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Index entry for get_indexes
@@ -97,25 +107,31 @@ const IndexEntrySchema = z.object({
 /**
  * sqlite_get_indexes output
  */
-export const GetIndexesOutputSchema = z.object({
-  success: z.boolean(),
-  count: z.number(),
-  indexes: z.array(IndexEntrySchema),
-});
+export const GetIndexesOutputSchema = z
+  .object({
+    success: z.boolean(),
+    count: z.number(),
+    indexes: z.array(IndexEntrySchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_create_index output
  */
-export const CreateIndexOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  sql: z.string(),
-});
+export const CreateIndexOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+    sql: z.string(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_drop_index output
  */
-export const DropIndexOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
+export const DropIndexOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+  })
+  .extend(ErrorFieldsMixin.shape);

@@ -3,103 +3,106 @@
  */
 
 import { z } from "zod";
+import { ErrorFieldsMixin } from "./error-mixin.js";
 
 /**
  * sqlite_vacuum output
  */
-export const VacuumOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  sizeChange: z
-    .object({
-      before: z.number(),
-      after: z.number(),
-      saved: z.number(),
-    })
-    .optional(),
-});
+export const VacuumOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+    sizeChange: z
+      .object({
+        before: z.number(),
+        after: z.number(),
+        saved: z.number(),
+      })
+      .optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_backup output
  */
-export const BackupOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  path: z.string(),
-  sizeBytes: z.number().optional(),
-  durationMs: z.number().optional(),
-  wasmLimitation: z.boolean().optional(),
-  note: z.string().optional(),
-});
+export const BackupOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    path: z.string().optional(),
+    sizeBytes: z.number().optional(),
+    durationMs: z.number().optional(),
+    wasmLimitation: z.boolean().optional(),
+    note: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_analyze output
  */
-export const AnalyzeOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  tablesAnalyzed: z.number().optional(),
-  durationMs: z.number().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const AnalyzeOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    tablesAnalyzed: z.number().optional(),
+    durationMs: z.number().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_optimize output
  */
-export const OptimizeOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  operations: z.array(z.string()).optional(),
-});
+export const OptimizeOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+    operations: z.array(z.string()).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_integrity_check output
  */
-export const IntegrityCheckOutputSchema = z.object({
-  success: z.boolean(),
-  integrity: z.enum(["ok", "errors_found"]),
-  errorCount: z.number(),
-  messages: z.array(z.string()).optional(),
-});
+export const IntegrityCheckOutputSchema = z
+  .object({
+    success: z.boolean(),
+    integrity: z.enum(["ok", "errors_found"]),
+    errorCount: z.number(),
+    messages: z.array(z.string()).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_restore output
  */
-export const RestoreOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  sourcePath: z.string().optional(),
-  durationMs: z.number().optional(),
-  wasmLimitation: z.boolean().optional(),
-  skippedTables: z.array(z.string()).optional(),
-  note: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const RestoreOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    sourcePath: z.string().optional(),
+    durationMs: z.number().optional(),
+    wasmLimitation: z.boolean().optional(),
+    skippedTables: z.array(z.string()).optional(),
+    note: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_verify_backup output
  */
-export const VerifyBackupOutputSchema = z.object({
-  success: z.boolean(),
-  valid: z.boolean().optional(),
-  pageCount: z.number().optional(),
-  pageSize: z.number().optional(),
-  integrity: z.enum(["ok", "errors_found"]).optional(),
-  messages: z.array(z.string()).optional(),
-  message: z.string().optional(),
-  wasmLimitation: z.boolean().optional(),
-  backupPath: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const VerifyBackupOutputSchema = z
+  .object({
+    success: z.boolean(),
+    valid: z.boolean().optional(),
+    pageCount: z.number().optional(),
+    pageSize: z.number().optional(),
+    integrity: z.enum(["ok", "errors_found"]).optional(),
+    messages: z.array(z.string()).optional(),
+    message: z.string().optional(),
+    wasmLimitation: z.boolean().optional(),
+    backupPath: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Index column info
@@ -123,18 +126,22 @@ const IndexStatsEntrySchema = z.object({
 /**
  * sqlite_index_stats output
  */
-export const IndexStatsOutputSchema = z.object({
-  success: z.boolean(),
-  indexes: z.array(IndexStatsEntrySchema),
-});
+export const IndexStatsOutputSchema = z
+  .object({
+    success: z.boolean(),
+    indexes: z.array(IndexStatsEntrySchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_pragma_compile_options output
  */
-export const PragmaCompileOptionsOutputSchema = z.object({
-  success: z.boolean(),
-  options: z.array(z.string()),
-});
+export const PragmaCompileOptionsOutputSchema = z
+  .object({
+    success: z.boolean(),
+    options: z.array(z.string()),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Database entry for database_list
@@ -148,36 +155,38 @@ const DatabaseListEntrySchema = z.object({
 /**
  * sqlite_pragma_database_list output
  */
-export const PragmaDatabaseListOutputSchema = z.object({
-  success: z.boolean(),
-  databases: z.array(DatabaseListEntrySchema),
-  configuredPath: z.string().optional(),
-  note: z.string().optional(),
-});
+export const PragmaDatabaseListOutputSchema = z
+  .object({
+    success: z.boolean(),
+    databases: z.array(DatabaseListEntrySchema),
+    configuredPath: z.string().optional(),
+    note: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_pragma_optimize output
  */
-export const PragmaOptimizeOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  durationMs: z.number(),
-});
+export const PragmaOptimizeOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+    durationMs: z.number(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_pragma_settings output
  */
-export const PragmaSettingsOutputSchema = z.object({
-  success: z.boolean(),
-  pragma: z.string().optional(),
-  value: z.unknown().optional(),
-  oldValue: z.unknown().optional(),
-  newValue: z.unknown().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const PragmaSettingsOutputSchema = z
+  .object({
+    success: z.boolean(),
+    pragma: z.string().optional(),
+    value: z.unknown().optional(),
+    oldValue: z.unknown().optional(),
+    newValue: z.unknown().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Column info for pragma_table_info
@@ -194,8 +203,10 @@ const PragmaTableInfoColumnSchema = z.object({
 /**
  * sqlite_pragma_table_info output
  */
-export const PragmaTableInfoOutputSchema = z.object({
-  success: z.boolean(),
-  table: z.string(),
-  columns: z.array(PragmaTableInfoColumnSchema),
-});
+export const PragmaTableInfoOutputSchema = z
+  .object({
+    success: z.boolean(),
+    table: z.string(),
+    columns: z.array(PragmaTableInfoColumnSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);

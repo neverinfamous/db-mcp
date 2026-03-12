@@ -7,7 +7,7 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { ReadQuerySchema, WriteQuerySchema } from "../../types.js";
 import {
   ReadQueryOutputSchema,
@@ -32,14 +32,10 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = ReadQuerySchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
         return {
-          success: false,
+          ...formatHandlerError(error),
           rowCount: 0,
           rows: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
         };
       }
 
@@ -47,11 +43,13 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
       const trimmedQuery = input.query.trim();
       if (trimmedQuery.length === 0) {
         return {
-          success: false,
+          ...formatHandlerError(
+            new ValidationError(
+              "Query cannot be empty. Provide a valid SELECT, PRAGMA, EXPLAIN, or WITH statement.",
+            ),
+          ),
           rowCount: 0,
           rows: [],
-          error:
-            "Query cannot be empty. Provide a valid SELECT, PRAGMA, EXPLAIN, or WITH statement.",
         };
       }
 
@@ -81,10 +79,13 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         );
         if (rejectedPrefix) {
           return {
-            success: false,
+            ...formatHandlerError(
+              new ValidationError(
+                `Statement type not allowed: ${rejectedPrefix} is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL.`,
+              ),
+            ),
             rowCount: 0,
             rows: [],
-            error: `Statement type not allowed: ${rejectedPrefix} is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL.`,
           };
         }
         // Fall through to let the adapter handle unrecognized statements
@@ -103,14 +104,10 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           executionTimeMs: result.executionTimeMs,
         };
       } catch (error) {
-        const structured = formatError(error);
         return {
-          success: false,
+          ...formatHandlerError(error),
           rowCount: 0,
           rows: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
         };
       }
     },
@@ -135,13 +132,9 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = WriteQuerySchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
         return {
-          success: false,
+          ...formatHandlerError(error),
           rowsAffected: 0,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
         };
       }
 
@@ -176,15 +169,21 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         );
         if (rejectedPrefix) {
           return {
-            success: false,
+            ...formatHandlerError(
+              new ValidationError(
+                `Statement type not allowed: ${rejectedPrefix} is not a DML statement. Use sqlite_read_query for SELECT, or appropriate admin tools for DDL.`,
+              ),
+            ),
             rowsAffected: 0,
-            error: `Statement type not allowed: ${rejectedPrefix} is not a DML statement. Use sqlite_read_query for SELECT, or appropriate admin tools for DDL.`,
           };
         }
         return {
-          success: false,
+          ...formatHandlerError(
+            new ValidationError(
+              `Unrecognized statement type. sqlite_write_query only accepts INSERT, UPDATE, DELETE, or REPLACE statements.`,
+            ),
+          ),
           rowsAffected: 0,
-          error: `Unrecognized statement type. sqlite_write_query only accepts INSERT, UPDATE, DELETE, or REPLACE statements.`,
         };
       }
 
@@ -200,13 +199,9 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
           executionTimeMs: result.executionTimeMs,
         };
       } catch (error) {
-        const structured = formatError(error);
         return {
-          success: false,
+          ...formatHandlerError(error),
           rowsAffected: 0,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
         };
       }
     },

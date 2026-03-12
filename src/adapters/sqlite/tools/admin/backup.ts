@@ -12,7 +12,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { admin, readOnly } from "../../../../utils/annotations.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   buildProgressContext,
@@ -50,20 +50,18 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = BackupSchema.parse(params);
       } catch (error) {
-        return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
-          path: "",
-        };
+        return { ...formatHandlerError(error), path: "" };
       }
 
       // WASM mode: backup is not available since file system access is limited
       // Return early to avoid inconsistent VACUUM INTO behavior across WASM VFS implementations
       if (!adapter.isNativeBackend()) {
         return {
-          success: false,
-          message:
-            "Backup not available: file system access is not supported in WASM mode.",
+          ...formatHandlerError(
+            new ValidationError(
+              "Backup not available: file system access is not supported in WASM mode.",
+            ),
+          ),
           wasmLimitation: true,
           path: input.targetPath,
         };
@@ -88,11 +86,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
           durationMs: duration,
         };
       } catch (error) {
-        return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
-          path: input.targetPath,
-        };
+        return { ...formatHandlerError(error), path: input.targetPath };
       }
     },
   };
@@ -134,7 +128,7 @@ export function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
           durationMs: duration,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -271,11 +265,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = RestoreSchema.parse(params);
       } catch (error) {
-        return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
-          sourcePath: "",
-        };
+        return { ...formatHandlerError(error), sourcePath: "" };
       }
       const progress = buildProgressContext(context);
       const start = Date.now();
@@ -287,9 +277,11 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
       if (!adapter.isNativeBackend()) {
         return {
-          success: false,
-          message:
-            "Restore not available: file system access is not supported in WASM mode.",
+          ...formatHandlerError(
+            new ValidationError(
+              "Restore not available: file system access is not supported in WASM mode.",
+            ),
+          ),
           wasmLimitation: true,
           sourcePath: input.sourcePath,
         };
@@ -300,8 +292,9 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       const resolvedPath = nodePath.resolve(input.sourcePath);
       if (!fs.existsSync(resolvedPath)) {
         return {
-          success: false,
-          message: `Source file not found: ${input.sourcePath}`,
+          ...formatHandlerError(
+            new ValidationError(`Source file not found: ${input.sourcePath}`),
+          ),
           sourcePath: input.sourcePath,
         };
       }
@@ -321,11 +314,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           true,
         );
       } catch (error) {
-        return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
-          sourcePath: input.sourcePath,
-        };
+        return { ...formatHandlerError(error), sourcePath: input.sourcePath };
       }
 
       try {

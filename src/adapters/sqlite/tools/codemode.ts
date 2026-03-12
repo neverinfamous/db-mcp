@@ -25,7 +25,7 @@ import {
   type SandboxMode,
 } from "../../../codemode/sandbox-factory.js";
 import { logger } from "../../../utils/logger/index.js";
-import { formatError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
+import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
 
 // =============================================================================
 // Module State
@@ -225,19 +225,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           error: error instanceof Error ? error : undefined,
         });
 
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: errorMsg,
-          code:
-            structured.code === "UNKNOWN_ERROR"
-              ? "CODEMODE_EXECUTION_FAILED"
-              : structured.code,
-          category: structured.category,
-          suggestion: structured.suggestion,
-          recoverable: structured.recoverable,
-          metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
-        };
+        return formatHandlerError(error);
       }
     },
   };

@@ -12,7 +12,8 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { ErrorFieldsMixin } from "../../output-schemas/error-mixin.js";
 import {
   levenshtein,
   metaphone,
@@ -34,8 +35,8 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: FuzzyMatchSchema,
     outputSchema: z.object({
       success: z.boolean(),
-      matchCount: z.number(),
-      tokenized: z.boolean(),
+      matchCount: z.number().optional(),
+      tokenized: z.boolean().optional(),
       matches: z.array(
         z.object({
           value: z.string(),
@@ -43,8 +44,8 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
           tokenDistance: z.number().optional(),
           distance: z.number(),
         }),
-      ),
-    }),
+      ).optional(),
+    }).extend(ErrorFieldsMixin.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Fuzzy Match"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -114,16 +115,7 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
           matches: limited,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          matchCount: 0,
-          tokenized: ((params as { tokenize?: boolean } | null)?.tokenize) ?? true,
-          matches: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -141,16 +133,16 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
     inputSchema: PhoneticMatchSchema,
     outputSchema: z.object({
       success: z.boolean(),
-      searchCode: z.string(),
-      matchCount: z.number(),
+      searchCode: z.string().optional(),
+      matchCount: z.number().optional(),
       matches: z.array(
         z.object({
           value: z.string(),
           phoneticCode: z.string(),
           row: z.record(z.string(), z.unknown()).optional(),
         }),
-      ),
-    }),
+      ).optional(),
+    }).extend(ErrorFieldsMixin.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Phonetic Match"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -254,16 +246,7 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
           };
         }
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          searchCode: "",
-          matchCount: 0,
-          matches: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -274,9 +257,9 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
  */
 export const AdvancedSearchOutputSchema = z.object({
   success: z.boolean(),
-  searchTerm: z.string(),
-  techniques: z.array(z.string()),
-  matchCount: z.number(),
+  searchTerm: z.string().optional(),
+  techniques: z.array(z.string()).optional(),
+  matchCount: z.number().optional(),
   matches: z.array(
     z.object({
       rowid: z.number(),
@@ -285,8 +268,8 @@ export const AdvancedSearchOutputSchema = z.object({
       bestScore: z.number(),
       bestType: z.string(),
     }),
-  ),
-});
+  ).optional(),
+}).extend(ErrorFieldsMixin.shape);
 
 /**
  * Advanced search combining multiple text processing techniques
@@ -412,18 +395,7 @@ export function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition
           matches: limited,
         };
       } catch (error) {
-        const structured = formatError(error);
-        const rawParams = params as { searchTerm?: string; techniques?: string[] } | null;
-        return {
-          success: false,
-          searchTerm: rawParams?.searchTerm ?? "",
-          techniques: rawParams?.techniques ?? [],
-          matchCount: 0,
-          matches: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };

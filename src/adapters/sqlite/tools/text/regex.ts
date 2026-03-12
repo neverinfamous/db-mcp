@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
@@ -86,15 +86,7 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
           matches: extracts,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          matches: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -159,15 +151,7 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
           matches,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          matches: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -232,15 +216,7 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
           rows,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowCount: 0,
-          rows: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };

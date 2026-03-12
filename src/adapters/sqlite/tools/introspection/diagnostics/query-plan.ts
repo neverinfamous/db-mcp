@@ -11,7 +11,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import { formatError } from "../../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 
 // =============================================================================
@@ -225,8 +225,7 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
               : undefined,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return { success: false, error: structured.error };
+        return formatHandlerError(error);
       }
     },
   };

@@ -8,7 +8,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   JsonInsertSchema,
   JsonUpdateSchema,
@@ -41,12 +41,7 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonInsertSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -86,14 +81,7 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
           rowsAffected: result.rowsAffected,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -116,12 +104,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonUpdateSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -163,14 +146,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
 
         return response;
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -194,12 +170,7 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonMergeSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -228,14 +199,7 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
 
         return response;
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -259,11 +223,7 @@ export function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition
       try {
         input = CreateJsonCollectionSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -325,13 +285,7 @@ export function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition
           indexCount,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };

@@ -464,10 +464,10 @@ describe("Core Tools", () => {
           indexName: "idx_bad",
           tableName: "nonexistent_table_xyz",
           columns: ["col"],
-        })) as { success: boolean; message: string };
+        })) as { success: boolean; error: string };
 
         expect(result.success).toBe(false);
-        expect(result.message).toBeDefined();
+        expect(result.error).toBeDefined();
       });
     });
 
@@ -486,10 +486,10 @@ describe("Core Tools", () => {
         const result = (await tools.get("sqlite_drop_table")?.({
           tableName: "nonexistent_table_xyz",
           ifExists: false,
-        })) as { success: boolean; message: string };
+        })) as { success: boolean; error: string };
 
         expect(result.success).toBe(false);
-        expect(result.message).toContain("does not exist");
+        expect(result.error).toContain("does not exist");
       });
     });
 
@@ -526,10 +526,10 @@ describe("Core Tools", () => {
         const result = (await tools.get("sqlite_drop_index")?.({
           indexName: "nonexistent_index_xyz",
           ifExists: false,
-        })) as { success: boolean; message: string };
+        })) as { success: boolean; error: string };
 
         expect(result.success).toBe(false);
-        expect(result.message).toContain("does not exist");
+        expect(result.error).toContain("does not exist");
       });
     });
   });

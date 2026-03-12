@@ -11,7 +11,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   normalizeJson,
   isJsonbSupported,
@@ -44,11 +44,7 @@ export function createJsonPrettyTool(): ToolDefinition {
       try {
         input = JsonPrettySchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return Promise.resolve({
-          success: false,
-          error: structured.error,
-        });
+        return Promise.resolve(formatHandlerError(error));
       }
 
       try {
@@ -90,12 +86,7 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonbConvertSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -126,14 +117,7 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
           rowsAffected: result.rowsAffected,
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          rowsAffected: 0,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -159,11 +143,7 @@ export function createJsonStorageInfoTool(
       try {
         input = JsonStorageInfoSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -217,13 +197,7 @@ export function createJsonStorageInfoTool(
                     "No JSON data found in sample.",
         };
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -252,11 +226,7 @@ export function createJsonNormalizeColumnTool(
       try {
         input = JsonNormalizeColumnSchema.parse(params);
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -351,13 +321,7 @@ export function createJsonNormalizeColumnTool(
         }
         return result;
       } catch (error) {
-        const structured = formatError(error);
-        return {
-          success: false,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };

@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
 import {
   StatsCorrelationOutputSchema,
   StatsTopNOutputSchema,
@@ -126,7 +126,7 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
           correlation: roundedCorrelation,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -178,7 +178,7 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -223,7 +223,7 @@ export function createDistinctValuesTool(
           values: result.rows?.map((r) => r["value"]),
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -374,7 +374,7 @@ export function createSummaryStatsTool(
           summaries,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -418,7 +418,7 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
           distribution: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };

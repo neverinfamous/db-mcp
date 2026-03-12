@@ -3,6 +3,7 @@
  */
 
 import { z } from "zod";
+import { ErrorFieldsMixin } from "./error-mixin.js";
 
 // =============================================================================
 // Transaction Tool Output Schemas (7 tools - Native only)
@@ -11,91 +12,81 @@ import { z } from "zod";
 /**
  * sqlite_transaction_begin output
  */
-export const TransactionBeginOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  mode: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const TransactionBeginOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    mode: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_transaction_commit output
  */
-export const TransactionCommitOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const TransactionCommitOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_transaction_rollback output
  */
-export const TransactionRollbackOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const TransactionRollbackOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_transaction_savepoint output
  */
-export const TransactionSavepointOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  name: z.string().optional(),
-  savepoint: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const TransactionSavepointOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    name: z.string().optional(),
+    savepoint: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_transaction_release output
  */
-export const TransactionReleaseOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  name: z.string().optional(),
-  savepoint: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const TransactionReleaseOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    name: z.string().optional(),
+    savepoint: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_transaction_rollback_to output
  */
-export const TransactionRollbackToOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  name: z.string().optional(),
-  savepoint: z.string().optional(),
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-});
+export const TransactionRollbackToOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    name: z.string().optional(),
+    savepoint: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_transaction_execute output
  */
-export const TransactionExecuteOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  statementsExecuted: z.number(),
-  results: z.array(z.unknown()).optional(),
-});
+export const TransactionExecuteOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+    statementsExecuted: z.number(),
+    results: z.array(z.unknown()).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 // =============================================================================
 // Window Function Tool Output Schemas (6 tools - Native only)
@@ -113,11 +104,13 @@ const RowNumberResultSchema = z
 /**
  * sqlite_window_row_number output
  */
-export const WindowRowNumberOutputSchema = z.object({
-  success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(RowNumberResultSchema),
-});
+export const WindowRowNumberOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number(),
+    rows: z.array(RowNumberResultSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Result item with rank values
@@ -133,11 +126,13 @@ const RankResultSchema = z
 /**
  * sqlite_window_rank output
  */
-export const WindowRankOutputSchema = z.object({
-  success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(RankResultSchema),
-});
+export const WindowRankOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number(),
+    rows: z.array(RankResultSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Result item with lag/lead values
@@ -152,11 +147,13 @@ const LagLeadResultSchema = z
 /**
  * sqlite_window_lag_lead output
  */
-export const WindowLagLeadOutputSchema = z.object({
-  success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(LagLeadResultSchema),
-});
+export const WindowLagLeadOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number(),
+    rows: z.array(LagLeadResultSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Result item with running_total
@@ -170,11 +167,13 @@ const RunningTotalResultSchema = z
 /**
  * sqlite_window_running_total output
  */
-export const WindowRunningTotalOutputSchema = z.object({
-  success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(RunningTotalResultSchema),
-});
+export const WindowRunningTotalOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number(),
+    rows: z.array(RunningTotalResultSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Result item with moving_avg
@@ -188,11 +187,13 @@ const MovingAvgResultSchema = z
 /**
  * sqlite_window_moving_avg output
  */
-export const WindowMovingAvgOutputSchema = z.object({
-  success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(MovingAvgResultSchema),
-});
+export const WindowMovingAvgOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number(),
+    rows: z.array(MovingAvgResultSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 /**
  * Result item with ntile bucket
@@ -206,8 +207,10 @@ const NtileResultSchema = z
 /**
  * sqlite_window_ntile output
  */
-export const WindowNtileOutputSchema = z.object({
-  success: z.boolean(),
-  rowCount: z.number(),
-  rows: z.array(NtileResultSchema),
-});
+export const WindowNtileOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number(),
+    rows: z.array(NtileResultSchema),
+  })
+  .extend(ErrorFieldsMixin.shape);

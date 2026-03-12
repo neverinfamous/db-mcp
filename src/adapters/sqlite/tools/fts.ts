@@ -10,7 +10,7 @@ import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
-import { formatError } from "../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../utils/errors/index.js";
 import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
@@ -200,17 +200,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
             (params as { tableName?: string } | null)?.tableName,
           );
         }
-        const structured = formatError(error);
-        const parsedName =
-          (params as { tableName?: string } | null)?.tableName ?? "";
-        return {
-          success: false as const,
-          message: structured.error,
-          tableName: parsedName,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -332,15 +322,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        const structured = formatError(error);
-        return {
-          success: false as const,
-          rowCount: 0,
-          results: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -385,17 +367,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
             (params as { table?: string } | null)?.table,
           );
         }
-        const structured = formatError(error);
-        const parsedTable =
-          (params as { table?: string } | null)?.table ?? "";
-        return {
-          success: false as const,
-          message: structured.error,
-          tableName: parsedTable,
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
@@ -447,15 +419,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        const structured = formatError(error);
-        return {
-          success: false as const,
-          rowCount: 0,
-          results: [],
-          error: structured.error,
-          code: structured.code,
-          suggestion: structured.suggestion,
-        };
+        return formatHandlerError(error);
       }
     },
   };
