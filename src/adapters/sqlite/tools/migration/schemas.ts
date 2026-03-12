@@ -75,6 +75,12 @@ export const MigrationHistorySchema = z
       .number()
       .optional()
       .describe("Offset for pagination (default: 0)"),
+    compact: z
+      .boolean()
+      .optional()
+      .describe(
+        "Omit migrationHash and sourceSystem from records to reduce payload (default: false)",
+      ),
   })
   .default({});
 

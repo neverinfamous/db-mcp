@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-**Last Updated March 10, 2026**
+**Last Updated March 11, 2026**
 
 **SQLite MCP Server** with 139 specialized tools, 8 resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control and deterministic error handling. Available in WASM and better-sqlite3 variants.
 
@@ -27,6 +27,7 @@
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **139 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox — reducing token overhead by up to 90% while exposing all 139 capabilities locally      |
+| **Token-Optimized Payloads**     | Every tool response is audited for token efficiency. Tools with large payloads offer optional flags (`compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, `maxInvalid`) to reduce response size   |
 | **8 Resources**                  | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                                                         |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                        |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                             |
@@ -249,16 +250,16 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 
 MCP resources provide read-only access to database metadata:
 
-| Resource              | URI                            | Description                       | Min Config    |
-| --------------------- | ------------------------------ | --------------------------------- | ------------- |
-| `sqlite_schema`       | `sqlite://schema`              | Full database schema              | `minimal`     |
-| `sqlite_tables`       | `sqlite://tables`              | List all tables                   | `minimal`     |
+| Resource              | URI                                 | Description                       | Min Config    |
+| --------------------- | ----------------------------------- | --------------------------------- | ------------- |
+| `sqlite_schema`       | `sqlite://schema`                   | Full database schema              | `minimal`     |
+| `sqlite_tables`       | `sqlite://tables`                   | List all tables                   | `minimal`     |
 | `sqlite_table_schema` | `sqlite://table/{tableName}/schema` | Schema for a specific table       | `minimal`     |
-| `sqlite_indexes`      | `sqlite://indexes`             | All indexes in the database       | `minimal`     |
-| `sqlite_views`        | `sqlite://views`               | All views in the database         | `core,admin`  |
-| `sqlite_health`       | `sqlite://health`              | Database health and status        | _(read-only)_ |
-| `sqlite_meta`         | `sqlite://meta`                | Database metadata and PRAGMAs     | `core,admin`  |
-| `sqlite_insights`     | `memo://insights`              | Business insights memo (analysis) | `core,admin`  |
+| `sqlite_indexes`      | `sqlite://indexes`                  | All indexes in the database       | `minimal`     |
+| `sqlite_views`        | `sqlite://views`                    | All views in the database         | `core,admin`  |
+| `sqlite_health`       | `sqlite://health`                   | Database health and status        | _(read-only)_ |
+| `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
+| `sqlite_insights`     | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
 
 > **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "codemode"` for maximum token efficiency, or `--tool-filter "core,admin"` (~37 WASM / ~44 Native tools) for individual tool calls.
 

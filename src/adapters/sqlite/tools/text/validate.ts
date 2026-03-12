@@ -195,12 +195,19 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           }
         }
 
+        const totalInvalid = invalidRows.length;
+        const maxInvalid = input.maxInvalid;
+        const truncated = totalInvalid > maxInvalid;
+
         return {
           success: true,
           totalRows: result.rows?.length ?? 0,
           validCount,
-          invalidCount: invalidRows.length,
-          invalidRows,
+          invalidCount: totalInvalid,
+          invalidRows: truncated
+            ? invalidRows.slice(0, maxInvalid)
+            : invalidRows,
+          ...(truncated ? { truncated: true } : {}),
         };
       } catch (error) {
         const structured = formatError(error);

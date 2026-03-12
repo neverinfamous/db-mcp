@@ -26,6 +26,12 @@ const DependencyGraphSchema = z
       .boolean()
       .optional()
       .describe("Include row counts per table (default: true)"),
+    nodesOnly: z
+      .boolean()
+      .optional()
+      .describe(
+        "Return only nodes without edges for a lightweight response (default: false)",
+      ),
   })
   .default({});
 
@@ -46,6 +52,12 @@ const CascadeSimulatorSchema = z.object({
     .enum(["DELETE", "DROP", "TRUNCATE"])
     .optional()
     .describe("Operation to simulate (default: DELETE)"),
+  compact: z
+    .boolean()
+    .optional()
+    .describe(
+      "Omit path arrays from affected entries to reduce payload (default: false)",
+    ),
 });
 
 // =============================================================================
@@ -173,13 +185,14 @@ export function createDependencyGraphTool(
           .filter((n) => !referencingTables.has(n.table))
           .map((n) => n.table);
 
+        const nodesOnly = input.nodesOnly === true;
         return {
           success: true,
           nodes: nodes.map((n) => ({
             table: n.table,
             ...(includeRowCounts ? { rowCount: n.rowCount } : {}),
           })),
-          edges,
+          ...(!nodesOnly ? { edges } : {}),
           circularDependencies: cycles.length > 0 ? cycles : undefined,
           stats: {
             totalTables: nodes.length,
@@ -434,7 +447,9 @@ export function createCascadeSimulatorTool(
           success: true,
           sourceTable: input.table,
           operation,
-          affectedTables: affected,
+          affectedTables: input.compact
+            ? affected.map(({ path: _path, ...rest }) => rest)
+            : affected,
           severity,
           stats: {
             totalTablesAffected: affected.length,

@@ -219,7 +219,10 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
             coveringIndexes: uniqueCovering,
             estimatedEfficiency,
           },
-          suggestions: suggestions.length > 0 ? suggestions : undefined,
+          suggestions:
+            suggestions.length > 0
+              ? [...new Set(suggestions)]
+              : undefined,
         };
       } catch (error) {
         const structured = formatError(error);

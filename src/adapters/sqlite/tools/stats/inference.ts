@@ -129,13 +129,16 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
             };
           });
 
+          const maxOut = input.maxOutliers;
+          const truncated = outliers.length > maxOut;
           return {
             success: true,
             method: "zscore",
             stats: { mean, stdDev, lowerBound, upperBound },
-            outlierCount: outliers.length,
+            outlierCount: truncated ? outliers.length : outliers.length,
             totalRows: total,
-            outliers,
+            outliers: truncated ? outliers.slice(0, maxOut) : outliers,
+            ...(truncated ? { truncated: true, totalOutliers: outliers.length } : {}),
           };
         } else {
           // IQR method
@@ -185,13 +188,16 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
             };
           });
 
+          const maxOut = input.maxOutliers;
+          const truncated = outliers.length > maxOut;
           return {
             success: true,
             method: "iqr",
             stats: { q1, q3, iqr, lowerBound, upperBound },
             outlierCount: outliers.length,
             totalRows: n,
-            outliers,
+            outliers: truncated ? outliers.slice(0, maxOut) : outliers,
+            ...(truncated ? { truncated: true, totalOutliers: outliers.length } : {}),
           };
         }
       } catch (error) {

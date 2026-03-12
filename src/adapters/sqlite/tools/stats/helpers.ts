@@ -178,6 +178,15 @@ export const OutlierSchema = z.object({
     .describe("IQR multiplier (default 1.5) or Z-score threshold (default 3)"),
   whereClause: z.string().optional(),
   limit: z.number().optional().default(100),
+  maxOutliers: z
+    .number()
+    .min(1)
+    .max(500)
+    .optional()
+    .default(50)
+    .describe(
+      "Maximum number of outliers to return (default 50). Reduces payload size for large datasets.",
+    ),
 });
 
 export const RegressionSchema = z.object({

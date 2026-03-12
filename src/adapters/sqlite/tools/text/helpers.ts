@@ -138,6 +138,15 @@ export const TextValidateSchema = z.object({
     .describe("Custom regex (required if pattern=custom)"),
   whereClause: z.string().optional(),
   limit: z.number().optional().default(100),
+  maxInvalid: z
+    .number()
+    .min(1)
+    .max(500)
+    .optional()
+    .default(20)
+    .describe(
+      "Maximum number of invalid rows to return (default 20). Reduces payload size.",
+    ),
 });
 
 export const AdvancedSearchSchema = z.object({

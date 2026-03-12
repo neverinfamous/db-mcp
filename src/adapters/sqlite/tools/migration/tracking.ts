@@ -434,9 +434,15 @@ export function createMigrationHistoryTool(
 
         const records = (result.rows ?? []).map(toMigrationRecord);
 
+        const outputRecords = input.compact
+          ? records.map(
+              ({ migrationHash: _h, sourceSystem: _s, ...rest }) => rest,
+            )
+          : records;
+
         return {
           success: true,
-          records,
+          records: outputRecords,
           total,
           limit,
           offset,

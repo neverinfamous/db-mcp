@@ -24,6 +24,12 @@ const IndexAuditSchema = z
       .string()
       .optional()
       .describe("Optional table name to audit (default: all tables)"),
+    minSeverity: z
+      .enum(["info", "warning", "error"])
+      .optional()
+      .describe(
+        "Minimum severity to include in findings (default: all). Reduces payload for large databases.",
+      ),
   })
   .default({});
 
@@ -238,10 +244,19 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
           (f) => f.type === "unindexed_large_table",
         ).length;
 
+        // Apply severity filter if specified
+        const severityOrder = { info: 0, warning: 1, error: 2 };
+        const minSev = input.minSeverity;
+        const filteredFindings = minSev
+          ? findings.filter(
+              (f) => severityOrder[f.severity] >= severityOrder[minSev],
+            )
+          : findings;
+
         return {
           success: true,
           totalIndexes: indexes.length,
-          findings,
+          findings: filteredFindings,
           summary: {
             redundant: redundantCount,
             missingFk: missingFkCount,
