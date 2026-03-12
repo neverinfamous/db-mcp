@@ -137,7 +137,7 @@ Specify exactly the groups you need:
 | `minimal`    | 10     | 10     | +3         | Core only                      |
 | `full`       | 115    | 139    | +3         | Everything enabled             |
 
-### Tool Groups (9 Available)
+### Tool Groups (10 Available)
 
 > **Note:** +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
 
