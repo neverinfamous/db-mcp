@@ -51,7 +51,7 @@ export class DbMcpServer {
       // Add all tools from enabled groups to the set
       enabledTools.add(group);
     }
-    const instructions = generateInstructions(enabledTools, [], []);
+    const instructions = generateInstructions(enabledTools, [], [], config.instructionLevel);
 
     // Initialize MCP server with logging capability and instructions
     this.server = new McpServer(

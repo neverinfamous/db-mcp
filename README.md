@@ -323,23 +323,24 @@ MCP prompts provide AI-assisted database workflows:
 
 ### Environment Variables
 
-| Variable                | Default   | Description                                                    |
-| ----------------------- | --------- | -------------------------------------------------------------- |
-| `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                      |
-| `SQLITE_DATABASE`       | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)     |
-| `DB_MCP_TOOL_FILTER`    | —         | Tool filter string (CLI: `--tool-filter`)                      |
-| `MCP_AUTH_TOKEN`        | —         | Simple bearer token for HTTP auth (CLI: `--auth-token`)        |
-| `OAUTH_ENABLED`         | `false`   | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                      |
-| `OAUTH_ISSUER`          | —         | Authorization server URL (CLI: `--oauth-issuer`)               |
-| `OAUTH_AUDIENCE`        | —         | Expected token audience (CLI: `--oauth-audience`)              |
-| `OAUTH_JWKS_URI`        | —         | JWKS URI, auto-discovered if omitted (CLI: `--oauth-jwks-uri`) |
-| `OAUTH_CLOCK_TOLERANCE` | `60`      | Clock tolerance in seconds (CLI: `--oauth-clock-tolerance`)    |
-| `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`             |
-| `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations)    |
-| `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced isolation) or `vm`       |
-| `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                    |
-| `CSV_EXTENSION_PATH`    | —         | Custom path to CSV extension binary (native only)              |
-| `SPATIALITE_PATH`       | —         | Custom path to SpatiaLite extension binary (native only)       |
+| Variable                | Default    | Description                                                    |
+| ----------------------- | ---------- | -------------------------------------------------------------- |
+| `MCP_HOST`              | `0.0.0.0`  | Host/IP to bind to (CLI: `--server-host`)                      |
+| `SQLITE_DATABASE`       | —          | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)     |
+| `DB_MCP_TOOL_FILTER`    | —          | Tool filter string (CLI: `--tool-filter`)                      |
+| `INSTRUCTION_LEVEL`     | `standard` | Briefing depth: `essential`, `standard`, `full` (CLI: `--instruction-level`) |
+| `MCP_AUTH_TOKEN`        | —          | Simple bearer token for HTTP auth (CLI: `--auth-token`)        |
+| `OAUTH_ENABLED`         | `false`    | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                      |
+| `OAUTH_ISSUER`          | —          | Authorization server URL (CLI: `--oauth-issuer`)               |
+| `OAUTH_AUDIENCE`        | —          | Expected token audience (CLI: `--oauth-audience`)              |
+| `OAUTH_JWKS_URI`        | —          | JWKS URI, auto-discovered if omitted (CLI: `--oauth-jwks-uri`) |
+| `OAUTH_CLOCK_TOLERANCE` | `60`       | Clock tolerance in seconds (CLI: `--oauth-clock-tolerance`)    |
+| `LOG_LEVEL`             | `info`     | Log verbosity: `debug`, `info`, `warning`, `error`             |
+| `METADATA_CACHE_TTL_MS` | `5000`     | Schema cache TTL in ms (auto-invalidated on DDL operations)    |
+| `CODEMODE_ISOLATION`    | `worker`   | Code Mode sandbox: `worker` (enhanced isolation) or `vm`       |
+| `MCP_RATE_LIMIT_MAX`    | `100`      | Max requests/minute per IP (HTTP transport)                    |
+| `CSV_EXTENSION_PATH`    | —          | Custom path to CSV extension binary (native only)              |
+| `SPATIALITE_PATH`       | —          | Custom path to SpatiaLite extension binary (native only)       |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
@@ -352,7 +353,7 @@ Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --
 Auth:         --auth-token <token>  |  --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>
 Extensions:   --csv  --spatialite                         (native only)
-Server:       --name <name>  --version <ver>  --tool-filter <filter>
+Server:       --name <name>  --version <ver>  --tool-filter <filter>  --instruction-level <essential|standard|full>
 ```
 
 > CLI flags override environment variables. Run `node dist/cli.js --help` for full details.

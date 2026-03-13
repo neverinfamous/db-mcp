@@ -296,7 +296,8 @@ docker run -i --rm \
 | ----------------------- | --------- | ----------------------------------------------------------- |
 | `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (`--server-host`)                        |
 | `SQLITE_DATABASE`       | —         | SQLite database path (`--sqlite` / `--sqlite-native`)       |
-| `DB_MCP_TOOL_FILTER`    | —         | Tool filter string (`--tool-filter`)                        |
+| `DB_MCP_TOOL_FILTER`    | —          | Tool filter string (`--tool-filter`)                        |
+| `INSTRUCTION_LEVEL`     | `standard` | Briefing depth: `essential`, `standard`, `full` (`--instruction-level`) |
 | `MCP_AUTH_TOKEN`        | —         | Simple bearer token for HTTP auth (`--auth-token`)          |
 | `OAUTH_ENABLED`         | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                        |
 | `OAUTH_ISSUER`          | —         | Authorization server URL (`--oauth-issuer`)                 |

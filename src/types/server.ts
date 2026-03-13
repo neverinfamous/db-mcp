@@ -54,4 +54,12 @@ export interface McpServerConfig {
    * Default: false (stateful mode with session management and SSE support)
    */
   statelessHttp?: boolean;
+
+  /**
+   * Instruction detail level for AI client briefings.
+   * - essential: ~200 tokens (core behaviors only)
+   * - standard: ~400 tokens (+ tool filtering reference) [default]
+   * - full: ~600 tokens (+ complete tool/resource reference)
+   */
+  instructionLevel?: "essential" | "standard" | "full";
 }
