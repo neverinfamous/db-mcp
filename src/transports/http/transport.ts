@@ -14,6 +14,7 @@
 import express, { type RequestHandler } from "express";
 import type { Request, Response } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { localhostHostValidation } from "@modelcontextprotocol/sdk/server/middleware/hostHeaderValidation.js";
 import { oauthErrorHandler } from "../../auth/middleware/index.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import { DbMcpError } from "../../utils/errors/base.js";
@@ -99,6 +100,9 @@ export class HttpTransport {
 
     // Create Express app
     this.state.app = express();
+
+    // DNS rebinding protection — reject requests with unrecognized Host headers
+    this.state.app.use(localhostHostValidation() as unknown as RequestHandler);
 
     // Security headers on all responses
     setupSecurityHeaders(this.state);

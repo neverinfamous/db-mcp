@@ -52,6 +52,9 @@ export interface ToolAnnotations {
 
   /** If true, the operation is irreversible or causes significant data loss */
   destructiveHint?: boolean;
+
+  /** If true, the tool interacts with external/"open world" systems (network, filesystem, etc.) */
+  openWorldHint?: boolean;
 }
 
 // =============================================================================

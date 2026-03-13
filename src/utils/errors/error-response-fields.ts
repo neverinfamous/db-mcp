@@ -4,6 +4,8 @@
  * Defines the ErrorResponseFields Zod schema fragment that gets extended into
  * every output schema. This ensures formatHandlerErrorResponse() responses pass
  * output schema validation (MCP SDK enforces additionalProperties: false).
+ *
+ * This is the 6-field standard required by the mcp-builder skill (§2.2.2).
  */
 
 import { z } from "zod";
@@ -14,6 +16,10 @@ import { z } from "zod";
  *   export const MyOutputSchema = z.object({ ... }).extend(ErrorResponseFields.shape);
  */
 export const ErrorResponseFields = z.object({
+  error: z
+    .string()
+    .optional()
+    .describe("Error message (human-readable)"),
   code: z
     .string()
     .optional()

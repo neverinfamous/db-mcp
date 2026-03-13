@@ -128,6 +128,7 @@ export class DbMcpServer {
   private registerBuiltInTools(): void {
     // Build options with icons (SDK type doesn't include icons, so we cast)
     const serverInfoOpts: Record<string, unknown> = {
+      title: "Server Info",
       description:
         "Get information about the db-mcp server and registered adapters",
       icons: SERVER_ICONS,
@@ -172,6 +173,7 @@ export class DbMcpServer {
 
     // Health check tool
     const healthOpts: Record<string, unknown> = {
+      title: "Server Health",
       description: "Check health status of all database connections",
       icons: SERVER_ICONS,
     };
@@ -211,6 +213,7 @@ export class DbMcpServer {
 
     // List adapters tool
     const listAdaptersOpts: Record<string, unknown> = {
+      title: "List Adapters",
       description: "List all registered database adapters",
       icons: SERVER_ICONS,
     };

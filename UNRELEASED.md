@@ -10,12 +10,18 @@
 - **Code Quality Audit**: Removed dead code by deleting unused barrel files (`src/auth/index.ts` and `src/transports/index.ts`).
 - **Performance Audit**: Disabled source maps generation in the production build to significantly reduce bundle size (from 3.7MB to 1.5MB), optimized sandbox serialization to reduce runtime memory allocations, and added caching to schema introspection tools via `SchemaManager`.
 - **Unified Audit**: Enabled code splitting in `tsup.config.ts` to deduplicate shared modules across the 3 entry points.
+- **MCP Compliance**: Added `openWorldHint: false` to all tool annotation presets and `openWorldHint` to the `ToolAnnotations` type interface.
+- **MCP Compliance**: Added `title` to built-in server tools (`server_info`, `server_health`, `list_adapters`).
+- **MCP Compliance**: Added `error` field to `ErrorResponseFields` mixin (was 5 fields, now 6 per mcp-builder §2.2.2).
+- **MCP Compliance**: Created `src/auth/transport-agnostic.ts` re-exporting non-Express auth utilities for transport portability.
 
 ## Security
 - **Strict Validation**: Hardened all Zod tool input schemas across sqlite and native-sqlite adapters using `.strict()` to reject unknown fields.
 - **SQL Injection**: Added strong regex validation to `savepoint` names in the Native SQLite transaction methods to prevent potential arbitrary SQL injection.
 - **CORS Advisory**: Updated `README.md` and `DOCKER_README.md` to explicitly warn about the permissive `["*"]` default CORS property in production HTTP deployments.
 - **Unified Audit**: SHA-pinned all GitHub Actions in `lint-and-test.yml` and `e2e.yml` for supply chain safety. Updated stale v4 SHAs to current v6 in `e2e.yml`. Removed manually-maintained `LABEL version` from `Dockerfile` to prevent version drift. Fixed `flatted` dependency vulnerability (GHSA-25h7-pfq9-p65f).
+- **DNS Rebinding**: Added `localhostHostValidation()` middleware from MCP SDK to the HTTP transport to prevent DNS rebinding attacks.
+- **Supply Chain**: SHA-pinned remaining 2 un-pinned CI actions (`actions/checkout`, `actions/setup-node`) in the benchmarks job of `lint-and-test.yml`.
 
 ## Fixed
 - **Validation Leaks**: Fixed Zod output schema errors in JSON tools (`sqlite_json_valid`, `sqlite_json_validate_path`) and core tools (`sqlite_drop_table`, `sqlite_create_index`, `sqlite_drop_index`) that caused the server to return raw MCP `-32602` validation frames instead of structured domain errors, by marking conditional message fields as optional.
