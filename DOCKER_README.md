@@ -161,10 +161,23 @@ Specify exactly the groups you need:
 | -------- | -------- | --------------- | --------------------------------------------- |
 | _(none)_ | Shortcut | `starter`       | **Whitelist Mode:** Enable ONLY this shortcut |
 | _(none)_ | Group    | `core`          | **Whitelist Mode:** Enable ONLY this group    |
+| _(none)_ | Tool     | `read_query`    | **Whitelist Mode:** Enable ONLY this tool     |
 | `+`      | Group    | `+vector`       | Add tools from this group to current set      |
 | `-`      | Group    | `-admin`        | Remove tools in this group from current set   |
 | `+`      | Tool     | `+fuzzy_search` | Add one specific tool                         |
 | `-`      | Tool     | `-drop_table`   | Remove one specific tool                      |
+
+#### Custom Tool Selection
+
+You can list individual tool names (without `+` prefix) to create a fully custom whitelist — only the tools you specify will be enabled:
+
+```bash
+# Enable exactly 3 tools
+--tool-filter "read_query,write_query,list_tables"
+
+# Mix tools from different groups
+--tool-filter "read_query,fuzzy_search,vector_search"
+```
 
 **Examples:**
 
