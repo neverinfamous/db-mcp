@@ -136,6 +136,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
+      openWorldHint: false,
     },
     handler: async (
       params: unknown,

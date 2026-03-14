@@ -63,6 +63,44 @@ To validate WASM mode produces identical results for shared tools:
 5. **Verify absent tools**: Calling a Native-only tool in WASM mode should return a structured error (not crash)
 6. **Key groups to verify**: text (FTS5 absent), stats (window functions absent), admin (transactions absent), geo (SpatiaLite absent)
 
+## Integration Test Scripts
+
+These scripts test features that require separate server processes — they **cannot** be run via MCP tool calls. All scripts are Node.js (`.mjs`), require no dependencies beyond Node.js, and exit with code 0 on success.
+
+> [!IMPORTANT]
+> Always `npm run build` before running these scripts — they execute `dist/cli.js` directly.
+
+### Script Reference
+
+| Script                        | Tests                                                         | Transport | Duration |
+| ----------------------------- | ------------------------------------------------------------- | --------- | -------- |
+| `test-instruction-levels.mjs` | `--instruction-level` essential/standard/full token ordering  | stdio     | ~10s     |
+| `test-tool-annotations.mjs`   | `tools/list` openWorldHint annotation presence and consistency | stdio     | ~5s      |
+
+### Quick Run
+
+```powershell
+cd C:\Users\chris\Desktop\db-mcp
+npm run build
+
+# Instruction levels
+node test-database/test-instruction-levels.mjs
+
+# Tool annotations
+node test-database/test-tool-annotations.mjs
+```
+
+### Success Criteria
+
+#### Instruction Levels
+- [ ] essential < standard < full (character count ordering)
+- [ ] No runtime errors in server logs
+
+#### Tool Annotations
+- [ ] All tools have `annotations` object with `openWorldHint` set
+- [ ] All `openWorldHint` values are `false` (db-mcp tools are local-only)
+- [ ] 0 missing annotations
+
 ## Agent Workflow
 
 1. Read `src/constants/server-instructions.md` (via `view_file`).
@@ -72,3 +110,4 @@ To validate WASM mode produces identical results for shared tools:
 5. Clean up any temporary tables generated during execution.
 6. Report findings using the designated reporting convention.
 7. (Optional) Run stress tests from `test-tools-advanced-1.md` or `test-tools-advanced-2.md`.
+

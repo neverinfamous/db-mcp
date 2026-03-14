@@ -23,6 +23,7 @@ import {
 import { generateInstructions } from "../constants/server-instructions.js";
 import { logger } from "../utils/logger/index.js";
 import { SERVER_ICONS } from "../utils/icons.js";
+import { READ_ONLY } from "../utils/annotations.js";
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
 
@@ -132,6 +133,7 @@ export class DbMcpServer {
       description:
         "Get information about the db-mcp server and registered adapters",
       icons: SERVER_ICONS,
+      annotations: READ_ONLY,
     };
 
     // Server info tool
@@ -176,6 +178,7 @@ export class DbMcpServer {
       title: "Server Health",
       description: "Check health status of all database connections",
       icons: SERVER_ICONS,
+      annotations: READ_ONLY,
     };
 
     this.server.registerTool(
@@ -216,6 +219,7 @@ export class DbMcpServer {
       title: "List Adapters",
       description: "List all registered database adapters",
       icons: SERVER_ICONS,
+      annotations: READ_ONLY,
     };
 
     this.server.registerTool(
