@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../types/index.js";
-import { formatError } from "../../utils/errors/index.js";
+import { formatHandlerError } from "../../utils/errors/index.js";
 
 // Interface for the adapter methods needed by tool registration
 export interface ToolRegistrationAdapter {
@@ -88,7 +88,7 @@ export function registerToolImpl(adapter: ToolRegistrationAdapter, server: McpSe
           ],
         };
       } catch (error) {
-        const structured = formatError(error);
+        const structured = formatHandlerError(error);
         return {
           content: [
             {

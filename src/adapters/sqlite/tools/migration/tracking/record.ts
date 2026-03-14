@@ -1,7 +1,7 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
-import { formatHandlerErrorResponse } from "../../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
   MIGRATIONS_TABLE,
   MigrationRecordSchema,
@@ -74,7 +74,7 @@ export function createMigrationRecordTool(
           record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

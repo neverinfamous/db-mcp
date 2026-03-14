@@ -5,7 +5,7 @@
  * - Error class instantiation and properties
  * - Pattern-based suggestion matching
  * - Error categorization
- * - formatError and wrapError utilities
+ * - formatHandlerError and wrapError utilities
  * - Error response structure
  *
  * Phase 2 of db-mcp Security Test Coverage Improvement Plan
@@ -22,7 +22,7 @@ import {
   ConfigurationError,
   InternalError,
   ErrorCategory,
-  formatError,
+  formatHandlerError,
   wrapError,
   isDbMcpError,
 } from "../../src/utils/errors/index.js";
@@ -254,13 +254,13 @@ describe("Pattern-based suggestions", () => {
 // Utility Function Tests
 // =============================================================================
 
-describe("formatError", () => {
+describe("formatHandlerError", () => {
   it("should format DbMcpError", () => {
     const error = new ValidationError("Invalid input", "INVALID", {
       suggestion: "Fix it",
     });
 
-    const response = formatError(error);
+    const response = formatHandlerError(error);
 
     expect(response.success).toBe(false);
     expect(response.error).toBe("Invalid input");
@@ -272,7 +272,7 @@ describe("formatError", () => {
   it("should format standard Error", () => {
     const error = new Error("Something went wrong");
 
-    const response = formatError(error);
+    const response = formatHandlerError(error);
 
     expect(response.success).toBe(false);
     expect(response.error).toBe("Something went wrong");
@@ -280,7 +280,7 @@ describe("formatError", () => {
   });
 
   it("should format non-Error values", () => {
-    const response = formatError("string error");
+    const response = formatHandlerError("string error");
 
     expect(response.success).toBe(false);
     expect(response.error).toBe("string error");
@@ -291,7 +291,7 @@ describe("formatError", () => {
   it("should apply pattern suggestions to standard errors", () => {
     const error = new Error("no such table: users");
 
-    const response = formatError(error);
+    const response = formatHandlerError(error);
 
     expect(response.suggestion).toContain("sqlite_list_tables");
   });

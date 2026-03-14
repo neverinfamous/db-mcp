@@ -1,7 +1,7 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
-import { formatHandlerErrorResponse } from "../../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
   MIGRATIONS_TABLE,
   MigrationApplySchema,
@@ -64,7 +64,7 @@ export function createMigrationApplyTool(
               input.appliedBy ?? null,
             ],
           );
-          const structured = formatHandlerErrorResponse(execError);
+          const structured = formatHandlerError(execError);
           return {
             success: false,
             error: `Migration execution failed: ${structured.error}`,
@@ -97,7 +97,7 @@ export function createMigrationApplyTool(
           record: record ? toMigrationRecord(record) : undefined,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

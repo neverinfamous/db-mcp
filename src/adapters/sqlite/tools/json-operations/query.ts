@@ -11,7 +11,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   JsonKeysOutputSchema,
   JsonEachOutputSchema,
@@ -40,7 +40,7 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonKeysSchema.parse(params);
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
 
       try {
@@ -85,7 +85,7 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
           keys: keys,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -108,7 +108,7 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = JsonEachSchema.parse(params);
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
 
       try {
@@ -151,7 +151,7 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
           elements: result.rows,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -177,7 +177,7 @@ export function createJsonGroupArrayTool(
       try {
         input = JsonGroupArraySchema.parse(params);
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
 
       try {
@@ -226,7 +226,7 @@ export function createJsonGroupArrayTool(
           rows: result.rows ?? [],
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -252,7 +252,7 @@ export function createJsonGroupObjectTool(
       try {
         input = JsonGroupObjectSchema.parse(params);
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
 
       try {
@@ -365,7 +365,7 @@ export function createJsonGroupObjectTool(
           ...(duplicateKeyWarning && { hint: duplicateKeyWarning }),
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

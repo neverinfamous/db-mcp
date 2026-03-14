@@ -22,8 +22,7 @@ export {
 export {
   type ErrorResponse,
   type ErrorContext,
-  formatHandlerErrorResponse,
-  formatError,
+  formatHandlerError,
   wrapError,
   isDbMcpError,
 } from "./format.js";

@@ -12,7 +12,7 @@
 
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
-import { formatError } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   LoadSpatialiteSchema,
   CreateSpatialTableSchema,
@@ -67,7 +67,7 @@ export function createLoadSpatialiteTool(
           searchedPaths: SPATIALITE_PATHS,
         });
       } catch (error) {
-        return Promise.resolve(formatError(error));
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };
@@ -155,7 +155,7 @@ export function createSpatialTableTool(
           srid: input.srid,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -187,7 +187,7 @@ export function createSpatialQueryTool(
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -326,7 +326,7 @@ export function createSpatialIndexTool(
           }
         }
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };

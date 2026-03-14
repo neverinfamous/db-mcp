@@ -1,7 +1,7 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { admin } from "../../../../../utils/annotations.js";
-import { formatHandlerErrorResponse } from "../../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { AnalyzeOutputSchema } from "../../../output-schemas/index.js";
 import { AnalyzeSchema } from "../helpers.js";
@@ -42,7 +42,7 @@ export function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
           durationMs: duration,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { ErrorFieldsMixin } from "../../output-schemas/error-mixin.js";
 import {
   levenshtein,
@@ -116,7 +116,7 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
           matches: limited,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -247,7 +247,7 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
           };
         }
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -396,7 +396,7 @@ export function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition
           matches: limited,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

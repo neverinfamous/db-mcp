@@ -3,7 +3,7 @@ import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { validateWhereClause, sanitizeIdentifier } from "../../../../../utils/index.js";
-import { formatHandlerErrorResponse, DbMcpError, ErrorCategory } from "../../../../../utils/errors/index.js";
+import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../../../utils/errors/index.js";
 import { validateColumnExists, validateNumericColumn, HypothesisSchema } from "../helpers.js";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { tDistPValue } from "../math-helpers.js";
@@ -235,7 +235,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

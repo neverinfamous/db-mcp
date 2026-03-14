@@ -3,7 +3,7 @@ import nodePath from "node:path";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { admin } from "../../../../../utils/annotations.js";
-import { formatHandlerErrorResponse, ValidationError } from "../../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../../utils/errors/index.js";
 import { buildProgressContext, sendProgress } from "../../../../../utils/progress-utils.js";
 import { RestoreOutputSchema } from "../../../output-schemas/index.js";
 import { RestoreSchema } from "../helpers.js";
@@ -26,7 +26,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = RestoreSchema.parse(params);
       } catch (error) {
-        return { ...formatHandlerErrorResponse(error), sourcePath: "" };
+        return { ...formatHandlerError(error), sourcePath: "" };
       }
       const progress = buildProgressContext(context);
       const start = Date.now();
@@ -35,7 +35,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (!adapter.isNativeBackend()) {
         return {
-          ...formatHandlerErrorResponse(
+          ...formatHandlerError(
             new ValidationError(
               "Restore not available: file system access is not supported in WASM mode.",
             ),
@@ -48,7 +48,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       const resolvedPath = nodePath.resolve(input.sourcePath);
       if (!fs.existsSync(resolvedPath)) {
         return {
-          ...formatHandlerErrorResponse(
+          ...formatHandlerError(
             new ValidationError(`Source file not found: ${input.sourcePath}`),
           ),
           sourcePath: input.sourcePath,
@@ -68,7 +68,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           true,
         );
       } catch (error) {
-        return { ...formatHandlerErrorResponse(error), sourcePath: input.sourcePath };
+        return { ...formatHandlerError(error), sourcePath: input.sourcePath };
       }
 
       try {

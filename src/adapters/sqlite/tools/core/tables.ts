@@ -16,7 +16,7 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerErrorResponse, ValidationError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   CreateTableSchema,
   ListTablesSchema,
@@ -125,7 +125,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = CreateTableSchema.parse(params);
       } catch (error) {
-        return { ...formatHandlerErrorResponse(error), sql: "" };
+        return { ...formatHandlerError(error), sql: "" };
       }
 
       // Validate table name
@@ -133,7 +133,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.tableName);
       } catch {
         return {
-          ...formatHandlerErrorResponse(
+          ...formatHandlerError(
             new ValidationError(
               `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
             ),
@@ -145,7 +145,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate columns
       if (input.columns.length === 0) {
         return {
-          ...formatHandlerErrorResponse(
+          ...formatHandlerError(
             new ValidationError("At least one column definition is required"),
           ),
           sql: "",
@@ -274,7 +274,7 @@ export function createDescribeTableTool(
         input = DescribeTableSchema.parse(params);
       } catch (error) {
         return {
-          ...formatHandlerErrorResponse(error),
+          ...formatHandlerError(error),
           table: "",
           columns: [],
         };
@@ -287,7 +287,7 @@ export function createDescribeTableTool(
       );
       if ((checkResult.rows?.length ?? 0) === 0) {
         return {
-          ...formatHandlerErrorResponse(
+          ...formatHandlerError(
             new ValidationError(
               `Table '${input.tableName}' does not exist`,
               "TABLE_NOT_FOUND",
@@ -313,7 +313,7 @@ export function createDescribeTableTool(
         };
       } catch (error) {
         return {
-          ...formatHandlerErrorResponse(error),
+          ...formatHandlerError(error),
           table: input.tableName,
           columns: [],
         };
@@ -340,14 +340,14 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = DropTableSchema.parse(params);
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
 
       // Validate table name
       try {
         sanitizeIdentifier(input.tableName);
       } catch {
-        return formatHandlerErrorResponse(
+        return formatHandlerError(
           new ValidationError(
             `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
           ),
@@ -368,7 +368,7 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
             message: `Table '${input.tableName}' does not exist (no changes made)`,
           };
         }
-        return formatHandlerErrorResponse(
+        return formatHandlerError(
           new ValidationError(`Table '${input.tableName}' does not exist`),
         );
       }
@@ -382,7 +382,7 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
           message: `Table '${input.tableName}' dropped successfully`,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

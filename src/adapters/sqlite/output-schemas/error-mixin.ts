@@ -1,17 +1,10 @@
 /**
  * Error Fields Mixin
  *
- * Shared Zod schema for enriched error fields returned by formatHandlerErrorResponse().
- * Merge into any output schema: `MySchema.merge(ErrorFieldsMixin)`.
+ * Re-exports ErrorResponseFields from the canonical location as ErrorFieldsMixin.
+ * This keeps backward compatibility for output-schema files that import from here.
+ *
+ * Single source of truth: src/utils/errors/error-response-fields.ts
  */
 
-import { z } from "zod";
-
-export const ErrorFieldsMixin = z.object({
-  error: z.string().optional(),
-  code: z.string().optional(),
-  category: z.string().optional(),
-  suggestion: z.string().optional(),
-  recoverable: z.boolean().optional(),
-  details: z.record(z.string(), z.unknown()).optional(),
-});
+export { ErrorResponseFields as ErrorFieldsMixin } from "../../../utils/errors/error-response-fields.js";

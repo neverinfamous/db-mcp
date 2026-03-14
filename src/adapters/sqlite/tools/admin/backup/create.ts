@@ -2,7 +2,7 @@ import nodePath from "node:path";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { admin } from "../../../../../utils/annotations.js";
-import { formatHandlerErrorResponse, ValidationError } from "../../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../../utils/errors/index.js";
 import { BackupOutputSchema } from "../../../output-schemas/index.js";
 import { BackupSchema } from "../helpers.js";
 
@@ -23,12 +23,12 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = BackupSchema.parse(params);
       } catch (error) {
-        return { ...formatHandlerErrorResponse(error), path: "" };
+        return { ...formatHandlerError(error), path: "" };
       }
 
       if (!adapter.isNativeBackend()) {
         return {
-          ...formatHandlerErrorResponse(
+          ...formatHandlerError(
             new ValidationError(
               "Backup not available: file system access is not supported in WASM mode.",
             ),
@@ -54,7 +54,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
           durationMs: duration,
         };
       } catch (error) {
-        return { ...formatHandlerErrorResponse(error), path: input.targetPath };
+        return { ...formatHandlerError(error), path: input.targetPath };
       }
     },
   };

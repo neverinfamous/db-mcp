@@ -10,7 +10,7 @@ import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
-import { formatHandlerErrorResponse } from "../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../utils/errors/index.js";
 import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
@@ -200,7 +200,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
             (params as { tableName?: string } | null)?.tableName,
           );
         }
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -322,7 +322,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -367,7 +367,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
             (params as { table?: string } | null)?.table,
           );
         }
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -419,7 +419,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerErrorResponse } from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   RegexReplaceOutputSchema,
 } from "../../output-schemas/index.js";
@@ -63,7 +63,7 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
           values: result.rows?.map((r) => r["concatenated"]),
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -102,7 +102,7 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
           rowsAffected: result.rowsAffected,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -154,7 +154,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
           results: result.rows,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -196,7 +196,7 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
           results: result.rows,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -241,7 +241,7 @@ export function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition 
           results: result.rows,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

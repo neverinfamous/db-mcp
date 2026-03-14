@@ -19,6 +19,9 @@
 - **MCP Compliance**: Added `title` to built-in server tools (`server_info`, `server_health`, `list_adapters`).
 - **MCP Compliance**: Added `error` field to `ErrorResponseFields` mixin (was 5 fields, now 6 per mcp-builder §2.2.2).
 - **MCP Compliance**: Created `src/auth/transport-agnostic.ts` re-exporting non-Express auth utilities for transport portability.
+- **MCP Compliance**: Renamed `formatHandlerErrorResponse` → `formatHandlerError` across all tool handlers, tests, and barrel exports per mcp-builder §2.2.2 single-formatter standard. Old name preserved as deprecated alias in `format.ts`.
+- **MCP Compliance**: Wired prompt `argsSchema` to SDK registration — prompts with required arguments now expose typed schemas via `prompts/list`. All-optional and zero-arg prompts correctly omit `argsSchema` per SDK gotcha (§1.4).
+- **MCP Compliance**: Consolidated duplicate `ErrorFieldsMixin` / `ErrorResponseFields` to single source of truth in `src/utils/errors/error-response-fields.ts` with re-export alias.
 - **MCP Compliance**: Wired `--instruction-level` CLI flag and `INSTRUCTION_LEVEL` env var to `generateInstructions()` — allows choosing `essential` (~1K tokens), `standard` (default, ~1.2K tokens), or `full` (~4.1K tokens) briefing depth.
 - **HSTS**: Wired `--enable-hsts` CLI flag and `MCP_ENABLE_HSTS` env var to the HTTP transport — previously defined in types but never reachable from the CLI.
 

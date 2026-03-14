@@ -15,7 +15,7 @@ import {
   sanitizeIdentifier,
   createColumnList,
 } from "../../../utils/index.js";
-import { formatHandlerErrorResponse, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
+import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
 import {
   GeoDistanceOutputSchema,
   GeoWithinRadiusOutputSchema,
@@ -169,7 +169,7 @@ function createGeoDistanceTool(): ToolDefinition {
           to: { lat: input.lat2, lon: input.lon2 },
         });
       } catch (error) {
-        return Promise.resolve(formatHandlerErrorResponse(error));
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };
@@ -277,7 +277,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
           results,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -334,7 +334,7 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
           results: result.rows ?? [],
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -400,7 +400,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
           clusters,
         };
       } catch (error) {
-        return formatHandlerErrorResponse(error);
+        return formatHandlerError(error);
       }
     },
   };

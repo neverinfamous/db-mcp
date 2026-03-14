@@ -7,7 +7,7 @@
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
-import { formatError } from "../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../utils/errors/index.js";
 
 // Schemas
 const BeginTransactionSchema = z.object({
@@ -84,7 +84,7 @@ function createBeginTransactionTool(
           mode: input.mode,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -112,7 +112,7 @@ function createCommitTransactionTool(
           message: "Transaction committed",
         });
       } catch (error) {
-        return Promise.resolve(formatError(error));
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };
@@ -139,7 +139,7 @@ function createRollbackTransactionTool(
           message: "Transaction rolled back",
         });
       } catch (error) {
-        return Promise.resolve(formatError(error));
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };
@@ -175,7 +175,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
           savepoint: input.name,
         });
       } catch (error) {
-        return Promise.resolve(formatError(error));
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };
@@ -213,7 +213,7 @@ function createReleaseSavepointTool(
           savepoint: input.name,
         });
       } catch (error) {
-        return Promise.resolve(formatError(error));
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };
@@ -251,7 +251,7 @@ function createRollbackToSavepointTool(
           savepoint: input.name,
         });
       } catch (error) {
-        return Promise.resolve(formatError(error));
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };

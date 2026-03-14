@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { validateWhereClause } from "../../../utils/index.js";
-import { formatError } from "../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../utils/errors/index.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
 import { ErrorCategory } from "../../../utils/errors/categories.js";
 
@@ -182,7 +182,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -238,7 +238,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -304,7 +304,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -366,7 +366,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -430,7 +430,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
@@ -485,7 +485,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
           rows: result.rows,
         };
       } catch (error) {
-        return formatError(error);
+        return formatHandlerError(error);
       }
     },
   };
