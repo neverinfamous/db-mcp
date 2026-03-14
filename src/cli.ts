@@ -193,7 +193,7 @@ Server Options:
                               Groups: core, json, text, fts5, stats, vector, geo, ...
                               Mixed: core,json,-text (whitelist with exclusions)
                               Legacy: -vector,-geo (exclusion from all)
-  --instruction-level <lvl>  Briefing depth: essential (~200 tokens), standard (default), full (~600 tokens)
+  --instruction-level <lvl>  Briefing depth: essential (~1K tokens), standard (default), full (~4.1K tokens)
 
 Environment Variables:
   MCP_HOST                  Host/IP to bind to (default: 0.0.0.0)

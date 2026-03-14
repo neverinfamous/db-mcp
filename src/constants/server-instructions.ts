@@ -33,14 +33,14 @@ export interface PromptDefinition {
 
 /**
  * Instruction detail level for token efficiency
- * - essential: ~200 tokens - Core behaviors only (for token-constrained clients)
- * - standard: ~400 tokens - + Tool filtering and groups (default)
- * - full: ~600 tokens - + Complete tool/resource reference
+ * - essential: ~1K tokens - Core behaviors only (for token-constrained clients)
+ * - standard: ~1.2K tokens - + Tool filtering and groups (default)
+ * - full: ~4.1K tokens - + Complete tool/resource reference
  */
 export type InstructionLevel = "essential" | "standard" | "full";
 
 /**
- * Essential behavioral guidance (~200 tokens)
+ * Essential behavioral guidance (~1K tokens)
  * Core patterns every AI agent should follow.
  */
 const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
@@ -103,7 +103,7 @@ const ESSENTIAL_INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 **Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.geo\``;
 
 /**
- * Tool filtering instructions (~150 additional tokens)
+ * Tool filtering instructions (~200 additional tokens)
  */
 const FILTERING_INSTRUCTIONS = `\n## Tool Filtering
 

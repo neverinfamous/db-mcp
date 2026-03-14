@@ -14,7 +14,7 @@
 - **MCP Compliance**: Added `title` to built-in server tools (`server_info`, `server_health`, `list_adapters`).
 - **MCP Compliance**: Added `error` field to `ErrorResponseFields` mixin (was 5 fields, now 6 per mcp-builder §2.2.2).
 - **MCP Compliance**: Created `src/auth/transport-agnostic.ts` re-exporting non-Express auth utilities for transport portability.
-- **MCP Compliance**: Wired `--instruction-level` CLI flag and `INSTRUCTION_LEVEL` env var to `generateInstructions()` — allows choosing `essential` (~200 tokens), `standard` (default, ~400 tokens), or `full` (~600 tokens) briefing depth.
+- **MCP Compliance**: Wired `--instruction-level` CLI flag and `INSTRUCTION_LEVEL` env var to `generateInstructions()` — allows choosing `essential` (~1K tokens), `standard` (default, ~1.2K tokens), or `full` (~4.1K tokens) briefing depth.
 
 ## Security
 - **Strict Validation**: Hardened all Zod tool input schemas across sqlite and native-sqlite adapters using `.strict()` to reject unknown fields.

@@ -166,9 +166,9 @@ Start the server with different `--instruction-level` values and read the server
 
 | `--instruction-level` | Expected Behavior |
 |---|---|
-| `essential` | Shortest instructions (~200 tokens) |
-| `standard` (default) | Medium instructions (~400 tokens) |
-| `full` | Longest instructions (~600 tokens) |
+| `essential` | Shortest instructions (~1K tokens) |
+| `standard` (default) | Medium instructions (~1.2K tokens) |
+| `full` | Longest instructions (~4.1K tokens) |
 
 > **Note:** The `INSTRUCTION_LEVEL` environment variable also controls this; CLI flag takes precedence.
 
