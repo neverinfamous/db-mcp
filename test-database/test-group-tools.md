@@ -63,6 +63,7 @@
 🔴 27. `sqlite_get_indexes({})` → handler error
 🔴 28. `sqlite_create_index({})` → handler error
 🔴 29. `sqlite_drop_index({})` → handler error
+🔴 30. `sqlite_execute_code({})` → handler error (has required `code` param)
 
 ---
 
@@ -599,22 +600,23 @@ Same as Native minus the 7 transaction management tools (items 30-36).
 🔴 45. `sqlite_restore({})` → handler error
 🔴 46. `sqlite_verify_backup({})` → handler error
 🔴 47. `sqlite_pragma_table_info({})` → handler error
-🔴 48. `sqlite_append_insight({})` → handler error
-🔴 49. `sqlite_create_view({})` → handler error
-🔴 50. `sqlite_drop_view({})` → handler error
-🔴 51. `sqlite_virtual_table_info({})` → handler error
-🔴 52. `sqlite_drop_virtual_table({})` → handler error
-🔴 53. `sqlite_create_csv_table({})` → handler error
-🔴 54. `sqlite_analyze_csv_schema({})` → handler error
-🔴 55. `sqlite_create_rtree_table({})` → handler error
-🔴 56. `sqlite_create_series_table({})` → handler error
-🔴 57. `sqlite_generate_series({})` → handler error
-🔴 58. `sqlite_dbstat({})` → handler error (or success if no required params)
-🔴 59. `sqlite_transaction_begin({})` `[NATIVE ONLY]` → handler error (or success if no required params)
-🔴 60. `sqlite_transaction_execute({})` `[NATIVE ONLY]` → handler error
-🔴 61. `sqlite_transaction_savepoint({})` `[NATIVE ONLY]` → handler error
-🔴 62. `sqlite_transaction_release({})` `[NATIVE ONLY]` → handler error
-🔴 63. `sqlite_transaction_rollback_to({})` `[NATIVE ONLY]` → handler error
+🔴 48. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
+🔴 49. `sqlite_append_insight({})` → handler error
+🔴 50. `sqlite_create_view({})` → handler error
+🔴 51. `sqlite_drop_view({})` → handler error
+🔴 52. `sqlite_virtual_table_info({})` → handler error
+🔴 53. `sqlite_drop_virtual_table({})` → handler error
+🔴 54. `sqlite_create_csv_table({})` → handler error
+🔴 55. `sqlite_analyze_csv_schema({})` → handler error
+🔴 56. `sqlite_create_rtree_table({})` → handler error
+🔴 57. `sqlite_create_series_table({})` → handler error
+🔴 58. `sqlite_generate_series({})` → handler error
+🔴 59. `sqlite_dbstat({})` → handler error (or success if no required params)
+🔴 60. `sqlite_transaction_begin({})` `[NATIVE ONLY]` → handler error (or success if no required params)
+🔴 61. `sqlite_transaction_execute({})` `[NATIVE ONLY]` → handler error
+🔴 62. `sqlite_transaction_savepoint({})` `[NATIVE ONLY]` → handler error
+🔴 63. `sqlite_transaction_release({})` `[NATIVE ONLY]` → handler error
+🔴 64. `sqlite_transaction_rollback_to({})` `[NATIVE ONLY]` → handler error
 
 ---
 
