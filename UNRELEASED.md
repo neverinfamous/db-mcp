@@ -15,6 +15,7 @@
 - **MCP Compliance**: Added `error` field to `ErrorResponseFields` mixin (was 5 fields, now 6 per mcp-builder §2.2.2).
 - **MCP Compliance**: Created `src/auth/transport-agnostic.ts` re-exporting non-Express auth utilities for transport portability.
 - **MCP Compliance**: Wired `--instruction-level` CLI flag and `INSTRUCTION_LEVEL` env var to `generateInstructions()` — allows choosing `essential` (~1K tokens), `standard` (default, ~1.2K tokens), or `full` (~4.1K tokens) briefing depth.
+- **HSTS**: Wired `--enable-hsts` CLI flag and `MCP_ENABLE_HSTS` env var to the HTTP transport — previously defined in types but never reachable from the CLI.
 
 ## Security
 - **Strict Validation**: Hardened all Zod tool input schemas across sqlite and native-sqlite adapters using `.strict()` to reject unknown fields.

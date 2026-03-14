@@ -54,6 +54,7 @@ export interface McpServerConfig {
    * Default: false (stateful mode with session management and SSE support)
    */
   statelessHttp?: boolean;
+  enableHSTS?: boolean;
 
   /**
    * Instruction detail level for AI client briefings.

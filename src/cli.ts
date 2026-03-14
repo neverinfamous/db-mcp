@@ -47,6 +47,8 @@ function parseArgs(): Partial<McpServerConfig> {
     } else if (arg === "--stateless") {
       // Enable stateless HTTP mode (no session management, no SSE)
       config.statelessHttp = true;
+    } else if (arg === "--enable-hsts") {
+      config.enableHSTS = true;
     } else if (arg === "--auth-token") {
       const tokenValue = args[++i];
       if (tokenValue) {
@@ -168,6 +170,7 @@ Transport Options:
                             Use 127.0.0.1 to restrict to local connections
   --stateless               Use stateless HTTP mode (no session management, no SSE)
                             Ideal for serverless deployments (Lambda, Workers)
+  --enable-hsts             Enable HSTS header (use when behind HTTPS)
 
 Authentication Options:
   --auth-token <token>      Simple bearer token for HTTP authentication
@@ -203,6 +206,7 @@ Environment Variables:
   OAUTH_AUDIENCE             Expected token audience
   OAUTH_JWKS_URI             JWKS URI
   OAUTH_CLOCK_TOLERANCE      Clock tolerance in seconds
+  MCP_ENABLE_HSTS            Enable HSTS header (same as --enable-hsts)
   DB_MCP_TOOL_FILTER        Tool filter string
   INSTRUCTION_LEVEL          Briefing depth: essential, standard, full
   SQLITE_DATABASE           SQLite database path

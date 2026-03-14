@@ -67,6 +67,8 @@ export class HttpTransport {
         ...config,
         host: config.host ?? "0.0.0.0",
         stateless: config.stateless ?? false,
+        enableHSTS:
+          config.enableHSTS ?? process.env["MCP_ENABLE_HSTS"] === "true",
       },
       app: null,
       httpServer: null,

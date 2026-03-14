@@ -308,6 +308,7 @@ export class DbMcpServer {
       port: this.config.port ?? 3000,
       ...(this.config.host !== undefined && { host: this.config.host }),
       ...(this.config.authToken !== undefined && { authToken: this.config.authToken }),
+      ...(this.config.enableHSTS !== undefined && { enableHSTS: this.config.enableHSTS }),
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
     });
