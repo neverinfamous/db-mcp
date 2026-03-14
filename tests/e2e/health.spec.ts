@@ -7,6 +7,9 @@ test.describe("MCP HTTP Server API", () => {
 
     const body = await response.json();
     expect(body).toHaveProperty("status", "healthy");
+    expect(body).toHaveProperty("timestamp");
+    // Timestamp should be a valid ISO string
+    expect(new Date(body.timestamp).toISOString()).toBe(body.timestamp);
   });
 
   test("should accept MCP initialization request on /mcp", async ({
@@ -32,5 +35,11 @@ test.describe("MCP HTTP Server API", () => {
     });
 
     expect(response.status()).toBe(200);
+    // Session ID should be returned in response headers
+    const sessionId = response.headers()["mcp-session-id"];
+    expect(sessionId).toBeDefined();
+    expect(typeof sessionId).toBe("string");
+    expect(sessionId!.length).toBeGreaterThan(0);
   });
 });
+

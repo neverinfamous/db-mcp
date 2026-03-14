@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { startServer, stopServer } from "./helpers.js";
 
 test.describe("HTTP Transport Security & Limits", () => {
   test("should return 404 Not Found for unknown endpoints", async ({
@@ -100,6 +101,19 @@ test.describe("HTTP Transport Security & Limits", () => {
     expect(headers["referrer-policy"]).toBe("no-referrer");
   });
 
+  test("should include CORS headers on responses", async ({ request }) => {
+    const response = await request.get("/health");
+    const headers = response.headers();
+
+    // Default CORS origin is * (configurable via --cors-origins)
+    expect(headers["access-control-allow-origin"]).toBe("*");
+    expect(headers["access-control-allow-methods"]).toContain("POST");
+    expect(headers["access-control-allow-methods"]).toContain("GET");
+    expect(headers["access-control-expose-headers"]).toContain(
+      "mcp-session-id",
+    );
+  });
+
   test("should not set HSTS header by default (opt-in only)", async ({
     request,
   }) => {
@@ -108,5 +122,23 @@ test.describe("HTTP Transport Security & Limits", () => {
 
     const headers = response.headers();
     expect(headers["strict-transport-security"]).toBeUndefined();
+  });
+
+  test("should include HSTS header when --enable-hsts is configured", async () => {
+    const HSTS_PORT = 3006;
+
+    await startServer(HSTS_PORT, ["--enable-hsts"], "hsts");
+
+    try {
+      const response = await fetch(`http://localhost:${HSTS_PORT}/health`);
+      expect(response.status).toBe(200);
+
+      const hsts = response.headers.get("strict-transport-security");
+      expect(hsts).toBeDefined();
+      expect(hsts).toContain("max-age=");
+      expect(hsts).toContain("includeSubDomains");
+    } finally {
+      stopServer(HSTS_PORT);
+    }
   });
 });
