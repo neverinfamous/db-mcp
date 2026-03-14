@@ -23,6 +23,17 @@
 - **Unified Audit**: SHA-pinned all GitHub Actions in `lint-and-test.yml` and `e2e.yml` for supply chain safety. Updated stale v4 SHAs to current v6 in `e2e.yml`. Removed manually-maintained `LABEL version` from `Dockerfile` to prevent version drift. Fixed `flatted` dependency vulnerability (GHSA-25h7-pfq9-p65f).
 - **DNS Rebinding**: Added `localhostHostValidation()` middleware from MCP SDK to the HTTP transport to prevent DNS rebinding attacks.
 - **Supply Chain**: SHA-pinned remaining 2 un-pinned CI actions (`actions/checkout`, `actions/setup-node`) in the benchmarks job of `lint-and-test.yml`.
+- **Supply Chain**: Bumped GitHub Actions to latest major versions (Node 24 runtime):
+  - `docker/login-action` v3 → v4
+  - `docker/build-push-action` v6 → v7
+  - `docker/metadata-action` v5 → v6
+  - `actions/upload-artifact` v6 → v7
+  - `actions/download-artifact` v7 → v8
+
+### Dependencies
+- Bumped `@types/node` from 25.4.0 to 25.5.0
+- Bumped `@vitest/coverage-v8` from 4.0.18 to 4.1.0
+- Bumped `vitest` from 4.0.18 to 4.1.0
 
 ## Fixed
 - **Validation Leaks**: Fixed Zod output schema errors in JSON tools (`sqlite_json_valid`, `sqlite_json_validate_path`) and core tools (`sqlite_drop_table`, `sqlite_create_index`, `sqlite_drop_index`) that caused the server to return raw MCP `-32602` validation frames instead of structured domain errors, by marking conditional message fields as optional.
