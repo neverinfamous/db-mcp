@@ -80,8 +80,11 @@ data/
 *.pem
 *.key
 
-# Test database (local development only)
-test-database/
+# Test database generated files (test plans, docs, SQL seeds are tracked)
+test-database/*.db
+test-database/*.db-shm
+test-database/*.db-wal
+test-database/*.db-journal
 extensions/
 
 # MCP Registry tokens
