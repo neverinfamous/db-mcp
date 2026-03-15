@@ -190,8 +190,6 @@ function createGeoDistanceTool(): ToolDefinition {
           success: true,
           distance: Math.round(distance * 1000) / 1000,
           unit: input.unit,
-          from: { lat: input.lat1, lon: input.lon1 },
-          to: { lat: input.lat2, lon: input.lon2 },
         });
       } catch (error) {
         return Promise.resolve(formatHandlerError(error));
@@ -270,10 +268,10 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
               lon,
               input.unit,
             );
-            return { ...row, _distance: Math.round(distance * 1000) / 1000 };
+            return { ...row, distance: Math.round(distance * 1000) / 1000 };
           })
-          .filter((r) => r._distance <= input.radius)
-          .sort((a, b) => a._distance - b._distance)
+          .filter((r) => r.distance <= input.radius)
+          .sort((a, b) => a.distance - b.distance)
           .slice(0, input.limit);
 
         // Strip internally-added lat/lon columns when returnColumns was specified

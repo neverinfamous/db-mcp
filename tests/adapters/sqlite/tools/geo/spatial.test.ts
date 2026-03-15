@@ -74,8 +74,6 @@ describe("Geo Tools - Spatial", () => {
         success: boolean;
         distance: number;
         unit: string;
-        from: { lat: number; lon: number };
-        to: { lat: number; lon: number };
       };
 
       expect(result.success).toBe(true);
@@ -83,8 +81,6 @@ describe("Geo Tools - Spatial", () => {
       // Distance between Times Square and Central Park is ~3.2km
       expect(result.distance).toBeGreaterThan(2.5);
       expect(result.distance).toBeLessThan(4);
-      expect(result.from).toEqual({ lat: 40.758, lon: -73.985 });
-      expect(result.to).toEqual({ lat: 40.785, lon: -73.968 });
     });
 
     it("should calculate distance in miles", async () => {
@@ -158,18 +154,18 @@ describe("Geo Tools - Spatial", () => {
       )) as {
         success: boolean;
         rowCount: number;
-        results: { name: string; _distance: number }[];
+        results: { name: string; distance: number }[];
       };
 
       expect(result.success).toBe(true);
       expect(result.rowCount).toBeGreaterThan(0);
       // Results should be sorted by distance
       expect(result.results[0].name).toBe("Times Square");
-      expect(result.results[0]._distance).toBe(0);
+      expect(result.results[0].distance).toBe(0);
 
       // All results should be within 5km
       for (const r of result.results) {
-        expect(r._distance).toBeLessThanOrEqual(5);
+        expect(r.distance).toBeLessThanOrEqual(5);
       }
     });
 
@@ -185,12 +181,12 @@ describe("Geo Tools - Spatial", () => {
           unit: "miles",
         },
         mockContext,
-      )) as { success: boolean; results: { _distance: number }[] };
+      )) as { success: boolean; results: { distance: number }[] };
 
       expect(result.success).toBe(true);
       // All results should be within 3 miles
       for (const r of result.results) {
-        expect(r._distance).toBeLessThanOrEqual(3);
+        expect(r.distance).toBeLessThanOrEqual(3);
       }
     });
 
@@ -228,7 +224,7 @@ describe("Geo Tools - Spatial", () => {
 
       expect(result.success).toBe(true);
       expect(result.results[0]).toHaveProperty("name");
-      expect(result.results[0]).toHaveProperty("_distance");
+      expect(result.results[0]).toHaveProperty("distance");
       expect(result.results[0]).not.toHaveProperty("latitude");
       expect(result.results[0]).not.toHaveProperty("longitude");
     });

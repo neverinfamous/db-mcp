@@ -11,7 +11,7 @@ import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./hel
 test.describe.configure({ mode: "serial" });
 
 test.describe("Payload Contracts: Geo", () => {
-  test("sqlite_geo_distance returns { success, distance, unit, from, to }", async ({}, testInfo) => {
+  test("sqlite_geo_distance returns { success, distance, unit }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_geo_distance", {
@@ -25,14 +25,6 @@ test.describe("Payload Contracts: Geo", () => {
       expect(typeof payload.distance).toBe("number");
       expect((payload.distance as number)).toBeGreaterThan(0);
       expect(payload.unit).toBe("km");
-
-      const from = payload.from as Record<string, unknown>;
-      expect(typeof from.lat).toBe("number");
-      expect(typeof from.lon).toBe("number");
-
-      const to = payload.to as Record<string, unknown>;
-      expect(typeof to.lat).toBe("number");
-      expect(typeof to.lon).toBe("number");
     } finally {
       await client.close();
     }
@@ -58,9 +50,8 @@ test.describe("Payload Contracts: Geo", () => {
 
       const results = payload.results as Record<string, unknown>[];
       if (results.length > 0) {
-        // Each result should have _distance appended
-        expect(results[0]).toHaveProperty("_distance");
-        expect(typeof results[0]._distance).toBe("number");
+        expect(results[0]).toHaveProperty("distance");
+        expect(typeof results[0].distance).toBe("number");
         expect(results[0]).toHaveProperty("name");
       }
     } finally {
