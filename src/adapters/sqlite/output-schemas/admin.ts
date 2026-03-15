@@ -12,6 +12,7 @@ export const VacuumOutputSchema = z
   .object({
     success: z.boolean(),
     message: z.string(),
+    durationMs: z.number().optional(),
     sizeChange: z
       .object({
         before: z.number(),
@@ -57,6 +58,7 @@ export const OptimizeOutputSchema = z
     success: z.boolean(),
     message: z.string(),
     operations: z.array(z.string()).optional(),
+    durationMs: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

@@ -19,6 +19,7 @@ export function createAnalyzeCsvSchemaTool(
     inputSchema: AnalyzeCsvSchemaSchema,
     outputSchema: z.object({
       success: z.boolean(),
+      message: z.string().optional(),
       hasHeader: z.boolean(),
       rowCount: z.number(),
       columns: z.array(
@@ -29,6 +30,7 @@ export function createAnalyzeCsvSchemaTool(
           sampleValues: z.array(z.string()),
         }),
       ),
+      wasmLimitation: z.boolean().optional(),
     }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Analyze CSV Schema"),
