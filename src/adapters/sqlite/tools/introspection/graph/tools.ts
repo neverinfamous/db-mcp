@@ -55,6 +55,12 @@ const DependencyGraphSchema = z
       .describe(
         "Return only nodes without edges for a lightweight response (default: false)",
       ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from results (default: true)",
+      ),
   })
   .default({});
 
@@ -66,6 +72,12 @@ const TopologicalSortSchema = z
     )
       .describe(
         "Sort direction: 'create' = dependencies first, 'drop' = dependents first (default: create)",
+      ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from results (default: true)",
       ),
   })
   .default({});
@@ -183,7 +195,9 @@ export function createDependencyGraphTool(
       try {
         const input = DependencyGraphSchema.parse(params);
         const includeRowCounts = input.includeRowCounts !== false;
-        const { nodes, edges } = await buildForeignKeyGraph(adapter);
+        const { nodes, edges } = await buildForeignKeyGraph(adapter, {
+          excludeSystemTables: input.excludeSystemTables,
+        });
 
         // Build adjacency for cycle detection
         const adjacency = new Map<string, string[]>();
@@ -248,7 +262,9 @@ export function createTopologicalSortTool(
       try {
         const input = TopologicalSortSchema.parse(params);
         const direction = input.direction ?? "create";
-        const { nodes, edges } = await buildForeignKeyGraph(adapter);
+        const { nodes, edges } = await buildForeignKeyGraph(adapter, {
+          excludeSystemTables: input.excludeSystemTables,
+        });
 
         // Build adjacency + in-degree for Kahn's algorithm
         const adjacency = new Map<string, string[]>();

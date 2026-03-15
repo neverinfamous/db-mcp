@@ -6,6 +6,7 @@
  */
 
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
+import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Types
@@ -44,11 +45,13 @@ export interface GraphEdge {
  */
 export async function buildForeignKeyGraph(
   adapter: SqliteAdapter,
+  options: { excludeSystemTables?: boolean | undefined } = {},
 ): Promise<{
   nodes: GraphNode[];
   edges: GraphEdge[];
   fkInfo: ForeignKeyInfo[];
 }> {
+  const excludeSystem = options.excludeSystemTables !== false;
   // Get all user tables (exclude internal/system)
   const adapterUnknown = adapter as unknown as Record<string, unknown>;
   const _schemaManager = "schemaManager" in adapterUnknown 
@@ -69,7 +72,12 @@ export async function buildForeignKeyGraph(
   const edges: GraphEdge[] = [];
   const fkInfo: ForeignKeyInfo[] = [];
 
-  for (const tableName of tableNames) {
+  // Filter system tables if requested
+  const filteredNames = excludeSystem
+    ? tableNames.filter((name) => !isSpatialiteSystemTable(name))
+    : tableNames;
+
+  for (const tableName of filteredNames) {
     nodes.push({ table: tableName, rowCount: 0 });
 
     // Get foreign keys (may fail for virtual tables in WASM)
