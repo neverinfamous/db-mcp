@@ -187,6 +187,18 @@ export function createSpatialQueryTool(
           rows: result.rows,
         };
       } catch (error) {
+        const msg =
+          error instanceof Error ? error.message : String(error);
+        if (msg.includes("does not return data")) {
+          return {
+            success: false,
+            error:
+              "This tool only supports SELECT queries. Use sqlite_write_query for INSERT/UPDATE/DELETE statements.",
+            code: "QUERY_NOT_SELECT",
+            category: "validation" as const,
+            recoverable: false,
+          };
+        }
         return formatHandlerError(error);
       }
     },

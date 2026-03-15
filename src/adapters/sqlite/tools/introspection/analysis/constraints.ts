@@ -16,6 +16,27 @@ import { z } from "zod";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
+// Enum Coercers (prevent raw MCP -32602 from z.enum validation)
+// =============================================================================
+
+const VALID_CHECKS = [
+  "missing_pk",
+  "missing_not_null",
+  "unindexed_fk",
+  "missing_fk",
+] as const;
+
+/** Filter array to only valid check values; pass non-arrays through for Zod to reject */
+const coerceChecks = (val: unknown): unknown =>
+  Array.isArray(val)
+    ? val.filter(
+        (v) =>
+          typeof v === "string" &&
+          (VALID_CHECKS as readonly string[]).includes(v),
+      )
+    : val;
+
+// =============================================================================
 // Schemas
 // =============================================================================
 
@@ -25,17 +46,19 @@ const ConstraintAnalysisSchema = z
       .string()
       .optional()
       .describe("Analyze constraints for a specific table only"),
-    checks: z
-      .array(
-        z.enum([
-          "missing_pk",
-          "missing_not_null",
-          "unindexed_fk",
-          "missing_fk",
-        ]),
-      )
-      .optional()
-      .describe("Specific checks to run (default: all)"),
+    checks: z.preprocess(
+      coerceChecks,
+      z
+        .array(
+          z.enum([
+            "missing_pk",
+            "missing_not_null",
+            "unindexed_fk",
+            "missing_fk",
+          ]),
+        )
+        .optional(),
+    ).describe("Specific checks to run (default: all)"),
   })
   .default({});
 

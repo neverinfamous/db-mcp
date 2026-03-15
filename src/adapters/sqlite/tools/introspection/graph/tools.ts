@@ -18,6 +18,28 @@ import { buildForeignKeyGraph, detectCycles } from "./helpers.js";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
+// Enum Coercers (prevent raw MCP -32602 from z.enum validation)
+// =============================================================================
+
+const VALID_DIRECTIONS = ["create", "drop"] as const;
+const coerceDirection = (val: unknown): unknown =>
+  typeof val === "string" &&
+  (VALID_DIRECTIONS as readonly string[]).includes(val)
+    ? val
+    : typeof val === "string"
+      ? undefined
+      : val;
+
+const VALID_OPERATIONS = ["DELETE", "DROP", "TRUNCATE"] as const;
+const coerceOperation = (val: unknown): unknown =>
+  typeof val === "string" &&
+  (VALID_OPERATIONS as readonly string[]).includes(val)
+    ? val
+    : typeof val === "string"
+      ? undefined
+      : val;
+
+// =============================================================================
 // Input Schemas
 // =============================================================================
 
@@ -38,9 +60,10 @@ const DependencyGraphSchema = z
 
 const TopologicalSortSchema = z
   .object({
-    direction: z
-      .enum(["create", "drop"])
-      .optional()
+    direction: z.preprocess(
+      coerceDirection,
+      z.enum(["create", "drop"]).optional(),
+    )
       .describe(
         "Sort direction: 'create' = dependencies first, 'drop' = dependents first (default: create)",
       ),
@@ -49,10 +72,10 @@ const TopologicalSortSchema = z
 
 const CascadeSimulatorSchema = z.object({
   table: z.string().describe("Table name to simulate deletion from"),
-  operation: z
-    .enum(["DELETE", "DROP", "TRUNCATE"])
-    .optional()
-    .describe("Operation to simulate (default: DELETE)"),
+  operation: z.preprocess(
+    coerceOperation,
+    z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
+  ).describe("Operation to simulate (default: DELETE)"),
   compact: z
     .boolean()
     .optional()

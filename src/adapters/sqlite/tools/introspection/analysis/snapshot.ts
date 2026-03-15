@@ -16,15 +16,33 @@ import { z } from "zod";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
+// Enum Coercers (prevent raw MCP -32602 from z.enum validation)
+// =============================================================================
+
+const VALID_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
+
+/** Filter array to only valid section values; pass non-arrays through for Zod to reject */
+const coerceSections = (val: unknown): unknown =>
+  Array.isArray(val)
+    ? val.filter(
+        (v) =>
+          typeof v === "string" &&
+          (VALID_SECTIONS as readonly string[]).includes(v),
+      )
+    : val;
+
+// =============================================================================
 // Schemas
 // =============================================================================
 
 const SchemaSnapshotSchema = z
   .object({
-    sections: z
-      .array(z.enum(["tables", "views", "indexes", "triggers"]))
-      .optional()
-      .describe("Specific sections to include (default: all)"),
+    sections: z.preprocess(
+      coerceSections,
+      z
+        .array(z.enum(["tables", "views", "indexes", "triggers"]))
+        .optional(),
+    ).describe("Specific sections to include (default: all)"),
     compact: z
       .boolean()
       .optional()
