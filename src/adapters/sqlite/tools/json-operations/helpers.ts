@@ -49,7 +49,10 @@ export const JsonEachSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to expand (defaults to $)"),
   whereClause: z.string().optional(),
-  limit: z.coerce.number().optional().default(100),
+  limit: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().default(100),
+  ),
 });
 
 export const JsonGroupArraySchema = z.object({
@@ -123,11 +126,10 @@ export const JsonbConvertSchema = z.object({
 export const JsonStorageInfoSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to analyze"),
-  sampleSize: z.coerce
-    .number()
-    .optional()
-    .default(100)
-    .describe("Number of rows to sample"),
+  sampleSize: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().default(100).describe("Number of rows to sample"),
+  ),
 });
 
 // Schema for normalize column tool

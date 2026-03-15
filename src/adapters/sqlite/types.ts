@@ -224,7 +224,10 @@ export const JsonQuerySchema = z.object({
     .optional()
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),
-  limit: z.coerce.number().optional().default(100),
+  limit: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().default(100),
+  ),
 }).strict();
 
 export const JsonValidatePathSchema = z.object({
@@ -279,11 +282,10 @@ export const VacuumSchema = z.object({
 export const AnalyzeJsonSchemaSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to analyze"),
-  sampleSize: z.coerce
-    .number()
-    .optional()
-    .default(100)
-    .describe("Number of rows to sample"),
+  sampleSize: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().default(100).describe("Number of rows to sample"),
+  ),
 }).strict();
 
 // Create JSON Collection
