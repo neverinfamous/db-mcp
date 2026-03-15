@@ -323,7 +323,8 @@ export function createAppendInsightTool(): ToolDefinition {
         if (!input.insight || input.insight.trim().length === 0) {
           return Promise.resolve({
             success: false,
-            message: "Insight must be a non-empty string",
+            error: "Insight must be a non-empty string",
+            message: "",
             insightCount: insightsManager.count(),
           });
         }

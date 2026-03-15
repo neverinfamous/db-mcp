@@ -2,7 +2,7 @@
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-**Step 2:** Please conduct an exhaustive test of the tool group listed below in **WASM Mode** using the live MCP server tool calls directly for testing, not scripts/terminal.
+**Step 2:** Please conduct an exhaustive test of the tool group listed below in using the live MCP server tool calls directly for testing, not scripts/terminal.
 
 **FTS Testing Notes (Text Group Only):**
 
@@ -51,7 +51,10 @@ The test database (test-server/test.db) contains these tables with JSON-relevant
 8. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it. 9. **Deterministic checklist first**: Complete ALL items in the group-specific checklist below before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run. 9. **Tool annotation verification**: Call `tools/list` to verify all tools have `openWorldHint: false` in their annotations. db-mcp tools are local database operations and must not hint at external access.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+
+9. **Deterministic checklist first**: Complete ALL items in the group-specific checklist below before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
+10. **Tool annotation verification — DO NOT SKIP!** This is the one test that requires terminal, not MCP tool calls. Run `node test-server/test-tool-annotations.mjs` (requires `npm run build` first) to verify all tools have `openWorldHint: false`. db-mcp tools are local database operations and must not hint at external access.
 
 ## Structured Error Response Pattern
 
