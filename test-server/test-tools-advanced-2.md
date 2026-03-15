@@ -61,7 +61,7 @@ At the end, confirm cleanup of all `stress_*` objects, then **fix every finding*
 
 ### Note:
 
-C:\Users\chris\Desktop\db-mcp\test-database is in .gitignore as intended.
+C:\Users\chris\Desktop\db-mcp\test-server is in .gitignore as intended.
 
 ---
 
@@ -131,8 +131,8 @@ Same as Native minus the 7 transaction management tools (items 30-36).
 
 ### Category 3: Backup/Restore Integrity
 
-11. `sqlite_backup({targetPath: "test-database/stress-backup.db"})` → success
-12. `sqlite_verify_backup({backupPath: "test-database/stress-backup.db"})` → integrity verified
+11. `sqlite_backup({targetPath: "test-server/stress-backup.db"})` → success
+12. `sqlite_verify_backup({backupPath: "test-server/stress-backup.db"})` → integrity verified
 13. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
 14. Cleanup: note backup file for manual removal
 
@@ -548,7 +548,7 @@ At the end, compile a summary of all findings from **both Part 1 and Part 2**:
 Create a plan to implement any fixes, including:
 
 - Correcting any deficiencies in `src/constants/server-instructions/*.md` (run `npm run generate:instructions` after editing)
-- Updating test-database.sql if needed
+- Updating test-server.sql if needed
 - Updating the prompts (`test-tools-advanced-1.md`, `test-tools-advanced-2.md`) if any test case was invalid
 
 Confirm cleanup of ALL `stress_*` objects is complete.

@@ -6,7 +6,7 @@
 
 ## Test Database Schema
 
-See [test-tools.md](./test-tools.md#test-database-schema) for full table details (10 tables, ~400 rows).
+See [test-tools.md](./test-tools.md#test-server-schema) for full table details (10 tables, ~400 rows).
 
 > **Note:** When testing `sqlite_execute_code`, do **not** pass `readonly: true` unless specifically testing read-only filtering. The `readonly` flag makes write methods return `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`.
 

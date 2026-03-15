@@ -5,8 +5,8 @@ This plan documents how to test all 10 MCP prompts in Cursor, since prompts aren
 ## Prerequisites
 
 1. Open Cursor and connect to the SQLite MCP server
-2. Test database must be loaded: `test-database/test.db`
-3. Server command: `node dist/cli.js --transport stdio --sqlite-native "test-database/test.db"`
+2. Test database must be loaded: `test-server/test.db`
+3. Server command: `node dist/cli.js --transport stdio --sqlite-native "test-server/test.db"`
 
 ---
 

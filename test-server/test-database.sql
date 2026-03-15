@@ -4,7 +4,7 @@
 -- This file creates all test tables needed for comprehensive testing of
 -- the db-mcp SQLite MCP server's 9 tool groups.
 --
--- Usage: sqlite3 test.db < test-database.sql
+-- Usage: sqlite3 test.db < test-server.sql
 -- =============================================================================
 
 -- =============================================================================

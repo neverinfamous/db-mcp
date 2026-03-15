@@ -11,7 +11,7 @@
 
 ## Test Database Schema
 
-The test database (test-database/test.db) contains these tables with JSON-relevant columns:
+The test database (test-server/test.db) contains these tables with JSON-relevant columns:
 
 | Table             | Rows | Columns                                                                       | JSON Columns                                                                              |
 | ----------------- | ---- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -44,7 +44,7 @@ The test database (test-database/test.db) contains these tables with JSON-releva
 1. Use existing `test_*` tables for read operations (SELECT, COUNT, queries)
 2. Create temporary tables with `temp_*` prefix for write operations
 3. Test each tool with realistic inputs based on the schema above
-4. Use `test-database/sample.csv` for CSV tool testing (columns: id, name, category, price, quantity, created_at)
+4. Use `test-server/sample.csv` for CSV tool testing (columns: id, name, category, price, quantity, created_at)
 5. Clean up any `temp_*` tables after testing with `sqlite_drop_table` or `sqlite_write_query`
 6. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
 7. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
@@ -147,7 +147,7 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 3. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
-   - Test database (`test-database/test-database.db`)
+   - Test database (`test-server/test-server.db`)
    - This prompt (`test-tools.md`) and group file (`test-group-tools.md`)
 
 ### After Implementation

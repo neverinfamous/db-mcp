@@ -7,7 +7,7 @@
  *
  * Usage:
  *   npm run build
- *   node test-database/test-tool-annotations.mjs
+ *   node test-server/test-tool-annotations.mjs
  */
 
 import { spawn } from 'child_process'
@@ -20,7 +20,7 @@ const proc = spawn(
         '--instruction-level',
         'essential',
         '--sqlite',
-        './test-database/test.db',
+        './test-server/test.db',
         '--tool-filter',
         '+all',
     ],

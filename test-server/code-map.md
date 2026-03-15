@@ -309,12 +309,12 @@ catch (error) {
 
 | File / Directory | Purpose |
 |-----------------|---------|
-| `test-database/README.md` | Agent testing orchestration doc |
-| `test-database/test-database.sql` | Seed DDL+DML (10 tables, ~400 rows) |
-| `test-database/reset-database.ps1` | Reset script — drops + re-seeds `test.db` |
-| `test-database/tool-reference.md` | Complete 139/115 tool inventory with descriptions |
-| `test-database/test-group-tools.md` | Per-group deterministic checklists |
-| `test-database/test-tools.md` | Entry-point protocol (schema ref, reporting format) |
+| `test-server/README.md` | Agent testing orchestration doc |
+| `test-server/test-server.sql` | Seed DDL+DML (10 tables, ~400 rows) |
+| `test-server/reset-database.ps1` | Reset script — drops + re-seeds `test.db` |
+| `test-server/tool-reference.md` | Complete 139/115 tool inventory with descriptions |
+| `test-server/test-group-tools.md` | Per-group deterministic checklists |
+| `test-server/test-tools.md` | Entry-point protocol (schema ref, reporting format) |
 | `tests/` | Vitest unit tests (per-module) |
 | `tests/e2e/` | Playwright E2E tests (HTTP/SSE transport parity) |
 | `benchmarks/` | Vitest bench performance benchmarks |

@@ -8,7 +8,7 @@
  *
  * Usage:
  *   npm run build
- *   node test-database/test-help-resources.mjs
+ *   node test-server/test-help-resources.mjs
  */
 
 import { spawn } from 'child_process'

@@ -57,7 +57,7 @@ At the end, confirm cleanup of all `stress_*` objects, then **fix every finding*
 
 ### Note:
 
-C:\Users\chris\Desktop\db-mcp\test-database is in .gitignore as intended.
+C:\Users\chris\Desktop\db-mcp\test-server is in .gitignore as intended.
 
 ---
 
@@ -529,7 +529,7 @@ At the end of Part 1, compile a summary of all findings from the 5 groups above:
 Create a plan to implement any fixes, including:
 
 - Correcting any deficiencies in `src/constants/server-instructions/*.md` (run `npm run generate:instructions` after editing)
-- Updating test-database.sql if needed
+- Updating test-server.sql if needed
 - Updating this prompt (`test-tools-advanced-1.md`) if any test case was invalid
 
 Confirm cleanup of ALL `stress_*` objects is complete.

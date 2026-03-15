@@ -550,9 +550,9 @@ Same as Native minus the 7 transaction management tools (items 30-36).
 
 **Checklist — Backup/Restore:**
 
-19. `sqlite_backup({path: "test-database/test-backup.db"})` → success with backup file info
-20. `sqlite_verify_backup({path: "test-database/test-backup.db"})` → integrity verified
-21. `sqlite_restore({path: "test-database/test-backup.db"})` → restore from backup, verify success
+19. `sqlite_backup({path: "test-server/test-backup.db"})` → success with backup file info
+20. `sqlite_verify_backup({path: "test-server/test-backup.db"})` → integrity verified
+21. `sqlite_restore({path: "test-server/test-backup.db"})` → restore from backup, verify success
 22. Cleanup: note backup file location for manual removal if desired
 
 **Checklist — Optimization:**
@@ -574,8 +574,8 @@ Same as Native minus the 7 transaction management tools (items 30-36).
 
 **Checklist — CSV:**
 
-34. `sqlite_analyze_csv_schema({path: "test-database/sample.csv"})` → inferred column types
-35. `sqlite_create_csv_table({table: "temp_csv_test", path: "test-database/sample.csv"})` → virtual table created
+34. `sqlite_analyze_csv_schema({path: "test-server/sample.csv"})` → inferred column types
+35. `sqlite_create_csv_table({table: "temp_csv_test", path: "test-server/sample.csv"})` → virtual table created
 36. Cleanup: `sqlite_drop_virtual_table({table: "temp_csv_test"})`
 
 **Checklist — Insights:**

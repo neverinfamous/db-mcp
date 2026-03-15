@@ -15,8 +15,8 @@
 | `tool-groups-list.md` | — | **Canonical tool inventory** — all 9 groups + codemode, 139 Native / 115 WASM tools. Source of truth for tool counts. | Reference / auditing |
 | `tool-reference.md` | ~18KB | **Complete Tool Reference** — Detailed list of all 139 Native / 115 WASM tools organized by group. | Reference |
 | [`code-map.md`](code-map.md) | ~12KB | **Source Code Map** — Directory tree, handler→tool mapping, type/schema locations, error hierarchy, constants, architecture patterns. | When debugging source code or making changes |
-| `reset-database.ps1` | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-database.sql`. Verifies row counts. | After migration group testing or if data is polluted |
-| `test-database.sql` | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables | Reference only — reset script consumes this |
+| `reset-database.ps1` | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-server.sql`. Verifies row counts. | After migration group testing or if data is polluted |
+| `test-server.sql` | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables | Reference only — reset script consumes this |
 | `sample.csv` | <1KB | CSV fixture for `sqlite_create_csv_table` / `sqlite_analyze_csv_schema` testing | Used by admin group checklist |
 
 ## Test Database Schema
@@ -84,10 +84,10 @@ cd C:\Users\chris\Desktop\db-mcp
 npm run build
 
 # Help resources
-node test-database/test-help-resources.mjs
+node test-server/test-help-resources.mjs
 
 # Tool annotations
-node test-database/test-tool-annotations.mjs
+node test-server/test-tool-annotations.mjs
 ```
 
 ### Success Criteria

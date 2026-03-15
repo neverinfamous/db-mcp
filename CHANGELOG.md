@@ -1584,7 +1584,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Test Database FTS5 Table** — Added pre-built FTS5 table for testing
   - `test_articles_fts`: FTS5 virtual table indexing `test_articles` (title, body)
-  - Updated `test-database.sql` to create and populate the FTS index
+  - Updated `test-server.sql` to create and populate the FTS index
   - Updated `reset-database.md` documentation with new table
 
 - **JSONB Support in Native Adapter** — Fixed JSONB detection missing in `NativeSqliteAdapter`
@@ -1664,9 +1664,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing
-  - `test-database/test-database.sql`: Seed data with 10 tables and 409 rows covering all 7 tool groups
-  - `test-database/reset-database.ps1`: PowerShell script to reset database to clean state with verification
-  - `test-database/test-groups/`: Individual test guides for each tool group (core, json, text, stats, vector, admin, geo)
+  - `test-server/test-server.sql`: Seed data with 10 tables and 409 rows covering all 7 tool groups
+  - `test-server/reset-database.ps1`: PowerShell script to reset database to clean state with verification
+  - `test-server/test-groups/`: Individual test guides for each tool group (core, json, text, stats, vector, admin, geo)
   - Uses ESM-compatible Node.js scripts with better-sqlite3 for cross-platform reset
   - Test tables: products, orders, json_docs, articles, users, measurements, embeddings, locations, categories, events
 

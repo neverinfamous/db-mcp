@@ -2,7 +2,7 @@
 
 ## Added
 - **E2E Tests**: Ported 32 HTTP transport e2e tests from memory-journal-mcp covering streaming (raw SSE for GET /mcp and GET /sse), advanced session management (cross-protocol guard, sequential isolation, post-DELETE rejection), rate limiting (429 burst, Retry-After header, health exemption), and OAuth 2.1 discovery (RFC 9728 metadata, scopes, auth gating). Enriched existing health and security specs with timestamp validation, session ID checks, CORS header assertions, and HSTS opt-in testing. Added `startServer()`/`stopServer()` managed child-process lifecycle helpers.
-- **Integration Test Scripts**: Ported `test-instruction-levels.mjs` and `test-tool-annotations.mjs` terminal scripts from memory-journal-mcp to `test-database/`.
+- **Integration Test Scripts**: Ported `test-instruction-levels.mjs` and `test-tool-annotations.mjs` terminal scripts from memory-journal-mcp to `test-server/`.
 - **MCP Compliance**: Added `READ_ONLY` annotations (`openWorldHint: false`) to 3 built-in server tools (`server_info`, `server_health`, `list_adapters`). Added missing `openWorldHint: false` to `sqlite_execute_code` codemode tool. All 118+ tools now have complete MCP annotations.
 - **Help Resources**: Added `sqlite://help` and `sqlite://help/{group}` MCP resources for on-demand tool reference documentation. Agents receive a slim ~680-char `instructions` payload pointing to these resources, instead of the previous ~3.5K+ payload that exceeded MCP client character limits and was silently truncated. Help resources are filtered by `--tool-filter` — only enabled groups get help resources registered.
 

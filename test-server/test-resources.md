@@ -1,6 +1,6 @@
 # db-mcp Resource Testing Plan
 
-Please test all db-mcp resources (8 data + up to 7 help) using the test database (test-database/test.db) and concisely report any issues.
+Please test all db-mcp resources (8 data + up to 7 help) using the test database (test-server/test.db) and concisely report any issues.
 
 ## Resources to Test
 
