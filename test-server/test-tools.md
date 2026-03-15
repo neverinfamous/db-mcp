@@ -2,14 +2,7 @@
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-**Step 2:** Please conduct an exhaustive test of the tool group listed below in using the live MCP server tool calls directly for testing, not scripts/terminal except when explictly demanded by this prompt.
-
-**Cleanup**: Attempts to DROP temp tables may fail due to a database lock. If so, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration.
-
-**FTS Testing Notes (Text Group Only):**
-
-- After `sqlite_fts_create`, always call `sqlite_fts_rebuild` before searching
-- `test_articles` searchable terms: `SQLite`, `database`, `JSON`, `FTS`, `vector`, `API`, `search`, `MCP`
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the group-specific checklist (pasted after this document) using live MCP server tool calls directly — not scripts/terminal except when explicitly demanded by this prompt.
 
 ## Test Database Schema
 
@@ -43,21 +36,19 @@ The test database (test-server/test.db) contains these tables with JSON-relevant
 
 ## Testing Requirements
 
-1. Use existing `test_*` tables for read operations (SELECT, COUNT, queries)
-2. Create temporary tables with `temp_*` prefix for write operations
-3. Test each tool with realistic inputs based on the schema above
-4. Use `test-server/sample.csv` for CSV tool testing (columns: id, name, category, price, quantity, created_at)
-5. Attempt to clean up `temp_*` tables after testing with `sqlite_drop_table` or `sqlite_write_query`. If cleanup fails due to a database lock (the MCP server or IDE may hold the `.db` file open), leftover `temp_*` tables are harmless — they have no foreign keys or triggers and are cleaned up when the test database is regenerated. Do not restart the IDE to force cleanup.
-6. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
-7. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
-8. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
-9. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches (handler returns fields not declared in the schema) produce the same `-32602` code as input errors but are only caught with valid inputs. See "Output Schema Validation Errors" below.
-
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 
-10. **Deterministic checklist first**: Complete ALL items in the group-specific checklist below before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
-11. **Tool annotation verification — DO NOT SKIP!** This is the one test that requires terminal, not MCP tool calls. Run `node test-server/test-tool-annotations.mjs` (requires `npm run build` first) to verify all tools have `openWorldHint: false`. db-mcp tools are local database operations and must not hint at external access.
+1. Use existing `test_*` tables for read operations (SELECT, COUNT, queries)
+2. Create temporary tables with `temp_*` prefix for write operations
+3. Test each tool with realistic inputs based on the schema above
+4. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
+5. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
+6. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
+7. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches (handler returns fields not declared in the schema) produce the same `-32602` code as input errors but are only caught with valid inputs. See "Output Schema Validation Errors" below.
+8. **Deterministic checklist first**: Complete ALL items in the group-specific checklist before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
+9. **Tool annotation verification — DO NOT SKIP!** This is the one test that requires terminal, not MCP tool calls. Run `node test-server/test-tool-annotations.mjs` (requires `npm run build` first) to verify all tools have `openWorldHint: false`. db-mcp tools are local database operations and must not hint at external access.
+10. **Cleanup**: Attempt to clean up `temp_*` tables after testing. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration.
 
 ## Structured Error Response Pattern
 
@@ -164,9 +155,8 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 
 ### After Testing
 
-1. **Cleanup**: Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration.
-2. **Triage findings**: If issues were found, create an implementation plan. If the plan requires no user decisions, proceed directly to implementation
-3. **Scope of fixes** includes corrections to any of:
+1. **Triage findings**: If issues were found, create an implementation plan. If the plan requires no user decisions, proceed directly to implementation
+2. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
    - Test database (`test-server/test.db`)
@@ -174,9 +164,9 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 
 ### After Implementation
 
-4. **Validate**: Run test suite and fix broken tests, run lint + typecheck and fix issues, update changelog (no duplicate headers)
-5. **Commit**: Stage and commit all changes — do NOT push
-6. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-7. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, suggest improvements.
+3. **Validate**: Run test suite and fix broken tests, run lint + typecheck and fix issues, update changelog (no duplicate headers)
+4. **Commit**: Stage and commit all changes — do NOT push
+5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
+6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, suggest improvements.
 
 ---

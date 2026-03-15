@@ -29,7 +29,7 @@
 2. `server_health` → verify healthy status
 3. `list_adapters` → verify at least one adapter listed
 4. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
-5. `sqlite_read_query({query: "SELECT name, price FROM test_products WHERE price > 500"})` → verify `Laptop Pro 15` (1299.99) and `Headphones Pro` (299.99) are returned — wait, 299.99 is < 500. Only `Laptop Pro 15` matches.
+5. `sqlite_read_query({query: "SELECT name, price FROM test_products WHERE price > 500"})` → 1 result: `Laptop Pro 15` (1299.99)
 6. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
 7. `sqlite_list_tables` → verify `test_products`, `test_orders`, `test_jsonb_docs`, `test_articles`, `test_users`, `test_measurements`, `test_embeddings`, `test_locations`, `test_categories`, `test_events` all present
 8. `sqlite_describe_table({table: "test_products"})` → verify columns include `id` (INTEGER), `name` (TEXT), `price` (REAL), `category` (TEXT)
@@ -191,6 +191,8 @@ Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 ## text Group-Specific Testing (Native- 18 Tools)
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
+
+> **FTS Testing Notes:** After `sqlite_fts_create`, always call `sqlite_fts_rebuild` before searching. `test_articles` searchable terms: `SQLite`, `database`, `JSON`, `FTS`, `vector`, `API`, `search`, `MCP`.
 
 ### Built-in Tools (3)
 
@@ -449,28 +451,30 @@ Same as Native minus the 6 window function tools (items 17-22).
 
 **Error path testing:**
 
-🔴 17. `sqlite_vector_search({table: "nonexistent_table_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → structured error
-🔴 18. `sqlite_vector_distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
+🔴 19. `sqlite_vector_search({table: "nonexistent_table_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → structured error
+🔴 20. `sqlite_vector_distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
 
-🔴 19. `sqlite_vector_create_table({})` → handler error
-🔴 20. `sqlite_vector_store({})` → handler error
-🔴 21. `sqlite_vector_batch_store({})` → handler error
-🔴 22. `sqlite_vector_search({})` → handler error
-🔴 23. `sqlite_vector_get({})` → handler error
-🔴 24. `sqlite_vector_delete({})` → handler error
-🔴 25. `sqlite_vector_count({})` → handler error
-🔴 26. `sqlite_vector_stats({})` → handler error
-🔴 27. `sqlite_vector_dimensions({})` → handler error
-🔴 28. `sqlite_vector_normalize({})` → handler error
-🔴 29. `sqlite_vector_distance({})` → handler error
+🔴 21. `sqlite_vector_create_table({})` → handler error
+🔴 22. `sqlite_vector_store({})` → handler error
+🔴 23. `sqlite_vector_batch_store({})` → handler error
+🔴 24. `sqlite_vector_search({})` → handler error
+🔴 25. `sqlite_vector_get({})` → handler error
+🔴 26. `sqlite_vector_delete({})` → handler error
+🔴 27. `sqlite_vector_count({})` → handler error
+🔴 28. `sqlite_vector_stats({})` → handler error
+🔴 29. `sqlite_vector_dimensions({})` → handler error
+🔴 30. `sqlite_vector_normalize({})` → handler error
+🔴 31. `sqlite_vector_distance({})` → handler error
 
 ---
 
 ## admin Group-Specific Testing
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
+
+> **CSV Testing Note:** Use `test-server/sample.csv` (columns: id, name, category, price, quantity, created_at) with **absolute paths** for CSV tool testing — relative paths resolve from IDE CWD.
 
 ### Built-in Tools (3)
 
