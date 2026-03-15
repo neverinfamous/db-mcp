@@ -8,6 +8,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly, admin } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   VacuumOutputSchema,
 } from "../../output-schemas/index.js";
@@ -37,10 +38,7 @@ export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         input = DbStatSchema.parse(params);
       } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        };
+        return formatHandlerError(error);
       }
 
       try {
@@ -208,8 +206,8 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
         input = VacuumSchema.parse(params);
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
           durationMs: 0,
         };
       }

@@ -278,8 +278,8 @@ function createExecuteInTransactionTool(
         input = ExecuteInTransactionSchema.parse(params);
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
           statementsExecuted: 0,
           results: [],
         };

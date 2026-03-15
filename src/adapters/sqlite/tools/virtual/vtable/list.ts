@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { ListVirtualTablesSchema } from "../helpers.js";
 
@@ -27,30 +28,34 @@ export function createListVirtualTablesTool(
     requiredScopes: ["read"],
     annotations: readOnly("List Virtual Tables"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = ListVirtualTablesSchema.parse(params);
+      try {
+        const input = ListVirtualTablesSchema.parse(params);
 
-      let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'`;
-      if (input.pattern) {
-        sql += ` AND name LIKE '${input.pattern.replace(/'/g, "''")}'`;
-      }
+        let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'`;
+        if (input.pattern) {
+          sql += ` AND name LIKE '${input.pattern.replace(/'/g, "''")}'`;
+        }
 
-      const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql);
 
-      const virtualTables = (result.rows ?? []).map((row) => {
-        const sqlStr = typeof row["sql"] === "string" ? row["sql"] : "";
-        const match = /USING\s+(\w+)/i.exec(sqlStr);
+        const virtualTables = (result.rows ?? []).map((row) => {
+          const sqlStr = typeof row["sql"] === "string" ? row["sql"] : "";
+          const match = /USING\s+(\w+)/i.exec(sqlStr);
+          return {
+            name: typeof row["name"] === "string" ? row["name"] : "",
+            module: match?.[1] ?? "unknown",
+            sql: sqlStr,
+          };
+        });
+
         return {
-          name: typeof row["name"] === "string" ? row["name"] : "",
-          module: match?.[1] ?? "unknown",
-          sql: sqlStr,
+          success: true,
+          count: virtualTables.length,
+          virtualTables,
         };
-      });
-
-      return {
-        success: true,
-        count: virtualTables.length,
-        virtualTables,
-      };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
     },
   };
 }

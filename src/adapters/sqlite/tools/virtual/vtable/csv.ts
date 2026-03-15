@@ -4,6 +4,7 @@ import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { idempotent } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { CreateCsvTableSchema } from "../helpers.js";
@@ -83,8 +84,8 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
           sql: "",
           columns: [],
         };

@@ -3,6 +3,7 @@ import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { destructive } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { DropVirtualTableSchema } from "../helpers.js";
 
@@ -69,8 +70,8 @@ export function createDropVirtualTableTool(
         }
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
         };
       }
     },

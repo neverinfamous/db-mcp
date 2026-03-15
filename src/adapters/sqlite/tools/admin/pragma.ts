@@ -285,10 +285,9 @@ export function createPragmaTableInfoTool(
         };
       } catch (error) {
         return {
-          success: false,
+          ...formatHandlerError(error),
           table: "",
           columns: [],
-          error: error instanceof Error ? error.message : String(error),
         };
       }
     },
@@ -330,8 +329,8 @@ export function createAppendInsightTool(): ToolDefinition {
         });
       } catch (error) {
         return Promise.resolve({
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
           insightCount: insightsManager.count(),
         });
       }

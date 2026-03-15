@@ -15,6 +15,7 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   GenerateSeriesOutputSchema,
   CreateTableOutputSchema,
@@ -47,10 +48,9 @@ export function createGenerateSeriesTool(
         input = GenerateSeriesSchema.parse(params);
       } catch (error) {
         return Promise.resolve({
-          success: false,
+          ...formatHandlerError(error),
           count: 0,
           values: [],
-          error: error instanceof Error ? error.message : String(error),
         });
       }
 
@@ -128,8 +128,8 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
           sql: "",
         };
       }
@@ -150,32 +150,36 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("List Views"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = ListViewsSchema.parse(params);
+      try {
+        const input = ListViewsSchema.parse(params);
 
-      let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'view'`;
-      if (input.pattern) {
-        const escapedPattern = input.pattern.replace(/'/g, "''");
-        sql += ` AND name LIKE '${escapedPattern}'`;
+        let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'view'`;
+        if (input.pattern) {
+          const escapedPattern = input.pattern.replace(/'/g, "''");
+          sql += ` AND name LIKE '${escapedPattern}'`;
+        }
+        sql += ` ORDER BY name`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        let views = (result.rows ?? []).map((row) => ({
+          name: typeof row["name"] === "string" ? row["name"] : "",
+          sql: typeof row["sql"] === "string" ? row["sql"] : null,
+        }));
+
+        // Filter out SpatiaLite system views if requested (default: true)
+        if (input.excludeSystemViews) {
+          views = views.filter((v) => !isSpatialiteSystemView(v.name));
+        }
+
+        return {
+          success: true,
+          count: views.length,
+          views,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
       }
-      sql += ` ORDER BY name`;
-
-      const result = await adapter.executeReadQuery(sql);
-
-      let views = (result.rows ?? []).map((row) => ({
-        name: typeof row["name"] === "string" ? row["name"] : "",
-        sql: typeof row["sql"] === "string" ? row["sql"] : null,
-      }));
-
-      // Filter out SpatiaLite system views if requested (default: true)
-      if (input.excludeSystemViews) {
-        views = views.filter((v) => !isSpatialiteSystemView(v.name));
-      }
-
-      return {
-        success: true,
-        count: views.length,
-        views,
-      };
     },
   };
 }
@@ -230,8 +234,8 @@ export function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
         };
       }
     },

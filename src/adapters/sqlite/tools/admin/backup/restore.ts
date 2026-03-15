@@ -194,6 +194,72 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           );
         }
 
+        // Restore user-created indexes
+        const indexesResult = await adapter.executeReadQuery(
+          `SELECT name, sql FROM backup_source.sqlite_master
+           WHERE type='index'
+           AND sql IS NOT NULL
+           AND name NOT LIKE 'sqlite_%'
+           ORDER BY name`,
+        );
+
+        for (const row of indexesResult.rows ?? []) {
+          const createSql = row["sql"] as string;
+          if (!createSql) continue;
+          try {
+            await adapter.executeWriteQuery(createSql, undefined, true);
+          } catch {
+            // Index may already exist or reference missing table — skip
+          }
+        }
+
+        // Restore views
+        const viewsResult = await adapter.executeReadQuery(
+          `SELECT name, sql FROM backup_source.sqlite_master
+           WHERE type='view'
+           AND name NOT LIKE 'sqlite_%'
+           ORDER BY name`,
+        );
+
+        for (const row of viewsResult.rows ?? []) {
+          const viewName = row["name"] as string;
+          const createSql = row["sql"] as string;
+          if (!createSql) continue;
+          const quotedViewName = `"${viewName.replace(/"/g, '""')}"`;
+          try {
+            await adapter
+              .executeWriteQuery(
+                `DROP VIEW IF EXISTS main.${quotedViewName}`,
+                undefined,
+                true,
+              )
+              .catch(() => {
+                /* ignore */
+              });
+            await adapter.executeWriteQuery(createSql, undefined, true);
+          } catch {
+            // View may reference missing tables — skip
+          }
+        }
+
+        // Restore triggers
+        const triggersResult = await adapter.executeReadQuery(
+          `SELECT name, sql FROM backup_source.sqlite_master
+           WHERE type='trigger'
+           AND name NOT LIKE 'sqlite_%'
+           ORDER BY name`,
+        );
+
+        for (const row of triggersResult.rows ?? []) {
+          const createSql = row["sql"] as string;
+          if (!createSql) continue;
+          try {
+            await adapter.executeWriteQuery(createSql, undefined, true);
+          } catch {
+            // Trigger may reference missing tables — skip
+          }
+        }
+
         await adapter.executeWriteQuery(
           "PRAGMA foreign_keys = ON",
           undefined,

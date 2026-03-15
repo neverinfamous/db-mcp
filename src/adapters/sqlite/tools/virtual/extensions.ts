@@ -12,6 +12,7 @@ import type {
 } from "../../../../types/index.js";
 import { idempotent } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { isModuleAvailable } from "./analysis.js";
 import { CreateRtreeTableSchema, CreateSeriesTableSchema } from "./helpers.js";
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
@@ -80,8 +81,8 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
           sql: "",
           columns: [],
         };
@@ -164,8 +165,8 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         return {
-          success: false,
-          message: error instanceof Error ? error.message : String(error),
+          ...formatHandlerError(error),
+          message: "",
           rowCount: 0,
         };
       }

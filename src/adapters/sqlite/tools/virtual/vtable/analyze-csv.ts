@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { AnalyzeCsvSchemaSchema } from "../helpers.js";
@@ -37,11 +38,10 @@ export function createAnalyzeCsvSchemaTool(
         input = AnalyzeCsvSchemaSchema.parse(params);
       } catch (error) {
         return {
-          success: false,
+          ...formatHandlerError(error),
           hasHeader: false,
           rowCount: 0,
           columns: [],
-          error: error instanceof Error ? error.message : String(error),
         };
       }
 
