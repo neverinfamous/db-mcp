@@ -145,7 +145,7 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 
 ### After Testing
 
-1. **Cleanup**: Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration
+1. **Cleanup**: Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration.
 2. **Triage findings**: If issues were found, create an implementation plan. If the plan requires no user decisions, proceed directly to implementation
 3. **Scope of fixes** includes corrections to any of:
    - Handler code

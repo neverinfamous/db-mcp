@@ -1,5 +1,3 @@
-> **Note:** Leftover `temp_*` tables from previous test runs may exist in the database. Ignore them — they are inert (no foreign keys, no triggers) and are cleaned up when the test database is regenerated. If a cleanup step (e.g., `sqlite_drop_table`) fails due to a database lock, skip it and continue testing.
-
 ## core Group-Specific Testing (Native and WASM are identical)
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
