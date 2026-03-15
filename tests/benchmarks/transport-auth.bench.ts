@@ -8,7 +8,7 @@
  */
 
 import { describe, bench, vi } from "vitest";
-import { extractBearerToken } from "../../src/auth/middleware.js";
+import { extractBearerToken } from "../../src/auth/middleware/index.js";
 import {
   TokenMissingError,
   InvalidTokenError,
@@ -28,7 +28,7 @@ import {
   isValidScope,
   getRequiredScopeForTool,
   getAccessibleTools,
-} from "../../src/auth/scopes.js";
+} from "../../src/auth/scopes/index.js";
 
 // Suppress logger output
 vi.mock("../../src/utils/logger/index.js", () => ({
