@@ -52,7 +52,9 @@ For each scenario, report:
 
 ---
 
-## Pass 1: `starter` (Core, JSON, Text)
+## Pass 1: `starter`
+
+**Tool groups under test:** `core` (10), `json` (24), `text` (14), `codemode` (1)
 
 ### Phase 1 — Discovery
 
@@ -102,7 +104,9 @@ Normalize and validate the email addresses in `test_users`. Are any malformed?
 
 ---
 
-## Pass 2: `analytics` (Core, JSON, Stats)
+## Pass 2: `analytics`
+
+**Tool groups under test:** `core` (10), `json` (24), `stats` (14), `codemode` (1)
 
 ### Phase 5 — Statistics
 
@@ -120,7 +124,9 @@ Which products have the most orders? Join the data and present a ranked summary 
 
 ---
 
-## Pass 3: `search` (Core, Text, Vector)
+## Pass 3: `search`
+
+**Tool groups under test:** `core` (10), `text` (14), `vector` (12), `codemode` (1)
 
 ### Phase 6 — Vector & Semantic Search
 
@@ -132,7 +138,9 @@ Search articles for "database" using full-text search, then find semantically si
 
 ---
 
-## Pass 4: `codemode` (Code Mode only)
+## Pass 4: `codemode`
+
+**Tool groups under test:** `codemode` (1) + built-in resources (3)
 
 ### Phase 7 — Code Mode Discovery & Efficiency
 
@@ -144,7 +152,9 @@ Using only `sqlite_execute_code`, find the top 5 products by order count with to
 
 ---
 
-## Pass 5: `core,geo` (Core, Geo — ~22 tools)
+## Pass 5: `core,geo`
+
+**Tool groups under test:** `core` (10), `geo` (5), `codemode` (1)
 
 ### Phase 8 — Geospatial
 
@@ -159,7 +169,9 @@ Find all locations within the bounding box covering Western Europe (lat 40–55,
 
 ---
 
-## Pass 6: `core,admin` (Core, Admin — ~44 tools)
+## Pass 6: `core,admin`
+
+**Tool groups under test:** `core` (10), `admin` (27), `codemode` (1)
 
 ### Phase 9 — Admin & Data Quality
 
@@ -174,7 +186,9 @@ Create a backup of the database. Verify the backup exists and is valid.
 
 ---
 
-## Pass 7: `core,introspection,migration` (Core, Introspection, Migration — ~27 tools)
+## Pass 7: `core,introspection,migration`
+
+**Tool groups under test:** `core` (10), `introspection` (10), `migration` (7), `codemode` (1)
 
 ### Phase 10 — Schema Analysis & Migration
 
