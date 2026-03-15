@@ -45,7 +45,7 @@ The test database (test-server/test.db) contains these tables with JSON-relevant
 2. Create temporary tables with `temp_*` prefix for write operations
 3. Test each tool with realistic inputs based on the schema above
 4. Use `test-server/sample.csv` for CSV tool testing (columns: id, name, category, price, quantity, created_at)
-5. Clean up any `temp_*` tables after testing with `sqlite_drop_table` or `sqlite_write_query`
+5. Attempt to clean up `temp_*` tables after testing with `sqlite_drop_table` or `sqlite_write_query`. If cleanup fails due to a database lock (the MCP server or IDE may hold the `.db` file open), leftover `temp_*` tables are harmless — they have no foreign keys or triggers and are cleaned up when the test database is regenerated. Do not restart the IDE to force cleanup.
 6. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
 7. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
 8. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
@@ -142,7 +142,7 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 
 ### After Testing
 
-1. **Cleanup**: Confirm all `temp_*` tables and temporary testing data are removed
+1. **Cleanup**: Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration
 2. **Triage findings**: If issues were found, create an implementation plan. If the plan requires no user decisions, proceed directly to implementation
 3. **Scope of fixes** includes corrections to any of:
    - Handler code
