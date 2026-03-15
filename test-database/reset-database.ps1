@@ -94,9 +94,20 @@ if (-not $sqlite3Path) {
 $totalSteps = if ($SkipVerify) { 2 } else { 3 }
 
 # ============================================================================
-# Step 1: Check for locks and delete existing database
+# Step 1: Clean up test artifacts and delete existing database
 # ============================================================================
-Write-Step "1" $totalSteps "Deleting existing database..."
+Write-Step "1" $totalSteps "Cleaning up test artifacts and deleting database..."
+
+# Remove backup .db files left by sqlite_backup tests
+$backupFiles = Get-ChildItem -Path $ScriptDir -Filter "*.db" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "test.db" }
+if ($backupFiles) {
+    foreach ($bf in $backupFiles) {
+        Remove-Item $bf.FullName -Force -ErrorAction SilentlyContinue
+        if ($Verbose) { Write-Info "Deleted backup: $($bf.Name)" }
+    }
+    Write-Success "Cleaned up $($backupFiles.Count) backup file(s)"
+}
 
 # Warn about any node processes that hold the database file open (e.g. MCP servers)
 $dbFullPath = (Resolve-Path $DatabasePath -ErrorAction SilentlyContinue)?.Path
@@ -232,6 +243,22 @@ if (-not $SkipVerify) {
         "test_events" = 100
     }
 
+    # Known non-seed tables that are expected to exist (SpatiaLite system tables,
+    # FTS virtual tables created by seed SQL, etc.)
+    $knownSystemTables = @(
+        "ElementaryGeometries", "KNN2", "SpatialIndex",
+        "data_licenses", "geometry_columns", "geometry_columns_auth",
+        "geometry_columns_field_infos", "geometry_columns_statistics",
+        "geometry_columns_time", "spatial_ref_sys", "spatial_ref_sys_aux",
+        "spatialite_history", "sql_statements_log",
+        "views_geometry_columns", "views_geometry_columns_auth",
+        "views_geometry_columns_field_infos", "views_geometry_columns_statistics",
+        "virts_geometry_columns", "virts_geometry_columns_auth",
+        "virts_geometry_columns_field_infos", "virts_geometry_columns_statistics",
+        "test_articles_fts", "test_articles_fts_config", "test_articles_fts_content",
+        "test_articles_fts_data", "test_articles_fts_docsize", "test_articles_fts_idx"
+    )
+
     $verifyScript = @"
 import Database from 'better-sqlite3';
 const db = new Database(process.argv[2], { readonly: true });
@@ -286,6 +313,43 @@ db.close();
             Write-Success "All tables verified successfully"
         } else {
             Write-Warn "Some tables have unexpected row counts"
+        }
+
+        # Check for unexpected non-seed tables (test artifacts left behind)
+        Write-Host "`n  Artifact check:" -ForegroundColor Yellow
+        $allTableNames = ($output | Where-Object { $_ -match "^TABLES:" }) -replace "^TABLES:", ""
+        # Get ALL tables from sqlite_master, not just test_* ones
+        $allTablesScript = @"
+import Database from 'better-sqlite3';
+const db = new Database(process.argv[2], { readonly: true });
+const all = db.prepare("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') ORDER BY name").all();
+for (const t of all) console.log('ALL:' + t.name);
+db.close();
+"@
+        $tempAllTables = Join-Path $dbMcpRoot ".check-artifacts.js"
+        $allTablesScript | Out-File -FilePath $tempAllTables -Encoding utf8 -NoNewline
+        $allOutput = node $tempAllTables $DatabasePath 2>&1
+        Remove-Item $tempAllTables -Force -ErrorAction SilentlyContinue
+
+        $unexpectedTables = @()
+        foreach ($line in $allOutput | Where-Object { $_ -match "^ALL:" }) {
+            $name = ($line -replace "^ALL:", "").Trim()
+            $isExpected = $expectedTables.ContainsKey($name) -or $knownSystemTables -contains $name
+            if (-not $isExpected) {
+                $unexpectedTables += $name
+            }
+        }
+
+        if ($unexpectedTables.Count -gt 0) {
+            Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) — possible stale test artifacts:"
+            foreach ($ut in $unexpectedTables) {
+                Write-Host "    [stale] " -ForegroundColor Yellow -NoNewline
+                Write-Host $ut -ForegroundColor Gray
+            }
+            Write-Info "These may be R-Tree shadow tables, _mcp_migrations, temp_* leftovers, or FTS tables from testing."
+            Write-Info "Consider running a full reset to remove them."
+        } else {
+            Write-Success "No stale test artifacts found"
         }
 
     } finally {
