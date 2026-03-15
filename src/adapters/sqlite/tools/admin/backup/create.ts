@@ -38,6 +38,15 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      if (!input.targetPath?.trim()) {
+        return {
+          ...formatHandlerError(
+            new ValidationError("targetPath is required"),
+          ),
+          path: "",
+        };
+      }
+
       const resolvedPath = nodePath.resolve(input.targetPath);
       const escapedPath = resolvedPath.replace(/'/g, "''");
       const sql = `VACUUM INTO '${escapedPath}'`;

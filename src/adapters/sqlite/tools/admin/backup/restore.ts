@@ -45,6 +45,15 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      if (!input.sourcePath?.trim()) {
+        return {
+          ...formatHandlerError(
+            new ValidationError("sourcePath is required"),
+          ),
+          sourcePath: "",
+        };
+      }
+
       const resolvedPath = nodePath.resolve(input.sourcePath);
       if (!fs.existsSync(resolvedPath)) {
         return {

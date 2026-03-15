@@ -528,7 +528,7 @@ Same as Native minus the 7 transaction management tools (items 30-36).
 1. `sqlite_pragma_database_list` → verify database path matches `test.db`
 2. `sqlite_pragma_compile_options` → verify list of compile options returned
 3. `sqlite_pragma_compile_options({filter: "FTS"})` → filtered subset containing FTS-related options (`ENABLE_FTS3`, `ENABLE_FTS4`, `ENABLE_FTS5`)
-4. `sqlite_pragma_settings` → verify key settings returned
+4. `sqlite_pragma_settings({pragma: "journal_mode"})` → `{value: "wal"}`
 5. `sqlite_pragma_table_info({table: "test_products"})` → verify columns: id, name, description, price, category, created_at
 6. `sqlite_index_stats` → verify index statistics for test database
 7. `sqlite_integrity_check` → `ok` result
@@ -537,24 +537,24 @@ Same as Native minus the 7 transaction management tools (items 30-36).
 
 **Checklist — View Management:**
 
-10. `sqlite_create_view({name: "temp_view_orders", sql: "SELECT product_id, COUNT(*) as order_count, SUM(total_price) as revenue FROM test_orders GROUP BY product_id"})` → success
+10. `sqlite_create_view({viewName: "temp_view_orders", selectQuery: "SELECT product_id, COUNT(*) as order_count, SUM(total_price) as revenue FROM test_orders GROUP BY product_id"})` → success
 11. `sqlite_list_views` → verify `temp_view_orders` present
-12. `sqlite_drop_view({name: "temp_view_orders"})` → success
+12. `sqlite_drop_view({viewName: "temp_view_orders"})` → success
 
 **Checklist — Virtual Tables:**
 
 13. `sqlite_list_virtual_tables` → verify `test_articles_fts` present (Native) or report behavior (WASM)
-14. `sqlite_virtual_table_info({table: "test_articles_fts"})` → verify module and column info (Native)
+14. `sqlite_virtual_table_info({tableName: "test_articles_fts"})` → verify module and column info (Native)
 15. `sqlite_generate_series({start: 1, stop: 5, step: 1})` → 5 values
-16. `sqlite_create_rtree_table({table: "temp_rtree_test", dimensions: 2})` → R-Tree virtual table created with 2D bounding box columns
-17. `sqlite_create_series_table({table: "temp_series_test"})` → series virtual table created
-18. Cleanup: `sqlite_drop_virtual_table({table: "temp_rtree_test"})` and `sqlite_drop_virtual_table({table: "temp_series_test"})`
+16. `sqlite_create_rtree_table({tableName: "temp_rtree_test", dimensions: 2})` → R-Tree virtual table created with 2D bounding box columns
+17. `sqlite_create_series_table({tableName: "temp_series_test", start: 1, stop: 10})` → regular table created with 10 rows (not a virtual table — see gotcha #15)
+18. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_rtree_test"})` and `sqlite_drop_table({table: "temp_series_test"})` (series is a regular table — use `sqlite_drop_table`)
 
 **Checklist — Backup/Restore:**
 
-19. `sqlite_backup({path: "test-server/test-backup.db"})` → success with backup file info
-20. `sqlite_verify_backup({path: "test-server/test-backup.db"})` → integrity verified
-21. `sqlite_restore({path: "test-server/test-backup.db"})` → restore from backup, verify success
+19. `sqlite_backup({targetPath: "<absolute-path>/test-server/test-backup.db"})` → success with backup file info (⚠️ use absolute path — relative paths resolve from IDE CWD)
+20. `sqlite_verify_backup({backupPath: "<absolute-path>/test-server/test-backup.db"})` → integrity verified
+21. `sqlite_restore({sourcePath: "<absolute-path>/test-server/test-backup.db"})` → restore from backup, verify success
 22. Cleanup: note backup file location for manual removal if desired
 
 **Checklist — Optimization:**
@@ -572,29 +572,29 @@ Same as Native minus the 7 transaction management tools (items 30-36).
 30. `sqlite_transaction_rollback_to({name: "sp1"})` → success
 31. `sqlite_transaction_release({name: "sp1"})` → success (released savepoints cannot be rolled back to)
 32. `sqlite_transaction_commit` → success
-33. `sqlite_transaction_execute({statements: [{sql: "SELECT 1 AS test"}, {sql: "SELECT 2 AS test2"}]})` → success with 2 statements executed
+33. `sqlite_transaction_execute({statements: ["SELECT 1 AS test", "SELECT 2 AS test2"]})` → success with 2 statements executed
 
 **Checklist — CSV:**
 
-34. `sqlite_analyze_csv_schema({path: "test-server/sample.csv"})` → inferred column types
-35. `sqlite_create_csv_table({table: "temp_csv_test", path: "test-server/sample.csv"})` → virtual table created
-36. Cleanup: `sqlite_drop_virtual_table({table: "temp_csv_test"})`
+34. `sqlite_analyze_csv_schema({filePath: "<absolute-path>/test-server/sample.csv"})` → inferred column types (⚠️ CSV requires absolute paths — see gotcha #14)
+35. `sqlite_create_csv_table({tableName: "temp_csv_test", filePath: "<absolute-path>/test-server/sample.csv"})` → virtual table created
+36. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_csv_test"})`
 
 **Checklist — Insights:**
 
-37. `sqlite_append_insight({text: "Test insight for verification"})` → success
+37. `sqlite_append_insight({insight: "Test insight for verification"})` → success
 
 **Code mode testing:**
 
 38. `sqlite_execute_code({code: "const result = await sqlite.admin.integrityCheck(); return result;"})` → `ok` result
-39. `sqlite_execute_code({code: "const result = await sqlite.admin.pragmaSettings(); return result;"})` → settings object
+39. `sqlite_execute_code({code: "const result = await sqlite.admin.pragmaSettings({pragma: 'journal_mode'}); return result;"})` → `{pragma: "journal_mode", value: "wal"}`
 
 **Error path testing:**
 
 🔴 40. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` → report behavior
-🔴 41. `sqlite_virtual_table_info({table: "nonexistent_table_xyz"})` → structured error
-🔴 42. `sqlite_verify_backup({path: "nonexistent_file.db"})` → structured error
-🔴 43. `sqlite_transaction_execute({statements: [{sql: "INSERT INTO nonexistent_table VALUES (1)"}]})` `[NATIVE ONLY]` → structured error with rollback info
+🔴 41. `sqlite_virtual_table_info({tableName: "nonexistent_table_xyz"})` → structured error
+🔴 42. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
+🔴 43. `sqlite_transaction_execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` `[NATIVE ONLY]` → structured error with rollback info
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
 

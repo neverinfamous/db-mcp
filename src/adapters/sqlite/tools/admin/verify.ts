@@ -45,6 +45,14 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
+        if (!input.backupPath?.trim()) {
+          return {
+            success: false,
+            message: "backupPath is required",
+            backupPath: "",
+          };
+        }
+
         // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
         // Resolve to absolute path to avoid CWD-relative false positives
         const resolvedPath = nodePath.resolve(input.backupPath);
