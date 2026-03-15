@@ -96,9 +96,12 @@ export function createPragmaDatabaseListTool(
         const configuredPath = adapter.getConfiguredPath();
 
         // Check if internal path differs from configured path (common in WASM mode)
+        // Normalize slashes for comparison — Windows SQLite returns backslashes
+        const normalize = (p: string): string => p.replace(/\\/g, "/");
         const mainDb = databases.find((db) => db.name === "main");
         const internalPathDiffers = Boolean(
-          mainDb?.file && mainDb.file !== configuredPath,
+          mainDb?.file &&
+            normalize(mainDb.file) !== normalize(configuredPath),
         );
 
         return {
