@@ -51,12 +51,13 @@ The test database (test-server/test.db) contains these tables with JSON-relevant
 6. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
 7. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
 8. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
+9. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches (handler returns fields not declared in the schema) produce the same `-32602` code as input errors but are only caught with valid inputs. See "Output Schema Validation Errors" below.
 
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 
-9. **Deterministic checklist first**: Complete ALL items in the group-specific checklist below before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
-10. **Tool annotation verification — DO NOT SKIP!** This is the one test that requires terminal, not MCP tool calls. Run `node test-server/test-tool-annotations.mjs` (requires `npm run build` first) to verify all tools have `openWorldHint: false`. db-mcp tools are local database operations and must not hint at external access.
+10. **Deterministic checklist first**: Complete ALL items in the group-specific checklist below before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
+11. **Tool annotation verification — DO NOT SKIP!** This is the one test that requires terminal, not MCP tool calls. Run `node test-server/test-tool-annotations.mjs` (requires `npm run build` first) to verify all tools have `openWorldHint: false`. db-mcp tools are local database operations and must not hint at external access.
 
 ## Structured Error Response Pattern
 
@@ -118,6 +119,19 @@ For every tool with optional numeric parameters (e.g., `limit`, `buckets`, `wind
 
 Unacceptable: Raw MCP error frame with `-32602` code.
 
+### Output Schema Validation Errors
+
+The MCP SDK enforces `additionalProperties: false` on **output** schemas. If a handler returns fields not declared in its output schema, the SDK rejects the response with a raw `-32602` error — even though the handler logic succeeded. This is a different failure mode from input validation:
+
+- **Input `-32602`**: Triggered by sending unrecognized/invalid parameters → caught by the Zod sweep (call with `{}` or `extraParam`)
+- **Output `-32602`**: Triggered by the handler **returning** undeclared fields → caught by a valid happy-path call that still produces a raw MCP error
+
+**How to detect:** If a tool call with **correct, valid inputs** returns a raw MCP `-32602` mentioning "does not match the tool's output schema" or "additional properties", the output schema in `src/adapters/sqlite/output-schemas/` is missing fields that the handler returns. Report as ❌ with both the tool name and the missing field(s).
+
+**Fix pattern:** Add the missing fields to the output schema (e.g., `durationMs: z.number().optional()`, `message: z.string().optional()`). Do NOT remove fields from the handler response — the schema must match reality.
+
+**Systematic check:** For every tool that has an `outputSchema`, make at least one valid happy-path call and confirm it returns a parseable JSON object with a `success` field — not a raw MCP error. This is separate from (and complementary to) the Zod validation sweep, which tests invalid inputs.
+
 ### Error Consistency Audit
 
 During testing, check for these inconsistencies across tool groups:
@@ -125,7 +139,8 @@ During testing, check for these inconsistencies across tool groups:
 1. **Throw-vs-return**: If a tool throws a raw error instead of returning `{success: false}`, report as ❌. Document which tool groups have raw-error leakage.
 2. **Error field name**: All `{success: false}` responses should use `error` as the field name. The `reason` field is reserved for `{success: true, skipped: true}` informational responses.
 3. **Zod validation leaks**: If calling a tool with an invalid enum value or missing required field produces a raw MCP `-32602` error instead of a structured response, report as ❌.
-4. **Centralized error formatting**: db-mcp uses `DbMcpError`. If any tool group catches errors but formats them inconsistently (e.g., different message patterns for the same error type), report as ⚠️.
+4. **Output schema leaks**: If calling a tool with valid inputs produces a raw MCP `-32602` mentioning "output schema" or "additional properties", report as ❌ (see "Output Schema Validation Errors" above).
+5. **Centralized error formatting**: db-mcp uses `DbMcpError`. If any tool group catches errors but formats them inconsistently (e.g., different message patterns for the same error type), report as ⚠️.
 
 ### Split Schema Pattern Verification
 
