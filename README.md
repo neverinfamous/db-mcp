@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-**SQLite MCP Server** with 139 specialized tools, 8 resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 139 specialized tools, 8 data resources + 7 help resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -24,7 +24,7 @@
 | Feature                        | Description                                                                                                                                                                                                  |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **139 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin           |
-| **8 Resources**                | Schema, tables, indexes, views, health status, database metadata, and business insights — always readable regardless of tool configuration                                                                   |
+| **15 Resources**               | 8 data resources (schema, tables, indexes, views, health, metadata, insights) + 7 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                       |
 | **10 AI-Powered Prompts**      | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                  |
 | **Code Mode**                  | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox — reducing token overhead by up to 90% while exposing all 139 capabilities locally                |
 | **Token-Optimized Payloads**   | Every tool response is audited for token efficiency. Tools with large payloads offer optional flags (`compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, `maxInvalid`) to reduce response size             |
@@ -303,7 +303,9 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 > **Note:** Extension binaries must match your platform and architecture. The server searches common paths automatically, or use the `CSV_EXTENSION_PATH` / `SPATIALITE_PATH` environment variables for custom locations.
 
-## 📁 Resources (8)
+## 📁 Resources
+
+### Data Resources (8)
 
 MCP resources provide read-only access to database metadata:
 
@@ -318,7 +320,21 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
 | `sqlite_insights`     | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
 
-> **Efficiency Tip:** Resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Use `--tool-filter "codemode"` for maximum token efficiency, or `--tool-filter "core,admin"` (~37 WASM / ~44 Native tools) for individual tool calls.
+### Help Resources (1 + up to 6)
+
+On-demand tool reference documentation, filtered by `--tool-filter`:
+
+| Resource              | URI                  | Description                                              | When Registered       |
+| --------------------- | -------------------- | -------------------------------------------------------- | --------------------- |
+| `sqlite_help`         | `sqlite://help`      | Gotchas, WASM vs Native, Code Mode API                   | Always                |
+| `sqlite_help_json`    | `sqlite://help/json` | JSON/JSONB operations reference                          | When json group on    |
+| `sqlite_help_text`    | `sqlite://help/text` | Text processing + FTS5 reference                         | When text group on    |
+| `sqlite_help_stats`   | `sqlite://help/stats`| Statistical analysis + window functions reference        | When stats group on   |
+| `sqlite_help_vector`  | `sqlite://help/vector`| Vector/semantic search reference                        | When vector group on  |
+| `sqlite_help_geo`     | `sqlite://help/geo`  | Geospatial + SpatiaLite reference                        | When geo group on     |
+| `sqlite_help_admin`   | `sqlite://help/admin`| Admin, transactions, backup, virtual tables reference    | When admin group on   |
+
+> **Efficiency Tip:** Data resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Help resources are served on-demand — agents read them only when working with a specific tool group.
 
 ## 💬 Prompts (10)
 
@@ -346,7 +362,6 @@ MCP prompts provide AI-assisted database workflows:
 | `MCP_HOST`              | `0.0.0.0`  | Host/IP to bind to (CLI: `--server-host`)                      |
 | `SQLITE_DATABASE`       | —          | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)     |
 | `DB_MCP_TOOL_FILTER`    | —          | Tool filter string (CLI: `--tool-filter`)                      |
-| `INSTRUCTION_LEVEL`     | `standard` | Briefing depth: `essential`, `standard`, `full` (CLI: `--instruction-level`) |
 | `MCP_AUTH_TOKEN`        | —          | Simple bearer token for HTTP auth (CLI: `--auth-token`)        |
 | `OAUTH_ENABLED`         | `false`    | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                      |
 | `OAUTH_ISSUER`          | —          | Authorization server URL (CLI: `--oauth-issuer`)               |
@@ -371,7 +386,7 @@ Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --
 Auth:         --auth-token <token>  |  --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>
 Extensions:   --csv  --spatialite                         (native only)
-Server:       --name <name>  --version <ver>  --tool-filter <filter>  --instruction-level <essential|standard|full>
+Server:       --name <name>  --version <ver>  --tool-filter <filter>
 ```
 
 > CLI flags override environment variables. Run `node dist/cli.js --help` for full details.

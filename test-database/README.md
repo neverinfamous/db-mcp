@@ -6,7 +6,7 @@
 
 | File | Size | Purpose | When to Read |
 |------|------|---------|--------------|
-| `test-tools.md` | ~12KB | **Entry-point protocol** — schema reference, error pattern docs, reporting format, cleanup rules. Paste a group checklist from `test-group-tools.md` at the bottom. | Always read first (Step 1 says read `src/constants/server-instructions.md`, Step 2 is the testing) |
+| `test-tools.md` | ~12KB | **Entry-point protocol** — schema reference, error pattern docs, reporting format, cleanup rules. Paste a group checklist from `test-group-tools.md` at the bottom. | Always read first (Step 1 says read help resources, Step 2 is the testing) |
 | `test-group-tools.md` | ~54KB | Per-group **deterministic checklists** (core, json, text, stats, vector, admin, geo, introspection, migration). Copy the relevant section into `test-tools.md`. | When running a specific tool group |
 | `test-tools-advanced-1.md` | ~28KB | **Second-pass stress tests (Part 1)** — boundary values, state pollution, error message quality, WASM parity. | After basic checklist passes |
 | `test-tools-advanced-2.md` | ~32KB | **Second-pass stress tests (Part 2)** — cross-group integration. Self-contained. | After basic checklist passes |
@@ -72,10 +72,10 @@ These scripts test features that require separate server processes — they **ca
 
 ### Script Reference
 
-| Script                        | Tests                                                         | Transport | Duration |
-| ----------------------------- | ------------------------------------------------------------- | --------- | -------- |
-| `test-instruction-levels.mjs` | `--instruction-level` essential/standard/full token ordering  | stdio     | ~10s     |
-| `test-tool-annotations.mjs`   | `tools/list` openWorldHint annotation presence and consistency | stdio     | ~5s      |
+| Script                        | Tests                                                          | Transport | Duration |
+| ----------------------------- | -------------------------------------------------------------- | --------- | -------- |
+| `test-help-resources.mjs`     | Slim instructions + `sqlite://help` resource filtering by group | stdio     | ~15s     |
+| `test-tool-annotations.mjs`   | `tools/list` openWorldHint annotation presence and consistency  | stdio     | ~5s      |
 
 ### Quick Run
 
@@ -83,8 +83,8 @@ These scripts test features that require separate server processes — they **ca
 cd C:\Users\chris\Desktop\db-mcp
 npm run build
 
-# Instruction levels
-node test-database/test-instruction-levels.mjs
+# Help resources
+node test-database/test-help-resources.mjs
 
 # Tool annotations
 node test-database/test-tool-annotations.mjs
@@ -92,9 +92,11 @@ node test-database/test-tool-annotations.mjs
 
 ### Success Criteria
 
-#### Instruction Levels
-- [ ] essential < standard < full (character count ordering)
-- [ ] No runtime errors in server logs
+#### Help Resources
+- [ ] Instructions under 1000 chars (~680)
+- [ ] `sqlite://help` always registered
+- [ ] Group-specific help only for enabled groups
+- [ ] No old content leaked into slim instructions
 
 #### Tool Annotations
 - [ ] All tools have `annotations` object with `openWorldHint` set
@@ -103,7 +105,7 @@ node test-database/test-tool-annotations.mjs
 
 ## Agent Workflow
 
-1. Read `src/constants/server-instructions.md` (via `view_file`).
+1. Read `sqlite://help` resource (or `view_file` on `src/constants/server-instructions/gotchas.md`).
 2. Read `test-tools.md` for protocol and schema details.
 3. Access `test-group-tools.md` and copy the target group checklist.
 4. Execute via direct MCP tool calls to test logic. Run both happy-path and error-path tests.
