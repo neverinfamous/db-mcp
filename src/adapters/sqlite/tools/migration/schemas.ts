@@ -19,7 +19,7 @@ export const MIGRATIONS_TABLE = "_mcp_migrations";
 // Input Schemas
 // =============================================================================
 
-export const MigrationInitSchema = z.object({}).strict().default({});
+export const MigrationInitSchema = z.object({}).default({});
 
 export const MigrationRecordSchema = z.object({
   version: z
@@ -88,7 +88,7 @@ export const MigrationHistorySchema = z
   })
   .default({});
 
-export const MigrationStatusSchema = z.object({}).strict().default({});
+export const MigrationStatusSchema = z.object({}).default({});
 
 // =============================================================================
 // Output Schemas

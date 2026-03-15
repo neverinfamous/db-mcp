@@ -108,7 +108,7 @@ export const ReadQuerySchema = z.object({
     .array(z.unknown())
     .optional()
     .describe("Query parameters for prepared statements"),
-}).strict();
+});
 
 export const WriteQuerySchema = z.object({
   query: z.string().describe("INSERT/UPDATE/DELETE query to execute"),
@@ -116,7 +116,7 @@ export const WriteQuerySchema = z.object({
     .array(z.unknown())
     .optional()
     .describe("Query parameters for prepared statements"),
-}).strict();
+});
 
 export const CreateTableSchema = z.object({
   tableName: z.string().describe("Name of the table to create"),
@@ -137,11 +137,11 @@ export const CreateTableSchema = z.object({
     .optional()
     .default(true)
     .describe("Add IF NOT EXISTS clause"),
-}).strict();
+});
 
 export const DescribeTableSchema = z.object({
   tableName: z.string().describe("Name of the table to describe"),
-}).strict();
+});
 
 export const DropTableSchema = z.object({
   tableName: z.string().describe("Name of the table to drop"),
@@ -150,7 +150,7 @@ export const DropTableSchema = z.object({
     .optional()
     .default(true)
     .describe("Add IF EXISTS clause"),
-}).strict();
+});
 
 export const CreateIndexSchema = z.object({
   indexName: z.string().describe("Name of the index"),
@@ -158,7 +158,7 @@ export const CreateIndexSchema = z.object({
   columns: z.array(z.string()).describe("Columns to index"),
   unique: z.boolean().optional().default(false).describe("Create unique index"),
   ifNotExists: z.boolean().optional().default(true),
-}).strict();
+});
 
 export const GetIndexesSchema = z.object({
   tableName: z.string().optional().describe("Filter indexes by table name"),
@@ -169,7 +169,7 @@ export const GetIndexesSchema = z.object({
     .describe(
       "Exclude SpatiaLite system indexes (idx_spatial_ref_sys, idx_srid_geocols, etc.)",
     ),
-}).strict();
+});
 
 export const DropIndexSchema = z.object({
   indexName: z.string().describe("Name of the index to drop"),
@@ -178,7 +178,7 @@ export const DropIndexSchema = z.object({
     .optional()
     .default(true)
     .describe("Add IF EXISTS clause"),
-}).strict();
+});
 
 export const ListTablesSchema = z.object({
   excludeSystemTables: z
@@ -188,7 +188,7 @@ export const ListTablesSchema = z.object({
     .describe(
       "Exclude SpatiaLite system tables (geometry_columns, spatial_ref_sys, etc.)",
     ),
-}).strict();
+});
 
 // JSON Helper Schemas
 export const JsonInsertSchema = z.object({
@@ -199,7 +199,7 @@ export const JsonInsertSchema = z.object({
     .record(z.string(), z.unknown())
     .optional()
     .describe("Other column values"),
-}).strict();
+});
 
 export const JsonUpdateSchema = z.object({
   table: z.string().describe("Table name"),
@@ -207,14 +207,14 @@ export const JsonUpdateSchema = z.object({
   path: z.string().describe("JSON path (e.g., $.key.subkey)"),
   value: z.unknown().describe("New value"),
   whereClause: z.string().describe("WHERE clause to identify rows"),
-}).strict();
+});
 
 export const JsonSelectSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   paths: z.array(z.string()).optional().describe("JSON paths to extract"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-}).strict();
+});
 
 export const JsonQuerySchema = z.object({
   table: z.string().describe("Table name"),
@@ -228,11 +228,11 @@ export const JsonQuerySchema = z.object({
     (val) => (typeof val === "number" ? val : undefined),
     z.number().optional().default(100),
   ),
-}).strict();
+});
 
 export const JsonValidatePathSchema = z.object({
   path: z.string().describe("JSON path to validate"),
-}).strict();
+});
 
 export const JsonMergeSchema = z.object({
   table: z.string().describe("Table name"),
@@ -240,19 +240,19 @@ export const JsonMergeSchema = z.object({
   mergeData: z.unknown().describe("JSON object to merge"),
   whereClause: z.string().describe("WHERE clause to identify rows"),
   deep: z.boolean().optional().default(false).describe("Deep merge"),
-}).strict();
+});
 
 // JSON Operation Schemas
 export const ValidateJsonSchema = z.object({
   json: z.string().describe("JSON string to validate"),
-}).strict();
+});
 
 export const JsonExtractSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path to extract"),
   whereClause: z.string().optional(),
-}).strict();
+});
 
 export const JsonSetSchema = z.object({
   table: z.string().describe("Table name"),
@@ -260,14 +260,14 @@ export const JsonSetSchema = z.object({
   path: z.string().describe("JSON path"),
   value: z.unknown().describe("Value to set"),
   whereClause: z.string().describe("WHERE clause"),
-}).strict();
+});
 
 export const JsonRemoveSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path to remove"),
   whereClause: z.string().describe("WHERE clause"),
-}).strict();
+});
 
 // Vacuum Schema
 export const VacuumSchema = z.object({
@@ -276,7 +276,7 @@ export const VacuumSchema = z.object({
     .optional()
     .default(true)
     .describe("Run ANALYZE after VACUUM"),
-}).strict();
+});
 
 // Analyze JSON Schema
 export const AnalyzeJsonSchemaSchema = z.object({
@@ -286,7 +286,7 @@ export const AnalyzeJsonSchemaSchema = z.object({
     (val) => (typeof val === "number" ? val : undefined),
     z.number().optional().default(100).describe("Number of rows to sample"),
   ),
-}).strict();
+});
 
 // Create JSON Collection
 export const CreateJsonCollectionSchema = z.object({
@@ -314,7 +314,7 @@ export const CreateJsonCollectionSchema = z.object({
     )
     .optional()
     .describe("JSON path indexes to create"),
-}).strict();
+});
 
 // Export schema types
 export type ReadQueryInput = z.infer<typeof ReadQuerySchema>;

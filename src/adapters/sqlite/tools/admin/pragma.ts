@@ -79,7 +79,7 @@ export function createPragmaDatabaseListTool(
     name: "sqlite_pragma_database_list",
     description: "List all attached databases.",
     group: "admin",
-    inputSchema: z.object({}).strict(),
+    inputSchema: z.object({}),
     outputSchema: PragmaDatabaseListOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Database List"),

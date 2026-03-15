@@ -24,13 +24,13 @@ const BeginTransactionSchema = z.object({
         "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
       ),
   ),
-}).strict();
+});
 
 const SavepointSchema = z.object({
   name: z
     .string()
     .describe("Savepoint name"),
-}).strict();
+});
 
 const ExecuteInTransactionSchema = z.object({
   statements: z
@@ -41,7 +41,7 @@ const ExecuteInTransactionSchema = z.object({
     .optional()
     .default(true)
     .describe("If true, rollback all changes when any statement fails"),
-}).strict();
+});
 
 /**
  * Get all transaction tools
@@ -103,7 +103,7 @@ function createCommitTransactionTool(
     description:
       "Commit the current transaction, making all changes permanent.",
     group: "admin",
-    inputSchema: z.object({}).strict(),
+    inputSchema: z.object({}),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {
@@ -130,7 +130,7 @@ function createRollbackTransactionTool(
     name: "sqlite_transaction_rollback",
     description: "Rollback the current transaction, discarding all changes.",
     group: "admin",
-    inputSchema: z.object({}).strict(),
+    inputSchema: z.object({}),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {
