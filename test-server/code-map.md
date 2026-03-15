@@ -22,12 +22,12 @@ src/
 │   ├── auth.ts                     # OAuthConfig, OAuthScope, TokenClaims, RequestContext
 │   ├── database.ts                 # DatabaseConfig, QueryResult, ColumnInfo, TableInfo, SchemaInfo, IndexInfo
 │   ├── filtering.ts                # ToolGroup, MetaGroup, ToolFilterRule, ToolFilterConfig
-│   ├── server.ts                   # TransportType, McpServerConfig (incl. authToken, oauth, instructionLevel)
+│   ├── server.ts                   # TransportType, McpServerConfig (incl. authToken, oauth)
 │   └── index.ts                    # Barrel — also re-exports error classes from utils/errors
 │
 ├── constants/
-│   ├── server-instructions.ts      # Agent instructions generator — 3 tiers: essential (~1K tokens), standard (~1.2K), full (~4.1K)
-│   └── server-instructions.md      # Human-readable version of the instructions
+│   ├── server-instructions.ts      # Generated: slim INSTRUCTIONS constant (~680 chars) + HELP_CONTENT map (per-group help)
+│   └── server-instructions/        # Source .md files for each help resource (overview, gotchas, json, text, stats, etc.)
 │
 ├── filtering/
 │   ├── tool-constants.ts           # TOOL_GROUPS arrays, META_GROUPS shortcuts, group→tools map
@@ -99,7 +99,7 @@ src/
 │   │   ├── schema-manager.ts       # Schema cache + metadata (TTL-based)
 │   │   ├── json-utils.ts           # JSON column detection and normalization
 │   │   ├── types.ts                # WASM-specific Zod schemas + TS types
-│   │   ├── resources.ts            # 8 MCP resources (schema, tables, indexes, etc.)
+│   │   ├── resources.ts            # 8 data MCP resources (schema, tables, indexes, etc.)
 │   │   ├── index.ts                # Barrel
 │   │   ├── output-schemas/         # Zod outputSchema definitions per group (see § below)
 │   │   ├── prompts/                # 10 MCP prompts (see § below)
@@ -271,7 +271,7 @@ catch (error) {
 
 | What | Where | Notes |
 |------|-------|-------|
-| Server instructions (agent prompt) | `src/constants/server-instructions.ts` | `generateInstructions(enabledTools, resources, prompts, level)` — configurable via `--instruction-level` / `INSTRUCTION_LEVEL` |
+| Server instructions (agent prompt) | `src/constants/server-instructions.ts` | Generated: slim `INSTRUCTIONS` (~680 chars) + `HELP_CONTENT` map. Source: `server-instructions/*.md` |
 | Tool group arrays | `src/filtering/tool-constants.ts` | `TOOL_GROUPS` map, `META_GROUPS` shortcuts |
 | Tool filter logic | `src/filtering/tool-filter.ts` | `ToolFilter` class |
 | JSON-RPC constants | `src/codemode/api-constants.ts` | Error codes, method names for sandbox RPC |
@@ -315,6 +315,9 @@ catch (error) {
 | `test-server/tool-reference.md` | Complete 139/115 tool inventory with descriptions |
 | `test-server/test-group-tools.md` | Per-group deterministic checklists |
 | `test-server/test-tools.md` | Entry-point protocol (schema ref, reporting format) |
+| `test-server/test-agent-experience.md` | 20 open-ended scenarios — validates help resource sufficiency |
+| `test-server/test-help-resources.mjs` | Integration test — slim instructions + help resource filtering |
+| `test-server/test-tool-annotations.mjs` | Integration test — openWorldHint annotation verification |
 | `tests/` | Vitest unit tests (per-module) |
 | `tests/e2e/` | Playwright E2E tests (HTTP/SSE transport parity) |
 | `benchmarks/` | Vitest bench performance benchmarks |
