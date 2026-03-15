@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: March 12, 2026
+> Last updated: March 15, 2026
 
 ---
 
@@ -178,6 +178,7 @@ Files that provide shared logic but do **not** register tools:
 
 | File | Purpose |
 |------|---------|
+| `core/tables.ts` | Also exports `isSpatialiteSystemTable()`, `isSpatialiteSystemView()`, `isSpatialiteSystemIndex()` — used by core + introspection tools for `excludeSystemTables` filtering |
 | `column-validation.ts` | `validateColumnExists()` — used by geo, stats, text |
 | `json-operations/helpers.ts` | JSON path/value normalization |
 | `json-helpers/helpers.ts` | JSON helper utilities |
