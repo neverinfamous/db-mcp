@@ -47,7 +47,10 @@ export const MigrationRecordSchema = z.object({
 export const MigrationApplySchema = MigrationRecordSchema;
 
 export const MigrationRollbackSchema = z.object({
-  id: z.coerce.number().optional().describe("Migration ID to roll back"),
+  id: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().describe("Migration ID to roll back"),
+  ),
   version: z
     .string()
     .optional()
@@ -68,14 +71,14 @@ export const MigrationHistorySchema = z
       .string()
       .optional()
       .describe("Filter by source system"),
-    limit: z.coerce
-      .number()
-      .optional()
-      .describe("Maximum records to return (default: 50)"),
-    offset: z.coerce
-      .number()
-      .optional()
-      .describe("Offset for pagination (default: 0)"),
+    limit: z.preprocess(
+      (val) => (typeof val === "number" ? val : undefined),
+      z.number().optional().describe("Maximum records to return (default: 50)"),
+    ),
+    offset: z.preprocess(
+      (val) => (typeof val === "number" ? val : undefined),
+      z.number().optional().describe("Offset for pagination (default: 0)"),
+    ),
     compact: z
       .boolean()
       .optional()
