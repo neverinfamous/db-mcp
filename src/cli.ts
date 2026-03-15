@@ -100,11 +100,6 @@ function parseArgs(): Partial<McpServerConfig> {
       if (filterValue) {
         config.toolFilter = filterValue;
       }
-    } else if (arg === "--instruction-level") {
-      const levelValue = args[++i];
-      if (levelValue === "essential" || levelValue === "standard" || levelValue === "full") {
-        config.instructionLevel = levelValue;
-      }
     } else if (arg === "--sqlite") {
       const dbPath = args[++i];
       if (dbPath) {
@@ -196,7 +191,6 @@ Server Options:
                               Groups: core, json, text, fts5, stats, vector, geo, ...
                               Mixed: core,json,-text (whitelist with exclusions)
                               Legacy: -vector,-geo (exclusion from all)
-  --instruction-level <lvl>  Briefing depth: essential (~1K tokens), standard (default), full (~4.1K tokens)
 
 Environment Variables:
   MCP_HOST                  Host/IP to bind to (default: 0.0.0.0)
@@ -208,7 +202,6 @@ Environment Variables:
   OAUTH_CLOCK_TOLERANCE      Clock tolerance in seconds
   MCP_ENABLE_HSTS            Enable HSTS header (same as --enable-hsts)
   DB_MCP_TOOL_FILTER        Tool filter string
-  INSTRUCTION_LEVEL          Briefing depth: essential, standard, full
   SQLITE_DATABASE           SQLite database path
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
   SPATIALITE_PATH           Custom path to SpatiaLite extension binary
@@ -267,11 +260,6 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     config.toolFilter = toolFilter;
   }
 
-  // Instruction level from environment
-  const instructionLevel = process.env["INSTRUCTION_LEVEL"];
-  if (instructionLevel === "essential" || instructionLevel === "standard" || instructionLevel === "full") {
-    config.instructionLevel = instructionLevel;
-  }
 
   // SQLite database from environment
   const sqliteUri =

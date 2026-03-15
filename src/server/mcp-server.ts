@@ -19,9 +19,9 @@ import {
   parseToolFilter,
   getFilterSummary,
   getToolFilterFromEnv,
-  TOOL_GROUPS,
 } from "../filtering/tool-filter.js";
-import { generateInstructions } from "../constants/server-instructions.js";
+import { INSTRUCTIONS, HELP_CONTENT } from "../constants/server-instructions.js";
+import type { ToolGroup } from "../types/index.js";
 import { logger } from "../utils/logger/index.js";
 import { SERVER_ICONS } from "../utils/icons.js";
 import { READ_ONLY } from "../utils/annotations.js";
@@ -42,27 +42,12 @@ export class DbMcpServer {
   constructor(config: McpServerConfig) {
     this.config = config;
 
-    // Initialize tool filter from config or environment (needed for instructions)
+    // Initialize tool filter from config or environment (needed for help resources)
     this.toolFilter = config.toolFilter
       ? parseToolFilter(config.toolFilter)
       : getToolFilterFromEnv();
 
-    // Build complete set of enabled tool names (for active tools summary)
-    const enabledTools = new Set<string>();
-    for (const group of this.toolFilter.enabledGroups) {
-      for (const tool of TOOL_GROUPS[group]) {
-        enabledTools.add(tool);
-      }
-    }
-    const instructions = generateInstructions(
-      enabledTools,
-      this.toolFilter.enabledGroups,
-      [],
-      [],
-      config.instructionLevel,
-    );
-
-    // Initialize MCP server with logging capability and instructions
+    // Initialize MCP server with slim instructions (~600 chars)
     this.server = new McpServer(
       {
         name: config.name,
@@ -72,7 +57,7 @@ export class DbMcpServer {
         capabilities: {
           logging: {},
         },
-        instructions,
+        instructions: INSTRUCTIONS,
       },
     );
 
@@ -88,8 +73,9 @@ export class DbMcpServer {
       capabilities: ["logging"],
     });
 
-    // Register built-in tools
+    // Register built-in tools and help resources
     this.registerBuiltInTools();
+    this.registerHelpResources();
   }
 
   /**
@@ -255,6 +241,77 @@ export class DbMcpServer {
         };
       },
     );
+  }
+
+  /**
+   * Register sqlite://help resources for on-demand reference documentation.
+   * Always registers sqlite://help (gotchas). Group-specific help is filtered
+   * by the tool filter configuration.
+   */
+  private registerHelpResources(): void {
+    // Always register sqlite://help (gotchas + code mode + WASM vs native)
+    const gotchasContent = HELP_CONTENT.get("gotchas");
+    if (gotchasContent) {
+      this.server.registerResource(
+        "sqlite_help",
+        "sqlite://help",
+        {
+          description: "Critical gotchas, WASM vs Native comparison, and Code Mode API reference",
+          mimeType: "text/markdown",
+        },
+        () => ({
+          contents: [{
+            uri: "sqlite://help",
+            mimeType: "text/markdown",
+            text: gotchasContent,
+          }],
+        }),
+      );
+    }
+
+    // Register group-specific help resources based on tool filter
+    const groupHelpKeys: { group: ToolGroup; key: string }[] = [
+      { group: "json", key: "json" },
+      { group: "text", key: "text" },
+      { group: "stats", key: "stats" },
+      { group: "vector", key: "vector" },
+      { group: "geo", key: "geo" },
+      { group: "admin", key: "admin" },
+    ];
+
+    for (const { group, key } of groupHelpKeys) {
+      if (!this.toolFilter.enabledGroups.has(group)) continue;
+
+      const content = HELP_CONTENT.get(key);
+      if (!content) continue;
+
+      this.server.registerResource(
+        `sqlite_help_${key}`,
+        `sqlite://help/${key}`,
+        {
+          description: `Tool reference for the ${group} tool group`,
+          mimeType: "text/markdown",
+        },
+        () => ({
+          contents: [{
+            uri: `sqlite://help/${key}`,
+            mimeType: "text/markdown",
+            text: content,
+          }],
+        }),
+      );
+    }
+
+    // Log registered help resources
+    const registeredHelp = ["sqlite://help"];
+    for (const { group, key } of groupHelpKeys) {
+      if (this.toolFilter.enabledGroups.has(group)) {
+        registeredHelp.push(`sqlite://help/${key}`);
+      }
+    }
+    logger.info(`Help resources: ${registeredHelp.join(", ")}`, {
+      module: "SERVER",
+    });
   }
 
   /**

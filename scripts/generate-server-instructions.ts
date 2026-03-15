@@ -1,83 +1,20 @@
 /**
- * Generates src/constants/server-instructions.ts from a single markdown source.
+ * Generates src/constants/server-instructions.ts from per-group markdown files.
  *
- * Reads server-instructions.md, splits by section markers
- * (<!-- SECTION: essential/filtering/reference -->) and group markers
- * (<!-- GROUP: groupname -->), escapes for template literals, and wraps them
- * in a TypeScript module with tiered instruction constants and dynamic logic.
- *
- * Uses string concatenation (not template literals) to build the output,
- * because the output itself contains template literals with interpolation.
+ * Reads server-instructions/*.md, escapes for template literals, and wraps them
+ * in a TypeScript module with a slim INSTRUCTIONS constant and a HELP_CONTENT map.
  *
  * Usage: node scripts/generate-server-instructions.ts
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 const constantsDir = resolve(projectRoot, "src/constants");
-
-// Read the single markdown source
-const sourceFile = resolve(constantsDir, "server-instructions.md");
-const sourceMd = readFileSync(sourceFile, "utf-8");
-
-// Split by section markers: <!-- SECTION: name -->
-const sections = new Map<string, string>();
-const sectionPattern = /<!--\s*SECTION:\s*(\w+)\s*-->/g;
-const markers: { name: string; index: number }[] = [];
-
-let match: RegExpExecArray | null;
-while ((match = sectionPattern.exec(sourceMd)) !== null) {
-  markers.push({ name: match[1], index: match.index + match[0].length });
-}
-
-for (let i = 0; i < markers.length; i++) {
-  const start = markers[i].index;
-  const end = i + 1 < markers.length ? sourceMd.lastIndexOf("<!--", markers[i + 1].index) : sourceMd.length;
-  sections.set(markers[i].name, sourceMd.substring(start, end).trim());
-}
-
-// Content before the first section marker is prepended to essential
-const preambleEnd = markers.length > 0 ? sourceMd.indexOf("<!--") : sourceMd.length;
-const preamble = sourceMd.substring(0, preambleEnd).trim();
-
-const essentialMd = preamble + "\n\n" + (sections.get("essential") ?? "");
-const filteringMd = sections.get("filtering") ?? "";
-const toolRefMd = sections.get("reference") ?? "";
-
-// Parse GROUP markers within the reference section
-// <!-- GROUP: groupname --> splits the reference into per-group sections
-const groupSections: { group: string; content: string }[] = [];
-const groupPattern = /<!--\s*GROUP:\s*([\w_]+)\s*-->/g;
-const groupMarkers: { name: string; index: number }[] = [];
-
-let groupMatch: RegExpExecArray | null;
-while ((groupMatch = groupPattern.exec(toolRefMd)) !== null) {
-  groupMarkers.push({ name: groupMatch[1], index: groupMatch.index + groupMatch[0].length });
-}
-
-if (groupMarkers.length > 0) {
-  for (let i = 0; i < groupMarkers.length; i++) {
-    const start = groupMarkers[i].index;
-    const end = i + 1 < groupMarkers.length
-      ? toolRefMd.lastIndexOf("<!--", groupMarkers[i + 1].index)
-      : toolRefMd.length;
-    const content = toolRefMd.substring(start, end).trim();
-    if (content) {
-      groupSections.push({ group: groupMarkers[i].name, content });
-    }
-  }
-}
-
-// Merge sections with the same group name (e.g., text = FTS5 + Text Processing)
-const mergedGroupSections = new Map<string, string>();
-for (const { group, content } of groupSections) {
-  const existing = mergedGroupSections.get(group);
-  mergedGroupSections.set(group, existing ? existing + "\n\n" + content : content);
-}
+const helpDir = resolve(constantsDir, "server-instructions");
 
 /**
  * Escape content for use inside a JS/TS template literal.
@@ -90,8 +27,21 @@ function escapeForTemplateLiteral(content: string): string {
     .replace(/\$\{/g, "\\${");
 }
 
-const essentialEscaped = escapeForTemplateLiteral(essentialMd);
-const filteringEscaped = escapeForTemplateLiteral(filteringMd);
+// Read overview (slim instructions field content)
+const overviewMd = readFileSync(resolve(helpDir, "overview.md"), "utf-8").trim();
+const overviewEscaped = escapeForTemplateLiteral(overviewMd);
+
+// Read all help files (everything except overview.md)
+const helpFiles = readdirSync(helpDir)
+  .filter((f) => f.endsWith(".md") && f !== "overview.md")
+  .sort();
+
+const helpEntries: { key: string; content: string }[] = [];
+for (const file of helpFiles) {
+  const key = basename(file, ".md"); // "gotchas", "json", "stats", etc.
+  const content = readFileSync(resolve(helpDir, file), "utf-8").trim();
+  helpEntries.push({ key, content });
+}
 
 // Use backtick char for building string to avoid nesting issues
 const BT = "`";
@@ -105,199 +55,44 @@ lines.push(" *");
 lines.push(
   " * \u26a0\ufe0f  AUTO-GENERATED \u2014 DO NOT EDIT THIS FILE DIRECTLY",
 );
-lines.push(" *     Edit src/constants/server-instructions.md instead,");
+lines.push(" *     Edit src/constants/server-instructions/*.md instead,");
 lines.push(" *     then run: npm run generate:instructions");
 lines.push(" *");
 lines.push(
-  " * These instructions are automatically sent to MCP clients during initialization,",
-);
-lines.push(" * providing guidance for AI agents on tool usage.");
-lines.push(" *");
-lines.push(" * Optimized for token efficiency with tiered instruction levels.");
-lines.push(" */");
-lines.push("");
-lines.push('import type { ToolGroup } from "../types/index.js";');
-lines.push(
-  'import { TOOL_GROUPS, ALL_TOOL_GROUPS } from "../filtering/tool-constants.js";',
-);
-lines.push("");
-lines.push("/**");
-lines.push(" * Resource definition for instruction generation");
-lines.push(" */");
-lines.push("export interface ResourceDefinition {");
-lines.push("  uri: string;");
-lines.push("  name: string;");
-lines.push("  description?: string;");
-lines.push("}");
-lines.push("");
-lines.push("/**");
-lines.push(" * Prompt definition for instruction generation");
-lines.push(" */");
-lines.push("export interface PromptDefinition {");
-lines.push("  name: string;");
-lines.push("  description?: string;");
-lines.push("}");
-lines.push("");
-lines.push("/**");
-lines.push(" * Instruction detail level for token efficiency");
-lines.push(
-  " * - essential: ~1K tokens - Core behaviors only (for token-constrained clients)",
+  " * Slim instructions are sent to MCP clients during initialization.",
 );
 lines.push(
-  " * - standard: ~1.2K tokens - + Tool filtering and groups (default)",
+  " * Detailed help is available on-demand via sqlite://help resources.",
 );
-lines.push(" * - full: ~4.1K tokens - + Complete tool/resource reference");
 lines.push(" */");
-lines.push('export type InstructionLevel = "essential" | "standard" | "full";');
 lines.push("");
 lines.push("/**");
-lines.push(" * Essential behavioral guidance (~1K tokens)");
-lines.push(" * Core patterns every AI agent should follow.");
+lines.push(" * Slim instructions for the MCP instructions field (~600 chars).");
+lines.push(
+  " * Points agents to sqlite://help resources for detailed reference.",
+);
 lines.push(" */");
 lines.push(
-  "const ESSENTIAL_INSTRUCTIONS = " + BT + essentialEscaped + BT + ";",
+  "export const INSTRUCTIONS = " + BT + overviewEscaped + BT + ";",
 );
 lines.push("");
 lines.push("/**");
-lines.push(" * Tool filtering instructions (~200 additional tokens)");
+lines.push(" * Help content keyed by group name.");
+lines.push(
+  " * 'gotchas' is the always-available help (sqlite://help).",
+);
+lines.push(
+  " * Other keys are tool groups (sqlite://help/{group}).",
+);
 lines.push(" */");
 lines.push(
-  "const FILTERING_INSTRUCTIONS = " + BT + "\\n" + filteringEscaped + BT + ";",
+  "export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([",
 );
-lines.push("");
-
-// Emit per-group reference sections as a Map
-lines.push("/**");
-lines.push(" * Tool reference sections keyed by group name.");
-lines.push(" * '_always' sections are included regardless of tool filter.");
-lines.push(" * Other keys correspond to tool group names from tool-constants.ts.");
-lines.push(" */");
-lines.push("const TOOL_REFERENCE_SECTIONS: ReadonlyMap<string, string> = new Map([");
-for (const [group, content] of mergedGroupSections) {
+for (const { key, content } of helpEntries) {
   const escaped = escapeForTemplateLiteral(content);
-  lines.push("  [" + JSON.stringify(group) + ", " + BT + "\\n" + escaped + BT + "],");
+  lines.push("  [" + JSON.stringify(key) + ", " + BT + escaped + BT + "],");
 }
 lines.push("]);");
-lines.push("");
-
-// Generate the generateInstructions function
-lines.push("/**");
-lines.push(
-  " * Generate dynamic instructions based on enabled tools, resources, and prompts",
-);
-lines.push(" *");
-lines.push(" * @param enabledTools - Set of enabled tool names");
-lines.push(" * @param enabledGroups - Set of enabled tool groups (for filtering reference sections)");
-lines.push(" * @param _resources - Available resource definitions");
-lines.push(" * @param prompts - Available prompt definitions");
-lines.push(" * @param level - Instruction detail level (default: 'standard')");
-lines.push(" */");
-lines.push("export function generateInstructions(");
-lines.push("  enabledTools: Set<string>,");
-lines.push("  enabledGroups: Set<ToolGroup>,");
-lines.push("  _resources: ResourceDefinition[],");
-lines.push("  prompts: PromptDefinition[],");
-lines.push('  level: InstructionLevel = "standard",');
-lines.push("): string {");
-lines.push("  let instructions = ESSENTIAL_INSTRUCTIONS;");
-lines.push("");
-lines.push("  // Standard and full levels include filtering patterns");
-lines.push('  if (level === "standard" || level === "full") {');
-lines.push("    instructions += FILTERING_INSTRUCTIONS;");
-lines.push("  }");
-lines.push("");
-lines.push("  // Full level includes filtered tool reference sections");
-lines.push('  if (level === "full") {');
-lines.push("    // Include only sections for enabled groups (+ _always sections)");
-lines.push("    for (const [group, content] of TOOL_REFERENCE_SECTIONS) {");
-lines.push('      if (group === "_always" || enabledGroups.has(group as ToolGroup)) {');
-lines.push("        instructions += content;");
-lines.push("      }");
-lines.push("    }");
-lines.push("");
-lines.push("    // Add active tools summary");
-lines.push("    const activeGroups = getActiveToolGroups(enabledTools);");
-lines.push("    if (activeGroups.length > 0) {");
-lines.push(
-  "      instructions += " +
-    BT +
-    "\\n## Active Tools (${String(enabledTools.size)})\\n" +
-    BT +
-    ";",
-);
-lines.push("      for (const { group, tools } of activeGroups) {");
-lines.push(
-  "        instructions += " +
-    BT +
-    "**${group}**: ${tools.map((t) => " +
-    BT +
-    "\\\\\\`${t}\\\\\\`" +
-    BT +
-    ').join(", ")}\\n' +
-    BT +
-    ";",
-);
-lines.push("      }");
-lines.push("    }");
-lines.push("");
-lines.push("    // Add prompts section");
-lines.push("    if (prompts.length > 0) {");
-lines.push(
-  "      instructions += " +
-    BT +
-    "\\n## Prompts (${String(prompts.length)})\\n" +
-    BT +
-    ";",
-);
-lines.push(
-  '      instructions += "Pre-built templates and guided workflows:\\n";',
-);
-lines.push("      for (const prompt of prompts) {");
-lines.push(
-  "        instructions += " +
-    BT +
-    '- \\\\\\`${prompt.name}\\\\\\` - ${prompt.description ?? ""}\\n' +
-    BT +
-    ";",
-);
-lines.push("      }");
-lines.push("    }");
-lines.push("  }");
-lines.push("");
-lines.push("  return instructions;");
-lines.push("}");
-lines.push("");
-lines.push("/**");
-lines.push(" * Get active tool groups with their enabled tools");
-lines.push(" */");
-lines.push("function getActiveToolGroups(");
-lines.push("  enabledTools: Set<string>,");
-lines.push("): { group: ToolGroup; tools: string[] }[] {");
-lines.push(
-  "  const activeGroups: { group: ToolGroup; tools: string[] }[] = [];",
-);
-lines.push("");
-lines.push("  for (const group of ALL_TOOL_GROUPS) {");
-lines.push("    const allTools = TOOL_GROUPS[group];");
-lines.push(
-  "    const enabledInGroup = allTools.filter((tool) => enabledTools.has(tool));",
-);
-lines.push("    if (enabledInGroup.length > 0) {");
-lines.push("      activeGroups.push({ group, tools: enabledInGroup });");
-lines.push("    }");
-lines.push("  }");
-lines.push("");
-lines.push("  return activeGroups;");
-lines.push("}");
-lines.push("");
-lines.push("/**");
-lines.push(" * Static instructions for backward compatibility");
-lines.push(
-  " * @deprecated Use generateInstructions() instead for dynamic content",
-);
-lines.push(" */");
-lines.push("export const SERVER_INSTRUCTIONS =");
-lines.push("  ESSENTIAL_INSTRUCTIONS + FILTERING_INSTRUCTIONS;");
 lines.push("");
 
 const tsContent = lines.join("\n");
@@ -309,19 +104,11 @@ process.stderr.write(
     "",
     "\u2705 Generated server-instructions.ts (" +
       tsContent.length.toLocaleString() +
-      " bytes) from server-instructions.md (" +
-      sourceMd.length.toLocaleString() +
-      " bytes)",
-    "   Sections: essential (" +
-      essentialMd.length.toLocaleString() +
-      " bytes), filtering (" +
-      filteringMd.length.toLocaleString() +
-      " bytes)",
-    "   Reference groups: " +
-      mergedGroupSections.size +
-      " unique groups (" +
-      [...mergedGroupSections.keys()].join(", ") +
-      ")",
+      " bytes) from " +
+      (helpEntries.length + 1) +
+      " markdown files",
+    "   Overview: " + overviewMd.length.toLocaleString() + " chars",
+    "   Help entries: " + helpEntries.map((e) => e.key).join(", "),
     "",
   ].join("\n"),
 );
