@@ -364,6 +364,7 @@ function createExecuteInTransactionTool(
 
         return {
           success: false,
+          error: `Transaction rolled back: ${message}`,
           message: `Transaction rolled back: ${message}`,
           statementsExecuted: results.length,
           results,

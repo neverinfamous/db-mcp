@@ -43,7 +43,8 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.dimensions < 2 || input.dimensions > 5) {
           return {
             success: false,
-            message: `Dimensions must be between 2 and 5, got ${input.dimensions}`,
+            error: `Dimensions must be between 2 and 5, got ${input.dimensions}`,
+            message: "",
             sql: "",
             columns: [],
           };
@@ -54,8 +55,9 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
         if (!rtreeAvailable) {
           return {
             success: false,
-            message:
+            error:
               "R-Tree extension not available. Use a SQLite build with rtree support.",
+            message: "",
             sql: "",
             columns: [],
             wasmLimitation: true,
@@ -116,7 +118,8 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.start === undefined || input.stop === undefined) {
           return {
             success: false,
-            message: "start and stop are required parameters",
+            error: "start and stop are required parameters",
+            message: "",
             rowCount: 0,
           };
         }

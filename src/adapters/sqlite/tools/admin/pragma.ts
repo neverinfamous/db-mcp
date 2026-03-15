@@ -171,7 +171,12 @@ export function createPragmaSettingsTool(
     requiredScopes: ["admin"],
     annotations: admin("PRAGMA Settings"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PragmaSettingsSchema.parse(params);
+      let input;
+      try {
+        input = PragmaSettingsSchema.parse(params);
+      } catch (error) {
+        return formatHandlerError(error);
+      }
 
       // Validate pragma name (alphanumeric + underscore only)
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.pragma)) {

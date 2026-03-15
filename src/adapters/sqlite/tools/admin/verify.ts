@@ -38,7 +38,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         if (!adapter.isNativeBackend()) {
           return {
             success: false,
-            message:
+            error:
               "Verify backup not available: file system access is not supported in WASM mode.",
             wasmLimitation: true,
             backupPath: input.backupPath,
@@ -48,7 +48,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         if (!input.backupPath?.trim()) {
           return {
             success: false,
-            message: "backupPath is required",
+            error: "backupPath is required",
             backupPath: "",
           };
         }
@@ -59,7 +59,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         if (!fs.existsSync(resolvedPath)) {
           return {
             success: false,
-            message: `Backup file not found: ${input.backupPath}`,
+            error: `Backup file not found: ${input.backupPath}`,
             backupPath: input.backupPath,
           };
         }
@@ -74,7 +74,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         } catch (error) {
           return {
             success: false,
-            message: error instanceof Error ? error.message : String(error),
+            error: error instanceof Error ? error.message : String(error),
             backupPath: input.backupPath,
           };
         }

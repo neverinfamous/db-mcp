@@ -73,9 +73,9 @@ export const DbStatSchema = z.object({
   excludeSystemTables: z
     .boolean()
     .optional()
-    .default(false)
+    .default(true)
     .describe(
-      "Exclude SpatiaLite system tables and indexes from results (default: false)",
+      "Exclude SpatiaLite system tables and indexes from results (default: true). Set to false to include all tables.",
     ),
 });
 
