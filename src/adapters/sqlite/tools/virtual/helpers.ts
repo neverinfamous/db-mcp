@@ -13,11 +13,23 @@
 
 import { z } from "zod";
 
+/**
+ * Coerce string values to numbers for MCP parameter safety.
+ * Returns undefined for unparseable values so `.default()` kicks in.
+ * Use for OPTIONAL numeric params with defaults.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? Number.isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 // Virtual table schemas
 export const GenerateSeriesSchema = z.object({
-  start: z.number().describe("Start value"),
-  stop: z.number().describe("Stop value"),
-  step: z.number().optional().default(1).describe("Step value"),
+  start: z.preprocess(coerceNumber, z.number().optional().describe("Start value")),
+  stop: z.preprocess(coerceNumber, z.number().optional().describe("Stop value")),
+  step: z.preprocess(coerceNumber, z.number().optional().default(1).describe("Step value")),
 });
 
 export const CreateViewSchema = z.object({
@@ -54,11 +66,10 @@ export const DbStatSchema = z.object({
     .describe(
       "If true, return aggregated per-table stats instead of raw page-level data",
     ),
-  limit: z
-    .number()
-    .optional()
-    .default(100)
-    .describe("Maximum number of tables/pages to return (default: 100)"),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum number of tables/pages to return (default: 100)"),
+  ),
   excludeSystemTables: z
     .boolean()
     .optional()
@@ -99,26 +110,23 @@ export const CreateCsvTableSchema = z.object({
 
 export const AnalyzeCsvSchemaSchema = z.object({
   filePath: z.string().describe("Path to the CSV file"),
-  sampleRows: z.number().optional().default(100).describe("Rows to sample"),
+  sampleRows: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Rows to sample")),
   delimiter: z.string().optional().default(",").describe("Column delimiter"),
 });
 
 export const CreateRtreeTableSchema = z.object({
   tableName: z.string().describe("Name for the R-Tree table"),
-  dimensions: z
-    .number()
-    .min(2)
-    .max(5)
-    .optional()
-    .default(2)
-    .describe("Number of dimensions (2-5)"),
+  dimensions: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(2).describe("Number of dimensions (2-5)"),
+  ),
   idColumn: z.string().optional().default("id").describe("ID column name"),
 });
 
 export const CreateSeriesTableSchema = z.object({
   tableName: z.string().describe("Name for the series table"),
-  start: z.number().describe("Start value"),
-  stop: z.number().describe("Stop value"),
-  step: z.number().optional().default(1).describe("Step value"),
+  start: z.preprocess(coerceNumber, z.number().optional().describe("Start value")),
+  stop: z.preprocess(coerceNumber, z.number().optional().describe("Stop value")),
+  step: z.preprocess(coerceNumber, z.number().optional().default(1).describe("Step value")),
   columnName: z.string().optional().default("value").describe("Column name"),
 });

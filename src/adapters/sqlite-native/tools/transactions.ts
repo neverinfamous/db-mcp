@@ -9,24 +9,26 @@ import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../utils/errors/index.js";
 
+// Valid enum values for transaction mode
+const VALID_MODES = ["deferred", "immediate", "exclusive"] as const;
+type TransactionMode = (typeof VALID_MODES)[number];
+
 // Schemas
 const BeginTransactionSchema = z.object({
-  mode: z
-    .enum(["deferred", "immediate", "exclusive"])
-    .optional()
-    .default("deferred")
-    .describe(
-      "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
-    ),
+  mode: z.preprocess(
+    (val) => (typeof val === "string" && VALID_MODES.includes(val as TransactionMode) ? val : undefined),
+    z.enum(["deferred", "immediate", "exclusive"])
+      .optional()
+      .default("deferred")
+      .describe(
+        "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
+      ),
+  ),
 }).strict();
 
 const SavepointSchema = z.object({
   name: z
     .string()
-    .regex(
-      /^[a-zA-Z_][a-zA-Z0-9_]*$/,
-      "Savepoint name must start with a letter/underscore and contain only alphanumeric chars",
-    )
     .describe("Savepoint name"),
 }).strict();
 

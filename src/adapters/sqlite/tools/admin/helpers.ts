@@ -15,6 +15,17 @@
 import { z } from "zod";
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 
+/**
+ * Coerce string values to numbers for MCP parameter safety.
+ * Returns undefined for unparseable values so `.default()` kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? Number.isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 // Admin schemas
 export const BackupSchema = z.object({
   targetPath: z.string().describe("Path for backup file"),
@@ -28,11 +39,10 @@ export const AnalyzeSchema = z.object({
 });
 
 export const IntegrityCheckSchema = z.object({
-  maxErrors: z
-    .number()
-    .optional()
-    .default(100)
-    .describe("Maximum errors to report"),
+  maxErrors: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum errors to report"),
+  ),
 });
 
 export const OptimizeSchema = z.object({
@@ -64,10 +74,10 @@ export const IndexStatsSchema = z.object({
 });
 
 export const PragmaOptimizeSchema = z.object({
-  mask: z
-    .number()
-    .optional()
-    .describe("Optional optimization mask (default: 0xfffe)"),
+  mask: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Optional optimization mask (default: 0xfffe)"),
+  ),
 });
 
 export const PragmaSettingsSchema = z.object({

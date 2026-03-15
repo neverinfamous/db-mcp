@@ -28,6 +28,17 @@ import { logger } from "../../../utils/logger/index.js";
 import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
 import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
 
+/**
+ * Coerce string values to numbers for MCP parameter safety.
+ * Returns undefined for unparseable values so `.default()` kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? Number.isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 // =============================================================================
 // Module State
 // =============================================================================
@@ -50,14 +61,11 @@ const ExecuteCodeSchema = z.object({
         "Use sqlite.help() to discover groups, sqlite.<group>.help() for methods. " +
         "Example: const tables = await sqlite.core.listTables(); return tables;",
     ),
-  timeout: z
-    .number()
-    .int()
-    .min(1000)
-    .max(30000)
-    .optional()
-    .default(30000)
-    .describe("Execution timeout in milliseconds (1000-30000, default: 30000)"),
+  timeout: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(30000)
+      .describe("Execution timeout in milliseconds (1000-30000, default: 30000)"),
+  ),
   readonly: z
     .boolean()
     .optional()
@@ -144,6 +152,19 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
     ): Promise<unknown> => {
       const parsed = ExecuteCodeSchema.parse(params);
       const { code, timeout: timeoutMs, readonly: isReadonly } = parsed;
+
+      // Validate timeout range (handler-level since schema refinements leak)
+      if (timeoutMs < 1000 || timeoutMs > 30000) {
+        return {
+          success: false,
+          error: `Timeout must be between 1000 and 30000 ms, got ${timeoutMs}`,
+          code: "CODEMODE_VALIDATION_FAILED",
+          category: "validation",
+          suggestion: "Provide a timeout value between 1000 and 30000 milliseconds.",
+          recoverable: false,
+          metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+        };
+      }
 
       // Validate code
       const validation = security.validateCode(code);

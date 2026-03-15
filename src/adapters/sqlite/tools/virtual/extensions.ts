@@ -38,6 +38,16 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate table name
         sanitizeIdentifier(input.tableName);
 
+        // Validate dimensions range (handler-level since schema refinements leak)
+        if (input.dimensions < 2 || input.dimensions > 5) {
+          return {
+            success: false,
+            message: `Dimensions must be between 2 and 5, got ${input.dimensions}`,
+            sql: "",
+            columns: [],
+          };
+        }
+
         // Check if rtree module is available
         const rtreeAvailable = await isModuleAvailable(adapter, "rtree");
         if (!rtreeAvailable) {
@@ -100,6 +110,15 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateSeriesTableSchema.parse(params);
+
+        // Validate required fields (schema uses .optional() for SDK compatibility)
+        if (input.start === undefined || input.stop === undefined) {
+          return {
+            success: false,
+            message: "start and stop are required parameters",
+            rowCount: 0,
+          };
+        }
 
         // Validate and quote identifiers
         const tableName = sanitizeIdentifier(input.tableName);

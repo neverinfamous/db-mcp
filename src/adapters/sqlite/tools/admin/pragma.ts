@@ -43,24 +43,28 @@ export function createPragmaCompileOptionsTool(
     requiredScopes: ["read"],
     annotations: readOnly("Compile Options"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PragmaCompileOptionsSchema.parse(params);
-      const result = await adapter.executeReadQuery("PRAGMA compile_options");
-      let options = (result.rows ?? []).map(
-        (r) => r["compile_options"] as string,
-      );
-
-      // Apply filter if provided
-      if (input.filter) {
-        const filterLower = input.filter.toLowerCase();
-        options = options.filter((opt) =>
-          opt.toLowerCase().includes(filterLower),
+      try {
+        const input = PragmaCompileOptionsSchema.parse(params);
+        const result = await adapter.executeReadQuery("PRAGMA compile_options");
+        let options = (result.rows ?? []).map(
+          (r) => r["compile_options"] as string,
         );
-      }
 
-      return {
-        success: true,
-        options,
-      };
+        // Apply filter if provided
+        if (input.filter) {
+          const filterLower = input.filter.toLowerCase();
+          options = options.filter((opt) =>
+            opt.toLowerCase().includes(filterLower),
+          );
+        }
+
+        return {
+          success: true,
+          options,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
     },
   };
 }
@@ -80,30 +84,34 @@ export function createPragmaDatabaseListTool(
     requiredScopes: ["read"],
     annotations: readOnly("Database List"),
     handler: async (_params: unknown, _context: RequestContext) => {
-      const result = await adapter.executeReadQuery("PRAGMA database_list");
-      const databases = (result.rows ?? []).map((r) => ({
-        seq: r["seq"] as number,
-        name: r["name"] as string,
-        file: r["file"] as string,
-      }));
+      try {
+        const result = await adapter.executeReadQuery("PRAGMA database_list");
+        const databases = (result.rows ?? []).map((r) => ({
+          seq: r["seq"] as number,
+          name: r["name"] as string,
+          file: r["file"] as string,
+        }));
 
-      // Get the user's configured path
-      const configuredPath = adapter.getConfiguredPath();
+        // Get the user's configured path
+        const configuredPath = adapter.getConfiguredPath();
 
-      // Check if internal path differs from configured path (common in WASM mode)
-      const mainDb = databases.find((db) => db.name === "main");
-      const internalPathDiffers = Boolean(
-        mainDb?.file && mainDb.file !== configuredPath,
-      );
+        // Check if internal path differs from configured path (common in WASM mode)
+        const mainDb = databases.find((db) => db.name === "main");
+        const internalPathDiffers = Boolean(
+          mainDb?.file && mainDb.file !== configuredPath,
+        );
 
-      return {
-        success: true,
-        databases,
-        configuredPath,
-        note: internalPathDiffers
-          ? "Internal file paths shown above are WASM virtual filesystem paths. The configuredPath shows the original database location."
-          : undefined,
-      };
+        return {
+          success: true,
+          databases,
+          configuredPath,
+          note: internalPathDiffers
+            ? "Internal file paths shown above are WASM virtual filesystem paths. The configuredPath shows the original database location."
+            : undefined,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
     },
   };
 }
@@ -124,22 +132,26 @@ export function createPragmaOptimizeTool(
     requiredScopes: ["admin"],
     annotations: admin("PRAGMA Optimize"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PragmaOptimizeSchema.parse(params);
-      const start = Date.now();
+      try {
+        const input = PragmaOptimizeSchema.parse(params);
+        const start = Date.now();
 
-      const sql =
-        input.mask !== undefined
-          ? `PRAGMA optimize(${input.mask})`
-          : "PRAGMA optimize";
-      await adapter.executeQuery(sql);
+        const sql =
+          input.mask !== undefined
+            ? `PRAGMA optimize(${input.mask})`
+            : "PRAGMA optimize";
+        await adapter.executeQuery(sql);
 
-      const duration = Date.now() - start;
+        const duration = Date.now() - start;
 
-      return {
-        success: true,
-        message: "Database optimized",
-        durationMs: duration,
-      };
+        return {
+          success: true,
+          message: "Database optimized",
+          durationMs: duration,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
     },
   };
 }

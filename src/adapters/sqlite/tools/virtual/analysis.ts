@@ -33,7 +33,15 @@ export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Database Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DbStatSchema.parse(params);
+      let input;
+      try {
+        input = DbStatSchema.parse(params);
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
 
       try {
         // Summarize mode: aggregate per-table stats
@@ -195,7 +203,16 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("Vacuum Database"),
     handler: async (params: unknown, context: RequestContext) => {
-      const input = VacuumSchema.parse(params);
+      let input;
+      try {
+        input = VacuumSchema.parse(params);
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          durationMs: 0,
+        };
+      }
       const progress = buildProgressContext(context);
 
       // Phase 1: Starting vacuum
