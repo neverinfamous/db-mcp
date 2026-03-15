@@ -14,6 +14,7 @@ import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Enum Coercers (prevent raw MCP -32602 from z.enum validation)
@@ -59,6 +60,12 @@ const ConstraintAnalysisSchema = z
         )
         .optional(),
     ).describe("Specific checks to run (default: all)"),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from constraint analysis (default: true)",
+      ),
   })
   .default({});
 
@@ -125,6 +132,8 @@ export function createConstraintAnalysisTool(
         );
         const tables = (tablesResult.rows ?? []).map(
           (r) => r["name"] as string,
+        ).filter(
+          (name) => !(input.excludeSystemTables !== false && isSpatialiteSystemTable(name)),
         );
 
         if (input.table && tables.length === 0) {

@@ -14,6 +14,7 @@ import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Schemas
@@ -25,6 +26,12 @@ const StorageAnalysisSchema = z
       .boolean()
       .optional()
       .describe("Include per-table size breakdown (default: true)"),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from per-table breakdown (default: true)",
+      ),
     limit: z
       .number()
       .min(1)
@@ -119,6 +126,7 @@ export function createStorageAnalysisTool(
       try {
         const input = StorageAnalysisSchema.parse(params);
         const includeDetails = input.includeTableDetails !== false;
+        const excludeSystem = input.excludeSystemTables !== false;
         const limit = input.limit ?? 50;
         // Gather database-level metrics
         const pageSize = await getPragmaNumber(adapter, "page_size");
@@ -187,6 +195,13 @@ export function createStorageAnalysisTool(
                   rowCount > 0 ? Math.round(sizeBytes / rowCount) : 0,
               });
             }
+
+            // Filter SpatiaLite system tables
+            if (excludeSystem) {
+              const filtered = tables.filter((t) => !isSpatialiteSystemTable(t.name));
+              tables.length = 0;
+              tables.push(...filtered);
+            }
           } catch {
             // dbstat not available — fallback to basic table list
             const tablesResult = await adapter.executeReadQuery(
@@ -198,6 +213,7 @@ export function createStorageAnalysisTool(
 
             for (const row of tablesResult.rows ?? []) {
               const tableName = row["name"] as string;
+              if (excludeSystem && isSpatialiteSystemTable(tableName)) continue;
               let rowCount = 0;
               try {
                 const countResult = await adapter.executeReadQuery(

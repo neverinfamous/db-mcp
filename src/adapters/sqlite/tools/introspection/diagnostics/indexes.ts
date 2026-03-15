@@ -14,6 +14,7 @@ import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Schemas
@@ -25,6 +26,12 @@ const IndexAuditSchema = z
       .string()
       .optional()
       .describe("Optional table name to audit (default: all tables)"),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from audit findings (default: true)",
+      ),
     minSeverity: z
       .enum(["info", "warning", "error"])
       .optional()
@@ -82,6 +89,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = IndexAuditSchema.parse(params);
+        const excludeSystem = input.excludeSystemTables !== false;
         // Get all user-created indexes
         let indexQuery = `SELECT name, tbl_name, sql FROM sqlite_master
                           WHERE type = 'index' AND sql IS NOT NULL`;
@@ -182,6 +190,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
 
         for (const row of tableList.rows ?? []) {
           const tableName = row["name"] as string;
+          if (excludeSystem && isSpatialiteSystemTable(tableName)) continue;
           const fkResult = await adapter.executeReadQuery(
             `PRAGMA foreign_key_list("${tableName}")`,
           );
@@ -210,6 +219,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
         // Check 3: Large tables without secondary indexes
         for (const row of tableList.rows ?? []) {
           const tableName = row["name"] as string;
+          if (excludeSystem && isSpatialiteSystemTable(tableName)) continue;
           const tableIdxs = byTable.get(tableName) ?? [];
 
           // Skip if already has user indexes

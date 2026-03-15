@@ -14,6 +14,11 @@ import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import {
+  isSpatialiteSystemTable,
+  isSpatialiteSystemView,
+  isSpatialiteSystemIndex,
+} from "../../core/tables.js";
 
 // =============================================================================
 // Enum Coercers (prevent raw MCP -32602 from z.enum validation)
@@ -48,6 +53,12 @@ const SchemaSnapshotSchema = z
       .optional()
       .describe(
         "Omit column details from tables section for reduced payload (default: false)",
+      ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables, views, indexes, and triggers (default: true)",
       ),
   })
   .default({});
@@ -138,6 +149,7 @@ export function createSchemaSnapshotTool(
           "triggers",
         ];
         const compact = input.compact ?? false;
+        const excludeSystem = input.excludeSystemTables !== false;
         const snapshot: Record<string, unknown> = {};
         const stats = { tables: 0, views: 0, indexes: 0, triggers: 0 };
 
@@ -156,6 +168,11 @@ export function createSchemaSnapshotTool(
                 `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
               );
               tablesList = (tablesResult.rows ?? []).map((r) => r["name"] as string);
+          }
+
+          // Filter SpatiaLite system tables
+          if (excludeSystem) {
+            tablesList = tablesList.filter((n) => !isSpatialiteSystemTable(n));
           }
           
           const tables = [];
@@ -202,10 +219,13 @@ export function createSchemaSnapshotTool(
           const viewsResult = await adapter.executeReadQuery(
             `SELECT name, sql FROM sqlite_master WHERE type='view' ORDER BY name`,
           );
-          const views = (viewsResult.rows ?? []).map((v) => ({
+          let views = (viewsResult.rows ?? []).map((v) => ({
             name: v["name"] as string,
             sql: v["sql"] as string,
           }));
+          if (excludeSystem) {
+            views = views.filter((v) => !isSpatialiteSystemView(v.name));
+          }
           snapshot["views"] = views;
           stats.views = views.length;
         }
@@ -214,12 +234,17 @@ export function createSchemaSnapshotTool(
           const indexResult = await adapter.executeReadQuery(
             `SELECT name, tbl_name, sql FROM sqlite_master WHERE type='index' AND sql IS NOT NULL ORDER BY tbl_name, name`,
           );
-          const indexes = (indexResult.rows ?? []).map((idx) => ({
+          let indexes = (indexResult.rows ?? []).map((idx) => ({
             name: idx["name"] as string,
             table: idx["tbl_name"] as string,
             unique: ((idx["sql"] as string) || "").includes("UNIQUE"),
             sql: idx["sql"] as string,
           }));
+          if (excludeSystem) {
+            indexes = indexes.filter(
+              (idx) => !isSpatialiteSystemIndex(idx.name) && !isSpatialiteSystemTable(idx.table),
+            );
+          }
           snapshot["indexes"] = indexes;
           stats.indexes = indexes.length;
         }
@@ -228,11 +253,14 @@ export function createSchemaSnapshotTool(
           const trigResult = await adapter.executeReadQuery(
             `SELECT name, tbl_name, sql FROM sqlite_master WHERE type='trigger' ORDER BY tbl_name, name`,
           );
-          const triggers = (trigResult.rows ?? []).map((t) => ({
+          let triggers = (trigResult.rows ?? []).map((t) => ({
             name: t["name"] as string,
             table: t["tbl_name"] as string,
             sql: t["sql"] as string,
           }));
+          if (excludeSystem) {
+            triggers = triggers.filter((t) => !isSpatialiteSystemTable(t.table));
+          }
           snapshot["triggers"] = triggers;
           stats.triggers = triggers.length;
         }
