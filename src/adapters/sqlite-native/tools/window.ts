@@ -97,7 +97,7 @@ const MovingAverageSchema = z.object({
   table: z.string().describe("Table name"),
   valueColumn: z.string().describe("Column to average"),
   orderBy: z.string().describe("Column(s) to order by"),
-  windowSize: z.preprocess(coerceNumber, z.number().describe("Number of rows in the moving window")),
+  windowSize: z.preprocess(coerceNumber, z.number().optional().describe("Number of rows in the moving window")),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
     .array(z.string())
@@ -110,7 +110,7 @@ const MovingAverageSchema = z.object({
 const NtileSchema = z.object({
   table: z.string().describe("Table name"),
   orderBy: z.string().describe("Column(s) to order by"),
-  buckets: z.preprocess(coerceNumber, z.number().describe("Number of buckets (e.g., 4 for quartiles)")),
+  buckets: z.preprocess(coerceNumber, z.number().optional().describe("Number of buckets (e.g., 4 for quartiles)")),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
     .array(z.string())
@@ -397,6 +397,16 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
       try {
         const input = MovingAverageSchema.parse(params);
 
+        if (input.windowSize === undefined) {
+          return {
+            success: false,
+            error: "'windowSize' is required",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
           throw new DbMcpError(
             "Invalid table name",
@@ -460,6 +470,16 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = NtileSchema.parse(params);
+
+        if (input.buckets === undefined) {
+          return {
+            success: false,
+            error: "'buckets' is required",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
           throw new DbMcpError(
