@@ -1,6 +1,6 @@
 # db-mcp Resource Testing Plan
 
-Please test all 8 db-mcp resources using the test database (test-database/test.db) and concisely report any issues.
+Please test all db-mcp resources (8 data + up to 7 help) using the test database (test-database/test.db) and concisely report any issues.
 
 ## Resources to Test
 
@@ -158,21 +158,38 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 9. Protocol Validation — Instruction Level & Tool Annotations
+### 9. Help Resources — On-Demand Reference Documentation
 
-**Test A — Instruction Level:**
+**Test A — sqlite://help (always registered):**
 
-Start the server with different `--instruction-level` values and read the server instructions resource to verify length varies:
+Read `sqlite://help` and verify it contains critical reference content:
 
-| `--instruction-level` | Expected Behavior |
+| Check | Expected |
 |---|---|
-| `essential` | Shortest instructions (~1K tokens) |
-| `standard` (default) | Medium instructions (~1.2K tokens) |
-| `full` | Longest instructions (~4.1K tokens) |
+| Resource exists | ✅ Always registered regardless of tool filter |
+| Contains "Critical Gotchas" | ✅ Section header present |
+| Contains "Code Mode API" | ✅ Section header present |
+| Contains "WASM vs Native" | ✅ Comparison section present |
+| Content is markdown | ✅ mimeType: text/markdown |
 
-> **Note:** The `INSTRUCTION_LEVEL` environment variable also controls this; CLI flag takes precedence.
+**Test B — Group-specific help resources:**
 
-**Test B — Tool Annotations (`openWorldHint`):**
+Verify that group-specific help resources are only registered when the corresponding group is enabled. These tests depend on the `--tool-filter` configuration:
+
+| Resource | URI | Registered When |
+|---|---|---|
+| `sqlite_help_json` | `sqlite://help/json` | json group enabled |
+| `sqlite_help_text` | `sqlite://help/text` | text group enabled |
+| `sqlite_help_stats` | `sqlite://help/stats` | stats group enabled |
+| `sqlite_help_vector` | `sqlite://help/vector` | vector group enabled |
+| `sqlite_help_geo` | `sqlite://help/geo` | geo group enabled |
+| `sqlite_help_admin` | `sqlite://help/admin` | admin group enabled |
+
+If a group-specific help resource is available, read it and verify it contains relevant tool reference content (tool names, parameters, usage notes).
+
+> **Note:** Help resources are tested more thoroughly by the `test-help-resources.mjs` integration script, which spins up separate server instances with different `--tool-filter` values.
+
+**Test C — Tool Annotations (`openWorldHint`):**
 
 Call `tools/list` and verify that **all** tools have `openWorldHint: false` in their annotations. db-mcp tools are local database operations — none require external network access.
 
@@ -212,10 +229,11 @@ Use live MCP resource reads via the `read_resource` tool against the running sql
 
 | Metric | Value |
 |--------|-------|
-| Total resources to test | 8 |
+| Data resources to test | 8 |
+| Help resources to test | 1 (sqlite://help) + up to 6 group-specific |
 | Static resources | 7 |
 | Templated resources | 1 (sqlite_table_schema with URI parameter) |
-| Protocol validation tests | 2 (instruction level tiers + tool annotations) |
+| Protocol validation tests | 2 (help resource content + tool annotations) |
 | Error cases to test | 1 (nonexistent table in template) |
 
 ---

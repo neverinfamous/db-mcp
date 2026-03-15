@@ -1,6 +1,6 @@
 # db-mcp Code Mode Test Plan
 
-**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions.md` using `view_file`.
+**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
 
 **Step 2:** Conduct an exhaustive test of **Code Mode** (`sqlite_execute_code`) using live MCP tool calls. All tests use the `sqlite_execute_code` tool — never direct tool calls — unless validating a comparison.
 

@@ -1,6 +1,6 @@
 # db-mcp (SQLite) Tools Test (Native Mode)
 
-**Step 1:** Confirm you read read the server instructions sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
 **Step 2:** Please conduct an exhaustive test of the tool group listed below in **WASM Mode** using the live MCP server tool calls directly for testing, not scripts/terminal.
 
@@ -47,7 +47,7 @@ The test database (test-database/test.db) contains these tables with JSON-releva
 4. Use `test-database/sample.csv` for CSV tool testing (columns: id, name, category, price, quantity, created_at)
 5. Clean up any `temp_*` tables after testing with `sqlite_drop_table` or `sqlite_write_query`
 6. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
-7. Do not mention what already works well or issues well documented in ServerInstructions and runtime hints which are already optimal
+7. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
 8. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
 
 > [!CAUTION]
@@ -138,7 +138,7 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 ### Reporting Rules
 
 - Use ✅ only in inline notes during testing; omit from Final Summary
-- Do not mention what already works well or issues already documented in ServerInstructions and runtime hints
+- Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
 
@@ -146,7 +146,7 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 2. **Triage findings**: If issues were found, create an implementation plan. If the plan requires no user decisions, proceed directly to implementation
 3. **Scope of fixes** includes corrections to any of:
    - Handler code
-   - `src/constants/server-instructions.md` (unified source) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
    - Test database (`test-database/test-database.db`)
    - This prompt (`test-tools.md`) and group file (`test-group-tools.md`)
 

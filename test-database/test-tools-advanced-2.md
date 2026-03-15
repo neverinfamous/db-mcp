@@ -1,6 +1,6 @@
 # Advanced Stress Test — db-mcp (SQLite) — Part 2
 
-**Step 1:** Read `server-instructions.ts` using `view_file` (not grep or search) to understand documented behaviors, edge cases, and response structures.
+**Step 1:** Read `server-instructions.ts` and `src/constants/server-instructions/gotchas.md` using `view_file` (not grep or search) to understand documented behaviors, edge cases, and response structures.
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode), not with a browser, scripts, or terminal.
 
@@ -547,7 +547,7 @@ At the end, compile a summary of all findings from **both Part 1 and Part 2**:
 
 Create a plan to implement any fixes, including:
 
-- Correcting any deficiencies in `src/constants/server-instructions.md` (run `npm run generate:instructions` after editing)
+- Correcting any deficiencies in `src/constants/server-instructions/*.md` (run `npm run generate:instructions` after editing)
 - Updating test-database.sql if needed
 - Updating the prompts (`test-tools-advanced-1.md`, `test-tools-advanced-2.md`) if any test case was invalid
 
