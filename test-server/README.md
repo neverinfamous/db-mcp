@@ -11,6 +11,7 @@
 | `test-tools-advanced-1.md` | ~28KB | **Second-pass stress tests (Part 1)** — boundary values, state pollution, error message quality, WASM parity. | After basic checklist passes |
 | `test-tools-advanced-2.md` | ~32KB | **Second-pass stress tests (Part 2)** — cross-group integration. Self-contained. | After basic checklist passes |
 | `test-resources.md` | ~6KB | Resource testing plan (8 data + 7 help resources via `read_resource`) | When testing resources |
+| `test-preflight.md` | ~2KB | **Pre-flight check** — validates slim instructions, help resources, data resources, and tool-filter alignment in 5 steps | Before any test pass |
 | `test-agent-experience.md` | ~9KB | **Agent experience test** — 29 open-ended scenarios across 7 passes validating help resource sufficiency | After help resource changes |
 | `test-prompts.md` | ~10KB | Prompt testing plan (10 prompts, tested manually since agents typically don't invoke prompts) | When testing prompts |
 | `tool-groups-list.md` | — | **Canonical tool inventory** — all 9 groups + codemode, 139 Native / 115 WASM tools. Source of truth for tool counts. | Reference / auditing |
