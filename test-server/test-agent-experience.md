@@ -12,6 +12,9 @@ Run **each pass** as a separate conversation with the corresponding `--tool-filt
 | Pass 2 | `analytics` | Core, JSON, Stats (~52) | 13–16 |
 | Pass 3 | `search` | Core, Text, Vector (~38) | 17–18 |
 | Pass 4 | `codemode` | Code Mode only (1+3) | 19–20 |
+| Pass 5 | `core,geo` | Core, Geo (~22) | 21–23 |
+| Pass 6 | `core,admin` | Core, Admin (~44) | 24–26 |
+| Pass 7 | `core,introspection,migration` | Core, Introspection, Migration (~27) | 27–29 |
 
 > **Important:** Do NOT combine passes. Each pass is a fresh conversation with a clean context. The agent has never seen this database before.
 
@@ -141,6 +144,51 @@ Using only `sqlite_execute_code`, find the top 5 products by order count with to
 
 ---
 
+## Pass 5: `core,geo` (Core, Geo — ~22 tools)
+
+### Phase 8 — Geospatial
+
+#### Scenario 21 — Distance between cities
+What is the distance between New York and Paris based on the coordinates in `test_locations`?
+
+#### Scenario 22 — Nearby locations
+Find all locations within 100km of London. How many are there?
+
+#### Scenario 23 — Bounding box
+Find all locations within the bounding box covering Western Europe (lat 40–55, lon -5 to 15).
+
+---
+
+## Pass 6: `core,admin` (Core, Admin — ~44 tools)
+
+### Phase 9 — Admin & Data Quality
+
+#### Scenario 24 — Data quality audit
+Audit the database for data quality issues: NULL values, duplicate entries, orphaned foreign keys, unused indexes. Summarize findings.
+
+#### Scenario 25 — Database health & optimization
+Run an integrity check, analyze the database, then suggest and apply optimizations.
+
+#### Scenario 26 — Backup and restore
+Create a backup of the database. Verify the backup exists and is valid.
+
+---
+
+## Pass 7: `core,introspection,migration` (Core, Introspection, Migration — ~27 tools)
+
+### Phase 10 — Schema Analysis & Migration
+
+#### Scenario 27 — Dependency graph
+Map out the foreign key dependency graph. Which tables have the most dependencies? What's the topological sort order?
+
+#### Scenario 28 — Cascade simulation
+What would happen if `test_products` row 1 were deleted? Simulate the cascade impact on related tables.
+
+#### Scenario 29 — Migration workflow
+Initialize migration tracking, then create and apply a migration that adds a `description` column to `test_products`. Roll it back after verifying.
+
+---
+
 ## Post-Test Summary
 
 Compile findings across all passes into:
@@ -149,4 +197,5 @@ Compile findings across all passes into:
 2. **Discovery friction** — cases where the agent struggled to find the right tool or resource
 3. **Suggested improvements** — specific additions to `src/constants/server-instructions/*.md`
 
-> **Key metric:** How many scenarios did the agent complete on the first try with ≤1 help resource read? This measures whether the instructions + tool descriptions are self-sufficient.
+> **Key metric:** How many of the 29 scenarios did the agent complete on the first try with ≤1 help resource read? This measures whether the instructions + tool descriptions are self-sufficient.
+
