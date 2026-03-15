@@ -7,6 +7,17 @@
 import { z } from "zod";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 // Re-export validateColumnExists from shared utility so existing consumers keep working
 export { validateColumnExists } from "../column-validation.js";
 
@@ -103,17 +114,16 @@ export const GroupByStatsSchema = z.object({
     .describe("Statistic type"),
   whereClause: z.string().optional(),
   orderBy: z.enum(["value", "group"]).optional().default("group"),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const HistogramSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column"),
-  buckets: z
-    .number()
-    .optional()
-    .default(10)
-    .describe("Number of buckets"),
+  buckets: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(10).describe("Number of buckets"),
+  ),
   whereClause: z.string().optional(),
 });
 
@@ -136,7 +146,7 @@ export const CorrelationSchema = z.object({
 export const TopNSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to rank"),
-  n: z.number().optional().default(10).describe("Number of top values"),
+  n: z.preprocess(coerceNumber, z.number().optional().default(10).describe("Number of top values")),
   orderDirection: z.enum(["asc", "desc"]).optional().default("desc"),
   whereClause: z.string().optional(),
   selectColumns: z
@@ -148,7 +158,7 @@ export const TopNSchema = z.object({
 export const DistinctValuesSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to get distinct values"),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   whereClause: z.string().optional(),
 });
 
@@ -164,7 +174,7 @@ export const SummaryStatsSchema = z.object({
 export const FrequencySchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to count frequency"),
-  limit: z.number().optional().default(20),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(20)),
   whereClause: z.string().optional(),
 });
 
@@ -172,32 +182,28 @@ export const OutlierSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column to analyze"),
   method: z.enum(["iqr", "zscore"]).optional().default("iqr"),
-  threshold: z
-    .number()
-    .optional()
-    .describe("IQR multiplier (default 1.5) or Z-score threshold (default 3)"),
+  threshold: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("IQR multiplier (default 1.5) or Z-score threshold (default 3)"),
+  ),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
-  maxOutliers: z
-    .number()
-    .min(1)
-    .max(500)
-    .optional()
-    .default(50)
-    .describe(
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  maxOutliers: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(50).describe(
       "Maximum number of outliers to return (default 50). Reduces payload size for large datasets.",
     ),
+  ),
 });
 
 export const RegressionSchema = z.object({
   table: z.string().describe("Table name"),
   xColumn: z.string().describe("Independent variable column"),
   yColumn: z.string().describe("Dependent variable column"),
-  degree: z
-    .number()
-    .optional()
-    .default(1)
-    .describe("Polynomial degree (1=linear)"),
+  degree: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(1).describe("Polynomial degree (1=linear)"),
+  ),
   whereClause: z.string().optional(),
 });
 
@@ -210,9 +216,9 @@ export const HypothesisSchema = z.object({
     .optional()
     .describe("Second column for two-sample t-test"),
   groupColumn: z.string().optional().describe("Group column for chi-square"),
-  expectedMean: z
-    .number()
-    .optional()
-    .describe("Expected mean for one-sample t-test"),
+  expectedMean: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Expected mean for one-sample t-test"),
+  ),
   whereClause: z.string().optional(),
 });

@@ -12,6 +12,17 @@ import { formatHandlerError } from "../../../utils/errors/index.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
 import { ErrorCategory } from "../../../utils/errors/categories.js";
 
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 // Schemas
 const RowNumberSchema = z.object({
   table: z.string().describe("Table name"),
@@ -22,7 +33,7 @@ const RowNumberSchema = z.object({
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.number().optional().default(100).describe("Maximum rows to return"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
 }).strict();
 
 const RankSchema = z.object({
@@ -39,7 +50,7 @@ const RankSchema = z.object({
     .default("rank")
     .describe("Rank function type"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.number().optional().default(100).describe("Maximum rows to return"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
 }).strict();
 
 const LagLeadSchema = z.object({
@@ -49,11 +60,10 @@ const LagLeadSchema = z.object({
   direction: z
     .enum(["lag", "lead"])
     .describe("LAG (previous) or LEAD (next) row"),
-  offset: z
-    .number()
-    .optional()
-    .default(1)
-    .describe("Number of rows to look back/ahead"),
+  offset: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(1).describe("Number of rows to look back/ahead"),
+  ),
   defaultValue: z
     .string()
     .optional()
@@ -64,7 +74,7 @@ const LagLeadSchema = z.object({
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.number().optional().default(100).describe("Maximum rows to return"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
 }).strict();
 
 const RunningTotalSchema = z.object({
@@ -80,34 +90,34 @@ const RunningTotalSchema = z.object({
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.number().optional().default(100).describe("Maximum rows to return"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
 }).strict();
 
 const MovingAverageSchema = z.object({
   table: z.string().describe("Table name"),
   valueColumn: z.string().describe("Column to average"),
   orderBy: z.string().describe("Column(s) to order by"),
-  windowSize: z.number().describe("Number of rows in the moving window"),
+  windowSize: z.preprocess(coerceNumber, z.number().describe("Number of rows in the moving window")),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.number().optional().default(100).describe("Maximum rows to return"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
 }).strict();
 
 const NtileSchema = z.object({
   table: z.string().describe("Table name"),
   orderBy: z.string().describe("Column(s) to order by"),
-  buckets: z.number().describe("Number of buckets (e.g., 4 for quartiles)"),
+  buckets: z.preprocess(coerceNumber, z.number().describe("Number of buckets (e.g., 4 for quartiles)")),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.number().optional().default(100).describe("Maximum rows to return"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
 }).strict();
 
 /**

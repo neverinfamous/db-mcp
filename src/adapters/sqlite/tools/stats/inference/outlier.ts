@@ -51,6 +51,17 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
       const input = OutlierSchema.parse(params);
 
       try {
+        // Validate maxOutliers bounds (was previously .min(1).max(500) in schema, moved here to avoid refinement leak)
+        if (input.maxOutliers !== undefined && (input.maxOutliers < 1 || input.maxOutliers > 500)) {
+          return {
+            success: false,
+            error: `'maxOutliers' must be between 1 and 500 (got ${input.maxOutliers})`,
+            code: "INVALID_INPUT",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+
         await validateColumnExists(adapter, input.table, input.column);
         const numericError = await validateNumericColumn(
           adapter,
