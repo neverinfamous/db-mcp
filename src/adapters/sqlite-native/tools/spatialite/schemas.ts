@@ -51,14 +51,13 @@ const VALID_FORMATS = ["wkt", "geojson"] as const;
 const VALID_OPERATIONS = ["buffer", "intersection", "union", "difference", "centroid", "envelope", "simplify"] as const;
 
 const coerceGeometryType = createEnumCoercer(VALID_GEOMETRY_TYPES);
-const coerceIndexAction = createEnumCoercer(VALID_INDEX_ACTIONS);
 
 // Required enum constants exported for handler-level validation.
 // Required enums can't use z.preprocess coercion because the SDK's .partial()
 // wraps the preprocess in .optional(), but the inner z.enum() still rejects
 // undefined — producing raw MCP -32602 errors. Instead, use z.string() in
 // the schema and validate in the handler's try/catch.
-export { VALID_ANALYSIS_TYPES, VALID_FORMATS, VALID_OPERATIONS };
+export { VALID_ANALYSIS_TYPES, VALID_INDEX_ACTIONS, VALID_FORMATS, VALID_OPERATIONS };
 
 export const LoadSpatialiteSchema = z.object({
   extensionPath: z
@@ -168,13 +167,10 @@ export const SpatialIndexSchema = z.object({
     .optional()
     .default("geom")
     .describe("Geometry column name"),
-  action: z.preprocess(
-    coerceIndexAction,
-    z.enum(["create", "drop", "check"])
-      .optional()
-      .default("create")
-      .describe("Action to perform"),
-  ),
+  action: z.string()
+    .optional()
+    .default("create")
+    .describe("Action to perform: create, drop, check"),
 }).strict();
 
 export const GeometryTransformSchema = z.object({

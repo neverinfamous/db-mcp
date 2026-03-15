@@ -145,7 +145,7 @@ const CascadeSimulatorOutputSchema = z.object({
         table: z.string(),
         action: z.string(),
         estimatedRows: z.number().optional(),
-        path: z.array(z.string()),
+        path: z.array(z.string()).optional(),
         depth: z.number(),
       }),
     )

@@ -18,6 +18,7 @@ import {
   CreateSpatialTableSchema,
   SpatialQuerySchema,
   SpatialIndexSchema,
+  VALID_INDEX_ACTIONS,
 } from "./schemas.js";
 import {
   tryLoadSpatialite,
@@ -229,6 +230,17 @@ export function createSpatialIndexTool(
           return { success: false, error: "Invalid table name" };
         }
 
+        // Handler-level enum validation (schema uses z.string() to avoid silent coercion)
+        if (!(VALID_INDEX_ACTIONS as readonly string[]).includes(input.action)) {
+          return {
+            success: false,
+            error: `Invalid action: '${input.action}'. Must be one of: ${VALID_INDEX_ACTIONS.join(", ")}`,
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+
         // Validate table exists before attempting index operations
         const tableCheck = await adapter.executeReadQuery(
           `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.tableName}'`,
@@ -336,6 +348,13 @@ export function createSpatialIndexTool(
               };
             }
           }
+
+          default:
+            // Unreachable — handler-level validation above catches invalid values
+            return {
+              success: false,
+              error: `Invalid action: '${input.action}'`,
+            };
         }
       } catch (error) {
         return formatHandlerError(error);
