@@ -169,7 +169,8 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |-------|-------------|-------|-------|
 | **stats** (window) | `window.ts` | 6 | `window_row_number`, `window_rank`, `window_lag_lead`, `window_running_total`, `window_moving_avg`, `window_ntile` |
 | **admin** (transactions) | `transactions.ts` | 7 | `transaction_begin/commit/rollback/savepoint/release/rollback_to/execute` |
-| **geo** (SpatiaLite) | `spatialite/tools.ts` | 7 | `spatialite_load/create_table/query/analyze/index/transform/import` |
+| **geo** (SpatiaLite) | `spatialite/tools.ts` | 4 | `spatialite_load/create_table/query/index` |
+| | `spatialite/analysis.ts` | 3 | `spatialite_analyze/transform/import` |
 
 ### Utility Files (no tools, shared helpers)
 
@@ -190,6 +191,8 @@ Files that provide shared logic but do **not** register tools:
 | `admin/helpers.ts` | Admin tool shared utilities |
 | `virtual/helpers.ts` | Virtual table helper utilities |
 | `introspection/graph/helpers.ts` | FK graph traversal helpers |
+| `spatialite/schemas.ts` (native) | Zod schemas for SpatiaLite tools |
+| `spatialite/loader.ts` (native) | SpatiaLite extension loader + path resolution |
 
 ---
 
