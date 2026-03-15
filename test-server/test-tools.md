@@ -4,6 +4,8 @@
 
 **Step 2:** Please conduct an exhaustive test of the tool group listed below in using the live MCP server tool calls directly for testing, not scripts/terminal except when explictly demanded by this prompt.
 
+**Cleanup**: Attempts to DROP temp tables may fail due to a database lock. If so, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration.
+
 **FTS Testing Notes (Text Group Only):**
 
 - After `sqlite_fts_create`, always call `sqlite_fts_rebuild` before searching
@@ -152,7 +154,7 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 3. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
-   - Test database (`test-server/test-server.db`)
+   - Test database (`test-server/test.db`)
    - This prompt (`test-tools.md`) and group file (`test-group-tools.md`)
 
 ### After Implementation

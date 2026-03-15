@@ -64,7 +64,10 @@ export function createLoadSpatialiteTool(
 
         return Promise.resolve({
           success: false,
-          message: result.error,
+          error: result.error,
+          code: "SPATIALITE_LOAD_FAILED",
+          category: "internal" as const,
+          recoverable: false,
           searchedPaths: SPATIALITE_PATHS,
         });
       } catch (error) {
@@ -94,7 +97,13 @@ export function createSpatialTableTool(
 
         // Validate table name
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-          return { success: false, error: "Invalid table name" };
+          return {
+            success: false,
+            error: `Invalid table name: '${input.tableName}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
         }
 
         // Check if table already exists
@@ -119,7 +128,10 @@ export function createSpatialTableTool(
           if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col.name)) {
             return {
               success: false,
-              error: `Invalid column name: ${col.name}`,
+              error: `Invalid column name: '${col.name}'`,
+              code: "VALIDATION_ERROR",
+              category: "validation" as const,
+              recoverable: false,
             };
           }
           columns.push(`"${col.name}" ${col.type}`);
@@ -144,6 +156,9 @@ export function createSpatialTableTool(
           return {
             success: false,
             error: `Failed to create geometry column '${input.geometryColumn}'. AddGeometryColumn returned: ${JSON.stringify(addResult.rows)}`,
+            code: "SPATIALITE_CREATE_FAILED",
+            category: "internal" as const,
+            recoverable: false,
           };
         }
 
@@ -227,7 +242,13 @@ export function createSpatialIndexTool(
 
         // Validate names
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-          return { success: false, error: "Invalid table name" };
+          return {
+            success: false,
+            error: `Invalid table name: '${input.tableName}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
         }
 
         // Handler-level enum validation (schema uses z.string() to avoid silent coercion)
@@ -249,6 +270,10 @@ export function createSpatialIndexTool(
           return {
             success: false,
             error: `Table '${input.tableName}' does not exist`,
+            code: "TABLE_NOT_FOUND",
+            category: "resource" as const,
+            suggestion: "Table not found. Run sqlite_list_tables to see available tables.",
+            recoverable: false,
           };
         }
 
@@ -350,10 +375,12 @@ export function createSpatialIndexTool(
           }
 
           default:
-            // Unreachable — handler-level validation above catches invalid values
             return {
               success: false,
-              error: `Invalid action: '${input.action}'`,
+              error: `Invalid action: '${input.action}'. Must be one of: ${VALID_INDEX_ACTIONS.join(", ")}`,
+              code: "VALIDATION_ERROR",
+              category: "validation" as const,
+              recoverable: false,
             };
         }
       } catch (error) {

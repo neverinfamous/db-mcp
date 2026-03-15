@@ -51,13 +51,25 @@ export function createSpatialAnalysisTool(
 
         // Validate names
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.sourceTable)) {
-          return { success: false, error: "Invalid source table name" };
+          return {
+            success: false,
+            error: `Invalid source table name: '${input.sourceTable}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
         }
         if (
           input.targetTable &&
           !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.targetTable)
         ) {
-          return { success: false, error: "Invalid target table name" };
+          return {
+            success: false,
+            error: `Invalid target table name: '${input.targetTable}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
         }
 
         let query: string;
@@ -78,6 +90,9 @@ export function createSpatialAnalysisTool(
                 success: false,
                 error:
                   "Missing required parameter 'targetTable' for nearest neighbor analysis",
+                code: "VALIDATION_ERROR",
+                category: "validation" as const,
+                recoverable: false,
               };
             }
             // Exclude self-matches when tables are the same and excludeSelf is true
@@ -103,6 +118,9 @@ export function createSpatialAnalysisTool(
                 success: false,
                 error:
                   "Missing required parameter 'targetTable' for point in polygon analysis",
+                code: "VALIDATION_ERROR",
+                category: "validation" as const,
+                recoverable: false,
               };
             }
             // Conditionally include WKT geometry based on includeGeometry param
@@ -200,6 +218,9 @@ export function createGeometryTransformTool(
               return {
                 success: false,
                 error: "Second geometry required for intersection",
+                code: "VALIDATION_ERROR",
+                category: "validation" as const,
+                recoverable: false,
               };
             }
             query = `SELECT AsText(Intersection(
@@ -213,6 +234,9 @@ export function createGeometryTransformTool(
               return {
                 success: false,
                 error: "Second geometry required for union",
+                code: "VALIDATION_ERROR",
+                category: "validation" as const,
+                recoverable: false,
               };
             }
             query = `SELECT AsText(GUnion(
@@ -226,6 +250,9 @@ export function createGeometryTransformTool(
               return {
                 success: false,
                 error: "Second geometry required for difference",
+                code: "VALIDATION_ERROR",
+                category: "validation" as const,
+                recoverable: false,
               };
             }
             query = `SELECT AsText(Difference(
@@ -259,6 +286,9 @@ export function createGeometryTransformTool(
           return {
             success: false,
             error: `Invalid geometry: '${input.geometry1}' could not be parsed as WKT`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
           };
         }
 
@@ -305,7 +335,13 @@ export function createSpatialImportTool(
 
         // Validate table name
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
-          return { success: false, error: "Invalid table name" };
+          return {
+            success: false,
+            error: `Invalid table name: '${input.tableName}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
         }
 
         let wkt: string;
@@ -327,7 +363,10 @@ export function createSpatialImportTool(
                 if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
                   return {
                     success: false,
-                    error: `Invalid column name: ${key}`,
+                    error: `Invalid column name: '${key}'`,
+                    code: "VALIDATION_ERROR",
+                    category: "validation" as const,
+                    recoverable: false,
                   };
                 }
                 columns.push(`"${key}"`);
@@ -350,6 +389,9 @@ export function createSpatialImportTool(
             return {
               success: false,
               error: `Invalid GeoJSON: ${e instanceof Error ? e.message : String(e)}`,
+              code: "VALIDATION_ERROR",
+              category: "validation" as const,
+              recoverable: false,
             };
           }
         } else {
@@ -365,6 +407,9 @@ export function createSpatialImportTool(
           return {
             success: false,
             error: `Invalid WKT geometry: '${wkt}' could not be parsed`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
           };
         }
 
@@ -377,7 +422,10 @@ export function createSpatialImportTool(
             if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
               return {
                 success: false,
-                error: `Invalid column name: ${key}`,
+                error: `Invalid column name: '${key}'`,
+                code: "VALIDATION_ERROR",
+                category: "validation" as const,
+                recoverable: false,
               };
             }
             columns.push(`"${key}"`);
