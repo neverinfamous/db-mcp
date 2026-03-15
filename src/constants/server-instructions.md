@@ -81,6 +81,8 @@ _Text group: 17 native, 13 in WASM (4 FTS5 tools require native)_
 
 <!-- SECTION: reference -->
 
+<!-- GROUP: _always -->
+
 ## ⚠️ Critical Gotchas
 
 1. **sqlite_write_query**: ⛔ Only INSERT/UPDATE/DELETE — use `sqlite_read_query` for SELECT
@@ -101,6 +103,8 @@ _Text group: 17 native, 13 in WASM (4 FTS5 tools require native)_
 16. **sqlite_dbstat**: `summarize` only works in native; WASM returns counts only
 17. **PRAGMA compile options**: WASM may show FTS3, not FTS5
 
+<!-- GROUP: json -->
+
 ## JSON Operations (23 tools)
 
 - `sqlite_create_json_collection({ tableName, indexes: [{ path: "$.key" }] })` — creates table with JSON indexes
@@ -118,6 +122,8 @@ _Text group: 17 native, 13 in WASM (4 FTS5 tools require native)_
 - `sqlite_json_storage_info({ table, column })` — check text vs JSONB format
 - `sqlite_jsonb_convert({ table, column })` — convert to JSONB for faster queries (SQLite 3.45+)
 
+<!-- GROUP: vector -->
+
 ## Vector/Semantic Search (11 tools)
 
 - `sqlite_vector_create_table({ tableName, dimensions, additionalColumns: [{ name, type }] })` — create vector table
@@ -132,12 +138,16 @@ _Text group: 17 native, 13 in WASM (4 FTS5 tools require native)_
 - `sqlite_vector_normalize({ vector: [...] })` — returns unit vector
 - `sqlite_vector_distance({ vector1, vector2, metric: "cosine" })` — or `"euclidean"`, `"dot"`
 
+<!-- GROUP: text -->
+
 ## Full-Text Search / FTS5 (4 tools, Native only)
 
 - `sqlite_fts_create({ tableName, sourceTable, columns: ["title", "content"] })` — creates FTS5 table with auto-sync triggers
 - `sqlite_fts_rebuild({ table })` — ⚠️ Required after create to populate index with existing data
 - `sqlite_fts_search({ table, query, limit })` — search FTS5 index. AND by default; use `OR` explicitly
 - `sqlite_fts_count` — count FTS5 entries
+
+<!-- GROUP: stats -->
 
 ## Statistical Analysis (13 core + 6 window)
 
@@ -158,6 +168,8 @@ Window functions (Native only):
 - `sqlite_window_moving_avg({ table, valueColumn, orderBy, windowSize: 7 })`
 - `sqlite_window_lead_lag`, `sqlite_window_ntile`
 
+<!-- GROUP: geo -->
+
 ## Geospatial Operations (4 basic + 7 SpatiaLite)
 
 Basic geo (always available — Haversine formula):
@@ -175,12 +187,16 @@ SpatiaLite (Native only):
 - `sqlite_spatialite_index({ tableName, geometryColumn, action: "create" })`
 - `sqlite_spatialite_status` — check SpatiaLite availability
 
+<!-- GROUP: admin -->
+
 ## Transactions (7 tools, Native only)
 
 - `sqlite_transaction_execute({ statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"] })` — atomic execution
 - `sqlite_transaction_begin({ mode: "immediate" })`
 - `sqlite_transaction_savepoint({ name })` / `sqlite_transaction_rollback_to({ name })` / `sqlite_transaction_release({ name })`
 - `sqlite_transaction_commit()` / `sqlite_transaction_rollback()`
+
+<!-- GROUP: text -->
 
 ## Text Processing (13 core + 4 FTS5)
 
@@ -194,6 +210,8 @@ SpatiaLite (Native only):
 - `sqlite_phonetic_match({ table, column, search, algorithm: "soundex" })` — matches against any word in value. Use `includeRowData: false` for lighter payloads
 - `sqlite_advanced_search({ table, column, searchTerm, techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold })` — fuzzyThreshold: 0.3-0.4 = loose, 0.6-0.8 = strict
 - `sqlite_text_pad`, `sqlite_text_template`, `sqlite_text_similarity`, `sqlite_text_word_count`
+
+<!-- GROUP: admin -->
 
 ## Database Administration
 
@@ -242,6 +260,8 @@ CSV Virtual Tables (Native only, requires ABSOLUTE paths):
 
 Business insights:
 - `sqlite_append_insight({ insight })` — add to `memo://insights`
+
+<!-- GROUP: _always -->
 
 ## Code Mode API Mapping
 

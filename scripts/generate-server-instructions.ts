@@ -2,9 +2,9 @@
  * Generates src/constants/server-instructions.ts from a single markdown source.
  *
  * Reads server-instructions.md, splits by section markers
- * (<!-- SECTION: essential/filtering/reference -->), escapes for template
- * literals, and wraps them in a TypeScript module with tiered instruction
- * constants and dynamic logic.
+ * (<!-- SECTION: essential/filtering/reference -->) and group markers
+ * (<!-- GROUP: groupname -->), escapes for template literals, and wraps them
+ * in a TypeScript module with tiered instruction constants and dynamic logic.
  *
  * Uses string concatenation (not template literals) to build the output,
  * because the output itself contains template literals with interpolation.
@@ -48,6 +48,37 @@ const essentialMd = preamble + "\n\n" + (sections.get("essential") ?? "");
 const filteringMd = sections.get("filtering") ?? "";
 const toolRefMd = sections.get("reference") ?? "";
 
+// Parse GROUP markers within the reference section
+// <!-- GROUP: groupname --> splits the reference into per-group sections
+const groupSections: { group: string; content: string }[] = [];
+const groupPattern = /<!--\s*GROUP:\s*([\w_]+)\s*-->/g;
+const groupMarkers: { name: string; index: number }[] = [];
+
+let groupMatch: RegExpExecArray | null;
+while ((groupMatch = groupPattern.exec(toolRefMd)) !== null) {
+  groupMarkers.push({ name: groupMatch[1], index: groupMatch.index + groupMatch[0].length });
+}
+
+if (groupMarkers.length > 0) {
+  for (let i = 0; i < groupMarkers.length; i++) {
+    const start = groupMarkers[i].index;
+    const end = i + 1 < groupMarkers.length
+      ? toolRefMd.lastIndexOf("<!--", groupMarkers[i + 1].index)
+      : toolRefMd.length;
+    const content = toolRefMd.substring(start, end).trim();
+    if (content) {
+      groupSections.push({ group: groupMarkers[i].name, content });
+    }
+  }
+}
+
+// Merge sections with the same group name (e.g., text = FTS5 + Text Processing)
+const mergedGroupSections = new Map<string, string>();
+for (const { group, content } of groupSections) {
+  const existing = mergedGroupSections.get(group);
+  mergedGroupSections.set(group, existing ? existing + "\n\n" + content : content);
+}
+
 /**
  * Escape content for use inside a JS/TS template literal.
  * Handles: backslashes, backticks, and template expressions (${).
@@ -61,7 +92,6 @@ function escapeForTemplateLiteral(content: string): string {
 
 const essentialEscaped = escapeForTemplateLiteral(essentialMd);
 const filteringEscaped = escapeForTemplateLiteral(filteringMd);
-const toolRefEscaped = escapeForTemplateLiteral(toolRefMd);
 
 // Use backtick char for building string to avoid nesting issues
 const BT = "`";
@@ -111,17 +141,17 @@ lines.push("");
 lines.push("/**");
 lines.push(" * Instruction detail level for token efficiency");
 lines.push(
-  " * - essential: ~200 tokens - Core behaviors only (for token-constrained clients)",
+  " * - essential: ~1K tokens - Core behaviors only (for token-constrained clients)",
 );
 lines.push(
-  " * - standard: ~400 tokens - + Tool filtering and groups (default)",
+  " * - standard: ~1.2K tokens - + Tool filtering and groups (default)",
 );
-lines.push(" * - full: ~600 tokens - + Complete tool/resource reference");
+lines.push(" * - full: ~4.1K tokens - + Complete tool/resource reference");
 lines.push(" */");
 lines.push('export type InstructionLevel = "essential" | "standard" | "full";');
 lines.push("");
 lines.push("/**");
-lines.push(" * Essential behavioral guidance (~200 tokens)");
+lines.push(" * Essential behavioral guidance (~1K tokens)");
 lines.push(" * Core patterns every AI agent should follow.");
 lines.push(" */");
 lines.push(
@@ -129,29 +159,42 @@ lines.push(
 );
 lines.push("");
 lines.push("/**");
-lines.push(" * Tool filtering instructions (~150 additional tokens)");
+lines.push(" * Tool filtering instructions (~200 additional tokens)");
 lines.push(" */");
 lines.push(
   "const FILTERING_INSTRUCTIONS = " + BT + "\\n" + filteringEscaped + BT + ";",
 );
 lines.push("");
+
+// Emit per-group reference sections as a Map
 lines.push("/**");
-lines.push(" * Tool reference - comprehensive usage examples");
+lines.push(" * Tool reference sections keyed by group name.");
+lines.push(" * '_always' sections are included regardless of tool filter.");
+lines.push(" * Other keys correspond to tool group names from tool-constants.ts.");
 lines.push(" */");
-lines.push("const TOOL_REFERENCE = " + BT + "\\n" + toolRefEscaped + BT + ";");
+lines.push("const TOOL_REFERENCE_SECTIONS: ReadonlyMap<string, string> = new Map([");
+for (const [group, content] of mergedGroupSections) {
+  const escaped = escapeForTemplateLiteral(content);
+  lines.push("  [" + JSON.stringify(group) + ", " + BT + "\\n" + escaped + BT + "],");
+}
+lines.push("]);");
 lines.push("");
+
+// Generate the generateInstructions function
 lines.push("/**");
 lines.push(
   " * Generate dynamic instructions based on enabled tools, resources, and prompts",
 );
 lines.push(" *");
 lines.push(" * @param enabledTools - Set of enabled tool names");
-lines.push(" * @param resources - Available resource definitions");
+lines.push(" * @param enabledGroups - Set of enabled tool groups (for filtering reference sections)");
+lines.push(" * @param _resources - Available resource definitions");
 lines.push(" * @param prompts - Available prompt definitions");
 lines.push(" * @param level - Instruction detail level (default: 'standard')");
 lines.push(" */");
 lines.push("export function generateInstructions(");
 lines.push("  enabledTools: Set<string>,");
+lines.push("  enabledGroups: Set<ToolGroup>,");
 lines.push("  _resources: ResourceDefinition[],");
 lines.push("  prompts: PromptDefinition[],");
 lines.push('  level: InstructionLevel = "standard",');
@@ -163,9 +206,14 @@ lines.push('  if (level === "standard" || level === "full") {');
 lines.push("    instructions += FILTERING_INSTRUCTIONS;");
 lines.push("  }");
 lines.push("");
-lines.push("  // Full level includes complete tool reference");
+lines.push("  // Full level includes filtered tool reference sections");
 lines.push('  if (level === "full") {');
-lines.push("    instructions += TOOL_REFERENCE;");
+lines.push("    // Include only sections for enabled groups (+ _always sections)");
+lines.push("    for (const [group, content] of TOOL_REFERENCE_SECTIONS) {");
+lines.push('      if (group === "_always" || enabledGroups.has(group as ToolGroup)) {');
+lines.push("        instructions += content;");
+lines.push("      }");
+lines.push("    }");
 lines.push("");
 lines.push("    // Add active tools summary");
 lines.push("    const activeGroups = getActiveToolGroups(enabledTools);");
@@ -268,9 +316,12 @@ process.stderr.write(
       essentialMd.length.toLocaleString() +
       " bytes), filtering (" +
       filteringMd.length.toLocaleString() +
-      " bytes), reference (" +
-      toolRefMd.length.toLocaleString() +
       " bytes)",
+    "   Reference groups: " +
+      mergedGroupSections.size +
+      " unique groups (" +
+      [...mergedGroupSections.keys()].join(", ") +
+      ")",
     "",
   ].join("\n"),
 );

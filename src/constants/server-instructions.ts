@@ -124,9 +124,12 @@ _+3 built-in tools (\`server_info\`, \`server_health\`, \`list_adapters\`) alway
 _Text group: 17 native, 13 in WASM (4 FTS5 tools require native)_`;
 
 /**
- * Tool reference - comprehensive usage examples
+ * Tool reference sections keyed by group name.
+ * '_always' sections are included regardless of tool filter.
+ * Other keys correspond to tool group names from tool-constants.ts.
  */
-const TOOL_REFERENCE = `\n## ⚠️ Critical Gotchas
+const TOOL_REFERENCE_SECTIONS: ReadonlyMap<string, string> = new Map([
+  ["_always", `\n## ⚠️ Critical Gotchas
 
 1. **sqlite_write_query**: ⛔ Only INSERT/UPDATE/DELETE — use \`sqlite_read_query\` for SELECT
 2. **Regex patterns**: Double-escape backslashes (\`\\\\\\\\\`) when passing through JSON/MCP
@@ -146,7 +149,14 @@ const TOOL_REFERENCE = `\n## ⚠️ Critical Gotchas
 16. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
 17. **PRAGMA compile options**: WASM may show FTS3, not FTS5
 
-## JSON Operations (23 tools)
+## Code Mode API Mapping
+
+\`sqlite_group_action\` → \`sqlite.group.action()\` (group prefixes dropped: \`sqlite_json_insert\` → \`sqlite.json.insert()\`)
+
+**Positional args work**: \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`
+
+**Discovery**: \`sqlite.help()\` returns all groups and methods. \`sqlite.core.help()\`, \`sqlite.json.help()\` for group-specific methods.`],
+  ["json", `\n## JSON Operations (23 tools)
 
 - \`sqlite_create_json_collection({ tableName, indexes: [{ path: "$.key" }] })\` — creates table with JSON indexes
 - \`sqlite_json_insert({ table, column, data: {...} })\` — insert JSON document
@@ -161,9 +171,8 @@ const TOOL_REFERENCE = `\n## ⚠️ Critical Gotchas
 - \`sqlite_json_group_object({ table, keyColumn, aggregateFunction? })\` — group into key-value object. For aggregate values (COUNT, SUM, AVG), use \`aggregateFunction\` param
 - \`sqlite_json_analyze_schema({ table, column })\` — infer schema types
 - \`sqlite_json_storage_info({ table, column })\` — check text vs JSONB format
-- \`sqlite_jsonb_convert({ table, column })\` — convert to JSONB for faster queries (SQLite 3.45+)
-
-## Vector/Semantic Search (11 tools)
+- \`sqlite_jsonb_convert({ table, column })\` — convert to JSONB for faster queries (SQLite 3.45+)`],
+  ["vector", `\n## Vector/Semantic Search (11 tools)
 
 - \`sqlite_vector_create_table({ tableName, dimensions, additionalColumns: [{ name, type }] })\` — create vector table
 - \`sqlite_vector_store({ table, idColumn, vectorColumn, id, vector: [...] })\` — store single vector
@@ -175,16 +184,27 @@ const TOOL_REFERENCE = `\n## ⚠️ Critical Gotchas
 - \`sqlite_vector_dimensions({ table, vectorColumn })\` — get dimensions
 - \`sqlite_vector_stats({ table, vectorColumn })\` — magnitude min/max/avg
 - \`sqlite_vector_normalize({ vector: [...] })\` — returns unit vector
-- \`sqlite_vector_distance({ vector1, vector2, metric: "cosine" })\` — or \`"euclidean"\`, \`"dot"\`
-
-## Full-Text Search / FTS5 (4 tools, Native only)
+- \`sqlite_vector_distance({ vector1, vector2, metric: "cosine" })\` — or \`"euclidean"\`, \`"dot"\``],
+  ["text", `\n## Full-Text Search / FTS5 (4 tools, Native only)
 
 - \`sqlite_fts_create({ tableName, sourceTable, columns: ["title", "content"] })\` — creates FTS5 table with auto-sync triggers
 - \`sqlite_fts_rebuild({ table })\` — ⚠️ Required after create to populate index with existing data
 - \`sqlite_fts_search({ table, query, limit })\` — search FTS5 index. AND by default; use \`OR\` explicitly
 - \`sqlite_fts_count\` — count FTS5 entries
 
-## Statistical Analysis (13 core + 6 window)
+## Text Processing (13 core + 4 FTS5)
+
+- \`sqlite_regex_match({ table, column, pattern })\` — ⚠️ double-escape backslashes in JSON
+- \`sqlite_regex_extract({ table, column, pattern, groupIndex })\` — extract capture group
+- \`sqlite_text_split({ table, column, delimiter })\` — split into parts array
+- \`sqlite_text_concat({ table, columns: ["first", "last"], separator: " " })\`
+- \`sqlite_text_normalize({ table, column, mode: "strip_accents" })\` — or nfc, nfd, nfkc, nfkd
+- \`sqlite_text_validate({ table, column, pattern: "email" })\` — patterns: email, phone, url, uuid, ipv4, custom. For custom: \`pattern: "custom", customPattern: "^[A-Z]{2}[0-9]{4}$"\`
+- \`sqlite_fuzzy_match({ table, column, search, maxDistance, tokenize? })\` — matches WORD TOKENS by default. Use \`tokenize: false\` for full-string matching
+- \`sqlite_phonetic_match({ table, column, search, algorithm: "soundex" })\` — matches against any word in value. Use \`includeRowData: false\` for lighter payloads
+- \`sqlite_advanced_search({ table, column, searchTerm, techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold })\` — fuzzyThreshold: 0.3-0.4 = loose, 0.6-0.8 = strict
+- \`sqlite_text_pad\`, \`sqlite_text_template\`, \`sqlite_text_similarity\`, \`sqlite_text_word_count\``],
+  ["stats", `\n## Statistical Analysis (13 core + 6 window)
 
 Core (always available):
 - \`sqlite_stats_basic({ table, column })\` — count, sum, avg, min, max
@@ -201,9 +221,8 @@ Window functions (Native only):
 - \`sqlite_window_rank({ table, orderBy, partitionBy?, rankType: "dense_rank" })\`
 - \`sqlite_window_running_total({ table, valueColumn, orderBy })\`
 - \`sqlite_window_moving_avg({ table, valueColumn, orderBy, windowSize: 7 })\`
-- \`sqlite_window_lead_lag\`, \`sqlite_window_ntile\`
-
-## Geospatial Operations (4 basic + 7 SpatiaLite)
+- \`sqlite_window_lead_lag\`, \`sqlite_window_ntile\``],
+  ["geo", `\n## Geospatial Operations (4 basic + 7 SpatiaLite)
 
 Basic geo (always available — Haversine formula):
 - \`sqlite_geo_distance({ lat1, lon1, lat2, lon2 })\` — returns km
@@ -218,27 +237,13 @@ SpatiaLite (Native only):
 - \`sqlite_spatialite_analyze({ analysisType, sourceTable, geometryColumn })\` — types: \`spatial_extent\`, \`point_in_polygon\`, \`nearest_neighbor\`, \`distance_matrix\`. ⚠️ nearest_neighbor/distance_matrix return CARTESIAN distance. Use \`excludeSelf: true\` for same source/target table
 - \`sqlite_spatialite_transform({ operation, geometry1, distance })\` — operations: \`buffer\`, \`simplify\`. Buffer \`distance\` = radius; simplify \`distance\` = tolerance (0.0001 for lat/lon). Buffer auto-simplifies (use \`simplifyTolerance: 0\` to disable)
 - \`sqlite_spatialite_index({ tableName, geometryColumn, action: "create" })\`
-- \`sqlite_spatialite_status\` — check SpatiaLite availability
-
-## Transactions (7 tools, Native only)
+- \`sqlite_spatialite_status\` — check SpatiaLite availability`],
+  ["admin", `\n## Transactions (7 tools, Native only)
 
 - \`sqlite_transaction_execute({ statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"] })\` — atomic execution
 - \`sqlite_transaction_begin({ mode: "immediate" })\`
 - \`sqlite_transaction_savepoint({ name })\` / \`sqlite_transaction_rollback_to({ name })\` / \`sqlite_transaction_release({ name })\`
 - \`sqlite_transaction_commit()\` / \`sqlite_transaction_rollback()\`
-
-## Text Processing (13 core + 4 FTS5)
-
-- \`sqlite_regex_match({ table, column, pattern })\` — ⚠️ double-escape backslashes in JSON
-- \`sqlite_regex_extract({ table, column, pattern, groupIndex })\` — extract capture group
-- \`sqlite_text_split({ table, column, delimiter })\` — split into parts array
-- \`sqlite_text_concat({ table, columns: ["first", "last"], separator: " " })\`
-- \`sqlite_text_normalize({ table, column, mode: "strip_accents" })\` — or nfc, nfd, nfkc, nfkd
-- \`sqlite_text_validate({ table, column, pattern: "email" })\` — patterns: email, phone, url, uuid, ipv4, custom. For custom: \`pattern: "custom", customPattern: "^[A-Z]{2}[0-9]{4}$"\`
-- \`sqlite_fuzzy_match({ table, column, search, maxDistance, tokenize? })\` — matches WORD TOKENS by default. Use \`tokenize: false\` for full-string matching
-- \`sqlite_phonetic_match({ table, column, search, algorithm: "soundex" })\` — matches against any word in value. Use \`includeRowData: false\` for lighter payloads
-- \`sqlite_advanced_search({ table, column, searchTerm, techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold })\` — fuzzyThreshold: 0.3-0.4 = loose, 0.6-0.8 = strict
-- \`sqlite_text_pad\`, \`sqlite_text_template\`, \`sqlite_text_similarity\`, \`sqlite_text_word_count\`
 
 ## Database Administration
 
@@ -286,26 +291,21 @@ CSV Virtual Tables (Native only, requires ABSOLUTE paths):
 - \`sqlite_create_csv_table({ tableName, filePath })\` — create virtual table from CSV
 
 Business insights:
-- \`sqlite_append_insight({ insight })\` — add to \`memo://insights\`
-
-## Code Mode API Mapping
-
-\`sqlite_group_action\` → \`sqlite.group.action()\` (group prefixes dropped: \`sqlite_json_insert\` → \`sqlite.json.insert()\`)
-
-**Positional args work**: \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`
-
-**Discovery**: \`sqlite.help()\` returns all groups and methods. \`sqlite.core.help()\`, \`sqlite.json.help()\` for group-specific methods.`;
+- \`sqlite_append_insight({ insight })\` — add to \`memo://insights\``],
+]);
 
 /**
  * Generate dynamic instructions based on enabled tools, resources, and prompts
  *
  * @param enabledTools - Set of enabled tool names
- * @param resources - Available resource definitions
+ * @param enabledGroups - Set of enabled tool groups (for filtering reference sections)
+ * @param _resources - Available resource definitions
  * @param prompts - Available prompt definitions
  * @param level - Instruction detail level (default: 'standard')
  */
 export function generateInstructions(
   enabledTools: Set<string>,
+  enabledGroups: Set<ToolGroup>,
   _resources: ResourceDefinition[],
   prompts: PromptDefinition[],
   level: InstructionLevel = "standard",
@@ -317,9 +317,14 @@ export function generateInstructions(
     instructions += FILTERING_INSTRUCTIONS;
   }
 
-  // Full level includes complete tool reference
+  // Full level includes filtered tool reference sections
   if (level === "full") {
-    instructions += TOOL_REFERENCE;
+    // Include only sections for enabled groups (+ _always sections)
+    for (const [group, content] of TOOL_REFERENCE_SECTIONS) {
+      if (group === "_always" || enabledGroups.has(group as ToolGroup)) {
+        instructions += content;
+      }
+    }
 
     // Add active tools summary
     const activeGroups = getActiveToolGroups(enabledTools);

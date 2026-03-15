@@ -19,6 +19,7 @@ import {
   parseToolFilter,
   getFilterSummary,
   getToolFilterFromEnv,
+  TOOL_GROUPS,
 } from "../filtering/tool-filter.js";
 import { generateInstructions } from "../constants/server-instructions.js";
 import { logger } from "../utils/logger/index.js";
@@ -46,13 +47,20 @@ export class DbMcpServer {
       ? parseToolFilter(config.toolFilter)
       : getToolFilterFromEnv();
 
-    // Generate server instructions based on enabled tools
+    // Build complete set of enabled tool names (for active tools summary)
     const enabledTools = new Set<string>();
     for (const group of this.toolFilter.enabledGroups) {
-      // Add all tools from enabled groups to the set
-      enabledTools.add(group);
+      for (const tool of TOOL_GROUPS[group]) {
+        enabledTools.add(tool);
+      }
     }
-    const instructions = generateInstructions(enabledTools, [], [], config.instructionLevel);
+    const instructions = generateInstructions(
+      enabledTools,
+      this.toolFilter.enabledGroups,
+      [],
+      [],
+      config.instructionLevel,
+    );
 
     // Initialize MCP server with logging capability and instructions
     this.server = new McpServer(
