@@ -51,8 +51,7 @@ The test database (test-database/test.db) contains these tables with JSON-releva
 8. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it. 9. **Deterministic checklist first**: Complete ALL items in the group-specific checklist below before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
-9. **Tool annotation verification**: Call `tools/list` to verify all tools have `openWorldHint: false` in their annotations. db-mcp tools are local database operations and must not hint at external access.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it. 9. **Deterministic checklist first**: Complete ALL items in the group-specific checklist below before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run. 9. **Tool annotation verification**: Call `tools/list` to verify all tools have `openWorldHint: false` in their annotations. db-mcp tools are local database operations and must not hint at external access.
 
 ## Structured Error Response Pattern
 
@@ -157,7 +156,5 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 5. **Commit**: Stage and commit all changes — do NOT push
 6. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
 7. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, suggest improvements.
-
-> **Note:** `test-database/` is in `.gitignore` as intended.
 
 ---
