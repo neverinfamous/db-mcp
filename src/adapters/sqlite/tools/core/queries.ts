@@ -95,7 +95,12 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         let finalQuery = input.query;
         // Inject a safety limit if none is provided to prevent OOM or event loop blocking
         // on massive tables, especially critical for the WASM backend.
-        if (!/\bLIMIT\b/i.test(finalQuery)) {
+        // Only apply to SELECT/WITH — PRAGMA and EXPLAIN don't support LIMIT.
+        const upperForLimit = finalQuery.trim().toUpperCase();
+        const isLimitable =
+          upperForLimit.startsWith("SELECT") ||
+          upperForLimit.startsWith("WITH");
+        if (isLimitable && !/\bLIMIT\b/i.test(finalQuery)) {
           finalQuery = `${finalQuery.trim()} LIMIT 1000`;
         }
 
