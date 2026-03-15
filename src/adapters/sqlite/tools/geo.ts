@@ -7,6 +7,31 @@
  */
 
 import { z } from "zod";
+
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
+const VALID_UNITS = ["km", "miles", "meters"] as const;
+
+/**
+ * Coerce invalid unit values to undefined so the schema default kicks in.
+ * Prevents raw MCP -32602 errors from enum validation.
+ */
+const coerceUnit = (val: unknown): unknown =>
+  typeof val === "string" &&
+  (VALID_UNITS as readonly string[]).includes(val)
+    ? val
+    : typeof val === "string"
+      ? undefined
+      : val;
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
@@ -26,22 +51,22 @@ import { validateColumnExists } from "./column-validation.js";
 
 // Geo schemas
 const GeoDistanceSchema = z.object({
-  lat1: z.number().describe("Latitude of point 1"),
-  lon1: z.number().describe("Longitude of point 1"),
-  lat2: z.number().describe("Latitude of point 2"),
-  lon2: z.number().describe("Longitude of point 2"),
-  unit: z.enum(["km", "miles", "meters"]).optional().default("km"),
+  lat1: z.preprocess(coerceNumber, z.number().describe("Latitude of point 1")),
+  lon1: z.preprocess(coerceNumber, z.number().describe("Longitude of point 1")),
+  lat2: z.preprocess(coerceNumber, z.number().describe("Latitude of point 2")),
+  lon2: z.preprocess(coerceNumber, z.number().describe("Longitude of point 2")),
+  unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
 });
 
 const GeoNearbySchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  centerLat: z.number().describe("Center latitude"),
-  centerLon: z.number().describe("Center longitude"),
-  radius: z.number().describe("Radius"),
-  unit: z.enum(["km", "miles", "meters"]).optional().default("km"),
-  limit: z.number().optional().default(100),
+  centerLat: z.preprocess(coerceNumber, z.number().describe("Center latitude")),
+  centerLon: z.preprocess(coerceNumber, z.number().describe("Center longitude")),
+  radius: z.preprocess(coerceNumber, z.number().describe("Radius")),
+  unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   returnColumns: z.array(z.string()).optional(),
 });
 
@@ -49,11 +74,11 @@ const GeoBoundingBoxSchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  minLat: z.number(),
-  maxLat: z.number(),
-  minLon: z.number(),
-  maxLon: z.number(),
-  limit: z.number().optional().default(100),
+  minLat: z.preprocess(coerceNumber, z.number()),
+  maxLat: z.preprocess(coerceNumber, z.number()),
+  minLon: z.preprocess(coerceNumber, z.number()),
+  maxLon: z.preprocess(coerceNumber, z.number()),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   returnColumns: z.array(z.string()).optional(),
 });
 
@@ -61,7 +86,7 @@ const GeoClusterSchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  gridSize: z.number().optional().default(0.1).describe("Grid size in degrees"),
+  gridSize: z.preprocess(coerceNumber, z.number().optional().default(0.1).describe("Grid size in degrees")),
   whereClause: z.string().optional(),
 });
 

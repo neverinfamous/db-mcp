@@ -14,6 +14,9 @@ import {
   SpatialAnalysisSchema,
   GeometryTransformSchema,
   SpatialImportSchema,
+  VALID_ANALYSIS_TYPES,
+  VALID_FORMATS,
+  VALID_OPERATIONS,
 } from "./schemas.js";
 import { ensureSpatialite } from "./loader.js";
 
@@ -34,6 +37,17 @@ export function createSpatialAnalysisTool(
       try {
         const input = SpatialAnalysisSchema.parse(params);
         ensureSpatialite(adapter);
+
+        // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
+        if (!(VALID_ANALYSIS_TYPES as readonly string[]).includes(input.analysisType)) {
+          return {
+            success: false,
+            error: `Invalid analysisType: '${input.analysisType}'. Must be one of: ${VALID_ANALYSIS_TYPES.join(", ")}`,
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
 
         // Validate names
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.sourceTable)) {
@@ -114,6 +128,10 @@ export function createSpatialAnalysisTool(
             ORDER BY distance LIMIT ${input.limit}`;
             break;
           }
+
+          default:
+            // Unreachable — handler-level validation above catches invalid values
+            query = "SELECT 1";
         }
 
         const result = await adapter.executeReadQuery(query);
@@ -148,6 +166,17 @@ export function createGeometryTransformTool(
       try {
         const input = GeometryTransformSchema.parse(params);
         ensureSpatialite(adapter);
+
+        // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
+        if (!(VALID_OPERATIONS as readonly string[]).includes(input.operation)) {
+          return {
+            success: false,
+            error: `Invalid operation: '${input.operation}'. Must be one of: ${VALID_OPERATIONS.join(", ")}`,
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
 
         let query: string;
         switch (input.operation) {
@@ -216,6 +245,10 @@ export function createGeometryTransformTool(
           case "simplify":
             query = `SELECT AsText(Simplify(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})) as result`;
             break;
+
+          default:
+            // Unreachable — handler-level validation above catches invalid values
+            query = "SELECT 1";
         }
 
         const result = await adapter.executeReadQuery(query);
@@ -258,6 +291,17 @@ export function createSpatialImportTool(
       try {
         const input = SpatialImportSchema.parse(params);
         ensureSpatialite(adapter);
+
+        // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
+        if (!(VALID_FORMATS as readonly string[]).includes(input.format)) {
+          return {
+            success: false,
+            error: `Invalid format: '${input.format}'. Must be one of: ${VALID_FORMATS.join(", ")}`,
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
 
         // Validate table name
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {

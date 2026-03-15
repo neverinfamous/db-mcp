@@ -6,6 +6,47 @@
 
 import { z } from "zod";
 
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
+/**
+ * Generic enum coercion factory.
+ * Returns undefined for invalid enum values so the schema default kicks in.
+ * Prevents raw MCP -32602 errors from enum validation.
+ */
+function createEnumCoercer(validValues: readonly string[]) {
+  return (val: unknown): unknown =>
+    typeof val === "string" && validValues.includes(val)
+      ? val
+      : typeof val === "string"
+        ? undefined
+        : val;
+}
+
+const VALID_GEOMETRY_TYPES = ["POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRY"] as const;
+const VALID_ANALYSIS_TYPES = ["nearest_neighbor", "point_in_polygon", "distance_matrix", "spatial_extent"] as const;
+const VALID_INDEX_ACTIONS = ["create", "drop", "check"] as const;
+const VALID_FORMATS = ["wkt", "geojson"] as const;
+const VALID_OPERATIONS = ["buffer", "intersection", "union", "difference", "centroid", "envelope", "simplify"] as const;
+
+const coerceGeometryType = createEnumCoercer(VALID_GEOMETRY_TYPES);
+const coerceIndexAction = createEnumCoercer(VALID_INDEX_ACTIONS);
+
+// Required enum constants exported for handler-level validation.
+// Required enums can't use z.preprocess coercion because the SDK's .partial()
+// wraps the preprocess in .optional(), but the inner z.enum() still rejects
+// undefined — producing raw MCP -32602 errors. Instead, use z.string() in
+// the schema and validate in the handler's try/catch.
+export { VALID_ANALYSIS_TYPES, VALID_FORMATS, VALID_OPERATIONS };
+
 export const LoadSpatialiteSchema = z.object({
   extensionPath: z
     .string()
@@ -25,8 +66,9 @@ export const CreateSpatialTableSchema = z.object({
     .optional()
     .default("geom")
     .describe("Name of the geometry column"),
-  geometryType: z
-    .enum([
+  geometryType: z.preprocess(
+    coerceGeometryType,
+    z.enum([
       "POINT",
       "LINESTRING",
       "POLYGON",
@@ -38,11 +80,14 @@ export const CreateSpatialTableSchema = z.object({
     .optional()
     .default("POINT")
     .describe("Type of geometry to store"),
-  srid: z
-    .number()
-    .optional()
-    .default(4326)
-    .describe("Spatial Reference System ID (4326 for WGS84)"),
+  ),
+  srid: z.preprocess(
+    coerceNumber,
+    z.number()
+      .optional()
+      .default(4326)
+      .describe("Spatial Reference System ID (4326 for WGS84)"),
+  ),
   additionalColumns: z
     .array(
       z.object({
@@ -65,14 +110,9 @@ export const SpatialQuerySchema = z.object({
 }).strict();
 
 export const SpatialAnalysisSchema = z.object({
-  analysisType: z
-    .enum([
-      "nearest_neighbor",
-      "point_in_polygon",
-      "distance_matrix",
-      "spatial_extent",
-    ])
-    .describe("Type of spatial analysis"),
+  analysisType: z.string().describe(
+    "Type of spatial analysis: nearest_neighbor, point_in_polygon, distance_matrix, spatial_extent",
+  ),
   sourceTable: z.string().describe("Source table for analysis"),
   targetTable: z
     .string()
@@ -85,7 +125,7 @@ export const SpatialAnalysisSchema = z.object({
     .optional()
     .default("geom")
     .describe("Geometry column name"),
-  limit: z.number().optional().default(100).describe("Limit results"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Limit results")),
   excludeSelf: z
     .boolean()
     .optional()
@@ -109,46 +149,44 @@ export const SpatialIndexSchema = z.object({
     .optional()
     .default("geom")
     .describe("Geometry column name"),
-  action: z
-    .enum(["create", "drop", "check"])
-    .optional()
-    .default("create")
-    .describe("Action to perform"),
+  action: z.preprocess(
+    coerceIndexAction,
+    z.enum(["create", "drop", "check"])
+      .optional()
+      .default("create")
+      .describe("Action to perform"),
+  ),
 }).strict();
 
 export const GeometryTransformSchema = z.object({
-  operation: z
-    .enum([
-      "buffer",
-      "intersection",
-      "union",
-      "difference",
-      "centroid",
-      "envelope",
-      "simplify",
-    ])
-    .describe("Geometry operation to perform"),
+  operation: z.string().describe(
+    "Geometry operation: buffer, intersection, union, difference, centroid, envelope, simplify",
+  ),
   geometry1: z.string().describe("First geometry (WKT format)"),
   geometry2: z.string().optional().describe("Second geometry for binary ops"),
-  distance: z
-    .number()
-    .optional()
-    .default(0.001)
-    .describe("Distance for buffer or simplify tolerance"),
-  srid: z.number().optional().default(4326).describe("SRID for result"),
-  simplifyTolerance: z
-    .number()
-    .optional()
-    .describe(
-      "For buffer operation: apply ST_Simplify to reduce vertices in output polygon. Recommended: 0.0001-0.001 for lat/lon",
-    ),
+  distance: z.preprocess(
+    coerceNumber,
+    z.number()
+      .optional()
+      .default(0.001)
+      .describe("Distance for buffer or simplify tolerance"),
+  ),
+  srid: z.preprocess(coerceNumber, z.number().optional().default(4326).describe("SRID for result")),
+  simplifyTolerance: z.preprocess(
+    coerceNumber,
+    z.number()
+      .optional()
+      .describe(
+        "For buffer operation: apply ST_Simplify to reduce vertices in output polygon. Recommended: 0.0001-0.001 for lat/lon",
+      ),
+  ),
 }).strict();
 
 export const SpatialImportSchema = z.object({
   tableName: z.string().describe("Target table name"),
-  format: z.enum(["wkt", "geojson"]).describe("Input format"),
+  format: z.string().describe("Input format: wkt or geojson"),
   data: z.string().describe("Geometry data (WKT string or GeoJSON)"),
-  srid: z.number().optional().default(4326).describe("SRID of input data"),
+  srid: z.preprocess(coerceNumber, z.number().optional().default(4326).describe("SRID of input data")),
   additionalData: z
     .record(z.string(), z.unknown())
     .optional()
