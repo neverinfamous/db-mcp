@@ -46,6 +46,13 @@ export function createVectorSearchTool(
       try {
         const input = VectorSearchSchema.parse(params);
 
+        if (input.queryVector.length === 0) {
+          return {
+            success: false,
+            error: "queryVector is required and must be a non-empty array of numbers",
+          };
+        }
+
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);

@@ -143,6 +143,13 @@ export function createVectorStoreTool(
       try {
         const input = VectorStoreSchema.parse(params);
 
+        if (input.vector.length === 0) {
+          return {
+            success: false,
+            error: "vector is required and must be a non-empty array of numbers",
+          };
+        }
+
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const idColumn = sanitizeIdentifier(input.idColumn);
@@ -242,16 +249,17 @@ export function createVectorBatchStoreTool(
           const dims = await validateDimensions(adapter, input.table, table);
           hasDimsColumn = dims.hasDimsColumn;
 
-          if (
-            dims.expectedDims !== undefined &&
-            input.items[0] &&
-            input.items[0].vector.length !== dims.expectedDims
-          ) {
-            return {
-              success: false,
-              error: `Dimension mismatch: vectors have ${input.items[0].vector.length} dimensions but table expects ${dims.expectedDims}`,
-              code: "DIMENSION_MISMATCH",
-            };
+          if (dims.expectedDims !== undefined) {
+            for (let i = 0; i < input.items.length; i++) {
+              const item = input.items[i];
+              if (item && item.vector.length !== dims.expectedDims) {
+                return {
+                  success: false,
+                  error: `Dimension mismatch at item[${i}]: vector has ${item.vector.length} dimensions but table expects ${dims.expectedDims}`,
+                  code: "DIMENSION_MISMATCH",
+                };
+              }
+            }
           }
         } catch {
           // Table lacks dimensions column — skip validation
@@ -300,6 +308,13 @@ export function createVectorDeleteTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorDeleteSchema.parse(params);
+
+        if (input.ids.length === 0) {
+          return {
+            success: true,
+            deleted: 0,
+          };
+        }
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);

@@ -222,6 +222,13 @@ export function createVectorNormalizeTool(): ToolDefinition {
       try {
         const input = VectorNormalizeSchema.parse(params);
 
+        if (input.vector.length === 0) {
+          return Promise.resolve({
+            success: false,
+            error: "vector is required and must be a non-empty array of numbers",
+          });
+        }
+
         const normalized = normalizeVector(input.vector);
 
         return Promise.resolve({
@@ -254,6 +261,13 @@ export function createVectorDistanceTool(): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorDistanceSchema.parse(params);
+
+        if (input.vector1.length === 0 || input.vector2.length === 0) {
+          return Promise.resolve({
+            success: false,
+            error: "vector1 and vector2 are required and must be non-empty arrays of numbers",
+          });
+        }
 
         if (input.vector1.length !== input.vector2.length) {
           return Promise.resolve({

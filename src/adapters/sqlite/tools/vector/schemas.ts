@@ -2,6 +2,15 @@
  * Vector Search Zod Schemas
  *
  * Input validation schemas for all vector tool parameters.
+ *
+ * ## Split Schema Pattern
+ *
+ * The SDK applies `.partial()` on schemas, making keys optional but NOT
+ * changing type constraints. For required array fields, `z.preprocess()`
+ * coerces non-array inputs to an empty array `[]` (which passes `.partial()`
+ * validation). The handler then rejects empty required arrays explicitly.
+ *
+ * Scalar numeric fields use coerceNumber + `.optional().default()`.
  */
 
 import { z } from "zod";
@@ -16,6 +25,26 @@ const coerceNumber = (val: unknown): unknown =>
       ? undefined
       : Number(val)
     : val;
+
+/**
+ * Coerce non-array values to empty array so SDK's `.partial()` validation
+ * passes. Also coerces arrays with non-numeric elements to empty array.
+ * Handler-level checks reject empty required arrays with structured errors.
+ */
+const coerceNumberArray = (val: unknown): unknown =>
+  Array.isArray(val)
+    ? val.every((v) => typeof v === "number")
+      ? val
+      : []
+    : Array.isArray(val)
+      ? val
+      : [];
+
+/**
+ * Coerce non-array values to empty array so SDK validation passes.
+ */
+const coerceArray = (val: unknown): unknown =>
+  Array.isArray(val) ? val : [];
 
 const VALID_METRICS = ["cosine", "euclidean", "dot"] as const;
 
@@ -36,13 +65,19 @@ export const VectorStoreSchema = z.object({
   idColumn: z.string().describe("ID column name"),
   vectorColumn: z.string().describe("Vector column name"),
   id: z.union([z.string(), z.number()]).describe("Row identifier"),
-  vector: z.array(z.number()).describe("Vector data as array of numbers"),
+  vector: z.preprocess(
+    coerceNumberArray,
+    z.array(z.number()).describe("Vector data as array of numbers"),
+  ),
 });
 
 export const VectorSearchSchema = z.object({
   table: z.string().describe("Table name"),
   vectorColumn: z.string().describe("Vector column name"),
-  queryVector: z.array(z.number()).describe("Query vector"),
+  queryVector: z.preprocess(
+    coerceNumberArray,
+    z.array(z.number()).describe("Query vector"),
+  ),
   metric: z.preprocess(
     coerceMetric,
     z
@@ -78,12 +113,21 @@ export const VectorCreateTableSchema = z.object({
 });
 
 export const VectorNormalizeSchema = z.object({
-  vector: z.array(z.number()).describe("Vector to normalize"),
+  vector: z.preprocess(
+    coerceNumberArray,
+    z.array(z.number()).describe("Vector to normalize"),
+  ),
 });
 
 export const VectorDistanceSchema = z.object({
-  vector1: z.array(z.number()).describe("First vector"),
-  vector2: z.array(z.number()).describe("Second vector"),
+  vector1: z.preprocess(
+    coerceNumberArray,
+    z.array(z.number()).describe("First vector"),
+  ),
+  vector2: z.preprocess(
+    coerceNumberArray,
+    z.array(z.number()).describe("Second vector"),
+  ),
   metric: z.preprocess(
     coerceMetric,
     z.enum(["cosine", "euclidean", "dot"]).optional().default("cosine"),
@@ -94,18 +138,27 @@ export const VectorBatchStoreSchema = z.object({
   table: z.string().describe("Table name"),
   idColumn: z.string().describe("ID column name"),
   vectorColumn: z.string().describe("Vector column name"),
-  items: z.array(
-    z.object({
-      id: z.union([z.string(), z.number()]),
-      vector: z.array(z.number()),
-    }),
+  items: z.preprocess(
+    coerceArray,
+    z.array(
+      z.object({
+        id: z.union([z.string(), z.number()]),
+        vector: z.preprocess(
+          coerceNumberArray,
+          z.array(z.number()),
+        ),
+      }),
+    ),
   ),
 });
 
 export const VectorDeleteSchema = z.object({
   table: z.string().describe("Table name"),
   idColumn: z.string().describe("ID column name"),
-  ids: z.array(z.union([z.string(), z.number()])).describe("IDs to delete"),
+  ids: z.preprocess(
+    coerceArray,
+    z.array(z.union([z.string(), z.number()])).describe("IDs to delete"),
+  ),
 });
 
 export const VectorGetSchema = z.object({
