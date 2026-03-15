@@ -18,6 +18,19 @@ const coerceNumber = (val: unknown): unknown =>
     : val;
 
 /**
+ * Coerce string-typed booleans to actual booleans.
+ * Returns undefined for non-boolean strings so the schema default kicks in.
+ */
+const coerceBoolean = (val: unknown): unknown =>
+  typeof val === "string"
+    ? val === "true"
+      ? true
+      : val === "false"
+        ? false
+        : undefined
+    : val;
+
+/**
  * Generic enum coercion factory.
  * Returns undefined for invalid enum values so the schema default kicks in.
  * Prevents raw MCP -32602 errors from enum validation.
@@ -52,11 +65,13 @@ export const LoadSpatialiteSchema = z.object({
     .string()
     .optional()
     .describe("Custom path to mod_spatialite extension"),
-  forceReload: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("Force reload if already loaded"),
+  forceReload: z.preprocess(
+    coerceBoolean,
+    z.boolean()
+      .optional()
+      .default(false)
+      .describe("Force reload if already loaded"),
+  ),
 }).strict();
 
 export const CreateSpatialTableSchema = z.object({
@@ -126,20 +141,24 @@ export const SpatialAnalysisSchema = z.object({
     .default("geom")
     .describe("Geometry column name"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Limit results")),
-  excludeSelf: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe(
-      "For nearest_neighbor: exclude self-matches when source and target tables are the same (default: true)",
-    ),
-  includeGeometry: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe(
-      "Include full WKT geometry in results (default: false to reduce payload size)",
-    ),
+  excludeSelf: z.preprocess(
+    coerceBoolean,
+    z.boolean()
+      .optional()
+      .default(true)
+      .describe(
+        "For nearest_neighbor: exclude self-matches when source and target tables are the same (default: true)",
+      ),
+  ),
+  includeGeometry: z.preprocess(
+    coerceBoolean,
+    z.boolean()
+      .optional()
+      .default(false)
+      .describe(
+        "Include full WKT geometry in results (default: false to reduce payload size)",
+      ),
+  ),
 }).strict();
 
 export const SpatialIndexSchema = z.object({
