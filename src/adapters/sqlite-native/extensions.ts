@@ -7,6 +7,7 @@
 
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import path from "node:path";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { ModuleLogger } from "../../utils/logger/index.js";
 
@@ -14,12 +15,25 @@ import type { ModuleLogger } from "../../utils/logger/index.js";
 // Extension Directory
 // =============================================================================
 
+/**
+ * Find the project root by walking up from the compiled file's directory.
+ * Resilient to bundler output structure (tsup code splitting puts files in dist/).
+ */
+function findProjectRoot(startDir: string): string {
+  let dir = startDir;
+  for (let i = 0; i < 10; i++) {
+    if (fs.existsSync(path.join(dir, "package.json"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break; // filesystem root
+    dir = parent;
+  }
+  return startDir; // fallback to start directory
+}
+
 /** Absolute path to the extensions directory (computed once at module load). */
 const __moduleFilename = fileURLToPath(import.meta.url);
-const EXTENSIONS_DIR = path.resolve(
-  path.dirname(__moduleFilename),
-  "../../../extensions",
-);
+const PROJECT_ROOT = findProjectRoot(path.dirname(__moduleFilename));
+const EXTENSIONS_DIR = path.join(PROJECT_ROOT, "extensions");
 
 // =============================================================================
 // Extension Loader
