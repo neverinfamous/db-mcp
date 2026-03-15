@@ -11,8 +11,8 @@ import { ErrorFieldsMixin } from "./error-mixin.js";
 export const FtsCreateOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    tableName: z.string(),
+    message: z.string().optional(),
+    tableName: z.string().optional(),
     triggersCreated: z.array(z.string()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -33,8 +33,8 @@ const FtsResultSchema = z
 export const FtsSearchOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    results: z.array(FtsResultSchema),
+    rowCount: z.number().optional(),
+    results: z.array(FtsResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -44,8 +44,8 @@ export const FtsSearchOutputSchema = z
 export const FtsRebuildOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    tableName: z.string(),
+    message: z.string().optional(),
+    tableName: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -55,7 +55,7 @@ export const FtsRebuildOutputSchema = z
 export const FtsOptimizeOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    tableName: z.string(),
+    message: z.string().optional(),
+    tableName: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);

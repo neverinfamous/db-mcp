@@ -12,14 +12,28 @@ export {
   validateColumnsExist,
 } from "../column-validation.js";
 
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 // Text tool schemas
 export const RegexExtractSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to extract from"),
   pattern: z.string().describe("Regular expression pattern"),
-  groupIndex: z.number().optional().default(0).describe("Capture group index"),
+  groupIndex: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(0).describe("Capture group index"),
+  ),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const RegexMatchSchema = z.object({
@@ -27,7 +41,7 @@ export const RegexMatchSchema = z.object({
   column: z.string().describe("Column to match"),
   pattern: z.string().describe("Regular expression pattern"),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const TextSplitSchema = z.object({
@@ -35,7 +49,7 @@ export const TextSplitSchema = z.object({
   column: z.string().describe("Column to split"),
   delimiter: z.string().describe("Delimiter string"),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const TextConcatSchema = z.object({
@@ -47,7 +61,7 @@ export const TextConcatSchema = z.object({
     .default("")
     .describe("Separator between values"),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const TextReplaceSchema = z.object({
@@ -63,7 +77,7 @@ export const TextTrimSchema = z.object({
   column: z.string().describe("Column to trim"),
   mode: z.enum(["both", "left", "right"]).optional().default("both"),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const TextCaseSchema = z.object({
@@ -71,16 +85,22 @@ export const TextCaseSchema = z.object({
   column: z.string().describe("Column to transform"),
   mode: z.enum(["upper", "lower"]).describe("Case transformation"),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const TextSubstringSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to extract from"),
-  start: z.number().describe("Start position (1-indexed)"),
-  length: z.number().optional().describe("Number of characters"),
+  start: z.preprocess(
+    coerceNumber,
+    z.number().describe("Start position (1-indexed)"),
+  ),
+  length: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Number of characters"),
+  ),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 // New text tool schemas
@@ -88,11 +108,14 @@ export const FuzzyMatchSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to search"),
   search: z.string().describe("Search string"),
-  maxDistance: z
-    .number()
-    .optional()
-    .default(3)
-    .describe("Maximum Levenshtein distance"),
+  maxDistance: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(3)
+      .describe("Maximum Levenshtein distance"),
+  ),
   tokenize: z
     .boolean()
     .optional()
@@ -100,7 +123,7 @@ export const FuzzyMatchSchema = z.object({
     .describe(
       "Split column values into words and match against tokens (default: true). Set false to match entire column value.",
     ),
-  limit: z.number().optional().default(10),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(10)),
 });
 
 export const PhoneticMatchSchema = z.object({
@@ -108,7 +131,7 @@ export const PhoneticMatchSchema = z.object({
   column: z.string().describe("Column to search"),
   search: z.string().describe("Search string"),
   algorithm: z.enum(["soundex", "metaphone"]).optional().default("soundex"),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   includeRowData: z
     .boolean()
     .optional()
@@ -123,7 +146,7 @@ export const TextNormalizeSchema = z.object({
     .enum(["nfc", "nfd", "nfkc", "nfkd", "strip_accents"])
     .describe("Normalization mode"),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const TextValidateSchema = z.object({
@@ -137,16 +160,17 @@ export const TextValidateSchema = z.object({
     .optional()
     .describe("Custom regex (required if pattern=custom)"),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
-  maxInvalid: z
-    .number()
-    .min(1)
-    .max(500)
-    .optional()
-    .default(20)
-    .describe(
-      "Maximum number of invalid rows to return (default 20). Reduces payload size.",
-    ),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  maxInvalid: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(20)
+      .describe(
+        "Maximum number of invalid rows to return (default 20). Reduces payload size.",
+      ),
+  ),
 });
 
 export const AdvancedSearchSchema = z.object({
@@ -158,13 +182,16 @@ export const AdvancedSearchSchema = z.object({
     .optional()
     .default(["exact", "fuzzy", "phonetic"])
     .describe("Search techniques to use"),
-  fuzzyThreshold: z
-    .number()
-    .optional()
-    .default(0.6)
-    .describe(
-      "Fuzzy match similarity threshold (0-1). Lower values are more lenient: 0.3-0.4 for loose matching (e.g., 'laptob' matches 'laptop'), 0.6-0.8 for strict matching.",
-    ),
+  fuzzyThreshold: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(0.6)
+      .describe(
+        "Fuzzy match similarity threshold (0-1). Lower values are more lenient: 0.3-0.4 for loose matching (e.g., 'laptob' matches 'laptop'), 0.6-0.8 for strict matching.",
+      ),
+  ),
   whereClause: z.string().optional(),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });

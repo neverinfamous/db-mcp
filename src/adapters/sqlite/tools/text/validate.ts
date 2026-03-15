@@ -34,13 +34,13 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
     inputSchema: TextNormalizeSchema,
     outputSchema: z.object({
       success: z.boolean(),
-      rowCount: z.number(),
+      rowCount: z.number().optional(),
       rows: z.array(
         z.object({
           original: z.string(),
           normalized: z.string(),
         }),
-      ),
+      ).optional(),
     }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Text Normalize"),
@@ -104,15 +104,15 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: TextValidateSchema,
     outputSchema: z.object({
       success: z.boolean(),
-      totalRows: z.number(),
-      validCount: z.number(),
-      invalidCount: z.number(),
+      totalRows: z.number().optional(),
+      validCount: z.number().optional(),
+      invalidCount: z.number().optional(),
       invalidRows: z.array(
         z.object({
           value: z.string().nullable(),
           rowid: z.number().optional(),
         }),
-      ),
+      ).optional(),
     }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Text Validate"),

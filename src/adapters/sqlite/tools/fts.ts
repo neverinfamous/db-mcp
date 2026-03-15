@@ -104,7 +104,10 @@ const FtsSearchSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Specific columns to search"),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(
+    (val) => (typeof val === "string" ? (isNaN(Number(val)) ? undefined : Number(val)) : val),
+    z.number().optional().default(100),
+  ),
   highlight: z
     .boolean()
     .optional()

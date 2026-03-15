@@ -12,8 +12,8 @@ import { ErrorFieldsMixin } from "./error-mixin.js";
 export const RegexMatchOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    matches: z.array(RowRecordSchema),
+    rowCount: z.number().optional(),
+    matches: z.array(RowRecordSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -23,7 +23,7 @@ export const RegexMatchOutputSchema = z
 export const RegexReplaceOutputSchema = z
   .object({
     success: z.boolean(),
-    rowsAffected: z.number(),
+    rowsAffected: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -42,8 +42,8 @@ const FuzzyResultSchema = z
 export const FuzzySearchOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    results: z.array(FuzzyResultSchema),
+    rowCount: z.number().optional(),
+    results: z.array(FuzzyResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -53,8 +53,8 @@ export const FuzzySearchOutputSchema = z
 export const SoundexOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    results: z.array(RowRecordSchema),
+    rowCount: z.number().optional(),
+    results: z.array(RowRecordSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -64,9 +64,9 @@ export const SoundexOutputSchema = z
 export const LevenshteinOutputSchema = z
   .object({
     success: z.boolean(),
-    distance: z.number(),
-    string1: z.string(),
-    string2: z.string(),
+    distance: z.number().optional(),
+    string1: z.string().optional(),
+    string2: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -76,9 +76,9 @@ export const LevenshteinOutputSchema = z
 export const TrigramSimilarityOutputSchema = z
   .object({
     success: z.boolean(),
-    similarity: z.number(),
-    string1: z.string(),
-    string2: z.string(),
+    similarity: z.number().optional(),
+    string1: z.string().optional(),
+    string2: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -88,8 +88,8 @@ export const TrigramSimilarityOutputSchema = z
 export const TextNormalizeOutputSchema = z
   .object({
     success: z.boolean(),
-    original: z.string(),
-    normalized: z.string(),
+    original: z.string().optional(),
+    normalized: z.string().optional(),
     operations: z.array(z.string()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -101,13 +101,13 @@ export const TextNormalizeOutputSchema = z
 export const TextSplitOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
+    rowCount: z.number().optional(),
     rows: z.array(
       z.object({
         rowid: z.number(),
         original: z.string().nullable(),
         parts: z.array(z.string()),
       }),
-    ),
+    ).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
