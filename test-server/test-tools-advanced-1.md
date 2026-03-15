@@ -45,7 +45,7 @@ Same as `test-tools.md` — refer to that file for the full schema reference. Ke
 
 - ❌ Fail: Tool errors or produces incorrect results (include error message)
 - ⚠️ Issue: Unexpected behavior or improvement opportunity
-- 📦 Payload: Unnecessarily large response for the given input
+- 📦 Payload: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization (e.g., filter system tables, add `compact` option, omit empty arrays).
 - ✅ Confirmed: Edge case handled correctly (use only inline during testing; omit from Final Summary)
 
 ### Error Code Consistency
