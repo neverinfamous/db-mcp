@@ -548,7 +548,7 @@ At the end, compile a summary of all findings from **both Part 1 and Part 2**:
 Create a plan to implement any fixes, including:
 
 - Correcting any deficiencies in `src/constants/server-instructions/*.md` (run `npm run generate:instructions` after editing)
-- Updating test-server.sql if needed
+- Updating test-database.sql if needed
 - Updating the prompts (`test-tools-advanced-1.md`, `test-tools-advanced-2.md`) if any test case was invalid
 
 Confirm cleanup of ALL `stress_*` objects is complete.

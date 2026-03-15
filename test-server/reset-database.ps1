@@ -6,7 +6,7 @@
 .DESCRIPTION
     This script performs a full reset of the db-mcp test database:
     1. Deletes the existing test database file (if exists)
-    2. Creates a fresh database from test-server.sql
+    2. Creates a fresh database from test-database.sql
     3. Verifies table counts and data integrity
     4. Displays a summary of seeded data
 
@@ -37,7 +37,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SqlFile = Join-Path $ScriptDir "test-server.sql"
+$SqlFile = Join-Path $ScriptDir "test-database.sql"
 
 # Default database path
 if (-not $DatabasePath) {
@@ -57,7 +57,7 @@ Write-Host "========================================================" -Foregroun
 
 # Verify prerequisites
 if (-not (Test-Path $SqlFile)) {
-    Write-Err "test-server.sql not found at: $SqlFile"
+    Write-Err "test-database.sql not found at: $SqlFile"
     exit 1
 }
 Write-Host "`nScript directory: " -NoNewline; Write-Host $ScriptDir -ForegroundColor Gray

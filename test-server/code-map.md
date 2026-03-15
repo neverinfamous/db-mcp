@@ -310,7 +310,7 @@ catch (error) {
 | File / Directory | Purpose |
 |-----------------|---------|
 | `test-server/README.md` | Agent testing orchestration doc |
-| `test-server/test-server.sql` | Seed DDL+DML (10 tables, ~400 rows) |
+| `test-server/test-database.sql` | Seed DDL+DML (10 tables, ~400 rows) |
 | `test-server/reset-database.ps1` | Reset script — drops + re-seeds `test.db` |
 | `test-server/tool-reference.md` | Complete 139/115 tool inventory with descriptions |
 | `test-server/test-group-tools.md` | Per-group deterministic checklists |

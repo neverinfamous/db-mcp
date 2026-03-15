@@ -10,13 +10,14 @@
 | `test-group-tools.md` | ~54KB | Per-group **deterministic checklists** (core, json, text, stats, vector, admin, geo, introspection, migration). Copy the relevant section into `test-tools.md`. | When running a specific tool group |
 | `test-tools-advanced-1.md` | ~28KB | **Second-pass stress tests (Part 1)** — boundary values, state pollution, error message quality, WASM parity. | After basic checklist passes |
 | `test-tools-advanced-2.md` | ~32KB | **Second-pass stress tests (Part 2)** — cross-group integration. Self-contained. | After basic checklist passes |
-| `test-resources.md` | ~6KB | Resource testing plan (8 resources via `read_resource`) | When testing resources |
+| `test-resources.md` | ~6KB | Resource testing plan (8 data + 7 help resources via `read_resource`) | When testing resources |
+| `test-agent-experience.md` | ~4KB | **Agent experience test** — 20 open-ended scenarios with zero hand-holding. Tests whether help resources + instructions are sufficient for cold-start. | After help resource changes |
 | `test-prompts.md` | ~10KB | Prompt testing plan (10 prompts, tested manually since agents typically don't invoke prompts) | When testing prompts |
 | `tool-groups-list.md` | — | **Canonical tool inventory** — all 9 groups + codemode, 139 Native / 115 WASM tools. Source of truth for tool counts. | Reference / auditing |
 | `tool-reference.md` | ~18KB | **Complete Tool Reference** — Detailed list of all 139 Native / 115 WASM tools organized by group. | Reference |
 | [`code-map.md`](code-map.md) | ~12KB | **Source Code Map** — Directory tree, handler→tool mapping, type/schema locations, error hierarchy, constants, architecture patterns. | When debugging source code or making changes |
-| `reset-database.ps1` | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-server.sql`. Verifies row counts. | After migration group testing or if data is polluted |
-| `test-server.sql` | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables | Reference only — reset script consumes this |
+| `reset-database.ps1` | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-database.sql`. Verifies row counts. | After migration group testing or if data is polluted |
+| `test-database.sql` | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables | Reference only — reset script consumes this |
 | `sample.csv` | <1KB | CSV fixture for `sqlite_create_csv_table` / `sqlite_analyze_csv_schema` testing | Used by admin group checklist |
 
 ## Test Database Schema
