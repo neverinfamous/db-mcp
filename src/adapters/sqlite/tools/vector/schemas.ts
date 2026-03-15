@@ -6,6 +6,31 @@
 
 import { z } from "zod";
 
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
+const VALID_METRICS = ["cosine", "euclidean", "dot"] as const;
+
+/**
+ * Coerce invalid metric values to undefined so the schema default kicks in.
+ * Prevents raw MCP -32602 errors from enum validation.
+ */
+const coerceMetric = (val: unknown): unknown =>
+  typeof val === "string" &&
+  (VALID_METRICS as readonly string[]).includes(val)
+    ? val
+    : typeof val === "string"
+      ? undefined
+      : val;
+
 export const VectorStoreSchema = z.object({
   table: z.string().describe("Table name"),
   idColumn: z.string().describe("ID column name"),
@@ -18,12 +43,18 @@ export const VectorSearchSchema = z.object({
   table: z.string().describe("Table name"),
   vectorColumn: z.string().describe("Vector column name"),
   queryVector: z.array(z.number()).describe("Query vector"),
-  metric: z
-    .enum(["cosine", "euclidean", "dot"])
-    .optional()
-    .default("cosine")
-    .describe("Distance metric"),
-  limit: z.number().optional().default(10).describe("Max results"),
+  metric: z.preprocess(
+    coerceMetric,
+    z
+      .enum(["cosine", "euclidean", "dot"])
+      .optional()
+      .default("cosine")
+      .describe("Distance metric"),
+  ),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(10).describe("Max results"),
+  ),
   whereClause: z.string().optional().describe("Optional WHERE filter"),
   returnColumns: z
     .array(z.string())
@@ -53,7 +84,10 @@ export const VectorNormalizeSchema = z.object({
 export const VectorDistanceSchema = z.object({
   vector1: z.array(z.number()).describe("First vector"),
   vector2: z.array(z.number()).describe("Second vector"),
-  metric: z.enum(["cosine", "euclidean", "dot"]).optional().default("cosine"),
+  metric: z.preprocess(
+    coerceMetric,
+    z.enum(["cosine", "euclidean", "dot"]).optional().default("cosine"),
+  ),
 });
 
 export const VectorBatchStoreSchema = z.object({
@@ -83,13 +117,19 @@ export const VectorGetSchema = z.object({
 
 export const VectorCountSchema = z.object({
   table: z.string().describe("Table name"),
-  dimensions: z.number().optional().describe("Filter by dimension count"),
+  dimensions: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Filter by dimension count"),
+  ),
 });
 
 export const VectorStatsSchema = z.object({
   table: z.string().describe("Table name"),
   vectorColumn: z.string().describe("Vector column name"),
-  sampleSize: z.number().optional().default(100),
+  sampleSize: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100),
+  ),
 });
 
 export const VectorDimensionsSchema = z.object({

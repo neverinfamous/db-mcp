@@ -797,7 +797,7 @@ Only the Haversine-based tools: items 4-7 and code mode. SpatiaLite tools (items
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
 
-> **Note:** Migration tools write a `_mcp_migrations` tracking table. Use `temp_*` naming for test migrations. **Clean up** the tracking table and any schema changes after testing. Consider resetting the database after this group.
+> **Note:** Migration tools write a `_mcp_migrations` tracking table. Use `temp_*` naming for test migrations. Attempt to remove all `temp_*` tables upon completion. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration
 
 ### Built-in Tools (3)
 
@@ -856,3 +856,4 @@ Only the Haversine-based tools: items 4-7 and code mode. SpatiaLite tools (items
 23. Drop `_mcp_migrations` table: `sqlite_drop_table({table: "_mcp_migrations"})` (writeQuery rejects DROP TABLE)
 24. Drop `temp_migration_test` if still exists: `sqlite_drop_table({table: "temp_migration_test"})`
 25. Verify cleanup via `sqlite_list_tables`
+26. Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration

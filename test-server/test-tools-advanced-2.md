@@ -8,26 +8,27 @@
 
 All tests should be executed via `sqlite_execute_code` code mode. Tests are written in direct tool call syntax for readability — translate to code mode:
 
-| Direct Tool Call | Code Mode Equivalent |
-|---|---|
-| `sqlite_read_query({query: "..."})` | `sqlite.core.readQuery({query: "..."})` |
-| `sqlite_write_query({query: "..."})` | `sqlite.core.writeQuery({query: "..."})` |
+| Direct Tool Call                                          | Code Mode Equivalent                                          |
+| --------------------------------------------------------- | ------------------------------------------------------------- |
+| `sqlite_read_query({query: "..."})`                       | `sqlite.core.readQuery({query: "..."})`                       |
+| `sqlite_write_query({query: "..."})`                      | `sqlite.core.writeQuery({query: "..."})`                      |
 | `sqlite_create_table({tableName: "...", columns: [...]})` | `sqlite.core.createTable({tableName: "...", columns: [...]})` |
-| `sqlite_describe_table({tableName: "..."})` | `sqlite.core.describeTable({tableName: "..."})` |
-| `sqlite_drop_table({tableName: "..."})` | `sqlite.core.dropTable({tableName: "..."})` |
-| `sqlite_create_index({...})` | `sqlite.core.createIndex({...})` |
-| `sqlite_get_indexes({tableName: "..."})` | `sqlite.core.getIndexes({tableName: "..."})` |
-| `sqlite_json_*({...})` | `sqlite.json.*({...})` |
-| `sqlite_text_*` / `sqlite_regex_*` / etc. | `sqlite.text.*` |
-| `sqlite_stats_*` / `sqlite_window_*` | `sqlite.stats.*` |
-| `sqlite_vector_*` | `sqlite.vector.*` |
-| `sqlite_fts_*` | `sqlite.text.*` (FTS tools are in the text group) |
-| `sqlite_create_view` / `sqlite_drop_view` / etc. | `sqlite.admin.*` |
-| `sqlite_geo_*` / `sqlite_spatialite_*` | `sqlite.geo.*` |
-| `sqlite_dependency_graph` / `sqlite_index_audit` / etc. | `sqlite.introspection.*` |
-| `sqlite_migration_*` | `sqlite.migration.*` |
+| `sqlite_describe_table({tableName: "..."})`               | `sqlite.core.describeTable({tableName: "..."})`               |
+| `sqlite_drop_table({tableName: "..."})`                   | `sqlite.core.dropTable({tableName: "..."})`                   |
+| `sqlite_create_index({...})`                              | `sqlite.core.createIndex({...})`                              |
+| `sqlite_get_indexes({tableName: "..."})`                  | `sqlite.core.getIndexes({tableName: "..."})`                  |
+| `sqlite_json_*({...})`                                    | `sqlite.json.*({...})`                                        |
+| `sqlite_text_*` / `sqlite_regex_*` / etc.                 | `sqlite.text.*`                                               |
+| `sqlite_stats_*` / `sqlite_window_*`                      | `sqlite.stats.*`                                              |
+| `sqlite_vector_*`                                         | `sqlite.vector.*`                                             |
+| `sqlite_fts_*`                                            | `sqlite.text.*` (FTS tools are in the text group)             |
+| `sqlite_create_view` / `sqlite_drop_view` / etc.          | `sqlite.admin.*`                                              |
+| `sqlite_geo_*` / `sqlite_spatialite_*`                    | `sqlite.geo.*`                                                |
+| `sqlite_dependency_graph` / `sqlite_index_audit` / etc.   | `sqlite.introspection.*`                                      |
+| `sqlite_migration_*`                                      | `sqlite.migration.*`                                          |
 
 **Key rules:**
+
 - Use `sqlite.<group>.help()` to discover method names and parameters for each group
 - State **persists** across `sqlite_execute_code` calls — create a table in one call, query it in the next
 - Do **NOT** pass `readonly: true` when tests need to create/write/drop objects
@@ -42,7 +43,7 @@ Same as `test-tools.md` — refer to that file for the full schema reference. Ke
 - **Temporary tables**: Prefix with `stress_` (e.g., `stress_empty_table`)
 - **Temporary indexes**: Prefix with `stress_idx_`
 - **Temporary views**: Prefix with `stress_view_`
-- Clean up ALL `stress_*` objects after testing
+- **Cleanup**: Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration
 
 ## Reporting Format
 
@@ -516,7 +517,7 @@ Rate each error response 1-5 for contextual usefulness:
 15. `sqlite_cascade_simulator({table: "stress_cross_ref"})` → verify self-reference analysis
 16. `sqlite_schema_snapshot({})` → verify `stress_cross_ref` appears in snapshot
 17. `sqlite_migration_rollback({version: "stress_cross_001"})` → report rollback behavior
-19. Cleanup: `sqlite_write_query({query: "DROP TABLE IF EXISTS _mcp_migrations"})`
+18. Cleanup: `sqlite_write_query({query: "DROP TABLE IF EXISTS _mcp_migrations"})`
 
 ### Workflow 4: Admin → Introspection (Health Check Pipeline)
 

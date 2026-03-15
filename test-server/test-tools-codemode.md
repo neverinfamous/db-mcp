@@ -98,7 +98,17 @@ Expected: methods include `extract`, `set`, `insert`, `query`, `analyzeSchema`, 
 ### 2.4 — All groups exist
 
 ```javascript
-const groups = ["core", "json", "text", "stats", "vector", "admin", "geo", "introspection", "migration"];
+const groups = [
+  "core",
+  "json",
+  "text",
+  "stats",
+  "vector",
+  "admin",
+  "geo",
+  "introspection",
+  "migration",
+];
 const results = {};
 for (const g of groups) {
   const h = await sqlite[g].help();
@@ -135,7 +145,9 @@ return { success: true, tableCount: tables.tables?.length };
 ### 3.1 — Read query
 
 ```javascript
-return await sqlite.core.readQuery({ query: "SELECT COUNT(*) as cnt FROM test_products" });
+return await sqlite.core.readQuery({
+  query: "SELECT COUNT(*) as cnt FROM test_products",
+});
 ```
 
 Expected: `{success: true, rows: [{cnt: 16}]}`
@@ -162,8 +174,12 @@ return await sqlite.core.describeTable("test_products");
 ### 3.5 — Write query (temp table)
 
 ```javascript
-await sqlite.core.writeQuery("CREATE TABLE temp_cm_test (id INTEGER PRIMARY KEY, value TEXT)");
-await sqlite.core.writeQuery("INSERT INTO temp_cm_test (value) VALUES ('hello')");
+await sqlite.core.writeQuery(
+  "CREATE TABLE temp_cm_test (id INTEGER PRIMARY KEY, value TEXT)",
+);
+await sqlite.core.writeQuery(
+  "INSERT INTO temp_cm_test (value) VALUES ('hello')",
+);
 const result = await sqlite.core.readQuery("SELECT * FROM temp_cm_test");
 return result;
 ```
@@ -181,22 +197,30 @@ return await sqlite.core.getIndexes();
 ### 4.1 — JSON extract
 
 ```javascript
-return await sqlite.json.extract({ table: "test_jsonb_docs", column: "doc", path: "$.title" });
+return await sqlite.json.extract({
+  table: "test_jsonb_docs",
+  column: "doc",
+  path: "$.title",
+});
 ```
 
 ### 4.2 — JSON query with filter
 
 ```javascript
 return await sqlite.json.query({
-  table: "test_jsonb_docs", column: "doc",
-  filterPaths: { "$.type": "article" }
+  table: "test_jsonb_docs",
+  column: "doc",
+  filterPaths: { "$.type": "article" },
 });
 ```
 
 ### 4.3 — JSON analyze schema
 
 ```javascript
-return await sqlite.json.analyzeSchema({ table: "test_jsonb_docs", column: "doc" });
+return await sqlite.json.analyzeSchema({
+  table: "test_jsonb_docs",
+  column: "doc",
+});
 ```
 
 ### 4.4 — JSON valid
@@ -218,27 +242,40 @@ return await sqlite.json.pretty({ json: '{"a":1,"b":2}' });
 ### 5.1 — Basic stats
 
 ```javascript
-return await sqlite.stats.statsBasic({ table: "test_measurements", column: "temperature" });
+return await sqlite.stats.statsBasic({
+  table: "test_measurements",
+  column: "temperature",
+});
 ```
 
 ### 5.2 — Histogram
 
 ```javascript
-return await sqlite.stats.statsHistogram({ table: "test_measurements", column: "temperature", buckets: 5 });
+return await sqlite.stats.statsHistogram({
+  table: "test_measurements",
+  column: "temperature",
+  buckets: 5,
+});
 ```
 
 ### 5.3 — Correlation
 
 ```javascript
 return await sqlite.stats.statsCorrelation({
-  table: "test_measurements", column1: "temperature", column2: "humidity"
+  table: "test_measurements",
+  column1: "temperature",
+  column2: "humidity",
 });
 ```
 
 ### 5.4 — Top N
 
 ```javascript
-return await sqlite.stats.statsTopN({ table: "test_products", column: "price", n: 5 });
+return await sqlite.stats.statsTopN({
+  table: "test_products",
+  column: "price",
+  n: 5,
+});
 ```
 
 ---
@@ -248,19 +285,33 @@ return await sqlite.stats.statsTopN({ table: "test_products", column: "price", n
 ### 6.1 — Regex match
 
 ```javascript
-return await sqlite.text.regexMatch({ table: "test_users", column: "email", pattern: "@example\\.com$" });
+return await sqlite.text.regexMatch({
+  table: "test_users",
+  column: "email",
+  pattern: "@example\\.com$",
+});
 ```
 
 ### 6.2 — Fuzzy match
 
 ```javascript
-return await sqlite.text.fuzzyMatch({ table: "test_products", column: "name", search: "laptop", maxDistance: 2 });
+return await sqlite.text.fuzzyMatch({
+  table: "test_products",
+  column: "name",
+  search: "laptop",
+  maxDistance: 2,
+});
 ```
 
 ### 6.3 — Text case
 
 ```javascript
-return await sqlite.text.case({ table: "test_products", column: "name", mode: "upper", limit: 3 });
+return await sqlite.text.case({
+  table: "test_products",
+  column: "name",
+  mode: "upper",
+  limit: 3,
+});
 ```
 
 ---
@@ -271,18 +322,25 @@ return await sqlite.text.case({ table: "test_products", column: "name", mode: "u
 
 ```javascript
 // Use first embedding from test_embeddings as query vector
-const first = await sqlite.core.readQuery("SELECT embedding FROM test_embeddings LIMIT 1");
+const first = await sqlite.core.readQuery(
+  "SELECT embedding FROM test_embeddings LIMIT 1",
+);
 const vec = JSON.parse(first.rows[0].embedding);
 return await sqlite.vector.search({
-  table: "test_embeddings", vectorColumn: "embedding",
-  queryVector: vec, limit: 3
+  table: "test_embeddings",
+  vectorColumn: "embedding",
+  queryVector: vec,
+  limit: 3,
 });
 ```
 
 ### 7.2 — Vector stats
 
 ```javascript
-return await sqlite.vector.stats({ table: "test_embeddings", vectorColumn: "embedding" });
+return await sqlite.vector.stats({
+  table: "test_embeddings",
+  vectorColumn: "embedding",
+});
 ```
 
 ### 7.3 — Vector count
@@ -294,7 +352,10 @@ return await sqlite.vector.count({ table: "test_embeddings" });
 ### 7.4 — Vector dimensions
 
 ```javascript
-return await sqlite.vector.dimensions({ table: "test_embeddings", vectorColumn: "embedding" });
+return await sqlite.vector.dimensions({
+  table: "test_embeddings",
+  vectorColumn: "embedding",
+});
 ```
 
 ---
@@ -304,15 +365,24 @@ return await sqlite.vector.dimensions({ table: "test_embeddings", vectorColumn: 
 ### 8.1 — Geo distance
 
 ```javascript
-return await sqlite.geo.distance({ lat1: 40.7128, lon1: -74.006, lat2: 34.0522, lon2: -118.2437 });
+return await sqlite.geo.distance({
+  lat1: 40.7128,
+  lon1: -74.006,
+  lat2: 34.0522,
+  lon2: -118.2437,
+});
 ```
 
 ### 8.2 — Geo nearby
 
 ```javascript
 return await sqlite.geo.nearby({
-  table: "test_locations", latColumn: "latitude", lonColumn: "longitude",
-  centerLat: 40.7, centerLon: -74.0, radius: 1000
+  table: "test_locations",
+  latColumn: "latitude",
+  lonColumn: "longitude",
+  centerLat: 40.7,
+  centerLon: -74.0,
+  radius: 1000,
 });
 ```
 
@@ -382,7 +452,9 @@ Expected: `{success: true, rows: [{cnt: 16}]}`
 
 ```javascript
 // readonly: true
-return await sqlite.core.writeQuery("INSERT INTO test_products (name) VALUES ('blocked')");
+return await sqlite.core.writeQuery(
+  "INSERT INTO test_products (name) VALUES ('blocked')",
+);
 ```
 
 Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
@@ -392,7 +464,10 @@ Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
 ```javascript
 // readonly: true
 const help = await sqlite.core.help();
-return { hasWriteQuery: help.methods.includes("writeQuery"), methods: help.methods };
+return {
+  hasWriteQuery: help.methods.includes("writeQuery"),
+  methods: help.methods,
+};
 ```
 
 Expected: `writeQuery` still appears in help (for discoverability) but is guarded.
@@ -401,7 +476,9 @@ Expected: `writeQuery` still appears in help (for discoverability) but is guarde
 
 ```javascript
 // readonly: true
-return await sqlite.core.writeQuery("CREATE TABLE temp_readonly_test (id INTEGER)");
+return await sqlite.core.writeQuery(
+  "CREATE TABLE temp_readonly_test (id INTEGER)",
+);
 ```
 
 Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
@@ -410,7 +487,10 @@ Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
 
 ```javascript
 // readonly: true
-return await sqlite.stats.statsBasic({ table: "test_products", column: "price" });
+return await sqlite.stats.statsBasic({
+  table: "test_products",
+  column: "price",
+});
 ```
 
 Expected: succeeds — stats tools are read-only.
@@ -422,8 +502,8 @@ Expected: succeeds — stats tools are read-only.
 ### 11.1 — Blocked pattern (require)
 
 ```javascript
-const fs = require('fs');
-return fs.readFileSync('/etc/passwd');
+const fs = require("fs");
+return fs.readFileSync("/etc/passwd");
 ```
 
 Expected: `{success: false, code: "CODEMODE_VALIDATION_FAILED"}` with suggestion about blocked patterns.
@@ -448,7 +528,7 @@ Expected: `{success: false, code: "CODEMODE_VALIDATION_FAILED"}`
 
 ```javascript
 // timeout: 2000
-while(true) {}
+while (true) {}
 ```
 
 Call with `timeout: 2000`. Expected: `{success: false}` with timeout error within ~2s.
@@ -473,7 +553,9 @@ Call `sqlite_execute_code` with `{}` (no `code` param). Expected: structured han
 
 ```javascript
 // Create, populate, transform, read
-await sqlite.core.writeQuery("CREATE TABLE temp_cm_etl (id INTEGER PRIMARY KEY, raw TEXT, processed TEXT)");
+await sqlite.core.writeQuery(
+  "CREATE TABLE temp_cm_etl (id INTEGER PRIMARY KEY, raw TEXT, processed TEXT)",
+);
 for (let i = 1; i <= 5; i++) {
   await sqlite.core.writeQuery({
     query: `INSERT INTO temp_cm_etl (raw) VALUES ('item_${i}')`,
@@ -488,8 +570,15 @@ return await sqlite.core.readQuery("SELECT * FROM temp_cm_etl");
 
 ```javascript
 // Use stats + json together
-const stats = await sqlite.stats.statsBasic({ table: "test_products", column: "price" });
-const top = await sqlite.stats.statsTopN({ table: "test_products", column: "price", n: 3 });
+const stats = await sqlite.stats.statsBasic({
+  table: "test_products",
+  column: "price",
+});
+const top = await sqlite.stats.statsTopN({
+  table: "test_products",
+  column: "price",
+  n: 3,
+});
 return { priceStats: stats, topProducts: top };
 ```
 
@@ -500,8 +589,14 @@ return { priceStats: stats, topProducts: top };
 const tables = await sqlite.core.listTables();
 const first = tables.tables[0].name;
 const schema = await sqlite.core.describeTable(first);
-const sample = await sqlite.core.readQuery({ query: `SELECT * FROM ${first} LIMIT 3` });
-return { table: first, columnCount: schema.columns?.length, sampleRows: sample.rows?.length };
+const sample = await sqlite.core.readQuery({
+  query: `SELECT * FROM ${first} LIMIT 3`,
+});
+return {
+  table: first,
+  columnCount: schema.columns?.length,
+  sampleRows: sample.rows?.length,
+};
 ```
 
 ### 12.4 — Loop with accumulator
@@ -531,4 +626,4 @@ await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_etl");
 
 ## Post-Test Procedures
 
-See [test-tools.md](./test-tools.md#post-test-procedures) — same workflow: cleanup `temp_*` tables, triage findings, create implementation plan if needed, validate with lint + typecheck, commit without push, live re-test and provide final summary.
+See [test-tools.md](./test-tools.md#post-test-procedures) — same workflow: Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration, triage findings, create implementation plan if needed, validate with lint + typecheck, commit without push, live re-test and provide final summary.
