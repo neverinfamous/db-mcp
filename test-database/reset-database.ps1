@@ -243,9 +243,12 @@ if (-not $SkipVerify) {
         "test_events" = 100
     }
 
-    # Known non-seed tables that are expected to exist (SpatiaLite system tables,
-    # FTS virtual tables created by seed SQL, etc.)
+    # Known non-seed tables that are expected to exist (SQLite internals,
+    # SpatiaLite system tables/views, FTS virtual tables created by seed SQL, etc.)
     $knownSystemTables = @(
+        # SQLite internals
+        "sqlite_sequence", "sqlite_stat1", "sqlite_stat4",
+        # SpatiaLite tables
         "ElementaryGeometries", "KNN2", "SpatialIndex",
         "data_licenses", "geometry_columns", "geometry_columns_auth",
         "geometry_columns_field_infos", "geometry_columns_statistics",
@@ -255,8 +258,15 @@ if (-not $SkipVerify) {
         "views_geometry_columns_field_infos", "views_geometry_columns_statistics",
         "virts_geometry_columns", "virts_geometry_columns_auth",
         "virts_geometry_columns_field_infos", "virts_geometry_columns_statistics",
+        # SpatiaLite views
+        "geom_cols_ref_sys", "spatial_ref_sys_all",
+        "vector_layers", "vector_layers_auth",
+        "vector_layers_field_infos", "vector_layers_statistics",
+        # FTS5 shadow tables (from seed SQL)
         "test_articles_fts", "test_articles_fts_config", "test_articles_fts_content",
-        "test_articles_fts_data", "test_articles_fts_docsize", "test_articles_fts_idx"
+        "test_articles_fts_data", "test_articles_fts_docsize", "test_articles_fts_idx",
+        # Migration tracking (created by seed SQL)
+        "_mcp_migrations"
     )
 
     $verifyScript = @"
