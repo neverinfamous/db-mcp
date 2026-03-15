@@ -107,6 +107,7 @@ const ExecuteCodeOutputSchema = z.object({
       cpuTimeMs: z.number().describe("CPU time in milliseconds"),
       memoryUsedMb: z.number().describe("Memory used in MB"),
     })
+    .optional()
     .describe("Execution performance metrics"),
 }).extend(ErrorResponseFields.shape);
 
@@ -150,58 +151,58 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
       params: unknown,
       _context: RequestContext,
     ): Promise<unknown> => {
-      const parsed = ExecuteCodeSchema.parse(params);
-      const { code, timeout: timeoutMs, readonly: isReadonly } = parsed;
-
-      // Validate timeout range (handler-level since schema refinements leak)
-      if (timeoutMs < 1000 || timeoutMs > 30000) {
-        return {
-          success: false,
-          error: `Timeout must be between 1000 and 30000 ms, got ${timeoutMs}`,
-          code: "CODEMODE_VALIDATION_FAILED",
-          category: "validation",
-          suggestion: "Provide a timeout value between 1000 and 30000 milliseconds.",
-          recoverable: false,
-          metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
-        };
-      }
-
-      // Validate code
-      const validation = security.validateCode(code);
-      if (!validation.valid) {
-        return {
-          success: false,
-          error: `Code validation failed: ${validation.errors.join("; ")}`,
-          code: "CODEMODE_VALIDATION_FAILED",
-          category: "validation",
-          suggestion:
-            "Review blocked patterns: require(), process., eval(), Function(), import(). Use sqlite.* API instead.",
-          recoverable: false,
-          metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
-        };
-      }
-
-      // Check rate limit
-      const clientId = _context.auth?.sub ?? "anonymous";
-      if (!security.checkRateLimit(clientId)) {
-        return {
-          success: false,
-          error: "Rate limit exceeded. Maximum 60 executions per minute.",
-          code: "CODEMODE_RATE_LIMITED",
-          category: "permission",
-          suggestion:
-            "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
-          recoverable: true,
-          metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
-        };
-      }
-
-      // Initialize pool lazily
-      if (!pool) {
-        initializePool();
-      }
-
       try {
+        const parsed = ExecuteCodeSchema.parse(params);
+        const { code, timeout: timeoutMs, readonly: isReadonly } = parsed;
+
+        // Validate timeout range (handler-level since schema refinements leak)
+        if (timeoutMs < 1000 || timeoutMs > 30000) {
+          return {
+            success: false,
+            error: `Timeout must be between 1000 and 30000 ms, got ${timeoutMs}`,
+            code: "CODEMODE_VALIDATION_FAILED",
+            category: "validation",
+            suggestion: "Provide a timeout value between 1000 and 30000 milliseconds.",
+            recoverable: false,
+            metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+          };
+        }
+
+        // Validate code
+        const validation = security.validateCode(code);
+        if (!validation.valid) {
+          return {
+            success: false,
+            error: `Code validation failed: ${validation.errors.join("; ")}`,
+            code: "CODEMODE_VALIDATION_FAILED",
+            category: "validation",
+            suggestion:
+              "Review blocked patterns: require(), process., eval(), Function(), import(). Use sqlite.* API instead.",
+            recoverable: false,
+            metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+          };
+        }
+
+        // Check rate limit
+        const clientId = _context.auth?.sub ?? "anonymous";
+        if (!security.checkRateLimit(clientId)) {
+          return {
+            success: false,
+            error: "Rate limit exceeded. Maximum 60 executions per minute.",
+            code: "CODEMODE_RATE_LIMITED",
+            category: "permission",
+            suggestion:
+              "Wait before retrying. Combine multiple operations into fewer execute_code calls.",
+            recoverable: true,
+            metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+          };
+        }
+
+        // Initialize pool lazily
+        if (!pool) {
+          initializePool();
+        }
+
         // Build API bindings from adapter's tool definitions
         // Always use all tools so help() shows the complete API surface
         const allTools = adapter.getToolDefinitions();

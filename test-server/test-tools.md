@@ -2,7 +2,7 @@
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-**Step 2:** Please conduct an exhaustive test of the tool group listed below in using the live MCP server tool calls directly for testing, not scripts/terminal.
+**Step 2:** Please conduct an exhaustive test of the tool group listed below in using the live MCP server tool calls directly for testing, not scripts/terminal except when explictly demanded by this prompt.
 
 **FTS Testing Notes (Text Group Only):**
 
