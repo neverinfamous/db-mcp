@@ -2,7 +2,9 @@
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-**Step 2:** Please conduct an exhaustive test of the tool group specified in the group-specific checklist (pasted after this document) using live MCP server tool calls directly — not scripts/terminal except when explicitly demanded by this prompt.
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the group-specific checklist (pasted after this document) using live MCP server tool calls directly — not scripts/terminal.
+
+**Note** If temp files are present, they are from a previous test pass. You can try codemode to drop them but otherwise just ignore/work around them. I will delete them when the IDE is closed and the database isn't locked.
 
 ## Test Database Schema
 
@@ -165,6 +167,6 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 3. **Validate**: Run test suite and fix broken tests, run lint + typecheck and fix issues, update changelog (no duplicate headers)
 4. **Commit**: Stage and commit all changes — do NOT push
 5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, suggest improvements.
+6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, make the improvements.
 
 ---

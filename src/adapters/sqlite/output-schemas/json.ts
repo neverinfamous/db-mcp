@@ -143,6 +143,7 @@ export const JsonSetOutputSchema = z
   .object({
     success: z.boolean(),
     rowsAffected: z.number().optional(),
+    warning: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -153,6 +154,7 @@ export const JsonRemoveOutputSchema = z
   .object({
     success: z.boolean(),
     rowsAffected: z.number().optional(),
+    warning: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
