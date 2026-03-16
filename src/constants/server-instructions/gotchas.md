@@ -43,7 +43,7 @@
 
 **Usage**: `sqlite_execute_code({ code: "const tables = await sqlite.core.listTables(); return tables;" })`
 **Discover**: `sqlite.help()` for all groups, `sqlite.<group>.help()` for methods.
-**Groups**: `sqlite.core`, `sqlite.json`, `sqlite.text`, `sqlite.stats`, `sqlite.vector`, `sqlite.admin`, `sqlite.geo`
+**Groups**: `sqlite.core`, `sqlite.json`, `sqlite.text`, `sqlite.stats`, `sqlite.vector`, `sqlite.admin`, `sqlite.geo`, `sqlite.introspection`, `sqlite.migration`
 
 ## Code Mode API Mapping
 

@@ -1,6 +1,6 @@
 # db-mcp Resource Testing Plan
 
-Please test all db-mcp resources (8 data + up to 7 help) using the test database (test-server/test.db) and concisely report any issues.
+Please test all db-mcp resources (8 data + up to 9 help) using the test database (test-server/test.db) and concisely report any issues.
 
 ## Resources to Test
 
@@ -184,6 +184,8 @@ Verify that group-specific help resources are only registered when the correspon
 | `sqlite_help_vector` | `sqlite://help/vector` | vector group enabled |
 | `sqlite_help_geo` | `sqlite://help/geo` | geo group enabled |
 | `sqlite_help_admin` | `sqlite://help/admin` | admin group enabled |
+| `sqlite_help_introspection` | `sqlite://help/introspection` | introspection group enabled |
+| `sqlite_help_migration` | `sqlite://help/migration` | migration group enabled |
 
 If a group-specific help resource is available, read it and verify it contains relevant tool reference content (tool names, parameters, usage notes).
 
@@ -230,7 +232,7 @@ Use live MCP resource reads via the `read_resource` tool against the running sql
 | Metric | Value |
 |--------|-------|
 | Data resources to test | 8 |
-| Help resources to test | 1 (sqlite://help) + up to 6 group-specific |
+| Help resources to test | 1 (sqlite://help) + up to 8 group-specific |
 | Static resources | 7 |
 | Templated resources | 1 (sqlite_table_schema with URI parameter) |
 | Protocol validation tests | 2 (help resource content + tool annotations) |

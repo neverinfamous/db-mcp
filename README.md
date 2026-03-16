@@ -24,7 +24,7 @@
 | Feature                        | Description                                                                                                                                                                                                  |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **139 Specialized Tools**      | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin           |
-| **15 Resources**               | 8 data resources (schema, tables, indexes, views, health, metadata, insights) + 7 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                       |
+| **17 Resources**               | 8 data resources (schema, tables, indexes, views, health, metadata, insights) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                       |
 | **10 AI-Powered Prompts**      | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                  |
 | **Code Mode**                  | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox — reducing token overhead by up to 90% while exposing all 139 capabilities locally                |
 | **Token-Optimized Payloads**   | Every tool response is audited for token efficiency. Tools with large payloads offer optional flags (`compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, `maxInvalid`) to reduce response size             |
@@ -320,19 +320,21 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
 | `sqlite_insights`     | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
 
-### Help Resources (1 + up to 6)
+### Help Resources (1 + up to 8)
 
 On-demand tool reference documentation, filtered by `--tool-filter`:
 
-| Resource              | URI                  | Description                                              | When Registered       |
-| --------------------- | -------------------- | -------------------------------------------------------- | --------------------- |
-| `sqlite_help`         | `sqlite://help`      | Gotchas, WASM vs Native, Code Mode API                   | Always                |
-| `sqlite_help_json`    | `sqlite://help/json` | JSON/JSONB operations reference                          | When json group on    |
-| `sqlite_help_text`    | `sqlite://help/text` | Text processing + FTS5 reference                         | When text group on    |
-| `sqlite_help_stats`   | `sqlite://help/stats`| Statistical analysis + window functions reference        | When stats group on   |
-| `sqlite_help_vector`  | `sqlite://help/vector`| Vector/semantic search reference                        | When vector group on  |
-| `sqlite_help_geo`     | `sqlite://help/geo`  | Geospatial + SpatiaLite reference                        | When geo group on     |
-| `sqlite_help_admin`   | `sqlite://help/admin`| Admin, transactions, backup, virtual tables reference    | When admin group on   |
+| Resource                     | URI                            | Description                                              | When Registered              |
+| ---------------------------- | ------------------------------ | -------------------------------------------------------- | ---------------------------- |
+| `sqlite_help`                | `sqlite://help`                | Gotchas, WASM vs Native, Code Mode API                   | Always                       |
+| `sqlite_help_json`           | `sqlite://help/json`           | JSON/JSONB operations reference                          | When json group on           |
+| `sqlite_help_text`           | `sqlite://help/text`           | Text processing + FTS5 reference                         | When text group on           |
+| `sqlite_help_stats`          | `sqlite://help/stats`          | Statistical analysis + window functions reference        | When stats group on          |
+| `sqlite_help_vector`         | `sqlite://help/vector`         | Vector/semantic search reference                         | When vector group on         |
+| `sqlite_help_geo`            | `sqlite://help/geo`            | Geospatial + SpatiaLite reference                        | When geo group on            |
+| `sqlite_help_admin`          | `sqlite://help/admin`          | Admin, transactions, backup, virtual tables reference    | When admin group on          |
+| `sqlite_help_introspection`  | `sqlite://help/introspection`  | Schema introspection, FK graph, diagnostics reference    | When introspection group on  |
+| `sqlite_help_migration`      | `sqlite://help/migration`      | Migration tracking, apply, rollback reference            | When migration group on      |
 
 > **Efficiency Tip:** Data resources are always **readable** regardless of tool configuration. The "Min Config" column shows the smallest configuration that provides tools to **act on** what the resource exposes. Help resources are served on-demand — agents read them only when working with a specific tool group.
 

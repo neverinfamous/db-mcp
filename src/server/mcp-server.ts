@@ -277,6 +277,8 @@ export class DbMcpServer {
       { group: "vector", key: "vector" },
       { group: "geo", key: "geo" },
       { group: "admin", key: "admin" },
+      { group: "introspection", key: "introspection" },
+      { group: "migration", key: "migration" },
     ];
 
     for (const { group, key } of groupHelpKeys) {

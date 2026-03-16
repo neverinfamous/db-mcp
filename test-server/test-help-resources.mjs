@@ -190,9 +190,11 @@ async function main() {
         'sqlite://help/vector',
         'sqlite://help/geo',
         'sqlite://help/admin',
+        'sqlite://help/introspection',
+        'sqlite://help/migration',
     ]
     const fullHasAll = expectedFull.every((u) => fullHelpUris.includes(u))
-    console.log(`  Has all 7 help resources: ${fullHasAll ? '✅' : '❌'}`)
+    console.log(`  Has all 9 help resources: ${fullHasAll ? '✅' : '❌'}`)
     if (!fullHasAll) allPassed = false
 
     // ── Summary ──

@@ -31,7 +31,7 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 ## Help Resources
 
 Read \`sqlite://help\` for gotchas and critical usage patterns.
-Read \`sqlite://help/{group}\` for group-specific tool reference (json, text, stats, vector, geo, admin).
+Read \`sqlite://help/{group}\` for group-specific tool reference (json, text, stats, vector, geo, admin, introspection, migration).
 Only help resources for your enabled tool groups are registered.`;
 
 /**
@@ -113,13 +113,13 @@ Basic geo (always available — Haversine formula):
 - \`sqlite_geo_cluster({ table, latColumn, lonColumn, gridSize })\`
 
 SpatiaLite (Native only):
+- \`sqlite_spatialite_load()\` — load SpatiaLite extension. Required before using other spatial tools
 - \`sqlite_spatialite_create_table({ tableName, geometryColumn, geometryType: "POINT", srid: 4326 })\`
 - \`sqlite_spatialite_import({ tableName, format: "wkt"|"geojson", data, additionalData? })\`
-- \`sqlite_spatialite_query({ query: "SELECT name, AsText(geom) FROM places WHERE..." })\`
+- \`sqlite_spatialite_query({ query: "SELECT name, AsText(geom) FROM places WHERE..." })\` — SELECT only
 - \`sqlite_spatialite_analyze({ analysisType, sourceTable, geometryColumn })\` — types: \`spatial_extent\`, \`point_in_polygon\`, \`nearest_neighbor\`, \`distance_matrix\`. ⚠️ nearest_neighbor/distance_matrix return CARTESIAN distance. Use \`excludeSelf: true\` for same source/target table
 - \`sqlite_spatialite_transform({ operation, geometry1, distance })\` — operations: \`buffer\`, \`simplify\`. Buffer \`distance\` = radius; simplify \`distance\` = tolerance (0.0001 for lat/lon). Buffer auto-simplifies (use \`simplifyTolerance: 0\` to disable)
-- \`sqlite_spatialite_index({ tableName, geometryColumn, action: "create" })\`
-- \`sqlite_spatialite_status\` — check SpatiaLite availability`],
+- \`sqlite_spatialite_index({ tableName, geometryColumn, action: "create" })\` — create, drop, or check spatial R-Tree index`],
   ["gotchas", `# db-mcp Help — Gotchas & Code Mode
 
 ## ⚠️ Critical Gotchas
@@ -165,7 +165,7 @@ SpatiaLite (Native only):
 
 **Usage**: \`sqlite_execute_code({ code: "const tables = await sqlite.core.listTables(); return tables;" })\`
 **Discover**: \`sqlite.help()\` for all groups, \`sqlite.<group>.help()\` for methods.
-**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.geo\`
+**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
 
 ## Code Mode API Mapping
 
@@ -174,6 +174,31 @@ SpatiaLite (Native only):
 **Positional args work**: \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`
 
 **Discovery**: \`sqlite.help()\` returns all groups and methods. \`sqlite.core.help()\`, \`sqlite.json.help()\` for group-specific methods.`],
+  ["introspection", `# db-mcp Help — Schema Introspection (9 tools)
+
+## Graph Analysis (3 tools)
+
+- \`sqlite_dependency_graph({ includeRowCounts?, nodesOnly?, excludeSystemTables? })\` — build FK dependency graph. \`nodesOnly: true\` for lightweight response (nodes without edges)
+- \`sqlite_topological_sort({ direction?, excludeSystemTables? })\` — safe DDL execution order. \`direction: "create"\` = parents first (default), \`"drop"\` = children first
+- \`sqlite_cascade_simulator({ table, operation?, compact? })\` — simulate DELETE/DROP/TRUNCATE impact. Shows affected tables, cascade paths, severity scoring. \`compact: true\` omits path arrays
+
+## Schema Analysis (3 tools)
+
+- \`sqlite_schema_snapshot({ sections?, compact?, excludeSystemTables? })\` — full schema in one call (tables, views, indexes, triggers). \`compact: true\` omits column details. \`sections: ["tables", "indexes"]\` to limit scope
+- \`sqlite_constraint_analysis({ table?, checks?, excludeSystemTables? })\` — find missing PKs, nullable reference columns, unindexed FKs, missing FK declarations. \`checks: ["missing_pk", "unindexed_fk"]\` to limit scope
+- \`sqlite_migration_risks({ statements: ["ALTER TABLE...", "DROP TABLE..."] })\` — analyze DDL for SQLite-specific risks (ALTER limitations, destructive ops, FTS5 rebuild needs)
+
+## Diagnostics (3 tools)
+
+- \`sqlite_storage_analysis({ includeTableDetails?, excludeSystemTables?, limit? })\` — fragmentation, per-table size breakdown, optimization recommendations
+- \`sqlite_index_audit({ table?, excludeSystemTables?, minSeverity? })\` — find redundant indexes (prefix duplicates), missing FK indexes, unindexed large tables. \`minSeverity: "warning"\` to reduce payload
+- \`sqlite_query_plan({ sql: "SELECT ..." })\` — EXPLAIN QUERY PLAN with scan-type classification (full_scan, index_scan, covering_index) and optimization suggestions. SELECT/WITH only
+
+## ⚠️ Gotchas
+
+- All introspection tools are **read-only** — they query PRAGMAs and sqlite_master, never modify data
+- \`excludeSystemTables\` defaults to \`true\` — SpatiaLite system tables are hidden for cleaner output. Pass \`false\` to include them
+- \`sqlite_migration_risks\` analyzes DDL text statically — it does NOT execute the statements`],
   ["json", `# db-mcp Help — JSON Operations (23 tools)
 
 - \`sqlite_create_json_collection({ tableName, indexes: [{ path: "$.key" }] })\` — creates table with JSON indexes
@@ -190,24 +215,45 @@ SpatiaLite (Native only):
 - \`sqlite_json_analyze_schema({ table, column })\` — infer schema types
 - \`sqlite_json_storage_info({ table, column })\` — check text vs JSONB format
 - \`sqlite_jsonb_convert({ table, column })\` — convert to JSONB for faster queries (SQLite 3.45+)`],
+  ["migration", `# db-mcp Help — Migration Tracking (6 tools)
+
+- \`sqlite_migration_init()\` — create \`_mcp_migrations\` tracking table. Idempotent — safe to call multiple times
+- \`sqlite_migration_apply({ version, migrationSql, description?, rollbackSql?, sourceSystem?, appliedBy? })\` — execute SQL and record atomically. If SQL fails, no record is created. SHA-256 dedup rejects duplicate SQL blocks
+- \`sqlite_migration_record({ version, migrationSql, description?, rollbackSql?, sourceSystem?, appliedBy? })\` — record a migration applied externally (does NOT execute the SQL). Same SHA-256 dedup
+- \`sqlite_migration_rollback({ id?, version?, dryRun? })\` — roll back by ID or version. Requires \`rollbackSql\` to have been recorded. \`dryRun: true\` previews the SQL without executing
+- \`sqlite_migration_history({ status?, sourceSystem?, limit?, offset?, compact? })\` — query migration records. \`status: "applied"\` or \`"rolled_back"\` or \`"failed"\`. \`compact: true\` omits hash and source system
+- \`sqlite_migration_status()\` — summary: latest version, counts by status, unique source systems
+
+## ⚠️ Gotchas
+
+- Must call \`sqlite_migration_init()\` before using any other migration tool — it creates the tracking table
+- \`sqlite_migration_apply\` and \`sqlite_migration_record\` use SHA-256 hashing — submitting the same SQL twice is rejected as a duplicate
+- Rollback requires \`rollbackSql\` to have been provided when the migration was recorded/applied
+- Migration group is **opt-in** — not included in any shortcut except \`dev-schema\` and \`full\``],
   ["stats", `# db-mcp Help — Statistical Analysis (13 core + 6 window)
 
 Core (always available):
 - \`sqlite_stats_basic({ table, column })\` — count, sum, avg, min, max
+- \`sqlite_stats_count({ table, column?, distinct? })\` — count rows, optionally distinct values
+- \`sqlite_stats_group_by({ table, column, groupBy })\` — aggregate statistics grouped by column
 - \`sqlite_stats_percentile({ table, column, percentiles: [25, 50, 75, 90] })\`
 - \`sqlite_stats_histogram({ table, column, buckets: 10 })\`
-- \`sqlite_stats_regression({ table, xColumn, yColumn, degree? })\` — linear (default) or quadratic (\`degree: 2\`)
-- \`sqlite_stats_outliers({ table, column, method: "iqr" })\` — or \`"zscore"\`
+- \`sqlite_stats_correlation({ table, column1, column2 })\` — Pearson correlation coefficient
 - \`sqlite_stats_top_n({ table, column, n, selectColumns: ["id", "name", "price"] })\` — ⚠️ always use \`selectColumns\`
+- \`sqlite_stats_distinct({ table, column })\` — distinct values
+- \`sqlite_stats_summary({ table, columns })\` — summary stats for multiple columns at once
+- \`sqlite_stats_frequency({ table, column })\` — frequency distribution
+- \`sqlite_stats_outliers({ table, column, method: "iqr" })\` — or \`"zscore"\`. Use \`maxOutliers\` to limit payload
+- \`sqlite_stats_regression({ table, xColumn, yColumn, degree? })\` — linear (default) or quadratic (\`degree: 2\`)
 - \`sqlite_stats_hypothesis({ table, column, testType: "ttest_one", expectedMean })\` — hypothesis testing
-- \`sqlite_stats_correlation\`, \`sqlite_stats_covariance\`, \`sqlite_stats_frequency\`, \`sqlite_stats_summary\`, \`sqlite_stats_z_score\`, \`sqlite_stats_moving_average\`
 
 Window functions (Native only):
 - \`sqlite_window_row_number({ table, orderBy, partitionBy? })\`
 - \`sqlite_window_rank({ table, orderBy, partitionBy?, rankType: "dense_rank" })\`
+- \`sqlite_window_lag_lead({ table, orderBy, column, partitionBy? })\` — access previous/next row values
 - \`sqlite_window_running_total({ table, valueColumn, orderBy })\`
 - \`sqlite_window_moving_avg({ table, valueColumn, orderBy, windowSize: 7 })\`
-- \`sqlite_window_lead_lag\`, \`sqlite_window_ntile\``],
+- \`sqlite_window_ntile({ table, orderBy, buckets, partitionBy? })\` — divide rows into N buckets`],
   ["text", `# db-mcp Help — Text Processing & FTS5
 
 ## Full-Text Search / FTS5 (4 tools, Native only)
@@ -215,20 +261,23 @@ Window functions (Native only):
 - \`sqlite_fts_create({ tableName, sourceTable, columns: ["title", "content"] })\` — creates FTS5 table with auto-sync triggers
 - \`sqlite_fts_rebuild({ table })\` — ⚠️ Required after create to populate index with existing data
 - \`sqlite_fts_search({ table, query, limit })\` — search FTS5 index. AND by default; use \`OR\` explicitly
-- \`sqlite_fts_count\` — count FTS5 entries
+- \`sqlite_fts_match_info({ table, query })\` — get FTS5 match ranking information using bm25
 
-## Text Processing (13 core + 4 FTS5)
+## Text Processing (13 tools)
 
 - \`sqlite_regex_match({ table, column, pattern })\` — ⚠️ double-escape backslashes in JSON
 - \`sqlite_regex_extract({ table, column, pattern, groupIndex })\` — extract capture group
 - \`sqlite_text_split({ table, column, delimiter })\` — split into parts array
 - \`sqlite_text_concat({ table, columns: ["first", "last"], separator: " " })\`
+- \`sqlite_text_replace({ table, column, search, replacement })\` — replace text using SQLite \`replace()\`
+- \`sqlite_text_trim({ table, column })\` — trim whitespace
+- \`sqlite_text_case({ table, column, mode: "upper" })\` — or \`"lower"\`
+- \`sqlite_text_substring({ table, column, start, length })\` — extract substring
 - \`sqlite_text_normalize({ table, column, mode: "strip_accents" })\` — or nfc, nfd, nfkc, nfkd
 - \`sqlite_text_validate({ table, column, pattern: "email" })\` — patterns: email, phone, url, uuid, ipv4, custom. For custom: \`pattern: "custom", customPattern: "^[A-Z]{2}[0-9]{4}$"\`
 - \`sqlite_fuzzy_match({ table, column, search, maxDistance, tokenize? })\` — matches WORD TOKENS by default. Use \`tokenize: false\` for full-string matching
 - \`sqlite_phonetic_match({ table, column, search, algorithm: "soundex" })\` — matches against any word in value. Use \`includeRowData: false\` for lighter payloads
-- \`sqlite_advanced_search({ table, column, searchTerm, techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold })\` — fuzzyThreshold: 0.3-0.4 = loose, 0.6-0.8 = strict
-- \`sqlite_text_pad\`, \`sqlite_text_template\`, \`sqlite_text_similarity\`, \`sqlite_text_word_count\``],
+- \`sqlite_advanced_search({ table, column, searchTerm, techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold })\` — fuzzyThreshold: 0.3-0.4 = loose, 0.6-0.8 = strict`],
   ["vector", `# db-mcp Help — Vector/Semantic Search (11 tools)
 
 - \`sqlite_vector_create_table({ tableName, dimensions, additionalColumns: [{ name, type }] })\` — create vector table
