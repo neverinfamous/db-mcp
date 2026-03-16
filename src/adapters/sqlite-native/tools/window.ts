@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { validateWhereClause } from "../../../utils/index.js";
-import { formatHandlerError } from "../../../utils/errors/index.js";
+import { formatHandlerError, ResourceNotFoundError } from "../../../utils/errors/index.js";
 import { resolveAliases } from "../../sqlite/types.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
 import { ErrorCategory } from "../../../utils/errors/categories.js";
@@ -130,6 +130,71 @@ const NtileSchema = z.object({
 });
 
 /**
+ * Validate table exists in database (format + existence check)
+ */
+async function validateTableExists(
+  adapter: NativeSqliteAdapter,
+  table: string,
+): Promise<void> {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
+    throw new DbMcpError(
+      "Invalid table name",
+      "NATIVE_WINDOW_INVALID_TABLE",
+      ErrorCategory.VALIDATION,
+    );
+  }
+
+  const result = await adapter.executeReadQuery(
+    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${table}'`,
+  );
+  if (!result.rows || result.rows.length === 0) {
+    throw new ResourceNotFoundError(
+      `Table '${table}' does not exist`,
+      "TABLE_NOT_FOUND",
+      {
+        suggestion:
+          "Table not found. Run sqlite_list_tables to see available tables.",
+        resourceType: "table",
+        resourceName: table,
+      },
+    );
+  }
+}
+
+/**
+ * Validate column exists in table
+ */
+async function validateColumnInTable(
+  adapter: NativeSqliteAdapter,
+  table: string,
+  column: string,
+): Promise<void> {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(column)) {
+    throw new DbMcpError(
+      "Invalid column name",
+      "NATIVE_WINDOW_INVALID_COLUMN",
+      ErrorCategory.VALIDATION,
+    );
+  }
+
+  const tableInfo = await adapter.executeReadQuery(
+    `SELECT name FROM pragma_table_info('${table}') WHERE name='${column}'`,
+  );
+  if (!tableInfo.rows || tableInfo.rows.length === 0) {
+    throw new ResourceNotFoundError(
+      `Column '${column}' not found in table '${table}'`,
+      "COLUMN_NOT_FOUND",
+      {
+        suggestion:
+          "Column not found. Use sqlite_describe_table to see available columns.",
+        resourceType: "column",
+        resourceName: column,
+      },
+    );
+  }
+}
+
+/**
  * Helper to format column selection
  */
 function formatColumns(selectColumns: string[] | undefined): string {
@@ -169,13 +234,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
       try {
         const input = RowNumberSchema.parse(params);
 
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new DbMcpError(
-            "Invalid table name",
-            "NATIVE_WINDOW_INVALID_TABLE",
-            ErrorCategory.VALIDATION
-          );
-        }
+        await validateTableExists(adapter, input.table);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -224,13 +283,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
       try {
         const input = RankSchema.parse(params);
 
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new DbMcpError(
-            "Invalid table name",
-            "NATIVE_WINDOW_INVALID_TABLE",
-            ErrorCategory.VALIDATION
-          );
-        }
+        await validateTableExists(adapter, input.table);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -281,20 +334,8 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
       try {
         const input = LagLeadSchema.parse(params);
 
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new DbMcpError(
-            "Invalid table name",
-            "NATIVE_WINDOW_INVALID_TABLE",
-            ErrorCategory.VALIDATION
-          );
-        }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-          throw new DbMcpError(
-            "Invalid column name",
-            "NATIVE_WINDOW_INVALID_COLUMN",
-            ErrorCategory.VALIDATION
-          );
-        }
+        await validateTableExists(adapter, input.table);
+        await validateColumnInTable(adapter, input.table, input.column);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -348,20 +389,8 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
       try {
         const input = RunningTotalSchema.parse(resolveAliases(params, { valueColumn: "column" }));
 
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new DbMcpError(
-            "Invalid table name",
-            "NATIVE_WINDOW_INVALID_TABLE",
-            ErrorCategory.VALIDATION
-          );
-        }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-          throw new DbMcpError(
-            "Invalid column name",
-            "NATIVE_WINDOW_INVALID_COLUMN",
-            ErrorCategory.VALIDATION
-          );
-        }
+        await validateTableExists(adapter, input.table);
+        await validateColumnInTable(adapter, input.table, input.column);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -421,20 +450,8 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
           };
         }
 
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new DbMcpError(
-            "Invalid table name",
-            "NATIVE_WINDOW_INVALID_TABLE",
-            ErrorCategory.VALIDATION
-          );
-        }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
-          throw new DbMcpError(
-            "Invalid column name",
-            "NATIVE_WINDOW_INVALID_COLUMN",
-            ErrorCategory.VALIDATION
-          );
-        }
+        await validateTableExists(adapter, input.table);
+        await validateColumnInTable(adapter, input.table, input.column);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -496,13 +513,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
           };
         }
 
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
-          throw new DbMcpError(
-            "Invalid table name",
-            "NATIVE_WINDOW_INVALID_TABLE",
-            ErrorCategory.VALIDATION
-          );
-        }
+        await validateTableExists(adapter, input.table);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
