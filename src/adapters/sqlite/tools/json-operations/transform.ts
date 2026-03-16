@@ -230,6 +230,20 @@ export function createJsonNormalizeColumnTool(
       }
 
       try {
+        // Validate outputFormat enum (handler-side to avoid Zod enum leak)
+        const VALID_OUTPUT_FORMATS = ["text", "jsonb", "preserve"] as const;
+        if (
+          input.outputFormat &&
+          !VALID_OUTPUT_FORMATS.includes(
+            input.outputFormat as (typeof VALID_OUTPUT_FORMATS)[number],
+          )
+        ) {
+          return {
+            success: false,
+            error: `Invalid outputFormat '${input.outputFormat}'. Must be one of: ${VALID_OUTPUT_FORMATS.join(", ")}`,
+          };
+        }
+
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

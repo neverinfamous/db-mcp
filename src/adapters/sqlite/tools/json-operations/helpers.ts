@@ -138,7 +138,7 @@ export const JsonNormalizeColumnSchema = z.object({
   column: z.string().describe("JSON column to normalize"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   outputFormat: z
-    .enum(["text", "jsonb", "preserve"])
+    .string()
     .optional()
     .default("preserve")
     .describe(

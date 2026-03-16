@@ -30,6 +30,7 @@ export const JsonUpdateOutputSchema = z
     success: z.boolean(),
     message: z.string().optional(),
     rowsAffected: z.number().optional(),
+    warning: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -76,6 +77,7 @@ export const JsonMergeOutputSchema = z
     success: z.boolean(),
     message: z.string().optional(),
     rowsAffected: z.number().optional(),
+    warning: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -328,6 +330,7 @@ export const JsonNormalizeColumnOutputSchema = z
     unchanged: z.number().optional(),
     errors: z.number().optional(),
     total: z.number().optional(),
-    outputFormat: z.enum(["text", "jsonb", "preserve"]).optional(),
+    outputFormat: z.string().optional(),
+    firstErrorDetail: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
