@@ -231,12 +231,26 @@ export function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("List Tables"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = ListTablesSchema.parse(params);
+      let input;
+      try {
+        input = ListTablesSchema.parse(params);
+      } catch (error) {
+        return {
+          ...formatHandlerError(error),
+          count: 0,
+          tables: [],
+        };
+      }
+
       let tables = await adapter.listTables();
 
-      // Filter out SpatiaLite system tables if requested
+      // Filter out SpatiaLite system tables and internal db-mcp tables
       if (input.excludeSystemTables) {
-        tables = tables.filter((t) => !isSpatialiteSystemTable(t.name));
+        tables = tables.filter(
+          (t) =>
+            !isSpatialiteSystemTable(t.name) &&
+            !t.name.startsWith("_mcp_"),
+        );
       }
 
       return {

@@ -23,7 +23,7 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3000",
       },
-      testIgnore: [/native\./, /auth\./, /payloads-window\./, /payloads-fts\./, /payloads-transactions\./, /payloads-spatialite\./],
+      testIgnore: [/native\./, /auth\./, /payloads-window\./, /payloads-fts\./, /payloads-transactions\./, /payloads-spatialite\./, /payloads-csv\./],
     },
     {
       name: "native",
@@ -57,7 +57,7 @@ export default defineConfig({
     },
     {
       command:
-        "node dist/cli.js --transport http --port 3001 --sqlite-native ./test-server/test.db --tool-filter +all",
+        "node dist/cli.js --transport http --port 3001 --sqlite-native ./test-server/test.db --csv --spatialite --tool-filter +all",
       url: "http://localhost:3001/health",
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
