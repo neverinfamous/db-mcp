@@ -67,7 +67,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "sales",
-          valueColumn: "amount",
+          column: "amount",
           orderBy: "id",
         },
         mockContext,
@@ -88,7 +88,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "sales",
-          valueColumn: "amount",
+          column: "amount",
           orderBy: "id",
           partitionBy: "region",
         },
@@ -109,7 +109,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "sales",
-          valueColumn: "amount",
+          column: "amount",
           orderBy: "id",
           whereClause: "region = 'South'",
         },
@@ -123,7 +123,7 @@ describe("Window Function Tools - Aggregate", () => {
     it("should reject invalid table name", async () => {
       // Starts with number, invalid
       const result = (await getTool().handler(
-        { table: "123", valueColumn: "amount", orderBy: "id" },
+        { table: "123", column: "amount", orderBy: "id" },
         mockContext,
       )) as { success: boolean; error: string };
 
@@ -134,7 +134,7 @@ describe("Window Function Tools - Aggregate", () => {
     it("should reject invalid column name", async () => {
       // Contains dash, invalid
       const result = (await getTool().handler(
-        { table: "sales", valueColumn: "bad-col", orderBy: "id" },
+        { table: "sales", column: "bad-col", orderBy: "id" },
         mockContext,
       )) as { success: boolean; error: string };
 
@@ -151,7 +151,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "sales",
-          valueColumn: "amount",
+          column: "amount",
           orderBy: "id",
           windowSize: 3,
         },
@@ -173,7 +173,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "sales",
-          valueColumn: "amount",
+          column: "amount",
           orderBy: "id",
           windowSize: 2,
           partitionBy: "region",
@@ -188,7 +188,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "sales",
-          valueColumn: "amount",
+          column: "amount",
           orderBy: "id",
           windowSize: 2,
           whereClause: "amount > 100",
@@ -205,7 +205,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "1DROP",
-          valueColumn: "amount",
+          column: "amount",
           orderBy: "id",
           windowSize: 3,
         },
@@ -221,7 +221,7 @@ describe("Window Function Tools - Aggregate", () => {
       const result = (await getTool().handler(
         {
           table: "sales",
-          valueColumn: "SELECT *",
+          column: "SELECT *",
           orderBy: "id",
           windowSize: 3,
         },

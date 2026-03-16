@@ -142,9 +142,10 @@ export const PhoneticMatchSchema = z.object({
 export const TextNormalizeSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to normalize"),
-  mode: z
-    .enum(["nfc", "nfd", "nfkc", "nfkd", "strip_accents"])
-    .describe("Normalization mode"),
+  mode: z.preprocess(
+    (val) => (typeof val === "string" ? val.toLowerCase() : val),
+    z.enum(["nfc", "nfd", "nfkc", "nfkd", "strip_accents"]).describe("Normalization mode"),
+  ),
   whereClause: z.string().optional(),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });

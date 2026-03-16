@@ -98,13 +98,13 @@ describe("Window Function Tools - Ranking", () => {
       )) as {
         success: boolean;
         rowCount: number;
-        rows: { row_num: number; amount: number }[];
+        rows: { row_number: number; amount: number }[];
       };
 
       expect(result.success).toBe(true);
       expect(result.rowCount).toBe(6);
       expect(result.rows).toBeDefined();
-      expect(result.rows[0].row_num).toBe(1);
+      expect(result.rows[0].row_number).toBe(1);
       expect(result.rows[0].amount).toBe(200); // Highest amount first
     });
 
@@ -118,13 +118,13 @@ describe("Window Function Tools - Ranking", () => {
         mockContext,
       )) as {
         success: boolean;
-        rows: { region: string; row_num: number }[];
+        rows: { region: string; row_number: number }[];
       };
 
       expect(result.success).toBe(true);
       // Each region should have row numbers 1, 2, 3
       const northRows = result.rows.filter((r) => r.region === "North");
-      const rowNums = northRows.map((r) => r.row_num);
+      const rowNums = northRows.map((r) => r.row_number);
       expect(rowNums).toContain(1);
       expect(rowNums).toContain(2);
       expect(rowNums).toContain(3);
@@ -143,7 +143,7 @@ describe("Window Function Tools - Ranking", () => {
       expect(result.success).toBe(true);
       expect(result.rows[0]).toHaveProperty("region");
       expect(result.rows[0]).toHaveProperty("amount");
-      expect(result.rows[0]).toHaveProperty("row_num");
+      expect(result.rows[0]).toHaveProperty("row_number");
     });
 
     it("should support whereClause", async () => {
@@ -196,12 +196,12 @@ describe("Window Function Tools - Ranking", () => {
       )) as {
         success: boolean;
         rankType: string;
-        rows: { rank_value: number }[];
+        rows: { rank: number }[];
       };
 
       expect(result.success).toBe(true);
       expect(result.rankType).toBe("rank");
-      expect(result.rows[0].rank_value).toBe(1);
+      expect(result.rows[0].rank).toBe(1);
     });
 
     it("should support DENSE_RANK", async () => {
@@ -221,13 +221,13 @@ describe("Window Function Tools - Ranking", () => {
       )) as {
         success: boolean;
         rankType: string;
-        rows: { rank_value: number }[];
+        rows: { percent_rank: number }[];
       };
 
       expect(result.success).toBe(true);
       expect(result.rankType).toBe("percent_rank");
       // First row should have rank 0
-      expect(result.rows[0].rank_value).toBe(0);
+      expect(result.rows[0].percent_rank).toBe(0);
     });
 
     it("should support whereClause", async () => {
@@ -267,14 +267,14 @@ describe("Window Function Tools - Ranking", () => {
           buckets: 4,
         },
         mockContext,
-      )) as { success: boolean; buckets: number; rows: { bucket: number }[] };
+      )) as { success: boolean; buckets: number; rows: { ntile: number }[] };
 
       expect(result.success).toBe(true);
       expect(result.buckets).toBe(4);
       // All rows should have bucket between 1 and 4
       for (const row of result.rows) {
-        expect(row.bucket).toBeGreaterThanOrEqual(1);
-        expect(row.bucket).toBeLessThanOrEqual(4);
+        expect(row.ntile).toBeGreaterThanOrEqual(1);
+        expect(row.ntile).toBeLessThanOrEqual(4);
       }
     });
 
@@ -287,13 +287,13 @@ describe("Window Function Tools - Ranking", () => {
           partitionBy: "region",
         },
         mockContext,
-      )) as { success: boolean; rows: { bucket: number }[] };
+      )) as { success: boolean; rows: { ntile: number }[] };
 
       expect(result.success).toBe(true);
       // Buckets should be 1 or 2 within each region
       for (const row of result.rows) {
-        expect(row.bucket).toBeGreaterThanOrEqual(1);
-        expect(row.bucket).toBeLessThanOrEqual(2);
+        expect(row.ntile).toBeGreaterThanOrEqual(1);
+        expect(row.ntile).toBeLessThanOrEqual(2);
       }
     });
 

@@ -87,7 +87,7 @@ const LagLeadSchema = z.object({
 
 const RunningTotalSchema = z.object({
   table: z.string().describe("Table name"),
-  valueColumn: z.string().describe("Column to sum"),
+  column: z.string().describe("Column to sum"),
   orderBy: z.string().describe("Column(s) to order by"),
   partitionBy: z
     .string()
@@ -103,7 +103,7 @@ const RunningTotalSchema = z.object({
 
 const MovingAverageSchema = z.object({
   table: z.string().describe("Table name"),
-  valueColumn: z.string().describe("Column to average"),
+  column: z.string().describe("Column to average"),
   orderBy: z.string().describe("Column(s) to order by"),
   windowSize: z.preprocess(coerceNumber, z.number().optional().describe("Number of rows in the moving window")),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
@@ -183,7 +183,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         let sql = `
                 SELECT ${columns},
-                    ROW_NUMBER() OVER (${partition} ORDER BY ${input.orderBy}) as row_num
+                    ROW_NUMBER() OVER (${partition} ORDER BY ${input.orderBy}) as row_number
                 FROM "${input.table}"
             `;
 
@@ -239,7 +239,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         let sql = `
                 SELECT ${columns},
-                    ${rankFunc}() OVER (${partition} ORDER BY ${input.orderBy}) as rank_value
+                    ${rankFunc}() OVER (${partition} ORDER BY ${input.orderBy}) as ${input.rankType}
                 FROM "${input.table}"
             `;
 
@@ -354,7 +354,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
             ErrorCategory.VALIDATION
           );
         }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.valueColumn)) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
           throw new DbMcpError(
             "Invalid column name",
             "NATIVE_WINDOW_INVALID_COLUMN",
@@ -369,7 +369,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         let sql = `
                 SELECT ${columns},
-                    SUM("${input.valueColumn}") OVER (${partition} ORDER BY ${input.orderBy} ROWS UNBOUNDED PRECEDING) as running_total
+                    SUM("${input.column}") OVER (${partition} ORDER BY ${input.orderBy} ROWS UNBOUNDED PRECEDING) as running_total
                 FROM "${input.table}"
             `;
 
@@ -383,7 +383,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          valueColumn: input.valueColumn,
+          valueColumn: input.column,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
@@ -427,7 +427,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
             ErrorCategory.VALIDATION
           );
         }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.valueColumn)) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.column)) {
           throw new DbMcpError(
             "Invalid column name",
             "NATIVE_WINDOW_INVALID_COLUMN",
@@ -443,7 +443,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         let sql = `
                 SELECT ${columns},
-                    AVG("${input.valueColumn}") OVER (${partition} ORDER BY ${input.orderBy} ROWS BETWEEN ${preceding} PRECEDING AND CURRENT ROW) as moving_avg
+                    AVG("${input.column}") OVER (${partition} ORDER BY ${input.orderBy} ROWS BETWEEN ${preceding} PRECEDING AND CURRENT ROW) as moving_avg
                 FROM "${input.table}"
             `;
 
@@ -457,7 +457,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          valueColumn: input.valueColumn,
+          valueColumn: input.column,
           windowSize: input.windowSize,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
@@ -510,7 +510,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         let sql = `
                 SELECT ${columns},
-                    NTILE(${input.buckets}) OVER (${partition} ORDER BY ${input.orderBy}) as bucket
+                    NTILE(${input.buckets}) OVER (${partition} ORDER BY ${input.orderBy}) as ntile
                 FROM "${input.table}"
             `;
 

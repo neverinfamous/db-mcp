@@ -98,6 +98,7 @@ test.describe("Payload Contracts: FTS5", () => {
         tableName: "_e2e_fts_test",
         sourceTable: "test_products",
         columns: ["name", "description"],
+        createTriggers: false, // Avoid orphaned triggers on test_products
       });
 
       expectSuccess(payload);
