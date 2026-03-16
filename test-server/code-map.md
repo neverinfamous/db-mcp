@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: March 15, 2026
+> Last updated: March 16, 2026
 
 ---
 
@@ -46,6 +46,7 @@ src/
 │   │   ├── base.ts                 # DbMcpError (abstract base)
 │   │   ├── categories.ts           # ErrorCategory enum + ErrorResponse interface
 │   │   ├── classes.ts              # 8 concrete error subclasses
+│   │   ├── error-response-fields.ts # ErrorResponseFields mixin (SSoT, re-exported from format.ts)
 │   │   ├── format.ts               # formatErrorResponse() — structured {success:false} builder
 │   │   ├── suggestions.ts          # Error suggestion helpers (typo hints, table/column suggestions)
 │   │   └── index.ts                # Barrel
@@ -57,17 +58,20 @@ src/
 │       └── index.ts                # Barrel
 │
 ├── auth/                           # OAuth 2.1 implementation
-│   ├── middleware.ts               # Express-style OAuth middleware
+│   ├── auth-context.ts             # Auth context utilities
+│   ├── middleware/                  # Express-style OAuth middleware (split from middleware.ts)
+│   │   └── index.ts
 │   ├── token-validator.ts          # JWT/JWKS token validation
-│   ├── scopes.ts                   # Scope parsing, enforcement, tool→scope mapping
+│   ├── scopes/                     # Scope parsing, enforcement (split from scopes.ts)
+│   │   └── index.ts
+│   ├── scope-map.ts                # Tool→scope mapping
 │   ├── oauth-resource-server.ts    # RFC 9728 /.well-known/oauth-protected-resource
 │   ├── authorization-server-discovery.ts  # RFC 8414 auth server metadata discovery
+│   ├── transport-agnostic.ts       # Non-Express auth re-exports for transport portability
 │   ├── errors.ts                   # OAuth-specific error classes
-│   ├── types.ts                    # OAuth TypeScript types
-│   └── index.ts                    # Barrel
+│   └── types.ts                    # OAuth TypeScript types
 │
 ├── transports/
-│   ├── index.ts                    # Barrel
 │   └── http/
 │       ├── transport.ts            # HTTP/SSE transport (Streamable HTTP + legacy SSE)
 │       ├── session.ts              # Session management (stateful + stateless modes)
@@ -113,6 +117,8 @@ src/
 │       ├── native-query-executor.ts     # Native query execution
 │       ├── extensions.ts               # Extension loader (CSV, SpatiaLite)
 │       ├── transaction-methods.ts      # Transaction state management
+│       ├── registration/               # Extracted tool/resource registration logic
+│       │   └── index.ts
 │       ├── index.ts                    # Barrel
 │       └── tools/                      # Native-only tool handlers (see § below)
 ```
@@ -147,7 +153,11 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | | `vector/search.ts` | 2 | `vector_search`, `vector_get` |
 | | `vector/metadata.ts` | 5 | `vector_count`, `vector_stats`, `vector_dimensions`, `vector_normalize`, `vector_distance` |
 | **geo** | `geo.ts` | 4 | `geo_distance`, `geo_nearby`, `geo_bounding_box`, `geo_cluster` |
-| **admin** | `admin/backup.ts` | 5 | `backup`, `restore`, `analyze`, `integrity_check`, `optimize` |
+| **admin** | `admin/backup/create.ts` | 1 | `backup` |
+| | `admin/backup/restore.ts` | 1 | `restore` |
+| | `admin/backup/analyze.ts` | 1 | `analyze` |
+| | `admin/backup/integrity.ts` | 1 | `integrity_check` |
+| | `admin/backup/optimize.ts` | 1 | `optimize` |
 | | `admin/verify.ts` | 2 | `verify_backup`, `index_stats` |
 | | `admin/pragma.ts` | 6 | `pragma_compile_options`, `pragma_database_list`, `pragma_optimize`, `pragma_settings`, `pragma_table_info`, `append_insight` |
 | | `virtual/views.ts` | 3 | `create_view`, `list_views`, `drop_view` |
@@ -161,7 +171,12 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | | `introspection/diagnostics/storage.ts` | 1 | `storage_analysis` |
 | | `introspection/diagnostics/indexes.ts` | 1 | `index_audit` |
 | | `introspection/diagnostics/query-plan.ts` | 1 | `query_plan` |
-| **migration** | `migration/tracking.ts` | 6 | `migration_init`, `migration_record`, `migration_apply`, `migration_rollback`, `migration_history`, `migration_status` |
+| **migration** | `migration/tracking/init.ts` | 1 | `migration_init` |
+| | `migration/tracking/record.ts` | 1 | `migration_record` |
+| | `migration/tracking/apply.ts` | 1 | `migration_apply` |
+| | `migration/tracking/rollback.ts` | 1 | `migration_rollback` |
+| | `migration/tracking/history.ts` | 1 | `migration_history` |
+| | `migration/tracking/status.ts` | 1 | `migration_status` |
 
 ### Native-Only Handlers (`src/adapters/sqlite-native/tools/`)
 
@@ -190,6 +205,7 @@ Files that provide shared logic but do **not** register tools:
 | `vector/schemas.ts` | Zod schemas for vector tools |
 | `vector/tools.ts` | Vector tool registration barrel |
 | `admin/helpers.ts` | Admin tool shared utilities |
+| `migration/schemas.ts` | Zod input schemas for migration tools |
 | `virtual/helpers.ts` | Virtual table helper utilities |
 | `introspection/graph/helpers.ts` | FK graph traversal helpers |
 | `spatialite/schemas.ts` (native) | Zod schemas for SpatiaLite tools |
@@ -214,8 +230,9 @@ Zod schemas that define the `outputSchema` for MCP tool responses:
 | `admin.ts` | Admin group output schemas |
 | `geo.ts` | Geo group output schemas |
 | `virtual.ts` | Virtual table output schemas |
-| `native.ts` | Native-only output schemas (window, transactions, spatialite) |
-| `server.ts` | Built-in tool output schemas (server_info, etc.) |
+| `native.ts` | Native-only output schemas (transactions, window functions) |
+| `spatialite.ts` | SpatiaLite output schemas (7 tools — native only) |
+| `server.ts` | Type aliases for core output schemas (built-in tools use `content` pattern, not `structuredContent`) |
 | `index.ts` | Barrel re-export |
 
 ---
