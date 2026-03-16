@@ -21,9 +21,14 @@ export function registerToolImpl(adapter: ToolRegistrationAdapter, server: McpSe
       "partial" in schema &&
       typeof (schema as { partial: unknown }).partial === "function"
     ) {
+      // .partial() makes all fields optional so the SDK accepts `{}`.
+      // .passthrough() preserves unrecognized keys (e.g., legacy aliases
+      // like `tableName`, `sql`) so handler-level resolveAliases() can
+      // map them to canonical names. Without passthrough, Zod's default
+      // .strip() mode silently removes unknown keys before the handler.
       toolOptions["inputSchema"] = (
-        schema as { partial: () => z.ZodType }
-      ).partial();
+        schema as { partial: () => { passthrough: () => z.ZodType } }
+      ).partial().passthrough();
     } else {
       toolOptions["inputSchema"] = schema;
     }

@@ -20,6 +20,7 @@ import {
   GetIndexesSchema,
   CreateIndexSchema,
   DropIndexSchema,
+  resolveAliases,
 } from "../../types.js";
 import {
   GetIndexesOutputSchema,
@@ -44,7 +45,7 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = GetIndexesSchema.parse(params);
+        input = GetIndexesSchema.parse(resolveAliases(params, { tableName: "table" }));
       } catch (error) {
         return {
           ...formatHandlerError(error),
@@ -135,7 +136,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = CreateIndexSchema.parse(params);
+        input = CreateIndexSchema.parse(resolveAliases(params, { tableName: "table", name: "indexName" }));
       } catch (error) {
         return { ...formatHandlerError(error), sql: "" };
       }
@@ -239,7 +240,7 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = DropIndexSchema.parse(params);
+        input = DropIndexSchema.parse(resolveAliases(params, { name: "indexName" }));
       } catch (error) {
         return formatHandlerError(error);
       }

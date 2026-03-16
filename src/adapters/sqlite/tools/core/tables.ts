@@ -22,6 +22,7 @@ import {
   ListTablesSchema,
   DescribeTableSchema,
   DropTableSchema,
+  resolveAliases,
 } from "../../types.js";
 import {
   CreateTableOutputSchema,
@@ -123,7 +124,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = CreateTableSchema.parse(params);
+        input = CreateTableSchema.parse(resolveAliases(params, { tableName: "table" }));
       } catch (error) {
         return { ...formatHandlerError(error), sql: "" };
       }
@@ -289,7 +290,7 @@ export function createDescribeTableTool(
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = DescribeTableSchema.parse(params);
+        input = DescribeTableSchema.parse(resolveAliases(params, { tableName: "table" }));
       } catch (error) {
         return {
           ...formatHandlerError(error),
@@ -356,7 +357,7 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = DropTableSchema.parse(params);
+        input = DropTableSchema.parse(resolveAliases(params, { tableName: "table" }));
       } catch (error) {
         return formatHandlerError(error);
       }

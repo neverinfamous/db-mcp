@@ -101,6 +101,29 @@ export interface JsonNormalizationResult {
 // Tool Input Schemas (Zod)
 // =============================================================================
 
+/**
+ * Alias coercion: maps legacy parameter names to canonical names.
+ * If the canonical field is missing but the alias is present, the alias
+ * value is transparently moved to the canonical field.
+ *
+ * Applied in handlers before `.parse()` — NOT in the schema itself,
+ * because wrapping in `z.preprocess()` turns `ZodObject` into `ZodEffects`
+ * which breaks the SDK's `.partial()` call in `registerToolImpl`.
+ */
+export function resolveAliases(
+  params: unknown,
+  aliasMap: Record<string, string>,
+): unknown {
+  if (typeof params !== "object" || params === null) return params;
+  const obj = params as Record<string, unknown>;
+  for (const [alias, canonical] of Object.entries(aliasMap)) {
+    if (obj[canonical] === undefined && obj[alias] !== undefined) {
+      obj[canonical] = obj[alias];
+    }
+  }
+  return obj;
+}
+
 // Core Tool Schemas
 export const ReadQuerySchema = z.object({
   query: z.string().describe("SELECT query to execute"),
