@@ -172,3 +172,5 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, make the improvements.
 
 ---
+
+Ignore WASM content. Test Native mode only:

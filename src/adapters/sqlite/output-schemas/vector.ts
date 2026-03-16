@@ -28,6 +28,7 @@ export const VectorBatchStoreOutputSchema = z
     success: z.boolean(),
     stored: z.number().optional(),
     dimensions: z.number().optional(),
+    message: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

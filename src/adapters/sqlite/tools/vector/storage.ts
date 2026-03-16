@@ -88,6 +88,7 @@ async function validateDimensions(
   adapter: SqliteAdapter,
   tableName: string,
   quotedTable: string,
+  vectorColumn?: string,
 ): Promise<{ expectedDims?: number; hasDimsColumn: boolean }> {
   let expectedDims: number | undefined;
   let hasDimsColumn = false;
@@ -116,6 +117,25 @@ async function validateDimensions(
       | undefined;
     if (rowDims !== undefined && rowDims !== null) {
       expectedDims = rowDims;
+    }
+  }
+
+  // Fallback: infer from existing vector data in the vector column
+  if (expectedDims === undefined && vectorColumn) {
+    const quotedVecCol = sanitizeIdentifier(vectorColumn);
+    const vecCheck = await adapter.executeReadQuery(
+      `SELECT ${quotedVecCol} FROM ${quotedTable} WHERE ${quotedVecCol} IS NOT NULL LIMIT 1`,
+    );
+    const rawVec = vecCheck.rows?.[0]?.[vectorColumn] as string | undefined;
+    if (rawVec) {
+      try {
+        const parsed = JSON.parse(rawVec) as unknown;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          expectedDims = parsed.length;
+        }
+      } catch {
+        // Not valid JSON — skip inference
+      }
     }
   }
 
@@ -158,7 +178,7 @@ export function createVectorStoreTool(
         // Validate dimensions against table schema
         let hasDimsColumn = false;
         try {
-          const dims = await validateDimensions(adapter, input.table, table);
+          const dims = await validateDimensions(adapter, input.table, table, input.vectorColumn);
           hasDimsColumn = dims.hasDimsColumn;
 
           if (
@@ -246,7 +266,7 @@ export function createVectorBatchStoreTool(
         // Validate dimensions against table schema
         let hasDimsColumn = false;
         try {
-          const dims = await validateDimensions(adapter, input.table, table);
+          const dims = await validateDimensions(adapter, input.table, table, input.vectorColumn);
           hasDimsColumn = dims.hasDimsColumn;
 
           if (dims.expectedDims !== undefined) {
