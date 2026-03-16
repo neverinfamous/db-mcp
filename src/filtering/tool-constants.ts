@@ -4,16 +4,16 @@
  * Defines the tool groups and meta-groups used for filtering.
  *
  * Actual tool groups (from code audit):
- *   core: 9 tools (from core.ts)
- *   json: 23 tools (from json-helpers.ts + json-operations.ts)
- *   text: 13 WASM / 17 Native (text.ts + fts.ts)
- *   stats: 13 WASM / 19 Native (stats.ts + window.ts)
- *   vector: 11 tools (from vector.ts)
- *   admin: 26 WASM / 33 Native (admin.ts + virtual.ts + transactions.ts)
- *   geo: 4 WASM / 11 Native (geo.ts + spatialite.ts)
- *   introspection: 9 tools (from introspection/graph.ts + introspection/analysis.ts + introspection/diagnostics.ts)
- *   migration: 6 tools (from migration/tracking.ts) — opt-in
- *   codemode: 1 tool (from codemode.ts)
+ *   core: 9 tools (core/queries.ts, core/tables.ts, core/indexes.ts)
+ *   json: 23 tools (json-operations/crud+query+transform.ts, json-helpers/read+write.ts)
+ *   text: 13 WASM / 17 Native (text/regex+formatting+search+validate.ts, fts.ts)
+ *   stats: 13 WASM / 19 Native (stats/basic+advanced.ts, native: window.ts)
+ *   vector: 11 tools (vector/storage+search+metadata.ts)
+ *   admin: 26 WASM / 33 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts, native: transactions.ts)
+ *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
+ *   introspection: 9 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot.ts, diagnostics/storage+indexes+query-plan.ts)
+ *   migration: 6 tools (migration/tracking.ts) — opt-in
+ *   codemode: 1 tool (codemode.ts)
  *   Total: 115 WASM / 139 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
@@ -55,7 +55,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "drop_index",
   ],
   json: [
-    // JSON Helper Tools (8)
+    // CRUD + Query + Collection (8: crud.ts, query.ts, write.ts)
     "json_insert",
     "json_update",
     "json_select",
@@ -64,7 +64,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "json_merge",
     "json_analyze_schema",
     "create_json_collection",
-    // JSON Operation Tools (12)
+    // Transform + Read (12: transform.ts, read.ts)
     "json_valid",
     "json_extract",
     "json_set",
@@ -77,7 +77,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "json_group_array",
     "json_group_object",
     "json_pretty",
-    // JSONB Tools (3)
+    // JSONB + Storage (3: write.ts, read.ts)
     "jsonb_convert",
     "json_storage_info",
     "json_normalize_column",
@@ -140,7 +140,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "vector_distance",
   ],
   admin: [
-    // Admin Tools (13 from admin.ts)
+    // Admin Tools (13: backup.ts, verify.ts, pragma.ts)
     "backup",
     "analyze",
     "integrity_check",
@@ -154,7 +154,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "pragma_settings",
     "pragma_table_info",
     "append_insight",
-    // Virtual Table Tools (13 from virtual.ts)
+    // Virtual Table Tools (13: views.ts, vtable.ts, extensions.ts, analysis.ts)
     "generate_series",
     "create_view",
     "list_views",
