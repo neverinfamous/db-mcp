@@ -63,6 +63,8 @@ export const VectorSearchOutputSchema = z
     metric: z.string().optional(),
     count: z.number().optional(),
     results: z.array(VectorSearchResultSchema).optional(),
+    skipped: z.number().optional(),
+    warning: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
