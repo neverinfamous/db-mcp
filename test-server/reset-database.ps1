@@ -372,6 +372,24 @@ Write-Host "`n========================================================" -Foregro
 Write-Host "                    Reset Complete!                      " -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
 
+# ============================================================================
+# Copy to project root for E2E tests
+# ============================================================================
+# Playwright E2E tests (playwright.config.ts) launch servers with `--sqlite ./database.db`
+# and `--sqlite-native ./database.db` at the project root. Keep them in sync.
+$dbMcpRoot = Split-Path -Parent $ScriptDir
+$e2eDbPath = Join-Path $dbMcpRoot "database.db"
+
+try {
+    Copy-Item $DatabasePath $e2eDbPath -Force
+    $e2eSize = [math]::Round((Get-Item $e2eDbPath).Length / 1KB, 2)
+    Write-Host "`n  E2E database: " -NoNewline
+    Write-Host "Copied to $e2eDbPath ($e2eSize KB)" -ForegroundColor Green
+} catch {
+    Write-Warn "Could not copy database to project root for E2E tests: $_"
+    Write-Info "You may need to manually copy $DatabasePath -> $e2eDbPath"
+}
+
 Write-Host "`nTo start testing, run:" -ForegroundColor Gray
 Write-Host ("  node dist/cli.js --transport stdio --sqlite-native " + [char]34 + "$DatabasePath" + [char]34) -ForegroundColor Cyan
 Write-Host ""

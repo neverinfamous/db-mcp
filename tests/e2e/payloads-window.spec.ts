@@ -163,7 +163,7 @@ test.describe("Payload Contracts: Window Functions", () => {
     try {
       const payload = await callToolAndParse(client, "sqlite_window_running_total", {
         table: "test_orders",
-        valueColumn: "total_price",
+        column: "total_price",
         orderBy: "order_date",
         limit: 5,
       });
@@ -188,7 +188,7 @@ test.describe("Payload Contracts: Window Functions", () => {
     try {
       const payload = await callToolAndParse(client, "sqlite_window_running_total", {
         table: "test_orders",
-        valueColumn: "total_price",
+        column: "total_price",
         orderBy: "order_date",
         partitionBy: "status",
         limit: 10,
@@ -208,7 +208,7 @@ test.describe("Payload Contracts: Window Functions", () => {
     try {
       const payload = await callToolAndParse(client, "sqlite_window_moving_avg", {
         table: "test_measurements",
-        valueColumn: "temperature",
+        column: "temperature",
         orderBy: "measured_at",
         windowSize: 5,
         limit: 10,
