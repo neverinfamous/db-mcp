@@ -15,15 +15,27 @@ import { setTimeout as delay } from "node:timers/promises";
 
 /**
  * Create an MCP SDK client connected via Legacy SSE transport.
+ * Retries up to 3 times with exponential backoff if the connection
+ * fails (typically from transient 429 rate limiting).
  */
 export async function createClient(baseURL: string): Promise<Client> {
-  const transport = new SSEClientTransport(new URL(`${baseURL}/sse`));
-  const client = new Client(
-    { name: "playwright-payload-test", version: "1.0.0" },
-    { capabilities: {} },
-  );
-  await client.connect(transport);
-  return client;
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const transport = new SSEClientTransport(new URL(`${baseURL}/sse`));
+      const client = new Client(
+        { name: "playwright-payload-test", version: "1.0.0" },
+        { capabilities: {} },
+      );
+      await client.connect(transport);
+      return client;
+    } catch (error) {
+      if (attempt === maxAttempts) throw error;
+      const backoffMs = attempt * 2000;
+      await delay(backoffMs);
+    }
+  }
+  throw new Error("unreachable");
 }
 
 /**

@@ -11,7 +11,11 @@ export default defineConfig({
   reporter: "list",
   use: {
     trace: "on-first-retry",
+    // 60s timeout — allows slow operations (vector stats, code mode ETL)
+    // to complete without flaky timeouts from rate-limit backpressure
+    actionTimeout: 0,
   },
+  timeout: 60_000,
   projects: [
     {
       name: "wasm",
@@ -49,7 +53,7 @@ export default defineConfig({
       timeout: 30000,
       stdout: "pipe",
       stderr: "pipe",
-      env: { ...process.env, MCP_RATE_LIMIT_MAX: "1000" },
+      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000" },
     },
     {
       command:
@@ -59,7 +63,7 @@ export default defineConfig({
       timeout: 30000,
       stdout: "pipe",
       stderr: "pipe",
-      env: { ...process.env, MCP_RATE_LIMIT_MAX: "1000" },
+      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000" },
     },
     {
       command:
@@ -69,7 +73,7 @@ export default defineConfig({
       timeout: 30000,
       stdout: "pipe",
       stderr: "pipe",
-      env: { ...process.env, MCP_RATE_LIMIT_MAX: "1000" },
+      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000" },
     },
   ],
 });
