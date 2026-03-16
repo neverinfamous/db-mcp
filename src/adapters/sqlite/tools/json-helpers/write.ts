@@ -45,6 +45,13 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       try {
+        if (input.data === undefined) {
+          return {
+            success: false,
+            error: "Missing required parameter: data",
+          };
+        }
+
         // Normalize JSON data for consistent storage
         const rawJson =
           typeof input.data === "string"
@@ -121,6 +128,14 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
+        if (input.value === undefined) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "Missing required parameter: value",
+          };
+        }
+
         // String values must be JSON-stringified to produce valid JSON
         // e.g., "New Title" -> '"New Title"' (with JSON quotes inside SQL quotes)
         const valueStr =
@@ -177,6 +192,14 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate names
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);
+
+        if (input.mergeData === undefined) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "Missing required parameter: mergeData",
+          };
+        }
 
         const mergeJson = JSON.stringify(input.mergeData);
 

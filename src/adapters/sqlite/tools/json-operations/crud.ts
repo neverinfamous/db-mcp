@@ -157,6 +157,14 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
+        if (input.value === undefined) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "Missing required parameter: value",
+          };
+        }
+
         const valueJson = JSON.stringify(input.value);
         validateWhereClause(input.whereClause);
         const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
@@ -378,6 +386,14 @@ export function createJsonArrayAppendTool(
             success: false,
             rowsAffected: 0,
             error: "JSON path must start with $",
+          };
+        }
+
+        if (input.value === undefined) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "Missing required parameter: value",
           };
         }
 
