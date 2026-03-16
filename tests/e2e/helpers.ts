@@ -59,6 +59,28 @@ export function expectSuccess(payload: Record<string, unknown>): void {
   expect(payload.success, msg).toBe(true);
 }
 
+/**
+ * Assert that a tool response is a structured handler error.
+ * Must have success: false and an error message.
+ * Must NOT be a raw MCP error (isError: true with no success field).
+ */
+export function expectHandlerError(payload: Record<string, unknown>): void {
+  expect(payload.success, `Expected handler error, got: ${JSON.stringify(payload, null, 2)}`).toBe(false);
+  expect(typeof payload.error, `Missing error message: ${JSON.stringify(payload, null, 2)}`).toBe("string");
+}
+
+/**
+ * Call a tool and return the raw MCP response (for tests that need isError check).
+ */
+export async function callToolRaw(
+  client: Client,
+  name: string,
+  args: Record<string, unknown> = {},
+): Promise<{ isError?: boolean; content: { type: string; text: string }[] }> {
+  const response = await client.callTool({ name, arguments: args });
+  return response as { isError?: boolean; content: { type: string; text: string }[] };
+}
+
 // =============================================================================
 // Server Process Management
 // =============================================================================

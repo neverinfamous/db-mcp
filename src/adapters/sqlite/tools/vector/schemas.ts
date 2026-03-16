@@ -46,19 +46,8 @@ const coerceNumberArray = (val: unknown): unknown =>
 const coerceArray = (val: unknown): unknown =>
   Array.isArray(val) ? val : [];
 
-const VALID_METRICS = ["cosine", "euclidean", "dot"] as const;
 
-/**
- * Coerce invalid metric values to undefined so the schema default kicks in.
- * Prevents raw MCP -32602 errors from enum validation.
- */
-const coerceMetric = (val: unknown): unknown =>
-  typeof val === "string" &&
-  (VALID_METRICS as readonly string[]).includes(val)
-    ? val
-    : typeof val === "string"
-      ? undefined
-      : val;
+
 
 export const VectorStoreSchema = z.object({
   table: z.string().describe("Table name"),
@@ -78,14 +67,7 @@ export const VectorSearchSchema = z.object({
     coerceNumberArray,
     z.array(z.number()).describe("Query vector"),
   ),
-  metric: z.preprocess(
-    coerceMetric,
-    z
-      .enum(["cosine", "euclidean", "dot"])
-      .optional()
-      .default("cosine")
-      .describe("Distance metric"),
-  ),
+  metric: z.string().optional().default("cosine").describe("Distance metric"),
   limit: z.preprocess(
     coerceNumber,
     z.number().optional().default(10).describe("Max results"),
@@ -128,10 +110,7 @@ export const VectorDistanceSchema = z.object({
     coerceNumberArray,
     z.array(z.number()).describe("Second vector"),
   ),
-  metric: z.preprocess(
-    coerceMetric,
-    z.enum(["cosine", "euclidean", "dot"]).optional().default("cosine"),
-  ),
+  metric: z.string().optional().default("cosine"),
 });
 
 export const VectorBatchStoreSchema = z.object({

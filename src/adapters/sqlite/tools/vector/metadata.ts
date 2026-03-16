@@ -285,8 +285,13 @@ export function createVectorDistanceTool(): ToolDefinition {
             result = dotProduct(input.vector1, input.vector2);
             break;
           case "cosine":
-          default:
             result = 1 - cosineSimilarity(input.vector1, input.vector2);
+            break;
+          default:
+            return Promise.resolve({
+              success: false,
+              error: `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`,
+            });
         }
 
         return Promise.resolve({

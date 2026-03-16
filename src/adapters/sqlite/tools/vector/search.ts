@@ -108,8 +108,13 @@ export function createVectorSearchTool(
                 score = dotProduct(queryVector, storedVector);
                 break;
               case "cosine":
-              default:
                 score = cosineSimilarity(queryVector, storedVector);
+                break;
+              default:
+                return {
+                  success: false,
+                  error: `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`,
+                };
             }
 
             scored.push({
