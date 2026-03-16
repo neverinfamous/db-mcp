@@ -212,3 +212,53 @@ export const PragmaTableInfoOutputSchema = z
     columns: z.array(PragmaTableInfoColumnSchema),
   })
   .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_append_insight output
+ */
+export const AppendInsightOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+    insightCount: z.number(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * Dbstat object entry (summarized mode)
+ */
+const DbstatObjectSchema = z.object({
+  name: z.string(),
+  pageCount: z.number(),
+  totalPayload: z.number(),
+  totalUnused: z.number(),
+  totalCells: z.number(),
+  maxPayload: z.number(),
+});
+
+/**
+ * sqlite_dbstat output
+ *
+ * Polymorphic: supports summarized, raw, and fallback return shapes.
+ */
+export const DbstatOutputSchema = z
+  .object({
+    success: z.boolean(),
+    // Summarized mode
+    summarized: z.boolean().optional(),
+    objectCount: z.number().optional(),
+    objects: z.array(DbstatObjectSchema).optional(),
+    // Raw mode
+    rowCount: z.number().optional(),
+    stats: z.array(z.record(z.string(), z.unknown())).optional(),
+    // Fallback mode
+    pageCount: z.number().optional(),
+    tableCount: z.number().optional(),
+    table: z.string().optional(),
+    estimatedPages: z.number().optional(),
+    totalDatabasePages: z.number().optional(),
+    // Shared
+    message: z.string().optional(),
+    note: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);

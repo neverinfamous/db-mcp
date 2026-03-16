@@ -15,6 +15,7 @@ import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
+  AppendInsightOutputSchema,
   PragmaCompileOptionsOutputSchema,
   PragmaDatabaseListOutputSchema,
   PragmaOptimizeOutputSchema,
@@ -27,7 +28,6 @@ import {
   PragmaSettingsSchema,
   PragmaTableInfoSchema,
   AppendInsightSchema,
-  AppendInsightOutputSchema,
 } from "./helpers.js";
 
 export function createPragmaCompileOptionsTool(

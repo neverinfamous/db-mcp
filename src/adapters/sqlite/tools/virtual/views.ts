@@ -178,7 +178,11 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
           views,
         };
       } catch (error) {
-        return formatHandlerError(error);
+        return {
+          ...formatHandlerError(error),
+          count: 0,
+          views: [],
+        };
       }
     },
   };

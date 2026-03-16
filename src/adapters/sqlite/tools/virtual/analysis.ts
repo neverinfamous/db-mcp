@@ -10,6 +10,7 @@ import { readOnly, admin } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
+  DbstatOutputSchema,
   VacuumOutputSchema,
 } from "../../output-schemas/index.js";
 import {
@@ -31,6 +32,7 @@ export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Get database storage statistics using dbstat virtual table.",
     group: "admin",
     inputSchema: DbStatSchema,
+    outputSchema: DbstatOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Database Stats"),
     handler: async (params: unknown, _context: RequestContext) => {

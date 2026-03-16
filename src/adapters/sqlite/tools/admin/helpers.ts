@@ -13,7 +13,6 @@
  */
 
 import { z } from "zod";
-import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 
 /**
  * Coerce string values to numbers for MCP parameter safety.
@@ -110,12 +109,3 @@ export const AppendInsightSchema = z.object({
     .string()
     .describe("Business insight discovered from data analysis"),
 });
-
-/**
- * Output schema for append_insight
- */
-export const AppendInsightOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  insightCount: z.number(),
-}).extend(ErrorResponseFields.shape);
