@@ -16,4 +16,5 @@ export * from "./vector.js";
 export * from "./geo.js";
 export * from "./admin.js";
 export * from "./native.js";
-export * from "./server.js";
+export type * from "./server.js";
+export * from "./spatialite.js";

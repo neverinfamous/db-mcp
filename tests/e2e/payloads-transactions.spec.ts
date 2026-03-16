@@ -73,11 +73,18 @@ test.describe("Payload Contracts: Transactions", () => {
   test("begin → write → commit persists data", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
+      // Create table OUTSIDE the transaction using the admin tool
+      await callToolAndParse(client, "sqlite_create_table", {
+        tableName: "_e2e_txn_test",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "val", type: "TEXT" },
+        ],
+      });
+
       await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
 
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "CREATE TABLE IF NOT EXISTS _e2e_txn_test (id INTEGER PRIMARY KEY, val TEXT)",
-      });
+      // DML via write_query inside the transaction
       await callToolAndParse(client, "sqlite_write_query", {
         query: "INSERT INTO _e2e_txn_test (val) VALUES ('committed')",
       });
@@ -95,8 +102,8 @@ test.describe("Payload Contracts: Transactions", () => {
       expect(rows[0].val).toBe("committed");
     } finally {
       // Cleanup
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_txn_test",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_txn_test",
       });
       await client.close();
     }
@@ -110,8 +117,12 @@ test.describe("Payload Contracts: Transactions", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Create table outside transaction
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "CREATE TABLE IF NOT EXISTS _e2e_txn_rollback (id INTEGER PRIMARY KEY, val TEXT)",
+      await callToolAndParse(client, "sqlite_create_table", {
+        tableName: "_e2e_txn_rollback",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "val", type: "TEXT" },
+        ],
       });
 
       await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
@@ -129,8 +140,8 @@ test.describe("Payload Contracts: Transactions", () => {
       const rows = readPayload.rows as Record<string, unknown>[];
       expect(rows[0].cnt).toBe(0);
     } finally {
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_txn_rollback",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_txn_rollback",
       });
       await client.close();
     }
@@ -178,12 +189,18 @@ test.describe("Payload Contracts: Transactions", () => {
   test("sqlite_transaction_rollback_to returns { success, message }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
+      // Create table outside transaction
+      await callToolAndParse(client, "sqlite_create_table", {
+        tableName: "_e2e_txn_sp",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "val", type: "TEXT" },
+        ],
+      });
+
       await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
 
-      // Create table and insert initial data
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "CREATE TABLE IF NOT EXISTS _e2e_txn_sp (id INTEGER PRIMARY KEY, val TEXT)",
-      });
+      // Insert initial data
       await callToolAndParse(client, "sqlite_write_query", {
         query: "INSERT INTO _e2e_txn_sp (val) VALUES ('before_savepoint')",
       });
@@ -212,9 +229,9 @@ test.describe("Payload Contracts: Transactions", () => {
       expect(rows[0].cnt).toBe(1);
     } finally {
       await callToolAndParse(client, "sqlite_transaction_rollback", {});
-      // Clean up table (was created inside transaction that got rolled back)
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_txn_sp",
+      // Clean up table
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_txn_sp",
       });
       await client.close();
     }
@@ -241,8 +258,8 @@ test.describe("Payload Contracts: Transactions", () => {
       const results = payload.results as Record<string, unknown>[];
       expect(results.length).toBe(4);
     } finally {
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_txn_exec",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_txn_exec",
       });
       await client.close();
     }
@@ -251,9 +268,13 @@ test.describe("Payload Contracts: Transactions", () => {
   test("sqlite_transaction_execute rolls back on error", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      // Create table first
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "CREATE TABLE IF NOT EXISTS _e2e_txn_exec_err (id INTEGER PRIMARY KEY, val TEXT NOT NULL)",
+      // Create table first using admin tool
+      await callToolAndParse(client, "sqlite_create_table", {
+        tableName: "_e2e_txn_exec_err",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "val", type: "TEXT NOT NULL" },
+        ],
       });
 
       const payload = await callToolAndParse(client, "sqlite_transaction_execute", {
@@ -274,8 +295,8 @@ test.describe("Payload Contracts: Transactions", () => {
       const rows = readPayload.rows as Record<string, unknown>[];
       expect(rows[0].cnt).toBe(0);
     } finally {
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_txn_exec_err",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_txn_exec_err",
       });
       await client.close();
     }

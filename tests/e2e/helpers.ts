@@ -146,7 +146,7 @@ export async function startServer(
 
   managedServers.set(port, { process: serverProcess, port });
 
-  const maxAttempts = 30;
+  const maxAttempts = 60;
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetch(`http://localhost:${port}/health`);

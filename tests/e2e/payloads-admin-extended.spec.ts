@@ -249,7 +249,7 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
     }
   });
 
-  test("sqlite_virtual_table_info returns { success, name, type } or error", async ({}, testInfo) => {
+  test("sqlite_virtual_table_info returns { success, name, module } or error", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_virtual_table_info", {
@@ -261,7 +261,7 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
       expect(typeof payload.success).toBe("boolean");
       if (payload.success) {
         expect(payload.name).toBe("_e2e_rtree_test");
-        expect(typeof payload.type).toBe("string");
+        expect(typeof payload.module).toBe("string");
       }
     } finally {
       await client.close();
@@ -285,8 +285,8 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
   test("sqlite_create_series_table returns { success, message, rowCount }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_series_test",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_series_test",
       });
 
       const payload = await callToolAndParse(client, "sqlite_create_series_table", {
@@ -301,8 +301,8 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
       expect(payload.rowCount).toBe(10);
     } finally {
       // create_series_table makes a regular table, not virtual
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_series_test",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_series_test",
       });
       await client.close();
     }

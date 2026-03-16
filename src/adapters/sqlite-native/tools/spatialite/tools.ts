@@ -26,6 +26,12 @@ import {
   ensureSpatialite,
   SPATIALITE_PATHS,
 } from "./loader.js";
+import {
+  SpatialiteLoadOutputSchema,
+  SpatialiteCreateTableOutputSchema,
+  SpatialiteQueryOutputSchema,
+  SpatialiteIndexOutputSchema,
+} from "../../../sqlite/output-schemas/index.js";
 
 /**
  * Load SpatiaLite extension
@@ -39,6 +45,7 @@ export function createLoadSpatialiteTool(
       "Load SpatiaLite extension for geospatial capabilities. Required before using other spatial tools.",
     group: "geo",
     inputSchema: LoadSpatialiteSchema,
+    outputSchema: SpatialiteLoadOutputSchema,
     requiredScopes: ["admin"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {
@@ -89,6 +96,7 @@ export function createSpatialTableTool(
       "Create a spatial table with geometry column using SpatiaLite.",
     group: "geo",
     inputSchema: CreateSpatialTableSchema,
+    outputSchema: SpatialiteCreateTableOutputSchema,
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -189,6 +197,7 @@ export function createSpatialQueryTool(
       "Execute spatial SQL queries using SpatiaLite functions (ST_Distance, ST_Within, etc.).",
     group: "geo",
     inputSchema: SpatialQuerySchema,
+    outputSchema: SpatialiteQueryOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -234,6 +243,7 @@ export function createSpatialIndexTool(
       "Create, drop, or check spatial R-Tree index on geometry column.",
     group: "geo",
     inputSchema: SpatialIndexSchema,
+    outputSchema: SpatialiteIndexOutputSchema,
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {

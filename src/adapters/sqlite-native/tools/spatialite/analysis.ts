@@ -19,6 +19,11 @@ import {
   VALID_OPERATIONS,
 } from "./schemas.js";
 import { ensureSpatialite } from "./loader.js";
+import {
+  SpatialiteAnalyzeOutputSchema,
+  SpatialiteTransformOutputSchema,
+  SpatialiteImportOutputSchema,
+} from "../../../sqlite/output-schemas/index.js";
 
 /**
  * Spatial analysis
@@ -32,6 +37,7 @@ export function createSpatialAnalysisTool(
       "Perform spatial analysis: nearest neighbor, point in polygon, distance matrix. For point_in_polygon, sourceTable should contain POINTs and targetTable should contain POLYGONs.",
     group: "geo",
     inputSchema: SpatialAnalysisSchema,
+    outputSchema: SpatialiteAnalyzeOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -179,6 +185,7 @@ export function createGeometryTransformTool(
       "Perform geometry operations: buffer, intersection, union, centroid, simplify.",
     group: "geo",
     inputSchema: GeometryTransformSchema,
+    outputSchema: SpatialiteTransformOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -316,6 +323,7 @@ export function createSpatialImportTool(
       "Import geometry data from WKT or GeoJSON into a spatial table.",
     group: "geo",
     inputSchema: SpatialImportSchema,
+    outputSchema: SpatialiteImportOutputSchema,
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {

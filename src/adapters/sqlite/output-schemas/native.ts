@@ -107,8 +107,8 @@ const RowNumberResultSchema = z
 export const WindowRowNumberOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    rows: z.array(RowNumberResultSchema),
+    rowCount: z.number().optional(),
+    rows: z.array(RowNumberResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -129,8 +129,9 @@ const RankResultSchema = z
 export const WindowRankOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    rows: z.array(RankResultSchema),
+    rankType: z.string().optional(),
+    rowCount: z.number().optional(),
+    rows: z.array(RankResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -150,8 +151,10 @@ const LagLeadResultSchema = z
 export const WindowLagLeadOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    rows: z.array(LagLeadResultSchema),
+    direction: z.string().optional(),
+    offset: z.number().optional(),
+    rowCount: z.number().optional(),
+    rows: z.array(LagLeadResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -170,8 +173,9 @@ const RunningTotalResultSchema = z
 export const WindowRunningTotalOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    rows: z.array(RunningTotalResultSchema),
+    valueColumn: z.string().optional(),
+    rowCount: z.number().optional(),
+    rows: z.array(RunningTotalResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -190,8 +194,10 @@ const MovingAvgResultSchema = z
 export const WindowMovingAvgOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    rows: z.array(MovingAvgResultSchema),
+    valueColumn: z.string().optional(),
+    windowSize: z.number().optional(),
+    rowCount: z.number().optional(),
+    rows: z.array(MovingAvgResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -210,7 +216,8 @@ const NtileResultSchema = z
 export const WindowNtileOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    rows: z.array(NtileResultSchema),
+    buckets: z.number().optional(),
+    rowCount: z.number().optional(),
+    rows: z.array(NtileResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);

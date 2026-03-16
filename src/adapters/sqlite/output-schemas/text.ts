@@ -28,59 +28,50 @@ export const RegexReplaceOutputSchema = z
   .extend(ErrorFieldsMixin.shape);
 
 /**
- * Result item with similarity score for fuzzy search
+ * Fuzzy match result item
  */
-const FuzzyResultSchema = z
-  .object({
-    similarity_score: z.number().optional(),
-  })
-  .loose();
+const FuzzyMatchResultSchema = z.object({
+  value: z.string(),
+  matchedToken: z.string().optional(),
+  tokenDistance: z.number().optional(),
+  distance: z.number(),
+});
 
 /**
- * sqlite_fuzzy_search output
+ * sqlite_fuzzy_match output
  */
 export const FuzzySearchOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number().optional(),
-    results: z.array(FuzzyResultSchema).optional(),
+    matchCount: z.number().optional(),
+    tokenized: z.boolean().optional(),
+    matches: z.array(FuzzyMatchResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
 /**
- * sqlite_soundex output
+ * Phonetic match result item
+ */
+const PhoneticMatchResultSchema = z.object({
+  value: z.string(),
+  phoneticCode: z.string(),
+  row: z.record(z.string(), z.unknown()).optional(),
+});
+
+/**
+ * sqlite_phonetic_match output
  */
 export const SoundexOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number().optional(),
-    results: z.array(RowRecordSchema).optional(),
+    searchCode: z.string().optional(),
+    matchCount: z.number().optional(),
+    matches: z.array(PhoneticMatchResultSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_levenshtein output
- */
-export const LevenshteinOutputSchema = z
-  .object({
-    success: z.boolean(),
-    distance: z.number().optional(),
-    string1: z.string().optional(),
-    string2: z.string().optional(),
-  })
-  .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_trigram_similarity output
- */
-export const TrigramSimilarityOutputSchema = z
-  .object({
-    success: z.boolean(),
-    similarity: z.number().optional(),
-    string1: z.string().optional(),
-    string2: z.string().optional(),
-  })
-  .extend(ErrorFieldsMixin.shape);
+
 
 /**
  * sqlite_text_normalize output
@@ -88,9 +79,15 @@ export const TrigramSimilarityOutputSchema = z
 export const TextNormalizeOutputSchema = z
   .object({
     success: z.boolean(),
-    original: z.string().optional(),
-    normalized: z.string().optional(),
-    operations: z.array(z.string()).optional(),
+    rowCount: z.number().optional(),
+    rows: z
+      .array(
+        z.object({
+          original: z.string(),
+          normalized: z.string(),
+        }),
+      )
+      .optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

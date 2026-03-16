@@ -14,13 +14,13 @@ import {
 } from "../../../../utils/index.js";
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
-
 import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 import {
   TextNormalizeSchema,
   TextValidateSchema,
   validateColumnExists,
 } from "./helpers.js";
+import { TextNormalizeOutputSchema } from "../../output-schemas/index.js";
 
 /**
  * Normalize text (Unicode normalization or accent stripping)
@@ -32,16 +32,7 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
       "Normalize text using Unicode normalization (NFC, NFD, NFKC, NFKD) or strip accents.",
     group: "text",
     inputSchema: TextNormalizeSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      rowCount: z.number().optional(),
-      rows: z.array(
-        z.object({
-          original: z.string(),
-          normalized: z.string(),
-        }),
-      ).optional(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: TextNormalizeOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Normalize"),
     handler: async (params: unknown, _context: RequestContext) => {

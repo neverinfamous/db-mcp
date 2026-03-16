@@ -119,22 +119,7 @@ export const StatsFrequencyOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_stats_describe output
- */
-export const StatsDescribeOutputSchema = z
-  .object({
-    success: z.boolean(),
-    column: z.string(),
-    count: z.number(),
-    mean: z.number().nullable(),
-    min: z.number().nullable(),
-    max: z.number().nullable(),
-    sum: z.number().nullable(),
-    stddev: z.number().nullable(),
-    variance: z.number().nullable(),
-  })
-  .extend(ErrorFieldsMixin.shape);
+
 
 /**
  * sqlite_stats_percentile output (array version for multiple percentiles)
@@ -217,28 +202,7 @@ export const StatsRegressionOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_stats_mode output
- */
-export const StatsModeOutputSchema = z
-  .object({
-    success: z.boolean(),
-    column: z.string(),
-    mode: z.unknown(),
-    frequency: z.number(),
-  })
-  .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_stats_median output
- */
-export const StatsMedianOutputSchema = z
-  .object({
-    success: z.boolean(),
-    column: z.string(),
-    median: z.number().nullable(),
-  })
-  .extend(ErrorFieldsMixin.shape);
 
 /**
  * sqlite_stats_outliers output
@@ -246,9 +210,29 @@ export const StatsMedianOutputSchema = z
 export const StatsOutliersOutputSchema = z
   .object({
     success: z.boolean(),
-    column: z.string().optional(),
     method: z.string().optional(),
-    outliers: z.array(StatsRowRecordSchema).optional(),
-    count: z.number().optional(),
+    stats: z
+      .object({
+        mean: z.number().optional(),
+        stdDev: z.number().optional(),
+        q1: z.number().optional(),
+        q3: z.number().optional(),
+        iqr: z.number().optional(),
+        lowerBound: z.number(),
+        upperBound: z.number(),
+      })
+      .optional(),
+    outlierCount: z.number().optional(),
+    totalRows: z.number().optional(),
+    outliers: z
+      .array(
+        z.object({
+          value: z.number(),
+          rowid: z.number().optional(),
+        }),
+      )
+      .optional(),
+    truncated: z.boolean().optional(),
+    totalOutliers: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);

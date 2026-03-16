@@ -1,9 +1,8 @@
 /**
- * Built-in Server Tool Output Schemas (3 tools) + Export Type Aliases
+ * Built-in Server Tool Export Type Aliases
  */
 
-import { z } from "zod";
-import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
+import type { z } from "zod";
 import type {
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
@@ -13,56 +12,6 @@ import type {
   DropTableOutputSchema,
   GetIndexesOutputSchema,
 } from "./core.js";
-
-/**
- * server_info output
- */
-export const ServerInfoOutputSchema = z.object({
-  name: z.string(),
-  version: z.string(),
-  transport: z.string(),
-  adapters: z.array(
-    z.object({
-      id: z.string(),
-      type: z.string(),
-      name: z.string(),
-    }),
-  ),
-  toolCount: z.number(),
-  toolFilter: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-/**
- * server_health output
- */
-export const ServerHealthOutputSchema = z.object({
-  status: z.enum(["healthy", "degraded", "unhealthy"]),
-  adapters: z.array(
-    z.object({
-      id: z.string(),
-      connected: z.boolean(),
-      latencyMs: z.number().optional(),
-      error: z.string().optional(),
-    }),
-  ),
-  uptime: z.number().optional(),
-}).extend(ErrorResponseFields.shape);
-
-/**
- * list_adapters output
- */
-export const ListAdaptersOutputSchema = z.object({
-  count: z.number(),
-  adapters: z.array(
-    z.object({
-      id: z.string(),
-      type: z.string(),
-      name: z.string(),
-      database: z.string().optional(),
-      connected: z.boolean(),
-    }),
-  ),
-}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Export Type Aliases

@@ -1,11 +1,10 @@
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { validateWhereClause, sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../../../utils/errors/index.js";
 import { validateColumnExists, validateNumericColumn, RegressionSchema } from "../helpers.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { StatsRegressionOutputSchema } from "../../../output-schemas/index.js";
 import { matrixTranspose, matrixMultiply, matrixInverse } from "../math-helpers.js";
 
 /**
@@ -18,24 +17,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
       "Perform linear or polynomial regression analysis between two columns.",
     group: "stats",
     inputSchema: RegressionSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      type: z.string().optional(),
-      sampleSize: z.number().optional(),
-      coefficients: z
-        .object({
-          intercept: z.number(),
-          linear: z.number().optional(),
-          quadratic: z.number().optional(),
-          cubic: z.number().optional(),
-        })
-        .optional(),
-      rSquared: z.number().optional(),
-      equation: z.string().optional(),
-      error: z.string().optional(),
-      code: z.string().optional(),
-      suggestion: z.string().optional(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: StatsRegressionOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Regression Analysis"),
     handler: async (params: unknown, _context: RequestContext) => {

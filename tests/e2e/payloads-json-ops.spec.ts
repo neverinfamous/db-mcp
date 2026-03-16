@@ -322,8 +322,8 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Cleanup from prior runs
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_json_coll",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_json_coll",
       });
 
       const payload = await callToolAndParse(client, "sqlite_create_json_collection", {
@@ -336,8 +336,8 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
       expect(typeof payload.indexCount).toBe("number");
     } finally {
       // Cleanup
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_json_coll",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_json_coll",
       });
       await client.close();
     }

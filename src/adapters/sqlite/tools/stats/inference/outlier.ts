@@ -1,11 +1,10 @@
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { validateWhereClause, sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { validateColumnExists, validateNumericColumn, OutlierSchema } from "../helpers.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { StatsOutliersOutputSchema } from "../../../output-schemas/index.js";
 
 /**
  * Outlier detection using IQR or Z-score
@@ -17,34 +16,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
       "Detect outliers using IQR (Interquartile Range) or Z-score method.",
     group: "stats",
     inputSchema: OutlierSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      method: z.string().optional(),
-      stats: z
-        .object({
-          mean: z.number().optional(),
-          stdDev: z.number().optional(),
-          q1: z.number().optional(),
-          q3: z.number().optional(),
-          iqr: z.number().optional(),
-          lowerBound: z.number(),
-          upperBound: z.number(),
-        })
-        .optional(),
-      outlierCount: z.number().optional(),
-      totalRows: z.number().optional(),
-      outliers: z
-        .array(
-          z.object({
-            value: z.number(),
-            rowid: z.number().optional(),
-          }),
-        )
-        .optional(),
-      error: z.string().optional(),
-      code: z.string().optional(),
-      suggestion: z.string().optional(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: StatsOutliersOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Outlier Detection"),
     handler: async (params: unknown, _context: RequestContext) => {

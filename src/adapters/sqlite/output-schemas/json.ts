@@ -247,33 +247,8 @@ export const JsonEachOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_json_tree output
- */
-export const JsonTreeOutputSchema = z
-  .object({
-    success: z.boolean(),
-    rowCount: z.number(),
-    nodes: z.array(
-      z.object({
-        key: z.union([z.string(), z.number()]).nullable(),
-        value: z.unknown(),
-        type: z.string(),
-        path: z.string(),
-      }),
-    ),
-  })
-  .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_json_patch output
- */
-export const JsonPatchOutputSchema = z
-  .object({
-    success: z.boolean(),
-    rowsAffected: z.number().optional(),
-  })
-  .extend(ErrorFieldsMixin.shape);
+
 
 /**
  * sqlite_json_pretty output

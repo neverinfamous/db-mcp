@@ -15,7 +15,7 @@ import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./hel
 test.describe.configure({ mode: "serial" });
 
 test.describe("Payload Contracts: Window Functions", () => {
-  test("sqlite_window_row_number returns { success, rows[] } with row_number field", async ({}, testInfo) => {
+  test("sqlite_window_row_number returns { success, rows[] } with row_num field", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_window_row_number", {
@@ -29,8 +29,9 @@ test.describe("Payload Contracts: Window Functions", () => {
 
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(5);
-      expect(typeof rows[0].row_number).toBe("number");
-      expect(rows[0].row_number).toBe(1);
+      // Handler aliases ROW_NUMBER() as "row_num"
+      expect(typeof rows[0].row_num).toBe("number");
+      expect(rows[0].row_num).toBe(1);
     } finally {
       await client.close();
     }
@@ -49,14 +50,14 @@ test.describe("Payload Contracts: Window Functions", () => {
       expectSuccess(payload);
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(10);
-      // First row of each partition should have row_number = 1
-      expect(typeof rows[0].row_number).toBe("number");
+      // First row of each partition should have row_num = 1
+      expect(typeof rows[0].row_num).toBe("number");
     } finally {
       await client.close();
     }
   });
 
-  test("sqlite_window_rank returns { success, rows[] } with rank field", async ({}, testInfo) => {
+  test("sqlite_window_rank returns { success, rows[] } with rank_value field", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_window_rank", {
@@ -70,58 +71,61 @@ test.describe("Payload Contracts: Window Functions", () => {
 
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(5);
-      // Default mode is "rank"
-      expect(typeof rows[0].rank).toBe("number");
+      // Handler aliases RANK() as "rank_value"
+      expect(typeof rows[0].rank_value).toBe("number");
     } finally {
       await client.close();
     }
   });
 
-  test("sqlite_window_rank with mode dense_rank", async ({}, testInfo) => {
+  test("sqlite_window_rank with rankType dense_rank", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_window_rank", {
         table: "test_measurements",
         orderBy: "sensor_id",
-        mode: "dense_rank",
+        rankType: "dense_rank",
         limit: 5,
       });
 
       expectSuccess(payload);
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(5);
-      expect(typeof rows[0].dense_rank).toBe("number");
+      // All rank types alias as "rank_value"
+      expect(typeof rows[0].rank_value).toBe("number");
     } finally {
       await client.close();
     }
   });
 
-  test("sqlite_window_rank with mode percent_rank", async ({}, testInfo) => {
+  test("sqlite_window_rank with rankType percent_rank", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_window_rank", {
         table: "test_measurements",
         orderBy: "temperature",
-        mode: "percent_rank",
+        rankType: "percent_rank",
         limit: 5,
       });
 
       expectSuccess(payload);
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(5);
-      expect(typeof rows[0].percent_rank).toBe("number");
+      expect(typeof rows[0].rank_value).toBe("number");
     } finally {
       await client.close();
     }
   });
 
-  test("sqlite_window_lag_lead returns { success, rows[] } with lag/lead fields", async ({}, testInfo) => {
+  test("sqlite_window_lag_lead returns { success, rows[] } with lag_value", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
+      // Schema requires `direction` — test LAG first
       const payload = await callToolAndParse(client, "sqlite_window_lag_lead", {
         table: "test_measurements",
         column: "temperature",
         orderBy: "measured_at",
+        direction: "lag",
         limit: 5,
       });
 
@@ -130,21 +134,21 @@ test.describe("Payload Contracts: Window Functions", () => {
 
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(5);
-      // Should have lag and lead columns
+      // Handler aliases as "{direction}_value"
       expect(rows[0]).toHaveProperty("lag_value");
-      expect(rows[0]).toHaveProperty("lead_value");
     } finally {
       await client.close();
     }
   });
 
-  test("sqlite_window_lag_lead with offset", async ({}, testInfo) => {
+  test("sqlite_window_lag_lead with direction lead and offset", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_window_lag_lead", {
         table: "test_measurements",
         column: "temperature",
         orderBy: "measured_at",
+        direction: "lead",
         offset: 3,
         limit: 5,
       });
@@ -152,6 +156,7 @@ test.describe("Payload Contracts: Window Functions", () => {
       expectSuccess(payload);
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(5);
+      expect(rows[0]).toHaveProperty("lead_value");
     } finally {
       await client.close();
     }
@@ -162,7 +167,7 @@ test.describe("Payload Contracts: Window Functions", () => {
     try {
       const payload = await callToolAndParse(client, "sqlite_window_running_total", {
         table: "test_orders",
-        column: "total_price",
+        valueColumn: "total_price",
         orderBy: "order_date",
         limit: 5,
       });
@@ -187,7 +192,7 @@ test.describe("Payload Contracts: Window Functions", () => {
     try {
       const payload = await callToolAndParse(client, "sqlite_window_running_total", {
         table: "test_orders",
-        column: "total_price",
+        valueColumn: "total_price",
         orderBy: "order_date",
         partitionBy: "status",
         limit: 10,
@@ -207,7 +212,7 @@ test.describe("Payload Contracts: Window Functions", () => {
     try {
       const payload = await callToolAndParse(client, "sqlite_window_moving_avg", {
         table: "test_measurements",
-        column: "temperature",
+        valueColumn: "temperature",
         orderBy: "measured_at",
         windowSize: 5,
         limit: 10,
@@ -224,7 +229,7 @@ test.describe("Payload Contracts: Window Functions", () => {
     }
   });
 
-  test("sqlite_window_ntile returns { success, rows[] } with ntile field", async ({}, testInfo) => {
+  test("sqlite_window_ntile returns { success, rows[] } with bucket field", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_window_ntile", {
@@ -239,11 +244,12 @@ test.describe("Payload Contracts: Window Functions", () => {
 
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(10);
-      expect(typeof rows[0].ntile).toBe("number");
-      // ntile values should be between 1 and buckets
+      // Handler aliases NTILE() as "bucket"
+      expect(typeof rows[0].bucket).toBe("number");
+      // bucket values should be between 1 and buckets
       for (const row of rows) {
-        expect(row.ntile as number).toBeGreaterThanOrEqual(1);
-        expect(row.ntile as number).toBeLessThanOrEqual(4);
+        expect(row.bucket as number).toBeGreaterThanOrEqual(1);
+        expect(row.bucket as number).toBeLessThanOrEqual(4);
       }
     } finally {
       await client.close();
@@ -264,7 +270,7 @@ test.describe("Payload Contracts: Window Functions", () => {
       const rows = payload.rows as Record<string, unknown>[];
       expect(rows.length).toBe(5);
       // First rows should be in bucket 1 (lowest temperatures)
-      expect(rows[0].ntile).toBe(1);
+      expect(rows[0].bucket).toBe(1);
     } finally {
       await client.close();
     }

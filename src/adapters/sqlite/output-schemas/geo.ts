@@ -70,43 +70,5 @@ export const GeoClusterOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-/**
- * Result item with required distance for nearest
- */
-const GeoNearestResultSchema = z
-  .object({
-    distance: z.number(),
-  })
-  .loose();
 
-/**
- * sqlite_geo_nearest output
- */
-export const GeoNearestOutputSchema = z
-  .object({
-    success: z.boolean(),
-    rowCount: z.number(),
-    results: z.array(GeoNearestResultSchema),
-  })
-  .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_geo_polygon_contains output
- */
-export const GeoPolygonContainsOutputSchema = z
-  .object({
-    success: z.boolean(),
-    contains: z.boolean(),
-  })
-  .extend(ErrorFieldsMixin.shape);
-
-/**
- * sqlite_geo_encode output
- */
-export const GeoEncodeOutputSchema = z
-  .object({
-    success: z.boolean(),
-    geohash: z.string(),
-    precision: z.number(),
-  })
-  .extend(ErrorFieldsMixin.shape);

@@ -11,6 +11,14 @@ import { validateWhereClause } from "../../../utils/index.js";
 import { formatHandlerError } from "../../../utils/errors/index.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
 import { ErrorCategory } from "../../../utils/errors/categories.js";
+import {
+  WindowRowNumberOutputSchema,
+  WindowRankOutputSchema,
+  WindowLagLeadOutputSchema,
+  WindowRunningTotalOutputSchema,
+  WindowMovingAvgOutputSchema,
+  WindowNtileOutputSchema,
+} from "../../sqlite/output-schemas/index.js";
 
 /**
  * Coerce string-typed numbers to actual numbers.
@@ -154,6 +162,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
       "Assign sequential row numbers based on ordering. Useful for pagination and ranking.",
     group: "stats",
     inputSchema: RowNumberSchema,
+    outputSchema: WindowRowNumberOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -208,6 +217,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
       "Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0-1 range.",
     group: "stats",
     inputSchema: RankSchema,
+    outputSchema: WindowRankOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -264,6 +274,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
       "Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows.",
     group: "stats",
     inputSchema: LagLeadSchema,
+    outputSchema: WindowLagLeadOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -330,6 +341,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
       "Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics.",
     group: "stats",
     inputSchema: RunningTotalSchema,
+    outputSchema: WindowRunningTotalOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -392,6 +404,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
       "Calculate moving (rolling) average. Useful for smoothing time series data.",
     group: "stats",
     inputSchema: MovingAverageSchema,
+    outputSchema: WindowMovingAvgOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -466,6 +479,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
       "Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles.",
     group: "stats",
     inputSchema: NtileSchema,
+    outputSchema: WindowNtileOutputSchema,
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {

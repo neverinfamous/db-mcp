@@ -13,6 +13,10 @@ import {
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
+import {
+  FuzzySearchOutputSchema,
+  SoundexOutputSchema,
+} from "../../output-schemas/index.js";
 import { ErrorFieldsMixin } from "../../output-schemas/error-mixin.js";
 import {
   levenshtein,
@@ -34,19 +38,7 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
       "Find fuzzy matches using Levenshtein distance. By default, splits values into tokens and matches against each word (use tokenize:false to match entire value). Use maxDistance 1-3 for similar-length strings.",
     group: "text",
     inputSchema: FuzzyMatchSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      matchCount: z.number().optional(),
-      tokenized: z.boolean().optional(),
-      matches: z.array(
-        z.object({
-          value: z.string(),
-          matchedToken: z.string().optional(),
-          tokenDistance: z.number().optional(),
-          distance: z.number(),
-        }),
-      ).optional(),
-    }).extend(ErrorFieldsMixin.shape),
+    outputSchema: FuzzySearchOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Fuzzy Match"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -132,18 +124,7 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
       "Find phonetically similar values using Soundex (SQLite native) or Metaphone algorithm.",
     group: "text",
     inputSchema: PhoneticMatchSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      searchCode: z.string().optional(),
-      matchCount: z.number().optional(),
-      matches: z.array(
-        z.object({
-          value: z.string(),
-          phoneticCode: z.string(),
-          row: z.record(z.string(), z.unknown()).optional(),
-        }),
-      ).optional(),
-    }).extend(ErrorFieldsMixin.shape),
+    outputSchema: SoundexOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Phonetic Match"),
     handler: async (params: unknown, _context: RequestContext) => {

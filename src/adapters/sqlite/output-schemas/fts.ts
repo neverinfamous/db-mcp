@@ -49,13 +49,5 @@ export const FtsRebuildOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_fts_optimize output
- */
-export const FtsOptimizeOutputSchema = z
-  .object({
-    success: z.boolean(),
-    message: z.string().optional(),
-    tableName: z.string().optional(),
-  })
-  .extend(ErrorFieldsMixin.shape);
+
+
