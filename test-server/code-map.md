@@ -310,7 +310,7 @@ catch (error) {
 | **Schema Cache** | `SchemaManager` caches table/column metadata with configurable TTL. Auto-invalidates on DDL ops. |
 | **Code Mode Bridge** | `sqlite.*` API in worker thread communicates via MessagePort RPC to main thread tool handlers. |
 | **Tool Filtering** | `ToolFilter` parses `--tool-filter` string → whitelist/blacklist of tool names. `codemode` auto-injected unless excluded. |
-| **Output Schemas** | Zod schemas in `output-schemas/` define response shapes per MCP `outputSchema` spec. |
+| **Output Schemas** | All Zod output schemas live in `output-schemas/` with named exports — **never inline** in handler files. Handlers import from `../../output-schemas/index.js`. All schemas extend `ErrorFieldsMixin.shape`. |
 | **Barrel Re-exports** | Every directory has `index.ts` barrel. Import from `./module/index.js` (with `.js` extension for ESM). |
 | **Module Logger** | `createModuleLogger("moduleName")` → structured logs with `[module]` prefix. |
 
