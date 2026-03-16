@@ -4,7 +4,7 @@
 
 **Step 2:** Please conduct an exhaustive test of the tool group specified in the group-specific checklist (pasted after this document) using live MCP server tool calls directly — not scripts/terminal.
 
-**Note** If temp files are present, they are from a previous test pass. You can try codemode to drop them but otherwise just ignore/work around them. I will delete them when the IDE is closed and the database isn't locked.
+**Note** If temp tables are present from a previous test pass, use `sqlite_execute_code` to drop them — code mode has the full `sqlite.*` API across all groups regardless of the tool filter (e.g., `sqlite.admin.dropVirtualTable({tableName: '...'})` for FTS tables, `sqlite.core.dropTable({table: '...'})` for regular tables).
 
 ## Test Database Schema
 
