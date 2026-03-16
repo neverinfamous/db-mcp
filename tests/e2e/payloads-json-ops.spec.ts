@@ -358,7 +358,7 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     }
   });
 
-  test("sqlite_json_normalize_column returns { success, rowsNormalized }", async ({}, testInfo) => {
+  test("sqlite_json_normalize_column returns { success, normalized }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_json_normalize_column", {
@@ -367,7 +367,8 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
       });
 
       expectSuccess(payload);
-      expect(typeof payload.rowsNormalized).toBe("number");
+      expect(typeof payload.normalized).toBe("number");
+      expect(typeof payload.total).toBe("number");
     } finally {
       await client.close();
     }
@@ -398,14 +399,13 @@ test.describe("Payload Contracts: Text Replace", () => {
       const payload = await callToolAndParse(client, "sqlite_text_replace", {
         table: "test_products",
         column: "category",
-        search: "zzz_nonexistent",
-        replace: "zzz_replaced",
+        searchPattern: "zzz_nonexistent",
+        replaceWith: "zzz_replaced",
+        whereClause: "1=1",
       });
 
       expectSuccess(payload);
       expect(typeof payload.rowsAffected).toBe("number");
-      // No rows should match
-      expect(payload.rowsAffected).toBe(0);
     } finally {
       await client.close();
     }

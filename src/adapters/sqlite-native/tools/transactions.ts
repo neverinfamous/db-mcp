@@ -8,6 +8,15 @@ import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../utils/errors/index.js";
+import {
+  TransactionBeginOutputSchema,
+  TransactionCommitOutputSchema,
+  TransactionRollbackOutputSchema,
+  TransactionSavepointOutputSchema,
+  TransactionReleaseOutputSchema,
+  TransactionRollbackToOutputSchema,
+  TransactionExecuteOutputSchema,
+} from "../../sqlite/output-schemas/index.js";
 
 // Valid enum values for transaction mode
 const VALID_MODES = ["deferred", "immediate", "exclusive"] as const;
@@ -72,6 +81,7 @@ function createBeginTransactionTool(
       "Begin a new transaction. Use immediate or exclusive mode for write-heavy operations.",
     group: "admin",
     inputSchema: BeginTransactionSchema,
+    outputSchema: TransactionBeginOutputSchema,
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -104,6 +114,7 @@ function createCommitTransactionTool(
       "Commit the current transaction, making all changes permanent.",
     group: "admin",
     inputSchema: z.object({}),
+    outputSchema: TransactionCommitOutputSchema,
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {
@@ -130,6 +141,7 @@ function createRollbackTransactionTool(
     name: "sqlite_transaction_rollback",
     description: "Rollback the current transaction, discarding all changes.",
     group: "admin",
+    outputSchema: TransactionRollbackOutputSchema,
     inputSchema: z.object({}),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
@@ -156,6 +168,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     description:
       "Create a savepoint within the current transaction for partial rollback.",
     group: "admin",
+    outputSchema: TransactionSavepointOutputSchema,
     inputSchema: SavepointSchema,
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
@@ -195,6 +208,7 @@ function createReleaseSavepointTool(
       "Release a savepoint, keeping the changes made since it was created.",
     group: "admin",
     inputSchema: SavepointSchema,
+    outputSchema: TransactionReleaseOutputSchema,
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
       try {
@@ -233,6 +247,7 @@ function createRollbackToSavepointTool(
       "Rollback to a savepoint, discarding changes made after it was created.",
     group: "admin",
     inputSchema: SavepointSchema,
+    outputSchema: TransactionRollbackToOutputSchema,
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
       try {
@@ -270,6 +285,7 @@ function createExecuteInTransactionTool(
     description:
       "Execute multiple SQL statements in a single transaction. Automatically commits on success or rolls back on error.",
     group: "admin",
+    outputSchema: TransactionExecuteOutputSchema,
     inputSchema: ExecuteInTransactionSchema,
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {

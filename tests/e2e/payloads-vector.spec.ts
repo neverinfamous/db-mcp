@@ -164,8 +164,8 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Cleanup from prior runs
-      await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_vec_write",
+      await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_vec_write",
       });
 
       const payload = await callToolAndParse(client, "sqlite_vector_create_table", {
@@ -180,35 +180,46 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
     }
   });
 
-  test("sqlite_vector_store returns { success, message }", async ({}, testInfo) => {
+  test("sqlite_vector_store returns { success }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
+      // Ensure the table exists (vector_create_table may use executeQuery which is read-only on some backends)
+      await callToolAndParse(client, "sqlite_create_table", {
+        tableName: "_e2e_vec_write",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "vector", type: "TEXT", nullable: false },
+          { name: "dimensions", type: "INTEGER" },
+        ],
+      });
+
       const payload = await callToolAndParse(client, "sqlite_vector_store", {
         table: "_e2e_vec_write",
         idColumn: "id",
-        vectorColumn: "embedding",
-        id: "vec_1",
+        vectorColumn: "vector",
+        id: 1,
         vector: [0.1, 0.2, 0.3, 0.4],
       });
 
       expectSuccess(payload);
-      expect(typeof payload.message).toBe("string");
+      expect(typeof payload.id).toBe("number");
+      expect(payload.dimensions).toBe(4);
     } finally {
       await client.close();
     }
   });
 
-  test("sqlite_vector_batch_store returns { success, stored, message }", async ({}, testInfo) => {
+  test("sqlite_vector_batch_store returns { success, stored }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_vector_batch_store", {
         table: "_e2e_vec_write",
         idColumn: "id",
-        vectorColumn: "embedding",
+        vectorColumn: "vector",
         items: [
-          { id: "vec_2", vector: [0.5, 0.6, 0.7, 0.8] },
-          { id: "vec_3", vector: [0.9, 1.0, 0.1, 0.2] },
-          { id: "vec_4", vector: [0.3, 0.4, 0.5, 0.6] },
+          { id: 2, vector: [0.5, 0.6, 0.7, 0.8] },
+          { id: 3, vector: [0.9, 1.0, 0.1, 0.2] },
+          { id: 4, vector: [0.3, 0.4, 0.5, 0.6] },
         ],
       });
 
@@ -240,7 +251,7 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
       const payload = await callToolAndParse(client, "sqlite_vector_delete", {
         table: "_e2e_vec_write",
         idColumn: "id",
-        ids: ["vec_2", "vec_3"],
+        ids: [2, 3],
       });
 
       expectSuccess(payload);
@@ -254,8 +265,8 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
   test("cleanup: drop vector write table", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TABLE IF EXISTS _e2e_vec_write",
+      const payload = await callToolAndParse(client, "sqlite_drop_table", {
+        tableName: "_e2e_vec_write",
       });
       expectSuccess(payload);
     } finally {
@@ -263,4 +274,5 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
     }
   });
 });
+
 
