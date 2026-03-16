@@ -93,7 +93,7 @@ export const TextSubstringSchema = z.object({
   column: z.string().describe("Column to extract from"),
   start: z.preprocess(
     coerceNumber,
-    z.number().describe("Start position (1-indexed)"),
+    z.number().optional().describe("Start position (1-indexed)"),
   ),
   length: z.preprocess(
     coerceNumber,

@@ -113,6 +113,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           rowid: z.number().optional(),
         }),
       ).optional(),
+      truncated: z.boolean().optional(),
     }).extend(ErrorResponseFields.shape),
     requiredScopes: ["read"],
     annotations: readOnly("Text Validate"),

@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   RegexReplaceOutputSchema,
 } from "../../output-schemas/index.js";
@@ -216,6 +216,12 @@ export function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition 
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextSubstringSchema.parse(params);
+
+        // Handler-side validation: start is required (schema uses .optional() to prevent raw MCP errors)
+        if (input.start === undefined || input.start === null) {
+          throw new ValidationError("'start' parameter is required (1-indexed position)");
+        }
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
