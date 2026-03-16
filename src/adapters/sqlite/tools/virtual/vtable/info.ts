@@ -1,11 +1,10 @@
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { VirtualTableInfoSchema } from "../helpers.js";
+import { VirtualTableInfoOutputSchema } from "../../../output-schemas/index.js";
 
 export function createVirtualTableInfoTool(
   adapter: SqliteAdapter,
@@ -15,22 +14,7 @@ export function createVirtualTableInfoTool(
     description: "Get metadata about a specific virtual table.",
     group: "admin",
     inputSchema: VirtualTableInfoSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      name: z.string(),
-      module: z.string(),
-      moduleAvailable: z.boolean().optional(),
-      columns: z
-        .array(
-          z.object({
-            name: z.string(),
-            type: z.string(),
-          }),
-        )
-        .optional(),
-      sql: z.string(),
-      note: z.string().optional(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: VirtualTableInfoOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Virtual Table Info"),
     handler: async (params: unknown, _context: RequestContext) => {

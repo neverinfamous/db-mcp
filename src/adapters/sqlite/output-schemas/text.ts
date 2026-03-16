@@ -108,3 +108,24 @@ export const TextSplitOutputSchema = z
     ).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_text_validate output
+ */
+export const TextValidateOutputSchema = z
+  .object({
+    success: z.boolean(),
+    totalRows: z.number().optional(),
+    validCount: z.number().optional(),
+    invalidCount: z.number().optional(),
+    invalidRows: z
+      .array(
+        z.object({
+          value: z.string().nullable(),
+          rowid: z.number().optional(),
+        }),
+      )
+      .optional(),
+    truncated: z.boolean().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);

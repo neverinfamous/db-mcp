@@ -4,7 +4,6 @@
  * R*Tree and series table creation.
  */
 
-import { z } from "zod";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -15,7 +14,10 @@ import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { isModuleAvailable } from "./analysis.js";
 import { CreateRtreeTableSchema, CreateSeriesTableSchema } from "./helpers.js";
-import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
+import {
+  CreateRtreeTableOutputSchema,
+  CreateSeriesTableOutputSchema,
+} from "../../output-schemas/index.js";
 
 export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -24,12 +26,7 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
       "Create an R-Tree virtual table for spatial indexing. Supports 2-5 dimensions.",
     group: "admin",
     inputSchema: CreateRtreeTableSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-      sql: z.string(),
-      columns: z.array(z.string()),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: CreateRtreeTableOutputSchema,
     requiredScopes: ["write"],
     annotations: idempotent("Create R-Tree Table"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -103,11 +100,7 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
       "Create a table populated with a series of numbers. Unlike generate_series, this creates a persistent table.",
     group: "admin",
     inputSchema: CreateSeriesTableSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-      rowCount: z.number(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: CreateSeriesTableOutputSchema,
     requiredScopes: ["write"],
     annotations: idempotent("Create Series Table"),
     handler: async (params: unknown, _context: RequestContext) => {

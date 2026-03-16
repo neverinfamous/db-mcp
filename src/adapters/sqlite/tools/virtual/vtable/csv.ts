@@ -1,13 +1,12 @@
 import * as path from "node:path";
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { idempotent } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { CreateCsvTableSchema } from "../helpers.js";
+import { CreateCsvTableOutputSchema } from "../../../output-schemas/index.js";
 
 export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -16,12 +15,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
       "Create a virtual table from a CSV file. Requires the csv extension.",
     group: "admin",
     inputSchema: CreateCsvTableSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-      sql: z.string(),
-      columns: z.array(z.string()),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: CreateCsvTableOutputSchema,
     requiredScopes: ["write"],
     annotations: idempotent("Create CSV Table"),
     handler: async (params: unknown, _context: RequestContext) => {

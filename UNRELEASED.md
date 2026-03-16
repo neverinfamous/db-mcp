@@ -11,6 +11,7 @@
 - **E2E Tests**: Added `help-resources.spec.ts` (11 tests — validates `sqlite://help` root + all 8 group help resources are listed, readable, and return non-empty markdown) and `aliases.spec.ts` (14 tests — validates backward-compatible parameter aliases `tableName`→`table`, `sql`→`query`, `name`→`indexName` across all 8 core tools including precedence and error paths).
 
 ## Changed
+- **Inline Schema Consolidation**: Extracted 8 remaining inline `outputSchema: z.object()` definitions from tool handlers into centralized `output-schemas/` files — `virtual.ts` (7 schemas: `ListVirtualTablesOutputSchema`, `VirtualTableInfoOutputSchema`, `DropVirtualTableOutputSchema`, `CreateCsvTableOutputSchema`, `AnalyzeCsvSchemaOutputSchema`, `CreateRtreeTableOutputSchema`, `CreateSeriesTableOutputSchema`), `text.ts` (1 schema: `TextValidateOutputSchema`), and `stats.ts` (1 schema: `StatsHypothesisOutputSchema`). All output schemas are now consistently defined in centralized files with named exports — zero inline definitions remain.
 - **Complexity Refactor**: Addressed source code complexity by splitting files exceeding logical grouping boundaries into modular directories with barrel exports:
   - Extracted query execution, initialization, and connection lifecycle handlers from `sqlite-adapter.ts`.
   - modularized authentication routines in `middleware.ts` and `scopes.ts`.

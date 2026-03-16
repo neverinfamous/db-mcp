@@ -1,10 +1,9 @@
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { ListVirtualTablesSchema } from "../helpers.js";
+import { ListVirtualTablesOutputSchema } from "../../../output-schemas/index.js";
 
 export function createListVirtualTablesTool(
   adapter: SqliteAdapter,
@@ -14,17 +13,7 @@ export function createListVirtualTablesTool(
     description: "List all virtual tables in the database.",
     group: "admin",
     inputSchema: ListVirtualTablesSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      count: z.number(),
-      virtualTables: z.array(
-        z.object({
-          name: z.string(),
-          module: z.string(),
-          sql: z.string(),
-        }),
-      ),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: ListVirtualTablesOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("List Virtual Tables"),
     handler: async (params: unknown, _context: RequestContext) => {

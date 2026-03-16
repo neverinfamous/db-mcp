@@ -1,11 +1,10 @@
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { destructive } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { DropVirtualTableSchema } from "../helpers.js";
+import { DropVirtualTableOutputSchema } from "../../../output-schemas/index.js";
 
 export function createDropVirtualTableTool(
   adapter: SqliteAdapter,
@@ -15,10 +14,7 @@ export function createDropVirtualTableTool(
     description: "Drop a virtual table.",
     group: "admin",
     inputSchema: DropVirtualTableSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: DropVirtualTableOutputSchema,
     requiredScopes: ["write"],
     annotations: destructive("Drop Virtual Table"),
     handler: async (params: unknown, _context: RequestContext) => {

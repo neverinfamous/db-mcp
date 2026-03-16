@@ -1,12 +1,11 @@
 import * as path from "node:path";
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
 import { AnalyzeCsvSchemaSchema } from "../helpers.js";
+import { AnalyzeCsvSchemaOutputSchema } from "../../../output-schemas/index.js";
 
 export function createAnalyzeCsvSchemaTool(
   adapter: SqliteAdapter,
@@ -17,21 +16,7 @@ export function createAnalyzeCsvSchemaTool(
       "Analyze a CSV file structure and infer column types. Uses a temporary virtual table.",
     group: "admin",
     inputSchema: AnalyzeCsvSchemaSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string().optional(),
-      hasHeader: z.boolean(),
-      rowCount: z.number(),
-      columns: z.array(
-        z.object({
-          name: z.string(),
-          inferredType: z.string(),
-          nullCount: z.number(),
-          sampleValues: z.array(z.string()),
-        }),
-      ),
-      wasmLimitation: z.boolean().optional(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: AnalyzeCsvSchemaOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Analyze CSV Schema"),
     handler: async (params: unknown, _context: RequestContext) => {

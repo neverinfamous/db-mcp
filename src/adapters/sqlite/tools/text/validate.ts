@@ -1,10 +1,3 @@
-/**
- * Text Validation & Normalization Tools
- *
- * Unicode normalization and pattern-based text validation tools.
- */
-
-import { z } from "zod";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
@@ -14,13 +7,15 @@ import {
 } from "../../../../utils/index.js";
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
-import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 import {
   TextNormalizeSchema,
   TextValidateSchema,
   validateColumnExists,
 } from "./helpers.js";
-import { TextNormalizeOutputSchema } from "../../output-schemas/index.js";
+import {
+  TextNormalizeOutputSchema,
+  TextValidateOutputSchema,
+} from "../../output-schemas/index.js";
 
 /**
  * Normalize text (Unicode normalization or accent stripping)
@@ -93,19 +88,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
       "Validate text values against patterns: email, phone, URL, UUID, IPv4, or custom regex.",
     group: "text",
     inputSchema: TextValidateSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      totalRows: z.number().optional(),
-      validCount: z.number().optional(),
-      invalidCount: z.number().optional(),
-      invalidRows: z.array(
-        z.object({
-          value: z.string().nullable(),
-          rowid: z.number().optional(),
-        }),
-      ).optional(),
-      truncated: z.boolean().optional(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: TextValidateOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Validate"),
     handler: async (params: unknown, _context: RequestContext) => {
