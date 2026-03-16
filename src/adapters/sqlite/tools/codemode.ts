@@ -260,29 +260,17 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
 // =============================================================================
 
 /**
- * Read-safe tool name patterns.
- * Tools matching these patterns are considered read-only even if
- * their readOnlyHint annotation is not explicitly set.
- */
-const READ_SAFE_PATTERNS = [
-  "read",
-  "list",
-  "describe",
-  "get",
-  "search",
-  "stats",
-  "count",
-];
-
-/**
  * Check if a tool is a write tool (not read-safe).
+ *
+ * Fail-closed: tools are assumed to be write tools UNLESS explicitly
+ * annotated with `readOnlyHint: true`. This prevents unannotated tools
+ * from bypassing the readonly guard.
  */
 function isWriteTool(tool: ToolDefinition): boolean {
-  // Explicitly marked as read-only → not a write tool
-  if (tool.annotations?.readOnlyHint !== false) return false;
-
-  // Check if tool name matches any read-safe pattern
-  return !READ_SAFE_PATTERNS.some((pattern) => tool.name.includes(pattern));
+  // Only explicitly read-only tools are exempt
+  if (tool.annotations?.readOnlyHint === true) return false;
+  // Everything else (readOnlyHint: false, undefined, or missing annotations) is a write tool
+  return true;
 }
 
 /**
@@ -316,6 +304,14 @@ function wrapReadonlyGuards(
   const writeTools = allTools.filter(isWriteTool);
 
   for (const tool of writeTools) {
+    // Defense-in-depth: warn about unannotated tools that are blocked
+    if (!tool.annotations) {
+      logger.warn(`Tool '${tool.name}' has no annotations — blocked in readonly mode (add annotations)`, {
+        module: "CODEMODE" as const,
+        operation: "readonlyGuard",
+      });
+    }
+
     const methodName = toolNameToMethodName(tool.name, tool.group);
     const guard = createReadonlyGuard(methodName);
 

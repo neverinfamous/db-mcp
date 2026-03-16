@@ -13,6 +13,7 @@
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { readOnly, write, admin } from "../../../../utils/annotations.js";
 import {
   LoadSpatialiteSchema,
   CreateSpatialTableSchema,
@@ -47,6 +48,7 @@ export function createLoadSpatialiteTool(
     inputSchema: LoadSpatialiteSchema,
     outputSchema: SpatialiteLoadOutputSchema,
     requiredScopes: ["admin"],
+    annotations: admin("SpatiaLite Load"),
     handler: (_params: unknown, _context: RequestContext) => {
       try {
         const input = LoadSpatialiteSchema.parse(_params);
@@ -98,6 +100,7 @@ export function createSpatialTableTool(
     inputSchema: CreateSpatialTableSchema,
     outputSchema: SpatialiteCreateTableOutputSchema,
     requiredScopes: ["write"],
+    annotations: write("SpatiaLite Create Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateSpatialTableSchema.parse(params);
@@ -199,6 +202,7 @@ export function createSpatialQueryTool(
     inputSchema: SpatialQuerySchema,
     outputSchema: SpatialiteQueryOutputSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("SpatiaLite Query"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialQuerySchema.parse(params);
@@ -245,6 +249,7 @@ export function createSpatialIndexTool(
     inputSchema: SpatialIndexSchema,
     outputSchema: SpatialiteIndexOutputSchema,
     requiredScopes: ["write"],
+    annotations: write("SpatiaLite Index"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialIndexSchema.parse(params);

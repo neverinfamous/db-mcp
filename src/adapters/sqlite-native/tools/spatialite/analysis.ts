@@ -10,6 +10,7 @@
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { readOnly, write } from "../../../../utils/annotations.js";
 import {
   SpatialAnalysisSchema,
   GeometryTransformSchema,
@@ -39,6 +40,7 @@ export function createSpatialAnalysisTool(
     inputSchema: SpatialAnalysisSchema,
     outputSchema: SpatialiteAnalyzeOutputSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("SpatiaLite Analyze"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialAnalysisSchema.parse(params);
@@ -187,6 +189,7 @@ export function createGeometryTransformTool(
     inputSchema: GeometryTransformSchema,
     outputSchema: SpatialiteTransformOutputSchema,
     requiredScopes: ["read"],
+    annotations: readOnly("SpatiaLite Transform"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeometryTransformSchema.parse(params);
@@ -325,6 +328,7 @@ export function createSpatialImportTool(
     inputSchema: SpatialImportSchema,
     outputSchema: SpatialiteImportOutputSchema,
     requiredScopes: ["write"],
+    annotations: write("SpatiaLite Import"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialImportSchema.parse(params);
