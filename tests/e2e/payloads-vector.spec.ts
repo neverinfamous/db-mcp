@@ -266,7 +266,7 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_vec_write",
+        table: "_e2e_vec_write",
       });
       expectSuccess(payload);
     } finally {

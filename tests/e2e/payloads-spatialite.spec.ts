@@ -42,7 +42,7 @@ test.describe("Payload Contracts: SpatiaLite", () => {
     try {
       // Clean up from prior runs
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_spatial_test",
+        table: "_e2e_spatial_test",
       });
 
       const payload = await callToolAndParse(client, "sqlite_spatialite_create_table", {
@@ -227,7 +227,7 @@ test.describe("Payload Contracts: SpatiaLite", () => {
       });
 
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_spatial_test",
+        table: "_e2e_spatial_test",
       });
     } finally {
       await client.close();

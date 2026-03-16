@@ -286,7 +286,7 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_series_test",
+        table: "_e2e_series_test",
       });
 
       const payload = await callToolAndParse(client, "sqlite_create_series_table", {
@@ -302,7 +302,7 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
     } finally {
       // create_series_table makes a regular table, not virtual
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_series_test",
+        table: "_e2e_series_test",
       });
       await client.close();
     }

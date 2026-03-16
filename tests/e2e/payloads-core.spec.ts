@@ -38,7 +38,7 @@ test.describe("Payload Contracts: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_describe_table", {
-        tableName: "test_products",
+        table: "test_products",
       });
 
       expectSuccess(payload);
@@ -111,7 +111,7 @@ test.describe("Payload Contracts: Core", () => {
     try {
       // Create temp table via create_table (write_query only allows DML)
       await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_payload_test",
+        table: "_e2e_payload_test",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "val", type: "TEXT" },
@@ -132,7 +132,7 @@ test.describe("Payload Contracts: Core", () => {
 
       // Cleanup
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_payload_test",
+        table: "_e2e_payload_test",
         ifExists: true,
       });
     } finally {
@@ -144,7 +144,7 @@ test.describe("Payload Contracts: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_get_indexes", {
-        tableName: "test_products",
+        table: "test_products",
       });
 
       expectSuccess(payload);
@@ -169,7 +169,7 @@ test.describe("Payload Contracts: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_ddl_test",
+        table: "_e2e_ddl_test",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "name", type: "TEXT" },
@@ -189,7 +189,7 @@ test.describe("Payload Contracts: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_create_index", {
-        tableName: "_e2e_ddl_test",
+        table: "_e2e_ddl_test",
         indexName: "_e2e_idx_name",
         columns: ["name"],
         ifNotExists: true,
@@ -221,7 +221,7 @@ test.describe("Payload Contracts: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_ddl_test",
+        table: "_e2e_ddl_test",
         ifExists: true,
       });
 

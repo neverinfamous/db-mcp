@@ -24,7 +24,7 @@ test.describe("Boundary: Empty Tables", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_boundary_empty",
+        table: "_e2e_boundary_empty",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "value", type: "REAL" },
@@ -84,7 +84,7 @@ test.describe("Boundary: Empty Tables", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_boundary_empty",
+        table: "_e2e_boundary_empty",
         ifExists: true,
       });
       expectSuccess(p);
@@ -103,7 +103,7 @@ test.describe("Boundary: Single Row", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_boundary_single",
+        table: "_e2e_boundary_single",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "value", type: "REAL" },
@@ -158,7 +158,7 @@ test.describe("Boundary: Single Row", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_boundary_single",
+        table: "_e2e_boundary_single",
         ifExists: true,
       });
     } finally {
@@ -176,7 +176,7 @@ test.describe("Boundary: NULLs", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_boundary_nulls",
+        table: "_e2e_boundary_nulls",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "value", type: "REAL" },
@@ -225,7 +225,7 @@ test.describe("Boundary: NULLs", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_boundary_nulls",
+        table: "_e2e_boundary_nulls",
         ifExists: true,
       });
     } finally {
@@ -244,20 +244,20 @@ test.describe("Boundary: Idempotency", () => {
     try {
       // Create
       const p1 = await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_boundary_idem",
+        table: "_e2e_boundary_idem",
         columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
       });
       expectSuccess(p1);
 
       // Drop
       const p2 = await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_boundary_idem",
+        table: "_e2e_boundary_idem",
       });
       expectSuccess(p2);
 
       // Recreate
       const p3 = await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_boundary_idem",
+        table: "_e2e_boundary_idem",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "extra", type: "TEXT" },
@@ -267,7 +267,7 @@ test.describe("Boundary: Idempotency", () => {
 
       // Verify new schema
       const p4 = await callToolAndParse(client, "sqlite_describe_table", {
-        tableName: "_e2e_boundary_idem",
+        table: "_e2e_boundary_idem",
       });
       expectSuccess(p4);
       const cols = p4.columns as { name: string }[];
@@ -281,7 +281,7 @@ test.describe("Boundary: Idempotency", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_boundary_idem",
+        table: "_e2e_boundary_idem",
         columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
       });
       // Some backends silently succeed — accept either structured error or success
@@ -298,7 +298,7 @@ test.describe("Boundary: Idempotency", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_boundary_idem",
+        table: "_e2e_boundary_idem",
         columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
         ifNotExists: true,
       });
@@ -312,7 +312,7 @@ test.describe("Boundary: Idempotency", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_boundary_idem",
+        table: "_e2e_boundary_idem",
         ifExists: true,
       });
     } finally {

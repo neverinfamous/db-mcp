@@ -35,7 +35,7 @@ test.describe("Errors: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_describe_table", {
-        tableName: "_e2e_nonexistent_xyz",
+        table: "_e2e_nonexistent_xyz",
       });
       expectHandlerError(p);
     } finally {
@@ -47,7 +47,7 @@ test.describe("Errors: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_nonexistent_xyz",
+        table: "_e2e_nonexistent_xyz",
       });
       // Some handlers use IF EXISTS internally — accept either structured error or success
       expect(typeof p.success).toBe("boolean");
@@ -63,7 +63,7 @@ test.describe("Errors: Core", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_get_indexes", {
-        tableName: "_e2e_nonexistent_xyz",
+        table: "_e2e_nonexistent_xyz",
       });
       expectHandlerError(p);
     } finally {

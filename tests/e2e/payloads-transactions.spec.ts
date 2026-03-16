@@ -75,7 +75,7 @@ test.describe("Payload Contracts: Transactions", () => {
     try {
       // Create table OUTSIDE the transaction using the admin tool
       await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_txn_test",
+        table: "_e2e_txn_test",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "val", type: "TEXT" },
@@ -103,7 +103,7 @@ test.describe("Payload Contracts: Transactions", () => {
     } finally {
       // Cleanup
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_txn_test",
+        table: "_e2e_txn_test",
       });
       await client.close();
     }
@@ -118,7 +118,7 @@ test.describe("Payload Contracts: Transactions", () => {
     try {
       // Create table outside transaction
       await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_txn_rollback",
+        table: "_e2e_txn_rollback",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "val", type: "TEXT" },
@@ -141,7 +141,7 @@ test.describe("Payload Contracts: Transactions", () => {
       expect(rows[0].cnt).toBe(0);
     } finally {
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_txn_rollback",
+        table: "_e2e_txn_rollback",
       });
       await client.close();
     }
@@ -191,7 +191,7 @@ test.describe("Payload Contracts: Transactions", () => {
     try {
       // Create table outside transaction
       await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_txn_sp",
+        table: "_e2e_txn_sp",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "val", type: "TEXT" },
@@ -231,7 +231,7 @@ test.describe("Payload Contracts: Transactions", () => {
       await callToolAndParse(client, "sqlite_transaction_rollback", {});
       // Clean up table
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_txn_sp",
+        table: "_e2e_txn_sp",
       });
       await client.close();
     }
@@ -259,7 +259,7 @@ test.describe("Payload Contracts: Transactions", () => {
       expect(results.length).toBe(4);
     } finally {
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_txn_exec",
+        table: "_e2e_txn_exec",
       });
       await client.close();
     }
@@ -270,7 +270,7 @@ test.describe("Payload Contracts: Transactions", () => {
     try {
       // Create table first using admin tool
       await callToolAndParse(client, "sqlite_create_table", {
-        tableName: "_e2e_txn_exec_err",
+        table: "_e2e_txn_exec_err",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "val", type: "TEXT NOT NULL" },
@@ -296,7 +296,7 @@ test.describe("Payload Contracts: Transactions", () => {
       expect(rows[0].cnt).toBe(0);
     } finally {
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_txn_exec_err",
+        table: "_e2e_txn_exec_err",
       });
       await client.close();
     }

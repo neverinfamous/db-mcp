@@ -323,7 +323,7 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     try {
       // Cleanup from prior runs
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_json_coll",
+        table: "_e2e_json_coll",
       });
 
       const payload = await callToolAndParse(client, "sqlite_create_json_collection", {
@@ -337,7 +337,7 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     } finally {
       // Cleanup
       await callToolAndParse(client, "sqlite_drop_table", {
-        tableName: "_e2e_json_coll",
+        table: "_e2e_json_coll",
       });
       await client.close();
     }
