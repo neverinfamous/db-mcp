@@ -9,6 +9,7 @@ import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { validateWhereClause } from "../../../utils/index.js";
 import { formatHandlerError } from "../../../utils/errors/index.js";
+import { resolveAliases } from "../../sqlite/types.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
 import { ErrorCategory } from "../../../utils/errors/categories.js";
 import {
@@ -345,7 +346,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = RunningTotalSchema.parse(params);
+        const input = RunningTotalSchema.parse(resolveAliases(params, { valueColumn: "column" }));
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.table)) {
           throw new DbMcpError(
@@ -408,7 +409,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = MovingAverageSchema.parse(params);
+        const input = MovingAverageSchema.parse(resolveAliases(params, { valueColumn: "column" }));
 
         if (input.windowSize === undefined) {
           return {

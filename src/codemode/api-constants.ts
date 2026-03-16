@@ -88,7 +88,7 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
 export const GROUP_EXAMPLES: Record<string, string[]> = {
   core: [
     'sqlite.core.readQuery({ query: "SELECT * FROM users LIMIT 10" })',
-    'sqlite.core.describeTable({ tableName: "users" })',
+    'sqlite.core.describeTable({ table: "users" })',
     "sqlite.core.listTables()",
     "sqlite.core.writeQuery({ query: \"INSERT INTO users (name) VALUES ('Alice')\" })",
   ],
@@ -148,18 +148,18 @@ export const GROUP_EXAMPLES: Record<string, string[]> = {
  *
  * Enables:
  * - `sqlite.core.readQuery("SELECT...")` → `{ query: "SELECT..." }`
- * - `sqlite.core.describeTable("users")` → `{ tableName: "users" }`
+ * - `sqlite.core.describeTable("users")` → `{ table: "users" }`
  */
 export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   // Core
   readQuery: "query",
   writeQuery: "query",
-  describeTable: "tableName",
-  dropTable: "tableName",
-  getIndexes: "tableName",
+  describeTable: "table",
+  dropTable: "table",
+  getIndexes: "table",
   dropIndex: "indexName",
-  createTable: ["tableName", "columns"],
-  createIndex: ["tableName", "columns", "indexName"],
+  createTable: ["table", "columns"],
+  createIndex: ["table", "columns", "indexName"],
 
   // JSON
   extract: ["table", "column", "path", "whereClause"],

@@ -431,8 +431,8 @@ sqlite_stats_top_n({
 sqlite_window_row_number({ table: "employees", orderBy: "hire_date", partitionBy: "department" });
 sqlite_window_rank({ table: "sales", orderBy: "revenue DESC", partitionBy: "region", rankType: "dense_rank" });
 sqlite_window_lag_lead({ table: "sales", orderBy: "date", column: "revenue", partitionBy: "region" }); // access previous/next row values
-sqlite_window_running_total({ table: "transactions", valueColumn: "amount", orderBy: "date" });
-sqlite_window_moving_avg({ table: "stock_prices", valueColumn: "close_price", orderBy: "date", windowSize: 7 });
+sqlite_window_running_total({ table: "transactions", column: "amount", orderBy: "date" });
+sqlite_window_moving_avg({ table: "stock_prices", column: "close_price", orderBy: "date", windowSize: 7 });
 sqlite_window_ntile({ table: "employees", orderBy: "salary DESC", buckets: 4, partitionBy: "department" }); // quartiles
 \`\`\``],
   ["text", `# db-mcp Help — Text Processing & FTS5
