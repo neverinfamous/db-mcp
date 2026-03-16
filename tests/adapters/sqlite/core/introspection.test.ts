@@ -96,7 +96,7 @@ describe("Core Tools - Introspection", () => {
       );
 
       const result = (await tools.get("sqlite_describe_table")?.({
-        tableName: "items",
+        table: "items",
       })) as { columns: { name: string }[] };
 
       expect(result.columns.map((c) => c.name)).toContain("id");
@@ -105,7 +105,7 @@ describe("Core Tools - Introspection", () => {
 
     it("should return TABLE_NOT_FOUND code for nonexistent table", async () => {
       const result = (await tools.get("sqlite_describe_table")?.({
-        tableName: "nonexistent_table_xyz",
+        table: "nonexistent_table_xyz",
       })) as {
         success: boolean;
         error?: string;
@@ -130,7 +130,7 @@ describe("Core Tools - Introspection", () => {
       await adapter.executeWriteQuery("CREATE INDEX idx_test ON indexed(name)");
 
       const result = (await tools.get("sqlite_get_indexes")?.({
-        tableName: "indexed",
+        table: "indexed",
       })) as { indexes: { name: string }[] };
 
       expect(result.indexes.length).toBeGreaterThan(0);
@@ -150,7 +150,7 @@ describe("Core Tools - Introspection", () => {
 
       // Without filter
       const allResult = (await tools.get("sqlite_get_indexes")?.({
-        tableName: "test_tbl",
+        table: "test_tbl",
         excludeSystemIndexes: false,
       })) as { indexes: { name: string }[] };
       const allNames = allResult.indexes.map((i) => i.name);
@@ -159,7 +159,7 @@ describe("Core Tools - Introspection", () => {
 
       // With filter
       const filteredResult = (await tools.get("sqlite_get_indexes")?.({
-        tableName: "test_tbl",
+        table: "test_tbl",
         excludeSystemIndexes: true,
       })) as { indexes: { name: string }[] };
       const filteredNames = filteredResult.indexes.map((i) => i.name);
@@ -169,7 +169,7 @@ describe("Core Tools - Introspection", () => {
 
     it("should return TABLE_NOT_FOUND for nonexistent table", async () => {
       const result = (await tools.get("sqlite_get_indexes")?.({
-        tableName: "nonexistent_table_xyz",
+        table: "nonexistent_table_xyz",
       })) as {
         success: boolean;
         error?: string;

@@ -55,15 +55,15 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL`;
 
-      if (input.tableName) {
+      if (input.table) {
         // Validate table name
         try {
-          sanitizeIdentifier(input.tableName);
+          sanitizeIdentifier(input.table);
         } catch {
           return {
             ...formatHandlerError(
               new ValidationError(
-                `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
+                `Invalid table name '${input.table}': must be a non-empty string starting with a letter or underscore`,
               ),
             ),
             count: 0,
@@ -74,13 +74,13 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         // Check table existence when a specific table is requested
         const checkResult = await adapter.executeReadQuery(
           `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
-          [input.tableName],
+          [input.table],
         );
         if ((checkResult.rows?.length ?? 0) === 0) {
           return {
             ...formatHandlerError(
               new ValidationError(
-                `Table '${input.tableName}' does not exist`,
+                `Table '${input.table}' does not exist`,
                 "TABLE_NOT_FOUND",
                 {
                   suggestion:
@@ -93,7 +93,7 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
-        sql += ` AND tbl_name = '${input.tableName}'`;
+        sql += ` AND tbl_name = '${input.table}'`;
       }
 
       const result = await adapter.executeReadQuery(sql);
@@ -155,7 +155,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate names
       try {
         sanitizeIdentifier(input.indexName);
-        sanitizeIdentifier(input.tableName);
+        sanitizeIdentifier(input.table);
         for (const col of input.columns) {
           sanitizeIdentifier(col);
         }
@@ -173,13 +173,13 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate table existence
       const tableCheck = await adapter.executeReadQuery(
         `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
-        [input.tableName],
+        [input.table],
       );
       if ((tableCheck.rows?.length ?? 0) === 0) {
         return {
           ...formatHandlerError(
             new ValidationError(
-              `Table '${input.tableName}' does not exist`,
+              `Table '${input.table}' does not exist`,
               "TABLE_NOT_FOUND",
               {
                 suggestion:
@@ -205,7 +205,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
         indexExisted = (checkResult.rows?.length ?? 0) > 0;
       }
 
-      const sql = `CREATE ${unique}INDEX ${ifNotExists}"${input.indexName}" ON "${input.tableName}" (${columns})`;
+      const sql = `CREATE ${unique}INDEX ${ifNotExists}"${input.indexName}" ON "${input.table}" (${columns})`;
 
       try {
         await adapter.executeQuery(sql);
@@ -214,7 +214,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           message: indexExisted
             ? `Index '${input.indexName}' already exists (no changes made)`
-            : `Index '${input.indexName}' created on ${input.tableName}(${input.columns.join(", ")})`,
+            : `Index '${input.indexName}' created on ${input.table}(${input.columns.join(", ")})`,
           sql,
         };
       } catch (error) {

@@ -119,7 +119,7 @@ export const WriteQuerySchema = z.object({
 });
 
 export const CreateTableSchema = z.object({
-  tableName: z.string().describe("Name of the table to create"),
+  table: z.string().describe("Name of the table to create"),
   columns: z
     .array(
       z.object({
@@ -140,11 +140,11 @@ export const CreateTableSchema = z.object({
 });
 
 export const DescribeTableSchema = z.object({
-  tableName: z.string().describe("Name of the table to describe"),
+  table: z.string().describe("Name of the table to describe"),
 });
 
 export const DropTableSchema = z.object({
-  tableName: z.string().describe("Name of the table to drop"),
+  table: z.string().describe("Name of the table to drop"),
   ifExists: z
     .boolean()
     .optional()
@@ -154,14 +154,14 @@ export const DropTableSchema = z.object({
 
 export const CreateIndexSchema = z.object({
   indexName: z.string().describe("Name of the index"),
-  tableName: z.string().describe("Table to create index on"),
+  table: z.string().describe("Table to create index on"),
   columns: z.array(z.string()).describe("Columns to index"),
   unique: z.boolean().optional().default(false).describe("Create unique index"),
   ifNotExists: z.boolean().optional().default(true),
 });
 
 export const GetIndexesSchema = z.object({
-  tableName: z.string().optional().describe("Filter indexes by table name"),
+  table: z.string().optional().describe("Filter indexes by table name"),
   excludeSystemIndexes: z
     .boolean()
     .optional()

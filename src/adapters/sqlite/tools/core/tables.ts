@@ -130,12 +130,12 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Validate table name
       try {
-        sanitizeIdentifier(input.tableName);
+        sanitizeIdentifier(input.table);
       } catch {
         return {
           ...formatHandlerError(
             new ValidationError(
-              `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
+              `Invalid table name '${input.table}': must be a non-empty string starting with a letter or underscore`,
             ),
           ),
           sql: "",
@@ -157,7 +157,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.ifNotExists) {
         const checkResult = await adapter.executeReadQuery(
           `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
-          [input.tableName],
+          [input.table],
         );
         tableExisted = (checkResult.rows?.length ?? 0) > 0;
       }
@@ -202,15 +202,15 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       });
 
       const ifNotExists = input.ifNotExists ? "IF NOT EXISTS " : "";
-      const sql = `CREATE TABLE ${ifNotExists}"${input.tableName}" (${columnDefs.join(", ")})`;
+      const sql = `CREATE TABLE ${ifNotExists}"${input.table}" (${columnDefs.join(", ")})`;
 
       await adapter.executeQuery(sql);
 
       return {
         success: true,
         message: tableExisted
-          ? `Table '${input.tableName}' already exists (no changes made)`
-          : `Table '${input.tableName}' created successfully`,
+          ? `Table '${input.table}' already exists (no changes made)`
+          : `Table '${input.table}' created successfully`,
         sql,
       };
     },
@@ -297,13 +297,13 @@ export function createDescribeTableTool(
       // Check table existence first for a specific error code
       const checkResult = await adapter.executeReadQuery(
         `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
-        [input.tableName],
+        [input.table],
       );
       if ((checkResult.rows?.length ?? 0) === 0) {
         return {
           ...formatHandlerError(
             new ValidationError(
-              `Table '${input.tableName}' does not exist`,
+              `Table '${input.table}' does not exist`,
               "TABLE_NOT_FOUND",
               {
                 suggestion:
@@ -311,13 +311,13 @@ export function createDescribeTableTool(
               },
             ),
           ),
-          table: input.tableName,
+          table: input.table,
           columns: [],
         };
       }
 
       try {
-        const tableInfo = await adapter.describeTable(input.tableName);
+        const tableInfo = await adapter.describeTable(input.table);
 
         return {
           success: true,
@@ -328,7 +328,7 @@ export function createDescribeTableTool(
       } catch (error) {
         return {
           ...formatHandlerError(error),
-          table: input.tableName,
+          table: input.table,
           columns: [],
         };
       }
@@ -359,11 +359,11 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Validate table name
       try {
-        sanitizeIdentifier(input.tableName);
+        sanitizeIdentifier(input.table);
       } catch {
         return formatHandlerError(
           new ValidationError(
-            `Invalid table name '${input.tableName}': must be a non-empty string starting with a letter or underscore`,
+            `Invalid table name '${input.table}': must be a non-empty string starting with a letter or underscore`,
           ),
         );
       }
@@ -371,7 +371,7 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       // Check if table exists before dropping
       const checkResult = await adapter.executeReadQuery(
         `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
-        [input.tableName],
+        [input.table],
       );
       const tableExists = (checkResult.rows?.length ?? 0) > 0;
 
@@ -379,21 +379,21 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.ifExists) {
           return {
             success: true,
-            message: `Table '${input.tableName}' does not exist (no changes made)`,
+            message: `Table '${input.table}' does not exist (no changes made)`,
           };
         }
         return formatHandlerError(
-          new ValidationError(`Table '${input.tableName}' does not exist`),
+          new ValidationError(`Table '${input.table}' does not exist`),
         );
       }
 
       try {
-        const sql = `DROP TABLE "${input.tableName}"`;
+        const sql = `DROP TABLE "${input.table}"`;
         await adapter.executeQuery(sql);
 
         return {
           success: true,
-          message: `Table '${input.tableName}' dropped successfully`,
+          message: `Table '${input.table}' dropped successfully`,
         };
       } catch (error) {
         return formatHandlerError(error);

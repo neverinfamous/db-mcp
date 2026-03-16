@@ -39,7 +39,7 @@ describe("Core Tools - DDL", () => {
   describe("sqlite_create_table", () => {
     it("should create a table", async () => {
       const result = await tools.get("sqlite_create_table")?.({
-        tableName: "users",
+        table: "users",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "name", type: "TEXT" },
@@ -54,7 +54,7 @@ describe("Core Tools - DDL", () => {
 
     it("should handle SQL expression default values", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "events",
+        table: "events",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "created_at", type: "TEXT", defaultValue: "datetime('now')" },
@@ -73,7 +73,7 @@ describe("Core Tools - DDL", () => {
 
     it("should handle string literal default values", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "configs",
+        table: "configs",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "status", type: "TEXT", defaultValue: "pending" },
@@ -86,7 +86,7 @@ describe("Core Tools - DDL", () => {
 
     it("should handle numeric default values", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "limits",
+        table: "limits",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "max_count", type: "INTEGER", defaultValue: 100 },
@@ -101,7 +101,7 @@ describe("Core Tools - DDL", () => {
 
     it("should handle boolean default values", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "flags",
+        table: "flags",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "enabled", type: "INTEGER", defaultValue: true },
@@ -116,7 +116,7 @@ describe("Core Tools - DDL", () => {
 
     it("should handle null default values", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "optionals",
+        table: "optionals",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "optional_field", type: "TEXT", defaultValue: null },
@@ -129,7 +129,7 @@ describe("Core Tools - DDL", () => {
 
     it("should handle object default values as JSON", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "jsondata",
+        table: "jsondata",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "metadata", type: "TEXT", defaultValue: { key: "value" } },
@@ -142,7 +142,7 @@ describe("Core Tools - DDL", () => {
 
     it("should escape quotes in string default values", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "quoted",
+        table: "quoted",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
           { name: "message", type: "TEXT", defaultValue: "it's working" },
@@ -155,13 +155,13 @@ describe("Core Tools - DDL", () => {
 
     it("should report existing table when using IF NOT EXISTS", async () => {
       await tools.get("sqlite_create_table")?.({
-        tableName: "existing",
+        table: "existing",
         columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
         ifNotExists: true,
       });
 
       const result = (await tools.get("sqlite_create_table")?.({
-        tableName: "existing",
+        table: "existing",
         columns: [{ name: "id", type: "INTEGER", primaryKey: true }],
         ifNotExists: true,
       })) as { success: boolean; message: string };
@@ -179,7 +179,7 @@ describe("Core Tools - DDL", () => {
 
       const result = await tools.get("sqlite_create_index")?.({
         indexName: "idx_name",
-        tableName: "indexed",
+        table: "indexed",
         columns: ["name"],
       });
 
@@ -189,7 +189,7 @@ describe("Core Tools - DDL", () => {
     it("should return structured error for nonexistent table", async () => {
       const result = (await tools.get("sqlite_create_index")?.({
         indexName: "idx_bad",
-        tableName: "nonexistent_table_xyz",
+        table: "nonexistent_table_xyz",
         columns: ["col"],
       })) as { success: boolean; error: string };
 
@@ -205,7 +205,7 @@ describe("Core Tools - DDL", () => {
       let tables = await adapter.listTables();
       expect(tables.map((t) => t.name)).toContain("todrop");
 
-      await tools.get("sqlite_drop_table")?.({ tableName: "todrop" });
+      await tools.get("sqlite_drop_table")?.({ table: "todrop" });
 
       tables = await adapter.listTables();
       expect(tables.map((t) => t.name)).not.toContain("todrop");
@@ -213,7 +213,7 @@ describe("Core Tools - DDL", () => {
 
     it("should return informative message when table does not exist with ifExists", async () => {
       const result = (await tools.get("sqlite_drop_table")?.({
-        tableName: "nonexistent_table_xyz",
+        table: "nonexistent_table_xyz",
         ifExists: true,
       })) as { success: boolean; message: string };
 
@@ -223,7 +223,7 @@ describe("Core Tools - DDL", () => {
 
     it("should return error when table does not exist without ifExists", async () => {
       const result = (await tools.get("sqlite_drop_table")?.({
-        tableName: "nonexistent_table_xyz",
+        table: "nonexistent_table_xyz",
         ifExists: false,
       })) as { success: boolean; error: string };
 
@@ -249,7 +249,7 @@ describe("Core Tools - DDL", () => {
       expect(result.message).toContain("dropped successfully");
 
       const indexes = (await tools.get("sqlite_get_indexes")?.({
-        tableName: "idx_test",
+        table: "idx_test",
       })) as { indexes: { name: string }[] };
       expect(indexes.indexes.map((i) => i.name)).not.toContain("idx_to_drop");
     });
