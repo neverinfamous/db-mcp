@@ -47,7 +47,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "node dist/cli.js --transport http --port 3000 --sqlite ./database.db --tool-filter +all",
+        "node dist/cli.js --transport http --port 3000 --sqlite ./test-server/test.db --tool-filter +all",
       url: "http://localhost:3000/health",
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
@@ -57,7 +57,7 @@ export default defineConfig({
     },
     {
       command:
-        "node dist/cli.js --transport http --port 3001 --sqlite-native ./database.db --tool-filter +all",
+        "node dist/cli.js --transport http --port 3001 --sqlite-native ./test-server/test.db --tool-filter +all",
       url: "http://localhost:3001/health",
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
@@ -67,7 +67,7 @@ export default defineConfig({
     },
     {
       command:
-        "node dist/cli.js --transport http --port 3003 --auth-token test-secret --sqlite ./database.db --tool-filter +all",
+        "node dist/cli.js --transport http --port 3003 --auth-token test-secret --sqlite ./test-server/test.db --tool-filter +all",
       url: "http://localhost:3003/health",
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
