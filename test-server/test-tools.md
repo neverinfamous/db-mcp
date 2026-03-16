@@ -133,6 +133,7 @@ During testing, check for these inconsistencies across tool groups:
 4. **Output schema leaks**: If calling a tool with valid inputs produces a raw MCP `-32602` mentioning "output schema" or "additional properties", report as ❌ (see "Output Schema Validation Errors" above).
 5. **Centralized error formatting**: db-mcp uses `DbMcpError`. If any tool group catches errors but formats them inconsistently (e.g., different message patterns for the same error type), report as ⚠️.
 6. **Orphaned output schemas**: If a schema is exported from `src/adapters/sqlite/output-schemas/` (e.g., `TransactionBeginOutputSchema`) but the corresponding tool definition does not reference it via `outputSchema`, report as ⚠️. Use `grep_search` to check whether the schema name appears in any tool file under `src/adapters/`. Defined-but-unwired schemas provide zero enforcement.
+7. **Inline output schemas**: If any tool defines `outputSchema: z.object({...})` inline in the handler file instead of importing a named schema from `output-schemas/`, report as ⚠️. All output schemas must live in `src/adapters/sqlite/output-schemas/` with named exports. Use `grep_search` with pattern `outputSchema: z.object` across `src/adapters/` to detect violations.
 
 ### Split Schema Pattern Verification
 
