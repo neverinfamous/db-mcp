@@ -165,7 +165,7 @@ export const GetIndexesSchema = z.object({
   excludeSystemIndexes: z
     .boolean()
     .optional()
-    .default(false)
+    .default(true)
     .describe(
       "Exclude SpatiaLite system indexes (idx_spatial_ref_sys, idx_srid_geocols, etc.)",
     ),
@@ -184,7 +184,7 @@ export const ListTablesSchema = z.object({
   excludeSystemTables: z
     .boolean()
     .optional()
-    .default(false)
+    .default(true)
     .describe(
       "Exclude SpatiaLite system tables (geometry_columns, spatial_ref_sys, etc.)",
     ),

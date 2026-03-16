@@ -65,7 +65,9 @@ describe("Core Tools - Introspection", () => {
       );
 
       // Without filter: should include all tables
-      const allResult = (await tools.get("sqlite_list_tables")?.({})) as {
+      const allResult = (await tools.get("sqlite_list_tables")?.({
+        excludeSystemTables: false,
+      })) as {
         tables: { name: string }[];
       };
       expect(allResult.tables.map((t) => t.name)).toContain("geometry_columns");
@@ -149,6 +151,7 @@ describe("Core Tools - Introspection", () => {
       // Without filter
       const allResult = (await tools.get("sqlite_get_indexes")?.({
         tableName: "test_tbl",
+        excludeSystemIndexes: false,
       })) as { indexes: { name: string }[] };
       const allNames = allResult.indexes.map((i) => i.name);
       expect(allNames).toContain("idx_user");
