@@ -204,15 +204,19 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       const ifNotExists = input.ifNotExists ? "IF NOT EXISTS " : "";
       const sql = `CREATE TABLE ${ifNotExists}"${input.table}" (${columnDefs.join(", ")})`;
 
-      await adapter.executeQuery(sql);
+      try {
+        await adapter.executeQuery(sql);
 
-      return {
-        success: true,
-        message: tableExisted
-          ? `Table '${input.table}' already exists (no changes made)`
-          : `Table '${input.table}' created successfully`,
-        sql,
-      };
+        return {
+          success: true,
+          message: tableExisted
+            ? `Table '${input.table}' already exists (no changes made)`
+            : `Table '${input.table}' created successfully`,
+          sql,
+        };
+      } catch (error) {
+        return { ...formatHandlerError(error), sql };
+      }
     },
   };
 }
