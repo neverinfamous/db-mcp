@@ -170,3 +170,166 @@ test.describe("Payload Contracts: Admin Extended", () => {
     }
   });
 });
+
+// =============================================================================
+// Admin Write Lifecycle Tests (missing payload coverage)
+// =============================================================================
+
+test.describe("Payload Contracts: Admin Lifecycle", () => {
+  // --- Views ---
+  test("sqlite_create_view returns { success, message }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      // Cleanup
+      await callToolAndParse(client, "sqlite_drop_view", {
+        viewName: "_e2e_test_view",
+      });
+
+      const payload = await callToolAndParse(client, "sqlite_create_view", {
+        viewName: "_e2e_test_view",
+        selectQuery: "SELECT id, name, price FROM test_products WHERE price > 50",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.message).toBe("string");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("verify view appears in list_views", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_list_views", {});
+
+      expectSuccess(payload);
+      expect(Array.isArray(payload.views)).toBe(true);
+      const views = payload.views as Record<string, unknown>[];
+      const found = views.some((v) => v.name === "_e2e_test_view");
+      expect(found).toBe(true);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_drop_view returns { success, message }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_drop_view", {
+        viewName: "_e2e_test_view",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.message).toBe("string");
+    } finally {
+      await client.close();
+    }
+  });
+
+  // --- Virtual Tables ---
+  test("sqlite_create_rtree_table returns { success, message }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      await callToolAndParse(client, "sqlite_drop_virtual_table", {
+        tableName: "_e2e_rtree_test",
+      });
+
+      const payload = await callToolAndParse(client, "sqlite_create_rtree_table", {
+        tableName: "_e2e_rtree_test",
+        dimensions: 2,
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.message).toBe("string");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_virtual_table_info returns { success, name, type }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_virtual_table_info", {
+        tableName: "_e2e_rtree_test",
+      });
+
+      expectSuccess(payload);
+      expect(payload.name).toBe("_e2e_rtree_test");
+      expect(typeof payload.type).toBe("string");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_drop_virtual_table returns { success, message }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_drop_virtual_table", {
+        tableName: "_e2e_rtree_test",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.message).toBe("string");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_create_series_table returns { success, message, rowCount }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      await callToolAndParse(client, "sqlite_write_query", {
+        query: "DROP TABLE IF EXISTS _e2e_series_test",
+      });
+
+      const payload = await callToolAndParse(client, "sqlite_create_series_table", {
+        tableName: "_e2e_series_test",
+        start: 1,
+        stop: 10,
+        step: 1,
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.message).toBe("string");
+      expect(payload.rowCount).toBe(10);
+    } finally {
+      // create_series_table makes a regular table, not virtual
+      await callToolAndParse(client, "sqlite_write_query", {
+        query: "DROP TABLE IF EXISTS _e2e_series_test",
+      });
+      await client.close();
+    }
+  });
+
+  // --- Backup/Restore lifecycle ---
+  test("sqlite_verify_backup returns success or WASM limitation", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_verify_backup", {
+        backupPath: "/tmp/test-backup.db",
+      });
+
+      // Native: may succeed if backup exists, fail gracefully otherwise
+      // WASM: WASM limitation
+      expect(typeof payload.success).toBe("boolean");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_restore returns success or WASM limitation", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_restore", {
+        sourcePath: "/tmp/test-backup.db",
+      });
+
+      // Native: may succeed if backup exists, fail gracefully otherwise
+      // WASM: WASM limitation
+      expect(typeof payload.success).toBe("boolean");
+    } finally {
+      await client.close();
+    }
+  });
+});
+

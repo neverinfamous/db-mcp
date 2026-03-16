@@ -260,3 +260,155 @@ test.describe("Payload Contracts: JSON Operations (Write)", () => {
     }
   });
 });
+
+// =============================================================================
+// Additional JSON Write Operations (missing payload coverage)
+// =============================================================================
+
+test.describe("Payload Contracts: JSON Write Extended", () => {
+  test("sqlite_json_insert returns { success, message, rowsAffected }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_json_insert", {
+        table: "test_jsonb_docs",
+        column: "doc",
+        data: { type: "test", title: "E2E Payload Test", author: "Playwright" },
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.message).toBe("string");
+      expect(typeof payload.rowsAffected).toBe("number");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_json_update returns { success, rowsAffected }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_json_update", {
+        table: "test_jsonb_docs",
+        column: "doc",
+        path: "$.author",
+        value: "Updated Author",
+        whereClause: "rowid = 1",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.rowsAffected).toBe("number");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_json_merge returns { success, rowsAffected }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_json_merge", {
+        table: "test_jsonb_docs",
+        column: "doc",
+        mergeData: { merged_field: true },
+        whereClause: "rowid = 1",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.rowsAffected).toBe("number");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_create_json_collection returns { success, message, indexCount }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      // Cleanup from prior runs
+      await callToolAndParse(client, "sqlite_write_query", {
+        query: "DROP TABLE IF EXISTS _e2e_json_coll",
+      });
+
+      const payload = await callToolAndParse(client, "sqlite_create_json_collection", {
+        tableName: "_e2e_json_coll",
+        timestamps: true,
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.message).toBe("string");
+      expect(typeof payload.indexCount).toBe("number");
+    } finally {
+      // Cleanup
+      await callToolAndParse(client, "sqlite_write_query", {
+        query: "DROP TABLE IF EXISTS _e2e_json_coll",
+      });
+      await client.close();
+    }
+  });
+
+  test("sqlite_jsonb_convert returns { success }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_jsonb_convert", {
+        table: "test_jsonb_docs",
+        column: "doc",
+      });
+
+      // May succeed with rowsConverted, or fail if JSONB not supported
+      expect(typeof payload.success).toBe("boolean");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_json_normalize_column returns { success, rowsNormalized }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_json_normalize_column", {
+        table: "test_jsonb_docs",
+        column: "doc",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.rowsNormalized).toBe("number");
+    } finally {
+      await client.close();
+    }
+  });
+
+  // Cleanup: remove the row we inserted
+  test("cleanup: remove test row", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      await callToolAndParse(client, "sqlite_write_query", {
+        query: "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.title') = 'E2E Payload Test'",
+      });
+    } finally {
+      await client.close();
+    }
+  });
+});
+
+// =============================================================================
+// Text: text_replace (missing payload coverage)
+// =============================================================================
+
+test.describe("Payload Contracts: Text Replace", () => {
+  test("sqlite_text_replace returns { success, rowsAffected }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      // Use a safe no-op replacement on test_products
+      const payload = await callToolAndParse(client, "sqlite_text_replace", {
+        table: "test_products",
+        column: "category",
+        search: "zzz_nonexistent",
+        replace: "zzz_replaced",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.rowsAffected).toBe("number");
+      // No rows should match
+      expect(payload.rowsAffected).toBe(0);
+    } finally {
+      await client.close();
+    }
+  });
+});
+

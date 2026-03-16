@@ -129,4 +129,48 @@ test.describe("Payload Contracts: Migration Tracking", () => {
       await client.close();
     }
   });
+
+  // =========================================================================
+  // migration_record (external recording without execution)
+  // =========================================================================
+
+  test("sqlite_migration_record returns { success, record }", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_migration_record", {
+        version: `e2e_record_${testId}`,
+        description: "Externally applied migration recorded by e2e test",
+        migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
+        sourceSystem: "e2e-test",
+      });
+
+      expectSuccess(payload);
+      const record = payload.record as Record<string, unknown>;
+      expect(typeof record.id).toBe("number");
+      expect(record.version).toBe(`e2e_record_${testId}`);
+      expect(record.status).toBe("applied");
+      expect(record.sourceSystem).toBe("e2e-test");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_migration_record rejects duplicate SHA-256", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_migration_record", {
+        version: `e2e_record_dup_${testId}`,
+        description: "Duplicate migration",
+        migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
+        sourceSystem: "e2e-test",
+      });
+
+      // Should fail because the SQL hash matches the previous record
+      expect(payload.success).toBe(false);
+      expect(typeof payload.error).toBe("string");
+    } finally {
+      await client.close();
+    }
+  });
 });
+
