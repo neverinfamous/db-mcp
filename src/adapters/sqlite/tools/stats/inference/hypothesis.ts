@@ -1,11 +1,10 @@
-import { z } from "zod";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { validateWhereClause, sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../../../utils/errors/index.js";
 import { validateColumnExists, validateNumericColumn, HypothesisSchema } from "../helpers.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { StatsHypothesisOutputSchema } from "../../../output-schemas/index.js";
 import { tDistPValue } from "../math-helpers.js";
 
 /**
@@ -18,18 +17,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
       "Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.",
     group: "stats",
     inputSchema: HypothesisSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      testType: z.string().optional(),
-      statistic: z.number().optional(),
-      pValue: z.number().optional(),
-      degreesOfFreedom: z.number().optional(),
-      significant: z.boolean().optional(),
-      details: z.record(z.string(), z.unknown()).optional(),
-      error: z.string().optional(),
-      code: z.string().optional(),
-      suggestion: z.string().optional(),
-    }).extend(ErrorResponseFields.shape),
+    outputSchema: StatsHypothesisOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Hypothesis Testing"),
     handler: async (params: unknown, _context: RequestContext) => {

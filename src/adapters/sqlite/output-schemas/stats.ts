@@ -1,5 +1,5 @@
 /**
- * Statistical Analysis Tool Output Schemas (16 tools)
+ * Statistical Analysis Tool Output Schemas (14 stats tools)
  */
 
 import { z } from "zod";
@@ -234,5 +234,20 @@ export const StatsOutliersOutputSchema = z
       .optional(),
     truncated: z.boolean().optional(),
     totalOutliers: z.number().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_stats_hypothesis output
+ */
+export const StatsHypothesisOutputSchema = z
+  .object({
+    success: z.boolean(),
+    testType: z.string().optional(),
+    statistic: z.number().optional(),
+    pValue: z.number().optional(),
+    degreesOfFreedom: z.number().optional(),
+    significant: z.boolean().optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
