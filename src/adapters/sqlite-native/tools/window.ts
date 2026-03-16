@@ -195,6 +195,28 @@ async function validateColumnInTable(
 }
 
 /**
+ * Validate that column names referenced in an ORDER BY clause exist in the table.
+ * Handles multi-column ordering (comma-separated), directional keywords (ASC/DESC),
+ * and gracefully skips expression-like tokens (containing parens, dots, etc.).
+ */
+async function validateOrderByColumns(
+  adapter: NativeSqliteAdapter,
+  table: string,
+  orderBy: string,
+): Promise<void> {
+  const parts = orderBy.split(",");
+  for (const part of parts) {
+    const tokens = part.trim().split(/\s+/);
+    const firstToken = tokens[0];
+    if (!firstToken) continue;
+    const colName = firstToken.replace(/^"|"$/g, "");
+    if (/[.()+*/]/.test(colName)) continue;
+    if (/^(ASC|DESC)$/i.test(colName)) continue;
+    await validateColumnInTable(adapter, table, colName);
+  }
+}
+
+/**
  * Helper to format column selection
  */
 function formatColumns(selectColumns: string[] | undefined): string {
@@ -235,6 +257,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = RowNumberSchema.parse(params);
 
         await validateTableExists(adapter, input.table);
+        await validateOrderByColumns(adapter, input.table, input.orderBy);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -284,6 +307,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = RankSchema.parse(params);
 
         await validateTableExists(adapter, input.table);
+        await validateOrderByColumns(adapter, input.table, input.orderBy);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -336,6 +360,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         await validateTableExists(adapter, input.table);
         await validateColumnInTable(adapter, input.table, input.column);
+        await validateOrderByColumns(adapter, input.table, input.orderBy);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -391,6 +416,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         await validateTableExists(adapter, input.table);
         await validateColumnInTable(adapter, input.table, input.column);
+        await validateOrderByColumns(adapter, input.table, input.orderBy);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -452,6 +478,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         await validateTableExists(adapter, input.table);
         await validateColumnInTable(adapter, input.table, input.column);
+        await validateOrderByColumns(adapter, input.table, input.orderBy);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy
@@ -514,6 +541,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
         }
 
         await validateTableExists(adapter, input.table);
+        await validateOrderByColumns(adapter, input.table, input.orderBy);
 
         const columns = formatColumns(input.selectColumns);
         const partition = input.partitionBy

@@ -355,7 +355,7 @@ Same as Native minus the 6 window function tools (items 17-22).
 16. `sqlite_window_rank({table: "test_products", orderBy: "price DESC"})` → rank with ties
 17. `sqlite_window_running_total({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → cumulative totals
 18. `sqlite_window_moving_avg({table: "test_measurements", valueColumn: "temperature", windowSize: 5, orderBy: "measured_at"})` → moving averages
-19. `sqlite_window_lag_lead({table: "test_orders", column: "total_price", orderBy: "order_date"})` → lag/lead values
+19. `sqlite_window_lag_lead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag/lead values
 20. `sqlite_window_ntile({table: "test_products", buckets: 4, orderBy: "price"})` → quartile assignments
 
 **Code mode testing:**
