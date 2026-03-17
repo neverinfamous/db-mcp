@@ -13,7 +13,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { IndexAuditOutputSchema } from "../../../output-schemas/index.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
@@ -41,36 +41,7 @@ const IndexAuditSchema = z
   })
   .default({});
 
-const IndexAuditOutputSchema = z.object({
-  success: z.boolean(),
-  totalIndexes: z.number().optional(),
-  findings: z
-    .array(
-      z.object({
-        type: z.enum([
-          "redundant",
-          "missing_fk_index",
-          "unindexed_large_table",
-        ]),
-        severity: z.enum(["info", "warning", "error"]),
-        table: z.string(),
-        index: z.string().optional(),
-        redundantOf: z.string().optional(),
-        column: z.string().optional(),
-        suggestion: z.string(),
-      }),
-    )
-    .optional(),
-  summary: z
-    .object({
-      redundant: z.number(),
-      missingFk: z.number(),
-      unindexedLarge: z.number(),
-      total: z.number(),
-    })
-    .optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
+
 
 // =============================================================================
 // Tool Creator

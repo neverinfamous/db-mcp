@@ -13,7 +13,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { StorageAnalysisOutputSchema } from "../../../output-schemas/index.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
@@ -41,42 +41,7 @@ const StorageAnalysisSchema = z
   })
   .default({});
 
-const StorageAnalysisOutputSchema = z.object({
-  success: z.boolean(),
-  database: z
-    .object({
-      totalSizeBytes: z.number(),
-      pageSize: z.number(),
-      totalPages: z.number(),
-      freePages: z.number(),
-      fragmentationPct: z.number(),
-      journalMode: z.string(),
-      autoVacuum: z.string(),
-    })
-    .optional(),
-  tables: z
-    .array(
-      z.object({
-        name: z.string(),
-        sizeBytes: z.number(),
-        pctOfTotal: z.number(),
-        pageCount: z.number(),
-        rowCount: z.number(),
-        avgRowBytes: z.number(),
-      }),
-    )
-    .optional(),
-  recommendations: z
-    .array(
-      z.object({
-        type: z.string(),
-        severity: z.enum(["info", "warning", "error"]),
-        message: z.string(),
-      }),
-    )
-    .optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
+
 
 // =============================================================================
 // Helper: get pragma value as string

@@ -15,7 +15,11 @@ import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
 import type { ForeignKeyInfo } from "./helpers.js";
 import { buildForeignKeyGraph, detectCycles } from "./helpers.js";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import {
+  DependencyGraphOutputSchema,
+  TopologicalSortOutputSchema,
+  CascadeSimulatorOutputSchema,
+} from "../../../output-schemas/index.js";
 
 // =============================================================================
 // Enum Coercers (prevent raw MCP -32602 from z.enum validation)
@@ -96,84 +100,7 @@ const CascadeSimulatorSchema = z.object({
     ),
 });
 
-// =============================================================================
-// Output Schemas
-// =============================================================================
 
-const DependencyGraphOutputSchema = z.object({
-  success: z.boolean(),
-  nodes: z
-    .array(z.object({ table: z.string(), rowCount: z.number().optional() }))
-    .optional(),
-  edges: z
-    .array(
-      z.object({
-        from: z.string(),
-        to: z.string(),
-        fromColumn: z.string(),
-        toColumn: z.string(),
-        onDelete: z.string(),
-        onUpdate: z.string(),
-      }),
-    )
-    .optional(),
-  circularDependencies: z.array(z.array(z.string())).optional(),
-  stats: z
-    .object({
-      totalTables: z.number(),
-      totalRelationships: z.number(),
-      rootTables: z.array(z.string()),
-      leafTables: z.array(z.string()),
-    })
-    .optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-const TopologicalSortOutputSchema = z.object({
-  success: z.boolean(),
-  order: z
-    .array(
-      z.object({
-        table: z.string(),
-        level: z.number(),
-        dependencies: z.array(z.string()),
-      }),
-    )
-    .optional(),
-  direction: z.string().optional(),
-  hasCycles: z.boolean().optional(),
-  cycles: z.array(z.array(z.string())).optional(),
-  hint: z.string().optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-const CascadeSimulatorOutputSchema = z.object({
-  success: z.boolean(),
-  sourceTable: z.string().optional(),
-  operation: z.string().optional(),
-  affectedTables: z
-    .array(
-      z.object({
-        table: z.string(),
-        action: z.string(),
-        estimatedRows: z.number().optional(),
-        path: z.array(z.string()).optional(),
-        depth: z.number(),
-      }),
-    )
-    .optional(),
-  severity: z.enum(["low", "medium", "high", "critical"]).optional(),
-  stats: z
-    .object({
-      totalTablesAffected: z.number(),
-      cascadeActions: z.number(),
-      blockingActions: z.number(),
-      setNullActions: z.number(),
-      maxDepth: z.number(),
-    })
-    .optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Tool Creators

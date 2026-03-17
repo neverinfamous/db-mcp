@@ -13,7 +13,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { ConstraintAnalysisOutputSchema } from "../../../output-schemas/index.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
@@ -69,28 +69,7 @@ const ConstraintAnalysisSchema = z
   })
   .default({});
 
-const ConstraintAnalysisOutputSchema = z.object({
-  success: z.boolean(),
-  findings: z
-    .array(
-      z.object({
-        type: z.string(),
-        severity: z.enum(["info", "warning", "error"]),
-        table: z.string(),
-        description: z.string(),
-        suggestion: z.string().optional(),
-      }),
-    )
-    .optional(),
-  summary: z
-    .object({
-      totalFindings: z.number(),
-      byType: z.record(z.string(), z.number()),
-      bySeverity: z.record(z.string(), z.number()),
-    })
-    .optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
+
 
 // =============================================================================
 // Tool Creator

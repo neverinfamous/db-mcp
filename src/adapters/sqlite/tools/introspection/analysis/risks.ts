@@ -12,7 +12,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { MigrationRisksOutputSchema } from "../../../output-schemas/index.js";
 
 // =============================================================================
 // Schemas
@@ -24,29 +24,7 @@ const MigrationRisksSchema = z.object({
     .describe("Array of DDL statements to analyze for risks"),
 });
 
-const MigrationRisksOutputSchema = z.object({
-  success: z.boolean(),
-  risks: z
-    .array(
-      z.object({
-        statement: z.string(),
-        statementIndex: z.number(),
-        riskLevel: z.enum(["low", "medium", "high", "critical"]),
-        category: z.string(),
-        description: z.string(),
-        mitigation: z.string().optional(),
-      }),
-    )
-    .optional(),
-  summary: z
-    .object({
-      totalStatements: z.number(),
-      totalRisks: z.number(),
-      highestRisk: z.string(),
-    })
-    .optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
+
 
 // =============================================================================
 // Tool Creator

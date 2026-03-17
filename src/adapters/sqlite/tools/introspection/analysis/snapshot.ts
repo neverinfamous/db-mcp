@@ -13,7 +13,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { SchemaSnapshotOutputSchema } from "../../../output-schemas/index.js";
 import {
   isSpatialiteSystemTable,
   isSpatialiteSystemView,
@@ -63,65 +63,7 @@ const SchemaSnapshotSchema = z
   })
   .default({});
 
-const SchemaSnapshotOutputSchema = z.object({
-  success: z.boolean(),
-  snapshot: z
-    .object({
-      tables: z
-        .array(
-          z.object({
-            name: z.string(),
-            columnCount: z.number(),
-            rowCount: z.number().optional(),
-            columns: z
-              .array(
-                z.object({
-                  name: z.string(),
-                  type: z.string(),
-                  nullable: z.boolean(),
-                  primaryKey: z.boolean(),
-                  defaultValue: z.unknown().optional(),
-                }),
-              )
-              .optional(),
-          }),
-        )
-        .optional(),
-      views: z
-        .array(z.object({ name: z.string(), sql: z.string() }))
-        .optional(),
-      indexes: z
-        .array(
-          z.object({
-            name: z.string(),
-            table: z.string(),
-            unique: z.boolean(),
-            sql: z.string(),
-          }),
-        )
-        .optional(),
-      triggers: z
-        .array(
-          z.object({
-            name: z.string(),
-            table: z.string(),
-            sql: z.string(),
-          }),
-        )
-        .optional(),
-    })
-    .optional(),
-  stats: z
-    .object({
-      tables: z.number(),
-      views: z.number(),
-      indexes: z.number(),
-      triggers: z.number(),
-    })
-    .optional(),
-  generatedAt: z.string().optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
+
 
 // =============================================================================
 // Tool Creator

@@ -13,51 +13,18 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import { ErrorResponseFields } from "../../../../../utils/errors/error-response-fields.js";
+import { QueryPlanOutputSchema } from "../../../output-schemas/index.js";
+
+// Synthetic EXPLAIN table names that are not real tables
+const SYNTHETIC_TABLES = new Set(["CONSTANT", "SUBQUERY", "LIST", "MATERIALIZED"]);
 
 // =============================================================================
-// Schemas
+// Input Schema
 // =============================================================================
 
 const QueryPlanSchema = z.object({
   sql: z.string().describe("SQL query to analyze (SELECT only)"),
 });
-
-const QueryPlanOutputSchema = z.object({
-  success: z.boolean(),
-  sql: z.string().optional(),
-  plan: z
-    .array(
-      z.object({
-        id: z.number(),
-        parent: z.number(),
-        detail: z.string(),
-        scanType: z
-          .enum([
-            "full_scan",
-            "index_scan",
-            "covering_index",
-            "search",
-            "subquery",
-            "compound",
-            "other",
-          ])
-          .optional(),
-        table: z.string().optional(),
-      }),
-    )
-    .optional(),
-  analysis: z
-    .object({
-      fullScans: z.array(z.string()),
-      indexScans: z.array(z.string()),
-      coveringIndexes: z.array(z.string()),
-      estimatedEfficiency: z.enum(["good", "moderate", "poor"]),
-    })
-    .optional(),
-  suggestions: z.array(z.string()).optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Tool Creator
@@ -151,13 +118,13 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
 
             if (detailUpper.includes("COVERING INDEX")) {
               scanType = "covering_index";
-              if (table) coveringIndexes.push(table);
+              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase())) coveringIndexes.push(table);
             } else if (detailUpper.includes("USING INDEX")) {
               scanType = "index_scan";
-              if (table) indexScans.push(table);
+              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase())) indexScans.push(table);
             } else {
               scanType = "full_scan";
-              if (table) fullScans.push(table);
+              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase())) fullScans.push(table);
             }
           } else if (detailUpper.includes("SEARCH")) {
             scanType = "search";
