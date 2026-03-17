@@ -9,6 +9,7 @@ import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { validateWhereClause } from "../../../utils/index.js";
 import { formatHandlerError, ResourceNotFoundError } from "../../../utils/errors/index.js";
+import { readOnly } from "../../../utils/annotations.js";
 import { resolveAliases } from "../../sqlite/types.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
 import { ErrorCategory } from "../../../utils/errors/categories.js";
@@ -264,6 +265,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: RowNumberSchema,
     outputSchema: WindowRowNumberOutputSchema,
+    annotations: readOnly("Window Row Number"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -314,6 +316,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: RankSchema,
     outputSchema: WindowRankOutputSchema,
+    annotations: readOnly("Window Rank"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -366,6 +369,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: LagLeadSchema,
     outputSchema: WindowLagLeadOutputSchema,
+    annotations: readOnly("Window Lag/Lead"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -433,6 +437,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: RunningTotalSchema,
     outputSchema: WindowRunningTotalOutputSchema,
+    annotations: readOnly("Window Running Total"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -485,6 +490,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: MovingAverageSchema,
     outputSchema: WindowMovingAvgOutputSchema,
+    annotations: readOnly("Window Moving Average"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -549,6 +555,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
     group: "stats",
     inputSchema: NtileSchema,
     outputSchema: WindowNtileOutputSchema,
+    annotations: readOnly("Window Ntile"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
