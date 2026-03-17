@@ -543,3 +543,137 @@ test.describe("Code Mode: Workflows", () => {
     }
   });
 });
+
+// =============================================================================
+// API Discoverability: help(), method aliases, convenience aliases
+// =============================================================================
+
+test.describe("Code Mode: API Discoverability", () => {
+  test("sqlite.help() returns all 9 groups", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_execute_code", {
+        code: "return await sqlite.help();",
+      });
+      expectSuccess(p);
+      const result = p.result as Record<string, unknown>;
+      const groups = result.groups as string[];
+      expect(groups.length).toBe(9);
+      const expected = [
+        "core", "json", "text", "stats", "vector",
+        "admin", "geo", "introspection", "migration",
+      ];
+      for (const g of expected) {
+        expect(groups).toContain(g);
+      }
+      expect(typeof result.totalMethods === "number" || result.totalMethods === undefined).toBe(true);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite.core.help() returns methods array", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_execute_code", {
+        code: "return await sqlite.core.help();",
+      });
+      expectSuccess(p);
+      const result = p.result as Record<string, unknown>;
+      expect(result.group).toBe("core");
+      const methods = result.methods as string[];
+      expect(Array.isArray(methods)).toBe(true);
+      expect(methods.length).toBeGreaterThan(0);
+      // Core should include these canonical methods
+      expect(methods).toContain("readQuery");
+      expect(methods).toContain("listTables");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("method alias resolves: core.query() = core.readQuery()", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_execute_code", {
+        code: `
+          const r1 = await sqlite.core.query("SELECT 1 AS num");
+          const r2 = await sqlite.core.readQuery("SELECT 1 AS num");
+          return { aliasRows: r1.rows, canonicalRows: r2.rows };
+        `,
+      });
+      expectSuccess(p);
+      const result = p.result as Record<string, unknown>;
+      expect(result.aliasRows).toEqual(result.canonicalRows);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("top-level convenience alias: sqlite.listTables()", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_execute_code", {
+        code: `
+          const tables = await sqlite.listTables();
+          return { success: true, tableCount: tables.tables?.length };
+        `,
+      });
+      expectSuccess(p);
+      const result = p.result as Record<string, unknown>;
+      expect(typeof result.tableCount).toBe("number");
+      expect((result.tableCount as number)).toBeGreaterThan(0);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("all groups return >0 methods from help()", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_execute_code", {
+        code: `
+          const groups = ["core","json","text","stats","vector","admin","geo","introspection","migration"];
+          const results = {};
+          for (const g of groups) {
+            const h = await sqlite[g].help();
+            results[g] = h.methods.length;
+          }
+          return results;
+        `,
+      });
+      expectSuccess(p);
+      const result = p.result as Record<string, number>;
+      expect(Object.keys(result).length).toBe(9);
+      for (const [group, count] of Object.entries(result)) {
+        expect(count, `${group} should have >0 methods`).toBeGreaterThan(0);
+      }
+    } finally {
+      await client.close();
+    }
+  });
+});
+
+// =============================================================================
+// Timeout Enforcement
+// =============================================================================
+
+test.describe("Code Mode: Timeout", () => {
+  test("infinite loop with timeout → structured error within ~2s", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const start = Date.now();
+      const p = await callToolAndParse(client, "sqlite_execute_code", {
+        code: "while (true) {}",
+        timeout: 2000,
+      });
+      const elapsed = Date.now() - start;
+      expect(p.success).toBe(false);
+      expect(typeof p.error).toBe("string");
+      // Should complete within a reasonable time (not hang forever)
+      expect(elapsed).toBeLessThan(15000);
+    } finally {
+      await client.close();
+    }
+  });
+});

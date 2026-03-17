@@ -59,6 +59,40 @@ test.describe("Payload Contracts: FTS5", () => {
     }
   });
 
+  test("sqlite_fts_search with boolean AND operator", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_fts_search", {
+        table: "test_articles_fts",
+        query: "database AND performance",
+        limit: 10,
+      });
+
+      expectSuccess(payload);
+      expect(Array.isArray(payload.results)).toBe(true);
+      expect(typeof payload.rowCount).toBe("number");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_fts_search with boolean NOT operator", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_fts_search", {
+        table: "test_articles_fts",
+        query: "database NOT performance",
+        limit: 10,
+      });
+
+      expectSuccess(payload);
+      expect(Array.isArray(payload.results)).toBe(true);
+      expect(typeof payload.rowCount).toBe("number");
+    } finally {
+      await client.close();
+    }
+  });
+
   test("sqlite_fts_match_info returns { success, results[], rowCount } with bm25 ranking", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {

@@ -23,7 +23,7 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3000",
       },
-      testIgnore: [/native\./, /auth\./, /payloads-window\./, /payloads-fts\./, /payloads-transactions\./, /payloads-spatialite\./, /payloads-csv\./],
+      testIgnore: [/native\./, /auth\./, /payloads-window\./, /payloads-fts\./, /payloads-transactions\./, /payloads-spatialite\./, /payloads-csv\./, /transactions-nested\./, /integration-workflows\./, /codemode-introspection\./],
     },
     {
       name: "native",

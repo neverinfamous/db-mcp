@@ -406,6 +406,96 @@ test.describe("Boundary: Vector", () => {
 });
 
 // =============================================================================
+// Vector: Empty Table Edge Cases
+// =============================================================================
+
+test.describe("Boundary: Vector Empty Table", () => {
+  test("setup: create empty vector table", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_vector_create_table", {
+        tableName: "_e2e_boundary_vec_empty",
+        dimensions: 4,
+      });
+      expectSuccess(p);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("vector count on empty table → 0", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_vector_count", {
+        table: "_e2e_boundary_vec_empty",
+      });
+      expectSuccess(p);
+      expect(p.count).toBe(0);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("vector search on empty table → 0 results, not error", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_vector_search", {
+        table: "_e2e_boundary_vec_empty",
+        vectorColumn: "vector",
+        queryVector: [1, 2, 3, 4],
+        metric: "cosine",
+        limit: 5,
+      });
+      expectSuccess(p);
+      expect(Array.isArray(p.results)).toBe(true);
+      expect((p.results as unknown[]).length).toBe(0);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("vector stats on empty table → graceful handling", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_vector_stats", {
+        table: "_e2e_boundary_vec_empty",
+        vectorColumn: "vector",
+      });
+      // Should handle gracefully — success with count 0 or message
+      expect(typeof p.success).toBe("boolean");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("vector dimensions on empty table → graceful handling", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_vector_dimensions", {
+        table: "_e2e_boundary_vec_empty",
+        vectorColumn: "vector",
+      });
+      // No vectors to infer dimensions from — accept null or graceful message
+      expect(typeof p.success).toBe("boolean");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("cleanup: drop empty vector table", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      await callToolAndParse(client, "sqlite_drop_table", {
+        table: "_e2e_boundary_vec_empty",
+        ifExists: true,
+      });
+    } finally {
+      await client.close();
+    }
+  });
+});
+
+// =============================================================================
 // Geo Edge Cases
 // =============================================================================
 

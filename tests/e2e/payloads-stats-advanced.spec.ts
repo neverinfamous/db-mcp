@@ -31,6 +31,24 @@ test.describe("Payload Contracts: Stats Advanced", () => {
     }
   });
 
+  test("sqlite_stats_correlation self-correlation → ≈1.0", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(client, "sqlite_stats_correlation", {
+        table: "test_products",
+        column1: "id",
+        column2: "id",
+      });
+
+      expectSuccess(payload);
+      expect(typeof payload.correlation).toBe("number");
+      // Self-correlation should be exactly or very close to 1.0
+      expect(Math.abs((payload.correlation as number) - 1.0)).toBeLessThan(0.001);
+    } finally {
+      await client.close();
+    }
+  });
+
   test("sqlite_stats_top_n returns { success, column, count, rows[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
