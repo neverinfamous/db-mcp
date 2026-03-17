@@ -375,8 +375,11 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
       try {
         const input = LagLeadSchema.parse(params);
 
+        // Normalize direction to lowercase (schema describes as LAG/LEAD uppercase)
+        const normalizedDirection = input.direction.toLowerCase();
+
         // Handler-side validation for required enum (z.string() in schema)
-        if (!VALID_DIRECTIONS.includes(input.direction as (typeof VALID_DIRECTIONS)[number])) {
+        if (!VALID_DIRECTIONS.includes(normalizedDirection as (typeof VALID_DIRECTIONS)[number])) {
           return {
             success: false,
             error: `Invalid direction '${input.direction}'. Must be one of: ${VALID_DIRECTIONS.join(", ")}`,
@@ -394,13 +397,13 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
-        const func = input.direction.toUpperCase();
+        const func = normalizedDirection.toUpperCase();
         const defaultVal =
           input.defaultValue !== undefined ? `, ${input.defaultValue}` : "";
 
         let sql = `
                 SELECT ${columns},
-                    ${func}("${input.column}", ${input.offset}${defaultVal}) OVER (${partition} ORDER BY ${input.orderBy}) as ${input.direction}_value
+                    ${func}("${input.column}", ${input.offset}${defaultVal}) OVER (${partition} ORDER BY ${input.orderBy}) as ${normalizedDirection}_value
                 FROM "${input.table}"
             `;
 
@@ -414,7 +417,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          direction: input.direction,
+          direction: normalizedDirection,
           offset: input.offset,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
