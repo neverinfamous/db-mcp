@@ -26,52 +26,43 @@ test.describe("Integration: Core → JSON → Stats Pipeline", () => {
   test("create table, insert JSON data, extract + analyze", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const p = await callToolAndParse(client, "sqlite_execute_code", {
-        code: `
-          // Step 1: Create table with JSON column
-          await sqlite.core.writeQuery(
-            "CREATE TABLE IF NOT EXISTS _e2e_integration_pipeline (id INTEGER PRIMARY KEY, data TEXT, score REAL)"
-          );
-
-          // Step 2: Insert JSON data
-          await sqlite.core.writeQuery({
-            query: "INSERT INTO _e2e_integration_pipeline VALUES (1, '{\\"category\\": \\"A\\", \\"value\\": 42}', 85.5), (2, '{\\"category\\": \\"B\\", \\"value\\": 17}', 92.3), (3, '{\\"category\\": \\"A\\", \\"value\\": 88}', 71.0), (4, '{\\"category\\": \\"B\\", \\"value\\": 55}', 63.8), (5, '{\\"category\\": \\"A\\", \\"value\\": 31}', 99.1)"
-          });
-
-          // Step 3: JSON extract categories
-          const extracted = await sqlite.json.extract({
-            table: "_e2e_integration_pipeline",
-            column: "data",
-            path: "$.category",
-          });
-
-          // Step 4: Stats count on the table
-          const countResult = await sqlite.stats.statsCount({
-            table: "_e2e_integration_pipeline",
-          });
-
-          // Step 5: Basic stats on the score column
-          const basicResult = await sqlite.stats.statsBasic({
-            table: "_e2e_integration_pipeline",
-            column: "score",
-          });
-
-          return {
-            rowsInserted: countResult.count,
-            categoriesFound: extracted.rowCount,
-            hasStats: basicResult.stats != null,
-            statsMin: basicResult.stats?.min,
-            statsMax: basicResult.stats?.max,
-          };
-        `,
+      // Step 1: Create table
+      const create = await callToolAndParse(client, "sqlite_write_query", {
+        query:
+          "CREATE TABLE IF NOT EXISTS _e2e_integration_pipeline (id INTEGER PRIMARY KEY, data TEXT, score REAL)",
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.rowsInserted).toBe(5);
-      expect(result.categoriesFound).toBe(5);
-      expect(result.hasStats).toBe(true);
-      expect(typeof result.statsMin).toBe("number");
-      expect(typeof result.statsMax).toBe("number");
+      expectSuccess(create);
+
+      // Step 2: Insert JSON + numeric data
+      const insert = await callToolAndParse(client, "sqlite_write_query", {
+        query: `INSERT INTO _e2e_integration_pipeline VALUES
+          (1, '{"category": "A", "value": 42}', 85.5),
+          (2, '{"category": "B", "value": 17}', 92.3),
+          (3, '{"category": "A", "value": 88}', 71.0),
+          (4, '{"category": "B", "value": 55}', 63.8),
+          (5, '{"category": "A", "value": 31}', 99.1)`,
+      });
+      expectSuccess(insert);
+
+      // Step 3: Cross-group — JSON extract
+      const extracted = await callToolAndParse(client, "sqlite_json_extract", {
+        table: "_e2e_integration_pipeline",
+        column: "data",
+        path: "$.category",
+      });
+      expectSuccess(extracted);
+      expect(extracted.rowCount).toBe(5);
+
+      // Step 4: Cross-group — Stats basic
+      const stats = await callToolAndParse(client, "sqlite_stats_basic", {
+        table: "_e2e_integration_pipeline",
+        column: "score",
+      });
+      expectSuccess(stats);
+      const s = stats.stats as Record<string, unknown>;
+      expect(s.count).toBe(5);
+      expect(typeof s.min).toBe("number");
+      expect(typeof s.max).toBe("number");
     } finally {
       await client.close();
     }

@@ -46,8 +46,11 @@ const coerceNumber = (val: unknown): unknown =>
 /** Shared sandbox pool (lazy-initialized) */
 let pool: ISandboxPool | null = null;
 
-/** Shared security manager */
-const security = new CodeModeSecurityManager();
+/** Shared security manager — honor MCP_CODEMODE_RATE_LIMIT env var for tests */
+const codemodeRateLimit = Number(process.env["MCP_CODEMODE_RATE_LIMIT"]) || 60;
+const security = new CodeModeSecurityManager({
+  maxExecutionsPerMinute: codemodeRateLimit,
+});
 
 // =============================================================================
 // Schemas
@@ -188,7 +191,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         if (!security.checkRateLimit(clientId)) {
           return {
             success: false,
-            error: "Rate limit exceeded. Maximum 60 executions per minute.",
+            error: `Rate limit exceeded. Maximum ${String(codemodeRateLimit)} executions per minute.`,
             code: "CODEMODE_RATE_LIMITED",
             category: "permission",
             suggestion:
