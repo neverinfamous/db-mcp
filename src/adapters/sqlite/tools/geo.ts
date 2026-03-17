@@ -10,7 +10,9 @@ import { z } from "zod";
 
 /**
  * Coerce string-typed numbers to actual numbers.
- * Returns undefined for non-numeric strings so the schema default kicks in.
+ * Returns undefined for non-numeric strings so the schema default kicks in
+ * (for optional params) or so the handler can catch it with a structured
+ * error (for required params using `.optional()` at the schema level).
  */
 const coerceNumber = (val: unknown): unknown =>
   typeof val === "string"
@@ -50,11 +52,14 @@ import {
 import { validateColumnExists } from "./column-validation.js";
 
 // Geo schemas
+// Required numeric params use `.optional()` at schema level so the SDK
+// doesn't reject coerced-undefined values at the boundary.  The handler
+// validates presence and range via validateCoordinates().
 const GeoDistanceSchema = z.object({
-  lat1: z.preprocess(coerceNumber, z.number().describe("Latitude of point 1")),
-  lon1: z.preprocess(coerceNumber, z.number().describe("Longitude of point 1")),
-  lat2: z.preprocess(coerceNumber, z.number().describe("Latitude of point 2")),
-  lon2: z.preprocess(coerceNumber, z.number().describe("Longitude of point 2")),
+  lat1: z.preprocess(coerceNumber, z.number().optional().describe("Latitude of point 1")),
+  lon1: z.preprocess(coerceNumber, z.number().optional().describe("Longitude of point 1")),
+  lat2: z.preprocess(coerceNumber, z.number().optional().describe("Latitude of point 2")),
+  lon2: z.preprocess(coerceNumber, z.number().optional().describe("Longitude of point 2")),
   unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
 });
 
@@ -62,9 +67,9 @@ const GeoNearbySchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  centerLat: z.preprocess(coerceNumber, z.number().describe("Center latitude")),
-  centerLon: z.preprocess(coerceNumber, z.number().describe("Center longitude")),
-  radius: z.preprocess(coerceNumber, z.number().describe("Radius")),
+  centerLat: z.preprocess(coerceNumber, z.number().optional().describe("Center latitude")),
+  centerLon: z.preprocess(coerceNumber, z.number().optional().describe("Center longitude")),
+  radius: z.preprocess(coerceNumber, z.number().optional().describe("Radius")),
   unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   returnColumns: z.array(z.string()).optional(),
@@ -74,10 +79,10 @@ const GeoBoundingBoxSchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  minLat: z.preprocess(coerceNumber, z.number()),
-  maxLat: z.preprocess(coerceNumber, z.number()),
-  minLon: z.preprocess(coerceNumber, z.number()),
-  maxLon: z.preprocess(coerceNumber, z.number()),
+  minLat: z.preprocess(coerceNumber, z.number().optional()),
+  maxLat: z.preprocess(coerceNumber, z.number().optional()),
+  minLon: z.preprocess(coerceNumber, z.number().optional()),
+  maxLon: z.preprocess(coerceNumber, z.number().optional()),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   returnColumns: z.array(z.string()).optional(),
 });
@@ -93,20 +98,45 @@ const GeoClusterSchema = z.object({
 
 
 /**
- * Validate coordinate ranges (handler-level, not schema-level to avoid raw MCP errors)
+ * Validate and narrow a numeric coordinate/parameter.
+ * Returns the validated number (narrowing `number | undefined` → `number`)
+ * so callers get a type-safe value without needing assertions.
  */
-function validateCoordinates(
-  coords: { name: string; value: number; min: number; max: number }[],
-): void {
-  for (const { name, value, min, max } of coords) {
-    if (value < min || value > max) {
-      throw new DbMcpError(
-        `Invalid ${name}: ${String(value)}. Must be between ${String(min)} and ${String(max)}.`,
-        "GEO_INVALID_COORDINATES",
-        ErrorCategory.VALIDATION
-      );
-    }
+function requireCoordinate(
+  value: number | undefined,
+  name: string,
+  min: number,
+  max: number,
+): number {
+  if (value === undefined || isNaN(value)) {
+    throw new DbMcpError(
+      `Invalid ${name}: value is not a valid number.`,
+      "GEO_INVALID_COORDINATES",
+      ErrorCategory.VALIDATION
+    );
   }
+  if (value < min || value > max) {
+    throw new DbMcpError(
+      `Invalid ${name}: ${String(value)}. Must be between ${String(min)} and ${String(max)}.`,
+      "GEO_INVALID_COORDINATES",
+      ErrorCategory.VALIDATION
+    );
+  }
+  return value;
+}
+
+/**
+ * Validate and narrow a required numeric parameter (no range check).
+ */
+function requireNumber(value: number | undefined, name: string): number {
+  if (value === undefined || isNaN(value)) {
+    throw new DbMcpError(
+      `Invalid ${name}: value is not a valid number.`,
+      "GEO_INVALID_COORDINATES",
+      ErrorCategory.VALIDATION
+    );
+  }
+  return value;
 }
 
 /**
@@ -171,20 +201,12 @@ function createGeoDistanceTool(): ToolDefinition {
       try {
         const input = GeoDistanceSchema.parse(params);
 
-        validateCoordinates([
-          { name: "lat1", value: input.lat1, min: -90, max: 90 },
-          { name: "lon1", value: input.lon1, min: -180, max: 180 },
-          { name: "lat2", value: input.lat2, min: -90, max: 90 },
-          { name: "lon2", value: input.lon2, min: -180, max: 180 },
-        ]);
+        const lat1 = requireCoordinate(input.lat1, "lat1", -90, 90);
+        const lon1 = requireCoordinate(input.lon1, "lon1", -180, 180);
+        const lat2 = requireCoordinate(input.lat2, "lat2", -90, 90);
+        const lon2 = requireCoordinate(input.lon2, "lon2", -180, 180);
 
-        const distance = haversineDistance(
-          input.lat1,
-          input.lon1,
-          input.lat2,
-          input.lon2,
-          input.unit,
-        );
+        const distance = haversineDistance(lat1, lon1, lat2, lon2, input.unit);
 
         return Promise.resolve({
           success: true,
@@ -214,10 +236,11 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const input = GeoNearbySchema.parse(params);
 
-        validateCoordinates([
-          { name: "centerLat", value: input.centerLat, min: -90, max: 90 },
-          { name: "centerLon", value: input.centerLon, min: -180, max: 180 },
-        ]);
+        // Validate radius is a valid number
+        const radius = requireNumber(input.radius, "radius");
+
+        const centerLat = requireCoordinate(input.centerLat, "centerLat", -90, 90);
+        const centerLon = requireCoordinate(input.centerLon, "centerLon", -180, 180);
 
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
@@ -242,17 +265,17 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
         // Calculate rough bounding box for pre-filtering
         const radiusKm =
           input.unit === "miles"
-            ? input.radius * 1.60934
+            ? radius * 1.60934
             : input.unit === "meters"
-              ? input.radius / 1000
-              : input.radius;
+              ? radius / 1000
+              : radius;
         const latDelta = radiusKm / KM_PER_DEGREE_LAT;
         const lonDelta =
-          radiusKm / (KM_PER_DEGREE_LAT * Math.cos((input.centerLat * Math.PI) / 180));
+          radiusKm / (KM_PER_DEGREE_LAT * Math.cos((centerLat * Math.PI) / 180));
 
         const sql = `SELECT ${selectCols} FROM ${table}
-                  WHERE ${latColumn} BETWEEN ${input.centerLat - latDelta} AND ${input.centerLat + latDelta}
-                  AND ${lonColumn} BETWEEN ${input.centerLon - lonDelta} AND ${input.centerLon + lonDelta}`;
+                  WHERE ${latColumn} BETWEEN ${centerLat - latDelta} AND ${centerLat + latDelta}
+                  AND ${lonColumn} BETWEEN ${centerLon - lonDelta} AND ${centerLon + lonDelta}`;
 
         const result = await adapter.executeReadQuery(sql);
 
@@ -262,15 +285,15 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
             const lat = Number(row[input.latColumn]);
             const lon = Number(row[input.lonColumn]);
             const distance = haversineDistance(
-              input.centerLat,
-              input.centerLon,
+              centerLat,
+              centerLon,
               lat,
               lon,
               input.unit,
             );
             return { ...row, distance: Math.round(distance * 1000) / 1000 };
           })
-          .filter((r) => r.distance <= input.radius)
+          .filter((r) => r.distance <= radius)
           .sort((a, b) => a.distance - b.distance)
           .slice(0, input.limit);
 
@@ -322,12 +345,10 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const input = GeoBoundingBoxSchema.parse(params);
 
-        validateCoordinates([
-          { name: "minLat", value: input.minLat, min: -90, max: 90 },
-          { name: "maxLat", value: input.maxLat, min: -90, max: 90 },
-          { name: "minLon", value: input.minLon, min: -180, max: 180 },
-          { name: "maxLon", value: input.maxLon, min: -180, max: 180 },
-        ]);
+        const minLat = requireCoordinate(input.minLat, "minLat", -90, 90);
+        const maxLat = requireCoordinate(input.maxLat, "maxLat", -90, 90);
+        const minLon = requireCoordinate(input.minLon, "minLon", -180, 180);
+        const maxLon = requireCoordinate(input.maxLon, "maxLon", -180, 180);
 
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
@@ -345,8 +366,8 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const sql = `SELECT ${selectCols} FROM ${table}
-                  WHERE ${latColumn} BETWEEN ${input.minLat} AND ${input.maxLat}
-                  AND ${lonColumn} BETWEEN ${input.minLon} AND ${input.maxLon}
+                  WHERE ${latColumn} BETWEEN ${minLat} AND ${maxLat}
+                  AND ${lonColumn} BETWEEN ${minLon} AND ${maxLon}
                   LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql);
