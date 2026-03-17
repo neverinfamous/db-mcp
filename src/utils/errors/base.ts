@@ -9,6 +9,18 @@ import type { ErrorCategory, ErrorResponse } from "./categories.js";
 import { findSuggestion } from "./suggestions.js";
 
 /**
+ * Generic error codes that should be auto-refined when findSuggestion
+ * provides a more specific code (e.g., DB_QUERY_FAILED → TABLE_NOT_FOUND).
+ */
+const REFINABLE_CODES = new Set([
+  "DB_QUERY_FAILED",
+  "DB_WRITE_FAILED",
+  "QUERY_ERROR",
+  "RESOURCE_ERROR",
+  "UNKNOWN_ERROR",
+]);
+
+/**
  * Base error class for db-mcp with enhanced diagnostics
  */
 export class DbMcpError extends Error {
@@ -36,14 +48,17 @@ export class DbMcpError extends Error {
   ) {
     super(message, { cause: options?.cause });
     this.name = this.constructor.name;
-    this.code = code;
     this.category = category;
     this.recoverable = options?.recoverable ?? false;
     this.details = options?.details;
 
-    // Auto-detect suggestion if not provided
-    this.suggestion =
-      options?.suggestion ?? findSuggestion(message)?.suggestion;
+    // Auto-detect suggestion and refine generic codes
+    const match = findSuggestion(message);
+    this.suggestion = options?.suggestion ?? match?.suggestion;
+
+    // Prefer the suggestion's specific code over generic category codes
+    this.code =
+      match?.code && REFINABLE_CODES.has(code) ? match.code : code;
 
     // Capture stack trace
     Error.captureStackTrace?.(this, this.constructor);

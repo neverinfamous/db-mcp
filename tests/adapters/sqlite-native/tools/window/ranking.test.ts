@@ -85,6 +85,29 @@ describe("Window Function Tools - Ranking", () => {
         expect(tool.requiredScopes).toContain("read");
       }
     });
+
+    it("should have readOnly annotations on all tools", () => {
+      for (const tool of tools) {
+        expect(
+          tool.annotations,
+          `${tool.name} missing annotations — will be blocked in readonly mode`,
+        ).toBeDefined();
+        expect(
+          tool.annotations?.readOnlyHint,
+          `${tool.name} should have readOnlyHint: true`,
+        ).toBe(true);
+      }
+    });
+
+    it("should have a title in annotations for all tools", () => {
+      for (const tool of tools) {
+        expect(
+          tool.annotations?.title,
+          `${tool.name} missing annotation title`,
+        ).toBeDefined();
+        expect(typeof tool.annotations?.title).toBe("string");
+      }
+    });
   });
 
   describe("sqlite_window_row_number", () => {
