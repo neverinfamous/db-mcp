@@ -49,6 +49,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           return {
             success: false,
             error: "backupPath is required",
+            code: "VALIDATION_ERROR",
             backupPath: "",
           };
         }
@@ -60,6 +61,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           return {
             success: false,
             error: `Backup file not found: ${input.backupPath}`,
+            code: "FILE_NOT_FOUND",
             backupPath: input.backupPath,
           };
         }
@@ -75,6 +77,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           return {
             success: false,
             error: error instanceof Error ? error.message : String(error),
+            code: "ATTACH_FAILED",
             backupPath: input.backupPath,
           };
         }

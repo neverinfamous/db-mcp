@@ -186,6 +186,7 @@ export function createPragmaSettingsTool(
         return {
           success: false,
           error: "Invalid PRAGMA name",
+          code: "VALIDATION_ERROR",
         };
       }
 
@@ -234,6 +235,7 @@ export function createPragmaSettingsTool(
           return {
             success: false,
             error: `Unknown or write-only PRAGMA: '${input.pragma}'`,
+            code: "VALIDATION_ERROR",
           };
         }
         return formatHandlerError(error);
@@ -283,6 +285,7 @@ export function createPragmaTableInfoTool(
             table: input.table,
             columns: [],
             error: `Table '${input.table}' not found or has no columns`,
+            code: "TABLE_NOT_FOUND",
           };
         }
 

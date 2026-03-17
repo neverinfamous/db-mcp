@@ -38,7 +38,9 @@ export function createDropVirtualTableTool(
         if (tableExists && !isVirtualTable) {
           return {
             success: false,
-            message: `'${input.tableName}' is a regular table, not a virtual table. Use sqlite_drop_table instead.`,
+            error: `'${input.tableName}' is a regular table, not a virtual table. Use sqlite_drop_table instead.`,
+            code: "VALIDATION_ERROR",
+            message: "",
           };
         }
 
