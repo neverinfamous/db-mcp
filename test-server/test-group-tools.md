@@ -858,4 +858,4 @@ Only the Haversine-based tools: items 4-7 and code mode. SpatiaLite tools (items
 23. Drop `_mcp_migrations` table: `sqlite_drop_table({table: "_mcp_migrations"})` (writeQuery rejects DROP TABLE)
 24. Drop `temp_migration_test` if still exists: `sqlite_drop_table({table: "temp_migration_test"})`
 25. Verify cleanup via `sqlite_list_tables`
-26. Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration
+26. Attempt to remove all `temp_*` tables. If DROP fails due to a database lock, move on — they are inert and will be cleaned up on next database regeneration

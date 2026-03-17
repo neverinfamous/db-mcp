@@ -32,6 +32,20 @@ const coerceNumber = (val: unknown): unknown =>
       : Number(val)
     : val;
 
+/**
+ * Create a coercer for optional enum params with defaults.
+ * Returns `undefined` for any value NOT in the allowed set,
+ * so `.optional().default()` kicks in.
+ * Prevents raw MCP -32602 for invalid enum values.
+ */
+const coerceEnumValues =
+  (allowed: readonly string[]) =>
+  (val: unknown): unknown =>
+    typeof val === "string" && allowed.includes(val) ? val : undefined;
+
+/** Valid direction values for handler-side validation (required enum). */
+const VALID_DIRECTIONS = ["lag", "lead"] as const;
+
 // Schemas
 const RowNumberSchema = z.object({
   table: z.string().describe("Table name"),
@@ -53,11 +67,10 @@ const RankSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
-  rankType: z
-    .enum(["rank", "dense_rank", "percent_rank"])
-    .optional()
-    .default("rank")
-    .describe("Rank function type"),
+  rankType: z.preprocess(
+    coerceEnumValues(["rank", "dense_rank", "percent_rank"]),
+    z.enum(["rank", "dense_rank", "percent_rank"]).optional().default("rank").describe("Rank function type"),
+  ),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
 });
@@ -67,7 +80,7 @@ const LagLeadSchema = z.object({
   column: z.string().describe("Column to get lag/lead value from"),
   orderBy: z.string().describe("Column(s) to order by"),
   direction: z
-    .enum(["lag", "lead"])
+    .string()
     .describe("LAG (previous) or LEAD (next) row"),
   offset: z.preprocess(
     coerceNumber,
@@ -357,6 +370,17 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = LagLeadSchema.parse(params);
+
+        // Handler-side validation for required enum (z.string() in schema)
+        if (!VALID_DIRECTIONS.includes(input.direction as (typeof VALID_DIRECTIONS)[number])) {
+          return {
+            success: false,
+            error: `Invalid direction '${input.direction}'. Must be one of: ${VALID_DIRECTIONS.join(", ")}`,
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
 
         await validateTableExists(adapter, input.table);
         await validateColumnInTable(adapter, input.table, input.column);
