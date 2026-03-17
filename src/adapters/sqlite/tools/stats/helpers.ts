@@ -19,11 +19,15 @@ const coerceNumber = (val: unknown): unknown =>
     : val;
 
 /**
- * Coerce empty strings to undefined so z.enum().optional().default() works.
- * Prevents raw MCP -32602 when explicit "" bypasses the default path.
+ * Create a coercer for optional enum params with defaults.
+ * Returns `undefined` for any value NOT in the allowed set
+ * (including empty strings), so `.optional().default()` kicks in.
+ * Prevents raw MCP -32602 for invalid enum values.
  */
-const coerceEnum = (val: unknown): unknown =>
-  typeof val === "string" && val.trim() === "" ? undefined : val;
+const coerceEnumValues =
+  (allowed: readonly string[]) =>
+  (val: unknown): unknown =>
+    typeof val === "string" && allowed.includes(val) ? val : undefined;
 
 /**
  * Valid enum values for handler-side validation.
@@ -127,7 +131,7 @@ export const GroupByStatsSchema = z.object({
     .string()
     .describe("Statistic type: 'sum', 'avg', 'min', 'max', or 'count'"),
   whereClause: z.string().optional(),
-  orderBy: z.preprocess(coerceEnum, z.enum(["value", "group"]).optional().default("group")),
+  orderBy: z.preprocess(coerceEnumValues(["value", "group"]), z.enum(["value", "group"]).optional().default("group")),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -161,7 +165,7 @@ export const TopNSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to rank"),
   n: z.preprocess(coerceNumber, z.number().optional().default(10).describe("Number of top values")),
-  orderDirection: z.preprocess(coerceEnum, z.enum(["asc", "desc"]).optional().default("desc")),
+  orderDirection: z.preprocess(coerceEnumValues(["asc", "desc"]), z.enum(["asc", "desc"]).optional().default("desc")),
   whereClause: z.string().optional(),
   selectColumns: z
     .array(z.string())
@@ -195,7 +199,7 @@ export const FrequencySchema = z.object({
 export const OutlierSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column to analyze"),
-  method: z.preprocess(coerceEnum, z.enum(["iqr", "zscore"]).optional().default("iqr")),
+  method: z.preprocess(coerceEnumValues(["iqr", "zscore"]), z.enum(["iqr", "zscore"]).optional().default("iqr")),
   threshold: z.preprocess(
     coerceNumber,
     z.number().optional().describe("IQR multiplier (default 1.5) or Z-score threshold (default 3)"),
