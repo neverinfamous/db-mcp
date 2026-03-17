@@ -78,6 +78,19 @@ const ERROR_SUGGESTIONS: {
     code: "COLUMN_NOT_FOUND",
   },
   {
+    pattern: /no such view[:\s]*(['"]?)(\w+)\1/i,
+    suggestion: "View not found. Run sqlite_list_views to see available views.",
+    category: ErrorCategory.RESOURCE,
+    code: "VIEW_NOT_FOUND",
+  },
+  {
+    pattern: /filename.*does not exist/i,
+    suggestion:
+      "File not found. Verify the absolute path exists and is readable.",
+    category: ErrorCategory.RESOURCE,
+    code: "FILE_NOT_FOUND",
+  },
+  {
     pattern: /table .* already exists/i,
     suggestion:
       "Table already exists. Use CREATE TABLE IF NOT EXISTS or drop the existing table first.",

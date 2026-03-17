@@ -1,6 +1,7 @@
 # Unreleased
 
 ## Added
+
 - **E2E Tests**: Ported 32 HTTP transport e2e tests from memory-journal-mcp covering streaming (raw SSE for GET /mcp and GET /sse), advanced session management (cross-protocol guard, sequential isolation, post-DELETE rejection), rate limiting (429 burst, Retry-After header, health exemption), and OAuth 2.1 discovery (RFC 9728 metadata, scopes, auth gating). Enriched existing health and security specs with timestamp validation, session ID checks, CORS header assertions, and HSTS opt-in testing. Added `startServer()`/`stopServer()` managed child-process lifecycle helpers.
 - **Integration Test Scripts**: Ported `test-instruction-levels.mjs` and `test-tool-annotations.mjs` terminal scripts from memory-journal-mcp to `test-server/`.
 - **MCP Compliance**: Added `READ_ONLY` annotations (`openWorldHint: false`) to 3 built-in server tools (`server_info`, `server_health`, `list_adapters`). Added missing `openWorldHint: false` to `sqlite_execute_code` codemode tool. All 118+ tools now have complete MCP annotations.
@@ -17,6 +18,7 @@
 - **E2E Tests (Resource + Prompt Depth)**: Added 13 gap-closing tests by auditing `test-resources.md` and `test-prompts.md` against existing specs. Resources (R1–R9): schema table count + names, templated reads (`sqlite://table/test_products/schema` + `test_orders`), nonexistent table error, index name assertions (`idx_orders_status`, `idx_products_category`), health backend info, meta PRAGMA fields (`page_size`), views empty array, insights write+read cycle via `sqlite_append_insight`, help keyword assertions ("gotcha", "code mode", "wasm"). Prompts (P1–P4): data-fetching prompts embed real table names (`explain_schema` contains "test_products"), argsSchema on prompts with required args (query_builder ≥3, data_analysis ≥1, explain_schema 0), missing required args graceful handling, deeper content assertions (debug_query reflects submitted SQL, migration reflects change description).
 
 ## Changed
+
 - **Inline Schema Consolidation**: Relocated 7 migration output schemas (`MigrationRecordEntry`, `MigrationInitOutputSchema`, `MigrationRecordOutputSchema`, `MigrationApplyOutputSchema`, `MigrationRollbackOutputSchema`, `MigrationHistoryOutputSchema`, `MigrationStatusOutputSchema`) from `tools/migration/schemas.ts` to centralized `output-schemas/migration.ts` — the last tool group without dedicated output schema files. Original location now re-exports for backward compatibility.
 - **Inline Schema Consolidation**: Extracted 9 inline `outputSchema: z.object()` definitions from introspection tool handlers into centralized `output-schemas/introspection.ts` — `DependencyGraphOutputSchema`, `TopologicalSortOutputSchema`, `CascadeSimulatorOutputSchema`, `SchemaSnapshotOutputSchema`, `ConstraintAnalysisOutputSchema`, `MigrationRisksOutputSchema`, `StorageAnalysisOutputSchema`, `IndexAuditOutputSchema`, `QueryPlanOutputSchema`. All output schemas are now consistently defined in centralized files with named exports — zero inline definitions remain across all tool groups.
 - **Inline Schema Consolidation**: Extracted 8 remaining inline `outputSchema: z.object()` definitions from tool handlers into centralized `output-schemas/` files — `virtual.ts` (7 schemas: `ListVirtualTablesOutputSchema`, `VirtualTableInfoOutputSchema`, `DropVirtualTableOutputSchema`, `CreateCsvTableOutputSchema`, `AnalyzeCsvSchemaOutputSchema`, `CreateRtreeTableOutputSchema`, `CreateSeriesTableOutputSchema`), `text.ts` (1 schema: `TextValidateOutputSchema`), and `stats.ts` (1 schema: `StatsHypothesisOutputSchema`). All output schemas are now consistently defined in centralized files with named exports — zero inline definitions remain.
@@ -40,6 +42,7 @@
 - **HSTS**: Wired `--enable-hsts` CLI flag and `MCP_ENABLE_HSTS` env var to the HTTP transport — previously defined in types but never reachable from the CLI.
 
 ## Security
+
 - **Strict Validation**: Removed `.strict()` from all Zod tool input schemas across all tool groups. `.strict()` maps to `additionalProperties: false` in JSON Schema, which causes the MCP SDK to reject unrecognized keys at the framework boundary before handlers can catch, producing raw `-32602` errors instead of structured responses. Handler-level validation (regex, enum checks) already guards against malformed input.
 - **SQL Injection**: Added strong regex validation to `savepoint` names in the Native SQLite transaction methods to prevent potential arbitrary SQL injection.
 - **CORS Advisory**: Updated `README.md` and `DOCKER_README.md` to explicitly warn about the permissive `["*"]` default CORS property in production HTTP deployments.
@@ -54,12 +57,14 @@
   - `actions/download-artifact` v7 → v8
 
 ### Dependencies
+
 - Bumped `better-sqlite3` from 12.6.2 to 12.8.0
 - Bumped `@types/node` from 25.4.0 to 25.5.0
 - Bumped `@vitest/coverage-v8` from 4.0.18 to 4.1.0
 - Bumped `vitest` from 4.0.18 to 4.1.0
 
 ## Fixed
+
 - **Missing Annotations**: Added `readOnly(...)` MCP annotations to all 6 window function tools (`sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`) — these were the only stats-group tools without `annotations`, causing the code mode readonly guard (fail-closed `isWriteTool()`) to incorrectly block them in `readonly: true` mode despite being pure SELECT queries.
 - **Missing Annotations**: Added `write(...)` MCP annotations to all 7 transaction tools (`sqlite_transaction_begin`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute`) — discovered by the new `tool-annotations.test.ts` invariant test. While the fail-closed `isWriteTool()` guard correctly blocked these in readonly mode (they are write tools), the missing annotations violated the structural invariant and prevented proper tool discoverability.
 - **Output Schema Strictness**: Made domain-specific fields optional in 24 output schemas across `core.ts` (5), `admin.ts` (9), `virtual.ts` (9), and `native.ts` (1) — fields like `rowCount`, `rows`, `tables`, `count`, `columns`, `indexes`, `integrity`, `databases`, `options`, `message`, `durationMs`, `insightCount`, `statementsExecuted` were required but absent from error responses (`{success: false, error: "..."}`), causing raw MCP `-32602` output validation errors on error paths. Discovered by the new `tool-output-schemas.test.ts` invariant test.
@@ -161,3 +166,5 @@
 - **Error Code Refinement**: Fixed `DbMcpError` subclasses (e.g., `QueryError`) always using their generic constructor code (e.g., `DB_QUERY_FAILED`) even when the error message matches a more specific suggestion pattern (e.g., `TABLE_NOT_FOUND`, `COLUMN_NOT_FOUND`). The constructor now auto-refines generic codes (`DB_QUERY_FAILED`, `DB_WRITE_FAILED`, `QUERY_ERROR`, `RESOURCE_ERROR`, `UNKNOWN_ERROR`) to the suggestion's specific code when available. This fixes all vector, stats, and other tools that delegate to `executeReadQuery`/`executeWriteQuery` — they now return `TABLE_NOT_FOUND` instead of `DB_QUERY_FAILED` for missing tables.
 - **Error Code Consistency**: Added missing `code: "DIMENSION_MISMATCH"` to `sqlite_vector_distance` dimension mismatch error — `sqlite_vector_store` and `sqlite_vector_batch_store` already return this code, but `vector_distance` returned a bare `{success: false, error: "..."}` without it.
 - **Error Code Consistency**: Added missing `code: "VECTOR_NOT_FOUND"` to `sqlite_vector_get` not-found error — both `{success: false}` return paths now include a specific error code for programmatic handling.
+- **Error Code Refinement**: Added `VIEW_NOT_FOUND` and `FILE_NOT_FOUND` error suggestion patterns — `sqlite_drop_view` on a nonexistent view and `sqlite_create_csv_table` on a nonexistent file now return specific codes instead of generic `DB_WRITE_FAILED`. Both patterns also provide actionable suggestions.
+- **Error Field Consistency**: Added missing `code: "VALIDATION_ERROR"` and `category: "validation"` to `sqlite_create_csv_table` and `sqlite_analyze_csv_schema` relative path rejection responses — previously returned bare `{success: false, error: "..."}` without structured error metadata.

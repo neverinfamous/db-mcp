@@ -1,6 +1,9 @@
 import * as path from "node:path";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
@@ -36,6 +39,8 @@ export function createAnalyzeCsvSchemaTool(
         return {
           success: false,
           error: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
+          code: "VALIDATION_ERROR",
+          category: "validation",
           hasHeader: false,
           rowCount: 0,
           columns: [],
