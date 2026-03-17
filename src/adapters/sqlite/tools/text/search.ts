@@ -12,7 +12,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   FuzzySearchOutputSchema,
   SoundexOutputSchema,
@@ -28,6 +28,7 @@ import {
   FuzzyMatchSchema,
   PhoneticMatchSchema,
   AdvancedSearchSchema,
+  VALID_PHONETIC_ALGORITHMS,
   validateColumnExists,
 } from "./helpers.js";
 
@@ -130,6 +131,14 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = PhoneticMatchSchema.parse(params);
+
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        if (input.algorithm && !VALID_PHONETIC_ALGORITHMS.includes(input.algorithm as typeof VALID_PHONETIC_ALGORITHMS[number])) {
+          throw new ValidationError(
+            `Invalid algorithm '${input.algorithm}'. Must be one of: ${VALID_PHONETIC_ALGORITHMS.join(", ")}`,
+          );
+        }
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

@@ -26,6 +26,7 @@ import {
   TextCaseSchema,
   TextSubstringSchema,
   VALID_TEXT_CASE_MODES,
+  VALID_TRIM_MODES,
   validateColumnExists,
   validateColumnsExist,
 } from "./helpers.js";
@@ -129,6 +130,14 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextTrimSchema.parse(params);
+
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        if (input.mode && !VALID_TRIM_MODES.includes(input.mode as typeof VALID_TRIM_MODES[number])) {
+          throw new ValidationError(
+            `Invalid mode '${input.mode}'. Must be one of: ${VALID_TRIM_MODES.join(", ")}`,
+          );
+        }
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

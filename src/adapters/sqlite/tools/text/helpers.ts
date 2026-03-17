@@ -16,6 +16,7 @@ export const VALID_TEXT_CASE_MODES = ["upper", "lower"] as const;
 export const VALID_NORMALIZE_MODES = ["nfc", "nfd", "nfkc", "nfkd", "strip_accents"] as const;
 export const VALID_VALIDATE_PATTERNS = ["email", "phone", "url", "uuid", "ipv4", "custom"] as const;
 export const VALID_PHONETIC_ALGORITHMS = ["soundex", "metaphone"] as const;
+export const VALID_TRIM_MODES = ["both", "left", "right"] as const;
 
 // Re-export validateColumnExists/validateColumnsExist from shared utility
 export {
@@ -33,13 +34,6 @@ const coerceNumber = (val: unknown): unknown =>
       ? undefined
       : Number(val)
     : val;
-
-/**
- * Coerce empty strings to undefined so z.enum().optional().default() works.
- * Prevents raw MCP -32602 when explicit "" bypasses the default path.
- */
-const coerceEnum = (val: unknown): unknown =>
-  typeof val === "string" && val.trim() === "" ? undefined : val;
 
 // Text tool schemas
 export const RegexExtractSchema = z.object({
@@ -93,7 +87,7 @@ export const TextReplaceSchema = z.object({
 export const TextTrimSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to trim"),
-  mode: z.preprocess(coerceEnum, z.enum(["both", "left", "right"]).optional().default("both")),
+  mode: z.string().optional().default("both").describe("Trim mode: 'both', 'left', or 'right'"),
   whereClause: z.string().optional(),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
@@ -148,10 +142,7 @@ export const PhoneticMatchSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to search"),
   search: z.string().describe("Search string"),
-  algorithm: z.preprocess(
-    (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
-    z.enum(["soundex", "metaphone"]).optional().default("soundex"),
-  ),
+  algorithm: z.string().optional().default("soundex").describe("Phonetic algorithm: 'soundex' or 'metaphone'"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   includeRowData: z
     .boolean()
