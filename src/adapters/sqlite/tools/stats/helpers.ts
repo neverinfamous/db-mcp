@@ -18,6 +18,20 @@ const coerceNumber = (val: unknown): unknown =>
       : Number(val)
     : val;
 
+/**
+ * Coerce empty strings to undefined so z.enum().optional().default() works.
+ * Prevents raw MCP -32602 when explicit "" bypasses the default path.
+ */
+const coerceEnum = (val: unknown): unknown =>
+  typeof val === "string" && val.trim() === "" ? undefined : val;
+
+/**
+ * Valid enum values for handler-side validation.
+ * Required enums use z.string() in schema + handler validation against these.
+ */
+export const VALID_STAT_TYPES = ["sum", "avg", "min", "max", "count"] as const;
+export const VALID_TEST_TYPES = ["ttest_one", "ttest_two", "chi_square"] as const;
+
 // Re-export validateColumnExists from shared utility so existing consumers keep working
 export { validateColumnExists } from "../column-validation.js";
 
@@ -110,10 +124,10 @@ export const GroupByStatsSchema = z.object({
   valueColumn: z.string().describe("Column for statistical value"),
   groupByColumn: z.string().describe("Column to group by"),
   stat: z
-    .enum(["sum", "avg", "min", "max", "count"])
-    .describe("Statistic type"),
+    .string()
+    .describe("Statistic type: 'sum', 'avg', 'min', 'max', or 'count'"),
   whereClause: z.string().optional(),
-  orderBy: z.enum(["value", "group"]).optional().default("group"),
+  orderBy: z.preprocess(coerceEnum, z.enum(["value", "group"]).optional().default("group")),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -147,7 +161,7 @@ export const TopNSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to rank"),
   n: z.preprocess(coerceNumber, z.number().optional().default(10).describe("Number of top values")),
-  orderDirection: z.enum(["asc", "desc"]).optional().default("desc"),
+  orderDirection: z.preprocess(coerceEnum, z.enum(["asc", "desc"]).optional().default("desc")),
   whereClause: z.string().optional(),
   selectColumns: z
     .array(z.string())
@@ -181,7 +195,7 @@ export const FrequencySchema = z.object({
 export const OutlierSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column to analyze"),
-  method: z.enum(["iqr", "zscore"]).optional().default("iqr"),
+  method: z.preprocess(coerceEnum, z.enum(["iqr", "zscore"]).optional().default("iqr")),
   threshold: z.preprocess(
     coerceNumber,
     z.number().optional().describe("IQR multiplier (default 1.5) or Z-score threshold (default 3)"),
@@ -209,7 +223,7 @@ export const RegressionSchema = z.object({
 
 export const HypothesisSchema = z.object({
   table: z.string().describe("Table name"),
-  testType: z.enum(["ttest_one", "ttest_two", "chi_square"]),
+  testType: z.string().describe("Test type: 'ttest_one', 'ttest_two', or 'chi_square'"),
   column: z.string().describe("Primary column for analysis"),
   column2: z
     .string()

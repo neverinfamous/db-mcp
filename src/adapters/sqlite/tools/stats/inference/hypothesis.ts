@@ -2,8 +2,8 @@ import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { validateWhereClause, sanitizeIdentifier } from "../../../../../utils/index.js";
-import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../../../utils/errors/index.js";
-import { validateColumnExists, validateNumericColumn, HypothesisSchema } from "../helpers.js";
+import { formatHandlerError, DbMcpError, ErrorCategory, ValidationError } from "../../../../../utils/errors/index.js";
+import { validateColumnExists, validateNumericColumn, VALID_TEST_TYPES, HypothesisSchema } from "../helpers.js";
 import { StatsHypothesisOutputSchema } from "../../../output-schemas/index.js";
 import { tDistPValue } from "../math-helpers.js";
 
@@ -24,6 +24,13 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
       const input = HypothesisSchema.parse(params);
 
       try {
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        if (!input.testType || !VALID_TEST_TYPES.includes(input.testType as typeof VALID_TEST_TYPES[number])) {
+          throw new ValidationError(
+            `Invalid testType '${input.testType ?? ""}'. Must be one of: ${VALID_TEST_TYPES.join(", ")}`,
+          );
+        }
+
         await validateColumnExists(adapter, input.table, input.column);
 
         sanitizeIdentifier(input.table);

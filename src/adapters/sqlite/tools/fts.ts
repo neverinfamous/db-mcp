@@ -75,6 +75,13 @@ function buildFts5SearchUnavailableError(): {
   };
 }
 
+/**
+ * Coerce empty strings to undefined so z.enum().optional().default() works.
+ * Prevents raw MCP -32602 when explicit "" bypasses the default path.
+ */
+const coerceEnum = (val: unknown): unknown =>
+  typeof val === "string" && val.trim() === "" ? undefined : val;
+
 // FTS schemas
 const FtsCreateSchema = z.object({
   tableName: z.string().describe("Name of the FTS table to create"),
@@ -84,10 +91,10 @@ const FtsCreateSchema = z.object({
     .string()
     .optional()
     .describe("Content table for external content FTS"),
-  tokenizer: z
-    .enum(["unicode61", "ascii", "porter"])
-    .optional()
-    .default("unicode61"),
+  tokenizer: z.preprocess(
+    coerceEnum,
+    z.enum(["unicode61", "ascii", "porter"]).optional().default("unicode61"),
+  ),
   createTriggers: z
     .boolean()
     .optional()
@@ -122,7 +129,7 @@ const FtsRebuildSchema = z.object({
 const FtsMatchInfoSchema = z.object({
   table: z.string().describe("FTS table name"),
   query: z.string().describe("Full-text search query"),
-  format: z.enum(["bm25", "rank"]).optional().default("bm25"),
+  format: z.preprocess(coerceEnum, z.enum(["bm25", "rank"]).optional().default("bm25")),
 });
 
 /**

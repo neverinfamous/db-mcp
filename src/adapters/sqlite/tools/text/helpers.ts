@@ -34,6 +34,13 @@ const coerceNumber = (val: unknown): unknown =>
       : Number(val)
     : val;
 
+/**
+ * Coerce empty strings to undefined so z.enum().optional().default() works.
+ * Prevents raw MCP -32602 when explicit "" bypasses the default path.
+ */
+const coerceEnum = (val: unknown): unknown =>
+  typeof val === "string" && val.trim() === "" ? undefined : val;
+
 // Text tool schemas
 export const RegexExtractSchema = z.object({
   table: z.string().describe("Table name"),
@@ -86,7 +93,7 @@ export const TextReplaceSchema = z.object({
 export const TextTrimSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to trim"),
-  mode: z.enum(["both", "left", "right"]).optional().default("both"),
+  mode: z.preprocess(coerceEnum, z.enum(["both", "left", "right"]).optional().default("both")),
   whereClause: z.string().optional(),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });

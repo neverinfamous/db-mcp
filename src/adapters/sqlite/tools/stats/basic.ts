@@ -11,7 +11,7 @@ import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ResourceNotFoundError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   StatsBasicOutputSchema,
   StatsCountOutputSchema,
@@ -22,6 +22,7 @@ import {
 import {
   validateColumnExists,
   validateNumericColumn,
+  VALID_STAT_TYPES,
   BasicStatsSchema,
   CountSchema,
   GroupByStatsSchema,
@@ -186,6 +187,13 @@ export function createGroupByStatsTool(
       const input = GroupByStatsSchema.parse(params);
 
       try {
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        if (!input.stat || !VALID_STAT_TYPES.includes(input.stat as typeof VALID_STAT_TYPES[number])) {
+          throw new ValidationError(
+            `Invalid stat '${input.stat ?? ""}'. Must be one of: ${VALID_STAT_TYPES.join(", ")}`,
+          );
+        }
+
         await validateColumnExists(adapter, input.table, input.valueColumn);
         await validateColumnExists(adapter, input.table, input.groupByColumn);
 
