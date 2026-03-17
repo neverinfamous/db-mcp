@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../utils/errors/index.js";
+import { write } from "../../../utils/annotations.js";
 import {
   TransactionBeginOutputSchema,
   TransactionCommitOutputSchema,
@@ -82,6 +83,7 @@ function createBeginTransactionTool(
     group: "admin",
     inputSchema: BeginTransactionSchema,
     outputSchema: TransactionBeginOutputSchema,
+    annotations: write("Begin Transaction"),
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -115,6 +117,7 @@ function createCommitTransactionTool(
     group: "admin",
     inputSchema: z.object({}),
     outputSchema: TransactionCommitOutputSchema,
+    annotations: write("Commit Transaction"),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {
@@ -143,6 +146,7 @@ function createRollbackTransactionTool(
     group: "admin",
     outputSchema: TransactionRollbackOutputSchema,
     inputSchema: z.object({}),
+    annotations: write("Rollback Transaction"),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
       try {
@@ -170,6 +174,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     group: "admin",
     outputSchema: TransactionSavepointOutputSchema,
     inputSchema: SavepointSchema,
+    annotations: write("Create Savepoint"),
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
       try {
@@ -209,6 +214,7 @@ function createReleaseSavepointTool(
     group: "admin",
     inputSchema: SavepointSchema,
     outputSchema: TransactionReleaseOutputSchema,
+    annotations: write("Release Savepoint"),
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
       try {
@@ -248,6 +254,7 @@ function createRollbackToSavepointTool(
     group: "admin",
     inputSchema: SavepointSchema,
     outputSchema: TransactionRollbackToOutputSchema,
+    annotations: write("Rollback to Savepoint"),
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
       try {
@@ -287,6 +294,7 @@ function createExecuteInTransactionTool(
     group: "admin",
     outputSchema: TransactionExecuteOutputSchema,
     inputSchema: ExecuteInTransactionSchema,
+    annotations: write("Execute in Transaction"),
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
       let input;

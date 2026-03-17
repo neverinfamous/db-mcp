@@ -230,8 +230,10 @@ test.describe("Code Mode: Readonly", () => {
 
   // Window function tools in readonly — these were previously blocked
   // by the fail-closed isWriteTool() guard due to missing annotations.
+  // Window functions are native-only (not available in WASM).
 
   test("window row_number works in readonly", async ({}, testInfo) => {
+    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -247,6 +249,7 @@ test.describe("Code Mode: Readonly", () => {
   });
 
   test("window rank works in readonly", async ({}, testInfo) => {
+    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -262,6 +265,7 @@ test.describe("Code Mode: Readonly", () => {
   });
 
   test("window lag_lead works in readonly", async ({}, testInfo) => {
+    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -277,6 +281,7 @@ test.describe("Code Mode: Readonly", () => {
   });
 
   test("window running_total works in readonly", async ({}, testInfo) => {
+    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -292,6 +297,7 @@ test.describe("Code Mode: Readonly", () => {
   });
 
   test("window moving_avg works in readonly", async ({}, testInfo) => {
+    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -307,6 +313,7 @@ test.describe("Code Mode: Readonly", () => {
   });
 
   test("window ntile works in readonly", async ({}, testInfo) => {
+    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
