@@ -1,8 +1,12 @@
-# Advanced Stress Test — db-mcp (SQLite) — Part 1
+# Advanced Stress Test — db-mcp (SQLite)
+
+**Test Native Mode Only. Ignore WASM content**
 
 **Step 1:** Read `server-instructions.ts` and `src/constants/server-instructions/gotchas.md` using `view_file` (not grep or search) to understand documented behaviors, edge cases, and response structures.
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode), not scripts/terminal.
+
+**Note**: If your attempt to cleanup after testing fails, it's because the database is locked. Move on. I will drop them.
 
 ## Code Mode Execution
 
@@ -54,7 +58,7 @@ When rating errors, flag any generic code (`RESOURCE_ERROR`, `UNKNOWN_ERROR`) th
 
 ## Post-Test Procedures
 
-At the end, confirm cleanup of all `stress_*` objects, then **fix every finding** — not just ❌ Fails, but also ⚠️ Issues (behavioral improvements, missing warnings, error code consistency) and 📦 Payload problems (responses that should be truncated or offer a `limit` param). Create a plan covering all findings; if the plan does not require important decision choices, proceed with implementation. When complete, run the full test suite and fix any broken tests, run lint and typecheck and fix any issues, run prettier, update the changelog (being careful not to create duplicate headers), and commit without pushing. Then re-test your fixes with direct MCP calls.
+At the end, confirm cleanup of all `stress_*` objects, then **fix every finding** — not just ❌ Fails, but also ⚠️ Issues (behavioral improvements, missing warnings, error code consistency) and 📦 Payload problems (responses that should be truncated or offer a `limit` param). Create a plan covering all finding architecturally consistent with other tools/tool groups. If the plan does not require important decision choices, proceed with implementation. When complete, update the changelog (being careful not to create duplicate headers), and commit without pushing. Then re-test your fixes with direct MCP calls.
 
 ---
 
@@ -145,7 +149,7 @@ For each test, verify the error returns a **structured response** (`{success: fa
 
 ### Final Cleanup
 
-Drop all `stress_*` tables created during testing. Confirm `test_products` row count is still 16 (no pollution).
+Drop all `stress_*` tables created during testing and confirm `test_products` row count is still 16 (no pollution).
 
 ---
 

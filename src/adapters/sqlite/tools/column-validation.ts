@@ -11,15 +11,13 @@ import type { SqliteAdapter } from "../sqlite-adapter.js";
 import { ResourceNotFoundError } from "../../../utils/errors/index.js";
 
 /**
- * Validate that a column exists in a table.
- * Prevents silent success when SQLite treats quoted nonexistent identifiers as string literals.
+ * Validate that a table (or view) exists.
+ * Throws TABLE_NOT_FOUND if not found in sqlite_master.
  */
-export async function validateColumnExists(
+export async function validateTableExists(
   adapter: SqliteAdapter,
   tableName: string,
-  columnName: string,
 ): Promise<void> {
-  // First check if the table exists
   const tableCheck = await adapter.executeReadQuery(
     `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${tableName.replace(/'/g, "''")}'`,
   );
@@ -35,6 +33,19 @@ export async function validateColumnExists(
       },
     );
   }
+}
+
+/**
+ * Validate that a column exists in a table.
+ * Prevents silent success when SQLite treats quoted nonexistent identifiers as string literals.
+ */
+export async function validateColumnExists(
+  adapter: SqliteAdapter,
+  tableName: string,
+  columnName: string,
+): Promise<void> {
+  // First check if the table exists
+  await validateTableExists(adapter, tableName);
 
   // Then check if the column exists
   const result = await adapter.executeReadQuery(

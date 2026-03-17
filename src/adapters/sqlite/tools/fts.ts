@@ -11,6 +11,7 @@ import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
 import { formatHandlerError } from "../../../utils/errors/index.js";
+import { validateTableExists } from "./column-validation.js";
 import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
@@ -289,8 +290,9 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
           return buildFts5SearchUnavailableError();
         }
 
-        // Validate FTS table name
+        // Validate FTS table name and existence
         sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
 
         let selectClause = "*";
         if (input.highlight) {
@@ -363,8 +365,9 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
           return buildFts5UnavailableError(input.table);
         }
 
-        // Validate FTS table name
+        // Validate FTS table name and existence
         sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
 
         // Rebuild = drop shadow tables and recreate
         const sql = `INSERT INTO "${input.table}"("${input.table}") VALUES('rebuild')`;
@@ -410,6 +413,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Validate FTS table name
         sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
 
         // Use single quotes for FTS5 MATCH strings
         const queryEscaped = input.query.replace(/'/g, "''");
