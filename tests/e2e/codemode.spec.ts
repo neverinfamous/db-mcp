@@ -231,98 +231,130 @@ test.describe("Code Mode: Readonly", () => {
   // Window function tools in readonly — these were previously blocked
   // by the fail-closed isWriteTool() guard due to missing annotations.
   // Window functions are native-only (not available in WASM).
+  // On WASM: assert the function is unavailable (expected behavior).
+  // On Native: assert readonly execution succeeds.
 
-  test("window row_number works in readonly", async ({}, testInfo) => {
-    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
+  test("window row_number works in readonly (native) or unavailable (WASM)", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.stats.windowRowNumber({ table: "test_products", orderBy: "price DESC" });`,
         readonly: true,
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.rowCount).toBeGreaterThan(0);
+      if (isWasm) {
+        expect(p.success).toBe(false);
+        expect(String(p.error)).toContain("not a function");
+      } else {
+        expectSuccess(p);
+        const result = p.result as Record<string, unknown>;
+        expect(result.rowCount).toBeGreaterThan(0);
+      }
     } finally {
       await client.close();
     }
   });
 
-  test("window rank works in readonly", async ({}, testInfo) => {
-    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
+  test("window rank works in readonly (native) or unavailable (WASM)", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.stats.windowRank({ table: "test_products", orderBy: "price DESC" });`,
         readonly: true,
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.rowCount).toBeGreaterThan(0);
+      if (isWasm) {
+        expect(p.success).toBe(false);
+        expect(String(p.error)).toContain("not a function");
+      } else {
+        expectSuccess(p);
+        const result = p.result as Record<string, unknown>;
+        expect(result.rowCount).toBeGreaterThan(0);
+      }
     } finally {
       await client.close();
     }
   });
 
-  test("window lag_lead works in readonly", async ({}, testInfo) => {
-    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
+  test("window lag_lead works in readonly (native) or unavailable (WASM)", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.stats.windowLagLead({ table: "test_products", column: "price", orderBy: "id", direction: "lag" });`,
         readonly: true,
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.rowCount).toBeGreaterThan(0);
+      if (isWasm) {
+        expect(p.success).toBe(false);
+        expect(String(p.error)).toContain("not a function");
+      } else {
+        expectSuccess(p);
+        const result = p.result as Record<string, unknown>;
+        expect(result.rowCount).toBeGreaterThan(0);
+      }
     } finally {
       await client.close();
     }
   });
 
-  test("window running_total works in readonly", async ({}, testInfo) => {
-    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
+  test("window running_total works in readonly (native) or unavailable (WASM)", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.stats.windowRunningTotal({ table: "test_products", column: "price", orderBy: "id" });`,
         readonly: true,
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.rowCount).toBeGreaterThan(0);
+      if (isWasm) {
+        expect(p.success).toBe(false);
+        expect(String(p.error)).toContain("not a function");
+      } else {
+        expectSuccess(p);
+        const result = p.result as Record<string, unknown>;
+        expect(result.rowCount).toBeGreaterThan(0);
+      }
     } finally {
       await client.close();
     }
   });
 
-  test("window moving_avg works in readonly", async ({}, testInfo) => {
-    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
+  test("window moving_avg works in readonly (native) or unavailable (WASM)", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.stats.windowMovingAvg({ table: "test_products", column: "price", orderBy: "id", windowSize: 3 });`,
         readonly: true,
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.rowCount).toBeGreaterThan(0);
+      if (isWasm) {
+        expect(p.success).toBe(false);
+        expect(String(p.error)).toContain("not a function");
+      } else {
+        expectSuccess(p);
+        const result = p.result as Record<string, unknown>;
+        expect(result.rowCount).toBeGreaterThan(0);
+      }
     } finally {
       await client.close();
     }
   });
 
-  test("window ntile works in readonly", async ({}, testInfo) => {
-    test.skip(testInfo.project.name === "wasm", "Window functions are native-only");
+  test("window ntile works in readonly (native) or unavailable (WASM)", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.stats.windowNtile({ table: "test_products", orderBy: "price DESC", buckets: 4 });`,
         readonly: true,
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.rowCount).toBeGreaterThan(0);
+      if (isWasm) {
+        expect(p.success).toBe(false);
+        expect(String(p.error)).toContain("not a function");
+      } else {
+        expectSuccess(p);
+        const result = p.result as Record<string, unknown>;
+        expect(result.rowCount).toBeGreaterThan(0);
+      }
     } finally {
       await client.close();
     }

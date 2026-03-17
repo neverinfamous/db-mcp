@@ -19,8 +19,8 @@ const ViewEntrySchema = z.object({
 export const ListViewsOutputSchema = z
   .object({
     success: z.boolean(),
-    count: z.number(),
-    views: z.array(ViewEntrySchema),
+    count: z.number().optional(),
+    views: z.array(ViewEntrySchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -30,8 +30,8 @@ export const ListViewsOutputSchema = z
 export const GenerateSeriesOutputSchema = z
   .object({
     success: z.boolean(),
-    count: z.number(),
-    values: z.array(z.number()),
+    count: z.number().optional(),
+    values: z.array(z.number()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -41,14 +41,14 @@ export const GenerateSeriesOutputSchema = z
 export const ListVirtualTablesOutputSchema = z
   .object({
     success: z.boolean(),
-    count: z.number(),
+    count: z.number().optional(),
     virtualTables: z.array(
       z.object({
         name: z.string(),
         module: z.string(),
         sql: z.string(),
       }),
-    ),
+    ).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -58,8 +58,8 @@ export const ListVirtualTablesOutputSchema = z
 export const VirtualTableInfoOutputSchema = z
   .object({
     success: z.boolean(),
-    name: z.string(),
-    module: z.string(),
+    name: z.string().optional(),
+    module: z.string().optional(),
     moduleAvailable: z.boolean().optional(),
     columns: z
       .array(
@@ -69,7 +69,7 @@ export const VirtualTableInfoOutputSchema = z
         }),
       )
       .optional(),
-    sql: z.string(),
+    sql: z.string().optional(),
     note: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -80,7 +80,7 @@ export const VirtualTableInfoOutputSchema = z
 export const DropVirtualTableOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
+    message: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -90,9 +90,9 @@ export const DropVirtualTableOutputSchema = z
 export const CreateCsvTableOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    sql: z.string(),
-    columns: z.array(z.string()),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+    columns: z.array(z.string()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -103,8 +103,8 @@ export const AnalyzeCsvSchemaOutputSchema = z
   .object({
     success: z.boolean(),
     message: z.string().optional(),
-    hasHeader: z.boolean(),
-    rowCount: z.number(),
+    hasHeader: z.boolean().optional(),
+    rowCount: z.number().optional(),
     columns: z.array(
       z.object({
         name: z.string(),
@@ -112,7 +112,7 @@ export const AnalyzeCsvSchemaOutputSchema = z
         nullCount: z.number(),
         sampleValues: z.array(z.string()),
       }),
-    ),
+    ).optional(),
     wasmLimitation: z.boolean().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -123,9 +123,9 @@ export const AnalyzeCsvSchemaOutputSchema = z
 export const CreateRtreeTableOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    sql: z.string(),
-    columns: z.array(z.string()),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+    columns: z.array(z.string()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -135,7 +135,7 @@ export const CreateRtreeTableOutputSchema = z
 export const CreateSeriesTableOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    rowCount: z.number(),
+    message: z.string().optional(),
+    rowCount: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);

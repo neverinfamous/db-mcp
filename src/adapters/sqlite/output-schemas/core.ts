@@ -12,8 +12,8 @@ import { ErrorFieldsMixin } from "./error-mixin.js";
 export const ReadQueryOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number(),
-    rows: z.array(RowRecordSchema),
+    rowCount: z.number().optional(),
+    rows: z.array(RowRecordSchema).optional(),
     executionTimeMs: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -24,7 +24,7 @@ export const ReadQueryOutputSchema = z
 export const WriteQueryOutputSchema = z
   .object({
     success: z.boolean(),
-    rowsAffected: z.number(),
+    rowsAffected: z.number().optional(),
     executionTimeMs: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -56,8 +56,8 @@ const TableEntrySchema = z.object({
 export const ListTablesOutputSchema = z
   .object({
     success: z.boolean(),
-    count: z.number(),
-    tables: z.array(TableEntrySchema),
+    count: z.number().optional(),
+    tables: z.array(TableEntrySchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -78,9 +78,9 @@ const ColumnInfoSchema = z.object({
 export const DescribeTableOutputSchema = z
   .object({
     success: z.boolean(),
-    table: z.string(),
+    table: z.string().optional(),
     rowCount: z.number().optional(),
-    columns: z.array(ColumnInfoSchema),
+    columns: z.array(ColumnInfoSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -110,8 +110,8 @@ const IndexEntrySchema = z.object({
 export const GetIndexesOutputSchema = z
   .object({
     success: z.boolean(),
-    count: z.number(),
-    indexes: z.array(IndexEntrySchema),
+    count: z.number().optional(),
+    indexes: z.array(IndexEntrySchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

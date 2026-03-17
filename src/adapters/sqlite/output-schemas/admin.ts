@@ -11,7 +11,7 @@ import { ErrorFieldsMixin } from "./error-mixin.js";
 export const VacuumOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
+    message: z.string().optional(),
     durationMs: z.number().optional(),
     wasmLimitation: z.boolean().optional(),
     sizeChange: z
@@ -57,7 +57,7 @@ export const AnalyzeOutputSchema = z
 export const OptimizeOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
+    message: z.string().optional(),
     operations: z.array(z.string()).optional(),
     durationMs: z.number().optional(),
   })
@@ -69,8 +69,8 @@ export const OptimizeOutputSchema = z
 export const IntegrityCheckOutputSchema = z
   .object({
     success: z.boolean(),
-    integrity: z.enum(["ok", "errors_found"]),
-    errorCount: z.number(),
+    integrity: z.enum(["ok", "errors_found"]).optional(),
+    errorCount: z.number().optional(),
     messages: z.array(z.string()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -132,7 +132,7 @@ const IndexStatsEntrySchema = z.object({
 export const IndexStatsOutputSchema = z
   .object({
     success: z.boolean(),
-    indexes: z.array(IndexStatsEntrySchema),
+    indexes: z.array(IndexStatsEntrySchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -142,7 +142,7 @@ export const IndexStatsOutputSchema = z
 export const PragmaCompileOptionsOutputSchema = z
   .object({
     success: z.boolean(),
-    options: z.array(z.string()),
+    options: z.array(z.string()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -161,7 +161,7 @@ const DatabaseListEntrySchema = z.object({
 export const PragmaDatabaseListOutputSchema = z
   .object({
     success: z.boolean(),
-    databases: z.array(DatabaseListEntrySchema),
+    databases: z.array(DatabaseListEntrySchema).optional(),
     configuredPath: z.string().optional(),
     note: z.string().optional(),
   })
@@ -173,8 +173,8 @@ export const PragmaDatabaseListOutputSchema = z
 export const PragmaOptimizeOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    durationMs: z.number(),
+    message: z.string().optional(),
+    durationMs: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -209,8 +209,8 @@ const PragmaTableInfoColumnSchema = z.object({
 export const PragmaTableInfoOutputSchema = z
   .object({
     success: z.boolean(),
-    table: z.string(),
-    columns: z.array(PragmaTableInfoColumnSchema),
+    table: z.string().optional(),
+    columns: z.array(PragmaTableInfoColumnSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -220,8 +220,8 @@ export const PragmaTableInfoOutputSchema = z
 export const AppendInsightOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    insightCount: z.number(),
+    message: z.string().optional(),
+    insightCount: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

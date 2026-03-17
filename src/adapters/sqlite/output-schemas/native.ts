@@ -82,8 +82,8 @@ export const TransactionRollbackToOutputSchema = z
 export const TransactionExecuteOutputSchema = z
   .object({
     success: z.boolean(),
-    message: z.string(),
-    statementsExecuted: z.number(),
+    message: z.string().optional(),
+    statementsExecuted: z.number().optional(),
     results: z.array(z.unknown()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
