@@ -13,6 +13,7 @@ export const VacuumOutputSchema = z
     success: z.boolean(),
     message: z.string(),
     durationMs: z.number().optional(),
+    wasmLimitation: z.boolean().optional(),
     sizeChange: z
       .object({
         before: z.number(),

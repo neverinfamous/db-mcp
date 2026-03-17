@@ -215,6 +215,21 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
       }
       const progress = buildProgressContext(context);
 
+      // VACUUM INTO requires file system access — not available in WASM
+      if (input.into && !adapter.isNativeBackend()) {
+        return {
+          success: false,
+          error:
+            "VACUUM INTO not available: file system access is not supported in WASM mode.",
+          code: "VALIDATION_ERROR" as const,
+          category: "validation" as const,
+          recoverable: false,
+          wasmLimitation: true,
+          message: "",
+          durationMs: 0,
+        };
+      }
+
       // Phase 1: Starting vacuum
       await sendProgress(progress, 1, 2, "Starting vacuum operation...");
 
@@ -225,20 +240,28 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
         sql = `VACUUM INTO '${escapedPath}'`;
       }
 
-      const start = Date.now();
-      await adapter.executeQuery(sql);
-      const duration = Date.now() - start;
+      try {
+        const start = Date.now();
+        await adapter.executeQuery(sql);
+        const duration = Date.now() - start;
 
-      // Phase 2: Complete
-      await sendProgress(progress, 2, 2, "Vacuum complete");
+        // Phase 2: Complete
+        await sendProgress(progress, 2, 2, "Vacuum complete");
 
-      return {
-        success: true,
-        message: input.into
-          ? `Database vacuumed into '${input.into}'`
-          : "Database vacuumed",
-        durationMs: duration,
-      };
+        return {
+          success: true,
+          message: input.into
+            ? `Database vacuumed into '${input.into}'`
+            : "Database vacuumed",
+          durationMs: duration,
+        };
+      } catch (error) {
+        return {
+          ...formatHandlerError(error),
+          message: "",
+          durationMs: 0,
+        };
+      }
     },
   };
 }
