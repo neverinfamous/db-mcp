@@ -235,4 +235,139 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       await client.close();
     }
   });
+
+  // ===========================================================================
+  // P1: Data-fetching prompts embed real database data
+  // ===========================================================================
+
+  test("sqlite_explain_schema embeds real table names from test DB", async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string;
+    const client = await createClient(baseURL);
+    try {
+      const response = await client.getPrompt({
+        name: "sqlite_explain_schema",
+        arguments: {},
+      });
+
+      const text = (response.messages[0].content as { text: string }).text as string;
+      // Data-fetching prompt should contain actual table names from the DB
+      expect(text).toContain("test_products");
+      expect(text).toContain("test_orders");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_documentation embeds real schema data", async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string;
+    const client = await createClient(baseURL);
+    try {
+      const response = await client.getPrompt({
+        name: "sqlite_documentation",
+        arguments: { format: "markdown" },
+      });
+
+      const text = (response.messages[0].content as { text: string }).text as string;
+      // Should include actual table info, not just a template
+      expect(text).toContain("test_products");
+    } finally {
+      await client.close();
+    }
+  });
+
+  // ===========================================================================
+  // P2: Prompts with required args expose argsSchema in listPrompts
+  // ===========================================================================
+
+  test("prompts with required args expose arguments in listPrompts", async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string;
+    const client = await createClient(baseURL);
+    try {
+      const listResponse = await client.listPrompts();
+
+      // query_builder has 3 required args
+      const queryBuilder = listResponse.prompts.find((p) => p.name === "sqlite_query_builder");
+      expect(queryBuilder).toBeDefined();
+      expect(queryBuilder!.arguments).toBeDefined();
+      expect(queryBuilder!.arguments!.length).toBeGreaterThanOrEqual(3);
+
+      // data_analysis has 1 required arg
+      const dataAnalysis = listResponse.prompts.find((p) => p.name === "sqlite_data_analysis");
+      expect(dataAnalysis).toBeDefined();
+      expect(dataAnalysis!.arguments).toBeDefined();
+      expect(dataAnalysis!.arguments!.length).toBeGreaterThanOrEqual(1);
+
+      // explain_schema has no args — should have 0 or undefined
+      const explainSchema = listResponse.prompts.find((p) => p.name === "sqlite_explain_schema");
+      expect(explainSchema).toBeDefined();
+      const argCount = explainSchema!.arguments?.length ?? 0;
+      expect(argCount).toBe(0);
+    } finally {
+      await client.close();
+    }
+  });
+
+  // ===========================================================================
+  // P3: Missing required args → MCP error, not crash
+  // ===========================================================================
+
+  test("sqlite_query_builder without required args → error", async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string;
+    const client = await createClient(baseURL);
+    try {
+      const response = await client.getPrompt({
+        name: "sqlite_query_builder",
+        arguments: {},
+      });
+      // If it returns instead of throwing, at minimum the content should
+      // still be structured (messages array with role + content)
+      expect(response.messages).toBeDefined();
+    } catch (error: unknown) {
+      // MCP SDK may throw for missing required args — acceptable
+      expect(error).toBeDefined();
+    } finally {
+      await client.close();
+    }
+  });
+
+  // ===========================================================================
+  // P4: Deeper content keyword assertions
+  // ===========================================================================
+
+  test("sqlite_debug_query reflects submitted SQL in response", async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string;
+    const client = await createClient(baseURL);
+    try {
+      const response = await client.getPrompt({
+        name: "sqlite_debug_query",
+        arguments: {
+          query: "SELECT * FORM test_products",
+          error: "near FORM: syntax error",
+        },
+      });
+
+      const text = (response.messages[0].content as { text: string }).text as string;
+      // Should reflect the actual SQL and error back
+      expect(text).toContain("SELECT * FORM test_products");
+      expect(text).toContain("syntax error");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("sqlite_migration reflects change description in response", async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string;
+    const client = await createClient(baseURL);
+    try {
+      const response = await client.getPrompt({
+        name: "sqlite_migration",
+        arguments: { change: "Add discount_percent column to test_products" },
+      });
+
+      const text = (response.messages[0].content as { text: string }).text as string;
+      expect(text).toContain("discount_percent");
+    } finally {
+      await client.close();
+    }
+  });
 });

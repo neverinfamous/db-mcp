@@ -1,8 +1,12 @@
 # Advanced Stress Test — db-mcp (SQLite) — Part 2
 
+**Ignore WASM content. Test Native Mode Only**
+
 **Step 1:** Read `server-instructions.ts` and `src/constants/server-instructions/gotchas.md` using `view_file` (not grep or search) to understand documented behaviors, edge cases, and response structures.
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode), not with a browser, scripts, or terminal.
+
+**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore and work around them.
 
 ## Code Mode Execution
 

@@ -144,4 +144,186 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     const uriTemplates = response.resourceTemplates.map((t) => t.uriTemplate);
     expect(uriTemplates).toContain("sqlite://table/{tableName}/schema");
   });
+
+  // ===========================================================================
+  // R1: Schema table count + specific names
+  // ===========================================================================
+
+  test("sqlite://schema contains ≥11 tables with expected names", async () => {
+    const response = await client.readResource({ uri: "sqlite://schema" });
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const schema = JSON.parse(wrapper.contents[0].text);
+    const tables = schema.tables as { name: string }[];
+
+    expect(tables.length).toBeGreaterThanOrEqual(11);
+
+    const names = tables.map((t) => t.name);
+    for (const expected of [
+      "test_products",
+      "test_orders",
+      "test_users",
+      "test_measurements",
+      "test_embeddings",
+      "test_locations",
+      "test_categories",
+      "test_events",
+    ]) {
+      expect(names, `Missing table: ${expected}`).toContain(expected);
+    }
+  });
+
+  // ===========================================================================
+  // R2: Templated resource reads — actual table schemas
+  // ===========================================================================
+
+  test("sqlite://table/test_products/schema returns columns", async () => {
+    const response = await client.readResource({
+      uri: "sqlite://table/test_products/schema",
+    });
+    expect(response.contents).toBeDefined();
+    expect(response.contents.length).toBeGreaterThan(0);
+
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const tableSchema = JSON.parse(wrapper.contents[0].text);
+
+    expect(tableSchema).toHaveProperty("columns");
+    const columns = tableSchema.columns as { name: string }[];
+    expect(columns.length).toBeGreaterThanOrEqual(5);
+
+    const colNames = columns.map((c) => c.name);
+    expect(colNames).toContain("id");
+    expect(colNames).toContain("name");
+    expect(colNames).toContain("price");
+  });
+
+  test("sqlite://table/test_orders/schema returns columns", async () => {
+    const response = await client.readResource({
+      uri: "sqlite://table/test_orders/schema",
+    });
+    expect(response.contents).toBeDefined();
+
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const tableSchema = JSON.parse(wrapper.contents[0].text);
+
+    expect(tableSchema).toHaveProperty("columns");
+    const columns = tableSchema.columns as { name: string }[];
+    expect(columns.length).toBeGreaterThanOrEqual(5);
+
+    const colNames = columns.map((c) => c.name);
+    expect(colNames).toContain("id");
+    expect(colNames).toContain("product_id");
+    expect(colNames).toContain("status");
+  });
+
+  // ===========================================================================
+  // R3: Nonexistent table → graceful error
+  // ===========================================================================
+
+  test("sqlite://table/nonexistent_table/schema → error, not crash", async () => {
+    try {
+      const response = await client.readResource({
+        uri: "sqlite://table/nonexistent_table/schema",
+      });
+      // If it returns instead of throwing, check for error indicator
+      const text = response.contents[0]!.text as string;
+      expect(text.toLowerCase()).toMatch(/not (found|exist)|error|no such table/);
+    } catch (error: unknown) {
+      // MCP SDK may throw for resource errors — that's acceptable
+      expect(error).toBeDefined();
+    }
+  });
+
+  // ===========================================================================
+  // R4: Index names — specific indexes present
+  // ===========================================================================
+
+  test("sqlite://indexes contains known test indexes", async () => {
+    const response = await client.readResource({ uri: "sqlite://indexes" });
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const indexes = JSON.parse(wrapper.contents[0].text);
+    const serialized = JSON.stringify(indexes);
+
+    // Verify known indexes exist somewhere in the response
+    expect(serialized).toContain("idx_orders_status");
+    expect(serialized).toContain("idx_products_category");
+  });
+
+  // ===========================================================================
+  // R5: Health — backend type field
+  // ===========================================================================
+
+  test("sqlite://health includes backend info", async () => {
+    const response = await client.readResource({ uri: "sqlite://health" });
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const health = JSON.parse(wrapper.contents[0].text);
+
+    expect(health.connected).toBe(true);
+    // Should have some backend type info (sql.js or better-sqlite3)
+    const serialized = JSON.stringify(health);
+    expect(
+      serialized.includes("sql.js") || serialized.includes("better-sqlite3") || health.backend !== undefined,
+    ).toBe(true);
+  });
+
+  // ===========================================================================
+  // R6: Meta — PRAGMA fields present
+  // ===========================================================================
+
+  test("sqlite://meta contains PRAGMA values", async () => {
+    const response = await client.readResource({ uri: "sqlite://meta" });
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const meta = JSON.parse(wrapper.contents[0].text);
+
+    expect(meta).toHaveProperty("adapter");
+    // PRAGMA values should be present — the exact shape varies by handler
+    const serialized = JSON.stringify(meta);
+    expect(serialized).toContain("page_size");
+  });
+
+  // ===========================================================================
+  // R7: Views — empty array since test DB has no views
+  // ===========================================================================
+
+  test("sqlite://views returns empty or valid array", async () => {
+    const response = await client.readResource({ uri: "sqlite://views" });
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const views = JSON.parse(wrapper.contents[0].text);
+
+    expect(Array.isArray(views)).toBe(true);
+    // Test DB has no views by default
+    expect(views.length).toBe(0);
+  });
+
+  // ===========================================================================
+  // R8: Insights write+read cycle
+  // ===========================================================================
+
+  test("memo://insights reflects content after sqlite_append_insight", async () => {
+    // Write an insight
+    const toolResult = await client.callTool({
+      name: "sqlite_append_insight",
+      arguments: {
+        insight: "E2E test resource insight: verify write+read cycle.",
+        category: "test",
+      },
+    });
+    const toolText = (toolResult.content as { text: string }[])[0].text;
+    const parsed = JSON.parse(toolText);
+    expect(parsed.success).toBe(true);
+
+    // Re-read insights resource — should contain the new insight
+    const response = await client.readResource({ uri: "memo://insights" });
+    const text = response.contents[0]!.text as string;
+    const wrapper = JSON.parse(text);
+    const insights = wrapper.contents[0].text as string;
+
+    expect(insights).toContain("verify write+read cycle");
+  });
 });

@@ -1,4 +1,6 @@
-# db-mcp (SQLite) Tool Testing (Ignore WASM content. Test Native Mode Only)
+# db-mcp (SQLite) Tool Testing
+
+**Ignore WASM content. Test Native Mode Only**
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 

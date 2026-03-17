@@ -73,6 +73,21 @@ test.describe("Help Resources", () => {
     }
   });
 
+  test("sqlite://help contains critical section keywords", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const response = await client.readResource({ uri: "sqlite://help" });
+      const text = (response.contents[0].text as string).toLowerCase();
+
+      // test-resources.md expects these sections
+      expect(text).toContain("gotcha");
+      expect(text).toContain("code mode");
+      expect(text).toContain("wasm");
+    } finally {
+      await client.close();
+    }
+  });
+
   for (const group of HELP_GROUPS) {
     test(`sqlite://help/${group} returns non-empty markdown`, async ({}, testInfo) => {
       const client = await createClient(getBaseURL(testInfo));
