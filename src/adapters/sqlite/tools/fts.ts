@@ -76,11 +76,15 @@ function buildFts5SearchUnavailableError(): {
 }
 
 /**
- * Coerce empty strings to undefined so z.enum().optional().default() works.
- * Prevents raw MCP -32602 when explicit "" bypasses the default path.
+ * Create a coercer for optional enum params with defaults.
+ * Returns `undefined` for any value NOT in the allowed set
+ * (including empty strings), so `.optional().default()` kicks in.
+ * Prevents raw MCP -32602 for invalid enum values.
  */
-const coerceEnum = (val: unknown): unknown =>
-  typeof val === "string" && val.trim() === "" ? undefined : val;
+const coerceEnumValues =
+  (allowed: readonly string[]) =>
+  (val: unknown): unknown =>
+    typeof val === "string" && allowed.includes(val) ? val : undefined;
 
 // FTS schemas
 const FtsCreateSchema = z.object({
@@ -92,7 +96,7 @@ const FtsCreateSchema = z.object({
     .optional()
     .describe("Content table for external content FTS"),
   tokenizer: z.preprocess(
-    coerceEnum,
+    coerceEnumValues(["unicode61", "ascii", "porter"]),
     z.enum(["unicode61", "ascii", "porter"]).optional().default("unicode61"),
   ),
   createTriggers: z
@@ -129,7 +133,7 @@ const FtsRebuildSchema = z.object({
 const FtsMatchInfoSchema = z.object({
   table: z.string().describe("FTS table name"),
   query: z.string().describe("Full-text search query"),
-  format: z.preprocess(coerceEnum, z.enum(["bm25", "rank"]).optional().default("bm25")),
+  format: z.preprocess(coerceEnumValues(["bm25", "rank"]), z.enum(["bm25", "rank"]).optional().default("bm25")),
 });
 
 /**
