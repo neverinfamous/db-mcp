@@ -17,6 +17,7 @@ export const VALID_NORMALIZE_MODES = ["nfc", "nfd", "nfkc", "nfkd", "strip_accen
 export const VALID_VALIDATE_PATTERNS = ["email", "phone", "url", "uuid", "ipv4", "custom"] as const;
 export const VALID_PHONETIC_ALGORITHMS = ["soundex", "metaphone"] as const;
 export const VALID_TRIM_MODES = ["both", "left", "right"] as const;
+export const VALID_SEARCH_TECHNIQUES = ["exact", "fuzzy", "phonetic"] as const;
 
 // Re-export validateColumnExists/validateColumnsExist from shared utility
 export {
@@ -188,7 +189,7 @@ export const AdvancedSearchSchema = z.object({
   column: z.string().describe("Column to search"),
   searchTerm: z.string().describe("Search term"),
   techniques: z
-    .array(z.enum(["exact", "fuzzy", "phonetic"]))
+    .array(z.string())
     .optional()
     .default(["exact", "fuzzy", "phonetic"])
     .describe("Search techniques to use"),

@@ -29,6 +29,7 @@ import {
   PhoneticMatchSchema,
   AdvancedSearchSchema,
   VALID_PHONETIC_ALGORITHMS,
+  VALID_SEARCH_TECHNIQUES,
   validateColumnExists,
 } from "./helpers.js";
 
@@ -259,6 +260,16 @@ export function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = AdvancedSearchSchema.parse(params);
+
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        for (const technique of input.techniques) {
+          if (!VALID_SEARCH_TECHNIQUES.includes(technique as typeof VALID_SEARCH_TECHNIQUES[number])) {
+            throw new ValidationError(
+              `Invalid technique '${technique}'. Must be one of: ${VALID_SEARCH_TECHNIQUES.join(", ")}`,
+            );
+          }
+        }
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
