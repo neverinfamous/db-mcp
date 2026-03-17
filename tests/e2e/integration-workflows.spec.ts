@@ -27,9 +27,14 @@ test.describe("Integration: Core → JSON → Stats Pipeline", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Step 1: Create table
-      const create = await callToolAndParse(client, "sqlite_write_query", {
-        query:
-          "CREATE TABLE IF NOT EXISTS _e2e_integration_pipeline (id INTEGER PRIMARY KEY, data TEXT, score REAL)",
+      const create = await callToolAndParse(client, "sqlite_create_table", {
+        table: "_e2e_integration_pipeline",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "data", type: "TEXT" },
+          { name: "score", type: "REAL" },
+        ],
+        ifNotExists: true,
       });
       expectSuccess(create);
 
