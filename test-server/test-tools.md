@@ -1,10 +1,10 @@
-# db-mcp (SQLite) Tool Testing (WASM Mode only)
+# db-mcp (SQLite) Tool Testing (Ignore Native Mode. Test WASM Mode Only)
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
 **Step 2:** Please conduct an exhaustive test of the tool group specified in the group-specific checklist (pasted after this document) using live MCP server tool calls directly — not scripts/terminal.
 
-**Note** If temp tables are present from a previous test pass, use `sqlite_execute_code` to drop them — code mode has the full `sqlite.*` API across all groups regardless of the tool filter (e.g., `sqlite.admin.dropVirtualTable({tableName: '...'})` for FTS tables, `sqlite.core.dropTable({table: '...'})` for regular tables). If you have trouble dropping them, it's because the database is locked so ignore and work around them.
+**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore and work around them.
 
 ## Test Database Schema
 

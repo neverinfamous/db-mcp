@@ -27,7 +27,8 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
         if (!path.isAbsolute(input.filePath)) {
           return {
             success: false,
-            message: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
+            error: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
+            message: "",
             sql: "",
             columns: [],
           };
@@ -38,9 +39,10 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
           const isWasm = !(await isModuleAvailable(adapter, "rtree"));
           return {
             success: false,
-            message: isWasm
+            error: isWasm
               ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
               : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+            message: "",
             sql: "",
             columns: [],
             wasmLimitation: isWasm,
