@@ -7,7 +7,6 @@
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import { ErrorResponseFields } from "../../../../utils/errors/error-response-fields.js";
 
 // =============================================================================
 // Constants
@@ -91,73 +90,18 @@ export const MigrationHistorySchema = z
 export const MigrationStatusSchema = z.object({}).default({});
 
 // =============================================================================
-// Output Schemas
+// Output Schemas (re-exported from centralized output-schemas/)
 // =============================================================================
 
-export const MigrationRecordEntry = z.object({
-  id: z.number(),
-  version: z.string(),
-  description: z.string().nullable(),
-  appliedAt: z.string(),
-  appliedBy: z.string().nullable(),
-  migrationHash: z.string(),
-  sourceSystem: z.string().nullable(),
-  status: z.string(),
-});
-
-export const MigrationInitOutputSchema = z.object({
-  success: z.boolean(),
-  tableCreated: z.boolean().optional(),
-  tableName: z.string().optional(),
-  existingRecords: z.number().optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-export const MigrationRecordOutputSchema = z.object({
-  success: z.boolean(),
-  record: MigrationRecordEntry.optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-export const MigrationApplyOutputSchema = z.object({
-  success: z.boolean(),
-  record: MigrationRecordEntry.optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-export const MigrationRollbackOutputSchema = z.object({
-  success: z.boolean(),
-  dryRun: z.boolean().optional(),
-  rollbackSql: z.string().nullable().optional(),
-  record: MigrationRecordEntry.optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-export const MigrationHistoryOutputSchema = z.object({
-  success: z.boolean(),
-  records: z.array(MigrationRecordEntry).optional(),
-  total: z.number().optional(),
-  limit: z.number().optional(),
-  offset: z.number().optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
-
-export const MigrationStatusOutputSchema = z.object({
-  success: z.boolean(),
-  initialized: z.boolean().optional(),
-  latestVersion: z.string().nullable().optional(),
-  latestAppliedAt: z.string().nullable().optional(),
-  counts: z
-    .object({
-      total: z.number(),
-      applied: z.number(),
-      rolledBack: z.number(),
-      failed: z.number(),
-    })
-    .optional(),
-  sourceSystems: z.array(z.string()).optional(),
-  error: z.string().optional(),
-}).extend(ErrorResponseFields.shape);
+export {
+  MigrationRecordEntry,
+  MigrationInitOutputSchema,
+  MigrationRecordOutputSchema,
+  MigrationApplyOutputSchema,
+  MigrationRollbackOutputSchema,
+  MigrationHistoryOutputSchema,
+  MigrationStatusOutputSchema,
+} from "../../output-schemas/migration.js";
 
 // =============================================================================
 // Utilities

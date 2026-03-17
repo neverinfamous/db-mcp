@@ -19,3 +19,4 @@ export * from "./native.js";
 export type * from "./server.js";
 export * from "./spatialite.js";
 export * from "./introspection.js";
+export * from "./migration.js";
