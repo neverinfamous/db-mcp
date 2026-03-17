@@ -44,7 +44,7 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
   },
   stats: {
     summary: "statsSummary",
-    describe: "statsBasic",
+    describe: "statsSummary",
     average: "statsBasic",
   },
   vector: {

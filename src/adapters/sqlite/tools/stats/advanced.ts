@@ -311,15 +311,18 @@ export function createSummaryStatsTool(
         }
 
         const tableInfo = await adapter.describeTable(input.table);
-        const knownColumns = new Set(
-          (tableInfo.columns ?? []).map((c) => c.name.toLowerCase()),
+        const columnTypeMap = new Map(
+          (tableInfo.columns ?? []).map((c) => [
+            c.name.toLowerCase(),
+            (c.type ?? "").toLowerCase(),
+          ]),
         );
 
         let columns: string[];
         if (input.columns && input.columns.length > 0) {
           for (const col of input.columns) {
             sanitizeIdentifier(col);
-            if (!knownColumns.has(col.toLowerCase())) {
+            if (!columnTypeMap.has(col.toLowerCase())) {
               throw new ResourceNotFoundError(
                 `Column '${col}' not found in table '${input.table}'`,
                 "COLUMN_NOT_FOUND",
@@ -362,6 +365,16 @@ export function createSummaryStatsTool(
         }[] = [];
 
         for (const col of columns) {
+          // Skip non-numeric columns with informative error instead of misleading avg=0
+          const colType = columnTypeMap.get(col.toLowerCase()) ?? "";
+          const isNumeric = [...numericTypes].some(
+            (nt) => colType === nt || colType.startsWith(nt),
+          );
+          if (!isNumeric) {
+            summaries.push({ column: col, error: "Not numeric" });
+            continue;
+          }
+
           const quotedCol = sanitizeIdentifier(col);
           let sql = `SELECT
                       COUNT(${quotedCol}) as count,
