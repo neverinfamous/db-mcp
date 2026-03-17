@@ -45,20 +45,23 @@ test.describe("Integration: Core → JSON → Stats Pipeline", () => {
             path: "$.category",
           });
 
-          // Step 4: Stats on the score column
-          const stats = await sqlite.stats.statsBasic({
+          // Step 4: Stats count on the table
+          const countResult = await sqlite.stats.statsCount({
+            table: "_e2e_integration_pipeline",
+          });
+
+          // Step 5: Basic stats on the score column
+          const basicResult = await sqlite.stats.statsBasic({
             table: "_e2e_integration_pipeline",
             column: "score",
           });
 
           return {
-            rowsInserted: 5,
+            rowsInserted: countResult.count,
             categoriesFound: extracted.rowCount,
-            scoreStats: {
-              count: stats.stats.count,
-              min: stats.stats.min,
-              max: stats.stats.max,
-            },
+            hasStats: basicResult.stats != null,
+            statsMin: basicResult.stats?.min,
+            statsMax: basicResult.stats?.max,
           };
         `,
       });
@@ -66,11 +69,9 @@ test.describe("Integration: Core → JSON → Stats Pipeline", () => {
       const result = p.result as Record<string, unknown>;
       expect(result.rowsInserted).toBe(5);
       expect(result.categoriesFound).toBe(5);
-
-      const scoreStats = result.scoreStats as Record<string, unknown>;
-      expect(scoreStats.count).toBe(5);
-      expect(typeof scoreStats.min).toBe("number");
-      expect(typeof scoreStats.max).toBe("number");
+      expect(result.hasStats).toBe(true);
+      expect(typeof result.statsMin).toBe("number");
+      expect(typeof result.statsMax).toBe("number");
     } finally {
       await client.close();
     }
