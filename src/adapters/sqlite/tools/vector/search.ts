@@ -209,12 +209,12 @@ export function createVectorGetTool(
         const result = await adapter.executeReadQuery(sql);
 
         if (!result.rows || result.rows.length === 0) {
-          return { success: false, error: "Vector not found" };
+          return { success: false, error: "Vector not found", code: "VECTOR_NOT_FOUND" };
         }
 
         const row = result.rows[0];
         if (!row) {
-          return { success: false, error: "Vector not found" };
+          return { success: false, error: "Vector not found", code: "VECTOR_NOT_FOUND" };
         }
 
         // Check if the vector column exists in the row data

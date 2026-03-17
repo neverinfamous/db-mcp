@@ -273,6 +273,7 @@ export function createVectorDistanceTool(): ToolDefinition {
           return Promise.resolve({
             success: false,
             error: "Vector dimensions must match",
+            code: "DIMENSION_MISMATCH",
           });
         }
 
