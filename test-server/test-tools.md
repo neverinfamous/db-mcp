@@ -173,4 +173,4 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 
 ---
 
-Ignore WASM content. Test Native mode only:
+Ignore Native content. Test WASM mode only:

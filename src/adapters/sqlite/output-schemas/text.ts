@@ -1,5 +1,5 @@
 /**
- * Text Processing Tool Output Schemas (8 tools)
+ * Text Processing Tool Output Schemas (14 tools)
  */
 
 import { z } from "zod";
@@ -127,5 +127,72 @@ export const TextValidateOutputSchema = z
       )
       .optional(),
     truncated: z.boolean().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_text_concat output
+ */
+export const TextConcatOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number().optional(),
+    values: z.array(z.unknown()).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_text_trim output
+ */
+export const TextTrimOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number().optional(),
+    results: z.array(RowRecordSchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_text_case output
+ */
+export const TextCaseOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number().optional(),
+    results: z.array(RowRecordSchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_text_substring output
+ */
+export const TextSubstringOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number().optional(),
+    results: z.array(RowRecordSchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_advanced_search output
+ */
+export const AdvancedSearchOutputSchema = z
+  .object({
+    success: z.boolean(),
+    searchTerm: z.string().optional(),
+    techniques: z.array(z.string()).optional(),
+    matchCount: z.number().optional(),
+    matches: z
+      .array(
+        z.object({
+          rowid: z.number(),
+          text: z.string(),
+          matchTypes: z.array(z.string()),
+          bestScore: z.number(),
+          bestType: z.string(),
+        }),
+      )
+      .optional(),
   })
   .extend(ErrorFieldsMixin.shape);

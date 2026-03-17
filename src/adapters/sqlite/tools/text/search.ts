@@ -4,7 +4,7 @@
  * Fuzzy matching, phonetic search, and advanced combined search.
  */
 
-import { z } from "zod";
+
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
@@ -16,8 +16,8 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   FuzzySearchOutputSchema,
   SoundexOutputSchema,
+  AdvancedSearchOutputSchema,
 } from "../../output-schemas/index.js";
-import { ErrorFieldsMixin } from "../../output-schemas/error-mixin.js";
 import {
   levenshtein,
   metaphone,
@@ -233,25 +233,6 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
     },
   };
 }
-
-/**
- * Output schema for advanced search
- */
-export const AdvancedSearchOutputSchema = z.object({
-  success: z.boolean(),
-  searchTerm: z.string().optional(),
-  techniques: z.array(z.string()).optional(),
-  matchCount: z.number().optional(),
-  matches: z.array(
-    z.object({
-      rowid: z.number(),
-      text: z.string(),
-      matchTypes: z.array(z.string()),
-      bestScore: z.number(),
-      bestType: z.string(),
-    }),
-  ).optional(),
-}).extend(ErrorFieldsMixin.shape);
 
 /**
  * Advanced search combining multiple text processing techniques

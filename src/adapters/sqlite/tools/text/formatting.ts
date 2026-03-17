@@ -14,6 +14,10 @@ import {
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   RegexReplaceOutputSchema,
+  TextConcatOutputSchema,
+  TextTrimOutputSchema,
+  TextCaseOutputSchema,
+  TextSubstringOutputSchema,
 } from "../../output-schemas/index.js";
 import {
   TextConcatSchema,
@@ -21,6 +25,7 @@ import {
   TextTrimSchema,
   TextCaseSchema,
   TextSubstringSchema,
+  VALID_TEXT_CASE_MODES,
   validateColumnExists,
   validateColumnsExist,
 } from "./helpers.js";
@@ -31,6 +36,7 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Concatenate multiple columns with optional separator.",
     group: "text",
     inputSchema: TextConcatSchema,
+    outputSchema: TextConcatOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Concat"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -117,6 +123,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Trim whitespace from text column values.",
     group: "text",
     inputSchema: TextTrimSchema,
+    outputSchema: TextTrimOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Trim"),
     handler: async (params: unknown, _context: RequestContext) => {
@@ -169,11 +176,20 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
     description: "Convert text to uppercase or lowercase.",
     group: "text",
     inputSchema: TextCaseSchema,
+    outputSchema: TextCaseOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Case"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextCaseSchema.parse(params);
+
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        if (!input.mode || !VALID_TEXT_CASE_MODES.includes(input.mode as typeof VALID_TEXT_CASE_MODES[number])) {
+          throw new ValidationError(
+            `Invalid mode '${input.mode ?? ""}'. Must be one of: ${VALID_TEXT_CASE_MODES.join(", ")}`,
+          );
+        }
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -211,6 +227,7 @@ export function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition 
     description: "Extract a substring from text column using substr().",
     group: "text",
     inputSchema: TextSubstringSchema,
+    outputSchema: TextSubstringOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Substring"),
     handler: async (params: unknown, _context: RequestContext) => {

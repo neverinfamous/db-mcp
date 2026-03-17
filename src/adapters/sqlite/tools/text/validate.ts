@@ -10,6 +10,8 @@ import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
 import {
   TextNormalizeSchema,
   TextValidateSchema,
+  VALID_NORMALIZE_MODES,
+  VALID_VALIDATE_PATTERNS,
   validateColumnExists,
 } from "./helpers.js";
 import {
@@ -33,6 +35,15 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextNormalizeSchema.parse(params);
+
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        const normalizedMode = input.mode?.toLowerCase() ?? "";
+        if (!VALID_NORMALIZE_MODES.includes(normalizedMode as typeof VALID_NORMALIZE_MODES[number])) {
+          throw new ValidationError(
+            `Invalid mode '${input.mode ?? ""}'. Must be one of: ${VALID_NORMALIZE_MODES.join(", ")}`,
+          );
+        }
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -55,11 +66,11 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
               : JSON.stringify(rawOriginal ?? "");
           let normalized: string;
 
-          if (input.mode === "strip_accents") {
+          if (normalizedMode === "strip_accents") {
             normalized = stripAccents(original);
           } else {
             normalized = original.normalize(
-              input.mode.toUpperCase() as "NFC" | "NFD" | "NFKC" | "NFKD",
+              normalizedMode.toUpperCase() as "NFC" | "NFD" | "NFKC" | "NFKD",
             );
           }
 
@@ -94,6 +105,14 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextValidateSchema.parse(params);
+
+        // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
+        if (!input.pattern || !VALID_VALIDATE_PATTERNS.includes(input.pattern as typeof VALID_VALIDATE_PATTERNS[number])) {
+          throw new ValidationError(
+            `Invalid pattern '${input.pattern ?? ""}'. Must be one of: ${VALID_VALIDATE_PATTERNS.join(", ")}`,
+          );
+        }
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
