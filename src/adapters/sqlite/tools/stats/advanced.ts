@@ -154,11 +154,49 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
         const order = input.orderDirection.toUpperCase();
 
-        let columnList = "*";
+        let columnList: string;
+        let hint: string | undefined;
+
         if (input.selectColumns && input.selectColumns.length > 0) {
+          // Explicit column selection — use as-is
           columnList = input.selectColumns
             .map((col) => sanitizeIdentifier(col))
             .join(", ");
+        } else {
+          // Auto-limit: exclude TEXT/BLOB columns likely to hold long content
+          const tableInfo = await adapter.describeTable(input.table);
+          const TEXT_TYPES = new Set(["text", "blob", "clob", "varchar", "nvarchar", "char"]);
+          const LONG_CONTENT_PATTERNS = [
+            "description", "body", "bio", "content", "notes", "summary",
+            "comment", "details", "html", "markdown", "text", "message",
+            "payload", "raw", "data", "log", "blob",
+          ];
+          const cols = (tableInfo.columns ?? []);
+          const excluded: string[] = [];
+          const included: string[] = [];
+
+          for (const c of cols) {
+            const typeLower = (c.type ?? "").toLowerCase();
+            const nameLower = c.name.toLowerCase();
+            const isText = [...TEXT_TYPES].some((t) => typeLower === t || typeLower.startsWith(t));
+            const isRankCol = nameLower === input.column.toLowerCase();
+            const isLongContent = LONG_CONTENT_PATTERNS.some(
+              (p) => nameLower === p || nameLower.endsWith(`_${p}`) || nameLower.startsWith(`${p}_`),
+            );
+
+            if (isText && !isRankCol && isLongContent) {
+              excluded.push(c.name);
+            } else {
+              included.push(c.name);
+            }
+          }
+
+          if (excluded.length > 0 && included.length > 0) {
+            columnList = included.map((col) => sanitizeIdentifier(col)).join(", ");
+            hint = `Excluded ${excluded.length} long-content column(s) (${excluded.join(", ")}) to reduce payload. Use selectColumns to override.`;
+          } else {
+            columnList = "*";
+          }
         }
 
         let sql = `SELECT ${columnList} FROM ${table}`;
@@ -170,13 +208,18 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           column: input.column,
           direction: input.orderDirection,
           count: result.rows?.length ?? 0,
           rows: result.rows,
         };
+        if (hint) {
+          response["hint"] = hint;
+        }
+
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }

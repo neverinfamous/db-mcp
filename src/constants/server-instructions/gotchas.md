@@ -14,7 +14,7 @@
 10. **Fuzzy matching tokenization**: Matches WORD TOKENS by default — `"laptop"` matches `"Laptop Pro 15"` (distance 0 on first token). Use `tokenize: false` for full-string matching
 11. **SpatiaLite distances**: `nearest_neighbor`/`distance_matrix` return CARTESIAN distance (degrees), not geodetic (km/miles)
 12. **SpatiaLite buffer**: Auto-simplifies output by default (tolerance=0.0001). Use `simplifyTolerance: 0` to disable
-13. **sqlite_stats_top_n**: ⚠️ Always use `selectColumns` to avoid returning all columns (large payloads with text fields)
+13. **sqlite_stats_top_n**: Auto-excludes long-content columns (description, body, notes, etc.) when `selectColumns` is omitted. Use `selectColumns` to override
 14. **CSV virtual tables**: Require ABSOLUTE file paths
 15. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use `sqlite_drop_table` to remove
 16. **sqlite_dbstat**: `summarize` only works in native; WASM returns counts only

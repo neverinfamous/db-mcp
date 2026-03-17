@@ -63,6 +63,7 @@ export const StatsTopNOutputSchema = z
     direction: z.string().optional(),
     count: z.number().optional(),
     rows: z.array(StatsRowRecordSchema).optional(),
+    hint: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
