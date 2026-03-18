@@ -70,7 +70,7 @@ import {
 export class NativeSqliteAdapter extends DatabaseAdapter {
   readonly type: DatabaseType = "sqlite";
   readonly name = "Native SQLite Adapter (better-sqlite3)";
-  readonly version = "1.0.0";
+  readonly version = "1.1.0";
 
   /**
    * Check if this adapter uses native (better-sqlite3) backend.
