@@ -53,11 +53,21 @@
   - `docker/login-action` v3 → v4
   - `docker/build-push-action` v6 → v7
   - `docker/metadata-action` v5 → v6
+  - `docker/setup-buildx-action` v3 → v4
   - `actions/upload-artifact` v6 → v7
   - `actions/download-artifact` v7 → v8
 
+- **Transitive Updates**: Fixed multiple vulnerabilities in transitive dependencies by updating `package-lock.json` via `npm update`:
+  - `minimatch`: ReDoS in `matchOne()` combinatorial backtracking via multiple non-adjacent GLOBSTAR segments.
+  - `hono` and `@hono/node-server`: Arbitrary file access via `serveStatic`, authorization bypass for protected static paths, SSE Control Field Injection, Cookie Attribute Injection, and Prototype Pollution in `parseBody`.
+  - `express-rate-limit`: IPv4-mapped IPv6 addresses bypassing per-client rate limiting on dual-stack networks.
+
 ### Dependencies
 
+- Bumped `sql.js` from 1.14.0 to 1.14.1
+- Bumped `jose` from 6.1.3 to 6.2.1
+- Bumped `eslint` from 10.0.1 to 10.0.3
+- Bumped `typescript-eslint` from 8.57.0 to 8.57.1
 - Bumped `better-sqlite3` from 12.6.2 to 12.8.0
 - Bumped `@types/node` from 25.4.0 to 25.5.0
 - Bumped `@vitest/coverage-v8` from 4.0.18 to 4.1.0
