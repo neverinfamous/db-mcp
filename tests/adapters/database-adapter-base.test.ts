@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // We need to test the abstract DatabaseAdapter behavior, which provides default implementations
 // for registerTool, registerResource, registerPrompt and ensureConnected.

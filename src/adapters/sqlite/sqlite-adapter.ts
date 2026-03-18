@@ -269,7 +269,7 @@ export class SqliteAdapter extends DatabaseAdapter {
   override getCapabilities(): AdapterCapabilities {
     return {
       json: true,
-      fullTextSearch: true, // FTS5 support
+      fullTextSearch: false, // FTS5 not available in WASM/sql.js build
       vector: true, // Custom implementation
       geospatial: false, // SpatiaLite not bundled
       transactions: true,

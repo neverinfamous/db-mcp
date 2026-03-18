@@ -102,16 +102,18 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       try {
-        let finalQuery = input.query;
+        // Normalize: strip trailing whitespace and semicolons so appending
+        // LIMIT won't produce invalid SQL like "SELECT ...; LIMIT 1000".
+        let finalQuery = input.query.replace(/[\s;]+$/g, "");
         // Inject a safety limit if none is provided to prevent OOM or event loop blocking
         // on massive tables, especially critical for the WASM backend.
         // Only apply to SELECT/WITH — PRAGMA and EXPLAIN don't support LIMIT.
-        const upperForLimit = finalQuery.trim().toUpperCase();
+        const upperForLimit = finalQuery.toUpperCase();
         const isLimitable =
           upperForLimit.startsWith("SELECT") ||
           upperForLimit.startsWith("WITH");
         if (isLimitable && !/\bLIMIT\b/i.test(finalQuery)) {
-          finalQuery = `${finalQuery.trim()} LIMIT 1000`;
+          finalQuery = `${finalQuery} LIMIT 1000`;
         }
 
         const result = await adapter.executeReadQuery(finalQuery, input.params);
@@ -159,15 +161,10 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      // Validate statement type: only allow DML statements
+      // Validate statement type: only allow DML statements.
+      // Support CTE-prefixed writes (WITH ... INSERT/UPDATE/DELETE/REPLACE).
       const trimmedUpper = input.query.trim().toUpperCase();
-      const allowedPrefixes = [
-        "INSERT",
-        "UPDATE",
-        "DELETE",
-        "REPLACE",
-        "UPSERT",
-      ];
+      const allowedPrefixes = ["INSERT", "UPDATE", "DELETE", "REPLACE"];
       const rejectedPrefixes = [
         "SELECT",
         "PRAGMA",
@@ -183,10 +180,31 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         "ANALYZE",
       ];
 
-      const isAllowed = allowedPrefixes.some((p) => trimmedUpper.startsWith(p));
+      // For CTE-prefixed queries (WITH ...), look past the CTE preamble
+      // to find the main DML keyword. We strip balanced parenthesized groups
+      // so inner SELECT/etc. in CTE bodies don't cause false matches.
+      let leadingKeyword = /^([A-Z]+)/.exec(trimmedUpper)?.[1] ?? "";
+      if (leadingKeyword === "WITH") {
+        // Strip balanced parenthesized groups so only top-level keywords remain
+        let stripped = trimmedUpper.slice(4);
+        let prev = "";
+        while (prev !== stripped) {
+          prev = stripped;
+          stripped = stripped.replace(/\([^()]*\)/g, "");
+        }
+        const mainMatch =
+          /\b(INSERT|UPDATE|DELETE|REPLACE|SELECT|PRAGMA|EXPLAIN|CREATE|ALTER|DROP|TRUNCATE|ATTACH|DETACH|VACUUM|REINDEX|ANALYZE)\b/.exec(
+            stripped,
+          );
+        if (mainMatch) {
+          leadingKeyword = mainMatch[1] ?? "";
+        }
+      }
+
+      const isAllowed = allowedPrefixes.includes(leadingKeyword);
       if (!isAllowed) {
-        const rejectedPrefix = rejectedPrefixes.find((p) =>
-          trimmedUpper.startsWith(p),
+        const rejectedPrefix = rejectedPrefixes.find(
+          (p) => p === leadingKeyword,
         );
         if (rejectedPrefix) {
           return {

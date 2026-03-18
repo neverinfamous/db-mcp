@@ -1,5 +1,5 @@
 /**
- * SQLite Admin Tools â€” Barrel Index
+ * SQLite Admin Tools — Barrel Index
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";

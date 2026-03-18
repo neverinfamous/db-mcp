@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   toolNameToMethodName,
   createSqliteApi,
-  SqliteApi,
 } from "../../src/codemode/api.js";
 import type { ToolDefinition } from "../../src/types/index.js";
 

@@ -152,14 +152,16 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
           FROM sqlite_master
           WHERE type = 'index' AND sql IS NOT NULL
         `;
+        const queryParams: unknown[] = [];
         if (input.table) {
           // Validate table name using centralized utility
           sanitizeIdentifier(input.table);
-          sql += ` AND tbl_name = '${input.table}'`;
+          sql += ` AND tbl_name = ?`;
+          queryParams.push(input.table);
         }
         sql += " ORDER BY tbl_name, name";
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const indexes: {
           name: string;

@@ -98,7 +98,7 @@ describe("SqliteAdapter - connected (in-memory)", () => {
 
     const caps = adapter.getCapabilities();
     expect(caps.json).toBe(true);
-    expect(caps.fullTextSearch).toBe(true);
+    expect(caps.fullTextSearch).toBe(false);
     expect(caps.vector).toBe(true);
     expect(caps.geospatial).toBe(false);
     expect(caps.transactions).toBe(true);

@@ -30,7 +30,7 @@ describe("Icon Utilities", () => {
         expect(icons!.length).toBeGreaterThan(0);
 
         for (const icon of icons!) {
-          expect(icon.src).toMatch(/^https:\/\/cdn\.jsdelivr\.net/);
+          expect(icon.src).toMatch(/^https:\/\/cdn\.jsdelivr\.net(?=\/|$)/);
           expect(icon.src).toMatch(/\.svg$/);
           expect(icon.mimeType).toBe("image/svg+xml");
         }

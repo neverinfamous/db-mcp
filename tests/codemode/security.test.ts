@@ -4,7 +4,7 @@
  * Tests code validation, rate limiting, result sanitization, and audit logging.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { CodeModeSecurityManager } from "../../src/codemode/security.js";
 
 describe("CodeModeSecurityManager", () => {

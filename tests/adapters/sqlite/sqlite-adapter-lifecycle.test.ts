@@ -9,10 +9,7 @@ import {
   connectSqliteDatabase,
   disconnectSqliteDatabase,
 } from "../../../src/adapters/sqlite/sqlite-adapter/lifecycle.js";
-import {
-  ConfigurationError,
-  ConnectionError,
-} from "../../../src/utils/errors/index.js";
+import { ConfigurationError } from "../../../src/utils/errors/index.js";
 
 // =============================================================================
 // Helpers

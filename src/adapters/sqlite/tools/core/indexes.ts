@@ -99,10 +99,13 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
-        sql += ` AND tbl_name = '${input.table}'`;
+        sql += ` AND tbl_name = ?`;
       }
 
-      const result = await adapter.executeReadQuery(sql);
+      const result = await adapter.executeReadQuery(
+        sql,
+        input.table ? [input.table] : undefined,
+      );
 
       let indexes = (result.rows ?? []).map((row) => ({
         name: row["name"] as string,

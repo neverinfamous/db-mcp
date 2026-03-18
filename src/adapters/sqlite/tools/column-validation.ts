@@ -67,13 +67,40 @@ export async function validateColumnExists(
 
 /**
  * Validate that multiple columns exist in a table.
+ * Optimized: validates table once, fetches all columns in a single
+ * pragma_table_info query, then checks membership in-memory.
  */
 export async function validateColumnsExist(
   adapter: SqliteAdapter,
   tableName: string,
   columnNames: string[],
 ): Promise<void> {
+  // Validate table existence once
+  await validateTableExists(adapter, tableName);
+
+  // Fetch all column names in a single PRAGMA query
+  const pragmaResult = await adapter.executeReadQuery(
+    `SELECT name FROM pragma_table_info('${tableName.replace(/'/g, "''")}')`,
+  );
+  const existingColumns = new Set<string>();
+  for (const row of pragmaResult.rows ?? []) {
+    if (typeof row["name"] === "string") {
+      existingColumns.add(row["name"]);
+    }
+  }
+
   for (const col of columnNames) {
-    await validateColumnExists(adapter, tableName, col);
+    if (!existingColumns.has(col)) {
+      throw new ResourceNotFoundError(
+        `Column '${col}' not found in table '${tableName}'`,
+        "COLUMN_NOT_FOUND",
+        {
+          suggestion:
+            "Column not found. Use sqlite_describe_table to see available columns.",
+          resourceType: "column",
+          resourceName: col,
+        },
+      );
+    }
   }
 }

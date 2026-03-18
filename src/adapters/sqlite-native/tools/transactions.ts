@@ -7,7 +7,10 @@
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
-import { formatHandlerError } from "../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../utils/errors/index.js";
 import { write } from "../../../utils/annotations.js";
 import {
   TransactionBeginOutputSchema,
@@ -183,10 +186,13 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const input = SavepointSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-          return Promise.resolve({
-            success: false,
-            error: "Invalid savepoint name",
-          });
+          return Promise.resolve(
+            formatHandlerError(
+              new ValidationError(
+                `Invalid savepoint name '${input.name}': must start with a letter or underscore and contain only alphanumeric characters`,
+              ),
+            ),
+          );
         }
 
         adapter.savepoint(input.name);
@@ -223,10 +229,13 @@ function createReleaseSavepointTool(
         const input = SavepointSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-          return Promise.resolve({
-            success: false,
-            error: "Invalid savepoint name",
-          });
+          return Promise.resolve(
+            formatHandlerError(
+              new ValidationError(
+                `Invalid savepoint name '${input.name}': must start with a letter or underscore and contain only alphanumeric characters`,
+              ),
+            ),
+          );
         }
 
         adapter.releaseSavepoint(input.name);
@@ -263,10 +272,13 @@ function createRollbackToSavepointTool(
         const input = SavepointSchema.parse(params);
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-          return Promise.resolve({
-            success: false,
-            error: "Invalid savepoint name",
-          });
+          return Promise.resolve(
+            formatHandlerError(
+              new ValidationError(
+                `Invalid savepoint name '${input.name}': must start with a letter or underscore and contain only alphanumeric characters`,
+              ),
+            ),
+          );
         }
 
         adapter.rollbackToSavepoint(input.name);

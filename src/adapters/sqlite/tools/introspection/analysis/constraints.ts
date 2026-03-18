@@ -248,9 +248,7 @@ export function createConstraintAnalysisTool(
                 (col["pk"] as number) === 0
               ) {
                 // Try to infer the referenced table name
-                const inferredTable = colName
-                  .replace(/_id$/i, "")
-                  .replace(/_/g, "_");
+                const inferredTable = colName.replace(/_id$/i, "");
                 findings.push({
                   type: "missing_fk",
                   severity: "info",

@@ -16,7 +16,6 @@ import {
   getBaseURL,
   callToolAndParse,
   expectSuccess,
-  expectHandlerError,
 } from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
