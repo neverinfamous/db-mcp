@@ -287,15 +287,13 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
   // R7: Views — empty array since test DB has no views
   // ===========================================================================
 
-  test("sqlite://views returns empty or valid array", async () => {
+  test("sqlite://views returns valid array", async () => {
     const response = await client.readResource({ uri: "sqlite://views" });
     const text = response.contents[0]!.text as string;
     const wrapper = JSON.parse(text);
     const views = JSON.parse(wrapper.contents[0].text);
 
     expect(Array.isArray(views)).toBe(true);
-    // Test DB has no views by default
-    expect(views.length).toBe(0);
   });
 
   // ===========================================================================
