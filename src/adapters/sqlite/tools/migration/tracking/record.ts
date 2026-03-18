@@ -83,8 +83,8 @@ export function createMigrationRecordTool(
 
         const result = await adapter.executeReadQuery(
           `SELECT id, version, description, applied_at, applied_by, migration_hash, source_system, status
-           FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ?`,
-          [hash],
+           FROM "${MIGRATIONS_TABLE}" WHERE version = ?`,
+          [input.version],
         );
         const record = result.rows?.[0];
 

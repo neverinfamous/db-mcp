@@ -62,7 +62,7 @@ export const MigrationRollbackSchema = z.object({
 export const MigrationHistorySchema = z
   .object({
     status: z
-      .enum(["applied", "rolled_back", "failed"])
+      .enum(["applied", "recorded", "rolled_back", "failed"])
       .optional()
       .describe("Filter by status"),
     sourceSystem: z.string().optional().describe("Filter by source system"),

@@ -60,6 +60,7 @@ export const MigrationRollbackOutputSchema = z
     success: z.boolean(),
     dryRun: z.boolean().optional(),
     rollbackSql: z.string().nullable().optional(),
+    warning: z.string().optional(),
     record: MigrationRecordEntry.optional(),
   })
   .extend(ErrorFieldsMixin.shape);

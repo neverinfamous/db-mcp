@@ -83,6 +83,30 @@ export function createMigrationRollbackTool(
           };
         }
 
+        // Recorded-only migrations were never executed — skip rollback SQL execution
+        if (currentStatus === "recorded") {
+          await adapter.executeQuery(
+            `UPDATE "${MIGRATIONS_TABLE}" SET status = 'rolled_back', rolled_back_at = datetime('now') WHERE id = ?`,
+            [migration["id"]],
+          );
+
+          const updated = await adapter.executeReadQuery(
+            `SELECT id, version, description, applied_at, applied_by, migration_hash, source_system, status
+             FROM "${MIGRATIONS_TABLE}" WHERE id = ?`,
+            [migration["id"]],
+          );
+          const record = updated.rows?.[0];
+
+          return {
+            success: true,
+            dryRun: false,
+            rollbackSql: null,
+            warning:
+              "Migration was only recorded (never applied) — marked as rolled_back without executing rollback SQL",
+            record: record ? toMigrationRecord(record) : undefined,
+          };
+        }
+
         const rollbackSql = migration["rollback_sql"] as string | null;
 
         if (!rollbackSql) {

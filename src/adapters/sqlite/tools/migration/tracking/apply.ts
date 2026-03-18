@@ -41,14 +41,14 @@ export function createMigrationApplyTool(
         const hash = hashMigration(input.migrationSql);
 
         const dupCheck = await adapter.executeReadQuery(
-          `SELECT id, version FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ?`,
+          `SELECT id, version, status FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ? AND status = 'applied'`,
           [hash],
         );
         if ((dupCheck.rows?.length ?? 0) > 0) {
           const existing = dupCheck.rows?.[0];
           return {
             success: false,
-            error: `Duplicate migration: SQL matches existing migration #${String(existing?.["id"])} (version: ${String(existing?.["version"])})`,
+            error: `Duplicate migration: SQL matches existing applied migration #${String(existing?.["id"])} (version: ${String(existing?.["version"])})`,
             code: "DUPLICATE_MIGRATION",
           };
         }
@@ -107,8 +107,8 @@ export function createMigrationApplyTool(
 
         const result = await adapter.executeReadQuery(
           `SELECT id, version, description, applied_at, applied_by, migration_hash, source_system, status
-           FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ?`,
-          [hash],
+           FROM "${MIGRATIONS_TABLE}" WHERE version = ?`,
+          [input.version],
         );
         const record = result.rows?.[0];
 
