@@ -116,17 +116,18 @@ export function createStorageAnalysisTool(
           avgRowBytes: number;
         }
 
-        const tables: TableEntry[] = [];
+        let tables: TableEntry[] = [];
         if (includeDetails) {
           try {
             // Try dbstat for accurate per-table sizes
+            // Note: limit is applied after system table filtering to avoid
+            // returning fewer rows than requested when system tables are excluded
             const dbstatResult = await adapter.executeReadQuery(
               `SELECT name, SUM(pgsize) as size_bytes, COUNT(*) as page_count
                FROM dbstat
                WHERE name NOT LIKE 'sqlite_%'
                GROUP BY name
-               ORDER BY size_bytes DESC
-               LIMIT ${limit}`,
+               ORDER BY size_bytes DESC`,
             );
 
             for (const row of dbstatResult.rows ?? []) {
@@ -159,21 +160,19 @@ export function createStorageAnalysisTool(
               });
             }
 
-            // Filter SpatiaLite system tables
+            // Filter SpatiaLite system tables, then apply limit
             if (excludeSystem) {
-              const filtered = tables.filter(
+              tables = tables.filter(
                 (t) => !isSpatialiteSystemTable(t.name),
               );
-              tables.length = 0;
-              tables.push(...filtered);
             }
+            tables = tables.slice(0, limit);
           } catch {
             // dbstat not available — fallback to basic table list
             const tablesResult = await adapter.executeReadQuery(
               `SELECT name FROM sqlite_master
                WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
-               ORDER BY name
-               LIMIT ${limit}`,
+               ORDER BY name`,
             );
 
             for (const row of tablesResult.rows ?? []) {
@@ -201,8 +200,9 @@ export function createStorageAnalysisTool(
               });
             }
 
-            // Sort by estimated size descending
+            // Sort by estimated size descending, then apply limit
             tables.sort((a, b) => b.sizeBytes - a.sizeBytes);
+            tables = tables.slice(0, limit);
           }
         }
 
