@@ -41,8 +41,6 @@ const StorageAnalysisSchema = z
   })
   .default({});
 
-
-
 // =============================================================================
 // Helper: get pragma value as string
 // =============================================================================
@@ -163,7 +161,9 @@ export function createStorageAnalysisTool(
 
             // Filter SpatiaLite system tables
             if (excludeSystem) {
-              const filtered = tables.filter((t) => !isSpatialiteSystemTable(t.name));
+              const filtered = tables.filter(
+                (t) => !isSpatialiteSystemTable(t.name),
+              );
               tables.length = 0;
               tables.push(...filtered);
             }

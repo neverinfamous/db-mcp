@@ -42,12 +42,12 @@ const coerceSections = (val: unknown): unknown =>
 
 const SchemaSnapshotSchema = z
   .object({
-    sections: z.preprocess(
-      coerceSections,
-      z
-        .array(z.enum(["tables", "views", "indexes", "triggers"]))
-        .optional(),
-    ).describe("Specific sections to include (default: all)"),
+    sections: z
+      .preprocess(
+        coerceSections,
+        z.array(z.enum(["tables", "views", "indexes", "triggers"])).optional(),
+      )
+      .describe("Specific sections to include (default: all)"),
     compact: z
       .boolean()
       .optional()
@@ -62,8 +62,6 @@ const SchemaSnapshotSchema = z
       ),
   })
   .default({});
-
-
 
 // =============================================================================
 // Tool Creator
@@ -98,25 +96,33 @@ export function createSchemaSnapshotTool(
         if (sections.includes("tables")) {
           // Ensure schema manager is initialized or fallback
           const adapterUnknown = adapter as unknown as Record<string, unknown>;
-          const _schemaManager = "schemaManager" in adapterUnknown 
-            ? adapterUnknown["schemaManager"] as { getRawTableNames: () => Promise<string[]> } 
-            : undefined;
+          const _schemaManager =
+            "schemaManager" in adapterUnknown
+              ? (adapterUnknown["schemaManager"] as {
+                  getRawTableNames: () => Promise<string[]>;
+                })
+              : undefined;
           let tablesList: string[];
-          
-          if (_schemaManager && typeof _schemaManager.getRawTableNames === "function") {
-              tablesList = await _schemaManager.getRawTableNames();
+
+          if (
+            _schemaManager &&
+            typeof _schemaManager.getRawTableNames === "function"
+          ) {
+            tablesList = await _schemaManager.getRawTableNames();
           } else {
-              const tablesResult = await adapter.executeReadQuery(
-                `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
-              );
-              tablesList = (tablesResult.rows ?? []).map((r) => r["name"] as string);
+            const tablesResult = await adapter.executeReadQuery(
+              `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
+            );
+            tablesList = (tablesResult.rows ?? []).map(
+              (r) => r["name"] as string,
+            );
           }
 
           // Filter SpatiaLite system tables
           if (excludeSystem) {
             tablesList = tablesList.filter((n) => !isSpatialiteSystemTable(n));
           }
-          
+
           const tables = [];
           for (const tableName of tablesList) {
             const tableEntry: Record<string, unknown> = {
@@ -184,7 +190,9 @@ export function createSchemaSnapshotTool(
           }));
           if (excludeSystem) {
             indexes = indexes.filter(
-              (idx) => !isSpatialiteSystemIndex(idx.name) && !isSpatialiteSystemTable(idx.table),
+              (idx) =>
+                !isSpatialiteSystemIndex(idx.name) &&
+                !isSpatialiteSystemTable(idx.table),
             );
           }
           snapshot["indexes"] = indexes;
@@ -201,7 +209,9 @@ export function createSchemaSnapshotTool(
             sql: t["sql"] as string,
           }));
           if (excludeSystem) {
-            triggers = triggers.filter((t) => !isSpatialiteSystemTable(t.table));
+            triggers = triggers.filter(
+              (t) => !isSpatialiteSystemTable(t.table),
+            );
           }
           snapshot["triggers"] = triggers;
           stats.triggers = triggers.length;

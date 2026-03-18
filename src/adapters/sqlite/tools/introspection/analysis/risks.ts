@@ -24,8 +24,6 @@ const MigrationRisksSchema = z.object({
     .describe("Array of DDL statements to analyze for risks"),
 });
 
-
-
 // =============================================================================
 // Tool Creator
 // =============================================================================
@@ -61,20 +59,28 @@ export function createMigrationRisksTool(
         // Get existing table info for context
         // Ensure schema manager is initialized or fallback
         const adapterUnknown = adapter as unknown as Record<string, unknown>;
-        const _schemaManager = "schemaManager" in adapterUnknown 
-          ? adapterUnknown["schemaManager"] as { getRawTableNames: () => Promise<string[]> } 
-          : undefined;
+        const _schemaManager =
+          "schemaManager" in adapterUnknown
+            ? (adapterUnknown["schemaManager"] as {
+                getRawTableNames: () => Promise<string[]>;
+              })
+            : undefined;
         let tableNames: string[];
-        
-        if (_schemaManager && typeof _schemaManager.getRawTableNames === "function") {
-             tableNames = await _schemaManager.getRawTableNames();
+
+        if (
+          _schemaManager &&
+          typeof _schemaManager.getRawTableNames === "function"
+        ) {
+          tableNames = await _schemaManager.getRawTableNames();
         } else {
-             const tablesResult = await adapter.executeReadQuery(
-                `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name`,
-             );
-             tableNames = (tablesResult.rows ?? []).map((r) => r["name"] as string);
+          const tablesResult = await adapter.executeReadQuery(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name`,
+          );
+          tableNames = (tablesResult.rows ?? []).map(
+            (r) => r["name"] as string,
+          );
         }
-        
+
         const existingTables = new Set(tableNames);
 
         for (let i = 0; i < input.statements.length; i++) {
@@ -156,11 +162,34 @@ export function createMigrationRisksTool(
             const tableMatch = dropTableRegex.exec(stmt);
             const tableName = tableMatch?.[1] ?? tableMatch?.[2];
             if (tableName && existingTables.has(tableName)) {
+              // Check for FK dependents (tables that reference this one)
+              let dependentInfo = "";
+              try {
+                const allTables = [...existingTables];
+                const dependents: string[] = [];
+                for (const otherTable of allTables) {
+                  if (otherTable === tableName) continue;
+                  const fkResult = await adapter.executeReadQuery(
+                    `PRAGMA foreign_key_list("${otherTable}")`,
+                  );
+                  for (const fk of fkResult.rows ?? []) {
+                    if ((fk["table"] as string) === tableName) {
+                      dependents.push(otherTable);
+                      break;
+                    }
+                  }
+                }
+                if (dependents.length > 0) {
+                  dependentInfo = ` Tables with FK references to '${tableName}': ${dependents.join(", ")}.`;
+                }
+              } catch {
+                // Ignore FK lookup failures; still report the base risk
+              }
               addRisk(
                 "critical",
                 "destructive",
-                `DROP TABLE will permanently delete '${tableName}' and all its data.`,
-                "Back up data first with sqlite_backup or export the table.",
+                `DROP TABLE will permanently delete '${tableName}' and all its data.${dependentInfo}`,
+                `Back up data first with sqlite_backup or export the table.${dependentInfo ? " Handle or drop dependent tables first." : ""}`,
               );
             } else {
               addRisk(

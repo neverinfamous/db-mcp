@@ -70,10 +70,8 @@ const DependencyGraphSchema = z
 
 const TopologicalSortSchema = z
   .object({
-    direction: z.preprocess(
-      coerceDirection,
-      z.enum(["create", "drop"]).optional(),
-    )
+    direction: z
+      .preprocess(coerceDirection, z.enum(["create", "drop"]).optional())
       .describe(
         "Sort direction: 'create' = dependencies first, 'drop' = dependents first (default: create)",
       ),
@@ -88,10 +86,12 @@ const TopologicalSortSchema = z
 
 const CascadeSimulatorSchema = z.object({
   table: z.string().describe("Table name to simulate deletion from"),
-  operation: z.preprocess(
-    coerceOperation,
-    z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
-  ).describe("Operation to simulate (default: DELETE)"),
+  operation: z
+    .preprocess(
+      coerceOperation,
+      z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
+    )
+    .describe("Operation to simulate (default: DELETE)"),
   compact: z
     .boolean()
     .optional()
@@ -99,8 +99,6 @@ const CascadeSimulatorSchema = z.object({
       "Omit path arrays from affected entries to reduce payload (default: false)",
     ),
 });
-
-
 
 // =============================================================================
 // Tool Creators
@@ -140,14 +138,23 @@ export function createDependencyGraphTool(
           nodes.map((n) => n.table),
         );
 
-        // Identify root tables (no incoming FK references) and leaf tables (no outgoing FKs)
+        // Identify root tables (referenced by others but don't reference anything)
+        // and leaf tables (reference others but aren't referenced themselves).
+        // Isolated tables (no FK relationships at all) are excluded from both
+        // to keep the sets disjoint and semantically meaningful.
         const referencedTables = new Set(edges.map((e) => e.to));
         const referencingTables = new Set(edges.map((e) => e.from));
         const rootTables = nodes
-          .filter((n) => !referencedTables.has(n.table))
+          .filter(
+            (n) =>
+              referencedTables.has(n.table) && !referencingTables.has(n.table),
+          )
           .map((n) => n.table);
         const leafTables = nodes
-          .filter((n) => !referencingTables.has(n.table))
+          .filter(
+            (n) =>
+              referencingTables.has(n.table) && !referencedTables.has(n.table),
+          )
           .map((n) => n.table);
 
         const nodesOnly = input.nodesOnly === true;
@@ -297,6 +304,11 @@ export function createCascadeSimulatorTool(
           return {
             success: false,
             error: `Table '${input.table}' does not exist`,
+            code: "TABLE_NOT_FOUND",
+            category: "resource",
+            suggestion:
+              "Table not found. Run sqlite_list_tables to see available tables.",
+            recoverable: false,
           };
         }
 

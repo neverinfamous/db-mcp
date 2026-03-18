@@ -16,7 +16,12 @@ import { z } from "zod";
 import { QueryPlanOutputSchema } from "../../../output-schemas/index.js";
 
 // Synthetic EXPLAIN table names that are not real tables
-const SYNTHETIC_TABLES = new Set(["CONSTANT", "SUBQUERY", "LIST", "MATERIALIZED"]);
+const SYNTHETIC_TABLES = new Set([
+  "CONSTANT",
+  "SUBQUERY",
+  "LIST",
+  "MATERIALIZED",
+]);
 
 // =============================================================================
 // Input Schema
@@ -60,6 +65,9 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
             error:
               "Only SELECT and WITH (CTE) queries can be analyzed. Received: " +
               upper.substring(0, 20),
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
           };
         }
 
@@ -118,13 +126,16 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
 
             if (detailUpper.includes("COVERING INDEX")) {
               scanType = "covering_index";
-              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase())) coveringIndexes.push(table);
+              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase()))
+                coveringIndexes.push(table);
             } else if (detailUpper.includes("USING INDEX")) {
               scanType = "index_scan";
-              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase())) indexScans.push(table);
+              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase()))
+                indexScans.push(table);
             } else {
               scanType = "full_scan";
-              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase())) fullScans.push(table);
+              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase()))
+                fullScans.push(table);
             }
           } else if (detailUpper.includes("SEARCH")) {
             scanType = "search";
@@ -188,9 +199,7 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
             estimatedEfficiency,
           },
           suggestions:
-            suggestions.length > 0
-              ? [...new Set(suggestions)]
-              : undefined,
+            suggestions.length > 0 ? [...new Set(suggestions)] : undefined,
         };
       } catch (error) {
         return formatHandlerError(error);

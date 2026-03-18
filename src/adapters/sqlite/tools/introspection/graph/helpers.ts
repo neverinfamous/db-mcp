@@ -54,18 +54,21 @@ export async function buildForeignKeyGraph(
   const excludeSystem = options.excludeSystemTables !== false;
   // Get all user tables (exclude internal/system)
   const adapterUnknown = adapter as unknown as Record<string, unknown>;
-  const _schemaManager = "schemaManager" in adapterUnknown 
-    ? adapterUnknown["schemaManager"] as { getRawTableNames: () => Promise<string[]> } 
-    : undefined;
+  const _schemaManager =
+    "schemaManager" in adapterUnknown
+      ? (adapterUnknown["schemaManager"] as {
+          getRawTableNames: () => Promise<string[]>;
+        })
+      : undefined;
   let tableNames: string[];
-  
+
   if (_schemaManager && typeof _schemaManager.getRawTableNames === "function") {
-      tableNames = await _schemaManager.getRawTableNames();
+    tableNames = await _schemaManager.getRawTableNames();
   } else {
-      const tablesResult = await adapter.executeReadQuery(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
-      );
-      tableNames = (tablesResult.rows ?? []).map((r) => r["name"] as string);
+    const tablesResult = await adapter.executeReadQuery(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
+    );
+    tableNames = (tablesResult.rows ?? []).map((r) => r["name"] as string);
   }
 
   const nodes: GraphNode[] = [];

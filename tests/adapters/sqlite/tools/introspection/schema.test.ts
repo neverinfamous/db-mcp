@@ -99,11 +99,17 @@ describe("Introspection Schema Tools", () => {
       };
 
       expect(result.success).toBe(true);
-      // "root" = no incoming FK references (nothing points TO it)
-      // projects has no incoming references, so it's a root
-      expect(result.stats.rootTables).toContain("projects");
-      // departments HAS incoming FKs from employees, so it's NOT a root
-      expect(result.stats.leafTables).toContain("departments");
+      // "root" = referenced by others but doesn't reference anything
+      // departments is referenced by employees but has no outgoing FKs → root
+      expect(result.stats.rootTables).toContain("departments");
+      // "leaf" = references others but isn't referenced by anything
+      // projects references employees but nothing references projects → leaf
+      expect(result.stats.leafTables).toContain("projects");
+      // They should be disjoint
+      const intersection = result.stats.rootTables.filter((t: string) =>
+        result.stats.leafTables.includes(t),
+      );
+      expect(intersection).toHaveLength(0);
     });
   });
 
@@ -171,9 +177,9 @@ describe("Introspection Schema Tools", () => {
       expect(result.success).toBe(true);
       expect(result.sourceTable).toBe("departments");
       // employees CASCADE → should appear
-      expect(
-        result.affectedTables.some((t) => t.table === "employees"),
-      ).toBe(true);
+      expect(result.affectedTables.some((t) => t.table === "employees")).toBe(
+        true,
+      );
     });
 
     it("should return empty affected list for leaf tables", async () => {
@@ -276,9 +282,7 @@ describe("Introspection Schema Tools", () => {
 
   describe("sqlite_constraint_analysis", () => {
     it("should analyze all constraints", async () => {
-      const result = (await tools.get("sqlite_constraint_analysis")?.(
-        {},
-      )) as {
+      const result = (await tools.get("sqlite_constraint_analysis")?.({})) as {
         success: boolean;
         findings: { type: string; severity: string; table: string }[];
         summary: {

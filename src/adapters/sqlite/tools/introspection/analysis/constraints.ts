@@ -47,19 +47,21 @@ const ConstraintAnalysisSchema = z
       .string()
       .optional()
       .describe("Analyze constraints for a specific table only"),
-    checks: z.preprocess(
-      coerceChecks,
-      z
-        .array(
-          z.enum([
-            "missing_pk",
-            "missing_not_null",
-            "unindexed_fk",
-            "missing_fk",
-          ]),
-        )
-        .optional(),
-    ).describe("Specific checks to run (default: all)"),
+    checks: z
+      .preprocess(
+        coerceChecks,
+        z
+          .array(
+            z.enum([
+              "missing_pk",
+              "missing_not_null",
+              "unindexed_fk",
+              "missing_fk",
+            ]),
+          )
+          .optional(),
+      )
+      .describe("Specific checks to run (default: all)"),
     excludeSystemTables: z
       .boolean()
       .optional()
@@ -68,8 +70,6 @@ const ConstraintAnalysisSchema = z
       ),
   })
   .default({});
-
-
 
 // =============================================================================
 // Tool Creator
@@ -109,16 +109,25 @@ export function createConstraintAnalysisTool(
           tableQuery,
           queryParams,
         );
-        const tables = (tablesResult.rows ?? []).map(
-          (r) => r["name"] as string,
-        ).filter(
-          (name) => !(input.excludeSystemTables !== false && isSpatialiteSystemTable(name)),
-        );
+        const tables = (tablesResult.rows ?? [])
+          .map((r) => r["name"] as string)
+          .filter(
+            (name) =>
+              !(
+                input.excludeSystemTables !== false &&
+                isSpatialiteSystemTable(name)
+              ),
+          );
 
         if (input.table && tables.length === 0) {
           return {
             success: false,
             error: `Table '${input.table}' does not exist`,
+            code: "TABLE_NOT_FOUND",
+            category: "resource",
+            suggestion:
+              "Table not found. Run sqlite_list_tables to see available tables.",
+            recoverable: false,
           };
         }
 
