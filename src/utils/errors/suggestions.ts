@@ -155,6 +155,13 @@ const ERROR_SUGGESTIONS: {
     category: ErrorCategory.CONNECTION,
   },
   {
+    pattern: /cannot start a transaction within a transaction/i,
+    suggestion:
+      "A transaction is already active. Commit or rollback the current transaction first, or use sqlite_transaction_execute for atomic multi-statement operations.",
+    category: ErrorCategory.QUERY,
+    code: "TRANSACTION_CONFLICT",
+  },
+  {
     pattern: /database is locked/i,
     suggestion:
       "Database is being used by another process. Wait and retry, or check for long-running transactions.",

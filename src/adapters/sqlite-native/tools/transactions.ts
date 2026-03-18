@@ -26,8 +26,12 @@ type TransactionMode = (typeof VALID_MODES)[number];
 // Schemas
 const BeginTransactionSchema = z.object({
   mode: z.preprocess(
-    (val) => (typeof val === "string" && VALID_MODES.includes(val as TransactionMode) ? val : undefined),
-    z.enum(["deferred", "immediate", "exclusive"])
+    (val) =>
+      typeof val === "string" && VALID_MODES.includes(val as TransactionMode)
+        ? val
+        : undefined,
+    z
+      .enum(["deferred", "immediate", "exclusive"])
       .optional()
       .default("deferred")
       .describe(
@@ -37,9 +41,7 @@ const BeginTransactionSchema = z.object({
 });
 
 const SavepointSchema = z.object({
-  name: z
-    .string()
-    .describe("Savepoint name"),
+  name: z.string().describe("Savepoint name"),
 });
 
 const ExecuteInTransactionSchema = z.object({
@@ -385,9 +387,10 @@ function createExecuteInTransactionTool(
       } catch (error) {
         adapter.rollbackTransaction();
         const message = error instanceof Error ? error.message : String(error);
+        const formatted = formatHandlerError(error);
 
         return {
-          success: false,
+          ...formatted,
           error: `Transaction rolled back: ${message}`,
           message: `Transaction rolled back: ${message}`,
           statementsExecuted: results.length,
