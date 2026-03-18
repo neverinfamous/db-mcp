@@ -7,8 +7,7 @@ WORKDIR /app
 # Install build dependencies for better-sqlite3 native compilation
 # Use Alpine edge for latest security patches
 RUN apk add --no-cache python3 make g++ && \
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl && \
-    apk upgrade --no-cache
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl
 
 # Upgrade npm globally (no patches here — builder is discarded, only production stage is scanned)
 RUN npm install -g npm@latest --force && npm cache clean --force
@@ -65,21 +64,21 @@ RUN cd /usr/local/lib/node_modules/npm && \
     mv package/* node_modules/@isaacs/brace-expansion/ && \
     rm -rf package isaacs-brace-expansion-5.0.1.tgz
 
-# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.8
+# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.11
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.8 && \
+    npm pack tar@7.5.11 && \
     rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.8.tgz && \
+    tar -xzf tar-7.5.11.tgz && \
     mv package node_modules/tar && \
-    rm tar-7.5.8.tgz
+    rm tar-7.5.11.tgz
 
-# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.1
+# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.4
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack minimatch@10.2.1 && \
+    npm pack minimatch@10.2.4 && \
     rm -rf node_modules/minimatch && \
-    tar -xzf minimatch-10.2.1.tgz && \
+    tar -xzf minimatch-10.2.4.tgz && \
     mv package node_modules/minimatch && \
-    rm minimatch-10.2.1.tgz
+    rm minimatch-10.2.4.tgz
 
 # Copy built artifacts and production dependencies
 COPY --from=builder /app/dist ./dist
@@ -101,9 +100,9 @@ ENV NODE_ENV=production
 # Switch to non-root user
 USER appuser
 
-# Health check
+# Health check — uses HTTP endpoint for HTTP transport, falls back to Node.js check for stdio
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "console.log('Server healthy')" || exit 1
+    CMD /bin/sh -c 'if [ "${MCP_TRANSPORT:-stdio}" = "http" ]; then curl -sf "http://localhost:${PORT:-3000}/health"; else node -e "console.log(\"ok\")"; fi'
 
 # Run the MCP server (default: stdio transport with native backend)
 ENTRYPOINT ["node", "dist/cli.js"]
@@ -111,7 +110,6 @@ CMD ["--transport", "stdio", "--sqlite-native", "/app/data/database.db"]
 
 # Labels for Docker Hub
 LABEL maintainer="Adamic.tech"
-LABEL description="SQLite MCP Server with OAuth 2.1, HTTP/SSE transport, 122 tools, and smart tool filtering"
-LABEL version="1.0.0"
+LABEL description="SQLite MCP Server with OAuth 2.1, HTTP/SSE transport, 139 tools, and smart tool filtering"
 LABEL org.opencontainers.image.source="https://github.com/neverinfamous/db-mcp"
 LABEL io.modelcontextprotocol.server.name="io.github.neverinfamous/db-mcp"

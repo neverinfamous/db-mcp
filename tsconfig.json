@@ -6,6 +6,8 @@
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "skipLibCheck": true,
     /* Strict Type-Checking Options */
     "strict": true,
@@ -34,8 +36,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true
+    "declarationMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]

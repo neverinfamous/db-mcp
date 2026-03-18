@@ -9,7 +9,7 @@ export {
   DbMcpServer,
   createServer,
   DEFAULT_CONFIG,
-} from "./server/McpServer.js";
+} from "./server/mcp-server.js";
 
 // Types
 export type {
@@ -57,7 +57,7 @@ export {
 } from "./types/index.js";
 
 // Base adapter class
-export { DatabaseAdapter } from "./adapters/DatabaseAdapter.js";
+export { DatabaseAdapter } from "./adapters/database-adapter.js";
 
 // Tool filtering utilities
 export {
@@ -69,8 +69,7 @@ export {
   filterTools,
   getToolFilterFromEnv,
   getFilterSummary,
-} from "./filtering/ToolFilter.js";
+} from "./filtering/tool-filter.js";
 
-// Version info
-export const VERSION = "0.1.0";
-export const NAME = "db-mcp";
+// Version info — single source of truth from package.json
+export { VERSION, NAME } from "./version.js";

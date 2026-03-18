@@ -1,12 +1,12 @@
 /**
  * db-mcp - OAuth Error Classes
  *
- * Module-prefixed error classes for OAuth 2.0 authentication
+ * Module-prefixed error classes for OAuth 2.1 authentication
  * and authorization failures.
  */
 
-import { DbMcpError } from "../types/index.js";
-import { ERROR_CODES } from "../utils/logger.js";
+import { DbMcpError, ErrorCategory } from "../utils/errors/index.js";
+import { ERROR_CODES } from "../utils/logger/index.js";
 
 // =============================================================================
 // Base OAuth Error
@@ -29,7 +29,7 @@ export class OAuthError extends DbMcpError {
     details?: Record<string, unknown>,
     wwwAuthenticate?: string,
   ) {
-    super(message, code, details);
+    super(message, code, ErrorCategory.AUTHENTICATION, { details });
     this.name = "OAuthError";
     this.httpStatus = httpStatus;
     this.wwwAuthenticate = wwwAuthenticate;

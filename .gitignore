@@ -6,17 +6,14 @@ dist/
 build/
 out/
 
-# Cloudflare
-.wrangler/
-
 # Environment files
 .env
 .env.local
 .env.*.local
 .dev.vars
-wrangler.toml
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -30,7 +27,8 @@ Thumbs.db
 
 # Editor directories and files
 .gemini/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
@@ -39,6 +37,11 @@ Thumbs.db
 # Test coverage
 coverage/
 .nyc_output/
+test-results.json
+
+# Playwright
+test-results/
+playwright-report/
 
 # TypeScript
 *.tsbuildinfo
@@ -74,14 +77,25 @@ data/
 *.sqlite3-journal
 
 # Credentials
-.env.local
 *.pem
 *.key
 
-# Test database (local development only)
-test-database/
+# Test database generated files (test plans, docs, SQL seeds are tracked)
+test-server/*.db
+test-server/*.db-shm
+test-server/*.db-wal
+test-server/*.db-journal
 extensions/
 
 # MCP Registry tokens
 .mcpregistry_github_token
 .mcpregistry_registry_token
+
+# Alternative lock files
+yarn.lock
+pnpm-lock.yaml
+
+# Temporary files
+tmp/
+temp/
+*.tmp

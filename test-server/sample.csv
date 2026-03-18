@@ -1,0 +1,11 @@
+id,name,category,price,quantity,created_at
+1,Widget A,Electronics,29.99,100,2026-01-15
+2,Widget B,Electronics,49.99,75,2026-01-16
+3,Gadget X,Home,19.99,200,2026-01-17
+4,Gadget Y,Home,24.99,150,2026-01-18
+5,Tool Alpha,Industrial,99.99,50,2026-01-19
+6,Tool Beta,Industrial,149.99,30,2026-01-20
+7,Component A,Electronics,9.99,500,2026-01-21
+8,Component B,Electronics,14.99,400,2026-01-22
+9,Fixture X,Home,39.99,80,2026-01-23
+10,Fixture Y,Home,59.99,60,2026-01-24

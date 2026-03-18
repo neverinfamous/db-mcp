@@ -4,37 +4,57 @@
  * Aggregates and exports all tool definitions from category modules.
  */
 
-import type { SqliteAdapter } from "../SqliteAdapter.js";
+import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, ToolGroup } from "../../../types/index.js";
-import { getCoreTools } from "./core.js";
-import { getJsonHelperTools } from "./json-helpers.js";
-import { getJsonOperationTools } from "./json-operations.js";
-import { getTextTools } from "./text.js";
-import { getFtsTools } from "./fts.js";
-import { getStatsTools } from "./stats.js";
-import { getVirtualTools } from "./virtual.js";
-import { getVectorTools } from "./vector.js";
+import { getToolGroupIcon } from "../../../utils/icons.js";
+import { getCoreTools } from "./core/index.js";
+import { getJsonHelperTools } from "./json-helpers/index.js";
+import { getJsonOperationTools } from "./json-operations/index.js";
+import { getTextTools } from "./text/index.js";
+
+import { getStatsTools } from "./stats/index.js";
+import { getVirtualTools } from "./virtual/index.js";
+import { getVectorTools } from "./vector/index.js";
 import { getGeoTools } from "./geo.js";
-import { getAdminTools } from "./admin.js";
+import { getAdminTools } from "./admin/index.js";
+import { getIntrospectionTools } from "./introspection/index.js";
+import { getMigrationTools } from "./migration/index.js";
+import { getCodeModeTools } from "./codemode.js";
 
 /**
- * Get all tool definitions for the SQLite adapter
+ * Get all tool definitions for the SQLite adapter.
+ * Attaches group-level icons to each tool.
  */
 export function getAllToolDefinitions(
   adapter: SqliteAdapter,
 ): ToolDefinition[] {
-  return [
+  const tools = [
     ...getCoreTools(adapter),
     ...getJsonHelperTools(adapter),
     ...getJsonOperationTools(adapter),
     ...getTextTools(adapter),
-    ...getFtsTools(adapter),
+
     ...getStatsTools(adapter),
     ...getVirtualTools(adapter),
     ...getVectorTools(adapter),
     ...getGeoTools(adapter),
     ...getAdminTools(adapter),
+    ...getIntrospectionTools(adapter),
+    ...getMigrationTools(adapter),
+    ...getCodeModeTools(adapter),
   ];
+
+  // Attach group-level icons to each tool definition
+  for (const tool of tools) {
+    if (!tool.icons) {
+      const icons = getToolGroupIcon(tool.group);
+      if (icons) {
+        tool.icons = icons;
+      }
+    }
+  }
+
+  return tools;
 }
 
 /**
@@ -64,13 +84,16 @@ export function getToolCountByGroup(
 }
 
 // Re-export individual tool modules
-export { getCoreTools } from "./core.js";
-export { getJsonHelperTools } from "./json-helpers.js";
-export { getJsonOperationTools } from "./json-operations.js";
-export { getTextTools } from "./text.js";
-export { getFtsTools } from "./fts.js";
-export { getStatsTools } from "./stats.js";
-export { getVirtualTools } from "./virtual.js";
-export { getVectorTools } from "./vector.js";
+export { getCoreTools } from "./core/index.js";
+export { getJsonHelperTools } from "./json-helpers/index.js";
+export { getJsonOperationTools } from "./json-operations/index.js";
+export { getTextTools } from "./text/index.js";
+
+export { getStatsTools } from "./stats/index.js";
+export { getVirtualTools } from "./virtual/index.js";
+export { getVectorTools } from "./vector/index.js";
 export { getGeoTools } from "./geo.js";
-export { getAdminTools } from "./admin.js";
+export { getAdminTools } from "./admin/index.js";
+export { getIntrospectionTools } from "./introspection/index.js";
+export { getMigrationTools } from "./migration/index.js";
+export { getCodeModeTools } from "./codemode.js";

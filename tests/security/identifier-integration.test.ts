@@ -70,59 +70,59 @@ describe("Security: Identifier Integration", () => {
 
   describe("FTS tools - identifier injection", () => {
     it("should reject FTS table name with SQL injection in create", async () => {
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "fts'; DROP TABLE users--",
-          sourceTable: "users",
-          columns: ["name", "email"],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "fts'; DROP TABLE users--",
+        sourceTable: "users",
+        columns: ["name", "email"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject source table name with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "valid_fts",
-          sourceTable: "users'; ATTACH DATABASE--",
-          columns: ["name"],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "valid_fts",
+        sourceTable: "users'; ATTACH DATABASE--",
+        columns: ["name"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject column name with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_create")({
-          tableName: "valid_fts",
-          sourceTable: "users",
-          columns: ["name; DROP TABLE--"],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_create")({
+        tableName: "valid_fts",
+        sourceTable: "users",
+        columns: ["name; DROP TABLE--"],
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject FTS search table with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_search")({
-          table: "fts_table' UNION SELECT--",
-          query: "test",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_search")({
+        table: "fts_table' UNION SELECT--",
+        query: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject FTS rebuild table with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_rebuild")({
-          table: "fts_table'; DELETE FROM users--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_rebuild")({
+        table: "fts_table'; DELETE FROM users--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject FTS match_info table with injection", async () => {
-      await expect(
-        getTool("sqlite_fts_match_info")({
-          table: "fts_table'); DROP TABLE--",
-          query: "test",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_fts_match_info")({
+        table: "fts_table'); DROP TABLE--",
+        query: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
@@ -132,54 +132,55 @@ describe("Security: Identifier Integration", () => {
 
   describe("text tools - identifier injection", () => {
     it("should reject table name with injection in regex_extract", async () => {
-      await expect(
-        getTool("sqlite_regex_extract")({
-          table: "users'; DROP TABLE--",
-          column: "name",
-          pattern: ".*",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_regex_extract")({
+        table: "users'; DROP TABLE--",
+        column: "name",
+        pattern: ".*",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject column name with injection in regex_extract", async () => {
-      await expect(
-        getTool("sqlite_regex_extract")({
-          table: "users",
-          column: "name; DROP TABLE--",
-          pattern: ".*",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_regex_extract")({
+        table: "users",
+        column: "name; DROP TABLE--",
+        pattern: ".*",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in regex_match", async () => {
-      await expect(
-        getTool("sqlite_regex_match")({
-          table: 'users"; DELETE--',
-          column: "name",
-          pattern: "test",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_regex_match")({
+        table: 'users"; DELETE--',
+        column: "name",
+        pattern: "test",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in text_split", async () => {
-      await expect(
-        getTool("sqlite_text_split")({
-          table: "users' OR '1'='1",
-          column: "name",
-          delimiter: " ",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_text_split")({
+        table: "users' OR '1'='1",
+        column: "name",
+        delimiter: " ",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in text_replace", async () => {
-      await expect(
-        getTool("sqlite_text_replace")({
-          table: "users; ATTACH DATABASE--",
-          column: "name",
-          search: "a",
-          replace: "b",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_text_replace")({
+        table: "users; ATTACH DATABASE--",
+        column: "name",
+        searchPattern: "a",
+        replaceWith: "b",
+        whereClause: "1=1",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
@@ -189,54 +190,59 @@ describe("Security: Identifier Integration", () => {
 
   describe("vector tools - identifier injection", () => {
     it("should reject table name with injection in vector_create_table", async () => {
-      await expect(
-        getTool("sqlite_vector_create_table")({
-          table: "vectors'; DROP TABLE users--",
-          dimensions: 128,
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_create_table")({
+        tableName: "vectors'; DROP TABLE users--",
+        dimensions: 128,
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in vector_store", async () => {
-      await expect(
-        getTool("sqlite_vector_store")({
-          table: 'vectors"; DELETE FROM--',
-          id: "1",
-          vector: [0.1, 0.2, 0.3],
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_store")({
+        table: 'vectors"; DELETE FROM--',
+        id: "1",
+        vector: [0.1, 0.2, 0.3],
+        idColumn: "id",
+        vectorColumn: "embedding",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject idColumn name with injection in vector_store", async () => {
-      await expect(
-        getTool("sqlite_vector_store")({
-          table: "vectors",
-          id: "1",
-          vector: [0.1, 0.2, 0.3],
-          idColumn: "id'; DROP TABLE--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_store")({
+        table: "vectors",
+        id: "1",
+        vector: [0.1, 0.2, 0.3],
+        idColumn: "id'; DROP TABLE--",
+        vectorColumn: "embedding",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject vectorColumn name with injection in vector_store", async () => {
-      await expect(
-        getTool("sqlite_vector_store")({
-          table: "vectors",
-          id: "1",
-          vector: [0.1, 0.2, 0.3],
-          vectorColumn: 'embedding"; DELETE--',
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_store")({
+        table: "vectors",
+        id: "1",
+        vector: [0.1, 0.2, 0.3],
+        idColumn: "id",
+        vectorColumn: 'embedding"; DELETE--',
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in vector_search", async () => {
-      await expect(
-        getTool("sqlite_vector_search")({
-          table: "vectors' UNION SELECT--",
-          queryVector: [0.1, 0.2, 0.3],
-          limit: 10,
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_vector_search")({
+        table: "vectors' UNION SELECT--",
+        queryVector: [0.1, 0.2, 0.3],
+        vectorColumn: "embedding",
+        limit: 10,
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
@@ -246,20 +252,20 @@ describe("Security: Identifier Integration", () => {
 
   describe("virtual table tools - identifier injection", () => {
     it("should reject view name with injection in create_view", async () => {
-      await expect(
-        getTool("sqlite_create_view")({
-          viewName: "my_view'; DROP TABLE--",
-          query: "SELECT * FROM users",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_create_view")({
+        viewName: "my_view'; DROP TABLE--",
+        query: "SELECT * FROM users",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject view name with injection in drop_view", async () => {
-      await expect(
-        getTool("sqlite_drop_view")({
-          viewName: 'my_view"; DELETE FROM users--',
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_drop_view")({
+        viewName: 'my_view"; DELETE FROM users--',
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
@@ -269,35 +275,35 @@ describe("Security: Identifier Integration", () => {
 
   describe("admin tools - identifier injection", () => {
     it("should reject PRAGMA name with injection", async () => {
-      await expect(
-        getTool("sqlite_pragma_settings")({
-          pragma: "cache_size; DROP TABLE users--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_pragma_settings")({
+        pragma: "cache_size; DROP TABLE users--",
+      })) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in pragma_table_info", async () => {
-      await expect(
-        getTool("sqlite_pragma_table_info")({
-          table: "users'; ATTACH DATABASE--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_pragma_table_info")({
+        table: "users'; ATTACH DATABASE--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in index_stats", async () => {
-      await expect(
-        getTool("sqlite_index_stats")({
-          table: "users' UNION SELECT--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_index_stats")({
+        table: "users' UNION SELECT--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
 
     it("should reject table name with injection in analyze", async () => {
-      await expect(
-        getTool("sqlite_analyze")({
-          table: "users'; DROP TABLE--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_analyze")({
+        table: "users'; DROP TABLE--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
     });
   });
 
@@ -307,41 +313,42 @@ describe("Security: Identifier Integration", () => {
 
   describe("stats tools - identifier injection", () => {
     it("should reject table name with injection in stats_basic", async () => {
-      await expect(
-        getTool("sqlite_stats_basic")({
-          table: "users'; DROP TABLE--",
-          column: "id",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_basic")({
+        table: "users'; DROP TABLE--",
+        column: "id",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should reject column name with injection in stats_basic", async () => {
-      await expect(
-        getTool("sqlite_stats_basic")({
-          table: "users",
-          column: "id; DROP TABLE users--",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_basic")({
+        table: "users",
+        column: "id; DROP TABLE users--",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should reject table name with injection in stats_histogram", async () => {
-      await expect(
-        getTool("sqlite_stats_histogram")({
-          table: 'users"; DELETE--',
-          column: "id",
-          buckets: 10,
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_histogram")({
+        table: 'users"; DELETE--',
+        column: "id",
+        buckets: 10,
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should reject table name with injection in stats_group_by", async () => {
-      await expect(
-        getTool("sqlite_stats_group_by")({
-          table: "users' OR 1=1--",
-          column: "id",
-          groupColumn: "name",
-        }),
-      ).rejects.toThrow(/invalid/i);
+      const result = (await getTool("sqlite_stats_group_by")({
+        table: "users' OR 1=1--",
+        valueColumn: "id",
+        groupByColumn: "name",
+        stat: "count",
+      })) as { success: boolean; error?: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 

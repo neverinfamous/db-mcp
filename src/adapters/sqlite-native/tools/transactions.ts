@@ -6,17 +6,44 @@
 
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
-import type { NativeSqliteAdapter } from "../NativeSqliteAdapter.js";
+import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../utils/errors/index.js";
+import { write } from "../../../utils/annotations.js";
+import {
+  TransactionBeginOutputSchema,
+  TransactionCommitOutputSchema,
+  TransactionRollbackOutputSchema,
+  TransactionSavepointOutputSchema,
+  TransactionReleaseOutputSchema,
+  TransactionRollbackToOutputSchema,
+  TransactionExecuteOutputSchema,
+} from "../../sqlite/output-schemas/index.js";
+
+// Valid enum values for transaction mode
+const VALID_MODES = ["deferred", "immediate", "exclusive"] as const;
+type TransactionMode = (typeof VALID_MODES)[number];
 
 // Schemas
 const BeginTransactionSchema = z.object({
-  mode: z
-    .enum(["deferred", "immediate", "exclusive"])
-    .optional()
-    .default("deferred")
-    .describe(
-      "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
-    ),
+  mode: z.preprocess(
+    (val) => {
+      if (typeof val !== "string") return undefined;
+      const normalized = val.toLowerCase();
+      return VALID_MODES.includes(normalized as TransactionMode)
+        ? normalized
+        : undefined;
+    },
+    z
+      .enum(["deferred", "immediate", "exclusive"])
+      .optional()
+      .default("deferred")
+      .describe(
+        "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
+      ),
+  ),
 });
 
 const SavepointSchema = z.object({
@@ -63,18 +90,24 @@ function createBeginTransactionTool(
       "Begin a new transaction. Use immediate or exclusive mode for write-heavy operations.",
     group: "admin",
     inputSchema: BeginTransactionSchema,
+    outputSchema: TransactionBeginOutputSchema,
+    annotations: write("Begin Transaction"),
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = BeginTransactionSchema.parse(params);
+      try {
+        const input = BeginTransactionSchema.parse(params);
 
-      const mode = input.mode.toUpperCase();
-      await adapter.executeWriteQuery(`BEGIN ${mode} TRANSACTION`);
+        const mode = input.mode.toUpperCase();
+        await adapter.executeWriteQuery(`BEGIN ${mode} TRANSACTION`);
 
-      return {
-        success: true,
-        message: `Transaction started (${input.mode} mode)`,
-        mode: input.mode,
-      };
+        return {
+          success: true,
+          message: `Transaction started (${input.mode} mode)`,
+          mode: input.mode,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
     },
   };
 }
@@ -91,14 +124,20 @@ function createCommitTransactionTool(
       "Commit the current transaction, making all changes permanent.",
     group: "admin",
     inputSchema: z.object({}),
+    outputSchema: TransactionCommitOutputSchema,
+    annotations: write("Commit Transaction"),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
-      adapter.commitTransaction();
+      try {
+        adapter.commitTransaction();
 
-      return Promise.resolve({
-        success: true,
-        message: "Transaction committed",
-      });
+        return Promise.resolve({
+          success: true,
+          message: "Transaction committed",
+        });
+      } catch (error) {
+        return Promise.resolve(formatHandlerError(error));
+      }
     },
   };
 }
@@ -113,15 +152,21 @@ function createRollbackTransactionTool(
     name: "sqlite_transaction_rollback",
     description: "Rollback the current transaction, discarding all changes.",
     group: "admin",
+    outputSchema: TransactionRollbackOutputSchema,
     inputSchema: z.object({}),
+    annotations: write("Rollback Transaction"),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {
-      adapter.rollbackTransaction();
+      try {
+        adapter.rollbackTransaction();
 
-      return Promise.resolve({
-        success: true,
-        message: "Transaction rolled back",
-      });
+        return Promise.resolve({
+          success: true,
+          message: "Transaction rolled back",
+        });
+      } catch (error) {
+        return Promise.resolve(formatHandlerError(error));
+      }
     },
   };
 }
@@ -135,22 +180,34 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     description:
       "Create a savepoint within the current transaction for partial rollback.",
     group: "admin",
+    outputSchema: TransactionSavepointOutputSchema,
     inputSchema: SavepointSchema,
+    annotations: write("Create Savepoint"),
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
-      const input = SavepointSchema.parse(params);
+      try {
+        const input = SavepointSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-        throw new Error("Invalid savepoint name");
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
+          return Promise.resolve(
+            formatHandlerError(
+              new ValidationError(
+                `Invalid savepoint name '${input.name}': must start with a letter or underscore and contain only alphanumeric characters`,
+              ),
+            ),
+          );
+        }
+
+        adapter.savepoint(input.name);
+
+        return Promise.resolve({
+          success: true,
+          message: `Savepoint '${input.name}' created`,
+          savepoint: input.name,
+        });
+      } catch (error) {
+        return Promise.resolve(formatHandlerError(error));
       }
-
-      adapter.savepoint(input.name);
-
-      return Promise.resolve({
-        success: true,
-        message: `Savepoint '${input.name}' created`,
-        savepoint: input.name,
-      });
     },
   };
 }
@@ -167,21 +224,33 @@ function createReleaseSavepointTool(
       "Release a savepoint, keeping the changes made since it was created.",
     group: "admin",
     inputSchema: SavepointSchema,
+    outputSchema: TransactionReleaseOutputSchema,
+    annotations: write("Release Savepoint"),
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
-      const input = SavepointSchema.parse(params);
+      try {
+        const input = SavepointSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-        throw new Error("Invalid savepoint name");
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
+          return Promise.resolve(
+            formatHandlerError(
+              new ValidationError(
+                `Invalid savepoint name '${input.name}': must start with a letter or underscore and contain only alphanumeric characters`,
+              ),
+            ),
+          );
+        }
+
+        adapter.releaseSavepoint(input.name);
+
+        return Promise.resolve({
+          success: true,
+          message: `Savepoint '${input.name}' released`,
+          savepoint: input.name,
+        });
+      } catch (error) {
+        return Promise.resolve(formatHandlerError(error));
       }
-
-      adapter.releaseSavepoint(input.name);
-
-      return Promise.resolve({
-        success: true,
-        message: `Savepoint '${input.name}' released`,
-        savepoint: input.name,
-      });
     },
   };
 }
@@ -198,21 +267,33 @@ function createRollbackToSavepointTool(
       "Rollback to a savepoint, discarding changes made after it was created.",
     group: "admin",
     inputSchema: SavepointSchema,
+    outputSchema: TransactionRollbackToOutputSchema,
+    annotations: write("Rollback to Savepoint"),
     requiredScopes: ["write"],
     handler: (params: unknown, _context: RequestContext) => {
-      const input = SavepointSchema.parse(params);
+      try {
+        const input = SavepointSchema.parse(params);
 
-      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
-        throw new Error("Invalid savepoint name");
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
+          return Promise.resolve(
+            formatHandlerError(
+              new ValidationError(
+                `Invalid savepoint name '${input.name}': must start with a letter or underscore and contain only alphanumeric characters`,
+              ),
+            ),
+          );
+        }
+
+        adapter.rollbackToSavepoint(input.name);
+
+        return Promise.resolve({
+          success: true,
+          message: `Rolled back to savepoint '${input.name}'`,
+          savepoint: input.name,
+        });
+      } catch (error) {
+        return Promise.resolve(formatHandlerError(error));
       }
-
-      adapter.rollbackToSavepoint(input.name);
-
-      return Promise.resolve({
-        success: true,
-        message: `Rolled back to savepoint '${input.name}'`,
-        savepoint: input.name,
-      });
     },
   };
 }
@@ -228,10 +309,22 @@ function createExecuteInTransactionTool(
     description:
       "Execute multiple SQL statements in a single transaction. Automatically commits on success or rolls back on error.",
     group: "admin",
+    outputSchema: TransactionExecuteOutputSchema,
     inputSchema: ExecuteInTransactionSchema,
+    annotations: write("Execute in Transaction"),
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = ExecuteInTransactionSchema.parse(params);
+      let input;
+      try {
+        input = ExecuteInTransactionSchema.parse(params);
+      } catch (error) {
+        return {
+          ...formatHandlerError(error),
+          message: "",
+          statementsExecuted: 0,
+          results: [],
+        };
+      }
 
       const results: {
         statement: string;
@@ -307,12 +400,24 @@ function createExecuteInTransactionTool(
           results,
         };
       } catch (error) {
-        adapter.rollbackTransaction();
+        let rollbackFailure: string | undefined;
+        try {
+          adapter.rollbackTransaction();
+        } catch (rbError) {
+          rollbackFailure =
+            rbError instanceof Error ? rbError.message : String(rbError);
+        }
         const message = error instanceof Error ? error.message : String(error);
+        const formatted = formatHandlerError(error);
+        let rollbackMessage = `Transaction rolled back: ${message}`;
+        if (rollbackFailure) {
+          rollbackMessage += ` (rollback error: ${rollbackFailure})`;
+        }
 
         return {
-          success: false,
-          message: `Transaction rolled back: ${message}`,
+          ...formatted,
+          error: formatted.error ?? rollbackMessage,
+          message: rollbackMessage,
           statementsExecuted: results.length,
           results,
         };

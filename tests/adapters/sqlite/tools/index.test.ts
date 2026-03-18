@@ -14,7 +14,7 @@ import {
   getToolsByGroup,
   getToolCountByGroup,
 } from "../../../../src/adapters/sqlite/tools/index.js";
-import type { SqliteAdapter } from "../../../../src/adapters/sqlite/SqliteAdapter.js";
+import type { SqliteAdapter } from "../../../../src/adapters/sqlite/sqlite-adapter.js";
 
 describe("Tools Index", () => {
   let adapter: TestAdapter;
@@ -35,7 +35,7 @@ describe("Tools Index", () => {
     it("should return all tool definitions", () => {
       const tools = getAllToolDefinitions(adapter as unknown as SqliteAdapter);
 
-      expect(tools.length).toBeGreaterThan(100);
+      expect(tools.length).toBeGreaterThan(90);
       expect(tools.every((t) => t.name && t.handler)).toBe(true);
     });
   });

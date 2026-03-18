@@ -1,4 +1,4 @@
-# Source files (dist is used instead)
+# Source files (dist/ is used instead)
 src/
 tests/
 
@@ -7,39 +7,53 @@ tests/
 .env*
 .vscode/
 .idea/
+.gemini/
 
 # Build configuration
 tsconfig.json
+tsup.config.ts
 eslint.config.js
 vitest.config.ts
 .prettierrc
 .prettierignore
+*.tsbuildinfo
 
 # Docker (separate distribution)
 Dockerfile
 .dockerignore
 DOCKER_README.md
 
-# Documentation (GitHub only)
+# Documentation (GitHub only — test-database/*.md are kept)
 docs/
 releases/
-*.md
-!README.md
-!LICENSE
+CHANGELOG.md
+UNRELEASED.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
 
 # Config examples
 config/
 
-# Database files
-*.db
-*.db-journal
-*.db-wal
-*.db-shm
+# Test database generated files (test plans, SQL seeds, reset script are included)
+test-database/*.db
+test-database/*.db-shm
+test-database/*.db-wal
+test-database/*.db-journal
 
 # Test artifacts
 coverage/
-test-database/
+
+# Extensions (user provides these)
+extensions/
 
 # MCP Registry tokens
 .mcpregistry_github_token
 .mcpregistry_registry_token
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Assets
+social-preview.png

@@ -6,15 +6,17 @@
  */
 
 import { z } from "zod";
-import type { SqliteAdapter } from "../SqliteAdapter.js";
+import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
+import { formatHandlerError } from "../../../utils/errors/index.js";
+import { validateTableExists } from "./column-validation.js";
 import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
   FtsRebuildOutputSchema,
-} from "../output-schemas.js";
+} from "../output-schemas/index.js";
 
 /**
  * Build error response for FTS5 unavailability in WASM mode
@@ -74,6 +76,17 @@ function buildFts5SearchUnavailableError(): {
   };
 }
 
+/**
+ * Create a coercer for optional enum params with defaults.
+ * Returns `undefined` for any value NOT in the allowed set
+ * (including empty strings), so `.optional().default()` kicks in.
+ * Prevents raw MCP -32602 for invalid enum values.
+ */
+const coerceEnumValues =
+  (allowed: readonly string[]) =>
+  (val: unknown): unknown =>
+    typeof val === "string" && allowed.includes(val) ? val : undefined;
+
 // FTS schemas
 const FtsCreateSchema = z.object({
   tableName: z.string().describe("Name of the FTS table to create"),
@@ -83,10 +96,10 @@ const FtsCreateSchema = z.object({
     .string()
     .optional()
     .describe("Content table for external content FTS"),
-  tokenizer: z
-    .enum(["unicode61", "ascii", "porter"])
-    .optional()
-    .default("unicode61"),
+  tokenizer: z.preprocess(
+    coerceEnumValues(["unicode61", "ascii", "porter"]),
+    z.enum(["unicode61", "ascii", "porter"]).optional().default("unicode61"),
+  ),
   createTriggers: z
     .boolean()
     .optional()
@@ -103,7 +116,15 @@ const FtsSearchSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Specific columns to search"),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(
+    (val) =>
+      typeof val === "string"
+        ? isNaN(Number(val))
+          ? undefined
+          : Number(val)
+        : val,
+    z.number().optional().default(100),
+  ),
   highlight: z
     .boolean()
     .optional()
@@ -118,7 +139,10 @@ const FtsRebuildSchema = z.object({
 const FtsMatchInfoSchema = z.object({
   table: z.string().describe("FTS table name"),
   query: z.string().describe("Full-text search query"),
-  format: z.enum(["bm25", "rank"]).optional().default("bm25"),
+  format: z.preprocess(
+    coerceEnumValues(["bm25", "rank"]),
+    z.enum(["bm25", "rank"]).optional().default("bm25"),
+  ),
 });
 
 /**
@@ -146,26 +170,25 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("FTS Create"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsCreateSchema.parse(params);
-
-      // Validate identifiers (FTS5 uses raw column names, not quoted)
-      sanitizeIdentifier(input.tableName);
-      sanitizeIdentifier(input.sourceTable);
-      for (const col of input.columns) {
-        sanitizeIdentifier(col);
-      }
-
-      const columnList = input.columns.join(", ");
-      let options = `tokenize="${input.tokenizer}"`;
-
-      // Use contentTable if specified, otherwise use sourceTable
-      const effectiveContentTable = input.contentTable ?? input.sourceTable;
-      sanitizeIdentifier(effectiveContentTable);
-      options += `, content="${effectiveContentTable}"`;
-
-      const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${input.tableName}" USING fts5(${columnList}, ${options})`;
-
       try {
+        const input = FtsCreateSchema.parse(params);
+
+        // Validate identifiers (FTS5 uses raw column names, not quoted)
+        sanitizeIdentifier(input.tableName);
+        sanitizeIdentifier(input.sourceTable);
+        for (const col of input.columns) {
+          sanitizeIdentifier(col);
+        }
+
+        const columnList = input.columns.join(", ");
+        let options = `tokenize="${input.tokenizer}"`;
+
+        // Use contentTable if specified, otherwise use sourceTable
+        const effectiveContentTable = input.contentTable ?? input.sourceTable;
+        sanitizeIdentifier(effectiveContentTable);
+        options += `, content="${effectiveContentTable}"`;
+
+        const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${input.tableName}" USING fts5(${columnList}, ${options})`;
         await adapter.executeQuery(sql);
 
         // Create sync triggers for external content FTS tables
@@ -196,9 +219,11 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return buildFts5UnavailableError(input.tableName);
+          return buildFts5UnavailableError(
+            (params as { tableName?: string } | null)?.tableName,
+          );
         }
-        throw error;
+        return formatHandlerError(error);
       }
     },
   };
@@ -265,22 +290,23 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("FTS Search"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsSearchSchema.parse(params);
-
-      // Upfront FTS5 availability check
-      if (!isFts5Available(adapter)) {
-        return buildFts5SearchUnavailableError();
-      }
-
-      // Validate FTS table name
-      sanitizeIdentifier(input.table);
-
-      let selectClause = "*";
-      if (input.highlight) {
-        selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
-      }
-
       try {
+        const input = FtsSearchSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5SearchUnavailableError();
+        }
+
+        // Validate FTS table name and existence
+        sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
+
+        let selectClause = "*";
+        if (input.highlight) {
+          selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
+        }
+
         // Handle wildcard/list-all query - skip MATCH and return all rows
         if (input.query === "*" || input.query.trim() === "") {
           const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit}`;
@@ -320,7 +346,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        throw error;
+        return formatHandlerError(error);
       }
     },
   };
@@ -339,20 +365,20 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("FTS Rebuild"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsRebuildSchema.parse(params);
-
-      // Upfront FTS5 availability check
-      if (!isFts5Available(adapter)) {
-        return buildFts5UnavailableError(input.table);
-      }
-
-      // Validate FTS table name
-      sanitizeIdentifier(input.table);
-
-      // Rebuild = drop shadow tables and recreate
-      const sql = `INSERT INTO "${input.table}"("${input.table}") VALUES('rebuild')`;
-
       try {
+        const input = FtsRebuildSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5UnavailableError(input.table);
+        }
+
+        // Validate FTS table name and existence
+        sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
+
+        // Rebuild = drop shadow tables and recreate
+        const sql = `INSERT INTO "${input.table}"("${input.table}") VALUES('rebuild')`;
         await adapter.executeQuery(sql);
 
         return {
@@ -362,9 +388,11 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
-          return buildFts5UnavailableError(input.table);
+          return buildFts5UnavailableError(
+            (params as { table?: string } | null)?.table,
+          );
         }
-        throw error;
+        return formatHandlerError(error);
       }
     },
   };
@@ -383,29 +411,29 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("FTS Match Info"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FtsMatchInfoSchema.parse(params);
-
-      // Upfront FTS5 availability check
-      if (!isFts5Available(adapter)) {
-        return buildFts5SearchUnavailableError();
-      }
-
-      // Validate FTS table name
-      sanitizeIdentifier(input.table);
-
-      // Use single quotes for FTS5 MATCH strings
-      const queryEscaped = input.query.replace(/'/g, "''");
-
-      let rankExpr: string;
-      if (input.format === "bm25") {
-        rankExpr = `bm25("${input.table}")`;
-      } else {
-        rankExpr = "rank";
-      }
-
-      const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
-
       try {
+        const input = FtsMatchInfoSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5SearchUnavailableError();
+        }
+
+        // Validate FTS table name
+        sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
+
+        // Use single quotes for FTS5 MATCH strings
+        const queryEscaped = input.query.replace(/'/g, "''");
+
+        let rankExpr: string;
+        if (input.format === "bm25") {
+          rankExpr = `bm25("${input.table}")`;
+        } else {
+          rankExpr = "rank";
+        }
+
+        const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
         const result = await adapter.executeReadQuery(sql);
 
         return {
@@ -417,7 +445,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
-        throw error;
+        return formatHandlerError(error);
       }
     },
   };

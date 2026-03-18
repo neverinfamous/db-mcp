@@ -37,7 +37,7 @@ describe("Statistics Tools", () => {
 
     // Insert test data with varied values for stats
     await adapter.executeWriteQuery(`
-      INSERT INTO sales (id, product, category, price, quantity, date) VALUES 
+      INSERT INTO sales (id, product, category, price, quantity, date) VALUES
       (1, 'Apple', 'Fruit', 1.50, 10, '2024-01-01'),
       (2, 'Banana', 'Fruit', 0.75, 20, '2024-01-02'),
       (3, 'Orange', 'Fruit', 1.25, 15, '2024-01-03'),
@@ -363,6 +363,170 @@ describe("Statistics Tools", () => {
 
       expect(result.success).toBe(true);
       expect(typeof result.statistic).toBe("number");
+    });
+  });
+
+  // =========================================================================
+  // Error Path Tests
+  // =========================================================================
+
+  describe("Error Handling", () => {
+    it("should return TABLE_NOT_FOUND for nonexistent table (basic)", async () => {
+      const result = (await tools.get("sqlite_stats_basic")?.({
+        table: "nonexistent_table",
+        column: "price",
+      })) as { success: boolean; code?: string; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("TABLE_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (basic)", async () => {
+      const result = (await tools.get("sqlite_stats_basic")?.({
+        table: "sales",
+        column: "nonexistent_col",
+      })) as { success: boolean; code?: string; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return TABLE_NOT_FOUND for nonexistent table (count)", async () => {
+      const result = (await tools.get("sqlite_stats_count")?.({
+        table: "nonexistent_table",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("TABLE_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (count)", async () => {
+      const result = (await tools.get("sqlite_stats_count")?.({
+        table: "sales",
+        column: "nonexistent_col",
+        distinct: true,
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (group_by)", async () => {
+      const result = (await tools.get("sqlite_stats_group_by")?.({
+        table: "sales",
+        valueColumn: "nonexistent_col",
+        groupByColumn: "category",
+        stat: "avg",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (histogram)", async () => {
+      const result = (await tools.get("sqlite_stats_histogram")?.({
+        table: "sales",
+        column: "nonexistent_col",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (correlation)", async () => {
+      const result = (await tools.get("sqlite_stats_correlation")?.({
+        table: "sales",
+        column1: "price",
+        column2: "nonexistent_col",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (top_n)", async () => {
+      const result = (await tools.get("sqlite_stats_top_n")?.({
+        table: "sales",
+        column: "nonexistent_col",
+        n: 5,
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (distinct)", async () => {
+      const result = (await tools.get("sqlite_stats_distinct")?.({
+        table: "sales",
+        column: "nonexistent_col",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return TABLE_NOT_FOUND for nonexistent table (summary)", async () => {
+      const result = (await tools.get("sqlite_stats_summary")?.({
+        table: "nonexistent_table",
+        columns: ["price"],
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("TABLE_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (summary)", async () => {
+      const result = (await tools.get("sqlite_stats_summary")?.({
+        table: "sales",
+        columns: ["nonexistent_col"],
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (frequency)", async () => {
+      const result = (await tools.get("sqlite_stats_frequency")?.({
+        table: "sales",
+        column: "nonexistent_col",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (outliers)", async () => {
+      const result = (await tools.get("sqlite_stats_outliers")?.({
+        table: "sales",
+        column: "nonexistent_col",
+        method: "iqr",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (regression)", async () => {
+      const result = (await tools.get("sqlite_stats_regression")?.({
+        table: "sales",
+        xColumn: "nonexistent_col",
+        yColumn: "price",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (hypothesis)", async () => {
+      const result = (await tools.get("sqlite_stats_hypothesis")?.({
+        table: "sales",
+        column: "nonexistent_col",
+        testType: "ttest_one",
+        expectedMean: 0,
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
     });
   });
 });

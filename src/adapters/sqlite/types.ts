@@ -101,6 +101,29 @@ export interface JsonNormalizationResult {
 // Tool Input Schemas (Zod)
 // =============================================================================
 
+/**
+ * Alias coercion: maps legacy parameter names to canonical names.
+ * If the canonical field is missing but the alias is present, the alias
+ * value is transparently moved to the canonical field.
+ *
+ * Applied in handlers before `.parse()` — NOT in the schema itself,
+ * because wrapping in `z.preprocess()` turns `ZodObject` into `ZodEffects`
+ * which breaks the SDK's `.partial()` call in `registerToolImpl`.
+ */
+export function resolveAliases(
+  params: unknown,
+  aliasMap: Record<string, string>,
+): unknown {
+  if (typeof params !== "object" || params === null) return params;
+  const obj = params as Record<string, unknown>;
+  for (const [alias, canonical] of Object.entries(aliasMap)) {
+    if (obj[canonical] === undefined && obj[alias] !== undefined) {
+      obj[canonical] = obj[alias];
+    }
+  }
+  return obj;
+}
+
 // Core Tool Schemas
 export const ReadQuerySchema = z.object({
   query: z.string().describe("SELECT query to execute"),
@@ -119,7 +142,7 @@ export const WriteQuerySchema = z.object({
 });
 
 export const CreateTableSchema = z.object({
-  tableName: z.string().describe("Name of the table to create"),
+  table: z.string().describe("Name of the table to create"),
   columns: z
     .array(
       z.object({
@@ -140,11 +163,11 @@ export const CreateTableSchema = z.object({
 });
 
 export const DescribeTableSchema = z.object({
-  tableName: z.string().describe("Name of the table to describe"),
+  table: z.string().describe("Name of the table to describe"),
 });
 
 export const DropTableSchema = z.object({
-  tableName: z.string().describe("Name of the table to drop"),
+  table: z.string().describe("Name of the table to drop"),
   ifExists: z
     .boolean()
     .optional()
@@ -154,28 +177,37 @@ export const DropTableSchema = z.object({
 
 export const CreateIndexSchema = z.object({
   indexName: z.string().describe("Name of the index"),
-  tableName: z.string().describe("Table to create index on"),
+  table: z.string().describe("Table to create index on"),
   columns: z.array(z.string()).describe("Columns to index"),
   unique: z.boolean().optional().default(false).describe("Create unique index"),
   ifNotExists: z.boolean().optional().default(true),
 });
 
 export const GetIndexesSchema = z.object({
-  tableName: z.string().optional().describe("Filter indexes by table name"),
+  table: z.string().optional().describe("Filter indexes by table name"),
   excludeSystemIndexes: z
     .boolean()
     .optional()
-    .default(false)
+    .default(true)
     .describe(
       "Exclude SpatiaLite system indexes (idx_spatial_ref_sys, idx_srid_geocols, etc.)",
     ),
+});
+
+export const DropIndexSchema = z.object({
+  indexName: z.string().describe("Name of the index to drop"),
+  ifExists: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Add IF EXISTS clause"),
 });
 
 export const ListTablesSchema = z.object({
   excludeSystemTables: z
     .boolean()
     .optional()
-    .default(false)
+    .default(true)
     .describe(
       "Exclude SpatiaLite system tables (geometry_columns, spatial_ref_sys, etc.)",
     ),
@@ -215,7 +247,10 @@ export const JsonQuerySchema = z.object({
     .optional()
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),
-  limit: z.number().optional().default(100),
+  limit: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().default(100),
+  ),
 });
 
 export const JsonValidatePathSchema = z.object({
@@ -270,11 +305,10 @@ export const VacuumSchema = z.object({
 export const AnalyzeJsonSchemaSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to analyze"),
-  sampleSize: z
-    .number()
-    .optional()
-    .default(100)
-    .describe("Number of rows to sample"),
+  sampleSize: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().default(100).describe("Number of rows to sample"),
+  ),
 });
 
 // Create JSON Collection
@@ -313,6 +347,7 @@ export type DescribeTableInput = z.infer<typeof DescribeTableSchema>;
 export type DropTableInput = z.infer<typeof DropTableSchema>;
 export type CreateIndexInput = z.infer<typeof CreateIndexSchema>;
 export type GetIndexesInput = z.infer<typeof GetIndexesSchema>;
+export type DropIndexInput = z.infer<typeof DropIndexSchema>;
 export type JsonInsertInput = z.infer<typeof JsonInsertSchema>;
 export type JsonUpdateInput = z.infer<typeof JsonUpdateSchema>;
 export type JsonSelectInput = z.infer<typeof JsonSelectSchema>;

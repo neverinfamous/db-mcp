@@ -95,14 +95,14 @@ describe("Vector Tools", () => {
   });
 
   describe("sqlite_vector_distance", () => {
-    it("should calculate cosine similarity", async () => {
+    it("should calculate cosine distance", async () => {
       const result = (await tools.get("sqlite_vector_distance")?.({
         vector1: [1, 0, 0],
         vector2: [1, 0, 0],
         metric: "cosine",
       })) as { value: number };
 
-      expect(result.value).toBe(1); // Same vector = similarity 1
+      expect(result.value).toBe(0); // Same vector = distance 0
     });
 
     it("should calculate euclidean distance", async () => {

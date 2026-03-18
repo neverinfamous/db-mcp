@@ -1,3 +1,12 @@
+# Dependencies (rebuilt in container)
+node_modules/
+
+# Build artifacts (rebuilt in container)
+dist/
+build/
+out/
+*.tsbuildinfo
+
 # Git
 .git/
 .gitignore
@@ -6,23 +15,31 @@
 # GitHub
 .github/
 
-# Development
+# Development files
 .env
 .env.*
-.vscode/
-.idea/
+!.env.example
+.dev.vars
 *.log
 
-# Dependencies (rebuilt in container)
-node_modules/
+# IDE/Editor
+.gemini/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Build artifacts (rebuilt in container)
-dist/
+# OS files
+.DS_Store
+Thumbs.db
 
 # Test files
 tests/
+__tests__/
 test-database/
 coverage/
+test-results.json
 *.test.ts
 *.spec.ts
 vitest.config.ts
@@ -39,11 +56,10 @@ docs/
 !README.md
 !LICENSE
 
-# IDE/Editor
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
+# Node and caching
+.npm/
+.eslintcache/
+.nyc_output/
 
 # Config files not needed in container
 eslint.config.js
@@ -53,6 +69,30 @@ eslint.config.js
 # Extensions (user provides these)
 extensions/
 
-# MCP Registry tokens
+# MCP Registry tokens and config
 .mcpregistry_github_token
 .mcpregistry_registry_token
+server.json
+
+# Docker (self-reference)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# NPM packaging config
+.npmignore
+
+# Alternative lock files
+yarn.lock
+pnpm-lock.yaml
+
+# Release notes
+releases/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Assets
+social-preview.png

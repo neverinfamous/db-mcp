@@ -19,7 +19,7 @@ import {
   ERROR_CODES,
   createModuleLogger,
   logger as defaultLogger,
-} from "../../src/utils/logger.js";
+} from "../../src/utils/logger/index.js";
 
 describe("Logger Security", () => {
   let logger: Logger;

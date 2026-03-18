@@ -5,14 +5,15 @@
  * 8 resources total.
  */
 
-import type { SqliteAdapter } from "./SqliteAdapter.js";
+import type { SqliteAdapter } from "./sqlite-adapter.js";
 import type { ResourceDefinition } from "../../types/index.js";
 import {
   HIGH_PRIORITY,
   MEDIUM_PRIORITY,
   LOW_PRIORITY,
-} from "../../utils/resourceAnnotations.js";
-import { insightsManager } from "../../utils/insightsManager.js";
+} from "../../utils/resource-annotations.js";
+import { insightsManager } from "../../utils/insights-manager.js";
+import { DbMcpError, ErrorCategory } from "../../utils/errors/index.js";
 
 /**
  * Get all resource definitions for the SQLite adapter
@@ -98,7 +99,11 @@ function createTableSchemaResource(adapter: SqliteAdapter): ResourceDefinition {
       const regex = /sqlite:\/\/table\/([^/]+)\/schema/;
       const match = regex.exec(uri);
       if (!match?.[1]) {
-        throw new Error("Invalid table URI format");
+        throw new DbMcpError(
+          "Invalid table URI format",
+          "RESOURCE_INVALID_URI",
+          ErrorCategory.VALIDATION,
+        );
       }
       const tableName = decodeURIComponent(match[1]);
       const tableInfo = await adapter.describeTable(tableName);

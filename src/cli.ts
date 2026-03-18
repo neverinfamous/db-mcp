@@ -5,11 +5,13 @@
  * Entry point for running the db-mcp server from the command line.
  */
 
-import { createServer, DEFAULT_CONFIG } from "./server/McpServer.js";
+import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
+import { VERSION } from "./version.js";
 import type {
   McpServerConfig,
   TransportType,
   DatabaseConfig,
+  OAuthConfig,
 } from "./types/index.js";
 
 /**
@@ -45,6 +47,44 @@ function parseArgs(): Partial<McpServerConfig> {
     } else if (arg === "--stateless") {
       // Enable stateless HTTP mode (no session management, no SSE)
       config.statelessHttp = true;
+    } else if (arg === "--enable-hsts") {
+      config.enableHSTS = true;
+    } else if (arg === "--auth-token") {
+      const tokenValue = args[++i];
+      if (tokenValue) {
+        config.authToken = tokenValue;
+      }
+    } else if (arg === "--oauth-enabled" || arg === "-o") {
+      if (!config.oauth) {
+        config.oauth = { enabled: true };
+      } else {
+        config.oauth.enabled = true;
+      }
+    } else if (arg === "--oauth-issuer") {
+      const issuerValue = args[++i];
+      if (issuerValue) {
+        config.oauth ??= { enabled: true };
+        config.oauth.authorizationServerUrl = issuerValue;
+        config.oauth.issuer = issuerValue;
+      }
+    } else if (arg === "--oauth-audience") {
+      const audValue = args[++i];
+      if (audValue) {
+        config.oauth ??= { enabled: true };
+        config.oauth.audience = audValue;
+      }
+    } else if (arg === "--oauth-jwks-uri") {
+      const jwksValue = args[++i];
+      if (jwksValue) {
+        config.oauth ??= { enabled: true };
+        config.oauth.jwksUri = jwksValue;
+      }
+    } else if (arg === "--oauth-clock-tolerance") {
+      const tolValue = args[++i];
+      if (tolValue) {
+        config.oauth ??= { enabled: true };
+        config.oauth.clockTolerance = parseInt(tolValue, 10);
+      }
     } else if (arg === "--name") {
       const nameValue = args[++i];
       if (nameValue) {
@@ -125,6 +165,15 @@ Transport Options:
                             Use 127.0.0.1 to restrict to local connections
   --stateless               Use stateless HTTP mode (no session management, no SSE)
                             Ideal for serverless deployments (Lambda, Workers)
+  --enable-hsts             Enable HSTS header (use when behind HTTPS)
+
+Authentication Options:
+  --auth-token <token>      Simple bearer token for HTTP authentication
+  --oauth-enabled, -o       Enable OAuth 2.1 authentication
+  --oauth-issuer <url>      Authorization server URL (issuer)
+  --oauth-audience <aud>    Expected token audience
+  --oauth-jwks-uri <url>    JWKS URI (auto-discovered from issuer if not set)
+  --oauth-clock-tolerance <seconds>  Clock tolerance in seconds (default: 60)
 
 Database Options:
   --sqlite <path>           Add SQLite database (WASM/sql.js)
@@ -136,7 +185,7 @@ Extension Options (Native only):
 
 Server Options:
   --name <name>             Server name (default: db-mcp)
-  --version <version>       Server version (default: 0.1.0)
+  --version <version>       Server version (default: ${VERSION})
   --tool-filter <filter>    Tool filter string. Supports:
                               Shortcuts: starter, analytics, search, spatial, minimal, full
                               Groups: core, json, text, fts5, stats, vector, geo, ...
@@ -145,6 +194,13 @@ Server Options:
 
 Environment Variables:
   MCP_HOST                  Host/IP to bind to (default: 0.0.0.0)
+  MCP_AUTH_TOKEN             Simple bearer token (same as --auth-token)
+  OAUTH_ENABLED              Enable OAuth 2.1 (same as --oauth-enabled)
+  OAUTH_ISSUER               Authorization server URL
+  OAUTH_AUDIENCE             Expected token audience
+  OAUTH_JWKS_URI             JWKS URI
+  OAUTH_CLOCK_TOLERANCE      Clock tolerance in seconds
+  MCP_ENABLE_HSTS            Enable HSTS header (same as --enable-hsts)
   DB_MCP_TOOL_FILTER        Tool filter string
   SQLITE_DATABASE           SQLite database path
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
@@ -153,9 +209,8 @@ Environment Variables:
 Examples:
   db-mcp --sqlite-native ./data.db
   db-mcp --sqlite-native ./data.db --tool-filter "starter"
-  db-mcp --sqlite-native ./data.db --tool-filter "core,json,text"
-  db-mcp --sqlite-native ./data.db --tool-filter "-vector,-stats"
-  db-mcp --transport http --port 3000 --server-host 0.0.0.0 --sqlite ./data.db
+  db-mcp --transport http --port 3000 --auth-token my-secret --sqlite ./data.db
+  db-mcp --transport http --oauth-enabled --oauth-issuer http://keycloak:8080/realms/mcp --oauth-audience db-mcp --sqlite ./data.db
 
 For more information, visit: https://github.com/neverinfamous/db-mcp
 `);
@@ -172,6 +227,30 @@ function loadEnvConfig(): Partial<McpServerConfig> {
   const host = process.env["MCP_HOST"] ?? process.env["HOST"];
   if (host) {
     config.host = host;
+  }
+
+  // Simple bearer token from environment
+  const authToken = process.env["MCP_AUTH_TOKEN"];
+  if (authToken) {
+    config.authToken = authToken;
+  }
+
+  // OAuth from environment
+  const oauthEnabled = process.env["OAUTH_ENABLED"] === "true";
+  if (oauthEnabled) {
+    const oauth: OAuthConfig = { enabled: true };
+    const issuer = process.env["OAUTH_ISSUER"];
+    if (issuer) {
+      oauth.authorizationServerUrl = issuer;
+      oauth.issuer = issuer;
+    }
+    const audience = process.env["OAUTH_AUDIENCE"];
+    if (audience) oauth.audience = audience;
+    const jwksUri = process.env["OAUTH_JWKS_URI"];
+    if (jwksUri) oauth.jwksUri = jwksUri;
+    const clockTolerance = process.env["OAUTH_CLOCK_TOLERANCE"];
+    if (clockTolerance) oauth.clockTolerance = parseInt(clockTolerance, 10);
+    config.oauth = oauth;
   }
 
   // Tool filter from environment
@@ -247,13 +326,11 @@ async function main(): Promise<void> {
           await server.registerAdapter(adapter, dbConfig);
         }
       }
-      // TODO: Add other database adapters as they are implemented
-      // else if (dbConfig.type === 'postgresql') { ... }
     }
 
     if (config.databases.length === 0) {
       console.error(
-        "Warning: No databases configured. Use --sqlite, --postgresql, etc. or set DATABASE_URI",
+        "Warning: No databases configured. Use --sqlite or --sqlite-native, or set SQLITE_DATABASE",
       );
     }
 

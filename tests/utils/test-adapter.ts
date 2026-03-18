@@ -9,8 +9,8 @@
  * - All SQLite extensions
  */
 
-import { NativeSqliteAdapter } from "../../src/adapters/sqlite-native/NativeSqliteAdapter.js";
-import type { SqliteAdapter as SqliteAdapterType } from "../../src/adapters/sqlite/SqliteAdapter.js";
+import { NativeSqliteAdapter } from "../../src/adapters/sqlite-native/native-sqlite-adapter.js";
+import type { SqliteAdapter as SqliteAdapterType } from "../../src/adapters/sqlite/sqlite-adapter.js";
 
 /**
  * Create a test adapter instance using NativeSqliteAdapter.

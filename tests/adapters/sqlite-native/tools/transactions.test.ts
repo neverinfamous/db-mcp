@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { getTransactionTools } from "../../../../src/adapters/sqlite-native/tools/transactions.js";
-import { NativeSqliteAdapter } from "../../../../src/adapters/sqlite-native/NativeSqliteAdapter.js";
+import { NativeSqliteAdapter } from "../../../../src/adapters/sqlite-native/native-sqlite-adapter.js";
 import type {
   RequestContext,
   ToolDefinition,
@@ -190,16 +190,22 @@ describe("Transaction Tools", () => {
       adapter.rollbackTransaction();
     });
 
-    it("should reject invalid savepoint names", () => {
-      expect(() =>
-        getSavepointTool().handler({ name: "123invalid" }, mockContext),
-      ).toThrow("Invalid savepoint name");
+    it("should reject invalid savepoint names", async () => {
+      const result = (await getSavepointTool().handler(
+        { name: "123invalid" },
+        mockContext,
+      )) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid savepoint name");
     });
 
-    it("should reject names with special characters", () => {
-      expect(() =>
-        getSavepointTool().handler({ name: "save-point" }, mockContext),
-      ).toThrow("Invalid savepoint name");
+    it("should reject names with special characters", async () => {
+      const result = (await getSavepointTool().handler(
+        { name: "save-point" },
+        mockContext,
+      )) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid savepoint name");
     });
   });
 
@@ -225,10 +231,13 @@ describe("Transaction Tools", () => {
       adapter.commitTransaction();
     });
 
-    it("should reject invalid names", () => {
-      expect(() =>
-        getReleaseTool().handler({ name: "bad name" }, mockContext),
-      ).toThrow("Invalid savepoint name");
+    it("should reject invalid names", async () => {
+      const result = (await getReleaseTool().handler(
+        { name: "bad name" },
+        mockContext,
+      )) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid savepoint name");
     });
   });
 
@@ -265,10 +274,13 @@ describe("Transaction Tools", () => {
       adapter.rollbackTransaction();
     });
 
-    it("should reject invalid names", () => {
-      expect(() =>
-        getRollbackToTool().handler({ name: "DROP TABLE" }, mockContext),
-      ).toThrow("Invalid savepoint name");
+    it("should reject invalid names", async () => {
+      const result = (await getRollbackToTool().handler(
+        { name: "DROP TABLE" },
+        mockContext,
+      )) as { success: boolean; error: string };
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid savepoint name");
     });
   });
 

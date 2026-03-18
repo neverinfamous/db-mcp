@@ -1,0 +1,6 @@
+id,name,category,price,in_stock
+1,Widget A,hardware,9.99,true
+2,Widget B,hardware,14.50,true
+3,Gadget X,electronics,29.99,false
+4,Gadget Y,electronics,49.99,true
+5,Tool Z,accessories,5.25,true
