@@ -89,7 +89,7 @@ export class AuthorizationServerDiscovery {
         throw new DbMcpError(
           `HTTP ${String(response.status)}: ${response.statusText}`,
           ERROR_CODES.AUTH.DISCOVERY_FAILED.full,
-          ErrorCategory.CONNECTION
+          ErrorCategory.CONNECTION,
         );
       }
 
@@ -133,7 +133,7 @@ export class AuthorizationServerDiscovery {
       throw new DbMcpError(
         "Missing required field: issuer",
         "AUTH_DISCOVERY_INVALID",
-        ErrorCategory.VALIDATION
+        ErrorCategory.VALIDATION,
       );
     }
 
@@ -141,7 +141,7 @@ export class AuthorizationServerDiscovery {
       throw new DbMcpError(
         "Missing required field: token_endpoint",
         "AUTH_DISCOVERY_INVALID",
-        ErrorCategory.VALIDATION
+        ErrorCategory.VALIDATION,
       );
     }
 
@@ -165,7 +165,7 @@ export class AuthorizationServerDiscovery {
       throw new DbMcpError(
         "Authorization server metadata not yet discovered. Call discover() first.",
         "AUTH_DISCOVERY_REQUIRED",
-        ErrorCategory.INTERNAL
+        ErrorCategory.INTERNAL,
       );
     }
     return this.cachedMetadata;
@@ -183,7 +183,7 @@ export class AuthorizationServerDiscovery {
       throw new DbMcpError(
         "Authorization server does not provide jwks_uri",
         "AUTH_DISCOVERY_INVALID",
-        ErrorCategory.VALIDATION
+        ErrorCategory.VALIDATION,
       );
     }
 

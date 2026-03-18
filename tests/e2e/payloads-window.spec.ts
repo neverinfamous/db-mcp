@@ -10,7 +10,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -18,11 +23,15 @@ test.describe("Payload Contracts: Window Functions", () => {
   test("sqlite_window_row_number returns { success, rows[] } with row_number field", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_window_row_number", {
-        table: "test_measurements",
-        orderBy: "temperature",
-        limit: 5,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_window_row_number",
+        {
+          table: "test_measurements",
+          orderBy: "temperature",
+          limit: 5,
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.rows)).toBe(true);
@@ -39,12 +48,16 @@ test.describe("Payload Contracts: Window Functions", () => {
   test("sqlite_window_row_number with partitionBy", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_window_row_number", {
-        table: "test_measurements",
-        orderBy: "temperature",
-        partitionBy: "sensor_id",
-        limit: 10,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_window_row_number",
+        {
+          table: "test_measurements",
+          orderBy: "temperature",
+          partitionBy: "sensor_id",
+          limit: 10,
+        },
+      );
 
       expectSuccess(payload);
       const rows = payload.rows as Record<string, unknown>[];
@@ -161,12 +174,16 @@ test.describe("Payload Contracts: Window Functions", () => {
   test("sqlite_window_running_total returns { success, rows[] } with running_total", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_window_running_total", {
-        table: "test_orders",
-        column: "total_price",
-        orderBy: "order_date",
-        limit: 5,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_window_running_total",
+        {
+          table: "test_orders",
+          column: "total_price",
+          orderBy: "order_date",
+          limit: 5,
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.rows)).toBe(true);
@@ -176,7 +193,9 @@ test.describe("Payload Contracts: Window Functions", () => {
       expect(typeof rows[0].running_total).toBe("number");
       // Running total should increase monotonically
       for (let i = 1; i < rows.length; i++) {
-        expect(rows[i].running_total as number).toBeGreaterThanOrEqual(rows[i - 1].running_total as number);
+        expect(rows[i].running_total as number).toBeGreaterThanOrEqual(
+          rows[i - 1].running_total as number,
+        );
       }
     } finally {
       await client.close();
@@ -186,13 +205,17 @@ test.describe("Payload Contracts: Window Functions", () => {
   test("sqlite_window_running_total with partitionBy", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_window_running_total", {
-        table: "test_orders",
-        column: "total_price",
-        orderBy: "order_date",
-        partitionBy: "status",
-        limit: 10,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_window_running_total",
+        {
+          table: "test_orders",
+          column: "total_price",
+          orderBy: "order_date",
+          partitionBy: "status",
+          limit: 10,
+        },
+      );
 
       expectSuccess(payload);
       const rows = payload.rows as Record<string, unknown>[];
@@ -206,13 +229,17 @@ test.describe("Payload Contracts: Window Functions", () => {
   test("sqlite_window_moving_avg returns { success, rows[] } with moving_avg", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_window_moving_avg", {
-        table: "test_measurements",
-        column: "temperature",
-        orderBy: "measured_at",
-        windowSize: 5,
-        limit: 10,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_window_moving_avg",
+        {
+          table: "test_measurements",
+          column: "temperature",
+          orderBy: "measured_at",
+          windowSize: 5,
+          limit: 10,
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.rows)).toBe(true);

@@ -34,7 +34,7 @@ export async function setupStatelessEndpoints(
     throw new DbMcpError(
       "Transport or server not initialized",
       ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
-      ErrorCategory.INTERNAL
+      ErrorCategory.INTERNAL,
     );
   }
 
@@ -101,7 +101,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
     throw new DbMcpError(
       "Transport or server not initialized",
       ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
-      ErrorCategory.INTERNAL
+      ErrorCategory.INTERNAL,
     );
   }
 
@@ -218,7 +218,10 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
         if (!res.headersSent) {
           res.status(500).json({
             jsonrpc: "2.0",
-            error: { code: JSONRPC_INTERNAL_ERROR, message: "Internal server error" },
+            error: {
+              code: JSONRPC_INTERNAL_ERROR,
+              message: "Internal server error",
+            },
             id: null,
           });
         }
@@ -246,10 +249,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
 
     const httpTransport = state.transports.get(sessionId);
     if (httpTransport !== undefined) {
-      void httpTransport.handleRequest(
-        asIncoming(req),
-        asServerResponse(res),
-      );
+      void httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
     }
   });
 
@@ -269,10 +269,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
 
     const httpTransport = state.transports.get(sessionId);
     if (httpTransport !== undefined) {
-      void httpTransport.handleRequest(
-        asIncoming(req),
-        asServerResponse(res),
-      );
+      void httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
     }
   });
 }
@@ -354,7 +351,10 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
     if (!sessionId) {
       res.status(400).json({
         jsonrpc: "2.0",
-        error: { code: JSONRPC_SERVER_ERROR, message: "Missing sessionId parameter" },
+        error: {
+          code: JSONRPC_SERVER_ERROR,
+          message: "Missing sessionId parameter",
+        },
         id: null,
       });
       return;

@@ -7,7 +7,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -15,7 +20,11 @@ test.describe("Payload Contracts: Virtual Tables & Views", () => {
   test("sqlite_list_virtual_tables returns { success, count, virtualTables[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_list_virtual_tables", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_list_virtual_tables",
+        {},
+      );
 
       expectSuccess(payload);
       expect(typeof payload.count).toBe("number");

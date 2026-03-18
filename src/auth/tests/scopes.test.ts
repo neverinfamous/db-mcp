@@ -305,9 +305,9 @@ describe("scopeGrantsTableAccess", () => {
   });
 
   it("should deny access for non-matching table: pattern", () => {
-    expect(
-      scopeGrantsTableAccess("table:mydb:products", "mydb", "users"),
-    ).toBe(false);
+    expect(scopeGrantsTableAccess("table:mydb:products", "mydb", "users")).toBe(
+      false,
+    );
   });
 });
 

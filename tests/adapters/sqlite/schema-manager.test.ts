@@ -108,18 +108,17 @@ describe("SchemaManager", () => {
       } as QueryResult);
 
       // Only articles is processed
-      mockExecuteReadQuery
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              name: "id",
-              type: "INTEGER",
-              notnull: 1,
-              pk: 1,
-              dflt_value: null,
-            },
-          ],
-        } as QueryResult);
+      mockExecuteReadQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            name: "id",
+            type: "INTEGER",
+            notnull: 1,
+            pk: 1,
+            dflt_value: null,
+          },
+        ],
+      } as QueryResult);
 
       const tables = await schemaManager.listTables();
 
@@ -153,25 +152,24 @@ describe("SchemaManager", () => {
 
   describe("describeTable", () => {
     it("should describe a table structure", async () => {
-      mockExecuteReadQuery
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              name: "id",
-              type: "INTEGER",
-              notnull: 1,
-              pk: 1,
-              dflt_value: null,
-            },
-            {
-              name: "email",
-              type: "TEXT",
-              notnull: 0,
-              pk: 0,
-              dflt_value: null,
-            },
-          ],
-        } as QueryResult);
+      mockExecuteReadQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            name: "id",
+            type: "INTEGER",
+            notnull: 1,
+            pk: 1,
+            dflt_value: null,
+          },
+          {
+            name: "email",
+            type: "TEXT",
+            notnull: 0,
+            pk: 0,
+            dflt_value: null,
+          },
+        ],
+      } as QueryResult);
 
       const tableInfo = await schemaManager.describeTable("users");
 
@@ -394,18 +392,17 @@ describe("SchemaManager", () => {
     });
 
     it("should return undefined rowCount", async () => {
-      mockExecuteReadQuery
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              name: "id",
-              type: "INTEGER",
-              notnull: 1,
-              pk: 1,
-              dflt_value: null,
-            },
-          ],
-        });
+      mockExecuteReadQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            name: "id",
+            type: "INTEGER",
+            notnull: 1,
+            pk: 1,
+            dflt_value: null,
+          },
+        ],
+      });
 
       const tableInfo = await schemaManager.describeTable("test_table");
       expect(tableInfo.rowCount).toBeUndefined();

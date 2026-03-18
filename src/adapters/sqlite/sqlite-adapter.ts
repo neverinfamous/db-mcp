@@ -22,9 +22,7 @@ import type {
   PromptDefinition,
   ToolGroup,
 } from "../../types/index.js";
-import {
-  ConnectionError,
-} from "../../utils/errors/index.js";
+import { ConnectionError } from "../../utils/errors/index.js";
 import type { SqliteConfig } from "./types.js";
 import type { SchemaManager } from "./schema-manager.js";
 
@@ -33,16 +31,21 @@ import { getAllToolDefinitions } from "./tools/index.js";
 import { getResourceDefinitions } from "./resources.js";
 import { getPromptDefinitions } from "./prompts/index.js";
 
-
 // Query execution logic (extracted for modularity)
 import { executeRead, executeWrite, executeGeneral } from "./query-executor.js";
 
 import { isDDL } from "../sqlite-helpers.js";
 
-import { connectSqliteDatabase, disconnectSqliteDatabase } from "./sqlite-adapter/lifecycle.js";
-import { fallBackListTables, fallBackDescribeTable, fallBackGetIndexes, fallBackGetSchema } from "./sqlite-adapter/schema.js";
-
-
+import {
+  connectSqliteDatabase,
+  disconnectSqliteDatabase,
+} from "./sqlite-adapter/lifecycle.js";
+import {
+  fallBackListTables,
+  fallBackDescribeTable,
+  fallBackGetIndexes,
+  fallBackGetSchema,
+} from "./sqlite-adapter/schema.js";
 
 /**
  * SQLite Database Adapter
@@ -279,7 +282,17 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Get supported tool groups
    */
   override getSupportedToolGroups(): ToolGroup[] {
-    return ["core", "json", "text", "stats", "vector", "admin", "geo", "introspection", "migration"];
+    return [
+      "core",
+      "json",
+      "text",
+      "stats",
+      "vector",
+      "admin",
+      "geo",
+      "introspection",
+      "migration",
+    ];
   }
 
   /**
@@ -302,7 +315,6 @@ export class SqliteAdapter extends DatabaseAdapter {
   override getPromptDefinitions(): PromptDefinition[] {
     return getPromptDefinitions(this);
   }
-
 
   /**
    * Ensure database is connected

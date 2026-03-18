@@ -117,7 +117,12 @@ const FtsSearchSchema = z.object({
     .optional()
     .describe("Specific columns to search"),
   limit: z.preprocess(
-    (val) => (typeof val === "string" ? (isNaN(Number(val)) ? undefined : Number(val)) : val),
+    (val) =>
+      typeof val === "string"
+        ? isNaN(Number(val))
+          ? undefined
+          : Number(val)
+        : val,
     z.number().optional().default(100),
   ),
   highlight: z
@@ -134,7 +139,10 @@ const FtsRebuildSchema = z.object({
 const FtsMatchInfoSchema = z.object({
   table: z.string().describe("FTS table name"),
   query: z.string().describe("Full-text search query"),
-  format: z.preprocess(coerceEnumValues(["bm25", "rank"]), z.enum(["bm25", "rank"]).optional().default("bm25")),
+  format: z.preprocess(
+    coerceEnumValues(["bm25", "rank"]),
+    z.enum(["bm25", "rank"]).optional().default("bm25"),
+  ),
 });
 
 /**

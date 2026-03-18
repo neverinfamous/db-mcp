@@ -102,7 +102,9 @@ test.describe("Help Resources", () => {
         expect(response.contents[0].mimeType).toBe("text/markdown");
 
         const text = response.contents[0].text as string;
-        expect(text.length, `${group} help content too short`).toBeGreaterThan(50);
+        expect(text.length, `${group} help content too short`).toBeGreaterThan(
+          50,
+        );
       } finally {
         await client.close();
       }

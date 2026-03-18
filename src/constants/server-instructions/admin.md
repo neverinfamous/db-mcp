@@ -4,7 +4,9 @@
 
 ```javascript
 // Atomic multi-statement execution (preferred for simple cases)
-sqlite_transaction_execute({ statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"] });
+sqlite_transaction_execute({
+  statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"],
+});
 
 // Manual transaction control
 sqlite_transaction_begin({ mode: "immediate" }); // or "deferred", "exclusive"
@@ -51,7 +53,10 @@ sqlite_pragma_optimize(); // run PRAGMA optimize
 ## Views
 
 ```javascript
-sqlite_create_view({ viewName: "active_orders", selectQuery: "SELECT * FROM orders WHERE status = 'active'" });
+sqlite_create_view({
+  viewName: "active_orders",
+  selectQuery: "SELECT * FROM orders WHERE status = 'active'",
+});
 sqlite_create_view({ viewName: "v", selectQuery: "...", replace: true }); // CREATE OR REPLACE
 sqlite_list_views(); // list all views
 sqlite_drop_view({ viewName: "active_orders" });
@@ -86,7 +91,10 @@ sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }); // 2D:
 
 ```javascript
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" }); // analyze CSV structure
-sqlite_create_csv_table({ tableName: "csv_data", filePath: "/absolute/path/to/data.csv" });
+sqlite_create_csv_table({
+  tableName: "csv_data",
+  filePath: "/absolute/path/to/data.csv",
+});
 ```
 
 ## Business Insights

@@ -5,7 +5,10 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
@@ -16,10 +19,7 @@ import {
   VectorSearchOutputSchema,
   VectorGetOutputSchema,
 } from "../../output-schemas/index.js";
-import {
-  VectorSearchSchema,
-  VectorGetSchema,
-} from "./schemas.js";
+import { VectorSearchSchema, VectorGetSchema } from "./schemas.js";
 import {
   cosineSimilarity,
   euclideanDistance,
@@ -30,9 +30,7 @@ import {
 /**
  * Vector similarity search
  */
-export function createVectorSearchTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_vector_search",
     description:
@@ -49,7 +47,8 @@ export function createVectorSearchTool(
         if (input.queryVector.length === 0) {
           return {
             success: false,
-            error: "queryVector is required and must be a non-empty array of numbers",
+            error:
+              "queryVector is required and must be a non-empty array of numbers",
           };
         }
 
@@ -84,15 +83,16 @@ export function createVectorSearchTool(
         // Calculate similarities in JavaScript
         const queryVector = input.queryVector;
         let skipped = 0;
-        const scored: (Record<string, unknown> & { _similarity: number })[] = [];
+        const scored: (Record<string, unknown> & { _similarity: number })[] =
+          [];
         const rows = result.rows ?? [];
-        
+
         for (let i = 0; i < rows.length; i++) {
           // Yield event loop every 500 rows to prevent blocking
           if (i > 0 && i % 500 === 0) {
             await new Promise((resolve) => setTimeout(resolve, 0));
           }
-          
+
           const row = rows[i];
           if (!row) continue;
           try {
@@ -181,9 +181,7 @@ export function createVectorSearchTool(
 /**
  * Get a vector by ID
  */
-export function createVectorGetTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_vector_get",
     description: "Retrieve a vector by its ID.",
@@ -209,12 +207,20 @@ export function createVectorGetTool(
         const result = await adapter.executeReadQuery(sql);
 
         if (!result.rows || result.rows.length === 0) {
-          return { success: false, error: "Vector not found", code: "VECTOR_NOT_FOUND" };
+          return {
+            success: false,
+            error: "Vector not found",
+            code: "VECTOR_NOT_FOUND",
+          };
         }
 
         const row = result.rows[0];
         if (!row) {
-          return { success: false, error: "Vector not found", code: "VECTOR_NOT_FOUND" };
+          return {
+            success: false,
+            error: "Vector not found",
+            code: "VECTOR_NOT_FOUND",
+          };
         }
 
         // Check if the vector column exists in the row data

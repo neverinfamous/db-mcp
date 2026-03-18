@@ -23,7 +23,18 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3000",
       },
-      testIgnore: [/native\./, /auth\./, /payloads-window\./, /payloads-fts\./, /payloads-transactions\./, /payloads-spatialite\./, /payloads-csv\./, /transactions-nested\./, /integration-workflows\./, /codemode-introspection\./],
+      testIgnore: [
+        /native\./,
+        /auth\./,
+        /payloads-window\./,
+        /payloads-fts\./,
+        /payloads-transactions\./,
+        /payloads-spatialite\./,
+        /payloads-csv\./,
+        /transactions-nested\./,
+        /integration-workflows\./,
+        /codemode-introspection\./,
+      ],
     },
     {
       name: "native",
@@ -53,7 +64,11 @@ export default defineConfig({
       timeout: 30000,
       stdout: "pipe",
       stderr: "pipe",
-      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000", MCP_CODEMODE_RATE_LIMIT: "10000" },
+      env: {
+        ...process.env,
+        MCP_RATE_LIMIT_MAX: "10000",
+        MCP_CODEMODE_RATE_LIMIT: "10000",
+      },
     },
     {
       command:
@@ -67,7 +82,8 @@ export default defineConfig({
         ...process.env,
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
-        SPATIALITE_PATH: "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite.dll",
+        SPATIALITE_PATH:
+          "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite.dll",
         CSV_EXTENSION_PATH: "./extensions/xsv0.dll",
       },
     },

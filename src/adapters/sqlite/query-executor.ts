@@ -132,14 +132,10 @@ export function executeWrite(
     log.error(`Write query failed: ${message}`, {
       code: ERROR_CODES.DB.QUERY_FAILED.full,
     });
-    throw new QueryError(
-      `Write query failed: ${message}`,
-      "DB_WRITE_FAILED",
-      {
-        sql,
-        cause: error instanceof Error ? error : undefined,
-      },
-    );
+    throw new QueryError(`Write query failed: ${message}`, "DB_WRITE_FAILED", {
+      sql,
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 }
 
@@ -187,13 +183,9 @@ export function executeGeneral(
     log.error(`Query failed: ${message}`, {
       code: ERROR_CODES.DB.QUERY_FAILED.full,
     });
-    throw new QueryError(
-      `Query failed: ${message}`,
-      "DB_QUERY_FAILED",
-      {
-        sql,
-        cause: error instanceof Error ? error : undefined,
-      },
-    );
+    throw new QueryError(`Query failed: ${message}`, "DB_QUERY_FAILED", {
+      sql,
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 }

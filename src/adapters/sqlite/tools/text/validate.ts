@@ -1,11 +1,17 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
 import {
   TextNormalizeSchema,
@@ -22,7 +28,9 @@ import {
 /**
  * Normalize text (Unicode normalization or accent stripping)
  */
-export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition {
+export function createTextNormalizeTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_text_normalize",
     description:
@@ -38,7 +46,11 @@ export function createTextNormalizeTool(adapter: SqliteAdapter): ToolDefinition 
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         const normalizedMode = input.mode?.toLowerCase() ?? "";
-        if (!VALID_NORMALIZE_MODES.includes(normalizedMode as typeof VALID_NORMALIZE_MODES[number])) {
+        if (
+          !VALID_NORMALIZE_MODES.includes(
+            normalizedMode as (typeof VALID_NORMALIZE_MODES)[number],
+          )
+        ) {
           throw new ValidationError(
             `Invalid mode '${input.mode ?? ""}'. Must be one of: ${VALID_NORMALIZE_MODES.join(", ")}`,
           );
@@ -107,7 +119,12 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
         const input = TextValidateSchema.parse(params);
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
-        if (!input.pattern || !VALID_VALIDATE_PATTERNS.includes(input.pattern as typeof VALID_VALIDATE_PATTERNS[number])) {
+        if (
+          !input.pattern ||
+          !VALID_VALIDATE_PATTERNS.includes(
+            input.pattern as (typeof VALID_VALIDATE_PATTERNS)[number],
+          )
+        ) {
           throw new ValidationError(
             `Invalid pattern '${input.pattern ?? ""}'. Must be one of: ${VALID_VALIDATE_PATTERNS.join(", ")}`,
           );
@@ -122,7 +139,9 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
         let pattern: RegExp;
         if (input.pattern === "custom") {
           if (!input.customPattern) {
-            throw new ValidationError("customPattern is required when pattern='custom'");
+            throw new ValidationError(
+              "customPattern is required when pattern='custom'",
+            );
           }
           // Normalize pattern: handle common JSON double-escaping issues
           // e.g., "\." in JSON becomes "\." in JavaScript string, but some clients
@@ -132,7 +151,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
             pattern = new RegExp(normalizedPattern);
           } catch {
             throw new ValidationError(
-              `Invalid regex pattern: ${input.customPattern} (normalized to: ${normalizedPattern})`
+              `Invalid regex pattern: ${input.customPattern} (normalized to: ${normalizedPattern})`,
             );
           }
         } else {

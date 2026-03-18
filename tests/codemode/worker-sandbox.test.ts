@@ -145,10 +145,7 @@ describe("WorkerSandboxPool", () => {
 
   describe("getStats", () => {
     it("should return correct statistics", () => {
-      pool = new WorkerSandboxPool(
-        { maxInstances: 5 },
-        { timeoutMs: 10000 },
-      );
+      pool = new WorkerSandboxPool({ maxInstances: 5 }, { timeoutMs: 10000 });
       const stats = pool.getStats();
       expect(stats.available).toBe(5);
       expect(stats.inUse).toBe(0);

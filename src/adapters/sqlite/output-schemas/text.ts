@@ -70,9 +70,6 @@ export const SoundexOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
-
-
 /**
  * sqlite_text_normalize output
  */
@@ -99,13 +96,15 @@ export const TextSplitOutputSchema = z
   .object({
     success: z.boolean(),
     rowCount: z.number().optional(),
-    rows: z.array(
-      z.object({
-        rowid: z.number(),
-        original: z.string().nullable(),
-        parts: z.array(z.string()),
-      }),
-    ).optional(),
+    rows: z
+      .array(
+        z.object({
+          rowid: z.number(),
+          original: z.string().nullable(),
+          parts: z.array(z.string()),
+        }),
+      )
+      .optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

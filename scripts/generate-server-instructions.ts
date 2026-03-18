@@ -28,7 +28,10 @@ function escapeForTemplateLiteral(content: string): string {
 }
 
 // Read overview (slim instructions field content)
-const overviewMd = readFileSync(resolve(helpDir, "overview.md"), "utf-8").trim();
+const overviewMd = readFileSync(
+  resolve(helpDir, "overview.md"),
+  "utf-8",
+).trim();
 const overviewEscaped = escapeForTemplateLiteral(overviewMd);
 
 // Read all help files (everything except overview.md)
@@ -72,18 +75,12 @@ lines.push(
   " * Points agents to sqlite://help resources for detailed reference.",
 );
 lines.push(" */");
-lines.push(
-  "export const INSTRUCTIONS = " + BT + overviewEscaped + BT + ";",
-);
+lines.push("export const INSTRUCTIONS = " + BT + overviewEscaped + BT + ";");
 lines.push("");
 lines.push("/**");
 lines.push(" * Help content keyed by group name.");
-lines.push(
-  " * 'gotchas' is the always-available help (sqlite://help).",
-);
-lines.push(
-  " * Other keys are tool groups (sqlite://help/{group}).",
-);
+lines.push(" * 'gotchas' is the always-available help (sqlite://help).");
+lines.push(" * Other keys are tool groups (sqlite://help/{group}).");
 lines.push(" */");
 lines.push(
   "export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([",

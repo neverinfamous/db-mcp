@@ -4,16 +4,16 @@ Please test all db-mcp resources (8 data + up to 9 help) using the test database
 
 ## Resources to Test
 
-| # | Resource Name | URI | Type | Expected Data Source |
-|---|---------------|-----|------|----------------------|
-| 1 | sqlite_schema | sqlite://schema | Static | Full schema via adapter.getSchema() |
-| 2 | sqlite_tables | sqlite://tables | Static | Table list via adapter.listTables() |
-| 3 | sqlite_table_schema | sqlite://table/{name}/schema | Templated | Specific table via adapter.describeTable() |
-| 4 | sqlite_indexes | sqlite://indexes | Static | All indexes via adapter.getAllIndexes() |
-| 5 | sqlite_views | sqlite://views | Static | Views from sqlite_master |
-| 6 | sqlite_health | sqlite://health | Static | Connection health via adapter.getHealth() |
-| 7 | sqlite_meta | sqlite://meta | Static | PRAGMA values + adapter info |
-| 8 | sqlite_insights | memo://insights | Static | In-memory insights memo |
+| #   | Resource Name       | URI                          | Type      | Expected Data Source                       |
+| --- | ------------------- | ---------------------------- | --------- | ------------------------------------------ |
+| 1   | sqlite_schema       | sqlite://schema              | Static    | Full schema via adapter.getSchema()        |
+| 2   | sqlite_tables       | sqlite://tables              | Static    | Table list via adapter.listTables()        |
+| 3   | sqlite_table_schema | sqlite://table/{name}/schema | Templated | Specific table via adapter.describeTable() |
+| 4   | sqlite_indexes      | sqlite://indexes             | Static    | All indexes via adapter.getAllIndexes()    |
+| 5   | sqlite_views        | sqlite://views               | Static    | Views from sqlite_master                   |
+| 6   | sqlite_health       | sqlite://health              | Static    | Connection health via adapter.getHealth()  |
+| 7   | sqlite_meta         | sqlite://meta                | Static    | PRAGMA values + adapter info               |
+| 8   | sqlite_insights     | memo://insights              | Static    | In-memory insights memo                    |
 
 ---
 
@@ -52,11 +52,11 @@ Please test all db-mcp resources (8 data + up to 9 help) using the test database
 
 **Test Cases:**
 
-| URI | Expected Result |
-|-----|----------------|
-| `sqlite://table/test_products/schema` | ✅ Returns 6 columns |
-| `sqlite://table/test_orders/schema` | ✅ Returns 7 columns |
-| `sqlite://table/test_embeddings/schema` | ✅ Returns 4 columns |
+| URI                                       | Expected Result                           |
+| ----------------------------------------- | ----------------------------------------- |
+| `sqlite://table/test_products/schema`     | ✅ Returns 6 columns                      |
+| `sqlite://table/test_orders/schema`       | ✅ Returns 7 columns                      |
+| `sqlite://table/test_embeddings/schema`   | ✅ Returns 4 columns                      |
 | `sqlite://table/nonexistent_table/schema` | ✅ Graceful error: "Table does not exist" |
 
 **Expected Output per table:**
@@ -97,7 +97,7 @@ Please test all db-mcp resources (8 data + up to 9 help) using the test database
 
 ```sql
 -- Setup (if testing view detection)
-CREATE VIEW test_view_order_summary AS 
+CREATE VIEW test_view_order_summary AS
 SELECT product_id, SUM(total_price) as total FROM test_orders GROUP BY product_id;
 -- Cleanup
 DROP VIEW IF EXISTS test_view_order_summary;
@@ -164,28 +164,28 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 Read `sqlite://help` and verify it contains critical reference content:
 
-| Check | Expected |
-|---|---|
-| Resource exists | ✅ Always registered regardless of tool filter |
-| Contains "Critical Gotchas" | ✅ Section header present |
-| Contains "Code Mode API" | ✅ Section header present |
-| Contains "WASM vs Native" | ✅ Comparison section present |
-| Content is markdown | ✅ mimeType: text/markdown |
+| Check                       | Expected                                       |
+| --------------------------- | ---------------------------------------------- |
+| Resource exists             | ✅ Always registered regardless of tool filter |
+| Contains "Critical Gotchas" | ✅ Section header present                      |
+| Contains "Code Mode API"    | ✅ Section header present                      |
+| Contains "WASM vs Native"   | ✅ Comparison section present                  |
+| Content is markdown         | ✅ mimeType: text/markdown                     |
 
 **Test B — Group-specific help resources:**
 
 Verify that group-specific help resources are only registered when the corresponding group is enabled. These tests depend on the `--tool-filter` configuration:
 
-| Resource | URI | Registered When |
-|---|---|---|
-| `sqlite_help_json` | `sqlite://help/json` | json group enabled |
-| `sqlite_help_text` | `sqlite://help/text` | text group enabled |
-| `sqlite_help_stats` | `sqlite://help/stats` | stats group enabled |
-| `sqlite_help_vector` | `sqlite://help/vector` | vector group enabled |
-| `sqlite_help_geo` | `sqlite://help/geo` | geo group enabled |
-| `sqlite_help_admin` | `sqlite://help/admin` | admin group enabled |
+| Resource                    | URI                           | Registered When             |
+| --------------------------- | ----------------------------- | --------------------------- |
+| `sqlite_help_json`          | `sqlite://help/json`          | json group enabled          |
+| `sqlite_help_text`          | `sqlite://help/text`          | text group enabled          |
+| `sqlite_help_stats`         | `sqlite://help/stats`         | stats group enabled         |
+| `sqlite_help_vector`        | `sqlite://help/vector`        | vector group enabled        |
+| `sqlite_help_geo`           | `sqlite://help/geo`           | geo group enabled           |
+| `sqlite_help_admin`         | `sqlite://help/admin`         | admin group enabled         |
 | `sqlite_help_introspection` | `sqlite://help/introspection` | introspection group enabled |
-| `sqlite_help_migration` | `sqlite://help/migration` | migration group enabled |
+| `sqlite_help_migration`     | `sqlite://help/migration`     | migration group enabled     |
 
 If a group-specific help resource is available, read it and verify it contains relevant tool reference content (tool names, parameters, usage notes).
 
@@ -195,10 +195,10 @@ If a group-specific help resource is available, read it and verify it contains r
 
 Call `tools/list` and verify that **all** tools have `openWorldHint: false` in their annotations. db-mcp tools are local database operations — none require external network access.
 
-| Check | Expected |
-|---|---|
+| Check                               | Expected                 |
+| ----------------------------------- | ------------------------ |
 | All tools have `annotations` object | ✅ Present on every tool |
-| All `openWorldHint` values | `false` |
+| All `openWorldHint` values          | `false`                  |
 
 ---
 
@@ -218,25 +218,25 @@ Use live MCP resource reads via the `read_resource` tool against the running sql
 
 ### Pass/Fail Criteria
 
-| Symbol | Meaning |
-|--------|---------|
-| ✅ | Resource returns expected data structure |
-| ❌ | Resource errors or returns unexpected format |
-| ⚠️ | Unexpected behavior or improvement opportunity |
-| 📦 | Response payload is larger than necessary |
+| Symbol | Meaning                                        |
+| ------ | ---------------------------------------------- |
+| ✅     | Resource returns expected data structure       |
+| ❌     | Resource errors or returns unexpected format   |
+| ⚠️     | Unexpected behavior or improvement opportunity |
+| 📦     | Response payload is larger than necessary      |
 
 ---
 
 ## Summary
 
-| Metric | Value |
-|--------|-------|
-| Data resources to test | 8 |
-| Help resources to test | 1 (sqlite://help) + up to 8 group-specific |
-| Static resources | 7 |
-| Templated resources | 1 (sqlite_table_schema with URI parameter) |
+| Metric                    | Value                                        |
+| ------------------------- | -------------------------------------------- |
+| Data resources to test    | 8                                            |
+| Help resources to test    | 1 (sqlite://help) + up to 8 group-specific   |
+| Static resources          | 7                                            |
+| Templated resources       | 1 (sqlite_table_schema with URI parameter)   |
 | Protocol validation tests | 2 (help resource content + tool annotations) |
-| Error cases to test | 1 (nonexistent table in template) |
+| Error cases to test       | 1 (nonexistent table in template)            |
 
 ---
 

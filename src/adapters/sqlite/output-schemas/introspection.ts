@@ -20,9 +20,7 @@ export const DependencyGraphOutputSchema = z
   .object({
     success: z.boolean(),
     nodes: z
-      .array(
-        z.object({ table: z.string(), rowCount: z.number().optional() }),
-      )
+      .array(z.object({ table: z.string(), rowCount: z.number().optional() }))
       .optional(),
     edges: z
       .array(

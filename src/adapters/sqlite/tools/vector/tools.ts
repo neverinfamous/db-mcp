@@ -11,10 +11,7 @@ export {
   createVectorDeleteTool,
 } from "./storage.js";
 
-export {
-  createVectorSearchTool,
-  createVectorGetTool,
-} from "./search.js";
+export { createVectorSearchTool, createVectorGetTool } from "./search.js";
 
 export {
   createVectorCountTool,

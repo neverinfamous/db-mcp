@@ -39,7 +39,10 @@ async function assertNumericCoercion(
     }
 
     // Must be a structured response — either handler error or coerced success
-    expect(typeof parsed.success, `${toolName}: missing success field. Got: ${JSON.stringify(parsed, null, 2)}`).toBe("boolean");
+    expect(
+      typeof parsed.success,
+      `${toolName}: missing success field. Got: ${JSON.stringify(parsed, null, 2)}`,
+    ).toBe("boolean");
   } finally {
     await client.close();
   }
@@ -177,10 +180,14 @@ test.describe("Numeric Coercion: Vector", () => {
 
 test.describe("Numeric Coercion: Admin", () => {
   test("generate_series with start: 'abc' → handler error", async ({}, testInfo) => {
-    await assertNumericCoercion(getBaseURL(testInfo), "sqlite_generate_series", {
-      start: "abc",
-      stop: 10,
-    });
+    await assertNumericCoercion(
+      getBaseURL(testInfo),
+      "sqlite_generate_series",
+      {
+        start: "abc",
+        stop: 10,
+      },
+    );
   });
 });
 

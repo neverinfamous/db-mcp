@@ -7,7 +7,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -23,7 +28,7 @@ test.describe("Payload Contracts: JSON", () => {
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
-      expect((payload.rowCount as number)).toBeGreaterThan(0);
+      expect(payload.rowCount as number).toBeGreaterThan(0);
       expect(Array.isArray(payload.rows)).toBe(true);
 
       const rows = payload.rows as Record<string, unknown>[];
@@ -60,17 +65,25 @@ test.describe("Payload Contracts: JSON", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Valid path
-      const valid = await callToolAndParse(client, "sqlite_json_validate_path", {
-        path: "$.type",
-      });
+      const valid = await callToolAndParse(
+        client,
+        "sqlite_json_validate_path",
+        {
+          path: "$.type",
+        },
+      );
       expect(valid.success).toBe(true);
       expect(valid.path).toBe("$.type");
       expect(valid.valid).toBe(true);
 
       // Invalid path
-      const invalid = await callToolAndParse(client, "sqlite_json_validate_path", {
-        path: "no-dollar",
-      });
+      const invalid = await callToolAndParse(
+        client,
+        "sqlite_json_validate_path",
+        {
+          path: "no-dollar",
+        },
+      );
       expect(invalid.valid).toBe(false);
       expect(Array.isArray(invalid.issues)).toBe(true);
     } finally {
@@ -81,10 +94,14 @@ test.describe("Payload Contracts: JSON", () => {
   test("sqlite_json_analyze_schema returns { success, schema }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_json_analyze_schema", {
-        table: "test_jsonb_docs",
-        column: "doc",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_json_analyze_schema",
+        {
+          table: "test_jsonb_docs",
+          column: "doc",
+        },
+      );
 
       expectSuccess(payload);
       const schema = payload.schema as Record<string, unknown>;
@@ -135,7 +152,7 @@ test.describe("Payload Contracts: JSON", () => {
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
-      expect((payload.rowCount as number)).toBeGreaterThan(0);
+      expect(payload.rowCount as number).toBeGreaterThan(0);
       expect(Array.isArray(payload.rows)).toBe(true);
 
       const rows = payload.rows as Record<string, unknown>[];

@@ -20,7 +20,9 @@ import type { Request, Response } from "express";
 // Helpers
 // =============================================================================
 
-function createMockState(configOverrides: Record<string, unknown> = {}): HttpTransportState {
+function createMockState(
+  configOverrides: Record<string, unknown> = {},
+): HttpTransportState {
   const middlewares: Function[] = [];
   return {
     app: {
@@ -88,12 +90,18 @@ describe("getClientIp", () => {
   });
 
   it("should fall back to remoteAddress when ip is null", () => {
-    const req = createMockReq({ ip: undefined, socket: { remoteAddress: "192.168.1.1" } });
+    const req = createMockReq({
+      ip: undefined,
+      socket: { remoteAddress: "192.168.1.1" },
+    });
     expect(getClientIp(req, false)).toBe("192.168.1.1");
   });
 
   it("should return 'unknown' when no IP is available", () => {
-    const req = createMockReq({ ip: undefined, socket: { remoteAddress: undefined } });
+    const req = createMockReq({
+      ip: undefined,
+      socket: { remoteAddress: undefined },
+    });
     expect(getClientIp(req, false)).toBe("unknown");
   });
 });
@@ -108,19 +116,27 @@ describe("matchesCorsOrigin", () => {
   });
 
   it("should match exact origin", () => {
-    expect(matchesCorsOrigin("https://example.com", "https://example.com")).toBe(true);
+    expect(
+      matchesCorsOrigin("https://example.com", "https://example.com"),
+    ).toBe(true);
   });
 
   it("should not match different origin", () => {
-    expect(matchesCorsOrigin("https://other.com", "https://example.com")).toBe(false);
+    expect(matchesCorsOrigin("https://other.com", "https://example.com")).toBe(
+      false,
+    );
   });
 
   it("should match wildcard subdomain", () => {
-    expect(matchesCorsOrigin("https://app.example.com", "*.example.com")).toBe(true);
+    expect(matchesCorsOrigin("https://app.example.com", "*.example.com")).toBe(
+      true,
+    );
   });
 
   it("should not match root domain for wildcard subdomain", () => {
-    expect(matchesCorsOrigin("https://example.com", "*.example.com")).toBe(false);
+    expect(matchesCorsOrigin("https://example.com", "*.example.com")).toBe(
+      false,
+    );
   });
 });
 
@@ -139,7 +155,10 @@ describe("setupSecurityHeaders", () => {
 
     middleware(createMockReq(), res, next);
 
-    expect(res.setHeader).toHaveBeenCalledWith("X-Content-Type-Options", "nosniff");
+    expect(res.setHeader).toHaveBeenCalledWith(
+      "X-Content-Type-Options",
+      "nosniff",
+    );
     expect(res.setHeader).toHaveBeenCalledWith("X-Frame-Options", "DENY");
     expect(res.setHeader).toHaveBeenCalledWith(
       "Content-Security-Policy",
@@ -197,7 +216,10 @@ describe("setupCors", () => {
     const res = createMockRes();
     middleware(req, res, vi.fn());
 
-    expect(res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Origin", "*");
+    expect(res.setHeader).toHaveBeenCalledWith(
+      "Access-Control-Allow-Origin",
+      "*",
+    );
   });
 
   it("should set specific origin when matched", () => {
@@ -209,7 +231,10 @@ describe("setupCors", () => {
     const res = createMockRes();
     middleware(req, res, vi.fn());
 
-    expect(res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Origin", "https://example.com");
+    expect(res.setHeader).toHaveBeenCalledWith(
+      "Access-Control-Allow-Origin",
+      "https://example.com",
+    );
     expect(res.setHeader).toHaveBeenCalledWith("Vary", "Origin");
   });
 
@@ -218,7 +243,10 @@ describe("setupCors", () => {
     setupCors(state);
 
     const middleware = (state.app as any)._middlewares[0];
-    const req = createMockReq({ method: "OPTIONS", headers: { origin: "https://any.com" } });
+    const req = createMockReq({
+      method: "OPTIONS",
+      headers: { origin: "https://any.com" },
+    });
     const res = createMockRes();
     const next = vi.fn();
     middleware(req, res, next);

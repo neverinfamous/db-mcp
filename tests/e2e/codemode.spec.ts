@@ -10,7 +10,13 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess, expectHandlerError } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+  expectHandlerError,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -150,8 +156,20 @@ test.describe("Code Mode: API Discoverability", () => {
       });
       expectSuccess(p);
       const result = p.result as Record<string, number>;
-      for (const group of ["core", "json", "text", "stats", "vector", "admin", "geo", "introspection", "migration"]) {
-        expect(result[group], `${group} should have methods`).toBeGreaterThan(0);
+      for (const group of [
+        "core",
+        "json",
+        "text",
+        "stats",
+        "vector",
+        "admin",
+        "geo",
+        "introspection",
+        "migration",
+      ]) {
+        expect(result[group], `${group} should have methods`).toBeGreaterThan(
+          0,
+        );
       }
     } finally {
       await client.close();
@@ -472,7 +490,9 @@ test.describe("Code Mode: Workflows", () => {
         await callToolAndParse(client, "sqlite_execute_code", {
           code: `await sqlite.core.writeQuery("DROP TABLE IF EXISTS _e2e_cm_etl"); return { cleaned: true };`,
         });
-      } catch { /* ignore cleanup errors */ }
+      } catch {
+        /* ignore cleanup errors */
+      }
       await client.close();
     }
   });
@@ -560,13 +580,23 @@ test.describe("Code Mode: API Discoverability", () => {
       const groups = result.groups as string[];
       expect(groups.length).toBe(9);
       const expected = [
-        "core", "json", "text", "stats", "vector",
-        "admin", "geo", "introspection", "migration",
+        "core",
+        "json",
+        "text",
+        "stats",
+        "vector",
+        "admin",
+        "geo",
+        "introspection",
+        "migration",
       ];
       for (const g of expected) {
         expect(groups).toContain(g);
       }
-      expect(typeof result.totalMethods === "number" || result.totalMethods === undefined).toBe(true);
+      expect(
+        typeof result.totalMethods === "number" ||
+          result.totalMethods === undefined,
+      ).toBe(true);
     } finally {
       await client.close();
     }
@@ -622,7 +652,7 @@ test.describe("Code Mode: API Discoverability", () => {
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
       expect(typeof result.tableCount).toBe("number");
-      expect((result.tableCount as number)).toBeGreaterThan(0);
+      expect(result.tableCount as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }

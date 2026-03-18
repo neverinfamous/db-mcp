@@ -55,8 +55,7 @@ export async function callToolAndParse(
   args: Record<string, unknown> = {},
 ): Promise<Record<string, unknown>> {
   const response = await client.callTool({ name, arguments: args });
-  const text = (response.content as { type: string; text: string }[])[0]
-    .text;
+  const text = (response.content as { type: string; text: string }[])[0].text;
   return JSON.parse(text) as Record<string, unknown>;
 }
 
@@ -65,9 +64,10 @@ export async function callToolAndParse(
  * Includes the full error payload in the assertion message on failure.
  */
 export function expectSuccess(payload: Record<string, unknown>): void {
-  const msg = payload.success === false
-    ? `Tool error: ${JSON.stringify(payload, null, 2)}`
-    : "";
+  const msg =
+    payload.success === false
+      ? `Tool error: ${JSON.stringify(payload, null, 2)}`
+      : "";
   expect(payload.success, msg).toBe(true);
 }
 
@@ -77,8 +77,14 @@ export function expectSuccess(payload: Record<string, unknown>): void {
  * Must NOT be a raw MCP error (isError: true with no success field).
  */
 export function expectHandlerError(payload: Record<string, unknown>): void {
-  expect(payload.success, `Expected handler error, got: ${JSON.stringify(payload, null, 2)}`).toBe(false);
-  expect(typeof payload.error, `Missing error message: ${JSON.stringify(payload, null, 2)}`).toBe("string");
+  expect(
+    payload.success,
+    `Expected handler error, got: ${JSON.stringify(payload, null, 2)}`,
+  ).toBe(false);
+  expect(
+    typeof payload.error,
+    `Missing error message: ${JSON.stringify(payload, null, 2)}`,
+  ).toBe("string");
 }
 
 /**
@@ -90,7 +96,10 @@ export async function callToolRaw(
   args: Record<string, unknown> = {},
 ): Promise<{ isError?: boolean; content: { type: string; text: string }[] }> {
   const response = await client.callTool({ name, arguments: args });
-  return response as { isError?: boolean; content: { type: string; text: string }[] };
+  return response as {
+    isError?: boolean;
+    content: { type: string; text: string }[];
+  };
 }
 
 // =============================================================================

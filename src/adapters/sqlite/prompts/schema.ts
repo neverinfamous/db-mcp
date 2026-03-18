@@ -10,7 +10,9 @@ import type { PromptDefinition } from "../../../types/index.js";
 /**
  * Explain the database schema
  */
-export function createExplainSchemaPrompt(adapter: SqliteAdapter): PromptDefinition {
+export function createExplainSchemaPrompt(
+  adapter: SqliteAdapter,
+): PromptDefinition {
   return {
     name: "sqlite_explain_schema",
     description:
@@ -49,7 +51,9 @@ Please explain:
 /**
  * Database optimization prompt
  */
-export function createOptimizationPrompt(adapter: SqliteAdapter): PromptDefinition {
+export function createOptimizationPrompt(
+  adapter: SqliteAdapter,
+): PromptDefinition {
   return {
     name: "sqlite_optimization",
     description: "Analyze and suggest database optimizations",
@@ -93,7 +97,9 @@ Please analyze and suggest:
 /**
  * Documentation generator prompt
  */
-export function createDocumentationPrompt(adapter: SqliteAdapter): PromptDefinition {
+export function createDocumentationPrompt(
+  adapter: SqliteAdapter,
+): PromptDefinition {
   return {
     name: "sqlite_documentation",
     description: "Generate documentation for the database schema",

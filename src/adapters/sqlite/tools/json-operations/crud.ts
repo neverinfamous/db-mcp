@@ -10,7 +10,10 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
+import {
+  sanitizeIdentifier,
+  validateWhereClause,
+} from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   JsonValidOutputSchema,

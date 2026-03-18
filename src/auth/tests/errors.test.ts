@@ -126,7 +126,9 @@ describe("AuthServerDiscoveryError", () => {
 
 describe("JwksFetchError", () => {
   it("should have 500 status", () => {
-    const error = new JwksFetchError("https://auth.example.com/.well-known/jwks.json");
+    const error = new JwksFetchError(
+      "https://auth.example.com/.well-known/jwks.json",
+    );
     expect(error.httpStatus).toBe(500);
   });
 });

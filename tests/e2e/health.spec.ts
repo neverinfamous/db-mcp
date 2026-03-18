@@ -42,4 +42,3 @@ test.describe("MCP HTTP Server API", () => {
     expect(sessionId!.length).toBeGreaterThan(0);
   });
 });
-

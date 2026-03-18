@@ -13,7 +13,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -39,7 +44,9 @@ test.describe("Transactions: Nested Savepoints", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Begin transaction
-      await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
+      await callToolAndParse(client, "sqlite_transaction_begin", {
+        mode: "immediate",
+      });
 
       // Insert row A (before any savepoint)
       await callToolAndParse(client, "sqlite_write_query", {
@@ -47,7 +54,9 @@ test.describe("Transactions: Nested Savepoints", () => {
       });
 
       // Create savepoint sp1
-      await callToolAndParse(client, "sqlite_transaction_savepoint", { name: "e2e_sp1" });
+      await callToolAndParse(client, "sqlite_transaction_savepoint", {
+        name: "e2e_sp1",
+      });
 
       // Insert row B (after sp1)
       await callToolAndParse(client, "sqlite_write_query", {
@@ -55,7 +64,9 @@ test.describe("Transactions: Nested Savepoints", () => {
       });
 
       // Create savepoint sp2
-      await callToolAndParse(client, "sqlite_transaction_savepoint", { name: "e2e_sp2" });
+      await callToolAndParse(client, "sqlite_transaction_savepoint", {
+        name: "e2e_sp2",
+      });
 
       // Insert row C (after sp2)
       await callToolAndParse(client, "sqlite_write_query", {
@@ -69,9 +80,13 @@ test.describe("Transactions: Nested Savepoints", () => {
       expect((before.rows as Record<string, unknown>[])[0].cnt).toBe(3);
 
       // Rollback to sp2 — should undo row C only
-      const rb2 = await callToolAndParse(client, "sqlite_transaction_rollback_to", {
-        name: "e2e_sp2",
-      });
+      const rb2 = await callToolAndParse(
+        client,
+        "sqlite_transaction_rollback_to",
+        {
+          name: "e2e_sp2",
+        },
+      );
       expectSuccess(rb2);
 
       // Verify: 2 rows remain (A + B, C was undone)
@@ -84,7 +99,9 @@ test.describe("Transactions: Nested Savepoints", () => {
       const surviving = await callToolAndParse(client, "sqlite_read_query", {
         query: "SELECT val FROM _e2e_txn_nested ORDER BY id",
       });
-      const vals = (surviving.rows as Record<string, unknown>[]).map((r) => r.val);
+      const vals = (surviving.rows as Record<string, unknown>[]).map(
+        (r) => r.val,
+      );
       expect(vals).toContain("row_A_pre_sp");
       expect(vals).toContain("row_B_after_sp1");
       expect(vals).not.toContain("row_C_after_sp2");
@@ -110,7 +127,9 @@ test.describe("Transactions: Nested Savepoints", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Begin transaction
-      await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
+      await callToolAndParse(client, "sqlite_transaction_begin", {
+        mode: "immediate",
+      });
 
       // Insert row X (before any savepoint)
       await callToolAndParse(client, "sqlite_write_query", {
@@ -118,7 +137,9 @@ test.describe("Transactions: Nested Savepoints", () => {
       });
 
       // Create savepoint sp1
-      await callToolAndParse(client, "sqlite_transaction_savepoint", { name: "e2e_sp1_full" });
+      await callToolAndParse(client, "sqlite_transaction_savepoint", {
+        name: "e2e_sp1_full",
+      });
 
       // Insert row Y (after sp1)
       await callToolAndParse(client, "sqlite_write_query", {
@@ -126,7 +147,9 @@ test.describe("Transactions: Nested Savepoints", () => {
       });
 
       // Create savepoint sp2
-      await callToolAndParse(client, "sqlite_transaction_savepoint", { name: "e2e_sp2_full" });
+      await callToolAndParse(client, "sqlite_transaction_savepoint", {
+        name: "e2e_sp2_full",
+      });
 
       // Insert row Z (after sp2)
       await callToolAndParse(client, "sqlite_write_query", {
@@ -134,9 +157,13 @@ test.describe("Transactions: Nested Savepoints", () => {
       });
 
       // Rollback to sp1 — should undo BOTH Y and Z
-      const rb1 = await callToolAndParse(client, "sqlite_transaction_rollback_to", {
-        name: "e2e_sp1_full",
-      });
+      const rb1 = await callToolAndParse(
+        client,
+        "sqlite_transaction_rollback_to",
+        {
+          name: "e2e_sp1_full",
+        },
+      );
       expectSuccess(rb1);
 
       // Verify: only 1 row remains (X only; Y and Z were undone)

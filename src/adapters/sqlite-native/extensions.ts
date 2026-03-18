@@ -61,10 +61,9 @@ function tryLoadExtension(
       // Try next path
     }
   }
-  log.warning(
-    `${name} extension not available. Set ${envVar} env var.`,
-    { code: "SQLITE_EXTENSION" },
-  );
+  log.warning(`${name} extension not available. Set ${envVar} env var.`, {
+    code: "SQLITE_EXTENSION",
+  });
 }
 
 // =============================================================================
@@ -74,10 +73,7 @@ function tryLoadExtension(
 /**
  * Load the SpatiaLite extension for GIS capabilities.
  */
-export function loadSpatialite(
-  db: BetterSqliteDb,
-  log: ModuleLogger,
-): void {
+export function loadSpatialite(db: BetterSqliteDb, log: ModuleLogger): void {
   const spatialitePaths = [
     process.env["SPATIALITE_PATH"],
     // Absolute paths to local extensions
@@ -117,10 +113,7 @@ export function loadSpatialite(
 /**
  * Load the CSV extension for CSV virtual tables.
  */
-export function loadCsvExtension(
-  db: BetterSqliteDb,
-  log: ModuleLogger,
-): void {
+export function loadCsvExtension(db: BetterSqliteDb, log: ModuleLogger): void {
   const csvPaths = [
     process.env["CSV_EXTENSION_PATH"],
     // sqlite-xsv extension with absolute paths

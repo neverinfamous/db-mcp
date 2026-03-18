@@ -17,9 +17,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
   test.beforeAll(async ({}, testInfo) => {
     resolvedBaseURL = testInfo.project.use.baseURL as string;
-    const transport = new SSEClientTransport(
-      new URL(`${resolvedBaseURL}/sse`),
-    );
+    const transport = new SSEClientTransport(new URL(`${resolvedBaseURL}/sse`));
     client = new Client(
       { name: "playwright-resource-test", version: "1.0.0" },
       { capabilities: {} },
@@ -229,7 +227,9 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
       });
       // If it returns instead of throwing, check for error indicator
       const text = response.contents[0]!.text as string;
-      expect(text.toLowerCase()).toMatch(/not (found|exist)|error|no such table/);
+      expect(text.toLowerCase()).toMatch(
+        /not (found|exist)|error|no such table/,
+      );
     } catch (error: unknown) {
       // MCP SDK may throw for resource errors — that's acceptable
       expect(error).toBeDefined();

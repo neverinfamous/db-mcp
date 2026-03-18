@@ -86,7 +86,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
 
       expect(response.messages).toBeDefined();
       expect(response.messages.length).toBeGreaterThan(0);
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("select");
       expect(text).toContain("SQL query");
     } finally {
@@ -104,7 +105,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("Analyze the data");
     } finally {
       await client.close();
@@ -141,7 +143,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("migration");
     } finally {
       await client.close();
@@ -161,7 +164,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("debug");
     } finally {
       await client.close();
@@ -178,7 +182,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("documentation");
     } finally {
       await client.close();
@@ -195,7 +200,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("table");
     } finally {
       await client.close();
@@ -212,7 +218,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("search");
     } finally {
       await client.close();
@@ -229,7 +236,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       });
 
       expect(response.messages).toBeDefined();
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("Demo");
     } finally {
       await client.close();
@@ -249,7 +257,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
         arguments: {},
       });
 
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       // Data-fetching prompt should contain actual table names from the DB
       expect(text).toContain("test_products");
       expect(text).toContain("test_orders");
@@ -267,7 +276,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
         arguments: { format: "markdown" },
       });
 
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       // Should include actual table info, not just a template
       expect(text).toContain("test_products");
     } finally {
@@ -286,19 +296,25 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
       const listResponse = await client.listPrompts();
 
       // query_builder has 3 required args
-      const queryBuilder = listResponse.prompts.find((p) => p.name === "sqlite_query_builder");
+      const queryBuilder = listResponse.prompts.find(
+        (p) => p.name === "sqlite_query_builder",
+      );
       expect(queryBuilder).toBeDefined();
       expect(queryBuilder!.arguments).toBeDefined();
       expect(queryBuilder!.arguments!.length).toBeGreaterThanOrEqual(3);
 
       // data_analysis has 1 required arg
-      const dataAnalysis = listResponse.prompts.find((p) => p.name === "sqlite_data_analysis");
+      const dataAnalysis = listResponse.prompts.find(
+        (p) => p.name === "sqlite_data_analysis",
+      );
       expect(dataAnalysis).toBeDefined();
       expect(dataAnalysis!.arguments).toBeDefined();
       expect(dataAnalysis!.arguments!.length).toBeGreaterThanOrEqual(1);
 
       // explain_schema has no args — should have 0 or undefined
-      const explainSchema = listResponse.prompts.find((p) => p.name === "sqlite_explain_schema");
+      const explainSchema = listResponse.prompts.find(
+        (p) => p.name === "sqlite_explain_schema",
+      );
       expect(explainSchema).toBeDefined();
       const argCount = explainSchema!.arguments?.length ?? 0;
       expect(argCount).toBe(0);
@@ -346,7 +362,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
         },
       });
 
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       // Should reflect the actual SQL and error back
       expect(text).toContain("SELECT * FORM test_products");
       expect(text).toContain("syntax error");
@@ -364,7 +381,8 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
         arguments: { change: "Add discount_percent column to test_products" },
       });
 
-      const text = (response.messages[0].content as { text: string }).text as string;
+      const text = (response.messages[0].content as { text: string })
+        .text as string;
       expect(text).toContain("discount_percent");
     } finally {
       await client.close();

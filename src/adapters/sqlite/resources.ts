@@ -99,7 +99,11 @@ function createTableSchemaResource(adapter: SqliteAdapter): ResourceDefinition {
       const regex = /sqlite:\/\/table\/([^/]+)\/schema/;
       const match = regex.exec(uri);
       if (!match?.[1]) {
-        throw new DbMcpError("Invalid table URI format", "RESOURCE_INVALID_URI", ErrorCategory.VALIDATION);
+        throw new DbMcpError(
+          "Invalid table URI format",
+          "RESOURCE_INVALID_URI",
+          ErrorCategory.VALIDATION,
+        );
       }
       const tableName = decodeURIComponent(match[1]);
       const tableInfo = await adapter.describeTable(tableName);

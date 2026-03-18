@@ -385,7 +385,13 @@ describe("createJsonArrayAppendTool", () => {
   it("should reject invalid path", async () => {
     const tool = createJsonArrayAppendTool(createMockAdapter());
     const result = (await tool.handler(
-      { table: "users", column: "tags", path: "tags", value: "x", whereClause: "1=1" },
+      {
+        table: "users",
+        column: "tags",
+        path: "tags",
+        value: "x",
+        whereClause: "1=1",
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(false);

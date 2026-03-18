@@ -144,6 +144,3 @@ export const VectorDistanceOutputSchema = z
     value: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
-
-
-

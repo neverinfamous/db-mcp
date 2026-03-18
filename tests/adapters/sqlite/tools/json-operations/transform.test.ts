@@ -100,11 +100,7 @@ describe("createJsonStorageInfoTool", () => {
   it("should analyze text JSON storage", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [
-        { data: '{"a":1}' },
-        { data: '{"b":2}' },
-        { data: null },
-      ],
+      rows: [{ data: '{"a":1}' }, { data: '{"b":2}' }, { data: null }],
     });
     const tool = createJsonStorageInfoTool(adapter);
     const result = (await tool.handler(
@@ -141,7 +137,9 @@ describe("createJsonStorageInfoTool", () => {
     )) as any;
     expect(result.success).toBe(true);
     // Buffer is not text → detected as jsonb or unknown depending on detection
-    expect(result.formats.text + result.formats.jsonb + result.formats.unknown).toBe(1);
+    expect(
+      result.formats.text + result.formats.jsonb + result.formats.unknown,
+    ).toBe(1);
   });
 
   it("should handle query error", async () => {
@@ -212,9 +210,7 @@ describe("createJsonNormalizeColumnTool", () => {
     const adapter = createMockAdapter();
     // raw_data is a Buffer (JSONB), outputFormat is 'text' → needs format change
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [
-        { _rid_: 1, raw_data: Buffer.from([1, 2]), json_data: '{"a":1}' },
-      ],
+      rows: [{ _rid_: 1, raw_data: Buffer.from([1, 2]), json_data: '{"a":1}' }],
     });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createJsonNormalizeColumnTool(adapter);
@@ -230,9 +226,7 @@ describe("createJsonNormalizeColumnTool", () => {
   it("should support jsonb outputFormat with text data", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [
-        { _rid_: 1, raw_data: '{"a":1}', json_data: '{"a":1}' },
-      ],
+      rows: [{ _rid_: 1, raw_data: '{"a":1}', json_data: '{"a":1}' }],
     });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createJsonNormalizeColumnTool(adapter);
@@ -267,7 +261,9 @@ describe("createJsonNormalizeColumnTool", () => {
     const adapter = createMockAdapter();
     // A normalizable row (keys out of order → wasModified: true) but write fails
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [{ _rid_: 1, raw_data: '{"b":2,"a":1}', json_data: '{"b":2,"a":1}' }],
+      rows: [
+        { _rid_: 1, raw_data: '{"b":2,"a":1}', json_data: '{"b":2,"a":1}' },
+      ],
     });
     adapter.executeWriteQuery.mockRejectedValue(new Error("disk full"));
     const tool = createJsonNormalizeColumnTool(adapter);

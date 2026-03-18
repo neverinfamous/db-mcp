@@ -103,7 +103,7 @@ export function ensureSpatialite(adapter: NativeSqliteAdapter): void {
       throw new DbMcpError(
         result.error ?? "Failed to load SpatiaLite",
         "SPATIALITE_LOAD_FAILED",
-        ErrorCategory.CONNECTION
+        ErrorCategory.CONNECTION,
       );
     }
   }

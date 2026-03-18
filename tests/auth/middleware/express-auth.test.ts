@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createAuthMiddleware } from "../../../src/auth/middleware/express-auth.js";
-import type { TokenValidator, TokenValidationResult } from "../../../src/auth/token-validator.js";
+import type {
+  TokenValidator,
+  TokenValidationResult,
+} from "../../../src/auth/token-validator.js";
 import type { OAuthResourceServer } from "../../../src/auth/oauth-resource-server.js";
 import type { Request, Response, NextFunction } from "express";
 
@@ -18,7 +21,12 @@ describe("createAuthMiddleware", () => {
 
     mockResourceServer = {
       getResourceUri: vi.fn().mockReturnValue("https://api.example.com"),
-      getWWWAuthenticateHeader: vi.fn().mockImplementation((error, description) => `Bearer error="${error}", error_description="${description}"`),
+      getWWWAuthenticateHeader: vi
+        .fn()
+        .mockImplementation(
+          (error, description) =>
+            `Bearer error="${error}", error_description="${description}"`,
+        ),
     } as unknown as OAuthResourceServer;
 
     mockRequest = {
@@ -42,7 +50,11 @@ describe("createAuthMiddleware", () => {
       resourceServer: mockResourceServer,
     });
 
-    await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+    await middleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
 
     expect(mockNext).toHaveBeenCalled();
     expect(mockTokenValidator.validate).not.toHaveBeenCalled();
@@ -57,7 +69,11 @@ describe("createAuthMiddleware", () => {
       publicPaths: ["/health", "/public/*"],
     });
 
-    await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+    await middleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
 
     expect(mockNext).toHaveBeenCalled();
     expect(mockTokenValidator.validate).not.toHaveBeenCalled();
@@ -71,7 +87,11 @@ describe("createAuthMiddleware", () => {
       publicPaths: ["/health", "/public/*"],
     });
 
-    await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+    await middleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
 
     expect(mockNext).toHaveBeenCalled();
     expect(mockTokenValidator.validate).not.toHaveBeenCalled();
@@ -83,10 +103,17 @@ describe("createAuthMiddleware", () => {
       resourceServer: mockResourceServer,
     });
 
-    await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+    await middleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.setHeader).toHaveBeenCalledWith("WWW-Authenticate", expect.stringContaining("Bearer"));
+    expect(mockResponse.setHeader).toHaveBeenCalledWith(
+      "WWW-Authenticate",
+      expect.stringContaining("Bearer"),
+    );
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: "unauthorized",
       error_description: "No access token provided",
@@ -106,13 +133,17 @@ describe("createAuthMiddleware", () => {
       resourceServer: mockResourceServer,
     });
 
-    await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+    await middleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
 
     expect(mockTokenValidator.validate).toHaveBeenCalledWith("invalid-token");
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.setHeader).toHaveBeenCalledWith(
       "WWW-Authenticate",
-      'Bearer error="invalid_token", error_description="Token expired"'
+      'Bearer error="invalid_token", error_description="Token expired"',
     );
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: "invalid_token",
@@ -133,7 +164,11 @@ describe("createAuthMiddleware", () => {
       resourceServer: mockResourceServer,
     });
 
-    await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+    await middleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
 
     expect(mockResponse.status).toHaveBeenCalledWith(500);
     expect(mockResponse.json).toHaveBeenCalledWith({ error: "internal_error" });
@@ -153,7 +188,11 @@ describe("createAuthMiddleware", () => {
       resourceServer: mockResourceServer,
     });
 
-    await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+    await middleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
 
     expect(mockTokenValidator.validate).toHaveBeenCalledWith("valid-token");
     expect((mockRequest as any).auth).toEqual(mockClaims);

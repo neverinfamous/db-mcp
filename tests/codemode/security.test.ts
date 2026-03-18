@@ -76,9 +76,7 @@ describe("CodeModeSecurityManager", () => {
     });
 
     it("should block Function constructor", () => {
-      const result = security.validateCode(
-        'new Function("return this")();',
-      );
+      const result = security.validateCode('new Function("return this")();');
       expect(result.valid).toBe(false);
     });
 
@@ -114,14 +112,14 @@ describe("CodeModeSecurityManager", () => {
 
     it("should allow safe code patterns", () => {
       const result = security.validateCode(
-        'const x = JSON.stringify({ a: 1 }); return x;',
+        "const x = JSON.stringify({ a: 1 }); return x;",
       );
       expect(result.valid).toBe(true);
     });
 
     it("should allow sqlite API usage", () => {
       const result = security.validateCode(
-        'const tables = await sqlite.core.listTables(); return tables;',
+        "const tables = await sqlite.core.listTables(); return tables;",
       );
       expect(result.valid).toBe(true);
     });
@@ -230,7 +228,10 @@ describe("CodeModeSecurityManager", () => {
     });
 
     it("should return error object for undefined (not JSON-serializable)", () => {
-      const result = security.sanitizeResult(undefined) as Record<string, unknown>;
+      const result = security.sanitizeResult(undefined) as Record<
+        string,
+        unknown
+      >;
       expect(result._error).toBe("Result could not be serialized");
       expect(result._type).toBe("undefined");
     });

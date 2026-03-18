@@ -100,8 +100,7 @@ export function createPragmaDatabaseListTool(
         const normalize = (p: string): string => p.replace(/\\/g, "/");
         const mainDb = databases.find((db) => db.name === "main");
         const internalPathDiffers = Boolean(
-          mainDb?.file &&
-            normalize(mainDb.file) !== normalize(configuredPath),
+          mainDb?.file && normalize(mainDb.file) !== normalize(configuredPath),
         );
 
         return {

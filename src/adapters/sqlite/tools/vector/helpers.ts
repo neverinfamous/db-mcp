@@ -8,7 +8,11 @@ import { DbMcpError, ErrorCategory } from "../../../../utils/errors/index.js";
 
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
-    throw new DbMcpError("Vector dimensions must match", "VECTOR_MISMATCH", ErrorCategory.VALIDATION);
+    throw new DbMcpError(
+      "Vector dimensions must match",
+      "VECTOR_MISMATCH",
+      ErrorCategory.VALIDATION,
+    );
   }
   let dotProd = 0;
   let normA = 0;
@@ -26,7 +30,11 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 
 export function euclideanDistance(a: number[], b: number[]): number {
   if (a.length !== b.length) {
-    throw new DbMcpError("Vector dimensions must match", "VECTOR_MISMATCH", ErrorCategory.VALIDATION);
+    throw new DbMcpError(
+      "Vector dimensions must match",
+      "VECTOR_MISMATCH",
+      ErrorCategory.VALIDATION,
+    );
   }
   let sum = 0;
   for (let i = 0; i < a.length; i++) {
@@ -40,7 +48,11 @@ export function euclideanDistance(a: number[], b: number[]): number {
 
 export function dotProduct(a: number[], b: number[]): number {
   if (a.length !== b.length) {
-    throw new DbMcpError("Vector dimensions must match", "VECTOR_MISMATCH", ErrorCategory.VALIDATION);
+    throw new DbMcpError(
+      "Vector dimensions must match",
+      "VECTOR_MISMATCH",
+      ErrorCategory.VALIDATION,
+    );
   }
   let sum = 0;
   for (let i = 0; i < a.length; i++) {
@@ -69,5 +81,9 @@ export function parseVector(value: unknown): number[] {
       // Not valid JSON
     }
   }
-  throw new DbMcpError("Invalid vector format", "VECTOR_INVALID", ErrorCategory.VALIDATION);
+  throw new DbMcpError(
+    "Invalid vector format",
+    "VECTOR_INVALID",
+    ErrorCategory.VALIDATION,
+  );
 }

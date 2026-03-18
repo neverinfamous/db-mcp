@@ -6,15 +6,27 @@
 
 import { z } from "zod";
 
-
 /**
  * Valid enum values for handler-side validation.
  * These are validated inside the handler's try/catch to produce structured
  * errors instead of raw MCP -32602 frames from Zod enum rejection.
  */
 export const VALID_TEXT_CASE_MODES = ["upper", "lower"] as const;
-export const VALID_NORMALIZE_MODES = ["nfc", "nfd", "nfkc", "nfkd", "strip_accents"] as const;
-export const VALID_VALIDATE_PATTERNS = ["email", "phone", "url", "uuid", "ipv4", "custom"] as const;
+export const VALID_NORMALIZE_MODES = [
+  "nfc",
+  "nfd",
+  "nfkc",
+  "nfkd",
+  "strip_accents",
+] as const;
+export const VALID_VALIDATE_PATTERNS = [
+  "email",
+  "phone",
+  "url",
+  "uuid",
+  "ipv4",
+  "custom",
+] as const;
 export const VALID_PHONETIC_ALGORITHMS = ["soundex", "metaphone"] as const;
 export const VALID_TRIM_MODES = ["both", "left", "right"] as const;
 export const VALID_SEARCH_TECHNIQUES = ["exact", "fuzzy", "phonetic"] as const;
@@ -88,7 +100,11 @@ export const TextReplaceSchema = z.object({
 export const TextTrimSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to trim"),
-  mode: z.string().optional().default("both").describe("Trim mode: 'both', 'left', or 'right'"),
+  mode: z
+    .string()
+    .optional()
+    .default("both")
+    .describe("Trim mode: 'both', 'left', or 'right'"),
   whereClause: z.string().optional(),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
@@ -123,11 +139,7 @@ export const FuzzyMatchSchema = z.object({
   search: z.string().describe("Search string"),
   maxDistance: z.preprocess(
     coerceNumber,
-    z
-      .number()
-      .optional()
-      .default(3)
-      .describe("Maximum Levenshtein distance"),
+    z.number().optional().default(3).describe("Maximum Levenshtein distance"),
   ),
   tokenize: z
     .boolean()
@@ -143,7 +155,11 @@ export const PhoneticMatchSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to search"),
   search: z.string().describe("Search string"),
-  algorithm: z.string().optional().default("soundex").describe("Phonetic algorithm: 'soundex' or 'metaphone'"),
+  algorithm: z
+    .string()
+    .optional()
+    .default("soundex")
+    .describe("Phonetic algorithm: 'soundex' or 'metaphone'"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   includeRowData: z
     .boolean()
@@ -155,7 +171,11 @@ export const PhoneticMatchSchema = z.object({
 export const TextNormalizeSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to normalize"),
-  mode: z.string().describe("Normalization mode: 'nfc', 'nfd', 'nfkc', 'nfkd', or 'strip_accents'"),
+  mode: z
+    .string()
+    .describe(
+      "Normalization mode: 'nfc', 'nfd', 'nfkc', 'nfkd', or 'strip_accents'",
+    ),
   whereClause: z.string().optional(),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
@@ -165,7 +185,9 @@ export const TextValidateSchema = z.object({
   column: z.string().describe("Column to validate"),
   pattern: z
     .string()
-    .describe("Validation pattern: 'email', 'phone', 'url', 'uuid', 'ipv4', or 'custom'"),
+    .describe(
+      "Validation pattern: 'email', 'phone', 'url', 'uuid', 'ipv4', or 'custom'",
+    ),
   customPattern: z
     .string()
     .optional()

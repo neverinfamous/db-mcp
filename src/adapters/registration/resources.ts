@@ -4,10 +4,18 @@ import type { ResourceDefinition, RequestContext } from "../../types/index.js";
 
 // Interface for adapter methods needed by resource registration
 export interface ResourceRegistrationAdapter {
-  createContext(requestId?: string, server?: unknown, progressToken?: string | number): RequestContext;
+  createContext(
+    requestId?: string,
+    server?: unknown,
+    progressToken?: string | number,
+  ): RequestContext;
 }
 
-export function registerResourceImpl(adapter: ResourceRegistrationAdapter, server: McpServer, resource: ResourceDefinition): void {
+export function registerResourceImpl(
+  adapter: ResourceRegistrationAdapter,
+  server: McpServer,
+  resource: ResourceDefinition,
+): void {
   const isTemplate = /\{[^}]+\}/.test(resource.uri);
 
   if (isTemplate) {
@@ -26,10 +34,7 @@ export function registerResourceImpl(adapter: ResourceRegistrationAdapter, serve
         _variables: Record<string, string | string[]>,
       ) => {
         const context = adapter.createContext();
-        const content = await resource.handler(
-          resourceUri.toString(),
-          context,
-        );
+        const content = await resource.handler(resourceUri.toString(), context);
         return {
           contents: [
             {
@@ -55,10 +60,7 @@ export function registerResourceImpl(adapter: ResourceRegistrationAdapter, serve
       },
       async (resourceUri: URL) => {
         const context = adapter.createContext();
-        const content = await resource.handler(
-          resourceUri.toString(),
-          context,
-        );
+        const content = await resource.handler(resourceUri.toString(), context);
         return {
           contents: [
             {

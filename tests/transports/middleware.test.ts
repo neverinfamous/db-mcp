@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getClientIp, matchesCorsOrigin } from "../../src/transports/http/middleware.js";
+import {
+  getClientIp,
+  matchesCorsOrigin,
+} from "../../src/transports/http/middleware.js";
 
 // =============================================================================
 // getClientIp
@@ -87,15 +90,15 @@ describe("matchesCorsOrigin", () => {
   });
 
   it("should reject non-matching exact origin", () => {
-    expect(
-      matchesCorsOrigin("https://other.com", "https://example.com"),
-    ).toBe(false);
+    expect(matchesCorsOrigin("https://other.com", "https://example.com")).toBe(
+      false,
+    );
   });
 
   it("should match wildcard subdomain pattern", () => {
-    expect(
-      matchesCorsOrigin("https://app.example.com", "*.example.com"),
-    ).toBe(true);
+    expect(matchesCorsOrigin("https://app.example.com", "*.example.com")).toBe(
+      true,
+    );
   });
 
   it("should match nested subdomain against wildcard pattern", () => {
@@ -110,8 +113,8 @@ describe("matchesCorsOrigin", () => {
   });
 
   it("should not match unrelated domain with same suffix", () => {
-    expect(
-      matchesCorsOrigin("https://notexample.com", "*.example.com"),
-    ).toBe(false);
+    expect(matchesCorsOrigin("https://notexample.com", "*.example.com")).toBe(
+      false,
+    );
   });
 });

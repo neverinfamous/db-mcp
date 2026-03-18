@@ -57,8 +57,7 @@ export class DbMcpError extends Error {
     this.suggestion = options?.suggestion ?? match?.suggestion;
 
     // Prefer the suggestion's specific code over generic category codes
-    this.code =
-      match?.code && REFINABLE_CODES.has(code) ? match.code : code;
+    this.code = match?.code && REFINABLE_CODES.has(code) ? match.code : code;
 
     // Capture stack trace
     Error.captureStackTrace?.(this, this.constructor);

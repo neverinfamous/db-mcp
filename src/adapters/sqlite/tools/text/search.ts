@@ -4,25 +4,26 @@
  * Fuzzy matching, phonetic search, and advanced combined search.
  */
 
-
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   FuzzySearchOutputSchema,
   SoundexOutputSchema,
   AdvancedSearchOutputSchema,
 } from "../../output-schemas/index.js";
-import {
-  levenshtein,
-  metaphone,
-  soundex,
-} from "./formatting.js";
+import { levenshtein, metaphone, soundex } from "./formatting.js";
 
 import {
   FuzzyMatchSchema,
@@ -119,7 +120,9 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Phonetic match using Soundex or Metaphone
  */
-export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition {
+export function createPhoneticMatchTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_phonetic_match",
     description:
@@ -134,7 +137,12 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
         const input = PhoneticMatchSchema.parse(params);
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
-        if (input.algorithm && !VALID_PHONETIC_ALGORITHMS.includes(input.algorithm as typeof VALID_PHONETIC_ALGORITHMS[number])) {
+        if (
+          input.algorithm &&
+          !VALID_PHONETIC_ALGORITHMS.includes(
+            input.algorithm as (typeof VALID_PHONETIC_ALGORITHMS)[number],
+          )
+        ) {
           throw new ValidationError(
             `Invalid algorithm '${input.algorithm}'. Must be one of: ${VALID_PHONETIC_ALGORITHMS.join(", ")}`,
           );
@@ -247,7 +255,9 @@ export function createPhoneticMatchTool(adapter: SqliteAdapter): ToolDefinition 
 /**
  * Advanced search combining multiple text processing techniques
  */
-export function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition {
+export function createAdvancedSearchTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_advanced_search",
     description:
@@ -263,7 +273,11 @@ export function createAdvancedSearchTool(adapter: SqliteAdapter): ToolDefinition
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         for (const technique of input.techniques) {
-          if (!VALID_SEARCH_TECHNIQUES.includes(technique as typeof VALID_SEARCH_TECHNIQUES[number])) {
+          if (
+            !VALID_SEARCH_TECHNIQUES.includes(
+              technique as (typeof VALID_SEARCH_TECHNIQUES)[number],
+            )
+          ) {
             throw new ValidationError(
               `Invalid technique '${technique}'. Must be one of: ${VALID_SEARCH_TECHNIQUES.join(", ")}`,
             );

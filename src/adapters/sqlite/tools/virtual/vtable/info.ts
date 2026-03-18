@@ -1,5 +1,8 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";

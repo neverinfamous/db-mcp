@@ -6,7 +6,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -20,7 +25,7 @@ test.describe("Payload Contracts: Vector", () => {
 
       expectSuccess(payload);
       expect(typeof payload.count).toBe("number");
-      expect((payload.count as number)).toBeGreaterThan(0);
+      expect(payload.count as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }
@@ -104,14 +109,18 @@ test.describe("Payload Contracts: Vector", () => {
   test("sqlite_vector_dimensions returns { success, dimensions }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_vector_dimensions", {
-        table: "test_embeddings",
-        vectorColumn: "embedding",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_vector_dimensions",
+        {
+          table: "test_embeddings",
+          vectorColumn: "embedding",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.dimensions).toBe("number");
-      expect((payload.dimensions as number)).toBeGreaterThan(0);
+      expect(payload.dimensions as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }
@@ -120,9 +129,13 @@ test.describe("Payload Contracts: Vector", () => {
   test("sqlite_vector_normalize returns { success, original, normalized }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_vector_normalize", {
-        vector: [3, 4],
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_vector_normalize",
+        {
+          vector: [3, 4],
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.original)).toBe(true);
@@ -168,10 +181,14 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
         tableName: "_e2e_vec_write",
       });
 
-      const payload = await callToolAndParse(client, "sqlite_vector_create_table", {
-        tableName: "_e2e_vec_write",
-        dimensions: 4,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_vector_create_table",
+        {
+          tableName: "_e2e_vec_write",
+          dimensions: 4,
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -212,16 +229,20 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
   test("sqlite_vector_batch_store returns { success, stored }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_vector_batch_store", {
-        table: "_e2e_vec_write",
-        idColumn: "id",
-        vectorColumn: "vector",
-        items: [
-          { id: 2, vector: [0.5, 0.6, 0.7, 0.8] },
-          { id: 3, vector: [0.9, 1.0, 0.1, 0.2] },
-          { id: 4, vector: [0.3, 0.4, 0.5, 0.6] },
-        ],
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_vector_batch_store",
+        {
+          table: "_e2e_vec_write",
+          idColumn: "id",
+          vectorColumn: "vector",
+          items: [
+            { id: 2, vector: [0.5, 0.6, 0.7, 0.8] },
+            { id: 3, vector: [0.9, 1.0, 0.1, 0.2] },
+            { id: 4, vector: [0.3, 0.4, 0.5, 0.6] },
+          ],
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.stored).toBe("number");
@@ -274,5 +295,3 @@ test.describe("Payload Contracts: Vector Write Operations", () => {
     }
   });
 });
-
-

@@ -7,7 +7,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -15,11 +20,15 @@ test.describe("Payload Contracts: Stats Advanced", () => {
   test("sqlite_stats_correlation returns { success, correlation, n }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_stats_correlation", {
-        table: "test_measurements",
-        column1: "temperature",
-        column2: "humidity",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_stats_correlation",
+        {
+          table: "test_measurements",
+          column1: "temperature",
+          column2: "humidity",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.correlation).toBe("number");
@@ -34,16 +43,22 @@ test.describe("Payload Contracts: Stats Advanced", () => {
   test("sqlite_stats_correlation self-correlation → ≈1.0", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_stats_correlation", {
-        table: "test_products",
-        column1: "id",
-        column2: "id",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_stats_correlation",
+        {
+          table: "test_products",
+          column1: "id",
+          column2: "id",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.correlation).toBe("number");
       // Self-correlation should be exactly or very close to 1.0
-      expect(Math.abs((payload.correlation as number) - 1.0)).toBeLessThan(0.001);
+      expect(Math.abs((payload.correlation as number) - 1.0)).toBeLessThan(
+        0.001,
+      );
     } finally {
       await client.close();
     }
@@ -62,7 +77,7 @@ test.describe("Payload Contracts: Stats Advanced", () => {
       expect(payload.column).toBe("temperature");
       expect(typeof payload.count).toBe("number");
       expect(Array.isArray(payload.rows)).toBe(true);
-      expect((payload.count as number)).toBeLessThanOrEqual(5);
+      expect(payload.count as number).toBeLessThanOrEqual(5);
     } finally {
       await client.close();
     }
@@ -80,7 +95,7 @@ test.describe("Payload Contracts: Stats Advanced", () => {
       expect(payload.column).toBe("sensor_id");
       expect(typeof payload.distinctCount).toBe("number");
       expect(Array.isArray(payload.values)).toBe(true);
-      expect((payload.distinctCount as number)).toBeGreaterThan(0);
+      expect(payload.distinctCount as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }
@@ -159,11 +174,15 @@ test.describe("Payload Contracts: Stats Inference", () => {
   test("sqlite_stats_regression returns { success, type, coefficients, rSquared, equation }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_stats_regression", {
-        table: "test_measurements",
-        xColumn: "temperature",
-        yColumn: "humidity",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_stats_regression",
+        {
+          table: "test_measurements",
+          xColumn: "temperature",
+          yColumn: "humidity",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.type).toBe("string");
@@ -181,12 +200,16 @@ test.describe("Payload Contracts: Stats Inference", () => {
   test("sqlite_stats_hypothesis returns { success, testType, statistic, pValue, significant }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_stats_hypothesis", {
-        table: "test_measurements",
-        column: "temperature",
-        testType: "ttest_one",
-        expectedMean: 25,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_stats_hypothesis",
+        {
+          table: "test_measurements",
+          column: "temperature",
+          testType: "ttest_one",
+          expectedMean: 25,
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.testType).toBe("ttest_one");

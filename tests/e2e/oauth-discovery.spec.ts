@@ -60,12 +60,10 @@ test.describe("OAuth 2.1 Discovery", () => {
       // RFC 9728 required fields
       expect(body).toHaveProperty("resource");
       expect(body).toHaveProperty("authorization_servers");
-      expect(
-        Array.isArray(body.authorization_servers),
-      ).toBe(true);
-      expect(
-        (body.authorization_servers as string[]).length,
-      ).toBeGreaterThan(0);
+      expect(Array.isArray(body.authorization_servers)).toBe(true);
+      expect((body.authorization_servers as string[]).length).toBeGreaterThan(
+        0,
+      );
 
       // Should include the issuer we configured
       expect(body.authorization_servers).toContain(
@@ -80,9 +78,7 @@ test.describe("OAuth 2.1 Discovery", () => {
 
       const body = (await response.json()) as Record<string, unknown>;
       expect(body).toHaveProperty("scopes_supported");
-      expect(
-        Array.isArray(body.scopes_supported),
-      ).toBe(true);
+      expect(Array.isArray(body.scopes_supported)).toBe(true);
 
       // Should include the 3 scope levels
       const scopes = body.scopes_supported as string[];

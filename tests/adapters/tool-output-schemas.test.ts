@@ -119,7 +119,9 @@ describe("Tool Output Schema Invariants (Native)", () => {
     for (const tool of tools) {
       if (tool.outputSchema && isZodSchema(tool.outputSchema)) {
         try {
-          const schema = tool.outputSchema as { parse: (v: unknown) => unknown };
+          const schema = tool.outputSchema as {
+            parse: (v: unknown) => unknown;
+          };
           schema.parse({ success: false, error: "test error" });
         } catch {
           violations.push(`${tool.name} (group: ${tool.group})`);
@@ -182,7 +184,9 @@ describe("Tool Output Schema Invariants (Native)", () => {
       // create_table and vector_create_table). And some schemas
       // (ErrorFieldsMixin, RowRecordSchema) are building blocks, not tool schemas.
       // So ≥ is the right comparison.
-      expect(exportedNames.length).toBeGreaterThanOrEqual(toolSchemaRefs.size - 1);
+      expect(exportedNames.length).toBeGreaterThanOrEqual(
+        toolSchemaRefs.size - 1,
+      );
       // The -1 accounts for ExecuteCodeOutputSchema which is inline in codemode.ts
     });
 
@@ -418,7 +422,9 @@ describe("Tool Output Schema Invariants (WASM)", () => {
     for (const tool of tools) {
       if (tool.outputSchema && isZodSchema(tool.outputSchema)) {
         try {
-          const schema = tool.outputSchema as { parse: (v: unknown) => unknown };
+          const schema = tool.outputSchema as {
+            parse: (v: unknown) => unknown;
+          };
           schema.parse({ success: false, error: "test error" });
         } catch {
           violations.push(`${tool.name} (group: ${tool.group})`);

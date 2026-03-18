@@ -5,13 +5,19 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ResourceNotFoundError,
+} from "../../../../utils/errors/index.js";
 import {
   StatsCorrelationOutputSchema,
   StatsTopNOutputSchema,
@@ -165,23 +171,49 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
         } else {
           // Auto-limit: exclude TEXT/BLOB columns likely to hold long content
           const tableInfo = await adapter.describeTable(input.table);
-          const TEXT_TYPES = new Set(["text", "blob", "clob", "varchar", "nvarchar", "char"]);
+          const TEXT_TYPES = new Set([
+            "text",
+            "blob",
+            "clob",
+            "varchar",
+            "nvarchar",
+            "char",
+          ]);
           const LONG_CONTENT_PATTERNS = [
-            "description", "body", "bio", "content", "notes", "summary",
-            "comment", "details", "html", "markdown", "text", "message",
-            "payload", "raw", "data", "log", "blob",
+            "description",
+            "body",
+            "bio",
+            "content",
+            "notes",
+            "summary",
+            "comment",
+            "details",
+            "html",
+            "markdown",
+            "text",
+            "message",
+            "payload",
+            "raw",
+            "data",
+            "log",
+            "blob",
           ];
-          const cols = (tableInfo.columns ?? []);
+          const cols = tableInfo.columns ?? [];
           const excluded: string[] = [];
           const included: string[] = [];
 
           for (const c of cols) {
             const typeLower = (c.type ?? "").toLowerCase();
             const nameLower = c.name.toLowerCase();
-            const isText = [...TEXT_TYPES].some((t) => typeLower === t || typeLower.startsWith(t));
+            const isText = [...TEXT_TYPES].some(
+              (t) => typeLower === t || typeLower.startsWith(t),
+            );
             const isRankCol = nameLower === input.column.toLowerCase();
             const isLongContent = LONG_CONTENT_PATTERNS.some(
-              (p) => nameLower === p || nameLower.endsWith(`_${p}`) || nameLower.startsWith(`${p}_`),
+              (p) =>
+                nameLower === p ||
+                nameLower.endsWith(`_${p}`) ||
+                nameLower.startsWith(`${p}_`),
             );
 
             if (isText && !isRankCol && isLongContent) {
@@ -192,7 +224,9 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
           }
 
           if (excluded.length > 0 && included.length > 0) {
-            columnList = included.map((col) => sanitizeIdentifier(col)).join(", ");
+            columnList = included
+              .map((col) => sanitizeIdentifier(col))
+              .join(", ");
             hint = `Excluded ${excluded.length} long-content column(s) (${excluded.join(", ")}) to reduce payload. Use selectColumns to override.`;
           } else {
             columnList = "*";
@@ -275,9 +309,7 @@ export function createDistinctValuesTool(
 /**
  * Summary statistics for all numeric columns
  */
-export function createSummaryStatsTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
   const numericTypes = new Set([...NUMERIC_TYPES]);
 
   return {

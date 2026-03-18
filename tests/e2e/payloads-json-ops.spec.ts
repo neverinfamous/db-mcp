@@ -10,7 +10,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -56,7 +61,7 @@ test.describe("Payload Contracts: JSON Operations (Read)", () => {
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
       expect(Array.isArray(payload.values)).toBe(true);
-      expect((payload.rowCount as number)).toBeGreaterThan(0);
+      expect(payload.rowCount as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }
@@ -87,11 +92,15 @@ test.describe("Payload Contracts: JSON Operations (Read)", () => {
   test("sqlite_json_array_length returns { success, rowCount, lengths[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_json_array_length", {
-        table: "test_jsonb_docs",
-        column: "tags",
-        path: "$",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_json_array_length",
+        {
+          table: "test_jsonb_docs",
+          column: "tags",
+          path: "$",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
@@ -111,7 +120,7 @@ test.describe("Payload Contracts: JSON Operations (Read)", () => {
       expectSuccess(payload);
       expect(typeof payload.formatted).toBe("string");
       // Should have indentation
-      expect((payload.formatted as string)).toContain("\n");
+      expect(payload.formatted as string).toContain("\n");
     } finally {
       await client.close();
     }
@@ -120,10 +129,14 @@ test.describe("Payload Contracts: JSON Operations (Read)", () => {
   test("sqlite_json_storage_info returns { success, jsonbSupported, sampleSize, formats }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_json_storage_info", {
-        table: "test_jsonb_docs",
-        column: "doc",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_json_storage_info",
+        {
+          table: "test_jsonb_docs",
+          column: "doc",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.jsonbSupported).toBe("boolean");
@@ -141,10 +154,14 @@ test.describe("Payload Contracts: JSON Operations (Read)", () => {
   test("sqlite_json_group_array returns { success, rowCount, rows[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_json_group_array", {
-        table: "test_products",
-        valueColumn: "name",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_json_group_array",
+        {
+          table: "test_products",
+          valueColumn: "name",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
@@ -157,11 +174,15 @@ test.describe("Payload Contracts: JSON Operations (Read)", () => {
   test("sqlite_json_group_object returns { success, rowCount, rows[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_json_group_object", {
-        table: "test_products",
-        keyColumn: "name",
-        valueColumn: "category",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_json_group_object",
+        {
+          table: "test_products",
+          keyColumn: "name",
+          valueColumn: "category",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
@@ -245,13 +266,17 @@ test.describe("Payload Contracts: JSON Operations (Write)", () => {
   test("sqlite_json_array_append returns { success, rowsAffected }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_json_array_append", {
-        table: "test_jsonb_docs",
-        column: "tags",
-        path: "$",
-        value: "new_tag",
-        whereClause: "rowid = 1",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_json_array_append",
+        {
+          table: "test_jsonb_docs",
+          column: "tags",
+          path: "$",
+          value: "new_tag",
+          whereClause: "rowid = 1",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.rowsAffected).toBe("number");
@@ -326,10 +351,14 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
         table: "_e2e_json_coll",
       });
 
-      const payload = await callToolAndParse(client, "sqlite_create_json_collection", {
-        tableName: "_e2e_json_coll",
-        timestamps: true,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_create_json_collection",
+        {
+          tableName: "_e2e_json_coll",
+          timestamps: true,
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -361,10 +390,14 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
   test("sqlite_json_normalize_column returns { success, normalized }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_json_normalize_column", {
-        table: "test_jsonb_docs",
-        column: "doc",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_json_normalize_column",
+        {
+          table: "test_jsonb_docs",
+          column: "doc",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.normalized).toBe("number");
@@ -379,7 +412,8 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_write_query", {
-        query: "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.title') = 'E2E Payload Test'",
+        query:
+          "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.title') = 'E2E Payload Test'",
       });
     } finally {
       await client.close();
@@ -411,4 +445,3 @@ test.describe("Payload Contracts: Text Replace", () => {
     }
   });
 });
-

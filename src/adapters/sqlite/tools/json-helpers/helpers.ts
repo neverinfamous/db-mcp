@@ -31,7 +31,9 @@ export function extractColumnNameFromPath(path: string): string {
   }
 
   // Use the last segment as the column name
-  return segments.length > 0 ? (segments[segments.length - 1] ?? "value") : "value";
+  return segments.length > 0
+    ? (segments[segments.length - 1] ?? "value")
+    : "value";
 }
 
 /**

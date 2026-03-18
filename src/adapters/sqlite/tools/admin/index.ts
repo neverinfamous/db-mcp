@@ -11,10 +11,7 @@ import {
   createOptimizeTool,
   createRestoreTool,
 } from "./backup/index.js";
-import {
-  createVerifyBackupTool,
-  createIndexStatsTool,
-} from "./verify.js";
+import { createVerifyBackupTool, createIndexStatsTool } from "./verify.js";
 import {
   createPragmaCompileOptionsTool,
   createPragmaDatabaseListTool,

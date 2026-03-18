@@ -7,7 +7,10 @@
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { getCodeModeTools, cleanupCodeMode } from "../../../../src/adapters/sqlite/tools/codemode.js";
+import {
+  getCodeModeTools,
+  cleanupCodeMode,
+} from "../../../../src/adapters/sqlite/tools/codemode.js";
 import type { ToolDefinition } from "../../../../src/types/index.js";
 
 // =============================================================================
@@ -83,10 +86,10 @@ describe("sqlite_execute_code handler - validation", () => {
     const adapter = createMockAdapter();
     const tool = getCodeModeTools(adapter as any)[0]!;
 
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { code: "" },
       { timestamp: new Date(), requestId: "test" },
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
   });
@@ -95,10 +98,10 @@ describe("sqlite_execute_code handler - validation", () => {
     const adapter = createMockAdapter();
     const tool = getCodeModeTools(adapter as any)[0]!;
 
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { code: 'const fs = require("fs");' },
       { timestamp: new Date(), requestId: "test" },
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
@@ -109,10 +112,10 @@ describe("sqlite_execute_code handler - validation", () => {
     const adapter = createMockAdapter();
     const tool = getCodeModeTools(adapter as any)[0]!;
 
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { code: "return 1;", timeout: 100 },
       { timestamp: new Date(), requestId: "test" },
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
@@ -123,10 +126,10 @@ describe("sqlite_execute_code handler - validation", () => {
     const adapter = createMockAdapter();
     const tool = getCodeModeTools(adapter as any)[0]!;
 
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { code: "return 1;", timeout: 60000 },
       { timestamp: new Date(), requestId: "test" },
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
@@ -137,10 +140,10 @@ describe("sqlite_execute_code handler - validation", () => {
     const tool = getCodeModeTools(adapter as any)[0]!;
 
     // Valid code, but worker-script.js isn't built during vitest runs
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { code: "return 42;" },
       { timestamp: new Date(), requestId: "test" },
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     // Should return an error result (not crash)
     expect(result.success).toBe(false);

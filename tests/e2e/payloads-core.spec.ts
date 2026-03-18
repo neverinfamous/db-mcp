@@ -6,7 +6,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -19,7 +24,7 @@ test.describe("Payload Contracts: Core", () => {
       expectSuccess(payload);
       expect(typeof payload.count).toBe("number");
       expect(Array.isArray(payload.tables)).toBe(true);
-      expect((payload.count as number)).toBeGreaterThan(0);
+      expect(payload.count as number).toBeGreaterThan(0);
 
       // Validate table entry shape
       const tables = payload.tables as Record<string, unknown>[];
@@ -28,7 +33,9 @@ test.describe("Payload Contracts: Core", () => {
       expect(typeof table.type).toBe("string");
       expect(typeof table.columnCount).toBe("number");
       // rowCount may be undefined now that COUNT(*) scans are removed
-      expect(["number", "undefined"].includes(typeof table.rowCount)).toBe(true);
+      expect(["number", "undefined"].includes(typeof table.rowCount)).toBe(
+        true,
+      );
     } finally {
       await client.close();
     }
@@ -43,7 +50,9 @@ test.describe("Payload Contracts: Core", () => {
 
       expectSuccess(payload);
       expect(payload.table).toBe("test_products");
-      expect(["number", "undefined"].includes(typeof payload.rowCount)).toBe(true);
+      expect(["number", "undefined"].includes(typeof payload.rowCount)).toBe(
+        true,
+      );
       expect(Array.isArray(payload.columns)).toBe(true);
 
       // Validate column entry shape
@@ -95,7 +104,7 @@ test.describe("Payload Contracts: Core", () => {
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
-      expect((payload.rowCount as number)).toBeGreaterThan(0);
+      expect(payload.rowCount as number).toBeGreaterThan(0);
       expect(Array.isArray(payload.rows)).toBe(true);
 
       const rows = payload.rows as Record<string, unknown>[];

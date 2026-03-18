@@ -63,9 +63,11 @@ describe("extractBearerToken", () => {
 // =============================================================================
 
 describe("createAuthenticatedContext", () => {
-  const createMockValidator = (
-    result: { valid: boolean; claims?: object; error?: string },
-  ): TokenValidator =>
+  const createMockValidator = (result: {
+    valid: boolean;
+    claims?: object;
+    error?: string;
+  }): TokenValidator =>
     ({
       validate: vi.fn().mockResolvedValue(result),
     }) as unknown as TokenValidator;
@@ -87,7 +89,10 @@ describe("createAuthenticatedContext", () => {
       iat: 1000000000,
     };
     const validator = createMockValidator({ valid: true, claims });
-    const ctx = await createAuthenticatedContext("Bearer valid-token", validator);
+    const ctx = await createAuthenticatedContext(
+      "Bearer valid-token",
+      validator,
+    );
 
     expect(ctx.authenticated).toBe(true);
     expect(ctx.scopes).toEqual(["read", "write"]);
@@ -111,9 +116,11 @@ describe("createAuthenticatedContext", () => {
 // =============================================================================
 
 describe("validateAuth", () => {
-  const createMockValidator = (
-    result: { valid: boolean; claims?: object; error?: string },
-  ): TokenValidator =>
+  const createMockValidator = (result: {
+    valid: boolean;
+    claims?: object;
+    error?: string;
+  }): TokenValidator =>
     ({
       validate: vi.fn().mockResolvedValue(result),
     }) as unknown as TokenValidator;

@@ -260,7 +260,6 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     config.toolFilter = toolFilter;
   }
 
-
   // SQLite database from environment
   const sqliteUri =
     process.env["SQLITE_DATABASE"] ?? process.env["SQLITE_PATH"];

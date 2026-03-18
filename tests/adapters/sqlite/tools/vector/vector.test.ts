@@ -182,7 +182,13 @@ describe("createVectorSearchTool", () => {
     adapter.executeReadQuery.mockRejectedValue(new Error("fail"));
     const tool = createVectorSearchTool(adapter);
     const result = (await tool.handler(
-      { table: "t", vectorColumn: "v", queryVector: [1], metric: "cosine", limit: 5 },
+      {
+        table: "t",
+        vectorColumn: "v",
+        queryVector: [1],
+        metric: "cosine",
+        limit: 5,
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(false);
@@ -311,7 +317,11 @@ describe("createVectorStoreTool", () => {
   it("should store vector (insert when update returns 0)", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [{ sql: "CREATE TABLE vecs (id INTEGER, vector TEXT, dimensions INTEGER DEFAULT 3)" }],
+      rows: [
+        {
+          sql: "CREATE TABLE vecs (id INTEGER, vector TEXT, dimensions INTEGER DEFAULT 3)",
+        },
+      ],
     });
     adapter.executeWriteQuery
       .mockResolvedValueOnce({ rowsAffected: 0 }) // update
@@ -333,7 +343,9 @@ describe("createVectorStoreTool", () => {
 
   it("should update existing vector", async () => {
     const adapter = createMockAdapter();
-    adapter.executeReadQuery.mockResolvedValue({ rows: [{ sql: "CREATE TABLE vecs (id, vector)" }] });
+    adapter.executeReadQuery.mockResolvedValue({
+      rows: [{ sql: "CREATE TABLE vecs (id, vector)" }],
+    });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createVectorStoreTool(adapter);
     const result = (await tool.handler(
@@ -367,7 +379,11 @@ describe("createVectorStoreTool", () => {
   it("should detect dimension mismatch", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [{ sql: "CREATE TABLE vecs (id INTEGER, vector TEXT, dimensions INTEGER DEFAULT 3)" }],
+      rows: [
+        {
+          sql: "CREATE TABLE vecs (id INTEGER, vector TEXT, dimensions INTEGER DEFAULT 3)",
+        },
+      ],
     });
     const tool = createVectorStoreTool(adapter);
     const result = (await tool.handler(
@@ -386,7 +402,9 @@ describe("createVectorStoreTool", () => {
 
   it("should store with string ID", async () => {
     const adapter = createMockAdapter();
-    adapter.executeReadQuery.mockResolvedValue({ rows: [{ sql: "CREATE TABLE vecs (id, vector)" }] });
+    adapter.executeReadQuery.mockResolvedValue({
+      rows: [{ sql: "CREATE TABLE vecs (id, vector)" }],
+    });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createVectorStoreTool(adapter);
     const result = (await tool.handler(
@@ -413,7 +431,9 @@ describe("createVectorBatchStoreTool", () => {
   it("should batch store vectors", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [{ sql: "CREATE TABLE vecs (id, vector, dimensions INTEGER DEFAULT 2)" }],
+      rows: [
+        { sql: "CREATE TABLE vecs (id, vector, dimensions INTEGER DEFAULT 2)" },
+      ],
     });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createVectorBatchStoreTool(adapter);
@@ -472,7 +492,9 @@ describe("createVectorBatchStoreTool", () => {
   it("should detect dimension mismatch in batch", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [{ sql: "CREATE TABLE vecs (id, vector, dimensions INTEGER DEFAULT 3)" }],
+      rows: [
+        { sql: "CREATE TABLE vecs (id, vector, dimensions INTEGER DEFAULT 3)" },
+      ],
     });
     const tool = createVectorBatchStoreTool(adapter);
     const result = (await tool.handler(

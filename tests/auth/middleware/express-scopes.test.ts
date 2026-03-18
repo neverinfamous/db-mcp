@@ -250,7 +250,13 @@ describe("oauthErrorHandler", () => {
   });
 
   it("should handle OAuth errors with proper status and headers", () => {
-    const error = new OAuthError("bad token", "invalid_token", 401, undefined, 'Bearer error="invalid_token"');
+    const error = new OAuthError(
+      "bad token",
+      "invalid_token",
+      401,
+      undefined,
+      'Bearer error="invalid_token"',
+    );
     const req = createMockReq();
     const res = createMockRes();
 

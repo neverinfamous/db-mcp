@@ -8,7 +8,10 @@
  */
 
 import { describe, it, expect, afterEach } from "vitest";
-import { SqliteAdapter, createSqliteAdapter } from "../../../src/adapters/sqlite/sqlite-adapter.js";
+import {
+  SqliteAdapter,
+  createSqliteAdapter,
+} from "../../../src/adapters/sqlite/sqlite-adapter.js";
 
 // =============================================================================
 // Factory
@@ -65,7 +68,11 @@ describe("SqliteAdapter - connected (in-memory)", () => {
 
   afterEach(async () => {
     if (adapter) {
-      try { await adapter.disconnect(); } catch { /* already disconnected */ }
+      try {
+        await adapter.disconnect();
+      } catch {
+        /* already disconnected */
+      }
     }
   });
 
@@ -130,8 +137,12 @@ describe("SqliteAdapter - connected (in-memory)", () => {
     adapter = createSqliteAdapter();
     await adapter.connect({ type: "sqlite" });
 
-    await adapter.executeWriteQuery("CREATE TABLE test_sa (id INTEGER PRIMARY KEY)");
-    const result = await adapter.executeWriteQuery("INSERT INTO test_sa VALUES (1)");
+    await adapter.executeWriteQuery(
+      "CREATE TABLE test_sa (id INTEGER PRIMARY KEY)",
+    );
+    const result = await adapter.executeWriteQuery(
+      "INSERT INTO test_sa VALUES (1)",
+    );
     expect(result.rowsAffected).toBe(1);
   });
 
@@ -141,7 +152,7 @@ describe("SqliteAdapter - connected (in-memory)", () => {
 
     await adapter.executeWriteQuery("CREATE TABLE cache_test (id INTEGER)");
     const result = await adapter.executeReadQuery(
-      "SELECT name FROM sqlite_master WHERE name = 'cache_test'"
+      "SELECT name FROM sqlite_master WHERE name = 'cache_test'",
     );
     expect(result.rows).toHaveLength(1);
   });
@@ -176,7 +187,9 @@ describe("SqliteAdapter - connected (in-memory)", () => {
     adapter = createSqliteAdapter();
     await adapter.connect({ type: "sqlite" });
 
-    await adapter.executeWriteQuery("CREATE TABLE dt_test (id INTEGER PRIMARY KEY, name TEXT)");
+    await adapter.executeWriteQuery(
+      "CREATE TABLE dt_test (id INTEGER PRIMARY KEY, name TEXT)",
+    );
     const info = await adapter.describeTable("dt_test");
     expect(info.name).toBe("dt_test");
     expect(info.columns.length).toBeGreaterThan(0);
@@ -186,7 +199,9 @@ describe("SqliteAdapter - connected (in-memory)", () => {
     adapter = createSqliteAdapter();
     await adapter.connect({ type: "sqlite" });
 
-    await adapter.executeWriteQuery("CREATE TABLE idx_test (id INTEGER, name TEXT)");
+    await adapter.executeWriteQuery(
+      "CREATE TABLE idx_test (id INTEGER, name TEXT)",
+    );
     await adapter.executeWriteQuery("CREATE INDEX idx_name ON idx_test(name)");
 
     const indexes = await adapter.getIndexes("idx_test");

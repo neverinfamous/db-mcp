@@ -46,9 +46,7 @@ describe("AuthorizationServerDiscovery", () => {
   describe("createAuthServerDiscovery factory", () => {
     it("should create AuthorizationServerDiscovery instance", () => {
       // Factory takes a plain string, not a config object
-      const discovery = createAuthServerDiscovery(
-        "https://auth.example.com",
-      );
+      const discovery = createAuthServerDiscovery("https://auth.example.com");
       expect(discovery).toBeInstanceOf(AuthorizationServerDiscovery);
     });
   });
@@ -128,9 +126,7 @@ describe("AuthorizationServerDiscovery", () => {
       await discovery.discover();
       const jwksUri = discovery.getJwksUri();
 
-      expect(jwksUri).toBe(
-        "https://auth.example.com/.well-known/jwks.json",
-      );
+      expect(jwksUri).toBe("https://auth.example.com/.well-known/jwks.json");
     });
 
     it("should throw if discover() not called", () => {
@@ -138,9 +134,7 @@ describe("AuthorizationServerDiscovery", () => {
         authServerUrl: "https://auth.example.com",
       });
 
-      expect(() => discovery.getJwksUri()).toThrow(
-        /not yet discovered/,
-      );
+      expect(() => discovery.getJwksUri()).toThrow(/not yet discovered/);
     });
   });
 

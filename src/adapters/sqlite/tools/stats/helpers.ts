@@ -34,11 +34,14 @@ const coerceEnumValues =
  * Required enums use z.string() in schema + handler validation against these.
  */
 export const VALID_STAT_TYPES = ["sum", "avg", "min", "max", "count"] as const;
-export const VALID_TEST_TYPES = ["ttest_one", "ttest_two", "chi_square"] as const;
+export const VALID_TEST_TYPES = [
+  "ttest_one",
+  "ttest_two",
+  "chi_square",
+] as const;
 
 // Re-export validateColumnExists from shared utility so existing consumers keep working
 export { validateColumnExists } from "../column-validation.js";
-
 
 /**
  * Numeric column types for validation.
@@ -131,7 +134,10 @@ export const GroupByStatsSchema = z.object({
     .string()
     .describe("Statistic type: 'sum', 'avg', 'min', 'max', or 'count'"),
   whereClause: z.string().optional(),
-  orderBy: z.preprocess(coerceEnumValues(["value", "group"]), z.enum(["value", "group"]).optional().default("group")),
+  orderBy: z.preprocess(
+    coerceEnumValues(["value", "group"]),
+    z.enum(["value", "group"]).optional().default("group"),
+  ),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -148,9 +154,7 @@ export const HistogramSchema = z.object({
 export const PercentileSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column"),
-  percentiles: z
-    .array(z.number())
-    .describe("Percentiles to compute"),
+  percentiles: z.array(z.number()).describe("Percentiles to compute"),
   whereClause: z.string().optional(),
 });
 
@@ -164,8 +168,14 @@ export const CorrelationSchema = z.object({
 export const TopNSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to rank"),
-  n: z.preprocess(coerceNumber, z.number().optional().default(10).describe("Number of top values")),
-  orderDirection: z.preprocess(coerceEnumValues(["asc", "desc"]), z.enum(["asc", "desc"]).optional().default("desc")),
+  n: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(10).describe("Number of top values"),
+  ),
+  orderDirection: z.preprocess(
+    coerceEnumValues(["asc", "desc"]),
+    z.enum(["asc", "desc"]).optional().default("desc"),
+  ),
   whereClause: z.string().optional(),
   selectColumns: z
     .array(z.string())
@@ -199,18 +209,30 @@ export const FrequencySchema = z.object({
 export const OutlierSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column to analyze"),
-  method: z.preprocess(coerceEnumValues(["iqr", "zscore"]), z.enum(["iqr", "zscore"]).optional().default("iqr")),
+  method: z.preprocess(
+    coerceEnumValues(["iqr", "zscore"]),
+    z.enum(["iqr", "zscore"]).optional().default("iqr"),
+  ),
   threshold: z.preprocess(
     coerceNumber,
-    z.number().optional().describe("IQR multiplier (default 1.5) or Z-score threshold (default 3)"),
+    z
+      .number()
+      .optional()
+      .describe(
+        "IQR multiplier (default 1.5) or Z-score threshold (default 3)",
+      ),
   ),
   whereClause: z.string().optional(),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   maxOutliers: z.preprocess(
     coerceNumber,
-    z.number().optional().default(50).describe(
-      "Maximum number of outliers to return (default 50). Reduces payload size for large datasets.",
-    ),
+    z
+      .number()
+      .optional()
+      .default(50)
+      .describe(
+        "Maximum number of outliers to return (default 50). Reduces payload size for large datasets.",
+      ),
   ),
 });
 
@@ -227,7 +249,9 @@ export const RegressionSchema = z.object({
 
 export const HypothesisSchema = z.object({
   table: z.string().describe("Table name"),
-  testType: z.string().describe("Test type: 'ttest_one', 'ttest_two', or 'chi_square'"),
+  testType: z
+    .string()
+    .describe("Test type: 'ttest_one', 'ttest_two', or 'chi_square'"),
   column: z.string().describe("Primary column for analysis"),
   column2: z
     .string()

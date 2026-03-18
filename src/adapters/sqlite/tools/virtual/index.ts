@@ -10,10 +10,7 @@ import {
   createListViewsTool,
   createDropViewTool,
 } from "./views.js";
-import {
-  createDbStatTool,
-  createVacuumTool,
-} from "./analysis.js";
+import { createDbStatTool, createVacuumTool } from "./analysis.js";
 import {
   createListVirtualTablesTool,
   createVirtualTableInfoTool,
@@ -21,10 +18,7 @@ import {
   createCsvTableTool,
   createAnalyzeCsvSchemaTool,
 } from "./vtable/index.js";
-import {
-  createRtreeTableTool,
-  createSeriesTableTool,
-} from "./extensions.js";
+import { createRtreeTableTool, createSeriesTableTool } from "./extensions.js";
 
 /**
  * Get all virtual table tools

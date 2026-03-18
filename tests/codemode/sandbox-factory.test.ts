@@ -83,7 +83,10 @@ describe("sandbox-factory", () => {
 
   describe("createSandboxPool", () => {
     it("should create a vm sandbox pool", () => {
-      const pool = createSandboxPool("vm", { minInstances: 1, maxInstances: 3 });
+      const pool = createSandboxPool("vm", {
+        minInstances: 1,
+        maxInstances: 3,
+      });
       expect(pool).toBeDefined();
       expect(pool.getStats().max).toBe(3);
       pool.dispose();
@@ -104,7 +107,10 @@ describe("sandbox-factory", () => {
     });
 
     it("should initialize pool correctly", () => {
-      const pool = createSandboxPool("vm", { minInstances: 2, maxInstances: 5 });
+      const pool = createSandboxPool("vm", {
+        minInstances: 2,
+        maxInstances: 5,
+      });
       pool.initialize();
       const stats = pool.getStats();
       expect(stats.available).toBe(2);

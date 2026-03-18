@@ -159,7 +159,7 @@ export class SchemaManager {
       throw new DbMcpError(
         "Invalid table name",
         "SQLITE_INVALID_TABLE",
-        ErrorCategory.VALIDATION
+        ErrorCategory.VALIDATION,
       );
     }
 
@@ -172,7 +172,7 @@ export class SchemaManager {
       throw new DbMcpError(
         `Table '${tableName}' does not exist`,
         "SQLITE_TABLE_NOT_FOUND",
-        ErrorCategory.RESOURCE
+        ErrorCategory.RESOURCE,
       );
     }
 

@@ -41,9 +41,7 @@ const TOOL_GROUP_ICONS: Record<ToolGroup, McpIcon[]> = {
   migration: [
     { src: `${MDI_BASE}/source-branch.svg`, mimeType: "image/svg+xml" },
   ],
-  codemode: [
-    { src: `${MDI_BASE}/code-braces.svg`, mimeType: "image/svg+xml" },
-  ],
+  codemode: [{ src: `${MDI_BASE}/code-braces.svg`, mimeType: "image/svg+xml" }],
 };
 
 // =============================================================================

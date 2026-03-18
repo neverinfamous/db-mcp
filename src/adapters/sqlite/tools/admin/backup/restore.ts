@@ -1,10 +1,19 @@
 import fs from "node:fs";
 import nodePath from "node:path";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { admin } from "../../../../../utils/annotations.js";
-import { formatHandlerError, ValidationError } from "../../../../../utils/errors/index.js";
-import { buildProgressContext, sendProgress } from "../../../../../utils/progress-utils.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../../utils/errors/index.js";
+import {
+  buildProgressContext,
+  sendProgress,
+} from "../../../../../utils/progress-utils.js";
 import { RestoreOutputSchema } from "../../../output-schemas/index.js";
 import { RestoreSchema } from "../helpers.js";
 
@@ -47,9 +56,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (!input.sourcePath?.trim()) {
         return {
-          ...formatHandlerError(
-            new ValidationError("sourcePath is required"),
-          ),
+          ...formatHandlerError(new ValidationError("sourcePath is required")),
           sourcePath: "",
         };
       }

@@ -11,7 +11,13 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectHandlerError, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectHandlerError,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -172,9 +178,7 @@ test.describe("Errors Native: Transactions", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_transaction_execute", {
-        statements: [
-          "THIS IS NOT VALID SQL AT ALL",
-        ],
+        statements: ["THIS IS NOT VALID SQL AT ALL"],
         rollbackOnError: true,
       });
       expectHandlerError(p);
@@ -189,9 +193,13 @@ test.describe("Errors Native: Transactions", () => {
       // Begin a transaction first so savepoint operations are valid context
       await callToolAndParse(client, "sqlite_transaction_begin", {});
 
-      const p = await callToolAndParse(client, "sqlite_transaction_rollback_to", {
-        name: "_e2e_nonexistent_savepoint_xyz",
-      });
+      const p = await callToolAndParse(
+        client,
+        "sqlite_transaction_rollback_to",
+        {
+          name: "_e2e_nonexistent_savepoint_xyz",
+        },
+      );
       expectHandlerError(p);
     } finally {
       // Clean up the open transaction

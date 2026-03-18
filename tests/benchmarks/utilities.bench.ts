@@ -236,10 +236,7 @@ describe("SQL Query Validation", () => {
   bench(
     "validateQuery(INSERT, write mode)",
     () => {
-      validateSql(
-        "INSERT INTO users (name, email) VALUES (?, ?)",
-        false,
-      );
+      validateSql("INSERT INTO users (name, email) VALUES (?, ?)", false);
     },
     { iterations: 5000, warmupIterations: 50 },
   );

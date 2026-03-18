@@ -10,7 +10,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -50,7 +55,11 @@ test.describe("Payload Contracts: Admin Extended", () => {
   test("sqlite_pragma_compile_options returns { success, options[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_pragma_compile_options", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_pragma_compile_options",
+        {},
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.options)).toBe(true);
@@ -63,9 +72,13 @@ test.describe("Payload Contracts: Admin Extended", () => {
   test("sqlite_pragma_compile_options with filter", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_pragma_compile_options", {
-        filter: "THREAD",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_pragma_compile_options",
+        {
+          filter: "THREAD",
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.options)).toBe(true);
@@ -77,7 +90,11 @@ test.describe("Payload Contracts: Admin Extended", () => {
   test("sqlite_pragma_optimize returns { success, message, durationMs }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_pragma_optimize", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_pragma_optimize",
+        {},
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -105,9 +122,13 @@ test.describe("Payload Contracts: Admin Extended", () => {
   test("sqlite_pragma_table_info returns { success, table, columns[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_pragma_table_info", {
-        table: "test_products",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_pragma_table_info",
+        {
+          table: "test_products",
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.table).toBe("test_products");
@@ -187,7 +208,8 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
 
       const payload = await callToolAndParse(client, "sqlite_create_view", {
         viewName: "_e2e_test_view",
-        selectQuery: "SELECT id, name, price FROM test_products WHERE price > 50",
+        selectQuery:
+          "SELECT id, name, price FROM test_products WHERE price > 50",
       });
 
       expectSuccess(payload);
@@ -234,10 +256,14 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
         tableName: "_e2e_rtree_test",
       });
 
-      const payload = await callToolAndParse(client, "sqlite_create_rtree_table", {
-        tableName: "_e2e_rtree_test",
-        dimensions: 2,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_create_rtree_table",
+        {
+          tableName: "_e2e_rtree_test",
+          dimensions: 2,
+        },
+      );
 
       // R-Tree not available on WASM
       expect(typeof payload.success).toBe("boolean");
@@ -252,9 +278,13 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
   test("sqlite_virtual_table_info returns { success, name, module } or error", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_virtual_table_info", {
-        tableName: "_e2e_rtree_test",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_virtual_table_info",
+        {
+          tableName: "_e2e_rtree_test",
+        },
+      );
 
       // If R-Tree was created (native), info should succeed
       // If WASM, table doesn't exist so it may error
@@ -271,9 +301,13 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
   test("sqlite_drop_virtual_table returns { success, message }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_drop_virtual_table", {
-        tableName: "_e2e_rtree_test",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_drop_virtual_table",
+        {
+          tableName: "_e2e_rtree_test",
+        },
+      );
 
       // Always succeeds with ifExists: true (default)
       expect(typeof payload.success).toBe("boolean");
@@ -289,12 +323,16 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
         table: "_e2e_series_test",
       });
 
-      const payload = await callToolAndParse(client, "sqlite_create_series_table", {
-        tableName: "_e2e_series_test",
-        start: 1,
-        stop: 10,
-        step: 1,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_create_series_table",
+        {
+          tableName: "_e2e_series_test",
+          start: 1,
+          stop: 10,
+          step: 1,
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -339,4 +377,3 @@ test.describe("Payload Contracts: Admin Lifecycle", () => {
     }
   });
 });
-

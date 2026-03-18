@@ -15,7 +15,10 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   GetIndexesSchema,
   CreateIndexSchema,
@@ -45,7 +48,9 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = GetIndexesSchema.parse(resolveAliases(params, { tableName: "table" }));
+        input = GetIndexesSchema.parse(
+          resolveAliases(params, { tableName: "table" }),
+        );
       } catch (error) {
         return {
           ...formatHandlerError(error),
@@ -136,7 +141,9 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = CreateIndexSchema.parse(resolveAliases(params, { tableName: "table", name: "indexName" }));
+        input = CreateIndexSchema.parse(
+          resolveAliases(params, { tableName: "table", name: "indexName" }),
+        );
       } catch (error) {
         return { ...formatHandlerError(error), sql: "" };
       }
@@ -240,7 +247,9 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = DropIndexSchema.parse(resolveAliases(params, { name: "indexName" }));
+        input = DropIndexSchema.parse(
+          resolveAliases(params, { name: "indexName" }),
+        );
       } catch (error) {
         return formatHandlerError(error);
       }

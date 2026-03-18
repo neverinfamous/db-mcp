@@ -14,9 +14,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Native-Only Tools (via MCP SDK Client)", () => {
   async function createClient(baseURL: string) {
-    const transport = new SSEClientTransport(
-      new URL(`${baseURL}/sse`),
-    );
+    const transport = new SSEClientTransport(new URL(`${baseURL}/sse`));
     const client = new Client(
       { name: "playwright-native-test", version: "1.0.0" },
       { capabilities: {} },
@@ -35,9 +33,7 @@ test.describe("Native-Only Tools (via MCP SDK Client)", () => {
       });
 
       expect(beginResponse.isError).toBeUndefined();
-      const beginParsed = JSON.parse(
-        (beginResponse.content[0] as any).text,
-      );
+      const beginParsed = JSON.parse((beginResponse.content[0] as any).text);
       expect(beginParsed).toHaveProperty("success", true);
       expect(beginParsed).toHaveProperty("mode");
 

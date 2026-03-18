@@ -5,8 +5,15 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
-import { write, idempotent, destructive } from "../../../../utils/annotations.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
+import {
+  write,
+  idempotent,
+  destructive,
+} from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
@@ -100,8 +107,7 @@ async function validateDimensions(
   const ddlSql = ddlResult.rows?.[0]?.["sql"] as string | undefined;
   if (ddlSql) {
     hasDimsColumn = /\bdimensions\b/i.test(ddlSql);
-    const defaultMatch =
-      /dimensions\s+INTEGER\s+DEFAULT\s+(\d+)/i.exec(ddlSql);
+    const defaultMatch = /dimensions\s+INTEGER\s+DEFAULT\s+(\d+)/i.exec(ddlSql);
     if (defaultMatch?.[1]) {
       expectedDims = parseInt(defaultMatch[1], 10);
     }
@@ -112,9 +118,7 @@ async function validateDimensions(
     const dimCheck = await adapter.executeReadQuery(
       `SELECT dimensions FROM ${quotedTable} LIMIT 1`,
     );
-    const rowDims = dimCheck.rows?.[0]?.["dimensions"] as
-      | number
-      | undefined;
+    const rowDims = dimCheck.rows?.[0]?.["dimensions"] as number | undefined;
     if (rowDims !== undefined && rowDims !== null) {
       expectedDims = rowDims;
     }
@@ -148,9 +152,7 @@ async function validateDimensions(
 /**
  * Store a vector
  */
-export function createVectorStoreTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_vector_store",
     description: "Store or update a vector in the database.",
@@ -166,7 +168,8 @@ export function createVectorStoreTool(
         if (input.vector.length === 0) {
           return {
             success: false,
-            error: "vector is required and must be a non-empty array of numbers",
+            error:
+              "vector is required and must be a non-empty array of numbers",
           };
         }
 
@@ -178,7 +181,12 @@ export function createVectorStoreTool(
         // Validate dimensions against table schema
         let hasDimsColumn = false;
         try {
-          const dims = await validateDimensions(adapter, input.table, table, input.vectorColumn);
+          const dims = await validateDimensions(
+            adapter,
+            input.table,
+            table,
+            input.vectorColumn,
+          );
           hasDimsColumn = dims.hasDimsColumn;
 
           if (
@@ -266,7 +274,12 @@ export function createVectorBatchStoreTool(
         // Validate dimensions against table schema
         let hasDimsColumn = false;
         try {
-          const dims = await validateDimensions(adapter, input.table, table, input.vectorColumn);
+          const dims = await validateDimensions(
+            adapter,
+            input.table,
+            table,
+            input.vectorColumn,
+          );
           hasDimsColumn = dims.hasDimsColumn;
 
           if (dims.expectedDims !== undefined) {
@@ -314,9 +327,7 @@ export function createVectorBatchStoreTool(
 /**
  * Delete vectors by ID
  */
-export function createVectorDeleteTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_vector_delete",
     description: "Delete vectors by their IDs.",

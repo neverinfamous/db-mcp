@@ -38,7 +38,9 @@ function createMockAdapter(isNative = true) {
 // =============================================================================
 
 describe("createRestoreTool", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should return correct metadata", () => {
     const tool = createRestoreTool(createMockAdapter());
@@ -49,7 +51,10 @@ describe("createRestoreTool", () => {
   it("should reject in WASM mode", async () => {
     const adapter = createMockAdapter(false);
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(result.wasmLimitation).toBe(true);
   });
@@ -57,7 +62,7 @@ describe("createRestoreTool", () => {
   it("should reject empty sourcePath", async () => {
     const adapter = createMockAdapter();
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "  " }, ctx) as any;
+    const result = (await tool.handler({ sourcePath: "  " }, ctx)) as any;
     expect(result.success).toBe(false);
   });
 
@@ -65,7 +70,10 @@ describe("createRestoreTool", () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     const adapter = createMockAdapter();
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/missing.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/missing.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("not found");
   });
@@ -73,11 +81,16 @@ describe("createRestoreTool", () => {
   it("should handle ATTACH failure", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const adapter = createMockAdapter();
-    adapter.executeReadQuery.mockResolvedValue({ rows: [{ integrity_check: "ok" }] });
+    adapter.executeReadQuery.mockResolvedValue({
+      rows: [{ integrity_check: "ok" }],
+    });
     adapter.executeWriteQuery.mockRejectedValueOnce(new Error("ATTACH failed"));
 
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
   });
 });
@@ -87,7 +100,9 @@ describe("createRestoreTool", () => {
 // =============================================================================
 
 describe("restore - successful flow", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should restore database from backup (native)", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
@@ -102,31 +117,58 @@ describe("restore - successful flow", () => {
         return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
       }
       // virtual tables in main
-      if (sql.includes("sqlite_master") && sql.includes("VIRTUAL TABLE") && !sql.includes("backup_source")) {
+      if (
+        sql.includes("sqlite_master") &&
+        sql.includes("VIRTUAL TABLE") &&
+        !sql.includes("backup_source")
+      ) {
         return Promise.resolve({ rows: [] });
       }
       // tables from backup
-      if (sql.includes("backup_source.sqlite_master") && sql.includes("NOT LIKE") && sql.includes("VIRTUAL TABLE")) {
+      if (
+        sql.includes("backup_source.sqlite_master") &&
+        sql.includes("NOT LIKE") &&
+        sql.includes("VIRTUAL TABLE")
+      ) {
         return Promise.resolve({ rows: [] }); // no virtual tables in backup
       }
-      if (sql.includes("backup_source.sqlite_master") && sql.includes("type='table'")) {
+      if (
+        sql.includes("backup_source.sqlite_master") &&
+        sql.includes("type='table'")
+      ) {
         return Promise.resolve({
           rows: [
-            { name: "users", sql: 'CREATE TABLE "users" (id INTEGER PRIMARY KEY, name TEXT)' },
-            { name: "orders", sql: 'CREATE TABLE "orders" (id INTEGER PRIMARY KEY, user_id INTEGER)' },
+            {
+              name: "users",
+              sql: 'CREATE TABLE "users" (id INTEGER PRIMARY KEY, name TEXT)',
+            },
+            {
+              name: "orders",
+              sql: 'CREATE TABLE "orders" (id INTEGER PRIMARY KEY, user_id INTEGER)',
+            },
           ],
         });
       }
       // indexes
       if (sql.includes("type='index'")) {
         return Promise.resolve({
-          rows: [{ name: "idx_user_name", sql: 'CREATE INDEX idx_user_name ON users(name)' }],
+          rows: [
+            {
+              name: "idx_user_name",
+              sql: "CREATE INDEX idx_user_name ON users(name)",
+            },
+          ],
         });
       }
       // views
       if (sql.includes("type='view'")) {
         return Promise.resolve({
-          rows: [{ name: "user_view", sql: 'CREATE VIEW user_view AS SELECT * FROM users' }],
+          rows: [
+            {
+              name: "user_view",
+              sql: "CREATE VIEW user_view AS SELECT * FROM users",
+            },
+          ],
         });
       }
       // triggers
@@ -139,7 +181,10 @@ describe("restore - successful flow", () => {
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
 
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
     expect(result.sourcePath).toBe("/tmp/backup.db");
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
@@ -154,23 +199,40 @@ describe("restore - successful flow", () => {
         return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
       }
       // Virtual tables in main (cleanup step)
-      if (sql.includes("sqlite_master") && sql.includes("VIRTUAL TABLE") && !sql.includes("backup_source")) {
+      if (
+        sql.includes("sqlite_master") &&
+        sql.includes("VIRTUAL TABLE") &&
+        !sql.includes("backup_source")
+      ) {
         return Promise.resolve({ rows: [] });
       }
       // Regular tables from backup (has "sql NOT LIKE 'CREATE VIRTUAL TABLE%'")
-      if (sql.includes("backup_source.sqlite_master") && sql.includes("sql NOT LIKE 'CREATE VIRTUAL")) {
+      if (
+        sql.includes("backup_source.sqlite_master") &&
+        sql.includes("sql NOT LIKE 'CREATE VIRTUAL")
+      ) {
         return Promise.resolve({ rows: [] });
       }
       // Virtual tables from backup (has "sql LIKE 'CREATE VIRTUAL TABLE%'" without NOT)
-      if (sql.includes("backup_source.sqlite_master") && sql.includes("sql LIKE 'CREATE VIRTUAL")) {
+      if (
+        sql.includes("backup_source.sqlite_master") &&
+        sql.includes("sql LIKE 'CREATE VIRTUAL")
+      ) {
         return Promise.resolve({
           rows: [
-            { name: "fts_index", sql: "CREATE VIRTUAL TABLE fts_index USING fts5(content)" },
+            {
+              name: "fts_index",
+              sql: "CREATE VIRTUAL TABLE fts_index USING fts5(content)",
+            },
           ],
         });
       }
       // indexes/views/triggers
-      if (sql.includes("type='index'") || sql.includes("type='view'") || sql.includes("type='trigger'")) {
+      if (
+        sql.includes("type='index'") ||
+        sql.includes("type='view'") ||
+        sql.includes("type='trigger'")
+      ) {
         return Promise.resolve({ rows: [] });
       }
       return Promise.resolve({ rows: [] });
@@ -187,7 +249,10 @@ describe("restore - successful flow", () => {
     });
 
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
     expect(result.skippedTables).toBeDefined();
     expect(result.skippedTables.length).toBeGreaterThan(0);
@@ -199,17 +264,27 @@ describe("restore - successful flow", () => {
     const adapter = createMockAdapter(true);
 
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("integrity_check")) return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
-      if (sql.includes("VIRTUAL TABLE") && !sql.includes("backup_source")) return Promise.resolve({ rows: [] });
-      if (sql.includes("backup_source") && sql.includes("VIRTUAL TABLE")) return Promise.resolve({ rows: [] });
-      if (sql.includes("backup_source.sqlite_master") && sql.includes("type='table'")) {
+      if (sql.includes("integrity_check"))
+        return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
+      if (sql.includes("VIRTUAL TABLE") && !sql.includes("backup_source"))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("backup_source") && sql.includes("VIRTUAL TABLE"))
+        return Promise.resolve({ rows: [] });
+      if (
+        sql.includes("backup_source.sqlite_master") &&
+        sql.includes("type='table'")
+      ) {
         return Promise.resolve({
           rows: [
             { name: "tbl", sql: null }, // null createSql, should be skipped
           ],
         });
       }
-      if (sql.includes("type='index'") || sql.includes("type='view'") || sql.includes("type='trigger'")) {
+      if (
+        sql.includes("type='index'") ||
+        sql.includes("type='view'") ||
+        sql.includes("type='trigger'")
+      ) {
         return Promise.resolve({ rows: [] });
       }
       return Promise.resolve({ rows: [] });
@@ -217,7 +292,10 @@ describe("restore - successful flow", () => {
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
 
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
   });
 
@@ -226,14 +304,18 @@ describe("restore - successful flow", () => {
     const adapter = createMockAdapter(true);
 
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("integrity_check")) return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
+      if (sql.includes("integrity_check"))
+        return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
       if (sql.includes("VIRTUAL TABLE")) return Promise.resolve({ rows: [] });
       if (sql.includes("type='table'")) return Promise.resolve({ rows: [] });
       if (sql.includes("type='index'")) return Promise.resolve({ rows: [] });
       if (sql.includes("type='view'")) {
         return Promise.resolve({
           rows: [
-            { name: "my_view", sql: "CREATE VIEW my_view AS SELECT * FROM missing_table" },
+            {
+              name: "my_view",
+              sql: "CREATE VIEW my_view AS SELECT * FROM missing_table",
+            },
           ],
         });
       }
@@ -250,7 +332,10 @@ describe("restore - successful flow", () => {
     });
 
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     // Should not fail even if view creation fails
     expect(result.success).toBe(true);
   });
@@ -260,7 +345,8 @@ describe("restore - successful flow", () => {
     const adapter = createMockAdapter(true);
 
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("integrity_check")) return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
+      if (sql.includes("integrity_check"))
+        return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
       if (sql.includes("VIRTUAL TABLE")) return Promise.resolve({ rows: [] });
       if (sql.includes("type='table'")) return Promise.resolve({ rows: [] });
       if (sql.includes("type='index'")) return Promise.resolve({ rows: [] });
@@ -268,7 +354,10 @@ describe("restore - successful flow", () => {
       if (sql.includes("type='trigger'")) {
         return Promise.resolve({
           rows: [
-            { name: "trg", sql: "CREATE TRIGGER trg AFTER INSERT ON missing_table BEGIN END" },
+            {
+              name: "trg",
+              sql: "CREATE TRIGGER trg AFTER INSERT ON missing_table BEGIN END",
+            },
           ],
         });
       }
@@ -283,7 +372,10 @@ describe("restore - successful flow", () => {
     });
 
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
   });
 
@@ -292,13 +384,17 @@ describe("restore - successful flow", () => {
     const adapter = createMockAdapter(true);
 
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("integrity_check")) return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
+      if (sql.includes("integrity_check"))
+        return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
       if (sql.includes("VIRTUAL TABLE")) return Promise.resolve({ rows: [] });
       if (sql.includes("type='table'")) return Promise.resolve({ rows: [] });
       if (sql.includes("type='index'")) {
         return Promise.resolve({
           rows: [
-            { name: "idx_test", sql: "CREATE INDEX idx_test ON missing_table(col)" },
+            {
+              name: "idx_test",
+              sql: "CREATE INDEX idx_test ON missing_table(col)",
+            },
             { name: "idx_null", sql: null }, // null sql, should skip
           ],
         });
@@ -316,7 +412,10 @@ describe("restore - successful flow", () => {
     });
 
     const tool = createRestoreTool(adapter);
-    const result = await tool.handler({ sourcePath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { sourcePath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
   });
 });

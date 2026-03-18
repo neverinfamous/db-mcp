@@ -108,7 +108,9 @@ describe("scopeGrantsDatabaseAccess", () => {
   });
 
   it("should deny table scope for non-matching database", () => {
-    expect(scopeGrantsDatabaseAccess("table:otherdb:users", "mydb")).toBe(false);
+    expect(scopeGrantsDatabaseAccess("table:otherdb:users", "mydb")).toBe(
+      false,
+    );
   });
 
   it("should deny unrecognized scopes", () => {
@@ -152,15 +154,21 @@ describe("scopeGrantsTableAccess", () => {
   });
 
   it("should grant table-specific scope for exact match", () => {
-    expect(scopeGrantsTableAccess("table:mydb:users", "mydb", "users")).toBe(true);
+    expect(scopeGrantsTableAccess("table:mydb:users", "mydb", "users")).toBe(
+      true,
+    );
   });
 
   it("should deny table-specific scope for different table", () => {
-    expect(scopeGrantsTableAccess("table:mydb:orders", "mydb", "users")).toBe(false);
+    expect(scopeGrantsTableAccess("table:mydb:orders", "mydb", "users")).toBe(
+      false,
+    );
   });
 
   it("should deny table-specific scope for different database", () => {
-    expect(scopeGrantsTableAccess("table:otherdb:users", "mydb", "users")).toBe(false);
+    expect(scopeGrantsTableAccess("table:otherdb:users", "mydb", "users")).toBe(
+      false,
+    );
   });
 });
 
@@ -170,11 +178,15 @@ describe("scopeGrantsTableAccess", () => {
 
 describe("scopesGrantTableAccess", () => {
   it("should return true if any scope grants table access", () => {
-    expect(scopesGrantTableAccess(["table:mydb:users"], "mydb", "users")).toBe(true);
+    expect(scopesGrantTableAccess(["table:mydb:users"], "mydb", "users")).toBe(
+      true,
+    );
   });
 
   it("should return false if no scope matches", () => {
-    expect(scopesGrantTableAccess(["table:mydb:orders"], "mydb", "users")).toBe(false);
+    expect(scopesGrantTableAccess(["table:mydb:orders"], "mydb", "users")).toBe(
+      false,
+    );
   });
 });
 

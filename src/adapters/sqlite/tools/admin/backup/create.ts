@@ -1,8 +1,14 @@
 import nodePath from "node:path";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { admin } from "../../../../../utils/annotations.js";
-import { formatHandlerError, ValidationError } from "../../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../../utils/errors/index.js";
 import { BackupOutputSchema } from "../../../output-schemas/index.js";
 import { BackupSchema } from "../helpers.js";
 
@@ -40,9 +46,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (!input.targetPath?.trim()) {
         return {
-          ...formatHandlerError(
-            new ValidationError("targetPath is required"),
-          ),
+          ...formatHandlerError(new ValidationError("targetPath is required")),
           path: "",
         };
       }

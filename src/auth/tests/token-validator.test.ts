@@ -115,9 +115,7 @@ describe("TokenValidator", () => {
       const JWSSignatureVerificationFailed =
         errors.JWSSignatureVerificationFailed as unknown as new () => Error;
 
-      mockVerify.mockRejectedValueOnce(
-        new JWSSignatureVerificationFailed(),
-      );
+      mockVerify.mockRejectedValueOnce(new JWSSignatureVerificationFailed());
 
       const validator = new TokenValidator(config);
       const result = await validator.validate("bad-sig-token");

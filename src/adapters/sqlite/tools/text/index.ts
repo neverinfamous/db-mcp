@@ -21,10 +21,7 @@ import {
   createPhoneticMatchTool,
   createAdvancedSearchTool,
 } from "./search.js";
-import {
-  createTextNormalizeTool,
-  createTextValidateTool,
-} from "./validate.js";
+import { createTextNormalizeTool, createTextValidateTool } from "./validate.js";
 
 /**
  * Get all text processing tools

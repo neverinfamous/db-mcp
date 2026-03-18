@@ -115,10 +115,7 @@ export function setupCors(state: HttpTransportState): void {
       res.setHeader("Access-Control-Allow-Credentials", "true");
     }
 
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, DELETE, OPTIONS",
-    );
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     res.setHeader(
       "Access-Control-Allow-Headers",
       "Content-Type, Accept, Authorization, mcp-session-id, Last-Event-ID, mcp-protocol-version",

@@ -162,9 +162,7 @@ export function createStorageAnalysisTool(
 
             // Filter SpatiaLite system tables, then apply limit
             if (excludeSystem) {
-              tables = tables.filter(
-                (t) => !isSpatialiteSystemTable(t.name),
-              );
+              tables = tables.filter((t) => !isSpatialiteSystemTable(t.name));
             }
             tables = tables.slice(0, limit);
           } catch {

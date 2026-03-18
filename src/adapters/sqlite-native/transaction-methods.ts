@@ -33,7 +33,9 @@ export function rollbackTransaction(db: BetterSqliteDb): void {
  */
 export function savepoint(db: BetterSqliteDb, name: string): void {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    throw new Error("Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.");
+    throw new Error(
+      "Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.",
+    );
   }
   // Name is validated to be safe (no quotes or special chars)
   db.exec(`SAVEPOINT "${name}"`);
@@ -44,7 +46,9 @@ export function savepoint(db: BetterSqliteDb, name: string): void {
  */
 export function releaseSavepoint(db: BetterSqliteDb, name: string): void {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    throw new Error("Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.");
+    throw new Error(
+      "Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.",
+    );
   }
   db.exec(`RELEASE SAVEPOINT "${name}"`);
 }
@@ -54,7 +58,9 @@ export function releaseSavepoint(db: BetterSqliteDb, name: string): void {
  */
 export function rollbackToSavepoint(db: BetterSqliteDb, name: string): void {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    throw new Error("Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.");
+    throw new Error(
+      "Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.",
+    );
   }
   db.exec(`ROLLBACK TO SAVEPOINT "${name}"`);
 }

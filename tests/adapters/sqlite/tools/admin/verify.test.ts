@@ -20,7 +20,10 @@ vi.mock("node:fs", async () => {
   };
 });
 
-import { createVerifyBackupTool, createIndexStatsTool } from "../../../../../src/adapters/sqlite/tools/admin/verify.js";
+import {
+  createVerifyBackupTool,
+  createIndexStatsTool,
+} from "../../../../../src/adapters/sqlite/tools/admin/verify.js";
 
 const ctx = { timestamp: new Date(), requestId: "test" };
 
@@ -38,7 +41,9 @@ function createMockAdapter(isNative = true) {
 // =============================================================================
 
 describe("createVerifyBackupTool", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should return metadata", () => {
     const tool = createVerifyBackupTool(createMockAdapter());
@@ -49,7 +54,10 @@ describe("createVerifyBackupTool", () => {
   it("should reject in WASM mode", async () => {
     const adapter = createMockAdapter(false);
     const tool = createVerifyBackupTool(adapter);
-    const result = await tool.handler({ backupPath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { backupPath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(result.wasmLimitation).toBe(true);
   });
@@ -57,7 +65,7 @@ describe("createVerifyBackupTool", () => {
   it("should reject empty backupPath", async () => {
     const adapter = createMockAdapter();
     const tool = createVerifyBackupTool(adapter);
-    const result = await tool.handler({ backupPath: "  " }, ctx) as any;
+    const result = (await tool.handler({ backupPath: "  " }, ctx)) as any;
     expect(result.success).toBe(false);
     expect(result.code).toBe("VALIDATION_ERROR");
   });
@@ -66,7 +74,10 @@ describe("createVerifyBackupTool", () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     const adapter = createMockAdapter();
     const tool = createVerifyBackupTool(adapter);
-    const result = await tool.handler({ backupPath: "/tmp/missing.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { backupPath: "/tmp/missing.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(result.code).toBe("FILE_NOT_FOUND");
   });
@@ -76,14 +87,20 @@ describe("createVerifyBackupTool", () => {
     const adapter = createMockAdapter();
     adapter.executeQuery.mockResolvedValue({ rows: [] }); // ATTACH/DETACH
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("page_count")) return Promise.resolve({ rows: [{ page_count: 100 }] });
-      if (sql.includes("page_size")) return Promise.resolve({ rows: [{ page_size: 4096 }] });
-      if (sql.includes("integrity_check")) return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
+      if (sql.includes("page_count"))
+        return Promise.resolve({ rows: [{ page_count: 100 }] });
+      if (sql.includes("page_size"))
+        return Promise.resolve({ rows: [{ page_size: 4096 }] });
+      if (sql.includes("integrity_check"))
+        return Promise.resolve({ rows: [{ integrity_check: "ok" }] });
       return Promise.resolve({ rows: [] });
     });
 
     const tool = createVerifyBackupTool(adapter);
-    const result = await tool.handler({ backupPath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { backupPath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
     expect(result.valid).toBe(true);
     expect(result.integrity).toBe("ok");
@@ -95,8 +112,10 @@ describe("createVerifyBackupTool", () => {
     const adapter = createMockAdapter();
     adapter.executeQuery.mockResolvedValue({ rows: [] });
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("page_count")) return Promise.resolve({ rows: [{ page_count: 50 }] });
-      if (sql.includes("page_size")) return Promise.resolve({ rows: [{ page_size: 4096 }] });
+      if (sql.includes("page_count"))
+        return Promise.resolve({ rows: [{ page_count: 50 }] });
+      if (sql.includes("page_size"))
+        return Promise.resolve({ rows: [{ page_size: 4096 }] });
       if (sql.includes("integrity_check")) {
         return Promise.resolve({
           rows: [
@@ -109,7 +128,10 @@ describe("createVerifyBackupTool", () => {
     });
 
     const tool = createVerifyBackupTool(adapter);
-    const result = await tool.handler({ backupPath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { backupPath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
     expect(result.valid).toBe(false);
     expect(result.integrity).toBe("errors_found");
@@ -119,10 +141,15 @@ describe("createVerifyBackupTool", () => {
   it("should handle ATTACH failure", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const adapter = createMockAdapter();
-    adapter.executeQuery.mockRejectedValueOnce(new Error("ATTACH failed: locked"));
+    adapter.executeQuery.mockRejectedValueOnce(
+      new Error("ATTACH failed: locked"),
+    );
 
     const tool = createVerifyBackupTool(adapter);
-    const result = await tool.handler({ backupPath: "/tmp/backup.db" }, ctx) as any;
+    const result = (await tool.handler(
+      { backupPath: "/tmp/backup.db" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(result.code).toBe("ATTACH_FAILED");
   });
@@ -133,7 +160,9 @@ describe("createVerifyBackupTool", () => {
 // =============================================================================
 
 describe("createIndexStatsTool", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should return metadata", () => {
     const tool = createIndexStatsTool(createMockAdapter());
@@ -147,8 +176,16 @@ describe("createIndexStatsTool", () => {
       if (sql.includes("sqlite_master")) {
         return Promise.resolve({
           rows: [
-            { name: "idx_name", table: "users", sql: "CREATE INDEX idx_name ON users(name)" },
-            { name: "idx_email", table: "users", sql: "CREATE UNIQUE INDEX idx_email ON users(email)" },
+            {
+              name: "idx_name",
+              table: "users",
+              sql: "CREATE INDEX idx_name ON users(name)",
+            },
+            {
+              name: "idx_email",
+              table: "users",
+              sql: "CREATE UNIQUE INDEX idx_email ON users(email)",
+            },
           ],
         });
       }
@@ -161,7 +198,7 @@ describe("createIndexStatsTool", () => {
     });
 
     const tool = createIndexStatsTool(adapter);
-    const result = await tool.handler({}, ctx) as any;
+    const result = (await tool.handler({}, ctx)) as any;
     expect(result.success).toBe(true);
     expect(result.indexes).toHaveLength(2);
     expect(result.indexes[1].unique).toBe(true);
@@ -171,7 +208,7 @@ describe("createIndexStatsTool", () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createIndexStatsTool(adapter);
-    const result = await tool.handler({ table: "users" }, ctx) as any;
+    const result = (await tool.handler({ table: "users" }, ctx)) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
       expect.stringContaining("users"),
@@ -184,7 +221,11 @@ describe("createIndexStatsTool", () => {
       if (sql.includes("sqlite_master")) {
         return Promise.resolve({
           rows: [
-            { name: "idx_active", table: "users", sql: "CREATE INDEX idx_active ON users(active) WHERE active = 1" },
+            {
+              name: "idx_active",
+              table: "users",
+              sql: "CREATE INDEX idx_active ON users(active) WHERE active = 1",
+            },
           ],
         });
       }
@@ -195,7 +236,7 @@ describe("createIndexStatsTool", () => {
     });
 
     const tool = createIndexStatsTool(adapter);
-    const result = await tool.handler({}, ctx) as any;
+    const result = (await tool.handler({}, ctx)) as any;
     expect(result.indexes[0].partial).toBe(true);
   });
 });

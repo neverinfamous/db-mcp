@@ -7,7 +7,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -44,7 +49,7 @@ test.describe("Payload Contracts: Stats", () => {
 
       expectSuccess(payload);
       expect(typeof payload.count).toBe("number");
-      expect((payload.count as number)).toBeGreaterThan(0);
+      expect(payload.count as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }
@@ -123,11 +128,15 @@ test.describe("Payload Contracts: Stats", () => {
   test("sqlite_stats_percentile returns { success, column, count, percentiles[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_stats_percentile", {
-        table: "test_products",
-        column: "price",
-        percentiles: [25, 50, 75],
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_stats_percentile",
+        {
+          table: "test_products",
+          column: "price",
+          percentiles: [25, 50, 75],
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.column).toBe("price");

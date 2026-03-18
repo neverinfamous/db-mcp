@@ -72,10 +72,10 @@ describe("hypothesis handler - validation", () => {
     const adapter = createMockAdapter([{ name: "value", type: "REAL" }]);
     const tool = createHypothesisTool(adapter);
 
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { table: "test", column: "value", testType: "invalid_test" },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("Invalid testType");
@@ -102,10 +102,15 @@ describe("hypothesis handler - ttest_one", () => {
     });
 
     const tool = createHypothesisTool(adapter);
-    const result = await tool.handler(
-      { table: "test", column: "value", testType: "ttest_one", expectedMean: 5.0 },
+    const result = (await tool.handler(
+      {
+        table: "test",
+        column: "value",
+        testType: "ttest_one",
+        expectedMean: 5.0,
+      },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(true);
     expect(result.testType).toBe("ttest_one");
@@ -127,10 +132,10 @@ describe("hypothesis handler - ttest_one", () => {
     });
 
     const tool = createHypothesisTool(adapter);
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { table: "test", column: "value", testType: "ttest_one" },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("Insufficient");
@@ -151,17 +156,24 @@ describe("hypothesis handler - ttest_two", () => {
     adapter.executeReadQuery.mockImplementation((sql: string) => {
       if (sql.includes("n1")) {
         return Promise.resolve({
-          rows: [{ n1: 30, mean1: 5.2, var1: 2.5, n2: 30, mean2: 4.8, var2: 3.1 }],
+          rows: [
+            { n1: 30, mean1: 5.2, var1: 2.5, n2: 30, mean2: 4.8, var2: 3.1 },
+          ],
         });
       }
       return originalImpl(sql);
     });
 
     const tool = createHypothesisTool(adapter);
-    const result = await tool.handler(
-      { table: "test", column: "value", column2: "value2", testType: "ttest_two" },
+    const result = (await tool.handler(
+      {
+        table: "test",
+        column: "value",
+        column2: "value2",
+        testType: "ttest_two",
+      },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(true);
     expect(result.testType).toBe("ttest_two");
@@ -174,10 +186,10 @@ describe("hypothesis handler - ttest_two", () => {
     const adapter = createMockAdapter([{ name: "value", type: "REAL" }]);
     const tool = createHypothesisTool(adapter);
 
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { table: "test", column: "value", testType: "ttest_two" },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("column2");
@@ -199,10 +211,15 @@ describe("hypothesis handler - ttest_two", () => {
     });
 
     const tool = createHypothesisTool(adapter);
-    const result = await tool.handler(
-      { table: "test", column: "value", column2: "value2", testType: "ttest_two" },
+    const result = (await tool.handler(
+      {
+        table: "test",
+        column: "value",
+        column2: "value2",
+        testType: "ttest_two",
+      },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("Insufficient");
@@ -235,10 +252,15 @@ describe("hypothesis handler - chi_square", () => {
     });
 
     const tool = createHypothesisTool(adapter);
-    const result = await tool.handler(
-      { table: "test", column: "category", groupColumn: "group", testType: "chi_square" },
+    const result = (await tool.handler(
+      {
+        table: "test",
+        column: "category",
+        groupColumn: "group",
+        testType: "chi_square",
+      },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(true);
     expect(result.testType).toBe("chi_square");
@@ -251,10 +273,10 @@ describe("hypothesis handler - chi_square", () => {
     const adapter = createMockAdapter([{ name: "category", type: "TEXT" }]);
     const tool = createHypothesisTool(adapter);
 
-    const result = await tool.handler(
+    const result = (await tool.handler(
       { table: "test", column: "category", testType: "chi_square" },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("groupColumn");
@@ -276,10 +298,15 @@ describe("hypothesis handler - chi_square", () => {
     });
 
     const tool = createHypothesisTool(adapter);
-    const result = await tool.handler(
-      { table: "test", column: "category", groupColumn: "group", testType: "chi_square" },
+    const result = (await tool.handler(
+      {
+        table: "test",
+        column: "category",
+        groupColumn: "group",
+        testType: "chi_square",
+      },
       ctx,
-    ) as Record<string, unknown>;
+    )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("Insufficient categories");

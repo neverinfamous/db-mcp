@@ -148,9 +148,7 @@ describe("Table Listing & Metadata", () => {
           sql: "CREATE TABLE sqlite_stat1 ...",
         },
       ];
-      const userTables = allTables.filter(
-        (t) => !t.name.startsWith("sqlite_"),
-      );
+      const userTables = allTables.filter((t) => !t.name.startsWith("sqlite_"));
       void userTables.length;
     },
     { iterations: 10000, warmupIterations: 100 },
@@ -265,7 +263,12 @@ describe("Query Result Processing", () => {
 // 4. JSON Path Validation (SQLite JSON operations)
 // ---------------------------------------------------------------------------
 describe("JSON Path Validation", () => {
-  const validPaths = ["$.name", "$.address.city", "$.tags[0]", "$.nested.deep.value"];
+  const validPaths = [
+    "$.name",
+    "$.address.city",
+    "$.tags[0]",
+    "$.nested.deep.value",
+  ];
   const invalidPaths = ["name", "..invalid", "$[", "$."];
 
   bench(

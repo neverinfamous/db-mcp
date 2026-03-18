@@ -23,7 +23,9 @@ import { QueryError } from "../../../src/utils/errors/index.js";
 async function createTestDb() {
   const SQL = await initSqlJs();
   const db = new SQL.Database();
-  db.run("CREATE TABLE test_qe (id INTEGER PRIMARY KEY, name TEXT, value REAL)");
+  db.run(
+    "CREATE TABLE test_qe (id INTEGER PRIMARY KEY, name TEXT, value REAL)",
+  );
   db.run("INSERT INTO test_qe VALUES (1, 'alpha', 1.1)");
   db.run("INSERT INTO test_qe VALUES (2, 'beta', 2.2)");
   db.run("INSERT INTO test_qe VALUES (3, 'gamma', 3.3)");
@@ -126,7 +128,9 @@ describe("executeRead", () => {
   it("should throw QueryError for non-existent table", async () => {
     const db = await createTestDb();
 
-    expect(() => executeRead(db, "SELECT * FROM nonexistent")).toThrow(QueryError);
+    expect(() => executeRead(db, "SELECT * FROM nonexistent")).toThrow(
+      QueryError,
+    );
 
     db.close();
   });
@@ -163,7 +167,10 @@ describe("executeWrite", () => {
     expect(result.rowsAffected).toBe(1);
 
     // Verify the update
-    const check = await executeRead(db, "SELECT name FROM test_qe WHERE id = 1");
+    const check = await executeRead(
+      db,
+      "SELECT name FROM test_qe WHERE id = 1",
+    );
     expect(check.rows[0]).toEqual({ name: "updated" });
 
     db.close();
@@ -219,7 +226,10 @@ describe("executeGeneral", () => {
   it("should execute query that returns rows", async () => {
     const db = await createTestDb();
 
-    const result = await executeGeneral(db, "SELECT * FROM test_qe ORDER BY id");
+    const result = await executeGeneral(
+      db,
+      "SELECT * FROM test_qe ORDER BY id",
+    );
 
     expect(result.rows).toHaveLength(3);
 

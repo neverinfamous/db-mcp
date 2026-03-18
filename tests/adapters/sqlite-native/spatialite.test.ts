@@ -109,8 +109,7 @@ describe("createSpatialTableTool", () => {
   it("should create spatial table", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("sqlite_master"))
-        return Promise.resolve({ rows: [] });
+      if (sql.includes("sqlite_master")) return Promise.resolve({ rows: [] });
       if (sql.includes("AddGeometryColumn"))
         return Promise.resolve({ rows: [{ result: 1 }] });
       if (sql.includes("pragma_table_info"))
@@ -190,8 +189,7 @@ describe("createSpatialTableTool", () => {
   it("should handle failed geometry column creation", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("sqlite_master"))
-        return Promise.resolve({ rows: [] });
+      if (sql.includes("sqlite_master")) return Promise.resolve({ rows: [] });
       if (sql.includes("AddGeometryColumn"))
         return Promise.resolve({ rows: [{ result: 0 }] });
       if (sql.includes("pragma_table_info"))
@@ -261,10 +259,7 @@ describe("createSpatialIndexTool", () => {
   it("should create spatial index", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (
-        sql.includes("sqlite_master") &&
-        sql.includes("name='idx_")
-      )
+      if (sql.includes("sqlite_master") && sql.includes("name='idx_"))
         return Promise.resolve({ rows: [] }); // Index doesn't exist
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] }); // Table exists
@@ -320,8 +315,7 @@ describe("createSpatialIndexTool", () => {
   it("should return already-dropped for drop", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_"))
-        return Promise.resolve({ rows: [] }); // No index
+      if (sql.includes("name='idx_")) return Promise.resolve({ rows: [] }); // No index
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       return Promise.resolve({ rows: [] });
@@ -399,8 +393,7 @@ describe("createSpatialIndexTool", () => {
   it("should check no-index case", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_"))
-        return Promise.resolve({ rows: [] });
+      if (sql.includes("name='idx_")) return Promise.resolve({ rows: [] });
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       return Promise.resolve({ rows: [] });
@@ -453,9 +446,7 @@ describe("createSpatialAnalysisTool", () => {
   it("should perform spatial_extent analysis", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [
-        { min_x: 0, min_y: 0, max_x: 10, max_y: 10, feature_count: 5 },
-      ],
+      rows: [{ min_x: 0, min_y: 0, max_x: 10, max_y: 10, feature_count: 5 }],
     });
     const tool = createSpatialAnalysisTool(adapter);
     const result = (await tool.handler(
@@ -622,7 +613,12 @@ describe("createGeometryTransformTool", () => {
     });
     const tool = createGeometryTransformTool(adapter);
     const result = (await tool.handler(
-      { operation: "buffer", geometry1: "POINT(0 0)", distance: 10, srid: 4326 },
+      {
+        operation: "buffer",
+        geometry1: "POINT(0 0)",
+        distance: 10,
+        srid: 4326,
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
@@ -654,7 +650,11 @@ describe("createGeometryTransformTool", () => {
     });
     const tool = createGeometryTransformTool(adapter);
     const result = (await tool.handler(
-      { operation: "envelope", geometry1: "LINESTRING(0 0, 10 10)", srid: 4326 },
+      {
+        operation: "envelope",
+        geometry1: "LINESTRING(0 0, 10 10)",
+        srid: 4326,
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
@@ -882,7 +882,12 @@ describe("createSpatialImportTool", () => {
   it("should reject invalid format", async () => {
     const tool = createSpatialImportTool(createMockAdapter());
     const result = (await tool.handler(
-      { tableName: "places", data: "POINT(0 0)", format: "invalid", srid: 4326 },
+      {
+        tableName: "places",
+        data: "POINT(0 0)",
+        format: "invalid",
+        srid: 4326,
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(false);
@@ -892,7 +897,12 @@ describe("createSpatialImportTool", () => {
   it("should reject invalid table name", async () => {
     const tool = createSpatialImportTool(createMockAdapter());
     const result = (await tool.handler(
-      { tableName: "bad table!", data: "POINT(0 0)", format: "wkt", srid: 4326 },
+      {
+        tableName: "bad table!",
+        data: "POINT(0 0)",
+        format: "wkt",
+        srid: 4326,
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(false);

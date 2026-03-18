@@ -14,7 +14,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -205,9 +210,9 @@ test.describe("Integration: Admin → Introspection Health Check", () => {
       expect(typeof result.totalIndexes).toBe("number");
       expect(typeof result.findingsCount).toBe("number");
       expect(typeof result.dbSizeBytes).toBe("number");
-      expect((result.dbSizeBytes as number)).toBeGreaterThan(0);
+      expect(result.dbSizeBytes as number).toBeGreaterThan(0);
       expect(typeof result.planSteps).toBe("number");
-      expect((result.planSteps as number)).toBeGreaterThan(0);
+      expect(result.planSteps as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }
@@ -241,7 +246,10 @@ test.describe("Integration: Core + Stats Cross-Validation", () => {
       expectSuccess(p);
       const result = p.result as Record<string, Record<string, unknown>>;
       for (const [table, data] of Object.entries(result)) {
-        expect(data.match, `${table}: manual count should match stats count`).toBe(true);
+        expect(
+          data.match,
+          `${table}: manual count should match stats count`,
+        ).toBe(true);
       }
     } finally {
       await client.close();

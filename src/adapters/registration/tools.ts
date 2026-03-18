@@ -5,10 +5,18 @@ import { formatHandlerError } from "../../utils/errors/index.js";
 
 // Interface for the adapter methods needed by tool registration
 export interface ToolRegistrationAdapter {
-  createContext(requestId?: string, server?: unknown, progressToken?: string | number): RequestContext;
+  createContext(
+    requestId?: string,
+    server?: unknown,
+    progressToken?: string | number,
+  ): RequestContext;
 }
 
-export function registerToolImpl(adapter: ToolRegistrationAdapter, server: McpServer, tool: ToolDefinition): void {
+export function registerToolImpl(
+  adapter: ToolRegistrationAdapter,
+  server: McpServer,
+  tool: ToolDefinition,
+): void {
   const toolOptions: Record<string, unknown> = {
     description: tool.description,
   };
@@ -28,7 +36,9 @@ export function registerToolImpl(adapter: ToolRegistrationAdapter, server: McpSe
       // .strip() mode silently removes unknown keys before the handler.
       toolOptions["inputSchema"] = (
         schema as { partial: () => { passthrough: () => z.ZodType } }
-      ).partial().passthrough();
+      )
+        .partial()
+        .passthrough();
     } else {
       toolOptions["inputSchema"] = schema;
     }
@@ -86,9 +96,7 @@ export function registerToolImpl(adapter: ToolRegistrationAdapter, server: McpSe
             {
               type: "text" as const,
               text:
-                typeof result === "string"
-                  ? result
-                  : JSON.stringify(result),
+                typeof result === "string" ? result : JSON.stringify(result),
             },
           ],
         };

@@ -5,13 +5,19 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   RegexReplaceOutputSchema,
   TextConcatOutputSchema,
@@ -132,7 +138,12 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
         const input = TextTrimSchema.parse(params);
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
-        if (input.mode && !VALID_TRIM_MODES.includes(input.mode as typeof VALID_TRIM_MODES[number])) {
+        if (
+          input.mode &&
+          !VALID_TRIM_MODES.includes(
+            input.mode as (typeof VALID_TRIM_MODES)[number],
+          )
+        ) {
           throw new ValidationError(
             `Invalid mode '${input.mode}'. Must be one of: ${VALID_TRIM_MODES.join(", ")}`,
           );
@@ -193,7 +204,12 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
         const input = TextCaseSchema.parse(params);
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
-        if (!input.mode || !VALID_TEXT_CASE_MODES.includes(input.mode as typeof VALID_TEXT_CASE_MODES[number])) {
+        if (
+          !input.mode ||
+          !VALID_TEXT_CASE_MODES.includes(
+            input.mode as (typeof VALID_TEXT_CASE_MODES)[number],
+          )
+        ) {
           throw new ValidationError(
             `Invalid mode '${input.mode ?? ""}'. Must be one of: ${VALID_TEXT_CASE_MODES.join(", ")}`,
           );
@@ -230,7 +246,9 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Extract substring
  */
-export function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition {
+export function createTextSubstringTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_text_substring",
     description: "Extract a substring from text column using substr().",
@@ -245,7 +263,9 @@ export function createTextSubstringTool(adapter: SqliteAdapter): ToolDefinition 
 
         // Handler-side validation: start is required (schema uses .optional() to prevent raw MCP errors)
         if (input.start === undefined || input.start === null) {
-          throw new ValidationError("'start' parameter is required (1-indexed position)");
+          throw new ValidationError(
+            "'start' parameter is required (1-indexed position)",
+          );
         }
 
         // Validate and quote identifiers, then verify column exists

@@ -39,8 +39,14 @@ async function assertZodHandlerError(baseURL: string, toolName: string) {
     }
 
     // Check: must be { success: false, error: "..." }
-    expect(parsed.success, `${toolName}: expected success: false, got: ${JSON.stringify(parsed, null, 2)}`).toBe(false);
-    expect(typeof parsed.error, `${toolName}: missing error string in: ${JSON.stringify(parsed, null, 2)}`).toBe("string");
+    expect(
+      parsed.success,
+      `${toolName}: expected success: false, got: ${JSON.stringify(parsed, null, 2)}`,
+    ).toBe(false);
+    expect(
+      typeof parsed.error,
+      `${toolName}: missing error string in: ${JSON.stringify(parsed, null, 2)}`,
+    ).toBe("string");
   } finally {
     await client.close();
   }

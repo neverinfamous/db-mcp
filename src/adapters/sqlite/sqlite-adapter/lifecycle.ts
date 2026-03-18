@@ -1,10 +1,20 @@
 import initSqlJs, { type Database } from "sql.js";
 import type { DatabaseConfig } from "../../../types/index.js";
-import { createModuleLogger, ERROR_CODES } from "../../../utils/logger/index.js";
-import { ConnectionError, ConfigurationError } from "../../../utils/errors/index.js";
+import {
+  createModuleLogger,
+  ERROR_CODES,
+} from "../../../utils/logger/index.js";
+import {
+  ConnectionError,
+  ConfigurationError,
+} from "../../../utils/errors/index.js";
 import type { SqliteConfig } from "../types.js";
 import { SchemaManager } from "../schema-manager.js";
-import { applyCommonPragmas, autoEnableWal, detectAndSetJsonbSupport } from "../../sqlite-helpers.js";
+import {
+  applyCommonPragmas,
+  autoEnableWal,
+  detectAndSetJsonbSupport,
+} from "../../sqlite-helpers.js";
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 
 const log = createModuleLogger("SQLITE");
@@ -30,7 +40,8 @@ export async function connectSqliteDatabase(
 
   try {
     const sqlJsInstance = await initSqlJs();
-    const filePath = sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
+    const filePath =
+      sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
     let db: Database;
 
     if (filePath === ":memory:") {

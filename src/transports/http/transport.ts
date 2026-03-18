@@ -204,7 +204,7 @@ export class HttpTransport {
       throw new DbMcpError(
         "Transport not initialized. Call initialize() first.",
         ERROR_CODES.SERVER.START_FAILED.full,
-        ErrorCategory.INTERNAL
+        ErrorCategory.INTERNAL,
       );
     }
 
@@ -218,7 +218,8 @@ export class HttpTransport {
               // Set HTTP server timeouts to prevent slowloris-style DoS attacks
               if (this.state.httpServer) {
                 this.state.httpServer.setTimeout(HTTP_REQUEST_TIMEOUT_MS);
-                this.state.httpServer.keepAliveTimeout = HTTP_KEEP_ALIVE_TIMEOUT_MS;
+                this.state.httpServer.keepAliveTimeout =
+                  HTTP_KEEP_ALIVE_TIMEOUT_MS;
                 this.state.httpServer.headersTimeout = HTTP_HEADERS_TIMEOUT_MS;
               }
 
@@ -226,9 +227,7 @@ export class HttpTransport {
                 `HTTP server listening on ${this.state.config.host ?? "0.0.0.0"}:${String(this.state.config.port)}`,
                 {
                   code: "HTTP_SERVER_STARTED",
-                  mode: this.state.config.stateless
-                    ? "stateless"
-                    : "stateful",
+                  mode: this.state.config.stateless ? "stateless" : "stateful",
                 },
               );
               resolve();

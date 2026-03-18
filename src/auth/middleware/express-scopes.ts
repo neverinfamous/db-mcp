@@ -54,10 +54,7 @@ export function requireAnyScope(scopes: string[]): RequestHandler {
       return;
     }
 
-    if (
-      req.auth.scopes.includes("full") ||
-      req.auth.scopes.includes("admin")
-    ) {
+    if (req.auth.scopes.includes("full") || req.auth.scopes.includes("admin")) {
       next();
       return;
     }

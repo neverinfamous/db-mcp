@@ -1,9 +1,19 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import { validateWhereClause, sanitizeIdentifier } from "../../../../../utils/index.js";
+import {
+  validateWhereClause,
+  sanitizeIdentifier,
+} from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { validateColumnExists, validateNumericColumn, OutlierSchema } from "../helpers.js";
+import {
+  validateColumnExists,
+  validateNumericColumn,
+  OutlierSchema,
+} from "../helpers.js";
 import { StatsOutliersOutputSchema } from "../../../output-schemas/index.js";
 
 /**
@@ -24,7 +34,10 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
 
       try {
         // Validate maxOutliers bounds (was previously .min(1).max(500) in schema, moved here to avoid refinement leak)
-        if (input.maxOutliers !== undefined && (input.maxOutliers < 1 || input.maxOutliers > 500)) {
+        if (
+          input.maxOutliers !== undefined &&
+          (input.maxOutliers < 1 || input.maxOutliers > 500)
+        ) {
           return {
             success: false,
             error: `'maxOutliers' must be between 1 and 500 (got ${input.maxOutliers})`,
@@ -97,7 +110,9 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
             outlierCount: truncated ? outliers.length : outliers.length,
             totalRows: total,
             outliers: truncated ? outliers.slice(0, maxOut) : outliers,
-            ...(truncated ? { truncated: true, totalOutliers: outliers.length } : {}),
+            ...(truncated
+              ? { truncated: true, totalOutliers: outliers.length }
+              : {}),
           };
         } else {
           // IQR method
@@ -156,7 +171,9 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
             outlierCount: outliers.length,
             totalRows: n,
             outliers: truncated ? outliers.slice(0, maxOut) : outliers,
-            ...(truncated ? { truncated: true, totalOutliers: outliers.length } : {}),
+            ...(truncated
+              ? { truncated: true, totalOutliers: outliers.length }
+              : {}),
           };
         }
       } catch (error) {

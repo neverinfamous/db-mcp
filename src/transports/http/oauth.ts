@@ -62,14 +62,14 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
  * Lighter-weight than full OAuth 2.1 — suitable for development
  * or single-tenant deployments behind a reverse proxy.
  */
-function createSimpleBearerAuth(
-  expectedToken: string,
-): RequestHandler {
+function createSimpleBearerAuth(expectedToken: string): RequestHandler {
   const publicPaths = ["/health", "/", "/.well-known"];
 
   return (req, res, next) => {
     // Skip public paths
-    if (publicPaths.some((p) => req.path === p || req.path.startsWith(`${p}/`))) {
+    if (
+      publicPaths.some((p) => req.path === p || req.path.startsWith(`${p}/`))
+    ) {
       next();
       return;
     }
@@ -78,16 +78,27 @@ function createSimpleBearerAuth(
     if (!authHeader?.startsWith("Bearer ")) {
       res.status(401);
       res.setHeader("WWW-Authenticate", 'Bearer realm="db-mcp"');
-      res.json({ error: "unauthorized", error_description: "Bearer token required" });
+      res.json({
+        error: "unauthorized",
+        error_description: "Bearer token required",
+      });
       return;
     }
 
     const token = authHeader.slice(7);
     if (token !== expectedToken) {
-      logger.warning("Invalid bearer token rejected", { code: "AUTH_BEARER_REJECTED" });
+      logger.warning("Invalid bearer token rejected", {
+        code: "AUTH_BEARER_REJECTED",
+      });
       res.status(401);
-      res.setHeader("WWW-Authenticate", 'Bearer realm="db-mcp", error="invalid_token"');
-      res.json({ error: "unauthorized", error_description: "Invalid bearer token" });
+      res.setHeader(
+        "WWW-Authenticate",
+        'Bearer realm="db-mcp", error="invalid_token"',
+      );
+      res.json({
+        error: "unauthorized",
+        error_description: "Invalid bearer token",
+      });
       return;
     }
 

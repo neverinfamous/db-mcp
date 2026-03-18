@@ -293,7 +293,7 @@ export class SandboxPool {
     throw new DbMcpError(
       "Sandbox pool exhausted",
       "CODEMODE_POOL_EXHAUSTED",
-      ErrorCategory.RESOURCE
+      ErrorCategory.RESOURCE,
     );
   }
 

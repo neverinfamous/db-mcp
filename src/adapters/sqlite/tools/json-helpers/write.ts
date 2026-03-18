@@ -5,9 +5,15 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { write } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
+import {
+  sanitizeIdentifier,
+  validateWhereClause,
+} from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   JsonInsertSchema,
@@ -231,7 +237,9 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Create a JSON document collection table
  */
-export function createJsonCollectionTool(adapter: SqliteAdapter): ToolDefinition {
+export function createJsonCollectionTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_create_json_collection",
     description:

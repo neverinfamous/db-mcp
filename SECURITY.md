@@ -68,10 +68,10 @@ Code Mode (`sqlite_execute_code`) runs user-supplied JavaScript in a secure sand
 
 ### **Isolation Modes**
 
-| Mode | Environment Variable | Security Level |
-| --- | --- | --- |
+| Mode                 | Environment Variable        | Security Level                                   |
+| -------------------- | --------------------------- | ------------------------------------------------ |
 | **Worker** (default) | `CODEMODE_ISOLATION=worker` | Enhanced — `worker_threads` with MessagePort RPC |
-| **VM** | `CODEMODE_ISOLATION=vm` | Standard — `node:vm` context isolation |
+| **VM**               | `CODEMODE_ISOLATION=vm`     | Standard — `node:vm` context isolation           |
 
 ### **Sandbox Restrictions**
 
@@ -261,8 +261,8 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 
 | Version | Supported |
 | ------- | --------- |
-| 1.x.x   | ✅         |
-| < 1.0   | ❌         |
+| 1.x.x   | ✅        |
+| < 1.0   | ❌        |
 
 If you discover a security vulnerability:
 

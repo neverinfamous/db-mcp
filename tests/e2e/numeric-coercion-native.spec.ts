@@ -42,7 +42,10 @@ async function assertNumericCoercion(
     }
 
     // Must be a structured response — either handler error or coerced success
-    expect(typeof parsed.success, `${toolName}: missing success field. Got: ${JSON.stringify(parsed, null, 2)}`).toBe("boolean");
+    expect(
+      typeof parsed.success,
+      `${toolName}: missing success field. Got: ${JSON.stringify(parsed, null, 2)}`,
+    ).toBe("boolean");
   } finally {
     await client.close();
   }
@@ -54,12 +57,16 @@ async function assertNumericCoercion(
 
 test.describe("Numeric Coercion Native: Window Functions", () => {
   test("window_moving_avg with windowSize: 'abc' → handler error", async ({}, testInfo) => {
-    await assertNumericCoercion(getBaseURL(testInfo), "sqlite_window_moving_avg", {
-      table: "test_measurements",
-      column: "temperature",
-      orderBy: "measured_at",
-      windowSize: "abc",
-    });
+    await assertNumericCoercion(
+      getBaseURL(testInfo),
+      "sqlite_window_moving_avg",
+      {
+        table: "test_measurements",
+        column: "temperature",
+        orderBy: "measured_at",
+        windowSize: "abc",
+      },
+    );
   });
 
   test("window_ntile with buckets: 'abc' → handler error", async ({}, testInfo) => {
@@ -71,21 +78,29 @@ test.describe("Numeric Coercion Native: Window Functions", () => {
   });
 
   test("window_lag_lead with offset: 'abc' → handler error", async ({}, testInfo) => {
-    await assertNumericCoercion(getBaseURL(testInfo), "sqlite_window_lag_lead", {
-      table: "test_measurements",
-      column: "temperature",
-      orderBy: "measured_at",
-      direction: "lag",
-      offset: "abc",
-    });
+    await assertNumericCoercion(
+      getBaseURL(testInfo),
+      "sqlite_window_lag_lead",
+      {
+        table: "test_measurements",
+        column: "temperature",
+        orderBy: "measured_at",
+        direction: "lag",
+        offset: "abc",
+      },
+    );
   });
 
   test("window_row_number with limit: 'abc' → handler error", async ({}, testInfo) => {
-    await assertNumericCoercion(getBaseURL(testInfo), "sqlite_window_row_number", {
-      table: "test_measurements",
-      orderBy: "temperature",
-      limit: "abc",
-    });
+    await assertNumericCoercion(
+      getBaseURL(testInfo),
+      "sqlite_window_row_number",
+      {
+        table: "test_measurements",
+        orderBy: "temperature",
+        limit: "abc",
+      },
+    );
   });
 
   test("window_rank with limit: 'abc' → handler error", async ({}, testInfo) => {

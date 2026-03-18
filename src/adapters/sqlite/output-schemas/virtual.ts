@@ -42,13 +42,15 @@ export const ListVirtualTablesOutputSchema = z
   .object({
     success: z.boolean(),
     count: z.number().optional(),
-    virtualTables: z.array(
-      z.object({
-        name: z.string(),
-        module: z.string(),
-        sql: z.string(),
-      }),
-    ).optional(),
+    virtualTables: z
+      .array(
+        z.object({
+          name: z.string(),
+          module: z.string(),
+          sql: z.string(),
+        }),
+      )
+      .optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -105,14 +107,16 @@ export const AnalyzeCsvSchemaOutputSchema = z
     message: z.string().optional(),
     hasHeader: z.boolean().optional(),
     rowCount: z.number().optional(),
-    columns: z.array(
-      z.object({
-        name: z.string(),
-        inferredType: z.string(),
-        nullCount: z.number(),
-        sampleValues: z.array(z.string()),
-      }),
-    ).optional(),
+    columns: z
+      .array(
+        z.object({
+          name: z.string(),
+          inferredType: z.string(),
+          nullCount: z.number(),
+          sampleValues: z.array(z.string()),
+        }),
+      )
+      .optional(),
     wasmLimitation: z.boolean().optional(),
   })
   .extend(ErrorFieldsMixin.shape);

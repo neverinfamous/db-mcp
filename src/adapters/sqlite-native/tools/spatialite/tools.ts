@@ -10,7 +10,10 @@
  * Analysis, transform, and import tools are in analysis.ts.
  */
 
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { readOnly, write, admin } from "../../../../utils/annotations.js";
@@ -216,8 +219,7 @@ export function createSpatialQueryTool(
           rows: result.rows,
         };
       } catch (error) {
-        const msg =
-          error instanceof Error ? error.message : String(error);
+        const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes("does not return data")) {
           return {
             success: false,
@@ -233,7 +235,6 @@ export function createSpatialQueryTool(
     },
   };
 }
-
 
 /**
  * Spatial index management
@@ -267,7 +268,9 @@ export function createSpatialIndexTool(
         }
 
         // Handler-level enum validation (schema uses z.string() to avoid silent coercion)
-        if (!(VALID_INDEX_ACTIONS as readonly string[]).includes(input.action)) {
+        if (
+          !(VALID_INDEX_ACTIONS as readonly string[]).includes(input.action)
+        ) {
           return {
             success: false,
             error: `Invalid action: '${input.action}'. Must be one of: ${VALID_INDEX_ACTIONS.join(", ")}`,
@@ -287,7 +290,8 @@ export function createSpatialIndexTool(
             error: `Table '${input.tableName}' does not exist`,
             code: "TABLE_NOT_FOUND",
             category: "resource" as const,
-            suggestion: "Table not found. Run sqlite_list_tables to see available tables.",
+            suggestion:
+              "Table not found. Run sqlite_list_tables to see available tables.",
             recoverable: false,
           };
         }
@@ -404,4 +408,3 @@ export function createSpatialIndexTool(
     },
   };
 }
-

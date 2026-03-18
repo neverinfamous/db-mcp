@@ -148,7 +148,15 @@ describe("Tool Annotation Invariants (Native)", () => {
     /**
      * Groups that contain a mix of read and write tools
      */
-    const mixedGroups = ["core", "json", "text", "vector", "admin", "geo", "migration"];
+    const mixedGroups = [
+      "core",
+      "json",
+      "text",
+      "vector",
+      "admin",
+      "geo",
+      "migration",
+    ];
 
     for (const group of mixedGroups) {
       it(`all ${group} tools should have annotations with explicit readOnlyHint`, () => {

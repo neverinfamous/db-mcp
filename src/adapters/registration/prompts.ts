@@ -4,7 +4,11 @@ import type { PromptDefinition, RequestContext } from "../../types/index.js";
 
 // Interface for adapter methods needed by prompt registration
 export interface PromptRegistrationAdapter {
-  createContext(requestId?: string, server?: unknown, progressToken?: string | number): RequestContext;
+  createContext(
+    requestId?: string,
+    server?: unknown,
+    progressToken?: string | number,
+  ): RequestContext;
 }
 
 /**
@@ -30,15 +34,26 @@ function buildArgsSchema(
   return schema;
 }
 
-export function registerPromptImpl(adapter: PromptRegistrationAdapter, server: McpServer, prompt: PromptDefinition): void {
+export function registerPromptImpl(
+  adapter: PromptRegistrationAdapter,
+  server: McpServer,
+  prompt: PromptDefinition,
+): void {
   const argsSchema = buildArgsSchema(prompt.arguments);
   const iconOpts = prompt.icons ? { icons: prompt.icons } : {};
 
   // Handler logic shared by both overload branches
-  const handleResult = async (args: Record<string, string>): Promise<{ messages: { role: "user" | "assistant"; content: { type: "text"; text: string } }[] }> => {
+  const handleResult = async (
+    args: Record<string, string>,
+  ): Promise<{
+    messages: {
+      role: "user" | "assistant";
+      content: { type: "text"; text: string };
+    }[];
+  }> => {
     const context = adapter.createContext();
     const result = await prompt.handler(args, context);
-    
+
     const messages: {
       role: "user" | "assistant";
       content: { type: "text"; text: string };
@@ -48,17 +63,15 @@ export function registerPromptImpl(adapter: PromptRegistrationAdapter, server: M
           content: { type: "text"; text: string };
         }[])
       : [
-            {
-              role: "assistant" as const,
-              content: {
-                type: "text" as const,
-                text:
-                  typeof result === "string"
-                    ? result
-                    : JSON.stringify(result),
-              },
+          {
+            role: "assistant" as const,
+            content: {
+              type: "text" as const,
+              text:
+                typeof result === "string" ? result : JSON.stringify(result),
             },
-          ];
+          },
+        ];
     return { messages };
   };
 

@@ -6,9 +6,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
   async function createClient(baseURL: string) {
-    const transport = new SSEClientTransport(
-      new URL(`${baseURL}/sse`),
-    );
+    const transport = new SSEClientTransport(new URL(`${baseURL}/sse`));
     const client = new Client(
       { name: "playwright-test-client", version: "1.0.0" },
       { capabilities: {} },
@@ -48,7 +46,8 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       expect(Array.isArray(response.content)).toBe(true);
       expect(response.content.length).toBeGreaterThan(0);
       expect(response.content[0].type).toBe("text");
-      const textOutput = (response.content[0] as { text: string }).text as string;
+      const textOutput = (response.content[0] as { text: string })
+        .text as string;
       // Verify structured response format
       const parsed = JSON.parse(textOutput);
       expect(parsed).toHaveProperty("tables");
@@ -75,7 +74,8 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       expect(Array.isArray(response.content)).toBe(true);
       if (response.content.length > 0) {
         expect(response.content[0].type).toBe("text");
-        const errorText = (response.content[0] as { text: string }).text as string;
+        const errorText = (response.content[0] as { text: string })
+          .text as string;
         expect(errorText.toLowerCase()).toContain("required");
       }
     } catch (error: any) {
@@ -119,7 +119,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       const response = await client.callTool({
         name: "sqlite_execute_code",
         arguments: {
-          code: 'const tables = await sqlite.core.listTables(); return tables;',
+          code: "const tables = await sqlite.core.listTables(); return tables;",
         },
       });
 
@@ -128,7 +128,8 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       expect(response.content.length).toBeGreaterThan(0);
       expect(response.content[0].type).toBe("text");
 
-      const textOutput = (response.content[0] as { text: string }).text as string;
+      const textOutput = (response.content[0] as { text: string })
+        .text as string;
       const parsed = JSON.parse(textOutput);
       expect(parsed).toHaveProperty("result");
       expect(parsed.result).toHaveProperty("tables");

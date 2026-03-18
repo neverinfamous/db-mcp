@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// We need to test the abstract DatabaseAdapter behavior, which provides default implementations 
+// We need to test the abstract DatabaseAdapter behavior, which provides default implementations
 // for registerTool, registerResource, registerPrompt and ensureConnected.
 import { DatabaseAdapter } from "../../src/adapters/database-adapter.js";
 import { ConnectionError } from "../../src/utils/errors/index.js";
-import type { 
-  DatabaseConfig, 
-  HealthStatus, 
-  QueryResult, 
-  SchemaInfo, 
-  TableInfo, 
-  AdapterCapabilities, 
-  ToolDefinition, 
-  ResourceDefinition, 
-  PromptDefinition, 
+import type {
+  DatabaseConfig,
+  HealthStatus,
+  QueryResult,
+  SchemaInfo,
+  TableInfo,
+  AdapterCapabilities,
+  ToolDefinition,
+  ResourceDefinition,
+  PromptDefinition,
   ToolGroup,
-  RequestContext
+  RequestContext,
 } from "../../src/types/index.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -37,7 +37,7 @@ vi.mock("../../src/filtering/tool-filter.js", () => ({
   isToolEnabled: vi.fn((tool: ToolDefinition) => {
     // Simple mock: enabled unless group is 'disabled_group'
     return tool.group !== ("disabled_group" as any);
-  })
+  }),
 }));
 
 /**
@@ -57,15 +57,20 @@ class MinimalDatabaseAdapter extends DatabaseAdapter {
   disconnect = vi.fn<[], Promise<void>>();
   getHealth = vi.fn<[], Promise<HealthStatus>>();
   executeReadQuery = vi.fn<[string, unknown[]?], Promise<QueryResult>>();
-  executeWriteQuery = vi.fn<[string, unknown[]?, boolean?], Promise<QueryResult>>();
+  executeWriteQuery = vi.fn<
+    [string, unknown[]?, boolean?],
+    Promise<QueryResult>
+  >();
   executeQuery = vi.fn<[string, unknown[]?], Promise<QueryResult>>();
   getSchema = vi.fn<[], Promise<SchemaInfo>>();
   listTables = vi.fn<[], Promise<TableInfo[]>>();
   describeTable = vi.fn<[string], Promise<TableInfo>>();
   listSchemas = vi.fn<[], Promise<string[]>>();
-  getCapabilities = vi.fn<[], AdapterCapabilities>(() => ({} as AdapterCapabilities));
+  getCapabilities = vi.fn<[], AdapterCapabilities>(
+    () => ({}) as AdapterCapabilities,
+  );
   getSupportedToolGroups = vi.fn<[], ToolGroup[]>(() => []);
-  
+
   getToolDefinitions = vi.fn<[], ToolDefinition[]>(() => []);
   getResourceDefinitions = vi.fn<[], ResourceDefinition[]>(() => []);
   getPromptDefinitions = vi.fn<[], PromptDefinition[]>(() => []);
@@ -93,7 +98,9 @@ describe("DatabaseAdapter Base Class", () => {
 
     it("should throw ConnectionError when not connected", () => {
       expect(() => adapter.testEnsureConnected()).toThrow(ConnectionError);
-      expect(() => adapter.testEnsureConnected()).toThrow("Not connected to database");
+      expect(() => adapter.testEnsureConnected()).toThrow(
+        "Not connected to database",
+      );
     });
 
     it("should not throw when connected", () => {
@@ -105,7 +112,7 @@ describe("DatabaseAdapter Base Class", () => {
   describe("createContext", () => {
     it("should generate a valid RequestContext with a UUID", () => {
       const context = adapter.createContext();
-      
+
       expect(context.requestId).toBeDefined();
       expect(typeof context.requestId).toBe("string");
       expect(context.requestId.length).toBeGreaterThan(0);
@@ -116,8 +123,12 @@ describe("DatabaseAdapter Base Class", () => {
 
     it("should use provided requestId, server, and progressToken", () => {
       const mockServerInstance = {};
-      const context = adapter.createContext("req-123", mockServerInstance, "prog-456");
-      
+      const context = adapter.createContext(
+        "req-123",
+        mockServerInstance,
+        "prog-456",
+      );
+
       expect(context.requestId).toBe("req-123");
       expect(context.server).toBe(mockServerInstance);
       expect(context.progressToken).toBe("prog-456");
@@ -129,9 +140,9 @@ describe("DatabaseAdapter Base Class", () => {
       adapter.setConnected(true);
       adapter.getCapabilities.mockReturnValue({ mockCapability: true } as any);
       adapter.getSupportedToolGroups.mockReturnValue(["core", "stats"]);
-      
+
       const info = adapter.getInfo();
-      
+
       expect(info.type).toBe("sqlite");
       expect(info.name).toBe("Minimal Adapter");
       expect(info.version).toBe("1.0.0");
@@ -143,36 +154,67 @@ describe("DatabaseAdapter Base Class", () => {
 
   describe("Registration Methods", () => {
     it("should filter tools dynamically and pass them to registerToolImpl", () => {
-      const enabledTool: ToolDefinition = { name: "enabled_tool", description: "", group: "core", handler: vi.fn() };
-      const disabledTool: ToolDefinition = { name: "disabled_tool", description: "", group: "disabled_group" as any, handler: vi.fn() };
-      
+      const enabledTool: ToolDefinition = {
+        name: "enabled_tool",
+        description: "",
+        group: "core",
+        handler: vi.fn(),
+      };
+      const disabledTool: ToolDefinition = {
+        name: "disabled_tool",
+        description: "",
+        group: "disabled_group" as any,
+        handler: vi.fn(),
+      };
+
       adapter.getToolDefinitions.mockReturnValue([enabledTool, disabledTool]);
-      
+
       adapter.registerTools(mockServer, { enabledGroups: ["core"] });
-      
+
       // Should filter out the disabled tool and only call register for the enabled one
       expect(registerToolImpl).toHaveBeenCalledTimes(1);
-      expect(registerToolImpl).toHaveBeenCalledWith(adapter, mockServer, enabledTool);
+      expect(registerToolImpl).toHaveBeenCalledWith(
+        adapter,
+        mockServer,
+        enabledTool,
+      );
     });
 
     it("should pass resources to registerResourceImpl", () => {
-      const resource1: ResourceDefinition = { uri: "sqlite://test", name: "Test", description: "", handler: vi.fn() };
+      const resource1: ResourceDefinition = {
+        uri: "sqlite://test",
+        name: "Test",
+        description: "",
+        handler: vi.fn(),
+      };
       adapter.getResourceDefinitions.mockReturnValue([resource1]);
-      
+
       adapter.registerResources(mockServer);
-      
+
       expect(registerResourceImpl).toHaveBeenCalledTimes(1);
-      expect(registerResourceImpl).toHaveBeenCalledWith(adapter, mockServer, resource1);
+      expect(registerResourceImpl).toHaveBeenCalledWith(
+        adapter,
+        mockServer,
+        resource1,
+      );
     });
 
     it("should pass prompts to registerPromptImpl", () => {
-      const prompt1: PromptDefinition = { name: "test_prompt", description: "", messages: vi.fn() };
+      const prompt1: PromptDefinition = {
+        name: "test_prompt",
+        description: "",
+        messages: vi.fn(),
+      };
       adapter.getPromptDefinitions.mockReturnValue([prompt1]);
-      
+
       adapter.registerPrompts(mockServer);
-      
+
       expect(registerPromptImpl).toHaveBeenCalledTimes(1);
-      expect(registerPromptImpl).toHaveBeenCalledWith(adapter, mockServer, prompt1);
+      expect(registerPromptImpl).toHaveBeenCalledWith(
+        adapter,
+        mockServer,
+        prompt1,
+      );
     });
   });
 });

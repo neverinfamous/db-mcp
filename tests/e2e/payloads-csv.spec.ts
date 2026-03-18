@@ -12,7 +12,12 @@
 
 import * as path from "node:path";
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -30,10 +35,14 @@ test.describe("Payload Contracts: CSV Tools", () => {
         tableName: "_e2e_csv_test",
       });
 
-      const payload = await callToolAndParse(client, "sqlite_create_csv_table", {
-        tableName: "_e2e_csv_test",
-        filePath: CSV_PATH,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_create_csv_table",
+        {
+          tableName: "_e2e_csv_test",
+          filePath: CSV_PATH,
+        },
+      );
 
       if (!payload.success) {
         // CSV extension not available — skip remaining tests
@@ -82,9 +91,13 @@ test.describe("Payload Contracts: CSV Tools", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_analyze_csv_schema", {
-        filePath: CSV_PATH,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_analyze_csv_schema",
+        {
+          filePath: CSV_PATH,
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.columns)).toBe(true);
@@ -108,9 +121,13 @@ test.describe("Payload Contracts: CSV Tools", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_drop_virtual_table", {
-        tableName: "_e2e_csv_test",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_drop_virtual_table",
+        {
+          tableName: "_e2e_csv_test",
+        },
+      );
       expectSuccess(payload);
     } finally {
       await client.close();
@@ -120,10 +137,14 @@ test.describe("Payload Contracts: CSV Tools", () => {
   test("sqlite_create_csv_table with relative path → error", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_create_csv_table", {
-        tableName: "_e2e_csv_relpath",
-        filePath: "test-server/fixtures/sample.csv",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_create_csv_table",
+        {
+          tableName: "_e2e_csv_relpath",
+          filePath: "test-server/fixtures/sample.csv",
+        },
+      );
 
       // Should fail because relative paths are not supported
       expect(payload.success).toBe(false);

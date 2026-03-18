@@ -18,7 +18,10 @@ import { createVirtualTableInfoTool } from "../../../../../src/adapters/sqlite/t
 import { createDropVirtualTableTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/drop.js";
 import { createCsvTableTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/csv.js";
 import { createAnalyzeCsvSchemaTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/analyze-csv.js";
-import { isModuleAvailable, isCsvModuleAvailable } from "../../../../../src/adapters/sqlite/tools/virtual/analysis.js";
+import {
+  isModuleAvailable,
+  isCsvModuleAvailable,
+} from "../../../../../src/adapters/sqlite/tools/virtual/analysis.js";
 
 const ctx = { timestamp: new Date(), requestId: "test" };
 
@@ -44,12 +47,18 @@ describe("createListVirtualTablesTool", () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
       rows: [
-        { name: "csv_data", sql: "CREATE VIRTUAL TABLE csv_data USING csv(filename='data.csv')" },
-        { name: "fts_index", sql: "CREATE VIRTUAL TABLE fts_index USING fts5(content)" },
+        {
+          name: "csv_data",
+          sql: "CREATE VIRTUAL TABLE csv_data USING csv(filename='data.csv')",
+        },
+        {
+          name: "fts_index",
+          sql: "CREATE VIRTUAL TABLE fts_index USING fts5(content)",
+        },
       ],
     });
     const tool = createListVirtualTablesTool(adapter);
-    const result = await tool.handler({}, ctx) as any;
+    const result = (await tool.handler({}, ctx)) as any;
     expect(result.success).toBe(true);
     expect(result.count).toBe(2);
     expect(result.virtualTables[0].module).toBe("csv");
@@ -59,19 +68,26 @@ describe("createListVirtualTablesTool", () => {
   it("should filter by pattern", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [{ name: "fts_index", sql: "CREATE VIRTUAL TABLE fts_index USING fts5(content)" }],
+      rows: [
+        {
+          name: "fts_index",
+          sql: "CREATE VIRTUAL TABLE fts_index USING fts5(content)",
+        },
+      ],
     });
     const tool = createListVirtualTablesTool(adapter);
-    const result = await tool.handler({ pattern: "fts_%" }, ctx) as any;
+    const result = (await tool.handler({ pattern: "fts_%" }, ctx)) as any;
     expect(result.success).toBe(true);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining("fts_%"));
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining("fts_%"),
+    );
   });
 
   it("should handle empty result", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createListVirtualTablesTool(adapter);
-    const result = await tool.handler({}, ctx) as any;
+    const result = (await tool.handler({}, ctx)) as any;
     expect(result.success).toBe(true);
     expect(result.count).toBe(0);
   });
@@ -87,7 +103,11 @@ describe("createVirtualTableInfoTool", () => {
     adapter.executeReadQuery.mockImplementation((sql: string) => {
       if (sql.includes("sqlite_master")) {
         return Promise.resolve({
-          rows: [{ sql: "CREATE VIRTUAL TABLE my_vtable USING fts5(content, title)" }],
+          rows: [
+            {
+              sql: "CREATE VIRTUAL TABLE my_vtable USING fts5(content, title)",
+            },
+          ],
         });
       }
       if (sql.includes("PRAGMA table_info")) {
@@ -101,7 +121,7 @@ describe("createVirtualTableInfoTool", () => {
       return Promise.resolve({ rows: [] });
     });
     const tool = createVirtualTableInfoTool(adapter);
-    const result = await tool.handler({ tableName: "my_vtable" }, ctx) as any;
+    const result = (await tool.handler({ tableName: "my_vtable" }, ctx)) as any;
     expect(result.success).toBe(true);
     expect(result.module).toBe("fts5");
     expect(result.columns).toHaveLength(2);
@@ -111,7 +131,10 @@ describe("createVirtualTableInfoTool", () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createVirtualTableInfoTool(adapter);
-    const result = await tool.handler({ tableName: "nonexistent" }, ctx) as any;
+    const result = (await tool.handler(
+      { tableName: "nonexistent" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(result.code).toBe("TABLE_NOT_FOUND");
   });
@@ -122,7 +145,11 @@ describe("createVirtualTableInfoTool", () => {
     adapter.executeReadQuery.mockImplementation((sql: string) => {
       if (sql.includes("sqlite_master")) {
         return Promise.resolve({
-          rows: [{ sql: "CREATE VIRTUAL TABLE csv_table USING csv(filename='data.csv')" }],
+          rows: [
+            {
+              sql: "CREATE VIRTUAL TABLE csv_table USING csv(filename='data.csv')",
+            },
+          ],
         });
       }
       if (sql.includes("PRAGMA table_info")) {
@@ -131,7 +158,7 @@ describe("createVirtualTableInfoTool", () => {
       return Promise.resolve({ rows: [] });
     });
     const tool = createVirtualTableInfoTool(adapter);
-    const result = await tool.handler({ tableName: "csv_table" }, ctx) as any;
+    const result = (await tool.handler({ tableName: "csv_table" }, ctx)) as any;
     expect(result.success).toBe(true);
     expect(result.moduleAvailable).toBe(false);
     expect(result.note).toContain("csv");
@@ -150,7 +177,7 @@ describe("createDropVirtualTableTool", () => {
     });
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
     const tool = createDropVirtualTableTool(adapter);
-    const result = await tool.handler({ tableName: "vtbl" }, ctx) as any;
+    const result = (await tool.handler({ tableName: "vtbl" }, ctx)) as any;
     expect(result.success).toBe(true);
   });
 
@@ -159,7 +186,10 @@ describe("createDropVirtualTableTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
     const tool = createDropVirtualTableTool(adapter);
-    const result = await tool.handler({ tableName: "nonexistent" }, ctx) as any;
+    const result = (await tool.handler(
+      { tableName: "nonexistent" },
+      ctx,
+    )) as any;
     // Uses DROP TABLE IF EXISTS by default, so missing table still succeeds
     expect(result.success).toBe(true);
     expect(result.message).toContain("did not exist");
@@ -171,7 +201,10 @@ describe("createDropVirtualTableTool", () => {
       rows: [{ sql: "CREATE VIRTUAL TABLE vtbl USING fts5(content)" }],
     });
     const tool = createDropVirtualTableTool(adapter);
-    const result = await tool.handler({ tableName: "vtbl", confirm: false }, ctx) as any;
+    const result = (await tool.handler(
+      { tableName: "vtbl", confirm: false },
+      ctx,
+    )) as any;
     // The behavior depends on whether confirm is required; test the handler runs
     expect(result).toBeDefined();
   });
@@ -182,47 +215,64 @@ describe("createDropVirtualTableTool", () => {
 // =============================================================================
 
 describe("createCsvTableTool", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should reject relative paths", async () => {
     const tool = createCsvTableTool(createMockAdapter());
-    const result = await tool.handler({
-      tableName: "data",
-      filePath: "relative/path.csv",
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        tableName: "data",
+        filePath: "relative/path.csv",
+      },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(String(result.error)).toContain("Relative path");
   });
 
   it("should reject when csv module unavailable (WASM)", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: false } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: false,
+    } as any);
     vi.mocked(isModuleAvailable).mockResolvedValue(false);
 
     const tool = createCsvTableTool(createMockAdapter());
-    const result = await tool.handler({
-      tableName: "data",
-      filePath: "/absolute/path.csv",
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        tableName: "data",
+        filePath: "/absolute/path.csv",
+      },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(result.wasmLimitation).toBe(true);
   });
 
   it("should reject when csv module unavailable (native)", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: false } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: false,
+    } as any);
     vi.mocked(isModuleAvailable).mockResolvedValue(true); // not WASM
 
     const tool = createCsvTableTool(createMockAdapter());
-    const result = await tool.handler({
-      tableName: "data",
-      filePath: "/absolute/path.csv",
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        tableName: "data",
+        filePath: "/absolute/path.csv",
+      },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     // Native mode explicitly sets wasmLimitation: false (not undefined)
     expect(result.wasmLimitation).toBe(false);
   });
 
   it("should create csv table when available", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: true } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: true,
+    } as any);
 
     const adapter = createMockAdapter();
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
@@ -231,13 +281,16 @@ describe("createCsvTableTool", () => {
     });
 
     const tool = createCsvTableTool(adapter);
-    const result = await tool.handler({
-      tableName: "data",
-      filePath: "/absolute/path.csv",
-      header: false,
-      delimiter: "\t",
-      columns: ["a", "b"],
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        tableName: "data",
+        filePath: "/absolute/path.csv",
+        header: false,
+        delimiter: "\t",
+        columns: ["a", "b"],
+      },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
     expect(result.columns).toEqual(["col1", "col2"]);
   });
@@ -248,35 +301,50 @@ describe("createCsvTableTool", () => {
 // =============================================================================
 
 describe("createAnalyzeCsvSchemaTool", () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should reject relative paths", async () => {
     const tool = createAnalyzeCsvSchemaTool(createMockAdapter());
-    const result = await tool.handler({
-      filePath: "relative/data.csv",
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        filePath: "relative/data.csv",
+      },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
   });
 
   it("should reject when csv unavailable (WASM)", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: false } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: false,
+    } as any);
     vi.mocked(isModuleAvailable).mockResolvedValue(false);
     const tool = createAnalyzeCsvSchemaTool(createMockAdapter());
-    const result = await tool.handler({
-      filePath: "/absolute/data.csv",
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        filePath: "/absolute/data.csv",
+      },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
     expect(result.wasmLimitation).toBe(true);
   });
 
   it("should analyze csv schema", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: true } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: true,
+    } as any);
     const adapter = createMockAdapter();
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
     adapter.executeReadQuery.mockImplementation((sql: string) => {
       if (sql.includes("PRAGMA table_info")) {
         return Promise.resolve({
-          rows: [{ name: "id", cid: 0 }, { name: "value", cid: 1 }],
+          rows: [
+            { name: "id", cid: 0 },
+            { name: "value", cid: 1 },
+          ],
         });
       }
       if (sql.includes("SELECT *")) {
@@ -294,18 +362,23 @@ describe("createAnalyzeCsvSchemaTool", () => {
     });
 
     const tool = createAnalyzeCsvSchemaTool(adapter);
-    const result = await tool.handler({
-      filePath: "/absolute/data.csv",
-      sampleRows: 10,
-      delimiter: "\t",
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        filePath: "/absolute/data.csv",
+        sampleRows: 10,
+        delimiter: "\t",
+      },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
     expect(result.columns).toHaveLength(2);
     expect(result.rowCount).toBe(100);
   });
 
   it("should infer INTEGER type", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: true } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: true,
+    } as any);
     const adapter = createMockAdapter();
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
     adapter.executeReadQuery.mockImplementation((sql: string) => {
@@ -317,19 +390,25 @@ describe("createAnalyzeCsvSchemaTool", () => {
           rows: [{ num: "1" }, { num: "2" }, { num: "3" }],
         });
       }
-      if (sql.includes("COUNT(*)")) return Promise.resolve({ rows: [{ cnt: 3 }] });
+      if (sql.includes("COUNT(*)"))
+        return Promise.resolve({ rows: [{ cnt: 3 }] });
       return Promise.resolve({ rows: [] });
     });
 
     const tool = createAnalyzeCsvSchemaTool(adapter);
-    const result = await tool.handler({
-      filePath: "/absolute/data.csv",
-    }, ctx) as any;
+    const result = (await tool.handler(
+      {
+        filePath: "/absolute/data.csv",
+      },
+      ctx,
+    )) as any;
     expect(result.columns[0].inferredType).toBe("INTEGER");
   });
 
   it("should handle null values in sample", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: true } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: true,
+    } as any);
     const adapter = createMockAdapter();
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
     adapter.executeReadQuery.mockImplementation((sql: string) => {
@@ -337,27 +416,38 @@ describe("createAnalyzeCsvSchemaTool", () => {
         return Promise.resolve({ rows: [{ name: "col", cid: 0 }] });
       }
       if (sql.includes("SELECT *")) {
-        return Promise.resolve({ rows: [{ col: null }, { col: "" }, { col: null }] });
+        return Promise.resolve({
+          rows: [{ col: null }, { col: "" }, { col: null }],
+        });
       }
-      if (sql.includes("COUNT(*)")) return Promise.resolve({ rows: [{ cnt: 3 }] });
+      if (sql.includes("COUNT(*)"))
+        return Promise.resolve({ rows: [{ cnt: 3 }] });
       return Promise.resolve({ rows: [] });
     });
 
     const tool = createAnalyzeCsvSchemaTool(adapter);
-    const result = await tool.handler({ filePath: "/absolute/data.csv" }, ctx) as any;
+    const result = (await tool.handler(
+      { filePath: "/absolute/data.csv" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(true);
     expect(result.columns[0].nullCount).toBe(3);
     expect(result.columns[0].inferredType).toBe("TEXT");
   });
 
   it("should clean up temp table on error", async () => {
-    vi.mocked(isCsvModuleAvailable).mockResolvedValue({ available: true } as any);
+    vi.mocked(isCsvModuleAvailable).mockResolvedValue({
+      available: true,
+    } as any);
     const adapter = createMockAdapter();
     adapter.executeWriteQuery.mockRejectedValueOnce(new Error("csv error"));
     adapter.executeWriteQuery.mockResolvedValue({ rows: [] }); // cleanup
 
     const tool = createAnalyzeCsvSchemaTool(adapter);
-    const result = await tool.handler({ filePath: "/absolute/data.csv" }, ctx) as any;
+    const result = (await tool.handler(
+      { filePath: "/absolute/data.csv" },
+      ctx,
+    )) as any;
     expect(result.success).toBe(false);
   });
 });

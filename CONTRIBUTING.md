@@ -142,7 +142,13 @@ Add your local build to `~/.cursor/mcp.json`:
   "mcpServers": {
     "db-mcp-dev": {
       "command": "node",
-      "args": ["path/to/your/db-mcp/dist/cli.js", "--transport", "stdio", "--sqlite-native", ":memory:"]
+      "args": [
+        "path/to/your/db-mcp/dist/cli.js",
+        "--transport",
+        "stdio",
+        "--sqlite-native",
+        ":memory:"
+      ]
     }
   }
 }
@@ -271,11 +277,11 @@ Use our [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md).
 
 ### What CI Will Check
 
-| Workflow       | What It Does                                     |
-| -------------- | ------------------------------------------------ |
-| **Lint & Test** | ESLint, TypeScript strict-mode, Vitest suite     |
-| **CodeQL**     | Static analysis for security vulnerabilities     |
-| **E2E**        | Playwright end-to-end transport parity tests     |
+| Workflow        | What It Does                                 |
+| --------------- | -------------------------------------------- |
+| **Lint & Test** | ESLint, TypeScript strict-mode, Vitest suite |
+| **CodeQL**      | Static analysis for security vulnerabilities |
+| **E2E**         | Playwright end-to-end transport parity tests |
 
 All checks must pass before merge. Security steps **hard-fail on fixable issues** — this is intentional.
 
@@ -319,18 +325,18 @@ src/
 
 ### Available Scripts
 
-| Script                | Purpose                                            |
-| --------------------- | -------------------------------------------------- |
-| `npm run build`       | Production build via tsup                          |
-| `npm run check`       | **Quality gate** — lint + typecheck (run before PRs) |
-| `npm run lint`        | ESLint only                                        |
-| `npm run lint:fix`    | ESLint with auto-fix                               |
-| `npm run typecheck`   | TypeScript strict-mode type checking               |
-| `npm test`            | Run all unit tests (Vitest)                        |
-| `npm run test:watch`  | Watch mode for iterative development               |
-| `npm run test:e2e`    | Playwright end-to-end tests (HTTP/SSE transport)   |
-| `npm run bench`       | Performance benchmarks (tinybench via Vitest)      |
-| `npm run bench:verbose` | Benchmarks with detailed timings                 |
+| Script                  | Purpose                                              |
+| ----------------------- | ---------------------------------------------------- |
+| `npm run build`         | Production build via tsup                            |
+| `npm run check`         | **Quality gate** — lint + typecheck (run before PRs) |
+| `npm run lint`          | ESLint only                                          |
+| `npm run lint:fix`      | ESLint with auto-fix                                 |
+| `npm run typecheck`     | TypeScript strict-mode type checking                 |
+| `npm test`              | Run all unit tests (Vitest)                          |
+| `npm run test:watch`    | Watch mode for iterative development                 |
+| `npm run test:e2e`      | Playwright end-to-end tests (HTTP/SSE transport)     |
+| `npm run bench`         | Performance benchmarks (tinybench via Vitest)        |
+| `npm run bench:verbose` | Benchmarks with detailed timings                     |
 
 ### Benchmarks
 

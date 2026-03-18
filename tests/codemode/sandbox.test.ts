@@ -99,19 +99,13 @@ describe("CodeModeSandbox", () => {
     });
 
     it("should block access to dangerous globals", async () => {
-      const result = await sandbox.execute(
-        "return typeof process;",
-        {},
-      );
+      const result = await sandbox.execute("return typeof process;", {});
       expect(result.success).toBe(true);
       expect(result.result).toBe("undefined");
     });
 
     it("should block access to require", async () => {
-      const result = await sandbox.execute(
-        "return typeof require;",
-        {},
-      );
+      const result = await sandbox.execute("return typeof require;", {});
       expect(result.success).toBe(true);
       expect(result.result).toBe("undefined");
     });

@@ -11,7 +11,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -23,9 +28,13 @@ test.describe("Payload Contracts: Transactions", () => {
   test("sqlite_transaction_begin returns { success, message }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_transaction_begin", {
-        mode: "immediate",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_begin",
+        {
+          mode: "immediate",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -42,7 +51,11 @@ test.describe("Payload Contracts: Transactions", () => {
       // Begin first
       await callToolAndParse(client, "sqlite_transaction_begin", {});
 
-      const payload = await callToolAndParse(client, "sqlite_transaction_commit", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_commit",
+        {},
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -57,7 +70,11 @@ test.describe("Payload Contracts: Transactions", () => {
       // Begin first
       await callToolAndParse(client, "sqlite_transaction_begin", {});
 
-      const payload = await callToolAndParse(client, "sqlite_transaction_rollback", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_rollback",
+        {},
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -82,14 +99,20 @@ test.describe("Payload Contracts: Transactions", () => {
         ],
       });
 
-      await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
+      await callToolAndParse(client, "sqlite_transaction_begin", {
+        mode: "immediate",
+      });
 
       // DML via write_query inside the transaction
       await callToolAndParse(client, "sqlite_write_query", {
         query: "INSERT INTO _e2e_txn_test (val) VALUES ('committed')",
       });
 
-      const commitPayload = await callToolAndParse(client, "sqlite_transaction_commit", {});
+      const commitPayload = await callToolAndParse(
+        client,
+        "sqlite_transaction_commit",
+        {},
+      );
       expectSuccess(commitPayload);
 
       // Verify data persisted
@@ -125,12 +148,19 @@ test.describe("Payload Contracts: Transactions", () => {
         ],
       });
 
-      await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
+      await callToolAndParse(client, "sqlite_transaction_begin", {
+        mode: "immediate",
+      });
       await callToolAndParse(client, "sqlite_write_query", {
-        query: "INSERT INTO _e2e_txn_rollback (val) VALUES ('to_be_rolled_back')",
+        query:
+          "INSERT INTO _e2e_txn_rollback (val) VALUES ('to_be_rolled_back')",
       });
 
-      const rollbackPayload = await callToolAndParse(client, "sqlite_transaction_rollback", {});
+      const rollbackPayload = await callToolAndParse(
+        client,
+        "sqlite_transaction_rollback",
+        {},
+      );
       expectSuccess(rollbackPayload);
 
       // Verify data was rolled back
@@ -156,9 +186,13 @@ test.describe("Payload Contracts: Transactions", () => {
     try {
       await callToolAndParse(client, "sqlite_transaction_begin", {});
 
-      const payload = await callToolAndParse(client, "sqlite_transaction_savepoint", {
-        name: "e2e_sp1",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_savepoint",
+        {
+          name: "e2e_sp1",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -172,11 +206,17 @@ test.describe("Payload Contracts: Transactions", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_transaction_begin", {});
-      await callToolAndParse(client, "sqlite_transaction_savepoint", { name: "e2e_sp_release" });
-
-      const payload = await callToolAndParse(client, "sqlite_transaction_release", {
+      await callToolAndParse(client, "sqlite_transaction_savepoint", {
         name: "e2e_sp_release",
       });
+
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_release",
+        {
+          name: "e2e_sp_release",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -198,7 +238,9 @@ test.describe("Payload Contracts: Transactions", () => {
         ],
       });
 
-      await callToolAndParse(client, "sqlite_transaction_begin", { mode: "immediate" });
+      await callToolAndParse(client, "sqlite_transaction_begin", {
+        mode: "immediate",
+      });
 
       // Insert initial data
       await callToolAndParse(client, "sqlite_write_query", {
@@ -206,7 +248,9 @@ test.describe("Payload Contracts: Transactions", () => {
       });
 
       // Create savepoint
-      await callToolAndParse(client, "sqlite_transaction_savepoint", { name: "e2e_sp_rollback" });
+      await callToolAndParse(client, "sqlite_transaction_savepoint", {
+        name: "e2e_sp_rollback",
+      });
 
       // Write after savepoint
       await callToolAndParse(client, "sqlite_write_query", {
@@ -214,9 +258,13 @@ test.describe("Payload Contracts: Transactions", () => {
       });
 
       // Rollback to savepoint — should discard the second insert
-      const payload = await callToolAndParse(client, "sqlite_transaction_rollback_to", {
-        name: "e2e_sp_rollback",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_rollback_to",
+        {
+          name: "e2e_sp_rollback",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -244,14 +292,18 @@ test.describe("Payload Contracts: Transactions", () => {
   test("sqlite_transaction_execute returns { success, results[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_transaction_execute", {
-        statements: [
-          "CREATE TABLE IF NOT EXISTS _e2e_txn_exec (id INTEGER PRIMARY KEY, val TEXT)",
-          "INSERT INTO _e2e_txn_exec (val) VALUES ('batch_1')",
-          "INSERT INTO _e2e_txn_exec (val) VALUES ('batch_2')",
-          "INSERT INTO _e2e_txn_exec (val) VALUES ('batch_3')",
-        ],
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_execute",
+        {
+          statements: [
+            "CREATE TABLE IF NOT EXISTS _e2e_txn_exec (id INTEGER PRIMARY KEY, val TEXT)",
+            "INSERT INTO _e2e_txn_exec (val) VALUES ('batch_1')",
+            "INSERT INTO _e2e_txn_exec (val) VALUES ('batch_2')",
+            "INSERT INTO _e2e_txn_exec (val) VALUES ('batch_3')",
+          ],
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.results)).toBe(true);
@@ -277,13 +329,17 @@ test.describe("Payload Contracts: Transactions", () => {
         ],
       });
 
-      const payload = await callToolAndParse(client, "sqlite_transaction_execute", {
-        statements: [
-          "INSERT INTO _e2e_txn_exec_err (val) VALUES ('should_rollback')",
-          "INSERT INTO _e2e_txn_exec_err (val) VALUES (NULL)", // NOT NULL violation
-        ],
-        rollbackOnError: true,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_execute",
+        {
+          statements: [
+            "INSERT INTO _e2e_txn_exec_err (val) VALUES ('should_rollback')",
+            "INSERT INTO _e2e_txn_exec_err (val) VALUES (NULL)", // NOT NULL violation
+          ],
+          rollbackOnError: true,
+        },
+      );
 
       // Should fail
       expect(payload.success).toBe(false);

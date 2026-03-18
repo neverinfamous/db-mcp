@@ -209,7 +209,9 @@ describe("createJsonGroupArrayTool", () => {
 
   it("should support allowExpressions with groupBy", async () => {
     const adapter = createMockAdapter();
-    adapter.executeReadQuery.mockResolvedValue({ rows: [{ group_key: "A", array_result: '["x"]' }] });
+    adapter.executeReadQuery.mockResolvedValue({
+      rows: [{ group_key: "A", array_result: '["x"]' }],
+    });
     const tool = createJsonGroupArrayTool(adapter);
     const result = (await tool.handler(
       {
@@ -314,7 +316,9 @@ describe("createJsonGroupObjectTool", () => {
 
   it("should support allowExpressions with groupByColumn", async () => {
     const adapter = createMockAdapter();
-    adapter.executeReadQuery.mockResolvedValue({ rows: [{ group_key: "X", object_result: '{"a":1}' }] });
+    adapter.executeReadQuery.mockResolvedValue({
+      rows: [{ group_key: "X", object_result: '{"a":1}' }],
+    });
     const tool = createJsonGroupObjectTool(adapter);
     const result = (await tool.handler(
       {
@@ -331,7 +335,9 @@ describe("createJsonGroupObjectTool", () => {
 
   it("should add duplicate key hint with allowExpressions and no groupBy", async () => {
     const adapter = createMockAdapter();
-    adapter.executeReadQuery.mockResolvedValue({ rows: [{ object_result: '{"a":1}' }] });
+    adapter.executeReadQuery.mockResolvedValue({
+      rows: [{ object_result: '{"a":1}' }],
+    });
     const tool = createJsonGroupObjectTool(adapter);
     const result = (await tool.handler(
       {
@@ -348,7 +354,9 @@ describe("createJsonGroupObjectTool", () => {
 
   it("should support whereClause with aggregateFunction", async () => {
     const adapter = createMockAdapter();
-    adapter.executeReadQuery.mockResolvedValue({ rows: [{ object_result: '{"A":5}' }] });
+    adapter.executeReadQuery.mockResolvedValue({
+      rows: [{ object_result: '{"A":5}' }],
+    });
     const tool = createJsonGroupObjectTool(adapter);
     const result = (await tool.handler(
       {

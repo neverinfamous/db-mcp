@@ -75,7 +75,10 @@ export const IndexStatsSchema = z.object({
 export const PragmaOptimizeSchema = z.object({
   mask: z.preprocess(
     coerceNumber,
-    z.number().optional().describe("Optional optimization mask (default: 0xfffe)"),
+    z
+      .number()
+      .optional()
+      .describe("Optional optimization mask (default: 0xfffe)"),
   ),
 });
 

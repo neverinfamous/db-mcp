@@ -7,7 +7,10 @@
  * - sqlite_spatialite_import
  */
 
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
@@ -47,7 +50,11 @@ export function createSpatialAnalysisTool(
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
-        if (!(VALID_ANALYSIS_TYPES as readonly string[]).includes(input.analysisType)) {
+        if (
+          !(VALID_ANALYSIS_TYPES as readonly string[]).includes(
+            input.analysisType,
+          )
+        ) {
           return {
             success: false,
             error: `Invalid analysisType: '${input.analysisType}'. Must be one of: ${VALID_ANALYSIS_TYPES.join(", ")}`,
@@ -196,7 +203,9 @@ export function createGeometryTransformTool(
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
-        if (!(VALID_OPERATIONS as readonly string[]).includes(input.operation)) {
+        if (
+          !(VALID_OPERATIONS as readonly string[]).includes(input.operation)
+        ) {
           return {
             success: false,
             error: `Invalid operation: '${input.operation}'. Must be one of: ${VALID_OPERATIONS.join(", ")}`,

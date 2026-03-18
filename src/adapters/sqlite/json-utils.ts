@@ -303,7 +303,7 @@ export function parseJsonValue(value: unknown): JsonValue {
     throw new DbMcpError(
       "JSONB blob cannot be parsed directly. Use json() in SQL query.",
       "JSON_PARSE_ERROR",
-      ErrorCategory.VALIDATION
+      ErrorCategory.VALIDATION,
     );
   }
 

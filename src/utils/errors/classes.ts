@@ -218,4 +218,3 @@ export class TransactionError extends DbMcpError {
     });
   }
 }
-

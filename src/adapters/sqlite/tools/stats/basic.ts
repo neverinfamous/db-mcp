@@ -5,13 +5,20 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ResourceNotFoundError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   StatsBasicOutputSchema,
   StatsCountOutputSchema,
@@ -172,9 +179,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
 /**
  * Group by with aggregation
  */
-export function createGroupByStatsTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_stats_group_by",
     description: "Aggregate statistics grouped by a column.",
@@ -188,7 +193,12 @@ export function createGroupByStatsTool(
 
       try {
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
-        if (!input.stat || !VALID_STAT_TYPES.includes(input.stat as typeof VALID_STAT_TYPES[number])) {
+        if (
+          !input.stat ||
+          !VALID_STAT_TYPES.includes(
+            input.stat as (typeof VALID_STAT_TYPES)[number],
+          )
+        ) {
           throw new ValidationError(
             `Invalid stat '${input.stat ?? ""}'. Must be one of: ${VALID_STAT_TYPES.join(", ")}`,
           );

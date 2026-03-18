@@ -5,10 +5,19 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier, validateWhereClause } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  sanitizeIdentifier,
+  validateWhereClause,
+} from "../../../../utils/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   JsonSelectSchema,
   JsonQuerySchema,
@@ -210,7 +219,9 @@ export function createJsonValidatePathTool(): ToolDefinition {
 /**
  * Analyze JSON schema from column data
  */
-export function createAnalyzeJsonSchemaTool(adapter: SqliteAdapter): ToolDefinition {
+export function createAnalyzeJsonSchemaTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_json_analyze_schema",
     description:

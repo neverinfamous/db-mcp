@@ -26,9 +26,7 @@ export function nativeExecuteRead(
   try {
     const stmt = db.prepare(sql);
     const normalizedParams = normalizeSqliteParams(params);
-    const rows = normalizedParams
-      ? stmt.all(...normalizedParams)
-      : stmt.all();
+    const rows = normalizedParams ? stmt.all(...normalizedParams) : stmt.all();
 
     return Promise.resolve({
       rows: rows as Record<string, unknown>[],
@@ -69,9 +67,7 @@ export function nativeExecuteWrite(
   try {
     const stmt = db.prepare(sql);
     const normalizedParams = normalizeSqliteParams(params);
-    const info = normalizedParams
-      ? stmt.run(...normalizedParams)
-      : stmt.run();
+    const info = normalizedParams ? stmt.run(...normalizedParams) : stmt.run();
 
     return Promise.resolve({
       rows: [],
@@ -83,14 +79,10 @@ export function nativeExecuteWrite(
     log.error(`Write query failed: ${message}`, {
       code: ERROR_CODES.DB.QUERY_FAILED.full,
     });
-    throw new QueryError(
-      `Write query failed: ${message}`,
-      "DB_WRITE_FAILED",
-      {
-        sql,
-        cause: error instanceof Error ? error : undefined,
-      },
-    );
+    throw new QueryError(`Write query failed: ${message}`, "DB_WRITE_FAILED", {
+      sql,
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 }
 

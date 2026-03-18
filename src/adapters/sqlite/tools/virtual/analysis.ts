@@ -5,7 +5,10 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly, admin } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
@@ -21,10 +24,7 @@ import {
   isSpatialiteSystemTable,
   isSpatialiteSystemIndex,
 } from "../core/index.js";
-import {
-  DbStatSchema,
-  VacuumSchema,
-} from "./helpers.js";
+import { DbStatSchema, VacuumSchema } from "./helpers.js";
 
 export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
   return {

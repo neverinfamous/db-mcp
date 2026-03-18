@@ -25,7 +25,11 @@ import {
   type SandboxMode,
 } from "../../../codemode/sandbox-factory.js";
 import { logger } from "../../../utils/logger/index.js";
-import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  DbMcpError,
+  ErrorCategory,
+} from "../../../utils/errors/index.js";
 import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
 
 /**
@@ -66,8 +70,13 @@ const ExecuteCodeSchema = z.object({
     ),
   timeout: z.preprocess(
     coerceNumber,
-    z.number().optional().default(30000)
-      .describe("Execution timeout in milliseconds (1000-30000, default: 30000)"),
+    z
+      .number()
+      .optional()
+      .default(30000)
+      .describe(
+        "Execution timeout in milliseconds (1000-30000, default: 30000)",
+      ),
   ),
   readonly: z
     .boolean()
@@ -76,43 +85,45 @@ const ExecuteCodeSchema = z.object({
     .describe("Restrict to read-only operations (default: false)"),
 });
 
-const ExecuteCodeOutputSchema = z.object({
-  success: z.boolean().describe("Whether execution completed successfully"),
-  result: z.unknown().optional().describe("Return value from the code"),
-  error: z.string().optional().describe("Error message if execution failed"),
-  code: z
-    .string()
-    .optional()
-    .describe(
-      "Error code for programmatic handling (e.g., CODEMODE_VALIDATION_FAILED)",
-    ),
-  category: z
-    .string()
-    .optional()
-    .describe(
-      "Error category: validation, permission, query, resource, internal",
-    ),
-  suggestion: z
-    .string()
-    .optional()
-    .describe("Actionable suggestion for resolving the error"),
-  recoverable: z
-    .boolean()
-    .optional()
-    .describe("Whether the error is recoverable by retrying"),
-  consoleOutput: z
-    .array(z.string())
-    .optional()
-    .describe("Console output captured during execution"),
-  metrics: z
-    .object({
-      wallTimeMs: z.number().describe("Wall clock time in milliseconds"),
-      cpuTimeMs: z.number().describe("CPU time in milliseconds"),
-      memoryUsedMb: z.number().describe("Memory used in MB"),
-    })
-    .optional()
-    .describe("Execution performance metrics"),
-}).extend(ErrorResponseFields.shape);
+const ExecuteCodeOutputSchema = z
+  .object({
+    success: z.boolean().describe("Whether execution completed successfully"),
+    result: z.unknown().optional().describe("Return value from the code"),
+    error: z.string().optional().describe("Error message if execution failed"),
+    code: z
+      .string()
+      .optional()
+      .describe(
+        "Error code for programmatic handling (e.g., CODEMODE_VALIDATION_FAILED)",
+      ),
+    category: z
+      .string()
+      .optional()
+      .describe(
+        "Error category: validation, permission, query, resource, internal",
+      ),
+    suggestion: z
+      .string()
+      .optional()
+      .describe("Actionable suggestion for resolving the error"),
+    recoverable: z
+      .boolean()
+      .optional()
+      .describe("Whether the error is recoverable by retrying"),
+    consoleOutput: z
+      .array(z.string())
+      .optional()
+      .describe("Console output captured during execution"),
+    metrics: z
+      .object({
+        wallTimeMs: z.number().describe("Wall clock time in milliseconds"),
+        cpuTimeMs: z.number().describe("CPU time in milliseconds"),
+        memoryUsedMb: z.number().describe("Memory used in MB"),
+      })
+      .optional()
+      .describe("Execution performance metrics"),
+  })
+  .extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Tool Definition
@@ -165,7 +176,8 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
             error: `Timeout must be between 1000 and 30000 ms, got ${timeoutMs}`,
             code: "CODEMODE_VALIDATION_FAILED",
             category: "validation",
-            suggestion: "Provide a timeout value between 1000 and 30000 milliseconds.",
+            suggestion:
+              "Provide a timeout value between 1000 and 30000 milliseconds.",
             recoverable: false,
             metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
           };
@@ -220,7 +232,11 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Execute in sandbox
         if (!pool) {
-          throw new DbMcpError("Sandbox pool not initialized", "CODEMODE_POOL_UNINITIALIZED", ErrorCategory.INTERNAL);
+          throw new DbMcpError(
+            "Sandbox pool not initialized",
+            "CODEMODE_POOL_UNINITIALIZED",
+            ErrorCategory.INTERNAL,
+          );
         }
         const result = await pool.execute(code, bindings, timeoutMs);
 
@@ -309,10 +325,13 @@ function wrapReadonlyGuards(
   for (const tool of writeTools) {
     // Defense-in-depth: warn about unannotated tools that are blocked
     if (!tool.annotations) {
-      logger.warn(`Tool '${tool.name}' has no annotations — blocked in readonly mode (add annotations)`, {
-        module: "CODEMODE" as const,
-        operation: "readonlyGuard",
-      });
+      logger.warn(
+        `Tool '${tool.name}' has no annotations — blocked in readonly mode (add annotations)`,
+        {
+          module: "CODEMODE" as const,
+          operation: "readonlyGuard",
+        },
+      );
     }
 
     const methodName = toolNameToMethodName(tool.name, tool.group);

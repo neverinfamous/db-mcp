@@ -9,7 +9,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -118,7 +123,7 @@ test.describe("Code Mode Groups: JSON", () => {
       });
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
-      expect((result.rowCount as number)).toBeGreaterThan(0);
+      expect(result.rowCount as number).toBeGreaterThan(0);
     } finally {
       await client.close();
     }

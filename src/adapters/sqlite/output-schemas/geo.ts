@@ -69,6 +69,3 @@ export const GeoClusterOutputSchema = z
       .optional(),
   })
   .extend(ErrorFieldsMixin.shape);
-
-
-

@@ -48,6 +48,3 @@ export const FtsRebuildOutputSchema = z
     tableName: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
-
-
-

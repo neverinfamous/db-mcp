@@ -21,11 +21,16 @@ vi.mock("jose", async (importOriginal) => {
 });
 
 import * as jose from "jose";
-import { TokenValidator, createTokenValidator } from "../../src/auth/token-validator.js";
+import {
+  TokenValidator,
+  createTokenValidator,
+} from "../../src/auth/token-validator.js";
 import { ERROR_CODES } from "../../src/utils/logger/index.js";
 
 const mockJwtVerify = jose.jwtVerify as unknown as ReturnType<typeof vi.fn>;
-const mockCreateRemoteJWKSet = jose.createRemoteJWKSet as unknown as ReturnType<typeof vi.fn>;
+const mockCreateRemoteJWKSet = jose.createRemoteJWKSet as unknown as ReturnType<
+  typeof vi.fn
+>;
 
 // =============================================================================
 // TokenValidator

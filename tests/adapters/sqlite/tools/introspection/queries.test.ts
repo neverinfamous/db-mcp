@@ -149,7 +149,12 @@ describe("Introspection Query Tools", () => {
       const result = (await tools.get("sqlite_index_audit")?.({})) as {
         success: boolean;
         totalIndexes: number;
-        findings: { type: string; table: string; column?: string; suggestion: string }[];
+        findings: {
+          type: string;
+          table: string;
+          column?: string;
+          suggestion: string;
+        }[];
         summary: { redundant: number; missingFk: number; total: number };
       };
 
@@ -179,9 +184,7 @@ describe("Introspection Query Tools", () => {
       };
 
       expect(result.success).toBe(true);
-      const redundant = result.findings.filter(
-        (f) => f.type === "redundant",
-      );
+      const redundant = result.findings.filter((f) => f.type === "redundant");
       expect(redundant.length).toBeGreaterThanOrEqual(1);
       expect(redundant[0]?.index).toBe("idx_emp_dept");
       expect(redundant[0]?.redundantOf).toBe("idx_emp_dept_name");

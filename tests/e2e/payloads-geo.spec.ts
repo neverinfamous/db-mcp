@@ -6,7 +6,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -23,7 +28,7 @@ test.describe("Payload Contracts: Geo", () => {
 
       expectSuccess(payload);
       expect(typeof payload.distance).toBe("number");
-      expect((payload.distance as number)).toBeGreaterThan(0);
+      expect(payload.distance as number).toBeGreaterThan(0);
       expect(payload.unit).toBe("km");
     } finally {
       await client.close();
@@ -63,15 +68,19 @@ test.describe("Payload Contracts: Geo", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Bounding box around NYC
-      const payload = await callToolAndParse(client, "sqlite_geo_bounding_box", {
-        table: "test_locations",
-        latColumn: "latitude",
-        lonColumn: "longitude",
-        minLat: 40.7,
-        maxLat: 40.8,
-        minLon: -74.0,
-        maxLon: -73.9,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_geo_bounding_box",
+        {
+          table: "test_locations",
+          latColumn: "latitude",
+          lonColumn: "longitude",
+          minLat: 40.7,
+          maxLat: 40.8,
+          minLon: -74.0,
+          maxLon: -73.9,
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");

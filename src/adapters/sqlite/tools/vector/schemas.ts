@@ -43,11 +43,7 @@ const coerceNumberArray = (val: unknown): unknown =>
 /**
  * Coerce non-array values to empty array so SDK validation passes.
  */
-const coerceArray = (val: unknown): unknown =>
-  Array.isArray(val) ? val : [];
-
-
-
+const coerceArray = (val: unknown): unknown => (Array.isArray(val) ? val : []);
 
 export const VectorStoreSchema = z.object({
   table: z.string().describe("Table name"),
@@ -122,10 +118,7 @@ export const VectorBatchStoreSchema = z.object({
     z.array(
       z.object({
         id: z.union([z.string(), z.number()]),
-        vector: z.preprocess(
-          coerceNumberArray,
-          z.array(z.number()),
-        ),
+        vector: z.preprocess(coerceNumberArray, z.array(z.number())),
       }),
     ),
   ),
@@ -158,10 +151,7 @@ export const VectorCountSchema = z.object({
 export const VectorStatsSchema = z.object({
   table: z.string().describe("Table name"),
   vectorColumn: z.string().describe("Vector column name"),
-  sampleSize: z.preprocess(
-    coerceNumber,
-    z.number().optional().default(100),
-  ),
+  sampleSize: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const VectorDimensionsSchema = z.object({

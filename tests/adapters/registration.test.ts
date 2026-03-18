@@ -5,12 +5,25 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { registerToolImpl, type ToolRegistrationAdapter } from "../../src/adapters/registration/tools.js";
-import { registerResourceImpl, type ResourceRegistrationAdapter } from "../../src/adapters/registration/resources.js";
-import { registerPromptImpl, type PromptRegistrationAdapter } from "../../src/adapters/registration/prompts.js";
+import {
+  registerToolImpl,
+  type ToolRegistrationAdapter,
+} from "../../src/adapters/registration/tools.js";
+import {
+  registerResourceImpl,
+  type ResourceRegistrationAdapter,
+} from "../../src/adapters/registration/resources.js";
+import {
+  registerPromptImpl,
+  type PromptRegistrationAdapter,
+} from "../../src/adapters/registration/prompts.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { ToolDefinition, ResourceDefinition, PromptDefinition } from "../../src/types/index.js";
+import type {
+  ToolDefinition,
+  ResourceDefinition,
+  PromptDefinition,
+} from "../../src/types/index.js";
 
 // =============================================================================
 // Helpers
@@ -29,7 +42,9 @@ function createMockServer() {
   };
 }
 
-function createMockAdapter(): ToolRegistrationAdapter & ResourceRegistrationAdapter & PromptRegistrationAdapter {
+function createMockAdapter(): ToolRegistrationAdapter &
+  ResourceRegistrationAdapter &
+  PromptRegistrationAdapter {
   return {
     createContext: vi.fn().mockReturnValue({
       timestamp: new Date(),
@@ -89,7 +104,10 @@ describe("registerToolImpl", () => {
     );
 
     // Should NOT have inputSchema key
-    const opts = server.registerTool.mock.calls[0]?.[1] as Record<string, unknown>;
+    const opts = server.registerTool.mock.calls[0]?.[1] as Record<
+      string,
+      unknown
+    >;
     expect(opts.inputSchema).toBeUndefined();
   });
 
@@ -104,7 +122,10 @@ describe("registerToolImpl", () => {
 
     registerToolImpl(adapter, server, tool);
 
-    const opts = server.registerTool.mock.calls[0]?.[1] as Record<string, unknown>;
+    const opts = server.registerTool.mock.calls[0]?.[1] as Record<
+      string,
+      unknown
+    >;
     expect(opts.outputSchema).toBeDefined();
   });
 
@@ -119,8 +140,14 @@ describe("registerToolImpl", () => {
 
     registerToolImpl(adapter, server, tool);
 
-    const opts = server.registerTool.mock.calls[0]?.[1] as Record<string, unknown>;
-    expect(opts.annotations).toEqual({ title: "Test Tool", readOnlyHint: true });
+    const opts = server.registerTool.mock.calls[0]?.[1] as Record<
+      string,
+      unknown
+    >;
+    expect(opts.annotations).toEqual({
+      title: "Test Tool",
+      readOnlyHint: true,
+    });
   });
 
   it("should register a tool with icons", () => {
@@ -134,7 +161,10 @@ describe("registerToolImpl", () => {
 
     registerToolImpl(adapter, server, tool);
 
-    const opts = server.registerTool.mock.calls[0]?.[1] as Record<string, unknown>;
+    const opts = server.registerTool.mock.calls[0]?.[1] as Record<
+      string,
+      unknown
+    >;
     expect(opts.icons).toEqual({ light: "icon.svg" });
   });
 
@@ -292,7 +322,10 @@ describe("registerResourceImpl", () => {
 
     registerResourceImpl(adapter, server, resource);
 
-    const opts = server.registerResource.mock.calls[0]?.[2] as Record<string, unknown>;
+    const opts = server.registerResource.mock.calls[0]?.[2] as Record<
+      string,
+      unknown
+    >;
     expect(opts.mimeType).toBe("text/markdown");
   });
 
@@ -307,7 +340,10 @@ describe("registerResourceImpl", () => {
 
     registerResourceImpl(adapter, server, resource);
 
-    const opts = server.registerResource.mock.calls[0]?.[2] as Record<string, unknown>;
+    const opts = server.registerResource.mock.calls[0]?.[2] as Record<
+      string,
+      unknown
+    >;
     expect(opts.icons).toEqual({ light: "schema.svg" });
   });
 
@@ -362,9 +398,7 @@ describe("registerPromptImpl", () => {
     const prompt: PromptDefinition = {
       name: "explain_schema",
       description: "Explain a table schema",
-      arguments: [
-        { name: "table", description: "Table name", required: true },
-      ],
+      arguments: [{ name: "table", description: "Table name", required: true }],
       handler: vi.fn().mockResolvedValue("Explanation..."),
     };
 
@@ -392,7 +426,10 @@ describe("registerPromptImpl", () => {
 
     registerPromptImpl(adapter, server, prompt);
 
-    const opts = server.registerPrompt.mock.calls[0]?.[1] as Record<string, unknown>;
+    const opts = server.registerPrompt.mock.calls[0]?.[1] as Record<
+      string,
+      unknown
+    >;
     expect(opts.argsSchema).toBeUndefined();
   });
 
@@ -405,13 +442,19 @@ describe("registerPromptImpl", () => {
 
     registerPromptImpl(adapter, server, prompt);
 
-    const opts = server.registerPrompt.mock.calls[0]?.[1] as Record<string, unknown>;
+    const opts = server.registerPrompt.mock.calls[0]?.[1] as Record<
+      string,
+      unknown
+    >;
     expect(opts.argsSchema).toBeUndefined();
   });
 
   it("should handle handler returning array of messages", async () => {
     const messages = [
-      { role: "assistant" as const, content: { type: "text" as const, text: "Hello" } },
+      {
+        role: "assistant" as const,
+        content: { type: "text" as const, text: "Hello" },
+      },
     ];
     const prompt: PromptDefinition = {
       name: "greet",
@@ -470,7 +513,10 @@ describe("registerPromptImpl", () => {
 
     registerPromptImpl(adapter, server, prompt);
 
-    const opts = server.registerPrompt.mock.calls[0]?.[1] as Record<string, unknown>;
+    const opts = server.registerPrompt.mock.calls[0]?.[1] as Record<
+      string,
+      unknown
+    >;
     expect(opts.icons).toEqual({ light: "prompt.svg" });
   });
 });

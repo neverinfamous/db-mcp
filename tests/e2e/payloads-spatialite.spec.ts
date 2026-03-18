@@ -11,7 +11,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -21,7 +26,11 @@ test.describe("Payload Contracts: SpatiaLite", () => {
   test("sqlite_spatialite_load returns { success, message } or skip if unavailable", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_spatialite_load", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_load",
+        {},
+      );
 
       if (payload.success) {
         spatialiteAvailable = true;
@@ -45,16 +54,20 @@ test.describe("Payload Contracts: SpatiaLite", () => {
         table: "_e2e_spatial_test",
       });
 
-      const payload = await callToolAndParse(client, "sqlite_spatialite_create_table", {
-        tableName: "_e2e_spatial_test",
-        geometryColumn: "geom",
-        geometryType: "POINT",
-        srid: 4326,
-        additionalColumns: [
-          { name: "label", type: "TEXT" },
-          { name: "value", type: "REAL" },
-        ],
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_create_table",
+        {
+          tableName: "_e2e_spatial_test",
+          geometryColumn: "geom",
+          geometryType: "POINT",
+          srid: 4326,
+          additionalColumns: [
+            { name: "label", type: "TEXT" },
+            { name: "value", type: "REAL" },
+          ],
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -77,13 +90,17 @@ test.describe("Payload Contracts: SpatiaLite", () => {
       ];
 
       for (const pt of points) {
-        const payload = await callToolAndParse(client, "sqlite_spatialite_import", {
-          tableName: "_e2e_spatial_test",
-          format: "wkt",
-          data: pt.wkt,
-          srid: 4326,
-          additionalData: { label: pt.label, value: pt.value },
-        });
+        const payload = await callToolAndParse(
+          client,
+          "sqlite_spatialite_import",
+          {
+            tableName: "_e2e_spatial_test",
+            format: "wkt",
+            data: pt.wkt,
+            srid: 4326,
+            additionalData: { label: pt.label, value: pt.value },
+          },
+        );
         expectSuccess(payload);
         expect(typeof payload.rowsAffected).toBe("number");
       }
@@ -97,9 +114,13 @@ test.describe("Payload Contracts: SpatiaLite", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_spatialite_query", {
-        query: 'SELECT label, AsText(geom) as wkt FROM "_e2e_spatial_test"',
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_query",
+        {
+          query: 'SELECT label, AsText(geom) as wkt FROM "_e2e_spatial_test"',
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.rowCount).toBe("number");
@@ -115,11 +136,15 @@ test.describe("Payload Contracts: SpatiaLite", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_spatialite_index", {
-        tableName: "_e2e_spatial_test",
-        geometryColumn: "geom",
-        action: "create",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_index",
+        {
+          tableName: "_e2e_spatial_test",
+          geometryColumn: "geom",
+          action: "create",
+        },
+      );
 
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
@@ -134,11 +159,15 @@ test.describe("Payload Contracts: SpatiaLite", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_spatialite_index", {
-        tableName: "_e2e_spatial_test",
-        geometryColumn: "geom",
-        action: "check",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_index",
+        {
+          tableName: "_e2e_spatial_test",
+          geometryColumn: "geom",
+          action: "check",
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.action).toBe("check");
@@ -153,11 +182,15 @@ test.describe("Payload Contracts: SpatiaLite", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_spatialite_analyze", {
-        analysisType: "spatial_extent",
-        sourceTable: "_e2e_spatial_test",
-        geometryColumn: "geom",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_analyze",
+        {
+          analysisType: "spatial_extent",
+          sourceTable: "_e2e_spatial_test",
+          geometryColumn: "geom",
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.analysisType).toBe("spatial_extent");
@@ -173,11 +206,15 @@ test.describe("Payload Contracts: SpatiaLite", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_spatialite_transform", {
-        operation: "centroid",
-        geometry1: "POLYGON((-73 40, -73 41, -74 41, -74 40, -73 40))",
-        srid: 4326,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_transform",
+        {
+          operation: "centroid",
+          geometry1: "POLYGON((-73 40, -73 41, -74 41, -74 40, -73 40))",
+          srid: 4326,
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.operation).toBe("centroid");
@@ -194,12 +231,16 @@ test.describe("Payload Contracts: SpatiaLite", () => {
 
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_spatialite_transform", {
-        operation: "buffer",
-        geometry1: "POINT(-73.9857 40.7484)",
-        distance: 0.01,
-        srid: 4326,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_spatialite_transform",
+        {
+          operation: "buffer",
+          geometry1: "POINT(-73.9857 40.7484)",
+          distance: 0.01,
+          srid: 4326,
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.operation).toBe("buffer");

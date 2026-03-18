@@ -11,7 +11,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -177,9 +182,13 @@ test.describe("Payload Contracts: FTS5", () => {
   test("cleanup: drop custom FTS table", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_drop_virtual_table", {
-        tableName: "_e2e_fts_test",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_drop_virtual_table",
+        {
+          tableName: "_e2e_fts_test",
+        },
+      );
       expectSuccess(payload);
     } finally {
       await client.close();

@@ -16,10 +16,7 @@ import { z } from "zod";
  *   export const MyOutputSchema = z.object({ ... }).extend(ErrorResponseFields.shape);
  */
 export const ErrorResponseFields = z.object({
-  error: z
-    .string()
-    .optional()
-    .describe("Error message (human-readable)"),
+  error: z.string().optional().describe("Error message (human-readable)"),
   code: z
     .string()
     .optional()
@@ -32,10 +29,7 @@ export const ErrorResponseFields = z.object({
     .boolean()
     .optional()
     .describe("Whether the error is recoverable"),
-  suggestion: z
-    .string()
-    .optional()
-    .describe("Suggested fix for the error"),
+  suggestion: z.string().optional().describe("Suggested fix for the error"),
   details: z
     .record(z.string(), z.unknown())
     .optional()

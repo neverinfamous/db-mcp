@@ -29,7 +29,11 @@
 
 ```javascript
 // Regular tables: use column names directly
-sqlite_json_group_array({ table: "events", valueColumn: "user_id", groupByColumn: "event_type" });
+sqlite_json_group_array({
+  table: "events",
+  valueColumn: "user_id",
+  groupByColumn: "event_type",
+});
 
 // JSON collections: use allowExpressions with json_extract for both columns
 // ⚠️ allowExpressions is for column extraction ONLY, NOT aggregate functions
@@ -42,8 +46,16 @@ sqlite_json_group_array({
 });
 
 // For aggregate values (COUNT, SUM, AVG), use aggregateFunction parameter instead
-sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" });
-sqlite_json_group_object({ table: "orders", keyColumn: "status", aggregateFunction: "SUM(total)" });
+sqlite_json_group_object({
+  table: "events",
+  keyColumn: "event_type",
+  aggregateFunction: "COUNT(*)",
+});
+sqlite_json_group_object({
+  table: "orders",
+  keyColumn: "status",
+  aggregateFunction: "SUM(total)",
+});
 ```
 
 - `sqlite_json_keys({ table, column, path? })` — get distinct keys of JSON objects

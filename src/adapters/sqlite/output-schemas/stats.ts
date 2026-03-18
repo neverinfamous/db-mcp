@@ -120,8 +120,6 @@ export const StatsFrequencyOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
-
 /**
  * sqlite_stats_percentile output (array version for multiple percentiles)
  */
@@ -202,8 +200,6 @@ export const StatsRegressionOutputSchema = z
     equation: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
-
-
 
 /**
  * sqlite_stats_outliers output

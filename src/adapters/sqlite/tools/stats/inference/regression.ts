@@ -1,11 +1,29 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import { validateWhereClause, sanitizeIdentifier } from "../../../../../utils/index.js";
-import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../../../utils/errors/index.js";
-import { validateColumnExists, validateNumericColumn, RegressionSchema } from "../helpers.js";
+import {
+  validateWhereClause,
+  sanitizeIdentifier,
+} from "../../../../../utils/index.js";
+import {
+  formatHandlerError,
+  DbMcpError,
+  ErrorCategory,
+} from "../../../../../utils/errors/index.js";
+import {
+  validateColumnExists,
+  validateNumericColumn,
+  RegressionSchema,
+} from "../helpers.js";
 import { StatsRegressionOutputSchema } from "../../../output-schemas/index.js";
-import { matrixTranspose, matrixMultiply, matrixInverse } from "../math-helpers.js";
+import {
+  matrixTranspose,
+  matrixMultiply,
+  matrixInverse,
+} from "../math-helpers.js";
 
 /**
  * Linear/polynomial regression analysis
@@ -77,7 +95,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
           throw new DbMcpError(
             `Insufficient data for degree ${degree} regression (need at least ${degree + 1} points, got ${pairs.length})`,
             "STATS_INSUFFICIENT_SAMPLE",
-            ErrorCategory.VALIDATION
+            ErrorCategory.VALIDATION,
           );
         }
 
@@ -90,7 +108,9 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         const XtX = matrixMultiply(Xt, X);
         const XtXInv = matrixInverse(XtX);
         const XtY = matrixMultiply(Xt, y);
-        const beta = matrixMultiply(XtXInv, XtY).map((r: number[]) => r[0] ?? 0);
+        const beta = matrixMultiply(XtXInv, XtY).map(
+          (r: number[]) => r[0] ?? 0,
+        );
 
         const meanY = pairs.reduce((s, p) => s + p.y, 0) / pairs.length;
         let ssRes = 0;

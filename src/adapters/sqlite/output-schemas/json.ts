@@ -247,9 +247,6 @@ export const JsonEachOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
-
-
 /**
  * sqlite_json_pretty output
  */

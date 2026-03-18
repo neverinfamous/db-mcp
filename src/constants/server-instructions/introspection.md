@@ -22,22 +22,36 @@ sqlite_cascade_simulator({ table: "users", operation: "drop", compact: true }); 
 
 ```javascript
 // Full schema in one call — compact: true omits column details, sections limits scope
-sqlite_schema_snapshot({ sections: ["tables", "indexes"], excludeSystemTables: true });
+sqlite_schema_snapshot({
+  sections: ["tables", "indexes"],
+  excludeSystemTables: true,
+});
 sqlite_schema_snapshot({ compact: true }); // lighter payload
 
 // Find constraint health issues — missing PKs, nullable FKs, unindexed FKs
 sqlite_constraint_analysis({ excludeSystemTables: true });
-sqlite_constraint_analysis({ table: "orders", checks: ["missing_pk", "unindexed_fk"] }); // limit scope
+sqlite_constraint_analysis({
+  table: "orders",
+  checks: ["missing_pk", "unindexed_fk"],
+}); // limit scope
 
 // Analyze DDL for SQLite-specific risks — does NOT execute the statements
-sqlite_migration_risks({ statements: ["ALTER TABLE users ADD COLUMN email TEXT", "DROP TABLE old_logs"] });
+sqlite_migration_risks({
+  statements: [
+    "ALTER TABLE users ADD COLUMN email TEXT",
+    "DROP TABLE old_logs",
+  ],
+});
 ```
 
 ## Diagnostics (3 tools)
 
 ```javascript
 // Fragmentation, per-table size breakdown, optimization recommendations
-sqlite_storage_analysis({ includeTableDetails: true, excludeSystemTables: true });
+sqlite_storage_analysis({
+  includeTableDetails: true,
+  excludeSystemTables: true,
+});
 sqlite_storage_analysis({ limit: 10 }); // top 10 tables only
 
 // Audit index effectiveness — find redundant, missing FK, unindexed large tables

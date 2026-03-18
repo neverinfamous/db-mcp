@@ -51,10 +51,18 @@ import {
 
 const log = logger.child("NATIVE_SQLITE");
 
-import { isDDL, applyCommonPragmas, autoEnableWal, detectAndSetJsonbSupport } from "../sqlite-helpers.js";
+import {
+  isDDL,
+  applyCommonPragmas,
+  autoEnableWal,
+  detectAndSetJsonbSupport,
+} from "../sqlite-helpers.js";
 
 // Query execution logic (extracted for modularity)
-import { nativeExecuteRead, nativeExecuteWrite } from "./native-query-executor.js";
+import {
+  nativeExecuteRead,
+  nativeExecuteWrite,
+} from "./native-query-executor.js";
 
 /**
  * Native SQLite Adapter using better-sqlite3
@@ -126,9 +134,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
 
       // Detect JSONB support based on SQLite version
       detectAndSetJsonbSupport(() => {
-        const versionResult = db
-          .prepare("SELECT sqlite_version()")
-          .get() as { "sqlite_version()": string } | undefined;
+        const versionResult = db.prepare("SELECT sqlite_version()").get() as
+          | { "sqlite_version()": string }
+          | undefined;
         return versionResult?.["sqlite_version()"] ?? "0.0.0";
       }, log);
 
@@ -160,10 +168,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     if (!this.db || !options) return;
 
     const db = this.db;
-    applyCommonPragmas(
-      { runPragma: (pragma) => db.pragma(pragma) },
-      options,
-    );
+    applyCommonPragmas({ runPragma: (pragma) => db.pragma(pragma) }, options);
 
     // Load native-only extensions
     if (options.spatialite) {
@@ -236,8 +241,6 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       return false;
     }
   }
-
-
 
   /**
    * Execute a read query
@@ -333,7 +336,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       throw new DbMcpError(
         "Invalid table name",
         "SQLITE_INVALID_TABLE",
-        ErrorCategory.VALIDATION
+        ErrorCategory.VALIDATION,
       );
     }
     const result = await this.executeReadQuery(
@@ -343,7 +346,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       throw new DbMcpError(
         `Table '${tableName}' does not exist`,
         "SQLITE_TABLE_NOT_FOUND",
-        ErrorCategory.RESOURCE
+        ErrorCategory.RESOURCE,
       );
     }
     return {
@@ -429,7 +432,17 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Get supported tool groups
    */
   override getSupportedToolGroups(): ToolGroup[] {
-    return ["core", "json", "text", "stats", "vector", "admin", "geo", "introspection", "migration"];
+    return [
+      "core",
+      "json",
+      "text",
+      "stats",
+      "vector",
+      "admin",
+      "geo",
+      "introspection",
+      "migration",
+    ];
   }
 
   /**

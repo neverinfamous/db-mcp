@@ -9,7 +9,13 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, callToolRaw, expectHandlerError } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  callToolRaw,
+  expectHandlerError,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -349,7 +355,10 @@ test.describe("Errors: Geo", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_geo_distance", {
-        lat1: 91, lon1: 0, lat2: 0, lon2: 0,
+        lat1: 91,
+        lon1: 0,
+        lat2: 0,
+        lon2: 0,
       });
       expectHandlerError(p);
     } finally {

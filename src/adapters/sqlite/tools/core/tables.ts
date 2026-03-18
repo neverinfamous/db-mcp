@@ -16,7 +16,10 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   CreateTableSchema,
   ListTablesSchema,
@@ -124,7 +127,9 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = CreateTableSchema.parse(resolveAliases(params, { tableName: "table" }));
+        input = CreateTableSchema.parse(
+          resolveAliases(params, { tableName: "table" }),
+        );
       } catch (error) {
         return { ...formatHandlerError(error), sql: "" };
       }
@@ -253,8 +258,7 @@ export function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.excludeSystemTables) {
         tables = tables.filter(
           (t) =>
-            !isSpatialiteSystemTable(t.name) &&
-            !t.name.startsWith("_mcp_"),
+            !isSpatialiteSystemTable(t.name) && !t.name.startsWith("_mcp_"),
         );
       }
 
@@ -290,7 +294,9 @@ export function createDescribeTableTool(
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = DescribeTableSchema.parse(resolveAliases(params, { tableName: "table" }));
+        input = DescribeTableSchema.parse(
+          resolveAliases(params, { tableName: "table" }),
+        );
       } catch (error) {
         return {
           ...formatHandlerError(error),
@@ -357,7 +363,9 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = DropTableSchema.parse(resolveAliases(params, { tableName: "table" }));
+        input = DropTableSchema.parse(
+          resolveAliases(params, { tableName: "table" }),
+        );
       } catch (error) {
         return formatHandlerError(error);
       }

@@ -20,7 +20,10 @@ import {
   getFilterSummary,
   getToolFilterFromEnv,
 } from "../filtering/tool-filter.js";
-import { INSTRUCTIONS, HELP_CONTENT } from "../constants/server-instructions.js";
+import {
+  INSTRUCTIONS,
+  HELP_CONTENT,
+} from "../constants/server-instructions.js";
 import type { ToolGroup } from "../types/index.js";
 import { logger } from "../utils/logger/index.js";
 import { SERVER_ICONS } from "../utils/icons.js";
@@ -256,15 +259,18 @@ export class DbMcpServer {
         "sqlite_help",
         "sqlite://help",
         {
-          description: "Critical gotchas, WASM vs Native comparison, and Code Mode API reference",
+          description:
+            "Critical gotchas, WASM vs Native comparison, and Code Mode API reference",
           mimeType: "text/markdown",
         },
         () => ({
-          contents: [{
-            uri: "sqlite://help",
-            mimeType: "text/markdown",
-            text: gotchasContent,
-          }],
+          contents: [
+            {
+              uri: "sqlite://help",
+              mimeType: "text/markdown",
+              text: gotchasContent,
+            },
+          ],
         }),
       );
     }
@@ -295,11 +301,13 @@ export class DbMcpServer {
           mimeType: "text/markdown",
         },
         () => ({
-          contents: [{
-            uri: `sqlite://help/${key}`,
-            mimeType: "text/markdown",
-            text: content,
-          }],
+          contents: [
+            {
+              uri: `sqlite://help/${key}`,
+              mimeType: "text/markdown",
+              text: content,
+            },
+          ],
         }),
       );
     }
@@ -331,7 +339,7 @@ export class DbMcpServer {
         throw new DbMcpError(
           `Unsupported transport: ${this.config.transport}`,
           "SERVER_START_FAILED",
-          ErrorCategory.CONFIGURATION
+          ErrorCategory.CONFIGURATION,
         );
     }
   }
@@ -378,8 +386,12 @@ export class DbMcpServer {
     const transport = new HttpTransport({
       port: this.config.port ?? 3000,
       ...(this.config.host !== undefined && { host: this.config.host }),
-      ...(this.config.authToken !== undefined && { authToken: this.config.authToken }),
-      ...(this.config.enableHSTS !== undefined && { enableHSTS: this.config.enableHSTS }),
+      ...(this.config.authToken !== undefined && {
+        authToken: this.config.authToken,
+      }),
+      ...(this.config.enableHSTS !== undefined && {
+        enableHSTS: this.config.enableHSTS,
+      }),
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
     });

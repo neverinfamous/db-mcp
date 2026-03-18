@@ -5,10 +5,20 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
-import { ReadQuerySchema, WriteQuerySchema, resolveAliases } from "../../types.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
+import {
+  ReadQuerySchema,
+  WriteQuerySchema,
+  resolveAliases,
+} from "../../types.js";
 import {
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
@@ -104,10 +114,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           finalQuery = `${finalQuery.trim()} LIMIT 1000`;
         }
 
-        const result = await adapter.executeReadQuery(
-          finalQuery,
-          input.params,
-        );
+        const result = await adapter.executeReadQuery(finalQuery, input.params);
 
         return {
           success: true,
@@ -142,7 +149,9 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input: { query: string; params?: unknown[] | undefined };
       try {
-        input = WriteQuerySchema.parse(resolveAliases(params, { sql: "query" }));
+        input = WriteQuerySchema.parse(
+          resolveAliases(params, { sql: "query" }),
+        );
       } catch (error) {
         return {
           ...formatHandlerError(error),

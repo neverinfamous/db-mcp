@@ -5,23 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased](https://github.com/neverinfamous/db-mcp/compare/v1.1.0...HEAD)
 
-### Changed
-
-- **Error Handling — Output Schema Migration** — All 10 output schema files (~115 schemas) now include `ErrorFieldsMixin` via `.extend(ErrorFieldsMixin.shape)`
-  - New `error-mixin.ts` defines shared mixin with all 6 `ErrorResponse` fields (`error`, `code`, `category`, `suggestion`, `recoverable`, `details`)
-  - Replaces inconsistent inline error fields (some schemas had `error`+`code`+`suggestion`, others had none)
-  - Ensures every tool's output schema can accommodate structured error responses
-- **Error Handling — Handler Migration to `formatHandlerError`** — ~108 catch blocks across ~25 handler files migrated to use `formatHandlerError()` directly
-  - Eliminates Pattern A re-wrapping (`const structured = formatError(error); return { success: false, message: structured.error }`)
-  - Eliminates Pattern B inline error construction
-  - All handler catch blocks now use `return formatHandlerError(error)` for consistent structured error responses
-  - Affected groups: core, admin, text, json-helpers, json-operations, introspection, fts, codemode, stats, vector, geo, migration
-  - 3 synchronous handlers wrapped with `Promise.resolve()` to satisfy `handler: () => Promise<unknown>` type constraint
+## [1.1.0](https://github.com/neverinfamous/db-mcp/releases/tag/v1.1.0) - 2026-03-18
 
 ### Added
 
+- **E2E Tests**: Ported 32 HTTP transport e2e tests from memory-journal-mcp covering streaming (raw SSE for GET /mcp and GET /sse), advanced session management (cross-protocol guard, sequential isolation, post-DELETE rejection), rate limiting (429 burst, Retry-After header, health exemption), and OAuth 2.1 discovery (RFC 9728 metadata, scopes, auth gating). Enriched existing health and security specs with timestamp validation, session ID checks, CORS header assertions, and HSTS opt-in testing. Added `startServer()`/`stopServer()` managed child-process lifecycle helpers.
+- **Integration Test Scripts**: Ported `test-instruction-levels.mjs` and `test-tool-annotations.mjs` terminal scripts from memory-journal-mcp to `test-server/`.
+- **MCP Compliance**: Added `READ_ONLY` annotations (`openWorldHint: false`) to 3 built-in server tools (`server_info`, `server_health`, `list_adapters`). Added missing `openWorldHint: false` to `sqlite_execute_code` codemode tool. All 118+ tools now have complete MCP annotations.
+- **Help Resources**: Added `sqlite://help` and `sqlite://help/{group}` MCP resources for on-demand tool reference documentation. Agents receive a slim ~680-char `instructions` payload pointing to these resources, instead of the previous ~3.5K+ payload that exceeded MCP client character limits and was silently truncated. Help resources are filtered by `--tool-filter` — only enabled groups get help resources registered.
+- **Help Resources**: Added `sqlite://help/introspection` and `sqlite://help/migration` help resources — these tool groups were missing dedicated help content, leaving HTTP/SSE/streaming users without access to reference documentation for 15 tools.
+- **E2E Tests**: Added 6 new spec files (~209 tests) automating the deterministic portions of manual agent testing prompts: `zod-sweep.spec.ts` (Zod validation sweep — every tool with required params called with `{}`), `errors-extended.spec.ts` (per-group domain error paths), `codemode.spec.ts` (sandbox lifecycle, security, readonly, workflows), `codemode-groups.spec.ts` (all 9 groups via `sqlite.*` API), `numeric-coercion.spec.ts` (string-typed numeric params), `boundary.spec.ts` (empty tables, NULLs, idempotency, edge cases). Added `expectHandlerError` and `callToolRaw` helpers to `helpers.ts`.
+- **E2E Tests**: Added 3 native-only spec files expanding systematic validation coverage to native-exclusive tools: `zod-sweep-native.spec.ts` (20 tools — FTS5, window functions, transactions, SpatiaLite called with `{}`), `errors-native.spec.ts` (20 error path tests — nonexistent tables/columns, invalid SQL/WKT, bad savepoints), `numeric-coercion-native.spec.ts` (8 tests — string-typed numeric params for window `windowSize`/`buckets`/`offset`/`limit`, FTS `limit`, transaction `mode`). Raises Zod sweep coverage from 83% to 98% of all tools.
+- **E2E Tests**: Added `help-resources.spec.ts` (11 tests — validates `sqlite://help` root + all 8 group help resources are listed, readable, and return non-empty markdown) and `aliases.spec.ts` (14 tests — validates backward-compatible parameter aliases `tableName`→`table`, `sql`→`query`, `name`→`indexName` across all 8 core tools including precedence and error paths).
+- **Annotation Invariant Tests**: Added `tool-annotations.test.ts` that enforces every tool in both WASM and Native adapters has `annotations` with explicit `readOnlyHint`. Includes per-group checks (all stats/introspection tools must be `readOnly`), specific window function assertions, and title validation. Would have caught the 6 missing window function annotations and the 7 missing transaction annotations.
+- **Output Schema Invariant Tests**: Added `tool-output-schemas.test.ts` that enforces every tool has an `outputSchema` defined, every schema is a valid Zod schema, every schema accepts error responses (`{success: false, error: "..."}`), schemas reference centralized `output-schemas/` exports (not inline `z.object()`), specific tool-to-schema wiring for ~70 tools, and no orphan schemas exist. Covers both WASM and Native adapters.
+- **E2E Tests**: Added 6 window function readonly smoke tests to `codemode.spec.ts` — verifies all window tools (`windowRowNumber`, `windowRank`, `windowLagLead`, `windowRunningTotal`, `windowMovingAvg`, `windowNtile`) work in `readonly: true` mode on native and are correctly unavailable on WASM. Uses dual-branch assertions (zero skips).
+- **Window Tool Tests**: Added annotation assertions to `ranking.test.ts` — verifies all 6 window tools have `readOnly` annotations with titles.
+- **E2E Tests (Prompt Audit)**: Added 12 gap-closing tests identified by auditing manual testing prompts against automated suites: (1) `codemode.spec.ts` — API discoverability tests for `sqlite.help()`, per-group `help()`, method aliases, convenience aliases, and all 9 groups returning `>0` methods; timeout enforcement for infinite loops. (2) `payloads-stats-advanced.spec.ts` — self-correlation edge case (column1 === column2 → ≈1.0). (3) `payloads-fts.spec.ts` — FTS5 boolean AND/NOT operators. (4) `payloads-migration.spec.ts` — duplicate version string rejection. (5) `boundary.spec.ts` — vector empty table edge cases (count, search, stats, dimensions on table with 0 vectors). (6) New `codemode-introspection.spec.ts` (~16 tests) — introspection code-mode-only params (`sections`, `compact`, `checks`, `table`, `includeTableDetails`, `limit`, `direction`). (7) New `transactions-nested.spec.ts` (~4 tests) — nested savepoint data correctness (rollback_to sp2 keeps sp1 data; rollback_to sp1 undoes everything after sp1). (8) New `integration-workflows.spec.ts` (~8 tests) — cross-group pipelines (Core→JSON→Stats, Core→Vector→Text, Admin→Introspection health check, Core+Stats cross-validation, data integrity verification).
+- **E2E Tests (Resource + Prompt Depth)**: Added 13 gap-closing tests by auditing `test-resources.md` and `test-prompts.md` against existing specs. Resources (R1–R9): schema table count + names, templated reads (`sqlite://table/test_products/schema` + `test_orders`), nonexistent table error, index name assertions (`idx_orders_status`, `idx_products_category`), health backend info, meta PRAGMA fields (`page_size`), views empty array, insights write+read cycle via `sqlite_append_insight`, help keyword assertions ("gotcha", "code mode", "wasm"). Prompts (P1–P4): data-fetching prompts embed real table names (`explain_schema` contains "test_products"), argsSchema on prompts with required args (query_builder ≥3, data_analysis ≥1, explain_schema 0), missing required args graceful handling, deeper content assertions (debug_query reflects submitted SQL, migration reflects change description).
 - **Error Handling — `TransactionError` Subclass** — New `TransactionError` class in `utils/errors/classes.ts` for commit/rollback/savepoint failures, using `QUERY` category with `recoverable: true`
 - **Error Handling — `ErrorContext` Interface** — New `ErrorContext` interface in `utils/errors/format.ts` for optional tool/table/sql context on error formatting calls
 - **Error Handling — `formatHandlerError` Export** — Canonical cross-project name for the primary error formatter; `formatError` remains as an alias
@@ -34,219 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **OAuth — Transport-Agnostic Auth** — Added `AuthenticatedContext`, `createAuthenticatedContext()`, `validateAuth()`, `formatOAuthError()` to decouple auth from Express
 - **OAuth — Resource Server Enhancements** — Added `isScopeSupported()`, `getWellKnownPath()`, `resource_documentation`, `resource_signing_alg_values_supported` to RFC 9728 metadata
 - **OAuth — Unit Test Coverage** — Added 8 unit test files for complete auth module coverage: scopes, scope-map, auth-context, errors, oauth-resource-server, middleware, token-validator, authorization-server-discovery
-
-### Changed
-
-- **Performance Audit Fix — Async File I/O** — Replaced synchronous `fs.readFileSync` and `fs.writeFileSync` with `fs.promises.readFile` and `fs.promises.writeFile` in `sqlite-adapter.ts` to prevent event loop blocking during database initialization and teardown.
-- **Code Quality Audit — Standardized Error** — Replaced an instance of generic `Error` in `sqlite_stats_regression` (inference.ts) with `DbMcpError` using `STATS_INSUFFICIENT_SAMPLE` and `VALIDATION` category.
-- **Code Quality Audit — Logger Module Split** — Split monolithic `logger.ts` (543 lines) into `utils/logger/` directory
-  - `types.ts`: `LogLevel`, `LogModule`, `LogContext` type definitions
-  - `error-codes.ts`: `ErrorCode` type, `createErrorCode()`, and `ERROR_CODES` constant map
-  - `module-logger.ts`: `ModuleLogger` class for module-scoped logging
-  - `logger.ts`: Core `Logger` class with sanitization and dual-mode output
-  - `index.ts`: Barrel re-export with default logger instance and env initialization
-  - Updated 30 consumer imports across source and test files
-
-### Fixed
-
-- **Code Quality Audit — Magic JSON-RPC Error Code** — Replaced 4 remaining inline `-32000` literals with `JSONRPC_SERVER_ERROR` constant in `session.ts`
-
-### Changed
-
-- **Code Quality Audit — Enhanced Error Handling** — Replaced 35+ instances of generic `throw new Error()` with enhanced `DbMcpError` (and subclasses like `ValidationError`) across the codebase
-  - Affected areas: `HttpTransport`, `DbMcpServer`, `SandboxPool`, `SchemaManager`, `native-sqlite-adapter`, and numerous tool modules (`window.ts`, `geo.ts`, `inference.ts`, `validate.ts`, etc.)
-  - Ensures all errors follow the structured `DbMcpError` format with appropriate module-prefixed error codes and ErrorCategory classifications
-
-### Security
-
-- **Code Quality Audit — Table Name Validation** — Added regex guard (`/^[a-zA-Z_][a-zA-Z0-9_]*$/`) to native adapter's `describeTable` fallback
-  - WASM adapter already had this guard; native adapter's fallback path was missing it
-
-### Added
-
 - **Transport Feature Backport** — `trustProxy` config option for X-Forwarded-For client IP extraction behind reverse proxies
 - **Transport Feature Backport** — `enableHSTS` / `hstsMaxAge` config options (HSTS now opt-in, was always-on)
 - **Transport Feature Backport** — Wildcard subdomain CORS matching (e.g., `*.example.com`)
 - **Transport Feature Backport** — New `middleware.test.ts` with 14 unit tests for `getClientIp()` and `matchesCorsOrigin()`
-
-### Changed
-
-- **Code Quality Audit — Shared WAL/JSONB Helpers** — Extracted `autoEnableWal()` and `detectAndSetJsonbSupport()` into `sqlite-helpers.ts`
-  - Both WASM and native adapters now delegate to shared helpers instead of duplicating logic
-- **Code Quality Audit — Native Query Executor** — Extracted `nativeExecuteRead()`, `nativeExecuteWrite()`, `nativeExecuteGeneral()` into `native-query-executor.ts`
-  - Mirrors the existing WASM `query-executor.ts` pattern; `native-sqlite-adapter.ts` reduced from 653 to ~555 lines
-- **Code Quality Audit — Transport Type Adapters** — Created `type-adapters.ts` with `asIncoming()` and `asServerResponse()`
-  - Replaced 16 inline `as unknown as` casts across `session.ts`
-- **Code Quality Audit — Query Validation Extraction** — Extracted `validateQuery()` and `DANGEROUS_SQL_PATTERNS` into `query-validation.ts`
-  - `database-adapter.ts` reduced from 564 to ~520 lines
-- **Code Quality Audit — LogModule Type** — Added `NATIVE_SQLITE` and `HTTP` to the `LogModule` union type
-- **Code Quality Audit — JSON-RPC Constants** — Added `JSONRPC_SERVER_ERROR` and `JSONRPC_INTERNAL_ERROR` to `transports/http/types.ts`
-  - Replaced inline magic numbers in `session.ts`
-
-### Fixed
-
-- **Code Quality Audit** — Removed unused deprecated `SERVER_INSTRUCTIONS` export from `server-instructions.ts` (zero consumers)
-- **Code Quality Audit** — `executeGeneral()` in `query-executor.ts` now throws `QueryError` with logging (was bare `Error`)
-- **Code Quality Audit** — `validateQuery()` in `database-adapter.ts` now throws `ValidationError` instead of bare `Error`
-- **Code Quality Audit** — `ensureConnected()` / `ensureDb()` in both adapters now throw `ConnectionError` instead of bare `Error`
-- **Transport Feature Backport** — Changed `Referrer-Policy` from `strict-origin-when-cross-origin` to `no-referrer` (API server has no referrer to share)
-
-### Changed
-
-- **Code Quality Audit — Base Class `ensureConnected()`** — Concrete `ensureConnected()` method on `DatabaseAdapter` with `ConnectionError`
-  - Both adapters override with `protected override` calling `super.ensureConnected()` + db-null check
-  - Eliminates duplicated connection-check logic between WASM and native adapters
-- **Code Quality Audit — Transaction Method Extraction** — Extracted 6 transaction functions into `transaction-methods.ts`
-  - `beginTransaction`, `commitTransaction`, `rollbackTransaction`, `savepoint`, `releaseSavepoint`, `rollbackToSavepoint`
-  - `native-sqlite-adapter.ts` delegates via thin one-liner methods; reduces file from 645 to ~605 lines
-- **Code Quality Audit — PRAGMA Deduplication** — Extracted `PragmaExecutor` interface and `applyCommonPragmas()` into `sqlite-helpers.ts`
-  - Eliminates duplicated walMode/foreignKeys/busyTimeout/cacheSize PRAGMA logic between WASM and native adapters
-  - Both adapters now delegate to the shared helper with a thin PragmaExecutor wrapper
-- **Code Quality Audit — Extension Loading Extraction** — Created `sqlite-native/extensions.ts` with `loadSpatialite()` and `loadCsvExtension()`
-  - Moved SpatiaLite and CSV extension loading (candidate paths, Windows PATH augmentation, try-next-path loop) out of `native-sqlite-adapter.ts`
-  - `native-sqlite-adapter.ts` reduced from 731 to 578 lines; `sqlite-adapter.ts` from 556 to 484 lines
-
-- **Code Quality Audit — Row Mapping Deduplication** — Extracted `rowsFromSqlJsResult()` helper in `sqlite-adapter.ts`
-  - Replaced 2 identical row-mapping closures in `executeReadQuery` and `executeQuery`
-- **Code Quality Audit — Query Executor Extraction** — Extracted `executeRead`, `executeWrite`, `executeGeneral` into `adapters/sqlite/query-executor.ts`
-  - `sqlite-adapter.ts` reduced from 679 to ~510 lines; adapter retains validation, connection, and schema cache responsibility
-- **Code Quality Audit — HTTP Timeout Constants** — Named magic timeout values in `transports/http/types.ts`
-  - `HTTP_REQUEST_TIMEOUT_MS` (120s), `HTTP_KEEP_ALIVE_TIMEOUT_MS` (65s), `HTTP_HEADERS_TIMEOUT_MS` (66s)
-  - `transport.ts` now imports named constants instead of using inline numbers
-- **Code Quality Audit — Types File Split** — Split `types/index.ts` (528 lines) into 5 sub-modules
-  - `database.ts`, `server.ts`, `auth.ts`, `filtering.ts`, `adapter.ts` with barrel re-export
-  - Zero consumer import changes — all continue importing from `types/index.js`
-- **Code Quality Audit** — Removed unused `dotenv` production dependency (never imported in source)
-- **Code Quality Audit** — Fixed stale `--postgresql` reference in CLI no-database warning; server only supports SQLite
-- **Code Quality Audit** — Removed extraneous blank lines in `sqlite-adapter.ts`
-- **Code Quality Audit** — Removed duplicate "Server Host Binding" CHANGELOG entry
-- **Code Quality Audit — Native Adapter Error Handling** — Replaced plain `Error` throws with typed error classes in `native-sqlite-adapter.ts`
-  - `connect()`: `ConfigurationError` for type mismatch, `ConnectionError` for connection failures
-  - `executeReadQuery()` / `executeWriteQuery()`: `QueryError` with SQL context and module-prefixed error codes
-  - Matches the WASM adapter's error handling, which already used typed errors
-
-### Changed
-
-- **Code Quality Audit — Extension Loading Deduplication** — Extracted `tryLoadExtension()` helper and `EXTENSIONS_DIR` constant in `native-sqlite-adapter.ts`
-  - SpatiaLite and CSV extension loading shared identical try-next-path loop, logging, and `__dirname` computation
-  - Both now call the shared helper; ~50 lines of duplication removed
-- **Code Quality Audit — Migration Record Mapping** — Extracted `toMigrationRecord()` into `migration/schemas.ts`
-  - Replaced 5 identical inline row→record mapping blocks in `tracking.ts`
-- **Code Quality Audit — API Constants Extraction** — Moved `METHOD_ALIASES`, `GROUP_EXAMPLES`, `POSITIONAL_PARAM_MAP`, `GROUP_PREFIX_MAP`, `KEEP_PREFIX_GROUPS` from `api.ts` to new `codemode/api-constants.ts`
-  - `api.ts` reduced from 610 to ~330 lines
-- **Code Quality Audit — `validateColumnExists` Deduplication** — Extracted shared `validateColumnExists()` and `validateColumnsExist()` into `adapters/sqlite/tools/column-validation.ts`
-  - Removed identical 40-line copies from `geo.ts`, `text/helpers.ts`, and `stats/helpers.ts`
-  - All three modules now re-export from the shared utility; no consumer import changes needed
-- **Code Quality Audit — `normalizeParams` Deduplication** — Extracted shared `normalizeSqliteParams()` into `adapters/sqlite-helpers.ts`
-  - Removed identical copies from `sqlite-adapter.ts` and `native-sqlite-adapter.ts`
-  - Both adapters now import from the shared module
-  - Also removed unnecessary `DatabaseType as DbType` alias in native adapter
-- **Code Quality Audit — `DatabaseType` Narrowing** — Narrowed `DatabaseType` union from 6 variants (`sqlite | postgresql | mysql | mongodb | redis | sqlserver`) to `"sqlite"` only
-  - Other database types would require separate MCP server projects; unused variants were dead code
-- **Code Quality Audit — `DatabaseConfig` Cleanup** — Removed unused `host`, `port`, `database`, `username`, `password` fields
-  - SQLite uses `connectionString` (file path) and `options`; relational connection fields were never referenced
-- **Code Quality Audit — `SqliteAdapter.getInfo()` Override Removed** — Deleted override that silently dropped `capabilities` and `toolGroups` fields from the parent `DatabaseAdapter.getInfo()`
-- **Code Quality Audit — Magic Values Named** — Replaced inline magic numbers with named constants
-  - `geo.ts`: `111` → `KM_PER_DEGREE_LAT` (km per degree of latitude for bounding box pre-filter)
-  - `worker-sandbox.ts`: `1000` → `TIMEOUT_GRACE_MS` (extra grace period for worker cleanup)
-- **Code Quality Audit — Stale TODO Removed** — Removed misleading `TODO: Add other database adapters` from `cli.ts`
-  - Additional adapters belong in separate MCP server projects, not this codebase
-
-### Security
-
-- **Code Quality Audit — Missing WHERE Clause Validation** — Added `validateWhereClause()` to 15 SQL interpolation points across 5 JSON tool files
-  - `json-operations/crud.ts` (7 handlers), `json-operations/query.ts` (5 handlers), `json-operations/transform.ts` (2 handlers)
-  - `json-helpers/read.ts` (1 handler), `json-helpers/write.ts` (2 handlers)
-  - These tools interpolated `input.whereClause` directly into SQL without validation, unlike text/stats/vector/window tools which all called `validateWhereClause()`
-
-### Fixed
-
-- **Version SSoT Mismatch** — Synced hardcoded `0.1.0` to `1.0.2` (matching `package.json`) in `index.ts`, `McpServer.ts`, and `cli.ts`
-- **Duplicate Error Class Hierarchy** — Removed 6 duplicate error classes from `types/index.ts` (simple constructor) and consolidated into `utils/errors.ts` (enhanced: category, suggestions, recoverable, `toResponse()`); `types/index.ts` now re-exports from `utils/errors.ts`; `auth/errors.ts` updated to extend enhanced `DbMcpError`; added `AUTHENTICATION`/`AUTHORIZATION` to `ErrorCategory` enum
-- **Bare `z.object({})` Schemas** — Added `.strict()` to 5 schemas (`transaction_commit`, `transaction_rollback`, `MigrationInitSchema`, `MigrationStatusSchema`, `pragma_database_list`) to reject extraneous properties
-
-### Changed
-
-- **File Naming Convention (Round 2)** — Renamed 3 camelCase files to lowercase-with-dashes per project convention
-  - Source: `insightsManager.ts` → `insights-manager.ts`, `resourceAnnotations.ts` → `resource-annotations.ts`
-  - Test: `insightsManager.test.ts` → `insights-manager.test.ts`
-  - Updated 6 files with corrected import paths
-- **`isDDL()` Helper Deduplication** — Extracted shared `isDDL()` function into `adapters/sqlite-helpers.ts`
-  - Removed identical copies from `sqlite-adapter.ts` and `native-sqlite-adapter.ts`
-  - Both adapters now import from the shared module
-- **Version Constant Deduplication** — `VERSION` and `NAME` now read from `package.json` at runtime via new `version.ts` module
-  - Eliminated 3 hardcoded `"1.0.2"` strings in `index.ts`, `mcp-server.ts`, and `cli.ts`
-  - `index.ts` re-exports from `version.ts`; `mcp-server.ts` and `cli.ts` import directly
-  - Future version bumps only need to update `package.json`
-- **File Size Refactoring** — Split 4 oversized files into modular subdirectories
-  - `utils/errors.ts` (559 lines) → `errors/` directory (5 modules + barrel), updated 43 import paths
-  - `introspection/diagnostics.ts` (738 lines) → `diagnostics/` directory (3 tool modules + barrel)
-  - `introspection/analysis.ts` (720 lines) → `analysis/` directory (3 tool modules + barrel)
-  - `introspection/graph.ts` (590 lines) → `graph/` directory (helpers + tools + barrel)
-
-- **File Naming Convention** — Renamed 16 PascalCase files (11 source + 5 test) to lowercase-with-dashes per project convention
-  - Source: `DatabaseAdapter.ts`, `McpServer.ts`, `SqliteAdapter.ts`, `NativeSqliteAdapter.ts`, `SchemaManager.ts`, `ToolFilter.ts`, `ToolConstants.ts`, `ServerInstructions.ts`, `OAuthResourceServer.ts`, `AuthorizationServerDiscovery.ts`, `TokenValidator.ts`
-  - Tests: `DatabaseAdapter.test.ts`, `SchemaManager.test.ts`, `SqliteAdapter.test.ts`, `NativeSqliteAdapter.test.ts`, `ToolFilter.test.ts`
-  - Updated 82 files with corrected import paths
-- **Dead Code Cleanup** — Removed extra blank lines in `native-sqlite-adapter.ts`
-
-### Security
-
-- **Security Audit Remediation** — Addressed 4 findings from comprehensive security audit
-  - Fixed transitive `hono` vulnerability (GHSA-v8w9-8mx6-g223) via `npm audit fix`
-  - Added HTTP server timeouts: `setTimeout(120s)`, `keepAliveTimeout(65s)`, `headersTimeout(66s)` to prevent slowloris-style DoS attacks
-  - SHA-pinned all GitHub Actions across 4 CI workflows (`lint-and-test.yml`, `codeql.yml`, `publish-npm.yml`, `docker-publish.yml`) to prevent supply chain attacks via tag hijacking
-  - Hardened Docker Scout security gate to fail-fast on non-timeout scan errors instead of silently continuing
-
-### Fixed
-
-- **`sqlite_migration_risks` DROP INDEX Detection** — Now returns `medium` risk for `DROP INDEX` statements
-  - Previously no risk entry was generated for `DROP INDEX` (fell through all pattern checks)
-  - Now detects `DROP INDEX` with `riskLevel: "medium"`, `category: "index_removal"`, and actionable mitigation advice
-- **`ERROR_SUGGESTIONS` Insufficient Data Pattern** — Regression tool's "Insufficient data" error now returns `VALIDATION_ERROR` instead of `UNKNOWN_ERROR`
-  - `sqlite_stats_regression` throws `Error("Insufficient data for degree N regression")` when data points < degree+1
-  - Message didn't match any `ERROR_SUGGESTIONS` pattern and fell through to `ErrorCategory.INTERNAL` → `UNKNOWN_ERROR`
-  - Added `/insufficient data/i` pattern mapping to `ErrorCategory.VALIDATION` with actionable suggestion
-- **`sqlite_json_set` / `sqlite_json_remove` No-Match Warning** — Returns `warning` field when `rowsAffected: 0`
-  - Previously returned `{success: true, rowsAffected: 0}` with no indication that nothing was changed
-  - Now includes `warning: "No rows matched the WHERE clause — no changes were made"`
-  - Mirrors the same pattern already applied to `sqlite_json_update` and `sqlite_json_merge`
-- **`ERROR_SUGGESTIONS` Column Name Pattern Coverage** — Added `has no column named` pattern for INSERT/UPDATE column errors
-  - SQLite uses "has no column named X" for INSERT/UPDATE column errors, distinct from "no such column" used by SELECT
-  - Previously classified as `UNKNOWN_ERROR` (no pattern match); now returns `RESOURCE_ERROR` with actionable suggestion
-- **`sqlite_text_validate` Missing `customPattern` Error Code** — Now returns `VALIDATION_ERROR` instead of `UNKNOWN_ERROR`
-  - Handler threw generic `Error` for missing `customPattern` when `pattern='custom'`; `formatError()` classified it as `UNKNOWN_ERROR`
-  - Changed to throw `ValidationError` with proper `VALIDATION_ERROR` code and `validation` category
-- **`sqlite_vector_store` / `sqlite_vector_batch_store` DDL-Based Dimension Check** — Dimension validation now reads table schema DDL as primary source
-  - Previously read `dimensions` from existing rows only — bypassed on empty tables or tables with mismatched row data
-  - Now parses `DEFAULT N` from `CREATE TABLE` SQL via `sqlite_master` for authoritative validation
-  - Falls back to existing row data when DDL lacks a DEFAULT clause
-  - INSERT now explicitly sets `dimensions` column to actual vector length
-- **`sqlite_vector_search` Skipped Vector Reporting** — Response now includes `skipped` count and `warning` when vectors fail similarity calculation
-  - Previously, vectors with dimension mismatches or parse errors were silently dropped (try/catch returned null)
-  - Now surfaces a `warning: "N vector(s) skipped due to dimension mismatch or parse errors"` field in the response
-  - Helps callers diagnose why `count` may be less than expected
-- **`sqlite_json_update` / `sqlite_json_merge` No-Match Warning** — Returns `warning` field when `rowsAffected: 0`
-  - Previously returned `{success: true, rowsAffected: 0}` with no indication that nothing was changed
-  - Now includes `warning: "No rows matched the WHERE clause — nothing was updated/merged"`
-  - Helps callers distinguish between a successful no-op and an actual problem
-- **`sqlite_stats_histogram` Empty Table Phantom Bucket** — Histogram on empty table no longer returns a phantom `{min: 0, max: 0, count: 1}` bucket
-  - Root cause: `MIN()`/`MAX()` return NULL on empty tables, which defaulted to 0 via `?? 0`, making `bucketSize === 0` and returning a hardcoded `count: 1`
-  - Now counts non-null rows via `COUNT(column)` and returns empty `buckets: []` when no data exists
-  - Uniform data (all values identical) now returns actual row count instead of hardcoded 1
-- **`sqlite_vector_store` / `sqlite_vector_batch_store` Dimension Mismatch Validation** — Storing vectors with wrong dimensions now returns a structured error
-  - Previously accepted any vector length regardless of table's configured `dimensions` column (e.g., storing 2-dim vector in 4-dim table succeeded silently)
-  - Now reads the table's `dimensions` column and returns `{success: false, code: "DIMENSION_MISMATCH"}` when vector length doesn't match
-  - `sqlite_vector_search` already validated dimensions at comparison time (via helper functions), so this adds write-side enforcement
-
-
-- **Introspection Tools WASM FTS5 Crash** — 5 introspection tools no longer crash when the database contains FTS5 virtual tables in WASM mode
-  - `sqlite_dependency_graph`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_schema_snapshot`, `sqlite_constraint_analysis` all failed with "no such module: fts5" because internal queries (`SELECT COUNT(*)`, `PRAGMA table_info`, `PRAGMA foreign_key_list`) hit FTS5 virtual tables that WASM SQLite can't resolve
-  - Added try/catch around per-table queries in `buildForeignKeyGraph()` (graph.ts) and `schemaSnapshot`/`constraintAnalysis` handlers (analysis.ts)
-  - FTS5 tables are still included in results (with rowCount 0 and columnCount 0) but no longer crash the entire operation
-
-### Added
-
 - **Playwright E2E Test Suite** — 12 spec files, dual-adapter (WASM + Native) and dual-transport (SSE + Streamable HTTP) coverage
   - `health.spec.ts`: Health endpoint and MCP initialization handshake
   - `protocols.spec.ts`: Streamable HTTP and Legacy SSE protocol validation (session IDs, invalid JSON, missing params)
@@ -335,74 +129,136 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Precedence: CLI flag > `MCP_HOST` env var > `HOST` env var > default (`0.0.0.0`)
   - Essential for containerized deployments where binding to all interfaces is required
 
-### Performance
-
-- **Compact JSON Serialization (R-1)** — Tool responses now use compact `JSON.stringify(result)` instead of pretty-printed `JSON.stringify(result, null, 2)`
-  - Reduces serialization overhead by ~15-20% on large payloads; MCP clients parse JSON programmatically
-  - Error responses retain pretty-print for debugging readability
-- **Incremental TypeScript Builds (B-1)** — Added `incremental: true` and `tsBuildInfoFile` to `tsconfig.json`
-  - Subsequent builds only recheck changed files, significantly reducing dev-loop build times
-- **Vitest Thread Pool (T-1)** — Configured `pool: "threads"` in `vitest.config.ts`
-  - Enables worker thread execution for test parallelism on multi-core machines
-- **`isDDL()` Helper Extraction (S-2/R-4)** — Replaced 3× duplicated DDL detection blocks with module-scope `isDDL()` function
-  - Eliminates redundant `sql.trim().toUpperCase()` allocations in `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`
-- **SchemaManager Array Pre-Allocation (R-7)** — `getAllIndexes()` now pre-allocates result array with `new Array(rows.length)`
-  - Avoids incremental `push()` resizing; improved documentation of PRAGMA batching constraints
-- **CI `node_modules` Caching (CI-1)** — Added `actions/cache@v4` for `node_modules` in `lint-and-test.yml`
-  - Keyed on `package-lock.json` hash per Node.js version; skips `npm ci` on cache hit (~20-30s savings per run)
-- **CI Benchmark Tracking (CI-2)** — New `benchmarks` job in `lint-and-test.yml` (main branch only)
-  - Runs `npm run bench` and uploads results as artifacts with 30-day retention for regression detection
-
-- **NativeSqliteAdapter SchemaManager Integration** — Schema metadata operations now use TTL-based caching
-  - `listTables()`, `describeTable()`, `getSchema()`, `getAllIndexes()` delegate through `SchemaManager` (5s TTL)
-  - Eliminates redundant `PRAGMA table_info()` queries on every metadata request
-  - Auto-invalidates schema cache on DDL operations (`CREATE`, `ALTER`, `DROP`)
-  - Matches the caching pattern already used by the WASM `SqliteAdapter`
-- **Cached Tool Definitions** — `NativeSqliteAdapter.getToolDefinitions()` now lazily caches results
-  - Tool definitions are immutable per adapter instance; avoids 13-way array spread on repeat calls
-- **Logger Taint-Breaking Optimization** — `writeToStderr()` uses `"".concat()` instead of per-character copy
-  - Previous O(n) character-by-character array+join replaced with single string concatenation
-  - Still breaks CodeQL taint tracking without the allocation overhead
-- **Logger Sensitive Key Matching** — Pre-computed `SENSITIVE_KEYS_ARRAY` at module scope
-  - Avoids spreading `Set` into a new array on every context key during `sanitizeContext()`
-- **Logger Regex Pre-Compilation** — `sanitizeMessage()` and `sanitizeStack()` regex patterns hoisted to module scope
-  - Avoids re-constructing `RegExp` objects (via `String.fromCharCode()`) on every log call
-- **SQL Validation Regex Pre-Compilation** — `DANGEROUS_SQL_PATTERNS` hoisted to module scope in `DatabaseAdapter.ts`
-  - Avoids re-allocating 5 `RegExp` objects per `validateQuery()` call
-- **CORS Preflight Caching** — Added `Access-Control-Max-Age: 86400` to OPTIONS responses
-  - Browsers cache preflight results for 24 hours, reducing repeated OPTIONS roundtrips
-- **Docker HTTP Healthcheck** — Healthcheck now validates `/health` endpoint for HTTP transport
-  - Falls back to basic Node.js check for stdio mode
-
-### Dependencies
-
-- `@types/node`: 25.3.5 → 25.4.0
-- `jose`: 6.2.0 → 6.2.1
-- `typescript-eslint`: 8.56.1 → 8.57.0
-- Dockerfile `tar` dependency pinned to `7.5.11` for security compliance
-- `@types/node`: 25.3.3 → 25.3.5
-- `eslint`: 10.0.2 → 10.0.3
-- `jose`: 6.1.3 → 6.2.0
-- Dockerfile `tar` dependency pinned to `7.5.10` for security compliance
-- Removed unused `pg` and `@types/pg` dependencies (never imported in source)
-- `@eslint/js`: 9.39.2 → 10.0.1 (major)
-- `eslint`: 9.39.2 → 10.0.2 (major/patch)
-- `@types/node`: 25.3.0 → 25.3.3
-- `rimraf`: 6.1.2 → 6.1.3
-- `typescript-eslint`: 8.55.0 → 8.56.1
-- `@modelcontextprotocol/sdk`: 1.27.0 → 1.27.1
-- `@types/pg`: 8.16.0 → 8.18.0
-- `globals`: 17.3.0 → 17.4.0
-- `pg`: 8.18.0 → 8.20.0
-- `sql.js`: 1.14.0 → 1.14.1
-- `@modelcontextprotocol/sdk`: 1.25.3 → 1.26.0
-- `@types/node`: 25.2.0 → 25.2.3
-- `dotenv`: 17.2.3 → 17.3.1
-- `sql.js`: 1.13.0 → 1.14.0
-- `typescript-eslint`: 8.54.0 → 8.55.0
-
 ### Changed
 
+- **Inline Schema Consolidation**: Relocated 7 migration output schemas (`MigrationRecordEntry`, `MigrationInitOutputSchema`, `MigrationRecordOutputSchema`, `MigrationApplyOutputSchema`, `MigrationRollbackOutputSchema`, `MigrationHistoryOutputSchema`, `MigrationStatusOutputSchema`) from `tools/migration/schemas.ts` to centralized `output-schemas/migration.ts` — the last tool group without dedicated output schema files. Original location now re-exports for backward compatibility.
+- **Inline Schema Consolidation**: Extracted 9 inline `outputSchema: z.object()` definitions from introspection tool handlers into centralized `output-schemas/introspection.ts` — `DependencyGraphOutputSchema`, `TopologicalSortOutputSchema`, `CascadeSimulatorOutputSchema`, `SchemaSnapshotOutputSchema`, `ConstraintAnalysisOutputSchema`, `MigrationRisksOutputSchema`, `StorageAnalysisOutputSchema`, `IndexAuditOutputSchema`, `QueryPlanOutputSchema`. All output schemas are now consistently defined in centralized files with named exports — zero inline definitions remain across all tool groups.
+- **Inline Schema Consolidation**: Extracted 8 remaining inline `outputSchema: z.object()` definitions from tool handlers into centralized `output-schemas/` files — `virtual.ts` (7 schemas: `ListVirtualTablesOutputSchema`, `VirtualTableInfoOutputSchema`, `DropVirtualTableOutputSchema`, `CreateCsvTableOutputSchema`, `AnalyzeCsvSchemaOutputSchema`, `CreateRtreeTableOutputSchema`, `CreateSeriesTableOutputSchema`), `text.ts` (1 schema: `TextValidateOutputSchema`), and `stats.ts` (1 schema: `StatsHypothesisOutputSchema`). All output schemas are now consistently defined in centralized files with named exports — zero inline definitions remain.
+- **Complexity Refactor**: Addressed source code complexity by splitting files exceeding logical grouping boundaries into modular directories with barrel exports:
+  - Extracted query execution, initialization, and connection lifecycle handlers from `sqlite-adapter.ts`.
+  - modularized authentication routines in `middleware.ts` and `scopes.ts`.
+  - Refined administration and stats tools (`backup.ts`, `tracking.ts`, `vtable.ts`, `inference.ts`).
+  - Extracted resource, tool, and prompt registration logic from `database-adapter.ts`.
+- **Code Quality Audit**: Addressed technical debt across the codebase by replacing generic `any` casts with type-safe structures, normalizing test file naming from `.test` to `kebab-case`, extracting massive `native-sqlite-adapter.ts` tooling logic into `registration`, and removing unsafe type imports.
+- **Code Quality Audit**: Removed dead code by deleting unused barrel files (`src/auth/index.ts` and `src/transports/index.ts`).
+- **Performance Audit**: Disabled source maps generation in the production build to significantly reduce bundle size (from 3.7MB to 1.5MB), optimized sandbox serialization to reduce runtime memory allocations, and added caching to schema introspection tools via `SchemaManager`.
+- **Unified Audit**: Enabled code splitting in `tsup.config.ts` to deduplicate shared modules across the 3 entry points.
+- **MCP Compliance**: Added `openWorldHint: false` to all tool annotation presets and `openWorldHint` to the `ToolAnnotations` type interface.
+- **MCP Compliance**: Added `title` to built-in server tools (`server_info`, `server_health`, `list_adapters`).
+- **MCP Compliance**: Added `error` field to `ErrorResponseFields` mixin (was 5 fields, now 6 per mcp-builder §2.2.2).
+- **MCP Compliance**: Created `src/auth/transport-agnostic.ts` re-exporting non-Express auth utilities for transport portability.
+- **MCP Compliance**: Renamed `formatHandlerErrorResponse` → `formatHandlerError` across all tool handlers, tests, and barrel exports per mcp-builder §2.2.2 single-formatter standard. Old name preserved as deprecated alias in `format.ts`.
+- **MCP Compliance**: Wired prompt `argsSchema` to SDK registration — prompts with required arguments now expose typed schemas via `prompts/list`. All-optional and zero-arg prompts correctly omit `argsSchema` per SDK gotcha (§1.4).
+- **MCP Compliance**: Consolidated duplicate `ErrorFieldsMixin` / `ErrorResponseFields` to single source of truth in `src/utils/errors/error-response-fields.ts` with re-export alias.
+- **Help Resource Architecture**: Replaced tiered `--instruction-level` CLI flag and `INSTRUCTION_LEVEL` env var with pull-based `sqlite://help` resources. Removed `instructionLevel` from `McpServerConfig`. Replaced monolithic `server-instructions.md` with per-group `.md` files in `src/constants/server-instructions/`. Generate script updated to produce slim `INSTRUCTIONS` constant + `HELP_CONTENT` map.
+- **HSTS**: Wired `--enable-hsts` CLI flag and `MCP_ENABLE_HSTS` env var to the HTTP transport — previously defined in types but never reachable from the CLI.
+- **Error Handling — Output Schema Migration** — All 10 output schema files (~115 schemas) now include `ErrorFieldsMixin` via `.extend(ErrorFieldsMixin.shape)`
+  - New `error-mixin.ts` defines shared mixin with all 6 `ErrorResponse` fields (`error`, `code`, `category`, `suggestion`, `recoverable`, `details`)
+  - Replaces inconsistent inline error fields (some schemas had `error`+`code`+`suggestion`, others had none)
+  - Ensures every tool's output schema can accommodate structured error responses
+- **Error Handling — Handler Migration to `formatHandlerError`** — ~108 catch blocks across ~25 handler files migrated to use `formatHandlerError()` directly
+  - Eliminates Pattern A re-wrapping (`const structured = formatError(error); return { success: false, message: structured.error }`)
+  - Eliminates Pattern B inline error construction
+  - All handler catch blocks now use `return formatHandlerError(error)` for consistent structured error responses
+  - Affected groups: core, admin, text, json-helpers, json-operations, introspection, fts, codemode, stats, vector, geo, migration
+  - 3 synchronous handlers wrapped with `Promise.resolve()` to satisfy `handler: () => Promise<unknown>` type constraint
+- **Performance Audit Fix — Async File I/O** — Replaced synchronous `fs.readFileSync` and `fs.writeFileSync` with `fs.promises.readFile` and `fs.promises.writeFile` in `sqlite-adapter.ts` to prevent event loop blocking during database initialization and teardown.
+- **Code Quality Audit — Standardized Error** — Replaced an instance of generic `Error` in `sqlite_stats_regression` (inference.ts) with `DbMcpError` using `STATS_INSUFFICIENT_SAMPLE` and `VALIDATION` category.
+- **Code Quality Audit — Logger Module Split** — Split monolithic `logger.ts` (543 lines) into `utils/logger/` directory
+  - `types.ts`: `LogLevel`, `LogModule`, `LogContext` type definitions
+  - `error-codes.ts`: `ErrorCode` type, `createErrorCode()`, and `ERROR_CODES` constant map
+  - `module-logger.ts`: `ModuleLogger` class for module-scoped logging
+  - `logger.ts`: Core `Logger` class with sanitization and dual-mode output
+  - `index.ts`: Barrel re-export with default logger instance and env initialization
+  - Updated 30 consumer imports across source and test files
+- **Code Quality Audit — Enhanced Error Handling** — Replaced 35+ instances of generic `throw new Error()` with enhanced `DbMcpError` (and subclasses like `ValidationError`) across the codebase
+  - Affected areas: `HttpTransport`, `DbMcpServer`, `SandboxPool`, `SchemaManager`, `native-sqlite-adapter`, and numerous tool modules (`window.ts`, `geo.ts`, `inference.ts`, `validate.ts`, etc.)
+  - Ensures all errors follow the structured `DbMcpError` format with appropriate module-prefixed error codes and ErrorCategory classifications
+- **Code Quality Audit — Shared WAL/JSONB Helpers** — Extracted `autoEnableWal()` and `detectAndSetJsonbSupport()` into `sqlite-helpers.ts`
+  - Both WASM and native adapters now delegate to shared helpers instead of duplicating logic
+- **Code Quality Audit — Native Query Executor** — Extracted `nativeExecuteRead()`, `nativeExecuteWrite()`, `nativeExecuteGeneral()` into `native-query-executor.ts`
+  - Mirrors the existing WASM `query-executor.ts` pattern; `native-sqlite-adapter.ts` reduced from 653 to ~555 lines
+- **Code Quality Audit — Transport Type Adapters** — Created `type-adapters.ts` with `asIncoming()` and `asServerResponse()`
+  - Replaced 16 inline `as unknown as` casts across `session.ts`
+- **Code Quality Audit — Query Validation Extraction** — Extracted `validateQuery()` and `DANGEROUS_SQL_PATTERNS` into `query-validation.ts`
+  - `database-adapter.ts` reduced from 564 to ~520 lines
+- **Code Quality Audit — LogModule Type** — Added `NATIVE_SQLITE` and `HTTP` to the `LogModule` union type
+- **Code Quality Audit — JSON-RPC Constants** — Added `JSONRPC_SERVER_ERROR` and `JSONRPC_INTERNAL_ERROR` to `transports/http/types.ts`
+  - Replaced inline magic numbers in `session.ts`
+- **Code Quality Audit — Base Class `ensureConnected()`** — Concrete `ensureConnected()` method on `DatabaseAdapter` with `ConnectionError`
+  - Both adapters override with `protected override` calling `super.ensureConnected()` + db-null check
+  - Eliminates duplicated connection-check logic between WASM and native adapters
+- **Code Quality Audit — Transaction Method Extraction** — Extracted 6 transaction functions into `transaction-methods.ts`
+  - `beginTransaction`, `commitTransaction`, `rollbackTransaction`, `savepoint`, `releaseSavepoint`, `rollbackToSavepoint`
+  - `native-sqlite-adapter.ts` delegates via thin one-liner methods; reduces file from 645 to ~605 lines
+- **Code Quality Audit — PRAGMA Deduplication** — Extracted `PragmaExecutor` interface and `applyCommonPragmas()` into `sqlite-helpers.ts`
+  - Eliminates duplicated walMode/foreignKeys/busyTimeout/cacheSize PRAGMA logic between WASM and native adapters
+  - Both adapters now delegate to the shared helper with a thin PragmaExecutor wrapper
+- **Code Quality Audit — Extension Loading Extraction** — Created `sqlite-native/extensions.ts` with `loadSpatialite()` and `loadCsvExtension()`
+  - Moved SpatiaLite and CSV extension loading (candidate paths, Windows PATH augmentation, try-next-path loop) out of `native-sqlite-adapter.ts`
+  - `native-sqlite-adapter.ts` reduced from 731 to 578 lines; `sqlite-adapter.ts` from 556 to 484 lines
+- **Code Quality Audit — Row Mapping Deduplication** — Extracted `rowsFromSqlJsResult()` helper in `sqlite-adapter.ts`
+  - Replaced 2 identical row-mapping closures in `executeReadQuery` and `executeQuery`
+- **Code Quality Audit — Query Executor Extraction** — Extracted `executeRead`, `executeWrite`, `executeGeneral` into `adapters/sqlite/query-executor.ts`
+  - `sqlite-adapter.ts` reduced from 679 to ~510 lines; adapter retains validation, connection, and schema cache responsibility
+- **Code Quality Audit — HTTP Timeout Constants** — Named magic timeout values in `transports/http/types.ts`
+  - `HTTP_REQUEST_TIMEOUT_MS` (120s), `HTTP_KEEP_ALIVE_TIMEOUT_MS` (65s), `HTTP_HEADERS_TIMEOUT_MS` (66s)
+  - `transport.ts` now imports named constants instead of using inline numbers
+- **Code Quality Audit — Types File Split** — Split `types/index.ts` (528 lines) into 5 sub-modules
+  - `database.ts`, `server.ts`, `auth.ts`, `filtering.ts`, `adapter.ts` with barrel re-export
+  - Zero consumer import changes — all continue importing from `types/index.js`
+- **Code Quality Audit** — Fixed stale `--postgresql` reference in CLI no-database warning; server only supports SQLite
+- **Code Quality Audit** — Removed extraneous blank lines in `sqlite-adapter.ts`
+- **Code Quality Audit** — Removed duplicate "Server Host Binding" CHANGELOG entry
+- **Code Quality Audit — Native Adapter Error Handling** — Replaced plain `Error` throws with typed error classes in `native-sqlite-adapter.ts`
+  - `connect()`: `ConfigurationError` for type mismatch, `ConnectionError` for connection failures
+  - `executeReadQuery()` / `executeWriteQuery()`: `QueryError` with SQL context and module-prefixed error codes
+  - Matches the WASM adapter's error handling, which already used typed errors
+- **Code Quality Audit — Extension Loading Deduplication** — Extracted `tryLoadExtension()` helper and `EXTENSIONS_DIR` constant in `native-sqlite-adapter.ts`
+  - SpatiaLite and CSV extension loading shared identical try-next-path loop, logging, and `__dirname` computation
+  - Both now call the shared helper; ~50 lines of duplication removed
+- **Code Quality Audit — Migration Record Mapping** — Extracted `toMigrationRecord()` into `migration/schemas.ts`
+  - Replaced 5 identical inline row→record mapping blocks in `tracking.ts`
+- **Code Quality Audit — API Constants Extraction** — Moved `METHOD_ALIASES`, `GROUP_EXAMPLES`, `POSITIONAL_PARAM_MAP`, `GROUP_PREFIX_MAP`, `KEEP_PREFIX_GROUPS` from `api.ts` to new `codemode/api-constants.ts`
+  - `api.ts` reduced from 610 to ~330 lines
+- **Code Quality Audit — `validateColumnExists` Deduplication** — Extracted shared `validateColumnExists()` and `validateColumnsExist()` into `adapters/sqlite/tools/column-validation.ts`
+  - Removed identical 40-line copies from `geo.ts`, `text/helpers.ts`, and `stats/helpers.ts`
+  - All three modules now re-export from the shared utility; no consumer import changes needed
+- **Code Quality Audit — `normalizeParams` Deduplication** — Extracted shared `normalizeSqliteParams()` into `adapters/sqlite-helpers.ts`
+  - Removed identical copies from `sqlite-adapter.ts` and `native-sqlite-adapter.ts`
+  - Both adapters now import from the shared module
+  - Also removed unnecessary `DatabaseType as DbType` alias in native adapter
+- **Code Quality Audit — `DatabaseType` Narrowing** — Narrowed `DatabaseType` union from 6 variants (`sqlite | postgresql | mysql | mongodb | redis | sqlserver`) to `"sqlite"` only
+  - Other database types would require separate MCP server projects; unused variants were dead code
+- **Code Quality Audit — `DatabaseConfig` Cleanup** — Removed unused `host`, `port`, `database`, `username`, `password` fields
+  - SQLite uses `connectionString` (file path) and `options`; relational connection fields were never referenced
+- **Code Quality Audit — `SqliteAdapter.getInfo()` Override Removed** — Deleted override that silently dropped `capabilities` and `toolGroups` fields from the parent `DatabaseAdapter.getInfo()`
+- **Code Quality Audit — Magic Values Named** — Replaced inline magic numbers with named constants
+  - `geo.ts`: `111` → `KM_PER_DEGREE_LAT` (km per degree of latitude for bounding box pre-filter)
+  - `worker-sandbox.ts`: `1000` → `TIMEOUT_GRACE_MS` (extra grace period for worker cleanup)
+- **Code Quality Audit — Stale TODO Removed** — Removed misleading `TODO: Add other database adapters` from `cli.ts`
+  - Additional adapters belong in separate MCP server projects, not this codebase
+- **File Naming Convention (Round 2)** — Renamed 3 camelCase files to lowercase-with-dashes per project convention
+  - Source: `insightsManager.ts` → `insights-manager.ts`, `resourceAnnotations.ts` → `resource-annotations.ts`
+  - Test: `insightsManager.test.ts` → `insights-manager.test.ts`
+  - Updated 6 files with corrected import paths
+- **`isDDL()` Helper Deduplication** — Extracted shared `isDDL()` function into `adapters/sqlite-helpers.ts`
+  - Removed identical copies from `sqlite-adapter.ts` and `native-sqlite-adapter.ts`
+  - Both adapters now import from the shared module
+- **Version Constant Deduplication** — `VERSION` and `NAME` now read from `package.json` at runtime via new `version.ts` module
+  - Eliminated 3 hardcoded `"1.0.2"` strings in `index.ts`, `mcp-server.ts`, and `cli.ts`
+  - `index.ts` re-exports from `version.ts`; `mcp-server.ts` and `cli.ts` import directly
+  - Future version bumps only need to update `package.json`
+- **File Size Refactoring** — Split 4 oversized files into modular subdirectories
+  - `utils/errors.ts` (559 lines) → `errors/` directory (5 modules + barrel), updated 43 import paths
+  - `introspection/diagnostics.ts` (738 lines) → `diagnostics/` directory (3 tool modules + barrel)
+  - `introspection/analysis.ts` (720 lines) → `analysis/` directory (3 tool modules + barrel)
+  - `introspection/graph.ts` (590 lines) → `graph/` directory (helpers + tools + barrel)
+- **File Naming Convention** — Renamed 16 PascalCase files (11 source + 5 test) to lowercase-with-dashes per project convention
+  - Source: `DatabaseAdapter.ts`, `McpServer.ts`, `SqliteAdapter.ts`, `NativeSqliteAdapter.ts`, `SchemaManager.ts`, `ToolFilter.ts`, `ToolConstants.ts`, `ServerInstructions.ts`, `OAuthResourceServer.ts`, `AuthorizationServerDiscovery.ts`, `TokenValidator.ts`
+  - Tests: `DatabaseAdapter.test.ts`, `SchemaManager.test.ts`, `SqliteAdapter.test.ts`, `NativeSqliteAdapter.test.ts`, `ToolFilter.test.ts`
+  - Updated 82 files with corrected import paths
+- **Dead Code Cleanup** — Removed extra blank lines in `native-sqlite-adapter.ts`
 - **Dockerfile Builder Stage** — Removed unnecessary `apk upgrade --no-cache` from builder stage (DK-3)
   - Builder is discarded after multi-stage build; security patches only needed in production stage
   - Saves ~5-10s per Docker build
@@ -415,7 +271,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `vector.ts` (826) → `vector/` (4 files: `schemas.ts`, `helpers.ts`, `tools.ts`, `index.ts`)
     - `core.ts` (770) → `core/` (4 files: `queries.ts`, `tables.ts`, `indexes.ts`, `index.ts`)
   - All consumer imports updated (6 source files + 1 test); no public API changes
-
 - **Configurable CORS Origins** — CORS refactored from hardcoded `Access-Control-Allow-Origin: *` to configurable `corsOrigins` array; supports explicit origins with `Access-Control-Allow-Credentials: true`; removed duplicated CORS middleware
 - **Root Endpoint** — `GET /` now lists Legacy SSE endpoints and updated description to "dual HTTP transport"
 - **Deterministic Error Handling** — Structured error responses across all tools
@@ -455,6 +310,178 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Missing Annotations**: Added `readOnly(...)` MCP annotations to all 6 window function tools (`sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`) — these were the only stats-group tools without `annotations`, causing the code mode readonly guard (fail-closed `isWriteTool()`) to incorrectly block them in `readonly: true` mode despite being pure SELECT queries.
+- **Missing Annotations**: Added `write(...)` MCP annotations to all 7 transaction tools (`sqlite_transaction_begin`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute`) — discovered by the new `tool-annotations.test.ts` invariant test. While the fail-closed `isWriteTool()` guard correctly blocked these in readonly mode (they are write tools), the missing annotations violated the structural invariant and prevented proper tool discoverability.
+- **Output Schema Strictness**: Made domain-specific fields optional in 24 output schemas across `core.ts` (5), `admin.ts` (9), `virtual.ts` (9), and `native.ts` (1) — fields like `rowCount`, `rows`, `tables`, `count`, `columns`, `indexes`, `integrity`, `databases`, `options`, `message`, `durationMs`, `insightCount`, `statementsExecuted` were required but absent from error responses (`{success: false, error: "..."}`), causing raw MCP `-32602` output validation errors on error paths. Discovered by the new `tool-output-schemas.test.ts` invariant test.
+- **Output Schema Enforcement**: Wired existing `TransactionBeginOutputSchema`, `TransactionCommitOutputSchema`, `TransactionRollbackOutputSchema`, `TransactionSavepointOutputSchema`, `TransactionReleaseOutputSchema`, `TransactionRollbackToOutputSchema`, and `TransactionExecuteOutputSchema` to their corresponding 7 transaction tool definitions — schemas were defined in `native.ts` but never referenced, so the MCP SDK could not enforce output validation on these tools.
+- **Input Coercion**: Added `z.preprocess()` coercion for numeric parameters (`limit`, `gridSize`, `srid`, `distance`, `simplifyTolerance`, `centerLat`, `centerLon`, `radius`, `minLat`, `maxLat`, `minLon`, `maxLon`, `lat1`–`lon2`) and enum parameters (`unit`, `geometryType`, `analysisType`, `action`, `format`, `operation`) in geo and SpatiaLite schemas — 22 params total. Non-numeric strings fall back to defaults, invalid enum values fall back to defaults instead of producing raw MCP `-32602` validation frames.
+- **Input Coercion**: Added `z.preprocess(coerceBoolean, ...)` coercion for boolean parameters (`forceReload`, `excludeSelf`, `includeGeometry`) in SpatiaLite schemas — non-boolean strings now coerce to defaults instead of producing raw MCP `-32602` validation frames.
+- **Validation Leaks**: Fixed Zod output schema errors in JSON tools (`sqlite_json_valid`, `sqlite_json_validate_path`) and core tools (`sqlite_drop_table`, `sqlite_create_index`, `sqlite_drop_index`) that caused the server to return raw MCP `-32602` validation frames instead of structured domain errors, by marking conditional message fields as optional.
+- **Input Coercion**: Handled invalid numeric input types gracefully in JSON operations (`sqlite_json_each`, `sqlite_json_query`, `sqlite_json_analyze_schema`, `sqlite_json_storage_info`) and migration tools (`sqlite_migration_rollback`, `sqlite_migration_history`) by replacing `z.coerce.number()` with `z.preprocess()` for `limit`, `sampleSize`, `id`, and `offset` parameters — non-numeric values now silently fall back to defaults instead of producing raw MCP `-32602` validation frames.
+- **Validation Leaks**: Fixed Zod output schema errors in text tools (`sqlite_regex_match`, `sqlite_regex_extract`, `sqlite_text_split`, `sqlite_text_replace`, `sqlite_text_normalize`, `sqlite_text_validate`) and FTS tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) that caused raw MCP `-32602` output validation errors on error paths, by marking non-error fields as optional so `{success: false, error: "..."}` responses pass output validation.
+- **Input Coercion**: Added `z.preprocess()` coercion for all numeric parameters in text tool schemas (`limit`, `maxDistance`, `groupIndex`, `start`, `length`, `fuzzyThreshold`, `maxInvalid`) and FTS search `limit` — non-numeric string values now silently fall back to defaults instead of producing raw MCP `-32602` input validation frames.
+- **Input Coercion**: Added `z.preprocess()` coercion for all numeric parameters in stats schemas (`limit`, `buckets`, `n`, `threshold`, `maxOutliers`, `degree`, `expectedMean`) and window function schemas (`limit`, `offset`, `windowSize`, `buckets`) — 19 params total. Moved `maxOutliers` min/max refinements (`.min(1).max(500)`) to handler validation to avoid Zod refinement leaks.
+- **Input Coercion**: Added `z.preprocess()` coercion for numeric parameters (`limit`, `sampleSize`, `dimensions`) and enum parameters (`metric`) in vector tool schemas — non-numeric strings fall back to defaults, invalid metric values fall back to `"cosine"` default instead of producing raw MCP `-32602` validation frames.
+- **Input Coercion**: Added `z.preprocess()` coercion for required array parameters in vector tool schemas (`vector`, `queryVector`, `vector1`, `vector2`, `items`, `ids`) — non-array inputs are coerced to empty arrays to pass SDK `.partial()` validation, then handler-level guards reject them with structured errors instead of raw MCP `-32602` validation frames.
+- **Dimension Validation**: Fixed `sqlite_vector_batch_store` only validating the first item's vector dimensions against the table schema — now validates all items individually with per-item error reporting (e.g., `"Dimension mismatch at item[1]"`).
+- **Input Coercion**: Added `z.preprocess()` coercion for numeric parameters in admin schemas (`maxErrors`, `mask`) and virtual table schemas (`limit`, `start`, `stop`, `step`, `sampleRows`, `dimensions`) — 12 params total. Moved `dimensions` min/max refinements (`.min(2).max(5)`) to handler validation to prevent Zod refinement leaks.
+- **Input Coercion**: Added `z.preprocess()` coercion for `timeout` parameter in `sqlite_execute_code` and moved `.int().min(1000).max(30000)` refinements to handler validation.
+- **Refinement Leaks**: Removed `.regex()` from `SavepointSchema.name` in transaction tools — handler already validates with inline regex check. Prevents raw MCP `-32602` on invalid savepoint names.
+- **Refinement Leaks**: Added `z.preprocess()` enum coercion for `BeginTransactionSchema.mode` — invalid enum values now coerce to `undefined` and fall to the `"deferred"` default instead of producing raw MCP `-32602` validation frames.
+- **Error Handling**: Added missing `try/catch` wrappers to admin handlers (`integrityCheck`, `pragmaCompileOptions`, `pragmaDatabaseList`, `pragmaOptimize`, `dbstat`, `vacuum`) — uncaught errors now return structured `{success: false}` responses via `formatHandlerError`.
+- **JSON Serialization**: Fixed an issue in `sqlite_json_query` where querying a column converted to JSONB would return the raw binary Buffer instead of the parsed JSON string by explicitly wrapping the column selection in `json()`.
+- **PRAGMA/EXPLAIN LIMIT**: Fixed `sqlite_read_query` appending `LIMIT 1000` to PRAGMA and EXPLAIN statements, causing syntax errors. Safety limit injection now only applies to SELECT and WITH queries.
+- **Instruction Generation**: Fixed `enabledTools` set in server constructor passing group names (e.g., `"core"`, `"json"`) instead of actual tool names, causing the Active Tools summary at `full` instruction level to never match any tools.
+- **Restore Data Loss**: Fixed `sqlite_restore` silently dropping user-created indexes, views, and triggers during backup→restore cycles. The handler only restored tables (`type='table'` from `sqlite_master`), permanently losing all other schema objects. Now restores indexes, views, and triggers from the backup source after table restoration.
+- **Error Formatting**: Standardized error handling across 11 admin/virtual tool handlers (`create_view`, `drop_view`, `generate_series`, `create_rtree_table`, `create_series_table`, `virtual_table_info`, `drop_virtual_table`, `pragma_table_info`, `append_insight`, `dbstat`, `vacuum`, `analyze_csv_schema`, `create_csv_table`, `list_virtual_tables`, `list_views`, `transaction_execute`) — replaced raw `error.message` (which produces unreadable Zod JSON arrays for validation errors) with `formatHandlerError()` for clean structured error responses.
+- **Empty Path Validation**: Added pre-validation guards to `sqlite_backup`, `sqlite_restore`, and `sqlite_verify_backup` — empty/blank path strings now return clear `"targetPath/sourcePath/backupPath is required"` errors instead of confusing CWD resolution errors.
+- **Test Prompt Corrections**: Fixed 15 parameter name mismatches in the admin group test checklist (`test-group-tools.md`): `viewName`/`selectQuery` for views, `tableName` for virtual tables, `targetPath`/`sourcePath`/`backupPath` for backup tools, `filePath` for CSV tools, `insight` for `append_insight`, `pragma` for `pragmaSettings`, plain string array for `transaction_execute`. Added required `start`/`stop` params for `create_series_table`, noted it creates a regular table (gotcha #15), and added absolute path warnings for backup and CSV tools.
+- **Extension Path Resolution**: Fixed `EXTENSIONS_DIR` in `extensions.ts` resolving to the wrong directory after tsup code splitting — the relative path `../../../extensions` was correct for the source tree depth (3 levels) but wrong for compiled output in `dist/` (1 level). Replaced with `findProjectRoot()` that walks up from the compiled file's directory to locate `package.json`, making CSV and future extension loading resilient to any bundler output structure. SpatiaLite was unaffected because it loaded via `SPATIALITE_PATH` env var.
+- **Validation Leak**: Fixed `sqlite_pragma_settings({})` producing a raw MCP error by moving `PragmaSettingsSchema.parse()` inside the `try/catch` block — Zod validation errors now return structured `{success: false}` responses.
+- **Error Field Consistency**: Changed error field from `message` to `error` in `{success: false}` responses for `sqlite_verify_backup`, `sqlite_create_rtree_table`, `sqlite_create_series_table`, and `sqlite_transaction_execute` — all error responses now consistently use the `error` field per structured error convention.
+- **Payload Optimization**: Changed `sqlite_dbstat` default for `excludeSystemTables` from `false` to `true` — SpatiaLite system tables (37 objects including `spatial_ref_sys` at 1434 pages) are now excluded by default, dramatically reducing response size.
+- **Misleading Note**: Fixed `sqlite_pragma_database_list` showing a "WASM virtual filesystem paths" note in Native mode on Windows — the path comparison now normalizes slashes before comparing, so the note only appears when internal paths genuinely differ (i.e., in WASM mode).
+- **Error Field Consistency**: Fixed `sqlite_append_insight` empty-insight error response using `message` instead of `error` field for `{success: false}` responses — now consistent with the structured error convention used by all other tools.
+- **Test Prompt**: Fixed `test-tools.md` item 9 annotation verification instruction from uncallable `tools/list` protocol method to the existing `test-tool-annotations.mjs` terminal script. Fixed duplicate item numbering (two item 9s) and broke items out of the CAUTION blockquote where they were incorrectly nested.
+- **Validation Leak**: Fixed `sqlite_execute_code({})` producing a raw MCP error by moving `ExecuteCodeSchema.parse()` inside the `try/catch` block — Zod validation errors now return structured `{success: false}` responses. Also made `metrics` optional in `ExecuteCodeOutputSchema` so error responses without metrics pass output schema validation.
+- **Input Coercion**: Added `z.preprocess()` coercion for enum parameters in introspection tool schemas — `operation` (`sqlite_cascade_simulator`), `direction` (`sqlite_topological_sort`), `sections` array (`sqlite_schema_snapshot`), and `checks` array (`sqlite_constraint_analysis`). Invalid enum values now coerce to defaults or are filtered out instead of producing raw MCP `-32602` validation frames.
+- **Payload Optimization**: Added `excludeSystemTables` parameter (default: `true`) to `sqlite_schema_snapshot`, `sqlite_storage_analysis`, `sqlite_index_audit`, and `sqlite_constraint_analysis`. SpatiaLite system tables, views, indexes, and triggers are now excluded by default, reducing response sizes by 47–91% in databases with SpatiaLite loaded. Pass `excludeSystemTables: false` to restore the previous behavior.
+- **Error Message Leak**: Fixed `sqlite_spatialite_query` exposing internal better-sqlite3 implementation detail ("This statement does not return data. Use run() instead") when called with non-SELECT statements — now returns a clear `"This tool only supports SELECT queries"` message with `QUERY_NOT_SELECT` error code.
+- **Silent Enum Coercion**: Fixed `sqlite_spatialite_index` silently coercing invalid `action` values (e.g., `"invalid_action"`) to the default `"create"` instead of returning a validation error. Replaced `z.preprocess(coerceIndexAction, z.enum(...))` with `z.string()` + handler-level validation, consistent with the pattern used by `analysisType`, `operation`, and `format` in other SpatiaLite tools.
+- **Output Schema Leak**: Fixed `sqlite_cascade_simulator` with `compact: true` producing a raw MCP `-32602` output validation error — the `path` field in the output schema was required but `compact` mode strips it from affected entries. Made `path` optional in `CascadeSimulatorOutputSchema`.
+- **Payload Optimization**: Added `excludeSystemTables` parameter (default: `true`) to `sqlite_dependency_graph` and `sqlite_topological_sort`. SpatiaLite system tables are now excluded by default, reducing `dependency_graph` from ~8KB→~1.5KB and `topological_sort` from ~3.5KB→~0.7KB in databases with SpatiaLite loaded. Pass `excludeSystemTables: false` to restore the previous behavior.
+- **Output Schema Leak**: Fixed `sqlite_geo_distance` returning `from` and `to` coordinate objects not declared in `GeoDistanceOutputSchema` — the `additionalProperties: false` constraint caused the MCP framework to reject all successful responses with `-32602`. Removed redundant coordinate echo fields.
+- **Field Naming**: Fixed `sqlite_geo_nearby` using `_distance` field name on result items instead of `distance` declared in `GeoWithinRadiusOutputSchema` — clients relying on the schema-declared field would find it absent.
+- **Strict Schema Leak**: Removed `.strict()` from all tool input schemas across all groups — core (10), json (14), stats/window (6), admin/transactions (7+1), geo/SpatiaLite (7), migration (2). `additionalProperties: false` caused the MCP SDK to reject unrecognized keys with raw `-32602` errors before handlers could catch them.
+- **Error Consistency**: Standardized ~20 error return paths across SpatiaLite tool handlers (`tools.ts`, `analysis.ts`) to include `code`, `category`, and `recoverable` fields — previously returned bare `{success: false, error: "..."}` without the structured metadata used by all other tool groups. Fixed `sqlite_spatialite_load` failure response using `message` field instead of `error` field.
+- **Output Schema Leak**: Fixed `sqlite_json_valid` and `sqlite_json_validate_path` returning raw MCP `-32602` output validation errors on every call — output schemas were missing `success`, `message`, `path`, and `issues` fields that the handlers return.
+- **Output Schema Leak**: Fixed `sqlite_optimize`, `sqlite_vacuum`, and `sqlite_analyze_csv_schema` returning raw MCP `-32602` output validation errors — output schemas were missing `durationMs`, `message`, and `wasmLimitation` fields that the handlers return.
+- **Phantom Tool Names**: Fixed 11 non-existent tool names in help resource source files (`stats.md`, `text.md`, `geo.md`) that would mislead agents into calling tools that don't exist. Removed `sqlite_stats_covariance`, `sqlite_stats_z_score`, `sqlite_stats_moving_average`, `sqlite_text_pad`, `sqlite_text_template`, `sqlite_text_similarity`, `sqlite_text_word_count`, `sqlite_fts_count`, `sqlite_spatialite_status`. Renamed `sqlite_window_lead_lag` → `sqlite_window_lag_lead`. Added missing real tools to help content.
+- **Code Mode Groups**: Fixed `gotchas.md` listing only 7 Code Mode API groups — added missing `sqlite.introspection` and `sqlite.migration` which are real groups exposed by the sandbox API.
+- **Validation Leak**: Fixed `sqlite_json_normalize_column` producing a raw MCP `-32602` error when `outputFormat` receives an invalid enum value (e.g., `"invalid_format"`). Replaced `z.enum()` in the schema with `z.string()` and handler-side validation, consistent with the established pattern for enum coercion.
+- **Output Schema Alignment**: Added missing `warning` field to `JsonSetOutputSchema` and `JsonRemoveOutputSchema` — handlers return a `warning` property when 0 rows are affected, but the output schema did not declare it. Added missing `firstErrorDetail` field to `JsonNormalizeColumnOutputSchema`. Changed `outputFormat` in `JsonNormalizeColumnOutputSchema` from `z.enum()` to `z.string()` to match the input schema change.
+- **Missing Value Guards**: Added explicit `undefined` guards for payload parameters (`value` in `sqlite_json_set`, `sqlite_json_array_append`, `sqlite_json_update`; `mergeData` in `sqlite_json_merge`; `data` in `sqlite_json_insert`) — the SDK's `.partial()` makes all params optional, so omitting these previously caused a cryptic `"Cannot read properties of undefined"` error instead of a clear `"Missing required parameter: <name>"` structured response.
+- **Input Coercion**: Fixed `sqlite_text_substring` `start` parameter producing a raw MCP `-32602` error when receiving wrong-type input (e.g., `"abc"`). Changed inner schema from required `z.number()` to `z.number().optional()` and added handler-side validation so the preprocess coercion-to-undefined path returns a structured error.
+- **Output Schema Leak**: Fixed `sqlite_text_validate` returning undeclared `truncated` field when invalid results exceed `maxInvalid` — added `truncated: z.boolean().optional()` to the inline output schema.
+- **Silent Enum Coercion**: Fixed `sqlite_vector_search` and `sqlite_vector_distance` silently coercing invalid `metric` values (e.g., `"invalid_metric"`) to the default `"cosine"` instead of returning a validation error. Replaced `z.preprocess(coerceMetric, z.enum(...))` with `z.string()` + handler-level validation, consistent with the pattern used for SpatiaLite `action` and JSON `outputFormat`.
+- **E2E Test Flakiness**: Fixed intermittent 429 rate-limit and timeout failures in the Playwright test suite by bumping `MCP_RATE_LIMIT_MAX` from 1000 to 10000 (5× headroom), increasing global test timeout to 60s, and adding retry-with-backoff logic to the `createClient()` helper.
+- **Raw MCP Error**: Fixed `sqlite_analyze_csv_schema` propagating a raw MCP error when the CSV file does not exist at an absolute path — the `try` block had no `catch`, only a `finally`. Added a `catch` block returning structured `{success: false, error: "..."}`. Also changed `message` → `error` in relative-path and WASM-unavailable error returns for field consistency.
+- **Output Schema Wiring**: Wired `outputSchema` for 6 window function tools (`sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`) — schemas were defined in `native.ts` but never referenced. Updated 6 named schemas to match handler return shapes (added `rankType`, `direction`, `valueColumn`, `windowSize`, `buckets`; made `rowCount`/`rows` optional).
+- **Output Schema Wiring**: Created 7 new SpatiaLite output schemas (`SpatialiteLoadOutputSchema`, `SpatialiteCreateTableOutputSchema`, `SpatialiteQueryOutputSchema`, `SpatialiteIndexOutputSchema`, `SpatialiteAnalyzeOutputSchema`, `SpatialiteTransformOutputSchema`, `SpatialiteImportOutputSchema`) and wired them into all 7 SpatiaLite tool definitions — these were the only tool group without output schema enforcement.
+- **Inline Schema Consolidation**: Replaced 5 inline `z.object()` output schemas with named imports from `output-schemas/` — `sqlite_fuzzy_match`, `sqlite_phonetic_match`, `sqlite_text_normalize`, `sqlite_stats_regression`, `sqlite_stats_outliers`. Updated the corresponding named schemas (`FuzzySearchOutputSchema`, `SoundexOutputSchema`, `TextNormalizeOutputSchema`, `StatsRegressionOutputSchema`, `StatsOutliersOutputSchema`) to match actual handler return shapes.
+- **Dead Schema Removal**: Deleted 25 orphaned output schemas that had no corresponding tools: 9 vector (`VectorCreate`, `VectorInsert`, `VectorUpsert`, `CosineSimilarity`, `EuclideanDistance`, `DotProduct`, `VectorMagnitude`, `HybridSearch` + result), 3 stats (`StatsDescribe`, `StatsMode`, `StatsMedian`), 3 virtual (`GenerateDates`, `CteRecursive`, `PivotTable`), 3 geo (`GeoNearest` + result, `GeoPolygonContains`, `GeoEncode`), 2 text (`Levenshtein`, `TrigramSimilarity`), 2 JSON (`JsonTree`, `JsonPatch`), 1 FTS (`FtsOptimize`), 3 server (`ServerInfo`, `ServerHealth`, `ListAdapters` — built-in tools use `content` pattern, not `structuredContent`).
+- **API Consistency**: Renamed `valueColumn` → `column` in `RunningTotalSchema` and `MovingAverageSchema` input schemas (and all handler references) for consistency with the other 4 window function tools which all use `column`. Updated unit tests accordingly.
+- **Input Coercion**: Added case-insensitive coercion to `TextNormalizeSchema.mode` — uppercase values like `"NFC"` now coerce to `"nfc"` instead of failing Zod enum validation.
+- **Payload Optimization**: Changed `sqlite_list_tables` and `sqlite_get_indexes` defaults for `excludeSystemTables` / `excludeSystemIndexes` from `false` to `true` — SpatiaLite system tables (27 entries) and system indexes (4 entries) are now excluded by default, reducing `list_tables` from 38→11 entries and `get_indexes` from 8→4 entries. Pass `excludeSystemTables: false` / `excludeSystemIndexes: false` to restore the previous behavior.
+- **Validation Leak**: Added missing `try/catch` around `ListTablesSchema.parse()` in `sqlite_list_tables` handler — the only core tool handler without the defensive wrapper. Zod parse errors now return structured `{success: false}` responses instead of propagating as uncaught exceptions.
+- **Payload Optimization**: Filtered internal `_mcp_migrations` table from `sqlite_list_tables` default results — the db-mcp migration tracking table is now excluded alongside SpatiaLite system tables when `excludeSystemTables: true` (default). Tables prefixed with `_mcp_` are internal and not relevant to user workflows.
+- **API Consistency**: Renamed `tableName` → `table` in core tool input schemas (`sqlite_create_table`, `sqlite_describe_table`, `sqlite_drop_table`, `sqlite_get_indexes`, `sqlite_create_index`) to match the field naming convention used by all other tool groups (json, text, stats, vector, admin).
+- **Backward Compatibility**: Added `resolveAliases()` parameter alias support to all 8 core tool handlers and 2 window function handlers — legacy parameter names (`tableName`, `sql`, `name`, `valueColumn`) are transparently mapped to canonical names (`table`, `query`, `indexName`, `column`) before Zod parsing. Canonical names take precedence when both are supplied. Applied via handler-level preprocess (not schema-level `z.preprocess()` which would break the SDK's `.partial()` call). Also changed `registerToolImpl` to use `.partial().passthrough()` so unknown alias keys survive Zod's default strip mode.
+- **Stale References**: Fixed `sqlite://help/stats` referencing `valueColumn` instead of `column` in `running_total` and `moving_avg` examples (both `stats.md` source and compiled `server-instructions.ts`). Fixed codemode `POSITIONAL_PARAM_MAP` and `GROUP_EXAMPLES` still using `tableName` for core tools after the rename to `table`.
+- **Raw MCP Error**: Fixed `sqlite_create_table` propagating a raw MCP error when `ifNotExists: false` and the table already exists — `adapter.executeQuery()` was outside any `try/catch`, so the SQLite error escaped as an uncaught exception instead of returning a structured `{success: false}` response.
+- **Error Quality**: Added `sqlite_master` table existence validation and `pragma_table_info` column existence validation to all 6 window function tools (`sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`) — previously relied on SQL execution errors which leaked raw SQL in the error `details` field. Now returns clean `TABLE_NOT_FOUND` / `COLUMN_NOT_FOUND` structured errors consistent with all other tool groups.
+- **Chi-Square Validation**: Fixed `sqlite_stats_hypothesis` with `testType: "chi_square"` incorrectly rejecting non-numeric columns — the `validateNumericColumn()` check ran unconditionally for all test types before branching, but chi-square tests operate on categorical data. Numeric validation now only runs for `ttest_one` and `ttest_two`.
+- **OrderBy Validation**: Added `validateOrderByColumns()` pre-validation to all 6 window function tools — parses column names from ORDER BY expressions (handling `price DESC`, multi-column `a, b DESC`, and expression skipping), then validates each against the table schema. Previously, nonexistent orderBy columns produced raw SQL errors with internal query leakage in `details.sql`.
+- **Test Prompt**: Fixed `test-group-tools.md` checklist item 19 missing required `direction: "lag"` parameter for `sqlite_window_lag_lead`.
+- **Output Schema Alignment**: Added missing `message` field to `VectorBatchStoreOutputSchema` — handler returns `message: "No items provided"` on empty-items path but the output schema did not declare it.
+- **Dimension Validation**: Fixed `sqlite_vector_store` and `sqlite_vector_batch_store` silently accepting mismatched vector dimensions when the table lacks a `dimensions` column (e.g., tables not created via `sqlite_vector_create_table`). Added a third fallback to `validateDimensions()` that samples an existing vector from the actual vector column to infer expected dimensions.
+- **Inline Schema Consolidation**: Relocated `AppendInsightOutputSchema` from handler helpers (`tools/admin/helpers.ts`) to the centralized `output-schemas/admin.ts` — consistent with the project convention that all output schemas live in the `output-schemas/` directory with named exports.
+- **Output Schema Wiring**: Created `DbstatOutputSchema` (polymorphic — supports summarized, raw, and fallback return shapes) and wired it to the `sqlite_dbstat` tool definition — the only admin tool without output schema enforcement.
+- **Output Schema Alignment**: Fixed `sqlite_list_views` error path returning bare `formatHandlerError(error)` without required output schema fields (`count`, `views`) — now merges `{count: 0, views: []}` to pass `ListViewsOutputSchema` validation on error paths.
+- **Output Schema Alignment**: Added missing `skipped` and `warning` fields to `VectorSearchOutputSchema` — handler returns these fields when unparseable vectors are encountered during search, but the output schema did not declare them, causing raw MCP `-32602` errors on direct tool calls that trigger the skip path.
+- **Missing Annotations**: Added MCP annotations to all 7 SpatiaLite tools (`spatialite_load`, `spatialite_create_table`, `spatialite_query`, `spatialite_index`, `spatialite_analyze`, `spatialite_transform`, `spatialite_import`) — these were the only tools without `annotations`, causing the code mode readonly guard to classify write tools as read-safe.
+- **Readonly Guard**: Fixed code mode `isWriteTool()` using fail-open logic (`readOnlyHint !== false`) that treated unannotated tools as read-safe. Inverted to fail-closed (`readOnlyHint === true`) — tools are now assumed to be write tools unless explicitly marked as read-only. Removed redundant `READ_SAFE_PATTERNS` heuristic. Added defense-in-depth warning logging for any unannotated tool blocked in readonly mode.
+- **Validation Leak**: Fixed `sqlite_text_case`, `sqlite_text_normalize`, and `sqlite_text_validate` producing raw MCP `-32602` errors when required enum params (`mode`, `pattern`) receive empty or invalid values. Replaced `z.enum()` in schemas with `z.string()` and handler-side validation against exported const arrays (`VALID_TEXT_CASE_MODES`, `VALID_NORMALIZE_MODES`, `VALID_VALIDATE_PATTERNS`). Fixed `sqlite_phonetic_match` `algorithm` param leaking on explicit empty string by adding a preprocess coercer.
+- **Output Schema Wiring**: Created 4 new text output schemas (`TextConcatOutputSchema`, `TextTrimOutputSchema`, `TextCaseOutputSchema`, `TextSubstringOutputSchema`) and wired them to their tool definitions. Relocated inline `AdvancedSearchOutputSchema` from `search.ts` to centralized `output-schemas/text.ts`.
+- **Validation Leak**: Fixed `sqlite_stats_group_by` and `sqlite_stats_hypothesis` producing raw MCP `-32602` errors when required enum params (`stat`, `testType`) receive empty or invalid values. Replaced `z.enum()` in schemas with `z.string()` and handler-side validation against exported const arrays (`VALID_STAT_TYPES`, `VALID_TEST_TYPES`).
+- **Enum Coercion**: Added `z.preprocess(coerceEnum, ...)` to 6 optional `z.enum()` params that leaked raw MCP `-32602` on explicit empty strings: `orderBy` and `stat` in `GroupByStatsSchema`, `orderDirection` in `TopNSchema`, `method` in `OutlierSchema`, `mode` in `TextTrimSchema`, `tokenizer` in `FtsCreateSchema`, `format` in `FtsMatchInfoSchema`. Empty strings now coerce to `undefined` so `.default()` kicks in.
+- **Validation Leak**: Fixed `sqlite_text_trim` and `sqlite_phonetic_match` producing raw MCP `-32602` errors when optional enum params (`mode`, `algorithm`) receive invalid non-empty values. Replaced `z.enum()` in schemas with `z.string()` and handler-side validation against exported const arrays (`VALID_TRIM_MODES`, `VALID_PHONETIC_ALGORITHMS`), consistent with the pattern used by `text_case`, `text_normalize`, and `text_validate`.
+- **Enum Coercion**: Replaced `coerceEnum` (empty-string-only) with `coerceEnumValues` factory for 5 optional `z.enum()` params with defaults — `orderBy` in `GroupByStatsSchema`, `orderDirection` in `TopNSchema`, `method` in `OutlierSchema`, `tokenizer` in `FtsCreateSchema`, `format` in `FtsMatchInfoSchema`. Invalid non-empty strings (e.g., `"invalid"`, `"abc"`) now coerce to `undefined` so `.default()` kicks in, instead of leaking raw MCP `-32602` from the inner `z.enum()` rejection.
+- **Validation Leak**: Fixed `sqlite_advanced_search` `techniques` array parameter producing a raw MCP `-32602` error when array elements contain invalid enum values (e.g., `["invalid_technique"]`). Replaced `z.enum(["exact", "fuzzy", "phonetic"])` inside the array with `z.string()` and handler-side validation against exported `VALID_SEARCH_TECHNIQUES` constant, consistent with the pattern used by all other enum params in text tools.
+- **Payload Optimization**: `sqlite_stats_top_n` now auto-excludes long-content TEXT/BLOB columns (matching names like `description`, `body`, `notes`, `content`, `summary`, etc.) when `selectColumns` is not specified. Short identifier columns (`name`, `category`, `email`, etc.) are preserved. A `hint` field in the response lists excluded columns. Use `selectColumns` to override and include specific text columns.
+- **Misleading Stats**: Fixed `sqlite_stats_summary` returning misleading `avg: 0` with null `min`/`max` when the user explicitly requests text columns via the `columns` parameter. Now returns `{column, error: "Not numeric"}` per-column (using the existing error field in the summary schema) instead of running SQL aggregates that produce meaningless results on text data.
+- **Code Mode Alias**: Changed `sqlite.stats.describe()` alias mapping from `statsBasic` → `statsSummary` — calling `describe({table: 'foo'})` now returns a table-level summary of all numeric columns, matching the intuitive expectation of "describe a table" rather than requiring a `column` parameter.
+- **Error Field Consistency**: Fixed `sqlite_create_csv_table` using `message` instead of `error` for failure text in two early-return paths (relative path rejection and WASM/CSV unavailability) — now consistent with the structured error convention used by all other tools.
+- **Raw MCP Error**: Fixed `sqlite_vacuum` with `into` parameter propagating a raw MCP error instead of a structured response. Added early WASM guard for `VACUUM INTO` (file system access not supported in WASM mode) and wrapped `executeQuery()` in `try/catch` so SQL failures (e.g., invalid target paths) return structured `{success: false}` responses. Added `wasmLimitation` field to `VacuumOutputSchema`.
+- **Input Coercion**: Fixed required numeric parameters in geo tools (`lat1`, `lon1`, `lat2`, `lon2`, `centerLat`, `centerLon`, `radius`, `minLat`, `maxLat`, `minLon`, `maxLon`) producing raw MCP `-32602` errors when receiving wrong-type string inputs (e.g., `"abc"`). Changed schema inner types from required `z.number()` to `z.number().optional()` so `coerceNumber`'s `undefined` fallback passes the SDK boundary, then added `requireCoordinate()` and `requireNumber()` handler-level validators that return structured `{success: false}` errors with `GEO_INVALID_COORDINATES` code.
+- **Misleading Suggestion**: Fixed `sqlite_query_plan` classifying `SCAN CONSTANT ROW` as a full table scan on synthetic table "CONSTANT" and suggesting adding an index — constant-row, subquery, list, and materialized EXPLAIN plan entries are now excluded from fullScans/indexScans/coveringIndexes lists and optimization suggestions.
+- **Validation Leak**: Fixed `sqlite_window_rank` and `sqlite_window_lag_lead` producing raw MCP `-32602` errors when enum params (`rankType`, `direction`) receive invalid values. `rankType` (optional with default) now uses `coerceEnumValues` coercer so invalid values fall to the `"rank"` default. `direction` (required, no default) changed from `z.enum()` to `z.string()` with handler-side validation against `VALID_DIRECTIONS` constant, returning a structured error.
+- **Error Quality**: Added table existence pre-validation to `sqlite_fts_search`, `sqlite_fts_rebuild`, and `sqlite_fts_match_info` — previously, querying a nonexistent FTS table produced a generic `DB_QUERY_FAILED` error with leaked SQL. Now returns a clean `TABLE_NOT_FOUND` structured error consistent with all other text group tools. Extracted reusable `validateTableExists()` from `column-validation.ts`.
+- **Case Sensitivity**: Fixed `sqlite_window_lag_lead` rejecting uppercase `"LAG"`/`"LEAD"` direction values despite the schema description suggesting them. The handler now normalizes direction to lowercase before validation, so `"LAG"`, `"lag"`, and `"Lag"` are all accepted.
+- **Error Code Refinement**: Fixed `DbMcpError` subclasses (e.g., `QueryError`) always using their generic constructor code (e.g., `DB_QUERY_FAILED`) even when the error message matches a more specific suggestion pattern (e.g., `TABLE_NOT_FOUND`, `COLUMN_NOT_FOUND`). The constructor now auto-refines generic codes (`DB_QUERY_FAILED`, `DB_WRITE_FAILED`, `QUERY_ERROR`, `RESOURCE_ERROR`, `UNKNOWN_ERROR`) to the suggestion's specific code when available. This fixes all vector, stats, and other tools that delegate to `executeReadQuery`/`executeWriteQuery` — they now return `TABLE_NOT_FOUND` instead of `DB_QUERY_FAILED` for missing tables.
+- **Error Code Consistency**: Added missing `code: "DIMENSION_MISMATCH"` to `sqlite_vector_distance` dimension mismatch error — `sqlite_vector_store` and `sqlite_vector_batch_store` already return this code, but `vector_distance` returned a bare `{success: false, error: "..."}` without it.
+- **Error Code Consistency**: Added missing `code: "VECTOR_NOT_FOUND"` to `sqlite_vector_get` not-found error — both `{success: false}` return paths now include a specific error code for programmatic handling.
+- **Error Code Refinement**: Added `VIEW_NOT_FOUND` and `FILE_NOT_FOUND` error suggestion patterns — `sqlite_drop_view` on a nonexistent view and `sqlite_create_csv_table` on a nonexistent file now return specific codes instead of generic `DB_WRITE_FAILED`. Both patterns also provide actionable suggestions.
+- **Error Field Consistency**: Added missing `code: "VALIDATION_ERROR"` and `category: "validation"` to `sqlite_create_csv_table` and `sqlite_analyze_csv_schema` relative path rejection responses — previously returned bare `{success: false, error: "..."}` without structured error metadata.
+- **Error Code Consistency**: Added missing error codes to 5 admin tool error responses: `sqlite_pragma_table_info` (`TABLE_NOT_FOUND`), `sqlite_pragma_settings` (`VALIDATION_ERROR` for invalid/unknown pragma names), `sqlite_verify_backup` (`FILE_NOT_FOUND` for missing files, `VALIDATION_ERROR` for empty paths, `ATTACH_FAILED` for attach errors), `sqlite_virtual_table_info` (`TABLE_NOT_FOUND`). Added `error` field and `VALIDATION_ERROR` code to `sqlite_drop_virtual_table` when attempting to drop a regular table (previously used `message` field only).
+- **Error Code Consistency**: Fixed `sqlite_transaction_execute` failure response missing structured error metadata (`code`, `category`, `suggestion`, `recoverable`) — now uses `formatHandlerError()` and spreads the formatted error, so failures return specific codes like `TABLE_NOT_FOUND` instead of bare `{success: false, error: "..."}`.
+- **Error Suggestion**: Added `TRANSACTION_CONFLICT` error suggestion pattern for "cannot start a transaction within a transaction" errors — advises committing/rolling back the active transaction or using `sqlite_transaction_execute` for atomic multi-statement operations.
+- **Graph Semantics**: Fixed `sqlite_dependency_graph` `rootTables` and `leafTables` overlapping for tables with no FK relationships. Root now means "referenced by others but doesn't reference anything" and leaf means "references others but isn't referenced by anything." Isolated tables (no FK relationships at all) are excluded from both, making the sets properly disjoint.
+- **Error Code Consistency**: Added missing `code: "TABLE_NOT_FOUND"` and structured error metadata to `sqlite_constraint_analysis` and `sqlite_cascade_simulator` nonexistent table responses — previously returned bare `{success: false, error: "..."}` without error codes.
+- **Error Code Consistency**: Added missing `code: "VALIDATION_ERROR"` and structured error metadata to `sqlite_query_plan` non-SELECT rejection response — previously returned bare `{success: false, error: "..."}` without error codes.
+- **FK Awareness**: Enhanced `sqlite_migration_risks` DROP TABLE analysis to check for FK dependents — when a table that other tables reference via foreign keys is dropped, the risk description now lists the dependent tables and the mitigation suggests handling them first.
+- **Limit After Filter**: Fixed `sqlite_storage_analysis` `limit` parameter being applied at the SQL level before SpatiaLite system table filtering — `limit: 3` with `excludeSystemTables: true` could return fewer tables than requested because system tables consumed slots in the SQL result set before being filtered out. Limit is now applied via `.slice()` after filtering in both the `dbstat` and fallback code paths.
+- **Error Code Consistency**: Added missing structured error codes to all migration tool error responses: `sqlite_migration_apply` (`DUPLICATE_MIGRATION`, `MIGRATION_NOT_INITIALIZED`, `MIGRATION_EXECUTION_FAILED`), `sqlite_migration_record` (`DUPLICATE_MIGRATION`, `MIGRATION_NOT_INITIALIZED`), `sqlite_migration_rollback` (`VALIDATION_ERROR`, `MIGRATION_NOT_FOUND`, `ROLLBACK_SQL_MISSING`, `MIGRATION_NOT_INITIALIZED`), `sqlite_migration_history` (`MIGRATION_NOT_INITIALIZED`) — previously returned bare `{success: false, error: "..."}` without error codes for programmatic handling.
+- **Migration Status Semantics**: `sqlite_migration_record` now inserts with `status: 'recorded'` instead of `'applied'` — distinguishes externally-recorded migrations from those actually executed by `sqlite_migration_apply`. Added `recorded` count to `sqlite_migration_status` output. Status output schema updated to include the new count field.
+- **Rollback Safety**: `sqlite_migration_rollback` now rejects re-rolling back an already `rolled_back` migration with `ALREADY_ROLLED_BACK` error code — previously would silently re-execute the rollback SQL, which could cause errors for non-idempotent rollback statements.
+- **Duplicate Version Blocking**: `sqlite_migration_record` and `sqlite_migration_apply` now reject duplicate version identifiers with `DUPLICATE_VERSION` error code — previously `migrationRecord` only warned and `migrationApply` had no version check at all. Duplicate versions caused ambiguity with `migrationRollback` which looks up by version and would silently target only the latest record.
+- **Rollback SQL Validation**: `sqlite_migration_rollback` now detects comment-only rollback SQL (e.g., `"-- Cannot drop column"`) and returns `ROLLBACK_SQL_INVALID` error — previously attempted to execute the comments, producing a confusing `DB_WRITE_FAILED` error with `"The supplied SQL string contains no statements"`. Strips single-line (`--`) and multi-line (`/* */`) comments before checking for executable content.
+- **Migration Dedup Scope**: Fixed `sqlite_migration_apply` SHA-256 dedup check blocking the `record → apply` workflow — the dedup previously matched against ALL migration statuses, so recording a migration with `migrationRecord` then applying the same SQL with `migrationApply` was rejected as a duplicate. Dedup now only blocks against `applied` migrations, allowing: (1) `record` then `apply` with the same SQL, (2) re-apply after rollback. Also fixed post-insert SELECT in both `apply.ts` and `record.ts` fetching by `migration_hash` (returns wrong row when multiple rows share a hash) — now fetches by `version` (unique).
+- **History Filter Completeness**: Added `"recorded"` to `MigrationHistorySchema.status` enum — previously only `["applied", "rolled_back", "failed"]` were available, making it impossible to filter history by `recorded` status.
+- **Rollback on Recorded-Only Migrations**: `sqlite_migration_rollback` now handles `recorded`-only migrations (never applied) by marking them as `rolled_back` without executing rollback SQL — previously would blindly execute the rollback SQL even though the migration was never applied, which could cause errors or unintended side effects. Returns `warning` explaining the behavior.
+- **Error Suggestion**: Added `MALFORMED_JSON` error suggestion pattern for `"malformed JSON"` errors — commonly triggered when `json_extract()` receives a nonexistent column name (SQLite treats the unresolved identifier as a string literal and attempts to parse it as JSON). The suggestion now guides the agent to verify the column exists with `sqlite_describe_table`, instead of returning a generic `DB_QUERY_FAILED` with no guidance.
+- **Error Field Consistency**: Added missing `code: "VALIDATION_ERROR"` and `category: "validation"` to WASM limitation error responses in `sqlite_verify_backup`, `sqlite_create_rtree_table`, `sqlite_create_csv_table`, and `sqlite_analyze_csv_schema` — previously returned bare `{success: false, error: "...", wasmLimitation: true}` without structured error metadata, inconsistent with `sqlite_backup` and `sqlite_restore` which used `formatHandlerError(new ValidationError(...))`.
+- **Code Quality Audit — Magic JSON-RPC Error Code** — Replaced 4 remaining inline `-32000` literals with `JSONRPC_SERVER_ERROR` constant in `session.ts`
+- **Code Quality Audit** — Removed unused deprecated `SERVER_INSTRUCTIONS` export from `server-instructions.ts` (zero consumers)
+- **Code Quality Audit** — `executeGeneral()` in `query-executor.ts` now throws `QueryError` with logging (was bare `Error`)
+- **Code Quality Audit** — `validateQuery()` in `database-adapter.ts` now throws `ValidationError` instead of bare `Error`
+- **Code Quality Audit** — `ensureConnected()` / `ensureDb()` in both adapters now throw `ConnectionError` instead of bare `Error`
+- **Transport Feature Backport** — Changed `Referrer-Policy` from `strict-origin-when-cross-origin` to `no-referrer` (API server has no referrer to share)
+- **Version SSoT Mismatch** — Synced hardcoded `0.1.0` to `1.0.2` (matching `package.json`) in `index.ts`, `McpServer.ts`, and `cli.ts`
+- **Duplicate Error Class Hierarchy** — Removed 6 duplicate error classes from `types/index.ts` (simple constructor) and consolidated into `utils/errors.ts` (enhanced: category, suggestions, recoverable, `toResponse()`); `types/index.ts` now re-exports from `utils/errors.ts`; `auth/errors.ts` updated to extend enhanced `DbMcpError`; added `AUTHENTICATION`/`AUTHORIZATION` to `ErrorCategory` enum
+- **Bare `z.object({})` Schemas** — Added `.strict()` to 5 schemas (`transaction_commit`, `transaction_rollback`, `MigrationInitSchema`, `MigrationStatusSchema`, `pragma_database_list`) to reject extraneous properties
+- **`sqlite_migration_risks` DROP INDEX Detection** — Now returns `medium` risk for `DROP INDEX` statements
+  - Previously no risk entry was generated for `DROP INDEX` (fell through all pattern checks)
+  - Now detects `DROP INDEX` with `riskLevel: "medium"`, `category: "index_removal"`, and actionable mitigation advice
+- **`ERROR_SUGGESTIONS` Insufficient Data Pattern** — Regression tool's "Insufficient data" error now returns `VALIDATION_ERROR` instead of `UNKNOWN_ERROR`
+  - `sqlite_stats_regression` throws `Error("Insufficient data for degree N regression")` when data points < degree+1
+  - Message didn't match any `ERROR_SUGGESTIONS` pattern and fell through to `ErrorCategory.INTERNAL` → `UNKNOWN_ERROR`
+  - Added `/insufficient data/i` pattern mapping to `ErrorCategory.VALIDATION` with actionable suggestion
+- **`sqlite_json_set` / `sqlite_json_remove` No-Match Warning** — Returns `warning` field when `rowsAffected: 0`
+  - Previously returned `{success: true, rowsAffected: 0}` with no indication that nothing was changed
+  - Now includes `warning: "No rows matched the WHERE clause — no changes were made"`
+  - Mirrors the same pattern already applied to `sqlite_json_update` and `sqlite_json_merge`
+- **`ERROR_SUGGESTIONS` Column Name Pattern Coverage** — Added `has no column named` pattern for INSERT/UPDATE column errors
+  - SQLite uses "has no column named X" for INSERT/UPDATE column errors, distinct from "no such column" used by SELECT
+  - Previously classified as `UNKNOWN_ERROR` (no pattern match); now returns `RESOURCE_ERROR` with actionable suggestion
+- **`sqlite_text_validate` Missing `customPattern` Error Code** — Now returns `VALIDATION_ERROR` instead of `UNKNOWN_ERROR`
+  - Handler threw generic `Error` for missing `customPattern` when `pattern='custom'`; `formatError()` classified it as `UNKNOWN_ERROR`
+  - Changed to throw `ValidationError` with proper `VALIDATION_ERROR` code and `validation` category
+- **`sqlite_vector_store` / `sqlite_vector_batch_store` DDL-Based Dimension Check** — Dimension validation now reads table schema DDL as primary source
+  - Previously read `dimensions` from existing rows only — bypassed on empty tables or tables with mismatched row data
+  - Now parses `DEFAULT N` from `CREATE TABLE` SQL via `sqlite_master` for authoritative validation
+  - Falls back to existing row data when DDL lacks a DEFAULT clause
+  - INSERT now explicitly sets `dimensions` column to actual vector length
+- **`sqlite_vector_search` Skipped Vector Reporting** — Response now includes `skipped` count and `warning` when vectors fail similarity calculation
+  - Previously, vectors with dimension mismatches or parse errors were silently dropped (try/catch returned null)
+  - Now surfaces a `warning: "N vector(s) skipped due to dimension mismatch or parse errors"` field in the response
+  - Helps callers diagnose why `count` may be less than expected
+- **`sqlite_json_update` / `sqlite_json_merge` No-Match Warning** — Returns `warning` field when `rowsAffected: 0`
+  - Previously returned `{success: true, rowsAffected: 0}` with no indication that nothing was changed
+  - Now includes `warning: "No rows matched the WHERE clause — nothing was updated/merged"`
+  - Helps callers distinguish between a successful no-op and an actual problem
+- **`sqlite_stats_histogram` Empty Table Phantom Bucket** — Histogram on empty table no longer returns a phantom `{min: 0, max: 0, count: 1}` bucket
+  - Root cause: `MIN()`/`MAX()` return NULL on empty tables, which defaulted to 0 via `?? 0`, making `bucketSize === 0` and returning a hardcoded `count: 1`
+  - Now counts non-null rows via `COUNT(column)` and returns empty `buckets: []` when no data exists
+  - Uniform data (all values identical) now returns actual row count instead of hardcoded 1
+- **`sqlite_vector_store` / `sqlite_vector_batch_store` Dimension Mismatch Validation** — Storing vectors with wrong dimensions now returns a structured error
+  - Previously accepted any vector length regardless of table's configured `dimensions` column (e.g., storing 2-dim vector in 4-dim table succeeded silently)
+  - Now reads the table's `dimensions` column and returns `{success: false, code: "DIMENSION_MISMATCH"}` when vector length doesn't match
+  - `sqlite_vector_search` already validated dimensions at comparison time (via helper functions), so this adds write-side enforcement
+- **Introspection Tools WASM FTS5 Crash** — 5 introspection tools no longer crash when the database contains FTS5 virtual tables in WASM mode
+  - `sqlite_dependency_graph`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_schema_snapshot`, `sqlite_constraint_analysis` all failed with "no such module: fts5" because internal queries (`SELECT COUNT(*)`, `PRAGMA table_info`, `PRAGMA foreign_key_list`) hit FTS5 virtual tables that WASM SQLite can't resolve
+  - Added try/catch around per-table queries in `buildForeignKeyGraph()` (graph.ts) and `schemaSnapshot`/`constraintAnalysis` handlers (analysis.ts)
+  - FTS5 tables are still included in results (with rowCount 0 and columnCount 0) but no longer crash the entire operation
 - **`sqlite_json_normalize_column` WASM Compatibility** — Fixed all rows silently failing in WASM mode
   - Root cause: `SELECT rowid, ...` doesn't expose `rowid` as a named column in sql-js when the table has an INTEGER PRIMARY KEY
   - Handler received `undefined` for `row["rowid"]`, causing all per-row UPDATE queries to fail in the inner try/catch
@@ -825,6 +852,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Strict Validation**: Removed `.strict()` from all Zod tool input schemas across all tool groups. `.strict()` maps to `additionalProperties: false` in JSON Schema, which causes the MCP SDK to reject unrecognized keys at the framework boundary before handlers can catch, producing raw `-32602` errors instead of structured responses. Handler-level validation (regex, enum checks) already guards against malformed input.
+- **SQL Injection**: Added strong regex validation to `savepoint` names in the Native SQLite transaction methods to prevent potential arbitrary SQL injection.
+- **CORS Advisory**: Updated `README.md` and `DOCKER_README.md` to explicitly warn about the permissive `["*"]` default CORS property in production HTTP deployments.
+- **Unified Audit**: SHA-pinned all GitHub Actions in `lint-and-test.yml` and `e2e.yml` for supply chain safety. Updated stale v4 SHAs to current v6 in `e2e.yml`. Removed manually-maintained `LABEL version` from `Dockerfile` to prevent version drift. Fixed `flatted` dependency vulnerability (GHSA-25h7-pfq9-p65f).
+- **DNS Rebinding**: Added `localhostHostValidation()` middleware from MCP SDK to the HTTP transport to prevent DNS rebinding attacks.
+- **Supply Chain**: SHA-pinned remaining 2 un-pinned CI actions (`actions/checkout`, `actions/setup-node`) in the benchmarks job of `lint-and-test.yml`.
+- **Supply Chain**: Bumped GitHub Actions to latest major versions (Node 24 runtime):
+  - `docker/login-action` v3 → v4
+  - `docker/build-push-action` v6 → v7
+  - `docker/metadata-action` v5 → v6
+  - `docker/setup-buildx-action` v3 → v4
+  - `actions/upload-artifact` v6 → v7
+  - `actions/download-artifact` v7 → v8
+- **Transitive Updates**: Fixed multiple vulnerabilities in transitive dependencies by updating `package-lock.json` via `npm update`:
+  - `minimatch`: ReDoS in `matchOne()` combinatorial backtracking via multiple non-adjacent GLOBSTAR segments.
+  - `hono` and `@hono/node-server`: Arbitrary file access via `serveStatic`, authorization bypass for protected static paths, SSE Control Field Injection, Cookie Attribute Injection, and Prototype Pollution in `parseBody`.
+  - `express-rate-limit`: IPv4-mapped IPv6 addresses bypassing per-client rate limiting on dual-stack networks.
+- **Code Quality Audit — Table Name Validation** — Added regex guard (`/^[a-zA-Z_][a-zA-Z0-9_]*$/`) to native adapter's `describeTable` fallback
+  - WASM adapter already had this guard; native adapter's fallback path was missing it
+- **Code Quality Audit — Missing WHERE Clause Validation** — Added `validateWhereClause()` to 15 SQL interpolation points across 5 JSON tool files
+  - `json-operations/crud.ts` (7 handlers), `json-operations/query.ts` (5 handlers), `json-operations/transform.ts` (2 handlers)
+  - `json-helpers/read.ts` (1 handler), `json-helpers/write.ts` (2 handlers)
+  - These tools interpolated `input.whereClause` directly into SQL without validation, unlike text/stats/vector/window tools which all called `validateWhereClause()`
+- **Security Audit Remediation** — Addressed 4 findings from comprehensive security audit
+  - Fixed transitive `hono` vulnerability (GHSA-v8w9-8mx6-g223) via `npm audit fix`
+  - Added HTTP server timeouts: `setTimeout(120s)`, `keepAliveTimeout(65s)`, `headersTimeout(66s)` to prevent slowloris-style DoS attacks
+  - SHA-pinned all GitHub Actions across 4 CI workflows (`lint-and-test.yml`, `codeql.yml`, `publish-npm.yml`, `docker-publish.yml`) to prevent supply chain attacks via tag hijacking
+  - Hardened Docker Scout security gate to fail-fast on non-timeout scan errors instead of silently continuing
 - **NPM Audit Remediation** — Patched high severity vulnerabilities in transitive dependencies
   - `@hono/node-server`: updated to 1.19.11
   - `hono`: updated to 4.12.5
@@ -838,6 +893,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed dead `new InvalidTokenError()` construction in auth middleware
   - Updated `SECURITY.md` supported versions to `1.x.x`
   - Fixed Dockerfile labels (version `1.0.2`, tool count `124`)
+
+### Performance
+
+- **Compact JSON Serialization (R-1)** — Tool responses now use compact `JSON.stringify(result)` instead of pretty-printed `JSON.stringify(result, null, 2)`
+  - Reduces serialization overhead by ~15-20% on large payloads; MCP clients parse JSON programmatically
+  - Error responses retain pretty-print for debugging readability
+- **Incremental TypeScript Builds (B-1)** — Added `incremental: true` and `tsBuildInfoFile` to `tsconfig.json`
+  - Subsequent builds only recheck changed files, significantly reducing dev-loop build times
+- **Vitest Thread Pool (T-1)** — Configured `pool: "threads"` in `vitest.config.ts`
+  - Enables worker thread execution for test parallelism on multi-core machines
+- **`isDDL()` Helper Extraction (S-2/R-4)** — Replaced 3× duplicated DDL detection blocks with module-scope `isDDL()` function
+  - Eliminates redundant `sql.trim().toUpperCase()` allocations in `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`
+- **SchemaManager Array Pre-Allocation (R-7)** — `getAllIndexes()` now pre-allocates result array with `new Array(rows.length)`
+  - Avoids incremental `push()` resizing; improved documentation of PRAGMA batching constraints
+- **CI `node_modules` Caching (CI-1)** — Added `actions/cache@v4` for `node_modules` in `lint-and-test.yml`
+  - Keyed on `package-lock.json` hash per Node.js version; skips `npm ci` on cache hit (~20-30s savings per run)
+- **CI Benchmark Tracking (CI-2)** — New `benchmarks` job in `lint-and-test.yml` (main branch only)
+  - Runs `npm run bench` and uploads results as artifacts with 30-day retention for regression detection
+- **NativeSqliteAdapter SchemaManager Integration** — Schema metadata operations now use TTL-based caching
+  - `listTables()`, `describeTable()`, `getSchema()`, `getAllIndexes()` delegate through `SchemaManager` (5s TTL)
+  - Eliminates redundant `PRAGMA table_info()` queries on every metadata request
+  - Auto-invalidates schema cache on DDL operations (`CREATE`, `ALTER`, `DROP`)
+  - Matches the caching pattern already used by the WASM `SqliteAdapter`
+- **Cached Tool Definitions** — `NativeSqliteAdapter.getToolDefinitions()` now lazily caches results
+  - Tool definitions are immutable per adapter instance; avoids 13-way array spread on repeat calls
+- **Logger Taint-Breaking Optimization** — `writeToStderr()` uses `"".concat()` instead of per-character copy
+  - Previous O(n) character-by-character array+join replaced with single string concatenation
+  - Still breaks CodeQL taint tracking without the allocation overhead
+- **Logger Sensitive Key Matching** — Pre-computed `SENSITIVE_KEYS_ARRAY` at module scope
+  - Avoids spreading `Set` into a new array on every context key during `sanitizeContext()`
+- **Logger Regex Pre-Compilation** — `sanitizeMessage()` and `sanitizeStack()` regex patterns hoisted to module scope
+  - Avoids re-constructing `RegExp` objects (via `String.fromCharCode()`) on every log call
+- **SQL Validation Regex Pre-Compilation** — `DANGEROUS_SQL_PATTERNS` hoisted to module scope in `DatabaseAdapter.ts`
+  - Avoids re-allocating 5 `RegExp` objects per `validateQuery()` call
+- **CORS Preflight Caching** — Added `Access-Control-Max-Age: 86400` to OPTIONS responses
+  - Browsers cache preflight results for 24 hours, reducing repeated OPTIONS roundtrips
+- **Docker HTTP Healthcheck** — Healthcheck now validates `/health` endpoint for HTTP transport
+  - Falls back to basic Node.js check for stdio mode
+
+### Dependencies
+
+- Bumped `@eslint/js` from 9.39.2 to 10.0.1 (major)
+- Bumped `@modelcontextprotocol/sdk` from 1.25.3 to 1.27.1
+- Bumped `@types/node` from 25.2.0 to 25.5.0
+- Bumped `@vitest/coverage-v8` from 4.0.18 to 4.1.0
+- Bumped `better-sqlite3` from 12.6.2 to 12.8.0
+- Bumped `eslint` from 9.39.2 to 10.0.3 (major)
+- Bumped `globals` from 17.3.0 to 17.4.0
+- Bumped `jose` from 6.1.3 to 6.2.1
+- Bumped `rimraf` from 6.1.2 to 6.1.3
+- Bumped `sql.js` from 1.13.0 to 1.14.1
+- Bumped `typescript-eslint` from 8.54.0 to 8.57.1
+- Bumped `vitest` from 4.0.18 to 4.1.0
+- Removed unused `dotenv` production dependency (never imported in source)
+- Removed unused `pg` and `@types/pg` dependencies (never imported in source)
+- Dockerfile `tar` dependency pinned to 7.5.11 for security compliance
 
 ---
 

@@ -52,7 +52,7 @@ export function getNativeToolDefinitions(
     ...getIntrospectionTools(sharedAdapter),
     ...getMigrationTools(sharedAdapter),
     ...getCodeModeTools(sharedAdapter),
-    
+
     // Native-only tools
     ...getTransactionTools(adapter),
     ...getWindowTools(adapter),

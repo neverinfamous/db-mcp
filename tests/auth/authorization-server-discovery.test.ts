@@ -69,10 +69,13 @@ describe("AuthorizationServerDiscovery", () => {
 
   describe("discover", () => {
     it("should fetch and cache metadata", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       const metadata = await disc.discover();
@@ -98,51 +101,67 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("should throw AuthServerDiscoveryError on HTTP error", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: "Not Found",
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+        }),
+      );
 
       const disc = createDiscovery();
       await expect(disc.discover()).rejects.toThrow(AuthServerDiscoveryError);
     });
 
     it("should throw AuthServerDiscoveryError on network error", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockRejectedValue(new Error("Network error")),
+      );
 
       const disc = createDiscovery();
       await expect(disc.discover()).rejects.toThrow(AuthServerDiscoveryError);
     });
 
     it("should throw on missing issuer", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ token_endpoint: "/token" }),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ token_endpoint: "/token" }),
+        }),
+      );
 
       const disc = createDiscovery();
       await expect(disc.discover()).rejects.toThrow(AuthServerDiscoveryError);
     });
 
     it("should throw on missing token_endpoint", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ issuer: AUTH_SERVER_URL }),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ issuer: AUTH_SERVER_URL }),
+        }),
+      );
 
       const disc = createDiscovery();
       await expect(disc.discover()).rejects.toThrow(AuthServerDiscoveryError);
     });
 
     it("should warn on issuer mismatch but not throw", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          ...VALID_METADATA,
-          issuer: "https://different-issuer.com",
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...VALID_METADATA,
+              issuer: "https://different-issuer.com",
+            }),
         }),
-      }));
+      );
 
       const disc = createDiscovery();
       // Should not throw — just warns
@@ -162,10 +181,13 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("getJwksUri should return jwks_uri", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -173,13 +195,17 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("getJwksUri should throw when not present", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          ...VALID_METADATA,
-          jwks_uri: undefined,
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...VALID_METADATA,
+              jwks_uri: undefined,
+            }),
         }),
-      }));
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -187,10 +213,13 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("getTokenEndpoint should return endpoint", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -198,10 +227,13 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("getIssuer should return issuer", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -209,10 +241,13 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("getRegistrationEndpoint should return endpoint", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -220,13 +255,17 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("getRegistrationEndpoint should return null when not present", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          ...VALID_METADATA,
-          registration_endpoint: undefined,
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...VALID_METADATA,
+              registration_endpoint: undefined,
+            }),
         }),
-      }));
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -234,10 +273,13 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("supportsClientRegistration should check registration endpoint", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -245,10 +287,13 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("getSupportedScopes should return scopes", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -256,10 +301,13 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("isScopeSupported should check scope list", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -268,13 +316,17 @@ describe("AuthorizationServerDiscovery", () => {
     });
 
     it("isScopeSupported should allow all when no scopes listed", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          ...VALID_METADATA,
-          scopes_supported: undefined,
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...VALID_METADATA,
+              scopes_supported: undefined,
+            }),
         }),
-      }));
+      );
 
       const disc = createDiscovery();
       await disc.discover();
@@ -288,10 +340,13 @@ describe("AuthorizationServerDiscovery", () => {
 
   describe("cache management", () => {
     it("clearCache should invalidate cache", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(VALID_METADATA),
-      }));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(VALID_METADATA),
+        }),
+      );
 
       const disc = createDiscovery();
       await disc.discover();

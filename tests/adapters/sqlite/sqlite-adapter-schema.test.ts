@@ -34,7 +34,9 @@ describe("fallBackGetSchema", () => {
   it("should return tables and indexes from adapter", async () => {
     const adapter = createMockAdapter();
     const mockTables = [{ name: "users", type: "table", columns: [] }];
-    const mockIndexes = [{ name: "idx_1", tableName: "users", columns: ["id"] }];
+    const mockIndexes = [
+      { name: "idx_1", tableName: "users", columns: ["id"] },
+    ];
     adapter.listTables.mockResolvedValue(mockTables);
     adapter.getIndexes.mockResolvedValue(mockIndexes);
 
@@ -123,9 +125,7 @@ describe("fallBackDescribeTable", () => {
   it("should throw for empty table name", async () => {
     const adapter = createMockAdapter();
 
-    await expect(
-      fallBackDescribeTable(adapter, ""),
-    ).rejects.toThrow();
+    await expect(fallBackDescribeTable(adapter, "")).rejects.toThrow();
   });
 
   it("should accept valid table names with underscores", async () => {
@@ -150,7 +150,11 @@ describe("fallBackGetIndexes", () => {
     adapter.executeReadQuery
       .mockResolvedValueOnce({
         rows: [
-          { name: "idx_email", tbl_name: "users", sql: "CREATE INDEX idx_email ON users(email)" },
+          {
+            name: "idx_email",
+            tbl_name: "users",
+            sql: "CREATE INDEX idx_email ON users(email)",
+          },
         ],
       })
       .mockResolvedValueOnce({
@@ -173,7 +177,11 @@ describe("fallBackGetIndexes", () => {
     adapter.executeReadQuery
       .mockResolvedValueOnce({
         rows: [
-          { name: "idx_uniq", tbl_name: "users", sql: "CREATE UNIQUE INDEX idx_uniq ON users(email)" },
+          {
+            name: "idx_uniq",
+            tbl_name: "users",
+            sql: "CREATE UNIQUE INDEX idx_uniq ON users(email)",
+          },
         ],
       })
       .mockResolvedValueOnce({
@@ -208,7 +216,11 @@ describe("fallBackGetIndexes", () => {
     adapter.executeReadQuery
       .mockResolvedValueOnce({
         rows: [
-          { name: "idx_broken", tbl_name: "test", sql: "CREATE INDEX idx_broken ON test(col)" },
+          {
+            name: "idx_broken",
+            tbl_name: "test",
+            sql: "CREATE INDEX idx_broken ON test(col)",
+          },
         ],
       })
       .mockRejectedValueOnce(new Error("PRAGMA failed"));

@@ -28,8 +28,7 @@ const VALID_UNITS = ["km", "miles", "meters"] as const;
  * Prevents raw MCP -32602 errors from enum validation.
  */
 const coerceUnit = (val: unknown): unknown =>
-  typeof val === "string" &&
-  (VALID_UNITS as readonly string[]).includes(val)
+  typeof val === "string" && (VALID_UNITS as readonly string[]).includes(val)
     ? val
     : typeof val === "string"
       ? undefined
@@ -42,7 +41,11 @@ import {
   sanitizeIdentifier,
   createColumnList,
 } from "../../../utils/index.js";
-import { formatHandlerError, DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  DbMcpError,
+  ErrorCategory,
+} from "../../../utils/errors/index.js";
 import {
   GeoDistanceOutputSchema,
   GeoWithinRadiusOutputSchema,
@@ -56,21 +59,45 @@ import { validateColumnExists } from "./column-validation.js";
 // doesn't reject coerced-undefined values at the boundary.  The handler
 // validates presence and range via validateCoordinates().
 const GeoDistanceSchema = z.object({
-  lat1: z.preprocess(coerceNumber, z.number().optional().describe("Latitude of point 1")),
-  lon1: z.preprocess(coerceNumber, z.number().optional().describe("Longitude of point 1")),
-  lat2: z.preprocess(coerceNumber, z.number().optional().describe("Latitude of point 2")),
-  lon2: z.preprocess(coerceNumber, z.number().optional().describe("Longitude of point 2")),
-  unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
+  lat1: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Latitude of point 1"),
+  ),
+  lon1: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Longitude of point 1"),
+  ),
+  lat2: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Latitude of point 2"),
+  ),
+  lon2: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Longitude of point 2"),
+  ),
+  unit: z.preprocess(
+    coerceUnit,
+    z.enum(["km", "miles", "meters"]).optional().default("km"),
+  ),
 });
 
 const GeoNearbySchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  centerLat: z.preprocess(coerceNumber, z.number().optional().describe("Center latitude")),
-  centerLon: z.preprocess(coerceNumber, z.number().optional().describe("Center longitude")),
+  centerLat: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Center latitude"),
+  ),
+  centerLon: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Center longitude"),
+  ),
   radius: z.preprocess(coerceNumber, z.number().optional().describe("Radius")),
-  unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
+  unit: z.preprocess(
+    coerceUnit,
+    z.enum(["km", "miles", "meters"]).optional().default("km"),
+  ),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   returnColumns: z.array(z.string()).optional(),
 });
@@ -91,11 +118,12 @@ const GeoClusterSchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  gridSize: z.preprocess(coerceNumber, z.number().optional().default(0.1).describe("Grid size in degrees")),
+  gridSize: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(0.1).describe("Grid size in degrees"),
+  ),
   whereClause: z.string().optional(),
 });
-
-
 
 /**
  * Validate and narrow a numeric coordinate/parameter.
@@ -112,14 +140,14 @@ function requireCoordinate(
     throw new DbMcpError(
       `Invalid ${name}: value is not a valid number.`,
       "GEO_INVALID_COORDINATES",
-      ErrorCategory.VALIDATION
+      ErrorCategory.VALIDATION,
     );
   }
   if (value < min || value > max) {
     throw new DbMcpError(
       `Invalid ${name}: ${String(value)}. Must be between ${String(min)} and ${String(max)}.`,
       "GEO_INVALID_COORDINATES",
-      ErrorCategory.VALIDATION
+      ErrorCategory.VALIDATION,
     );
   }
   return value;
@@ -133,7 +161,7 @@ function requireNumber(value: number | undefined, name: string): number {
     throw new DbMcpError(
       `Invalid ${name}: value is not a valid number.`,
       "GEO_INVALID_COORDINATES",
-      ErrorCategory.VALIDATION
+      ErrorCategory.VALIDATION,
     );
   }
   return value;
@@ -239,8 +267,18 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate radius is a valid number
         const radius = requireNumber(input.radius, "radius");
 
-        const centerLat = requireCoordinate(input.centerLat, "centerLat", -90, 90);
-        const centerLon = requireCoordinate(input.centerLon, "centerLon", -180, 180);
+        const centerLat = requireCoordinate(
+          input.centerLat,
+          "centerLat",
+          -90,
+          90,
+        );
+        const centerLon = requireCoordinate(
+          input.centerLon,
+          "centerLon",
+          -180,
+          180,
+        );
 
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
@@ -271,7 +309,8 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
               : radius;
         const latDelta = radiusKm / KM_PER_DEGREE_LAT;
         const lonDelta =
-          radiusKm / (KM_PER_DEGREE_LAT * Math.cos((centerLat * Math.PI) / 180));
+          radiusKm /
+          (KM_PER_DEGREE_LAT * Math.cos((centerLat * Math.PI) / 180));
 
         const sql = `SELECT ${selectCols} FROM ${table}
                   WHERE ${latColumn} BETWEEN ${centerLat - latDelta} AND ${centerLat + latDelta}

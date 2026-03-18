@@ -1,8 +1,14 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { admin } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
-import { buildProgressContext, sendProgress } from "../../../../../utils/progress-utils.js";
+import {
+  buildProgressContext,
+  sendProgress,
+} from "../../../../../utils/progress-utils.js";
 import { OptimizeOutputSchema } from "../../../output-schemas/index.js";
 import { OptimizeSchema } from "../helpers.js";
 
@@ -29,7 +35,12 @@ export function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
       const operations: string[] = [];
       const start = Date.now();
 
-      await sendProgress(progress, ++step, totalSteps, "Starting optimization...");
+      await sendProgress(
+        progress,
+        ++step,
+        totalSteps,
+        "Starting optimization...",
+      );
 
       if (input.reindex) {
         await sendProgress(progress, ++step, totalSteps, "Reindexing...");
@@ -57,7 +68,12 @@ export function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
 
       const duration = Date.now() - start;
 
-      await sendProgress(progress, totalSteps, totalSteps, "Optimization complete");
+      await sendProgress(
+        progress,
+        totalSteps,
+        totalSteps,
+        "Optimization complete",
+      );
 
       return {
         success: true,

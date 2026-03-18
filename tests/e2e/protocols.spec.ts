@@ -101,7 +101,10 @@ test.describe("HTTP Transport Protocols", () => {
 
       expect(response.status()).toBe(400);
       const body = await response.json();
-      expect(body.error).toHaveProperty("message", "Missing sessionId parameter");
+      expect(body.error).toHaveProperty(
+        "message",
+        "Missing sessionId parameter",
+      );
     });
 
     test("should reject message POSTs for an unknown sessionId", async ({
@@ -129,8 +132,10 @@ test.describe("HTTP Transport Protocols", () => {
     test("should complete full SDK client round-trip via Legacy SSE", async ({}, testInfo) => {
       // Regression test: server.connect() auto-calls start() on SSEServerTransport,
       // so a redundant start() call would throw "already started!" and break SSE entirely.
-      const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
-      const { SSEClientTransport } = await import("@modelcontextprotocol/sdk/client/sse.js");
+      const { Client } =
+        await import("@modelcontextprotocol/sdk/client/index.js");
+      const { SSEClientTransport } =
+        await import("@modelcontextprotocol/sdk/client/sse.js");
 
       const baseURL = testInfo.project.use.baseURL as string;
       const transport = new SSEClientTransport(new URL(`${baseURL}/sse`));
@@ -149,7 +154,8 @@ test.describe("HTTP Transport Protocols", () => {
 
         expect(response.isError).toBeUndefined();
         expect(Array.isArray(response.content)).toBe(true);
-        const text = (response.content[0] as { type: string; text: string }).text;
+        const text = (response.content[0] as { type: string; text: string })
+          .text;
         expect(text.length).toBeGreaterThan(0);
       } finally {
         await client.close();

@@ -5,7 +5,10 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
@@ -34,9 +37,7 @@ import {
 /**
  * Count vectors
  */
-export function createVectorCountTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_vector_count",
     description: "Count vectors in a table.",
@@ -72,9 +73,7 @@ export function createVectorCountTool(
 /**
  * Vector statistics
  */
-export function createVectorStatsTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_vector_stats",
     description: "Get statistics about vectors in a table.",
@@ -97,12 +96,12 @@ export function createVectorStatsTool(
 
         const vectors: number[][] = [];
         const rows = result.rows ?? [];
-        
+
         for (let i = 0; i < rows.length; i++) {
           if (i > 0 && i % 500 === 0) {
             await new Promise((resolve) => setTimeout(resolve, 0));
           }
-          
+
           try {
             const row = rows[i];
             if (row) {
@@ -225,7 +224,8 @@ export function createVectorNormalizeTool(): ToolDefinition {
         if (input.vector.length === 0) {
           return Promise.resolve({
             success: false,
-            error: "vector is required and must be a non-empty array of numbers",
+            error:
+              "vector is required and must be a non-empty array of numbers",
           });
         }
 
@@ -265,7 +265,8 @@ export function createVectorDistanceTool(): ToolDefinition {
         if (input.vector1.length === 0 || input.vector2.length === 0) {
           return Promise.resolve({
             success: false,
-            error: "vector1 and vector2 are required and must be non-empty arrays of numbers",
+            error:
+              "vector1 and vector2 are required and must be non-empty arrays of numbers",
           });
         }
 

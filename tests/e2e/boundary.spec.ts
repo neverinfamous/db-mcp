@@ -11,7 +11,13 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess, expectHandlerError } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+  expectHandlerError,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -145,7 +151,10 @@ test.describe("Boundary: Single Row", () => {
         percentiles: [25, 50, 75],
       });
       expectSuccess(p);
-      const percentiles = p.percentiles as { percentile: number; value: number }[];
+      const percentiles = p.percentiles as {
+        percentile: number;
+        value: number;
+      }[];
       for (const pct of percentiles) {
         expect(pct.value).toBe(42.5);
       }
@@ -184,7 +193,8 @@ test.describe("Boundary: NULLs", () => {
         ifNotExists: true,
       });
       await callToolAndParse(client, "sqlite_write_query", {
-        query: "INSERT INTO _e2e_boundary_nulls (id, value) VALUES (1, NULL), (2, NULL), (3, NULL), (4, 100.0)",
+        query:
+          "INSERT INTO _e2e_boundary_nulls (id, value) VALUES (1, NULL), (2, NULL), (3, NULL), (4, 100.0)",
       });
     } finally {
       await client.close();
@@ -504,7 +514,10 @@ test.describe("Boundary: Geo", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_geo_distance", {
-        lat1: 0, lon1: 0, lat2: 0, lon2: 0,
+        lat1: 0,
+        lon1: 0,
+        lat2: 0,
+        lon2: 0,
       });
       expectSuccess(p);
       expect(p.distance).toBe(0);

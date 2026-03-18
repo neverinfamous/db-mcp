@@ -8,7 +8,10 @@ import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import { validateWhereClause } from "../../../utils/index.js";
-import { formatHandlerError, ResourceNotFoundError } from "../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ResourceNotFoundError,
+} from "../../../utils/errors/index.js";
 import { readOnly } from "../../../utils/annotations.js";
 import { resolveAliases } from "../../sqlite/types.js";
 import { DbMcpError } from "../../../utils/errors/base.js";
@@ -57,7 +60,10 @@ const RowNumberSchema = z.object({
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum rows to return"),
+  ),
 });
 
 const RankSchema = z.object({
@@ -70,22 +76,31 @@ const RankSchema = z.object({
     .describe("Columns to include in result"),
   rankType: z.preprocess(
     coerceEnumValues(["rank", "dense_rank", "percent_rank"]),
-    z.enum(["rank", "dense_rank", "percent_rank"]).optional().default("rank").describe("Rank function type"),
+    z
+      .enum(["rank", "dense_rank", "percent_rank"])
+      .optional()
+      .default("rank")
+      .describe("Rank function type"),
   ),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum rows to return"),
+  ),
 });
 
 const LagLeadSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to get lag/lead value from"),
   orderBy: z.string().describe("Column(s) to order by"),
-  direction: z
-    .string()
-    .describe("LAG (previous) or LEAD (next) row"),
+  direction: z.string().describe("LAG (previous) or LEAD (next) row"),
   offset: z.preprocess(
     coerceNumber,
-    z.number().optional().default(1).describe("Number of rows to look back/ahead"),
+    z
+      .number()
+      .optional()
+      .default(1)
+      .describe("Number of rows to look back/ahead"),
   ),
   defaultValue: z
     .string()
@@ -97,7 +112,10 @@ const LagLeadSchema = z.object({
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum rows to return"),
+  ),
 });
 
 const RunningTotalSchema = z.object({
@@ -113,34 +131,49 @@ const RunningTotalSchema = z.object({
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum rows to return"),
+  ),
 });
 
 const MovingAverageSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to average"),
   orderBy: z.string().describe("Column(s) to order by"),
-  windowSize: z.preprocess(coerceNumber, z.number().optional().describe("Number of rows in the moving window")),
+  windowSize: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Number of rows in the moving window"),
+  ),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum rows to return"),
+  ),
 });
 
 const NtileSchema = z.object({
   table: z.string().describe("Table name"),
   orderBy: z.string().describe("Column(s) to order by"),
-  buckets: z.preprocess(coerceNumber, z.number().optional().describe("Number of buckets (e.g., 4 for quartiles)")),
+  buckets: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Number of buckets (e.g., 4 for quartiles)"),
+  ),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100).describe("Maximum rows to return")),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum rows to return"),
+  ),
 });
 
 /**
@@ -379,7 +412,11 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
         const normalizedDirection = input.direction.toLowerCase();
 
         // Handler-side validation for required enum (z.string() in schema)
-        if (!VALID_DIRECTIONS.includes(normalizedDirection as (typeof VALID_DIRECTIONS)[number])) {
+        if (
+          !VALID_DIRECTIONS.includes(
+            normalizedDirection as (typeof VALID_DIRECTIONS)[number],
+          )
+        ) {
           return {
             success: false,
             error: `Invalid direction '${input.direction}'. Must be one of: ${VALID_DIRECTIONS.join(", ")}`,
@@ -444,7 +481,9 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = RunningTotalSchema.parse(resolveAliases(params, { valueColumn: "column" }));
+        const input = RunningTotalSchema.parse(
+          resolveAliases(params, { valueColumn: "column" }),
+        );
 
         await validateTableExists(adapter, input.table);
         await validateColumnInTable(adapter, input.table, input.column);
@@ -497,7 +536,9 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = MovingAverageSchema.parse(resolveAliases(params, { valueColumn: "column" }));
+        const input = MovingAverageSchema.parse(
+          resolveAliases(params, { valueColumn: "column" }),
+        );
 
         if (input.windowSize === undefined) {
           return {

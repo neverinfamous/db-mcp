@@ -65,9 +65,7 @@ export function applyCommonPragmas(
     executor.runPragma("journal_mode = WAL");
   }
   if (options.foreignKeys !== undefined) {
-    executor.runPragma(
-      `foreign_keys = ${options.foreignKeys ? "ON" : "OFF"}`,
-    );
+    executor.runPragma(`foreign_keys = ${options.foreignKeys ? "ON" : "OFF"}`);
   }
   if (options.busyTimeout !== undefined) {
     executor.runPragma(`busy_timeout = ${options.busyTimeout}`);

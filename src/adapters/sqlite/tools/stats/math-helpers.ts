@@ -102,7 +102,11 @@ export function matrixInverse(A: number[][]): number[][] {
 
     const pivot = pivotRow[col] ?? 0;
     if (Math.abs(pivot) < 1e-10) {
-      throw new DbMcpError("Matrix is singular, cannot compute inverse", "MATH_SINGULAR", ErrorCategory.VALIDATION);
+      throw new DbMcpError(
+        "Matrix is singular, cannot compute inverse",
+        "MATH_SINGULAR",
+        ErrorCategory.VALIDATION,
+      );
     }
 
     for (let j = 0; j < 2 * n; j++) {

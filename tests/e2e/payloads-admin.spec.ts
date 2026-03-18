@@ -6,7 +6,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -39,7 +44,10 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
   test("sqlite_pragma_database_list returns { success, databases[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_pragma_database_list");
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_pragma_database_list",
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.databases)).toBe(true);
@@ -70,7 +78,7 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
       // Stats summary
       const stats = payload.stats as Record<string, unknown>;
       expect(typeof stats.tables).toBe("number");
-      expect((stats.tables as number)).toBeGreaterThan(0);
+      expect(stats.tables as number).toBeGreaterThan(0);
 
       // generatedAt timestamp
       expect(typeof payload.generatedAt).toBe("string");
@@ -134,9 +142,13 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
   test("sqlite_topological_sort returns { success, order[], direction }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_topological_sort", {
-        direction: "create",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_topological_sort",
+        {
+          direction: "create",
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.direction).toBe("create");
@@ -156,10 +168,14 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
   test("sqlite_cascade_simulator returns { success, affected[], severity }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_cascade_simulator", {
-        table: "test_orders",
-        operation: "DELETE",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_cascade_simulator",
+        {
+          table: "test_orders",
+          operation: "DELETE",
+        },
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.affectedTables)).toBe(true);
@@ -208,9 +224,13 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
   test("sqlite_constraint_analysis returns { success }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_constraint_analysis", {
-        table: "test_products",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_constraint_analysis",
+        {
+          table: "test_products",
+        },
+      );
 
       expectSuccess(payload);
     } finally {

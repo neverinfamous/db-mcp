@@ -9,7 +9,10 @@ import {
   connectSqliteDatabase,
   disconnectSqliteDatabase,
 } from "../../../src/adapters/sqlite/sqlite-adapter/lifecycle.js";
-import { ConfigurationError, ConnectionError } from "../../../src/utils/errors/index.js";
+import {
+  ConfigurationError,
+  ConnectionError,
+} from "../../../src/utils/errors/index.js";
 
 // =============================================================================
 // Helpers
@@ -61,9 +64,12 @@ describe("connectSqliteDatabase", () => {
   it("should default to :memory: when no file path given", async () => {
     const adapter = createMockAdapter();
 
-    const result = await connectSqliteDatabase(adapter as any, {
-      type: "sqlite",
-    } as any);
+    const result = await connectSqliteDatabase(
+      adapter as any,
+      {
+        type: "sqlite",
+      } as any,
+    );
 
     expect(result.db).toBeDefined();
 
@@ -73,13 +79,16 @@ describe("connectSqliteDatabase", () => {
   it("should apply pragma options", async () => {
     const adapter = createMockAdapter();
 
-    const result = await connectSqliteDatabase(adapter as any, {
-      type: "sqlite",
-      connectionString: ":memory:",
-      options: {
-        foreignKeys: true,
-      },
-    } as any);
+    const result = await connectSqliteDatabase(
+      adapter as any,
+      {
+        type: "sqlite",
+        connectionString: ":memory:",
+        options: {
+          foreignKeys: true,
+        },
+      } as any,
+    );
 
     expect(result.db).toBeDefined();
 

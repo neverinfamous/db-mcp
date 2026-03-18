@@ -3,13 +3,17 @@ import type { SchemaInfo, TableInfo, IndexInfo } from "../../../types/index.js";
 import { DbMcpError, ErrorCategory } from "../../../utils/errors/index.js";
 import type { ColumnInfo } from "../../../types/index.js";
 
-export async function fallBackGetSchema(adapter: SqliteAdapter): Promise<SchemaInfo> {
+export async function fallBackGetSchema(
+  adapter: SqliteAdapter,
+): Promise<SchemaInfo> {
   const tables = await adapter.listTables();
   const indexes = await adapter.getIndexes();
   return { tables, indexes };
 }
 
-export async function fallBackListTables(adapter: SqliteAdapter): Promise<TableInfo[]> {
+export async function fallBackListTables(
+  adapter: SqliteAdapter,
+): Promise<TableInfo[]> {
   const result = await adapter.executeReadQuery(
     `SELECT name, type FROM sqlite_master
            WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
@@ -26,12 +30,15 @@ export async function fallBackListTables(adapter: SqliteAdapter): Promise<TableI
   return tables;
 }
 
-export async function fallBackDescribeTable(adapter: SqliteAdapter, tableName: string): Promise<TableInfo> {
+export async function fallBackDescribeTable(
+  adapter: SqliteAdapter,
+  tableName: string,
+): Promise<TableInfo> {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
     throw new DbMcpError(
       "Invalid table name",
       "SQLITE_INVALID_TABLE",
-      ErrorCategory.VALIDATION
+      ErrorCategory.VALIDATION,
     );
   }
   const result = await adapter.executeReadQuery(
@@ -56,7 +63,10 @@ export async function fallBackDescribeTable(adapter: SqliteAdapter, tableName: s
   };
 }
 
-export async function fallBackGetIndexes(adapter: SqliteAdapter, table?: string): Promise<IndexInfo[]> {
+export async function fallBackGetIndexes(
+  adapter: SqliteAdapter,
+  table?: string,
+): Promise<IndexInfo[]> {
   let sql = `SELECT name, tbl_name, sql FROM sqlite_master
            WHERE type = 'index' AND sql IS NOT NULL`;
   if (table) {
