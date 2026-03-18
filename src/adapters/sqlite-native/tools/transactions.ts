@@ -29,10 +29,13 @@ type TransactionMode = (typeof VALID_MODES)[number];
 // Schemas
 const BeginTransactionSchema = z.object({
   mode: z.preprocess(
-    (val) =>
-      typeof val === "string" && VALID_MODES.includes(val as TransactionMode)
-        ? val
-        : undefined,
+    (val) => {
+      if (typeof val !== "string") return undefined;
+      const normalized = val.toLowerCase();
+      return VALID_MODES.includes(normalized as TransactionMode)
+        ? normalized
+        : undefined;
+    },
     z
       .enum(["deferred", "immediate", "exclusive"])
       .optional()
@@ -397,10 +400,19 @@ function createExecuteInTransactionTool(
           results,
         };
       } catch (error) {
-        adapter.rollbackTransaction();
+        let rollbackFailure: string | undefined;
+        try {
+          adapter.rollbackTransaction();
+        } catch (rbError) {
+          rollbackFailure =
+            rbError instanceof Error ? rbError.message : String(rbError);
+        }
         const message = error instanceof Error ? error.message : String(error);
         const formatted = formatHandlerError(error);
-        const rollbackMessage = `Transaction rolled back: ${message}`;
+        let rollbackMessage = `Transaction rolled back: ${message}`;
+        if (rollbackFailure) {
+          rollbackMessage += ` (rollback error: ${rollbackFailure})`;
+        }
 
         return {
           ...formatted,

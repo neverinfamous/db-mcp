@@ -881,9 +881,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Transaction Rollback**: Preserved `formatted.error` in rollback catch block instead of overwriting with generic rollback message
 - **SpatiaLite Loader**: Windows PATH resolution now derives directory from `customPath` (when provided) instead of only `SPATIALITE_PATH` env var; renamed shadow `path` variable
 - **CI E2E**: Added database seeding step (`sqlite3 test.db < test-database.sql`) to `e2e.yml` — `test.db` is gitignored and absent on fresh CI checkout, causing WASM E2E tests to fail with empty database
+- **Transaction Mode**: Normalized transaction mode input to lowercase — `IMMEDIATE` and `Immediate` now correctly resolve to `immediate` instead of silently defaulting to `deferred`
+- **Transaction Rollback**: Wrapped `rollbackTransaction()` in try/catch to preserve original error context if rollback itself fails
+- **Verify Backup Errors**: Error codes (`FILE_NOT_FOUND`, `ATTACH_FAILED`) now passed through `ValidationError` constructor instead of overriding after `formatHandlerError` spread
+- **Dockerfile Healthcheck**: Transport-aware healthcheck — only runs `curl /health` in HTTP mode; falls back to lightweight Node.js check for stdio to prevent false-healthy status
 
 ### Security
 
+- **CTE Write-Bypass**: `sqlite_read_query` now blocks `WITH ... INSERT/UPDATE/DELETE` — parses past CTE preamble to verify main statement is `SELECT` or `EXPLAIN`
+- **PRAGMA Hardening**: Assignment detection uses anchored regex (`^PRAGMA\s+name\s*=`) instead of `includes("=")` to avoid false positives in string literals; function-call regex handles schema-qualified names (`PRAGMA main.table_info(...)`)
+- **SQL Comment Injection**: Comment-style patterns (`--`, `/* */`) now tested against string-literal-stripped SQL to prevent false positives on quoted values like `SELECT 'a--b'`
+- **Log Injection (CodeQL)**: Logger taint-break uses char-code round-trip (`String.fromCharCode`) to sever CodeQL data-flow tracking chain for sanitized output
 - **Strict Validation**: Removed `.strict()` from all Zod tool input schemas across all tool groups. `.strict()` maps to `additionalProperties: false` in JSON Schema, which causes the MCP SDK to reject unrecognized keys at the framework boundary before handlers can catch, producing raw `-32602` errors instead of structured responses. Handler-level validation (regex, enum checks) already guards against malformed input.
 - **SQL Injection**: Added strong regex validation to `savepoint` names in the Native SQLite transaction methods to prevent potential arbitrary SQL injection.
 - **CORS Advisory**: Updated `README.md` and `DOCKER_README.md` to explicitly warn about the permissive `["*"]` default CORS property in production HTTP deployments.

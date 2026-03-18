@@ -18,11 +18,24 @@ const DANGEROUS_SQL_PATTERNS: RegExp[] = [
   /;\s*ALTER\s+/i,
   /;\s*UNION\s+ALL\s+SELECT/i,
   /;\s*UNION\s+SELECT/i,
-  /--.*$/m,
-  /\/\*[\s\S]*?\*\//,
   /;\s*ATTACH\s+/i,
   /;\s*DETACH\s+/i,
 ];
+
+/**
+ * Comment-style SQL patterns.
+ * Checked against string-literal-stripped SQL to avoid false positives
+ * on comment markers inside quoted strings (e.g., SELECT 'a--b').
+ */
+const COMMENT_SQL_PATTERNS: RegExp[] = [/--.*$/m, /\/\*[\s\S]*?\*\//];
+
+/**
+ * Strip SQL string literals so comment detection doesn't match
+ * markers inside quoted values. Handles escaped quotes ('').
+ */
+function stripSqlStringLiterals(sql: string): string {
+  return sql.replace(/'(?:''|[^'])*'/g, "''");
+}
 
 /**
  * Write-statement prefixes blocked in read-only mode
@@ -63,6 +76,18 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
   // Note: This is a basic check; parameterized queries are the primary defense
   for (const pattern of DANGEROUS_SQL_PATTERNS) {
     if (pattern.test(sql)) {
+      throw new ValidationError(
+        "Query contains potentially dangerous patterns",
+        "DB_DANGEROUS_PATTERN",
+      );
+    }
+  }
+
+  // Check comment patterns against string-literal-stripped SQL
+  // to avoid false positives on markers inside quoted strings
+  const sqlWithoutStrings = stripSqlStringLiterals(sql);
+  for (const pattern of COMMENT_SQL_PATTERNS) {
+    if (pattern.test(sqlWithoutStrings)) {
       throw new ValidationError(
         "Query contains potentially dangerous patterns",
         "DB_DANGEROUS_PATTERN",

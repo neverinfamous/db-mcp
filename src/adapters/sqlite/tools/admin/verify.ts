@@ -65,9 +65,11 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         if (!fs.existsSync(resolvedPath)) {
           return {
             ...formatHandlerError(
-              new ValidationError(`Backup file not found: ${input.backupPath}`),
+              new ValidationError(
+                `Backup file not found: ${input.backupPath}`,
+                "FILE_NOT_FOUND",
+              ),
             ),
-            code: "FILE_NOT_FOUND",
             backupPath: input.backupPath,
           };
         }
@@ -84,9 +86,9 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
             ...formatHandlerError(
               new ValidationError(
                 error instanceof Error ? error.message : String(error),
+                "ATTACH_FAILED",
               ),
             ),
-            code: "ATTACH_FAILED",
             backupPath: input.backupPath,
           };
         }

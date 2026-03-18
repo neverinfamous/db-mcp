@@ -84,8 +84,8 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Block mutating PRAGMAs while allowing read-only introspection PRAGMAs
       if (trimmedUpper.startsWith("PRAGMA")) {
-        // Assignment form is always mutating
-        if (trimmedQuery.includes("=")) {
+        // Assignment form (PRAGMA [schema.]name = ...) is always mutating
+        if (/^PRAGMA\s+(?:\w+\.)?\w+\s*=/i.test(trimmedQuery)) {
           return {
             ...formatHandlerError(
               new ValidationError(
@@ -97,8 +97,10 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           };
         }
 
-        // For function-call form PRAGMA name(...), only allow known read-only PRAGMAs
-        const pragmaMatch = /^PRAGMA\s+(\w+)\s*\(/i.exec(trimmedQuery);
+        // For function-call form PRAGMA [schema.]name(...), only allow known read-only PRAGMAs
+        const pragmaMatch = /^PRAGMA\s+(?:\w+\.)?(\w+)\s*\(/i.exec(
+          trimmedQuery,
+        );
         if (pragmaMatch) {
           const pragmaName = (pragmaMatch[1] ?? "").toLowerCase();
           const readOnlyPragmas = new Set([
@@ -130,7 +132,27 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         }
       }
 
-      const isAllowed = allowedPrefixes.some((p) => trimmedUpper.startsWith(p));
+      let isAllowed = allowedPrefixes.some((p) => trimmedUpper.startsWith(p));
+
+      // CTE safety: WITH can prefix writes (WITH ... INSERT/UPDATE/DELETE).
+      // Only allow WITH when the main statement after CTEs is SELECT or EXPLAIN.
+      if (isAllowed && trimmedUpper.startsWith("WITH")) {
+        // Strip CTEs by finding the last top-level ')' before the main statement
+        let depth = 0;
+        let mainStart = 0;
+        for (let i = 0; i < trimmedQuery.length; i++) {
+          if (trimmedQuery[i] === "(") depth++;
+          else if (trimmedQuery[i] === ")") {
+            depth--;
+            if (depth === 0) mainStart = i + 1;
+          }
+        }
+        const mainStmt = trimmedQuery.slice(mainStart).trim().toUpperCase();
+        if (!mainStmt.startsWith("SELECT") && !mainStmt.startsWith("EXPLAIN")) {
+          isAllowed = false;
+        }
+      }
+
       if (!isAllowed) {
         const rejectedPrefix = rejectedPrefixes.find((p) =>
           trimmedUpper.startsWith(p),

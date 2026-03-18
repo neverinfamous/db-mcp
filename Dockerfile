@@ -100,9 +100,9 @@ ENV NODE_ENV=production
 # Switch to non-root user
 USER appuser
 
-# Health check — validates HTTP endpoint when available, falls back to Node.js check for stdio
+# Health check — uses HTTP endpoint for HTTP transport, falls back to Node.js check for stdio
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -sf http://localhost:${PORT:-3000}/health || node -e "console.log('ok')"
+    CMD /bin/sh -c 'if [ "${MCP_TRANSPORT:-stdio}" = "http" ]; then curl -sf "http://localhost:${PORT:-3000}/health"; else node -e "console.log(\"ok\")"; fi'
 
 # Run the MCP server (default: stdio transport with native backend)
 ENTRYPOINT ["node", "dist/cli.js"]
