@@ -43,22 +43,27 @@ export function tryLoadSpatialite(
   // On Windows, SpatiaLite DLL has many dependencies (libgeos, libproj, etc.)
   // These must be in PATH for Windows to find them when loading the extension.
   // Prepend the extension directory to PATH before attempting to load.
-  const envPath = process.env["SPATIALITE_PATH"];
-  if (envPath && process.platform === "win32") {
-    const extensionDir = envPath.replace(/[/\\][^/\\]+$/, ""); // Get directory from DLL path
-    const currentPath = process.env["PATH"] ?? "";
-    if (!currentPath.includes(extensionDir)) {
-      process.env["PATH"] = extensionDir + ";" + currentPath;
+  const chosenPathForEnv = customPath ?? process.env["SPATIALITE_PATH"];
+  if (process.platform === "win32" && chosenPathForEnv) {
+    // Only treat it as a filesystem path if it contains a path separator
+    const looksLikeFsPath =
+      chosenPathForEnv.includes("/") || chosenPathForEnv.includes("\\");
+    if (looksLikeFsPath) {
+      const extensionDir = chosenPathForEnv.replace(/[/\\][^/\\]+$/, ""); // Get directory from DLL path
+      const currentPath = process.env["PATH"] ?? "";
+      if (!currentPath.includes(extensionDir)) {
+        process.env["PATH"] = extensionDir + ";" + currentPath;
+      }
     }
   }
 
-  for (const path of paths) {
+  for (const candidatePath of paths) {
     try {
-      db.loadExtension(path);
+      db.loadExtension(candidatePath);
       // Initialize spatial metadata
       db.exec("SELECT InitSpatialMetaData(1)");
       loadedDatabases.add(db);
-      return { success: true, path };
+      return { success: true, path: candidatePath };
     } catch {
       // Try next path
     }

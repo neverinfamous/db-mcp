@@ -158,7 +158,7 @@ export class SchemaManager {
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
       throw new DbMcpError(
         "Invalid table name",
-        "SQLITE_INVALID_TABLE",
+        "INVALID_TABLE",
         ErrorCategory.VALIDATION,
       );
     }
@@ -171,7 +171,7 @@ export class SchemaManager {
     if (!result.rows || result.rows.length === 0) {
       throw new DbMcpError(
         `Table '${tableName}' does not exist`,
-        "SQLITE_TABLE_NOT_FOUND",
+        "TABLE_NOT_FOUND",
         ErrorCategory.RESOURCE,
       );
     }

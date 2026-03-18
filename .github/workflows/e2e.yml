@@ -27,6 +27,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Seed test database
+        run: sqlite3 test-server/test.db < test-server/test-database.sql
+
       - name: Run E2E tests
         run: npm run test:e2e
 

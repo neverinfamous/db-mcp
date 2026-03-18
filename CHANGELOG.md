@@ -873,6 +873,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Verify Backup**: Wrapped `DETACH DATABASE` in `finally` block with try/catch to prevent detach failures from overriding successful verification results
 - **Optimize Tool**: Added try/catch + `formatHandlerError` to `sqlite_optimize` handler for consistent structured error responses on parse or runtime failures
 - **Structured Errors**: Added `structuredContent` to error responses in the tool registration wrapper when tools have `outputSchema`, ensuring clients receive machine-readable error payloads
+- **PRAGMA Safety**: Block mutating PRAGMAs in `sqlite_read_query` — assignment form (`=`) always blocked; function-call form (`PRAGMA name(...)`) checked against read-only allowlist (table_info, index_list, foreign_key_list, etc.)
+- **Optimize Progress**: Fixed off-by-one progress tracking in analyze branch (`step + 1` → `++step`)
+- **Adapter Version**: Updated `SqliteAdapter.version` from `1.0.0` to `1.1.0` to match `package.json`
+- **Error Codes**: Aligned schema-manager error codes with canonical tool-level codes (`SQLITE_INVALID_TABLE` → `INVALID_TABLE`, `SQLITE_TABLE_NOT_FOUND` → `TABLE_NOT_FOUND`)
+- **Transaction Methods**: Removed local `ValidationError` class in favor of plain `Error` — callers already wrap with `formatHandlerError`
+- **Transaction Rollback**: Preserved `formatted.error` in rollback catch block instead of overwriting with generic rollback message
+- **SpatiaLite Loader**: Windows PATH resolution now derives directory from `customPath` (when provided) instead of only `SPATIALITE_PATH` env var; renamed shadow `path` variable
+- **CI E2E**: Added database seeding step (`sqlite3 test.db < test-database.sql`) to `e2e.yml` — `test.db` is gitignored and absent on fresh CI checkout, causing WASM E2E tests to fail with empty database
 
 ### Security
 

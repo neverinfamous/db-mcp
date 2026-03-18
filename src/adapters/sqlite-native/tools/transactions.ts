@@ -400,11 +400,12 @@ function createExecuteInTransactionTool(
         adapter.rollbackTransaction();
         const message = error instanceof Error ? error.message : String(error);
         const formatted = formatHandlerError(error);
+        const rollbackMessage = `Transaction rolled back: ${message}`;
 
         return {
           ...formatted,
-          error: `Transaction rolled back: ${message}`,
-          message: `Transaction rolled back: ${message}`,
+          error: formatted.error ?? rollbackMessage,
+          message: rollbackMessage,
           statementsExecuted: results.length,
           results,
         };

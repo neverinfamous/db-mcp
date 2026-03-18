@@ -82,17 +82,52 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         "DETACH",
       ];
 
-      // Block mutating PRAGMAs (assignment form with =) in read-only context
-      if (trimmedUpper.startsWith("PRAGMA") && trimmedQuery.includes("=")) {
-        return {
-          ...formatHandlerError(
-            new ValidationError(
-              "Mutating PRAGMA (with assignment) not allowed in sqlite_read_query. Use admin tools to change database settings.",
+      // Block mutating PRAGMAs while allowing read-only introspection PRAGMAs
+      if (trimmedUpper.startsWith("PRAGMA")) {
+        // Assignment form is always mutating
+        if (trimmedQuery.includes("=")) {
+          return {
+            ...formatHandlerError(
+              new ValidationError(
+                "Mutating PRAGMA not allowed in sqlite_read_query. Use admin tools to change database settings.",
+              ),
             ),
-          ),
-          rowCount: 0,
-          rows: [],
-        };
+            rowCount: 0,
+            rows: [],
+          };
+        }
+
+        // For function-call form PRAGMA name(...), only allow known read-only PRAGMAs
+        const pragmaMatch = /^PRAGMA\s+(\w+)\s*\(/i.exec(trimmedQuery);
+        if (pragmaMatch) {
+          const pragmaName = (pragmaMatch[1] ?? "").toLowerCase();
+          const readOnlyPragmas = new Set([
+            "table_info",
+            "table_xinfo",
+            "table_list",
+            "index_list",
+            "index_info",
+            "index_xinfo",
+            "foreign_key_list",
+            "foreign_key_check",
+            "collation_list",
+            "database_list",
+            "compile_options",
+            "integrity_check",
+            "quick_check",
+          ]);
+          if (!readOnlyPragmas.has(pragmaName)) {
+            return {
+              ...formatHandlerError(
+                new ValidationError(
+                  `PRAGMA ${pragmaName}(...) is not allowed in sqlite_read_query. Only read-only PRAGMAs are permitted. Use admin tools to change database settings.`,
+                ),
+              ),
+              rowCount: 0,
+              rows: [],
+            };
+          }
+        }
       }
 
       const isAllowed = allowedPrefixes.some((p) => trimmedUpper.startsWith(p));
