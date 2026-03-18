@@ -46,7 +46,7 @@ test.describe("Payload Contracts: CSV Tools", () => {
 
       if (!payload.success) {
         // CSV extension not available — skip remaining tests
-        const msg = payload.message as string;
+        const msg = (payload.error ?? payload.message) as string;
         if (msg && (msg.includes("not available") || msg.includes("CSV"))) {
           csvAvailable = false;
           test.skip();
