@@ -97,6 +97,15 @@ const ERROR_SUGGESTIONS: {
     category: ErrorCategory.RESOURCE,
   },
 
+  // JSON-specific errors — often caused by wrong column name
+  {
+    pattern: /malformed JSON/i,
+    suggestion:
+      "The JSON data is malformed. This commonly occurs when the column name is incorrect — SQLite treats the unresolved identifier as a literal string. Verify the column exists with sqlite_describe_table.",
+    category: ErrorCategory.QUERY,
+    code: "MALFORMED_JSON",
+  },
+
   // Query errors
   {
     pattern: /syntax error/i,

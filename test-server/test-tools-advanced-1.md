@@ -1,6 +1,6 @@
 # Advanced Stress Test — db-mcp (SQLite)
 
-**Test Native Mode Only. Ignore WASM content**
+**Test WASM Mode Only. Ignore Native content**
 
 **Step 1:** Read `server-instructions.ts` and `src/constants/server-instructions/gotchas.md` using `view_file` (not grep or search) to understand documented behaviors, edge cases, and response structures.
 
