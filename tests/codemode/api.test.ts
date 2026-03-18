@@ -168,5 +168,82 @@ describe("codemode api", () => {
 
       expect(mockTool.handler).toHaveBeenCalledWith(arg, expect.any(Object));
     });
+
+    it("should handle number positional argument", async () => {
+      const numberTool: ToolDefinition = {
+        name: "sqlite_stats_histogram",
+        description: "Histogram",
+        group: "stats",
+        handler: vi.fn().mockResolvedValue({}),
+      };
+      (numberTool.handler as any).mockClear();
+
+      const api = createSqliteApi([numberTool]);
+      // Call with a number — should map to positional param if defined
+      await api.stats.statsHistogram(10);
+
+      expect(numberTool.handler).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+      );
+    });
+
+    it("should handle boolean positional argument", async () => {
+      const boolTool: ToolDefinition = {
+        name: "sqlite_read_query",
+        description: "Read",
+        group: "core",
+        handler: vi.fn().mockResolvedValue({}),
+      };
+
+      const api = createSqliteApi([boolTool]);
+      // Boolean primitive gets mapped through positional params
+      await api.core.readQuery(true);
+
+      expect(boolTool.handler).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+      );
+    });
+
+    it("should handle zero arguments", async () => {
+      const noArgTool: ToolDefinition = {
+        name: "sqlite_list_tables",
+        description: "List tables",
+        group: "core",
+        handler: vi.fn().mockResolvedValue({}),
+      };
+
+      const api = createSqliteApi([noArgTool]);
+      await api.core.listTables();
+
+      // Should pass undefined/empty params
+      expect(noArgTool.handler).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe("getGroupMethods", () => {
+    it("should return empty array for invalid group", () => {
+      const api = createSqliteApi([]);
+      const methods = api.getGroupMethods("nonexistent" as any);
+      expect(methods).toEqual([]);
+    });
+
+    it("should exclude help from method listing", () => {
+      const tool: ToolDefinition = {
+        name: "sqlite_read_query",
+        description: "Read",
+        group: "core",
+        handler: vi.fn(),
+      };
+
+      const api = createSqliteApi([tool]);
+      const methods = api.getGroupMethods("core");
+      expect(methods).toContain("readQuery");
+      expect(methods).not.toContain("help");
+    });
   });
 });

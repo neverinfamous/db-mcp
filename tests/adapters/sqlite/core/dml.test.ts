@@ -122,5 +122,66 @@ describe("Core Tools - DML", () => {
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
+
+    it("should accept CTE-prefixed INSERT (WITH...INSERT)", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE cte_target (id INTEGER PRIMARY KEY, value INTEGER)",
+      );
+
+      const result = (await tools.get("sqlite_write_query")?.({
+        query:
+          "WITH vals(v) AS (VALUES (1), (2), (3)) INSERT INTO cte_target (value) SELECT v FROM vals",
+      })) as { success: boolean; rowsAffected: number };
+
+      expect(result.success).toBe(true);
+      expect(result.rowsAffected).toBe(3);
+    });
+
+    it("should accept CTE-prefixed DELETE (WITH...DELETE)", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE cte_del (id INTEGER PRIMARY KEY, name TEXT)",
+      );
+      await adapter.executeWriteQuery(
+        "INSERT INTO cte_del VALUES (1, 'a'), (2, 'b')",
+      );
+
+      const result = (await tools.get("sqlite_write_query")?.({
+        query:
+          "WITH targets AS (SELECT id FROM cte_del WHERE name = 'a') DELETE FROM cte_del WHERE id IN (SELECT id FROM targets)",
+      })) as { success: boolean; rowsAffected: number };
+
+      expect(result.success).toBe(true);
+      expect(result.rowsAffected).toBe(1);
+    });
+
+    it("should reject CTE-prefixed SELECT via write_query", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query:
+          "WITH t AS (SELECT 1 AS v) SELECT * FROM t",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("SELECT");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject unrecognized statement types", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "FOOBAR something",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Unrecognized statement type");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject empty query", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("cannot be empty");
+    });
   });
 });

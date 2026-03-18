@@ -413,4 +413,151 @@ describe("NativeSqliteAdapter", () => {
       expect(tableNames).not.toContain("articles_fts_config");
     });
   });
+
+  describe("Transactions", () => {
+    beforeEach(async () => {
+      const config: SqliteConfig = {
+        type: "sqlite",
+        filePath: ":memory:",
+      };
+      await adapter.connect(config);
+      await adapter.executeWriteQuery(
+        "CREATE TABLE txn_test (id INTEGER PRIMARY KEY, val TEXT)",
+      );
+    });
+
+    it("should begin and commit a transaction", async () => {
+      adapter.beginTransaction();
+      await adapter.executeWriteQuery(
+        "INSERT INTO txn_test VALUES (1, 'hello')",
+      );
+      adapter.commitTransaction();
+
+      const result = await adapter.executeReadQuery(
+        "SELECT * FROM txn_test",
+      );
+      expect(result.rows).toHaveLength(1);
+    });
+
+    it("should begin and rollback a transaction", async () => {
+      adapter.beginTransaction();
+      await adapter.executeWriteQuery(
+        "INSERT INTO txn_test VALUES (1, 'hello')",
+      );
+      adapter.rollbackTransaction();
+
+      const result = await adapter.executeReadQuery(
+        "SELECT * FROM txn_test",
+      );
+      expect(result.rows).toHaveLength(0);
+    });
+
+    it("should support savepoints", async () => {
+      adapter.beginTransaction();
+      await adapter.executeWriteQuery(
+        "INSERT INTO txn_test VALUES (1, 'first')",
+      );
+
+      adapter.savepoint("sp1");
+      await adapter.executeWriteQuery(
+        "INSERT INTO txn_test VALUES (2, 'second')",
+      );
+
+      adapter.rollbackToSavepoint("sp1");
+
+      adapter.commitTransaction();
+
+      const result = await adapter.executeReadQuery(
+        "SELECT * FROM txn_test",
+      );
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows?.[0]?.["val"]).toBe("first");
+    });
+
+    it("should release savepoints", async () => {
+      adapter.beginTransaction();
+      adapter.savepoint("sp1");
+      await adapter.executeWriteQuery(
+        "INSERT INTO txn_test VALUES (1, 'data')",
+      );
+      adapter.releaseSavepoint("sp1");
+      adapter.commitTransaction();
+
+      const result = await adapter.executeReadQuery(
+        "SELECT * FROM txn_test",
+      );
+      expect(result.rows).toHaveLength(1);
+    });
+  });
+
+  describe("rawQuery", () => {
+    beforeEach(async () => {
+      const config: SqliteConfig = {
+        type: "sqlite",
+        filePath: ":memory:",
+      };
+      await adapter.connect(config);
+    });
+
+    it("should delegate to executeQuery for SELECT", async () => {
+      const result = await adapter.rawQuery("SELECT 42 as answer");
+      expect(result.rows?.[0]).toEqual({ answer: 42 });
+    });
+
+    it("should delegate to executeQuery for INSERT", async () => {
+      await adapter.rawQuery(
+        "CREATE TABLE raw_test (id INTEGER PRIMARY KEY)",
+      );
+      const result = await adapter.rawQuery(
+        "INSERT INTO raw_test DEFAULT VALUES",
+      );
+      expect(result.rowsAffected).toBe(1);
+    });
+  });
+
+  describe("clearSchemaCache", () => {
+    beforeEach(async () => {
+      const config: SqliteConfig = {
+        type: "sqlite",
+        filePath: ":memory:",
+      };
+      await adapter.connect(config);
+    });
+
+    it("should clear schema cache without error", () => {
+      expect(() => adapter.clearSchemaCache()).not.toThrow();
+    });
+
+    it("should allow listing tables after cache clear", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE cache_test (id INTEGER PRIMARY KEY)",
+      );
+      adapter.clearSchemaCache();
+
+      const tables = await adapter.listTables();
+      expect(tables.map((t) => t.name)).toContain("cache_test");
+    });
+  });
+
+  describe("describeTable edge cases", () => {
+    beforeEach(async () => {
+      const config: SqliteConfig = {
+        type: "sqlite",
+        filePath: ":memory:",
+      };
+      await adapter.connect(config);
+    });
+
+    it("should describe table with nullable columns", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE nullable_test (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)",
+      );
+
+      const tableInfo = await adapter.describeTable("nullable_test");
+      expect(tableInfo.columns).toHaveLength(3);
+      // name and age should be nullable
+      const nameCol = tableInfo.columns?.find((c) => c.name === "name");
+      expect(nameCol?.nullable).toBe(true);
+    });
+  });
 });

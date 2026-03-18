@@ -334,12 +334,17 @@ describe("Introspection Schema Tools", () => {
   // ===========================================================================
 
   describe("sqlite_migration_risks", () => {
-    it("should assess DROP TABLE risks", async () => {
+    it("should assess DROP TABLE risks with FK dependents", async () => {
       const result = (await tools.get("sqlite_migration_risks")?.({
         statements: ["DROP TABLE departments"],
       })) as {
         success: boolean;
-        risks: { riskLevel: string; category: string }[];
+        risks: {
+          riskLevel: string;
+          category: string;
+          description: string;
+          mitigation?: string;
+        }[];
         summary: {
           totalStatements: number;
           totalRisks: number;
@@ -349,34 +354,197 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.risks.length).toBeGreaterThan(0);
-      expect(result.summary.totalRisks).toBeGreaterThan(0);
+      expect(result.summary.highestRisk).toBe("critical");
+      // Should mention dependent tables
+      const dropRisk = result.risks.find((r) => r.category === "destructive");
+      expect(dropRisk).toBeDefined();
+      expect(dropRisk?.description).toContain("departments");
     });
 
-    it("should assess ALTER TABLE risk", async () => {
+    it("should assess ALTER TABLE DROP COLUMN risk", async () => {
       const result = (await tools.get("sqlite_migration_risks")?.({
-        statements: ["ALTER TABLE employees ADD COLUMN email TEXT"],
+        statements: ["ALTER TABLE employees DROP COLUMN name"],
       })) as {
         success: boolean;
-        risks: { riskLevel: string }[];
+        risks: { riskLevel: string; category: string }[];
       };
 
       expect(result.success).toBe(true);
+      const alterRisk = result.risks.find(
+        (r) => r.category === "alter_limitation",
+      );
+      expect(alterRisk).toBeDefined();
+      expect(alterRisk?.riskLevel).toBe("high");
     });
 
-    it("should assess CREATE TABLE as low risk", async () => {
+    it("should assess ALTER TABLE RENAME COLUMN risk", async () => {
       const result = (await tools.get("sqlite_migration_risks")?.({
-        statements: ["CREATE TABLE new_table (id INTEGER PRIMARY KEY)"],
+        statements: ["ALTER TABLE employees RENAME COLUMN name TO full_name"],
       })) as {
         success: boolean;
-        risks: { riskLevel: string }[];
+        risks: { riskLevel: string; category: string }[];
+      };
+
+      expect(result.success).toBe(true);
+      const alterRisk = result.risks.find(
+        (r) => r.category === "alter_limitation",
+      );
+      expect(alterRisk).toBeDefined();
+      expect(alterRisk?.riskLevel).toBe("medium");
+    });
+
+    it("should assess ADD COLUMN NOT NULL without DEFAULT risk", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: [
+          "ALTER TABLE employees ADD COLUMN email TEXT NOT NULL",
+        ],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+      };
+
+      expect(result.success).toBe(true);
+      const notNullRisk = result.risks.find(
+        (r) =>
+          r.category === "alter_limitation" &&
+          r.riskLevel === "high",
+      );
+      expect(notNullRisk).toBeDefined();
+    });
+
+    it("should assess ADD COLUMN PRIMARY KEY as critical", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: [
+          "ALTER TABLE employees ADD COLUMN uuid TEXT PRIMARY KEY",
+        ],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
         summary: { highestRisk: string };
       };
 
       expect(result.success).toBe(true);
-      expect(result.summary.highestRisk).toBe("low");
+      expect(result.summary.highestRisk).toBe("critical");
     });
 
-    it("should handle multiple statements", async () => {
+    it("should assess ADD COLUMN UNIQUE risk", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: [
+          "ALTER TABLE employees ADD COLUMN badge TEXT UNIQUE",
+        ],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+      };
+
+      expect(result.success).toBe(true);
+      const uniqueRisk = result.risks.find(
+        (r) => r.riskLevel === "high" && r.category === "alter_limitation",
+      );
+      expect(uniqueRisk).toBeDefined();
+    });
+
+    it("should assess DROP INDEX risk", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: ["DROP INDEX idx_something"],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+      };
+
+      expect(result.success).toBe(true);
+      const indexRisk = result.risks.find(
+        (r) => r.category === "index_removal",
+      );
+      expect(indexRisk).toBeDefined();
+      expect(indexRisk?.riskLevel).toBe("medium");
+    });
+
+    it("should assess DELETE without WHERE as critical", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: ["DELETE FROM employees"],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+        summary: { highestRisk: string };
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.summary.highestRisk).toBe("critical");
+      const deleteRisk = result.risks.find(
+        (r) => r.category === "destructive",
+      );
+      expect(deleteRisk).toBeDefined();
+    });
+
+    it("should assess VACUUM risk", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: ["VACUUM"],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+      };
+
+      expect(result.success).toBe(true);
+      const vacuumRisk = result.risks.find(
+        (r) => r.category === "performance",
+      );
+      expect(vacuumRisk).toBeDefined();
+      expect(vacuumRisk?.riskLevel).toBe("medium");
+    });
+
+    it("should assess FTS5 virtual table creation", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: [
+          "CREATE VIRTUAL TABLE articles_fts USING fts5(title, body)",
+        ],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+      };
+
+      expect(result.success).toBe(true);
+      const ftsRisk = result.risks.find((r) => r.category === "fts5");
+      expect(ftsRisk).toBeDefined();
+      expect(ftsRisk?.riskLevel).toBe("low");
+    });
+
+    it("should assess transaction wrappers", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: ["BEGIN", "COMMIT", "ROLLBACK"],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+        summary: { totalStatements: number };
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.summary.totalStatements).toBe(3);
+      const txnRisks = result.risks.filter(
+        (r) => r.category === "transaction",
+      );
+      expect(txnRisks.length).toBe(3);
+      expect(txnRisks.every((r) => r.riskLevel === "low")).toBe(true);
+    });
+
+    it("should assess DROP TABLE IF EXISTS for non-existent table", async () => {
+      const result = (await tools.get("sqlite_migration_risks")?.({
+        statements: ["DROP TABLE IF EXISTS nonexistent_xyz"],
+      })) as {
+        success: boolean;
+        risks: { riskLevel: string; category: string }[];
+      };
+
+      expect(result.success).toBe(true);
+      // Should still flag as high risk (destructive)
+      const dropRisk = result.risks.find(
+        (r) => r.category === "destructive",
+      );
+      expect(dropRisk).toBeDefined();
+      expect(dropRisk?.riskLevel).toBe("high");
+    });
+
+    it("should handle creating a simple table with multiple statements", async () => {
       const result = (await tools.get("sqlite_migration_risks")?.({
         statements: [
           "CREATE TABLE logs (id INTEGER PRIMARY KEY, msg TEXT)",
@@ -391,7 +559,6 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.summary.totalStatements).toBe(3);
-      // CREATE TABLE is safe and may not generate a risk entry
       expect(result.risks.length).toBeGreaterThanOrEqual(1);
     });
   });

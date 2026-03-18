@@ -152,6 +152,66 @@ describe("sqlite_execute_code handler - validation", () => {
 });
 
 // =============================================================================
+// Readonly Guards & Write-Tool Detection
+// =============================================================================
+
+describe("sqlite_execute_code handler - readonly guards", () => {
+  afterEach(() => {
+    cleanupCodeMode();
+  });
+
+  it("should include unannotated tools as write tools (fail-closed)", () => {
+    const unannotatedTool: ToolDefinition = {
+      name: "sqlite_custom_op",
+      description: "No annotations",
+      group: "core",
+      handler: vi.fn().mockResolvedValue({ success: true }),
+    };
+
+    const adapter = {
+      getToolDefinitions: vi
+        .fn()
+        .mockReturnValue([unannotatedTool]),
+    };
+
+    // Getting tools should not crash even with unannotated tools
+    const tools = getCodeModeTools(adapter as any);
+    expect(tools).toHaveLength(1);
+  });
+
+  it("should coerce string timeout to number", async () => {
+    const adapter = createMockAdapter();
+    const tool = getCodeModeTools(adapter as any)[0]!;
+
+    // String "100" should be coerced to number 100, which is out of range
+    const result = (await tool.handler(
+      { code: "return 1;", timeout: "100" },
+      { timestamp: new Date(), requestId: "test" },
+    )) as Record<string, unknown>;
+
+    expect(result.success).toBe(false);
+    expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
+  });
+
+  it("should coerce unparseable string timeout to default", async () => {
+    const adapter = createMockAdapter();
+    const tool = getCodeModeTools(adapter as any)[0]!;
+
+    // "abc" is not parseable, should become NaN → undefined → default 30000
+    // Then valid code hits worker-script missing error
+    const result = (await tool.handler(
+      { code: "return 1;", timeout: "abc" },
+      { timestamp: new Date(), requestId: "test" },
+    )) as Record<string, unknown>;
+
+    // Should not be a validation error from timeout — defaults to 30000
+    expect(result.success).toBe(false);
+    // Error is about worker-script, not timeout
+    expect(result.code).not.toBe("CODEMODE_VALIDATION_FAILED");
+  });
+});
+
+// =============================================================================
 // cleanupCodeMode
 // =============================================================================
 
