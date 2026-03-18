@@ -483,5 +483,5 @@ Rate each error response 1-5 for contextual usefulness:
 1. Drop `_mcp_migrations`: `sqlite_write_query({query: "DROP TABLE IF EXISTS _mcp_migrations"})`
 2. Drop `stress_migration_data`: `sqlite_write_query({query: "DROP TABLE IF EXISTS stress_migration_data"})`
 3. Drop `stress_idx_flag`: `sqlite_write_query({query: "DROP INDEX IF EXISTS stress_idx_flag"})`
-4. **Reset the database** to undo the `stress_flag` column addition on `test_products` (SQLite cannot DROP COLUMN in older versions)
+4. **Reset the database** with `pwsh -ExecutionPolicy Bypass -File .\reset-database.ps1` to undo the `stress_flag` column addition on `test_products` (SQLite cannot DROP COLUMN in older versions)
 5. After reset, verify: `test_products` has 16 rows and original 6 columns (no `stress_flag`)

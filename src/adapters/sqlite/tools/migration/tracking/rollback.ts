@@ -94,6 +94,21 @@ export function createMigrationRollbackTool(
           };
         }
 
+        // Check if rollback SQL contains executable statements (not just comments/whitespace)
+        const strippedSql = rollbackSql
+          .replace(/--[^\n]*/g, "") // strip single-line comments
+          .replace(/\/\*[\s\S]*?\*\//g, "") // strip multi-line comments
+          .trim();
+
+        if (!strippedSql) {
+          return {
+            success: false,
+            rollbackSql,
+            error: `Rollback SQL contains only comments — no executable statements. SQL: "${rollbackSql}"`,
+            code: "ROLLBACK_SQL_INVALID",
+          };
+        }
+
         if (input.dryRun) {
           return {
             success: true,

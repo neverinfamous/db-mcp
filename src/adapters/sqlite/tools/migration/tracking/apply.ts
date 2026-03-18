@@ -53,6 +53,20 @@ export function createMigrationApplyTool(
           };
         }
 
+        // Block duplicate version names to prevent rollback ambiguity
+        const versionCheck = await adapter.executeReadQuery(
+          `SELECT id, status FROM "${MIGRATIONS_TABLE}" WHERE version = ?`,
+          [input.version],
+        );
+        if ((versionCheck.rows?.length ?? 0) > 0) {
+          const existing = versionCheck.rows?.[0];
+          return {
+            success: false,
+            error: `Duplicate version: '${input.version}' already exists (id=${String(existing?.["id"])}, status=${String(existing?.["status"])}). Use a unique version identifier.`,
+            code: "DUPLICATE_VERSION",
+          };
+        }
+
         try {
           await adapter.executeQuery(input.migrationSql);
         } catch (execError) {
