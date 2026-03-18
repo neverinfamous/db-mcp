@@ -137,18 +137,87 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
       // CTE safety: WITH can prefix writes (WITH ... INSERT/UPDATE/DELETE).
       // Only allow WITH when the main statement after CTEs is SELECT or EXPLAIN.
       if (isAllowed && trimmedUpper.startsWith("WITH")) {
-        // Strip CTEs by finding the last top-level ')' before the main statement
-        let depth = 0;
-        let mainStart = 0;
-        for (let i = 0; i < trimmedQuery.length; i++) {
-          if (trimmedQuery[i] === "(") depth++;
-          else if (trimmedQuery[i] === ")") {
-            depth--;
-            if (depth === 0) mainStart = i + 1;
+        // Walk past WITH [RECURSIVE] and each CTE definition to find the main statement.
+        let i = 4; // skip "WITH"
+        // Skip whitespace
+        while (i < trimmedUpper.length && /\s/.test(trimmedUpper[i] ?? "")) i++;
+        // Skip optional RECURSIVE
+        if (trimmedUpper.startsWith("RECURSIVE", i)) i += 9;
+
+        // Parse each CTE: name [(cols)] AS (body) [, ...]
+        let foundMain = false;
+        while (i < trimmedUpper.length) {
+          // Skip whitespace before CTE name
+          while (i < trimmedUpper.length && /\s/.test(trimmedUpper[i] ?? ""))
+            i++;
+          // Skip CTE name (identifier or quoted)
+          while (
+            i < trimmedUpper.length &&
+            /[A-Z0-9_]/i.test(trimmedQuery[i] ?? "")
+          )
+            i++;
+          // Skip whitespace
+          while (i < trimmedUpper.length && /\s/.test(trimmedUpper[i] ?? ""))
+            i++;
+          // Optional column list in parens
+          if (trimmedQuery[i] === "(") {
+            let d = 0;
+            while (i < trimmedQuery.length) {
+              if (trimmedQuery[i] === "(") d++;
+              else if (trimmedQuery[i] === ")") {
+                d--;
+                if (d === 0) {
+                  i++;
+                  break;
+                }
+              }
+              i++;
+            }
           }
+          // Skip whitespace before AS
+          while (i < trimmedUpper.length && /\s/.test(trimmedUpper[i] ?? ""))
+            i++;
+          // Expect AS keyword
+          if (!trimmedUpper.startsWith("AS", i)) break;
+          i += 2;
+          // Skip whitespace before CTE body
+          while (i < trimmedUpper.length && /\s/.test(trimmedUpper[i] ?? ""))
+            i++;
+          // Skip CTE body (balanced parens)
+          if (trimmedQuery[i] === "(") {
+            let d = 0;
+            while (i < trimmedQuery.length) {
+              if (trimmedQuery[i] === "(") d++;
+              else if (trimmedQuery[i] === ")") {
+                d--;
+                if (d === 0) {
+                  i++;
+                  break;
+                }
+              }
+              i++;
+            }
+          }
+          // Skip whitespace after CTE body
+          while (i < trimmedUpper.length && /\s/.test(trimmedUpper[i] ?? ""))
+            i++;
+          // Another CTE?
+          if (trimmedQuery[i] === ",") {
+            i++;
+            continue;
+          }
+          // No more CTEs — remainder is the main statement
+          foundMain = true;
+          break;
         }
-        const mainStmt = trimmedQuery.slice(mainStart).trim().toUpperCase();
-        if (!mainStmt.startsWith("SELECT") && !mainStmt.startsWith("EXPLAIN")) {
+
+        const mainStmt = foundMain
+          ? trimmedUpper.slice(i).trim()
+          : trimmedUpper.slice(i).trim();
+        if (
+          !mainStmt.startsWith("SELECT") &&
+          !mainStmt.startsWith("EXPLAIN")
+        ) {
           isAllowed = false;
         }
       }

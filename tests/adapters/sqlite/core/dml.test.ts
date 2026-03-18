@@ -66,6 +66,145 @@ describe("Core Tools - DML", () => {
       expect(result.error).toBeDefined();
       expect(result.rows).toEqual([]);
     });
+
+    // =========================================================================
+    // PRAGMA Guards
+    // =========================================================================
+
+    it("should reject mutating PRAGMA assignment form", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "PRAGMA journal_mode = WAL",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Mutating PRAGMA");
+    });
+
+    it("should reject schema-qualified mutating PRAGMA", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "PRAGMA main.journal_mode = DELETE",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Mutating PRAGMA");
+    });
+
+    it("should reject non-whitelisted PRAGMA function-call form", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "PRAGMA page_size(4096)",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("page_size");
+      expect(result.error).toContain("not allowed");
+    });
+
+    it("should allow read-only PRAGMA function-call: table_info", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE pragma_test (id INTEGER PRIMARY KEY, name TEXT)",
+      );
+
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "PRAGMA table_info('pragma_test')",
+      })) as { success: boolean; rows: unknown[] };
+
+      expect(result.success).toBe(true);
+      expect(result.rows.length).toBeGreaterThan(0);
+    });
+
+    it("should allow simple read-only PRAGMA without parens", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "PRAGMA table_list",
+      })) as { success: boolean; rows: unknown[] };
+
+      expect(result.success).toBe(true);
+      expect(result.rows).toBeDefined();
+    });
+
+    it("should allow read-only PRAGMA: foreign_key_list", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE fk_src (id INTEGER PRIMARY KEY)",
+      );
+      await adapter.executeWriteQuery(
+        "CREATE TABLE fk_test (id INTEGER PRIMARY KEY, ref INTEGER REFERENCES fk_src(id))",
+      );
+
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "PRAGMA foreign_key_list('fk_test')",
+      })) as { success: boolean };
+
+      expect(result.success).toBe(true);
+    });
+
+    // =========================================================================
+    // CTE Read Parser
+    // =========================================================================
+
+    it("should allow simple CTE with SELECT", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "WITH t AS (SELECT 1 AS v) SELECT * FROM t",
+      })) as { success: boolean; rows: Record<string, unknown>[] };
+
+      expect(result.success).toBe(true);
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0]?.["v"]).toBe(1);
+    });
+
+    it("should allow RECURSIVE CTE", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query:
+          "WITH RECURSIVE cnt(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM cnt WHERE x < 5) SELECT x FROM cnt",
+      })) as { success: boolean; rows: Record<string, unknown>[] };
+
+      expect(result.success).toBe(true);
+      expect(result.rows).toHaveLength(5);
+    });
+
+    it("should allow multi-CTE query", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query:
+          "WITH a AS (SELECT 1 AS x), b AS (SELECT 2 AS y) SELECT a.x, b.y FROM a, b",
+      })) as { success: boolean; rows: Record<string, unknown>[] };
+
+      expect(result.success).toBe(true);
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0]?.["x"]).toBe(1);
+      expect(result.rows[0]?.["y"]).toBe(2);
+    });
+
+    it("should allow CTE with explicit column list", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query: "WITH t(a, b) AS (SELECT 10, 20) SELECT a, b FROM t",
+      })) as { success: boolean; rows: Record<string, unknown>[] };
+
+      expect(result.success).toBe(true);
+      expect(result.rows[0]?.["a"]).toBe(10);
+      expect(result.rows[0]?.["b"]).toBe(20);
+    });
+
+    it("should reject CTE-prefixed INSERT via read_query", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE cte_read_test (id INTEGER PRIMARY KEY, val INTEGER)",
+      );
+
+      const result = (await tools.get("sqlite_read_query")?.({
+        query:
+          "WITH vals(v) AS (VALUES (1)) INSERT INTO cte_read_test (val) SELECT v FROM vals",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("not allowed");
+    });
+
+    it("should reject CTE-prefixed UPDATE via read_query", async () => {
+      const result = (await tools.get("sqlite_read_query")?.({
+        query:
+          "WITH vals AS (SELECT 1 AS v) UPDATE data SET value = vals.v FROM vals",
+      })) as { success: boolean; error?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("not allowed");
+    });
   });
 
   describe("sqlite_write_query", () => {
