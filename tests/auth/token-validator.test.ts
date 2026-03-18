@@ -3,12 +3,29 @@
  *
  * Tests JWT token validation, claims extraction, error handling,
  * cache management, and static factory methods.
+ *
+ * Uses vi.mock("jose") because ESM module exports are non-configurable
+ * and cannot be mocked with vi.spyOn.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+// Must mock jose BEFORE importing TokenValidator (hoisted by vitest)
+vi.mock("jose", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("jose")>();
+  return {
+    ...actual,
+    createRemoteJWKSet: vi.fn().mockReturnValue(() => {}),
+    jwtVerify: vi.fn(),
+  };
+});
+
 import * as jose from "jose";
 import { TokenValidator, createTokenValidator } from "../../src/auth/token-validator.js";
 import { ERROR_CODES } from "../../src/utils/logger/index.js";
+
+const mockJwtVerify = jose.jwtVerify as unknown as ReturnType<typeof vi.fn>;
+const mockCreateRemoteJWKSet = jose.createRemoteJWKSet as unknown as ReturnType<typeof vi.fn>;
 
 // =============================================================================
 // TokenValidator
@@ -25,6 +42,8 @@ describe("TokenValidator", () => {
 
   beforeEach(() => {
     validator = new TokenValidator(config);
+    mockCreateRemoteJWKSet.mockReturnValue(() => {});
+    mockJwtVerify.mockReset();
   });
 
   afterEach(() => {
@@ -65,14 +84,10 @@ describe("TokenValidator", () => {
         aud: config.audience,
       };
 
-      vi.spyOn(jose, "jwtVerify").mockResolvedValueOnce({
+      mockJwtVerify.mockResolvedValueOnce({
         payload: mockPayload,
         protectedHeader: { alg: "RS256" },
-      } as unknown as jose.JWTVerifyResult);
-
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
+      });
 
       const result = await validator.validate("valid.jwt.token");
 
@@ -82,12 +97,8 @@ describe("TokenValidator", () => {
     });
 
     it("should handle expired token", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
       const expiredError = new jose.errors.JWTExpired("Token expired");
-      vi.spyOn(jose, "jwtVerify").mockRejectedValueOnce(expiredError);
+      mockJwtVerify.mockRejectedValueOnce(expiredError);
 
       const result = await validator.validate("expired.jwt.token");
 
@@ -97,14 +108,10 @@ describe("TokenValidator", () => {
     });
 
     it("should handle claim validation failure", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
       const claimError = new jose.errors.JWTClaimValidationFailed(
         "audience mismatch",
       );
-      vi.spyOn(jose, "jwtVerify").mockRejectedValueOnce(claimError);
+      mockJwtVerify.mockRejectedValueOnce(claimError);
 
       const result = await validator.validate("bad-claims.jwt.token");
 
@@ -114,14 +121,10 @@ describe("TokenValidator", () => {
     });
 
     it("should handle signature verification failure", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
       const sigError = new jose.errors.JWSSignatureVerificationFailed(
         "bad signature",
       );
-      vi.spyOn(jose, "jwtVerify").mockRejectedValueOnce(sigError);
+      mockJwtVerify.mockRejectedValueOnce(sigError);
 
       const result = await validator.validate("bad-sig.jwt.token");
 
@@ -131,12 +134,8 @@ describe("TokenValidator", () => {
     });
 
     it("should handle no matching JWKS key", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
       const noKeyError = new jose.errors.JWKSNoMatchingKey();
-      vi.spyOn(jose, "jwtVerify").mockRejectedValueOnce(noKeyError);
+      mockJwtVerify.mockRejectedValueOnce(noKeyError);
 
       const result = await validator.validate("no-key.jwt.token");
 
@@ -146,13 +145,7 @@ describe("TokenValidator", () => {
     });
 
     it("should handle generic errors", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
-      vi.spyOn(jose, "jwtVerify").mockRejectedValueOnce(
-        new Error("unexpected error"),
-      );
+      mockJwtVerify.mockRejectedValueOnce(new Error("unexpected error"));
 
       const result = await validator.validate("bad.jwt.token");
 
@@ -162,10 +155,6 @@ describe("TokenValidator", () => {
     });
 
     it("should extract scopes from 'scopes' array claim", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
       const payload = {
         sub: "user-1",
         scopes: ["read", "write", "admin"],
@@ -173,10 +162,10 @@ describe("TokenValidator", () => {
         iat: Math.floor(Date.now() / 1000),
       };
 
-      vi.spyOn(jose, "jwtVerify").mockResolvedValueOnce({
+      mockJwtVerify.mockResolvedValueOnce({
         payload,
         protectedHeader: { alg: "RS256" },
-      } as unknown as jose.JWTVerifyResult);
+      });
 
       const result = await validator.validate("array-scopes.jwt.token");
 
@@ -185,10 +174,6 @@ describe("TokenValidator", () => {
     });
 
     it("should extract scopes from 'scope' array claim", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
       const payload = {
         sub: "user-1",
         scope: ["read", "full"],
@@ -196,10 +181,10 @@ describe("TokenValidator", () => {
         iat: Math.floor(Date.now() / 1000),
       };
 
-      vi.spyOn(jose, "jwtVerify").mockResolvedValueOnce({
+      mockJwtVerify.mockResolvedValueOnce({
         payload,
         protectedHeader: { alg: "RS256" },
-      } as unknown as jose.JWTVerifyResult);
+      });
 
       const result = await validator.validate("scope-array.jwt.token");
 
@@ -208,16 +193,12 @@ describe("TokenValidator", () => {
     });
 
     it("should default missing claims gracefully", async () => {
-      vi.spyOn(jose, "createRemoteJWKSet").mockReturnValueOnce(
-        (() => {}) as unknown as ReturnType<typeof jose.createRemoteJWKSet>,
-      );
-
       const payload = {}; // no sub, exp, iat
 
-      vi.spyOn(jose, "jwtVerify").mockResolvedValueOnce({
+      mockJwtVerify.mockResolvedValueOnce({
         payload,
         protectedHeader: { alg: "RS256" },
-      } as unknown as jose.JWTVerifyResult);
+      });
 
       const result = await validator.validate("minimal.jwt.token");
 
