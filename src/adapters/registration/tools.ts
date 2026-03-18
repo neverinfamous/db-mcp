@@ -102,6 +102,18 @@ export function registerToolImpl(
         };
       } catch (error) {
         const structured = formatHandlerError(error);
+        if (hasOutputSchema) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(structured, null, 2),
+              },
+            ],
+            structuredContent: structured as unknown as Record<string, unknown>,
+            isError: true,
+          };
+        }
         return {
           content: [
             {

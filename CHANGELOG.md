@@ -868,6 +868,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Index Detection**: Case-insensitive `UNIQUE` detection in `sqlite_get_indexes` (normalize DDL to uppercase before matching)
 - **Metadata**: Updated `server.json` tool count from 122 to 139
 - **CodeQL**: Removed unused `calledPragma` variable in vtable test
+- **SQL Injection**: Narrowed `UNION SELECT` / `UNION ALL SELECT` dangerous-pattern regexes to require semicolon-delimited context (`;\\s*UNION`), allowing legitimate UNION queries
+- **PRAGMA Safety**: Block mutating PRAGMAs (assignment form with `=`) in `sqlite_read_query` to prevent privilege escalation via `writable_schema`, `journal_mode`, etc.
+- **Verify Backup**: Wrapped `DETACH DATABASE` in `finally` block with try/catch to prevent detach failures from overriding successful verification results
+- **Optimize Tool**: Added try/catch + `formatHandlerError` to `sqlite_optimize` handler for consistent structured error responses on parse or runtime failures
+- **Structured Errors**: Added `structuredContent` to error responses in the tool registration wrapper when tools have `outputSchema`, ensuring clients receive machine-readable error payloads
 
 ### Security
 

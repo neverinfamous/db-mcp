@@ -9,6 +9,7 @@ import {
   buildProgressContext,
   sendProgress,
 } from "../../../../../utils/progress-utils.js";
+import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { OptimizeOutputSchema } from "../../../output-schemas/index.js";
 import { OptimizeSchema } from "../helpers.js";
 
@@ -25,62 +26,70 @@ export function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["admin"],
     annotations: admin("Optimize Database"),
     handler: async (params: unknown, context: RequestContext) => {
-      const input = OptimizeSchema.parse(params);
-      const progress = buildProgressContext(context);
+      try {
+        const input = OptimizeSchema.parse(params);
+        const progress = buildProgressContext(context);
 
-      const totalSteps =
-        1 + (input.reindex ? 1 : 0) + (input.analyze ? 1 : 0) + 1;
-      let step = 0;
+        const totalSteps =
+          1 + (input.reindex ? 1 : 0) + (input.analyze ? 1 : 0) + 1;
+        let step = 0;
 
-      const operations: string[] = [];
-      const start = Date.now();
+        const operations: string[] = [];
+        const start = Date.now();
 
-      await sendProgress(
-        progress,
-        ++step,
-        totalSteps,
-        "Starting optimization...",
-      );
+        await sendProgress(
+          progress,
+          ++step,
+          totalSteps,
+          "Starting optimization...",
+        );
 
-      if (input.reindex) {
-        await sendProgress(progress, ++step, totalSteps, "Reindexing...");
-        if (input.table) {
-          const table = sanitizeIdentifier(input.table);
-          await adapter.executeQuery(`REINDEX ${table}`);
-          operations.push(`reindexed ${input.table}`);
-        } else {
-          await adapter.executeQuery("REINDEX");
-          operations.push("reindexed all");
+        if (input.reindex) {
+          await sendProgress(progress, ++step, totalSteps, "Reindexing...");
+          if (input.table) {
+            const table = sanitizeIdentifier(input.table);
+            await adapter.executeQuery(`REINDEX ${table}`);
+            operations.push(`reindexed ${input.table}`);
+          } else {
+            await adapter.executeQuery("REINDEX");
+            operations.push("reindexed all");
+          }
         }
-      }
 
-      if (input.analyze) {
-        await sendProgress(progress, step + 1, totalSteps, "Analyzing...");
-        if (input.table) {
-          const table = sanitizeIdentifier(input.table);
-          await adapter.executeQuery(`ANALYZE ${table}`);
-          operations.push(`analyzed ${input.table}`);
-        } else {
-          await adapter.executeQuery("ANALYZE");
-          operations.push("analyzed all");
+        if (input.analyze) {
+          await sendProgress(progress, step + 1, totalSteps, "Analyzing...");
+          if (input.table) {
+            const table = sanitizeIdentifier(input.table);
+            await adapter.executeQuery(`ANALYZE ${table}`);
+            operations.push(`analyzed ${input.table}`);
+          } else {
+            await adapter.executeQuery("ANALYZE");
+            operations.push("analyzed all");
+          }
         }
+
+        const duration = Date.now() - start;
+
+        await sendProgress(
+          progress,
+          totalSteps,
+          totalSteps,
+          "Optimization complete",
+        );
+
+        return {
+          success: true,
+          message: `Optimization complete: ${operations.length > 0 ? operations.join(", ") : "no operations performed"}`,
+          operations,
+          durationMs: duration,
+        };
+      } catch (error) {
+        return {
+          ...formatHandlerError(error),
+          operations: [],
+          durationMs: 0,
+        };
       }
-
-      const duration = Date.now() - start;
-
-      await sendProgress(
-        progress,
-        totalSteps,
-        totalSteps,
-        "Optimization complete",
-      );
-
-      return {
-        success: true,
-        message: `Optimization complete: ${operations.length > 0 ? operations.join(", ") : "no operations performed"}`,
-        operations,
-        durationMs: duration,
-      };
     },
   };
 }

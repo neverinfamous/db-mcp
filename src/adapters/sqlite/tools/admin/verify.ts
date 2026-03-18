@@ -124,8 +124,12 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
             messages: isOk ? undefined : messages,
           };
         } finally {
-          // Always detach
-          await adapter.executeQuery("DETACH DATABASE backup_verify");
+          // Always detach; swallow errors to avoid overriding verification result
+          try {
+            await adapter.executeQuery("DETACH DATABASE backup_verify");
+          } catch {
+            // Intentionally ignore detach errors
+          }
         }
       } catch (error) {
         return formatHandlerError(error);

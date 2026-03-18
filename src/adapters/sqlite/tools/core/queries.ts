@@ -82,6 +82,19 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         "DETACH",
       ];
 
+      // Block mutating PRAGMAs (assignment form with =) in read-only context
+      if (trimmedUpper.startsWith("PRAGMA") && trimmedQuery.includes("=")) {
+        return {
+          ...formatHandlerError(
+            new ValidationError(
+              "Mutating PRAGMA (with assignment) not allowed in sqlite_read_query. Use admin tools to change database settings.",
+            ),
+          ),
+          rowCount: 0,
+          rows: [],
+        };
+      }
+
       const isAllowed = allowedPrefixes.some((p) => trimmedUpper.startsWith(p));
       if (!isAllowed) {
         const rejectedPrefix = rejectedPrefixes.find((p) =>
