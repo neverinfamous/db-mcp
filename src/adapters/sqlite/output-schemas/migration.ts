@@ -38,6 +38,7 @@ export const MigrationRecordOutputSchema = z
   .object({
     success: z.boolean(),
     record: MigrationRecordEntry.optional(),
+    warning: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -89,6 +90,7 @@ export const MigrationStatusOutputSchema = z
       .object({
         total: z.number(),
         applied: z.number(),
+        recorded: z.number(),
         rolledBack: z.number(),
         failed: z.number(),
       })

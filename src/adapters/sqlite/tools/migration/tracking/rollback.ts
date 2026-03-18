@@ -73,6 +73,16 @@ export function createMigrationRollbackTool(
             code: "MIGRATION_NOT_FOUND",
           };
         }
+
+        const currentStatus = migration["status"] as string;
+        if (currentStatus === "rolled_back") {
+          return {
+            success: false,
+            error: `Migration '${migration["version"] as string}' (id=${String(migration["id"])}) is already rolled back`,
+            code: "ALREADY_ROLLED_BACK",
+          };
+        }
+
         const rollbackSql = migration["rollback_sql"] as string | null;
 
         if (!rollbackSql) {

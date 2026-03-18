@@ -92,7 +92,7 @@ describe("Migration Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.record.version).toBe("1.0.0");
-      expect(result.record.status).toBe("applied");
+      expect(result.record.status).toBe("recorded");
       expect(result.record.migrationHash).toHaveLength(64);
     });
 
@@ -272,6 +272,34 @@ describe("Migration Tools", () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain("rollback");
     });
+
+    it("should reject rolling back an already rolled-back migration", async () => {
+      await tools.get("sqlite_migration_init")?.({});
+
+      await tools.get("sqlite_migration_apply")?.({
+        version: "4.0.0",
+        migrationSql: "CREATE TABLE already_rolled (id INTEGER PRIMARY KEY)",
+        rollbackSql: "DROP TABLE already_rolled",
+      });
+
+      // First rollback succeeds
+      const first = (await tools.get("sqlite_migration_rollback")?.({
+        version: "4.0.0",
+      })) as { success: boolean };
+      expect(first.success).toBe(true);
+
+      // Second rollback should fail with ALREADY_ROLLED_BACK
+      const second = (await tools.get("sqlite_migration_rollback")?.({
+        version: "4.0.0",
+      })) as {
+        success: boolean;
+        error: string;
+        code: string;
+      };
+      expect(second.success).toBe(false);
+      expect(second.code).toBe("ALREADY_ROLLED_BACK");
+      expect(second.error).toContain("already rolled back");
+    });
   });
 
   // ===========================================================================
@@ -407,6 +435,7 @@ describe("Migration Tools", () => {
       expect(result.initialized).toBe(true);
       expect(result.counts.total).toBe(2);
       expect(result.counts.applied).toBe(1);
+      expect(result.counts.recorded).toBe(0);
       expect(result.counts.rolledBack).toBe(1);
       expect(result.counts.failed).toBe(0);
     });

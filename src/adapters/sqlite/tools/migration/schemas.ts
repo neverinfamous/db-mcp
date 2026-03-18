@@ -29,10 +29,7 @@ export const MigrationRecordSchema = z.object({
     .optional()
     .describe("Human-readable description of the migration"),
   migrationSql: z.string().describe("The DDL/SQL statements applied"),
-  rollbackSql: z
-    .string()
-    .optional()
-    .describe("SQL to reverse this migration"),
+  rollbackSql: z.string().optional().describe("SQL to reverse this migration"),
   sourceSystem: z
     .string()
     .optional()
@@ -57,7 +54,9 @@ export const MigrationRollbackSchema = z.object({
   dryRun: z
     .boolean()
     .optional()
-    .describe("If true, return the rollback SQL without executing (default: false)"),
+    .describe(
+      "If true, return the rollback SQL without executing (default: false)",
+    ),
 });
 
 export const MigrationHistorySchema = z
@@ -66,10 +65,7 @@ export const MigrationHistorySchema = z
       .enum(["applied", "rolled_back", "failed"])
       .optional()
       .describe("Filter by status"),
-    sourceSystem: z
-      .string()
-      .optional()
-      .describe("Filter by source system"),
+    sourceSystem: z.string().optional().describe("Filter by source system"),
     limit: z.preprocess(
       (val) => (typeof val === "number" ? val : undefined),
       z.number().optional().describe("Maximum records to return (default: 50)"),
@@ -111,9 +107,7 @@ export {
  * Map a raw SQLite row to a typed migration record.
  * Shared by record, apply, rollback, and history tools.
  */
-export function toMigrationRecord(
-  row: Record<string, unknown>,
-): {
+export function toMigrationRecord(row: Record<string, unknown>): {
   id: number;
   version: string;
   description: string | null;

@@ -36,7 +36,13 @@ export function createMigrationStatusTool(
             initialized: false,
             latestVersion: null,
             latestAppliedAt: null,
-            counts: { total: 0, applied: 0, rolledBack: 0, failed: 0 },
+            counts: {
+              total: 0,
+              applied: 0,
+              recorded: 0,
+              rolledBack: 0,
+              failed: 0,
+            },
             sourceSystems: [],
           };
         }
@@ -49,12 +55,19 @@ export function createMigrationStatusTool(
         const countsResult = await adapter.executeReadQuery(
           `SELECT status, COUNT(*) as cnt FROM "${MIGRATIONS_TABLE}" GROUP BY status`,
         );
-        const counts = { total: 0, applied: 0, rolledBack: 0, failed: 0 };
+        const counts = {
+          total: 0,
+          applied: 0,
+          recorded: 0,
+          rolledBack: 0,
+          failed: 0,
+        };
         for (const row of countsResult.rows ?? []) {
           const status = row["status"] as string;
           const cnt = row["cnt"] as number;
           counts.total += cnt;
           if (status === "applied") counts.applied = cnt;
+          else if (status === "recorded") counts.recorded = cnt;
           else if (status === "rolled_back") counts.rolledBack = cnt;
           else if (status === "failed") counts.failed = cnt;
         }

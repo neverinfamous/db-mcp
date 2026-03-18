@@ -53,9 +53,16 @@ export function createMigrationRecordTool(
           };
         }
 
+        // Check for duplicate version names (not blocked, but warn)
+        const versionCheck = await adapter.executeReadQuery(
+          `SELECT id FROM "${MIGRATIONS_TABLE}" WHERE version = ?`,
+          [input.version],
+        );
+        const hasDuplicateVersion = (versionCheck.rows?.length ?? 0) > 0;
+
         await adapter.executeQuery(
-          `INSERT INTO "${MIGRATIONS_TABLE}" (version, description, migration_sql, rollback_sql, migration_hash, source_system, applied_by)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO "${MIGRATIONS_TABLE}" (version, description, migration_sql, rollback_sql, migration_hash, source_system, applied_by, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'recorded')`,
           [
             input.version,
             input.description ?? null,
@@ -77,6 +84,9 @@ export function createMigrationRecordTool(
         return {
           success: true,
           record: record ? toMigrationRecord(record) : undefined,
+          ...(hasDuplicateVersion && {
+            warning: `Version '${input.version}' already exists in migration history. Consider using a unique version identifier.`,
+          }),
         };
       } catch (error) {
         return formatHandlerError(error);

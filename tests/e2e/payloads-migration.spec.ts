@@ -7,7 +7,12 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { createClient, getBaseURL, callToolAndParse, expectSuccess } from "./helpers.js";
+import {
+  createClient,
+  getBaseURL,
+  callToolAndParse,
+  expectSuccess,
+} from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -18,7 +23,11 @@ test.describe("Payload Contracts: Migration Tracking", () => {
   test("sqlite_migration_init returns { success, tableCreated, tableName }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_migration_init", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_migration_init",
+        {},
+      );
 
       expectSuccess(payload);
       expect(typeof payload.tableCreated).toBe("boolean");
@@ -54,7 +63,11 @@ test.describe("Payload Contracts: Migration Tracking", () => {
   test("sqlite_migration_history returns { success, records[], total }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_migration_history", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_migration_history",
+        {},
+      );
 
       expectSuccess(payload);
       expect(Array.isArray(payload.records)).toBe(true);
@@ -77,10 +90,14 @@ test.describe("Payload Contracts: Migration Tracking", () => {
   test("sqlite_migration_rollback with dryRun returns { success, dryRun, rollbackSql }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_migration_rollback", {
-        version: `e2e_${testId}`,
-        dryRun: true,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_migration_rollback",
+        {
+          version: `e2e_${testId}`,
+          dryRun: true,
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.dryRun).toBe(true);
@@ -93,10 +110,14 @@ test.describe("Payload Contracts: Migration Tracking", () => {
   test("sqlite_migration_rollback actually rolls back", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_migration_rollback", {
-        version: `e2e_${testId}`,
-        dryRun: false,
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_migration_rollback",
+        {
+          version: `e2e_${testId}`,
+          dryRun: false,
+        },
+      );
 
       expectSuccess(payload);
       expect(payload.dryRun).toBe(false);
@@ -113,7 +134,11 @@ test.describe("Payload Contracts: Migration Tracking", () => {
   test("sqlite_migration_status returns { success, initialized, counts }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_migration_status", {});
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_migration_status",
+        {},
+      );
 
       expectSuccess(payload);
       expect(payload.initialized).toBe(true);
@@ -121,6 +146,7 @@ test.describe("Payload Contracts: Migration Tracking", () => {
       const counts = payload.counts as Record<string, unknown>;
       expect(typeof counts.total).toBe("number");
       expect(typeof counts.applied).toBe("number");
+      expect(typeof counts.recorded).toBe("number");
       expect(typeof counts.rolledBack).toBe("number");
       expect(typeof counts.failed).toBe("number");
 
@@ -137,18 +163,22 @@ test.describe("Payload Contracts: Migration Tracking", () => {
   test("sqlite_migration_record returns { success, record }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_migration_record", {
-        version: `e2e_record_${testId}`,
-        description: "Externally applied migration recorded by e2e test",
-        migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
-        sourceSystem: "e2e-test",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_migration_record",
+        {
+          version: `e2e_record_${testId}`,
+          description: "Externally applied migration recorded by e2e test",
+          migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
+          sourceSystem: "e2e-test",
+        },
+      );
 
       expectSuccess(payload);
       const record = payload.record as Record<string, unknown>;
       expect(typeof record.id).toBe("number");
       expect(record.version).toBe(`e2e_record_${testId}`);
-      expect(record.status).toBe("applied");
+      expect(record.status).toBe("recorded");
       expect(record.sourceSystem).toBe("e2e-test");
     } finally {
       await client.close();
@@ -158,12 +188,16 @@ test.describe("Payload Contracts: Migration Tracking", () => {
   test("sqlite_migration_record rejects duplicate SHA-256", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_migration_record", {
-        version: `e2e_record_dup_${testId}`,
-        description: "Duplicate migration",
-        migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
-        sourceSystem: "e2e-test",
-      });
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_migration_record",
+        {
+          version: `e2e_record_dup_${testId}`,
+          description: "Duplicate migration",
+          migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
+          sourceSystem: "e2e-test",
+        },
+      );
 
       // Should fail because the SQL hash matches the previous record
       expect(payload.success).toBe(false);
