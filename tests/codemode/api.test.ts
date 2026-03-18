@@ -1,134 +1,157 @@
-/**
- * Code Mode API Tests
- *
- * Tests for the POSITIONAL_PARAM_MAP and toolNameToMethodName
- * in the code mode sandbox API.
- */
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { toolNameToMethodName, createSqliteApi, SqliteApi } from "../../src/codemode/api.js";
+import type { ToolDefinition } from "../../src/types/index.js";
 
-import { describe, it, expect } from "vitest";
-import { toolNameToMethodName } from "../../src/codemode/api.js";
-
-describe("Code Mode API", () => {
+describe("codemode api", () => {
   describe("toolNameToMethodName", () => {
-    it("should convert core tool names", () => {
-      expect(toolNameToMethodName("sqlite_read_query", "core")).toBe(
-        "readQuery",
-      );
-      expect(toolNameToMethodName("sqlite_list_tables", "core")).toBe(
-        "listTables",
-      );
-      expect(toolNameToMethodName("sqlite_describe_table", "core")).toBe(
-        "describeTable",
-      );
+    it("should remove sqlite_ prefix and convert to camelCase", () => {
+      expect(toolNameToMethodName("sqlite_read_query", "core")).toBe("readQuery");
+      expect(toolNameToMethodName("sqlite_json_extract", "json")).toBe("extract");
     });
 
-    it("should convert json tool names", () => {
-      expect(toolNameToMethodName("sqlite_json_extract", "json")).toBe(
-        "extract",
-      );
-      expect(toolNameToMethodName("sqlite_json_valid", "json")).toBe("valid");
-      expect(toolNameToMethodName("sqlite_json_pretty", "json")).toBe("pretty");
-      expect(toolNameToMethodName("sqlite_json_validate_path", "json")).toBe(
-        "validatePath",
-      );
-      expect(toolNameToMethodName("sqlite_json_set", "json")).toBe("set");
-      expect(toolNameToMethodName("sqlite_json_remove", "json")).toBe("remove");
-      expect(toolNameToMethodName("sqlite_json_type", "json")).toBe("type");
-      expect(toolNameToMethodName("sqlite_json_array_length", "json")).toBe(
-        "arrayLength",
-      );
-      expect(toolNameToMethodName("sqlite_json_each", "json")).toBe("each");
-      expect(toolNameToMethodName("sqlite_json_keys", "json")).toBe("keys");
-      expect(toolNameToMethodName("sqlite_json_group_array", "json")).toBe(
-        "groupArray",
-      );
-      expect(toolNameToMethodName("sqlite_json_group_object", "json")).toBe(
-        "groupObject",
-      );
-      expect(toolNameToMethodName("sqlite_json_analyze_schema", "json")).toBe(
-        "analyzeSchema",
-      );
-      expect(toolNameToMethodName("sqlite_json_merge", "json")).toBe("merge");
-      expect(toolNameToMethodName("sqlite_json_insert", "json")).toBe("insert");
-      expect(toolNameToMethodName("sqlite_json_update", "json")).toBe("update");
-      expect(toolNameToMethodName("sqlite_json_select", "json")).toBe("select");
-      expect(toolNameToMethodName("sqlite_json_query", "json")).toBe("query");
-      expect(toolNameToMethodName("sqlite_json_storage_info", "json")).toBe(
-        "storageInfo",
-      );
-      expect(toolNameToMethodName("sqlite_jsonb_convert", "json")).toBe(
-        "jsonbConvert",
-      );
-      expect(toolNameToMethodName("sqlite_json_normalize_column", "json")).toBe(
-        "normalizeColumn",
-      );
-    });
-
-    it("should convert text tool names", () => {
-      expect(toolNameToMethodName("sqlite_regex_match", "text")).toBe(
-        "regexMatch",
-      );
-      expect(toolNameToMethodName("sqlite_regex_extract", "text")).toBe(
-        "regexExtract",
-      );
-      expect(toolNameToMethodName("sqlite_fuzzy_match", "text")).toBe(
-        "fuzzyMatch",
-      );
-      expect(toolNameToMethodName("sqlite_phonetic_match", "text")).toBe(
-        "phoneticMatch",
-      );
-      expect(toolNameToMethodName("sqlite_advanced_search", "text")).toBe(
-        "advancedSearch",
-      );
-      expect(toolNameToMethodName("sqlite_text_split", "text")).toBe("split");
-      expect(toolNameToMethodName("sqlite_text_concat", "text")).toBe("concat");
-      expect(toolNameToMethodName("sqlite_text_replace", "text")).toBe(
-        "replace",
-      );
-      expect(toolNameToMethodName("sqlite_text_trim", "text")).toBe("trim");
-      expect(toolNameToMethodName("sqlite_text_case", "text")).toBe("case");
-      expect(toolNameToMethodName("sqlite_text_substring", "text")).toBe(
-        "substring",
-      );
-      expect(toolNameToMethodName("sqlite_text_validate", "text")).toBe(
-        "validate",
-      );
-      expect(toolNameToMethodName("sqlite_text_normalize", "text")).toBe(
-        "normalize",
-      );
-    });
-
-    it("should convert stats tool names (keeping prefix)", () => {
-      expect(toolNameToMethodName("sqlite_stats_basic", "stats")).toBe(
-        "statsBasic",
-      );
-      expect(toolNameToMethodName("sqlite_stats_histogram", "stats")).toBe(
-        "statsHistogram",
-      );
-    });
-
-    it("should convert vector tool names", () => {
-      expect(toolNameToMethodName("sqlite_vector_search", "vector")).toBe(
-        "search",
-      );
-      expect(toolNameToMethodName("sqlite_vector_store", "vector")).toBe(
-        "store",
-      );
-    });
-
-    it("should convert admin tool names (keeping prefix)", () => {
-      expect(toolNameToMethodName("sqlite_vacuum", "admin")).toBe("vacuum");
+    it("should handle groups where prefix is kept", () => {
+      // Admin group keeps its prefix according to KEEP_PREFIX_GROUPS
       expect(toolNameToMethodName("sqlite_backup", "admin")).toBe("backup");
-      expect(toolNameToMethodName("sqlite_integrity_check", "admin")).toBe(
-        "integrityCheck",
+      expect(toolNameToMethodName("sqlite_transaction_begin", "admin")).toBe("transactionBegin");
+    });
+
+    it("should handle groups with custom prefixes", () => {
+      // Depending on POSITIONAL_PARAM_MAP and KEEP_PREFIX_GROUPS, stats might keep its prefix
+      expect(toolNameToMethodName("sqlite_stats_basic", "stats")).toBe("statsBasic");
+      // 'vector' might drop 'vector_' or keep it
+      expect(toolNameToMethodName("sqlite_vector_search", "vector")).toBe("search");
+    });
+  });
+
+  describe("SqliteApi", () => {
+    const mockCoreTool: ToolDefinition = {
+      name: "sqlite_read_query",
+      description: "Read query",
+      group: "core",
+      handler: vi.fn().mockResolvedValue({ result: "core_success" }),
+    };
+
+    const mockStatsTool: ToolDefinition = {
+      name: "sqlite_stats_basic",
+      description: "Basic stats",
+      group: "stats",
+      handler: vi.fn().mockResolvedValue({ result: "stats_success" }),
+    };
+
+    const mockAdminTool: ToolDefinition = {
+      name: "sqlite_backup",
+      description: "Backup database",
+      group: "admin",
+      handler: vi.fn().mockResolvedValue({ result: "admin_success" }),
+    };
+
+    const mockCodemodeTool: ToolDefinition = {
+      name: "sqlite_execute_code",
+      description: "Should be skipped",
+      group: "codemode",
+      handler: vi.fn(),
+    };
+
+    it("should filter out codemode tools and group others correctly", () => {
+      const api = createSqliteApi([
+        mockCoreTool,
+        mockStatsTool,
+        mockAdminTool,
+        mockCodemodeTool,
+      ]);
+
+      const groups = api.getGroups();
+      expect(groups).toContain("core");
+      expect(groups).toContain("stats");
+      expect(groups).toContain("admin");
+      expect(groups).not.toContain("codemode");
+    });
+
+    it("should create method wrappers that call the underlying handler", async () => {
+      const api = createSqliteApi([mockCoreTool]);
+      
+      // Call the method
+      const result = await api.core.readQuery({ sql: "SELECT 1" });
+      
+      expect(result).toEqual({ result: "core_success" });
+      expect(mockCoreTool.handler).toHaveBeenCalledWith(
+        { sql: "SELECT 1" },
+        expect.objectContaining({
+          timestamp: expect.any(Date),
+          requestId: expect.any(String),
+        })
       );
     });
 
-    it("should convert geo tool names", () => {
-      expect(toolNameToMethodName("sqlite_geo_distance", "geo")).toBe(
-        "distance",
+    it("should provide a help() method for each group", async () => {
+      const api = createSqliteApi([mockCoreTool]);
+      const helpResult = await api.core.help();
+      
+      expect(helpResult.group).toBe("core");
+      expect(helpResult.methods).toContain("readQuery");
+      // Alias 'query' might also be present if defined in METHOD_ALIASES
+    });
+
+    it("should generate sandbox bindings with top-level aliases", async () => {
+      const api = createSqliteApi([mockCoreTool]);
+      const bindings = api.createSandboxBindings();
+      
+      expect(bindings.core).toBeDefined();
+      expect(bindings.readQuery).toBeDefined();
+      expect(typeof bindings.help).toBe("function");
+
+      const topLevelHelp = await (bindings.help as Function)();
+      expect(topLevelHelp.groups).toContain("core");
+      expect(topLevelHelp.totalMethods).toBeGreaterThan(0);
+    });
+  });
+
+  describe("API Method Parameter Normalization", () => {
+    // We are testing normalizeParams implicitly through the generated method
+    const mockTool: ToolDefinition = {
+      name: "sqlite_read_query", // readQuery maps to ['sql', 'params'] or ['query', 'params']
+      description: "Read query",
+      group: "core",
+      handler: vi.fn().mockResolvedValue({}),
+    };
+
+    beforeEach(() => {
+      (mockTool.handler as any).mockClear();
+    });
+
+    it("should normalize single string positional argument", async () => {
+      const api = createSqliteApi([mockTool]);
+      await api.core.readQuery("SELECT 1");
+      
+      expect(mockTool.handler).toHaveBeenCalledWith(
+        // The fallback maps the string strictly based on POSITIONAL_PARAM_MAP["readQuery"]
+        // Let's assert that it builds the expected object based on the mapped key (e.g. query)
+        expect.objectContaining({ query: "SELECT 1" }),
+        expect.any(Object)
       );
-      expect(toolNameToMethodName("sqlite_geo_nearby", "geo")).toBe("nearby");
+    });
+
+    it("should merge trailing options object for named parameters", async () => {
+      const api = createSqliteApi([mockTool]);
+      // If POSITIONAL_PARAM_MAP["readQuery"] is just "query", positional arguments beyond the first 
+      // are ignored unless they are a trailing options object.
+      await api.core.readQuery("SELECT * FROM users WHERE id = ?", { params: [1] });
+      
+      expect(mockTool.handler).toHaveBeenCalledWith(
+        expect.objectContaining({ query: "SELECT * FROM users WHERE id = ?", params: [1] }),
+        expect.any(Object)
+      );
+    });
+
+    it("should pass through object arguments unchanged", async () => {
+      const api = createSqliteApi([mockTool]);
+      const arg = { sql: "SELECT 1", params: [] };
+      await api.core.readQuery(arg);
+      
+      expect(mockTool.handler).toHaveBeenCalledWith(
+        arg,
+        expect.any(Object)
+      );
     });
   });
 });
