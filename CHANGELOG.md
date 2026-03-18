@@ -885,6 +885,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Transaction Rollback**: Wrapped `rollbackTransaction()` in try/catch to preserve original error context if rollback itself fails
 - **Verify Backup Errors**: Error codes (`FILE_NOT_FOUND`, `ATTACH_FAILED`) now passed through `ValidationError` constructor instead of overriding after `formatHandlerError` spread
 - **Dockerfile Healthcheck**: Transport-aware healthcheck — only runs `curl /health` in HTTP mode; falls back to lightweight Node.js check for stdio to prevent false-healthy status
+- **E2E**: CSV payload test now reads `payload.error` (not `payload.message`) for extension-unavailable skip detection, fixing CI failures on Linux where the Windows-only CSV extension is absent
 
 ### Security
 
@@ -989,6 +990,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unused `dotenv` production dependency (never imported in source)
 - Removed unused `pg` and `@types/pg` dependencies (never imported in source)
 - Dockerfile `tar` dependency pinned to 7.5.11 for security compliance
+- Bumped `@types/sql.js` from 1.4.9 to 1.4.10
+- Bumped `jose` from 6.2.1 to 6.2.2
 
 ---
 
