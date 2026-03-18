@@ -1,5 +1,8 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
@@ -31,6 +34,7 @@ export function createMigrationRollbackTool(
             success: false,
             error:
               "Migration tracking not initialized. Run sqlite_migration_init first.",
+            code: "MIGRATION_NOT_INITIALIZED",
           };
         }
 
@@ -38,6 +42,7 @@ export function createMigrationRollbackTool(
           return {
             success: false,
             error: "Either 'id' or 'version' must be provided",
+            code: "VALIDATION_ERROR",
           };
         }
 
@@ -56,12 +61,17 @@ export function createMigrationRollbackTool(
           return {
             success: false,
             error: `Migration not found: ${input.id !== undefined ? `id=${input.id}` : `version=${input.version}`}`,
+            code: "MIGRATION_NOT_FOUND",
           };
         }
 
         const migration = result.rows?.[0];
         if (!migration) {
-          return { success: false, error: "Migration record not found" };
+          return {
+            success: false,
+            error: "Migration record not found",
+            code: "MIGRATION_NOT_FOUND",
+          };
         }
         const rollbackSql = migration["rollback_sql"] as string | null;
 
@@ -70,6 +80,7 @@ export function createMigrationRollbackTool(
             success: false,
             rollbackSql: null,
             error: "No rollback SQL recorded for this migration",
+            code: "ROLLBACK_SQL_MISSING",
           };
         }
 

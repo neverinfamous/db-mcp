@@ -1,5 +1,8 @@
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
@@ -31,6 +34,7 @@ export function createMigrationRecordTool(
             success: false,
             error:
               "Migration tracking not initialized. Run sqlite_migration_init first.",
+            code: "MIGRATION_NOT_INITIALIZED",
           };
         }
 
@@ -45,6 +49,7 @@ export function createMigrationRecordTool(
           return {
             success: false,
             error: `Duplicate migration: SQL matches existing migration #${String(existing?.["id"])} (version: ${String(existing?.["version"])})`,
+            code: "DUPLICATE_MIGRATION",
           };
         }
 
