@@ -15,6 +15,7 @@ import {
   destructive,
 } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { validateTableExists } from "../column-validation.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -78,22 +79,11 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Check table existence when a specific table is requested
-        const checkResult = await adapter.executeReadQuery(
-          `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
-          [input.table],
-        );
-        if ((checkResult.rows?.length ?? 0) === 0) {
+        try {
+          await validateTableExists(adapter, input.table);
+        } catch (error) {
           return {
-            ...formatHandlerError(
-              new ValidationError(
-                `Table '${input.table}' does not exist`,
-                "TABLE_NOT_FOUND",
-                {
-                  suggestion:
-                    "Table not found. Run sqlite_list_tables to see available tables.",
-                },
-              ),
-            ),
+            ...formatHandlerError(error),
             count: 0,
             indexes: [],
           };
@@ -183,24 +173,10 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       // Validate table existence
-      const tableCheck = await adapter.executeReadQuery(
-        `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
-        [input.table],
-      );
-      if ((tableCheck.rows?.length ?? 0) === 0) {
-        return {
-          ...formatHandlerError(
-            new ValidationError(
-              `Table '${input.table}' does not exist`,
-              "TABLE_NOT_FOUND",
-              {
-                suggestion:
-                  "Table not found. Run sqlite_list_tables to see available tables.",
-              },
-            ),
-          ),
-          sql: "",
-        };
+      try {
+        await validateTableExists(adapter, input.table);
+      } catch (error) {
+        return { ...formatHandlerError(error), sql: "" };
       }
 
       const unique = input.unique ? "UNIQUE " : "";

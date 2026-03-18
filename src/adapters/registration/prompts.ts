@@ -44,7 +44,7 @@ export function registerPromptImpl(
 
   // Handler logic shared by both overload branches
   const handleResult = async (
-    args: Record<string, string>,
+    args?: Record<string, string>,
   ): Promise<{
     messages: {
       role: "user" | "assistant";
@@ -52,7 +52,8 @@ export function registerPromptImpl(
     }[];
   }> => {
     const context = adapter.createContext();
-    const result = await prompt.handler(args, context);
+    const safeArgs: Record<string, string> = args ?? {};
+    const result = await prompt.handler(safeArgs, context);
 
     const messages: {
       role: "user" | "assistant";

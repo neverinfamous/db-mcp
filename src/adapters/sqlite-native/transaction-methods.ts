@@ -6,6 +6,7 @@
  */
 
 import type { Database as BetterSqliteDb } from "better-sqlite3";
+import { ValidationError } from "../../utils/errors/classes.js";
 
 /**
  * Transaction-related helpers. Callers catch thrown errors via `instanceof Error`
@@ -38,8 +39,9 @@ export function rollbackTransaction(db: BetterSqliteDb): void {
  */
 export function savepoint(db: BetterSqliteDb, name: string): void {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    throw new Error(
+    throw new ValidationError(
       "Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.",
+      "INVALID_SAVEPOINT_NAME",
     );
   }
   // Name is validated to be safe (no quotes or special chars)

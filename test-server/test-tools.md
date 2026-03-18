@@ -1,12 +1,12 @@
 # db-mcp (SQLite) Tool Testing
 
-**Ignore Native content. Test WASM Mode Only**
+**Ignore WASM content. Test Native Mode Only**
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
 **Step 2:** Please conduct an exhaustive test of the tool group specified in the group-specific checklist (pasted after this document) using live MCP server tool calls directly — not scripts/terminal.
 
-**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore and work around them.
+**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore them.
 
 ## Test Database Schema
 
@@ -174,5 +174,3 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, make the improvements.
 
 ---
-
-Ignore Native content. Test WASM mode only:
