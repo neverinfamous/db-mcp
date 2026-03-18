@@ -12,8 +12,9 @@
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
-![Tests](https://img.shields.io/badge/Tests-941%20passed-brightgreen)
-![Coverage](https://img.shields.io/badge/Coverage-80%25-yellow)
+![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen)
+![E2E Tests](https://img.shields.io/badge/E2E-1136%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-90%25-brightgreen)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -34,7 +35,7 @@
 | **Smart Tool Filtering**       | 9 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                              |
 | **HTTP Streaming Transport**   | Streamable HTTP (`/mcp`) for modern clients + legacy SSE (`/sse`) for backward compatibility — both protocols supported simultaneously with security headers, rate limiting, health check, and stateless mode for serverless |
 | **Production-Ready Security**  | SQL injection protection, parameterized queries, input validation, sandboxed code execution, HTTP body size enforcement, 7 security headers, server timeouts (slowloris protection), Retry-After rate limiting, `trustProxy` for reverse proxy deployments, opt-in HSTS, non-root Docker execution, and build provenance |
-| **Strict TypeScript**          | 100% type-safe codebase with strict mode, no `any` types, 941 tests and 80% coverage                                                                                                                        |
+| **Strict TypeScript**          | 100% type-safe codebase with strict mode, no `any` types, 1911 unit tests + 1136 E2E tests and 90% coverage                                                                                                                        |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions, no silent failures. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes |
 | **MCP 2025-03-26 Compliant**   | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                                |
 
