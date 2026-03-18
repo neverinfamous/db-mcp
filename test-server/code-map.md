@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: March 16, 2026
+> Last updated: March 18, 2026
 
 ---
 
@@ -27,7 +27,17 @@ src/
 │
 ├── constants/
 │   ├── server-instructions.ts      # Generated: slim INSTRUCTIONS constant (~680 chars) + HELP_CONTENT map (per-group help)
-│   └── server-instructions/        # Source .md files for each help resource (overview, gotchas, json, text, stats, etc.)
+│   └── server-instructions/        # Source .md files for each help resource
+│       ├── overview.md             # Root help content (sqlite://help)
+│       ├── gotchas.md              # Common gotchas and critical usage patterns
+│       ├── admin.md                # Admin group help
+│       ├── geo.md                  # Geo group help
+│       ├── introspection.md        # Introspection group help
+│       ├── json.md                 # JSON group help
+│       ├── migration.md            # Migration group help
+│       ├── stats.md                # Stats group help
+│       ├── text.md                 # Text group help
+│       └── vector.md              # Vector group help
 │
 ├── filtering/
 │   ├── tool-constants.ts           # TOOL_GROUPS arrays, META_GROUPS shortcuts, group→tools map
@@ -43,11 +53,11 @@ src/
 │   ├── where-clause.ts             # WHERE clause builder/validator
 │   ├── index.ts                    # Barrel re-export
 │   ├── errors/                     # Error class hierarchy (see § Error Classes below)
-│   │   ├── base.ts                 # DbMcpError (abstract base)
+│   │   ├── base.ts                 # DbMcpError (abstract base) — auto-refines generic codes via suggestions
 │   │   ├── categories.ts           # ErrorCategory enum + ErrorResponse interface
 │   │   ├── classes.ts              # 8 concrete error subclasses
 │   │   ├── error-response-fields.ts # ErrorResponseFields mixin (SSoT, re-exported from format.ts)
-│   │   ├── format.ts               # formatErrorResponse() — structured {success:false} builder
+│   │   ├── format.ts               # formatHandlerError() — structured {success:false} builder
 │   │   ├── suggestions.ts          # Error suggestion helpers (typo hints, table/column suggestions)
 │   │   └── index.ts                # Barrel
 │   └── logger/
@@ -75,7 +85,7 @@ src/
 │   └── http/
 │       ├── transport.ts            # HTTP/SSE transport (Streamable HTTP + legacy SSE)
 │       ├── session.ts              # Session management (stateful + stateless modes)
-│       ├── middleware.ts            # Security headers, rate limiting, CORS, body parsing
+│       ├── middleware.ts            # Security headers, rate limiting, CORS, body parsing, DNS rebinding guard
 │       ├── oauth.ts                # OAuth 2.1 integration + simple bearer auth middleware
 │       ├── type-adapters.ts        # Hono→Express type bridges
 │       ├── types.ts                # HTTP transport types
@@ -108,14 +118,13 @@ src/
 │   │   ├── output-schemas/         # Zod outputSchema definitions per group (see § below)
 │   │   ├── prompts/                # 10 MCP prompts (see § below)
 │   │   └── tools/                  # Tool handler files (see § Handler Map below)
-│   │       ├── column-validation.ts  # Shared column existence validation utility
-│   │       ├── geo.ts                # 4 Haversine geo tools (WASM, no SpatiaLite)
+│   │       ├── column-validation.ts  # validateColumnExists() + validateTableExists() — used by geo, stats, text, FTS, window
 │   │       └── ...                   # Group subdirectories below
 │   │
 │   └── sqlite-native/              # ── Native adapter (better-sqlite3) ──
 │       ├── native-sqlite-adapter.ts     # NativeSqliteAdapter class (extends DatabaseAdapter)
 │       ├── native-query-executor.ts     # Native query execution
-│       ├── extensions.ts               # Extension loader (CSV, SpatiaLite)
+│       ├── extensions.ts               # Extension loader (CSV, SpatiaLite) — uses findProjectRoot()
 │       ├── transaction-methods.ts      # Transaction state management
 │       ├── registration/               # Extracted tool/resource registration logic
 │       │   └── index.ts
@@ -194,7 +203,7 @@ Files that provide shared logic but do **not** register tools:
 | File | Purpose |
 |------|---------|
 | `core/tables.ts` | Also exports `isSpatialiteSystemTable()`, `isSpatialiteSystemView()`, `isSpatialiteSystemIndex()` — used by core + introspection tools for `excludeSystemTables` filtering |
-| `column-validation.ts` | `validateColumnExists()` — used by geo, stats, text |
+| `column-validation.ts` | `validateColumnExists()`, `validateTableExists()` — used by geo, stats, text, FTS, window |
 | `json-operations/helpers.ts` | JSON path/value normalization |
 | `json-helpers/helpers.ts` | JSON helper utilities |
 | `text/helpers.ts` | Text processing shared logic |
@@ -205,7 +214,7 @@ Files that provide shared logic but do **not** register tools:
 | `vector/schemas.ts` | Zod schemas for vector tools |
 | `vector/tools.ts` | Vector tool registration barrel |
 | `admin/helpers.ts` | Admin tool shared utilities |
-| `migration/schemas.ts` | Zod input schemas for migration tools |
+| `migration/schemas.ts` | Zod input schemas for migration tools (re-exports output schemas from `output-schemas/migration.ts`) |
 | `virtual/helpers.ts` | Virtual table helper utilities |
 | `introspection/graph/helpers.ts` | FK graph traversal helpers |
 | `spatialite/schemas.ts` (native) | Zod schemas for SpatiaLite tools |
@@ -215,7 +224,7 @@ Files that provide shared logic but do **not** register tools:
 
 ## Output Schemas (`src/adapters/sqlite/output-schemas/`)
 
-Zod schemas that define the `outputSchema` for MCP tool responses:
+Zod schemas that define the `outputSchema` for MCP tool responses. All output schemas are centralized here with named exports — **zero inline definitions** remain across all tool groups.
 
 | File | Groups Covered |
 |------|---------------|
@@ -223,14 +232,16 @@ Zod schemas that define the `outputSchema` for MCP tool responses:
 | `error-mixin.ts` | `ErrorFieldsMixin` — 6 optional error fields merged into all output schemas |
 | `core.ts` | Core group output schemas |
 | `json.ts` | JSON group output schemas |
-| `text.ts` | Text group output schemas |
+| `text.ts` | Text group output schemas (incl. `TextConcatOutputSchema`, `TextTrimOutputSchema`, `TextCaseOutputSchema`, `TextSubstringOutputSchema`, `AdvancedSearchOutputSchema`) |
 | `fts.ts` | FTS5 output schemas |
-| `stats.ts` | Stats group output schemas |
+| `stats.ts` | Stats group output schemas (incl. `StatsHypothesisOutputSchema`) |
 | `vector.ts` | Vector group output schemas |
-| `admin.ts` | Admin group output schemas |
+| `admin.ts` | Admin group output schemas (incl. `AppendInsightOutputSchema`, `DbstatOutputSchema`) |
 | `geo.ts` | Geo group output schemas |
-| `virtual.ts` | Virtual table output schemas |
-| `native.ts` | Native-only output schemas (transactions, window functions) |
+| `introspection.ts` | Introspection group output schemas (9 schemas: DependencyGraph, TopologicalSort, CascadeSimulator, SchemaSnapshot, ConstraintAnalysis, MigrationRisks, StorageAnalysis, IndexAudit, QueryPlan) |
+| `migration.ts` | Migration group output schemas (7 schemas: MigrationInit, MigrationRecord, MigrationApply, MigrationRollback, MigrationHistory, MigrationStatus + MigrationRecordEntry) |
+| `virtual.ts` | Virtual table output schemas (7 schemas: ListVirtualTables, VirtualTableInfo, DropVirtualTable, CreateCsvTable, AnalyzeCsvSchema, CreateRtreeTable, CreateSeriesTable) |
+| `native.ts` | Native-only output schemas (transactions — 7 schemas, window functions — 6 schemas) |
 | `spatialite.ts` | SpatiaLite output schemas (7 tools — native only) |
 | `server.ts` | Type aliases for core output schemas (built-in tools use `content` pattern, not `structuredContent`) |
 | `index.ts` | Barrel re-export |
@@ -246,11 +257,15 @@ Zod schemas that define the `outputSchema` for MCP tool responses:
 | `schema.ts` | `sqlite_explain_schema`, `sqlite_documentation`, `sqlite_migration` |
 | `index.ts` | Barrel + `sqlite_optimization` |
 
+Prompts with required arguments expose typed `argsSchema` via `prompts/list`. All-optional and zero-arg prompts correctly omit `argsSchema`.
+
 ---
 
 ## Error Class Hierarchy
 
-All errors extend `DbMcpError` (defined in `src/utils/errors/base.ts`). Every tool returns structured `{success: false, error, code, category, suggestion, recoverable}` via `formatErrorResponse()` — never raw MCP exceptions.
+All errors extend `DbMcpError` (defined in `src/utils/errors/base.ts`). Every tool returns structured `{success: false, error, code, category, suggestion, recoverable}` via `formatHandlerError()` — never raw MCP exceptions.
+
+The `DbMcpError` constructor auto-refines generic codes (`DB_QUERY_FAILED`, `DB_WRITE_FAILED`, `QUERY_ERROR`, `RESOURCE_ERROR`, `UNKNOWN_ERROR`) to more specific codes (e.g., `TABLE_NOT_FOUND`, `COLUMN_NOT_FOUND`, `VIEW_NOT_FOUND`, `FILE_NOT_FOUND`, `MALFORMED_JSON`, `TRANSACTION_CONFLICT`) when the error message matches a suggestion pattern.
 
 ```
 DbMcpError (base.ts)
@@ -285,6 +300,7 @@ catch (error) {
 - `suggestTableName(input, existingTables)` — fuzzy-matches typos
 - `suggestColumnName(input, existingColumns)` — fuzzy-matches columns
 - `suggestToolName(input)` — suggests similar tool names
+- Pattern-based refinement: `TABLE_NOT_FOUND`, `COLUMN_NOT_FOUND`, `VIEW_NOT_FOUND`, `FILE_NOT_FOUND`, `MALFORMED_JSON`, `TRANSACTION_CONFLICT`, `DUPLICATE_MIGRATION`, `DUPLICATE_VERSION`, `ALREADY_ROLLED_BACK`, `DIMENSION_MISMATCH`, `VECTOR_NOT_FOUND`
 
 ---
 
@@ -305,14 +321,19 @@ catch (error) {
 
 | Pattern | Description |
 |---------|-------------|
-| **Structured Errors** | Every tool returns `{success: false, error}` — never raw exceptions. Uses `formatHandlerError()`. |
+| **Structured Errors** | Every tool returns `{success: false, error, code, category, suggestion, recoverable}` — never raw exceptions. Uses `formatHandlerError()`. |
 | **Adapter Pattern** | `DatabaseAdapter` (abstract) → `SqliteAdapter` (WASM) / `NativeSqliteAdapter` (Native). Both share tool handler files from `sqlite/tools/`. |
 | **Schema Cache** | `SchemaManager` caches table/column metadata with configurable TTL. Auto-invalidates on DDL ops. |
-| **Code Mode Bridge** | `sqlite.*` API in worker thread communicates via MessagePort RPC to main thread tool handlers. |
-| **Tool Filtering** | `ToolFilter` parses `--tool-filter` string → whitelist/blacklist of tool names. `codemode` auto-injected unless excluded. |
-| **Output Schemas** | All Zod output schemas live in `output-schemas/` with named exports — **never inline** in handler files. Handlers import from `../../output-schemas/index.js`. All schemas extend `ErrorFieldsMixin.shape`. |
+| **Code Mode Bridge** | `sqlite.*` API in worker thread communicates via MessagePort RPC to main thread tool handlers. All 9 groups exposed (`core`, `json`, `text`, `stats`, `vector`, `geo`, `admin`, `introspection`, `migration`). |
+| **Tool Filtering** | `ToolFilter` parses `--tool-filter` string → whitelist/blacklist of tool names. `codemode` auto-injected unless excluded. Help resources filtered to match enabled groups. |
+| **Output Schemas** | All Zod output schemas live in `output-schemas/` with named exports — **never inline** in handler files. Handlers import from `../../output-schemas/index.js`. All schemas extend `ErrorFieldsMixin.shape`. Domain-specific fields are optional so error responses pass validation. |
+| **Input Coercion** | All numeric params use `z.preprocess(coerceNumber, ...)` so wrong-type strings fall to defaults. Required enums use `z.string()` + handler validation. Optional enums use `coerceEnumValues()` factory. Array params coerce non-arrays to empty arrays for SDK `.partial()` compatibility. |
+| **Readonly Guard** | Code mode `isWriteTool()` uses fail-closed logic (`readOnlyHint === true`) — tools without annotations are blocked in readonly mode. |
+| **Parameter Aliases** | Core tools support backward-compatible aliases (`tableName`→`table`, `sql`→`query`, `name`→`indexName`) via `resolveAliases()` in handlers. Canonical names take precedence. |
 | **Barrel Re-exports** | Every directory has `index.ts` barrel. Import from `./module/index.js` (with `.js` extension for ESM). |
 | **Module Logger** | `createModuleLogger("moduleName")` → structured logs with `[module]` prefix. |
+| **Help Resources** | Pull-based `sqlite://help` + `sqlite://help/{group}` replace the old push-based `--instruction-level` flag. Per-group `.md` sources in `server-instructions/`. |
+| **DNS Rebinding Guard** | `localhostHostValidation()` middleware from MCP SDK on HTTP transport. |
 
 ---
 
@@ -334,11 +355,53 @@ catch (error) {
 | `test-server/test-database.sql` | Seed DDL+DML (10 tables, ~400 rows) |
 | `test-server/reset-database.ps1` | Reset script — drops + re-seeds `test.db` |
 | `test-server/tool-reference.md` | Complete 139/115 tool inventory with descriptions |
-| `test-server/test-group-tools.md` | Per-group deterministic checklists |
+| `test-server/test-preflight.md` | Pre-test verification checklist |
 | `test-server/test-tools.md` | Entry-point protocol (schema ref, reporting format) |
+| `test-server/test-group-tools.md` | Per-group deterministic checklists |
+| `test-server/test-tools-advanced-1.md` | Advanced stress test prompts (part 1) |
+| `test-server/test-tools-advanced-2.md` | Advanced stress test prompts (part 2) |
+| `test-server/test-tools-codemode.md` | Code mode specific test prompts |
+| `test-server/test-resources.md` | MCP resource verification prompts |
+| `test-server/test-prompts.md` | MCP prompt verification prompts |
 | `test-server/test-agent-experience.md` | 20 open-ended scenarios — validates help resource sufficiency |
 | `test-server/test-help-resources.mjs` | Integration test — slim instructions + help resource filtering |
 | `test-server/test-tool-annotations.mjs` | Integration test — openWorldHint annotation verification |
+| `test-server/fixtures/` | Test fixture files (e.g., `sample.csv`) |
+| `tests/adapters/tool-annotations.test.ts` | Vitest invariant — every tool has `annotations` with explicit `readOnlyHint`, per-group checks, title validation |
+| `tests/adapters/tool-output-schemas.test.ts` | Vitest invariant — every tool has `outputSchema`, error response acceptance, centralized schema wiring, no orphans |
 | `tests/` | Vitest unit tests (per-module) |
-| `tests/e2e/` | Playwright E2E tests (HTTP/SSE transport parity) |
+| `tests/e2e/` | Playwright E2E tests (~50 spec files, ~300+ tests) — HTTP/SSE transport parity |
 | `benchmarks/` | Vitest bench performance benchmarks |
+
+### E2E Spec Files (`tests/e2e/`)
+
+| Spec File | Coverage |
+|-----------|----------|
+| `zod-sweep.spec.ts` | Zod validation sweep — every WASM tool called with `{}` |
+| `zod-sweep-native.spec.ts` | Zod validation sweep — 20 native-only tools (FTS5, window, transactions, SpatiaLite) |
+| `errors.spec.ts` | Basic error path tests |
+| `errors-extended.spec.ts` | Per-group domain error paths |
+| `errors-native.spec.ts` | Native-only error paths (20 tests) |
+| `codemode.spec.ts` | Sandbox lifecycle, security, readonly, workflows, window function smoke tests, API discoverability |
+| `codemode-groups.spec.ts` | All 9 groups via `sqlite.*` API |
+| `codemode-introspection.spec.ts` | Introspection code-mode-only params (~16 tests) |
+| `numeric-coercion.spec.ts` | String-typed numeric param coercion |
+| `numeric-coercion-native.spec.ts` | Native-only numeric coercion (8 tests) |
+| `boundary.spec.ts` | Empty tables, NULLs, idempotency, edge cases, vector empty table edges |
+| `help-resources.spec.ts` | Root + 8 group help resources listed, readable, non-empty |
+| `aliases.spec.ts` | Backward-compatible parameter aliases (14 tests) |
+| `resources.spec.ts` | MCP resource verification (schema, tables, indexes, health, meta, insights, help) |
+| `prompts.spec.ts` | MCP prompt verification (argsSchema, required args, content assertions) |
+| `transactions-nested.spec.ts` | Nested savepoint data correctness (~4 tests) |
+| `integration-workflows.spec.ts` | Cross-group pipelines (~8 tests) |
+| `payloads-*.spec.ts` | Per-group payload correctness (core, json, text, fts, stats, vector, geo, admin, introspection, migration, spatialite, transactions, window, virtual, csv) |
+| `auth.spec.ts`, `oauth-discovery.spec.ts` | OAuth 2.1 and RFC 9728 metadata |
+| `health.spec.ts` | Health endpoint verification |
+| `security.spec.ts` | Security header assertions, HSTS |
+| `sessions.spec.ts`, `session-advanced.spec.ts` | Session management (cross-protocol, sequential isolation, post-DELETE) |
+| `streaming.spec.ts`, `streamable-http.spec.ts` | Raw SSE streaming verification |
+| `rate-limiting.spec.ts` | 429 burst, Retry-After header, health exemption |
+| `protocols.spec.ts` | Transport protocol tests |
+| `stateless.spec.ts` | Stateless mode tests |
+| `tools.spec.ts` | Core tool listing and invocation |
+| `native.spec.ts`, `wasm.spec.ts` | Backend-specific tests |
