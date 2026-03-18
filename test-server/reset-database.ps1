@@ -371,8 +371,3 @@ db.close();
 Write-Host "`n========================================================" -ForegroundColor Green
 Write-Host "                    Reset Complete!                      " -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
-
-Write-Host "`nTo start testing, run:" -ForegroundColor Gray
-Write-Host ("  node dist/cli.js --transport stdio --sqlite-native " + [char]34 + "$DatabasePath" + [char]34) -ForegroundColor Cyan
-Write-Host ""
-
