@@ -8,6 +8,17 @@
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 
 /**
+ * Local ValidationError to avoid circular imports from utils/errors.
+ * Callers catch this via `instanceof Error` and wrap with `formatHandlerError`.
+ */
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+/**
  * Begin a transaction
  */
 export function beginTransaction(db: BetterSqliteDb): void {
@@ -33,7 +44,7 @@ export function rollbackTransaction(db: BetterSqliteDb): void {
  */
 export function savepoint(db: BetterSqliteDb, name: string): void {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    throw new Error(
+    throw new ValidationError(
       "Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.",
     );
   }
@@ -46,7 +57,7 @@ export function savepoint(db: BetterSqliteDb, name: string): void {
  */
 export function releaseSavepoint(db: BetterSqliteDb, name: string): void {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    throw new Error(
+    throw new ValidationError(
       "Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.",
     );
   }
@@ -58,7 +69,7 @@ export function releaseSavepoint(db: BetterSqliteDb, name: string): void {
  */
 export function rollbackToSavepoint(db: BetterSqliteDb, name: string): void {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    throw new Error(
+    throw new ValidationError(
       "Invalid savepoint name. Must start with a letter/underscore and contain only alphanumeric chars.",
     );
   }

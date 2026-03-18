@@ -69,10 +69,12 @@ export async function fallBackGetIndexes(
 ): Promise<IndexInfo[]> {
   let sql = `SELECT name, tbl_name, sql FROM sqlite_master
            WHERE type = 'index' AND sql IS NOT NULL`;
+  let params: unknown[] | undefined;
   if (table) {
-    sql += ` AND tbl_name = '${table.replace(/'/g, "''")}'`;
+    sql += ` AND tbl_name = ?`;
+    params = [table];
   }
-  const result = await adapter.executeReadQuery(sql);
+  const result = await adapter.executeReadQuery(sql, params);
 
   const indexes: IndexInfo[] = [];
   for (const row of result.rows ?? []) {

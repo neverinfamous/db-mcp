@@ -19,7 +19,8 @@ export async function validateTableExists(
   tableName: string,
 ): Promise<void> {
   const tableCheck = await adapter.executeReadQuery(
-    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${tableName.replace(/'/g, "''")}'`,
+    "SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?",
+    [tableName],
   );
   if (!tableCheck.rows || tableCheck.rows.length === 0) {
     throw new ResourceNotFoundError(
@@ -49,7 +50,8 @@ export async function validateColumnExists(
 
   // Then check if the column exists
   const result = await adapter.executeReadQuery(
-    `SELECT name FROM pragma_table_info('${tableName.replace(/'/g, "''")}') WHERE name = '${columnName.replace(/'/g, "''")}' LIMIT 1`,
+    "SELECT name FROM pragma_table_info(?) WHERE name = ? LIMIT 1",
+    [tableName, columnName],
   );
   if (!result.rows || result.rows.length === 0) {
     throw new ResourceNotFoundError(
@@ -80,7 +82,8 @@ export async function validateColumnsExist(
 
   // Fetch all column names in a single PRAGMA query
   const pragmaResult = await adapter.executeReadQuery(
-    `SELECT name FROM pragma_table_info('${tableName.replace(/'/g, "''")}')`,
+    "SELECT name FROM pragma_table_info(?)",
+    [tableName],
   );
   const existingColumns = new Set<string>();
   for (const row of pragmaResult.rows ?? []) {

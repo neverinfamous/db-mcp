@@ -200,7 +200,9 @@ describe("fallBackGetIndexes", () => {
     await fallBackGetIndexes(adapter, "users");
 
     const sql = adapter.executeReadQuery.mock.calls[0][0];
-    expect(sql).toContain("users");
+    const params = adapter.executeReadQuery.mock.calls[0][1];
+    expect(sql).toContain("tbl_name = ?");
+    expect(params).toEqual(["users"]);
   });
 
   it("should handle empty indexes", async () => {

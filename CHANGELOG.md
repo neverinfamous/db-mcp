@@ -860,6 +860,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Encoding**: Fixed mojibake em dash (`â€"` → `—`) in admin barrel index JSDoc
 - **CodeQL**: Fixed missing regex anchor in icon URL test assertion
 - **CodeQL**: Removed 10 unused imports across 8 test files
+- **SQL Injection**: Replaced string interpolation with parameter binding in column validation queries (`validateTableExists`, `validateColumnExists`, `validateColumnsExist`)
+- **SQL Injection**: Replaced string interpolation with parameter binding in schema fallback `fallBackGetIndexes` table filter
+- **Read Query**: Deny-by-default for `sqlite_read_query` — unrecognized statement types are now blocked instead of falling through to the adapter
+- **Verify Backup**: Use structured `formatHandlerError` in `sqlite_verify_backup` early-return error paths (empty path, file not found, ATTACH failure)
+- **Transaction Methods**: Throw `ValidationError` instead of generic `Error` for invalid savepoint names in native transaction methods
+- **Index Detection**: Case-insensitive `UNIQUE` detection in `sqlite_get_indexes` (normalize DDL to uppercase before matching)
+- **Metadata**: Updated `server.json` tool count from 122 to 139
+- **CodeQL**: Removed unused `calledPragma` variable in vtable test
 
 ### Security
 

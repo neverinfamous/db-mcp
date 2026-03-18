@@ -87,18 +87,14 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         const rejectedPrefix = rejectedPrefixes.find((p) =>
           trimmedUpper.startsWith(p),
         );
-        if (rejectedPrefix) {
-          return {
-            ...formatHandlerError(
-              new ValidationError(
-                `Statement type not allowed: ${rejectedPrefix} is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL.`,
-              ),
-            ),
-            rowCount: 0,
-            rows: [],
-          };
-        }
-        // Fall through to let the adapter handle unrecognized statements
+        const message = rejectedPrefix
+          ? `Statement type not allowed: ${rejectedPrefix} is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL.`
+          : "Statement type not allowed in sqlite_read_query. Only SELECT, PRAGMA, EXPLAIN, or WITH statements are permitted.";
+        return {
+          ...formatHandlerError(new ValidationError(message)),
+          rowCount: 0,
+          rows: [],
+        };
       }
 
       try {

@@ -110,7 +110,8 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
       let indexes = (result.rows ?? []).map((row) => ({
         name: row["name"] as string,
         table: row["tbl_name"] as string,
-        unique: (row["sql"] as string)?.includes("UNIQUE") ?? false,
+        unique:
+          (row["sql"] as string)?.toUpperCase().includes("UNIQUE") ?? false,
         sql: row["sql"] as string,
       }));
 

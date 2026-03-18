@@ -26,21 +26,25 @@ function createMockAdapter(columns: Array<{ name: string; type: string }>) {
   } as any;
 
   // Default executeReadQuery handler: dispatches based on SQL content
-  adapter.executeReadQuery.mockImplementation((sql: string) => {
-    // Table existence check (validateTableExists)
-    if (sql.includes("sqlite_master")) {
-      return Promise.resolve({ rows: [{ "1": 1 }] });
-    }
-    // Column existence check (validateColumnExists → pragma_table_info)
-    if (sql.includes("pragma_table_info")) {
-      // Extract the column name from the WHERE clause
-      const match = /name\s*=\s*'([^']+)'/i.exec(sql);
-      const requestedCol = match?.[1];
-      const found = columns.find((c) => c.name === requestedCol);
-      return Promise.resolve({ rows: found ? [{ name: found.name }] : [] });
-    }
-    return Promise.resolve({ rows: [] });
-  });
+  adapter.executeReadQuery.mockImplementation(
+    (sql: string, params?: unknown[]) => {
+      // Table existence check (validateTableExists)
+      if (sql.includes("sqlite_master")) {
+        return Promise.resolve({ rows: [{ "1": 1 }] });
+      }
+      // Column existence check (validateColumnExists → pragma_table_info)
+      if (sql.includes("pragma_table_info")) {
+        // With param binding, the column name is in params[1]
+        const requestedCol =
+          params?.[1] ??
+          // Fallback: extract from SQL if not using params
+          /name\s*=\s*'([^']+)'/i.exec(sql)?.[1];
+        const found = columns.find((c) => c.name === requestedCol);
+        return Promise.resolve({ rows: found ? [{ name: found.name }] : [] });
+      }
+      return Promise.resolve({ rows: [] });
+    },
+  );
 
   return adapter;
 }
@@ -92,14 +96,16 @@ describe("hypothesis handler - ttest_one", () => {
 
     // Override to also handle the stats query
     const originalImpl = adapter.executeReadQuery.getMockImplementation()!;
-    adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("AVG") && sql.includes("COUNT")) {
-        return Promise.resolve({
-          rows: [{ n: 30, mean: 5.2, variance: 2.5 }],
-        });
-      }
-      return originalImpl(sql);
-    });
+    adapter.executeReadQuery.mockImplementation(
+      (sql: string, params?: unknown[]) => {
+        if (sql.includes("AVG") && sql.includes("COUNT")) {
+          return Promise.resolve({
+            rows: [{ n: 30, mean: 5.2, variance: 2.5 }],
+          });
+        }
+        return originalImpl(sql, params);
+      },
+    );
 
     const tool = createHypothesisTool(adapter);
     const result = (await tool.handler(
@@ -124,12 +130,14 @@ describe("hypothesis handler - ttest_one", () => {
   it("should reject insufficient sample size", async () => {
     const adapter = createMockAdapter([{ name: "value", type: "REAL" }]);
     const originalImpl = adapter.executeReadQuery.getMockImplementation()!;
-    adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("AVG")) {
-        return Promise.resolve({ rows: [{ n: 1, mean: 5, variance: 0 }] });
-      }
-      return originalImpl(sql);
-    });
+    adapter.executeReadQuery.mockImplementation(
+      (sql: string, params?: unknown[]) => {
+        if (sql.includes("AVG")) {
+          return Promise.resolve({ rows: [{ n: 1, mean: 5, variance: 0 }] });
+        }
+        return originalImpl(sql, params);
+      },
+    );
 
     const tool = createHypothesisTool(adapter);
     const result = (await tool.handler(
@@ -153,16 +161,18 @@ describe("hypothesis handler - ttest_two", () => {
       { name: "value2", type: "REAL" },
     ]);
     const originalImpl = adapter.executeReadQuery.getMockImplementation()!;
-    adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("n1")) {
-        return Promise.resolve({
-          rows: [
-            { n1: 30, mean1: 5.2, var1: 2.5, n2: 30, mean2: 4.8, var2: 3.1 },
-          ],
-        });
-      }
-      return originalImpl(sql);
-    });
+    adapter.executeReadQuery.mockImplementation(
+      (sql: string, params?: unknown[]) => {
+        if (sql.includes("n1")) {
+          return Promise.resolve({
+            rows: [
+              { n1: 30, mean1: 5.2, var1: 2.5, n2: 30, mean2: 4.8, var2: 3.1 },
+            ],
+          });
+        }
+        return originalImpl(sql, params);
+      },
+    );
 
     const tool = createHypothesisTool(adapter);
     const result = (await tool.handler(
@@ -201,14 +211,16 @@ describe("hypothesis handler - ttest_two", () => {
       { name: "value2", type: "REAL" },
     ]);
     const originalImpl = adapter.executeReadQuery.getMockImplementation()!;
-    adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("n1")) {
-        return Promise.resolve({
-          rows: [{ n1: 1, mean1: 5, var1: 0, n2: 1, mean2: 4, var2: 0 }],
-        });
-      }
-      return originalImpl(sql);
-    });
+    adapter.executeReadQuery.mockImplementation(
+      (sql: string, params?: unknown[]) => {
+        if (sql.includes("n1")) {
+          return Promise.resolve({
+            rows: [{ n1: 1, mean1: 5, var1: 0, n2: 1, mean2: 4, var2: 0 }],
+          });
+        }
+        return originalImpl(sql, params);
+      },
+    );
 
     const tool = createHypothesisTool(adapter);
     const result = (await tool.handler(
@@ -237,19 +249,21 @@ describe("hypothesis handler - chi_square", () => {
       { name: "group", type: "TEXT" },
     ]);
     const originalImpl = adapter.executeReadQuery.getMockImplementation()!;
-    adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("GROUP BY")) {
-        return Promise.resolve({
-          rows: [
-            { col1: "A", col2: "X", observed: 10 },
-            { col1: "A", col2: "Y", observed: 20 },
-            { col1: "B", col2: "X", observed: 15 },
-            { col1: "B", col2: "Y", observed: 5 },
-          ],
-        });
-      }
-      return originalImpl(sql);
-    });
+    adapter.executeReadQuery.mockImplementation(
+      (sql: string, params?: unknown[]) => {
+        if (sql.includes("GROUP BY")) {
+          return Promise.resolve({
+            rows: [
+              { col1: "A", col2: "X", observed: 10 },
+              { col1: "A", col2: "Y", observed: 20 },
+              { col1: "B", col2: "X", observed: 15 },
+              { col1: "B", col2: "Y", observed: 5 },
+            ],
+          });
+        }
+        return originalImpl(sql, params);
+      },
+    );
 
     const tool = createHypothesisTool(adapter);
     const result = (await tool.handler(
@@ -288,14 +302,16 @@ describe("hypothesis handler - chi_square", () => {
       { name: "group", type: "TEXT" },
     ]);
     const originalImpl = adapter.executeReadQuery.getMockImplementation()!;
-    adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("GROUP BY")) {
-        return Promise.resolve({
-          rows: [{ col1: "A", col2: "X", observed: 10 }],
-        });
-      }
-      return originalImpl(sql);
-    });
+    adapter.executeReadQuery.mockImplementation(
+      (sql: string, params?: unknown[]) => {
+        if (sql.includes("GROUP BY")) {
+          return Promise.resolve({
+            rows: [{ col1: "A", col2: "X", observed: 10 }],
+          });
+        }
+        return originalImpl(sql, params);
+      },
+    );
 
     const tool = createHypothesisTool(adapter);
     const result = (await tool.handler(

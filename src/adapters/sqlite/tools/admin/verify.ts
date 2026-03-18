@@ -52,9 +52,9 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
 
         if (!input.backupPath?.trim()) {
           return {
-            success: false,
-            error: "backupPath is required",
-            code: "VALIDATION_ERROR",
+            ...formatHandlerError(
+              new ValidationError("backupPath is required"),
+            ),
             backupPath: "",
           };
         }
@@ -64,8 +64,9 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         const resolvedPath = nodePath.resolve(input.backupPath);
         if (!fs.existsSync(resolvedPath)) {
           return {
-            success: false,
-            error: `Backup file not found: ${input.backupPath}`,
+            ...formatHandlerError(
+              new ValidationError(`Backup file not found: ${input.backupPath}`),
+            ),
             code: "FILE_NOT_FOUND",
             backupPath: input.backupPath,
           };
@@ -80,8 +81,11 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           );
         } catch (error) {
           return {
-            success: false,
-            error: error instanceof Error ? error.message : String(error),
+            ...formatHandlerError(
+              new ValidationError(
+                error instanceof Error ? error.message : String(error),
+              ),
+            ),
             code: "ATTACH_FAILED",
             backupPath: input.backupPath,
           };

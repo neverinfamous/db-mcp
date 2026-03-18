@@ -141,7 +141,6 @@ describe("createVirtualTableInfoTool", () => {
 
   it("should handle module not available", async () => {
     const adapter = createMockAdapter();
-    let calledPragma = false;
     adapter.executeReadQuery.mockImplementation((sql: string) => {
       if (sql.includes("sqlite_master")) {
         return Promise.resolve({
