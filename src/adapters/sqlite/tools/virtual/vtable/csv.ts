@@ -47,6 +47,8 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
             error: isWasm
               ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
               : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+            code: "VALIDATION_ERROR",
+            category: "validation",
             message: "",
             sql: "",
             columns: [],

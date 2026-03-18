@@ -7,19 +7,22 @@
 import fs from "node:fs";
 import nodePath from "node:path";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import { isSpatialiteSystemIndex } from "../core/index.js";
 import {
   VerifyBackupOutputSchema,
   IndexStatsOutputSchema,
 } from "../../output-schemas/index.js";
-import {
-  VerifyBackupSchema,
-  IndexStatsSchema,
-} from "./helpers.js";
+import { VerifyBackupSchema, IndexStatsSchema } from "./helpers.js";
 
 export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -37,9 +40,11 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
         if (!adapter.isNativeBackend()) {
           return {
-            success: false,
-            error:
-              "Verify backup not available: file system access is not supported in WASM mode.",
+            ...formatHandlerError(
+              new ValidationError(
+                "Verify backup not available: file system access is not supported in WASM mode.",
+              ),
+            ),
             wasmLimitation: true,
             backupPath: input.backupPath,
           };

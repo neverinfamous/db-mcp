@@ -41,6 +41,8 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
           return {
             success: false,
             error: `Dimensions must be between 2 and 5, got ${input.dimensions}`,
+            code: "VALIDATION_ERROR",
+            category: "validation",
             message: "",
             sql: "",
             columns: [],
@@ -54,6 +56,8 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
             success: false,
             error:
               "R-Tree extension not available. Use a SQLite build with rtree support.",
+            code: "VALIDATION_ERROR",
+            category: "validation",
             message: "",
             sql: "",
             columns: [],
