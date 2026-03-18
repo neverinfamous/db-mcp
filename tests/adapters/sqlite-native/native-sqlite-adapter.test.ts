@@ -433,9 +433,7 @@ describe("NativeSqliteAdapter", () => {
       );
       adapter.commitTransaction();
 
-      const result = await adapter.executeReadQuery(
-        "SELECT * FROM txn_test",
-      );
+      const result = await adapter.executeReadQuery("SELECT * FROM txn_test");
       expect(result.rows).toHaveLength(1);
     });
 
@@ -446,9 +444,7 @@ describe("NativeSqliteAdapter", () => {
       );
       adapter.rollbackTransaction();
 
-      const result = await adapter.executeReadQuery(
-        "SELECT * FROM txn_test",
-      );
+      const result = await adapter.executeReadQuery("SELECT * FROM txn_test");
       expect(result.rows).toHaveLength(0);
     });
 
@@ -467,9 +463,7 @@ describe("NativeSqliteAdapter", () => {
 
       adapter.commitTransaction();
 
-      const result = await adapter.executeReadQuery(
-        "SELECT * FROM txn_test",
-      );
+      const result = await adapter.executeReadQuery("SELECT * FROM txn_test");
       expect(result.rows).toHaveLength(1);
       expect(result.rows?.[0]?.["val"]).toBe("first");
     });
@@ -483,9 +477,7 @@ describe("NativeSqliteAdapter", () => {
       adapter.releaseSavepoint("sp1");
       adapter.commitTransaction();
 
-      const result = await adapter.executeReadQuery(
-        "SELECT * FROM txn_test",
-      );
+      const result = await adapter.executeReadQuery("SELECT * FROM txn_test");
       expect(result.rows).toHaveLength(1);
     });
   });
@@ -505,9 +497,7 @@ describe("NativeSqliteAdapter", () => {
     });
 
     it("should delegate to executeQuery for INSERT", async () => {
-      await adapter.rawQuery(
-        "CREATE TABLE raw_test (id INTEGER PRIMARY KEY)",
-      );
+      await adapter.rawQuery("CREATE TABLE raw_test (id INTEGER PRIMARY KEY)");
       const result = await adapter.rawQuery(
         "INSERT INTO raw_test DEFAULT VALUES",
       );

@@ -169,9 +169,7 @@ describe("sqlite_execute_code handler - readonly guards", () => {
     };
 
     const adapter = {
-      getToolDefinitions: vi
-        .fn()
-        .mockReturnValue([unannotatedTool]),
+      getToolDefinitions: vi.fn().mockReturnValue([unannotatedTool]),
     };
 
     // Getting tools should not crash even with unannotated tools

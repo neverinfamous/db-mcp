@@ -395,9 +395,7 @@ describe("Introspection Schema Tools", () => {
 
     it("should assess ADD COLUMN NOT NULL without DEFAULT risk", async () => {
       const result = (await tools.get("sqlite_migration_risks")?.({
-        statements: [
-          "ALTER TABLE employees ADD COLUMN email TEXT NOT NULL",
-        ],
+        statements: ["ALTER TABLE employees ADD COLUMN email TEXT NOT NULL"],
       })) as {
         success: boolean;
         risks: { riskLevel: string; category: string }[];
@@ -405,18 +403,14 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       const notNullRisk = result.risks.find(
-        (r) =>
-          r.category === "alter_limitation" &&
-          r.riskLevel === "high",
+        (r) => r.category === "alter_limitation" && r.riskLevel === "high",
       );
       expect(notNullRisk).toBeDefined();
     });
 
     it("should assess ADD COLUMN PRIMARY KEY as critical", async () => {
       const result = (await tools.get("sqlite_migration_risks")?.({
-        statements: [
-          "ALTER TABLE employees ADD COLUMN uuid TEXT PRIMARY KEY",
-        ],
+        statements: ["ALTER TABLE employees ADD COLUMN uuid TEXT PRIMARY KEY"],
       })) as {
         success: boolean;
         risks: { riskLevel: string; category: string }[];
@@ -429,9 +423,7 @@ describe("Introspection Schema Tools", () => {
 
     it("should assess ADD COLUMN UNIQUE risk", async () => {
       const result = (await tools.get("sqlite_migration_risks")?.({
-        statements: [
-          "ALTER TABLE employees ADD COLUMN badge TEXT UNIQUE",
-        ],
+        statements: ["ALTER TABLE employees ADD COLUMN badge TEXT UNIQUE"],
       })) as {
         success: boolean;
         risks: { riskLevel: string; category: string }[];
@@ -471,9 +463,7 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.summary.highestRisk).toBe("critical");
-      const deleteRisk = result.risks.find(
-        (r) => r.category === "destructive",
-      );
+      const deleteRisk = result.risks.find((r) => r.category === "destructive");
       expect(deleteRisk).toBeDefined();
     });
 
@@ -486,9 +476,7 @@ describe("Introspection Schema Tools", () => {
       };
 
       expect(result.success).toBe(true);
-      const vacuumRisk = result.risks.find(
-        (r) => r.category === "performance",
-      );
+      const vacuumRisk = result.risks.find((r) => r.category === "performance");
       expect(vacuumRisk).toBeDefined();
       expect(vacuumRisk?.riskLevel).toBe("medium");
     });
@@ -520,9 +508,7 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.summary.totalStatements).toBe(3);
-      const txnRisks = result.risks.filter(
-        (r) => r.category === "transaction",
-      );
+      const txnRisks = result.risks.filter((r) => r.category === "transaction");
       expect(txnRisks.length).toBe(3);
       expect(txnRisks.every((r) => r.riskLevel === "low")).toBe(true);
     });
@@ -537,9 +523,7 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       // Should still flag as high risk (destructive)
-      const dropRisk = result.risks.find(
-        (r) => r.category === "destructive",
-      );
+      const dropRisk = result.risks.find((r) => r.category === "destructive");
       expect(dropRisk).toBeDefined();
       expect(dropRisk?.riskLevel).toBe("high");
     });

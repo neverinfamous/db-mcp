@@ -156,8 +156,7 @@ describe("Core Tools - DML", () => {
 
     it("should reject CTE-prefixed SELECT via write_query", async () => {
       const result = (await tools.get("sqlite_write_query")?.({
-        query:
-          "WITH t AS (SELECT 1 AS v) SELECT * FROM t",
+        query: "WITH t AS (SELECT 1 AS v) SELECT * FROM t",
       })) as { success: boolean; error?: string; rowsAffected: number };
 
       expect(result.success).toBe(false);
