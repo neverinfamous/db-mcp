@@ -23,6 +23,7 @@ import type {
   ToolGroup,
 } from "../../types/index.js";
 import { logger, ERROR_CODES } from "../../utils/logger/index.js";
+import { VERSION } from "../../version.js";
 import {
   ConnectionError,
   ConfigurationError,
@@ -70,7 +71,7 @@ import {
 export class NativeSqliteAdapter extends DatabaseAdapter {
   readonly type: DatabaseType = "sqlite";
   readonly name = "Native SQLite Adapter (better-sqlite3)";
-  readonly version = "1.1.0";
+  readonly version = VERSION;
 
   /**
    * Check if this adapter uses native (better-sqlite3) backend.
