@@ -102,6 +102,34 @@ jobs:
 
           echo "✅ Security gate passed - images will now be built and pushed"
 
+      - name: Trivy security scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
+        with:
+          image-ref: local-scan:latest
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          timeout: 10m
+
+      - name: Trivy SARIF upload
+        if: always()
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
+        with:
+          image-ref: local-scan:latest
+          format: sarif
+          output: trivy-results.sarif
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          timeout: 10m
+
+      - name: Upload Trivy results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-docker-scan
+
   # Build each platform on native architecture (only runs if security scan passes)
   build-platform:
     needs: [security-scan]
