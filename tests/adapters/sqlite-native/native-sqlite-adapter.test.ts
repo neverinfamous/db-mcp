@@ -8,12 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { NativeSqliteAdapter } from "../../../src/adapters/sqlite-native/native-sqlite-adapter.js";
 import type { SqliteConfig } from "../../../src/adapters/sqlite/types.js";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-const { version: packageVersion } = require("../../../package.json") as {
-  version: string;
-};
+import { VERSION } from "../../../src/version.js";
 
 describe("NativeSqliteAdapter", () => {
   let adapter: NativeSqliteAdapter;
@@ -40,7 +35,7 @@ describe("NativeSqliteAdapter", () => {
     });
 
     it("should return version", () => {
-      expect(adapter.version).toBe(packageVersion);
+      expect(adapter.version).toBe(VERSION);
     });
 
     it("should identify as native backend", () => {

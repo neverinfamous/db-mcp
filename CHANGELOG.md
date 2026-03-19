@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/neverinfamous/db-mcp/compare/v1.1.0...HEAD)
+## [Unreleased](https://github.com/neverinfamous/db-mcp/compare/v1.1.1...HEAD)
+
+## [1.1.1](https://github.com/neverinfamous/db-mcp/releases/tag/v1.1.1) - 2026-03-18
+
+### Fixed
+
+- **Docker Build**: Copy `tsup.config.ts` into builder stage — fixes "No input files" CI build failure
+- **Docker Workflow**: Updated `docker/setup-buildx-action` from v3 (Node 20, deprecated) to v4 (Node 24)
+- **Docker Workflow**: Fixed `peter-evans/dockerhub-description` broken SHA — updated to v5 release (`1b9a80c`)
+- **Prompt Handler**: Made `args` optional in `handleResult` to prevent crash when SDK invokes prompts with `undefined` args
+- **Transaction Methods**: Replaced generic `Error` with `ValidationError` + `INVALID_SAVEPOINT_NAME` code for savepoint name validation
+- **Index Tools**: Centralized table existence checks via `validateTableExists()` from `column-validation.ts`
+- **Version Test**: Derive expected adapter version from `src/version.ts` (`VERSION` SSoT) instead of hardcoded string
 
 ## [1.1.0](https://github.com/neverinfamous/db-mcp/releases/tag/v1.1.0) - 2026-03-18
 

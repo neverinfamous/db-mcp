@@ -56,7 +56,7 @@ import {
 export class SqliteAdapter extends DatabaseAdapter {
   override readonly type = "sqlite" as const;
   override readonly name = "SQLite Adapter";
-  override readonly version = "1.1.0"; // Keep in sync with package.json
+  override readonly version = "1.1.1"; // Keep in sync with package.json
 
   /**
    * Check if this adapter uses native (better-sqlite3) backend.
