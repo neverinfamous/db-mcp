@@ -56,6 +56,20 @@ Same as `test-tools.md` — refer to that file for the full schema reference. Ke
 
 When rating errors, flag any generic code (`RESOURCE_ERROR`, `UNKNOWN_ERROR`) that should be a specific code (e.g., `TABLE_NOT_FOUND`, `COLUMN_NOT_FOUND`, `VALIDATION_ERROR`). These are fixable in `src/utils/errors/` (see `suggestions.ts` and `classes.ts`) by adding a `code` override to the matching error class. Treat as ⚠️ Issue and include in fix plan.
 
+### Error Message Quality Rating
+
+Rate each error response on the following scale:
+
+| Quality Level     | Example                                                        | Verdict                                     |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------- |
+| **5 - Excellent** | `Table 'stress_empty_table' does not exist (code: TABLE_NOT_FOUND)` | ✅ Includes object name + error code + context |
+| **4 - Good**      | `Table 'stress_empty_table' does not exist`                    | ✅ Includes object name                      |
+| **3 - Adequate**  | `SQLITE_ERROR: no such table: stress_empty_table`              | ⚠️ Raw SQLite error leaked but informative   |
+| **2 - Poor**      | `SQLITE_ERROR: no such table`                                  | ⚠️ No object name in message                 |
+| **1 - Useless**   | `Query failed` or generic `Error occurred`                     | ❌ No context, report as issue               |
+
+Flag any tool returning Level 1-2 error messages as ⚠️ with the tool name for error quality improvement.
+
 ## Post-Test Procedures
 
 At the end, confirm cleanup of all `stress_*` objects, then **fix every finding** — not just ❌ Fails, but also ⚠️ Issues (behavioral improvements, missing warnings, error code consistency) and 📦 Payload problems (responses that should be truncated or offer a `limit` param). Create a plan covering all finding architecturally consistent with other tools/tool groups. If the plan does not require important decision choices, proceed with implementation. When complete, update the changelog (being careful not to create duplicate headers), and commit without pushing. Then re-test your fixes with direct MCP calls.

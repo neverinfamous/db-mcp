@@ -137,12 +137,50 @@ During testing, check for these inconsistencies across tool groups:
 6. **Orphaned output schemas**: If a schema is exported from `src/adapters/sqlite/output-schemas/` (e.g., `TransactionBeginOutputSchema`) but the corresponding tool definition does not reference it via `outputSchema`, report as ⚠️. Use `grep_search` to check whether the schema name appears in any tool file under `src/adapters/`. Defined-but-unwired schemas provide zero enforcement.
 7. **Inline output schemas**: If any tool defines `outputSchema: z.object({...})` inline in the handler file instead of importing a named schema from `output-schemas/`, report as ⚠️. All output schemas must live in `src/adapters/sqlite/output-schemas/` with named exports. Use `grep_search` with pattern `outputSchema: z.object` across `src/adapters/` to detect violations.
 
+## Error Path Testing Checklist
+
+For each tool group under test, verify at least one scenario from each applicable row:
+
+| Error Scenario | Tool Groups to Test | Example Input |
+|----------------|-------------------|---------------|
+| Nonexistent table | All table-accepting tools | `table: "nonexistent_xyz"` |
+| Invalid SQL syntax | Core (`read_query`, `write_query`) | `query: "SELEKT * FROM"` |
+| Invalid column name | Stats, JSON, text, vector, geo | `column: "nonexistent_col"` |
+| Duplicate table/index | Core (`create_table`, `create_index`) | Create existing table |
+| Empty required array | Admin (transactions) | `statements: []` |
+| Missing required field | All tools with required params | Omit `table`, `query`, etc. |
+| **Zod validation (empty params)** | **Every tool with required params** | `{}` (empty object — must return handler error, not MCP `-32602` error) |
+| **Zod validation (wrong type)** | **Tools with typed params** | Pass string where number expected, etc. |
+| Invalid file path | Admin (CSV, backup, restore) | `filePath: "nonexistent_file.csv"` |
+| Out-of-bounds coordinates | Geo (distance, nearby) | `lat1: 91` (must be -90 to 90) |
+
 ### Split Schema Pattern Verification
 
 All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP parameter visibility, and a `z.preprocess()` wrapper for handler parsing. Verify:
 
 1. **Parameter visibility**: For tools with optional parameters (e.g., `limit`, `readonly`), make a direct MCP call using those parameters. If the tool ignores or rejects documented parameters, report as a Split Schema violation.
 2. **Alias acceptance**: For tools with documented parameter aliases (e.g., `table`/`tableName`, `query`/`sql`, `indexName`/`name`), verify that direct MCP tool calls correctly accept the aliases.
+
+## Cleanup Conventions
+
+During testing, use these naming conventions:
+
+- **Temporary tables**: Prefix with `temp_` (e.g., `temp_core_test`)
+- **Temporary indexes**: Prefix with `temp_idx_` (e.g., `temp_idx_name`)
+- **Temporary views**: Prefix with `temp_view_` (e.g., `temp_view_orders`)
+- **Temporary FTS tables**: Prefix with `temp_` (e.g., `temp_users_fts`)
+
+After testing, clean up:
+
+```sql
+-- List temp tables
+SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'temp_%';
+
+-- Drop temp table
+DROP TABLE IF EXISTS temp_my_test_table;
+```
+
+If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration via `reset-database.ps1`.
 
 ## Reporting Format
 
@@ -172,5 +210,31 @@ All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP
 4. **Commit**: Stage and commit all changes — do NOT push
 5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
 6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, make the improvements.
+
+---
+
+## Troubleshooting
+
+### Database is locked / file in use
+
+1. Check for Node.js processes using the database: `Get-CimInstance Win32_Process -Filter "Name = 'node.exe'"` 
+2. If an MCP server is running, the database will be locked. The reset script handles this by overwriting in-place
+3. WAL/journal files (`test.db-wal`, `test.db-shm`) are normal — they are cleaned up on database close
+
+### Reset script fails
+
+1. Run with `-Verbose`: `.\reset-database.ps1 -Verbose`
+2. If `sqlite3` is not in PATH, the script falls back to Node.js with `better-sqlite3`
+3. Backup `.db` files left by `sqlite_backup` tests are cleaned up automatically
+
+### SpatiaLite tools fail [NATIVE ONLY]
+
+1. SpatiaLite must be installed and loadable by the SQLite engine
+2. Verify with `sqlite_spatialite_load` — should return a version string
+3. SpatiaLite tools are excluded from WASM mode entirely
+
+### FTS5 tools not available [WASM]
+
+FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) are Native-only. In WASM mode, these tools are not registered and will not appear in the tool list. This is expected behavior.
 
 ---

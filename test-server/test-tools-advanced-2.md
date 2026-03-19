@@ -485,3 +485,61 @@ Rate each error response 1-5 for contextual usefulness:
 3. Drop `stress_idx_flag`: `sqlite_write_query({query: "DROP INDEX IF EXISTS stress_idx_flag"})`
 4. **Reset the database** with `pwsh -ExecutionPolicy Bypass -File .\reset-database.ps1` to undo the `stress_flag` column addition on `test_products` (SQLite cannot DROP COLUMN in older versions)
 5. After reset, verify: `test_products` has 16 rows and original 6 columns (no `stress_flag`)
+
+---
+
+## Cross-Group Integration Workflows
+
+> **Purpose**: Test realistic multi-group pipelines that exercise tool chains spanning multiple groups. These catch state-management bugs that single-group tests miss (e.g., temp table metadata leaking between groups, transaction isolation issues).
+
+### Workflow 1: Core → JSON → Stats (Data Pipeline)
+
+1. `sqlite_create_table({tableName: "stress_pipeline", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "data", type: "TEXT"}, {name: "score", type: "REAL"}]})` → success
+2. Insert 5 rows with JSON data (`{"category": "tech", "priority": N}`) and varying scores via `sqlite_write_query`
+3. `sqlite_json_extract({table: "stress_pipeline", column: "data", path: "$.category"})` → verify extraction returns "tech" for all rows
+4. `sqlite_stats_basic({table: "stress_pipeline", column: "score"})` → verify count=5, min, max, avg
+5. `sqlite_stats_percentile({table: "stress_pipeline", column: "score", percentiles: [25, 50, 75]})` → verify 3 values
+6. Cleanup: `sqlite_drop_table({tableName: "stress_pipeline"})`
+
+### Workflow 2: Core → Vector → Text (Search Pipeline)
+
+7. `sqlite_vector_create_table({tableName: "stress_search", dimensions: 4, additionalColumns: [{name: "content", type: "TEXT"}]})` → success
+8. Insert 3 rows via `sqlite_write_query` with text content and 4-dim vectors
+9. `sqlite_vector_search({table: "stress_search", vectorColumn: "vector", queryVector: [0.1, 0.2, 0.3, 0.4], metric: "cosine", limit: 2})` → 2 nearest results
+10. `sqlite_fuzzy_match({table: "stress_search", column: "content", search: "<search term>", maxDistance: 3})` → verify text search
+11. Cleanup: `sqlite_drop_table({tableName: "stress_search"})`
+
+### Workflow 3: Migration → Introspection (Schema Lifecycle)
+
+12. `sqlite_migration_init({})` → initialize tracking
+13. `sqlite_migration_apply({version: "stress_integration", migrationSql: "CREATE TABLE stress_migrated (id INTEGER PRIMARY KEY, status TEXT DEFAULT 'active')", rollbackSql: "DROP TABLE IF EXISTS stress_migrated"})` → applied
+14. `sqlite_describe_table({tableName: "stress_migrated"})` → verify columns match migration DDL
+15. `sqlite_schema_snapshot({})` → verify `stress_migrated` appears in snapshot
+16. `sqlite_migration_rollback({version: "stress_integration"})` → rolled back
+17. `sqlite_describe_table({tableName: "stress_migrated"})` → verify table no longer exists (structured error)
+
+### Workflow 4: Admin → Core (Maintenance Pipeline)
+
+18. `sqlite_integrity_check` → database integrity OK
+19. `sqlite_analyze` → update statistics
+20. `sqlite_query_plan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → execution plan
+21. `sqlite_vacuum` → vacuum
+22. `sqlite_query_plan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → compare plan post-vacuum
+
+### Error Code Consistency (Cross-Group Check)
+
+During all workflows above, watch for these error code quality indicators:
+
+| Quality Level     | Example                                                        | Verdict                                     |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------- |
+| **5 - Excellent** | `Table 'stress_pipeline' does not exist (code: TABLE_NOT_FOUND)` | ✅ Includes object name + context            |
+| **4 - Good**      | `Table 'stress_pipeline' does not exist`                       | ✅ Includes object name                      |
+| **3 - Adequate**  | `SQLITE_ERROR: no such table: stress_pipeline`                 | ⚠️ Raw SQLite error leaked but informative   |
+| **2 - Poor**      | `SQLITE_ERROR: no such table`                                  | ⚠️ No object name in message                 |
+| **1 - Useless**   | `Query failed` or generic `Error occurred`                     | ❌ No context, report as issue               |
+
+Flag any tool returning Level 1-2 error messages as ⚠️ with the tool name for error quality improvement.
+
+### Final Cleanup
+
+Drop all remaining `stress_*` tables and views. Drop `_mcp_migrations` if present. Confirm all test table row counts match baselines.
