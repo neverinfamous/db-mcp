@@ -34,7 +34,7 @@ describe("NativeSqliteAdapter", () => {
     });
 
     it("should return version", () => {
-      expect(adapter.version).toBe("1.0.0");
+      expect(adapter.version).toBe("1.1.0");
     });
 
     it("should identify as native backend", () => {
