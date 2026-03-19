@@ -28,15 +28,13 @@
 | **17 Resources**                 | 8 data resources (schema, tables, indexes, views, health, metadata, insights) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                   |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 139 capabilities locally, reducing token overhead by up to 90% and supercharging AI agent reasoning              |
-| **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access. Large datasets include metadata so agents always know the full picture  |
+| **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access                                                                                                     |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                   |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                       |
 | **Smart Tool Filtering**         | 9 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                          |
-| **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) for modern clients + legacy SSE (`/sse`) for backward compatibility — both protocols supported simultaneously with security headers, rate limiting, health check, and stateless mode for serverless                                                                                             |
-| **Production-Ready Security**    | SQL injection protection, parameterized queries, input validation, sandboxed code execution, HTTP body size enforcement, 7 security headers, server timeouts (slowloris protection), Retry-After rate limiting, `trustProxy` for reverse proxy deployments, opt-in HSTS, non-root Docker execution, and build provenance |
-| **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types, 1911 unit tests + 1136 E2E tests and 90% coverage                                                                                                                                                                                                              |
-| **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions, no silent failures. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                               |
-| **MCP 2025-03-26 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                                                                                                                                            |
+| **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) + legacy SSE (`/sse`) with security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                     |
+| **Production-Ready Security**    | SQL injection protection, parameterized queries, input validation, sandboxed code execution, HTTP body size enforcement, 7 security headers, server timeouts, rate limiting, `trustProxy`, opt-in HSTS, non-root Docker execution, and build provenance                                                                  |
+| **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                   |
 
 ### Backend Options
 
@@ -49,7 +47,7 @@
 | **Cross-platform**   | ✅ Pure JavaScript                                               | Compiled natively in image      |
 | **Performance**      | ⚠️ Synchronous execution (Blocks Node Event Loop on heavy loads) | 🚀 High-performance, concurrent |
 
-> ⚠️ **WASM Performance Note:** The WASM (`sql.js`) backend executes queries entirely in JavaScript memory, which synchronously blocks the Node.js event loop during intensive workloads. For safety, the `sqlite_read_query` tool limits unbounded queries to 1,000 rows. For high-throughput production or large datasets, use the Native (`--sqlite-native`) backend.
+> ⚠️ **WASM Note:** The WASM backend blocks the Node.js event loop during intensive workloads. `sqlite_read_query` limits unbounded queries to 1,000 rows. For production, use Native (`--sqlite-native`).
 
 ## 🚀 Quick Start (2 Minutes)
 
@@ -127,8 +125,6 @@ Specify exactly the groups you need:
 
 ### Shortcuts (Predefined Bundles)
 
-> **Note:** Native includes FTS5 (4), window functions (6), transactions (7), and SpatiaLite (7) not available in WASM.
-
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
 | `starter`    | **46** | **50** | +3         | Core, JSON, Text               |
@@ -141,20 +137,20 @@ Specify exactly the groups you need:
 
 ### Tool Groups (10 Available)
 
-> **Note:** +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
+> +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
 
-| Group           | WASM | Native | + Built-in | Description                                  |
-| --------------- | ---- | ------ | ---------- | -------------------------------------------- |
-| `codemode`      | 1    | 1      | +3         | Code Mode (sandboxed code execution) 🌟      |
-| `core`          | 10   | 10     | +3         | Basic CRUD, schema, tables                   |
-| `json`          | 24   | 24     | +3         | JSON/JSONB operations, analysis              |
-| `text`          | 14   | 18     | +3         | Text processing + FTS5 + advanced search     |
-| `stats`         | 14   | 20     | +3         | Statistical analysis (+ window funcs)        |
-| `vector`        | 12   | 12     | +3         | Embeddings, similarity search                |
-| `admin`         | 27   | 34     | +3         | Backup, restore, virtual tables, pragma      |
-| `geo`           | 5    | 12     | +3         | Geospatial + SpatiaLite (Native only)        |
-| `introspection` | 10   | 10     | +3         | FK graph, cascade sim, storage/index audit   |
-| `migration`     | 7    | 7      | +3         | Migration tracking, apply, rollback (opt-in) |
+| Group           | WASM | Native | Description                                  |
+| --------------- | ---- | ------ | -------------------------------------------- |
+| `codemode`      | 1    | 1      | Code Mode (sandboxed code execution) 🌟      |
+| `core`          | 10   | 10     | Basic CRUD, schema, tables                   |
+| `json`          | 24   | 24     | JSON/JSONB operations, analysis              |
+| `text`          | 14   | 18     | Text processing + FTS5 + advanced search     |
+| `stats`         | 14   | 20     | Statistical analysis (+ window funcs)        |
+| `vector`        | 12   | 12     | Embeddings, similarity search                |
+| `admin`         | 27   | 34     | Backup, restore, virtual tables, pragma      |
+| `geo`           | 5    | 12     | Geospatial + SpatiaLite (Native only)        |
+| `introspection` | 10   | 10     | FK graph, cascade sim, storage/index audit   |
+| `migration`     | 7    | 7      | Migration tracking, apply, rollback (opt-in) |
 
 ### Syntax Reference
 
@@ -168,18 +164,6 @@ Specify exactly the groups you need:
 | `+`      | Tool     | `+fuzzy_search` | Add one specific tool                         |
 | `-`      | Tool     | `-drop_table`   | Remove one specific tool                      |
 
-#### Custom Tool Selection
-
-You can list individual tool names (without `+` prefix) to create a fully custom whitelist — only the tools you specify will be enabled:
-
-```bash
-# Enable exactly 3 tools
---tool-filter "read_query,write_query,list_tables"
-
-# Mix tools from different groups
---tool-filter "read_query,fuzzy_search,vector_search"
-```
-
 **Examples:**
 
 ```bash
@@ -187,13 +171,7 @@ You can list individual tool names (without `+` prefix) to create a fully custom
 --tool-filter "core,json,text,fts5"
 --tool-filter "starter,+stats"
 --tool-filter "starter,-fts5"
-```
-
-**Legacy Syntax (still supported):**
-If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want to start with _all_ tools enabled and then subtract.
-
-```bash
---tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
+--tool-filter "read_query,write_query,list_tables"  # Custom whitelist
 ```
 
 ## 🛡️ Supply Chain Security
@@ -214,16 +192,12 @@ docker pull writenotenow/db-mcp:sha256-<manifest-digest>
 docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 ```
 
-**Security Features:**
-
-- ✅ **Build Provenance** - Cryptographic proof of build process
-- ✅ **SBOM Available** - Complete software bill of materials
-- ✅ **Non-root Execution** - Minimal attack surface
-- ✅ **Security Scanned** - Docker Scout blocks critical/high CVEs
+- ✅ **Build Provenance** — Cryptographic proof of build process
+- ✅ **SBOM Available** — Complete software bill of materials
+- ✅ **Non-root Execution** — Minimal attack surface
+- ✅ **Security Scanned** — Docker Scout blocks critical/high CVEs
 
 ## 📊 Tool Categories
-
-> **Note:** Counts below show unique tools per category. The [Tool Groups](#️-tool-filtering) table shows per-group totals including the auto-injected Code Mode tool (+1).
 
 | Category             | Native  | Description                     |
 | -------------------- | ------- | ------------------------------- |
@@ -239,42 +213,23 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Code Mode            | 1       | Sandboxed JavaScript execution  |
 | **Total**            | **139** |                                 |
 
-### 📁 Data Resources (8)
+### 📁 Resources (8 Data + 9 Help)
 
-MCP resources provide read-only access to database metadata:
+Data resources provide read-only access to database metadata. Help resources (`sqlite://help/*`) provide on-demand per-group tool reference, filtered by `--tool-filter`.
 
-| Resource              | URI                                 | Description                       | Min Config    |
-| --------------------- | ----------------------------------- | --------------------------------- | ------------- |
-| `sqlite_schema`       | `sqlite://schema`                   | Full database schema              | `minimal`     |
-| `sqlite_tables`       | `sqlite://tables`                   | List all tables                   | `minimal`     |
-| `sqlite_table_schema` | `sqlite://table/{tableName}/schema` | Schema for a specific table       | `minimal`     |
-| `sqlite_indexes`      | `sqlite://indexes`                  | All indexes in the database       | `minimal`     |
-| `sqlite_views`        | `sqlite://views`                    | All views in the database         | `core,admin`  |
-| `sqlite_health`       | `sqlite://health`                   | Database health and status        | _(read-only)_ |
-| `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
-| `sqlite_insights`     | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
-
-### Help Resources (1 + up to 8)
-
-On-demand tool reference documentation, filtered by `--tool-filter`:
-
-| Resource                    | URI                           | Description                                           | When Registered             |
-| --------------------------- | ----------------------------- | ----------------------------------------------------- | --------------------------- |
-| `sqlite_help`               | `sqlite://help`               | Gotchas, WASM vs Native, Code Mode API                | Always                      |
-| `sqlite_help_json`          | `sqlite://help/json`          | JSON/JSONB operations reference                       | When json group on          |
-| `sqlite_help_text`          | `sqlite://help/text`          | Text processing + FTS5 reference                      | When text group on          |
-| `sqlite_help_stats`         | `sqlite://help/stats`         | Statistical analysis + window functions reference     | When stats group on         |
-| `sqlite_help_vector`        | `sqlite://help/vector`        | Vector/semantic search reference                      | When vector group on        |
-| `sqlite_help_geo`           | `sqlite://help/geo`           | Geospatial + SpatiaLite reference                     | When geo group on           |
-| `sqlite_help_admin`         | `sqlite://help/admin`         | Admin, transactions, backup, virtual tables reference | When admin group on         |
-| `sqlite_help_introspection` | `sqlite://help/introspection` | Schema introspection, FK graph, diagnostics reference | When introspection group on |
-| `sqlite_help_migration`     | `sqlite://help/migration`     | Migration tracking, apply, rollback reference         | When migration group on     |
-
-> **Efficiency Tip:** Data resources are always **readable** regardless of tool configuration. Help resources are served on-demand — agents read them only when working with a specific tool group.
+| Resource              | URI                                 | Description                  |
+| --------------------- | ----------------------------------- | ---------------------------- |
+| `sqlite_schema`       | `sqlite://schema`                   | Full database schema         |
+| `sqlite_tables`       | `sqlite://tables`                   | List all tables              |
+| `sqlite_table_schema` | `sqlite://table/{tableName}/schema` | Schema for a specific table  |
+| `sqlite_indexes`      | `sqlite://indexes`                  | All indexes in the database  |
+| `sqlite_views`        | `sqlite://views`                    | All views in the database    |
+| `sqlite_health`       | `sqlite://health`                   | Database health and status   |
+| `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs|
+| `sqlite_insights`     | `memo://insights`                   | Business insights memo       |
+| `sqlite_help`         | `sqlite://help`                     | Main help + per-group refs   |
 
 ### 💬 Prompts (10)
-
-MCP prompts provide AI-assisted database workflows:
 
 | Prompt                          | Description                                      |
 | ------------------------------- | ------------------------------------------------ |
@@ -291,32 +246,12 @@ MCP prompts provide AI-assisted database workflows:
 
 ### SQLite Extensions
 
-The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Loadable extensions require additional setup:
+The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable loadable extensions via CLI flags:
 
-| Extension      | Purpose                   | Tools | CLI Flag       |
-| -------------- | ------------------------- | ----- | -------------- |
-| **CSV**        | CSV virtual tables        | 2     | `--csv`        |
-| **SpatiaLite** | Advanced GIS capabilities | 7     | `--spatialite` |
-
-**SpatiaLite** is pre-installed in the Docker image (AMD64 only). Enable it with:
-
-```bash
-docker run -i --rm \
-  -v ./data:/app/data \
-  writenotenow/db-mcp:latest \
-  --sqlite-native /app/data/database.db --spatialite
-```
-
-**CSV** requires setting `CSV_EXTENSION_PATH` to a compiled binary inside the container:
-
-```bash
-docker run -i --rm \
-  -v ./data:/app/data \
-  -v /path/to/csv.so:/app/extensions/csv.so \
-  -e CSV_EXTENSION_PATH=/app/extensions/csv.so \
-  writenotenow/db-mcp:latest \
-  --sqlite-native /app/data/database.db --csv
-```
+| Extension      | Purpose             | Tools | CLI Flag       | Notes                                  |
+| -------------- | ------------------- | ----- | -------------- | -------------------------------------- |
+| **CSV**        | CSV virtual tables  | 2     | `--csv`        | Requires `CSV_EXTENSION_PATH` env var  |
+| **SpatiaLite** | Advanced GIS        | 7     | `--spatialite` | Pre-installed (AMD64 only)             |
 
 ## 🔧 Configuration
 
@@ -330,17 +265,15 @@ docker run -i --rm \
 | `MCP_AUTH_TOKEN`        | —         | Simple bearer token for HTTP auth (`--auth-token`)          |
 | `OAUTH_ENABLED`         | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                        |
 | `OAUTH_ISSUER`          | —         | Authorization server URL (`--oauth-issuer`)                 |
-| `OAUTH_AUDIENCE`        | —         | Expected token audience (`--oauth-audience`)                |
+| `OAUTH_AUDIENCE`        | —         | Expected token audience (`--oauth-audience`)                |\
 | `OAUTH_JWKS_URI`        | —         | JWKS URI, auto-discovered if omitted (`--oauth-jwks-uri`)   |
 | `OAUTH_CLOCK_TOLERANCE` | `60`      | Clock tolerance in seconds (`--oauth-clock-tolerance`)      |
 | `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`          |
-| `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations) |
-| `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced isolation) or `vm`    |
+| `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL)            |
+| `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced) or `vm`              |
 | `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                 |
-| `CSV_EXTENSION_PATH`    | —         | Custom path to CSV extension binary (native only)           |
-| `SPATIALITE_PATH`       | —         | Custom path to SpatiaLite extension binary (native only)    |
-
-> **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
+| `CSV_EXTENSION_PATH`    | —         | Path to CSV extension binary (native only)                  |
+| `SPATIALITE_PATH`       | —         | Path to SpatiaLite extension binary (native only)           |
 
 ### HTTP/SSE Transport
 
@@ -354,56 +287,25 @@ docker run --rm -p 3000:3000 \
 ```
 
 > [!IMPORTANT]
-> When running in Docker with HTTP transport, use `--server-host 0.0.0.0` to bind to all interfaces. Without this, the server may only listen on `localhost` inside the container, making it unreachable from the host.
+> Use `--server-host 0.0.0.0` to bind to all interfaces. Without this, the server may only listen on `localhost` inside the container. Add `--stateless` for serverless deployments (disables SSE and progress notifications).
 
 **Endpoints:**
 
 | Endpoint         | Description                                      | Mode     |
 | ---------------- | ------------------------------------------------ | -------- |
-| `GET /`          | Server info and available endpoints              | Both     |
 | `POST /mcp`      | JSON-RPC requests (initialize, tools/call, etc.) | Both     |
 | `GET /mcp`       | SSE stream for server-to-client notifications    | Stateful |
 | `DELETE /mcp`    | Session termination                              | Stateful |
 | `GET /sse`       | Legacy SSE connection (MCP 2024-11-05)           | Stateful |
 | `POST /messages` | Legacy SSE message endpoint                      | Stateful |
 | `GET /health`    | Health check (always public)                     | Both     |
+| `GET /`          | Server info and available endpoints              | Both     |
 
-**Session Management:** The server uses stateful sessions by default. Include the `mcp-session-id` header (returned from initialization) in subsequent requests for session continuity.
-
-**Security Features:**
-
-- **7 Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy` (no-referrer), `Permissions-Policy` + opt-in `Strict-Transport-Security` via `enableHSTS`
-- **Server Timeouts** — Request, keep-alive, and headers timeouts prevent slowloris-style DoS
-- **Rate Limiting** — 100 requests/minute per IP (429 + Retry-After on excess, health checks exempt)
-- **CORS** — Configurable via `--cors-origins` (default: `*`, supports wildcard subdomains like `*.example.com`). ⚠️ **Security Warning:** The default `*` allows requests from any origin. For production HTTP deployments, explicitly configure this to your trusted domains.
-- **Trust Proxy** — Opt-in `trustProxy` for X-Forwarded-For IP extraction behind reverse proxies
-- **Body Size Limit** — Configurable via `--max-body-bytes` (default: 1 MB)
-- **404 Handler** — Unknown paths return `{ error: "Not found" }`
-- **Cross-Protocol Guard** — SSE session IDs rejected on `/mcp` and vice versa
-
-#### Stateless Mode (Serverless)
-
-For serverless deployments (AWS Lambda, Cloudflare Workers, Vercel), use stateless mode:
-
-```bash
-docker run --rm -p 3000:3000 \
-  -v ./data:/app/data \
-  writenotenow/db-mcp:latest \
-  --transport http --port 3000 --server-host 0.0.0.0 --stateless --sqlite-native /app/data/database.db
-```
-
-| Mode                      | Progress Notifications | Legacy SSE | Serverless |
-| ------------------------- | ---------------------- | ---------- | ---------- |
-| Stateful (default)        | ✅ Yes                 | ✅ Yes     | ⚠️ Complex |
-| Stateless (`--stateless`) | ❌ No                  | ❌ No      | ✅ Native  |
+**Security:** 7 security headers, server timeouts (slowloris protection), rate limiting (100/min, 429 + Retry-After), CORS (`--cors-origins`), trust proxy (`trustProxy`), body size limit (`--max-body-bytes`, default 1MB), opt-in HSTS, cross-protocol session guard.
 
 ### 🔐 Authentication
 
-db-mcp supports two authentication mechanisms for HTTP transport:
-
 #### Simple Bearer Token
-
-Lightweight authentication for development or single-tenant deployments:
 
 ```bash
 docker run --rm -p 3000:3000 \
@@ -416,7 +318,7 @@ Clients must include `Authorization: Bearer my-secret` on all requests. `/health
 
 #### OAuth 2.1 (Enterprise)
 
-Full OAuth 2.1 with RFC 9728/8414 compliance using CLI flags:
+Full OAuth 2.1 with RFC 9728/8414 compliance:
 
 ```bash
 docker run --rm -p 3000:3000 \
@@ -427,19 +329,9 @@ docker run --rm -p 3000:3000 \
   --sqlite-native /app/data/database.db
 ```
 
-**Supported Scopes:**
+**Scopes:** `read`, `write`, `admin`, `db:{name}`, `table:{db}:{table}`. See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for provider configuration.
 
-| Scope                | Description                            |
-| -------------------- | -------------------------------------- |
-| `read`               | Read-only access to all databases      |
-| `write`              | Read and write access to all databases |
-| `admin`              | Full administrative access             |
-| `db:{name}`          | Access to specific database only       |
-| `table:{db}:{table}` | Access to specific table only          |
-
-See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for configuring your OAuth provider.
-
-> **Priority:** When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence. If neither is configured, the server warns and runs without authentication.
+> When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence.
 
 ## 📦 Image Details
 
@@ -448,12 +340,7 @@ See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYC
 | **AMD64** (x86_64)        | Full: 139 tools, native, SpatiaLite |
 | **ARM64** (Apple Silicon) | Full: 139 tools, native             |
 
-**Image Benefits:**
-
-- **Node.js 24 on Alpine Linux** - Minimal footprint
-- **better-sqlite3** - High-performance native SQLite
-- **Multi-stage build** - Optimized size
-- **Non-root user** - Security hardened
+Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sqlite3 native
 
 **Available Tags:**
 
@@ -461,40 +348,11 @@ See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYC
 - `latest` - Always the newest version
 - `sha-<commit>` - Git commit pinned
 
-## 🏗️ Build from Source
-
-```bash
-git clone https://github.com/neverinfamous/db-mcp.git
-cd db-mcp
-docker build -t db-mcp-local .
-```
-
-Update your MCP config:
-
-```json
-{
-  "mcpServers": {
-    "db-mcp-sqlite": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-v",
-        "./data:/app/data",
-        "db-mcp-local",
-        "--sqlite-native",
-        "/app/data/database.db"
-      ]
-    }
-  }
-}
-```
-
 ## 📚 Documentation & Resources
 
-- **[GitHub Wiki](https://github.com/neverinfamous/db-mcp/wiki)** - Complete documentation
-- **[Issues](https://github.com/neverinfamous/db-mcp/issues)** - Bug reports & feature requests
+- **[GitHub Wiki](https://github.com/neverinfamous/db-mcp/wiki)** — Complete documentation
+- **[Build from Source](https://github.com/neverinfamous/db-mcp#-build-from-source)** — Clone, build, and run locally
+- **[Issues](https://github.com/neverinfamous/db-mcp/issues)** — Bug reports & feature requests
 
 ## 📄 License
 

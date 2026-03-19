@@ -84,13 +84,15 @@ Build the project:
 npm run build
 ```
 
-Run the server:
+Run the server with **Native backend** (better-sqlite3 — full features, requires Node.js native build):
 
 ```bash
-# Native backend (better-sqlite3) - Full features, requires Node.js native build
 node dist/cli.js --transport stdio --sqlite-native ./database.db
+```
 
-# WASM backend (sql.js) - Cross-platform, no compilation required
+Or with **WASM backend** (sql.js — cross-platform, no compilation required):
+
+```bash
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
@@ -220,14 +222,21 @@ Specify exactly the groups you need:
 
 You can list individual tool names (without `+` prefix) to create a fully custom whitelist — only the tools you specify will be enabled:
 
+Enable exactly 3 tools (whitelist mode):
+
 ```bash
-# Enable exactly 3 tools (whitelist mode)
 --tool-filter "read_query,write_query,list_tables"
+```
 
-# Mix tools from different groups
+Mix tools from different groups:
+
+```bash
 --tool-filter "read_query,fuzzy_search,vector_search"
+```
 
-# Combine with a shortcut or group
+Combine with a shortcut or group:
+
+```bash
 --tool-filter "starter,+vector_search,+fuzzy_search"
 ```
 
@@ -272,33 +281,43 @@ SQLite supports both **built-in** extensions (compiled into better-sqlite3) and 
 
 **CSV Extension:**
 
+Download a precompiled binary or compile from source: https://www.sqlite.org/csv.html
+
+Set the environment variable (Linux/macOS):
+
 ```bash
-# Download precompiled binary or compile from SQLite source:
-# https://www.sqlite.org/csv.html
+export CSV_EXTENSION_PATH=/path/to/csv.so
+```
 
-# Set environment variable:
-export CSV_EXTENSION_PATH=/path/to/csv.so  # Linux
-export CSV_EXTENSION_PATH=/path/to/csv.dll # Windows
+On Windows, use `.dll`:
 
-# Or use CLI flag:
+```bash
+export CSV_EXTENSION_PATH=/path/to/csv.dll
+```
+
+Or use the CLI flag:
+
+```bash
 db-mcp --sqlite-native ./data.db --csv
 ```
 
 **SpatiaLite Extension:**
 
+Install the library for your platform:
+
+- **Linux (apt):** `sudo apt install libspatialite-dev`
+- **macOS (Homebrew):** `brew install libspatialite`
+- **Windows:** Download from https://www.gaia-gis.it/gaia-sins/
+
+Set the environment variable:
+
 ```bash
-# Linux (apt):
-sudo apt install libspatialite-dev
-
-# macOS (Homebrew):
-brew install libspatialite
-
-# Windows: Download from https://www.gaia-gis.it/gaia-sins/
-
-# Set environment variable:
 export SPATIALITE_PATH=/path/to/mod_spatialite.so
+```
 
-# Or use CLI flag:
+Or use the CLI flag:
+
+```bash
 db-mcp --sqlite-native ./data.db --spatialite
 ```
 
@@ -485,11 +504,15 @@ db-mcp supports two authentication mechanisms for HTTP transport:
 
 Lightweight authentication for development or single-tenant deployments:
 
-```bash
-# CLI
-node dist/cli.js --transport http --port 3000 --auth-token my-secret --sqlite-native ./database.db
+Via CLI flag:
 
-# Environment variable
+```bash
+node dist/cli.js --transport http --port 3000 --auth-token my-secret --sqlite-native ./database.db
+```
+
+Or via environment variable:
+
+```bash
 export MCP_AUTH_TOKEN=my-secret
 node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
 ```

@@ -315,7 +315,7 @@ catch (error) {
 | Tool filter logic                  | `src/filtering/tool-filter.ts`         | `ToolFilter` class                                                                                   |
 | JSON-RPC constants                 | `src/codemode/api-constants.ts`        | Error codes, method names for sandbox RPC                                                            |
 | Logger error codes                 | `src/utils/logger/error-codes.ts`      | Module-prefixed codes (`DB_`, `AUTH_`, etc.)                                                         |
-| Version SSoT                       | `src/version.ts`                       | Reads from `package.json` at build time                                                              |
+| Version SSoT                       | `src/version.ts`                       | Reads from `package.json` at runtime. Both adapters `import { VERSION }` — **never hardcode version strings** |
 
 ---
 
