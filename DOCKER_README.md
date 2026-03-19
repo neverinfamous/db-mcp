@@ -457,7 +457,7 @@ See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYC
 
 **Available Tags:**
 
-- `1.1.0` - Specific version (recommended for production)
+- `v1.1.1` - Specific version (recommended for production)
 - `latest` - Always the newest version
 - `sha-<commit>` - Git commit pinned
 

@@ -23,6 +23,7 @@ import type {
   ToolGroup,
 } from "../../types/index.js";
 import { ConnectionError } from "../../utils/errors/index.js";
+import { VERSION } from "../../version.js";
 import type { SqliteConfig } from "./types.js";
 import type { SchemaManager } from "./schema-manager.js";
 
@@ -56,7 +57,7 @@ import {
 export class SqliteAdapter extends DatabaseAdapter {
   override readonly type = "sqlite" as const;
   override readonly name = "SQLite Adapter";
-  override readonly version = "1.1.0"; // Keep in sync with package.json
+  override readonly version = VERSION;
 
   /**
    * Check if this adapter uses native (better-sqlite3) backend.
