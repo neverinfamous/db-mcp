@@ -20,6 +20,7 @@ import {
   type SandboxResult,
   type ExecutionMetrics,
 } from "./types.js";
+import { transformAutoReturn } from "./auto-return.js";
 
 /**
  * A sandboxed execution context using Node.js vm module
@@ -146,7 +147,7 @@ export class CodeModeSandbox {
       this.context["sqlite"] = apiBindings;
 
       // Wrap in async IIFE for top-level await
-      const wrappedCode = `(async () => { ${code} })()`;
+      const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
 
       const script = new vm.Script(wrappedCode, {
         filename: "user-code.js",

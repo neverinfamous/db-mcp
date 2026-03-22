@@ -10,6 +10,7 @@
 
 import { parentPort, workerData, type MessagePort } from "node:worker_threads";
 import vm from "node:vm";
+import { transformAutoReturn } from "./auto-return.js";
 
 interface WorkerData {
   code: string;
@@ -175,7 +176,7 @@ async function executeInWorker(): Promise<void> {
     });
 
     // Wrap in async IIFE for top-level await
-    const wrappedCode = `(async () => { ${code} })()`;
+    const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
 
     const script = new vm.Script(wrappedCode, {
       filename: "user-code.js",
