@@ -32,14 +32,14 @@ jobs:
           else
             echo "has_code=false" >> $GITHUB_OUTPUT
           fi
-      - uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+      - uses: github/codeql-action/init@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
         if: steps.check-files.outputs.has_code == 'true'
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
-      - uses: github/codeql-action/autobuild@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+      - uses: github/codeql-action/autobuild@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
         if: steps.check-files.outputs.has_code == 'true'
-      - uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+      - uses: github/codeql-action/analyze@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
         if: steps.check-files.outputs.has_code == 'true'
         with:
           category: "/language:${{matrix.language}}"
