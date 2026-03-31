@@ -1,6 +1,6 @@
-# Contributing to db-mcp
+# Contributing to postgres-mcp
 
-Thank you for your interest in contributing to db-mcp! This project is built by developers, for developers, and we welcome contributions that make the SQLite MCP experience better for everyone.
+Thank you for your interest in contributing to postgres-mcp! This project is built by developers, for developers, and we welcome contributions that make the PostgreSQL MCP experience better for everyone.
 
 ## 🚀 Quick Start
 
@@ -17,20 +17,15 @@ Thank you for your interest in contributing to db-mcp! This project is built by 
 - **Node.js 24+** (see `engines` in `package.json`)
 - **npm** (comes with Node.js)
 - **Git** (for version control)
+- **PostgreSQL** (local instance or Docker)
 - **Docker** (optional, for container testing)
-
-For native backend development (better-sqlite3), you'll also need a C++ build toolchain:
-
-- **Windows:** Visual Studio Build Tools (C++ workload)
-- **macOS:** Xcode Command Line Tools (`xcode-select --install`)
-- **Linux:** `build-essential`, `python3`
 
 ### Local Development
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/db-mcp.git
-cd db-mcp
+git clone https://github.com/YOUR_USERNAME/postgres-mcp.git
+cd postgres-mcp
 
 # Install dependencies
 npm install
@@ -48,23 +43,23 @@ npm run check   # Runs ESLint + TypeScript strict-mode type checking
 ### Running the Server Locally
 
 ```bash
-# Native backend (better-sqlite3) — full 139-tool feature set
-node dist/cli.js --transport stdio --sqlite-native :memory:
+# Connect to a local PostgreSQL instance via stdio
+node dist/cli.js --transport stdio --postgres "postgresql://user:pass@localhost:5432/mydb"
 
-# WASM backend (sql.js) — 115 tools, no native dependencies
-node dist/cli.js --transport stdio --sqlite :memory:
+# HTTP transport (for testing with an MCP client)
+node dist/cli.js --transport http --port 3000 --postgres "postgresql://user:pass@localhost:5432/mydb"
 ```
 
-> **Backend choice matters for testing.** If your change touches native-only features (transactions, window functions, SpatiaLite, FTS5 advanced), test against `--sqlite-native`. If it's backend-agnostic, verify against both.
+> **Connection string required.** The server requires a valid PostgreSQL connection string. For local testing, you can use a `.env` file or pass the string directly. Never commit credentials to version control.
 
 ### Docker Development (Optional)
 
 ```bash
 # Build the Docker image locally
-docker build -f Dockerfile -t db-mcp-dev .
+docker build -f Dockerfile -t postgres-mcp-dev .
 
-# Run with a data volume
-docker run --rm -i -v ./data:/workspace db-mcp-dev --sqlite-native /workspace/database.db
+# Run with a connection string
+docker run --rm -i postgres-mcp-dev --transport stdio --postgres "postgresql://user:pass@host:5432/mydb"
 ```
 
 ## 📋 What We're Looking For
@@ -74,21 +69,21 @@ We especially welcome contributions in these areas:
 ### 🎯 High Priority
 
 - **Bug fixes** and stability improvements
-- **Performance improvements** (faster tool dispatch, reduced overhead)
-- **New tools** that extend SQLite capabilities within existing groups
+- **Performance improvements** (faster tool dispatch, reduced overhead, connection pool tuning)
+- **New tools** that extend PostgreSQL capabilities within existing groups
 - **Better error messages** with actionable remediation hints
 
 ### 🔍 Medium Priority
 
-- **Enhanced Code Mode** features and sandbox capabilities
-- **Additional vector search** models and similarity metrics
-- **Geospatial improvements** (SpatiaLite integration, new geo tools)
-- **Documentation improvements** and examples
+- **Enhanced Code Mode** worker-thread operations and sandbox capabilities
+- **Additional PostGIS / pgvector** advanced spatial/math tool coverage
+- **New PostgreSQL extensions integrations** (e.g., TimescaleDB)
+- **Documentation improvements** and Playwright end-to-end examples
 
 ### 💡 Future Features
 
-- **New tool groups** for specialized SQL workflows
-- **Additional SQLite extension** integrations
+- **New tool groups** for specialized PostgreSQL workflows
+- **Additional PostgreSQL extension** integrations
 - **Performance benchmarks** for new hot paths
 - **IDE-specific integrations** beyond MCP
 
@@ -100,14 +95,11 @@ We especially welcome contributions in these areas:
 # Run all tests
 npm test
 
-# Run tests in watch mode
-npm run test:watch
-
 # Run tests with coverage
 npm run test:coverage
 
 # Run a specific test file
-npx vitest run src/adapters/sqlite-native.test.ts
+npx vitest run src/__tests__/your-test-file.test.ts
 
 # Run benchmarks
 npm run bench
@@ -121,7 +113,6 @@ npm run check   # ESLint + TypeScript strict-mode
 
 # Or individually
 npm run lint        # ESLint only
-npm run lint:fix    # ESLint with auto-fix
 npm run typecheck   # TypeScript strict-mode type checking
 ```
 
@@ -140,14 +131,14 @@ Add your local build to `~/.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "db-mcp-dev": {
+    "postgres-mcp-dev": {
       "command": "node",
       "args": [
-        "path/to/your/db-mcp/dist/cli.js",
+        "path/to/your/postgres-mcp/dist/cli.js",
         "--transport",
         "stdio",
-        "--sqlite-native",
-        ":memory:"
+        "--postgres",
+        "postgresql://user:pass@localhost:5432/mydb"
       ]
     }
   }
@@ -158,8 +149,8 @@ Add your local build to `~/.cursor/mcp.json`:
 
 ```bash
 # Build and run locally
-docker build -f Dockerfile -t db-mcp-dev .
-docker run --rm -i -v ./data:/workspace db-mcp-dev --sqlite-native /workspace/database.db
+docker build -f Dockerfile -t postgres-mcp-dev .
+docker run --rm -i postgres-mcp-dev --transport stdio --postgres "postgresql://user:pass@host:5432/mydb"
 ```
 
 ## 📝 Coding Standards
@@ -167,7 +158,7 @@ docker run --rm -i -v ./data:/workspace db-mcp-dev --sqlite-native /workspace/da
 ### TypeScript Code Style
 
 - **Strict mode** — `tsconfig.json` enforces strict TypeScript
-- **ESLint** — Run `npm run lint` to check, `npm run lint:fix` to auto-fix
+- **ESLint** — Run `npm run lint` to check, `npm run lint:fix` to auto-fix (when available)
 - **Prettier** — Formatting is handled automatically during the release workflow
 - **Type safety** — Avoid `any`; use proper types and Zod schemas
 - **Modularity** — Keep files under ~500 lines; split into sub-modules when approaching the limit
@@ -177,7 +168,7 @@ docker run --rm -i -v ./data:/workspace db-mcp-dev --sqlite-native /workspace/da
 
 All files and directories use **kebab-case** (lowercase with dashes):
 
-- ✅ `database-adapter.ts`, `tool-filter.ts`, `json-operations/`
+- ✅ `database-adapter.ts`, `tool-filter.ts`, `pool-manager/`
 - ❌ `DatabaseAdapter.ts`, `toolFilter.ts`
 
 ### Structured Error Handling
@@ -195,12 +186,13 @@ Every tool must return structured error responses — never raw exceptions:
 }
 ```
 
-Error codes should be module-prefixed (e.g., `JSON_PARSE_FAILED`, `VECTOR_DIMENSION_MISMATCH`). Use `try/catch` at boundaries, not every statement. Always propagate stack traces — don't swallow errors.
+Error logic should leverage the `PostgresMcpError` hierarchy (e.g., `ValidationError`, `QueryError`). Our Auto-refinement system automatically maps generic codes to specific ones (e.g., `QUERY_ERROR` → `TABLE_NOT_FOUND`) and populates suggestions. Catch at the handler boundary and return `formatHandlerError(error)` to ensure a highly-compliant JSON payload. Always propagate stack traces — don't swallow errors.
 
 ### Input Validation
 
-- All parameters are validated via **Zod schemas** with coercion where appropriate (e.g., `z.coerce.number()` for numeric params that may arrive as strings)
-- Invalid inputs must return structured errors, not raw Zod validation messages
+- All parameters are validated via **Zod schemas** with explicit coercion controls (e.g., `z.preprocess(coerceNumber, z.number().optional())` instead of aggressive `z.coerce.number()`)
+- Output schemas are strictly defined to guarantee AI agents receive deterministic P154-compliant structures (using `openWorldHint: false`)
+- Invalid inputs must return structured errors, automatically handled by `formatHandlerError()` without raw Zod validation messages
 - SQL injection is prevented via **parameter binding** — never interpolate user input into SQL strings
 
 ### Logging
@@ -216,14 +208,15 @@ Use the centralized logger with structured payloads. Include: `module`, `operati
 
 ## 🔧 Adding or Modifying Tools
 
-db-mcp organizes tools into **10 groups**: `core`, `json`, `text`, `stats`, `vector`, `admin`, `geo`, `introspection`, `migration`, and `codemode`. When adding a new tool:
+postgres-mcp organizes tools into groups covering: `core`, `schema`, `introspection`, `migration`, `monitoring`, `performance`, `stats`, `text`, `jsonb`, `vector`, `admin`, `transactions`, `partitioning`, `backup`, `codemode`, and PostgreSQL extensions (`postgis`, `ltree`, `citext`, `pgcrypto`, `partman`, `cron`, `kcache`). When adding a new tool:
 
-1. **Define the tool** with its Zod input schema in the appropriate group under `src/constants/`
-2. **Implement the handler** in the corresponding adapter directory
-3. **Add structured error handling** using the pattern above
-4. **Write tests** — meaningful tests, not coverage boosters
-5. **Add the tool to the group's help resource** (the markdown file under `src/constants/`)
-6. **Update `UNRELEASED.md`** with your change (see [Changelog](#-changelog) below)
+1. **Define the tool input and output schemas** using Zod in the appropriate group under `src/adapters/postgresql/schemas/`
+2. **Implement the handler** in the corresponding adapter directory under `src/adapters/postgresql/tools/`
+3. **Add structured error handling** by letting the handler return `formatHandlerError()` when exceptions are caught
+4. **Write meaningful Vitest tests** and update E2E spec files if making systemic changes
+5. **Add the tool to the group's help resource** (the markdown file under `src/constants/server-instructions/`)
+6. **Verify OAuth Scope** — ensure the new tool aligns with its group's defined OAuth 2.1 scope (`read`, `write`, or `admin`)
+7. **Update `UNRELEASED.md`** with your change (see [Changelog](#-changelog) below)
 
 ## 🐛 Bug Reports
 
@@ -232,7 +225,7 @@ When reporting bugs, please include:
 1. **Environment details** (OS, Node.js version, npm version)
 2. **Steps to reproduce** the issue
 3. **Expected vs actual behavior**
-4. **Backend used** (`--sqlite` WASM or `--sqlite-native`)
+4. **PostgreSQL version** and relevant extensions enabled
 5. **MCP client details** (Cursor version, Claude Desktop, configuration)
 6. **Relevant logs** or error messages
 
@@ -244,7 +237,7 @@ For new features, please provide:
 
 1. **Use case description** — What problem does this solve?
 2. **Proposed solution** — How should it work?
-3. **Tool group fit** — Which of the 10 groups does this belong to?
+3. **Tool group fit** — Which group does this belong to, or does it need a new one?
 4. **Alternatives considered** — What other approaches did you think about?
 5. **Implementation notes** — Any technical considerations
 
@@ -301,7 +294,7 @@ Log all changes in **[`UNRELEASED.md`](UNRELEASED.md)** at the project root usin
 
 ### Working with MCP
 
-- **Test both backends** — WASM and Native behave differently for some features
+- **Test with a real PostgreSQL instance** — behaviour varies across versions and extension states
 - **Check tool responses** — Ensure JSON responses are well-formed
 - **Output schemas** — All tools have Zod output schemas; error responses must pass validation
 - **Dual-schema pattern** — Relaxed schemas for SDK validation, strict schemas inside handlers
@@ -310,37 +303,40 @@ Log all changes in **[`UNRELEASED.md`](UNRELEASED.md)** at the project root usin
 
 ```
 src/
-├── adapters/       # Database backend implementations (WASM + Native)
-├── auth/           # OAuth 2.1, bearer token, scope enforcement
-├── cli.ts          # CLI argument parsing and server bootstrap
-├── codemode/       # Sandboxed JavaScript execution (Code Mode)
-├── constants/      # Tool definitions, help content, prompts
-├── filtering/      # Tool filter parsing, group/shortcut resolution
+├── adapters/       # PostgreSQL queries, handlers, Zod schemas, prompts, and resources
+├── audit/          # JSONL audit trail with session token estimates, pre-mutation snapshots, interceptor
+├── auth/           # Transport-agnostic OAuth 2.1, scopes, RFC 6750 enforcement
+├── cli/            # CLI argument parsing and server bootstrap
+├── cli.ts          # Entry point
+├── codemode/       # Sandboxed JavaScript execution (Code Mode — VM & Worker Isolate)
+├── constants/      # Help content generation and dynamic server instructions
+├── filtering/      # Tool filter parsing, group resolution
+├── pool/           # Connection pool management
 ├── server/         # MCP server setup, handler registration
 ├── transports/     # HTTP/SSE/stdio transport layer
-├── types/          # Shared TypeScript type definitions
-├── utils/          # Logging, sanitization, validation helpers
-└── version.ts      # Version SSoT (synced with package.json)
+├── types/          # Core TypeScript types (errors, schema, mcp, oauth)
+├── utils/          # Logging, sanitization, validation, errors helpers
+└── index.ts        # Public API exports
 ```
 
 ### Available Scripts
 
 | Script                  | Purpose                                              |
 | ----------------------- | ---------------------------------------------------- |
-| `npm run build`         | Production build via tsup                            |
+| `npm run build`         | Production build via tsc                             |
+| `npm run dev`           | Watch mode (incremental builds)                      |
 | `npm run check`         | **Quality gate** — lint + typecheck (run before PRs) |
 | `npm run lint`          | ESLint only                                          |
-| `npm run lint:fix`      | ESLint with auto-fix                                 |
 | `npm run typecheck`     | TypeScript strict-mode type checking                 |
 | `npm test`              | Run all unit tests (Vitest)                          |
-| `npm run test:watch`    | Watch mode for iterative development                 |
+| `npm run test:coverage` | Tests with V8 coverage report                        |
 | `npm run test:e2e`      | Playwright end-to-end tests (HTTP/SSE transport)     |
 | `npm run bench`         | Performance benchmarks (tinybench via Vitest)        |
 | `npm run bench:verbose` | Benchmarks with detailed timings                     |
 
 ### Benchmarks
 
-If your change touches a hot path (tool dispatch, schema parsing, auth, Code Mode), run benchmarks to verify you haven't introduced a regression:
+If your change touches a hot path (tool dispatch, schema parsing, auth, Code Mode, connection pool), run benchmarks to verify you haven't introduced a regression:
 
 ```bash
 npm run bench
@@ -356,6 +352,7 @@ When contributing code, follow these security practices:
 - **Input validation** via Zod schemas at tool boundaries
 - **No secrets in code** — use environment variables (`.env` files are gitignored)
 - **Typed error classes** with descriptive messages — don't expose internal details to end users
+- **Transport Security** — preserve DNS rebinding protection and Slowloris DoS timeouts in HTTP layers
 
 ## 🤝 Community
 
@@ -367,7 +364,7 @@ When contributing code, follow these security practices:
 ## 📞 Getting Help
 
 - **GitHub Issues** — Bug reports and feature requests
-- **Documentation** — Check [README.md](README.md), [Wiki](https://github.com/neverinfamous/db-mcp/wiki), and Docker guides first
+- **Documentation** — Check [README.md](README.md), [Wiki](https://github.com/neverinfamous/postgres-mcp/wiki), and Docker guides first
 - **Email** — **admin@adamic.tech**
 
 ## 🏆 Recognition
@@ -378,4 +375,4 @@ Contributors are recognized in:
 - **README** — Contributor acknowledgments
 - **Git history** — Your commits are permanent record
 
-Thank you for helping make db-mcp better for the developer community! 🚀
+Thank you for helping make postgres-mcp better for the developer community! 🚀
