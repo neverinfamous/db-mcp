@@ -1,5 +1,7 @@
 # db-mcp (SQLite MCP Server)
 
+<!-- mcp-name: io.github.neverinfamous/db-mcp -->
+
 **SQLite MCP Server** with 139 specialized tools, 8 data resources + 9 help resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
