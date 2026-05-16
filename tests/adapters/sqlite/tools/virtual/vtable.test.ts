@@ -246,7 +246,7 @@ describe("createCsvTableTool", () => {
       ctx,
     )) as any;
     expect(result.success).toBe(false);
-    expect(result.wasmLimitation).toBe(true);
+    expect(result.details?.wasmLimitation).toBe(true);
   });
 
   it("should reject when csv module unavailable (native)", async () => {
@@ -265,7 +265,7 @@ describe("createCsvTableTool", () => {
     )) as any;
     expect(result.success).toBe(false);
     // Native mode explicitly sets wasmLimitation: false (not undefined)
-    expect(result.wasmLimitation).toBe(false);
+    expect(result.details?.wasmLimitation).toBe(false);
   });
 
   it("should create csv table when available", async () => {
@@ -328,7 +328,7 @@ describe("createAnalyzeCsvSchemaTool", () => {
       ctx,
     )) as any;
     expect(result.success).toBe(false);
-    expect(result.wasmLimitation).toBe(true);
+    expect(result.details?.wasmLimitation).toBe(true);
   });
 
   it("should analyze csv schema", async () => {

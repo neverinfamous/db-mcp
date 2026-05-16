@@ -50,20 +50,22 @@ export function createAnalyzeCsvSchemaTool(
         };
       }
 
-      const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
-      if (!csvAvailable) {
-        const isWasm = !(await isModuleAvailable(adapter, "rtree"));
-        throw new ExtensionNotAvailableError("csv", {
-          suggestion: isWasm
-            ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
-            : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
-          details: { wasmLimitation: isWasm },
-        });
-      }
+
 
       const tempName = `_csv_analyze_${Date.now()}`;
 
       try {
+        const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
+        if (!csvAvailable) {
+          const isWasm = !(await isModuleAvailable(adapter, "rtree"));
+          throw new ExtensionNotAvailableError("csv", {
+            suggestion: isWasm
+              ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
+              : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
+            details: { wasmLimitation: isWasm },
+          });
+        }
+
         const options = [`filename='${input.filePath.replace(/'/g, "''")}'`];
         if (input.delimiter !== ",") {
           options.push(`delimiter='${input.delimiter}'`);
@@ -140,11 +142,11 @@ export function createAnalyzeCsvSchemaTool(
           columns: [],
         };
       } finally {
-        await adapter
-          .executeWriteQuery(`DROP TABLE IF EXISTS "${tempName}"`)
-          .catch(() => {
-            /* ignore */
-          });
+        try {
+          await adapter.executeWriteQuery(`DROP TABLE IF EXISTS "${tempName}"`);
+        } catch {
+          /* ignore */
+        }
       }
     },
   };

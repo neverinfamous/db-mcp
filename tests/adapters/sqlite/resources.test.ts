@@ -29,7 +29,7 @@ describe("SQLite Resources", () => {
     ctx = createMockContext();
     await adapter.connect({
       type: "sqlite",
-      database: ":memory:",
+      connectionString: ":memory:",
     });
 
     // Create test data
@@ -60,9 +60,9 @@ describe("SQLite Resources", () => {
   });
 
   describe("getResourceDefinitions", () => {
-    it("should return 8 resource definitions", () => {
+    it("should return 10 resource definitions", () => {
       const resources = adapter.getResourceDefinitions();
-      expect(resources.length).toBe(8);
+      expect(resources.length).toBe(10);
     });
 
     it("should include all expected resources", () => {

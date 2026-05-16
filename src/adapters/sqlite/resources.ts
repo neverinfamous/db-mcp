@@ -11,6 +11,7 @@ import {
   HIGH_PRIORITY,
   MEDIUM_PRIORITY,
   LOW_PRIORITY,
+  ASSISTANT_FOCUSED,
 } from "../../utils/resource-annotations.js";
 import { insightsManager } from "../../utils/insights-manager.js";
 import { DbMcpError, ErrorCategory } from "../../utils/errors/index.js";
@@ -29,6 +30,8 @@ export function getResourceDefinitions(
     createViewsResource(adapter),
     createHealthResource(adapter),
     createMetaResource(adapter),
+    createCompileOptionsResource(adapter),
+    createPragmaResource(adapter),
     createInsightsResource(),
   ];
 }
@@ -276,6 +279,140 @@ function createInsightsResource(): ResourceDefinition {
           },
         ],
       });
+    },
+  };
+}
+
+/**
+ * SQLite compile-time options
+ */
+function createCompileOptionsResource(
+  adapter: SqliteAdapter,
+): ResourceDefinition {
+  return {
+    name: "sqlite_compile_options",
+    uri: "sqlite://compile_options",
+    description: "SQLite compile-time build options",
+    mimeType: "application/json",
+    annotations: ASSISTANT_FOCUSED,
+    handler: async () => {
+      const result = await adapter.executeReadQuery(
+        "PRAGMA compile_options",
+      );
+
+      const options = (result.rows ?? []).map((r) => String(r["compile_options"]));
+      
+      // Extract notable features to highlight
+      const highlights = [];
+      const notablePatterns = [
+        "FTS5", "JSON1", "RTREE", "MATH_FUNCTIONS", 
+        "ENABLE_GEOPOLY", "ENABLE_STAT4", "THREADSAFE"
+      ];
+      
+      for (const opt of options) {
+        for (const pattern of notablePatterns) {
+          if (opt.includes(pattern)) {
+            highlights.push(opt);
+          }
+        }
+      }
+
+      return {
+        contents: [
+          {
+            uri: "sqlite://compile_options",
+            mimeType: "application/json",
+            text: JSON.stringify(
+              {
+                options,
+                count: options.length,
+                highlights,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      };
+    },
+  };
+}
+
+/**
+ * Curated PRAGMA configuration snapshot
+ */
+function createPragmaResource(adapter: SqliteAdapter): ResourceDefinition {
+  return {
+    name: "sqlite_pragma",
+    uri: "sqlite://pragma",
+    description: "Runtime PRAGMA configuration snapshot",
+    mimeType: "application/json",
+    annotations: ASSISTANT_FOCUSED,
+    handler: async () => {
+      // Group PRAGMAs by category
+      const pragmaGroups = {
+        storage: ["page_size", "page_count", "max_page_count", "auto_vacuum"],
+        performance: ["cache_size", "mmap_size", "temp_store", "journal_mode", "synchronous"],
+        safety: ["foreign_keys", "secure_delete", "locking_mode"],
+        behavior: ["wal_autocheckpoint", "busy_timeout", "encoding"],
+      };
+
+      const settings: Record<string, { value: unknown; category: string; description: string }> = {};
+      const descriptions: Record<string, string> = {
+        page_size: "Database page size in bytes",
+        page_count: "Current number of pages",
+        max_page_count: "Maximum allowed number of pages",
+        auto_vacuum: "Auto-vacuum mode (0=none, 1=full, 2=incremental)",
+        cache_size: "Suggested max number of database disk pages in memory",
+        mmap_size: "Max bytes that can be memory-mapped",
+        temp_store: "Where to store temporary tables (0=default, 1=file, 2=memory)",
+        journal_mode: "Transaction journal mode (e.g., DELETE, TRUNCATE, PERSIST, MEMORY, WAL)",
+        synchronous: "Sync disk writes (0=OFF, 1=NORMAL, 2=FULL, 3=EXTRA)",
+        foreign_keys: "Foreign key constraint enforcement",
+        secure_delete: "Overwrite deleted content with zeros",
+        locking_mode: "Connection locking mode (NORMAL or EXCLUSIVE)",
+        wal_autocheckpoint: "WAL auto-checkpoint size in pages",
+        busy_timeout: "Milliseconds to wait for a lock",
+        encoding: "Text encoding used by the database",
+      };
+
+      for (const [category, pragmas] of Object.entries(pragmaGroups)) {
+        for (const pragma of pragmas) {
+          try {
+            const result = await adapter.executeReadQuery(
+              `PRAGMA ${pragma}`,
+            );
+            settings[pragma] = {
+              value: result.rows?.[0]?.[pragma] ?? null,
+              category,
+              description: descriptions[pragma] ?? "",
+            };
+          } catch {
+            settings[pragma] = {
+              value: null,
+              category,
+              description: descriptions[pragma] ?? "",
+            };
+          }
+        }
+      }
+
+      return {
+        contents: [
+          {
+            uri: "sqlite://pragma",
+            mimeType: "application/json",
+            text: JSON.stringify(
+              {
+                settings,
+                settingsCount: Object.keys(settings).length,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      };
     },
   };
 }

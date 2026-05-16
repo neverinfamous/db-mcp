@@ -13,6 +13,12 @@
 - **Text Sentiment**: New `sqlite_text_sentiment` tool for cross-server parity with `pg_text_sentiment`. Basic keyword-based sentiment analysis on raw text input. Returns sentiment classification (very_positive/positive/neutral/negative/very_negative), score, confidence, and optionally matched words. Pure JS implementation — available in both WASM and Native backends.
 - **FTS5 Headline**: New `sqlite_fts_headline` tool for cross-server parity with `pg_text_headline`. Generates highlighted snippets from FTS5 search results using SQLite's native `highlight()` and `snippet()` functions. Supports custom highlight markers and context window size. Native backend only.
 - **`ExtensionNotAvailableError`**: New typed error class for extension unavailability (SpatiaLite, CSV, R-Tree). Code: `EXTENSION_MISSING`, category: `config`. Replaces ad-hoc inline error returns with a structured, `instanceof`-testable error. Ported from postgres-mcp for cross-server parity.
+- **Introspection Resources**: Added `sqlite://compile_options` (compile-time build features) and `sqlite://pragma` (runtime configuration snapshot) resources to achieve resource count parity with `postgres-mcp`. Both are read-only and available unconditionally via the `read_resource` MCP tool.
+
+### Documentation
+
+- **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
+
 
 ### Security
 

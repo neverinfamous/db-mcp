@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.neverinfamous/db-mcp -->
 
-**SQLite MCP Server** with 151 specialized tools, 9 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 151 specialized tools, 11 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -27,7 +27,7 @@
 | Feature                          | Description                                                                                                                                                                                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **151 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
-| **17 Resources**                 | 9 data resources (schema, tables, indexes, views, health, metadata, insights, audit) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
+| **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 151 capabilities locally, reducing token overhead by up to 90% and supercharging AI agent reasoning              |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access. Large datasets include metadata so agents always know the full picture  |
@@ -328,7 +328,7 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 ## 📁 Resources
 
-### Data Resources (9)
+### Data Resources (11)
 
 MCP resources provide read-only access to database metadata:
 
@@ -341,6 +341,8 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_views`        | `sqlite://views`                    | All views in the database         | `core,admin`  |
 | `sqlite_health`       | `sqlite://health`                   | Database health and status        | _(read-only)_ |
 | `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
+| `sqlite_compile_options`| `sqlite://compile_options`          | SQLite compile-time build options | _(read-only)_ |
+| `sqlite_pragma`       | `sqlite://pragma`                   | Runtime PRAGMA config snapshot    | _(read-only)_ |
 | `sqlite_insights`     | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
 | `sqlite_audit`        | `sqlite://audit`                    | Recent audit log + backup stats   | `--audit-log` |
 

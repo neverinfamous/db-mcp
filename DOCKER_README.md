@@ -25,7 +25,7 @@ Production-ready SQLite MCP server with 151 tools, audit logging, OAuth 2.1, and
 | Feature                          | Description                                                                                                                                                                                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **151 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
-| **17 Resources**                 | 9 data resources (schema, tables, indexes, views, health, metadata, insights, audit) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
+| **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 151 capabilities locally, reducing token overhead by up to 90% and supercharging AI agent reasoning              |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access                                                                                                     |
@@ -215,7 +215,7 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Code Mode            | 1       | Sandboxed JavaScript execution  |
 | **Total**            | **151** |                                 |
 
-### 📁 Resources (9 Data + 9 Help)
+### 📁 Resources (11 Data + 9 Help)
 
 Data resources provide read-only access to database metadata. Help resources (`sqlite://help/*`) provide on-demand per-group tool reference, filtered by `--tool-filter`.
 
@@ -228,6 +228,8 @@ Data resources provide read-only access to database metadata. Help resources (`s
 | `sqlite_views`        | `sqlite://views`                    | All views in the database    |
 | `sqlite_health`       | `sqlite://health`                   | Database health and status   |
 | `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs|
+| `sqlite_compile_options`| `sqlite://compile_options`          | Compile-time build options   |
+| `sqlite_pragma`       | `sqlite://pragma`                   | Runtime PRAGMA snapshot      |
 | `sqlite_insights`     | `memo://insights`                   | Business insights memo       |
 | `sqlite_audit`        | `sqlite://audit`                    | Recent audit log + backup stats |
 | `sqlite_help`         | `sqlite://help`                     | Main help + per-group refs   |

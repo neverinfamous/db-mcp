@@ -121,7 +121,7 @@ src/
 │   │   ├── schema-manager.ts       # Schema cache + metadata (TTL-based)
 │   │   ├── json-utils.ts           # JSON column detection and normalization
 │   │   ├── types.ts                # WASM-specific Zod schemas + TS types
-│   │   ├── resources.ts            # 8 data MCP resources (schema, tables, indexes, etc.)
+│   │   ├── resources.ts            # 10 data MCP resources (schema, tables, indexes, compile_options, etc.)
 │   │   ├── index.ts                # Barrel
 │   │   ├── output-schemas/         # Zod outputSchema definitions per group (see § below)
 │   │   ├── prompts/                # 10 MCP prompts (see § below)
