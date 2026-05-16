@@ -9,7 +9,8 @@
  *   text: 14 WASM / 19 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
  *   stats: 16 WASM / 22 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
- *   admin: 26 WASM / 34 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts, native: transactions.ts)
+ *   admin: 26 WASM / 26 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts)
+ *   transactions: 8 Native (native: transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
  *   introspection: 9 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
@@ -32,6 +33,7 @@ export const ALL_TOOL_GROUPS: ToolGroup[] = [
   "stats",
   "vector",
   "admin",
+  "transactions",
   "geo",
   "introspection",
   "migration",
@@ -181,6 +183,8 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "analyze_csv_schema",
     "create_rtree_table",
     "create_series_table",
+  ],
+  transactions: [
     // Transaction Tools (8 Native-only)
     "transaction_begin",
     "transaction_status",
@@ -261,6 +265,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
     "stats",
     "vector",
     "admin",
+    "transactions",
     "geo",
     "introspection",
     "migration",

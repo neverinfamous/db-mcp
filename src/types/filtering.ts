@@ -12,14 +12,15 @@
  * Tool group identifiers
  */
 export type ToolGroup =
-  | "core" // Basic CRUD, schema operations (8 tools)
-  | "json" // JSON/JSONB operations (23 tools)
-  | "text" // Text processing + FTS5 (16 tools)
-  | "stats" // Statistical analysis (13 WASM / 19 Native)
+  | "core" // Basic CRUD, schema operations (14 tools)
+  | "json" // JSON/JSONB operations (24 tools)
+  | "text" // Text processing + FTS5 (14 WASM / 19 Native)
+  | "stats" // Statistical analysis (16 WASM / 22 Native)
   | "vector" // Vector/semantic search (11 tools)
-  | "admin" // Administration (25 WASM / 32 Native)
+  | "admin" // Administration (26 WASM / 26 Native)
+  | "transactions" // Transaction control (8 tools, Native only)
   | "geo" // Geospatial (4 WASM / 11 Native)
-  | "introspection" // Schema analysis, dependency graphs (6 tools)
+  | "introspection" // Schema analysis, dependency graphs (9 tools)
   | "migration" // Migration tracking (6 tools, opt-in)
   | "codemode"; // Sandboxed code execution (1 tool)
 

@@ -27,6 +27,7 @@
 
 - **Dependency Updates**: Updated `typescript` to `^6.0.3` and bumped various packages including `@playwright/test`, `@types/node`, `@modelcontextprotocol/sdk`, `eslint`, `vitest`, `tsx`, and `better-sqlite3`. Updated GitHub Actions to their latest SHA-pinned versions (`docker/build-push-action`, `actions/upload-artifact`, `docker/login-action`, `github/codeql-action`, `actions/cache`).
 - **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, `test-server/tool-reference.md`, and `test-server/code-map.md` to reflect the expanded inventory (151 Native / 125 WASM tools), including the 5 new core convenience tools, JSON security scan, text sentiment, and FTS5 headline.
+- **Transaction Group Split**: Moved 8 transaction tools (`sqlite_transaction_begin`, `sqlite_transaction_status`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute`) from `admin` group into a dedicated `transactions` group for improved discoverability. OAuth scope for transactions changed from `admin` to `write` (matching mysql-mcp and postgres-mcp). Code Mode exposes transactions via `sqlite.transactions.*` namespace.
 
 ### Fixed
 

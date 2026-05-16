@@ -31,7 +31,7 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 ## Help Resources
 
 Read \`sqlite://help\` for gotchas and critical usage patterns.
-Read \`sqlite://help/{group}\` for group-specific tool reference (json, text, stats, vector, geo, admin, introspection, migration).
+Read \`sqlite://help/{group}\` for group-specific tool reference (json, text, stats, vector, geo, admin, transactions, introspection, migration).
 Only help resources for your enabled tool groups are registered.`;
 
 /**
@@ -40,27 +40,7 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (34 Native / 26 WASM)
-
-## Transactions (8 tools, Native only)
-
-\`\`\`javascript
-// Atomic multi-statement execution (preferred for simple cases)
-sqlite_transaction_execute({
-  statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"],
-});
-
-// Manual transaction control
-sqlite_transaction_begin({ mode: "immediate" }); // or "deferred", "exclusive"
-sqlite_transaction_savepoint({ name: "checkpoint" });
-sqlite_transaction_rollback_to({ name: "checkpoint" });
-sqlite_transaction_release({ name: "checkpoint" });
-sqlite_transaction_commit();
-sqlite_transaction_rollback();
-
-// Check transaction state (read-only)
-sqlite_transaction_status(); // → { status: "active" | "none", active: true/false }
-\`\`\`
+  ["admin", `# db-mcp Help — Database Administration (26 Native / 26 WASM)
 
 ## Maintenance
 
@@ -325,7 +305,7 @@ sqlite_spatialite_index({
 
 **Usage**: \`sqlite_execute_code({ code: "const tables = await sqlite.core.listTables(); return tables;" })\`
 **Discover**: \`sqlite.help()\` for all groups, \`sqlite.<group>.help()\` for methods.
-**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
+**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.transactions\`, \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
 
 ## Code Mode API Mapping
 
@@ -760,6 +740,38 @@ sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });
 sqlite_text_sentiment({ text: "Great service but slow delivery", returnWords: true });
 // → { sentiment: "neutral", score: 0, matchedPositive: ["great"], matchedNegative: ["slow"] }
 \`\`\``],
+  ["transactions", `# db-mcp Help — Transactions (8 tools, Native only)
+
+## Atomic Execution (preferred for simple cases)
+
+\`\`\`javascript
+sqlite_transaction_execute({
+  statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"],
+});
+\`\`\`
+
+## Manual Transaction Control
+
+\`\`\`javascript
+sqlite_transaction_begin({ mode: "immediate" }); // or "deferred", "exclusive"
+sqlite_transaction_savepoint({ name: "checkpoint" });
+sqlite_transaction_rollback_to({ name: "checkpoint" });
+sqlite_transaction_release({ name: "checkpoint" });
+sqlite_transaction_commit();
+sqlite_transaction_rollback();
+\`\`\`
+
+## Transaction State (read-only)
+
+\`\`\`javascript
+sqlite_transaction_status(); // → { status: "active" | "none", active: true/false }
+\`\`\`
+
+## ⚠️ Gotchas
+
+- Transaction tools are **Native only** — WASM adapter does not support transactions
+- Use \`sqlite_transaction_execute\` for simple multi-statement operations; manual \`begin\`/\`commit\` for complex flows with savepoints
+- \`sqlite_transaction_status\` is read-only and requires only \`read\` scope; all other transaction tools require \`write\` scope`],
   ["vector", `# db-mcp Help — Vector/Semantic Search (11 tools)
 
 \`\`\`javascript

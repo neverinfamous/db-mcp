@@ -146,6 +146,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
       "stats",
       "vector",
       "admin",
+      "transactions",
       "geo",
       "introspection",
       "migration",

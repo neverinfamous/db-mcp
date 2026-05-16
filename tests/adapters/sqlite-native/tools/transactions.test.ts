@@ -59,9 +59,9 @@ describe("Transaction Tools", () => {
       expect(names).toContain("sqlite_transaction_execute");
     });
 
-    it("should assign all tools to admin group", () => {
+    it("should assign all tools to transactions group", () => {
       for (const tool of tools) {
-        expect(tool.group).toBe("admin");
+        expect(tool.group).toBe("transactions");
       }
     });
 

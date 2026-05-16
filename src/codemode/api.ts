@@ -32,6 +32,7 @@ import {
  *   sqlite_geo_distance (geo) → distance
  *   sqlite_backup (admin) → backup
  *   sqlite_transaction_begin (admin) → transactionBegin
+ *   sqlite_transaction_begin (transactions) → begin
  */
 export function toolNameToMethodName(
   toolName: string,
@@ -215,6 +216,7 @@ export class SqliteApi {
   readonly stats: GroupApiRecord;
   readonly vector: GroupApiRecord;
   readonly admin: GroupApiRecord;
+  readonly transactions: GroupApiRecord;
   readonly geo: GroupApiRecord;
   readonly introspection: GroupApiRecord;
   readonly migration: GroupApiRecord;
@@ -243,6 +245,10 @@ export class SqliteApi {
       this.toolsByGroup.get("vector") ?? [],
     );
     this.admin = createGroupApi("admin", this.toolsByGroup.get("admin") ?? []);
+    this.transactions = createGroupApi(
+      "transactions",
+      this.toolsByGroup.get("transactions") ?? [],
+    );
     this.geo = createGroupApi("geo", this.toolsByGroup.get("geo") ?? []);
     this.introspection = createGroupApi(
       "introspection",
@@ -288,6 +294,7 @@ export class SqliteApi {
       stats: this.stats,
       vector: this.vector,
       admin: this.admin,
+      transactions: this.transactions,
       geo: this.geo,
       introspection: this.introspection,
       migration: this.migration,

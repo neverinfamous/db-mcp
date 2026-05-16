@@ -90,7 +90,7 @@ function createBeginTransactionTool(
     name: "sqlite_transaction_begin",
     description:
       "Begin a new transaction. Use immediate or exclusive mode for write-heavy operations.",
-    group: "admin",
+    group: "transactions",
     inputSchema: BeginTransactionSchema,
     outputSchema: TransactionBeginOutputSchema,
     annotations: write("Begin Transaction"),
@@ -125,7 +125,7 @@ function createTransactionStatusTool(
     description:
       "Check whether a transaction is currently active. " +
       "Returns status and a boolean flag. Read-only — does not alter transaction state.",
-    group: "admin",
+    group: "transactions",
     inputSchema: z.object({}),
     outputSchema: TransactionStatusOutputSchema,
     annotations: readOnly("Transaction Status"),
@@ -160,7 +160,7 @@ function createCommitTransactionTool(
     name: "sqlite_transaction_commit",
     description:
       "Commit the current transaction, making all changes permanent.",
-    group: "admin",
+    group: "transactions",
     inputSchema: z.object({}),
     outputSchema: TransactionCommitOutputSchema,
     annotations: write("Commit Transaction"),
@@ -189,7 +189,7 @@ function createRollbackTransactionTool(
   return {
     name: "sqlite_transaction_rollback",
     description: "Rollback the current transaction, discarding all changes.",
-    group: "admin",
+    group: "transactions",
     outputSchema: TransactionRollbackOutputSchema,
     inputSchema: z.object({}),
     annotations: write("Rollback Transaction"),
@@ -217,7 +217,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     name: "sqlite_transaction_savepoint",
     description:
       "Create a savepoint within the current transaction for partial rollback.",
-    group: "admin",
+    group: "transactions",
     outputSchema: TransactionSavepointOutputSchema,
     inputSchema: SavepointSchema,
     annotations: write("Create Savepoint"),
@@ -260,7 +260,7 @@ function createReleaseSavepointTool(
     name: "sqlite_transaction_release",
     description:
       "Release a savepoint, keeping the changes made since it was created.",
-    group: "admin",
+    group: "transactions",
     inputSchema: SavepointSchema,
     outputSchema: TransactionReleaseOutputSchema,
     annotations: write("Release Savepoint"),
@@ -303,7 +303,7 @@ function createRollbackToSavepointTool(
     name: "sqlite_transaction_rollback_to",
     description:
       "Rollback to a savepoint, discarding changes made after it was created.",
-    group: "admin",
+    group: "transactions",
     inputSchema: SavepointSchema,
     outputSchema: TransactionRollbackToOutputSchema,
     annotations: write("Rollback to Savepoint"),
@@ -346,7 +346,7 @@ function createExecuteInTransactionTool(
     name: "sqlite_transaction_execute",
     description:
       "Execute multiple SQL statements in a single transaction. Automatically commits on success or rolls back on error.",
-    group: "admin",
+    group: "transactions",
     outputSchema: TransactionExecuteOutputSchema,
     inputSchema: ExecuteInTransactionSchema,
     annotations: write("Execute in Transaction"),

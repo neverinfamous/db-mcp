@@ -1,24 +1,4 @@
-# db-mcp Help — Database Administration (34 Native / 26 WASM)
-
-## Transactions (8 tools, Native only)
-
-```javascript
-// Atomic multi-statement execution (preferred for simple cases)
-sqlite_transaction_execute({
-  statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"],
-});
-
-// Manual transaction control
-sqlite_transaction_begin({ mode: "immediate" }); // or "deferred", "exclusive"
-sqlite_transaction_savepoint({ name: "checkpoint" });
-sqlite_transaction_rollback_to({ name: "checkpoint" });
-sqlite_transaction_release({ name: "checkpoint" });
-sqlite_transaction_commit();
-sqlite_transaction_rollback();
-
-// Check transaction state (read-only)
-sqlite_transaction_status(); // → { status: "active" | "none", active: true/false }
-```
+# db-mcp Help — Database Administration (26 Native / 26 WASM)
 
 ## Maintenance
 

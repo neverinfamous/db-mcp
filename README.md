@@ -34,7 +34,7 @@
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                   |
 | **Performance**                  | **⚠️ WASM Caution:** Synchronous execution blocks Node Event Loop on heavy workloads. **🚀 Native:** High-performance concurrent execution.                                                                                                                                                                              |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                       |
-| **Smart Tool Filtering**         | 9 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                          |
+| **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                         |
 | **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) for modern clients + legacy SSE (`/sse`) for backward compatibility — both protocols supported simultaneously with security headers, rate limiting, health check, and stateless mode for serverless                                                                                             |
 | **Production-Ready Security**    | SQL injection protection, parameterized queries, input validation, sandboxed code execution, HTTP body size enforcement, 7 security headers, server timeouts (slowloris protection), Retry-After rate limiting, `trustProxy` for reverse proxy deployments, opt-in HSTS, non-root Docker execution, and build provenance |
 | **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types, 1911 unit tests + 1136 E2E tests and 90% coverage                                                                                                                                                                                                              |
@@ -203,7 +203,8 @@ Specify exactly the groups you need:
 | `text`          | 14   | 19     | +3         | Text processing + FTS5 + advanced search     |
 | `stats`         | 16   | 22     | +3         | Statistical analysis (+ window funcs)        |
 | `vector`        | 11   | 11     | +3         | Embeddings, similarity search                |
-| `admin`         | 26   | 34     | +3         | Backup, restore, virtual tables, transactions |
+| `admin`         | 26   | 26     | +3         | Backup, restore, virtual tables, pragma      |
+| `transactions`  | 0    | 8      | +3         | Transaction control and atomic execution     |
 | `geo`           | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)        |
 | `introspection` | 9    | 9      | +3         | FK graph, cascade sim, storage/index audit   |
 | `migration`     | 6    | 6      | +3         | Migration tracking, apply, rollback (opt-in) |
@@ -355,7 +356,8 @@ On-demand tool reference documentation, filtered by `--tool-filter`:
 | `sqlite_help_stats`         | `sqlite://help/stats`         | Statistical analysis + window functions reference     | When stats group on         |
 | `sqlite_help_vector`        | `sqlite://help/vector`        | Vector/semantic search reference                      | When vector group on        |
 | `sqlite_help_geo`           | `sqlite://help/geo`           | Geospatial + SpatiaLite reference                     | When geo group on           |
-| `sqlite_help_admin`         | `sqlite://help/admin`         | Admin, transactions, backup, virtual tables reference | When admin group on         |
+| `sqlite_help_admin`         | `sqlite://help/admin`         | Admin, backup, virtual tables reference               | When admin group on         |
+| `sqlite_help_transactions`  | `sqlite://help/transactions`  | Transaction control reference                         | When transactions group on  |
 | `sqlite_help_introspection` | `sqlite://help/introspection` | Schema introspection, FK graph, diagnostics reference | When introspection group on |
 | `sqlite_help_migration`     | `sqlite://help/migration`     | Migration tracking, apply, rollback reference         | When migration group on     |
 

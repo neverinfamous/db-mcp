@@ -58,6 +58,11 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
     tables: "listVirtualTables",
     pragma: "pragmaSettings",
   },
+  transactions: {
+    start: "begin",
+    save: "savepoint",
+    exec: "execute",
+  },
   geo: {
     near: "nearby",
     bbox: "boundingBox",
@@ -118,6 +123,12 @@ export const GROUP_EXAMPLES: Record<string, string[]> = {
     "sqlite.admin.integrityCheck({ maxErrors: 10 })",
     'sqlite.admin.analyze({ table: "orders" })',
     'sqlite.admin.backup({ targetPath: "/path/to/backup.db" })',
+  ],
+  transactions: [
+    'sqlite.transactions.begin({ mode: "immediate" })',
+    'sqlite.transactions.execute({ statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"] })',
+    "sqlite.transactions.status()",
+    "sqlite.transactions.commit()",
   ],
   geo: [
     "sqlite.geo.distance({ lat1: 40.7128, lon1: -74.006, lat2: 34.0522, lon2: -118.2437 })",
@@ -254,6 +265,13 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   createCsvTable: ["tableName", "filePath"],
   analyzeCsvSchema: "filePath",
 
+  // Transactions
+  begin: "mode",
+  savepoint: "name",
+  release: "name",
+  rollbackTo: "name",
+  execute: "statements",
+
   // Introspection
   cascadeSimulator: "table",
   constraintAnalysis: "table",
@@ -279,6 +297,7 @@ export const GROUP_PREFIX_MAP: Record<string, string> = {
   vector: "vector_",
   geo: "geo_",
   admin: "", // Admin tools have varied prefixes — handled case-by-case
+  transactions: "transaction_", // sqlite_transaction_* → begin, commit, etc.
   introspection: "", // Introspection tools have varied prefixes
   migration: "migration_", // sqlite_migration_* → migration*
   codemode: "execute_",

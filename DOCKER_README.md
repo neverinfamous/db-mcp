@@ -31,7 +31,7 @@ Production-ready SQLite MCP server with 151 tools, audit logging, OAuth 2.1, and
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access                                                                                                     |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                   |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                       |
-| **Smart Tool Filtering**         | 9 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                          |
+| **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                         |
 | **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) + legacy SSE (`/sse`) with security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                     |
 | **Production-Ready Security**    | SQL injection protection, parameterized queries, input validation, sandboxed code execution, HTTP body size enforcement, 7 security headers, server timeouts, rate limiting, `trustProxy`, opt-in HSTS, non-root Docker execution, and build provenance                                                                  |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                   |
@@ -147,7 +147,8 @@ Specify exactly the groups you need:
 | `text`          | 14   | 19     | Text processing + FTS5 + advanced search     |
 | `stats`         | 16   | 22     | Statistical analysis (+ window funcs)        |
 | `vector`        | 11   | 11     | Embeddings, similarity search                |
-| `admin`         | 26   | 34     | Backup, restore, virtual tables, pragma      |
+| `admin`         | 26   | 26     | Backup, restore, virtual tables, pragma      |
+| `transactions`  | 0    | 8      | Transaction control and atomic execution     |
 | `geo`           | 4    | 11     | Geospatial + SpatiaLite (Native only)        |
 | `introspection` | 9    | 9      | FK graph, cascade sim, storage/index audit   |
 | `migration`     | 6    | 6      | Migration tracking, apply, rollback (opt-in) |
@@ -207,7 +208,8 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Statistical Analysis | 22      | Stats, outliers, window funcs   |
 | Vector/Semantic      | 11      | Embeddings, similarity search   |
 | Geospatial           | 11      | Distance, SpatiaLite GIS        |
-| Admin/Backup         | 34      | Backup, restore, virtual tables, transactions |
+| Admin/Backup         | 26      | Backup, restore, virtual tables, pragma       |
+| Transactions         | 8       | Transaction control and atomic execution      |
 | Introspection        | 9       | FK graph, cascade sim, audit    |
 | Migration            | 6       | Tracking, apply, rollback       |
 | Code Mode            | 1       | Sandboxed JavaScript execution  |
