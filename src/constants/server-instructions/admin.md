@@ -1,6 +1,6 @@
-# db-mcp Help — Database Administration (33 Native / 26 WASM)
+# db-mcp Help — Database Administration (34 Native / 26 WASM)
 
-## Transactions (7 tools, Native only)
+## Transactions (8 tools, Native only)
 
 ```javascript
 // Atomic multi-statement execution (preferred for simple cases)
@@ -15,6 +15,9 @@ sqlite_transaction_rollback_to({ name: "checkpoint" });
 sqlite_transaction_release({ name: "checkpoint" });
 sqlite_transaction_commit();
 sqlite_transaction_rollback();
+
+// Check transaction state (read-only)
+sqlite_transaction_status(); // → { status: "active" | "none", active: true/false }
 ```
 
 ## Maintenance

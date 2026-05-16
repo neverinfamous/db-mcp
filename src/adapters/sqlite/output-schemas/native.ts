@@ -88,6 +88,26 @@ export const TransactionExecuteOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
+/**
+ * sqlite_transaction_status output
+ */
+export const TransactionStatusOutputSchema = z
+  .object({
+    success: z.boolean(),
+    status: z
+      .enum(["active", "none"])
+      .optional()
+      .describe(
+        'Transaction state: "active" (transaction in progress) or "none" (no active transaction)',
+      ),
+    active: z
+      .boolean()
+      .optional()
+      .describe("Whether a transaction is currently in progress"),
+    message: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
 // =============================================================================
 // Window Function Tool Output Schemas (6 tools - Native only)
 // =============================================================================

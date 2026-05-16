@@ -11,7 +11,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../utils/errors/index.js";
-import { write } from "../../../utils/annotations.js";
+import { readOnly, write } from "../../../utils/annotations.js";
 import {
   TransactionBeginOutputSchema,
   TransactionCommitOutputSchema,
@@ -20,6 +20,7 @@ import {
   TransactionReleaseOutputSchema,
   TransactionRollbackToOutputSchema,
   TransactionExecuteOutputSchema,
+  TransactionStatusOutputSchema,
 } from "../../sqlite/output-schemas/index.js";
 
 // Valid enum values for transaction mode
@@ -69,6 +70,7 @@ export function getTransactionTools(
 ): ToolDefinition[] {
   return [
     createBeginTransactionTool(adapter),
+    createTransactionStatusTool(adapter),
     createCommitTransactionTool(adapter),
     createRollbackTransactionTool(adapter),
     createSavepointTool(adapter),
@@ -107,6 +109,42 @@ function createBeginTransactionTool(
         };
       } catch (error) {
         return formatHandlerError(error);
+      }
+    },
+  };
+}
+
+/**
+ * Transaction status — read-only check
+ */
+function createTransactionStatusTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
+  return {
+    name: "sqlite_transaction_status",
+    description:
+      "Check whether a transaction is currently active. " +
+      "Returns status and a boolean flag. Read-only — does not alter transaction state.",
+    group: "admin",
+    inputSchema: z.object({}),
+    outputSchema: TransactionStatusOutputSchema,
+    annotations: readOnly("Transaction Status"),
+    requiredScopes: ["read"],
+    handler: (_params: unknown, _context: RequestContext) => {
+      try {
+        const db = adapter.getDatabase();
+        const active = db.inTransaction;
+
+        return Promise.resolve({
+          success: true,
+          status: active ? "active" : "none",
+          active,
+          message: active
+            ? "A transaction is currently active."
+            : "No transaction is active.",
+        });
+      } catch (error) {
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };

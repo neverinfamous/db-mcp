@@ -1,8 +1,8 @@
 /**
  * Payload Contract Tests: Transaction Tools
  *
- * Validates response shapes for all 7 transaction tools:
- * transaction_begin, transaction_commit, transaction_rollback,
+ * Validates response shapes for all 8 transaction tools:
+ * transaction_begin, transaction_status, transaction_commit, transaction_rollback,
  * transaction_savepoint, transaction_release, transaction_rollback_to,
  * transaction_execute.
  *
@@ -79,6 +79,49 @@ test.describe("Payload Contracts: Transactions", () => {
       expectSuccess(payload);
       expect(typeof payload.message).toBe("string");
     } finally {
+      await client.close();
+    }
+  });
+
+  // =========================================================================
+  // Transaction status: read-only state check
+  // =========================================================================
+
+  test('sqlite_transaction_status returns { status: "none" } when no transaction', async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_status",
+        {},
+      );
+
+      expectSuccess(payload);
+      expect(payload.status).toBe("none");
+      expect(payload.active).toBe(false);
+      expect(typeof payload.message).toBe("string");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test('sqlite_transaction_status returns { status: "active" } inside a transaction', async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      await callToolAndParse(client, "sqlite_transaction_begin", {});
+
+      const payload = await callToolAndParse(
+        client,
+        "sqlite_transaction_status",
+        {},
+      );
+
+      expectSuccess(payload);
+      expect(payload.status).toBe("active");
+      expect(payload.active).toBe(true);
+      expect(typeof payload.message).toBe("string");
+    } finally {
+      await callToolAndParse(client, "sqlite_transaction_rollback", {});
       await client.close();
     }
   });

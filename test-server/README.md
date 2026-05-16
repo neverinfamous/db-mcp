@@ -12,10 +12,9 @@
 | `test-tools-advanced-2.md`   | ~32KB | **Second-pass stress tests (Part 2)** — cross-group integration. Self-contained.                                                                                    | After basic checklist passes                                               |
 | `test-resources.md`          | ~6KB  | Resource testing plan (8 data + 7 help resources via `read_resource`)                                                                                               | When testing resources                                                     |
 | `test-preflight.md`          | ~2KB  | **Pre-flight check** — validates slim instructions, help resources, data resources, and tool-filter alignment in 5 steps                                            | Before any test pass                                                       |
-| `test-agent-experience.md`   | ~9KB  | **Agent experience test** — 29 open-ended scenarios across 7 passes validating help resource sufficiency                                                            | After help resource changes                                                |
 | `test-prompts.md`            | ~10KB | Prompt testing plan (10 prompts, tested manually since agents typically don't invoke prompts)                                                                       | When testing prompts                                                       |
-| `tool-groups-list.md`        | —     | **Canonical tool inventory** — all 9 groups + codemode, 139 Native / 115 WASM tools. Source of truth for tool counts.                                               | Reference / auditing                                                       |
-| `tool-reference.md`          | ~18KB | **Complete Tool Reference** — Detailed list of all 139 Native / 115 WASM tools organized by group.                                                                  | Reference                                                                  |
+| `tool-groups-list.md`        | —     | **Canonical tool inventory** — all 9 groups + codemode, 140 Native / 115 WASM tools. Source of truth for tool counts.                                               | Reference / auditing                                                       |
+| `tool-reference.md`          | ~18KB | **Complete Tool Reference** — Detailed list of all 140 Native / 115 WASM tools organized by group.                                                                  | Reference                                                                  |
 | [`code-map.md`](code-map.md) | ~12KB | **Source Code Map** — Directory tree, handler→tool mapping, type/schema locations, error hierarchy, constants, architecture patterns.                               | When debugging source code or making changes                               |
 | `reset-database.ps1`         | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-database.sql`. Verifies row counts.                                                                      | After migration group testing or if data is polluted                       |
 | `test-database.sql`          | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables                                                                                                                        | Reference only — reset script consumes this                                |
@@ -59,7 +58,7 @@
 To validate WASM mode produces identical results for shared tools:
 
 1. **Configure for WASM**: Set `--sqlite` (not `--sqlite-native`) in your MCP client config
-2. **Expected tool count**: 115 WASM vs 139 Native (24 fewer: 4 FTS5, 6 window, 7 transaction, 7 SpatiaLite)
+2. **Expected tool count**: 115 WASM vs 140 Native (25 fewer: 4 FTS5, 6 window, 8 transaction, 7 SpatiaLite)
 3. **Run the same checklists**: Use `test-group-tools.md` but skip items marked `[NATIVE ONLY]`
 4. **Verify shared tools**: All non-`[NATIVE ONLY]` items should produce identical output in both backends
 5. **Verify absent tools**: Calling a Native-only tool in WASM mode should return a structured error (not crash)

@@ -9,12 +9,12 @@
  *   text: 13 WASM / 17 Native (text/regex+formatting+search+validate.ts, fts.ts)
  *   stats: 13 WASM / 19 Native (stats/basic+advanced.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
- *   admin: 26 WASM / 33 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts, native: transactions.ts)
+ *   admin: 26 WASM / 34 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts, native: transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
  *   introspection: 9 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Total: 115 WASM / 139 Native tools
+ *   Total: 115 WASM / 140 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -168,8 +168,9 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "analyze_csv_schema",
     "create_rtree_table",
     "create_series_table",
-    // Transaction Tools (7 Native-only)
+    // Transaction Tools (8 Native-only)
     "transaction_begin",
+    "transaction_status",
     "transaction_commit",
     "transaction_rollback",
     "transaction_savepoint",
@@ -239,7 +240,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Bare minimum - Core + Codemode (10 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (115 WASM / 139 Native)
+  // All tools enabled (115 WASM / 140 Native)
   full: [
     "core",
     "json",

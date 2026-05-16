@@ -193,7 +193,7 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | Group                    | Handler File             | Tools | Notes                                                                                                              |
 | ------------------------ | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------ |
 | **stats** (window)       | `window.ts`              | 6     | `window_row_number`, `window_rank`, `window_lag_lead`, `window_running_total`, `window_moving_avg`, `window_ntile` |
-| **admin** (transactions) | `transactions.ts`        | 7     | `transaction_begin/commit/rollback/savepoint/release/rollback_to/execute`                                          |
+| **admin** (transactions) | `transactions.ts`        | 8     | `transaction_begin/status/commit/rollback/savepoint/release/rollback_to/execute`                               |
 | **geo** (SpatiaLite)     | `spatialite/tools.ts`    | 4     | `spatialite_load/create_table/query/index`                                                                         |
 |                          | `spatialite/analysis.ts` | 3     | `spatialite_analyze/transform/import`                                                                              |
 
@@ -242,7 +242,7 @@ Zod schemas that define the `outputSchema` for MCP tool responses. All output sc
 | `introspection.ts` | Introspection group output schemas (9 schemas: DependencyGraph, TopologicalSort, CascadeSimulator, SchemaSnapshot, ConstraintAnalysis, MigrationRisks, StorageAnalysis, IndexAudit, QueryPlan) |
 | `migration.ts`     | Migration group output schemas (7 schemas: MigrationInit, MigrationRecord, MigrationApply, MigrationRollback, MigrationHistory, MigrationStatus + MigrationRecordEntry)                        |
 | `virtual.ts`       | Virtual table output schemas (7 schemas: ListVirtualTables, VirtualTableInfo, DropVirtualTable, CreateCsvTable, AnalyzeCsvSchema, CreateRtreeTable, CreateSeriesTable)                         |
-| `native.ts`        | Native-only output schemas (transactions — 7 schemas, window functions — 6 schemas)                                                                                                            |
+| `native.ts`        | Native-only output schemas (transactions — 8 schemas, window functions — 6 schemas)                                                                                                            |
 | `spatialite.ts`    | SpatiaLite output schemas (7 tools — native only)                                                                                                                                              |
 | `server.ts`        | Type aliases for core output schemas (built-in tools use `content` pattern, not `structuredContent`)                                                                                           |
 | `index.ts`         | Barrel re-export                                                                                                                                                                               |
@@ -357,7 +357,7 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Complete 139/115 tool inventory with descriptions                                                                  |
+| `test-server/tool-reference.md`              | Complete 140/115 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
 | `test-server/test-tools.md`                  | Entry-point protocol (schema ref, reporting format)                                                                |
 | `test-server/test-group-tools.md`            | Per-group deterministic checklists                                                                                 |

@@ -40,9 +40,9 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (33 Native / 26 WASM)
+  ["admin", `# db-mcp Help — Database Administration (34 Native / 26 WASM)
 
-## Transactions (7 tools, Native only)
+## Transactions (8 tools, Native only)
 
 \`\`\`javascript
 // Atomic multi-statement execution (preferred for simple cases)
@@ -57,6 +57,9 @@ sqlite_transaction_rollback_to({ name: "checkpoint" });
 sqlite_transaction_release({ name: "checkpoint" });
 sqlite_transaction_commit();
 sqlite_transaction_rollback();
+
+// Check transaction state (read-only)
+sqlite_transaction_status(); // → { status: "active" | "none", active: true/false }
 \`\`\`
 
 ## Maintenance
@@ -277,7 +280,7 @@ sqlite_spatialite_index({
 | Feature                                           | Native                | WASM        | Fallback         |
 | ------------------------------------------------- | --------------------- | ----------- | ---------------- |
 | FTS5 full-text search                             | ✅                    | ❌          | None             |
-| Transactions (7 tools)                            | ✅                    | ❌          | None             |
+| Transactions (8 tools)                            | ✅                    | ❌          | None             |
 | Window functions (6 tools in stats group)         | ✅                    | ❌          | None             |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅                    | ❌          | None             |
 | Backup/Restore (3 tools)                          | ✅                    | ❌          | Graceful error   |

@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **139 Native / 115 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **140 Native / 115 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -142,7 +142,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (33 Native / 26 WASM tools + Code Mode)
+## admin (34 Native / 26 WASM tools + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, virtual tables, and transaction control.
 
@@ -175,6 +175,7 @@ Database maintenance — backup/restore, PRAGMA, views, virtual tables, and tran
 | `sqlite_create_rtree_table`      | Create an R-Tree virtual table for spatial indexing. Supports 2–5 dimensions.                                                     |
 | `sqlite_create_series_table`     | Create a table populated with a series of numbers. Unlike `generate_series`, this creates a persistent table.                     |
 | `sqlite_transaction_begin`       | Begin a new transaction. Use immediate or exclusive mode for write-heavy operations. `[NATIVE ONLY]`                              |
+| `sqlite_transaction_status`      | Check whether a transaction is currently active. Returns status and a boolean flag. Read-only. `[NATIVE ONLY]`                    |
 | `sqlite_transaction_commit`      | Commit the current transaction, making all changes permanent. `[NATIVE ONLY]`                                                     |
 | `sqlite_transaction_rollback`    | Rollback the current transaction, discarding all changes. `[NATIVE ONLY]`                                                         |
 | `sqlite_transaction_savepoint`   | Create a savepoint within the current transaction for partial rollback. `[NATIVE ONLY]`                                           |

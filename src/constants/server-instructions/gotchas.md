@@ -25,7 +25,7 @@
 | Feature                                           | Native                | WASM        | Fallback         |
 | ------------------------------------------------- | --------------------- | ----------- | ---------------- |
 | FTS5 full-text search                             | ✅                    | ❌          | None             |
-| Transactions (7 tools)                            | ✅                    | ❌          | None             |
+| Transactions (8 tools)                            | ✅                    | ❌          | None             |
 | Window functions (6 tools in stats group)         | ✅                    | ❌          | None             |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅                    | ❌          | None             |
 | Backup/Restore (3 tools)                          | ✅                    | ❌          | Graceful error   |
