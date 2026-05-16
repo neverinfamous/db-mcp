@@ -19,7 +19,7 @@ describe("Transaction Tools", () => {
 
   beforeEach(async () => {
     adapter = new NativeSqliteAdapter();
-    await adapter.connect({ type: "sqlite", database: ":memory:" });
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
 
     // Create test table
     await adapter.executeWriteQuery(
@@ -43,13 +43,14 @@ describe("Transaction Tools", () => {
   });
 
   describe("getTransactionTools", () => {
-    it("should return 7 transaction tools", () => {
-      expect(tools).toHaveLength(7);
+    it("should return 8 transaction tools", () => {
+      expect(tools).toHaveLength(8);
     });
 
     it("should include all expected tools", () => {
       const names = tools.map((t) => t.name);
       expect(names).toContain("sqlite_transaction_begin");
+      expect(names).toContain("sqlite_transaction_status");
       expect(names).toContain("sqlite_transaction_commit");
       expect(names).toContain("sqlite_transaction_rollback");
       expect(names).toContain("sqlite_transaction_savepoint");
@@ -64,9 +65,13 @@ describe("Transaction Tools", () => {
       }
     });
 
-    it("should require write scope for all tools", () => {
+    it("should require write scope for mutating tools and read scope for status", () => {
       for (const tool of tools) {
-        expect(tool.requiredScopes).toContain("write");
+        if (tool.name === "sqlite_transaction_status") {
+          expect(tool.requiredScopes).toContain("read");
+        } else {
+          expect(tool.requiredScopes).toContain("write");
+        }
       }
     });
   });
