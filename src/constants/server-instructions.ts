@@ -629,7 +629,7 @@ sqlite_window_ntile({
 \`\`\``],
   ["text", `# db-mcp Help — Text Processing & FTS5
 
-## Full-Text Search / FTS5 (4 tools, Native only)
+## Full-Text Search / FTS5 (5 tools, Native only)
 
 \`\`\`javascript
 // Create FTS5 table with triggers for auto-sync on future changes
@@ -648,11 +648,24 @@ sqlite_fts_search({
   limit: 10,
 });
 sqlite_fts_match_info({ table: "articles_fts", query: "machine learning" }); // bm25 ranking info
+
+// Highlighted snippets from FTS5 search matches (headline/snippet)
+sqlite_fts_headline({ table: "articles_fts", query: "machine learning" });
+// → results with <b>machine</b> <b>learning</b> highlighted in context
+
+// Custom markers and snippet window
+sqlite_fts_headline({
+  table: "articles_fts",
+  query: "database",
+  startSel: "**",
+  stopSel: "**",
+  snippetWords: 5,
+});
 \`\`\`
 
 ⚠️ FTS5 virtual tables (\`*_fts\`) and shadow tables (\`*_fts_*\`) are hidden from \`sqlite_list_tables\` for cleaner output
 
-## Text Processing (13 tools)
+## Text Processing (14 tools)
 
 \`\`\`javascript
 // Regex patterns: ⚠️ Double-escape backslashes (\\\\) when passing through JSON/MCP
@@ -739,6 +752,13 @@ sqlite_advanced_search({
   techniques: ["exact", "fuzzy", "phonetic"],
   fuzzyThreshold: 0.4,
 });
+
+// Sentiment analysis — pure text analysis, no database query needed
+sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });
+// → { sentiment: "very_positive", score: 2, confidence: "medium" }
+
+sqlite_text_sentiment({ text: "Great service but slow delivery", returnWords: true });
+// → { sentiment: "neutral", score: 0, matchedPositive: ["great"], matchedNegative: ["slow"] }
 \`\`\``],
   ["vector", `# db-mcp Help — Vector/Semantic Search (11 tools)
 

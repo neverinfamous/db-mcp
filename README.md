@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.neverinfamous/db-mcp -->
 
-**SQLite MCP Server** with 149 specialized tools, 9 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 151 specialized tools, 9 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -26,10 +26,10 @@
 
 | Feature                          | Description                                                                                                                                                                                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **149 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
+| **151 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
 | **17 Resources**                 | 9 data resources (schema, tables, indexes, views, health, metadata, insights, audit) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 149 capabilities locally, reducing token overhead by up to 90% and supercharging AI agent reasoning              |
+| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 151 capabilities locally, reducing token overhead by up to 90% and supercharging AI agent reasoning              |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access. Large datasets include metadata so agents always know the full picture  |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                   |
 | **Performance**                  | **⚠️ WASM Caution:** Synchronous execution blocks Node Event Loop on heavy workloads. **🚀 Native:** High-performance concurrent execution.                                                                                                                                                                              |
@@ -98,7 +98,7 @@ Or with **WASM backend** (sql.js — cross-platform, no compilation required):
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (149 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (124 tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (151 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (125 tools, no native dependencies).
 
 ### Verify It Works
 
@@ -128,13 +128,13 @@ npm run test
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 149 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 151 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Quick Start: Recommended Configurations
 
 #### ⭐ Recommended: Code Mode (Maximum Token Savings)
 
-Code Mode (`sqlite_execute_code`) provides access to all 149 tools' worth of capability through a single, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all capabilities locally — reducing token overhead by up to 90%.
+Code Mode (`sqlite_execute_code`) provides access to all 151 tools' worth of capability through a single, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all capabilities locally — reducing token overhead by up to 90%.
 
 ```json
 {
@@ -155,7 +155,7 @@ Code Mode (`sqlite_execute_code`) provides access to all 149 tools' worth of cap
 }
 ```
 
-This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 9 tool groups, and returning exactly the data it needs — in one execution.
+This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 10 tool groups, and returning exactly the data it needs — in one execution.
 
 #### Starter (50 tools)
 
@@ -179,17 +179,17 @@ Specify exactly the groups you need:
 
 ### Shortcuts (Predefined Bundles)
 
-> **Note:** Native includes FTS5 (4), window functions (6), transactions (8), and SpatiaLite (7) not available in WASM.
+> **Note:** Native includes FTS5 (5), window functions (6), transactions (8), and SpatiaLite (7) not available in WASM.
 
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
-| `starter`    | **51** | **55** | +3         | Core, JSON, Text               |
-| `analytics`  | 54     | 60     | +3         | Core, JSON, Stats              |
-| `search`     | 39     | 43     | +3         | Core, Text, Vector             |
+| `starter`    | **53** | **58** | +3         | Core, JSON, Text               |
+| `analytics`  | 55     | 61     | +3         | Core, JSON, Stats              |
+| `search`     | 40     | 45     | +3         | Core, Text, Vector             |
 | `spatial`    | 30     | 37     | +3         | Core, Geo, Vector              |
 | `dev-schema` | 30     | 30     | +3         | Core, Introspection, Migration |
 | `minimal`    | 15     | 15     | +3         | Core only                      |
-| `full`       | 124    | 149    | +3         | Everything enabled             |
+| `full`       | 125    | 151    | +3         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
@@ -198,15 +198,15 @@ Specify exactly the groups you need:
 | Group           | WASM | Native | + Built-in | Description                                  |
 | --------------- | ---- | ------ | ---------- | -------------------------------------------- |
 | `codemode`      | 1    | 1      | +3         | Code Mode (sandboxed code execution) 🌟      |
-| `core`          | 15   | 15     | +3         | Basic CRUD, schema, tables                   |
+| `core`          | 14   | 14     | +3         | Basic CRUD, schema, tables                   |
 | `json`          | 24   | 24     | +3         | JSON/JSONB operations, analysis              |
-| `text`          | 14   | 18     | +3         | Text processing + FTS5 + advanced search     |
+| `text`          | 14   | 19     | +3         | Text processing + FTS5 + advanced search     |
 | `stats`         | 16   | 22     | +3         | Statistical analysis (+ window funcs)        |
-| `vector`        | 12   | 12     | +3         | Embeddings, similarity search                |
-| `admin`         | 27   | 34     | +3         | Backup, restore, virtual tables, transactions |
-| `geo`           | 5    | 12     | +3         | Geospatial + SpatiaLite (Native only)        |
-| `introspection` | 10   | 10     | +3         | FK graph, cascade sim, storage/index audit   |
-| `migration`     | 7    | 7      | +3         | Migration tracking, apply, rollback (opt-in) |
+| `vector`        | 11   | 11     | +3         | Embeddings, similarity search                |
+| `admin`         | 26   | 34     | +3         | Backup, restore, virtual tables, transactions |
+| `geo`           | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)        |
+| `introspection` | 9    | 9      | +3         | FK graph, cascade sim, storage/index audit   |
+| `migration`     | 6    | 6      | +3         | Migration tracking, apply, rollback (opt-in) |
 
 ### Syntax Reference
 

@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **149 Native / 124 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **151 Native / 125 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -74,9 +74,9 @@ Comprehensive JSON manipulation — read, write, transform, validate, and analyz
 
 ---
 
-## text (17 Native / 13 WASM tools + Code Mode)
+## text (19 Native / 14 WASM tools + Code Mode)
 
-Text processing, regex, fuzzy matching, phonetic search, and FTS5 full-text search.
+Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and FTS5 full-text search.
 
 | Tool                     | Description                                                                                                                                                                      |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -93,10 +93,12 @@ Text processing, regex, fuzzy matching, phonetic search, and FTS5 full-text sear
 | `sqlite_text_normalize`  | Normalize text using Unicode normalization (NFC, NFD, NFKC, NFKD) or strip accents.                                                                                              |
 | `sqlite_text_validate`   | Validate text values against patterns: email, phone, URL, UUID, IPv4, or custom regex.                                                                                           |
 | `sqlite_advanced_search` | Advanced search combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching.                                                                                           |
+| `sqlite_text_sentiment`  | Perform basic keyword-based sentiment analysis on raw text. Returns sentiment classification, score, confidence, and optionally matched words. No database query needed.         |
 | `sqlite_fts_create`      | Create an FTS5 full-text search virtual table. `[NATIVE ONLY]`                                                                                                                   |
 | `sqlite_fts_search`      | Search an FTS5 table using full-text query syntax. `[NATIVE ONLY]`                                                                                                               |
 | `sqlite_fts_rebuild`     | Rebuild an FTS5 index to optimize search performance. `[NATIVE ONLY]`                                                                                                            |
 | `sqlite_fts_match_info`  | Get FTS5 match ranking information using bm25. `[NATIVE ONLY]`                                                                                                                   |
+| `sqlite_fts_headline`    | Generate highlighted snippets from FTS5 search results using `highlight()` and `snippet()`. `[NATIVE ONLY]`                                                                      |
 
 ---
 

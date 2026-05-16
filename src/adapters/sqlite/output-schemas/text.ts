@@ -195,3 +195,41 @@ export const AdvancedSearchOutputSchema = z
       .optional(),
   })
   .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_text_sentiment output
+ */
+export const TextSentimentOutputSchema = z
+  .object({
+    success: z.boolean(),
+    sentiment: z
+      .enum(["very_positive", "positive", "neutral", "negative", "very_negative"])
+      .optional()
+      .describe("Overall sentiment classification"),
+    score: z
+      .number()
+      .optional()
+      .describe("Net sentiment score (positive - negative)"),
+    positiveCount: z
+      .number()
+      .optional()
+      .describe("Number of positive words found"),
+    negativeCount: z
+      .number()
+      .optional()
+      .describe("Number of negative words found"),
+    confidence: z
+      .enum(["low", "medium", "high"])
+      .optional()
+      .describe("Confidence level"),
+    matchedPositive: z
+      .array(z.string())
+      .optional()
+      .describe("Matched positive words (if returnWords=true)"),
+    matchedNegative: z
+      .array(z.string())
+      .optional()
+      .describe("Matched negative words (if returnWords=true)"),
+  })
+  .extend(ErrorFieldsMixin.shape);
+

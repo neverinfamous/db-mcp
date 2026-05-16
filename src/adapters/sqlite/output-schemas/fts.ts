@@ -48,3 +48,25 @@ export const FtsRebuildOutputSchema = z
     tableName: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_fts_headline output
+ */
+export const FtsHeadlineOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number().optional(),
+    results: z
+      .array(
+        z
+          .object({
+            headline: z.string().optional(),
+            snippet: z.string().optional(),
+            rank: z.number().nullable().optional(),
+          })
+          .loose(),
+      )
+      .optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+

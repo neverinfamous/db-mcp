@@ -10,6 +10,8 @@
 - **Token Burn-Rate**: Every tool response now includes `_meta.tokenEstimate` (~4 bytes/token heuristic). Code Mode responses include `metrics.tokenEstimate`. Matches postgres-mcp and mysql-mcp for cross-server parity.
 - **Anomaly Detection Suite**: 3 new stats tools for cross-server parity with postgres-mcp and mysql-mcp. `sqlite_stats_detect_anomalies` (z-score data distribution analysis), `sqlite_stats_detect_bloat` (multi-factor fragmentation/bloat risk scoring via PRAGMA + dbstat), `sqlite_stats_detect_schema_risks` (schema health risk scoring — missing FK indexes, wide tables, missing PKs). All read-only, available in both WASM and Native backends, with Code Mode support via `sqlite.stats.*`.
 - **JSON Security Scan**: New `sqlite_json_security_scan` tool for cross-server parity with `pg_jsonb_security_scan`. Scans JSON columns for sensitive keys (password, token, ssn, etc.), SQL injection patterns, and XSS attack vectors. Returns `riskLevel` (low/medium/high) and detailed issue breakdown. Uses JS-side regex scanning on sampled rows. Available in both WASM and Native backends.
+- **Text Sentiment**: New `sqlite_text_sentiment` tool for cross-server parity with `pg_text_sentiment`. Basic keyword-based sentiment analysis on raw text input. Returns sentiment classification (very_positive/positive/neutral/negative/very_negative), score, confidence, and optionally matched words. Pure JS implementation — available in both WASM and Native backends.
+- **FTS5 Headline**: New `sqlite_fts_headline` tool for cross-server parity with `pg_text_headline`. Generates highlighted snippets from FTS5 search results using SQLite's native `highlight()` and `snippet()` functions. Supports custom highlight markers and context window size. Native backend only.
 
 ### Security
 
@@ -24,7 +26,7 @@
 ### Changed
 
 - **Dependency Updates**: Updated `typescript` to `^6.0.3` and bumped various packages including `@playwright/test`, `@types/node`, `@modelcontextprotocol/sdk`, `eslint`, `vitest`, `tsx`, and `better-sqlite3`. Updated GitHub Actions to their latest SHA-pinned versions (`docker/build-push-action`, `actions/upload-artifact`, `docker/login-action`, `github/codeql-action`, `actions/cache`).
-- **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, `test-server/tool-reference.md`, and `test-server/code-map.md` to reflect the expanded inventory (149 Native / 124 WASM tools), including the 5 new core convenience tools and JSON security scan.
+- **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, `test-server/tool-reference.md`, and `test-server/code-map.md` to reflect the expanded inventory (151 Native / 125 WASM tools), including the 5 new core convenience tools, JSON security scan, text sentiment, and FTS5 headline.
 
 ### Fixed
 

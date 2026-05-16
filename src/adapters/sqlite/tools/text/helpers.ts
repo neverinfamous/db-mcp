@@ -228,3 +228,42 @@ export const AdvancedSearchSchema = z.object({
   whereClause: z.string().optional(),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
+
+// Sentiment analysis schema (pure JS, no DB queries)
+export const TextSentimentSchema = z.object({
+  text: z.string().describe("Text to analyze for sentiment"),
+  returnWords: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Return matched positive/negative words"),
+});
+
+// FTS5 headline/snippet schema (native-only)
+export const FtsHeadlineSchema = z.object({
+  table: z.string().describe("FTS5 table name"),
+  query: z.string().describe("Full-text search query"),
+  column: z
+    .string()
+    .optional()
+    .describe("Specific FTS column to highlight (default: column 0)"),
+  startSel: z
+    .string()
+    .optional()
+    .default("<b>")
+    .describe("Start highlight marker"),
+  stopSel: z
+    .string()
+    .optional()
+    .default("</b>")
+    .describe("Stop highlight marker"),
+  snippetWords: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(10)
+      .describe("Number of context words around match for snippet()"),
+  ),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+});

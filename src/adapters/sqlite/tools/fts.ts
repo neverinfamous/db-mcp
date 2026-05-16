@@ -16,7 +16,9 @@ import {
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
   FtsRebuildOutputSchema,
+  FtsHeadlineOutputSchema,
 } from "../output-schemas/index.js";
+import { FtsHeadlineSchema } from "./text/helpers.js";
 
 /**
  * Build error response for FTS5 unavailability in WASM mode
@@ -154,6 +156,7 @@ export function getFtsTools(adapter: SqliteAdapter): ToolDefinition[] {
     createFtsSearchTool(adapter),
     createFtsRebuildTool(adapter),
     createFtsMatchInfoTool(adapter),
+    createFtsHeadlineTool(adapter),
   ];
 }
 
@@ -434,6 +437,89 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          results: result.rows,
+        };
+      } catch (error) {
+        if (isFts5UnavailableError(error)) {
+          return buildFts5SearchUnavailableError();
+        }
+        return formatHandlerError(error);
+      }
+    },
+  };
+}
+
+/**
+ * FTS5 headline/snippet — highlighted search result excerpts
+ */
+function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_fts_headline",
+    description:
+      "Generate highlighted snippets from FTS5 full-text search results. Returns headline (highlight) and snippet (context window) for each match.",
+    group: "text",
+    inputSchema: FtsHeadlineSchema,
+    outputSchema: FtsHeadlineOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("FTS Headline"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      try {
+        const input = FtsHeadlineSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5SearchUnavailableError();
+        }
+
+        // Validate FTS table name and existence
+        sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
+
+        // Escape single quotes in query
+        const queryEscaped = input.query.replace(/'/g, "''");
+
+        // Determine column index for highlight/snippet (default: 0)
+        let columnIndex = 0;
+        if (input.column) {
+          // Look up column index from FTS table structure
+          const colResult = await adapter.executeReadQuery(
+            `PRAGMA table_info("${input.table}")`,
+          );
+          const colRows = colResult.rows ?? [];
+          const found = colRows.findIndex(
+            (r) => String(r["name"]) === input.column,
+          );
+          if (found >= 0) {
+            columnIndex = found;
+          }
+        }
+
+        // Escape markers for SQL
+        const startSel = input.startSel.replace(/'/g, "''");
+        const stopSel = input.stopSel.replace(/'/g, "''");
+
+        // Build SELECT with highlight() and snippet()
+        const highlightExpr = `highlight("${input.table}", ${String(columnIndex)}, '${startSel}', '${stopSel}')`;
+        const snippetExpr = `snippet("${input.table}", ${String(columnIndex)}, '${startSel}', '${stopSel}', '...', ${String(input.snippetWords)})`;
+
+        // Handle wildcard query — return all rows without MATCH
+        if (input.query === "*" || input.query.trim() === "") {
+          const sql = `SELECT *, NULL as headline, NULL as snippet, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${String(input.limit)}`;
+          const result = await adapter.executeReadQuery(sql);
+          return {
+            success: true,
+            rowCount: result.rows?.length ?? 0,
+            results: result.rows,
+          };
+        }
+
+        const sql = `SELECT ${highlightExpr} as headline, ${snippetExpr} as snippet, rank FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY rank LIMIT ${String(input.limit)}`;
+
         const result = await adapter.executeReadQuery(sql);
 
         return {
