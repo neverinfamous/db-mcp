@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-**SQLite MCP Server** with 140 specialized tools, 8 data resources + 9 help resources, and 10 prompts, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 140 specialized tools, 9 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 [![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
@@ -25,7 +25,7 @@
 | Feature                          | Description                                                                                                                                                                                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **140 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
-| **17 Resources**                 | 8 data resources (schema, tables, indexes, views, health, metadata, insights) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                   |
+| **17 Resources**                 | 9 data resources (schema, tables, indexes, views, health, metadata, insights, audit) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 140 capabilities locally, reducing token overhead by up to 90% and supercharging AI agent reasoning              |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access                                                                                                     |
@@ -213,7 +213,7 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Code Mode            | 1       | Sandboxed JavaScript execution  |
 | **Total**            | **140** |                                 |
 
-### 📁 Resources (8 Data + 9 Help)
+### 📁 Resources (9 Data + 9 Help)
 
 Data resources provide read-only access to database metadata. Help resources (`sqlite://help/*`) provide on-demand per-group tool reference, filtered by `--tool-filter`.
 
@@ -227,6 +227,7 @@ Data resources provide read-only access to database metadata. Help resources (`s
 | `sqlite_health`       | `sqlite://health`                   | Database health and status   |
 | `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs|
 | `sqlite_insights`     | `memo://insights`                   | Business insights memo       |
+| `sqlite_audit`        | `sqlite://audit`                    | Recent audit log + backup stats |
 | `sqlite_help`         | `sqlite://help`                     | Main help + per-group refs   |
 
 ### 💬 Prompts (10)
@@ -274,6 +275,11 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                 |
 | `CSV_EXTENSION_PATH`    | —         | Path to CSV extension binary (native only)                  |
 | `SPATIALITE_PATH`       | —         | Path to SpatiaLite extension binary (native only)           |
+| `AUDIT_LOG`             | —         | Audit log file path, or `stderr` (`--audit-log`)            |
+| `AUDIT_REDACT`          | `false`   | Redact tool arguments from audit entries (`--audit-redact`) |
+| `AUDIT_READS`           | `false`   | Also log read-scoped tool invocations (`--audit-reads`)     |
+| `AUDIT_BACKUP`          | `false`   | Enable pre-mutation DDL snapshots (`--audit-backup`)        |
+| `AUDIT_BACKUP_DATA`     | `false`   | Include sample data rows in snapshots (`--audit-backup-data`) |
 
 ### HTTP/SSE Transport
 

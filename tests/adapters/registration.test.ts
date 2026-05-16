@@ -155,7 +155,7 @@ describe("registerToolImpl", () => {
       name: "sqlite_test",
       description: "Test",
       group: "core",
-      icons: { light: "icon.svg" },
+      icons: [{ src: "icon.svg", theme: "light" }],
       handler: vi.fn(),
     };
 
@@ -165,7 +165,7 @@ describe("registerToolImpl", () => {
       string,
       unknown
     >;
-    expect(opts.icons).toEqual({ light: "icon.svg" });
+    expect(opts.icons).toEqual([{ src: "icon.svg", theme: "light" }]);
   });
 
   it("should return structuredContent when outputSchema is present", async () => {
@@ -184,7 +184,10 @@ describe("registerToolImpl", () => {
     const result = await handler({}, { _meta: {} });
 
     expect(result.structuredContent).toEqual(mockResult);
-    expect(result.content[0].text).toBe(JSON.stringify(mockResult));
+    // content[0].text includes _meta.tokenEstimate injected by registration layer
+    const parsed = JSON.parse(result.content[0].text) as Record<string, unknown>;
+    expect(parsed).toMatchObject(mockResult);
+    expect(parsed._meta).toEqual({ tokenEstimate: expect.any(Number) });
   });
 
   it("should return text content when no outputSchema", async () => {
@@ -201,7 +204,10 @@ describe("registerToolImpl", () => {
     const result = await handler({}, { _meta: {} });
 
     expect(result.structuredContent).toBeUndefined();
-    expect(result.content[0].text).toBe(JSON.stringify({ tables: ["a"] }));
+    // content[0].text includes _meta.tokenEstimate injected by registration layer
+    const parsed = JSON.parse(result.content[0].text) as Record<string, unknown>;
+    expect(parsed).toMatchObject({ tables: ["a"] });
+    expect(parsed._meta).toEqual({ tokenEstimate: expect.any(Number) });
   });
 
   it("should return string result directly when no outputSchema", async () => {
@@ -334,7 +340,7 @@ describe("registerResourceImpl", () => {
       name: "schema",
       uri: "sqlite://schema",
       description: "Schema",
-      icons: { light: "schema.svg" },
+      icons: [{ src: "schema.svg", theme: "light" }],
       handler: vi.fn().mockResolvedValue({}),
     };
 
@@ -344,7 +350,7 @@ describe("registerResourceImpl", () => {
       string,
       unknown
     >;
-    expect(opts.icons).toEqual({ light: "schema.svg" });
+    expect(opts.icons).toEqual([{ src: "schema.svg", theme: "light" }]);
   });
 
   it("should handle handler returning string content", async () => {
@@ -507,7 +513,7 @@ describe("registerPromptImpl", () => {
     const prompt: PromptDefinition = {
       name: "test",
       description: "Test",
-      icons: { light: "prompt.svg" },
+      icons: [{ src: "prompt.svg", theme: "light" }],
       handler: vi.fn().mockResolvedValue("ok"),
     };
 
@@ -517,6 +523,6 @@ describe("registerPromptImpl", () => {
       string,
       unknown
     >;
-    expect(opts.icons).toEqual({ light: "prompt.svg" });
+    expect(opts.icons).toEqual([{ src: "prompt.svg", theme: "light" }]);
   });
 });

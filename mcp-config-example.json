@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "db-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-v",
+        "./data:/app/data",
+        "-e",
+        "LOG_LEVEL",
+        "-e",
+        "MCP_AUTH_TOKEN",
+        "-e",
+        "OAUTH_ENABLED",
+        "-e",
+        "OAUTH_ISSUER",
+        "-e",
+        "OAUTH_AUDIENCE",
+        "-e",
+        "AUDIT_BACKUP",
+        "-e",
+        "AUDIT_REDACT",
+        "-e",
+        "AUDIT_READS",
+        "writenotenow/db-mcp:latest",
+        "--sqlite-native",
+        "/app/data/my-database.db",
+        "--tool-filter",
+        "codemode",
+        "--audit-log",
+        "/tmp/db-mcp-logs/audit.jsonl"
+      ],
+      "env": {
+        "LOG_LEVEL": "info",
+        "MCP_AUTH_TOKEN": "",
+        "OAUTH_ENABLED": "false",
+        "OAUTH_ISSUER": "",
+        "OAUTH_AUDIENCE": "",
+        "AUDIT_BACKUP": "false",
+        "AUDIT_REDACT": "false",
+        "AUDIT_READS": "false"
+      }
+    }
+  }
+}

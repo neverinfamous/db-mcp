@@ -13,7 +13,7 @@ import type {
   ToolFilterConfig,
 } from "../types/index.js";
 import { VERSION, NAME } from "../version.js";
-import { type DatabaseAdapter } from "../adapters/database-adapter.js";
+import type { DatabaseAdapter } from "../adapters/database-adapter.js";
 import type { HttpTransportConfig } from "../transports/http/types.js";
 import {
   parseToolFilter,
@@ -30,6 +30,11 @@ import { SERVER_ICONS } from "../utils/icons.js";
 import { READ_ONLY } from "../utils/annotations.js";
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
+import { AuditLogger } from "../audit/logger.js";
+import { BackupManager } from "../audit/backup-manager.js";
+import { createAuditInterceptor } from "../audit/interceptor.js";
+import type { AuditInterceptor } from "../audit/interceptor.js";
+import { z } from "zod";
 
 /**
  * Main db-mcp server class
@@ -41,6 +46,9 @@ export class DbMcpServer {
   private adapters = new Map<string, DatabaseAdapter>();
   private toolFilter: ToolFilterConfig;
   private config: McpServerConfig;
+  private auditLogger: AuditLogger | null = null;
+  private backupManager: BackupManager | null = null;
+  private auditInterceptor: AuditInterceptor | null = null;
 
   constructor(config: McpServerConfig) {
     this.config = config;
@@ -79,6 +87,11 @@ export class DbMcpServer {
     // Register built-in tools and help resources
     this.registerBuiltInTools();
     this.registerHelpResources();
+
+    // Initialize audit subsystem if configured
+    if (config.audit?.enabled) {
+      void this.initializeAudit(config);
+    }
   }
 
   /**
@@ -95,6 +108,20 @@ export class DbMcpServer {
 
     // Store adapter
     this.adapters.set(adapterId, adapter);
+
+    // Inject audit interceptor if available (narrowed for type-only import)
+    if (this.auditInterceptor && "setAuditInterceptor" in adapter) {
+      (
+        adapter as {
+          setAuditInterceptor: (i: AuditInterceptor) => void;
+        }
+      ).setAuditInterceptor(this.auditInterceptor);
+    }
+    if (this.backupManager && "setBackupManager" in adapter) {
+      (
+        adapter as { setBackupManager: (m: BackupManager) => void }
+      ).setBackupManager(this.backupManager);
+    }
 
     // Register adapter's tools with filtering
     adapter.registerTools(this.server, this.toolFilter);
@@ -430,9 +457,251 @@ export class DbMcpServer {
       }
     }
 
+    // Close audit logger
+    if (this.auditLogger) {
+      await this.auditLogger.close();
+      logger.info("Audit logger closed", { module: "AUDIT" });
+    }
+
+    // Flush backup manager
+    if (this.backupManager) {
+      await this.backupManager.flush();
+      logger.info("Backup manager flushed", { module: "AUDIT" });
+    }
+
     // Close MCP server
     await this.server.close();
     logger.info("Server shutdown complete", { module: "SERVER" });
+  }
+
+  /**
+   * Initialize the audit subsystem: logger, interceptor, backup manager,
+   * sqlite://audit resource, and audit backup tools.
+   */
+  private async initializeAudit(config: McpServerConfig): Promise<void> {
+    const auditConfig = config.audit;
+    if (!auditConfig?.enabled) return;
+
+    // Create audit logger and eagerly touch the log file
+    this.auditLogger = new AuditLogger(auditConfig);
+    await this.auditLogger.init();
+
+    // Create backup manager if configured
+    if (auditConfig.backup?.enabled) {
+      this.backupManager = new BackupManager(
+        auditConfig.backup,
+        auditConfig.logPath,
+      );
+    }
+
+    // Create interceptor (backup + query adapter wired after first adapter registers)
+    this.auditInterceptor = createAuditInterceptor(
+      this.auditLogger,
+      this.backupManager ?? undefined,
+      undefined, // queryAdapter wired later when adapter connects
+    );
+
+    // Register sqlite://audit resource
+    this.registerAuditResource();
+
+    // Register audit backup tools only if admin group is enabled in the tool filter
+    if (this.backupManager && this.toolFilter.enabledGroups.has("admin")) {
+      this.registerAuditBackupTools();
+    }
+
+    logger.info(
+      `Audit logging enabled (${auditConfig.logPath}, redact=${String(auditConfig.redact)}, reads=${String(auditConfig.auditReads)}, backup=${String(!!auditConfig.backup?.enabled)})`,
+      { module: "AUDIT" },
+    );
+  }
+
+  /**
+   * Register the sqlite://audit resource for agent access to audit log.
+   */
+  private registerAuditResource(): void {
+    if (!this.auditLogger) return;
+    const auditLogger = this.auditLogger;
+    const backupManager = this.backupManager;
+
+    this.server.registerResource(
+      "sqlite_audit",
+      "sqlite://audit",
+      {
+        description:
+          "Recent audit log entries and backup statistics. Shows the last 50 tool invocations with timing, outcomes, and token estimates.",
+        mimeType: "application/json",
+      },
+      async () => {
+        const recent = await auditLogger.recent(50);
+        const backupStats = backupManager
+          ? await backupManager.getStats()
+          : undefined;
+
+        const payload = {
+          entries: recent,
+          stats: {
+            totalEntries: recent.length,
+            ...(backupStats && { backups: backupStats }),
+          },
+        };
+
+        return {
+          contents: [
+            {
+              uri: "sqlite://audit",
+              mimeType: "application/json",
+              text: JSON.stringify(payload, null, 2),
+            },
+          ],
+        };
+      },
+    );
+  }
+
+  /**
+   * Register audit backup tools for snapshot management.
+   */
+  private registerAuditBackupTools(): void {
+    const backupManager = this.backupManager;
+    if (!backupManager) return;
+
+    // sqlite_audit_list_backups
+    this.server.registerTool(
+      "sqlite_audit_list_backups",
+      {
+        title: "List Audit Backups",
+        description:
+          "List pre-mutation DDL snapshots captured before destructive operations. Returns metadata for each snapshot including timestamp, tool, target, and size.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async () => {
+        const snapshots = await backupManager.listSnapshots();
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                {
+                  snapshots,
+                  count: snapshots.length,
+                  _meta: {
+                    tokenEstimate: Math.ceil(
+                      Buffer.byteLength(
+                        JSON.stringify(snapshots),
+                        "utf8",
+                      ) / 4,
+                    ),
+                  },
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      },
+    );
+
+    // sqlite_audit_get_backup
+    this.server.registerTool(
+      "sqlite_audit_get_backup",
+      {
+        title: "Get Audit Backup",
+        description:
+          "Retrieve a specific pre-mutation DDL snapshot by filename. Returns the full snapshot content including DDL and optional data.",
+        inputSchema: z.object({
+          filename: z
+            .string()
+            .describe(
+              "Snapshot filename from sqlite_audit_list_backups results",
+            ),
+        }),
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args: unknown) => {
+        const { filename } = args as { filename: string };
+        const snapshot = await backupManager.getSnapshot(filename);
+        if (!snapshot) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    error: `Snapshot not found: ${filename}`,
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+            isError: true,
+          };
+        }
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(snapshot, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    // sqlite_audit_cleanup
+    this.server.registerTool(
+      "sqlite_audit_cleanup",
+      {
+        title: "Cleanup Audit Backups",
+        description:
+          "Apply retention policy to audit backup snapshots. Deletes snapshots exceeding age or count limits.",
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async () => {
+        const deleted = await backupManager.cleanup();
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                {
+                  success: true,
+                  deletedCount: deleted,
+                  message:
+                    deleted > 0
+                      ? `Cleaned up ${String(deleted)} snapshot(s)`
+                      : "No snapshots to clean up",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      },
+    );
+
+    logger.info(
+      "Registered audit backup tools: sqlite_audit_list_backups, sqlite_audit_get_backup, sqlite_audit_cleanup",
+      { module: "AUDIT" },
+    );
   }
 }
 

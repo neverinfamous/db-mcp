@@ -254,11 +254,27 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         );
         security.auditLog(record);
 
+        // Compute token estimate from result (~4 bytes per token)
+        let tokenEstimate = 0;
+        if (sanitizedResult !== undefined) {
+          try {
+            const json = JSON.stringify(sanitizedResult);
+            tokenEstimate = Math.ceil(
+              Buffer.byteLength(json, "utf8") / 4,
+            );
+          } catch {
+            // Serialization failure — leave at 0
+          }
+        }
+
         return {
           success: result.success,
           result: sanitizedResult,
           error: result.error,
-          metrics: result.metrics,
+          metrics: {
+            ...result.metrics,
+            tokenEstimate,
+          },
         };
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);

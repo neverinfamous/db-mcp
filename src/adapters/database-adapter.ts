@@ -30,6 +30,8 @@ import type {
 import { isToolEnabled } from "../filtering/tool-filter.js";
 import { ConnectionError } from "../utils/errors/index.js";
 import { validateQuery } from "./query-validation.js";
+import type { AuditInterceptor } from "../audit/interceptor.js";
+import type { BackupManager } from "../audit/backup-manager.js";
 
 import {
   registerToolImpl,
@@ -154,6 +156,34 @@ export abstract class DatabaseAdapter {
    * Get supported tool groups for this adapter
    */
   abstract getSupportedToolGroups(): ToolGroup[];
+
+  // ===========================================================================
+  // Audit Subsystem
+  // ===========================================================================
+
+  protected auditInterceptor: AuditInterceptor | null = null;
+  protected backupManager: BackupManager | null = null;
+
+  /**
+   * Inject the audit interceptor.
+   */
+  setAuditInterceptor(interceptor: AuditInterceptor): void {
+    this.auditInterceptor = interceptor;
+  }
+
+  /**
+   * Inject the backup manager for tools to use natively.
+   */
+  setBackupManager(manager: BackupManager): void {
+    this.backupManager = manager;
+  }
+
+  /**
+   * Get the audit interceptor (used by registration layer and Code Mode).
+   */
+  getAuditInterceptor(): AuditInterceptor | null {
+    return this.auditInterceptor;
+  }
 
   // ===========================================================================
   // Tool Registration

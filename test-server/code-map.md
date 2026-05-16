@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: March 18, 2026
+> Last updated: May 16, 2026
 
 ---
 
@@ -80,6 +80,13 @@ src/
 │   ├── transport-agnostic.ts       # Non-Express auth re-exports for transport portability
 │   ├── errors.ts                   # OAuth-specific error classes
 │   └── types.ts                    # OAuth TypeScript types
+│
+├── audit/                          # Audit logging subsystem
+│   ├── types.ts                    # AuditEntry, AuditConfig, BackupConfig, SnapshotMetadata types
+│   ├── logger.ts                   # AuditLogger — async-buffered JSONL writer with rotation
+│   ├── interceptor.ts              # createAuditInterceptor() — wraps tool handlers with around()
+│   ├── backup-manager.ts           # BackupManager — pre-mutation DDL snapshots (gzip)
+│   └── index.ts                    # Barrel
 │
 ├── transports/
 │   └── http/
