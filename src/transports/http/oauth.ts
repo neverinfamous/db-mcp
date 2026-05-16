@@ -9,6 +9,8 @@ import { AuthorizationServerDiscovery } from "../../auth/authorization-server-di
 import { TokenValidator } from "../../auth/token-validator.js";
 import { createAuthMiddleware } from "../../auth/middleware/index.js";
 import { SUPPORTED_SCOPES } from "../../auth/scopes/index.js";
+import { scopesGrantToolAccess } from "../../auth/scopes/index.js";
+import { InsufficientScopeError } from "../../auth/errors.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
 import type { RequestHandler } from "express";
@@ -104,6 +106,72 @@ function createSimpleBearerAuth(expectedToken: string): RequestHandler {
 
     next();
   };
+}
+
+/**
+ * Apply per-tool scope enforcement middleware for tools/call requests.
+ * Parses the tool name from the JSON-RPC body and checks against the
+ * OAuth scopes provided in req.auth.
+ */
+export function applyScopeEnforcementMiddleware(state: HttpTransportState): void {
+  if (!state.app) return;
+
+  state.app.use((req, res, next) => {
+    interface JsonRpcBody {
+      method?: string;
+      params?: { name?: string };
+    }
+    
+    // Only intercept JSON-RPC POST requests for tools/call
+    const body = req.body as JsonRpcBody | null | undefined;
+    if (req.method !== "POST" || body?.method !== "tools/call") {
+      next();
+      return;
+    }
+
+    const toolName = body.params?.name;
+    if (!toolName) {
+      next();
+      return;
+    }
+
+    // If req.auth is missing, it means either:
+    // 1. Auth is not configured (disabled)
+    // 2. Simple bearer auth is used (which doesn't set req.auth but validates)
+    // In both cases, scope enforcement does not apply.
+    if (!req.auth) {
+      next();
+      return;
+    }
+
+    const hasAccess = scopesGrantToolAccess(req.auth.scopes, toolName);
+
+    if (!hasAccess) {
+      const error = new InsufficientScopeError(
+        `Tool access: ${toolName}`,
+        req.auth.scopes,
+      );
+
+      logger.warning(`Insufficient scope for tool: ${toolName}`, {
+        code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+        toolName,
+        providedScopes: req.auth.scopes,
+      });
+
+      res.status(error.httpStatus);
+      if (error.wwwAuthenticate) {
+        res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+      }
+      res.json({
+        error: "insufficient_scope",
+        error_description: `Access to tool '${toolName}' denied`,
+        tool: toolName,
+      });
+      return;
+    }
+
+    next();
+  });
 }
 
 // =============================================================================

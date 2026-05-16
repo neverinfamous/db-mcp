@@ -38,7 +38,7 @@ import {
   setupStatefulEndpoints,
   setupLegacySSEEndpoints,
 } from "./session.js";
-import { applyAuthMiddleware, setupOAuth } from "./oauth.js";
+import { applyAuthMiddleware, setupOAuth, applyScopeEnforcementMiddleware } from "./oauth.js";
 import type { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 
 const logger = createModuleLogger("HTTP");
@@ -166,6 +166,7 @@ export class HttpTransport {
 
     // Apply auth middleware before MCP endpoints
     applyAuthMiddleware(this.state);
+    applyScopeEnforcementMiddleware(this.state);
 
     // Set up MCP endpoints based on mode
     if (this.state.config.stateless) {

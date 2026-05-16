@@ -13,4 +13,5 @@
 - **Dependency Updates**: Updated `typescript` to `^6.0.3` and bumped various packages including `@playwright/test`, `@types/node`, `@modelcontextprotocol/sdk`, `eslint`, `vitest`, `tsx`, and `better-sqlite3`. Updated GitHub Actions to their latest SHA-pinned versions (`docker/build-push-action`, `actions/upload-artifact`, `docker/login-action`, `github/codeql-action`, `actions/cache`).
 
 ### Fixed
+- Fixed OAuth scope enforcement gap where tools were missing authorization level verification at the HTTP transport layer before being dispatched to the MCP handler.
 - **Code Mode last-expression auto-return** — Bare expressions like `sqlite.help()` now correctly surface their return value from `sqlite_execute_code`. Previously, the async IIFE wrapper silently returned `undefined` for non-`return` statements. New `transformAutoReturn()` utility prepends `return` to the last expression statement, mimicking Node REPL semantics. Applied to both VM and Worker sandbox paths.
