@@ -84,7 +84,7 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Connect to a SQLite database
    */
   override async connect(config: DatabaseConfig): Promise<void> {
-    this.config = config as SqliteConfig;
+    this.config = config;
     const { db, schemaManager } = await connectSqliteDatabase(this, config);
     this.db = db;
     this.schemaManager = schemaManager;

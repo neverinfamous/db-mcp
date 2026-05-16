@@ -104,7 +104,7 @@ export class HttpTransport {
     this.state.app = express();
 
     // DNS rebinding protection — reject requests with unrecognized Host headers
-    this.state.app.use(localhostHostValidation() as unknown as RequestHandler);
+    this.state.app.use(localhostHostValidation());
 
     // Security headers on all responses
     setupSecurityHeaders(this.state);

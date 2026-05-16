@@ -86,8 +86,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Returns the user-configured path, not internal WASM virtual filesystem paths.
    */
   getConfiguredPath(): string {
-    const config = this.config as SqliteConfig | null;
-    return config?.filePath ?? config?.connectionString ?? ":memory:";
+    const config = this.config as SqliteConfig | undefined;
+    const path = config?.filePath ?? config?.connectionString ?? ":memory:";
+    return path;
   }
 
   private db: BetterSqliteDb | null = null;

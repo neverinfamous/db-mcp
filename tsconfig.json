@@ -36,7 +36,9 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "ignoreDeprecations": "5.0",
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]

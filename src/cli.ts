@@ -9,7 +9,6 @@ import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
 import { VERSION } from "./version.js";
 import type {
   McpServerConfig,
-  TransportType,
   DatabaseConfig,
   OAuthConfig,
 } from "./types/index.js";
@@ -32,7 +31,7 @@ function parseArgs(): Partial<McpServerConfig> {
     if (arg === "--transport" || arg === "-t") {
       const value = args[++i];
       if (value === "stdio" || value === "http" || value === "sse") {
-        config.transport = value as TransportType;
+        config.transport = value;
       }
     } else if (arg === "--port" || arg === "-p") {
       const portValue = args[++i];
@@ -119,7 +118,7 @@ function parseArgs(): Partial<McpServerConfig> {
             csv: enableCsv,
             spatialite: enableSpatialite,
           },
-        } as DatabaseConfig);
+        });
       }
     } else if (arg === "--csv") {
       enableCsv = true;

@@ -27,7 +27,7 @@ export function registerToolImpl(
       typeof schema === "object" &&
       schema !== null &&
       "partial" in schema &&
-      typeof (schema as { partial: unknown }).partial === "function"
+      typeof (schema).partial === "function"
     ) {
       // .partial() makes all fields optional so the SDK accepts `{}`.
       // .passthrough() preserves unrecognized keys (e.g., legacy aliases
@@ -60,13 +60,11 @@ export function registerToolImpl(
 
   server.registerTool(
     tool.name,
-    toolOptions as {
-      description?: string;
-      inputSchema?: z.ZodType;
-      outputSchema?: z.ZodType;
-    },
-    async (args: unknown, extra: unknown) => {
+    toolOptions,
+    async (argsOrExtra: unknown, possibleExtra?: unknown) => {
       try {
+        const extra = possibleExtra !== undefined ? possibleExtra : argsOrExtra;
+        const args = possibleExtra !== undefined ? argsOrExtra : {};
         const extraMeta = extra as {
           _meta?: { progressToken?: string | number };
         };

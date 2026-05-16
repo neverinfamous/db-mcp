@@ -315,13 +315,13 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
         // Note: connect() auto-calls start() on SSE transports — do NOT call start() separately
         try {
           await server.connect(
-            sseTransport as Parameters<typeof server.connect>[0],
+            sseTransport,
           );
         } catch {
           // Close existing connection and retry
           await server.close();
           await server.connect(
-            sseTransport as Parameters<typeof server.connect>[0],
+            sseTransport,
           );
         }
       } catch (error) {

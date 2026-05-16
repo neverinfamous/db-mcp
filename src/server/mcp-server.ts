@@ -136,7 +136,7 @@ export class DbMcpServer {
     // Server info tool
     this.server.registerTool(
       "server_info",
-      serverInfoOpts as { description?: string },
+      serverInfoOpts,
       () => {
         const adapterInfo = [];
         for (const [id, adapter] of this.adapters) {
@@ -180,7 +180,7 @@ export class DbMcpServer {
 
     this.server.registerTool(
       "server_health",
-      healthOpts as { description?: string },
+      healthOpts,
       async () => {
         const health: Record<string, unknown> = {
           server: "healthy",
@@ -221,7 +221,7 @@ export class DbMcpServer {
 
     this.server.registerTool(
       "list_adapters",
-      listAdaptersOpts as { description?: string },
+      listAdaptersOpts,
       () => {
         const adapters = [];
         for (const [id, adapter] of this.adapters) {
