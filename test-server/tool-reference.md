@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **140 Native / 115 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **143 Native / 118 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -94,31 +94,34 @@ Text processing, regex, fuzzy matching, phonetic search, and FTS5 full-text sear
 
 ---
 
-## stats (19 Native / 13 WASM tools + Code Mode)
+## stats (22 Native / 16 WASM tools + Code Mode)
 
-Statistical analysis — descriptive stats, percentiles, correlation, regression, distributions, and window functions.
+Statistical analysis — descriptive stats, percentiles, correlation, regression, distributions, anomaly detection, and window functions.
 
-| Tool                          | Description                                                                                                             |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_stats_basic`          | Get basic statistics (count, sum, avg, min, max) for a numeric column.                                                  |
-| `sqlite_stats_count`          | Count rows, optionally distinct values in a column.                                                                     |
-| `sqlite_stats_group_by`       | Aggregate statistics grouped by a column.                                                                               |
-| `sqlite_stats_histogram`      | Create a histogram with specified number of buckets.                                                                    |
-| `sqlite_stats_percentile`     | Calculate percentiles (median, quartiles, etc.) for a column.                                                           |
-| `sqlite_stats_correlation`    | Calculate Pearson correlation coefficient between two numeric columns.                                                  |
-| `sqlite_stats_top_n`          | Get top N values from a column.                                                                                         |
-| `sqlite_stats_distinct`       | Get distinct values from a column.                                                                                      |
-| `sqlite_stats_summary`        | Get summary statistics for multiple columns at once.                                                                    |
-| `sqlite_stats_frequency`      | Get frequency distribution of values in a column.                                                                       |
-| `sqlite_stats_outliers`       | Detect outliers using IQR (Interquartile Range) or Z-score method.                                                      |
-| `sqlite_stats_regression`     | Perform linear or polynomial regression analysis between two columns.                                                   |
-| `sqlite_stats_hypothesis`     | Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.                         |
-| `sqlite_window_row_number`    | Assign sequential row numbers based on ordering. Useful for pagination and ranking. `[NATIVE ONLY]`                     |
-| `sqlite_window_rank`          | Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0–1 range. `[NATIVE ONLY]` |
-| `sqlite_window_lag_lead`      | Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows. `[NATIVE ONLY]`                 |
-| `sqlite_window_running_total` | Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics. `[NATIVE ONLY]`                  |
-| `sqlite_window_moving_avg`    | Calculate moving (rolling) average. Useful for smoothing time series data. `[NATIVE ONLY]`                              |
-| `sqlite_window_ntile`         | Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles. `[NATIVE ONLY]`               |
+| Tool                                | Description                                                                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `sqlite_stats_basic`                | Get basic statistics (count, sum, avg, min, max) for a numeric column.                                                  |
+| `sqlite_stats_count`                | Count rows, optionally distinct values in a column.                                                                     |
+| `sqlite_stats_group_by`             | Aggregate statistics grouped by a column.                                                                               |
+| `sqlite_stats_histogram`            | Create a histogram with specified number of buckets.                                                                    |
+| `sqlite_stats_percentile`           | Calculate percentiles (median, quartiles, etc.) for a column.                                                           |
+| `sqlite_stats_correlation`          | Calculate Pearson correlation coefficient between two numeric columns.                                                  |
+| `sqlite_stats_top_n`                | Get top N values from a column.                                                                                         |
+| `sqlite_stats_distinct`             | Get distinct values from a column.                                                                                      |
+| `sqlite_stats_summary`              | Get summary statistics for multiple columns at once.                                                                    |
+| `sqlite_stats_frequency`            | Get frequency distribution of values in a column.                                                                       |
+| `sqlite_stats_outliers`             | Detect outliers using IQR (Interquartile Range) or Z-score method.                                                      |
+| `sqlite_stats_regression`           | Perform linear or polynomial regression analysis between two columns.                                                   |
+| `sqlite_stats_hypothesis`           | Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.                         |
+| `sqlite_stats_detect_anomalies`     | Detect data distribution anomalies using z-score analysis across numeric columns. Returns per-column risk assessment.   |
+| `sqlite_stats_detect_bloat`         | Score tables by fragmentation/bloat risk using PRAGMA + dbstat metrics. Returns weighted risk scores (0-100).            |
+| `sqlite_stats_detect_schema_risks`  | Score tables by schema health risk: missing FK indexes, no PKs, wide tables, large unindexed tables. Risk scores 0-100. |
+| `sqlite_window_row_number`          | Assign sequential row numbers based on ordering. Useful for pagination and ranking. `[NATIVE ONLY]`                     |
+| `sqlite_window_rank`                | Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0–1 range. `[NATIVE ONLY]` |
+| `sqlite_window_lag_lead`            | Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows. `[NATIVE ONLY]`                 |
+| `sqlite_window_running_total`       | Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics. `[NATIVE ONLY]`                  |
+| `sqlite_window_moving_avg`          | Calculate moving (rolling) average. Useful for smoothing time series data. `[NATIVE ONLY]`                              |
+| `sqlite_window_ntile`               | Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles. `[NATIVE ONLY]`               |
 
 ---
 

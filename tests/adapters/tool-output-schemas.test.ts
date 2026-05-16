@@ -67,7 +67,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
 
   beforeEach(async () => {
     adapter = new NativeSqliteAdapter();
-    await adapter.connect({ type: "sqlite", filePath: ":memory:" });
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
     tools = adapter.getToolDefinitions();
   });
 
@@ -251,6 +251,9 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_stats_outliers", "StatsOutliersOutputSchema"],
       ["sqlite_stats_regression", "StatsRegressionOutputSchema"],
       ["sqlite_stats_hypothesis", "StatsHypothesisOutputSchema"],
+      ["sqlite_stats_detect_anomalies", "StatsDetectAnomaliesOutputSchema"],
+      ["sqlite_stats_detect_bloat", "StatsDetectBloatOutputSchema"],
+      ["sqlite_stats_detect_schema_risks", "StatsDetectSchemaRisksOutputSchema"],
 
       // Window function tools
       ["sqlite_window_row_number", "WindowRowNumberOutputSchema"],

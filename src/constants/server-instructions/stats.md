@@ -1,4 +1,4 @@
-# db-mcp Help — Statistical Analysis (13 core + 6 window)
+# db-mcp Help — Statistical Analysis (16 core + 6 window)
 
 ## Core Statistics (always available)
 
@@ -44,6 +44,27 @@ sqlite_stats_top_n({
   n: 10,
   selectColumns: ["id", "name", "price"],
 });
+```
+
+## Anomaly Detection (3 tools)
+
+```javascript
+// Data distribution anomaly detection — z-score analysis on numeric columns
+sqlite_stats_detect_anomalies({ table: "sales", threshold: 2.0 }); // auto-detects numeric columns
+sqlite_stats_detect_anomalies({
+  table: "metrics",
+  columns: ["latency_ms", "error_rate"],
+  threshold: 3.0,
+  limit: 20,
+});
+
+// Fragmentation/bloat risk scoring — PRAGMA + dbstat analysis
+sqlite_stats_detect_bloat(); // all tables, default limit 50
+sqlite_stats_detect_bloat({ limit: 10 }); // top 10 riskiest
+
+// Schema health risk scoring — FK indexes, PKs, wide tables
+sqlite_stats_detect_schema_risks(); // all tables
+sqlite_stats_detect_schema_risks({ excludeSystemTables: false }); // include SpatiaLite tables
 ```
 
 ## Window Functions (6 tools, Native only)

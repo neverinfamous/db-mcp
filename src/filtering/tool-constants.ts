@@ -7,14 +7,14 @@
  *   core: 9 tools (core/queries.ts, core/tables.ts, core/indexes.ts)
  *   json: 23 tools (json-operations/crud+query+transform.ts, json-helpers/read+write.ts)
  *   text: 13 WASM / 17 Native (text/regex+formatting+search+validate.ts, fts.ts)
- *   stats: 13 WASM / 19 Native (stats/basic+advanced.ts, native: window.ts)
+ *   stats: 16 WASM / 22 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
  *   admin: 26 WASM / 34 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts, native: transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
  *   introspection: 9 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Total: 115 WASM / 140 Native tools
+ *   Total: 118 WASM / 143 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -104,7 +104,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "fts_match_info",
   ],
   stats: [
-    // Stats Tools (13 WASM)
+    // Stats Tools (16 WASM)
     "stats_basic",
     "stats_count",
     "stats_group_by",
@@ -118,6 +118,10 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "stats_outliers",
     "stats_regression",
     "stats_hypothesis",
+    // Anomaly Detection (3 WASM)
+    "stats_detect_anomalies",
+    "stats_detect_bloat",
+    "stats_detect_schema_risks",
     // Window Tools (6 Native-only)
     "window_row_number",
     "window_rank",

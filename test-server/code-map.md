@@ -166,6 +166,8 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | **text** (FTS5)   | `fts.ts`                                  | 4     | `fts_create`, `fts_search`, `fts_rebuild`, `fts_match_info`                                                                   |
 | **stats**         | `stats/basic.ts`                          | 7     | `stats_basic`, `stats_count`, `stats_group_by`, `stats_histogram`, `stats_percentile`, `stats_correlation`, `stats_top_n`     |
 |                   | `stats/advanced.ts`                       | 6     | `stats_distinct`, `stats_summary`, `stats_frequency`, `stats_outliers`, `stats_regression`, `stats_hypothesis`                |
+|                   | `stats/anomaly-detection.ts`              | 2     | `stats_detect_anomalies`, `stats_detect_bloat`                                                                                |
+|                   | `stats/schema-risks.ts`                   | 1     | `stats_detect_schema_risks`                                                                                                   |
 | **vector**        | `vector/storage.ts`                       | 4     | `vector_create_table`, `vector_store`, `vector_batch_store`, `vector_delete`                                                  |
 |                   | `vector/search.ts`                        | 2     | `vector_search`, `vector_get`                                                                                                 |
 |                   | `vector/metadata.ts`                      | 5     | `vector_count`, `vector_stats`, `vector_dimensions`, `vector_normalize`, `vector_distance`                                    |
@@ -364,7 +366,7 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Complete 140/115 tool inventory with descriptions                                                                  |
+| `test-server/tool-reference.md`              | Complete 143/118 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
 | `test-server/test-tools.md`                  | Entry-point protocol (schema ref, reporting format)                                                                |
 | `test-server/test-group-tools.md`            | Per-group deterministic checklists                                                                                 |

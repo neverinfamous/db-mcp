@@ -248,3 +248,115 @@ export const StatsHypothesisOutputSchema = z
     details: z.record(z.string(), z.unknown()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
+
+// =============================================================================
+// Anomaly Detection Output Schemas
+// =============================================================================
+
+/**
+ * sqlite_stats_detect_anomalies output
+ */
+export const StatsDetectAnomaliesOutputSchema = z
+  .object({
+    success: z.boolean(),
+    anomalies: z
+      .array(
+        z.object({
+          column: z.string(),
+          mean: z.number(),
+          stddev: z.number(),
+          anomalyCount: z.number(),
+          totalRows: z.number(),
+          topDeviations: z.array(
+            z.object({
+              rowid: z.number(),
+              value: z.number(),
+              zScore: z.number(),
+            }),
+          ),
+        }),
+      )
+      .optional(),
+    riskLevel: z.enum(["low", "moderate", "high", "critical"]).optional(),
+    totalColumnsAnalyzed: z.number().optional(),
+    totalAnomalies: z.number().optional(),
+    summary: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_stats_detect_bloat output
+ */
+export const StatsDetectBloatOutputSchema = z
+  .object({
+    success: z.boolean(),
+    database: z
+      .object({
+        totalSizeBytes: z.number(),
+        pageSize: z.number(),
+        totalPages: z.number(),
+        freePages: z.number(),
+        fragmentationPct: z.number(),
+        journalMode: z.string(),
+        autoVacuum: z.string(),
+      })
+      .optional(),
+    tables: z
+      .array(
+        z.object({
+          name: z.string(),
+          sizeBytes: z.number(),
+          pageCount: z.number(),
+          rowCount: z.number(),
+          pctOfTotal: z.number(),
+          riskScore: z.number(),
+          riskLevel: z.enum(["low", "moderate", "high", "critical"]),
+          factors: z.object({
+            fragmentation: z.number(),
+            tableSizeImpact: z.number(),
+            autoVacuumStatus: z.number(),
+            journalMode: z.number(),
+          }),
+          recommendations: z.array(z.string()),
+        }),
+      )
+      .optional(),
+    highRiskCount: z.number().optional(),
+    totalAnalyzed: z.number().optional(),
+    summary: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_stats_detect_schema_risks output
+ */
+export const StatsDetectSchemaRisksOutputSchema = z
+  .object({
+    success: z.boolean(),
+    tables: z
+      .array(
+        z.object({
+          name: z.string(),
+          rowCount: z.number(),
+          columnCount: z.number(),
+          indexCount: z.number(),
+          hasPrimaryKey: z.boolean(),
+          foreignKeyCount: z.number(),
+          unindexedForeignKeys: z.array(z.string()),
+          riskScore: z.number(),
+          riskLevel: z.enum(["low", "moderate", "high", "critical"]),
+          factors: z.object({
+            missingFkIndexes: z.number(),
+            wideTable: z.number(),
+            noPrimaryKey: z.number(),
+            largeUnindexed: z.number(),
+          }),
+          recommendations: z.array(z.string()),
+        }),
+      )
+      .optional(),
+    highRiskCount: z.number().optional(),
+    totalAnalyzed: z.number().optional(),
+    summary: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);

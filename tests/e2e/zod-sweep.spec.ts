@@ -142,7 +142,7 @@ test.describe("Zod Sweep: Text", () => {
 });
 
 // =============================================================================
-// Stats Group (13 WASM tools with required params)
+// Stats Group (14 WASM tools with required params)
 // =============================================================================
 
 test.describe("Zod Sweep: Stats", () => {
@@ -160,6 +160,8 @@ test.describe("Zod Sweep: Stats", () => {
     "sqlite_stats_outliers",
     "sqlite_stats_regression",
     "sqlite_stats_hypothesis",
+    // Anomaly Detection (detect_bloat and detect_schema_risks accept {} via .default())
+    "sqlite_stats_detect_anomalies",
   ];
 
   for (const tool of tools) {
