@@ -147,6 +147,33 @@ sqlite_create_csv_table({
 \`\`\`javascript
 sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to memo://insights
 \`\`\``],
+  ["core", `# db-mcp Help — Core Operations (14 tools)
+
+## Basic Queries
+
+- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10" })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements
+- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, or DDL statements
+
+## Tables & Schema
+
+- \`sqlite_list_tables({ excludeSystemTables?: boolean })\` — list all tables in the database (system tables excluded by default)
+- \`sqlite_describe_table({ table: "users" })\` — get detailed schema, columns, and foreign keys for a specific table
+- \`sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })\` — create a new table
+- \`sqlite_drop_table({ table: "users", ifExists?: true })\` — drop an existing table
+
+## Indexes
+
+- \`sqlite_get_indexes({ table?: "users", excludeSystemIndexes?: true })\` — list indexes (optionally filtered by table)
+- \`sqlite_create_index({ indexName: "idx_users_email", table: "users", columns: ["email"], unique?: true })\` — create a new index
+- \`sqlite_drop_index({ indexName: "idx_users_email", ifExists?: true })\` — drop an existing index
+
+## Convenience Tools (High-Level Data Operations)
+
+- \`sqlite_upsert({ table: "users", data: [{ id: 1, name: "Alice" }], conflictColumns: ["id"], updateColumns: ["name"] })\` — insert or update rows using \`ON CONFLICT\` (or \`REPLACE\` fallback)
+- \`sqlite_batch_insert({ table: "users", data: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }] })\` — insert multiple rows in a single batch
+- \`sqlite_count({ table: "users", whereClause?: "status = 'active'" })\` — count rows in a table (faster than a full query)
+- \`sqlite_exists({ table: "users", whereClause: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
+- \`sqlite_truncate({ table: "users" })\` — quickly delete all rows from a table (executes \`DELETE FROM table\`)`],
   ["geo", `# db-mcp Help — Geospatial Operations (4 basic + 7 SpatiaLite)
 
 ## Basic Geo (always available — Haversine formula)
@@ -375,7 +402,7 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
 
 - \`excludeSystemTables\` defaults to \`true\` — SpatiaLite system tables are hidden for cleaner output. Pass \`false\` to include them
 - \`sqlite_migration_risks\` analyzes DDL text statically — it does NOT execute the statements`],
-  ["json", `# db-mcp Help — JSON Operations (23 tools)
+  ["json", `# db-mcp Help — JSON Operations (24 tools)
 
 ## Collection & CRUD
 
@@ -439,6 +466,10 @@ sqlite_json_group_object({
 - \`sqlite_json_pretty({ table, column, whereClause? })\` — format JSON with indentation
 - \`sqlite_json_valid({ table, column })\` — check if values are valid JSON
 - \`sqlite_json_analyze_schema({ table, column })\` — infer schema types
+
+## Security
+
+- \`sqlite_json_security_scan({ table, column, sampleSize?, whereClause? })\` — scan JSON column for sensitive keys (password, token, ssn, etc.), SQL injection patterns, and XSS patterns. Returns \`riskLevel\` (low/medium/high) and issue details. Use larger \`sampleSize\` for thorough scans
 
 ## JSONB Optimization (SQLite 3.45+)
 

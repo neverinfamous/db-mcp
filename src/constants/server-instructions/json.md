@@ -1,4 +1,4 @@
-# db-mcp Help — JSON Operations (23 tools)
+# db-mcp Help — JSON Operations (24 tools)
 
 ## Collection & CRUD
 
@@ -62,6 +62,10 @@ sqlite_json_group_object({
 - `sqlite_json_pretty({ table, column, whereClause? })` — format JSON with indentation
 - `sqlite_json_valid({ table, column })` — check if values are valid JSON
 - `sqlite_json_analyze_schema({ table, column })` — infer schema types
+
+## Security
+
+- `sqlite_json_security_scan({ table, column, sampleSize?, whereClause? })` — scan JSON column for sensitive keys (password, token, ssn, etc.), SQL injection patterns, and XSS patterns. Returns `riskLevel` (low/medium/high) and issue details. Use larger `sampleSize` for thorough scans
 
 ## JSONB Optimization (SQLite 3.45+)
 

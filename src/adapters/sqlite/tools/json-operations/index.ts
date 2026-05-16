@@ -25,6 +25,7 @@ import {
   createJsonStorageInfoTool,
   createJsonNormalizeColumnTool,
 } from "./transform.js";
+import { createJsonSecurityScanTool } from "./security.js";
 
 /**
  * Get all JSON operation tools
@@ -48,5 +49,6 @@ export function getJsonOperationTools(
     createJsonbConvertTool(adapter),
     createJsonStorageInfoTool(adapter),
     createJsonNormalizeColumnTool(adapter),
+    createJsonSecurityScanTool(adapter),
   ];
 }

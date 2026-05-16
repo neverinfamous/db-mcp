@@ -46,6 +46,8 @@
         "AUDIT_READS",
         "-e",
         "AUDIT_BACKUP_DATA",
+        "-e",
+        "AUDIT_LOG",
         "writenotenow/db-mcp:latest",
         "--sqlite-native",
         "/app/data/my-database.db",
@@ -73,7 +75,8 @@
         "AUDIT_BACKUP": "false",
         "AUDIT_REDACT": "false",
         "AUDIT_READS": "false",
-        "AUDIT_BACKUP_DATA": "false"
+        "AUDIT_BACKUP_DATA": "false",
+        "AUDIT_LOG": ""
       }
     }
   }

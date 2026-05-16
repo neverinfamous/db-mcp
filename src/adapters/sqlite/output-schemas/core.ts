@@ -135,3 +135,23 @@ export const DropIndexOutputSchema = z
     message: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_count output
+ */
+export const CountOutputSchema = z
+  .object({
+    success: z.boolean(),
+    count: z.number().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_exists output
+ */
+export const ExistsOutputSchema = z
+  .object({
+    success: z.boolean(),
+    exists: z.boolean().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);

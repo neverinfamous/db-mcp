@@ -308,3 +308,38 @@ export const JsonNormalizeColumnOutputSchema = z
     firstErrorDetail: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
+
+// =============================================================================
+// JSON Security Scan Output Schema (1 tool)
+// =============================================================================
+
+/**
+ * sqlite_json_security_scan output
+ *
+ * Mirrors pg_jsonb_security_scan for cross-server parity.
+ */
+export const JsonSecurityScanOutputSchema = z
+  .object({
+    success: z.boolean(),
+    scannedRows: z.number().optional().describe("Number of rows scanned"),
+    issues: z
+      .array(
+        z.object({
+          type: z
+            .string()
+            .describe(
+              "Issue type: sensitive_key | sql_injection_pattern | xss_pattern",
+            ),
+          key: z.string().optional().describe("Affected JSON key"),
+          count: z.number().optional().describe("Occurrence count"),
+        }),
+      )
+      .optional()
+      .describe("Security issues found"),
+    riskLevel: z
+      .enum(["low", "medium", "high"])
+      .optional()
+      .describe("Overall risk level"),
+  })
+  .extend(ErrorFieldsMixin.shape);
+

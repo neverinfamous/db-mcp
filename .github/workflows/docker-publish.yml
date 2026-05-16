@@ -300,7 +300,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: ${{ env.IMAGE_NAME }}
           readme-filepath: ./DOCKER_README.md
-          short-description: "SQLite MCP Server — 139 Tools, Code Mode, OAuth 2.1, Dual-Transport HTTP/SSE & Tool Filtering."
+          short-description: "SQLite MCP Server — 149 Tools, Code Mode, OAuth 2.1, Dual-Transport HTTP/SSE & Tool Filtering."
 
       - name: Deployment Summary
         if: github.ref == 'refs/heads/main'

@@ -342,6 +342,17 @@ export const CreateJsonCollectionSchema = z.object({
     .describe("JSON path indexes to create"),
 });
 
+// JSON Security Scan
+export const JsonSecurityScanSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("JSON column to scan for security issues"),
+  sampleSize: z.preprocess(
+    (val) => (typeof val === "number" ? val : undefined),
+    z.number().optional().default(100).describe("Number of rows to sample"),
+  ),
+  whereClause: z.string().optional().describe("Optional WHERE clause"),
+});
+
 // Export schema types
 export type ReadQueryInput = z.infer<typeof ReadQuerySchema>;
 export type WriteQueryInput = z.infer<typeof WriteQuerySchema>;
@@ -366,3 +377,4 @@ export type AnalyzeJsonSchemaInput = z.infer<typeof AnalyzeJsonSchemaSchema>;
 export type CreateJsonCollectionInput = z.infer<
   typeof CreateJsonCollectionSchema
 >;
+export type JsonSecurityScanInput = z.infer<typeof JsonSecurityScanSchema>;

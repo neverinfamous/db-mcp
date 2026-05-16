@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **143 Native / 118 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **149 Native / 124 WASM tools** organized by 9 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -18,7 +18,7 @@ Sandboxed JavaScript execution that exposes all 9 tool groups through the `sqlit
 
 ---
 
-## core (9 tools + Code Mode)
+## core (14 tools + Code Mode)
 
 Read/write queries, table and index management, and schema discovery.
 
@@ -26,6 +26,11 @@ Read/write queries, table and index management, and schema discovery.
 | ----------------------- | --------------------------------------------------------------------------------------------------------- |
 | `sqlite_read_query`     | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety.    |
 | `sqlite_write_query`    | Execute an INSERT, UPDATE, or DELETE query. Returns affected row count. Use parameter binding for safety. |
+| `sqlite_upsert`         | Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).        |
+| `sqlite_batch_insert`   | Insert multiple rows in a single statement.                                                               |
+| `sqlite_count`          | Count rows in a table, optionally filtered by a WHERE clause.                                             |
+| `sqlite_exists`         | Check whether rows exist in a table, optionally filtered by a WHERE clause.                               |
+| `sqlite_truncate`       | Truncate a table (executes DELETE FROM table).                                                            |
 | `sqlite_list_tables`    | List all tables and views in the database with their column counts.                                       |
 | `sqlite_describe_table` | Get detailed schema information for a table including columns, types, and constraints.                    |
 | `sqlite_create_table`   | Create a new table in the database with specified columns and constraints.                                |
@@ -36,7 +41,7 @@ Read/write queries, table and index management, and schema discovery.
 
 ---
 
-## json (23 tools + Code Mode)
+## json (24 tools + Code Mode)
 
 Comprehensive JSON manipulation — read, write, transform, validate, and analyze JSON documents stored in SQLite.
 
@@ -65,6 +70,7 @@ Comprehensive JSON manipulation — read, write, transform, validate, and analyz
 | `sqlite_jsonb_convert`          | Convert a text JSON column to JSONB binary format for faster processing. Requires SQLite 3.45+.                      |
 | `sqlite_json_storage_info`      | Analyze storage format of a JSON column (text vs JSONB) and report statistics.                                       |
 | `sqlite_json_normalize_column`  | Normalize JSON data in a column (sort keys, compact format) for consistent storage and comparison.                   |
+| `sqlite_json_security_scan`     | Scan JSON columns for sensitive keys (PII/credentials), SQL injection patterns, and XSS attack vectors.              |
 
 ---
 

@@ -3,11 +3,13 @@
 ### Added
 
 - **Initialization SQL**: Added `initializationSql?: string[]` to `SqliteConfig` for SQLite connections, enabling per-connection session setup (e.g. `PRAGMA foreign_keys = ON;`). This executes exactly once when the adapter connects, satisfying the requirement for session-level guardrails across both Native (`better-sqlite3`) and WASM (`sql.js`) backends.
+- **Convenience Tools**: Added 5 new tools to the `core` group (`sqlite_upsert`, `sqlite_batch_insert`, `sqlite_count`, `sqlite_exists`, `sqlite_truncate`) to achieve complete feature parity with `postgres-mcp`. These tools are available in both Native and WASM backends, with `sqlite_upsert` utilizing SQLite's native `INSERT ON CONFLICT DO UPDATE` or `INSERT OR REPLACE` fallback.
 - **`sqlite_transaction_status`**: New read-only tool to check whether a SQLite transaction is currently active (native backend only). Returns `{status: "active" | "none", active: boolean}`. Ported from `pg_transaction_status` for cross-server parity.
 - **Audit Logging**: JSONL audit trail with async-buffered writes, log rotation (10MB, 5-file cascade), and `sqlite://audit` resource for agent access to the last 50 entries. Configurable via `--audit-log <path>`, `--audit-redact`, `--audit-reads` CLI flags or `AUDIT_LOG`, `AUDIT_REDACT`, `AUDIT_READS` environment variables. Write/admin tools are always logged; read tools optionally.
 - **DDL Backup Snapshots**: Pre-mutation DDL capture for destructive operations (`sqlite_drop_table`, `sqlite_drop_index`, `sqlite_drop_view`, `sqlite_import_csv`, `sqlite_backup`). Gzip-compressed snapshots with retention policy (age + count limits). Tools: `sqlite_audit_list_backups`, `sqlite_audit_get_backup`, `sqlite_audit_cleanup`. Enabled via `--audit-backup` / `AUDIT_BACKUP`.
 - **Token Burn-Rate**: Every tool response now includes `_meta.tokenEstimate` (~4 bytes/token heuristic). Code Mode responses include `metrics.tokenEstimate`. Matches postgres-mcp and mysql-mcp for cross-server parity.
 - **Anomaly Detection Suite**: 3 new stats tools for cross-server parity with postgres-mcp and mysql-mcp. `sqlite_stats_detect_anomalies` (z-score data distribution analysis), `sqlite_stats_detect_bloat` (multi-factor fragmentation/bloat risk scoring via PRAGMA + dbstat), `sqlite_stats_detect_schema_risks` (schema health risk scoring — missing FK indexes, wide tables, missing PKs). All read-only, available in both WASM and Native backends, with Code Mode support via `sqlite.stats.*`.
+- **JSON Security Scan**: New `sqlite_json_security_scan` tool for cross-server parity with `pg_jsonb_security_scan`. Scans JSON columns for sensitive keys (password, token, ssn, etc.), SQL injection patterns, and XSS attack vectors. Returns `riskLevel` (low/medium/high) and detailed issue breakdown. Uses JS-side regex scanning on sampled rows. Available in both WASM and Native backends.
 
 ### Security
 
@@ -22,7 +24,7 @@
 ### Changed
 
 - **Dependency Updates**: Updated `typescript` to `^6.0.3` and bumped various packages including `@playwright/test`, `@types/node`, `@modelcontextprotocol/sdk`, `eslint`, `vitest`, `tsx`, and `better-sqlite3`. Updated GitHub Actions to their latest SHA-pinned versions (`docker/build-push-action`, `actions/upload-artifact`, `docker/login-action`, `github/codeql-action`, `actions/cache`).
-- **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, and `test-server/code-map.md` to reflect the expanded inventory (143 Native / 118 WASM tools).
+- **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, `test-server/tool-reference.md`, and `test-server/code-map.md` to reflect the expanded inventory (149 Native / 124 WASM tools), including the 5 new core convenience tools and JSON security scan.
 
 ### Fixed
 

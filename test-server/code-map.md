@@ -152,6 +152,7 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | ----------------- | ----------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------- |
 | **codemode**      | `codemode.ts`                             | 1     | `sqlite_execute_code`                                                                                                         |
 | **core**          | `core/queries.ts`                         | 2     | `sqlite_read_query`, `sqlite_write_query`                                                                                     |
+|                   | `core/convenience.ts`                     | 5     | `sqlite_upsert`, `sqlite_batch_insert`, `sqlite_count`, `sqlite_exists`, `sqlite_truncate`                                    |
 |                   | `core/tables.ts`                          | 4     | `create_table`, `list_tables`, `describe_table`, `drop_table`                                                                 |
 |                   | `core/indexes.ts`                         | 3     | `get_indexes`, `create_index`, `drop_index`                                                                                   |
 | **json**          | `json-operations/crud.ts`                 | 3     | `json_insert`, `json_update`, `json_select`                                                                                   |
@@ -366,7 +367,7 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Complete 143/118 tool inventory with descriptions                                                                  |
+| `test-server/tool-reference.md`              | Complete 149/124 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
 | `test-server/test-tools.md`                  | Entry-point protocol (schema ref, reporting format)                                                                |
 | `test-server/test-group-tools.md`            | Per-group deterministic checklists                                                                                 |

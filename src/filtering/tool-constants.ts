@@ -4,8 +4,8 @@
  * Defines the tool groups and meta-groups used for filtering.
  *
  * Actual tool groups (from code audit):
- *   core: 9 tools (core/queries.ts, core/tables.ts, core/indexes.ts)
- *   json: 23 tools (json-operations/crud+query+transform.ts, json-helpers/read+write.ts)
+ *   core: 14 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts)
+ *   json: 24 tools (json-operations/crud+query+transform+security.ts, json-helpers/read+write.ts)
  *   text: 13 WASM / 17 Native (text/regex+formatting+search+validate.ts, fts.ts)
  *   stats: 16 WASM / 22 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
@@ -14,7 +14,7 @@
  *   introspection: 9 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Total: 118 WASM / 143 Native tools
+ *   Total: 124 WASM / 149 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -53,6 +53,11 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "get_indexes",
     "create_index",
     "drop_index",
+    "upsert",
+    "batch_insert",
+    "count",
+    "exists",
+    "truncate",
   ],
   json: [
     // CRUD + Query + Collection (8: crud.ts, query.ts, write.ts)
@@ -81,6 +86,8 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "jsonb_convert",
     "json_storage_info",
     "json_normalize_column",
+    // Security (1: security.ts)
+    "json_security_scan",
   ],
   text: [
     // Text Tools (13 WASM)
@@ -226,25 +233,25 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text + Codemode (46 WASM / 50 Native)
+  // General development - Core + JSON + Text + Codemode (52 WASM / 56 Native)
   starter: ["core", "json", "text", "codemode"],
 
-  // Data analysis - Core + JSON + Stats + Codemode (46 WASM / 52 Native)
+  // Data analysis - Core + JSON + Stats + Codemode (52 WASM / 58 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector + Codemode (34 WASM / 38 Native)
+  // Search workloads - Core + Text + Vector + Codemode (39 WASM / 43 Native)
   search: ["core", "text", "vector", "codemode"],
 
-  // Geospatial workloads - Core + Geo + Vector + Codemode (25 WASM / 32 Native)
+  // Geospatial workloads - Core + Geo + Vector + Codemode (30 WASM / 37 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
-  // Schema development - Core + Introspection + Migration + Codemode (25 tools)
+  // Schema development - Core + Introspection + Migration + Codemode (30 tools)
   "dev-schema": ["core", "introspection", "migration", "codemode"],
 
-  // Bare minimum - Core + Codemode (10 tools)
+  // Bare minimum - Core + Codemode (15 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (115 WASM / 140 Native)
+  // All tools enabled (124 WASM / 149 Native)
   full: [
     "core",
     "json",
