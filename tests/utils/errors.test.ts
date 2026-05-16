@@ -21,6 +21,7 @@ import {
   ResourceNotFoundError,
   ConfigurationError,
   InternalError,
+  ExtensionNotAvailableError,
   ErrorCategory,
   formatHandlerError,
   wrapError,
@@ -345,6 +346,7 @@ describe("isDbMcpError", () => {
     expect(isDbMcpError(new ValidationError("Test"))).toBe(true);
     expect(isDbMcpError(new ConnectionError("Test"))).toBe(true);
     expect(isDbMcpError(new QueryError("Test"))).toBe(true);
+    expect(isDbMcpError(new ExtensionNotAvailableError("csv"))).toBe(true);
   });
 
   it("should return false for standard Error", () => {
@@ -356,6 +358,87 @@ describe("isDbMcpError", () => {
     expect(isDbMcpError(null)).toBe(false);
     expect(isDbMcpError(undefined)).toBe(false);
     expect(isDbMcpError({})).toBe(false);
+  });
+});
+
+// =============================================================================
+// ExtensionNotAvailableError Tests
+// =============================================================================
+
+describe("ExtensionNotAvailableError", () => {
+  it("should create with extension name", () => {
+    const error = new ExtensionNotAvailableError("SpatiaLite");
+
+    expect(error).toBeInstanceOf(DbMcpError);
+    expect(error).toBeInstanceOf(ExtensionNotAvailableError);
+    expect(error.message).toBe(
+      "Extension 'SpatiaLite' is not installed or available",
+    );
+    expect(error.code).toBe("EXTENSION_MISSING");
+    expect(error.category).toBe(ErrorCategory.CONFIGURATION);
+    expect(error.name).toBe("ExtensionNotAvailableError");
+    expect(error.details).toEqual({ extension: "SpatiaLite" });
+    expect(error.recoverable).toBe(false);
+  });
+
+  it("should have default suggestion", () => {
+    const error = new ExtensionNotAvailableError("csv");
+
+    expect(error.suggestion).toContain("csv");
+    expect(error.suggestion).toContain("environment variable");
+  });
+
+  it("should allow custom suggestion override", () => {
+    const error = new ExtensionNotAvailableError("csv", {
+      suggestion:
+        "CSV extension not available in WASM mode. Use native SQLite.",
+    });
+
+    expect(error.suggestion).toBe(
+      "CSV extension not available in WASM mode. Use native SQLite.",
+    );
+  });
+
+  it("should merge extension name with additional details", () => {
+    const error = new ExtensionNotAvailableError("SpatiaLite", {
+      details: { wasmLimitation: true, platform: "wasm" },
+    });
+
+    expect(error.details).toEqual({
+      extension: "SpatiaLite",
+      wasmLimitation: true,
+      platform: "wasm",
+    });
+  });
+
+  it("should handle various extension names", () => {
+    const extensions = ["SpatiaLite", "csv", "rtree", "FTS5", "xsv0"];
+
+    for (const ext of extensions) {
+      const error = new ExtensionNotAvailableError(ext);
+      expect(error.message).toContain(ext);
+      expect(error.details?.["extension"]).toBe(ext);
+    }
+  });
+
+  it("should produce correct toResponse shape", () => {
+    const error = new ExtensionNotAvailableError("csv");
+    const response = error.toResponse();
+
+    expect(response.success).toBe(false);
+    expect(response.code).toBe("EXTENSION_MISSING");
+    expect(response.category).toBe(ErrorCategory.CONFIGURATION);
+    expect(response.recoverable).toBe(false);
+    expect(response.details).toEqual({ extension: "csv" });
+  });
+
+  it("should work with formatHandlerError", () => {
+    const error = new ExtensionNotAvailableError("rtree");
+    const response = formatHandlerError(error);
+
+    expect(response.success).toBe(false);
+    expect(response.code).toBe("EXTENSION_MISSING");
+    expect(response.category).toBe(ErrorCategory.CONFIGURATION);
   });
 });
 

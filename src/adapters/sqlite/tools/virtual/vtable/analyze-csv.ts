@@ -5,7 +5,10 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import { formatHandlerError } from "../../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ExtensionNotAvailableError,
+} from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { AnalyzeCsvSchemaSchema } from "../helpers.js";
 import { AnalyzeCsvSchemaOutputSchema } from "../../../output-schemas/index.js";
@@ -50,18 +53,12 @@ export function createAnalyzeCsvSchemaTool(
       const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
       if (!csvAvailable) {
         const isWasm = !(await isModuleAvailable(adapter, "rtree"));
-        return {
-          success: false,
-          error: isWasm
+        throw new ExtensionNotAvailableError("csv", {
+          suggestion: isWasm
             ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
             : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
-          code: "VALIDATION_ERROR",
-          category: "validation",
-          hasHeader: false,
-          rowCount: 0,
-          columns: [],
-          wasmLimitation: isWasm,
-        };
+          details: { wasmLimitation: isWasm },
+        });
       }
 
       const tempName = `_csv_analyze_${Date.now()}`;

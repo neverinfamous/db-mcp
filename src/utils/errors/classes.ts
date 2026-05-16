@@ -218,3 +218,34 @@ export class TransactionError extends DbMcpError {
     });
   }
 }
+
+/**
+ * Extension not available error
+ *
+ * Used when a required SQLite extension (SpatiaLite, CSV, R-Tree, etc.)
+ * is not installed or cannot be loaded in the current runtime.
+ */
+export class ExtensionNotAvailableError extends DbMcpError {
+  constructor(
+    extensionName: string,
+    options?: {
+      suggestion?: string | undefined;
+      details?: Record<string, unknown> | undefined;
+      cause?: Error | undefined;
+    },
+  ) {
+    super(
+      `Extension '${extensionName}' is not installed or available`,
+      "EXTENSION_MISSING",
+      ErrorCategory.CONFIGURATION,
+      {
+        suggestion:
+          options?.suggestion ??
+          `Install or enable the '${extensionName}' extension. Check environment variable or CLI flag configuration.`,
+        details: { extension: extensionName, ...options?.details },
+        recoverable: false,
+        cause: options?.cause,
+      },
+    );
+  }
+}

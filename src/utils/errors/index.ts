@@ -18,6 +18,7 @@ export {
   AuthenticationError,
   AuthorizationError,
   TransactionError,
+  ExtensionNotAvailableError,
 } from "./classes.js";
 export {
   type ErrorResponse,

@@ -1,11 +1,5 @@
-/**
- * SpatiaLite Extension Loader
- *
- * Utilities for loading, checking, and ensuring the SpatiaLite extension.
- */
-
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
-import { DbMcpError, ErrorCategory } from "../../../../utils/errors/index.js";
+import { ExtensionNotAvailableError } from "../../../../utils/errors/index.js";
 
 // SpatiaLite extension paths to try (platform-aware)
 const SPATIALITE_PATHS = [
@@ -105,11 +99,10 @@ export function ensureSpatialite(adapter: NativeSqliteAdapter): void {
   if (!isSpatialiteLoaded(adapter)) {
     const result = tryLoadSpatialite(adapter);
     if (!result.success) {
-      throw new DbMcpError(
-        result.error ?? "Failed to load SpatiaLite",
-        "SPATIALITE_LOAD_FAILED",
-        ErrorCategory.CONNECTION,
-      );
+      throw new ExtensionNotAvailableError("SpatiaLite", {
+        suggestion:
+          "Install mod_spatialite and set SPATIALITE_PATH environment variable.",
+      });
     }
   }
 }

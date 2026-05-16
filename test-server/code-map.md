@@ -281,15 +281,17 @@ The `DbMcpError` constructor auto-refines generic codes (`DB_QUERY_FAILED`, `DB_
 
 ```
 DbMcpError (base.ts)
-├── ValidationError         code: VALIDATION_ERROR      category: validation
-├── ConnectionError         code: CONNECTION_ERROR       category: connection      recoverable: true
-├── QueryError              code: QUERY_ERROR            category: query            accepts: sql option
-├── PermissionError         code: PERMISSION_ERROR       category: permission
-├── ResourceNotFoundError   code: RESOURCE_NOT_FOUND     category: resource         accepts: resourceType, resourceName
-├── ConfigurationError      code: CONFIG_ERROR           category: config
-├── InternalError           code: INTERNAL_ERROR         category: internal
-├── AuthenticationError     code: AUTHENTICATION_ERROR   category: authentication
-└── AuthorizationError      code: AUTHORIZATION_ERROR    category: authorization
+├── ValidationError              code: VALIDATION_ERROR      category: validation
+├── ConnectionError              code: CONNECTION_ERROR       category: connection      recoverable: true
+├── QueryError                   code: QUERY_ERROR            category: query            accepts: sql option
+├── PermissionError              code: PERMISSION_ERROR       category: permission
+├── ResourceNotFoundError        code: RESOURCE_NOT_FOUND     category: resource         accepts: resourceType, resourceName
+├── ConfigurationError           code: CONFIG_ERROR           category: config
+├── InternalError                code: INTERNAL_ERROR         category: internal
+├── AuthenticationError          code: AUTHENTICATION_ERROR   category: authentication
+├── AuthorizationError           code: AUTHORIZATION_ERROR    category: authorization
+├── TransactionError             code: TRANSACTION_ERROR      category: query            recoverable: true
+└── ExtensionNotAvailableError   code: EXTENSION_MISSING      category: config           accepts: extensionName
 ```
 
 **Usage pattern** — all tool handlers:

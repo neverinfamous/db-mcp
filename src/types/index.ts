@@ -56,4 +56,5 @@ export {
   ValidationError,
   AuthenticationError,
   AuthorizationError,
+  ExtensionNotAvailableError,
 } from "../utils/errors/index.js";

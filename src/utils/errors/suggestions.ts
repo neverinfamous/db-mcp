@@ -215,6 +215,15 @@ const ERROR_SUGGESTIONS: {
     suggestion: "Internal sandbox error. Retry the operation.",
     category: ErrorCategory.INTERNAL,
   },
+
+  // Extension errors
+  {
+    pattern: /extension.*not (available|installed|loaded|found)/i,
+    suggestion:
+      "Extension is not available. Check CLI flags, environment variables, or platform compatibility.",
+    category: ErrorCategory.CONFIGURATION,
+    code: "EXTENSION_MISSING",
+  },
 ];
 
 /**

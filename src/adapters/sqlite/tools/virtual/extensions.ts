@@ -11,7 +11,10 @@ import type {
 } from "../../../../types/index.js";
 import { idempotent } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ExtensionNotAvailableError,
+} from "../../../../utils/errors/index.js";
 import { isModuleAvailable } from "./analysis.js";
 import { CreateRtreeTableSchema, CreateSeriesTableSchema } from "./helpers.js";
 import {
@@ -52,17 +55,10 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
         // Check if rtree module is available
         const rtreeAvailable = await isModuleAvailable(adapter, "rtree");
         if (!rtreeAvailable) {
-          return {
-            success: false,
-            error:
-              "R-Tree extension not available. Use a SQLite build with rtree support.",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            message: "",
-            sql: "",
-            columns: [],
-            wasmLimitation: true,
-          };
+          throw new ExtensionNotAvailableError("rtree", {
+            suggestion:
+              "R-Tree extension not available. Use a SQLite build with R-Tree support.",
+          });
         }
 
         // Build column list based on dimensions

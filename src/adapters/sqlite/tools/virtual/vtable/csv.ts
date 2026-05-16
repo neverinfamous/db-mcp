@@ -6,7 +6,10 @@ import type {
 } from "../../../../../types/index.js";
 import { idempotent } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
-import { formatHandlerError } from "../../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ExtensionNotAvailableError,
+} from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { CreateCsvTableSchema } from "../helpers.js";
 import { CreateCsvTableOutputSchema } from "../../../output-schemas/index.js";
@@ -42,18 +45,12 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
         const { available: csvAvailable } = await isCsvModuleAvailable(adapter);
         if (!csvAvailable) {
           const isWasm = !(await isModuleAvailable(adapter, "rtree"));
-          return {
-            success: false,
-            error: isWasm
+          throw new ExtensionNotAvailableError("csv", {
+            suggestion: isWasm
               ? "CSV extension not available in WASM mode. Use native SQLite with the csv extension."
               : "CSV extension not available. Load the csv/xsv extension using --csv flag or set CSV_EXTENSION_PATH.",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            message: "",
-            sql: "",
-            columns: [],
-            wasmLimitation: isWasm,
-          };
+            details: { wasmLimitation: isWasm },
+          });
         }
 
         const options: string[] = [
