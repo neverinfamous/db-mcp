@@ -91,6 +91,15 @@ export async function connectSqliteDatabase(
       return (versionResult[0]?.values[0]?.[0] as string) ?? "0.0.0";
     }, log);
 
+    if (sqliteConfig.initializationSql && Array.isArray(sqliteConfig.initializationSql)) {
+      for (const sql of sqliteConfig.initializationSql) {
+        db.run(sql);
+      }
+      log.info(`Executed ${sqliteConfig.initializationSql.length} initialization SQL statements`, {
+        code: "SQLITE_INIT_SQL",
+      });
+    }
+
     const schemaManager = new SchemaManager(adapter);
 
     return { db, sqlJsInstance, schemaManager };

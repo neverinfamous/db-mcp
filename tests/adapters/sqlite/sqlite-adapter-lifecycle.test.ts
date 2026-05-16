@@ -91,6 +91,27 @@ describe("connectSqliteDatabase", () => {
 
     result.db.close();
   });
+
+  it("should execute initializationSql on connect", async () => {
+    const adapter = createMockAdapter();
+
+    const result = await connectSqliteDatabase(
+      adapter as any,
+      {
+        type: "sqlite",
+        connectionString: ":memory:",
+        initializationSql: [
+          "CREATE TABLE init_test (id INTEGER PRIMARY KEY, val TEXT)",
+          "INSERT INTO init_test (id, val) VALUES (1, 'initialized')",
+        ],
+      } as any,
+    );
+
+    const queryResult = result.db.exec("SELECT val FROM init_test WHERE id = 1");
+    expect(queryResult[0]?.values[0]?.[0]).toBe("initialized");
+
+    result.db.close();
+  });
 });
 
 // =============================================================================

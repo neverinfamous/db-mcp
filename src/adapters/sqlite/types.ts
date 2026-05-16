@@ -58,6 +58,9 @@ export interface SqliteConfig extends DatabaseConfig {
   /** Path to SQLite database file (use ':memory:' for in-memory) */
   filePath?: string;
 
+  /** Optional SQL statements to run immediately after connection */
+  initializationSql?: string[];
+
   /** SQLite-specific options */
   options?: SqliteOptions;
 }
