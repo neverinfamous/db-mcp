@@ -53,26 +53,79 @@ export function createMigrationApplyTool(
           };
         }
 
-        // Block duplicate version names to prevent rollback ambiguity
+        // Block duplicate version names to prevent rollback ambiguity, UNLESS it's just 'recorded' or 'failed'
         const versionCheck = await adapter.executeReadQuery(
           `SELECT id, status FROM "${MIGRATIONS_TABLE}" WHERE version = ?`,
           [input.version],
         );
+        let existingId: number | undefined = undefined;
+        
         if ((versionCheck.rows?.length ?? 0) > 0) {
           const existing = versionCheck.rows?.[0];
-          return {
-            success: false,
-            error: `Duplicate version: '${input.version}' already exists (id=${String(existing?.["id"])}, status=${String(existing?.["status"])}). Use a unique version identifier.`,
-            code: "DUPLICATE_VERSION",
-          };
+          if (existing?.["status"] === "applied") {
+            return {
+              success: false,
+              error: `Duplicate version: '${input.version}' already exists (id=${String(existing?.["id"])}, status=${existing?.["status"] as string}). Use a unique version identifier.`,
+              code: "DUPLICATE_VERSION",
+            };
+          }
+          existingId = existing?.["id"] as number;
         }
 
         try {
           await adapter.executeQuery(input.sql);
         } catch (execError) {
+          if (existingId !== undefined) {
+            await adapter.executeQuery(
+              `UPDATE "${MIGRATIONS_TABLE}" SET migration_sql = ?, rollback_sql = ?, migration_hash = ?, source_system = ?, applied_by = ?, status = 'failed', applied_at = CURRENT_TIMESTAMP WHERE id = ?`,
+              [
+                input.sql,
+                input.rollbackSql ?? null,
+                hash,
+                input.sourceSystem ?? "agent",
+                input.appliedBy ?? null,
+                existingId
+              ],
+            );
+          } else {
+            await adapter.executeQuery(
+              `INSERT INTO "${MIGRATIONS_TABLE}" (version, description, migration_sql, rollback_sql, migration_hash, source_system, applied_by, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 'failed')`,
+              [
+                input.version,
+                input.description ?? null,
+                input.sql,
+                input.rollbackSql ?? null,
+                hash,
+                input.sourceSystem ?? "agent",
+                input.appliedBy ?? null,
+              ],
+            );
+          }
+          const structured = formatHandlerError(execError);
+          return {
+            success: false,
+            error: `Migration execution failed: ${structured.error}`,
+            code: "MIGRATION_EXECUTION_FAILED",
+          };
+        }
+
+        if (existingId !== undefined) {
           await adapter.executeQuery(
-            `INSERT INTO "${MIGRATIONS_TABLE}" (version, description, migration_sql, rollback_sql, migration_hash, source_system, applied_by, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'failed')`,
+            `UPDATE "${MIGRATIONS_TABLE}" SET migration_sql = ?, rollback_sql = ?, migration_hash = ?, source_system = ?, applied_by = ?, status = 'applied', applied_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [
+              input.sql,
+              input.rollbackSql ?? null,
+              hash,
+              input.sourceSystem ?? "agent",
+              input.appliedBy ?? null,
+              existingId
+            ],
+          );
+        } else {
+          await adapter.executeQuery(
+            `INSERT INTO "${MIGRATIONS_TABLE}" (version, description, migration_sql, rollback_sql, migration_hash, source_system, applied_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
               input.version,
               input.description ?? null,
@@ -83,27 +136,7 @@ export function createMigrationApplyTool(
               input.appliedBy ?? null,
             ],
           );
-          const structured = formatHandlerError(execError);
-          return {
-            success: false,
-            error: `Migration execution failed: ${structured.error}`,
-            code: "MIGRATION_EXECUTION_FAILED",
-          };
         }
-
-        await adapter.executeQuery(
-          `INSERT INTO "${MIGRATIONS_TABLE}" (version, description, migration_sql, rollback_sql, migration_hash, source_system, applied_by)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            input.version,
-            input.description ?? null,
-            input.sql,
-            input.rollbackSql ?? null,
-            hash,
-            input.sourceSystem ?? "agent",
-            input.appliedBy ?? null,
-          ],
-        );
 
         const result = await adapter.executeReadQuery(
           `SELECT id, version, description, applied_at, applied_by, migration_hash, source_system, status
