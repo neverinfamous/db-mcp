@@ -52,7 +52,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 ### 1.1 — Check initial state
 
 ```javascript
-return await sqlite.transactions.transactionStatus();
+return await sqlite.transactions.status();
 ```
 
 Expected: `{status: "none", active: false}`
@@ -60,7 +60,7 @@ Expected: `{status: "none", active: false}`
 ### 1.2 — Begin transaction
 
 ```javascript
-return await sqlite.transactions.transactionBegin();
+return await sqlite.transactions.begin();
 ```
 
 Expected: Success, transaction ID returned.
@@ -68,7 +68,7 @@ Expected: Success, transaction ID returned.
 ### 1.3 — Verify active state
 
 ```javascript
-return await sqlite.transactions.transactionStatus();
+return await sqlite.transactions.status();
 ```
 
 Expected: `{status: "active", active: true}`
@@ -76,7 +76,7 @@ Expected: `{status: "active", active: true}`
 ### 1.4 — Rollback
 
 ```javascript
-return await sqlite.transactions.transactionRollback();
+return await sqlite.transactions.rollback();
 ```
 
 Expected: Success.
@@ -84,7 +84,7 @@ Expected: Success.
 ### 1.5 — Verify none state after rollback
 
 ```javascript
-return await sqlite.transactions.transactionStatus();
+return await sqlite.transactions.status();
 ```
 
 Expected: `{status: "none", active: false}`
@@ -96,18 +96,18 @@ Expected: `{status: "none", active: false}`
 ### 2.1 — Begin + savepoint + release + commit
 
 ```javascript
-await sqlite.transactions.transactionBegin();
-await sqlite.transactions.transactionSavepoint({name: "sp1"});
-await sqlite.transactions.transactionRollbackTo({name: "sp1"});
-await sqlite.transactions.transactionRelease({name: "sp1"});
-const result = await sqlite.transactions.transactionCommit();
+await sqlite.transactions.begin();
+await sqlite.transactions.savepoint({name: "sp1"});
+await sqlite.transactions.rollbackTo({name: "sp1"});
+await sqlite.transactions.release({name: "sp1"});
+const result = await sqlite.transactions.commit();
 return result;
 ```
 
 ### 2.2 — Transactional execute
 
 ```javascript
-return await sqlite.transactions.transactionExecute({
+return await sqlite.transactions.execute({
   statements: ["SELECT 1 AS test", "SELECT 2 AS test2"]
 });
 ```
@@ -121,7 +121,7 @@ Expected: Success with 2 statements executed.
 🔴 3.1 — Execute with invalid SQL:
 
 ```javascript
-return await sqlite.transactions.transactionExecute({
+return await sqlite.transactions.execute({
   statements: ["INSERT INTO nonexistent_table VALUES (1)"]
 });
 ```
@@ -131,7 +131,7 @@ Expected: `{success: false}` with rollback info.
 🔴 3.2 — Execute with empty array:
 
 ```javascript
-return await sqlite.transactions.transactionExecute({ statements: [] });
+return await sqlite.transactions.execute({ statements: [] });
 ```
 
 Report behavior.
@@ -139,7 +139,7 @@ Report behavior.
 🔴 3.3 — Rollback with no active transaction:
 
 ```javascript
-return await sqlite.transactions.transactionRollback();
+return await sqlite.transactions.rollback();
 ```
 
 Report behavior when no transaction is active.
@@ -147,9 +147,9 @@ Report behavior when no transaction is active.
 🔴 3.4 — Release nonexistent savepoint:
 
 ```javascript
-await sqlite.transactions.transactionBegin();
-const result = await sqlite.transactions.transactionRelease({name: "nonexistent_sp_xyz"});
-await sqlite.transactions.transactionRollback(); // cleanup
+await sqlite.transactions.begin();
+const result = await sqlite.transactions.release({name: "nonexistent_sp_xyz"});
+await sqlite.transactions.rollback(); // cleanup
 return result;
 ```
 
@@ -159,14 +159,14 @@ Expected: `{success: false}` — structured error.
 
 ## Phase 4: Transaction Zod Validation (batched)
 
-🔴 4.1. `sqlite.transactions.transactionBegin({})` → success or handler error (no required params)
-🔴 4.2. `sqlite.transactions.transactionStatus({})` → success or handler error (no required params)
-🔴 4.3. `sqlite.transactions.transactionCommit({})` → success or handler error (no required params)
-🔴 4.4. `sqlite.transactions.transactionRollback({})` → success or handler error (no required params)
-🔴 4.5. `sqlite.transactions.transactionExecute({})` → `{success: false}` (missing `statements`)
-🔴 4.6. `sqlite.transactions.transactionSavepoint({})` → `{success: false}` (missing `name`)
-🔴 4.7. `sqlite.transactions.transactionRelease({})` → `{success: false}` (missing `name`)
-🔴 4.8. `sqlite.transactions.transactionRollbackTo({})` → `{success: false}` (missing `name`)
+🔴 4.1. `sqlite.transactions.begin({})` → success or handler error (no required params)
+🔴 4.2. `sqlite.transactions.status({})` → success or handler error (no required params)
+🔴 4.3. `sqlite.transactions.commit({})` → success or handler error (no required params)
+🔴 4.4. `sqlite.transactions.rollback({})` → success or handler error (no required params)
+🔴 4.5. `sqlite.transactions.execute({})` → `{success: false}` (missing `statements`)
+🔴 4.6. `sqlite.transactions.savepoint({})` → `{success: false}` (missing `name`)
+🔴 4.7. `sqlite.transactions.release({})` → `{success: false}` (missing `name`)
+🔴 4.8. `sqlite.transactions.rollbackTo({})` → `{success: false}` (missing `name`)
 
 ---
 
@@ -178,7 +178,7 @@ Expected: `{success: false}` — structured error.
 const failures = [];
 
 // Execute a multi-statement transaction
-const result = await sqlite.transactions.transactionExecute({
+const result = await sqlite.transactions.execute({
   statements: [
     "CREATE TABLE temp_cm_txn (id INTEGER PRIMARY KEY, val TEXT)",
     "INSERT INTO temp_cm_txn VALUES (1, 'alpha')",
@@ -200,15 +200,15 @@ return { failures, success: failures.length === 0 };
 ### 5.2 — Status + execute cross-check
 
 ```javascript
-const before = await sqlite.transactions.transactionStatus();
-const exec = await sqlite.transactions.transactionExecute({
+const before = await sqlite.transactions.status();
+const exec = await sqlite.transactions.execute({
   statements: ["SELECT COUNT(*) AS n FROM test_products"]
 });
-const after = await sqlite.transactions.transactionStatus();
+const after = await sqlite.transactions.status();
 return { before, exec, after };
 ```
 
-Expected: `before.active === false`, `after.active === false` (transactionExecute is self-contained).
+Expected: `before.active === false`, `after.active === false` (execute is self-contained).
 
 ---
 
