@@ -6,15 +6,15 @@
 
 | File                         | Size  | Purpose                                                                                                                                                             | When to Read                                                               |
 | ---------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `test-tools.md`              | ~12KB | **Entry-point protocol** — schema reference, error pattern docs, reporting format, cleanup rules. Paste a group checklist from `test-group-tools.md` at the bottom. | Always read first (Step 1 says read help resources, Step 2 is the testing) |
-| `test-group-tools.md`        | ~54KB | Per-group **deterministic checklists** (core, json, text, stats, vector, admin, geo, introspection, migration). Copy the relevant section into `test-tools.md`.     | When running a specific tool group                                         |
-| `test-tools-advanced-1.md`   | ~28KB | **Second-pass stress tests (Part 1)** — boundary values, state pollution, error message quality, WASM parity.                                                       | After basic checklist passes                                               |
-| `test-tools-advanced-2.md`   | ~32KB | **Second-pass stress tests (Part 2)** — cross-group integration. Self-contained.                                                                                    | After basic checklist passes                                               |
+| `test-tool-groups/`          | —     | **10 self-contained test prompts** — one per tool group. Each is a complete, standalone prompt (paste directly). See `test-tool-groups/README.md` for details.       | **Primary testing method** — use instead of `test-tools.md` + `test-group-tools.md` |
+| `test-tool-groups-codemode/` | —     | **10 self-contained Code Mode test prompts** — one per tool group. Tests via `sqlite_execute_code` only. See `test-tool-groups-codemode/README.md`.                  | **Primary Code Mode testing method**                                       |
+| `test-advanced/`             | —     | **10 self-contained advanced stress test prompts** — one per tool group. Second-pass edge cases via Code Mode. See `test-advanced/README.md`.                        | **Primary advanced testing method**                                        |
+| `old-tests/`                 | —     | Archived legacy prompts (`test-tools.md`, `test-group-tools.md`, `test-tools-codemode.md`, `test-tools-advanced-1.md`, `test-tools-advanced-2.md`). Not for use.    | Historical reference only                                                  |
 | `test-resources.md`          | ~6KB  | Resource testing plan (8 data + 7 help resources via `read_resource`)                                                                                               | When testing resources                                                     |
 | `test-preflight.md`          | ~2KB  | **Pre-flight check** — validates slim instructions, help resources, data resources, and tool-filter alignment in 5 steps                                            | Before any test pass                                                       |
 | `test-prompts.md`            | ~10KB | Prompt testing plan (10 prompts, tested manually since agents typically don't invoke prompts)                                                                       | When testing prompts                                                       |
-| `tool-groups-list.md`        | —     | **Canonical tool inventory** — all 9 groups + codemode, 140 Native / 115 WASM tools. Source of truth for tool counts.                                               | Reference / auditing                                                       |
-| `tool-reference.md`          | ~18KB | **Complete Tool Reference** — Detailed list of all 140 Native / 115 WASM tools organized by group.                                                                  | Reference                                                                  |
+| `tool-groups-list.md`        | —     | **Canonical tool inventory** — all 10 groups + codemode, 151 Native / 125 WASM tools. Source of truth for tool counts.                                              | Reference / auditing                                                       |
+| `tool-reference.md`          | ~18KB | **Complete Tool Reference** — Detailed list of all 151 Native / 125 WASM tools organized by group.                                                                  | Reference                                                                  |
 | [`code-map.md`](code-map.md) | ~12KB | **Source Code Map** — Directory tree, handler→tool mapping, type/schema locations, error hierarchy, constants, architecture patterns.                               | When debugging source code or making changes                               |
 | `reset-database.ps1`         | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-database.sql`. Verifies row counts.                                                                      | After migration group testing or if data is polluted                       |
 | `test-database.sql`          | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables                                                                                                                        | Reference only — reset script consumes this                                |
@@ -109,9 +109,8 @@ node test-server/test-tool-annotations.mjs
 ## Agent Workflow
 
 1. Read `sqlite://help` resource (or `view_file` on `src/constants/server-instructions/gotchas.md`).
-2. Read `test-tools.md` for protocol and schema details.
-3. Access `test-group-tools.md` and copy the target group checklist.
-4. Execute via direct MCP tool calls to test logic. Run both happy-path and error-path tests.
-5. Clean up any temporary tables generated during execution.
-6. Report findings using the designated reporting convention.
-7. (Optional) Run stress tests from `test-tools-advanced-1.md` or `test-tools-advanced-2.md`.
+2. Open the target group prompt from `test-tool-groups/` (e.g., `test-tool-group-core.md`). Each file is self-contained.
+3. Execute via direct MCP tool calls to test logic. Run both happy-path and error-path tests.
+4. Clean up any temporary tables generated during execution.
+5. Report findings using the designated reporting convention.
+6. (Optional) Run stress tests from `test-tools-advanced-1.md` or `test-tools-advanced-2.md`.

@@ -1,0 +1,168 @@
+# db-mcp (SQLite) Tool Group Testing: [transactions]
+
+**Ignore WASM content. Test Native Mode Only**
+
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
+
+**Step 2:** Please conduct an exhaustive test of the **transactions** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
+
+**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore them.
+
+## Reporting Format
+
+- ❌ Fail: Tool errors or produces incorrect results (include error message)
+- ⚠️ Issue: Unexpected behavior or improvement opportunity
+- 📦 Payload: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Report the response size in KB and suggest a concrete optimization.
+
+## Test Database Schema
+
+| Table             | Rows | Columns                                                                       | JSON Columns                                                                              |
+| ----------------- | ---- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| test_products     | 16   | id, name, description, price, category, created_at                            | —                                                                                         |
+| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, order_date, status | —                                                                                         |
+| test_jsonb_docs   | 6    | id, doc, metadata, tags, created_at                                           | **doc**, **metadata** (nested), **tags** (array)                                          |
+| test_articles     | 8    | id, title, body, author, category, published_at                               | —                                                                                         |
+| test_users        | 9    | id, username, email, phone, bio, created_at                                   | —                                                                                         |
+| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, measured_at                   | —                                                                                         |
+| test_embeddings   | 20   | id, content, category, embedding                                              | **embedding** (8-dim float array); category values: database, fitness, food, tech, travel |
+| test_locations    | 15   | id, name, city, latitude, longitude, type                                     | —                                                                                         |
+| test_categories   | 17   | id, name, path, level                                                         | —                                                                                         |
+| test_events       | 100  | id, event_type, user_id (INT, 8 values), payload, event_date                  | **payload** (JSON)                                                                        |
+
+> **Note:** When testing `sqlite_execute_code`, do **not** pass `readonly: true` unless specifically testing read-only filtering.
+
+## Testing Requirements
+
+> [!CAUTION]
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed**.
+
+1. Use existing `test_*` tables for read operations
+2. Create temporary tables with `temp_*` prefix for write operations
+3. Report all failures, unexpected behaviors, or unnecessarily large payloads
+4. Do not mention what already works well or issues documented in help resources
+5. **Error path testing**: For **every** tool, test (a) domain error and (b) Zod validation error (`{}`). Both must return `{success: false, error: "..."}`.
+6. **Output schema testing**: For tools with `outputSchema`, confirm valid calls return structured JSON.
+7. **Deterministic checklist first**: Complete ALL items before freeform exploration.
+
+## Structured Error Response Pattern
+
+```json
+{ "success": false, "error": "Human-readable error message" }
+```
+
+| Type                 | Source                                                             | What you see                                                      | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields           | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field      | Bug — report as ❌ |
+
+### Zod Validation Errors
+
+**Zod refinement leak pattern:** `.partial()` does NOT strip `.min(N)` / `.max(N)` refinements. **Fix:** Remove refinements from schema, validate inside handler.
+
+- Raw MCP error (no `success` field) → report as ❌
+- `{success: false, error: "..."}` → correct
+- Successful response for invalid input → report as ⚠️
+
+### Output Schema Validation Errors
+
+If valid inputs return raw MCP `-32602` mentioning "output schema", report as ❌.
+
+### Error Consistency Audit
+
+1. Raw error instead of `{success: false}` → ❌
+2. Must use `error` field name
+3. Orphaned/inline output schemas → ⚠️
+
+### Split Schema Pattern Verification
+
+Verify parameter visibility and alias acceptance.
+
+## Cleanup Conventions
+
+- **Temporary tables**: Prefix with `temp_`
+- If DROP fails due to database lock, move on.
+
+---
+
+## Group Focus: transactions
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+> **Note:** All 8 transaction tools are **`[NATIVE ONLY]`** — they are not available in WASM mode. Transaction operations require the `write` OAuth scope.
+
+### Built-in Tools (3)
+
+1. server_info
+2. server_health
+3. list_adapters
+
+### transactions Group Tools (8) `[NATIVE ONLY]`
+
+4. sqlite_transaction_begin
+5. sqlite_transaction_status
+6. sqlite_transaction_commit
+7. sqlite_transaction_rollback
+8. sqlite_transaction_savepoint
+9. sqlite_transaction_release
+10. sqlite_transaction_rollback_to
+11. sqlite_transaction_execute
+12. sqlite_execute_code
+
+**Checklist — Full Lifecycle:**
+
+1. `sqlite_transaction_status` → `{status: "none", active: false}` (no active transaction)
+2. `sqlite_transaction_begin` → capture transaction ID
+3. `sqlite_transaction_status` → `{status: "active", active: true}`
+4. `sqlite_transaction_rollback` → rollback entire transaction, verify success
+5. `sqlite_transaction_status` → `{status: "none", active: false}` (back to none)
+6. `sqlite_transaction_begin` → start a new transaction for savepoint tests
+7. `sqlite_transaction_savepoint({name: "sp1"})` → success
+8. `sqlite_transaction_rollback_to({name: "sp1"})` → success
+9. `sqlite_transaction_release({name: "sp1"})` → success (released savepoints cannot be rolled back to)
+10. `sqlite_transaction_commit` → success
+11. `sqlite_transaction_execute({statements: ["SELECT 1 AS test", "SELECT 2 AS test2"]})` → success with 2 statements executed
+
+**Code mode testing:**
+
+12. `sqlite_execute_code({code: "const result = await sqlite.transactions.transactionStatus(); return result;"})` → transaction status
+13. `sqlite_execute_code({code: "const result = await sqlite.transactions.transactionExecute({statements: ['SELECT 1 AS test']}); return result;"})` → success
+
+**Error path testing:**
+
+🔴 14. `sqlite_transaction_execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → structured error with rollback info
+🔴 15. `sqlite_transaction_execute({statements: []})` → report behavior for empty array
+
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+
+🔴 16. `sqlite_transaction_begin({})` → handler error (or success if no required params)
+🔴 17. `sqlite_transaction_status({})` → handler error (or success if no required params)
+🔴 18. `sqlite_transaction_commit({})` → handler error (or success if no required params)
+🔴 19. `sqlite_transaction_rollback({})` → handler error (or success if no required params)
+🔴 20. `sqlite_transaction_execute({})` → handler error
+🔴 21. `sqlite_transaction_savepoint({})` → handler error
+🔴 22. `sqlite_transaction_release({})` → handler error
+🔴 23. `sqlite_transaction_rollback_to({})` → handler error
+
+---
+
+## Post-Test Procedures
+
+1. **Triage findings**: Create implementation plan if issues found
+2. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
+3. **Validate**: Test suite, lint + typecheck, changelog
+4. **Commit**: Stage and commit — do NOT push
+5. **Live re-test**: After server rebuild
+6. **Final summary**: After testing/re-testing
+
+---
+
+## Troubleshooting
+
+### Database is locked / file in use
+
+1. Check for Node.js processes: `Get-CimInstance Win32_Process -Filter "Name = 'node.exe'"`
+2. WAL/journal files are normal
+
+### Reset script fails
+
+1. Run with `-Verbose`: `.\reset-database.ps1 -Verbose`

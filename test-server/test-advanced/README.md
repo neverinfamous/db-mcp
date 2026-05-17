@@ -1,0 +1,34 @@
+# db-mcp Advanced Stress Tests
+
+> **This document is optimized for AI agent consumption.** It provides context and execution rules for the advanced stress testing suite located in this directory.
+
+This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool groups. These tests simulate complex, edge-case, and boundary interactions using exclusively **Code Mode** (`sqlite_execute_code`).
+
+## Pre-requisites
+
+1. Basic deterministic tool group checklists (located in `../test-tool-groups/*.md`) MUST be successfully passed before running these advanced tests.
+2. Code Mode basic tests (located in `../test-tool-groups-codemode/*.md`) MUST be successfully passed.
+3. The testing database MUST be freshly seeded via `../reset-database.ps1` to ensure deterministic results.
+
+## File Inventory
+
+| File | Primary Focus | Key Validations |
+| ---- | ------------- | --------------- |
+| `test-tools-advanced-core.md` | Core | Boundary values, empty states, state pollution, idempotency, error quality, payload sizes |
+| `test-tools-advanced-json.md` | JSON | Deep nesting, merge conflicts (RFC 7396), type coercion, write safety |
+| `test-tools-advanced-text.md` | Text | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]` |
+| `test-tools-advanced-stats.md` | Stats | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]` |
+| `test-tools-advanced-vector.md` | Vector | Empty tables, distance metrics, dimension mismatch, batch operations |
+| `test-tools-advanced-admin.md` | Admin | View lifecycle, virtual tables, backup/restore, pragma edge cases |
+| `test-tools-advanced-transactions.md` | Transactions | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]` |
+| `test-tools-advanced-geo.md` | Geo | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]` |
+| `test-tools-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, storage/index audit, query plan depth |
+| `test-tools-advanced-migration.md` | Migration | Lifecycle, state pollution, SHA-256 dedup, error paths |
+
+## Agent Execution Protocol
+
+1. **Strict Code Mode Only:** All advanced stress tests must be executed entirely via `sqlite_execute_code`. Direct tool calls are forbidden unless specifically instructed for baseline comparison.
+2. **Sequential Grouping:** Execute only **one markdown file at a time**. Report findings, fix errors, apply updates to the changelog, and commit before advancing to the next file.
+3. **Payload Optimization (Token Monitoring):** Monitor `metrics.tokenEstimate` on every response. If extremely large unbounded responses are produced, flag as 📦 **Payload Issue**.
+4. **Structured Error Adherence:** When testing boundary failure parameters, assert that the handler outputs a proper structured error (`{success: false, error: "..."}`) rather than leaking raw SQLite errors.
+5. **No Persistent Pollution:** After finishing a file, verify all `stress_*` tables/views/indexes are dropped. No test state should bleed into the next run.

@@ -1,0 +1,147 @@
+# db-mcp Code Mode Testing: [text]
+
+**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
+
+**Step 2:** Conduct an exhaustive test of the **text** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
+
+## Reporting Format
+
+- ❌ Fail: Tool errors or produces incorrect results
+- ⚠️ Issue: Unexpected behavior or improvement opportunity
+- 📦 Payload: Unnecessarily large response — monitor `metrics.tokenEstimate`.
+
+## Test Database Schema
+
+| Table         | Rows | Key Columns                                       |
+| ------------- | ---- | ------------------------------------------------- |
+| test_products | 16   | id, name (row 16: `Café Décor Light` — accented), price, category |
+| test_users    | 9    | id, username, email, phone, bio                   |
+| test_articles | 8    | id, title, body, author, category, published_at   |
+
+**Test data:**
+- Emails: `@example.com`, `@company.org`, `@gmail.com`, etc. One user (`testuser`) has `test.user@gmail.com`
+- Phone formats: `+1-555-0101`, `+44-20-7123-4567`, `+82-2-1234-5678`
+- FTS searchable terms: `SQLite`, `database`, `JSON`, `FTS`, `vector`, `API`, `search`, `MCP`
+
+## Testing Requirements
+
+> [!CAUTION]
+> **Zero tolerance for raw MCP errors.** Report as ❌.
+
+1. **Batched scripting**: Bundle checks with `failures` array.
+2. **Error path testing**: Every tool with `{}` (Zod) and domain error.
+3. **Token tracking**: Monitor `metrics.tokenEstimate`.
+4. **Coverage Matrix**: `| Tool | Happy Path | Domain Error | Zod Error |`
+5. **Deterministic checklist first**.
+
+## Structured Error Response Pattern
+
+Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `isError: true`.
+
+## Cleanup
+
+- Temporary FTS tables: `temp_*` prefix. Drop at end of script.
+
+---
+
+## Phase 1: Text Tools — Happy Paths (batched)
+
+> Bundle items 1-14 into 1-2 `sqlite_execute_code` calls.
+
+1. `sqlite.text.regexMatch({table: "test_users", column: "email", pattern: "@gmail\\.com$"})` → at least 1 result
+2. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → domain parts
+3. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptp", maxDistance: 3})` → `Laptop Pro 15`
+4. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop"})` → `Laptop Pro 15`
+5. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "email"})` → all 9 valid
+6. `sqlite.text.textValidate({table: "test_users", column: "phone", pattern: "phone"})` → valid/invalid counts
+7. `sqlite.text.textCase({table: "test_users", column: "username", mode: "upper"})` → uppercased
+8. `sqlite.text.textNormalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` → `Cafe Decor Light`
+9. `sqlite.text.textSplit({table: "test_users", column: "email", delimiter: "@"})` → local + domain parts
+10. `sqlite.text.textConcat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated
+11. `sqlite.text.textTrim({table: "test_users", column: "bio"})` → trimmed
+12. `sqlite.text.textSubstring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars
+13. `sqlite.text.textSentiment({table: "test_articles", column: "body"})` → sentiment scores
+14. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → finds `Mechanical Keyboard`
+
+---
+
+## Phase 2: FTS5 Tools `[NATIVE ONLY]` — Happy Paths (batched)
+
+15. `sqlite.text.ftsCreate({sourceTable: "test_users", columns: ["username", "bio"], ftsTable: "temp_cm_fts"})` → created
+16. `sqlite.text.ftsRebuild({table: "temp_cm_fts"})` → rebuilt
+17. `sqlite.text.ftsSearch({table: "temp_cm_fts", query: "test*"})` → results
+18. `sqlite.text.ftsMatchInfo({table: "temp_cm_fts", query: "test*"})` → match info with scoring
+19. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+20. Cleanup: drop `temp_cm_fts`
+21. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite"})` → at least 1 result
+22. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "MCP protocol"})` → article 3
+23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
+
+---
+
+## Phase 3: Text Write Tool (temp table)
+
+24. `sqlite.text.textReplace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
+25. Revert: `sqlite.text.textReplace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
+
+---
+
+## Phase 4: Text Domain Errors (batched)
+
+🔴 26. `sqlite.text.regexMatch({table: "nonexistent_xyz", column: "x", pattern: "."})` → `{success: false}`
+🔴 27. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → `{success: false}`
+🔴 28. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → `{success: false}`
+
+---
+
+## Phase 5: Text Zod Validation (batched)
+
+🔴 29. `sqlite.text.regexExtract({})` → `{success: false}`
+🔴 30. `sqlite.text.regexMatch({})` → `{success: false}`
+🔴 31. `sqlite.text.textSplit({})` → `{success: false}`
+🔴 32. `sqlite.text.textConcat({})` → `{success: false}`
+🔴 33. `sqlite.text.textReplace({})` → `{success: false}`
+🔴 34. `sqlite.text.textTrim({})` → `{success: false}`
+🔴 35. `sqlite.text.textCase({})` → `{success: false}`
+🔴 36. `sqlite.text.textSubstring({})` → `{success: false}`
+🔴 37. `sqlite.text.fuzzyMatch({})` → `{success: false}`
+🔴 38. `sqlite.text.phoneticMatch({})` → `{success: false}`
+🔴 39. `sqlite.text.textNormalize({})` → `{success: false}`
+🔴 40. `sqlite.text.textValidate({})` → `{success: false}`
+🔴 41. `sqlite.text.advancedSearch({})` → `{success: false}`
+🔴 42. `sqlite.text.textSentiment({})` → `{success: false}`
+🔴 43. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 44. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 45. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 46. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 47. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
+
+---
+
+## Phase 6: Multi-Step Workflow
+
+### 6.1 — Text analysis pipeline
+
+```javascript
+const failures = [];
+// Validate emails, extract domains, search fuzzy, combine results
+const validation = await sqlite.text.textValidate({table: "test_users", column: "email", pattern: "email"});
+const domains = await sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1});
+const fuzzy = await sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "keybord", maxDistance: 3});
+if (!validation) failures.push("validation failed");
+if (!domains) failures.push("domain extraction failed");
+if (!fuzzy) failures.push("fuzzy search failed");
+return { failures, success: failures.length === 0, summary: { validEmails: !!validation, domainCount: domains?.rows?.length, fuzzyHits: fuzzy?.rows?.length } };
+```
+
+---
+
+## Post-Test Procedures
+
+1. **Cleanup**: Drop `temp_*` FTS tables
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, this prompt
+4. **Validate**: Test suite, lint + typecheck, changelog
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

@@ -1,0 +1,163 @@
+# Advanced Stress Test — db-mcp — [text]
+
+**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
+
+**Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
+
+## Code Mode Execution
+
+All tests via `sqlite_execute_code`. Use `sqlite.text.*` for all text/regex/FTS tools.
+State persists across calls. Do NOT pass `readonly: true`. Group related tests into single calls.
+
+## Test Database Schema
+
+| Table             | Rows | Key Columns                                                     |
+| ----------------- | ---- | --------------------------------------------------------------- |
+| test_products     | 16   | id, name (row 16: `Café Décor Light`), price, category          |
+| test_users        | 9    | id, username, email, phone, bio                                  |
+| test_articles     | 8    | id, title, body, author, category                                |
+| test_articles_fts | —    | FTS5 virtual table (title, body columns) `[NATIVE ONLY]`        |
+
+**Key data:**
+- Emails: `@example.com`, `@company.org`, `@gmail.com`; one dotted local: `test.user@gmail.com`
+- Phones: `+1-555-0101`, `+44-20-7123-4567`, `+82-2-1234-5678` (1 NULL)
+- Usernames: lowercase single-word (`johndoe`, `janesmith`, `testuser`, etc.)
+
+## Naming & Cleanup
+
+- **Temporary tables/FTS**: `stress_*` prefix. Drop at end.
+
+## Reporting Format
+
+- ❌ Fail | ⚠️ Issue | 📦 Payload (monitor `metrics.tokenEstimate`) | ✅ Confirmed (inline only)
+
+### Error Message Quality Rating
+
+| Level | Verdict |
+| --- | --- |
+| 5 - Excellent (name + code + context) | ✅ |
+| 4 - Good (name) | ✅ |
+| 3 - Adequate (raw SQLite, informative) | ⚠️ |
+| 2 - Poor (no object name) | ⚠️ |
+| 1 - Useless (generic) | ❌ |
+
+## Structured Error Response Pattern
+
+Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `isError: true`.
+
+---
+
+## text Group Tools — Native (19)
+
+1. sqlite_regex_extract
+2. sqlite_regex_match
+3. sqlite_text_split
+4. sqlite_text_concat
+5. sqlite_text_replace
+6. sqlite_text_trim
+7. sqlite_text_case
+8. sqlite_text_substring
+9. sqlite_fuzzy_match
+10. sqlite_phonetic_match
+11. sqlite_text_normalize
+12. sqlite_text_validate
+13. sqlite_advanced_search
+14. sqlite_text_sentiment
+15. sqlite_fts_create `[NATIVE ONLY]`
+16. sqlite_fts_search `[NATIVE ONLY]`
+17. sqlite_fts_rebuild `[NATIVE ONLY]`
+18. sqlite_fts_match_info `[NATIVE ONLY]`
+19. sqlite_fts_headline `[NATIVE ONLY]`
+
+### WASM (14)
+
+Same minus the 5 FTS5 tools (items 15-19).
+
+---
+
+### Category 1: Regex Edge Cases
+
+1. `sqlite.text.regexMatch({table: "test_users", column: "email", pattern: "^[a-z]+\\.[a-z]+@"})` → match dotted local parts (test.user)
+2. `sqlite.text.regexMatch({table: "test_users", column: "phone", pattern: "^\\+1"})` → US phone numbers only (6 users, 1 NULL excluded)
+3. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@(.+)$", groupIndex: 1})` → full domain extraction
+4. `sqlite.text.regexMatch({table: "test_users", column: "bio", pattern: ".*"})` → should match all non-NULL bios (all 9 users have bios)
+
+---
+
+### Category 2: Fuzzy/Phonetic Matching Stress
+
+5. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Keyborad", maxDistance: 3})` → find "Mechanical Keyboard" (Levenshtein)
+6. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "LAPTOP", maxDistance: 2, tokenize: true})` → match "Laptop" token in "Laptop Pro 15"
+7. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "xyznonexistent", maxDistance: 1})` → 0 results
+8. `sqlite.text.phoneticMatch({table: "test_users", column: "username", search: "jon", algorithm: "soundex"})` → 0 results (Soundex: "jon"=J500 ≠ "johndoe"=J530; single-word usernames aren't tokenized)
+9. `sqlite.text.phoneticMatch({table: "test_users", column: "username", search: "smith", algorithm: "soundex"})` → report behavior (janesmith contains "smith" as suffix)
+10. `sqlite.text.advancedSearch({table: "test_users", column: "username", searchTerm: "jhn", techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold: 0.3})` → should find John via fuzzy/phonetic
+
+---
+
+### Category 3: Text Transformation Edge Cases
+
+11. `sqlite.text.textNormalize({table: "test_products", column: "name", mode: "strip_accents"})` → `"Café Décor Light"` → `"Cafe Decor Light"` — verify ALL rows returned
+12. `sqlite.text.textNormalize({table: "test_products", column: "name", mode: "nfkc"})` → NFKC normalization
+13. `sqlite.text.textCase({table: "test_users", column: "username", mode: "upper"})` → verify 9 uppercased usernames
+14. `sqlite.text.textCase({table: "test_users", column: "username", mode: "lower"})` → idempotent (already lowercase)
+15. `sqlite.text.textSubstring({table: "test_users", column: "email", start: 1, length: 3})` → first 3 chars of each email
+
+---
+
+### Category 4: Validation Patterns
+
+16. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "email"})` → expect all 9 valid
+17. `sqlite.text.textValidate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid/null counts
+18. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "custom", customPattern: "^.+@.+\\..{2,}$"})` → custom regex validation
+
+---
+
+### Category 5: Sentiment Analysis Edge Cases
+
+19. `sqlite.text.textSentiment({table: "test_articles", column: "body"})` → sentiment scores for all 8 articles
+20. Create `stress_sentiment_test` with rows: `"I love this!"` (positive), `"This is terrible"` (negative), `""` (empty), `NULL` → report behavior for edge cases
+
+---
+
+### Category 6: FTS5 State Integrity `[NATIVE ONLY]`
+
+21. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → results about databases
+22. `sqlite.text.ftsRebuild({table: "test_articles_fts"})` → success
+23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
+24. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
+25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
+26. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+
+---
+
+### Category 7: WASM Boundary Verification
+
+For WASM testing only:
+
+27. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
+28. All 14 non-FTS text tools should work identically in WASM and Native
+
+---
+
+### Category 8: Error Message Quality
+
+29. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
+30. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
+31. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
+32. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+
+---
+
+### Final Cleanup
+
+Drop `stress_*` tables. Confirm `test_articles` row count is still 8. Verify FTS index integrity with `sqlite.text.ftsMatchInfo` `[NATIVE ONLY]`.
+
+## Post-Test Procedures
+
+1. **Cleanup**: Drop all `stress_*` objects
+2. **Fix EVERY finding** — ❌, ⚠️, 📦
+3. **Validate**: Test suite, lint + typecheck, changelog
+4. **Commit**: Stage and commit — do NOT push
+5. **Re-test**: After server rebuild
+6. **Token audit**: Report most expensive block

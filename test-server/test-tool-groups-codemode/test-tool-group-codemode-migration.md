@@ -1,0 +1,246 @@
+# db-mcp Code Mode Testing: [migration]
+
+**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
+
+**Step 2:** Conduct an exhaustive test of the **migration** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
+
+> **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and modifies schema. Always reset after.
+
+## Reporting Format
+
+- ❌ Fail: Tool errors or produces incorrect results
+- ⚠️ Issue: Unexpected behavior or improvement opportunity
+- 📦 Payload: Unnecessarily large response — monitor `metrics.tokenEstimate`.
+
+## Test Database Schema
+
+| Table             | Rows | Key Columns                                                   |
+| ----------------- | ---- | ------------------------------------------------------------- |
+| test_products     | 16   | id, name, price, category                                     |
+| test_orders       | 20   | id, product_id (FK), total_price, status                      |
+
+## Testing Requirements
+
+> [!CAUTION]
+> **Zero tolerance for raw MCP errors.** Report as ❌.
+
+1. **Batched scripting**: Bundle checks with `failures` array where possible.
+2. **Error path testing**: Every tool with `{}` (Zod) and domain error.
+3. **Token tracking**: Monitor `metrics.tokenEstimate`.
+4. **Coverage Matrix**: `| Tool | Happy Path | Domain Error | Zod Error |`
+5. **Deterministic checklist first**.
+
+> **⚠️ Migration ordering matters**: Migration tests are stateful — each depends on the previous. Run lifecycle tests sequentially, not batched.
+
+## Structured Error Response Pattern
+
+Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `isError: true`.
+
+---
+
+## Phase 1: Initialization & Recording — Happy Paths (sequential)
+
+### 1.1 — Init migrations
+
+```javascript
+return await sqlite.migration.migrationInit();
+```
+
+Expected: `{success: true}`, creates `_mcp_migrations` table (idempotent).
+
+### 1.2 — Init again (idempotency)
+
+```javascript
+return await sqlite.migration.migrationInit();
+```
+
+Expected: Succeeds without error.
+
+### 1.3 — Check status (empty)
+
+```javascript
+return await sqlite.migration.migrationStatus();
+```
+
+Expected: No migrations applied.
+
+### 1.4 — Record a migration (no execution)
+
+```javascript
+return await sqlite.migration.migrationRecord({
+  version: "1.0.0",
+  description: "Create temp table",
+  sql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
+});
+```
+
+Expected: Recorded (SQL not executed — only logged).
+
+### 1.5 — Check status (1 migration)
+
+```javascript
+return await sqlite.migration.migrationStatus();
+```
+
+Expected: Count incremented.
+
+### 1.6 — Check history
+
+```javascript
+return await sqlite.migration.migrationHistory();
+```
+
+Expected: Version 1.0.0 listed.
+
+---
+
+## Phase 2: Apply & Execute — Happy Paths (sequential)
+
+### 2.1 — Apply a migration (SQL executed)
+
+```javascript
+return await sqlite.migration.migrationApply({
+  version: "1.0.1",
+  description: "Create applied table",
+  sql: "CREATE TABLE temp_cm_mig_applied (id INTEGER PRIMARY KEY, value TEXT)"
+});
+```
+
+Expected: Applied (SQL executed AND recorded).
+
+### 2.2 — Verify table exists
+
+```javascript
+return await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_applied'");
+```
+
+Expected: Table exists.
+
+### 2.3 — Check history (2 migrations)
+
+```javascript
+return await sqlite.migration.migrationHistory();
+```
+
+Expected: Both 1.0.0 and 1.0.1 listed.
+
+---
+
+## Phase 3: SHA-256 Deduplication
+
+### 3.1 — Duplicate SQL detection
+
+```javascript
+return await sqlite.migration.migrationRecord({
+  version: "1.0.2",
+  description: "Duplicate test",
+  sql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
+});
+```
+
+Expected: Fail — duplicate SQL hash detected.
+
+---
+
+## Phase 4: Rollback — Happy Paths (sequential)
+
+### 4.1 — Rollback without rollback SQL
+
+```javascript
+return await sqlite.migration.migrationRollback({ version: "1.0.1" });
+```
+
+Expected: Informative error (no rollbackSql was provided).
+
+### 4.2 — Apply with rollback SQL
+
+```javascript
+return await sqlite.migration.migrationApply({
+  version: "1.0.3",
+  description: "With rollback",
+  sql: "CREATE TABLE temp_cm_mig_rollback (id INTEGER PRIMARY KEY)",
+  rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_rollback"
+});
+```
+
+Expected: Applied with rollback SQL stored.
+
+### 4.3 — Execute rollback
+
+```javascript
+return await sqlite.migration.migrationRollback({ version: "1.0.3" });
+```
+
+Expected: Rollback SQL executed.
+
+### 4.4 — Verify table gone
+
+```javascript
+return await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_rollback'");
+```
+
+Expected: Table does NOT exist.
+
+---
+
+## Phase 5: Migration Domain Errors (batched)
+
+🔴 5.1. `sqlite.migration.migrationApply({version: "bad version!", description: "Invalid", sql: "SELECT 1"})` → report behavior
+🔴 5.2. `sqlite.migration.migrationRollback({version: "nonexistent_version"})` → `{success: false}`
+
+---
+
+## Phase 6: Migration Zod Validation (batched)
+
+🔴 6.1. `sqlite.migration.migrationInit({})` → success (no required params)
+🔴 6.2. `sqlite.migration.migrationRecord({})` → `{success: false}` (missing required params)
+🔴 6.3. `sqlite.migration.migrationApply({})` → `{success: false}` (missing required params)
+🔴 6.4. `sqlite.migration.migrationRollback({})` → `{success: false}` (missing `version`)
+🔴 6.5. `sqlite.migration.migrationHistory({})` → success (no required params)
+🔴 6.6. `sqlite.migration.migrationStatus({})` → success (no required params)
+
+---
+
+## Phase 7: Multi-Step Workflow
+
+### 7.1 — Full migration lifecycle
+
+```javascript
+const failures = [];
+// Init
+await sqlite.migration.migrationInit();
+
+// Apply
+await sqlite.migration.migrationApply({
+  version: "9.9.1",
+  description: "Lifecycle test",
+  sql: "CREATE TABLE temp_cm_mig_lifecycle (id INTEGER PRIMARY KEY, val TEXT)",
+  rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_lifecycle"
+});
+
+// Verify
+const status = await sqlite.migration.migrationStatus();
+const history = await sqlite.migration.migrationHistory();
+const tableExists = await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_lifecycle'");
+
+if (!tableExists.rows || tableExists.rows.length === 0) failures.push("table not created after apply");
+
+// Rollback
+await sqlite.migration.migrationRollback({version: "9.9.1"});
+const afterRollback = await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_lifecycle'");
+if (afterRollback.rows && afterRollback.rows.length > 0) failures.push("table still exists after rollback");
+
+return { failures, success: failures.length === 0, statusBefore: status, historyEntries: history };
+```
+
+---
+
+## Post-Test Procedures
+
+1. **⚠️ Reset database**: Run `.\reset-database.ps1` to clean up `_mcp_migrations` and `temp_cm_mig_*` tables
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, this prompt
+4. **Validate**: Test suite, lint + typecheck, changelog
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

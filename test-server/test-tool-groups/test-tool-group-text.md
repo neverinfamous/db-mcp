@@ -1,0 +1,244 @@
+# db-mcp (SQLite) Tool Group Testing: [text]
+
+**Ignore WASM content. Test Native Mode Only**
+
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
+
+**Step 2:** Please conduct an exhaustive test of the **text** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
+
+**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore them.
+
+## Reporting Format
+
+- ❌ Fail: Tool errors or produces incorrect results (include error message)
+- ⚠️ Issue: Unexpected behavior or improvement opportunity
+- 📦 Payload: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+
+## Test Database Schema
+
+The test database (test-server/test.db) contains these tables with JSON-relevant columns:
+
+| Table             | Rows | Columns                                                                       | JSON Columns                                                                              |
+| ----------------- | ---- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| test_products     | 16   | id, name, description, price, category, created_at                            | —                                                                                         |
+| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, order_date, status | —                                                                                         |
+| test_jsonb_docs   | 6    | id, doc, metadata, tags, created_at                                           | **doc**, **metadata** (nested), **tags** (array)                                          |
+| test_articles     | 8    | id, title, body, author, category, published_at                               | —                                                                                         |
+| test_users        | 9    | id, username, email, phone, bio, created_at                                   | —                                                                                         |
+| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, measured_at                   | —                                                                                         |
+| test_embeddings   | 20   | id, content, category, embedding                                              | **embedding** (8-dim float array); category values: database, fitness, food, tech, travel |
+| test_locations    | 15   | id, name, city, latitude, longitude, type                                     | —                                                                                         |
+| test_categories   | 17   | id, name, path, level                                                         | —                                                                                         |
+| test_events       | 100  | id, event_type, user_id (INT, 8 values), payload, event_date                  | **payload** (JSON)                                                                        |
+
+> **Note:** String values in test data use **lowercase** (e.g., `category = 'electronics'`, not `'Electronics'`). Use case-sensitive matching in queries.
+
+> **Note:** `test_measurements.sensor_id` is an **INTEGER** column (values 1-5), not a string. Use `sensor_id = 1`, not `sensor_id = 'S001'`.
+
+> **Note:** When testing `sqlite_execute_code`, do **not** pass `readonly: true` unless specifically testing read-only filtering.
+
+## Testing Requirements
+
+> [!CAUTION]
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately.
+
+1. Use existing `test_*` tables for read operations (SELECT, COUNT, queries)
+2. Create temporary tables with `temp_*` prefix for write operations
+3. Test each tool with realistic inputs based on the schema above
+4. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
+5. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
+6. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error and (b) a **Zod validation error** (`{}`). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+7. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error.
+8. **Deterministic checklist first**: Complete ALL items in the group-specific checklist before moving to freeform exploration.
+
+## Structured Error Response Pattern
+
+All tools should return errors as structured objects instead of throwing. The expected pattern:
+
+```json
+{ "success": false, "error": "Human-readable error message" }
+```
+
+### Handler Error vs MCP Error — How to Distinguish
+
+| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+
+### Zod Validation Errors
+
+**Zod refinement leak pattern:** `DatabaseAdapter.registerTool()` uses `.partial()` on input schemas so the SDK accepts `{}`. But `.partial()` only makes keys **optional** — it does NOT strip refinements like `.min(1)`, `.max(90)`. **Fix:** Remove ALL `.min(N)` / `.max(N)` refinements from the schema and validate inside the handler instead.
+
+**Required enum coercion pattern:** For **required** enum params, use `z.string()` in the schema and validate the enum inside the handler's `try/catch`.
+
+**What to report:**
+
+- Raw MCP error (no `success` field) → report as ❌
+- `{success: false, error: "..."}` → correct, do not report
+- Successful response for invalid input → report as ⚠️
+
+### Wrong-Type Numeric Parameter Coercion
+
+For every tool with optional numeric parameters, call with `param: "abc"` (string instead of number). Must NOT return raw MCP `-32602` error.
+
+### Output Schema Validation Errors
+
+If a tool call with **correct, valid inputs** returns a raw MCP `-32602` mentioning "output schema", report as ❌.
+
+### Error Consistency Audit
+
+1. **Throw-vs-return**: Raw error instead of `{success: false}` → report as ❌.
+2. **Error field name**: Must use `error` field. `reason` is reserved for `{success: true, skipped: true}`.
+3. **Orphaned output schemas**: Schema exported but not wired → report as ⚠️.
+4. **Inline output schemas**: `outputSchema: z.object({...})` inline → report as ⚠️.
+
+### Split Schema Pattern Verification
+
+Verify parameter visibility and alias acceptance for tools with optional parameters or documented aliases.
+
+## Cleanup Conventions
+
+- **Temporary tables**: Prefix with `temp_` (e.g., `temp_text_test`)
+- **Temporary FTS tables**: Prefix with `temp_` (e.g., `temp_users_fts`)
+- If DROP fails due to a database lock, move on.
+
+---
+
+## Group Focus: text
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
+
+> **FTS Testing Notes:** After `sqlite_fts_create`, always call `sqlite_fts_rebuild` before searching. `test_articles` searchable terms: `SQLite`, `database`, `JSON`, `FTS`, `vector`, `API`, `search`, `MCP`.
+
+### Built-in Tools (3)
+
+1. server_info
+2. server_health
+3. list_adapters
+
+### text Group Tools (Native — 19 Tools)
+
+4. sqlite_regex_extract
+5. sqlite_regex_match
+6. sqlite_text_split
+7. sqlite_text_concat
+8. sqlite_text_replace
+9. sqlite_text_trim
+10. sqlite_text_case
+11. sqlite_text_substring
+12. sqlite_fuzzy_match
+13. sqlite_phonetic_match
+14. sqlite_text_normalize
+15. sqlite_text_validate
+16. sqlite_advanced_search
+17. sqlite_text_sentiment
+18. sqlite_fts_create `[NATIVE ONLY]`
+19. sqlite_fts_search `[NATIVE ONLY]`
+20. sqlite_fts_rebuild `[NATIVE ONLY]`
+21. sqlite_fts_match_info `[NATIVE ONLY]`
+22. sqlite_fts_headline `[NATIVE ONLY]`
+23. sqlite_execute_code
+
+### text Group Tools (WASM — 14 Tools)
+
+Same as Native minus the 5 FTS5 tools (items 18-22). WASM mode excludes FTS5 tools entirely.
+
+**Test data reference:**
+
+- `test_articles` (8 rows): FTS5 searchable terms: `SQLite`, `database`, `JSON`, `FTS`, `vector`, `API`, `search`, `MCP`
+- `test_users` (9 rows): Emails include `@example.com`, `@company.org`, `@gmail.com`, etc. One user (`testuser`) has `test.user@gmail.com`. Phone formats: `+1-555-0101`, `+44-20-7123-4567`, `+82-2-1234-5678`
+- `test_products` row 16: `name = 'Café Décor Light'` — has accented characters for `strip_accents` testing
+
+**Checklist:**
+
+1. `sqlite_regex_match({table: "test_users", column: "email", pattern: "@gmail\\.com$"})` → at least 1 result (`test.user@gmail.com`)
+2. `sqlite_regex_extract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → extract domain parts (example, company, startup, etc.)
+3. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "Laptp", maxDistance: 3})` → results include `Laptop Pro 15`
+4. `sqlite_phonetic_match({table: "test_products", column: "name", search: "Labtop"})` → should find `Laptop Pro 15` via Soundex (both produce L131)
+5. `sqlite_text_validate({table: "test_users", column: "email", pattern: "email"})` → all 9 rows should be valid emails
+6. `sqlite_text_validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid counts (one user has NULL phone)
+7. `sqlite_text_case({table: "test_users", column: "username", mode: "upper"})` → all usernames uppercased
+8. `sqlite_text_normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` becomes `Cafe Decor Light`
+9. `sqlite_text_split({table: "test_users", column: "email", delimiter: "@"})` → each email split into local + domain parts
+10. `sqlite_text_concat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated strings
+11. `sqlite_text_replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected (write operation — revert with `searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"` afterward)
+12. `sqlite_text_trim({table: "test_users", column: "bio"})` → trimmed bios
+13. `sqlite_text_substring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars of each username
+14. `sqlite_advanced_search({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → should find `Mechanical Keyboard`
+
+**FTS5 tools `[NATIVE ONLY]`:**
+
+15. `sqlite_fts_create({sourceTable: "test_users", columns: ["username", "bio"], ftsTable: "temp_users_fts"})` → FTS5 virtual table created
+16. `sqlite_fts_rebuild({table: "temp_users_fts"})` → rebuild index before searching
+17. `sqlite_fts_search({table: "temp_users_fts", query: "test*"})` → verify results from test_users data (prefix query needed since no standalone "test" token exists)
+18. Cleanup: `sqlite_drop_table({table: "temp_users_fts"})` (drop the temp FTS table)
+19. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite"})` → at least 1 result (article 1: "Introduction to SQLite")
+20. `sqlite_fts_search({table: "test_articles_fts", query: "MCP protocol"})` → matches article 3: "The Model Context Protocol Explained"
+21. `sqlite_fts_search({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
+22. `sqlite_fts_match_info({table: "test_articles_fts", query: "database"})` → match info with scoring data
+23. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
+
+**Code mode testing:**
+
+24. `sqlite_execute_code({code: "const result = await sqlite.text.fuzzyMatch({table: 'test_products', column: 'name', search: 'Laptp', maxDistance: 3}); return result;"})` → results include `Laptop Pro 15`
+25. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\\\.com$'}); return result;"})` → at least 1 result
+
+**Error path testing:**
+
+🔴 26. `sqlite_regex_match({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
+🔴 27. `sqlite_fuzzy_match({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error with code `COLUMN_NOT_FOUND`
+🔴 28. `sqlite_fts_search({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+
+🔴 29. `sqlite_regex_extract({})` → handler error
+🔴 30. `sqlite_regex_match({})` → handler error
+🔴 31. `sqlite_text_split({})` → handler error
+🔴 32. `sqlite_text_concat({})` → handler error
+🔴 33. `sqlite_text_replace({})` → handler error
+🔴 34. `sqlite_text_trim({})` → handler error
+🔴 35. `sqlite_text_case({})` → handler error
+🔴 36. `sqlite_text_substring({})` → handler error
+🔴 37. `sqlite_fuzzy_match({})` → handler error
+🔴 38. `sqlite_phonetic_match({})` → handler error
+🔴 39. `sqlite_text_normalize({})` → handler error
+🔴 40. `sqlite_text_validate({})` → handler error
+🔴 41. `sqlite_advanced_search({})` → handler error
+🔴 42. `sqlite_text_sentiment({})` → handler error
+🔴 43. `sqlite_fts_create({})` `[NATIVE ONLY]` → handler error
+🔴 44. `sqlite_fts_search({})` `[NATIVE ONLY]` → handler error
+🔴 45. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
+🔴 46. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
+🔴 47. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
+
+---
+
+## Post-Test Procedures
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan. If the plan requires no user decisions, proceed directly to implementation
+2. **Scope of fixes** includes corrections to handler code, `src/constants/server-instructions/*.md`, test database, or this prompt
+3. **Validate**: Run test suite, lint + typecheck, update changelog (no duplicate headers)
+4. **Commit**: Stage and commit — do NOT push
+5. **Live re-test**: Test fixes with direct MCP tool calls after server rebuild
+6. **Final summary**: Provide summary after testing/re-testing confirms fixes
+
+---
+
+## Troubleshooting
+
+### Database is locked / file in use
+
+1. Check for Node.js processes: `Get-CimInstance Win32_Process -Filter "Name = 'node.exe'"`
+2. WAL/journal files (`test.db-wal`, `test.db-shm`) are normal
+
+### FTS5 tools not available [WASM]
+
+FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`, `sqlite_fts_headline`) are Native-only. In WASM mode, these tools are not registered and will not appear in the tool list. This is expected behavior.
+
+### Reset script fails
+
+1. Run with `-Verbose`: `.\reset-database.ps1 -Verbose`
+2. If `sqlite3` is not in PATH, the script falls back to Node.js with `better-sqlite3`

@@ -1,0 +1,182 @@
+# db-mcp (SQLite) Tool Group Testing: [migration]
+
+**Ignore WASM content. Test Native Mode Only**
+
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
+
+**Step 2:** Please conduct an exhaustive test of the **migration** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
+
+**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore them.
+
+## Reporting Format
+
+- ❌ Fail: Tool errors or produces incorrect results (include error message)
+- ⚠️ Issue: Unexpected behavior or improvement opportunity
+- 📦 Payload: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Report the response size in KB and suggest a concrete optimization.
+
+## Test Database Schema
+
+| Table             | Rows | Columns                                                                       | JSON Columns                                                                              |
+| ----------------- | ---- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| test_products     | 16   | id, name, description, price, category, created_at                            | —                                                                                         |
+| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, order_date, status | —                                                                                         |
+| test_jsonb_docs   | 6    | id, doc, metadata, tags, created_at                                           | **doc**, **metadata** (nested), **tags** (array)                                          |
+| test_articles     | 8    | id, title, body, author, category, published_at                               | —                                                                                         |
+| test_users        | 9    | id, username, email, phone, bio, created_at                                   | —                                                                                         |
+| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, measured_at                   | —                                                                                         |
+| test_embeddings   | 20   | id, content, category, embedding                                              | **embedding** (8-dim float array); category values: database, fitness, food, tech, travel |
+| test_locations    | 15   | id, name, city, latitude, longitude, type                                     | —                                                                                         |
+| test_categories   | 17   | id, name, path, level                                                         | —                                                                                         |
+| test_events       | 100  | id, event_type, user_id (INT, 8 values), payload, event_date                  | **payload** (JSON)                                                                        |
+
+> **Note:** When testing `sqlite_execute_code`, do **not** pass `readonly: true` unless specifically testing read-only filtering.
+
+## Testing Requirements
+
+> [!CAUTION]
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed**.
+
+1. Use existing `test_*` tables for read operations
+2. Report all failures, unexpected behaviors, or unnecessarily large payloads
+3. Do not mention what already works well or issues documented in help resources
+4. **Error path testing**: For **every** tool, test (a) domain error and (b) Zod validation error (`{}`). Both must return `{success: false, error: "..."}`.
+5. **Output schema testing**: For tools with `outputSchema`, confirm valid calls return structured JSON.
+6. **Deterministic checklist first**: Complete ALL items before freeform exploration.
+
+## Structured Error Response Pattern
+
+```json
+{ "success": false, "error": "Human-readable error message" }
+```
+
+| Type                 | Source                                                             | What you see                                                      | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields           | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field      | Bug — report as ❌ |
+
+### Zod Validation Errors
+
+**Zod refinement leak pattern:** `.partial()` does NOT strip `.min(N)` / `.max(N)` refinements. **Fix:** Remove refinements from schema, validate inside handler.
+
+- Raw MCP error (no `success` field) → report as ❌
+- `{success: false, error: "..."}` → correct
+- Successful response for invalid input → report as ⚠️
+
+### Output Schema Validation Errors
+
+If valid inputs return raw MCP `-32602` mentioning "output schema", report as ❌.
+
+### Error Consistency Audit
+
+1. Raw error instead of `{success: false}` → ❌
+2. Must use `error` field name
+3. Orphaned/inline output schemas → ⚠️
+
+### Split Schema Pattern Verification
+
+Verify parameter visibility and alias acceptance.
+
+---
+
+## Group Focus: migration
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+> **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and modifies the database schema. Always reset the database after completing migration tests.
+
+### Built-in Tools (3)
+
+1. server_info
+2. server_health
+3. list_adapters
+
+### migration Group Tools (6)
+
+4. sqlite_migration_init
+5. sqlite_migration_record
+6. sqlite_migration_apply
+7. sqlite_migration_rollback
+8. sqlite_migration_history
+9. sqlite_migration_status
+10. sqlite_execute_code
+
+**Checklist — Initialization & Recording:**
+
+1. `sqlite_migration_init` → `{success: true}`, creates `_mcp_migrations` table (idempotent — safe to call multiple times)
+2. `sqlite_migration_init` → call again to verify idempotency (should succeed without error)
+3. `sqlite_migration_status` → verify empty state (no migrations applied yet)
+4. `sqlite_migration_record({version: "1.0.0", description: "Create temp table", sql: "CREATE TABLE temp_migration_test (id INTEGER PRIMARY KEY, name TEXT)"})` → recorded (not executed — only logged)
+5. `sqlite_migration_status` → verify migration count incremented
+6. `sqlite_migration_history` → verify migration 1.0.0 listed with status "recorded"
+
+**Checklist — Apply & Execute:**
+
+7. `sqlite_migration_apply({version: "1.0.1", description: "Create temp migration table", sql: "CREATE TABLE temp_migration_applied (id INTEGER PRIMARY KEY, value TEXT)"})` → applied (SQL executed AND recorded)
+8. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_applied'"})` → table exists
+9. `sqlite_migration_history` → verify both 1.0.0 and 1.0.1 listed
+10. `sqlite_migration_status` → verify count shows 2 migrations
+
+**Checklist — SHA-256 Deduplication:**
+
+11. `sqlite_migration_record({version: "1.0.2", description: "Duplicate test", sql: "CREATE TABLE temp_migration_test (id INTEGER PRIMARY KEY, name TEXT)"})` → should fail (duplicate SQL detected via SHA-256 hash)
+
+**Checklist — Rollback:**
+
+12. `sqlite_migration_rollback({version: "1.0.1"})` → report behavior (rollback requires rollback SQL to have been recorded; if none was provided during apply, rollback should return an informative error)
+13. `sqlite_migration_apply({version: "1.0.3", description: "With rollback", sql: "CREATE TABLE temp_migration_rollback (id INTEGER PRIMARY KEY)", rollbackSql: "DROP TABLE IF EXISTS temp_migration_rollback"})` → applied with rollback SQL stored
+14. `sqlite_migration_rollback({version: "1.0.3"})` → should execute the rollback SQL
+15. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_rollback'"})` → table should NOT exist
+16. `sqlite_migration_rollback({version: "1.0.3", dryRun: true})` → report behavior (preview mode)
+
+**Code mode testing:**
+
+17. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationStatus(); return result;"})` → migration status summary
+18. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationHistory(); return result;"})` → migration history list
+
+**Error path testing:**
+
+🔴 19. `sqlite_migration_apply({version: "bad version!", description: "Invalid", sql: "SELECT 1"})` → report behavior (invalid version format)
+🔴 20. `sqlite_migration_rollback({version: "nonexistent_version"})` → structured error
+
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+
+🔴 21. `sqlite_migration_init({})` → handler error (or success if no required params)
+🔴 22. `sqlite_migration_record({})` → handler error
+🔴 23. `sqlite_migration_apply({})` → handler error
+🔴 24. `sqlite_migration_rollback({})` → handler error
+🔴 25. `sqlite_migration_history({})` → handler error (or success if no required params)
+🔴 26. `sqlite_migration_status({})` → handler error (or success if no required params)
+
+---
+
+## Post-Test Procedures
+
+### After Testing
+
+1. **⚠️ Reset database**: Run `.\reset-database.ps1` to clean up migration artifacts (`_mcp_migrations` table and any `temp_migration_*` tables)
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
+4. **Validate**: Test suite, lint + typecheck, changelog
+5. **Commit**: Stage and commit — do NOT push
+6. **Live re-test**: After server rebuild
+7. **Final summary**: After testing/re-testing
+
+---
+
+## Troubleshooting
+
+### Database is locked / file in use
+
+1. Check for Node.js processes: `Get-CimInstance Win32_Process -Filter "Name = 'node.exe'"`
+2. WAL/journal files are normal
+
+### Migration state is dirty
+
+If previous migration test left the database in a bad state:
+1. Run `.\reset-database.ps1` to regenerate the test database from `test-database.sql`
+2. This drops and recreates all tables, including removing `_mcp_migrations`
+
+### Reset script fails
+
+1. Run with `-Verbose`: `.\reset-database.ps1 -Verbose`
+2. If `sqlite3` is not in PATH, the script falls back to Node.js with `better-sqlite3`
