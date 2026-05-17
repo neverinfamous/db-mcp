@@ -137,7 +137,7 @@ describe("Vector Tools", () => {
       })) as {
         success: boolean;
         count: number;
-        results: { id: number; _similarity: number }[];
+        rows: { id: number; _similarity: number }[];
       };
 
       expect(result.success).toBe(true);
@@ -316,11 +316,11 @@ describe("Vector Tools", () => {
         metric: "euclidean",
       })) as {
         success: boolean;
-        value: number;
+        distance: number;
       };
 
       expect(result.success).toBe(true);
-      expect(result.value).toBeCloseTo(Math.sqrt(2), 3);
+      expect(result.distance).toBeCloseTo(Math.sqrt(2), 3);
     });
 
     it("should calculate cosine distance", async () => {
@@ -330,11 +330,11 @@ describe("Vector Tools", () => {
         metric: "cosine",
       })) as {
         success: boolean;
-        value: number;
+        distance: number;
       };
 
       expect(result.success).toBe(true);
-      expect(result.value).toBe(0); // Identical vectors = zero distance
+      expect(result.distance).toBe(0); // Identical vectors = zero distance
     });
 
     it("should calculate dot product", async () => {
@@ -344,11 +344,11 @@ describe("Vector Tools", () => {
         metric: "dot",
       })) as {
         success: boolean;
-        value: number;
+        distance: number;
       };
 
       expect(result.success).toBe(true);
-      expect(result.value).toBeCloseTo(32); // 1*4 + 2*5 + 3*6 = 32
+      expect(result.distance).toBeCloseTo(32); // 1*4 + 2*5 + 3*6 = 32
     });
   });
 
@@ -400,11 +400,11 @@ describe("Vector Tools", () => {
       })) as {
         success: boolean;
         count: number;
-        results: { id: number }[];
+        rows: { id: number }[];
       };
 
       expect(result.success).toBe(true);
-      expect(result.results[0]?.id).toBe(1);
+      expect(result.rows[0]?.id).toBe(1);
     });
   });
 

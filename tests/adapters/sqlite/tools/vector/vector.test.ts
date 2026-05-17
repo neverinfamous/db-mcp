@@ -55,7 +55,7 @@ describe("createVectorSearchTool", () => {
     )) as any;
     expect(result.success).toBe(true);
     expect(result.count).toBe(2);
-    expect(result.results[0]._similarity).toBeDefined();
+    expect(result.rows[0]._similarity).toBeDefined();
   });
 
   it("should search by euclidean distance", async () => {
@@ -150,7 +150,7 @@ describe("createVectorSearchTool", () => {
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    expect(result.results[0]).toHaveProperty("_similarity");
+    expect(result.rows[0]).toHaveProperty("_similarity");
   });
 
   it("should skip invalid vectors and report warning", async () => {

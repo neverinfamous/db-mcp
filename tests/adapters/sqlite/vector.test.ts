@@ -87,10 +87,10 @@ describe("Vector Tools", () => {
         queryVector: [0.9, 0.1, 0.0],
         metric: "cosine",
         limit: 2,
-      })) as { results: { label: string; _similarity: number }[] };
+      })) as { rows: { label: string; _similarity: number }[] };
 
       // x-axis should be most similar
-      expect(result.results[0]?.label).toBe("x-axis");
+      expect(result.rows[0]?.label).toBe("x-axis");
     });
   });
 
@@ -100,9 +100,9 @@ describe("Vector Tools", () => {
         vector1: [1, 0, 0],
         vector2: [1, 0, 0],
         metric: "cosine",
-      })) as { value: number };
+      })) as { distance: number };
 
-      expect(result.value).toBe(0); // Same vector = distance 0
+      expect(result.distance).toBe(0); // Same vector = distance 0
     });
 
     it("should calculate euclidean distance", async () => {
@@ -110,9 +110,9 @@ describe("Vector Tools", () => {
         vector1: [0, 0],
         vector2: [3, 4],
         metric: "euclidean",
-      })) as { value: number };
+      })) as { distance: number };
 
-      expect(result.value).toBe(5); // 3-4-5 triangle
+      expect(result.distance).toBe(5); // 3-4-5 triangle
     });
   });
 
