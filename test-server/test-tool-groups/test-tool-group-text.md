@@ -53,6 +53,7 @@ The test database (test-server/test.db) contains these tables with JSON-relevant
 6. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error and (b) a **Zod validation error** (`{}`). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
 7. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error.
 8. **Deterministic checklist first**: Complete ALL items in the group-specific checklist before moving to freeform exploration.
+9. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 ## Structured Error Response Pattern
 
@@ -223,7 +224,7 @@ Same as Native minus the 5 FTS5 tools (items 18-22). WASM mode excludes FTS5 too
 
 1. **Triage findings**: If issues were found, create an implementation plan. If the plan requires no user decisions, proceed directly to implementation
 2. **Scope of fixes** includes corrections to handler code, `src/constants/server-instructions/*.md`, test database, or this prompt
-3. **Validate**: Run test suite, lint + typecheck, update changelog (no duplicate headers)
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit — do NOT push
 5. **Live re-test**: Test fixes with direct MCP tool calls after server rebuild
 6. **Final summary**: Provide summary after testing/re-testing confirms fixes

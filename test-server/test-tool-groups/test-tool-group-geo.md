@@ -46,6 +46,7 @@
 5. **Error path testing**: For **every** tool, test (a) domain error and (b) Zod validation error (`{}`). Both must return `{success: false, error: "..."}`.
 6. **Output schema testing**: For tools with `outputSchema`, confirm valid calls return structured JSON.
 7. **Deterministic checklist first**: Complete ALL items before freeform exploration.
+8. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 ## Structured Error Response Pattern
 
@@ -180,7 +181,7 @@ Only the Haversine-based tools: items 4-7 and code mode. SpatiaLite tools (items
 
 1. **Triage findings**: Create implementation plan if issues found
 2. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-3. **Validate**: Test suite, lint + typecheck, changelog
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit — do NOT push
 5. **Live re-test**: After server rebuild
 6. **Final summary**: After testing/re-testing

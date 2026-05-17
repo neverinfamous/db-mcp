@@ -34,6 +34,12 @@ When tasked with running tests from this folder, adhere to the following protoco
 - **Structured Error Path**: Ensure domain errors (e.g., nonexistent table) return an object `{"success": false, "error": "..."}`. A raw MCP error indicates a missing try/catch in the handler.
 - **Zod Exceptions**: Pass `{}` with missing required parameters or invalid types. The response must be a handler error, not a raw MCP `-32602` error.
 - **Payload Limits**: Watch for payload bloat and explicitly log it as a 📦 warning if it risks overflowing context window token limits.
+- **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
+- **Documentation Parity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is correct and intended, but the documentation is inaccurate, outdated, or lacking specificity.
+
+### 2.5 Testing Limits
+
+- **No Automated Execution**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
 
 ### 3. Tracking Metrics & Progress
 

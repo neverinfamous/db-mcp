@@ -50,6 +50,7 @@
 5. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) domain error and (b) Zod validation error (`{}`). Both must return `{success: false, error: "..."}` — NOT a raw MCP error frame.
 6. **Output schema testing**: For **every** tool with an `outputSchema`, confirm valid happy-path calls return structured JSON — NOT a raw MCP `-32602` error.
 7. **Deterministic checklist first**: Complete ALL items before freeform exploration.
+8. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 ## Structured Error Response Pattern
 
@@ -207,7 +208,7 @@ Same as Native minus the 6 window function tools (items 20-25).
 
 1. **Triage findings**: Create implementation plan if issues found
 2. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-3. **Validate**: Test suite, lint + typecheck, changelog
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit — do NOT push
 5. **Live re-test**: After server rebuild
 6. **Final summary**: After testing/re-testing

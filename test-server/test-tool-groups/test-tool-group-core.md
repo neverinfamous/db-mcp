@@ -60,6 +60,7 @@ The test database (test-server/test.db) contains these tables with JSON-relevant
 6. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
 7. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches (handler returns fields not declared in the schema) produce the same `-32602` code as input errors but are only caught with valid inputs. See "Output Schema Validation Errors" below. Also check for the inverse: if a schema is **defined** in `src/adapters/sqlite/output-schemas/` but **not wired** to the tool definition, report as ⚠️ — the schema exists but provides no enforcement.
 8. **Deterministic checklist first**: Complete ALL items in the group-specific checklist before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
+9. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 ## Structured Error Response Pattern
 
@@ -285,7 +286,7 @@ If DROP fails due to a database lock, note the leftover tables and move on — t
 
 ### After Implementation
 
-3. **Validate**: Run test suite and fix broken tests, run lint + typecheck and fix issues, update changelog (no duplicate headers)
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit all changes — do NOT push
 5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
 6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, make the improvements.

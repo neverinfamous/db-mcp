@@ -45,6 +45,7 @@
 4. **Error path testing**: For **every** tool, test (a) domain error and (b) Zod validation error (`{}`). Both must return `{success: false, error: "..."}`.
 5. **Output schema testing**: For tools with `outputSchema`, confirm valid calls return structured JSON.
 6. **Deterministic checklist first**: Complete ALL items before freeform exploration.
+7. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 ## Structured Error Response Pattern
 
@@ -159,7 +160,7 @@ Verify parameter visibility and alias acceptance.
 1. **⚠️ Reset database**: Run `.\reset-database.ps1` to clean up migration artifacts (`_mcp_migrations` table and any `temp_migration_*` tables)
 2. **Triage findings**: Create implementation plan if issues found
 3. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-4. **Validate**: Test suite, lint + typecheck, changelog
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 5. **Commit**: Stage and commit — do NOT push
 6. **Live re-test**: After server rebuild
 7. **Final summary**: After testing/re-testing
