@@ -230,10 +230,7 @@ export const AdvancedSearchSchema = z.object({
 });
 
 export const TextSentimentSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("Column to analyze"),
-  whereClause: z.string().optional(),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  text: z.string().describe("Text to analyze"),
   returnWords: z
     .boolean()
     .optional()

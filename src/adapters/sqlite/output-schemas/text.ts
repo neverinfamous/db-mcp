@@ -196,24 +196,16 @@ export const AdvancedSearchOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-/**
- * sqlite_text_sentiment output
- */
 export const TextSentimentOutputSchema = z
   .object({
     success: z.boolean(),
-    rowCount: z.number().optional(),
-    results: z.array(z.object({
-      rowid: z.number().optional(),
-      original: z.string().nullable().optional(),
-      sentiment: z.string(),
-      score: z.number(),
-      confidence: z.string(),
-      positiveCount: z.number().optional(),
-      negativeCount: z.number().optional(),
-      matchedPositive: z.array(z.string()).optional(),
-      matchedNegative: z.array(z.string()).optional(),
-    })).optional(),
+    sentiment: z.string().optional(),
+    score: z.number().optional(),
+    confidence: z.string().optional(),
+    positiveCount: z.number().optional(),
+    negativeCount: z.number().optional(),
+    matchedPositive: z.array(z.string()).optional(),
+    matchedNegative: z.array(z.string()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
