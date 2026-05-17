@@ -44,6 +44,7 @@ Row 4 has nested: `doc.nested.level1.level2 = "deep value"`
 3. **Token tracking**: Monitor `metrics.tokenEstimate`. Report most expensive block.
 4. **Coverage Matrix**: `| Tool | Happy Path | Domain Error | Zod Error |`
 5. **Deterministic checklist first**.
+6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 ## Structured Error Response Pattern
 

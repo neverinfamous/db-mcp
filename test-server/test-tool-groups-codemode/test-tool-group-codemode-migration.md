@@ -32,6 +32,7 @@
 3. **Token tracking**: Monitor `metrics.tokenEstimate`.
 4. **Coverage Matrix**: `| Tool | Happy Path | Domain Error | Zod Error |`
 5. **Deterministic checklist first**.
+6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 > **⚠️ Migration ordering matters**: Migration tests are stateful — each depends on the previous. Run lifecycle tests sequentially, not batched.
 

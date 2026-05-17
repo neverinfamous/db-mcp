@@ -40,6 +40,7 @@
 3. **Token tracking**: Monitor `metrics.tokenEstimate` on every response. Report the most expensive block.
 4. **Strict Coverage Matrix**: Maintain in `tmp/task.md`: `| Tool | Happy Path | Domain Error | Zod Error |`
 5. **Deterministic checklist first**: Complete ALL numbered items before freeform exploration.
+6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
 
 ## Structured Error Response Pattern
 
