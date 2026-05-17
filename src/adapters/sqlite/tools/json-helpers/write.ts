@@ -76,7 +76,10 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           message: `Inserted new JSON row in ${input.table}.${input.column}`,
           rowsAffected: result.rowsAffected,
-          lastInsertRowid: result.lastInsertRowid ? Number(result.lastInsertRowid) : undefined,
+          lastInsertRowid:
+            result.lastInsertId !== undefined
+              ? Number(result.lastInsertId)
+              : undefined,
         };
       } catch (error) {
         return formatHandlerError(error);
