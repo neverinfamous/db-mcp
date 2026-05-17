@@ -356,7 +356,7 @@ describe("Introspection Schema Tools", () => {
       expect(result.risks.length).toBeGreaterThan(0);
       expect(result.summary.highestRisk).toBe("critical");
       // Should mention dependent tables
-      const dropRisk = result.risks.find((r) => r.category === "data_loss");
+      const dropRisk = result.risks.find((r) => r.category === "destructive");
       expect(dropRisk).toBeDefined();
       expect(dropRisk?.description).toContain("departments");
     });
@@ -523,7 +523,7 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       // Should still flag as high risk (destructive)
-      const dropRisk = result.risks.find((r) => r.category === "data_loss");
+      const dropRisk = result.risks.find((r) => r.category === "destructive");
       expect(dropRisk).toBeDefined();
       expect(dropRisk?.riskLevel).toBe("high");
     });

@@ -21,6 +21,7 @@ import { MigrationRisksOutputSchema } from "../../../output-schemas/index.js";
 const MigrationRisksSchema = z.object({
   statements: z
     .array(z.string())
+    .min(1, "statements array cannot be empty")
     .describe("Array of DDL statements to analyze for risks"),
 });
 
@@ -187,14 +188,14 @@ export function createMigrationRisksTool(
               }
               addRisk(
                 "critical",
-                "data_loss",
+                "destructive",
                 `DROP TABLE will permanently delete '${tableName}' and all its data.${dependentInfo}`,
                 `Back up data first with sqlite_backup or export the table.${dependentInfo ? " Handle or drop dependent tables first." : ""}`,
               );
             } else {
               addRisk(
                 "high",
-                "data_loss",
+                "destructive",
                 "DROP TABLE will permanently delete the table and all its data.",
                 "Back up data first.",
               );
