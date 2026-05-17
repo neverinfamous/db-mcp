@@ -121,10 +121,12 @@ const FtsSearchSchema = z.object({
   limit: z.preprocess(
     (val) =>
       typeof val === "string"
-        ? isNaN(Number(val))
-          ? undefined
-          : Number(val)
-        : val,
+    ? val.trim() === ""
+      ? undefined
+      : isNaN(Number(val))
+        ? val
+        : Number(val)
+    : val,
     z.number().optional().default(100),
   ),
   highlight: z

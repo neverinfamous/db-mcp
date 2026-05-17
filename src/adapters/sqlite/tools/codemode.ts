@@ -38,9 +38,11 @@ import { ErrorResponseFields } from "../../../utils/errors/error-response-fields
  */
 const coerceNumber = (val: unknown): unknown =>
   typeof val === "string"
-    ? Number.isNaN(Number(val))
+    ? val.trim() === ""
       ? undefined
-      : Number(val)
+      : isNaN(Number(val))
+        ? val
+        : Number(val)
     : val;
 
 // =============================================================================
