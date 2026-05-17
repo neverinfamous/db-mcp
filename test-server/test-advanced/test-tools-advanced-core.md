@@ -9,6 +9,8 @@
 
 ## Code Mode Execution
 
+- **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+
 All tests via `sqlite_execute_code`. Translation table:
 
 | Direct Tool Call | Code Mode Equivalent |
@@ -177,7 +179,7 @@ Drop all `stress_*` tables. Confirm `test_products` row count is still 16 (no po
 1. **Cleanup**: Drop all `stress_*` objects
 2. **Fix EVERY finding** — ❌ Fails, ⚠️ Issues, 📦 Payloads. All changes consistent with `code-map.md`
 3. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-4. **Validate**: Test suite, lint + typecheck, changelog
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 5. **Commit**: Stage and commit — do NOT push
 6. **Re-test**: After server rebuild, re-test fixes with code mode calls
 7. **Token audit**: Report most expensive block

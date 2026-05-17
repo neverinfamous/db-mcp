@@ -11,6 +11,8 @@
 
 ## Code Mode Execution
 
+- **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+
 All tests via `sqlite_execute_code`. Use `sqlite.introspection.*` for all introspection tools.
 State persists across calls. All introspection tools are **read-only** — no cleanup needed.
 
@@ -153,7 +155,7 @@ All tools read-only — no cleanup needed. Confirm `test_products` (16), `test_o
 ## Post-Test Procedures
 
 1. **Fix EVERY finding** — ❌, ⚠️, 📦
-2. **Validate**: Test suite, lint + typecheck, changelog
+2. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 3. **Commit**: Stage and commit — do NOT push
 4. **Re-test**: After server rebuild
 5. **Token audit**: Report most expensive block

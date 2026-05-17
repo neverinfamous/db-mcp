@@ -11,6 +11,8 @@
 
 ## Code Mode Execution
 
+- **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+
 All tests via `sqlite_execute_code`. Use `sqlite.transactions.*` for transaction tools, `sqlite.core.*` for read/write.
 State persists across calls. Do NOT pass `readonly: true`.
 
@@ -119,7 +121,7 @@ Drop `stress_tx_sp`, `stress_tx_test`, `stress_tx_fail` if they exist. Confirm `
 
 1. **Cleanup**: Roll back any active transaction, drop all `stress_*` objects
 2. **Fix EVERY finding** — ❌, ⚠️, 📦
-3. **Validate**: Test suite, lint + typecheck, changelog
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit — do NOT push
 5. **Re-test**: After server rebuild
 6. **Token audit**: Report most expensive block

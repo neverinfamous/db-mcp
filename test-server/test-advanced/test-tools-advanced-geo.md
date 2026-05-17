@@ -9,6 +9,8 @@
 
 ## Code Mode Execution
 
+- **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+
 All tests via `sqlite_execute_code`. Use `sqlite.geo.*` for geo/SpatiaLite tools.
 State persists across calls. Do NOT pass `readonly: true`. Group related tests into single calls.
 
@@ -136,7 +138,7 @@ Drop `stress_geo_spatial` (if created). Confirm `test_locations` count is still 
 
 1. **Cleanup**: Drop all `stress_*` objects
 2. **Fix EVERY finding** — ❌, ⚠️, 📦
-3. **Validate**: Test suite, lint + typecheck, changelog
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit — do NOT push
 5. **Re-test**: After server rebuild
 6. **Token audit**: Report most expensive block
