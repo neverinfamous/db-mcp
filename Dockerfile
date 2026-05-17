@@ -47,13 +47,13 @@ RUN apk add --no-cache ca-certificates && \
 # Patch npm-bundled transitive dependencies for Docker Scout compliance.
 # These only matter in the production image (what gets scanned and deployed).
 
-# Fix GHSA-73rr-hh4g-fpgx: Manually update npm's bundled diff to 8.0.3
+# Fix GHSA-73rr-hh4g-fpgx: Manually update npm's bundled diff to 9.0.0
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack diff@8.0.3 && \
+    npm pack diff@9.0.0 && \
     rm -rf node_modules/diff && \
-    tar -xzf diff-8.0.3.tgz && \
+    tar -xzf diff-9.0.0.tgz && \
     mv package node_modules/diff && \
-    rm diff-8.0.3.tgz
+    rm diff-9.0.0.tgz
 
 # Fix CVE-2026-25547: Manually update npm's bundled @isaacs/brace-expansion to 5.0.1
 RUN cd /usr/local/lib/node_modules/npm && \
@@ -64,21 +64,21 @@ RUN cd /usr/local/lib/node_modules/npm && \
     mv package/* node_modules/@isaacs/brace-expansion/ && \
     rm -rf package isaacs-brace-expansion-5.0.1.tgz
 
-# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.11
+# Fix CVE-2026-23950, CVE-2026-24842, CVE-2026-26960: Manually update npm's bundled tar to 7.5.15
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack tar@7.5.11 && \
+    npm pack tar@7.5.15 && \
     rm -rf node_modules/tar && \
-    tar -xzf tar-7.5.11.tgz && \
+    tar -xzf tar-7.5.15.tgz && \
     mv package node_modules/tar && \
-    rm tar-7.5.11.tgz
+    rm tar-7.5.15.tgz
 
-# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.4
+# Fix CVE-2026-26996: Manually update npm's bundled minimatch to 10.2.5
 RUN cd /usr/local/lib/node_modules/npm && \
-    npm pack minimatch@10.2.4 && \
+    npm pack minimatch@10.2.5 && \
     rm -rf node_modules/minimatch && \
-    tar -xzf minimatch-10.2.4.tgz && \
+    tar -xzf minimatch-10.2.5.tgz && \
     mv package node_modules/minimatch && \
-    rm minimatch-10.2.4.tgz
+    rm minimatch-10.2.5.tgz
 
 # Copy built artifacts and production dependencies
 COPY --from=builder /app/dist ./dist
