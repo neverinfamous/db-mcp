@@ -158,7 +158,7 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 
 **3.3 Type/Constraint Violations**
 
-27. `sqlite.core.writeQuery("INSERT INTO test_products (id) VALUES (1)")` → duplicate primary key error (id=1 exists)
+27. `sqlite.core.writeQuery("INSERT INTO test_products (id, name, price, category) VALUES (1, 'dup', 10.0, 'cat')")` → duplicate primary key error (id=1 exists)
 
 ---
 

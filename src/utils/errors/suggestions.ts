@@ -95,6 +95,14 @@ const ERROR_SUGGESTIONS: {
     suggestion:
       "Table already exists. Use CREATE TABLE IF NOT EXISTS or drop the existing table first.",
     category: ErrorCategory.RESOURCE,
+    code: "TABLE_ALREADY_EXISTS",
+  },
+  {
+    pattern: /index .* already exists/i,
+    suggestion:
+      "Index already exists. Use CREATE INDEX IF NOT EXISTS or drop the existing index first.",
+    category: ErrorCategory.RESOURCE,
+    code: "INDEX_ALREADY_EXISTS",
   },
 
   // JSON-specific errors — often caused by wrong column name
