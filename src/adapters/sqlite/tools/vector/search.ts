@@ -161,7 +161,7 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           metric: input.metric,
           count: results.length,
-          results,
+          rows: results,
         };
 
         if (skipped > 0) {

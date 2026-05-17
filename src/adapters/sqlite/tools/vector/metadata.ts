@@ -299,7 +299,7 @@ export function createVectorDistanceTool(): ToolDefinition {
         return Promise.resolve({
           success: true,
           metric: input.metric,
-          value: Math.round(result * 10000) / 10000,
+          distance: Math.round(result * 10000) / 10000,
         });
       } catch (error) {
         return Promise.resolve(formatHandlerError(error));

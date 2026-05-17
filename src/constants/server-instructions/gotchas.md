@@ -19,7 +19,7 @@
 15. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use `sqlite_drop_table` to remove
 16. **sqlite_dbstat**: `summarize` only works in native; WASM returns counts only
 17. **PRAGMA compile options**: WASM may show FTS3, not FTS5
-18. **Vector tool schemas**: Vector tools use distinct schemas from core tools. E.g., `sqlite.vector.search` returns `results` (not `rows`), `distance` returns `value` (not `distance`), and `dimensions` requires `vectorColumn`. Additionally, `sqlite.vector.get` wraps metadata inside a `metadata` object (e.g., `metadata.content`), and `sqlite.vector.stats` returns `sampleSize` and `magnitudeStats` (not `count` and `stats`).
+18. **Vector tool schemas**: Vector tools use distinct schemas for specific operations. E.g., `sqlite.vector.dimensions` requires `vectorColumn`. Additionally, `sqlite.vector.get` wraps metadata inside a `metadata` object (e.g., `metadata.content`), and `sqlite.vector.stats` returns `sampleSize` and `magnitudeStats` (not `count` and `stats`).
 
 ## WASM vs Native
 

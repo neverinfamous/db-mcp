@@ -407,7 +407,7 @@ test.describe("Boundary: Vector", () => {
         metric: "euclidean",
       });
       expectSuccess(p);
-      expect(p.value).toBe(0);
+      expect(p.distance).toBe(0);
     } finally {
       await client.close();
     }
@@ -456,8 +456,8 @@ test.describe("Boundary: Vector Empty Table", () => {
         limit: 5,
       });
       expectSuccess(p);
-      expect(Array.isArray(p.results)).toBe(true);
-      expect((p.results as unknown[]).length).toBe(0);
+      expect(Array.isArray(p.rows)).toBe(true);
+      expect((p.rows as unknown[]).length).toBe(0);
     } finally {
       await client.close();
     }

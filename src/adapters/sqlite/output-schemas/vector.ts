@@ -62,7 +62,7 @@ export const VectorSearchOutputSchema = z
     success: z.boolean(),
     metric: z.string().optional(),
     count: z.number().optional(),
-    results: z.array(VectorSearchResultSchema).optional(),
+    rows: z.array(VectorSearchResultSchema).optional(),
     skipped: z.number().optional(),
     warning: z.string().optional(),
   })
@@ -141,6 +141,6 @@ export const VectorDistanceOutputSchema = z
   .object({
     success: z.boolean(),
     metric: z.string().optional(),
-    value: z.number().optional(),
+    distance: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);

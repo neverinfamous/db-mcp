@@ -112,7 +112,7 @@ const similar = await sqlite.vector.search({
   table: "test_embeddings", vectorColumn: "embedding",
   queryVector: vec, metric: "cosine", limit: 5
 });
-if (!similar || !similar.results || similar.results.length < 1) failures.push("search returned no results");
+if (!similar || !similar.rows || similar.rows.length < 1) failures.push("search returned no results");
 
 // Get stats
 const vstats = await sqlite.vector.stats({table: "test_embeddings", vectorColumn: "embedding"});
@@ -122,7 +122,7 @@ if (!vstats) failures.push("stats failed");
 const dist = await sqlite.vector.distance({vector1: vec, vector2: vec, metric: "cosine"});
 // Self-distance should be 0 (or very close)
 
-return { failures, success: failures.length === 0, resultCount: similar?.results?.length, selfDistance: dist.value };
+return { failures, success: failures.length === 0, resultCount: similar?.rows?.length, selfDistance: dist.distance };
 ```
 
 ### 5.2 — Create → populate → search → teardown
@@ -138,7 +138,7 @@ const results = await sqlite.vector.search({
   table: "temp_cm_vec_pipe", vectorColumn: "vector",
   queryVector: [1, 0, 0], metric: "cosine", limit: 3
 });
-if (results.results[0].id !== 1) failures.push("expected row 1 as closest match");
+if (results.rows[0].id !== 1) failures.push("expected row 1 as closest match");
 await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_vec_pipe");
 return { failures, success: failures.length === 0 };
 ```

@@ -31,7 +31,7 @@ test.describe("Payload Contracts: Vector", () => {
     }
   });
 
-  test("sqlite_vector_search returns { success, results[] }", async ({}, testInfo) => {
+  test("sqlite_vector_search returns { success, rows[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_vector_search", {
@@ -42,12 +42,12 @@ test.describe("Payload Contracts: Vector", () => {
       });
 
       expectSuccess(payload);
-      expect(Array.isArray(payload.results)).toBe(true);
-      expect((payload.results as unknown[]).length).toBeLessThanOrEqual(3);
+      expect(Array.isArray(payload.rows)).toBe(true);
+      expect((payload.rows as unknown[]).length).toBeLessThanOrEqual(3);
 
-      const results = payload.results as Record<string, unknown>[];
-      if (results.length > 0) {
-        const r = results[0];
+      const rows = payload.rows as Record<string, unknown>[];
+      if (rows.length > 0) {
+        const r = rows[0];
         expect(r).toHaveProperty("id");
         expect(r).toHaveProperty("_similarity");
         expect(typeof r._similarity).toBe("number");
@@ -150,7 +150,7 @@ test.describe("Payload Contracts: Vector", () => {
     }
   });
 
-  test("sqlite_vector_distance returns { success, metric, value }", async ({}, testInfo) => {
+  test("sqlite_vector_distance returns { success, metric, distance }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const payload = await callToolAndParse(client, "sqlite_vector_distance", {
@@ -161,7 +161,7 @@ test.describe("Payload Contracts: Vector", () => {
 
       expectSuccess(payload);
       expect(payload.metric).toBe("cosine");
-      expect(typeof payload.value).toBe("number");
+      expect(typeof payload.distance).toBe("number");
     } finally {
       await client.close();
     }
