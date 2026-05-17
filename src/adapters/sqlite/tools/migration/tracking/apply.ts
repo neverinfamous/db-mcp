@@ -38,7 +38,7 @@ export function createMigrationApplyTool(
           };
         }
 
-        const hash = hashMigration(input.sql);
+        const hash = hashMigration(input.migrationSql);
 
         const dupCheck = await adapter.executeReadQuery(
           `SELECT id, version, status FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ? AND status = 'applied'`,
@@ -73,13 +73,13 @@ export function createMigrationApplyTool(
         }
 
         try {
-          await adapter.executeQuery(input.sql);
+          await adapter.executeQuery(input.migrationSql);
         } catch (execError) {
           if (existingId !== undefined) {
             await adapter.executeQuery(
               `UPDATE "${MIGRATIONS_TABLE}" SET migration_sql = ?, rollback_sql = ?, migration_hash = ?, source_system = ?, applied_by = ?, status = 'failed', applied_at = CURRENT_TIMESTAMP WHERE id = ?`,
               [
-                input.sql,
+                input.migrationSql,
                 input.rollbackSql ?? null,
                 hash,
                 input.sourceSystem ?? "agent",
@@ -94,7 +94,7 @@ export function createMigrationApplyTool(
               [
                 input.version,
                 input.description ?? null,
-                input.sql,
+                input.migrationSql,
                 input.rollbackSql ?? null,
                 hash,
                 input.sourceSystem ?? "agent",
@@ -114,7 +114,7 @@ export function createMigrationApplyTool(
           await adapter.executeQuery(
             `UPDATE "${MIGRATIONS_TABLE}" SET migration_sql = ?, rollback_sql = ?, migration_hash = ?, source_system = ?, applied_by = ?, status = 'applied', applied_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [
-              input.sql,
+              input.migrationSql,
               input.rollbackSql ?? null,
               hash,
               input.sourceSystem ?? "agent",
@@ -129,7 +129,7 @@ export function createMigrationApplyTool(
             [
               input.version,
               input.description ?? null,
-              input.sql,
+              input.migrationSql,
               input.rollbackSql ?? null,
               hash,
               input.sourceSystem ?? "agent",

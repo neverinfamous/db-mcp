@@ -38,7 +38,7 @@ export function createMigrationRecordTool(
           };
         }
 
-        const hash = hashMigration(input.sql);
+        const hash = hashMigration(input.migrationSql);
 
         const dupCheck = await adapter.executeReadQuery(
           `SELECT id, version FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ?`,
@@ -73,7 +73,7 @@ export function createMigrationRecordTool(
           [
             input.version,
             input.description ?? null,
-            input.sql,
+            input.migrationSql,
             input.rollbackSql ?? null,
             hash,
             input.sourceSystem ?? "manual",
