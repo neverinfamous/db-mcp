@@ -1,78 +1,76 @@
-# db-mcp Admin Tool Group Codemode Testing
+# Code Mode Core Group - Validation Report
 
 ## Executive Summary
-The **admin** tool group was exhaustively tested using the `sqlite_execute_code` code-mode interface. 
-- All 26 tools fully complied with the "Code Over Docs" policy and zero-tolerance MCP error rules.
-- Structured Error Pattern is correctly implemented across the entire suite: domain and Zod errors gracefully return `{"success": false, "error": "...", "code": "..."}` without throwing unhandled MCP exceptions.
-- `temp_*` views and tables created during the test were systematically cleaned up.
+The **Core** tool group has been rigorously tested using exclusively the `sqlite_execute_code` Code Mode interface. The primary objective was to ensure complete API parity, discoverability, robust error handling, and payload token efficiency. 
 
----
+**Result**: ✅ **All tests passed flawlessly.** No handler code modifications were required, affirming that the underlying tool architecture maintains strong parity and correct Zod validations in the Code Mode execution context.
 
 ## Coverage Matrix
 
 | Tool | Happy Path | Domain Error | Zod Error |
-|---|---|---|---|
-| `sqlite.admin.pragmaDatabaseList` | ✅ | N/A | N/A |
-| `sqlite.admin.pragmaCompileOptions` | ✅ | N/A | N/A |
-| `sqlite.admin.pragmaSettings` | ✅ | N/A | ✅ |
-| `sqlite.admin.pragmaTableInfo` | ✅ | ✅ | ✅ |
-| `sqlite.admin.indexStats` | ✅ | N/A | N/A |
-| `sqlite.admin.integrityCheck` | ✅ | N/A | N/A |
-| `sqlite.admin.analyze` | ✅ | N/A | N/A |
-| `sqlite.admin.dbstat` | ✅ | N/A | ✅ |
-| `sqlite.admin.createView` | ✅ | N/A | ✅ |
-| `sqlite.admin.listViews` | ✅ | N/A | N/A |
-| `sqlite.admin.dropView` | ✅ | ✅ | ✅ |
-| `sqlite.admin.listVirtualTables` | ✅ | N/A | N/A |
-| `sqlite.admin.virtualTableInfo` | ✅ | ✅ | ✅ |
-| `sqlite.admin.dropVirtualTable` | ✅ | ✅ | ✅ |
-| `sqlite.admin.generateSeries` | ✅ | N/A | ✅ |
-| `sqlite.admin.createRtreeTable` | ✅ | N/A | ✅ |
-| `sqlite.admin.createSeriesTable` | ✅ | N/A | ✅ |
-| `sqlite.admin.backup` | ✅ | N/A | ✅ |
-| `sqlite.admin.verifyBackup` | ✅ | ✅ | ✅ |
-| `sqlite.admin.restore` | ✅ | N/A | ✅ |
-| `sqlite.admin.vacuum` | ✅ | N/A | N/A |
-| `sqlite.admin.optimize` | ✅ | N/A | N/A |
-| `sqlite.admin.pragmaOptimize` | ✅ | N/A | N/A |
-| `sqlite.admin.analyzeCsvSchema` | ✅ | N/A | ✅ |
-| `sqlite.admin.createCsvTable` | ✅ | N/A | ✅ |
-| `sqlite.admin.appendInsight` | ✅ | N/A | ✅ |
+| ---- | ---------- | ------------ | --------- |
+| `readQuery` | ✅ | ✅ | ✅ |
+| `writeQuery` | ✅ | ✅ | ✅ |
+| `listTables` | ✅ | ✅ | ✅ |
+| `describeTable` | ✅ | ✅ | ✅ |
+| `getIndexes` | ✅ | ✅ | ✅ |
+| `createTable` | ✅ | N/A | ✅ |
+| `dropTable` | ✅ | ✅ | ✅ |
+| `createIndex` | ✅ | N/A | ✅ |
+| `dropIndex` | ✅ | N/A | ✅ |
+| `upsert` | ✅ | ✅ | ✅ |
+| `batchInsert` | ✅ | ✅ | ✅ |
+| `count` | ✅ | ✅ | ✅ |
+| `exists` | ✅ | ✅ | ✅ |
+| `truncate` | ✅ | ✅ | ✅ |
+| Code Mode APIs | ✅ | ✅ | ✅ |
+| Readonly Mode | ✅ | ✅ | ✅ |
 
 ---
 
-## Phase Execution Logs
+## Detailed Findings
 
-### Phase 1: Pragma & Inspection
-- **Result:** All 9 tools executed successfully.
-- **Notes:** `indexStats` correctly returns the `indexes` array; `dbstat` correctly returns the `objects` array; `integrityCheck` returns `integrity: "ok"`. No payload bloat was observed. Max token estimate: ~2065.
+### Phase 1: Sandbox Basics
+- `return 42` / `return {}` / async / await are fully supported and unwrap effectively.
+- Using undefined variables safely throws `{ success: false, error: "ReferenceError: ..." }` instead of crashing the sandbox.
+- Empty scripts (`code: ""`) returned precise Zod parsing metadata correctly.
 
-### Phase 2: View Management
-- **Result:** View lifecycle (`createView`, `listViews`, `dropView`) operates flawlessly. The temporary view `temp_view_orders` was created, validated in the view list, and cleanly dropped.
+### Phase 2: API Discoverability
+- `sqlite.help()` lists 196 total methods with all expected groups accurately registered.
+- `sqlite.core.help()` returns 21 methods natively available to the core sandbox.
+- **Top-level aliases** (e.g., `sqlite.listTables()`) behave identically to their namespaced counterparts (e.g., `sqlite.core.listTables()`), confirming wrapper reliability.
 
-### Phase 3: Virtual Tables
-- **Result:** `listVirtualTables` found `test_articles_fts`. `virtualTableInfo` fetched schema successfully. The code-mode functions seamlessly created the `temp_cm_rtree` and `temp_cm_series` tables, generated values with `generateSeries`, and successfully executed cleanup (`dropVirtualTable` and `dropTable`).
+### Phase 3: Security & Error Handling
+- Attempting `require()`, `process.`, or `eval()` immediately halts execution with a structured validation error and does not enter the script phase.
+- Infinite loops properly hit the `timeout` boundary limit and exit gracefully.
+- Invalid query APIs (e.g., `sqlite.core.readQuery({ query: "SELECT * FROM nonexistent_xyz" })`) yield `{ success: false, error: ... }` properly instead of causing raw MCP handler exceptions.
 
-### Phase 4: Backup/Restore
-- **Result:** A backup was correctly output to `C:\Users\chris\Desktop\db-mcp\test-server\test-backup.db`. `verifyBackup` validated the integrity (pageCount: 1731, integrity: "ok"). The database restored successfully.
+### Phase 4: Happy Paths (Batched Core)
+- Read and write operations operate securely within sequential loops.
+- `rowsAffected` metrics track effectively. Temp tables execute seamlessly across lifecycle steps.
 
-### Phase 5: Optimization
-- **Result:** `vacuum`, `optimize`, and `pragmaOptimize` ran seamlessly.
+### Phase 5 & 6: Domain and Zod Violations
+- All methods appropriately caught parameter-level Zod checks. 
+- Domain violations (e.g. `sqlite.core.dropTable("nonexistent_xyz")`) handled missing references with detailed standard error structures indicating resource-not-found exceptions.
+- **Zod refine patterns** effectively blocked attempts without missing internal schemas.
 
-### Phase 6: CSV
-- **Result:** `analyzeCsvSchema` correctly inferred the 6 columns in `sample.csv`. `createCsvTable` created the virtual table successfully, and `dropVirtualTable` was subsequently used to perform cleanup.
+### Phase 7: Readonly Constraints
+- Activating `readonly: true` permitted pure stats/read operations effectively.
+- Write/update logic securely yielded `CODEMODE_READONLY_VIOLATION` with no underlying data modification.
 
-### Phase 7: Insights
-- **Result:** Successfully appended `"Test insight from codemode"`.
+### Phase 8: Multi-Step Workflows
+- Performed rapid ETL pipelines (Insert loops, Updates) mapped within an array efficiently.
+- Combined loops traversing standard introspections returned correctly.
 
-### Phase 8: Domain Errors
-- **Result:** `TABLE_NOT_FOUND`, `FILE_NOT_FOUND`, and `VIEW_NOT_FOUND` structured error codes were gracefully returned for operations against non-existent artifacts (`nonexistent_xyz`, `nonexistent_file.db`).
+---
 
-### Phase 9: Zod Validation
-- **Result:** Every tool lacking required parameters successfully returned `VALIDATION_ERROR` (e.g., `Invalid input: expected string, received undefined`). Raw MCP exceptions were not thrown.
+## Token Efficiency Audit
 
-### Phase 10: Multi-Step Workflow
-- **Result:** The Database Health Check Pipeline correctly batched `integrityCheck`, `pragmaSettings`, `dbstat`, `listViews`, and `listVirtualTables`. No failures reported. View Lifecycle workflow also passed effortlessly.
+All Code Mode queries showcased phenomenal token efficiency due to optimized data structures. The most expensive block involved generating 10 errors sequentially inside Phase 5 Domain Tests, consuming an aggregated maximum of merely **~123 meta tokens**—which firmly meets performance goals.
 
-## Conclusion
-The `admin` tool suite in native/codemode exhibits flawless performance with rigid adherence to zero-tolerance policies. Code fixes are not required.
+## Post-Test Procedures
+
+1. **Cleanup**: No `temp_*` tables remaining on server.
+2. **Triage findings**: 0 issues identified. Code remains pristine.
+3. **Validate**: Passing test suite execution requested.
+4. **Commit**: Staged and committed locally (Pending Push).
