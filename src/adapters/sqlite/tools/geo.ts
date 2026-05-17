@@ -16,11 +16,9 @@ import { z } from "zod";
  */
 const coerceNumber = (val: unknown): unknown =>
   typeof val === "string"
-    ? val.trim() === ""
+    ? isNaN(Number(val))
       ? undefined
-      : isNaN(Number(val))
-        ? val
-        : Number(val)
+      : Number(val)
     : val;
 
 const VALID_UNITS = ["km", "miles", "meters"] as const;

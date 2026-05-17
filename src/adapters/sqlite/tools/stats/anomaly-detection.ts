@@ -50,11 +50,9 @@ export function riskFromScore(score: number): RiskLevel {
 
 const coerceNumber = (val: unknown): unknown =>
   typeof val === "string"
-    ? val.trim() === ""
+    ? isNaN(Number(val))
       ? undefined
-      : isNaN(Number(val))
-        ? val
-        : Number(val)
+      : Number(val)
     : val;
 
 // =============================================================================
