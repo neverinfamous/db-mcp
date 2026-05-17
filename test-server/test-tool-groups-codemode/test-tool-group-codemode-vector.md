@@ -48,7 +48,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 ## Phase 1: Vector Read Tools — Happy Paths (batched)
 
 1. `sqlite.vector.count({table: "test_embeddings"})` → `{count: 20}`
-2. `sqlite.vector.dimensions({table: "test_embeddings"})` → `{dimensions: 8}`
+2. `sqlite.vector.dimensions({table: "test_embeddings", vectorColumn: "embedding"})` → `{dimensions: 8}`
 3. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 1})` → content="Machine learning fundamentals", 8 dims
 4. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3})` → row 1 first (exact match, similarity ≈ 1)
 5. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3, whereClause: "category = 'database'"})` → only database results
@@ -111,7 +111,7 @@ const similar = await sqlite.vector.search({
   table: "test_embeddings", vectorColumn: "embedding",
   queryVector: vec, metric: "cosine", limit: 5
 });
-if (!similar || !similar.rows || similar.rows.length < 1) failures.push("search returned no results");
+if (!similar || !similar.results || similar.results.length < 1) failures.push("search returned no results");
 
 // Get stats
 const vstats = await sqlite.vector.stats({table: "test_embeddings", vectorColumn: "embedding"});
@@ -121,7 +121,7 @@ if (!vstats) failures.push("stats failed");
 const dist = await sqlite.vector.distance({vector1: vec, vector2: vec, metric: "cosine"});
 // Self-distance should be 0 (or very close)
 
-return { failures, success: failures.length === 0, resultCount: similar?.rows?.length, selfDistance: dist };
+return { failures, success: failures.length === 0, resultCount: similar?.results?.length, selfDistance: dist.value };
 ```
 
 ### 5.2 — Create → populate → search → teardown
@@ -137,7 +137,7 @@ const results = await sqlite.vector.search({
   table: "temp_cm_vec_pipe", vectorColumn: "vector",
   queryVector: [1, 0, 0], metric: "cosine", limit: 3
 });
-if (results.rows[0].id !== 1) failures.push("expected row 1 as closest match");
+if (results.results[0].id !== 1) failures.push("expected row 1 as closest match");
 await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_vec_pipe");
 return { failures, success: failures.length === 0 };
 ```
