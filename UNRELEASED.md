@@ -19,7 +19,6 @@
 
 - **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
 
-
 ### Security
 
 - **CI/CD Hardening**: Added `--provenance` flag to `npm publish` in `publish-npm.yml` for SLSA Build L3 attestation. Added `id-token: write` permission for OIDC provenance token generation.
@@ -40,4 +39,6 @@
 
 - Fixed OAuth scope enforcement gap where tools were missing authorization level verification at the HTTP transport layer before being dispatched to the MCP handler.
 - **Code Mode last-expression auto-return** — Bare expressions like `sqlite.help()` now correctly surface their return value from `sqlite_execute_code`. Previously, the async IIFE wrapper silently returned `undefined` for non-`return` statements. New `transformAutoReturn()` utility prepends `return` to the last expression statement, mimicking Node REPL semantics. Applied to both VM and Worker sandbox paths.
-- **Structured Error Parity** — Fixed an issue in `sqlite_generate_series` and `sqlite_create_series_table` where validation errors for missing parameters (due to SDK compatibility constraints) bypassed Zod and returned ad-hoc objects missing `code` (`VALIDATION_ERROR`) and `category` fields. Confirmed fix through exhaustive Admin Code Mode testing covering happy paths, domain errors, and multi-step workflows.
+- **Structured Error Parity** — Fixed an issue in `sqlite_generate_series` and `sqlite_create_series_table` where validation errors for missing parameters (due to SDK compatibility constraints) bypassed Zod and returned ad-hoc objects missing `code` (`VALIDATION_ERROR`) and `category` fields.
+- **Schema Strict Validation Leak** — Fixed an issue in `sqlite_count` and `sqlite_exists` where `ZodSchema` definitions lacked `.strict()` and caused unknown parameters (e.g., typos like `whereClause` instead of `where`) to be silently ignored, executing broad queries instead of rejecting the input. Aliased `whereClause` correctly to `where` in `convenience-schemas`.
+- **Code Mode Discovery parity** — `sqlite.help()` within Code Mode worker processes now properly computes and returns `totalMethods` and `usage` instructions to match the top-level API shape.

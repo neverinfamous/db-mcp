@@ -138,7 +138,7 @@ Expected: structured handler error, NOT raw MCP `-32602`.
 return await sqlite.help();
 ```
 
-Expected: `{groups: [...], totalMethods: <number>}` with 10 groups listed (including transactions).
+Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions).
 
 ### 2.2 — Group help (core)
 
@@ -371,13 +371,16 @@ Expected: succeeds — stats tools are read-only.
 ### 8.1 — ETL pipeline
 
 ```javascript
-await sqlite.core.writeQuery("CREATE TABLE temp_cm_etl (id INTEGER PRIMARY KEY, raw TEXT, processed TEXT)");
+await sqlite.core.createTable({
+  table: "temp_cm_etl", 
+  columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "raw", type: "TEXT"}, {name: "processed", type: "TEXT"}]
+});
 for (let i = 1; i <= 5; i++) {
   await sqlite.core.writeQuery({ query: `INSERT INTO temp_cm_etl (raw) VALUES ('item_${i}')` });
 }
 await sqlite.core.writeQuery("UPDATE temp_cm_etl SET processed = UPPER(raw)");
 const result = await sqlite.core.readQuery("SELECT * FROM temp_cm_etl");
-await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_etl");
+await sqlite.core.dropTable({table: "temp_cm_etl", ifExists: true});
 return result;
 ```
 

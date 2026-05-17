@@ -67,7 +67,7 @@ export const UpsertSchemaBase = z.object({
   conflictColumns: z.array(z.string()).optional().describe("Columns that form the unique constraint (ON CONFLICT). If omitted, falls back to INSERT OR REPLACE."),
   updateColumns: z.array(z.string()).optional().describe("Columns to update on conflict (default: all except conflict columns). Only used if conflictColumns is provided."),
   returning: z.array(z.string()).optional().describe("Columns to return"),
-});
+}).strict();
 
 export const UpsertSchema = z
   .preprocess((val) => resolveAliases(val, { table: "tableName", data: "values" }), UpsertSchemaBase)
@@ -93,7 +93,7 @@ export const BatchInsertSchemaBase = z.object({
   tableName: z.string().optional().describe("Alias for table"),
   rows: z.array(z.record(z.string(), z.unknown())).optional().describe("Array of row objects to insert"),
   returning: z.array(z.string()).optional().describe("Columns to return"),
-});
+}).strict();
 
 export const BatchInsertSchema = z
   .preprocess((val) => resolveAliases(val, { table: "tableName" }), BatchInsertSchemaBase)
@@ -120,15 +120,16 @@ export const CountSchemaBase = z.object({
   params: z.unknown().optional().describe("Parameters for WHERE clause placeholders"),
   condition: z.string().optional().describe("Alias for where"),
   filter: z.string().optional().describe("Alias for where"),
+  whereClause: z.string().optional().describe("Alias for where"),
   column: z.string().optional().describe("Column to count (default: * for all rows)"),
-});
+}).strict();
 
 export const CountSchema = z
   .preprocess((val) => resolveAliases(resolveAliases(val, { table: "tableName" }), { where: "condition" }), CountSchemaBase)
   .transform((data) => ({
     ...data,
     table: data.table ?? data.tableName ?? "",
-    where: data.where ?? data.condition ?? data.filter,
+    where: data.where ?? data.condition ?? data.filter ?? data.whereClause,
     params: Array.isArray(data.params) ? data.params : (data.params !== undefined && data.params !== null ? [data.params] : []),
   }))
   .refine((data) => data.table !== "", {
@@ -146,14 +147,15 @@ export const ExistsSchemaBase = z.object({
   params: z.unknown().optional().describe("Parameters for WHERE clause placeholders"),
   condition: z.string().optional().describe("Alias for where"),
   filter: z.string().optional().describe("Alias for where"),
-});
+  whereClause: z.string().optional().describe("Alias for where"),
+}).strict();
 
 export const ExistsSchema = z
   .preprocess((val) => resolveAliases(resolveAliases(val, { table: "tableName" }), { where: "condition" }), ExistsSchemaBase)
   .transform((data) => ({
     ...data,
     table: data.table ?? data.tableName ?? "",
-    where: data.where ?? data.condition ?? data.filter,
+    where: data.where ?? data.condition ?? data.filter ?? data.whereClause,
     params: Array.isArray(data.params) ? data.params : (data.params !== undefined && data.params !== null ? [data.params] : []),
   }))
   .refine((data) => data.table !== "", {
@@ -168,7 +170,7 @@ export const TruncateSchemaBase = z.object({
   table: z.string().optional().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   restartIdentity: z.boolean().optional().describe("Restart identity sequences (DELETE FROM sqlite_sequence)"),
-});
+}).strict();
 
 export const TruncateSchema = z
   .preprocess((val) => resolveAliases(val, { table: "tableName" }), TruncateSchemaBase)

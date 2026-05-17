@@ -96,9 +96,17 @@ function buildSqliteProxy(
     for (const method of topLevel) {
       if (method === "help") {
         // Top-level help returns all groups
-        sqlite["help"] = (): { groups: string[] } => ({
-          groups: groupNames,
-        });
+        sqlite["help"] = (): { groups: string[]; totalMethods: number; usage: string } => {
+          let totalMethods = 0;
+          for (const k of groupNames) {
+            totalMethods += (bindings[k] ?? []).filter((m: string) => m !== "help").length;
+          }
+          return {
+            groups: groupNames,
+            totalMethods,
+            usage: "Use sqlite.<group>.help() for group details. Example: sqlite.core.help()",
+          };
+        };
       } else {
         // Top-level aliases forward via _topLevel group
         sqlite[method] = (...args: unknown[]): Promise<unknown> =>
@@ -118,9 +126,17 @@ function buildSqliteProxy(
 
   // If no top-level help was set, add one
   if (sqlite["help"] === undefined) {
-    sqlite["help"] = (): { groups: string[] } => ({
-      groups: groupNames,
-    });
+    sqlite["help"] = (): { groups: string[]; totalMethods: number; usage: string } => {
+      let totalMethods = 0;
+      for (const k of groupNames) {
+        totalMethods += (bindings[k] ?? []).filter((m: string) => m !== "help").length;
+      }
+      return {
+        groups: groupNames,
+        totalMethods,
+        usage: "Use sqlite.<group>.help() for group details. Example: sqlite.core.help()",
+      };
+    };
   }
 
   return sqlite;
