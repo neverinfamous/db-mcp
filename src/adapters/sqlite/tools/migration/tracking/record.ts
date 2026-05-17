@@ -29,6 +29,14 @@ export function createMigrationRecordTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = MigrationRecordSchema.parse(params);
+        if (!input.migrationSql && !input.sql) {
+          return {
+            success: false,
+            error: "Must provide either migrationSql or sql",
+            code: "VALIDATION_ERROR",
+          };
+        }
+
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
@@ -38,7 +46,8 @@ export function createMigrationRecordTool(
           };
         }
 
-        const hash = hashMigration(input.migrationSql);
+        const actualSql = input.migrationSql ?? input.sql ?? "";
+        const hash = hashMigration(actualSql);
 
         const dupCheck = await adapter.executeReadQuery(
           `SELECT id, version FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ?`,
@@ -73,7 +82,7 @@ export function createMigrationRecordTool(
           [
             input.version,
             input.description ?? null,
-            input.migrationSql,
+            actualSql,
             input.rollbackSql ?? null,
             hash,
             input.sourceSystem ?? "manual",

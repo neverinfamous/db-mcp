@@ -145,7 +145,7 @@ export const GROUP_EXAMPLES: Record<string, string[]> = {
   ],
   migration: [
     "sqlite.migration.migrationInit()",
-    'sqlite.migration.migrationApply({ version: "1.0.0", migrationSql: "ALTER TABLE users ADD COLUMN email TEXT" })',
+    'sqlite.migration.migrationApply({ version: "1.0.0", sql: "ALTER TABLE users ADD COLUMN email TEXT" })',
     "sqlite.migration.migrationStatus()",
     'sqlite.migration.migrationHistory({ status: "applied" })',
   ],

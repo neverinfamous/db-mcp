@@ -29,6 +29,14 @@ export function createMigrationApplyTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = MigrationApplySchema.parse(params);
+        if (!input.migrationSql && !input.sql) {
+          return {
+            success: false,
+            error: "Must provide either migrationSql or sql",
+            code: "VALIDATION_ERROR",
+          };
+        }
+
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
@@ -38,7 +46,8 @@ export function createMigrationApplyTool(
           };
         }
 
-        const hash = hashMigration(input.migrationSql);
+        const actualSql = input.migrationSql ?? input.sql ?? "";
+        const hash = hashMigration(actualSql);
 
         const dupCheck = await adapter.executeReadQuery(
           `SELECT id, version, status FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ? AND status = 'applied'`,
@@ -73,13 +82,13 @@ export function createMigrationApplyTool(
         }
 
         try {
-          await adapter.executeQuery(input.migrationSql);
+          await adapter.executeQuery(actualSql);
         } catch (execError) {
           if (existingId !== undefined) {
             await adapter.executeQuery(
               `UPDATE "${MIGRATIONS_TABLE}" SET migration_sql = ?, rollback_sql = ?, migration_hash = ?, source_system = ?, applied_by = ?, status = 'failed', applied_at = CURRENT_TIMESTAMP WHERE id = ?`,
               [
-                input.migrationSql,
+                actualSql,
                 input.rollbackSql ?? null,
                 hash,
                 input.sourceSystem ?? "agent",
@@ -94,7 +103,7 @@ export function createMigrationApplyTool(
               [
                 input.version,
                 input.description ?? null,
-                input.migrationSql,
+                actualSql,
                 input.rollbackSql ?? null,
                 hash,
                 input.sourceSystem ?? "agent",
@@ -114,7 +123,7 @@ export function createMigrationApplyTool(
           await adapter.executeQuery(
             `UPDATE "${MIGRATIONS_TABLE}" SET migration_sql = ?, rollback_sql = ?, migration_hash = ?, source_system = ?, applied_by = ?, status = 'applied', applied_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [
-              input.migrationSql,
+              actualSql,
               input.rollbackSql ?? null,
               hash,
               input.sourceSystem ?? "agent",
@@ -129,7 +138,7 @@ export function createMigrationApplyTool(
             [
               input.version,
               input.description ?? null,
-              input.migrationSql,
+              actualSql,
               input.rollbackSql ?? null,
               hash,
               input.sourceSystem ?? "agent",
