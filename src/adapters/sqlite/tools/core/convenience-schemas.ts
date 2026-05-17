@@ -64,18 +64,21 @@ export const UpsertSchemaBase = z.object({
   tableName: z.string().optional().describe("Alias for table"),
   data: z.record(z.string(), z.unknown()).optional().describe("Column-value pairs to insert"),
   values: z.record(z.string(), z.unknown()).optional().describe("Alias for data"),
-  conflictColumns: z.array(z.string()).optional().describe("Columns that form the unique constraint (ON CONFLICT). If omitted, falls back to INSERT OR REPLACE."),
+  conflictColumns: z.union([z.array(z.string()), z.string()]).optional().describe("Columns that form the unique constraint (ON CONFLICT). If omitted, falls back to INSERT OR REPLACE."),
+  conflictColumn: z.union([z.string(), z.array(z.string())]).optional().describe("Alias for conflictColumns"),
   updateColumns: z.array(z.string()).optional().describe("Columns to update on conflict (default: all except conflict columns). Only used if conflictColumns is provided."),
   returning: z.array(z.string()).optional().describe("Columns to return"),
 }).strict();
 
 export const UpsertSchema = z
-  .preprocess((val) => resolveAliases(val, { table: "tableName", data: "values" }), UpsertSchemaBase)
+  .preprocess((val) => resolveAliases(val, { table: "tableName", data: "values", conflictColumns: "conflictColumn" }), UpsertSchemaBase)
   .transform((d) => ({
     ...d,
     table: d.table ?? d.tableName ?? "",
     data: d.data ?? d.values ?? {},
-    conflictColumns: d.conflictColumns ?? [],
+    conflictColumns: d.conflictColumns !== undefined 
+      ? (Array.isArray(d.conflictColumns) ? d.conflictColumns : [d.conflictColumns]) 
+      : [],
   }))
   .refine((d) => d.table !== "", {
     message: 'table (or tableName alias) is required. Usage: sqlite_upsert({ table: "users", data: { name: "John" }, conflictColumns: ["id"] })',
@@ -122,6 +125,7 @@ export const CountSchemaBase = z.object({
   filter: z.string().optional().describe("Alias for where"),
   whereClause: z.string().optional().describe("Alias for where"),
   column: z.string().optional().describe("Column to count (default: * for all rows)"),
+  distinct: z.boolean().optional().describe("Count distinct values of the specified column"),
 }).strict();
 
 export const CountSchema = z

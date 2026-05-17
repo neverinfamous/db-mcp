@@ -183,7 +183,8 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
       if (validationError) return validationError;
 
       const column = input.column && input.column !== "*" ? `"${input.column}"` : "*";
-      let sql = `SELECT COUNT(${column}) as count FROM "${input.table}"`;
+      const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
+      let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM "${input.table}"`;
       
       if (input.where) {
         sql += ` WHERE ${input.where}`;
