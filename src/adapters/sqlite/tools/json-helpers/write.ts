@@ -30,12 +30,12 @@ import {
 
 
 /**
- * Insert JSON data with auto-normalization
+ * Insert JSON data as a new row
  */
 export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_insert",
-    description: "Insert a value at a specific JSON path using json_insert(). Only inserts if the key does not already exist.",
+    description: "Insert a new row with a JSON document.",
     group: "json",
     inputSchema: JsonInsertSchema,
     outputSchema: JsonInsertOutputSchema,
@@ -54,46 +54,30 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);
 
-        // Validate JSON path format
-        if (!input.path.startsWith("$")) {
+        if (input.jsonData === undefined) {
           return {
             success: false,
             rowsAffected: 0,
-            error: "JSON path must start with $",
-          };
-        }
-
-        if (input.value === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: value",
+            error: "Missing required parameter: jsonData",
           };
         }
 
         // String values must be JSON-stringified to produce valid JSON
         const valueStr =
-          typeof input.value === "string"
-            ? `'${JSON.stringify(input.value).replace(/'/g, "''")}'`
-            : JSON.stringify(input.value);
+          typeof input.jsonData === "string"
+            ? `'${JSON.stringify(input.jsonData).replace(/'/g, "''")}'`
+            : `'${JSON.stringify(input.jsonData).replace(/'/g, "''")}'`;
 
-        validateWhereClause(input.whereClause);
-        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_insert("${input.column}", '${input.path}', json(${valueStr})) WHERE ${input.whereClause}`;
+        const sql = `INSERT INTO "${input.table}" ("${input.column}") VALUES (json(${valueStr}))`;
 
         const result = await adapter.executeWriteQuery(sql);
 
-        const response: Record<string, unknown> = {
+        return {
           success: true,
-          message: `Inserted ${input.path} in ${input.table}.${input.column}`,
+          message: `Inserted new JSON row in ${input.table}.${input.column}`,
           rowsAffected: result.rowsAffected,
+          lastInsertRowid: result.lastInsertRowid ? Number(result.lastInsertRowid) : undefined,
         };
-
-        if (result.rowsAffected === 0) {
-          response["warning"] =
-            "No rows matched the WHERE clause — nothing was updated";
-        }
-
-        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
