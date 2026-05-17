@@ -123,8 +123,8 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ## Phase 6: Wrong-Type Numeric Coercion (batched)
 
-🔴 51. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → handler error, NOT raw MCP
-🔴 52. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → handler error
+🔴 51. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → coerced default (success) or handler error, NOT raw MCP
+🔴 52. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → coerced default (success) or handler error
 
 ---
 
