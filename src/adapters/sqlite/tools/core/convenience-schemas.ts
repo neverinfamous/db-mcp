@@ -59,65 +59,34 @@ export function preprocessTableParams(input: unknown): unknown {
 // Upsert Schema
 // =============================================================================
 
-export const UpsertSchemaBase = z.object({
-  table: z.string().optional().describe("Table name"),
+export const UpsertSchema = z.object({
+  table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  data: z.record(z.string(), z.unknown()).optional().describe("Column-value pairs to insert"),
+  data: z.record(z.string(), z.unknown()).describe("Column-value pairs to insert"),
   values: z.record(z.string(), z.unknown()).optional().describe("Alias for data"),
   conflictColumns: z.union([z.array(z.string()), z.string()]).optional().describe("Columns that form the unique constraint (ON CONFLICT). If omitted, falls back to INSERT OR REPLACE."),
   conflictColumn: z.union([z.string(), z.array(z.string())]).optional().describe("Alias for conflictColumns"),
   updateColumns: z.array(z.string()).optional().describe("Columns to update on conflict (default: all except conflict columns). Only used if conflictColumns is provided."),
   returning: z.array(z.string()).optional().describe("Columns to return"),
-}).strict();
-
-export const UpsertSchema = z
-  .preprocess((val) => resolveAliases(val, { table: "tableName", data: "values", conflictColumns: "conflictColumn" }), UpsertSchemaBase)
-  .transform((d) => ({
-    ...d,
-    table: d.table ?? d.tableName ?? "",
-    data: d.data ?? d.values ?? {},
-    conflictColumns: d.conflictColumns !== undefined 
-      ? (Array.isArray(d.conflictColumns) ? d.conflictColumns : [d.conflictColumns]) 
-      : [],
-  }))
-  .refine((d) => d.table !== "", {
-    message: 'table (or tableName alias) is required. Usage: sqlite_upsert({ table: "users", data: { name: "John" }, conflictColumns: ["id"] })',
-  })
-  .refine((d) => Object.keys(d.data).length > 0, {
-    message: "data (or values alias) is required",
-  });
+});
 
 // =============================================================================
 // BatchInsert Schema
 // =============================================================================
 
-export const BatchInsertSchemaBase = z.object({
-  table: z.string().optional().describe("Table name"),
+export const BatchInsertSchema = z.object({
+  table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  rows: z.array(z.record(z.string(), z.unknown())).optional().describe("Array of row objects to insert"),
+  rows: z.array(z.record(z.string(), z.unknown())).describe("Array of row objects to insert"),
   returning: z.array(z.string()).optional().describe("Columns to return"),
-}).strict();
-
-export const BatchInsertSchema = z
-  .preprocess((val) => resolveAliases(val, { table: "tableName" }), BatchInsertSchemaBase)
-  .transform((data) => ({
-    ...data,
-    table: data.table ?? data.tableName ?? "",
-    rows: data.rows ?? [],
-  }))
-  .refine((data) => data.table !== "", {
-    message: 'table (or tableName alias) is required. Usage: sqlite_batch_insert({ table: "users", rows: [{ name: "John" }, { name: "Jane" }] })',
-  })
-  .refine((data) => data.rows.length > 0, {
-    message: 'rows must not be empty. Provide at least one row to insert.',
-  });
+});
 
 // =============================================================================
 // Count Schema
 // =============================================================================
 
-export const CountSchemaBase = z.object({
-  table: z.string().optional().describe("Table name"),
+export const CountSchema = z.object({
+  table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   where: z.string().optional().describe("WHERE clause (supports ? placeholders)"),
   params: z.unknown().optional().describe("Parameters for WHERE clause placeholders"),
@@ -125,63 +94,30 @@ export const CountSchemaBase = z.object({
   filter: z.string().optional().describe("Alias for where"),
   whereClause: z.string().optional().describe("Alias for where"),
   column: z.string().optional().describe("Column to count (default: * for all rows)"),
+  columnName: z.string().optional().describe("Alias for column"),
   distinct: z.boolean().optional().describe("Count distinct values of the specified column"),
-}).strict();
-
-export const CountSchema = z
-  .preprocess((val) => resolveAliases(resolveAliases(val, { table: "tableName" }), { where: "condition" }), CountSchemaBase)
-  .transform((data) => ({
-    ...data,
-    table: data.table ?? data.tableName ?? "",
-    where: data.where ?? data.condition ?? data.filter ?? data.whereClause,
-    params: Array.isArray(data.params) ? data.params : (data.params !== undefined && data.params !== null ? [data.params] : []),
-  }))
-  .refine((data) => data.table !== "", {
-    message: 'table (or tableName alias) is required.',
-  });
+});
 
 // =============================================================================
 // Exists Schema
 // =============================================================================
 
-export const ExistsSchemaBase = z.object({
-  table: z.string().optional().describe("Table name"),
+export const ExistsSchema = z.object({
+  table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   where: z.string().optional().describe("WHERE clause (supports ? placeholders)"),
   params: z.unknown().optional().describe("Parameters for WHERE clause placeholders"),
   condition: z.string().optional().describe("Alias for where"),
   filter: z.string().optional().describe("Alias for where"),
   whereClause: z.string().optional().describe("Alias for where"),
-}).strict();
-
-export const ExistsSchema = z
-  .preprocess((val) => resolveAliases(resolveAliases(val, { table: "tableName" }), { where: "condition" }), ExistsSchemaBase)
-  .transform((data) => ({
-    ...data,
-    table: data.table ?? data.tableName ?? "",
-    where: data.where ?? data.condition ?? data.filter ?? data.whereClause,
-    params: Array.isArray(data.params) ? data.params : (data.params !== undefined && data.params !== null ? [data.params] : []),
-  }))
-  .refine((data) => data.table !== "", {
-    message: 'table (or tableName alias) is required.',
-  });
+});
 
 // =============================================================================
 // Truncate Schema
 // =============================================================================
 
-export const TruncateSchemaBase = z.object({
-  table: z.string().optional().describe("Table name"),
+export const TruncateSchema = z.object({
+  table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   restartIdentity: z.boolean().optional().describe("Restart identity sequences (DELETE FROM sqlite_sequence)"),
-}).strict();
-
-export const TruncateSchema = z
-  .preprocess((val) => resolveAliases(val, { table: "tableName" }), TruncateSchemaBase)
-  .transform((data) => ({
-    ...data,
-    table: data.table ?? data.tableName ?? "",
-  }))
-  .refine((data) => data.table !== "", {
-    message: 'table (or tableName alias) is required.',
-  });
+});

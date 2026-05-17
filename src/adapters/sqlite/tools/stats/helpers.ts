@@ -115,13 +115,17 @@ export async function validateNumericColumn(
 
 export const BasicStatsSchema = z.object({
   table: z.string().describe("Table name"),
+  tableName: z.string().optional().describe("Alias for table name"),
   column: z.string().describe("Numeric column for statistics"),
+  columnName: z.string().optional().describe("Alias for column name"),
   whereClause: z.string().optional(),
 });
 
 export const CountSchema = z.object({
   table: z.string().describe("Table name"),
+  tableName: z.string().optional().describe("Alias for table name"),
   column: z.string().optional().describe("Column to count (default: *)"),
+  columnName: z.string().optional().describe("Alias for column name"),
   distinct: z.boolean().optional().default(false),
   whereClause: z.string().optional(),
 });

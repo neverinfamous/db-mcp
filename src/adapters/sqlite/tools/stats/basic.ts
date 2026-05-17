@@ -9,6 +9,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
+import { resolveAliases } from "../../types.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
@@ -52,7 +53,8 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = BasicStatsSchema.parse(params);
+        const aliasedParams = resolveAliases(params, { table: "tableName", column: "columnName" });
+        const input = BasicStatsSchema.parse(aliasedParams);
 
         await validateColumnExists(adapter, input.table, input.column);
         const numericError = await validateNumericColumn(
@@ -122,7 +124,8 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = CountSchema.parse(params);
+        const aliasedParams = resolveAliases(params, { table: "tableName", column: "columnName" });
+        const input = CountSchema.parse(aliasedParams);
 
         if (input.column) {
           await validateColumnExists(adapter, input.table, input.column);

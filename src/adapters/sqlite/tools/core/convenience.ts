@@ -9,6 +9,7 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { resolveAliases } from "../../types.js";
 
 import {
   validateTableExists,
@@ -41,7 +42,16 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = UpsertSchema.parse(params);
+        const aliasedParams = resolveAliases(params, { table: "tableName", data: "values", conflictColumns: "conflictColumn" });
+        const parsed = UpsertSchema.parse(aliasedParams);
+        input = {
+          ...parsed,
+          data: parsed.data ?? parsed.values ?? {},
+          conflictColumns: parsed.conflictColumns !== undefined
+            ? (Array.isArray(parsed.conflictColumns) ? parsed.conflictColumns : [parsed.conflictColumns])
+            : [],
+        };
+        if (Object.keys(input.data).length === 0) throw new Error("data (or values alias) is required");
       } catch (error) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
@@ -108,7 +118,13 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = BatchInsertSchema.parse(params);
+        const aliasedParams = resolveAliases(params, { table: "tableName" });
+        const parsed = BatchInsertSchema.parse(aliasedParams);
+        input = {
+          ...parsed,
+          rows: parsed.rows ?? [],
+        };
+        if (input.rows.length === 0) throw new Error("rows must not be empty. Provide at least one row to insert.");
       } catch (error) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
@@ -174,7 +190,14 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = CountSchema.parse(params);
+        let aliasedParams = resolveAliases(params, { table: "tableName", column: "columnName" });
+        aliasedParams = resolveAliases(aliasedParams, { where: "condition" });
+        const parsed = CountSchema.parse(aliasedParams);
+        input = {
+          ...parsed,
+          where: parsed.where ?? parsed.condition ?? parsed.filter ?? parsed.whereClause,
+          params: Array.isArray(parsed.params) ? parsed.params : (parsed.params !== undefined && parsed.params !== null ? [parsed.params] : []),
+        };
       } catch (error) {
         return { ...formatHandlerError(error) };
       }
@@ -218,7 +241,14 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = ExistsSchema.parse(params);
+        let aliasedParams = resolveAliases(params, { table: "tableName" });
+        aliasedParams = resolveAliases(aliasedParams, { where: "condition" });
+        const parsed = ExistsSchema.parse(aliasedParams);
+        input = {
+          ...parsed,
+          where: parsed.where ?? parsed.condition ?? parsed.filter ?? parsed.whereClause,
+          params: Array.isArray(parsed.params) ? parsed.params : (parsed.params !== undefined && parsed.params !== null ? [parsed.params] : []),
+        };
       } catch (error) {
         return { ...formatHandlerError(error) };
       }
@@ -262,7 +292,8 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = TruncateSchema.parse(params);
+        const aliasedParams = resolveAliases(params, { table: "tableName" });
+        input = TruncateSchema.parse(aliasedParams);
       } catch (error) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }

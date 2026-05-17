@@ -51,3 +51,4 @@
 - **Testing Prompts**: Reverted `test-tool-group-codemode-vector.md` and E2E tests to enforce strict output schemas (`rows` instead of `results`, `distance` instead of `value`) under the Code-Over-Docs policy.
 - **Vector Schema Parity**: Standardized vector search and distance tool outputs (`sqlite.vector.search` now returns `rows`; `sqlite.vector.distance` now returns `distance`) to align with cross-server canonical implementations (e.g., `postgres-mcp`).
 - **Gotchas Documentation**: Removed vector schema discrepancy caveats from `gotchas.md` now that the canonical outputs are enforced.
+- **Core Group Stress Testing**: Fixed schema aliases in `CountSchema` and `BasicStatsSchema` to properly accept `tableName` and `columnName` inputs, standardizing parameter names across the `core` and `stats` tool groups and resolving validation errors encountered during Code Mode execution.
