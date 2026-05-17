@@ -10,7 +10,6 @@ import type { ToolDefinition, RequestContext } from "../../../../types/index.js"
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   formatHandlerError,
-  ValidationError,
 } from "../../../../utils/errors/index.js";
 import { TextSentimentOutputSchema } from "../../output-schemas/index.js";
 import { TextSentimentSchema } from "./helpers.js";
@@ -71,78 +70,111 @@ const NEGATIVE_WORDS = [
  * Create the text sentiment analysis tool.
  * No adapter dependency — this is a pure JS text analysis tool.
  */
-export function createTextSentimentTool(): ToolDefinition {
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
+
+export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_text_sentiment",
-    description:
-      "Perform basic sentiment analysis on text using keyword matching.",
+    description: "Perform basic sentiment analysis on text column using keyword matching.",
     group: "text",
     inputSchema: TextSentimentSchema,
     outputSchema: TextSentimentOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Text Sentiment"),
-    handler: (params: unknown, _context: RequestContext) => {
+    handler: async (params: unknown, _context: RequestContext) => {
       try {
         const parsed = TextSentimentSchema.parse(params ?? {});
-        if (!parsed.text || parsed.text.trim().length === 0) {
-          throw new ValidationError("Text must not be empty");
-        }
-        const text = parsed.text.toLowerCase();
+        
+        const table = parsed.table;
+        const column = parsed.column;
+        
+        // Use double quotes around table and column to prevent injection issues with reserved words
+        const sql = `SELECT rowid, "${column}" as original FROM "${table}"${parsed.whereClause ? ` WHERE ${parsed.whereClause}` : ""} LIMIT ?`;
+        
+        const queryResult = await adapter.executeReadQuery(sql, [parsed.limit]);
+        const rows = queryResult.rows ?? [];
+        
+        const results = rows.map((row) => {
+          const original = row["original"];
+          const rowid = row["rowid"];
+          
+          let originalText: string | null = null;
+          if (typeof original === "string") {
+            originalText = original;
+          } else if (typeof original === "number") {
+            originalText = String(original);
+          }
 
-        const words = text.split(/\s+/);
-        const matchedPositive = words
-          .map((w) => w.replace(/[^a-z]/g, ""))
-          .filter((w): w is string =>
-            (POSITIVE_WORDS as readonly string[]).includes(w),
-          );
-        const matchedNegative = words
-          .map((w) => w.replace(/[^a-z]/g, ""))
-          .filter((w): w is string =>
-            (NEGATIVE_WORDS as readonly string[]).includes(w),
-          );
+          if (originalText === null || originalText.trim() === "") {
+             return {
+               rowid: Number(rowid),
+               original: originalText,
+               sentiment: "neutral",
+               score: 0,
+               confidence: "low",
+               positiveCount: 0,
+               negativeCount: 0
+             };
+          }
+          const text = originalText.toLowerCase();
+          const words = text.split(/\s+/);
+          const matchedPositive = words
+            .map((w) => w.replace(/[^a-z]/g, ""))
+            .filter((w): w is string =>
+              (POSITIVE_WORDS as readonly string[]).includes(w),
+            );
+          const matchedNegative = words
+            .map((w) => w.replace(/[^a-z]/g, ""))
+            .filter((w): w is string =>
+              (NEGATIVE_WORDS as readonly string[]).includes(w),
+            );
 
-        const positiveScore = matchedPositive.length;
-        const negativeScore = matchedNegative.length;
-        const totalScore = positiveScore - negativeScore;
+          const positiveScore = matchedPositive.length;
+          const negativeScore = matchedNegative.length;
+          const totalScore = positiveScore - negativeScore;
 
-        let sentiment: string;
-        if (totalScore > 2) sentiment = "very_positive";
-        else if (totalScore > 0) sentiment = "positive";
-        else if (totalScore < -2) sentiment = "very_negative";
-        else if (totalScore < 0) sentiment = "negative";
-        else sentiment = "neutral";
+          let sentiment: "very_positive" | "positive" | "neutral" | "negative" | "very_negative";
+          if (totalScore > 2) sentiment = "very_positive";
+          else if (totalScore > 0) sentiment = "positive";
+          else if (totalScore < -2) sentiment = "very_negative";
+          else if (totalScore < 0) sentiment = "negative";
+          else sentiment = "neutral";
+          
+          interface SentimentResult {
+            rowid: number;
+            original: string | null;
+            sentiment: string;
+            score: number;
+            confidence: string;
+            positiveCount: number;
+            negativeCount: number;
+            matchedPositive?: string[];
+            matchedNegative?: string[];
+          }
+          
+          const result: SentimentResult = {
+             rowid: Number(rowid),
+             original: originalText,
+             sentiment,
+             score: totalScore,
+             confidence: positiveScore + negativeScore > 3 ? "high" : positiveScore + negativeScore > 1 ? "medium" : "low",
+             positiveCount: positiveScore,
+             negativeCount: negativeScore
+          };
+          if (parsed.returnWords) {
+             result.matchedPositive = matchedPositive;
+             result.matchedNegative = matchedNegative;
+          }
+          return result;
+        });
 
-        const result: {
-          success: true;
-          sentiment: string;
-          score: number;
-          positiveCount: number;
-          negativeCount: number;
-          confidence: string;
-          matchedPositive?: string[];
-          matchedNegative?: string[];
-        } = {
+        return {
           success: true,
-          sentiment,
-          score: totalScore,
-          positiveCount: positiveScore,
-          negativeCount: negativeScore,
-          confidence:
-            positiveScore + negativeScore > 3
-              ? "high"
-              : positiveScore + negativeScore > 1
-                ? "medium"
-                : "low",
+          rowCount: results.length,
+          results
         };
-
-        if (parsed.returnWords) {
-          result.matchedPositive = matchedPositive;
-          result.matchedNegative = matchedNegative;
-        }
-
-        return Promise.resolve(result);
       } catch (error) {
-        return Promise.resolve(formatHandlerError(error));
+        return formatHandlerError(error);
       }
     },
   };

@@ -42,6 +42,6 @@ export function getTextTools(adapter: SqliteAdapter): ToolDefinition[] {
     createTextNormalizeTool(adapter),
     createTextValidateTool(adapter),
     createAdvancedSearchTool(adapter),
-    createTextSentimentTool(),
+    createTextSentimentTool(adapter),
   ];
 }

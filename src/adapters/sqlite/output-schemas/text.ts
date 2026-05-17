@@ -202,34 +202,18 @@ export const AdvancedSearchOutputSchema = z
 export const TextSentimentOutputSchema = z
   .object({
     success: z.boolean(),
-    sentiment: z
-      .enum(["very_positive", "positive", "neutral", "negative", "very_negative"])
-      .optional()
-      .describe("Overall sentiment classification"),
-    score: z
-      .number()
-      .optional()
-      .describe("Net sentiment score (positive - negative)"),
-    positiveCount: z
-      .number()
-      .optional()
-      .describe("Number of positive words found"),
-    negativeCount: z
-      .number()
-      .optional()
-      .describe("Number of negative words found"),
-    confidence: z
-      .enum(["low", "medium", "high"])
-      .optional()
-      .describe("Confidence level"),
-    matchedPositive: z
-      .array(z.string())
-      .optional()
-      .describe("Matched positive words (if returnWords=true)"),
-    matchedNegative: z
-      .array(z.string())
-      .optional()
-      .describe("Matched negative words (if returnWords=true)"),
+    rowCount: z.number().optional(),
+    results: z.array(z.object({
+      rowid: z.number().optional(),
+      original: z.string().nullable().optional(),
+      sentiment: z.string(),
+      score: z.number(),
+      confidence: z.string(),
+      positiveCount: z.number().optional(),
+      negativeCount: z.number().optional(),
+      matchedPositive: z.array(z.string()).optional(),
+      matchedNegative: z.array(z.string()).optional(),
+    })).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

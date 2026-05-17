@@ -229,9 +229,11 @@ export const AdvancedSearchSchema = z.object({
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
-// Sentiment analysis schema (pure JS, no DB queries)
 export const TextSentimentSchema = z.object({
-  text: z.string().describe("Text to analyze for sentiment"),
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column to analyze"),
+  whereClause: z.string().optional(),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   returnWords: z
     .boolean()
     .optional()
