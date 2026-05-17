@@ -207,7 +207,7 @@ export function createJsonValidatePathTool(): ToolDefinition {
       }
 
       return Promise.resolve({
-        success: issues.length === 0,
+        success: true,
         path,
         valid: issues.length === 0,
         issues: issues.length > 0 ? issues : undefined,
