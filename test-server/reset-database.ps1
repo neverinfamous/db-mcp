@@ -181,7 +181,7 @@ if (-not $useCli) {
 } else {
     # Use Node.js with better-sqlite3 via inline script
     $dbMcpRoot = Split-Path -Parent $ScriptDir
-    $nodeScript = @"
+    $nodeScript = @'
 import Database from 'better-sqlite3';
 import { readFileSync } from 'fs';
 
@@ -198,7 +198,7 @@ try {
     console.error('ERROR:', err.message);
     process.exit(1);
 }
-"@
+'@
 
     # Write temp script to project directory so node can resolve dependencies
     $tempScript = Join-Path $dbMcpRoot ".create-test-db.js"
@@ -269,7 +269,7 @@ if (-not $SkipVerify) {
         "_mcp_migrations"
     )
 
-    $verifyScript = @"
+    $verifyScript = @'
 import Database from 'better-sqlite3';
 const db = new Database(process.argv[2], { readonly: true });
 
@@ -282,7 +282,7 @@ for (const table of tables) {
 }
 
 db.close();
-"@
+'@
 
     $dbMcpRoot = Split-Path -Parent $ScriptDir
     # Write temp script to project directory so node can resolve dependencies
@@ -329,13 +329,13 @@ db.close();
         Write-Host "`n  Artifact check:" -ForegroundColor Yellow
         $allTableNames = ($output | Where-Object { $_ -match "^TABLES:" }) -replace "^TABLES:", ""
         # Get ALL tables from sqlite_master, not just test_* ones
-        $allTablesScript = @"
+        $allTablesScript = @'
 import Database from 'better-sqlite3';
 const db = new Database(process.argv[2], { readonly: true });
 const all = db.prepare("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') ORDER BY name").all();
 for (const t of all) console.log('ALL:' + t.name);
 db.close();
-"@
+'@
         $tempAllTables = Join-Path $dbMcpRoot ".check-artifacts.js"
         $allTablesScript | Out-File -FilePath $tempAllTables -Encoding utf8 -NoNewline
         $allOutput = node $tempAllTables $DatabasePath 2>&1
