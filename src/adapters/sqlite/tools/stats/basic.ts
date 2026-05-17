@@ -271,7 +271,7 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.buckets < 1) {
           return {
             success: false,
-            error: "'buckets' must be at least 1",
+            error: `'buckets' must be at least 1 for table '${input.table}'`,
             code: "INVALID_INPUT",
             category: "validation",
             recoverable: false,

@@ -97,7 +97,7 @@ export async function validateNumericColumn(
   if (!isNumericType(colType)) {
     return {
       success: false,
-      error: `Column '${columnName}' is not numeric (type: ${colType || "unknown"}). This operation requires a numeric column.`,
+      error: `Column '${columnName}' in table '${tableName}' is not numeric (type: ${colType || "unknown"}). This operation requires a numeric column.`,
       code: "INVALID_INPUT",
       category: "validation",
       suggestion:
