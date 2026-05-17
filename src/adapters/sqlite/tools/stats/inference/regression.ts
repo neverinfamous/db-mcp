@@ -39,9 +39,9 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Regression Analysis"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = RegressionSchema.parse(params);
-
       try {
+        const input = RegressionSchema.parse(params);
+
         if (input.degree < 1 || input.degree > 3) {
           return {
             success: false,

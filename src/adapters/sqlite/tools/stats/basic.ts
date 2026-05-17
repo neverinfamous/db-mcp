@@ -51,9 +51,9 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = BasicStatsSchema.parse(params);
-
       try {
+        const input = BasicStatsSchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column);
         const numericError = await validateNumericColumn(
           adapter,
@@ -121,9 +121,9 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CountSchema.parse(params);
-
       try {
+        const input = CountSchema.parse(params);
+
         if (input.column) {
           await validateColumnExists(adapter, input.table, input.column);
         } else {
@@ -189,9 +189,9 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Group By Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = GroupByStatsSchema.parse(params);
-
       try {
+        const input = GroupByStatsSchema.parse(params);
+
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
           !input.stat ||
@@ -262,9 +262,9 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Histogram"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = HistogramSchema.parse(params);
-
       try {
+        const input = HistogramSchema.parse(params);
+
         if (input.buckets < 1) {
           return {
             success: false,
@@ -382,9 +382,9 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Percentile"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PercentileSchema.parse(params);
-
       try {
+        const input = PercentileSchema.parse(params);
+
         const invalidPercentiles = input.percentiles.filter(
           (p) => p < 0 || p > 100,
         );

@@ -27,7 +27,7 @@ import {
 
 /**
  * Coerce string-typed numbers to actual numbers.
- * Returns undefined for non-numeric strings so the schema default kicks in.
+ * Returns the original string for non-numeric strings so Zod validation fails.
  */
 const coerceNumber = (val: unknown): unknown =>
   typeof val === "string"

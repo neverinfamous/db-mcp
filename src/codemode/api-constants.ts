@@ -46,6 +46,9 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
     summary: "statsSummary",
     describe: "statsSummary",
     average: "statsBasic",
+    detectAnomalies: "statsDetectAnomalies",
+    detectBloat: "statsDetectBloat",
+    detectSchemaRisks: "statsDetectSchemaRisks",
   },
   vector: {
     find: "search",
@@ -238,6 +241,9 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
     "expectedMean",
     "whereClause",
   ],
+  statsDetectAnomalies: ["table", "threshold", "limit", "whereClause"],
+  statsDetectBloat: "limit",
+  statsDetectSchemaRisks: "limit",
 
   // Vector
   vectorCreateTable: ["tableName", "dimensions"],

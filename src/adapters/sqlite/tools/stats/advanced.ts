@@ -50,9 +50,9 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Correlation"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CorrelationSchema.parse(params);
-
       try {
+        const input = CorrelationSchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column1);
         await validateColumnExists(adapter, input.table, input.column2);
 
@@ -151,9 +151,9 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Top N Values"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TopNSchema.parse(params);
-
       try {
+        const input = TopNSchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
@@ -276,9 +276,9 @@ export function createDistinctValuesTool(
     requiredScopes: ["read"],
     annotations: readOnly("Distinct Values"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DistinctValuesSchema.parse(params);
-
       try {
+        const input = DistinctValuesSchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
@@ -321,9 +321,9 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Summary Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = SummaryStatsSchema.parse(params);
-
       try {
+        const input = SummaryStatsSchema.parse(params);
+
         const table = sanitizeIdentifier(input.table);
 
         const tableCheck = await adapter.executeReadQuery(
@@ -481,9 +481,9 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Frequency"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FrequencySchema.parse(params);
-
       try {
+        const input = FrequencySchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);

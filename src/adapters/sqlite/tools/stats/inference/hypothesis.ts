@@ -37,9 +37,9 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Hypothesis Testing"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = HypothesisSchema.parse(params);
-
       try {
+        const input = HypothesisSchema.parse(params);
+
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
           !input.testType ||

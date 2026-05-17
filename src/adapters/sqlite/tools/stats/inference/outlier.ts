@@ -30,9 +30,9 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Outlier Detection"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = OutlierSchema.parse(params);
-
       try {
+        const input = OutlierSchema.parse(params);
+
         // Validate maxOutliers bounds (was previously .min(1).max(500) in schema, moved here to avoid refinement leak)
         if (
           input.maxOutliers !== undefined &&

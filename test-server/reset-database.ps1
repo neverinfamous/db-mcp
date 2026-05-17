@@ -110,8 +110,8 @@ if ($backupFiles) {
 }
 
 # Warn about any node processes that hold the database file open (e.g. MCP servers)
-$dbFullPath = (Resolve-Path $DatabasePath -ErrorAction SilentlyContinue)?.Path
-if (-not $dbFullPath) { $dbFullPath = $DatabasePath }
+$resolvePath = Resolve-Path $DatabasePath -ErrorAction SilentlyContinue
+$dbFullPath = if ($resolvePath) { $resolvePath.Path } else { $DatabasePath }
 $dbNameEscaped = [regex]::Escape(($dbFullPath -replace '\\', '/'))
 $dbNameEscapedBackslash = [regex]::Escape($dbFullPath)
 
