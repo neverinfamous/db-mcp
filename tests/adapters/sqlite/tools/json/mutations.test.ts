@@ -45,11 +45,19 @@ describe("JSON Mutation Tools", () => {
   });
 
   describe("sqlite_json_insert", () => {
-    it("should insert JSON data as object", async () => {
+    beforeEach(async () => {
+      await adapter.executeWriteQuery(
+        `INSERT INTO documents (id, data) VALUES (1, '{"title": "Old"}')`,
+      );
+    });
+
+    it("should insert a new key at JSON path", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        data: { name: "Alice", age: 30 },
+        path: "$.count",
+        value: 1,
+        whereClause: "id = 1",
       })) as {
         success: boolean;
         message: string;
@@ -59,20 +67,19 @@ describe("JSON Mutation Tools", () => {
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);
 
-      // Verify inserted data
       const check = await adapter.executeReadQuery(
-        "SELECT data FROM documents",
+        "SELECT json_extract(data, '$.count') as count FROM documents WHERE id = 1",
       );
-      expect(check.rows?.length).toBe(1);
-      const parsed = JSON.parse(check.rows?.[0]?.data as string);
-      expect(parsed.name).toBe("Alice");
+      expect(check.rows?.[0]?.count).toBe(1);
     });
 
-    it("should insert JSON data as string", async () => {
+    it("should insert a new string value at JSON path", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        data: '{"product": "Widget", "price": 9.99}',
+        path: "$.description",
+        value: "New Description",
+        whereClause: "id = 1",
       })) as {
         success: boolean;
         rowsAffected: number;
@@ -80,19 +87,20 @@ describe("JSON Mutation Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);
+      
+      const check = await adapter.executeReadQuery(
+        "SELECT json_extract(data, '$.description') as desc FROM documents WHERE id = 1",
+      );
+      expect(check.rows?.[0]?.desc).toBe("New Description");
     });
 
-    it("should insert with additional columns", async () => {
-      // Add another column
-      await adapter.executeWriteQuery(
-        "ALTER TABLE documents ADD COLUMN type TEXT",
-      );
-
+    it("should not overwrite an existing key", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        data: { value: 100 },
-        additionalColumns: { type: "metric" },
+        path: "$.title",
+        value: "New Title",
+        whereClause: "id = 1",
       })) as {
         success: boolean;
         rowsAffected: number;
@@ -101,9 +109,9 @@ describe("JSON Mutation Tools", () => {
       expect(result.success).toBe(true);
 
       const check = await adapter.executeReadQuery(
-        "SELECT type FROM documents",
+        "SELECT json_extract(data, '$.title') as title FROM documents WHERE id = 1",
       );
-      expect(check.rows?.[0]?.type).toBe("metric");
+      expect(check.rows?.[0]?.title).toBe("Old"); // Unchanged
     });
   });
 

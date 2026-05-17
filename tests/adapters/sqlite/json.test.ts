@@ -138,37 +138,39 @@ describe("JSON Tools", () => {
   });
 
   describe("sqlite_json_insert", () => {
-    it("should insert JSON row", async () => {
+    it("should insert a new key into JSON", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "profiles",
         column: "data",
-        data: { name: "Charlie", age: 35 },
+        path: "$.nickname",
+        value: "Al",
+        whereClause: "id = 1",
       })) as { success: boolean; rowsAffected: number };
 
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);
 
-      const count = await adapter.executeReadQuery(
-        "SELECT COUNT(*) as count FROM profiles",
+      const check = await adapter.executeReadQuery(
+        "SELECT json_extract(data, '$.nickname') as nickname FROM profiles WHERE id = 1",
       );
-      expect(count.rows?.[0]?.["count"]).toBe(3);
+      expect(check.rows?.[0]?.["nickname"]).toBe("Al");
     });
 
-    it("should insert JSON with additional columns", async () => {
-      // Create table with extra column
-      await adapter.executeWriteQuery(
-        "CREATE TABLE test_json (id INTEGER PRIMARY KEY, json_data TEXT, label TEXT)",
+    it("should not overwrite an existing key", async () => {
+      const result = (await tools.get("sqlite_json_insert")?.({
+        table: "profiles",
+        column: "data",
+        path: "$.age",
+        value: 99,
+        whereClause: "id = 1",
+      })) as { success: boolean; rowsAffected: number; warning?: string };
+
+      expect(result.success).toBe(true);
+
+      const check = await adapter.executeReadQuery(
+        "SELECT json_extract(data, '$.age') as age FROM profiles WHERE id = 1",
       );
-
-      await tools.get("sqlite_json_insert")?.({
-        table: "test_json",
-        column: "json_data",
-        data: { foo: "bar" },
-        additionalColumns: { label: "test" },
-      });
-
-      const result = await adapter.executeReadQuery("SELECT * FROM test_json");
-      expect(result.rows?.[0]?.["label"]).toBe("test");
+      expect(check.rows?.[0]?.["age"]).toBe(30); // Unchanged
     });
   });
 
