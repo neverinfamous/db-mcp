@@ -72,7 +72,7 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
             : input.column2;
           return {
             success: false,
-            error: `Column '${nonNumeric}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
+            error: `Column '${nonNumeric}' in table '${input.table}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
             code: "INVALID_INPUT",
             category: "validation",
             suggestion:

@@ -470,7 +470,7 @@ sqlite_migration_init();
 sqlite_migration_apply({
   version: "2024-01-15-add-users",
   description: "Create users table",
-  migrationSql:
+  sql:
     "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE)",
   rollbackSql: "DROP TABLE users",
   sourceSystem: "agent",
@@ -481,7 +481,7 @@ sqlite_migration_apply({
 sqlite_migration_record({
   version: "2024-01-10-initial",
   description: "Initial schema (pre-existing)",
-  migrationSql: "CREATE TABLE orders (...)",
+  sql: "CREATE TABLE orders (...)",
   sourceSystem: "manual",
 });
 
