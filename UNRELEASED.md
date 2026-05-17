@@ -17,7 +17,6 @@
 
 ### Documentation
 
-- **Introspection Code Mode Tests**: Conducted an exhaustive stress test of the introspection tool group using Code Mode (`sqlite_execute_code`). Validated happy paths, domain error handling, and Zod validation constraints. Documented expected payload sizes and specific handler behaviors in `test-tool-group-codemode-introspection.md` to establish the testing baseline.
 - **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
 
 ### Security
@@ -44,3 +43,4 @@
 - **Schema Strict Validation Leak** — Fixed an issue in `sqlite_count` and `sqlite_exists` where `ZodSchema` definitions lacked `.strict()` and caused unknown parameters (e.g., typos like `whereClause` instead of `where`) to be silently ignored, executing broad queries instead of rejecting the input. Aliased `whereClause` correctly to `where` in `convenience-schemas`.
 - **Code Mode Discovery parity** — `sqlite.help()` within Code Mode worker processes now properly computes and returns `totalMethods` and `usage` instructions to match the top-level API shape.
 - **Audit Logging Silent Failure** — Fixed a bug where audit logs were not writing to the configured JSONL file despite being enabled. Tool names in `toolScopeMap` were missing their `sqlite_` prefix (e.g., `"execute_code"` instead of `"sqlite_execute_code"`), causing them to fall back to the `read` scope and skip logging when `--audit-reads` was false. Added correct prefixing during scope map initialization and fixed `typescript-eslint` typing strictness issues (`no-unsafe-call`, `strict-boolean-expressions`) in the audit interceptor.
+- **Code Mode Migration Tests** — Resolved a discrepancy in the Code Mode prompt for testing the migration tool group where the SQL string parameter was incorrectly named `sql` instead of `migrationSql`, bringing the test prompt into compliance with the established Zod schema.

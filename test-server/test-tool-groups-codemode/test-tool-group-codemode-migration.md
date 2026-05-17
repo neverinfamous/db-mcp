@@ -73,7 +73,7 @@ Expected: No migrations applied.
 return await sqlite.migration.migrationRecord({
   version: "1.0.0",
   description: "Create temp table",
-  sql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
+  migrationSql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
 });
 ```
 
@@ -105,7 +105,7 @@ Expected: Version 1.0.0 listed.
 return await sqlite.migration.migrationApply({
   version: "1.0.1",
   description: "Create applied table",
-  sql: "CREATE TABLE temp_cm_mig_applied (id INTEGER PRIMARY KEY, value TEXT)"
+  migrationSql: "CREATE TABLE temp_cm_mig_applied (id INTEGER PRIMARY KEY, value TEXT)"
 });
 ```
 
@@ -137,7 +137,7 @@ Expected: Both 1.0.0 and 1.0.1 listed.
 return await sqlite.migration.migrationRecord({
   version: "1.0.2",
   description: "Duplicate test",
-  sql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
+  migrationSql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
 });
 ```
 
@@ -161,7 +161,7 @@ Expected: Informative error (no rollbackSql was provided).
 return await sqlite.migration.migrationApply({
   version: "1.0.3",
   description: "With rollback",
-  sql: "CREATE TABLE temp_cm_mig_rollback (id INTEGER PRIMARY KEY)",
+  migrationSql: "CREATE TABLE temp_cm_mig_rollback (id INTEGER PRIMARY KEY)",
   rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_rollback"
 });
 ```
@@ -188,7 +188,7 @@ Expected: Table does NOT exist.
 
 ## Phase 5: Migration Domain Errors (batched)
 
-🔴 5.1. `sqlite.migration.migrationApply({version: "bad version!", description: "Invalid", sql: "SELECT 1"})` → report behavior
+🔴 5.1. `sqlite.migration.migrationApply({version: "bad version!", description: "Invalid", migrationSql: "SELECT 1"})` → report behavior
 🔴 5.2. `sqlite.migration.migrationRollback({version: "nonexistent_version"})` → `{success: false}`
 
 ---
@@ -217,7 +217,7 @@ await sqlite.migration.migrationInit();
 await sqlite.migration.migrationApply({
   version: "9.9.1",
   description: "Lifecycle test",
-  sql: "CREATE TABLE temp_cm_mig_lifecycle (id INTEGER PRIMARY KEY, val TEXT)",
+  migrationSql: "CREATE TABLE temp_cm_mig_lifecycle (id INTEGER PRIMARY KEY, val TEXT)",
   rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_lifecycle"
 });
 
