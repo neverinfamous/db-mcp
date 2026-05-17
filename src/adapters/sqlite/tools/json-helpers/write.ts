@@ -27,7 +27,7 @@ import {
   JsonMergeOutputSchema,
   CreateJsonCollectionOutputSchema,
 } from "../../output-schemas/index.js";
-import { normalizeJson } from "../../json-utils.js";
+
 
 /**
  * Insert JSON data with auto-normalization
@@ -35,8 +35,7 @@ import { normalizeJson } from "../../json-utils.js";
 export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_insert",
-    description:
-      "Insert a row with JSON data. Automatically normalizes JSON for consistent storage.",
+    description: "Insert a value at a specific JSON path using json_insert(). Only inserts if the key does not already exist.",
     group: "json",
     inputSchema: JsonInsertSchema,
     outputSchema: JsonInsertOutputSchema,
@@ -51,48 +50,50 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       try {
-        if (input.data === undefined) {
+        // Validate table and column names
+        sanitizeIdentifier(input.table);
+        sanitizeIdentifier(input.column);
+
+        // Validate JSON path format
+        if (!input.path.startsWith("$")) {
           return {
             success: false,
-            error: "Missing required parameter: data",
+            rowsAffected: 0,
+            error: "JSON path must start with $",
           };
         }
 
-        // Normalize JSON data for consistent storage
-        const rawJson =
-          typeof input.data === "string"
-            ? input.data
-            : JSON.stringify(input.data);
-
-        const { normalized: jsonStr } = normalizeJson(rawJson);
-
-        // Build column list
-        const columns = [input.column];
-        const placeholders = ["?"];
-        const values: unknown[] = [jsonStr];
-
-        if (input.additionalColumns) {
-          for (const [col, val] of Object.entries(input.additionalColumns)) {
-            // Validate column name
-            sanitizeIdentifier(col);
-            columns.push(col);
-            placeholders.push("?");
-            values.push(typeof val === "object" ? JSON.stringify(val) : val);
-          }
+        if (input.value === undefined) {
+          return {
+            success: false,
+            rowsAffected: 0,
+            error: "Missing required parameter: value",
+          };
         }
 
-        // Validate table name
-        sanitizeIdentifier(input.table);
+        // String values must be JSON-stringified to produce valid JSON
+        const valueStr =
+          typeof input.value === "string"
+            ? `'${JSON.stringify(input.value).replace(/'/g, "''")}'`
+            : JSON.stringify(input.value);
 
-        const sql = `INSERT INTO "${input.table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${placeholders.join(", ")})`;
+        validateWhereClause(input.whereClause);
+        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_insert("${input.column}", '${input.path}', json(${valueStr})) WHERE ${input.whereClause}`;
 
-        const result = await adapter.executeWriteQuery(sql, values);
+        const result = await adapter.executeWriteQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
-          message: `Inserted row into ${input.table}`,
+          message: `Inserted ${input.path} in ${input.table}.${input.column}`,
           rowsAffected: result.rowsAffected,
         };
+
+        if (result.rowsAffected === 0) {
+          response["warning"] =
+            "No rows matched the WHERE clause — nothing was updated";
+        }
+
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
@@ -106,7 +107,7 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
 export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_update",
-    description: "Update a value at a specific JSON path using json_set().",
+    description: "Update a value at a specific JSON path using json_replace(). Only updates if the key already exists.",
     group: "json",
     inputSchema: JsonUpdateSchema,
     outputSchema: JsonUpdateOutputSchema,
@@ -150,7 +151,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
             : JSON.stringify(input.value);
 
         validateWhereClause(input.whereClause);
-        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_set("${input.column}", '${input.path}', json(${valueStr})) WHERE ${input.whereClause}`;
+        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_replace("${input.column}", '${input.path}', json(${valueStr})) WHERE ${input.whereClause}`;
 
         const result = await adapter.executeWriteQuery(sql);
 

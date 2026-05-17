@@ -220,11 +220,9 @@ export const ListTablesSchema = z.object({
 export const JsonInsertSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
-  data: z.unknown().describe("JSON data to insert (auto-normalized)"),
-  additionalColumns: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe("Other column values"),
+  path: z.string().describe("JSON path"),
+  value: z.unknown().describe("Value to insert"),
+  whereClause: z.string().describe("WHERE clause to identify rows"),
 });
 
 export const JsonUpdateSchema = z.object({
