@@ -69,11 +69,15 @@ export function nativeExecuteWrite(
     const normalizedParams = normalizeSqliteParams(params);
     const info = normalizedParams ? stmt.run(...normalizedParams) : stmt.run();
 
-    return Promise.resolve({
+    const result: QueryResult = {
       rows: [],
       rowsAffected: info.changes,
       executionTimeMs: Date.now() - start,
-    });
+    };
+    if (info.lastInsertRowid !== undefined) {
+      result.lastInsertId = Number(info.lastInsertRowid);
+    }
+    return Promise.resolve(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error(`Write query failed: ${message}`, {

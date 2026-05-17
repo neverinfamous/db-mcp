@@ -45,73 +45,40 @@ describe("JSON Mutation Tools", () => {
   });
 
   describe("sqlite_json_insert", () => {
-    beforeEach(async () => {
-      await adapter.executeWriteQuery(
-        `INSERT INTO documents (id, data) VALUES (1, '{"title": "Old"}')`,
-      );
-    });
-
-    it("should insert a new key at JSON path", async () => {
+    it("should insert a new row with JSON data", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        path: "$.count",
-        value: 1,
-        whereClause: "id = 1",
+        jsonData: { title: "New Document", count: 10 },
       })) as {
         success: boolean;
         message: string;
         rowsAffected: number;
+        lastInsertRowid?: number;
       };
 
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);
+      expect(result.lastInsertRowid).toBeDefined();
 
       const check = await adapter.executeReadQuery(
-        "SELECT json_extract(data, '$.count') as count FROM documents WHERE id = 1",
+        `SELECT json_extract(data, '$.title') as title FROM documents WHERE id = ${result.lastInsertRowid}`,
       );
-      expect(check.rows?.[0]?.count).toBe(1);
+      expect(check.rows?.[0]?.title).toBe("New Document");
     });
 
-    it("should insert a new string value at JSON path", async () => {
+    it("should reject missing jsonData", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        path: "$.description",
-        value: "New Description",
-        whereClause: "id = 1",
       })) as {
         success: boolean;
-        rowsAffected: number;
+        error: string;
+        code: string;
       };
 
-      expect(result.success).toBe(true);
-      expect(result.rowsAffected).toBe(1);
-      
-      const check = await adapter.executeReadQuery(
-        "SELECT json_extract(data, '$.description') as desc FROM documents WHERE id = 1",
-      );
-      expect(check.rows?.[0]?.desc).toBe("New Description");
-    });
-
-    it("should not overwrite an existing key", async () => {
-      const result = (await tools.get("sqlite_json_insert")?.({
-        table: "documents",
-        column: "data",
-        path: "$.title",
-        value: "New Title",
-        whereClause: "id = 1",
-      })) as {
-        success: boolean;
-        rowsAffected: number;
-      };
-
-      expect(result.success).toBe(true);
-
-      const check = await adapter.executeReadQuery(
-        "SELECT json_extract(data, '$.title') as title FROM documents WHERE id = 1",
-      );
-      expect(check.rows?.[0]?.title).toBe("Old"); // Unchanged
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("VALIDATION_ERROR");
     });
   });
 

@@ -123,10 +123,24 @@ export function executeWrite(
 
     const changes = db.getRowsModified();
 
-    return Promise.resolve({
+    let lastInsertId: number | undefined;
+    try {
+      const rowidResult = db.exec("SELECT last_insert_rowid()");
+      if (rowidResult[0]?.values[0]) {
+        lastInsertId = Number(rowidResult[0].values[0][0]);
+      }
+    } catch {
+      // Ignore if not supported
+    }
+
+    const result: QueryResult = {
       rowsAffected: changes,
       executionTimeMs: Date.now() - start,
-    });
+    };
+    if (lastInsertId !== undefined) {
+      result.lastInsertId = lastInsertId;
+    }
+    return Promise.resolve(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error(`Write query failed: ${message}`, {
