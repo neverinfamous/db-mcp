@@ -55,22 +55,22 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 2. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → domain parts
 3. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptp", maxDistance: 3})` → `Laptop Pro 15`
 4. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop"})` → `Laptop Pro 15`
-5. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "email"})` → all 9 valid
-6. `sqlite.text.textValidate({table: "test_users", column: "phone", pattern: "phone"})` → valid/invalid counts
-7. `sqlite.text.textCase({table: "test_users", column: "username", mode: "upper"})` → uppercased
-8. `sqlite.text.textNormalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` → `Cafe Decor Light`
-9. `sqlite.text.textSplit({table: "test_users", column: "email", delimiter: "@"})` → local + domain parts
-10. `sqlite.text.textConcat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated
-11. `sqlite.text.textTrim({table: "test_users", column: "bio"})` → trimmed
-12. `sqlite.text.textSubstring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars
-13. `sqlite.text.textSentiment({table: "test_articles", column: "body"})` → sentiment scores
+5. `sqlite.text.validate({table: "test_users", column: "email", pattern: "email"})` → all 9 valid
+6. `sqlite.text.validate({table: "test_users", column: "phone", pattern: "phone"})` → valid/invalid counts
+7. `sqlite.text.case({table: "test_users", column: "username", mode: "upper"})` → uppercased
+8. `sqlite.text.normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` → `Cafe Decor Light`
+9. `sqlite.text.split({table: "test_users", column: "email", delimiter: "@"})` → local + domain parts
+10. `sqlite.text.concat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated
+11. `sqlite.text.trim({table: "test_users", column: "bio"})` → trimmed
+12. `sqlite.text.substring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars
+13. `sqlite.text.sentiment({text: "I love this product"})` → sentiment scores
 14. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → finds `Mechanical Keyboard`
 
 ---
 
 ## Phase 2: FTS5 Tools `[NATIVE ONLY]` — Happy Paths (batched)
 
-15. `sqlite.text.ftsCreate({sourceTable: "test_users", columns: ["username", "bio"], ftsTable: "temp_cm_fts"})` → created
+15. `sqlite.text.ftsCreate({sourceTable: "test_users", columns: ["username", "bio"], tableName: "temp_cm_fts"})` → created
 16. `sqlite.text.ftsRebuild({table: "temp_cm_fts"})` → rebuilt
 17. `sqlite.text.ftsSearch({table: "temp_cm_fts", query: "test*"})` → results
 18. `sqlite.text.ftsMatchInfo({table: "temp_cm_fts", query: "test*"})` → match info with scoring
@@ -84,8 +84,8 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ## Phase 3: Text Write Tool (temp table)
 
-24. `sqlite.text.textReplace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
-25. Revert: `sqlite.text.textReplace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
+24. `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
+25. Revert: `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
 
 ---
 
@@ -101,18 +101,18 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 🔴 29. `sqlite.text.regexExtract({})` → `{success: false}`
 🔴 30. `sqlite.text.regexMatch({})` → `{success: false}`
-🔴 31. `sqlite.text.textSplit({})` → `{success: false}`
-🔴 32. `sqlite.text.textConcat({})` → `{success: false}`
-🔴 33. `sqlite.text.textReplace({})` → `{success: false}`
-🔴 34. `sqlite.text.textTrim({})` → `{success: false}`
-🔴 35. `sqlite.text.textCase({})` → `{success: false}`
-🔴 36. `sqlite.text.textSubstring({})` → `{success: false}`
+🔴 31. `sqlite.text.split({})` → `{success: false}`
+🔴 32. `sqlite.text.concat({})` → `{success: false}`
+🔴 33. `sqlite.text.replace({})` → `{success: false}`
+🔴 34. `sqlite.text.trim({})` → `{success: false}`
+🔴 35. `sqlite.text.case({})` → `{success: false}`
+🔴 36. `sqlite.text.substring({})` → `{success: false}`
 🔴 37. `sqlite.text.fuzzyMatch({})` → `{success: false}`
 🔴 38. `sqlite.text.phoneticMatch({})` → `{success: false}`
-🔴 39. `sqlite.text.textNormalize({})` → `{success: false}`
-🔴 40. `sqlite.text.textValidate({})` → `{success: false}`
+🔴 39. `sqlite.text.normalize({})` → `{success: false}`
+🔴 40. `sqlite.text.validate({})` → `{success: false}`
 🔴 41. `sqlite.text.advancedSearch({})` → `{success: false}`
-🔴 42. `sqlite.text.textSentiment({})` → `{success: false}`
+🔴 42. `sqlite.text.sentiment({})` → `{success: false}`
 🔴 43. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 44. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 45. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
@@ -128,13 +128,13 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 ```javascript
 const failures = [];
 // Validate emails, extract domains, search fuzzy, combine results
-const validation = await sqlite.text.textValidate({table: "test_users", column: "email", pattern: "email"});
+const validation = await sqlite.text.validate({table: "test_users", column: "email", pattern: "email"});
 const domains = await sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1});
 const fuzzy = await sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "keybord", maxDistance: 3});
-if (!validation) failures.push("validation failed");
-if (!domains) failures.push("domain extraction failed");
-if (!fuzzy) failures.push("fuzzy search failed");
-return { failures, success: failures.length === 0, summary: { validEmails: !!validation, domainCount: domains?.rows?.length, fuzzyHits: fuzzy?.rows?.length } };
+if (!validation.success) failures.push("validation failed");
+if (!domains.success) failures.push("domain extraction failed");
+if (!fuzzy.success) failures.push("fuzzy search failed");
+return { failures, success: failures.length === 0, summary: { validEmails: validation?.validCount, domainCount: domains?.matches?.length, fuzzyHits: fuzzy?.matches?.length } };
 ```
 
 ---
