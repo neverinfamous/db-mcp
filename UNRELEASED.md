@@ -17,6 +17,7 @@
 
 ### Documentation
 
+- **Introspection Code Mode Tests**: Conducted an exhaustive stress test of the introspection tool group using Code Mode (`sqlite_execute_code`). Validated happy paths, domain error handling, and Zod validation constraints. Documented expected payload sizes and specific handler behaviors in `test-tool-group-codemode-introspection.md` to establish the testing baseline.
 - **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
 
 ### Security
