@@ -43,6 +43,7 @@ test-results.json
 # Playwright
 test-results/
 playwright-report/
+playwright-results.json
 
 # TypeScript
 *.tsbuildinfo

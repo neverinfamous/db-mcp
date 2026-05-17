@@ -15,8 +15,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 ![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen)
-![E2E Tests](https://img.shields.io/badge/E2E-1136%20passed-brightgreen)
-![Coverage](https://img.shields.io/badge/Coverage-90%25-brightgreen)
+![E2E](https://img.shields.io/badge/E2E-1144%20passing%20%C2%B7%200%20skipped-blue.svg)
+![Coverage](https://img.shields.io/badge/Coverage-86.17%25-green.svg)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 

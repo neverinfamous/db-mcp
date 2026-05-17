@@ -8,7 +8,7 @@ export default defineConfig({
   // MCP SDK McpServer only supports one active transport at a time.
   // Parallel workers create competing SSE connections that steal each other's transport.
   workers: 1,
-  reporter: "list",
+  reporter: [["list"], ["json", { outputFile: "playwright-results.json" }]],
   use: {
     trace: "on-first-retry",
     // 60s timeout — allows slow operations (vector stats, code mode ETL)
