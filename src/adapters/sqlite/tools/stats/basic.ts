@@ -53,7 +53,7 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const aliasedParams = resolveAliases(params, { table: "tableName", column: "columnName" });
+        const aliasedParams = resolveAliases(params, { tableName: "table", columnName: "column" });
         const input = BasicStatsSchema.parse(aliasedParams);
 
         await validateColumnExists(adapter, input.table, input.column);
@@ -124,7 +124,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const aliasedParams = resolveAliases(params, { table: "tableName", column: "columnName" });
+        const aliasedParams = resolveAliases(params, { tableName: "table", columnName: "column" });
         const input = CountSchema.parse(aliasedParams);
 
         if (input.column) {

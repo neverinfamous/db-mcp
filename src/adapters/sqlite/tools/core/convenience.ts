@@ -42,7 +42,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        const aliasedParams = resolveAliases(params, { table: "tableName", data: "values", conflictColumns: "conflictColumn" });
+        const aliasedParams = resolveAliases(params, { tableName: "table", values: "data", conflictColumn: "conflictColumns" });
         const parsed = UpsertSchema.parse(aliasedParams);
         input = {
           ...parsed,
@@ -118,7 +118,7 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        const aliasedParams = resolveAliases(params, { table: "tableName" });
+        const aliasedParams = resolveAliases(params, { tableName: "table" });
         const parsed = BatchInsertSchema.parse(aliasedParams);
         input = {
           ...parsed,
@@ -190,8 +190,8 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        let aliasedParams = resolveAliases(params, { table: "tableName", column: "columnName" });
-        aliasedParams = resolveAliases(aliasedParams, { where: "condition" });
+        let aliasedParams = resolveAliases(params, { tableName: "table", columnName: "column" });
+        aliasedParams = resolveAliases(aliasedParams, { condition: "where", filter: "where", whereClause: "where" });
         const parsed = CountSchema.parse(aliasedParams);
         input = {
           ...parsed,
@@ -241,8 +241,8 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        let aliasedParams = resolveAliases(params, { table: "tableName" });
-        aliasedParams = resolveAliases(aliasedParams, { where: "condition" });
+        let aliasedParams = resolveAliases(params, { tableName: "table" });
+        aliasedParams = resolveAliases(aliasedParams, { condition: "where", filter: "where", whereClause: "where" });
         const parsed = ExistsSchema.parse(aliasedParams);
         input = {
           ...parsed,
@@ -292,7 +292,7 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        const aliasedParams = resolveAliases(params, { table: "tableName" });
+        const aliasedParams = resolveAliases(params, { tableName: "table" });
         input = TruncateSchema.parse(aliasedParams);
       } catch (error) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
