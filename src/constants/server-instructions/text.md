@@ -62,8 +62,8 @@ sqlite_text_concat({
 sqlite_text_replace({
   table: "docs",
   column: "content",
-  search: "old",
-  replacement: "new",
+  searchPattern: "old",
+  replaceWith: "new",
 });
 sqlite_text_trim({ table: "users", column: "name" }); // trim whitespace
 sqlite_text_case({ table: "products", column: "name", mode: "upper" }); // or "lower"
