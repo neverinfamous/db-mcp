@@ -18,7 +18,8 @@ When tasked with running tests from this folder, adhere to the following optimiz
 - **Structured Error Path**: Ensure domain errors (e.g., nonexistent table) return an object `{"success": false, "error": "..."}` instead of crashing or leaking raw MCP errors.
 - **Zod Resilience**: Pass `{}` with missing required parameters or invalid types. Verify that Zod errors are properly caught and formatted.
 - **Payload Limits**: If a response payload is excessively large, report it as a 📦 Payload issue.
-- **Documentation Parity**: If tool schemas or behavior diverge from what is documented, proactively update the corresponding file in `src/constants/server-instructions`.
+- **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
+- **Documentation Parity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is correct and intended, but the documentation is inaccurate, outdated, or lacking specificity.
 
 ### 3. Tracking Progress
 
