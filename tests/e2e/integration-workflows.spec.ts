@@ -141,8 +141,8 @@ test.describe("Integration: Core → Vector → Text Pipeline", () => {
 
           return {
             stored: 3,
-            searchResultCount: searchResults.results.length,
-            topResultId: searchResults.results[0]?.id,
+            searchResultCount: searchResults.rows.length,
+            topResultId: searchResults.rows[0]?.id,
             totalVectors: count.count,
           };
         `,
