@@ -101,14 +101,22 @@ export function createAuditInterceptor(
 
       // Pre-mutation snapshot (before tool executes)
       if (
-        backupManager &&
-        queryAdapter &&
-        backupManager.shouldSnapshot(toolName)
+        backupManager !== undefined &&
+        queryAdapter !== undefined &&
+        (backupManager as { shouldSnapshot(t: string): boolean }).shouldSnapshot(toolName)
       ) {
         try {
-          backupRef = await backupManager.createSnapshot(
+          backupRef = await (backupManager as {
+            createSnapshot(
+              t: string,
+              a: unknown,
+              r: string,
+              qa: SnapshotQueryAdapter,
+              l?: string,
+            ): Promise<string | undefined>;
+          }).createSnapshot(
             toolName,
-            (args ?? {}) as Record<string, unknown>,
+            args ?? {},
             requestId,
             queryAdapter,
             options?.logAs,

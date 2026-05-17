@@ -49,6 +49,7 @@ export class DbMcpServer {
   private auditLogger: AuditLogger | null = null;
   private backupManager: BackupManager | null = null;
   private auditInterceptor: AuditInterceptor | null = null;
+  private auditInitPromise: Promise<void> | null = null;
 
   constructor(config: McpServerConfig) {
     this.config = config;
@@ -90,7 +91,7 @@ export class DbMcpServer {
 
     // Initialize audit subsystem if configured
     if (config.audit?.enabled) {
-      void this.initializeAudit(config);
+      this.auditInitPromise = this.initializeAudit(config);
     }
   }
 
@@ -102,6 +103,11 @@ export class DbMcpServer {
     config: DatabaseConfig,
   ): Promise<void> {
     const adapterId = `${adapter.type}:${config.connectionString ?? "default"}`;
+
+    // Wait for audit subsystem to initialize before registering adapters
+    if (this.auditInitPromise) {
+      await this.auditInitPromise;
+    }
 
     // Connect to database
     await adapter.connect(config);
