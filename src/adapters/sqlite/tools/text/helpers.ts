@@ -230,12 +230,15 @@ export const AdvancedSearchSchema = z.object({
 });
 
 export const TextSentimentSchema = z.object({
-  text: z.string().describe("Text to analyze"),
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column to analyze"),
   returnWords: z
     .boolean()
     .optional()
     .default(false)
     .describe("Return matched positive/negative words"),
+  whereClause: z.string().optional(),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 // FTS5 headline/snippet schema (native-only)

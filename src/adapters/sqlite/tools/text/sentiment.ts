@@ -2,7 +2,6 @@
  * Text Sentiment Analysis Tool
  *
  * Basic keyword-based sentiment analysis using word matching.
- * Pure JS implementation — no database queries needed.
  * Ported from postgres-mcp pg_text_sentiment for cross-server parity.
  */
 
@@ -11,8 +10,13 @@ import { readOnly } from "../../../../utils/annotations.js";
 import {
   formatHandlerError,
 } from "../../../../utils/errors/index.js";
+import {
+  sanitizeIdentifier,
+  validateWhereClause,
+} from "../../../../utils/index.js";
 import { TextSentimentOutputSchema } from "../../output-schemas/index.js";
-import { TextSentimentSchema } from "./helpers.js";
+import { TextSentimentSchema, validateColumnExists } from "./helpers.js";
+import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
 const POSITIVE_WORDS = [
   "good",
@@ -68,11 +72,8 @@ const NEGATIVE_WORDS = [
 
 /**
  * Create the text sentiment analysis tool.
- * No adapter dependency — this is a pure JS text analysis tool.
  */
-import type { SqliteAdapter } from "../../sqlite-adapter.js";
-
-export function createTextSentimentTool(_adapter: SqliteAdapter): ToolDefinition {
+export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_text_sentiment",
     description: "Perform basic sentiment analysis on text column using keyword matching.",
@@ -83,70 +84,129 @@ export function createTextSentimentTool(_adapter: SqliteAdapter): ToolDefinition
     annotations: readOnly("Text Sentiment"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        await Promise.resolve(); // Satisfy require-await for pure JS tools
         const parsed = TextSentimentSchema.parse(params ?? {});
         
-        const originalText = parsed.text;
+        interface AnalyzeTextReturn {
+             sentiment: string;
+             score: number;
+             confidence: string;
+             positiveCount: number;
+             negativeCount: number;
+             matchedPositive?: string[] | undefined;
+             matchedNegative?: string[] | undefined;
+        }
 
-        if (!originalText || originalText.trim() === "") {
+        // Define analysis function
+        const analyzeText = (original: string | null | undefined): AnalyzeTextReturn => {
+          if (!original || original.trim() === "") {
              return {
-               success: true,
                sentiment: "neutral",
                score: 0,
                confidence: "low",
                positiveCount: 0,
                negativeCount: 0
              };
-        }
+          }
 
-        const text = originalText.toLowerCase();
-        const words = text.split(/\s+/);
-        const matchedPositive = words
-          .map((w) => w.replace(/[^a-z]/g, ""))
-          .filter((w): w is string =>
-            (POSITIVE_WORDS as readonly string[]).includes(w),
-          );
-        const matchedNegative = words
-          .map((w) => w.replace(/[^a-z]/g, ""))
-          .filter((w): w is string =>
-            (NEGATIVE_WORDS as readonly string[]).includes(w),
-          );
+          const textStr = original.toLowerCase();
+          const words = textStr.split(/\s+/);
+          const matchedPositive = words
+            .map((w) => w.replace(/[^a-z]/g, ""))
+            .filter((w): w is string =>
+              (POSITIVE_WORDS as readonly string[]).includes(w),
+            );
+          const matchedNegative = words
+            .map((w) => w.replace(/[^a-z]/g, ""))
+            .filter((w): w is string =>
+              (NEGATIVE_WORDS as readonly string[]).includes(w),
+            );
 
-        const positiveScore = matchedPositive.length;
-        const negativeScore = matchedNegative.length;
-        const totalScore = positiveScore - negativeScore;
+          const positiveScore = matchedPositive.length;
+          const negativeScore = matchedNegative.length;
+          const totalScore = positiveScore - negativeScore;
 
-        let sentiment: "very_positive" | "positive" | "neutral" | "negative" | "very_negative";
-        if (totalScore > 2) sentiment = "very_positive";
-        else if (totalScore > 0) sentiment = "positive";
-        else if (totalScore < -2) sentiment = "very_negative";
-        else if (totalScore < 0) sentiment = "negative";
-        else sentiment = "neutral";
-        
-        interface SentimentResult {
-           success: boolean;
-           sentiment: string;
-           score: number;
-           confidence: string;
-           positiveCount: number;
-           negativeCount: number;
-           matchedPositive?: string[];
-           matchedNegative?: string[];
-        }
-
-        const result: SentimentResult = {
-           success: true,
-           sentiment,
-           score: totalScore,
-           confidence: positiveScore + negativeScore > 3 ? "high" : positiveScore + negativeScore > 1 ? "medium" : "low",
-           positiveCount: positiveScore,
-           negativeCount: negativeScore
+          let sentiment: "very_positive" | "positive" | "neutral" | "negative" | "very_negative";
+          if (totalScore > 2) sentiment = "very_positive";
+          else if (totalScore > 0) sentiment = "positive";
+          else if (totalScore < -2) sentiment = "very_negative";
+          else if (totalScore < 0) sentiment = "negative";
+          else sentiment = "neutral";
+          
+          return {
+             sentiment,
+             score: totalScore,
+             confidence: positiveScore + negativeScore > 3 ? "high" : positiveScore + negativeScore > 1 ? "medium" : "low",
+             positiveCount: positiveScore,
+             negativeCount: negativeScore,
+             matchedPositive: parsed.returnWords ? matchedPositive : undefined,
+             matchedNegative: parsed.returnWords ? matchedNegative : undefined
+          };
         };
-        if (parsed.returnWords) {
-           result.matchedPositive = matchedPositive;
-           result.matchedNegative = matchedNegative;
+
+        if (parsed.text !== undefined) {
+           // Standalone text mode
+           const res = analyzeText(parsed.text);
+           return {
+             success: true,
+             ...res
+           };
         }
-        return result;
+
+        if (!parsed.table || !parsed.column) {
+           throw new Error("Must provide either 'text' or both 'table' and 'column'");
+        }
+
+        // Table mode
+        const table = sanitizeIdentifier(parsed.table);
+        const column = sanitizeIdentifier(parsed.column);
+        await validateColumnExists(adapter, parsed.table, parsed.column);
+
+        let sql = `SELECT rowid, ${column} as original FROM ${table}`;
+        if (parsed.whereClause) {
+          validateWhereClause(parsed.whereClause);
+          sql += ` WHERE ${parsed.whereClause}`;
+        }
+        sql += ` LIMIT ${parsed.limit}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        const rows = (result.rows ?? []).map((row) => {
+          const rawOriginal = row["original"];
+          const original =
+            typeof rawOriginal === "string"
+              ? rawOriginal
+              : rawOriginal === null || rawOriginal === undefined
+                ? ""
+                : JSON.stringify(rawOriginal);
+
+          const res = analyzeText(original);
+          
+          interface SentimentResult {
+             rowid?: number | undefined;
+             original: string;
+             sentiment: string;
+             score: number;
+             confidence: string;
+             positiveCount: number;
+             negativeCount: number;
+             matchedPositive?: string[] | undefined;
+             matchedNegative?: string[] | undefined;
+          }
+
+          const resObj: SentimentResult = {
+             rowid: row["rowid"] as number | undefined,
+             original: original,
+             ...res
+          };
+          
+          return resObj;
+        });
+
+        return {
+          success: true,
+          rowCount: rows.length,
+          results: rows
+        };
       } catch (error) {
         return formatHandlerError(error);
       }
