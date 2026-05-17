@@ -12,7 +12,7 @@ sqlite_vector_batch_store({ table: "docs", idColumn: "id", vectorColumn: "emb", 
 sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10, returnColumns: ["id", "title"] }); // returns { results: [...] } instead of rows
 
 // Retrieve and delete vectors
-// Note: sqlite_vector_get returns parsed 'vector' array + raw JSON string in 'metadata' for flexibility
+// Note: sqlite_vector_get returns parsed 'vector' array + additional columns in a 'metadata' object for flexibility
 sqlite_vector_get({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1 });
 sqlite_vector_delete({ table: "docs", idColumn: "id", ids: [1, 2, 3] });
 
