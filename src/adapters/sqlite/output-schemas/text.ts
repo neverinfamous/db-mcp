@@ -211,6 +211,15 @@ const SentimentResultItemSchema = z.object({
 export const TextSentimentOutputSchema = z
   .object({
     success: z.boolean(),
+    
+    sentiment: z.string().optional(),
+    score: z.number().optional(),
+    confidence: z.string().optional(),
+    positiveCount: z.number().optional(),
+    negativeCount: z.number().optional(),
+    matchedPositive: z.array(z.string()).optional(),
+    matchedNegative: z.array(z.string()).optional(),
+
     rowCount: z.number().optional(),
     results: z.array(SentimentResultItemSchema).optional(),
   })
