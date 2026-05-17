@@ -131,7 +131,7 @@ const nearby = await sqlite.geo.nearby({
   centerLat: 40.758, centerLon: -73.9855, radius: 50
 });
 
-return { failures, success: failures.length === 0, distances, nearbyCount: nearby?.rows?.length };
+return { failures, success: failures.length === 0, distances, nearbyCount: nearby?.rowCount || nearby?.results?.length };
 ```
 
 ---
