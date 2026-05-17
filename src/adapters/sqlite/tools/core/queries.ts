@@ -248,7 +248,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           upperForLimit.startsWith("SELECT") ||
           upperForLimit.startsWith("WITH");
         if (isLimitable && !/\bLIMIT\b/i.test(finalQuery)) {
-          finalQuery = `${finalQuery} LIMIT 1000`;
+          finalQuery = `${finalQuery} LIMIT 100`;
         }
 
         const result = await adapter.executeReadQuery(finalQuery, input.params);

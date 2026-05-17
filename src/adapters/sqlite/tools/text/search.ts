@@ -52,7 +52,7 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
-        const sql = `SELECT ${column} FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+        const sql = `SELECT ${column} FROM ${table} WHERE ${column} IS NOT NULL LIMIT 100`;
         const result = await adapter.executeReadQuery(sql);
 
         const matches: {
@@ -162,7 +162,7 @@ export function createPhoneticMatchTool(
         // against individual words (consistent with advanced_search behavior).
         // SQLite's native soundex() computes on the full string, which doesn't
         // support per-word matching.
-        const sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 1000`;
+        const sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 100`;
         if (input.algorithm === "soundex") {
           const result = await adapter.executeReadQuery(sql);
 
@@ -295,7 +295,7 @@ export function createAdvancedSearchTool(
           validateWhereClause(input.whereClause);
           whereClause = ` AND ${input.whereClause}`;
         }
-        const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 1000`;
+        const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 100`;
         const result = await adapter.executeReadQuery(query);
 
         if (!result.rows || result.rows.length === 0) {

@@ -118,24 +118,28 @@ const ERROR_SUGGESTIONS: {
     suggestion:
       "A row with this value already exists. Use UPDATE to modify existing data or check for duplicates.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /FOREIGN KEY constraint failed/i,
     suggestion:
       "The referenced row does not exist. Ensure the parent record exists before inserting.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /NOT NULL constraint failed/i,
     suggestion:
       "A required column is missing a value. Provide a value or set a default.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /CHECK constraint failed/i,
     suggestion:
       "The value does not meet the column's check constraint requirements.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /incomplete input/i,
