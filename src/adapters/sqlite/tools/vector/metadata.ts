@@ -224,8 +224,10 @@ export function createVectorNormalizeTool(): ToolDefinition {
         if (input.vector.length === 0) {
           return Promise.resolve({
             success: false,
-            error:
-              "vector is required and must be a non-empty array of numbers",
+            error: "vector is required and must be a non-empty array of numbers",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
           });
         }
 
@@ -265,8 +267,10 @@ export function createVectorDistanceTool(): ToolDefinition {
         if (input.vector1.length === 0 || input.vector2.length === 0) {
           return Promise.resolve({
             success: false,
-            error:
-              "vector1 and vector2 are required and must be non-empty arrays of numbers",
+            error: "vector1 and vector2 are required and must be non-empty arrays of numbers",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
           });
         }
 
@@ -293,6 +297,9 @@ export function createVectorDistanceTool(): ToolDefinition {
             return Promise.resolve({
               success: false,
               error: `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`,
+              code: "VALIDATION_ERROR",
+              category: "validation",
+              recoverable: false,
             });
         }
 
