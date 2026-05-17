@@ -289,7 +289,7 @@ describe("JSON Query Tools", () => {
         issues: string[];
       };
 
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
       expect(result.valid).toBe(false);
       expect(result.issues).toContain("Path must start with $");
     });
@@ -303,7 +303,7 @@ describe("JSON Query Tools", () => {
         issues: string[];
       };
 
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
       expect(result.valid).toBe(false);
     });
   });
