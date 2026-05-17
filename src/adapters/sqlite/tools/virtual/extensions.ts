@@ -112,6 +112,8 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
           return {
             success: false,
             error: "start and stop are required parameters",
+            code: "VALIDATION_ERROR",
+            category: "validation",
             message: "",
             rowCount: 0,
           };

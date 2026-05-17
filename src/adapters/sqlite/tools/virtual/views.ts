@@ -61,6 +61,8 @@ export function createGenerateSeriesTool(
           count: 0,
           values: [],
           error: "start and stop are required parameters",
+          code: "VALIDATION_ERROR",
+          category: "validation",
         });
       }
 
