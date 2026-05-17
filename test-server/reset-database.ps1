@@ -122,7 +122,7 @@ if ($nodeProcesses) {
     foreach ($proc in $nodeProcesses) {
         Write-Warn "Node process PID $($proc.ProcessId) is using this database (likely an MCP server)"
     }
-    Write-Info "The database file will be replaced in-place — existing connections will pick up the new data."
+    Write-Info "The database file will be replaced in-place - existing connections will pick up the new data."
 }
 
 $filesToDelete = @(
@@ -351,7 +351,7 @@ db.close();
         }
 
         if ($unexpectedTables.Count -gt 0) {
-            Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) — possible stale test artifacts:"
+            Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) - possible stale test artifacts:"
             foreach ($ut in $unexpectedTables) {
                 Write-Host "    [stale] " -ForegroundColor Yellow -NoNewline
                 Write-Host $ut -ForegroundColor Gray
