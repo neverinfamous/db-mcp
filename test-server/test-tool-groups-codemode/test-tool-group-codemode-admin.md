@@ -12,12 +12,12 @@
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price, category, created_at                         |
-| test_orders       | 20   | id, product_id (FK→test_products), total_price, status        |
-| test_articles     | 8    | id, title, body, author, category                             |
-| test_articles_fts | —    | FTS5 virtual table (title, body columns)                      |
+| Table             | Rows | Key Columns                                            |
+| ----------------- | ---- | ------------------------------------------------------ |
+| test_products     | 16   | id, name, price, category, created_at                  |
+| test_orders       | 20   | id, product_id (FK→test_products), total_price, status |
+| test_articles     | 8    | id, title, body, author, category                      |
+| test_articles_fts | —    | FTS5 virtual table (title, body columns)               |
 
 > **CSV testing**: Use `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv` (columns: id, name, category, price, quantity, created_at). **Absolute paths only** — relative paths resolve from IDE CWD.
 
@@ -114,7 +114,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 🔴 29. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → report behavior
 🔴 30. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
 🔴 31. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
-🔴 32. `sqlite.admin.dropView({viewName: "nonexistent_xyz"})` → `{success: false}`
+🔴 32. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
 
 ---
 
@@ -148,16 +148,23 @@ const failures = [];
 const integrity = await sqlite.admin.integrityCheck();
 if (!integrity) failures.push("integrity check failed");
 
-const journal = await sqlite.admin.pragmaSettings({pragma: "journal_mode"});
-if (journal.value !== "wal") failures.push(`expected WAL, got ${journal.value}`);
+const journal = await sqlite.admin.pragmaSettings({ pragma: "journal_mode" });
+if (journal.value !== "wal")
+  failures.push(`expected WAL, got ${journal.value}`);
 
-const storage = await sqlite.admin.dbstat({summarize: true});
+const storage = await sqlite.admin.dbstat({ summarize: true });
 const views = await sqlite.admin.listViews();
 const vtables = await sqlite.admin.listVirtualTables();
 
 return {
-  failures, success: failures.length === 0,
-  summary: { integrity: "ok", journalMode: journal.value, viewCount: views?.views?.length, virtualTableCount: vtables?.tables?.length }
+  failures,
+  success: failures.length === 0,
+  summary: {
+    integrity: "ok",
+    journalMode: journal.value,
+    viewCount: views?.views?.length,
+    virtualTableCount: vtables?.tables?.length,
+  },
 };
 ```
 
@@ -165,11 +172,14 @@ return {
 
 ```javascript
 const failures = [];
-await sqlite.admin.createView({viewName: "temp_view_cm_test", selectQuery: "SELECT COUNT(*) as n FROM test_products"});
+await sqlite.admin.createView({
+  viewName: "temp_view_cm_test",
+  selectQuery: "SELECT COUNT(*) as n FROM test_products",
+});
 const views = await sqlite.admin.listViews();
-const found = views.views?.some(v => v.name === "temp_view_cm_test");
+const found = views.views?.some((v) => v.name === "temp_view_cm_test");
 if (!found) failures.push("view not found after creation");
-await sqlite.admin.dropView({viewName: "temp_view_cm_test"});
+await sqlite.admin.dropView({ viewName: "temp_view_cm_test" });
 return { failures, success: failures.length === 0 };
 ```
 

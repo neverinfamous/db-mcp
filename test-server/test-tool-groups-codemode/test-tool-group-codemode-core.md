@@ -288,7 +288,7 @@ Expected: runtime error, not crash.
 🔴 24. `sqlite.core.writeQuery("INSERT INTO nonexistent_xyz VALUES (1)")` → `{success: false}`
 🔴 25. `sqlite.core.describeTable("nonexistent_xyz")` → `{success: false}` mentioning table
 🔴 26. `sqlite.core.getIndexes({table: "nonexistent_xyz"})` → report behavior
-🔴 27. `sqlite.core.dropTable({table: "nonexistent_xyz"})` → `{success: false}` or `{existed: false}`
+🔴 27. `sqlite.core.dropTable({table: "nonexistent_xyz", ifExists: false})` → `{success: false}`
 🔴 28. `sqlite.core.count({table: "nonexistent_xyz"})` → `{success: false}`
 🔴 29. `sqlite.core.exists({table: "nonexistent_xyz"})` → `{success: false}`
 🔴 30. `sqlite.core.upsert({table: "nonexistent_xyz", data: {id: 1}})` → `{success: false}`
