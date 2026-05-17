@@ -187,14 +187,14 @@ export function createMigrationRisksTool(
               }
               addRisk(
                 "critical",
-                "destructive",
+                "data_loss",
                 `DROP TABLE will permanently delete '${tableName}' and all its data.${dependentInfo}`,
                 `Back up data first with sqlite_backup or export the table.${dependentInfo ? " Handle or drop dependent tables first." : ""}`,
               );
             } else {
               addRisk(
                 "high",
-                "destructive",
+                "data_loss",
                 "DROP TABLE will permanently delete the table and all its data.",
                 "Back up data first.",
               );
@@ -215,7 +215,7 @@ export function createMigrationRisksTool(
           if (upper.startsWith("DELETE") && !upper.includes("WHERE")) {
             addRisk(
               "critical",
-              "destructive",
+              "data_loss",
               "DELETE without WHERE clause will remove all rows from the table.",
               "Add a WHERE clause to target specific rows.",
             );
