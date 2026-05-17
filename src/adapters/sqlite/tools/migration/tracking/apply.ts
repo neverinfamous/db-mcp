@@ -38,7 +38,7 @@ export function createMigrationApplyTool(
           };
         }
 
-        const hash = hashMigration(input.migrationSql);
+        const hash = hashMigration(input.sql);
 
         const dupCheck = await adapter.executeReadQuery(
           `SELECT id, version, status FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ? AND status = 'applied'`,
@@ -68,7 +68,7 @@ export function createMigrationApplyTool(
         }
 
         try {
-          await adapter.executeQuery(input.migrationSql);
+          await adapter.executeQuery(input.sql);
         } catch (execError) {
           await adapter.executeQuery(
             `INSERT INTO "${MIGRATIONS_TABLE}" (version, description, migration_sql, rollback_sql, migration_hash, source_system, applied_by, status)
@@ -76,7 +76,7 @@ export function createMigrationApplyTool(
             [
               input.version,
               input.description ?? null,
-              input.migrationSql,
+              input.sql,
               input.rollbackSql ?? null,
               hash,
               input.sourceSystem ?? "agent",
@@ -97,7 +97,7 @@ export function createMigrationApplyTool(
           [
             input.version,
             input.description ?? null,
-            input.migrationSql,
+            input.sql,
             input.rollbackSql ?? null,
             hash,
             input.sourceSystem ?? "agent",

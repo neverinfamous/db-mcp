@@ -76,7 +76,7 @@ describe("Migration Tools", () => {
       const result = (await tools.get("sqlite_migration_record")?.({
         version: "1.0.0",
         description: "Initial schema",
-        migrationSql: "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)",
+        sql: "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)",
         rollbackSql: "DROP TABLE users",
         sourceSystem: "test",
         appliedBy: "vitest",
@@ -101,12 +101,12 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_record")?.({
         version: "1.0.0",
-        migrationSql: "CREATE TABLE users (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE users (id INTEGER PRIMARY KEY)",
       });
 
       const result = (await tools.get("sqlite_migration_record")?.({
         version: "1.0.1",
-        migrationSql: "CREATE TABLE users (id INTEGER PRIMARY KEY)", // Same SQL
+        sql: "CREATE TABLE users (id INTEGER PRIMARY KEY)", // Same SQL
       })) as {
         success: boolean;
         error: string;
@@ -119,7 +119,7 @@ describe("Migration Tools", () => {
     it("should fail without init", async () => {
       const result = (await tools.get("sqlite_migration_record")?.({
         version: "1.0.0",
-        migrationSql: "CREATE TABLE t (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE t (id INTEGER PRIMARY KEY)",
       })) as {
         success: boolean;
         error: string;
@@ -140,7 +140,7 @@ describe("Migration Tools", () => {
       const result = (await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
         description: "Create users table",
-        migrationSql: "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)",
+        sql: "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)",
         rollbackSql: "DROP TABLE users",
       })) as {
         success: boolean;
@@ -163,7 +163,7 @@ describe("Migration Tools", () => {
 
       const result = (await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
-        migrationSql: "INVALID SQL STATEMENT",
+        sql: "INVALID SQL STATEMENT",
       })) as {
         success: boolean;
         error: string;
@@ -177,12 +177,12 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
-        migrationSql: "CREATE TABLE t1 (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE t1 (id INTEGER PRIMARY KEY)",
       });
 
       const result = (await tools.get("sqlite_migration_apply")?.({
         version: "1.0.1",
-        migrationSql: "CREATE TABLE t1 (id INTEGER PRIMARY KEY)", // Same SQL
+        sql: "CREATE TABLE t1 (id INTEGER PRIMARY KEY)", // Same SQL
       })) as {
         success: boolean;
         error: string;
@@ -203,7 +203,7 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
-        migrationSql: "CREATE TABLE rollback_test (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE rollback_test (id INTEGER PRIMARY KEY)",
         rollbackSql: "DROP TABLE rollback_test",
       });
 
@@ -229,7 +229,7 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "2.0.0",
-        migrationSql: "CREATE TABLE keep_table (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE keep_table (id INTEGER PRIMARY KEY)",
         rollbackSql: "DROP TABLE keep_table",
       });
 
@@ -258,7 +258,7 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "3.0.0",
-        migrationSql: "CREATE TABLE no_rollback (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE no_rollback (id INTEGER PRIMARY KEY)",
         // No rollbackSql provided
       });
 
@@ -278,7 +278,7 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "4.0.0",
-        migrationSql: "CREATE TABLE already_rolled (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE already_rolled (id INTEGER PRIMARY KEY)",
         rollbackSql: "DROP TABLE already_rolled",
       });
 
@@ -312,12 +312,12 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
-        migrationSql: "CREATE TABLE h1 (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE h1 (id INTEGER PRIMARY KEY)",
         sourceSystem: "test",
       });
       await tools.get("sqlite_migration_apply")?.({
         version: "2.0.0",
-        migrationSql: "CREATE TABLE h2 (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE h2 (id INTEGER PRIMARY KEY)",
         sourceSystem: "test",
       });
 
@@ -337,12 +337,12 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
-        migrationSql: "CREATE TABLE f1 (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE f1 (id INTEGER PRIMARY KEY)",
         rollbackSql: "DROP TABLE f1",
       });
       await tools.get("sqlite_migration_apply")?.({
         version: "2.0.0",
-        migrationSql: "CREATE TABLE f2 (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE f2 (id INTEGER PRIMARY KEY)",
       });
       await tools.get("sqlite_migration_rollback")?.({
         version: "1.0.0",
@@ -367,7 +367,7 @@ describe("Migration Tools", () => {
       for (let i = 1; i <= 5; i++) {
         await tools.get("sqlite_migration_apply")?.({
           version: `${String(i)}.0.0`,
-          migrationSql: `CREATE TABLE p${String(i)} (id INTEGER PRIMARY KEY)`,
+          sql: `CREATE TABLE p${String(i)} (id INTEGER PRIMARY KEY)`,
         });
       }
 
@@ -408,12 +408,12 @@ describe("Migration Tools", () => {
 
       await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
-        migrationSql: "CREATE TABLE s1 (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE s1 (id INTEGER PRIMARY KEY)",
         rollbackSql: "DROP TABLE s1",
       });
       await tools.get("sqlite_migration_apply")?.({
         version: "2.0.0",
-        migrationSql: "CREATE TABLE s2 (id INTEGER PRIMARY KEY)",
+        sql: "CREATE TABLE s2 (id INTEGER PRIMARY KEY)",
       });
       await tools.get("sqlite_migration_rollback")?.({
         version: "1.0.0",
@@ -457,7 +457,7 @@ describe("Migration Tools", () => {
       const apply = (await tools.get("sqlite_migration_apply")?.({
         version: "1.0.0",
         description: "Add users",
-        migrationSql:
+        sql:
           "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)",
         rollbackSql: "DROP TABLE users",
         sourceSystem: "vitest",

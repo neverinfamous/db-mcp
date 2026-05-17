@@ -44,7 +44,7 @@ test.describe("Payload Contracts: Migration Tracking", () => {
       const payload = await callToolAndParse(client, "sqlite_migration_apply", {
         version: `e2e_${testId}`,
         description: "Test migration from payload contract tests",
-        migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_test_${testId} (id INTEGER PRIMARY KEY, val TEXT)`,
+        sql: `CREATE TABLE IF NOT EXISTS _e2e_migration_test_${testId} (id INTEGER PRIMARY KEY, val TEXT)`,
         rollbackSql: `DROP TABLE IF EXISTS _e2e_migration_test_${testId}`,
       });
 
@@ -169,7 +169,7 @@ test.describe("Payload Contracts: Migration Tracking", () => {
         {
           version: `e2e_record_${testId}`,
           description: "Externally applied migration recorded by e2e test",
-          migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
+          sql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
           sourceSystem: "e2e-test",
         },
       );
@@ -194,7 +194,7 @@ test.describe("Payload Contracts: Migration Tracking", () => {
         {
           version: `e2e_record_dup_${testId}`,
           description: "Duplicate migration",
-          migrationSql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
+          sql: `CREATE TABLE IF NOT EXISTS _e2e_migration_external_${testId} (id INTEGER)`,
           sourceSystem: "e2e-test",
         },
       );

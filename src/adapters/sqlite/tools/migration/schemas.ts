@@ -28,7 +28,7 @@ export const MigrationRecordSchema = z.object({
     .string()
     .optional()
     .describe("Human-readable description of the migration"),
-  migrationSql: z.string().describe("The DDL/SQL statements applied"),
+  sql: z.string().describe("The DDL/SQL statements applied"),
   rollbackSql: z.string().optional().describe("SQL to reverse this migration"),
   sourceSystem: z
     .string()
