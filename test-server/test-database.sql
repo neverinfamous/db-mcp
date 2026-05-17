@@ -2,7 +2,7 @@
 -- DB-MCP Test Database - Seed Data
 -- =============================================================================
 -- This file creates all test tables needed for comprehensive testing of
--- the db-mcp SQLite MCP server's 9 tool groups.
+-- the db-mcp SQLite MCP server's 10 tool groups.
 --
 -- Usage: sqlite3 test.db < test-database.sql
 -- =============================================================================
@@ -367,9 +367,45 @@ FROM (
 -- =============================================================================
 -- When the MCP server holds the DB open, the reset script overwrites in-place.
 -- Non-test tables from prior runs survive because only test_* tables are re-created.
+-- This section drops all known artifact patterns to prevent stale warnings.
 
+-- temp_* leftovers from ad-hoc testing
 DROP TABLE IF EXISTS temp_text_test;
+DROP TABLE IF EXISTS temp_series_test;
 DROP TABLE IF EXISTS "";
+
+-- stress_* leftovers from advanced stress tests
+DROP TABLE IF EXISTS stress_empty_table;
+DROP TABLE IF EXISTS stress_cycle_table;
+DROP TABLE IF EXISTS stress_json_test;
+DROP TABLE IF EXISTS stress_json_write;
+DROP TABLE IF EXISTS stress_json_inject;
+DROP TABLE IF EXISTS stress_sentiment_test;
+DROP TABLE IF EXISTS stress_stats_table;
+DROP TABLE IF EXISTS stress_vec_empty;
+DROP TABLE IF EXISTS stress_pipeline;
+DROP TABLE IF EXISTS stress_search;
+DROP TABLE IF EXISTS stress_migrated;
+DROP TABLE IF EXISTS stress_migration_data;
+DROP TABLE IF EXISTS stress_tx_test;
+DROP TABLE IF EXISTS stress_tx_fail;
+DROP TABLE IF EXISTS stress_tx_fail2;
+DROP TABLE IF EXISTS stress_tx_sp;
+DROP TABLE IF EXISTS stress_geo_spatial;
+DROP TABLE IF EXISTS stress_rtree_test;
+DROP TABLE IF EXISTS stress_csv;
+DROP VIEW IF EXISTS stress_view_orders;
+DROP INDEX IF EXISTS stress_idx_cycle;
+DROP INDEX IF EXISTS stress_idx_flag;
+
+-- E2E Playwright SpatiaLite R-Tree shadow tables
+DROP TABLE IF EXISTS idx__e2e_spatial_test_geom;
+DROP TABLE IF EXISTS idx__e2e_spatial_test_geom_node;
+DROP TABLE IF EXISTS idx__e2e_spatial_test_geom_parent;
+DROP TABLE IF EXISTS idx__e2e_spatial_test_geom_rowid;
+
+-- Migration tracking table
+DROP TABLE IF EXISTS _mcp_migrations;
 
 -- =============================================================================
 -- Summary: Test Tables Created
