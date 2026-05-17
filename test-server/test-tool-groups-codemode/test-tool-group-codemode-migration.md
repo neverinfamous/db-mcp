@@ -240,10 +240,11 @@ return { failures, success: failures.length === 0, statusBefore: status, history
 
 ## Post-Test Procedures
 
-1. **⚠️ Reset database**: Run `.\reset-database.ps1` to clean up `_mcp_migrations` and `temp_cm_mig_*` tables
-2. **Triage findings**: Create implementation plan if issues found
-3. **Scope of fixes**: Handler code, server-instructions, this prompt
-4. **Validate**: Test suite, lint + typecheck, changelog
-5. **Commit**: Stage and commit — do NOT push
-6. **Token audit**: Report most expensive block
-7. **Final summary**: After testing/re-testing
+1. **⚠️ Explicit Cleanup**: Execute a final Code Mode script to `DROP TABLE IF EXISTS` all `temp_*` tables created during the test, as the active MCP server lock prevents the reset script from clearing them.
+2. **⚠️ Reset database**: Run `.\test-server\reset-database.ps1` to re-seed the test database.
+3. **Triage findings**: Create implementation plan if issues found
+4. **Scope of fixes**: Handler code, server-instructions, this prompt
+5. **Validate**: Test suite, lint + typecheck, changelog
+6. **Commit**: Stage and commit — do NOT push
+7. **Token audit**: Report most expensive block
+8. **Final summary**: After testing/re-testing

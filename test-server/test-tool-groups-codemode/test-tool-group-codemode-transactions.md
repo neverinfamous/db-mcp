@@ -215,9 +215,9 @@ Expected: `before.active === false`, `after.active === false` (transactionExecut
 ## Post-Test Procedures
 
 1. **Cleanup**: Ensure no active transaction is left open
-2. **Triage findings**: Create implementation plan if issues found
-3. **Scope of fixes**: Handler code, server-instructions, this prompt
-4. **Validate**: Test suite, lint + typecheck, changelog
-5. **Commit**: Stage and commit — do NOT push
-6. **Token audit**: Report most expensive block
-7. **Final summary**: After testing/re-testing
+3. **Triage findings**: Create implementation plan if issues found
+4. **Scope of fixes**: Handler code, server-instructions, this prompt
+5. **Validate**: Test suite, lint + typecheck, changelog
+6. **Commit**: Stage and commit — do NOT push
+7. **Token audit**: Report most expensive block
+8. **Final summary**: After testing/re-testing

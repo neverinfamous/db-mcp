@@ -414,10 +414,10 @@ return counts;
 ## Post-Test Procedures
 
 1. **Cleanup**: Confirm all `temp_*` tables are removed
-2. **Triage findings**: Create implementation plan if issues found
-3. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-4. **Validate**: Test suite, lint + typecheck, changelog
-5. **Commit**: Stage and commit — do NOT push
+3. **Triage findings**: Create implementation plan if issues found
+4. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
+5. **Validate**: Test suite, lint + typecheck, changelog
+6. **Commit**: Stage and commit — do NOT push
 6. **Live re-test**: After server rebuild
 7. **Token audit**: Report `metrics.tokenEstimate` for the most expensive block
 8. **Final summary**: After testing/re-testing

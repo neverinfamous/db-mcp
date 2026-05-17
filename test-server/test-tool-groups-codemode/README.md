@@ -32,7 +32,8 @@ Monitor `metrics.tokenEstimate` on every Code Mode response. Report the single m
 ### 5. Cleanup
 
 - Any write tests should operate on temporary tables or objects prefixed with `temp_`.
-- Your script should explicitly drop `temp_` objects at the end of execution.
+- **Active Connection Lock**: The MCP server holds a lock on the SQLite database, preventing the reset script from replacing the file outright. The reset script only seeds default tables, it does not drop unknown `temp_` tables.
+- **Mandatory Code Mode Cleanup**: Your final step MUST be a Code Mode script that explicitly drops ALL `temp_*` tables (e.g., `sqlite.core.dropTable({tableName: '...', force: true})`) BEFORE you run the reset script.
 
 ## File Inventory
 
