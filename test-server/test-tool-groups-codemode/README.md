@@ -18,6 +18,7 @@ When tasked with running tests from this folder, adhere to the following optimiz
 - **Structured Error Path**: Ensure domain errors (e.g., nonexistent table) return an object `{"success": false, "error": "..."}` instead of crashing or leaking raw MCP errors.
 - **Zod Resilience**: Pass `{}` with missing required parameters or invalid types. Verify that Zod errors are properly caught and formatted.
 - **Payload Limits**: If a response payload is excessively large, report it as a 📦 Payload issue.
+- **Documentation Parity**: If tool schemas or behavior diverge from what is documented, proactively update the corresponding file in `src/constants/server-instructions`.
 
 ### 3. Tracking Progress
 
@@ -34,6 +35,10 @@ Monitor `metrics.tokenEstimate` on every Code Mode response. Report the single m
 - Any write tests should operate on temporary tables or objects prefixed with `temp_`.
 - **Active Connection Lock**: The MCP server holds a lock on the SQLite database, preventing the reset script from replacing the file outright. The reset script only seeds default tables, it does not drop unknown `temp_` tables.
 - **Mandatory Code Mode Cleanup**: Your final step MUST be a Code Mode script that explicitly drops ALL `temp_*` tables (e.g., `sqlite.core.dropTable({tableName: '...', force: true})`) BEFORE you run the reset script.
+
+### 6. Testing Limits
+
+- **No Automated Execution**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
 
 ## File Inventory
 

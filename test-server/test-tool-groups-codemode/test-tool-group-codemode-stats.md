@@ -159,7 +159,7 @@ return {
 
 1. **Triage findings**: Create implementation plan if issues found
 2. **Scope of fixes**: Handler code, server-instructions, this prompt
-3. **Validate**: Test suite, lint + typecheck, changelog
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit — do NOT push
 5. **Token audit**: Report most expensive block
 6. **Final summary**: After testing/re-testing

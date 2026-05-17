@@ -416,7 +416,7 @@ return counts;
 1. **Cleanup**: Confirm all `temp_*` tables are removed
 3. **Triage findings**: Create implementation plan if issues found
 4. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-5. **Validate**: Test suite, lint + typecheck, changelog
+5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 6. **Commit**: Stage and commit — do NOT push
 6. **Live re-test**: After server rebuild
 7. **Token audit**: Report `metrics.tokenEstimate` for the most expensive block

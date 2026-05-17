@@ -171,7 +171,7 @@ return { jsonExtract: extract, priceStats: stats };
 1. **Cleanup**: Confirm all `temp_*` tables removed
 3. **Triage findings**: Create implementation plan if issues found
 4. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-5. **Validate**: Test suite, lint + typecheck, changelog
+5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 6. **Commit**: Stage and commit — do NOT push
 7. **Token audit**: Report most expensive block
 8. **Final summary**: After testing/re-testing
