@@ -220,7 +220,9 @@ export const ListTablesSchema = z.object({
 export const JsonInsertSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
-  jsonData: z.unknown().describe("JSON data to insert"),
+  path: z.string().describe("JSON path to insert into"),
+  value: z.unknown().describe("Value to insert"),
+  whereClause: z.string().describe("WHERE clause to identify rows"),
 });
 
 export const JsonUpdateSchema = z.object({
@@ -247,7 +249,7 @@ export const JsonQuerySchema = z.object({
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),
   limit: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
+    (val) => (typeof val === "string" ? Number(val) : val),
     z.number().optional().default(100),
   ),
 });
@@ -305,7 +307,7 @@ export const AnalyzeJsonSchemaSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
+    (val) => (typeof val === "string" ? Number(val) : val),
     z.number().optional().default(100).describe("Number of rows to sample"),
   ),
 });
@@ -343,7 +345,7 @@ export const JsonSecurityScanSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to scan for security issues"),
   sampleSize: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
+    (val) => (typeof val === "string" ? Number(val) : val),
     z.number().optional().default(100).describe("Number of rows to sample"),
   ),
   whereClause: z.string().optional().describe("Optional WHERE clause"),

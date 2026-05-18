@@ -18,6 +18,7 @@ export const JsonInsertOutputSchema = z
     success: z.boolean(),
     message: z.string().optional(),
     rowsAffected: z.number().optional(),
+    warning: z.string().optional(),
     lastInsertRowid: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);

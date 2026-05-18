@@ -45,32 +45,40 @@ describe("JSON Mutation Tools", () => {
   });
 
   describe("sqlite_json_insert", () => {
-    it("should insert a new row with JSON data", async () => {
+    beforeEach(async () => {
+      await adapter.executeWriteQuery(
+        `INSERT INTO documents (id, data) VALUES (2, '{"count": 0}')`,
+      );
+    });
+
+    it("should insert a new key with JSON data", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        jsonData: { title: "New Document", count: 10 },
+        path: "$.title",
+        value: "New Document",
+        whereClause: "id = 2",
       })) as {
         success: boolean;
         message: string;
         rowsAffected: number;
-        lastInsertRowid?: number;
       };
 
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);
-      expect(result.lastInsertRowid).toBeDefined();
 
       const check = await adapter.executeReadQuery(
-        `SELECT json_extract(data, '$.title') as title FROM documents WHERE id = ${result.lastInsertRowid}`,
+        `SELECT json_extract(data, '$.title') as title FROM documents WHERE id = 2`,
       );
       expect(check.rows?.[0]?.title).toBe("New Document");
     });
 
-    it("should reject missing jsonData", async () => {
+    it("should reject missing value", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
+        path: "$.title",
+        whereClause: "id = 2",
       })) as {
         success: boolean;
         error: string;

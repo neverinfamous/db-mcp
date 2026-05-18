@@ -50,7 +50,7 @@ export const JsonEachSchema = z.object({
   path: z.string().optional().describe("Path to expand (defaults to $)"),
   whereClause: z.string().optional(),
   limit: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
+    (val) => (typeof val === "string" ? Number(val) : val),
     z.number().optional().default(100),
   ),
 });
@@ -127,7 +127,7 @@ export const JsonStorageInfoSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
+    (val) => (typeof val === "string" ? Number(val) : val),
     z.number().optional().default(100).describe("Number of rows to sample"),
   ),
 });
