@@ -141,6 +141,8 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           if (!input.customPattern) {
             throw new ValidationError(
               "customPattern is required when pattern='custom'",
+              "VALIDATION_ERROR",
+              { details: { parameter: "customPattern" } }
             );
           }
           // Normalize pattern: handle common JSON double-escaping issues
