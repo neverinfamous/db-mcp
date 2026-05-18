@@ -61,7 +61,7 @@ export function createTextNormalizeTool(
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
-        let sql = `SELECT rowid, ${column} as value FROM ${table}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -71,7 +71,7 @@ export function createTextNormalizeTool(
         const result = await adapter.executeReadQuery(sql);
 
         const rows = (result.rows ?? []).map((row) => {
-          const rawRowid = row["rowid"];
+          const rawRowid = row["id"];
           const rowid = typeof rawRowid === "number" ? rawRowid : typeof rawRowid === "string" ? parseInt(rawRowid, 10) || 0 : 0;
           const rawOriginal = row["value"];
           const original =
@@ -166,7 +166,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           pattern = foundPattern;
         }
 
-        let sql = `SELECT rowid, ${column} as value FROM ${table}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -197,7 +197,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           if (pattern.test(value)) {
             validCount++;
           } else {
-            const rowid = row["rowid"];
+            const rowid = row["id"];
             if (typeof rowid === "number") {
               invalidRows.push({ value: displayValue, rowid });
             } else {

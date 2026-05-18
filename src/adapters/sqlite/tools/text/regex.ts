@@ -77,7 +77,6 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
                   : 0;
             return {
               rowid,
-              original: value,
               extracted: match ? (match[input.groupIndex] ?? match[0]) : null,
             };
           })
