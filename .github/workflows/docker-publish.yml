@@ -123,9 +123,8 @@ jobs:
           severity: CRITICAL,HIGH,MEDIUM,LOW
           timeout: 10m
 
-      - name: Upload Trivy results to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@0e9f55954318745b37b7933c693bc093f7336125 # v4.35.1
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
         with:
           sarif_file: trivy-results.sarif
           category: trivy-docker-scan
