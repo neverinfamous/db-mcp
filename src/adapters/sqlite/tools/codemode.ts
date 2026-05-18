@@ -30,7 +30,7 @@ import {
   DbMcpError,
   ErrorCategory,
 } from "../../../utils/errors/index.js";
-import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
+import { ExecuteCodeOutputSchema } from "../output-schemas/index.js";
 
 /**
  * Coerce string values to numbers for MCP parameter safety.
@@ -85,45 +85,7 @@ const ExecuteCodeSchema = z.object({
     .describe("Restrict to read-only operations (default: false)"),
 });
 
-const ExecuteCodeOutputSchema = z
-  .object({
-    success: z.boolean().describe("Whether execution completed successfully"),
-    result: z.unknown().optional().describe("Return value from the code"),
-    error: z.string().optional().describe("Error message if execution failed"),
-    code: z
-      .string()
-      .optional()
-      .describe(
-        "Error code for programmatic handling (e.g., CODEMODE_VALIDATION_FAILED)",
-      ),
-    category: z
-      .string()
-      .optional()
-      .describe(
-        "Error category: validation, permission, query, resource, internal",
-      ),
-    suggestion: z
-      .string()
-      .optional()
-      .describe("Actionable suggestion for resolving the error"),
-    recoverable: z
-      .boolean()
-      .optional()
-      .describe("Whether the error is recoverable by retrying"),
-    consoleOutput: z
-      .array(z.string())
-      .optional()
-      .describe("Console output captured during execution"),
-    metrics: z
-      .object({
-        wallTimeMs: z.number().describe("Wall clock time in milliseconds"),
-        cpuTimeMs: z.number().describe("CPU time in milliseconds"),
-        memoryUsedMb: z.number().describe("Memory used in MB"),
-      })
-      .optional()
-      .describe("Execution performance metrics"),
-  })
-  .extend(ErrorResponseFields.shape);
+
 
 // =============================================================================
 // Tool Definition
