@@ -164,8 +164,8 @@ export const PhoneticMatchSchema = z.object({
   includeRowData: z
     .boolean()
     .optional()
-    .default(true)
-    .describe("Include full row data in results (default: true)"),
+    .default(false)
+    .describe("Include full row data in results (default: false)"),
 });
 
 export const TextNormalizeSchema = z.object({

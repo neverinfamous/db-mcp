@@ -10,7 +10,7 @@ import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
-import { formatHandlerError } from "../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../utils/errors/index.js";
 import { validateTableExists } from "./column-validation.js";
 import {
   FtsCreateOutputSchema,
@@ -91,7 +91,8 @@ const coerceEnumValues =
 
 // FTS schemas
 const FtsCreateSchema = z.object({
-  tableName: z.string().describe("Name of the FTS table to create"),
+  tableName: z.string().optional().describe("Name of the FTS table to create"),
+  ftsTable: z.string().optional().describe("Name of the FTS table to create (alias)"),
   sourceTable: z.string().describe("Source table to index"),
   columns: z.array(z.string()).describe("Columns to include in the index"),
   contentTable: z
@@ -175,9 +176,14 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsCreateSchema.parse(params);
+        
+        const targetTableName = input.tableName || input.ftsTable;
+        if (!targetTableName) {
+          throw new ValidationError("Must provide either tableName or ftsTable");
+        }
 
         // Validate identifiers (FTS5 uses raw column names, not quoted)
-        sanitizeIdentifier(input.tableName);
+        sanitizeIdentifier(targetTableName);
         sanitizeIdentifier(input.sourceTable);
         for (const col of input.columns) {
           sanitizeIdentifier(col);
@@ -191,7 +197,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(effectiveContentTable);
         options += `, content="${effectiveContentTable}"`;
 
-        const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${input.tableName}" USING fts5(${columnList}, ${options})`;
+        const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${targetTableName}" USING fts5(${columnList}, ${options})`;
         await adapter.executeQuery(sql);
 
         // Create sync triggers for external content FTS tables
@@ -199,7 +205,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.createTriggers) {
           triggersCreated = await createSyncTriggers(
             adapter,
-            input.tableName,
+            targetTableName,
             effectiveContentTable,
             input.columns,
           );
@@ -207,23 +213,23 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Populate the FTS index with existing data
         await adapter.executeQuery(
-          `INSERT INTO "${input.tableName}"("${input.tableName}") VALUES('rebuild')`,
+          `INSERT INTO "${targetTableName}"("${targetTableName}") VALUES('rebuild')`,
         );
 
         const message = triggersCreated.length
-          ? `FTS5 table '${input.tableName}' created with ${triggersCreated.length} sync triggers`
-          : `FTS5 table '${input.tableName}' created`;
+          ? `FTS5 table '${targetTableName}' created with ${triggersCreated.length} sync triggers`
+          : `FTS5 table '${targetTableName}' created`;
 
         return {
           success: true,
           message,
-          tableName: input.tableName,
+          tableName: targetTableName,
           triggersCreated: triggersCreated.length ? triggersCreated : undefined,
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
           return buildFts5UnavailableError(
-            (params as { tableName?: string } | null)?.tableName,
+            (params as { tableName?: string } | null)?.tableName || (params as { ftsTable?: string } | null)?.ftsTable,
           );
         }
         return formatHandlerError(error);
