@@ -48,8 +48,13 @@ const DetectSchemaRisksSchema = z
       .boolean()
       .optional()
       .describe("Exclude SpatiaLite system tables (default: true)"),
+    includeZeroRisk: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("Include tables with 0 risk score (default: false)"),
   })
-  .default(() => ({ limit: 50 }));
+  .default(() => ({ limit: 50, includeZeroRisk: false }));
 
 // =============================================================================
 // Tool Creator
@@ -254,6 +259,10 @@ export function createDetectSchemaRisksTool(
         }
 
         // Sort by risk score descending, then limit
+        if (!input.includeZeroRisk) {
+          tables = tables.filter((t) => t.riskScore > 0);
+        }
+        
         tables.sort((a, b) => b.riskScore - a.riskScore);
         tables = tables.slice(0, limit);
 

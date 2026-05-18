@@ -59,11 +59,11 @@ sqlite_stats_detect_anomalies({
 });
 
 // Fragmentation/bloat risk scoring — PRAGMA + dbstat analysis
-sqlite_stats_detect_bloat(); // all tables, default limit 50
-sqlite_stats_detect_bloat({ limit: 10 }); // top 10 riskiest
+sqlite_stats_detect_bloat(); // riskiest tables (>0 score), default limit 50
+sqlite_stats_detect_bloat({ includeZeroRisk: true, limit: 10 }); // include zero risk, top 10
 
 // Schema health risk scoring — FK indexes, PKs, wide tables
-sqlite_stats_detect_schema_risks(); // all tables
+sqlite_stats_detect_schema_risks(); // riskiest tables (>0 score)
 sqlite_stats_detect_schema_risks({ excludeSystemTables: false }); // include SpatiaLite tables
 ```
 
