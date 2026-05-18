@@ -38,22 +38,6 @@ export function createMigrationRollbackTool(
           };
         }
 
-        if (input.id === undefined && input.version === undefined) {
-          return {
-            success: false,
-            error: "Either 'id' or 'version' must be provided",
-            code: "VALIDATION_ERROR",
-          };
-        }
-
-        if (input.version !== undefined && !/^[a-zA-Z0-9_.-]+$/.test(input.version)) {
-          return {
-            success: false,
-            error: "version: Version must contain only alphanumeric characters, dots, dashes, or underscores",
-            code: "VALIDATION_ERROR",
-          };
-        }
-
         let query: string;
         let queryParams: unknown[];
         if (input.id !== undefined) {

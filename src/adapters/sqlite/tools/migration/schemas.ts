@@ -23,6 +23,7 @@ export const MigrationInitSchema = z.object({}).default({});
 export const MigrationRecordSchema = z.object({
   version: z
     .string()
+    .regex(/^[a-zA-Z0-9_.-]+$/, "Version must contain only alphanumeric characters, dots, dashes, or underscores")
     .describe("Version identifier (e.g., '1.0.0', '2024-01-15-add-users')"),
   description: z
     .string()
@@ -39,6 +40,14 @@ export const MigrationRecordSchema = z.object({
     .string()
     .optional()
     .describe("Who/what applied this migration (e.g., agent name, user)"),
+}).superRefine((data, ctx) => {
+  if (!data.migrationSql && !data.sql) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["sql"],
+      message: "Must provide either migrationSql or sql",
+    });
+  }
 });
 
 export const MigrationApplySchema = MigrationRecordSchema;
@@ -50,6 +59,7 @@ export const MigrationRollbackSchema = z.object({
   ),
   version: z
     .string()
+    .regex(/^[a-zA-Z0-9_.-]+$/, "Version must contain only alphanumeric characters, dots, dashes, or underscores")
     .optional()
     .describe("Migration version to roll back (alternative to id)"),
   dryRun: z
@@ -58,6 +68,14 @@ export const MigrationRollbackSchema = z.object({
     .describe(
       "If true, return the rollback SQL without executing (default: false)",
     ),
+}).superRefine((data, ctx) => {
+  if (data.id === undefined && data.version === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["version"],
+      message: "Either 'id' or 'version' must be provided",
+    });
+  }
 });
 
 export const MigrationHistorySchema = z

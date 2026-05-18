@@ -30,22 +30,6 @@ export function createMigrationRecordTool(
       try {
         const input = MigrationRecordSchema.parse(params);
 
-        if (!/^[a-zA-Z0-9_.-]+$/.test(input.version)) {
-          return {
-            success: false,
-            error: "version: Version must contain only alphanumeric characters, dots, dashes, or underscores",
-            code: "VALIDATION_ERROR",
-          };
-        }
-
-        if (!input.migrationSql && !input.sql) {
-          return {
-            success: false,
-            error: "Must provide either migrationSql or sql",
-            code: "VALIDATION_ERROR",
-          };
-        }
-
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
