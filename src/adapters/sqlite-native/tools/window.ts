@@ -29,12 +29,13 @@ import {
  * Coerce string-typed numbers to actual numbers.
  * Returns the original string for non-numeric strings so Zod validation fails.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 /**
  * Create a coercer for optional enum params with defaults.
@@ -62,7 +63,7 @@ const RowNumberSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(50).describe("Maximum rows to return"),
   ),
 });
 
@@ -85,7 +86,7 @@ const RankSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(50).describe("Maximum rows to return"),
   ),
 });
 
@@ -114,7 +115,7 @@ const LagLeadSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(50).describe("Maximum rows to return"),
   ),
 });
 
@@ -133,7 +134,7 @@ const RunningTotalSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(50).describe("Maximum rows to return"),
   ),
 });
 
@@ -153,7 +154,7 @@ const MovingAverageSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(50).describe("Maximum rows to return"),
   ),
 });
 
@@ -172,7 +173,7 @@ const NtileSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(50).describe("Maximum rows to return"),
   ),
 });
 

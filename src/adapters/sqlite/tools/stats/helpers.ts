@@ -11,12 +11,13 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
  * Coerce string-typed numbers to actual numbers.
  * Returns the original string for non-numeric strings so Zod validation fails.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 /**
  * Create a coercer for optional enum params with defaults.
