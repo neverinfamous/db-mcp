@@ -129,6 +129,7 @@ export const WindowRowNumberOutputSchema = z
     success: z.boolean(),
     rowCount: z.number().optional(),
     rows: z.array(RowNumberResultSchema).optional(),
+    hint: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -152,6 +153,7 @@ export const WindowRankOutputSchema = z
     rankType: z.string().optional(),
     rowCount: z.number().optional(),
     rows: z.array(RankResultSchema).optional(),
+    hint: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -175,6 +177,7 @@ export const WindowLagLeadOutputSchema = z
     offset: z.number().optional(),
     rowCount: z.number().optional(),
     rows: z.array(LagLeadResultSchema).optional(),
+    hint: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -196,6 +199,7 @@ export const WindowRunningTotalOutputSchema = z
     valueColumn: z.string().optional(),
     rowCount: z.number().optional(),
     rows: z.array(RunningTotalResultSchema).optional(),
+    hint: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -218,6 +222,7 @@ export const WindowMovingAvgOutputSchema = z
     windowSize: z.number().optional(),
     rowCount: z.number().optional(),
     rows: z.array(MovingAvgResultSchema).optional(),
+    hint: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -239,5 +244,6 @@ export const WindowNtileOutputSchema = z
     buckets: z.number().optional(),
     rowCount: z.number().optional(),
     rows: z.array(NtileResultSchema).optional(),
+    hint: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
