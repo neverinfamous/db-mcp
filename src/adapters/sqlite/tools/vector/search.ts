@@ -58,10 +58,9 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Build select clause
         // Determine if vector column should be included in final results
+        // Exclude by default to prevent massive payload bloat, unless explicitly requested
         const includeVectorInResults =
-          !input.returnColumns ||
-          input.returnColumns.length === 0 ||
-          input.returnColumns.includes(input.vectorColumn);
+          input.returnColumns?.includes(input.vectorColumn) ?? false;
 
         let selectCols = "*";
         if (input.returnColumns && input.returnColumns.length > 0) {
