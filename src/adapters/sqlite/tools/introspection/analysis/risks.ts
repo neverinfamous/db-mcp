@@ -21,7 +21,6 @@ import { MigrationRisksOutputSchema } from "../../../output-schemas/index.js";
 const MigrationRisksSchema = z.object({
   statements: z
     .array(z.string())
-    .min(1, "statements array cannot be empty")
     .describe("Array of DDL statements to analyze for risks"),
 });
 
@@ -44,6 +43,16 @@ export function createMigrationRisksTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = MigrationRisksSchema.parse(params);
+        if (input.statements.length === 0) {
+          return {
+            success: false,
+            error: "statements array cannot be empty",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+        
         interface Risk {
           statement: string;
           statementIndex: number;
