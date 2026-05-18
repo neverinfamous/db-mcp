@@ -232,12 +232,16 @@ export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
         }
         const vectorData = parseVector(rawVector);
 
+        const metadata = Object.fromEntries(
+          Object.entries(row).filter(([key]) => key !== input.vectorColumn),
+        );
+
         return {
           success: true,
           id: input.id,
           dimensions: vectorData.length,
           vector: vectorData,
-          metadata: row,
+          metadata,
         };
       } catch (error) {
         return formatHandlerError(error);
