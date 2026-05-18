@@ -124,7 +124,7 @@ Verify parameter visibility and alias acceptance.
 **Checklist:**
 
 1. `sqlite_vector_count({table: "test_embeddings"})` → `{count: 20}`
-2. `sqlite_vector_dimensions({table: "test_embeddings"})` → `{dimensions: 8}`
+2. `sqlite_vector_dimensions({table: "test_embeddings", vectorColumn: "embedding"})` → `{dimensions: 8}`
 3. `sqlite_vector_get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 1})` → verify content="Machine learning fundamentals", category="tech", embedding has 8 dimensions
 4. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3})` → top result should be row 1 (exact match, \_similarity ≈ 1)
 5. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3, whereClause: "category = 'database'"})` → only database category results
