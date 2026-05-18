@@ -23,6 +23,7 @@ export const MigrationInitSchema = z.object({}).default({});
 export const MigrationRecordSchema = z.object({
   version: z
     .string()
+    .regex(/^[a-zA-Z0-9_.-]+$/, "Version must contain only alphanumeric characters, dots, dashes, or underscores")
     .describe("Version identifier (e.g., '1.0.0', '2024-01-15-add-users')"),
   description: z
     .string()
