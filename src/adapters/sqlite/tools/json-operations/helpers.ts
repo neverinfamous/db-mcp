@@ -14,6 +14,17 @@
 
 import { z } from "zod";
 
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 // Additional schemas for JSON operations
 export const JsonTypeSchema = z.object({
   table: z.string().describe("Table name"),
@@ -50,7 +61,7 @@ export const JsonEachSchema = z.object({
   path: z.string().optional().describe("Path to expand (defaults to $)"),
   whereClause: z.string().optional(),
   limit: z.preprocess(
-    (val) => (typeof val === "string" ? Number(val) : val),
+    coerceNumber,
     z.number().optional().default(100),
   ),
 });
@@ -127,7 +138,7 @@ export const JsonStorageInfoSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
-    (val) => (typeof val === "string" ? Number(val) : val),
+    coerceNumber,
     z.number().optional().default(100).describe("Number of rows to sample"),
   ),
 });

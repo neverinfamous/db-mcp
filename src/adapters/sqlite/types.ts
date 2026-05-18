@@ -113,6 +113,18 @@ export interface JsonNormalizationResult {
  * because wrapping in `z.preprocess()` turns `ZodObject` into `ZodEffects`
  * which breaks the SDK's `.partial()` call in `registerToolImpl`.
  */
+
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 export function resolveAliases(
   params: unknown,
   aliasMap: Record<string, string>,
@@ -249,7 +261,7 @@ export const JsonQuerySchema = z.object({
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),
   limit: z.preprocess(
-    (val) => (typeof val === "string" ? Number(val) : val),
+    coerceNumber,
     z.number().optional().default(100),
   ),
 });
@@ -307,7 +319,7 @@ export const AnalyzeJsonSchemaSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
-    (val) => (typeof val === "string" ? Number(val) : val),
+    coerceNumber,
     z.number().optional().default(100).describe("Number of rows to sample"),
   ),
 });
@@ -345,7 +357,7 @@ export const JsonSecurityScanSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to scan for security issues"),
   sampleSize: z.preprocess(
-    (val) => (typeof val === "string" ? Number(val) : val),
+    coerceNumber,
     z.number().optional().default(100).describe("Number of rows to sample"),
   ),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
