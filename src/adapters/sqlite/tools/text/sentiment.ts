@@ -161,7 +161,7 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
         const column = sanitizeIdentifier(parsed.column);
         await validateColumnExists(adapter, parsed.table, parsed.column);
 
-        let sql = `SELECT rowid, ${column} as original FROM ${table}`;
+        let sql = `SELECT rowid, ${column} as value FROM ${table}`;
         if (parsed.whereClause) {
           validateWhereClause(parsed.whereClause);
           sql += ` WHERE ${parsed.whereClause}`;
@@ -171,7 +171,7 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
         const result = await adapter.executeReadQuery(sql);
 
         const rows = (result.rows ?? []).map((row) => {
-          const rawOriginal = row["original"];
+          const rawOriginal = row["value"];
           const original =
             typeof rawOriginal === "string"
               ? rawOriginal
@@ -183,7 +183,6 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
           
           interface SentimentResult {
              rowid?: number | undefined;
-             original: string;
              sentiment: string;
              score: number;
              confidence: string;
@@ -195,7 +194,6 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
 
           const resObj: SentimentResult = {
              rowid: row["rowid"] as number | undefined,
-             original: original,
              ...res
           };
           

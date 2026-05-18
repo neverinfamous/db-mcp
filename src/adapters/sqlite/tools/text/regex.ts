@@ -208,7 +208,6 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
           const parts = original.split(input.delimiter);
           return {
             rowid,
-            original: rawValue === null ? null : original,
             parts,
           };
         });

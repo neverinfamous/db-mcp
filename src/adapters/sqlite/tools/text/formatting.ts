@@ -166,7 +166,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
             trimFunc = "trim";
         }
 
-        let sql = `SELECT rowid, ${column} as original, ${trimFunc}(${column}) as trimmed FROM ${table}`;
+        let sql = `SELECT rowid, ${trimFunc}(${column}) as trimmed FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -222,7 +222,7 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
 
         const caseFunc = input.mode === "upper" ? "upper" : "lower";
 
-        let sql = `SELECT rowid, ${column} as original, ${caseFunc}(${column}) as transformed FROM ${table}`;
+        let sql = `SELECT rowid, ${caseFunc}(${column}) as transformed FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -278,7 +278,7 @@ export function createTextSubstringTool(
             ? `substr(${column}, ${input.start}, ${input.length})`
             : `substr(${column}, ${input.start})`;
 
-        let sql = `SELECT rowid, ${column} as original, ${substrExpr} as substring FROM ${table}`;
+        let sql = `SELECT rowid, ${substrExpr} as substring FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;

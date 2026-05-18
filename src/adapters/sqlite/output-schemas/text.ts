@@ -80,7 +80,7 @@ export const TextNormalizeOutputSchema = z
     rows: z
       .array(
         z.object({
-          original: z.string(),
+          rowid: z.number(),
           normalized: z.string(),
         }),
       )
@@ -100,7 +100,6 @@ export const TextSplitOutputSchema = z
       .array(
         z.object({
           rowid: z.number(),
-          original: z.string().nullable(),
           parts: z.array(z.string()),
         }),
       )
@@ -198,7 +197,6 @@ export const AdvancedSearchOutputSchema = z
 
 const SentimentResultItemSchema = z.object({
   rowid: z.number().optional(),
-  original: z.string().nullable().optional(),
   sentiment: z.string(),
   score: z.number(),
   confidence: z.string(),

@@ -61,7 +61,7 @@ export function createTextNormalizeTool(
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
-        let sql = `SELECT ${column} as original FROM ${table}`;
+        let sql = `SELECT rowid, ${column} as value FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -71,7 +71,9 @@ export function createTextNormalizeTool(
         const result = await adapter.executeReadQuery(sql);
 
         const rows = (result.rows ?? []).map((row) => {
-          const rawOriginal = row["original"];
+          const rawRowid = row["rowid"];
+          const rowid = typeof rawRowid === "number" ? rawRowid : typeof rawRowid === "string" ? parseInt(rawRowid, 10) || 0 : 0;
+          const rawOriginal = row["value"];
           const original =
             typeof rawOriginal === "string"
               ? rawOriginal
@@ -86,7 +88,7 @@ export function createTextNormalizeTool(
             );
           }
 
-          return { original, normalized };
+          return { rowid, normalized };
         });
 
         return {
