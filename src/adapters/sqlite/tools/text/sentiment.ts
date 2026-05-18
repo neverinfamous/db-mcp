@@ -9,6 +9,7 @@ import type { ToolDefinition, RequestContext } from "../../../../types/index.js"
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   formatHandlerError,
+  ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
   sanitizeIdentifier,
@@ -153,7 +154,7 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
         }
 
         if (!parsed.table || !parsed.column) {
-           throw new Error("Must provide either 'text' or both 'table' and 'column'");
+           throw new ValidationError("Must provide either 'text' or both 'table' and 'column'");
         }
 
         // Table mode
