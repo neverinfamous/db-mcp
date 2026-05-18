@@ -128,8 +128,8 @@ Verify parameter visibility and alias acceptance.
 
 **Code mode testing:**
 
-12. `sqlite_execute_code({code: "const result = await sqlite.transactions.transactionStatus(); return result;"})` → transaction status
-13. `sqlite_execute_code({code: "const result = await sqlite.transactions.transactionExecute({statements: ['SELECT 1 AS test']}); return result;"})` → success
+12. `sqlite_execute_code({code: "const result = await sqlite.transactions.status(); return result;"})` → transaction status
+13. `sqlite_execute_code({code: "const result = await sqlite.transactions.execute({statements: ['SELECT 1 AS test']}); return result;"})` → success
 
 **Error path testing:**
 
