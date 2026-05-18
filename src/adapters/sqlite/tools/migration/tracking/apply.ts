@@ -29,6 +29,15 @@ export function createMigrationApplyTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = MigrationApplySchema.parse(params);
+        
+        if (!/^[a-zA-Z0-9_.-]+$/.test(input.version)) {
+          return {
+            success: false,
+            error: "version: Version must contain only alphanumeric characters, dots, dashes, or underscores",
+            code: "VALIDATION_ERROR",
+          };
+        }
+
         if (!input.migrationSql && !input.sql) {
           return {
             success: false,
