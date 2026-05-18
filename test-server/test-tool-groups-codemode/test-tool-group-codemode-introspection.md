@@ -68,7 +68,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 10. `sqlite.introspection.storageAnalysis({})` → `database.pageSize > 0`, `database.totalPages > 0`; tables array present
 11. `sqlite.introspection.indexAudit({})` → `findings` array; redundant index for `idx_orders_status`
 12. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty
-13. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan with `idx_orders_status`
+13. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan with `idx_orders_status_date`
 14. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan (no index on name)
 
 ---
