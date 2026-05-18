@@ -29,7 +29,7 @@ export function registerToolImpl(
       typeof schema === "object" &&
       schema !== null &&
       "partial" in schema &&
-      typeof (schema).partial === "function"
+      typeof (schema as Record<string, unknown>)["partial"] === "function"
     ) {
       // .partial() makes all fields optional so the SDK accepts `{}`.
       // .passthrough() preserves unrecognized keys (e.g., legacy aliases
