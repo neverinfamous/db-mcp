@@ -63,7 +63,7 @@ export const ListViewsSchema = z.object({
 
 export const DropViewSchema = z.object({
   viewName: z.string().describe("Name of the view to drop"),
-  ifExists: z.boolean().optional().default(true),
+  ifExists: z.boolean().optional().default(false),
 });
 
 export const DbStatSchema = z.object({
