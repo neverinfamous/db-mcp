@@ -297,9 +297,7 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
       const payload = await callToolAndParse(client, "sqlite_json_insert", {
         table: "test_jsonb_docs",
         column: "doc",
-        path: "$.e2e_insert_test",
-        value: "Playwright",
-        whereClause: "id = 1",
+        data: { e2e_insert_test: "Playwright" },
       });
 
       expectSuccess(payload);
@@ -409,15 +407,12 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     }
   });
 
-  // Cleanup: remove the key we inserted
-  test("cleanup: remove test key", async ({}, testInfo) => {
+  // Cleanup: remove the row we inserted
+  test("cleanup: remove test row", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      await callToolAndParse(client, "sqlite_json_remove", {
-        table: "test_jsonb_docs",
-        column: "doc",
-        path: "$.e2e_insert_test",
-        whereClause: "id = 1",
+      await callToolAndParse(client, "sqlite_write_query", {
+        query: "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.e2e_insert_test') IS NOT NULL",
       });
     } finally {
       await client.close();

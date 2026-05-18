@@ -138,34 +138,26 @@ describe("JSON Tools", () => {
   });
 
   describe("sqlite_json_insert", () => {
-    it("should insert a new key with JSON data", async () => {
-      await adapter.executeWriteQuery(
-        `INSERT INTO profiles (id, data) VALUES (3, '{"name": "Charlie"}')`
-      );
-
+    it("should insert a new row with JSON data", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "profiles",
         column: "data",
-        path: "$.age",
-        value: 40,
-        whereClause: "id = 3",
-      })) as { success: boolean; rowsAffected: number };
+        data: { name: "Charlie", age: 40 },
+      })) as { success: boolean; rowsAffected: number; lastInsertRowid: number };
 
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);
 
       const check = await adapter.executeReadQuery(
-        `SELECT json_extract(data, '$.age') as age FROM profiles WHERE id = 3`,
+        `SELECT json_extract(data, '$.age') as age FROM profiles WHERE id = ${result.lastInsertRowid}`,
       );
       expect(check.rows?.[0]?.["age"]).toBe(40);
     });
 
-    it("should fail validation if value is missing", async () => {
+    it("should fail validation if data is missing", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "profiles",
         column: "data",
-        path: "$.age",
-        whereClause: "id = 3",
       })) as { success: boolean; error: string; code: string };
 
       expect(result.success).toBe(false);

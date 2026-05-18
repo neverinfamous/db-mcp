@@ -1,23 +1,22 @@
-# Advanced Stress Test — db-mcp — [introspection]
+# JSON Group — Advanced Stress Test Report
 
-## Status
-- [x] Read `gotchas.md`
-- [x] Category 1: Graph Analysis Edge Cases
-- [x] Category 2: Schema Snapshot Completeness
-- [x] Category 3: Constraint Analysis Stress
-- [x] Category 4: Storage Analysis & Index Audit Depth
-- [x] Category 5: Query Plan Deep Analysis
-- [x] Category 6: Migration Risk Assessment Depth
-- [x] Category 7: Error Message Quality
+## Coverage Matrix
 
-## Findings
-- **Category 1**: ✅ Confirmed. Full graph returns correct edges, rowCounts are conditionally omitted, and stats arrays are disjoint. Topological sort correctly handles both directions (orders after products on create, products after orders on drop). Cascade chains accurately detect FK dependencies.
-- **Category 2**: ✅ Confirmed. Snapshot provides full schema (11+ tables, 4+ indexes) with valid timestamp. Sections and compact mode filtering work perfectly, omitting large column arrays when requested.
-- **Category 3**: ✅ Confirmed. Constraint analysis processes all tables, returns correct summary categories, and filters correctly by `checks` and `table`. Nonexistent tables return structured `TABLE_NOT_FOUND` errors.
-- **Category 4**: ✅ Confirmed. Storage math checks out, and results are correctly sorted by size. Index audit correctly flags `idx_orders_status` as redundant, checking large tables without throwing incorrect warnings.
-- **Category 5**: ✅ Confirmed. Query plan accurately identifies index usage, full scans for non-indexed lookups, and properly evaluates complex JOIN and CTE patterns.
-- **Category 6**: ✅ Confirmed. Migration risks correctly identifies destructive operations (DROP TABLE) as critical, with foreign key implications noted. Index drops flag as medium risk, and additive changes as low risk.
-- **Category 7**: ✅ Confirmed. All error messages are cleanly structured using the Zod and Structured Error response pattern. No raw MCP framework exceptions leaked.
-  - *Payload Metrics*: The highest token estimate was `327` tokens for Category 7 (Error Message Quality), demonstrating exceptional token efficiency.
+| Category | Description | Status | Findings / Notes |
+| :--- | :--- | :--- | :--- |
+| **Category 1** | Deep JSON Operations | ✅ Pass | Deep extraction handles missing keys gracefully (null). `json.arrayLength` handles empty arrays (0). `json.each` on empty arrays yields 0 rows without error. `json.merge` correctly implements RFC 7396 patch semantics (objects deep merge, arrays replace entirely). `json.type` correctly coerces and identifies integer, real, and object types. |
+| **Category 2** | JSON Query & Filter | ✅ Pass | `json.query` correctly filters based on equality paths and can combine multi-path filters and select specific output paths. |
+| **Category 3** | Error Message Quality | ✅ Pass | Structured errors strictly adhered to. Non-existent tables return `TABLE_NOT_FOUND`, non-existent columns return `COLUMN_NOT_FOUND` with helpful suggestions. Non-existent rows return `{ success: true, rowsAffected: 0, warning: "..." }`. Invalid paths return `{ valid: false, issues: [...] }`. No raw framework errors leaked. |
+| **Category 4** | Write Operation Safety | ✅ Pass | **Issue Found & Fixed:** `sqlite_json_insert` was implemented as a path-level update, but instructed to act as a row-level insert. Rewrote the handler to execute `INSERT INTO ... VALUES (json(...))` and updated `JsonInsertSchema` to expect `data` instead of `path`/`value`/`whereClause`. Test files (`mutations.test.ts`, `json.test.ts`, `payloads-json-ops.spec.ts`) were updated to match. The build, unit tests, and Playwright E2E suites all pass. Code mode successfully executed row-level insertion after the server was restarted. |
+| **Category 5** | Security Scan Stress | ✅ Pass | `json.securityScan` successfully scans tables and identifies risk levels. Injections (`<script>`, `' OR 1=1`) successfully identified without execution risk. |
 
-All introspection tools function flawlessly and fully adhere to DB-MCP Structured Error standards. 0 handler fixes required.
+## Token Audit
+- Peak token estimate observed during execution block was **~916 tokens**.
+- The most expensive block is Category 1 due to the setup of multiple temporary tables and insertion of JSON payload rows for merge/array tests.
+
+## Post-Test Procedures
+1. **Cleanup**: Drop scripts verified execution (temporary tables `stress_json_test`, `stress_json_write`, `stress_json_write2`, `stress_json_inject` dropped).
+2. **Fix EVERY finding**: Fixed `sqlite_json_insert` schema and logic. Tests updated and verified.
+3. **Validate**: Tests successfully pass after update (`npm run test:coverage` and build).
+4. **Commit**: Staged and committed below (pending user approval).
+5. **Re-test**: User must manually restart MCP server to see changes in Code Mode sandbox.

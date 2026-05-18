@@ -39,7 +39,7 @@ import {
 export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_insert",
-    description: "Insert a new value at a JSON path using json_insert(). Only inserts if the key does not exist.",
+    description: "Insert a new row with JSON data into a JSON column. Note: This creates a new table row, rather than modifying an existing JSON object.",
     group: "json",
     inputSchema: JsonInsertSchema,
     outputSchema: JsonInsertOutputSchema,
@@ -58,37 +58,32 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);
 
-        if (!input.path.startsWith("$")) {
+        if (input.data === undefined) {
           return {
             success: false,
             rowsAffected: 0,
-            error: "JSON path must start with $",
+            error: "Missing required parameter: data",
           };
         }
 
-        if (input.value === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: value",
-          };
-        }
-
-        const valueJson = JSON.stringify(input.value);
-        validateWhereClause(input.whereClause);
-        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_insert("${input.column}", '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+        const valueJson = JSON.stringify(input.data);
+        const sql = `INSERT INTO "${input.table}" ("${input.column}") VALUES (json('${valueJson.replace(/'/g, "''")}'))`;
 
         const result = await adapter.executeWriteQuery(sql);
 
         const response: Record<string, unknown> = {
           success: true,
-          message: `Inserted ${input.path} in ${input.table}.${input.column}`,
+          message: `Inserted new row into ${input.table}.${input.column}`,
           rowsAffected: result.rowsAffected,
         };
 
-        if (result.rowsAffected === 0) {
-          response["warning"] =
-            "No rows matched the WHERE clause — nothing was inserted";
+        if (result.lastInsertId !== undefined) {
+          response["lastInsertRowid"] = Number(result.lastInsertId);
+        } else if ("lastInsertRowid" in result) {
+          const res = result as Record<string, unknown>;
+          if (res["lastInsertRowid"] !== undefined) {
+            response["lastInsertRowid"] = Number(res["lastInsertRowid"]);
+          }
         }
 
         return response;
