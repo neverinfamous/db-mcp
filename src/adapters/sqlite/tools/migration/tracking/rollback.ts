@@ -8,6 +8,7 @@ import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
   MIGRATIONS_TABLE,
   MigrationRollbackSchema,
+  MigrationRollbackValidationSchema,
   MigrationRollbackOutputSchema,
   isMigrationTableInitialized,
   toMigrationRecord,
@@ -26,7 +27,7 @@ export function createMigrationRollbackTool(
     requiredScopes: ["admin"],
     annotations: write("Migration Rollback"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = MigrationRollbackSchema.parse(params);
+      const input = MigrationRollbackValidationSchema.parse(params);
 
       try {
         if (!(await isMigrationTableInitialized(adapter))) {

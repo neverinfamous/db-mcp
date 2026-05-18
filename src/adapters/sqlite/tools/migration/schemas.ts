@@ -40,7 +40,9 @@ export const MigrationRecordSchema = z.object({
     .string()
     .optional()
     .describe("Who/what applied this migration (e.g., agent name, user)"),
-}).superRefine((data, ctx) => {
+});
+
+export const MigrationRecordValidationSchema = MigrationRecordSchema.superRefine((data, ctx) => {
   if (!data.migrationSql && !data.sql) {
     ctx.addIssue({
       code: "custom",
@@ -51,6 +53,7 @@ export const MigrationRecordSchema = z.object({
 });
 
 export const MigrationApplySchema = MigrationRecordSchema;
+export const MigrationApplyValidationSchema = MigrationRecordValidationSchema;
 
 export const MigrationRollbackSchema = z.object({
   id: z.preprocess(
@@ -68,7 +71,9 @@ export const MigrationRollbackSchema = z.object({
     .describe(
       "If true, return the rollback SQL without executing (default: false)",
     ),
-}).superRefine((data, ctx) => {
+});
+
+export const MigrationRollbackValidationSchema = MigrationRollbackSchema.superRefine((data, ctx) => {
   if (data.id === undefined && data.version === undefined) {
     ctx.addIssue({
       code: "custom",

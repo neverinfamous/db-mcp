@@ -8,6 +8,7 @@ import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
   MIGRATIONS_TABLE,
   MigrationRecordSchema,
+  MigrationRecordValidationSchema,
   MigrationRecordOutputSchema,
   hashMigration,
   isMigrationTableInitialized,
@@ -28,7 +29,7 @@ export function createMigrationRecordTool(
     annotations: write("Migration Record"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = MigrationRecordSchema.parse(params);
+        const input = MigrationRecordValidationSchema.parse(params);
 
         if (!(await isMigrationTableInitialized(adapter))) {
           return {

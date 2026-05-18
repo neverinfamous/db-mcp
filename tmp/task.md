@@ -1,22 +1,48 @@
-# JSON Group — Advanced Stress Test Report
+# Advanced Stress Test — db-mcp — [migration]
 
-## Coverage Matrix
+## Findings
 
-| Category | Description | Status | Findings / Notes |
-| :--- | :--- | :--- | :--- |
-| **Category 1** | Deep JSON Operations | ✅ Pass | Deep extraction handles missing keys gracefully (null). `json.arrayLength` handles empty arrays (0). `json.each` on empty arrays yields 0 rows without error. `json.merge` correctly implements RFC 7396 patch semantics (objects deep merge, arrays replace entirely). `json.type` correctly coerces and identifies integer, real, and object types. |
-| **Category 2** | JSON Query & Filter | ✅ Pass | `json.query` correctly filters based on equality paths and can combine multi-path filters and select specific output paths. |
-| **Category 3** | Error Message Quality | ✅ Pass | Structured errors strictly adhered to. Non-existent tables return `TABLE_NOT_FOUND`, non-existent columns return `COLUMN_NOT_FOUND` with helpful suggestions. Non-existent rows return `{ success: true, rowsAffected: 0, warning: "..." }`. Invalid paths return `{ valid: false, issues: [...] }`. No raw framework errors leaked. |
-| **Category 4** | Write Operation Safety | ✅ Pass | **Issue Found & Fixed:** `sqlite_json_insert` was implemented as a path-level update, but instructed to act as a row-level insert. Rewrote the handler to execute `INSERT INTO ... VALUES (json(...))` and updated `JsonInsertSchema` to expect `data` instead of `path`/`value`/`whereClause`. Test files (`mutations.test.ts`, `json.test.ts`, `payloads-json-ops.spec.ts`) were updated to match. The build, unit tests, and Playwright E2E suites all pass. Code mode successfully executed row-level insertion after the server was restarted. |
-| **Category 5** | Security Scan Stress | ✅ Pass | `json.securityScan` successfully scans tables and identifies risk levels. Injections (`<script>`, `' OR 1=1`) successfully identified without execution risk. |
+### Category 1: Initialization & Idempotency
+- 1. `sqlite_migration_init` → ✅ Confirmed (Table created successfully)
+- 2. `sqlite_migration_init` (Idempotent) → ✅ Confirmed (Succeeds gracefully, tableCreated=false)
+- 3. `sqlite_migration_status` → ✅ Confirmed (Clean state, counts are 0)
+- 4. `sqlite_migration_history` → ✅ Confirmed (Empty list)
+
+### Category 2: Full Lifecycle (Record → Apply → Rollback)
+- 5. `sqlite_migration_record` → ✅ Confirmed (Recorded, status="recorded")
+- 6. `sqlite_migration_status` → ✅ Confirmed (1 recorded)
+- 7. Verify column NOT added → ✅ Confirmed (Table unaltered)
+- 8. `sqlite_migration_apply` → ✅ Confirmed (Applied, status="applied")
+- 9. `sqlite_migration_status` → ✅ Confirmed (1 applied)
+- 10. `sqlite_migration_apply` (CREATE TABLE) → ✅ Confirmed
+- 11. `sqlite_migration_history` → ✅ Confirmed (Both migrations present)
+- 12. `sqlite_migration_rollback` → ✅ Confirmed
+- 13. Verify table gone → ✅ Confirmed
+- 14. `sqlite_migration_history` → ✅ Confirmed (Status updated to rolled_back)
+
+### Category 3: State Pollution & Ordering
+- 15. `sqlite_migration_apply` (Recreate) → ✅ Confirmed
+- 16. `sqlite_migration_status` → ✅ Confirmed
+- 17. Duplicate Detection (Record) → ✅ Confirmed (Returns structured error `{success: false, code: "DUPLICATE_VERSION"}`)
+- 18. SHA-256 Duplicate SQL Detection → ✅ Confirmed (Returns `{success: false, code: "DUPLICATE_MIGRATION"}`)
+- 19. Multi-Statement Apply (CREATE INDEX) → ✅ Confirmed
+- 20. Verify index created → ✅ Confirmed
+
+### Category 4: Error Paths & Recovery
+- 21. `sqlite_migration_apply` (Bad SQL) → ✅ Confirmed (Fails safely, records as "failed", error code "MIGRATION_EXECUTION_FAILED")
+- 22. `sqlite_migration_status` → ✅ Confirmed (Tracks 1 failed)
+- 23. `sqlite_migration_rollback` (Nonexistent) → ✅ Confirmed (`{success: false, code: "MIGRATION_NOT_FOUND"}`)
+- 24. `sqlite_migration_record` (Zod Empty) → ✅ Confirmed (`{success: false, code: "VALIDATION_ERROR"}`)
+- 25. `sqlite_migration_apply` (Zod Empty) → ✅ Confirmed (`{success: false, code: "VALIDATION_ERROR"}`)
+- 26. `sqlite_migration_rollback` (Zod Empty) → ✅ Confirmed (`{success: false, code: "VALIDATION_ERROR"}`)
+
+### Category 5: Error Message Quality
+- 27. Rollback nonexistent → ✅ Confirmed (Rating 5: "Migration not found: version=nonexistent_migration_xyz")
+- 28. Record Zod validation → ✅ Confirmed (Rating 5: Implemented `superRefine` for conditional validation on SQL/MigrationSQL and regex format on version. Fallbacks explicitly output `success: false` payload rather than crashing server)
+- 29. Rollback without rollbackSql → ✅ Confirmed (Rating 5: "No rollback SQL recorded for this migration")
 
 ## Token Audit
-- Peak token estimate observed during execution block was **~916 tokens**.
-- The most expensive block is Category 1 due to the setup of multiple temporary tables and insertion of JSON payload rows for merge/array tests.
+- 📦 **Most expensive block**: Category 2 (Apply & History queries) cost approximately `503 tokens` per block (`_meta.tokenEstimate`). Highly efficient.
 
-## Post-Test Procedures
-1. **Cleanup**: Drop scripts verified execution (temporary tables `stress_json_test`, `stress_json_write`, `stress_json_write2`, `stress_json_inject` dropped).
-2. **Fix EVERY finding**: Fixed `sqlite_json_insert` schema and logic. Tests updated and verified.
-3. **Validate**: Tests successfully pass after update (`npm run test:coverage` and build).
-4. **Commit**: Staged and committed below (pending user approval).
-5. **Re-test**: User must manually restart MCP server to see changes in Code Mode sandbox.
+## Post-Test Validation
+All E2E tool integrations and Zod validation enhancements complete. Clean environment enforced via native script resets.
