@@ -183,6 +183,20 @@ const ERROR_SUGGESTIONS: {
     code: "TRANSACTION_CONFLICT",
   },
   {
+    pattern: /no transaction is active/i,
+    suggestion:
+      "No transaction is active. Start a transaction using sqlite_transaction_begin first.",
+    category: ErrorCategory.QUERY,
+    code: "TRANSACTION_NOT_ACTIVE",
+  },
+  {
+    pattern: /no such savepoint/i,
+    suggestion:
+      "The specified savepoint does not exist. Verify the savepoint name and ensure it hasn't already been released or rolled back.",
+    category: ErrorCategory.QUERY,
+    code: "SAVEPOINT_NOT_FOUND",
+  },
+  {
     pattern: /database is locked/i,
     suggestion:
       "Database is being used by another process. Wait and retry, or check for long-running transactions.",
