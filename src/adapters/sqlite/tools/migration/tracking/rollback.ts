@@ -27,9 +27,8 @@ export function createMigrationRollbackTool(
     requiredScopes: ["admin"],
     annotations: write("Migration Rollback"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = MigrationRollbackValidationSchema.parse(params);
-
       try {
+        const input = MigrationRollbackValidationSchema.parse(params);
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
@@ -106,7 +105,7 @@ export function createMigrationRollbackTool(
           return {
             success: false,
             rollbackSql: null,
-            error: "No rollback SQL recorded for this migration",
+            error: `No rollback SQL recorded for migration '${migration["version"] as string}' (id=${String(migration["id"])})`,
             code: "ROLLBACK_SQL_MISSING",
           };
         }

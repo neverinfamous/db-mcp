@@ -37,7 +37,8 @@ export function registerToolImpl(
         )
           .partial()
           .passthrough();
-      } catch {
+      } catch (e) {
+        console.error(`Error applying .partial() to ${tool.name}:`, e);
         // ZodEffects throws on .partial() in Zod 4
         toolOptions["inputSchema"] = schema;
       }
