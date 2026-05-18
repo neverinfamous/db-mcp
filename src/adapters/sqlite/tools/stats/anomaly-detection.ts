@@ -369,7 +369,7 @@ export function createDetectBloatTool(
         );
 
         if (!input.includeZeroRisk) {
-          tables = tables.filter((t) => t.riskScore > 0);
+          tables = tables.filter((t) => t.riskScore >= 10);
         }
 
         tables.sort((a, b) => b.riskScore - a.riskScore);
