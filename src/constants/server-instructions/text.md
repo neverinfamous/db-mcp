@@ -4,6 +4,7 @@
 
 ```javascript
 // Create FTS5 table with triggers for auto-sync on future changes
+// (Dropping this FTS table via sqlite_drop_table will automatically clean up these sync triggers)
 sqlite_fts_create({
   tableName: "articles_fts",
   sourceTable: "articles",

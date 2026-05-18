@@ -282,6 +282,7 @@ sqlite_spatialite_index({
 16. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
 17. **PRAGMA compile options**: WASM may show FTS3, not FTS5
 18. **Vector tool schemas**: Vector tools use distinct schemas for specific operations. E.g., \`sqlite.vector.dimensions\` requires \`vectorColumn\`. Additionally, \`sqlite.vector.get\` wraps metadata inside a \`metadata\` object (e.g., \`metadata.content\`), and \`sqlite.vector.stats\` returns \`sampleSize\` and \`magnitudeStats\` (not \`count\` and \`stats\`).
+19. **FTS5 trigger cleanup**: Dropping an FTS5 table with \`sqlite_drop_table\` automatically finds and removes the associated \`_ai\`, \`_ad\`, and \`_au\` sync triggers from the source table.
 
 ## WASM vs Native
 
@@ -614,6 +615,7 @@ sqlite_window_ntile({
 
 \`\`\`javascript
 // Create FTS5 table with triggers for auto-sync on future changes
+// (Dropping this FTS table via sqlite_drop_table will automatically clean up these sync triggers)
 sqlite_fts_create({
   tableName: "articles_fts",
   sourceTable: "articles",

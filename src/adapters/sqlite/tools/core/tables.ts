@@ -401,6 +401,42 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       try {
+        // Attempt to clean up orphaned FTS5 sync triggers on source tables
+        // These triggers are named {tableName}_ai, {tableName}_ad, {tableName}_au
+        const triggerNames = [
+          `${input.table}_ai`,
+          `${input.table}_ad`,
+          `${input.table}_au`,
+        ];
+
+        try {
+          const triggersResult = await adapter.executeReadQuery(
+            `SELECT name, sql FROM sqlite_master WHERE type='trigger' AND name IN (?, ?, ?)`,
+            triggerNames,
+          );
+
+          if (triggersResult.rows && triggersResult.rows.length > 0) {
+            for (const row of triggersResult.rows) {
+              const rawSql = row["sql"];
+              const sql = typeof rawSql === "string" ? rawSql : "";
+              const triggerName = row["name"];
+
+              if (typeof triggerName !== "string") continue;
+
+              // Verify the trigger was created for this FTS table by checking if it inserts into it
+              if (
+                sql.includes(`INTO "${input.table}"`) ||
+                sql.includes(`INTO ${input.table}`)
+              ) {
+                await adapter.executeQuery(`DROP TRIGGER IF EXISTS "${triggerName}"`);
+              }
+            }
+          }
+        } catch (err) {
+          // Ignore cleanup errors to ensure the primary DROP TABLE operation proceeds
+          console.warn(`Failed to clean up FTS triggers for ${input.table}:`, err);
+        }
+
         const sql = `DROP TABLE "${input.table}"`;
         await adapter.executeQuery(sql);
 

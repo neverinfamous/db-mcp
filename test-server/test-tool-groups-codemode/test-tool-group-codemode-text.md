@@ -76,7 +76,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 17. `sqlite.text.ftsSearch({table: "temp_cm_fts", query: "test*"})` → results
 18. `sqlite.text.ftsMatchInfo({table: "temp_cm_fts", query: "test*"})` → match info with scoring
 19. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
-20. Cleanup: drop `temp_cm_fts`
+20. Cleanup: drop `temp_cm_fts` (automatically drops associated sync triggers)
 21. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite"})` → at least 1 result
 22. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "MCP protocol"})` → article 3
 23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
