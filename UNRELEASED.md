@@ -23,6 +23,7 @@
 
 ### Documentation
 
+- **Introspection Suite Verification**: Completed exhaustive testing of the 9-tool `introspection` group (including `dependencyGraph`, `topologicalSort`, `cascadeSimulator`, and schema analysis) via Code Mode. Verified structural integrity of complex graph payloads and proper enforcement of structured errors for all domain and Zod validations.
 - **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
 
 ### Security
@@ -36,8 +37,6 @@
 - **Vulnerability Remediation**: Resolved Vite, Hono, path-to-regexp, fast-uri, Picomatch, and ip-address vulnerabilities via `npm update` and transitive lockfile resolutions.
 
 ### Changed
-
-- **Geo Tool Suite Validation**: Verified 100% compliance with structured error response patterns and Zod validation bounds for all Geo Haversine tools (`distance`, `nearby`, `boundingBox`, `cluster`) operating within the WASM backend. No raw MCP errors leaked during bounds validation.
 
 - **OAuth Identity in Audit Logs**: Audit log entries now capture the authenticated user's identity (`user` field from `claims.sub`) and granted scopes (`scopes` array) when OAuth 2.1 is configured. Previously hardcoded as `null`/`[]`. Identity is read from `AsyncLocalStorage` via `getAuthContext()`, matching the postgres-mcp reference implementation. When OAuth is not configured (stdio transport, no auth), fields remain `null`/`[]` as before.
 
