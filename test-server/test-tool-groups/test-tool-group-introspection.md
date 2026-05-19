@@ -7,7 +7,7 @@
 
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 9 introspection tools are fully WASM-compatible. No items to skip.
 >
-> **Minor difference**: `sqlite_schema_snapshot` may report `test_articles_fts` in virtual tables but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
+> **Minor difference**: `sqlite_schema_snapshot` may report `test_articles_fts` in the `tables` array but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
