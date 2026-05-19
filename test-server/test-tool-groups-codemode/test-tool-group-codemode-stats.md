@@ -59,17 +59,17 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 > Bundle items 1-14 into 1-2 `sqlite_execute_code` calls.
 
-1. `sqlite.stats.statsBasic({table: "test_measurements", column: "temperature"})` → `count: 200`, `min`, `max`, `avg` present
+1. `sqlite.stats.statsBasic({table: "test_measurements", column: "temperature"})` → `count: 200`, `min`, `max`, `avg` present inside `stats` object
 2. `sqlite.stats.statsCount({table: "test_products"})` → `{count: 16}`
 3. `sqlite.stats.statsCount({table: "test_products", column: "category", distinct: true})` → 3 (electronics, accessories, office)
-4. `sqlite.stats.statsGroupBy({table: "test_measurements", groupByColumn: "sensor_id", valueColumn: "temperature", stat: "avg"})` → 5 groups
+4. `sqlite.stats.statsGroupBy({table: "test_measurements", groupByColumn: "sensor_id", valueColumn: "temperature", stat: "avg"})` → 5 results in `results` array
 5. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: 5})` → 5 buckets
 6. `sqlite.stats.statsPercentile({table: "test_measurements", column: "temperature", percentiles: [25, 50, 75, 90]})` → 4 values
 7. `sqlite.stats.statsCorrelation({table: "test_measurements", column1: "temperature", column2: "humidity"})` → value between -1 and 1
-8. `sqlite.stats.statsTopN({table: "test_products", column: "price", n: 3, orderDirection: "desc"})` → top 3, `Laptop Pro 15` at 1299.99 first
+8. `sqlite.stats.statsTopN({table: "test_products", column: "price", n: 3, orderDirection: "desc"})` → top 3 in `rows` array, `Laptop Pro 15` at 1299.99 first
 9. `sqlite.stats.statsDistinct({table: "test_locations", column: "city"})` → 6 cities
 10. `sqlite.stats.statsSummary({table: "test_measurements", columns: ["temperature", "humidity", "pressure"]})` → 3 summaries
-11. `sqlite.stats.statsFrequency({table: "test_events", column: "event_type"})` → 5 event types, ~20 each
+11. `sqlite.stats.statsFrequency({table: "test_events", column: "event_type"})` → 5 event types in `distribution` array, ~20 each
 12. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature"})` → outlier detection result
 13. `sqlite.stats.statsRegression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
 14. `sqlite.stats.statsHypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → `statistic` and `pValue` present
@@ -78,9 +78,9 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ## Phase 2: Anomaly Detection Suite — Happy Paths (batched)
 
-15. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → anomaly detection result
+15. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → `anomalies` array present, `riskLevel` low
 16. `sqlite.stats.detectBloat()` → bloat detection (may return empty if no bloat)
-17. `sqlite.stats.detectSchemaRisks()` → schema risk assessment
+17. `sqlite.stats.detectSchemaRisks()` → `tables` array present, `highRiskCount` 0
 
 ---
 
@@ -146,7 +146,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 ```javascript
 const failures = [];
 const basic = await sqlite.stats.statsBasic({table: "test_measurements", column: "temperature"});
-if (!basic || basic.count !== 200) failures.push("basic stats: count mismatch");
+if (!basic || basic.stats.count !== 200) failures.push("basic stats: count mismatch");
 
 const pct = await sqlite.stats.statsPercentile({table: "test_measurements", column: "temperature", percentiles: [50]});
 const corr = await sqlite.stats.statsCorrelation({table: "test_measurements", column1: "temperature", column2: "humidity"});
@@ -156,10 +156,10 @@ return {
   failures,
   success: failures.length === 0,
   summary: {
-    tempRange: `${basic.min} - ${basic.max}`,
-    median: pct,
-    correlation: corr,
-    topProducts: top
+    tempRange: `${basic.stats.min} - ${basic.stats.max}`,
+    median: pct.percentiles,
+    correlation: corr.correlation,
+    topProducts: top.rows
   }
 };
 ```
