@@ -23,7 +23,6 @@ export const MigrationInitSchema = z.object({}).default({});
 export const MigrationRecordSchema = z.object({
   version: z
     .string()
-    .regex(/^[a-zA-Z0-9_.-]+$/, "Version must contain only alphanumeric characters, dots, dashes, or underscores")
     .describe("Version identifier (e.g., '1.0.0', '2024-01-15-add-users')"),
   description: z
     .string()
@@ -43,6 +42,13 @@ export const MigrationRecordSchema = z.object({
 });
 
 export const MigrationRecordValidationSchema = MigrationRecordSchema.superRefine((data, ctx) => {
+  if (!/^[a-zA-Z0-9_.-]+$/.test(data.version)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["version"],
+      message: "Version must contain only alphanumeric characters, dots, dashes, or underscores",
+    });
+  }
   if (!data.migrationSql && !data.sql) {
     ctx.addIssue({
       code: "custom",
@@ -62,7 +68,6 @@ export const MigrationRollbackSchema = z.object({
   ),
   version: z
     .string()
-    .regex(/^[a-zA-Z0-9_.-]+$/, "Version must contain only alphanumeric characters, dots, dashes, or underscores")
     .optional()
     .describe("Migration version to roll back (alternative to id)"),
   dryRun: z
@@ -74,6 +79,13 @@ export const MigrationRollbackSchema = z.object({
 });
 
 export const MigrationRollbackValidationSchema = MigrationRollbackSchema.superRefine((data, ctx) => {
+  if (data.version !== undefined && !/^[a-zA-Z0-9_.-]+$/.test(data.version)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["version"],
+      message: "Version must contain only alphanumeric characters, dots, dashes, or underscores",
+    });
+  }
   if (data.id === undefined && data.version === undefined) {
     ctx.addIssue({
       code: "custom",
