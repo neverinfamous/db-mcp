@@ -11,7 +11,7 @@ import {
 } from "../../../../../utils/errors/index.js";
 import { BackupOutputSchema } from "../../../output-schemas/index.js";
 import { BackupSchema } from "../helpers.js";
-import { sendProgress } from "../../../../../utils/progress-utils.js";
+import { sendProgress, buildProgressContext } from "../../../../../utils/progress-utils.js";
 
 /**
  * Backup database
@@ -58,9 +58,10 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
 
       const start = Date.now();
       try {
-        await sendProgress(_context.progressToken, 1, 2, `Creating backup at ${resolvedPath}...`);
+        const progress = buildProgressContext(_context);
+        await sendProgress(progress, 1, 2, `Creating backup at ${resolvedPath}...`);
         await adapter.executeQuery(sql);
-        await sendProgress(_context.progressToken, 2, 2, "Backup complete");
+        await sendProgress(progress, 2, 2, "Backup complete");
         const duration = Date.now() - start;
 
         return {
