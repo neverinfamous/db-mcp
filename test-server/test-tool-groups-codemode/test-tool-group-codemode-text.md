@@ -133,6 +133,14 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
+## Phase 5.5: Gotcha Edge Cases (batched)
+
+48. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
+49. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
+50. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
+
+---
+
 ## Phase 6: Multi-Step Workflow
 
 ### 6.1 — Text analysis pipeline
@@ -148,6 +156,29 @@ if (!domains.success) failures.push("domain extraction failed");
 if (!fuzzy.success) failures.push("fuzzy search failed");
 return { failures, success: failures.length === 0, summary: { validEmails: validation?.validCount, domainCount: domains?.matches?.length, fuzzyHits: fuzzy?.matches?.length } };
 ```
+
+---
+
+### 6.2 — FTS5 rebuild requirement verification `[NATIVE ONLY]`
+
+```javascript
+const failures = [];
+// Create FTS5 table
+await sqlite.text.ftsCreate({sourceTable: "test_users", columns: ["username", "bio"], tableName: "temp_cm_fts_rebuild"});
+// Search BEFORE rebuild — should return 0 results
+const before = await sqlite.text.ftsSearch({table: "temp_cm_fts_rebuild", query: "admin"});
+if (before.rows?.length > 0) failures.push("FTS5 search returned results before rebuild — gotcha #5 may not apply");
+// Rebuild to populate index
+await sqlite.text.ftsRebuild({table: "temp_cm_fts_rebuild"});
+// Search AFTER rebuild — should return results
+const after = await sqlite.text.ftsSearch({table: "temp_cm_fts_rebuild", query: "admin"});
+if (!after.rows || after.rows.length === 0) failures.push("FTS5 search returned 0 results after rebuild");
+// Cleanup
+await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_fts_rebuild");
+return { failures, success: failures.length === 0, beforeCount: before.rows?.length || 0, afterCount: after.rows?.length || 0 };
+```
+
+Expected: `beforeCount: 0`, `afterCount: > 0` — validates that `ftsRebuild` is required after `ftsCreate` to populate the index (gotcha #5).
 
 ---
 

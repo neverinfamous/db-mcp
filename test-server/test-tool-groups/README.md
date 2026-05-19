@@ -6,15 +6,23 @@
 
 | File | Group | Tools | Notes |
 |------|-------|-------|-------|
-| `test-tool-group-core.md` | core | 14 + Code Mode | Identical Native/WASM |
-| `test-tool-group-json.md` | json | 24 + Code Mode | Identical Native/WASM |
-| `test-tool-group-text.md` | text | 19N/14W + Code Mode | FTS5 tools `[NATIVE ONLY]` |
-| `test-tool-group-stats.md` | stats | 22N/16W + Code Mode | Window functions `[NATIVE ONLY]` |
-| `test-tool-group-vector.md` | vector | 11 + Code Mode | Identical Native/WASM |
-| `test-tool-group-admin.md` | admin | 26 + Code Mode | CSV, backup, views, pragma |
+| `test-tool-group-core-data.md` | core-data | 7 | Identical Native/WASM |
+| `test-tool-group-core-schema.md` | core-schema | 8 + Code Mode | Identical Native/WASM |
+| `test-tool-group-json-read.md` | json-read | 18 | Identical Native/WASM |
+| `test-tool-group-json-write.md` | json-write | 7 | Identical Native/WASM |
+| `test-tool-group-text-basic.md` | text-basic | 11 + Code Mode | Identical Native/WASM |
+| `test-tool-group-text-advanced.md` | text-advanced | 9N/4W | FTS5 tools `[NATIVE ONLY]` |
+| `test-tool-group-stats-basic.md` | stats-basic | 16 + Code Mode | Identical Native/WASM |
+| `test-tool-group-stats-advanced.md` | stats-advanced | 6N/0W | Window functions `[NATIVE ONLY]` |
+| `test-tool-group-vector-read.md` | vector-read | 7 + Code Mode | Identical Native/WASM |
+| `test-tool-group-vector-write.md` | vector-write | 4 | Identical Native/WASM |
+| `test-tool-group-admin-core.md` | admin-core | 19 + Code Mode | Identical Native/WASM |
+| `test-tool-group-admin-extensions.md` | admin-extensions | 8 | CSV, series, rtree |
 | `test-tool-group-transactions.md` | transactions | 8 + Code Mode | `[NATIVE ONLY]` |
-| `test-tool-group-geo.md` | geo | 11N/4W + Code Mode | SpatiaLite `[NATIVE ONLY]` |
-| `test-tool-group-introspection.md` | introspection | 9 + Code Mode | Identical Native/WASM |
+| `test-tool-group-geo-haversine.md` | geo-haversine | 4 + Code Mode | Identical Native/WASM |
+| `test-tool-group-geo-spatialite.md` | geo-spatialite | 7N/0W | SpatiaLite `[NATIVE ONLY]` |
+| `test-tool-group-introspection-schema.md` | introspection-schema | 6 | Identical Native/WASM |
+| `test-tool-group-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode | Identical Native/WASM |
 | `test-tool-group-migration.md` | migration | 6 + Code Mode | Identical Native/WASM |
 
 **Total**: 151 Native / 125 WASM tools across 10 groups + Code Mode.

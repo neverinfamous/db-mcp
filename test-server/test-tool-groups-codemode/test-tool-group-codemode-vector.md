@@ -151,6 +151,40 @@ return { failures, success: failures.length === 0 };
 
 ---
 
+### 5.3 — Vector + JSON cross-group
+
+```javascript
+const failures = [];
+// Create vector table with metadata column
+await sqlite.vector.createTable({
+  tableName: "temp_cm_vec_json",
+  dimensions: 3,
+  additionalColumns: [{name: "metadata", type: "TEXT"}]
+});
+// Store vector with JSON metadata
+await sqlite.vector.store({
+  table: "temp_cm_vec_json", idColumn: "id", vectorColumn: "vector",
+  id: 1, vector: [1, 0, 0]
+});
+await sqlite.core.writeQuery({
+  query: `UPDATE temp_cm_vec_json SET metadata = '{"category": "test", "score": 0.95}' WHERE id = 1`
+});
+// Search and extract JSON from results
+const results = await sqlite.vector.search({
+  table: "temp_cm_vec_json", vectorColumn: "vector",
+  queryVector: [1, 0, 0], metric: "cosine", limit: 1
+});
+if (!results.rows || results.rows.length === 0) failures.push("vector search returned no results");
+const meta = await sqlite.json.extract({
+  table: "temp_cm_vec_json", column: "metadata", path: "$.category", whereClause: "id = 1"
+});
+if (!meta || meta.success === false) failures.push("JSON extract from vector table failed");
+await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_vec_json");
+return { failures, success: failures.length === 0, searchResult: results, jsonMeta: meta };
+```
+
+---
+
 ## Post-Test Procedures
 
 1. **Cleanup**: Drop `temp_*` tables

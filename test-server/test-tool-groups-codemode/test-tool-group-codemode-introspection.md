@@ -81,9 +81,9 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
-## Phase 4: Code-Mode-Only Parameters (batched)
+## Phase 4: Advanced Optional Parameters (batched)
 
-> These parameters are only accessible via Code Mode, not via direct tool calls.
+> Test these granular optional parameters. Note: While previously thought to be Code Mode-only, these parameters are actually available in both Code Mode and direct tool calls.
 
 15. `sqlite.introspection.schemaSnapshot({sections: ["tables"]})` → only tables section (no views/indexes)
 16. `sqlite.introspection.schemaSnapshot({compact: true})` → compact mode omits columns from table entries

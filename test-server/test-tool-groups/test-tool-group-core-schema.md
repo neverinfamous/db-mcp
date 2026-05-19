@@ -1,15 +1,15 @@
-# db-mcp (SQLite) Tool Group Testing: [core]
+# db-mcp (SQLite) Tool Group Testing: [core-schema]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in C:\Users\chris\Desktop\db-mcp\tmp\task.md. However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 14 core tools are fully WASM-compatible. No items to skip or adjust.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 8 core schema tools are fully WASM-compatible. No items to skip or adjust.
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-**Step 2:** Please conduct an exhaustive test of the **core** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
+**Step 2:** Please conduct an exhaustive test of the **core-schema** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
 
 **Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
 
@@ -37,19 +37,6 @@ The test database (test-server/test.db) contains these tables with JSON-relevant
 | test_locations    | 15   | id, name, city, latitude, longitude, type                                     | —                                                                                         |
 | test_categories   | 17   | id, name, path, level                                                         | —                                                                                         |
 | test_events       | 100  | id, event_type, user_id (INT, 8 values), payload, event_date                  | **payload** (JSON)                                                                        |
-
-**Primary JSON test tables:**
-
-- `test_jsonb_docs.doc` — Row 1: `{"type":"article","title":"Getting Started with SQLite","author":"Alice","views":1250,"rating":4.5}`, Row 3: `{"type":"video",...,"duration":3600}`, Row 4 has `nested.level1.level2 = "deep value"`
-- `test_jsonb_docs.metadata` — Object with keys: source, language, version, quality, subscribers
-- `test_jsonb_docs.tags` — Array of strings like `["database","tutorial","beginner"]`
-- `test_events.payload` — Object with keys: page (values: home, products, cart, checkout), session (values: sess_1000+)
-
-> **Note:** String values in test data use **lowercase** (e.g., `category = 'electronics'`, not `'Electronics'`). Use case-sensitive matching in queries.
-
-> **Note:** `test_measurements.sensor_id` is an **INTEGER** column (values 1-5), not a string. Use `sensor_id = 1`, not `sensor_id = 'S001'`.
-
-> **Note:** When testing `sqlite_execute_code`, do **not** pass `readonly: true` unless specifically testing read-only filtering. The `readonly` flag makes write methods return structured errors (`{success: false, code: "CODEMODE_READONLY_VIOLATION"}`). Methods remain callable but reject write operations. Use `readonly: false` (or omit it) to get the full API surface.
 
 ## Testing Requirements
 
@@ -116,16 +103,6 @@ Calling a tool with wrong parameter types or missing required fields triggers a 
 - If a tool returns `{success: false, error: "..."}`, that is the correct behavior — do not report it as a failure
 - If a tool returns a successful response for an obviously invalid input (e.g., nonexistent table returns `{success: true}`), report it as ⚠️
 
-### Wrong-Type Numeric Parameter Coercion
-
-For every tool with optional numeric parameters (e.g., `limit`, `buckets`, `windowSize`, `radius`, `sampleSize`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error. Acceptable behaviors:
-
-- Handler returns `{success: false, error: "..."}` with a validation message
-- Handler silently applies the default value
-- Handler coerces to NaN and returns a descriptive error
-
-Unacceptable: Raw MCP error frame with `-32602` code.
-
 ### Output Schema Validation Errors
 
 The MCP SDK enforces `additionalProperties: false` on **output** schemas. If a handler returns fields not declared in its output schema, the SDK rejects the response with a raw `-32602` error — even though the handler logic succeeded. This is a different failure mode from input validation:
@@ -158,15 +135,10 @@ For each tool group under test, verify at least one scenario from each applicabl
 | Error Scenario | Tool Groups to Test | Example Input |
 |----------------|-------------------|---------------|
 | Nonexistent table | All table-accepting tools | `table: "nonexistent_xyz"` |
-| Invalid SQL syntax | Core (`read_query`, `write_query`) | `query: "SELEKT * FROM"` |
-| Invalid column name | Stats, JSON, text, vector, geo | `column: "nonexistent_col"` |
 | Duplicate table/index | Core (`create_table`, `create_index`) | Create existing table |
-| Empty required array | Transactions | `statements: []` |
 | Missing required field | All tools with required params | Omit `table`, `query`, etc. |
 | **Zod validation (empty params)** | **Every tool with required params** | `{}` (empty object — must return handler error, not MCP `-32602` error) |
 | **Zod validation (wrong type)** | **Tools with typed params** | Pass string where number expected, etc. |
-| Invalid file path | Admin (CSV, backup, restore) | `filePath: "nonexistent_file.csv"` |
-| Out-of-bounds coordinates | Geo (distance, nearby) | `lat1: 91` (must be -90 to 90) |
 
 ### Split Schema Pattern Verification
 
@@ -181,8 +153,6 @@ During testing, use these naming conventions:
 
 - **Temporary tables**: Prefix with `temp_` (e.g., `temp_core_test`)
 - **Temporary indexes**: Prefix with `temp_idx_` (e.g., `temp_idx_name`)
-- **Temporary views**: Prefix with `temp_view_` (e.g., `temp_view_orders`)
-- **Temporary FTS tables**: Prefix with `temp_` (e.g., `temp_users_fts`)
 
 After testing, clean up:
 
@@ -191,96 +161,56 @@ After testing, clean up:
 SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'temp_%';
 
 -- Drop temp table
-DROP TABLE IF EXISTS temp_my_test_table;
+DROP TABLE IF EXISTS temp_core_test;
 ```
 
-If DROP fails due to a database lock, note the leftover tables and move on — they are inert and will be cleaned up on next database regeneration via `reset-database.ps1`.
-
 ---
 
-## Group Focus: core
+## Group Focus: core-schema
 
-> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Built-in Tools (3)
+### core-schema Group Tools (8)
 
-1. server_info
-2. server_health
-3. list_adapters
-
----
-
-### core Group Tools (14)
-
-4. sqlite_read_query
-5. sqlite_write_query
-6. sqlite_upsert
-7. sqlite_batch_insert
-8. sqlite_count
-9. sqlite_exists
-10. sqlite_truncate
-11. sqlite_list_tables
-12. sqlite_describe_table
-13. sqlite_create_table
-14. sqlite_drop_table
-15. sqlite_get_indexes
-16. sqlite_create_index
-17. sqlite_drop_index
-18. sqlite_execute_code
+1. sqlite_list_tables
+2. sqlite_describe_table
+3. sqlite_create_table
+4. sqlite_drop_table
+5. sqlite_get_indexes
+6. sqlite_create_index
+7. sqlite_drop_index
+8. sqlite_execute_code
 
 **Checklist:**
 
-1. `server_info` → verify server name, version, adapter info present
-2. `server_health` → verify healthy status
-3. `list_adapters` → verify at least one adapter listed
-4. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
-5. `sqlite_read_query({query: "SELECT name, price FROM test_products WHERE price > 500"})` → 1 result: `Laptop Pro 15` (1299.99)
-6. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
-7. `sqlite_list_tables` → verify `test_products`, `test_orders`, `test_jsonb_docs`, `test_articles`, `test_users`, `test_measurements`, `test_embeddings`, `test_locations`, `test_categories`, `test_events` all present
-8. `sqlite_describe_table({table: "test_products"})` → verify columns include `id` (INTEGER), `name` (TEXT), `price` (REAL), `category` (TEXT)
-9. `sqlite_get_indexes({table: "test_orders"})` → verify `idx_orders_status` and `idx_orders_date` present
-10. `sqlite_create_table({table: "temp_core_test", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}, {name: "value", type: "REAL"}]})` → success
-11. `sqlite_write_query({query: "INSERT INTO temp_core_test (id, name, value) VALUES (1, 'alpha', 10.5), (2, 'beta', 20.0)"})` → `{rowsAffected: 2}`
-12. `sqlite_read_query({query: "SELECT * FROM temp_core_test"})` → 2 rows
-13. `sqlite_create_index({table: "temp_core_test", columns: ["name"], indexName: "idx_temp_core_name"})` → success
-14. `sqlite_drop_table({table: "temp_core_test"})` → success
-15. `sqlite_count({table: "test_products"})` → `{count: 16}`
-16. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
-17. `sqlite_create_table({table: "temp_core_test2", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
-18. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 1, val: "a"}, {id: 2, val: "b"}]})` → `{rowsAffected: 2}`
-19. `sqlite_upsert({table: "temp_core_test2", data: {id: 1, val: "c"}, conflictColumns: ["id"]})` → `{rowsAffected: 1}`
-20. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
-21. `sqlite_drop_table({table: "temp_core_test2"})` → success
+1. `sqlite_list_tables({excludeSystemTables: true})` → verify `test_products`, `test_orders`, etc. all present, but `sqlite_master` or `sqlite_sequence` absent
+2. `sqlite_describe_table({table: "test_products"})` → verify columns include `id` (INTEGER), `name` (TEXT), `price` (REAL), `category` (TEXT)
+3. `sqlite_get_indexes({table: "test_orders", excludeSystemIndexes: true})` → verify `idx_orders_status` and `idx_orders_date` present
+4. `sqlite_create_table({table: "temp_core_test", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}, {name: "value", type: "REAL"}], ifNotExists: true})` → success
+5. `sqlite_create_table({table: "temp_core_test", columns: [{name: "id", type: "INTEGER", primaryKey: true}], ifNotExists: true})` → success (should not fail if table already exists due to ifNotExists)
+6. `sqlite_create_index({table: "temp_core_test", columns: ["name"], indexName: "idx_temp_core_name", unique: false, ifNotExists: true})` → success
+7. `sqlite_drop_index({indexName: "idx_temp_core_name", ifExists: true})` → success
+8. `sqlite_drop_table({table: "temp_core_test", ifExists: true})` → success
 
 **Code mode testing:**
 
-22. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
-23. `sqlite_execute_code({code: "const result = await sqlite.core.readQuery('SELECT COUNT(*) AS n FROM test_products'); return result;", readonly: true})` → `{rows: [{n: 16}]}` (verify readonly mode works)
-24. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
+9. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
+10. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
 
 **Error path testing:**
 
-🔴 25. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
-🔴 26. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
-🔴 27. `sqlite_get_indexes({table: "nonexistent_table_xyz"})` → report behavior (structured error or empty result)
-🔴 28. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
+🔴 11. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
+🔴 12. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Every response must be a handler error (`{success: false, error: "Validation error: ..."}`) — NOT a raw MCP error frame:
 
-🔴 29. `sqlite_read_query({})` → handler error
-🔴 30. `sqlite_write_query({})` → handler error
-🔴 31. `sqlite_create_table({})` → handler error
-🔴 32. `sqlite_describe_table({})` → handler error
-🔴 33. `sqlite_drop_table({})` → handler error
-🔴 34. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
-🔴 35. `sqlite_create_index({})` → handler error
-🔴 36. `sqlite_drop_index({})` → handler error
-🔴 37. `sqlite_execute_code({})` → handler error (has required `code` param)
-🔴 38. `sqlite_upsert({})` → handler error
-🔴 39. `sqlite_batch_insert({})` → handler error
-🔴 40. `sqlite_count({})` → handler error
-🔴 41. `sqlite_exists({})` → handler error
-🔴 42. `sqlite_truncate({})` → handler error
+🔴 13. `sqlite_create_table({})` → handler error
+🔴 14. `sqlite_describe_table({})` → handler error
+🔴 15. `sqlite_drop_table({})` → handler error
+🔴 16. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
+🔴 17. `sqlite_create_index({})` → handler error
+🔴 18. `sqlite_drop_index({})` → handler error
+🔴 19. `sqlite_execute_code({})` → handler error (has required `code` param)
 
 ---
 
@@ -306,19 +236,3 @@ If DROP fails due to a database lock, note the leftover tables and move on — t
 4. **Commit**: Stage and commit all changes — do NOT push
 5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
 6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, make the improvements.
-
----
-
-## Troubleshooting
-
-### Database is locked / file in use
-
-1. Check for Node.js processes using the database: `Get-CimInstance Win32_Process -Filter "Name = 'node.exe'"`
-2. If an MCP server is running, the database will be locked. The reset script handles this by overwriting in-place
-3. WAL/journal files (`test.db-wal`, `test.db-shm`) are normal — they are cleaned up on database close
-
-### Reset script fails
-
-1. Run with `-Verbose`: `.\reset-database.ps1 -Verbose`
-2. If `sqlite3` is not in PATH, the script falls back to Node.js with `better-sqlite3`
-3. Backup `.db` files left by `sqlite_backup` tests are cleaned up automatically

@@ -144,6 +144,15 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 
 ---
 
+## Phase 4.5: Gotcha Edge Cases (batched)
+
+57. `sqlite.json.each({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1", limit: 2})` → only 2 rows returned (not all array items) — `limit` param prevents row multiplication bloat (gotcha #6)
+58. `sqlite.json.groupObject({table: "test_jsonb_docs", keyColumn: "id", valueColumn: "json_extract(doc, '$.author')", allowExpressions: true})` → 6 key-value pairs with unique keys — verify behavior when keys are guaranteed unique (gotcha #7)
+59. `sqlite.json.normalizeColumn({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → verify explicit text output differs from default `preserve` mode (gotcha #9)
+60. `sqlite.json.groupArray({table: "test_jsonb_docs", valueColumn: "COUNT(*)", allowExpressions: true})` → report behavior — `allowExpressions` is designed for column extraction (e.g., `json_extract`), NOT aggregate functions (gotcha #8)
+
+---
+
 ## Phase 5: Multi-Step Workflow
 
 ### 5.1 — JSON ETL pipeline
@@ -170,6 +179,24 @@ const extract = await sqlite.json.extract({table: "test_jsonb_docs", column: "do
 const stats = await sqlite.stats.statsBasic({table: "test_products", column: "price"});
 return { jsonExtract: extract, priceStats: stats };
 ```
+
+---
+
+### 5.3 — Security scan positive detection
+
+```javascript
+const failures = [];
+await sqlite.json.createJsonCollection({tableName: "temp_cm_json_sec"});
+await sqlite.core.writeQuery({
+  query: `INSERT INTO temp_cm_json_sec (data) VALUES ('{"password": "secret123", "api_key": "sk-abc123", "query": "DROP TABLE users; --", "html": "<script>alert(1)</script>"}')`
+});
+const scan = await sqlite.json.securityScan({table: "temp_cm_json_sec", column: "data"});
+await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_json_sec");
+if (scan.riskLevel === "low") failures.push("expected riskLevel > low for malicious data");
+return { failures, success: failures.length === 0, riskLevel: scan.riskLevel };
+```
+
+Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`) and/or injection/XSS patterns.
 
 ---
 

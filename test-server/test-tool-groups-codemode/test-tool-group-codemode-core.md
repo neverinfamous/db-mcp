@@ -11,11 +11,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
-
-- All 14 core tools are fully WASM-compatible — no phases to skip.
-- **Phase 2.1** (top-level help): Expect fewer than 10 groups — `transactions` is not listed (0 tools registered in WASM). `totalMethods` will be ~125 instead of ~196.
-- **Phase 2.3** (all groups exist): The `transactions` group property exists on the `sqlite` object but returns 0 methods. Adjust the assertion to allow 0 methods for `transactions`.
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 14 core tools are fully WASM-compatible. No phases to skip or adjust.
 
 ## Reporting Format
 
@@ -98,165 +94,7 @@ return { failures, success: failures.length === 0 };
 
 ---
 
-## Phase 1: Sandbox Basics (6 tests)
-
-> These tests validate the Code Mode sandbox itself — run them first.
-
-### 1.1 — Simple return value
-
-```javascript
-return 42;
-```
-
-Expected: `{success: true, result: 42}`
-
-### 1.2 — Object return
-
-```javascript
-return { name: "test", values: [1, 2, 3] };
-```
-
-### 1.3 — Async/await support
-
-```javascript
-const result = await Promise.resolve("async works");
-return result;
-```
-
-### 1.4 — Runtime error handling
-
-```javascript
-const x = undefinedVariable;
-return x;
-```
-
-Expected: `{success: false, error: "...not defined..."}` — structured, not crash.
-
-### 1.5 — Empty code
-
-Call `sqlite_execute_code` with `code: ""`.
-Expected: `{success: false}` with validation error, not raw MCP error.
-
-### 1.6 — Empty params
-
-Call `sqlite_execute_code` with `{}` (no `code` param).
-Expected: structured handler error, NOT raw MCP `-32602`.
-
----
-
-## Phase 2: API Discoverability (6 tests)
-
-### 2.1 — Top-level help
-
-```javascript
-return await sqlite.help();
-```
-
-Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 125.
-
-### 2.2 — Group help (core)
-
-```javascript
-return await sqlite.core.help();
-```
-
-Expected: `{group: "core", methods: [...]}` with methods including `readQuery`, `writeQuery`, `listTables`, `describeTable`, `upsert`, `batchInsert`, `count`, `exists`, `truncate`.
-
-### 2.3 — All groups exist
-
-```javascript
-const groups = ["core", "json", "text", "stats", "vector", "admin", "transactions", "geo", "introspection", "migration"];
-const results = {};
-for (const g of groups) {
-  const h = await sqlite[g].help();
-  results[g] = h.methods.length;
-}
-return results;
-```
-
-Expected: All 10 groups return >0 methods. **WASM**: `transactions` returns 0 methods — adjust assertion to allow this.
-
-### 2.4 — Method aliases resolve
-
-```javascript
-const r1 = await sqlite.core.query("SELECT 1 AS num");
-const r2 = await sqlite.core.readQuery("SELECT 1 AS num");
-return { aliasResult: r1, canonicalResult: r2 };
-```
-
-Expected: Both return identical results.
-
-### 2.5 — Top-level convenience aliases
-
-```javascript
-const tables = await sqlite.listTables();
-return { success: true, tableCount: tables.tables?.length };
-```
-
-### 2.6 — Positional args
-
-```javascript
-return await sqlite.core.readQuery("SELECT name FROM test_products LIMIT 2");
-```
-
-Expected: Works with string positional arg (not just object).
-
----
-
-## Phase 3: Security & Error Handling (6 tests)
-
-### 3.1 — Blocked pattern (require)
-
-```javascript
-const fs = require("fs");
-return fs.readFileSync("/etc/passwd");
-```
-
-Expected: `{success: false, code: "CODEMODE_VALIDATION_FAILED"}`
-
-### 3.2 — Blocked pattern (process)
-
-```javascript
-return process.env;
-```
-
-Expected: `{success: false}` — blocked pattern or runtime error.
-
-### 3.3 — Blocked pattern (eval)
-
-```javascript
-return eval("1+1");
-```
-
-Expected: `{success: false, code: "CODEMODE_VALIDATION_FAILED"}`
-
-### 3.4 — Timeout enforcement
-
-```javascript
-while (true) {}
-```
-
-Call with `timeout: 2000`. Expected: `{success: false}` with timeout error within ~2s.
-
-### 3.5 — Invalid tool call via API
-
-```javascript
-return await sqlite.core.readQuery({ query: "SELECT * FROM nonexistent_xyz" });
-```
-
-Expected: Returns `{success: false, error: "..."}` — sandbox must not crash.
-
-### 3.6 — Undefined API group
-
-```javascript
-return await sqlite.nonexistent.help();
-```
-
-Expected: runtime error, not crash.
-
----
-
-## Phase 4: Core Group — Happy Paths (batched)
+## Phase 1: Core Group — Happy Paths (batched)
 
 > **Instructions**: Construct a single `sqlite_execute_code` script to execute the numbered items below. Use the `sqlite.*` namespace. Compare responses against expected results and push deviations to a `failures` array.
 
@@ -294,95 +132,61 @@ Expected: runtime error, not crash.
 21. `sqlite.core.dropIndex({indexName: "idx_temp_cm_name"})` → success
 22. `sqlite.core.dropTable({table: "temp_cm_core"})` → success
 
----
+**Parameter binding:**
 
-## Phase 5: Core Group — Domain Errors (batched)
+23. `sqlite.core.readQuery({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99)
+24. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → verify multi-parameter binding returns correct subset
 
-🔴 23. `sqlite.core.readQuery({query: "SELECT * FROM nonexistent_xyz"})` → `{success: false}`
-🔴 24. `sqlite.core.writeQuery("INSERT INTO nonexistent_xyz VALUES (1)")` → `{success: false}`
-🔴 25. `sqlite.core.describeTable("nonexistent_xyz")` → `{success: false}` mentioning table
-🔴 26. `sqlite.core.getIndexes({table: "nonexistent_xyz"})` → report behavior
-🔴 27. `sqlite.core.dropTable({table: "nonexistent_xyz", ifExists: false})` → `{success: false}`
-🔴 28. `sqlite.core.count({table: "nonexistent_xyz"})` → `{success: false}`
-🔴 29. `sqlite.core.exists({table: "nonexistent_xyz"})` → `{success: false}`
-🔴 30. `sqlite.core.upsert({table: "nonexistent_xyz", data: {id: 1}})` → `{success: false}`
-🔴 31. `sqlite.core.batchInsert({table: "nonexistent_xyz", rows: [{id: 1}]})` → `{success: false}`
-🔴 32. `sqlite.core.truncate({table: "nonexistent_xyz"})` → `{success: false}`
+**Boundary tests:**
+
+25. `sqlite.core.dropTable({table: "nonexistent_drop_test", ifExists: true})` → succeeds silently (ifExists prevents error on nonexistent table)
 
 ---
 
-## Phase 6: Core Group — Zod Validation (batched)
+## Phase 2: Core Group — Domain & Separation Errors (batched)
 
-🔴 33. `sqlite.core.readQuery({})` → `{success: false}` handler error
-🔴 34. `sqlite.core.writeQuery({})` → `{success: false}` handler error
-🔴 35. `sqlite.core.createTable({})` → `{success: false}` handler error
-🔴 36. `sqlite.core.describeTable({})` → `{success: false}` handler error
-🔴 37. `sqlite.core.dropTable({})` → `{success: false}` handler error
-🔴 38. `sqlite.core.createIndex({})` → `{success: false}` handler error
-🔴 39. `sqlite.core.dropIndex({})` → `{success: false}` handler error
-🔴 40. `sqlite.core.upsert({})` → `{success: false}` handler error
-🔴 41. `sqlite.core.batchInsert({})` → `{success: false}` handler error
-🔴 42. `sqlite.core.count({})` → `{success: false}` handler error
-🔴 43. `sqlite.core.exists({})` → `{success: false}` handler error
-🔴 44. `sqlite.core.truncate({})` → `{success: false}` handler error
+🔴 26. `sqlite.core.readQuery({query: "SELECT * FROM nonexistent_xyz"})` → `{success: false}`
+🔴 27. `sqlite.core.writeQuery("INSERT INTO nonexistent_xyz VALUES (1)")` → `{success: false}`
+🔴 28. `sqlite.core.describeTable("nonexistent_xyz")` → `{success: false}` mentioning table
+🔴 29. `sqlite.core.getIndexes({table: "nonexistent_xyz"})` → report behavior
+🔴 30. `sqlite.core.dropTable({table: "nonexistent_xyz", ifExists: false})` → `{success: false}`
+🔴 31. `sqlite.core.count({table: "nonexistent_xyz"})` → `{success: false}`
+🔴 32. `sqlite.core.exists({table: "nonexistent_xyz"})` → `{success: false}`
+🔴 33. `sqlite.core.upsert({table: "nonexistent_xyz", data: {id: 1}})` → `{success: false}`
+🔴 34. `sqlite.core.batchInsert({table: "nonexistent_xyz", rows: [{id: 1}]})` → `{success: false}`
+🔴 35. `sqlite.core.truncate({table: "nonexistent_xyz"})` → `{success: false}`
 
----
+**Write/read separation (gotcha #1):**
 
-## Phase 7: Readonly Mode (5 tests)
+🔴 36. `sqlite.core.writeQuery("SELECT * FROM test_products")` → `{success: false}` — writeQuery rejects SELECT statements
+🔴 37. `sqlite.core.readQuery("INSERT INTO test_products (name) VALUES ('bad')")` → `{success: false}` — readQuery rejects INSERT/UPDATE/DELETE
 
-All tests use `readonly: true` on the `sqlite_execute_code` call.
+**Boundary conditions:**
 
-### 7.1 — Read operations work
-
-```javascript
-// readonly: true
-return await sqlite.core.readQuery("SELECT COUNT(*) AS cnt FROM test_products");
-```
-
-Expected: `{success: true, rows: [{cnt: 16}]}`
-
-### 7.2 — Write operations blocked
-
-```javascript
-// readonly: true
-return await sqlite.core.writeQuery("INSERT INTO test_products (name) VALUES ('blocked')");
-```
-
-Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
-
-### 7.3 — Read methods still discoverable
-
-```javascript
-// readonly: true
-const help = await sqlite.core.help();
-return { hasWriteQuery: help.methods.includes("writeQuery"), methods: help.methods };
-```
-
-Expected: `writeQuery` still appears in help (for discoverability) but is guarded.
-
-### 7.4 — Create table blocked
-
-```javascript
-// readonly: true
-return await sqlite.core.writeQuery("CREATE TABLE temp_readonly_test (id INTEGER)");
-```
-
-Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
-
-### 7.5 — Stats read-only works
-
-```javascript
-// readonly: true
-return await sqlite.stats.statsBasic({ table: "test_products", column: "price" });
-```
-
-Expected: succeeds — stats tools are read-only.
+🔴 38. `sqlite.core.batchInsert({table: "test_products", rows: []})` → report behavior (empty rows array)
 
 ---
 
-## Phase 8: Multi-Step Workflow (3 tests)
+## Phase 3: Core Group — Zod Validation (batched)
 
-### 8.1 — ETL pipeline
+🔴 39. `sqlite.core.readQuery({})` → `{success: false}` handler error
+🔴 40. `sqlite.core.writeQuery({})` → `{success: false}` handler error
+🔴 41. `sqlite.core.createTable({})` → `{success: false}` handler error
+🔴 42. `sqlite.core.describeTable({})` → `{success: false}` handler error
+🔴 43. `sqlite.core.dropTable({})` → `{success: false}` handler error
+🔴 44. `sqlite.core.createIndex({})` → `{success: false}` handler error
+🔴 45. `sqlite.core.dropIndex({})` → `{success: false}` handler error
+🔴 46. `sqlite.core.upsert({})` → `{success: false}` handler error
+🔴 47. `sqlite.core.batchInsert({})` → `{success: false}` handler error
+🔴 48. `sqlite.core.count({})` → `{success: false}` handler error
+🔴 49. `sqlite.core.exists({})` → `{success: false}` handler error
+🔴 50. `sqlite.core.truncate({})` → `{success: false}` handler error
+
+---
+
+## Phase 4: Multi-Step Workflow (4 tests)
+
+### 4.1 — ETL pipeline
 
 ```javascript
 await sqlite.core.createTable({
@@ -398,7 +202,7 @@ await sqlite.core.dropTable({table: "temp_cm_etl", ifExists: true});
 return result;
 ```
 
-### 8.2 — Schema introspection + query
+### 4.2 — Schema introspection + query
 
 ```javascript
 const tables = await sqlite.core.listTables();
@@ -408,7 +212,7 @@ const sample = await sqlite.core.readQuery({ query: `SELECT * FROM ${first} LIMI
 return { table: first, columnCount: schema.columns?.length, sampleRows: sample.rows?.length };
 ```
 
-### 8.3 — Loop with accumulator
+### 4.3 — Loop with accumulator
 
 ```javascript
 const tables = await sqlite.core.listTables();
@@ -418,6 +222,28 @@ for (const t of tables.tables.slice(0, 5)) {
   counts[t.name] = r.count;
 }
 return counts;
+```
+
+### 4.4 — Schema mutation + introspection verification
+
+```javascript
+const failures = [];
+// Create table and verify it appears in introspection
+await sqlite.core.createTable({
+  table: "temp_cm_intro_check",
+  columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "data", type: "TEXT"}]
+});
+const snapshot = await sqlite.introspection.schemaSnapshot({compact: true});
+const found = snapshot.snapshot?.tables?.some(t => t.name === "temp_cm_intro_check");
+if (!found) failures.push("temp table not in schema snapshot after creation");
+
+// Drop table and verify it's gone
+await sqlite.core.dropTable({table: "temp_cm_intro_check"});
+const after = await sqlite.introspection.schemaSnapshot({compact: true});
+const stillThere = after.snapshot?.tables?.some(t => t.name === "temp_cm_intro_check");
+if (stillThere) failures.push("temp table still in snapshot after drop");
+
+return { failures, success: failures.length === 0 };
 ```
 
 ---

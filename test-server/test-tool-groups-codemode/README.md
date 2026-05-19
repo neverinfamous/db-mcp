@@ -1,6 +1,6 @@
 # db-mcp Code Mode Testing Suite
 
-**Directory Purpose**: This folder contains 10 self-contained, modular test prompts covering every tool group in `db-mcp`. These prompts are strictly designed for **Code Mode (`sqlite_execute_code`) validation only**.
+**Directory Purpose**: This folder contains 12 self-contained, modular test prompts covering every tool group in `db-mcp`. These prompts are strictly designed for **Code Mode (`sqlite_execute_code`) validation only**.
 
 ## Agent Instructions
 
@@ -75,7 +75,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` | Matches FTS5 | Matches FTS3 |
 | `sqlite.core.listTables()` / `sqlite.admin.listVirtualTables()` | `test_articles_fts` present and queryable | `test_articles_fts` may appear in sqlite_master but FTS5 queries fail |
 | `sqlite.help()` | `totalMethods` reflects 151 tools | `totalMethods` reflects 125 tools |
-| Phase 2.1 (core prompt) top-level help | 10 groups listed | `transactions` group shows 0 methods |
+| Phase 2.1 (sandbox prompt) top-level help | 10 groups listed | `transactions` group shows 0 methods |
 
 #### WASM-Specific Degradation Prompt
 
@@ -85,7 +85,8 @@ After completing the applicable prompts above, run `test-tool-group-codemode-was
 
 | File | Group | Tools |
 |------|-------|-------|
-| `test-tool-group-codemode-core.md` | core | 14 + sandbox/security/discoverability |
+| `test-tool-group-codemode-sandbox.md` | sandbox | Sandbox basics, API discoverability, security, readonly, state isolation |
+| `test-tool-group-codemode-core.md` | core | 14 |
 | `test-tool-group-codemode-json.md` | json | 24 |
 | `test-tool-group-codemode-text.md` | text | 19N/14W |
 | `test-tool-group-codemode-stats.md` | stats | 22N/16W |
@@ -97,7 +98,14 @@ After completing the applicable prompts above, run `test-tool-group-codemode-was
 | `test-tool-group-codemode-migration.md` | migration | 6 |
 | `test-tool-group-codemode-wasm-degradation.md` | cross-group | WASM-only graceful degradation |
 
-**Total**: 151 Native / 125 WASM tools across 10 groups + 1 WASM degradation prompt.
+**Total**: 151 Native / 125 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt.
+
+## Recommended Execution Order
+
+1. **`test-tool-group-codemode-sandbox.md`** — Run first. Validates the sandbox execution environment (return values, API discoverability, security blocks, readonly mode, state isolation). If this fails, subsequent prompts will not work correctly.
+2. **`test-tool-group-codemode-core.md`** — Run second. Tests the core tool group (read/write queries, tables, indexes, parameter binding).
+3. **Remaining group prompts** — Run in any order: `json`, `text`, `stats`, `vector`, `admin`, `transactions`, `geo`, `introspection`, `migration`.
+4. **`test-tool-group-codemode-wasm-degradation.md`** — Run last, WASM only. Validates graceful degradation patterns.
 
 ## Tool Groups Available
 

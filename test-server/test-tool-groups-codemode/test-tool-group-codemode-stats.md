@@ -141,6 +141,15 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
+## Phase 6.5: Gotcha Edge Cases (batched)
+
+53. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3})` → verify auto-exclusion of long-content columns (`body`, `description`, `notes`, etc.) from output when `selectColumns` is omitted (gotcha #13)
+54. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3, selectColumns: ["title", "body"]})` → explicit `selectColumns` overrides auto-exclusion — `body` should appear in results (gotcha #13)
+55. `sqlite.stats.detectBloat({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
+56. `sqlite.stats.detectSchemaRisks({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
+
+---
+
 ## Phase 7: Multi-Step Workflow
 
 ### 7.1 — Statistical analysis pipeline
@@ -164,6 +173,27 @@ return {
     topProducts: top.rows
   }
 };
+```
+
+---
+
+### 7.2 — Empty table boundary
+
+```javascript
+const failures = [];
+await sqlite.core.createTable({
+  table: "temp_cm_stats_empty",
+  columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "value", type: "REAL"}]
+});
+const basic = await sqlite.stats.statsBasic({table: "temp_cm_stats_empty", column: "value"});
+// Should return count: 0 or {success: false} — must not crash
+if (basic.success === false) {
+  // Structured error is acceptable for empty table
+} else if (basic.stats?.count !== 0) {
+  failures.push("expected count 0 for empty table, got: " + basic.stats?.count);
+}
+await sqlite.core.dropTable({table: "temp_cm_stats_empty"});
+return { failures, success: failures.length === 0, basicResult: basic };
 ```
 
 ---
