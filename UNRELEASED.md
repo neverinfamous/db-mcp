@@ -2,6 +2,8 @@
 
 ### Added
 
+- **Progress Notifications**: Added support for MCP long-running task progress notifications. Notifications are now correctly emitted during lengthy operations including `sqlite_backup` (admin/backup), `sqlite_migration_apply` (migration/apply), and `sqlite_virtual_analysis` (virtual/analysis), ensuring cross-server parity with postgres-mcp and mysql-mcp.
+
 - **Initialization SQL**: Added `initializationSql?: string[]` to `SqliteConfig` for SQLite connections, enabling per-connection session setup (e.g. `PRAGMA foreign_keys = ON;`). This executes exactly once when the adapter connects, satisfying the requirement for session-level guardrails across both Native (`better-sqlite3`) and WASM (`sql.js`) backends.
 - **Convenience Tools**: Added 5 new tools to the `core` group (`sqlite_upsert`, `sqlite_batch_insert`, `sqlite_count`, `sqlite_exists`, `sqlite_truncate`) to achieve complete feature parity with `postgres-mcp`. These tools are available in both Native and WASM backends, with `sqlite_upsert` utilizing SQLite's native `INSERT ON CONFLICT DO UPDATE` or `INSERT OR REPLACE` fallback.
 - **`sqlite_transaction_status`**: New read-only tool to check whether a SQLite transaction is currently active (native backend only). Returns `{status: "active" | "none", active: boolean}`. Ported from `pg_transaction_status` for cross-server parity.
@@ -34,6 +36,8 @@
 - **Vulnerability Remediation**: Resolved Vite, Hono, path-to-regexp, fast-uri, Picomatch, and ip-address vulnerabilities via `npm update` and transitive lockfile resolutions.
 
 ### Changed
+
+- **Zero-Suppression Architecture**: Finalized the Zod Schema Registry by completely purging all inline `z.object` definitions and Zod imports from the `src/adapters/sqlite/tools/` directory. All schemas (including `geo`, `fts`, `admin`, `json-operations`, and `vector`) and their associated coercion utilities (`coerceNumber`, `coerceUnit`, `coerceEnumValues`) are now strictly centralized within `src/adapters/sqlite/schemas/`, ensuring 100% modular decoupling and zero-suppression compliance.
 
 - **Dependency Updates**: Updated `typescript` to `^6.0.3`, `zod` to `^4.4.3`, `jose` to `^6.2.3`, `typescript-eslint` to `^8.59.3`, and bumped various packages including `@playwright/test`, `@types/node`, `@modelcontextprotocol/sdk`, `eslint`, `vitest`, `tsx` to `^4.22.1`, and `better-sqlite3`. Updated Dockerfile overrides for `diff` (9.0.0), `tar` (7.5.15), and `minimatch` (10.2.5). Updated GitHub Actions to their latest SHA-pinned versions (`docker/build-push-action`, `actions/upload-artifact`, `docker/login-action`, `github/codeql-action`, `actions/cache`, `actions/setup-node`).
 - **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, `test-server/tool-reference.md`, and `test-server/code-map.md` to reflect the expanded inventory (151 Native / 125 WASM tools), including the 5 new core convenience tools, JSON security scan, text sentiment, and FTS5 headline.
