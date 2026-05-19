@@ -1,55 +1,46 @@
-# Test Progress: JSON Tools (WASM Mode)
+# WASM JSON Tools Advanced Stress Testing (stats)
 
-## Overview
-- **Suite**: JSON Tools Advanced Stress Test
-- **Mode**: WASM (`--sqlite` / sql.js)
-- **Status**: ✅ Completed
-- **Coverage**: 24/24 JSON tools successfully verified via `sqlite_execute_code`.
+**Task:** Execute the `test-tools-advanced-stats.md` certification pass in WASM mode.
 
-## Tool Coverage Matrix
+## Results & Findings
 
-| Tool | Status | Notes |
-| --- | --- | --- |
-| `sqlite_json_valid` | ✅ | Verified implicitly via successful JSON parsing and manipulation |
-| `sqlite_json_extract` | ✅ | Deep nested, nonexistent paths, and non-existent keys correctly handled |
-| `sqlite_json_set` | ✅ | Handled updates successfully; no-op when WHERE clause misses |
-| `sqlite_json_remove` | ✅ | Successfully removed paths |
-| `sqlite_json_type` | ✅ | Correctly coerced arrays, objects, reals, and integers |
-| `sqlite_json_array_length` | ✅ | Counted standard and empty arrays accurately |
-| `sqlite_json_array_append` | ✅ | Standard JSON array append logic verified implicitly |
-| `sqlite_json_keys` | ✅ | Key extraction operational |
-| `sqlite_json_each` | ✅ | Table expansion for array structures functioning |
-| `sqlite_json_group_array` | ✅ | Aggregation operational |
-| `sqlite_json_group_object` | ✅ | Object aggregation operational |
-| `sqlite_json_pretty` | ✅ | JSON formatting functioning |
-| `sqlite_jsonb_convert` | ✅ | Conversion functions safely passing through JSON payloads |
-| `sqlite_json_storage_info` | ✅ | Storage metadata operational |
-| `sqlite_json_normalize_column` | ✅ | Normalization compacted and parsed JSON without data loss |
-| `sqlite_json_insert` | ✅ | Row-level insertion successfully parsed `data` param and created row |
-| `sqlite_json_update` | ✅ | Validated alongside set |
-| `sqlite_json_select` | ✅ | Selection and projection mapping cleanly |
-| `sqlite_json_query` | ✅ | Deep filtering against test data rows executed flawlessly |
-| `sqlite_json_validate_path` | ✅ | Empty paths and bad paths rejected cleanly |
-| `sqlite_json_merge` | ✅ | RFC 7396 merge-patch semantics confirmed (deep merge object, overwrite arrays) |
-| `sqlite_json_analyze_schema` | ✅ | Schema introspection operations functional |
-| `sqlite_create_json_collection` | ✅ | Successfully configured schema collection |
-| `sqlite_json_security_scan` | ✅ | Security sweeps identified injected XSS correctly (`<script>`) |
+### Category 1: Boundary Values & Empty States
+- **1.1 Empty Table Statistics:** ✅ Graceful handling of empty state (`count: 0`, `min/max: 0/null` or empty `buckets: []`). No crashes.
+- **1.2 Single-Row Statistics:** ✅ All tools correctly process $n=1$, including `statsRegression` gracefully failing with `Insufficient data ... (need at least 2 points, got 1)`.
+- **1.3 NULL-Heavy Data:** ✅ Correctly excludes NULL values and counts `count: 2`.
+- **1.4 Extreme Numeric Values:** ✅ Safely calculates aggregates over `+/-99999999.99`.
 
-## Key Findings
+### Category 2: Statistical Edge Cases
+- **2.1 Self-Correlation:** ✅ Computed self-correlation (id vs id) = `1.0`.
+- **2.2 Hypothesis:** ✅ Executed `ttest_one` on measurements returning extremely low `pValue` with `significant: true` for expected mean of 999.
+- **2.3 Outliers (IQR & Z-score):** ✅ Successfully computed bounds and found 0 outliers in `test_measurements`.
+- **2.4 Regression (Degree 2):** ✅ Calculated polynomial regression coefficients (`quadratic`, `linear`, `intercept`) safely.
 
-### ✅ Contractual Compliance
-1. **WASM Parity**: All JSON tools are 100% operational in WASM mode. The lack of native JSONB extensions does not prevent successful textual extraction, manipulation, and scanning.
-2. **Structural Errors**: Excellent adherence. E.g., querying nonexistent columns or paths returns high-fidelity, structured errors: `{"success":false,"error":"Query execution failed: malformed JSON","code":"MALFORMED_JSON","suggestion":"The JSON data is malformed..."}`.
-3. **Merge Patch Constraints**: Array replacements correctly overwrite (rather than append) compliant with RFC 7396.
+### Category 3: Anomaly Detection Stress
+- **3.1 detectAnomalies (mixed data):** ✅ Graceful output `riskLevel: low`, correctly handled.
+- **3.2 detectBloat:** ✅ Completed with summary: `No high-risk bloat detected across 0 tables` (WASM fallback correctly runs without crashing but only reads available generic counts).
+- **3.3 detectSchemaRisks:** ✅ Executed successfully.
 
-### 📦 Token Metrics
-- **Peak Payload**: A combined execution block of 20 JSON queries across 5 categories consumed **~1,267 tokens**.
-- The `metrics.tokenEstimate` tracked payloads effectively without breaking memory barriers.
+### Category 4: Window Functions
+- **Skipped** as per `[NATIVE ONLY]` directives.
 
-### 📝 Adjustments Made
-1. Corrected the expected seed data author in the `test-tools-advanced-json.md` prompt from "Alice" to "Updated Author" to reflect the actual schema state and pass correctly without reporting false positives on empty result sets.
-2. Updated the documentation note for `sqlite_json_insert` to clarify it uses the `data` parameter rather than `jsonString` in code mode execution.
+### Category 5: Error Message Quality
+- **5.1 Invalid Table:** ✅ `Table 'nonexistent_table_xyz' does not exist`
+- **5.2 Invalid Column:** ✅ `Column 'nonexistent_col' not found in table 'test_products'`
+- **5.3 Non-numeric column correlation:** ✅ `Column 'name' in table 'test_products' is not numeric (type: text). Correlation requires numeric columns.`
+- **5.4 Invalid Buckets (< 1):** ✅ `'buckets' must be at least 1 for table 'test_products'`
+
+### Category 6: WASM Boundary Verification
+- **6.1 Tool Exposure:** ✅ Confirmed via `sqlite.stats.help()` that all window function tools (`windowRowNumber`, `windowRank`, `windowLagLead`, `windowRunningTotal`, `windowMovingAvg`, `windowNtile`) are strictly omitted in WASM environments.
+- **6.2 Parity:** ✅ 16 generic stats tools are fully functionally aligned with the established output schemas.
+
+## Remediation & Actions Taken
+- Created test table using Code Mode with the `sqlite.migration.migrationApply` tool because `CREATE TABLE` and other DML statements are restricted from `sqlite.core.writeQuery` for safety.
+- Tracked metrics and cleaned up the `stress_stats_table`.
+- Zero factual errors or syntax bugs discovered in the prompt documentation!
+
+**Token Audit:** 
+- The most expensive payload block was Category 1 (Boundary tests) at **~727** token estimate.
 
 ## Next Steps
-- **Validation**: Instruct user to run the test suite, lint, and typecheck.
-- **Commit**: Ready to stage and commit.
+All test procedures successfully completed. Awaiting user verification/Vitest execution.
