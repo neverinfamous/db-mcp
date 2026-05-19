@@ -52,7 +52,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ## Phase 1: Graph Analysis — Happy Paths (batched)
 
-1. `sqlite.introspection.dependencyGraph({})` → nodes ≥ 2, edges includes `test_orders → test_products`
+1. `sqlite.introspection.dependencyGraph({})` → nodes ≥ 2, edges includes `test_orders → test_products` (using `from` and `to`)
 2. `sqlite.introspection.topologicalSort({})` → `test_products` before `test_orders` (FK dependency); `hasCycles: false`
 3. `sqlite.introspection.cascadeSimulator({table: "test_products"})` → affectedTables includes `test_orders`
 4. `sqlite.introspection.cascadeSimulator({table: "test_measurements"})` → affectedTables empty
@@ -74,8 +74,8 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 10. `sqlite.introspection.storageAnalysis({})` → `database.pageSize > 0`, `database.totalPages > 0`; tables array present
 11. `sqlite.introspection.indexAudit({})` → `findings` array; redundant index for `idx_orders_status`
 12. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty
-13. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan with `idx_orders_status_date`
-14. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan (no index on name)
+13. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan array contains `idx_orders_status_date`
+14. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan array contains `test_products` (no index on name)
 
 ---
 
@@ -167,8 +167,8 @@ for (const sql of queries) {
   const plan = await sqlite.introspection.queryPlan({ sql });
   plans.push({
     sql: sql.substring(0, 50),
-    fullScans: plan.analysis?.fullScans,
-    indexScans: plan.analysis?.indexScans,
+    fullScans: plan.analysis?.fullScans?.length,
+    indexScans: plan.analysis?.indexScans?.length,
   });
 }
 return plans;
