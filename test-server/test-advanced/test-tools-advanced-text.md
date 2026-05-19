@@ -112,25 +112,25 @@ Same minus the 5 FTS5 tools (items 15-19).
 
 ### Category 3: Text Transformation Edge Cases
 
-11. `sqlite.text.textNormalize({table: "test_products", column: "name", mode: "strip_accents"})` → `"Café Décor Light"` → `"Cafe Decor Light"` — verify ALL rows returned
-12. `sqlite.text.textNormalize({table: "test_products", column: "name", mode: "nfkc"})` → NFKC normalization
-13. `sqlite.text.textCase({table: "test_users", column: "username", mode: "upper"})` → verify 9 uppercased usernames
-14. `sqlite.text.textCase({table: "test_users", column: "username", mode: "lower"})` → idempotent (already lowercase)
-15. `sqlite.text.textSubstring({table: "test_users", column: "email", start: 1, length: 3})` → first 3 chars of each email
+11. `sqlite.text.normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `"Café Décor Light"` → `"Cafe Decor Light"` — verify ALL rows returned
+12. `sqlite.text.normalize({table: "test_products", column: "name", mode: "nfkc"})` → NFKC normalization
+13. `sqlite.text.case({table: "test_users", column: "username", mode: "upper"})` → verify 9 uppercased usernames
+14. `sqlite.text.case({table: "test_users", column: "username", mode: "lower"})` → idempotent (already lowercase)
+15. `sqlite.text.substring({table: "test_users", column: "email", start: 1, length: 3})` → first 3 chars of each email
 
 ---
 
 ### Category 4: Validation Patterns
 
-16. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "email"})` → expect all 9 valid
-17. `sqlite.text.textValidate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid/null counts
-18. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "custom", customPattern: "^.+@.+\\..{2,}$"})` → custom regex validation
+16. `sqlite.text.validate({table: "test_users", column: "email", pattern: "email"})` → expect all 9 valid
+17. `sqlite.text.validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid/null counts
+18. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom", customPattern: "^.+@.+\\..{2,}$"})` → custom regex validation
 
 ---
 
 ### Category 5: Sentiment Analysis Edge Cases
 
-19. `sqlite.text.textSentiment({table: "test_articles", column: "body"})` → sentiment scores for all 8 articles
+19. `sqlite.text.sentiment({table: "test_articles", column: "body"})` → sentiment scores for all 8 articles
 20. Create `stress_sentiment_test` with rows: `"I love this!"` (positive), `"This is terrible"` (negative), `""` (empty), `NULL` → report behavior for edge cases
 
 ---
@@ -159,7 +159,7 @@ For WASM testing only:
 
 29. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
 30. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
-31. `sqlite.text.textValidate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
+31. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
 32. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
 
 ---
