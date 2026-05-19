@@ -1,4 +1,4 @@
-import { validateColumnExists, validateNumericColumn, VALID_STAT_TYPES } from './helpers.js';
+import { validateColumnExists, validateNumericColumn, VALID_STAT_TYPES } from "./helpers.js";
 /**
  * Basic Statistics Tools
  *
@@ -30,7 +30,7 @@ import {
 } from "../../schemas/stats.js";
 import {
   BasicStatsSchema,
-  CountSchema,
+  StatsCountSchema,
   GroupByStatsSchema,
   HistogramSchema,
   PercentileSchema,
@@ -116,14 +116,14 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     name: "sqlite_stats_count",
     description: "Count rows, optionally distinct values in a column.",
     group: "stats",
-    inputSchema: CountSchema,
+    inputSchema: StatsCountSchema,
     outputSchema: StatsCountOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const aliasedParams = resolveAliases(params, { tableName: "table", columnName: "column" });
-        const input = CountSchema.parse(aliasedParams);
+        const input = StatsCountSchema.parse(aliasedParams);
 
         if (input.column) {
           await validateColumnExists(adapter, input.table, input.column);

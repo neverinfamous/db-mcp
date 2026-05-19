@@ -388,7 +388,7 @@ export const BasicStatsSchema = z.object({
   whereClause: z.string().optional(),
 });
 
-export const CountSchema = z.object({
+export const StatsCountSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table name"),
   column: z.string().optional().describe("Column to count (default: *)"),
@@ -542,7 +542,7 @@ export const HypothesisSchema = z.object({
 // =============================================================================
 
 export type BasicStatsInput = z.infer<typeof BasicStatsSchema>;
-export type CountInput = z.infer<typeof CountSchema>;
+export type StatsCountInput = z.infer<typeof StatsCountSchema>;
 export type GroupByStatsInput = z.infer<typeof GroupByStatsSchema>;
 export type HistogramInput = z.infer<typeof HistogramSchema>;
 export type PercentileInput = z.infer<typeof PercentileSchema>;
@@ -554,3 +554,83 @@ export type FrequencyInput = z.infer<typeof FrequencySchema>;
 export type OutlierInput = z.infer<typeof OutlierSchema>;
 export type RegressionInput = z.infer<typeof RegressionSchema>;
 export type HypothesisInput = z.infer<typeof HypothesisSchema>;
+
+
+// // const coerceNumber = (val: unknown): unknown =>
+//   typeof val === "string"
+//     ? isNaN(Number(val))
+//       ? undefined
+//       : Number(val)
+//     : val;
+
+export const DetectSchemaRisksSchema = z
+  .object({
+    limit: z.preprocess(
+      coerceNumber,
+      z
+        .number()
+        .optional()
+        .default(50)
+        .describe("Maximum tables to analyze (default: 50)"),
+    ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe("Exclude SpatiaLite system tables (default: true)"),
+    includeZeroRisk: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("Include tables with 0 risk score (default: false)"),
+  })
+  .default(() => ({ limit: 50, includeZeroRisk: false }));
+export type DetectSchemaRisksInput = z.infer<typeof DetectSchemaRisksSchema>;
+
+export const DetectAnomaliesSchema = z.object({
+  table: z.string().describe("Table name to analyze"),
+  columns: z
+    .array(z.string())
+    .optional()
+    .describe("Numeric columns to analyze (default: all numeric columns)"),
+  threshold: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(2.0)
+      .describe("Z-score threshold for flagging anomalies (default: 2.0)"),
+  ),
+  limit: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(50)
+      .describe("Maximum anomalies to return per column (default: 50)"),
+  ),
+  whereClause: z.string().optional().describe("Optional WHERE clause filter"),
+});
+export type DetectAnomaliesInput = z.infer<typeof DetectAnomaliesSchema>;
+
+export const DetectBloatSchema = z
+  .object({
+    limit: z.preprocess(
+      coerceNumber,
+      z
+        .number()
+        .optional()
+        .default(25)
+        .describe("Maximum tables to analyze (default: 25)"),
+    ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe("Exclude SpatiaLite system tables (default: true)"),
+    includeZeroRisk: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("Include tables with 0 risk score (default: false)"),
+  })
+  .default(() => ({ limit: 25, includeZeroRisk: false }));
+export type DetectBloatInput = z.infer<typeof DetectBloatSchema>;

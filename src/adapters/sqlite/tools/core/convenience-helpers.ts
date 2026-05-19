@@ -54,7 +54,4 @@ export function preprocessTableParams(input: unknown): unknown {
   return resolveAliases(input, { table: "tableName", name: "table" });
 }
 
-// =============================================================================
-// Upsert Schema
-// =============================================================================
 

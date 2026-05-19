@@ -5,12 +5,8 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import {
-  MIGRATIONS_TABLE,
-  MigrationStatusSchema,
-  MigrationStatusOutputSchema,
-  isMigrationTableInitialized,
-} from "../schemas.js";
+import { MigrationStatusSchema, MigrationStatusOutputSchema } from "../../../schemas/migration.js";
+import { MIGRATIONS_TABLE, isMigrationTableInitialized } from "../helpers.js";
 
 export function createMigrationStatusTool(
   adapter: SqliteAdapter,

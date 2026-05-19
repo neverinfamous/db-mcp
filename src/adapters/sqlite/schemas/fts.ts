@@ -76,3 +76,49 @@ export const FtsHeadlineOutputSchema = z
 // Input Schemas
 // =============================================================================
 
+
+const coerceEnumValues =
+  (allowed: readonly string[]) =>
+  (val: unknown): unknown =>
+    typeof val === "string" && allowed.includes(val) ? val : undefined;
+
+export const FtsCreateSchema = z.object({
+  tableName: z.string().optional().describe("Name of the FTS table to create"),
+  ftsTable: z.string().optional().describe("Name of the FTS table to create (alias)"),
+  sourceTable: z.string().describe("Source table to index"),
+  columns: z.array(z.string()).describe("Columns to include in the index"),
+  contentTable: z.string().optional().describe("Content table for external content FTS"),
+  tokenizer: z.preprocess(
+    coerceEnumValues(["unicode61", "ascii", "porter"]),
+    z.enum(["unicode61", "ascii", "porter"]).optional().default("unicode61"),
+  ),
+  createTriggers: z.boolean().optional().default(true).describe("Create triggers"),
+});
+export type FtsCreateInput = z.infer<typeof FtsCreateSchema>;
+
+export const FtsSearchSchema = z.object({
+  table: z.string().describe("FTS table name"),
+  query: z.string().describe("Full-text search query"),
+  columns: z.array(z.string()).optional().describe("Specific columns to search"),
+  limit: z.preprocess(
+    (val) => typeof val === "string" ? (isNaN(Number(val)) ? undefined : Number(val)) : val,
+    z.number().optional().default(100)
+  ),
+  highlight: z.boolean().optional().default(false).describe("Include highlighted snippets"),
+});
+export type FtsSearchInput = z.infer<typeof FtsSearchSchema>;
+
+export const FtsRebuildSchema = z.object({
+  table: z.string().describe("FTS table name to rebuild"),
+});
+export type FtsRebuildInput = z.infer<typeof FtsRebuildSchema>;
+
+export const FtsMatchInfoSchema = z.object({
+  table: z.string().describe("FTS table name"),
+  query: z.string().describe("Full-text search query"),
+  format: z.preprocess(
+    coerceEnumValues(["bm25", "rank"]),
+    z.enum(["bm25", "rank"]).optional().default("bm25"),
+  ),
+});
+export type FtsMatchInfoInput = z.infer<typeof FtsMatchInfoSchema>;

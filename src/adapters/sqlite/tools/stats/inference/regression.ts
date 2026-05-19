@@ -1,4 +1,4 @@
-import { validateColumnExists, validateNumericColumn } from '../helpers.js';
+import { validateColumnExists, validateNumericColumn } from "../helpers.js";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,

@@ -1,4 +1,4 @@
-import { validateColumnExists, isNumericType } from './helpers.js';
+import { validateColumnExists, isNumericType } from "./helpers.js";
 /**
  * SQLite Anomaly Detection Tools
  *
@@ -14,7 +14,7 @@ import { validateColumnExists, isNumericType } from './helpers.js';
  *   - toNum, riskFromScore, RiskLevel
  */
 
-import { z } from "zod";
+
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -25,6 +25,8 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   StatsDetectAnomaliesOutputSchema,
   StatsDetectBloatOutputSchema,
+  DetectAnomaliesSchema,
+  DetectBloatSchema,
 } from "../../schemas/stats.js";
 import { } from "../../schemas/stats.js";
 import { isSpatialiteSystemTable } from "../core/tables.js";
@@ -49,63 +51,7 @@ export function riskFromScore(score: number): RiskLevel {
 // Input Schema Helpers
 // =============================================================================
 
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
 
-// =============================================================================
-// Schemas
-// =============================================================================
-
-const DetectAnomaliesSchema = z.object({
-  table: z.string().describe("Table name to analyze"),
-  columns: z
-    .array(z.string())
-    .optional()
-    .describe("Numeric columns to analyze (default: all numeric columns)"),
-  threshold: z.preprocess(
-    coerceNumber,
-    z
-      .number()
-      .optional()
-      .default(2.0)
-      .describe("Z-score threshold for flagging anomalies (default: 2.0)"),
-  ),
-  limit: z.preprocess(
-    coerceNumber,
-    z
-      .number()
-      .optional()
-      .default(50)
-      .describe("Maximum anomalies to return per column (default: 50)"),
-  ),
-  whereClause: z.string().optional().describe("Optional WHERE clause filter"),
-});
-
-const DetectBloatSchema = z
-  .object({
-    limit: z.preprocess(
-      coerceNumber,
-      z
-        .number()
-        .optional()
-        .default(25)
-        .describe("Maximum tables to analyze (default: 25)"),
-    ),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe("Exclude SpatiaLite system tables (default: true)"),
-    includeZeroRisk: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe("Include tables with 0 risk score (default: false)"),
-  })
-  .default(() => ({ limit: 25, includeZeroRisk: false }));
 
 // =============================================================================
 // Helper: get PRAGMA value

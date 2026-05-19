@@ -348,3 +348,218 @@ export const QueryPlanOutputSchema = z
 // Input Schemas
 // =============================================================================
 
+
+
+const VALID_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
+
+/** Filter array to only valid section values; pass non-arrays through for Zod to reject */
+const coerceSections = (val: unknown): unknown =>
+  Array.isArray(val)
+    ? val.filter(
+        (v) =>
+          typeof v === "string" &&
+          (VALID_SECTIONS as readonly string[]).includes(v),
+      )
+    : val;
+
+const VALID_CHECKS = [
+  "missing_pk",
+  "missing_not_null",
+  "unindexed_fk",
+  "missing_fk",
+] as const;
+
+/** Filter array to only valid check values; pass non-arrays through for Zod to reject */
+const coerceChecks = (val: unknown): unknown =>
+  Array.isArray(val)
+    ? val.filter(
+        (v) =>
+          typeof v === "string" &&
+          (VALID_CHECKS as readonly string[]).includes(v),
+      )
+    : val;
+
+const VALID_DIRECTIONS = ["create", "drop"] as const;
+const coerceDirection = (val: unknown): unknown =>
+  typeof val === "string" &&
+  (VALID_DIRECTIONS as readonly string[]).includes(val)
+    ? val
+    : typeof val === "string"
+      ? undefined
+      : val;
+
+const VALID_OPERATIONS = ["DELETE", "DROP", "TRUNCATE"] as const;
+const coerceOperation = (val: unknown): unknown =>
+  typeof val === "string" &&
+  (VALID_OPERATIONS as readonly string[]).includes(val)
+    ? val
+    : typeof val === "string"
+      ? undefined
+      : val;
+
+export const StorageAnalysisSchema = z
+  .object({
+    includeTableDetails: z
+      .boolean()
+      .optional()
+      .describe("Include per-table size breakdown (default: true)"),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from per-table breakdown (default: true)",
+      ),
+    limit: z
+      .number()
+      .min(1)
+      .max(500)
+      .optional()
+      .describe("Maximum number of tables to include (default: 50)"),
+  })
+  .default({});
+export type StorageAnalysisInput = z.infer<typeof StorageAnalysisSchema>;
+
+export const QueryPlanSchema = z.object({
+  sql: z.string().describe("SQL query to analyze (SELECT only)"),
+});
+export type QueryPlanInput = z.infer<typeof QueryPlanSchema>;
+
+export const IndexAuditSchema = z
+  .object({
+    table: z
+      .string()
+      .optional()
+      .describe("Optional table name to audit (default: all tables)"),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from audit findings (default: true)",
+      ),
+    minSeverity: z
+      .enum(["info", "warning", "error"])
+      .optional()
+      .describe(
+        "Minimum severity to include in findings (default: all). Reduces payload for large databases.",
+      ),
+  })
+  .default({});
+export type IndexAuditInput = z.infer<typeof IndexAuditSchema>;
+
+export const SchemaSnapshotSchema = z
+  .object({
+    sections: z
+      .preprocess(
+        coerceSections,
+        z.array(z.enum(["tables", "views", "indexes", "triggers"])).optional(),
+      )
+      .describe("Specific sections to include (default: all)"),
+    compact: z
+      .boolean()
+      .optional()
+      .describe(
+        "Omit column details from tables section for reduced payload (default: false)",
+      ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables, views, indexes, and triggers (default: true)",
+      ),
+  })
+  .default({});
+export type SchemaSnapshotInput = z.infer<typeof SchemaSnapshotSchema>;
+
+export const MigrationRisksSchema = z.object({
+  statements: z
+    .array(z.string())
+    .describe("Array of DDL statements to analyze for risks"),
+});
+export type MigrationRisksInput = z.infer<typeof MigrationRisksSchema>;
+
+export const ConstraintAnalysisSchema = z
+  .object({
+    table: z
+      .string()
+      .optional()
+      .describe("Analyze constraints for a specific table only"),
+    checks: z
+      .preprocess(
+        coerceChecks,
+        z
+          .array(
+            z.enum([
+              "missing_pk",
+              "missing_not_null",
+              "unindexed_fk",
+              "missing_fk",
+            ]),
+          )
+          .optional(),
+      )
+      .describe("Specific checks to run (default: all)"),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from constraint analysis (default: true)",
+      ),
+  })
+  .default({});
+export type ConstraintAnalysisInput = z.infer<typeof ConstraintAnalysisSchema>;
+
+export const DependencyGraphSchema = z
+  .object({
+    includeRowCounts: z
+      .boolean()
+      .optional()
+      .describe("Include row counts per table (default: true)"),
+    nodesOnly: z
+      .boolean()
+      .optional()
+      .describe(
+        "Return only nodes without edges for a lightweight response (default: false)",
+      ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from results (default: true)",
+      ),
+  })
+  .default({});
+export type DependencyGraphInput = z.infer<typeof DependencyGraphSchema>;
+
+export const TopologicalSortSchema = z
+  .object({
+    direction: z
+      .preprocess(coerceDirection, z.enum(["create", "drop"]).optional())
+      .describe(
+        "Sort direction: 'create' = dependencies first, 'drop' = dependents first (default: create)",
+      ),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables from results (default: true)",
+      ),
+  })
+  .default({});
+export type TopologicalSortInput = z.infer<typeof TopologicalSortSchema>;
+
+export const CascadeSimulatorSchema = z.object({
+  table: z.string().describe("Table name to simulate deletion from"),
+  operation: z
+    .preprocess(
+      coerceOperation,
+      z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
+    )
+    .describe("Operation to simulate (default: DELETE)"),
+  compact: z
+    .boolean()
+    .optional()
+    .describe(
+      "Omit path arrays from affected entries to reduce payload (default: false)",
+    ),
+});
+export type CascadeSimulatorInput = z.infer<typeof CascadeSimulatorSchema>;

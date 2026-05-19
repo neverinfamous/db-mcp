@@ -12,34 +12,14 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { StorageAnalysisOutputSchema } from "../../../schemas/introspection.js";
+import { StorageAnalysisOutputSchema, StorageAnalysisSchema } from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
 
-const StorageAnalysisSchema = z
-  .object({
-    includeTableDetails: z
-      .boolean()
-      .optional()
-      .describe("Include per-table size breakdown (default: true)"),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe(
-        "Exclude SpatiaLite system tables from per-table breakdown (default: true)",
-      ),
-    limit: z
-      .number()
-      .min(1)
-      .max(500)
-      .optional()
-      .describe("Maximum number of tables to include (default: 50)"),
-  })
-  .default({});
+
 
 // =============================================================================
 // Helper: get pragma value as string

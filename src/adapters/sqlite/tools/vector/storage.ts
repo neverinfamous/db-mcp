@@ -27,7 +27,7 @@ import {
   VectorCreateTableSchema,
   VectorBatchStoreSchema,
   VectorDeleteSchema,
-} from "./schemas.js";
+} from "../../schemas/vector.js";
 
 /**
  * Create a table for vector storage

@@ -12,8 +12,7 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { QueryPlanOutputSchema } from "../../../schemas/introspection.js";
+import { QueryPlanOutputSchema, QueryPlanSchema } from "../../../schemas/introspection.js";
 
 // Synthetic EXPLAIN table names that are not real tables
 const SYNTHETIC_TABLES = new Set([
@@ -27,9 +26,7 @@ const SYNTHETIC_TABLES = new Set([
 // Input Schema
 // =============================================================================
 
-const QueryPlanSchema = z.object({
-  sql: z.string().describe("SQL query to analyze (SELECT only)"),
-});
+
 
 // =============================================================================
 // Tool Creator

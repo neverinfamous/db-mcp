@@ -14,91 +14,16 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
 import {
   DependencyGraphOutputSchema,
   TopologicalSortOutputSchema,
   CascadeSimulatorOutputSchema,
+  DependencyGraphSchema,
+  TopologicalSortSchema,
+  CascadeSimulatorSchema,
 } from "../../../schemas/introspection.js";
 
-// =============================================================================
-// Enum Coercers (prevent raw MCP -32602 from z.enum validation)
-// =============================================================================
 
-const VALID_DIRECTIONS = ["create", "drop"] as const;
-const coerceDirection = (val: unknown): unknown =>
-  typeof val === "string" &&
-  (VALID_DIRECTIONS as readonly string[]).includes(val)
-    ? val
-    : typeof val === "string"
-      ? undefined
-      : val;
-
-const VALID_OPERATIONS = ["DELETE", "DROP", "TRUNCATE"] as const;
-const coerceOperation = (val: unknown): unknown =>
-  typeof val === "string" &&
-  (VALID_OPERATIONS as readonly string[]).includes(val)
-    ? val
-    : typeof val === "string"
-      ? undefined
-      : val;
-
-// =============================================================================
-// Input Schemas
-// =============================================================================
-
-const DependencyGraphSchema = z
-  .object({
-    includeRowCounts: z
-      .boolean()
-      .optional()
-      .describe("Include row counts per table (default: true)"),
-    nodesOnly: z
-      .boolean()
-      .optional()
-      .describe(
-        "Return only nodes without edges for a lightweight response (default: false)",
-      ),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe(
-        "Exclude SpatiaLite system tables from results (default: true)",
-      ),
-  })
-  .default({});
-
-const TopologicalSortSchema = z
-  .object({
-    direction: z
-      .preprocess(coerceDirection, z.enum(["create", "drop"]).optional())
-      .describe(
-        "Sort direction: 'create' = dependencies first, 'drop' = dependents first (default: create)",
-      ),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe(
-        "Exclude SpatiaLite system tables from results (default: true)",
-      ),
-  })
-  .default({});
-
-const CascadeSimulatorSchema = z.object({
-  table: z.string().describe("Table name to simulate deletion from"),
-  operation: z
-    .preprocess(
-      coerceOperation,
-      z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
-    )
-    .describe("Operation to simulate (default: DELETE)"),
-  compact: z
-    .boolean()
-    .optional()
-    .describe(
-      "Omit path arrays from affected entries to reduce payload (default: false)",
-    ),
-});
 
 // =============================================================================
 // Tool Creators

@@ -1,4 +1,4 @@
-import { VALID_TEXT_CASE_MODES, VALID_TRIM_MODES, validateColumnExists, validateColumnsExist } from './helpers.js';
+import { VALID_TEXT_CASE_MODES, VALID_TRIM_MODES, validateColumnExists, validateColumnsExist } from "./helpers.js";
 /**
  * Text Formatting Tools
  *

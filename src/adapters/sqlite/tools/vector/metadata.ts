@@ -1,5 +1,5 @@
-import { euclideanDistance, dotProduct, cosineSimilarity } from './helpers.js';
-import { normalizeVector, parseVector } from './helpers.js';
+import { euclideanDistance, dotProduct, cosineSimilarity } from "./helpers.js";
+import { normalizeVector, parseVector } from "./helpers.js";
 /**
  * Vector Metadata Tool Implementations
  *
@@ -27,7 +27,7 @@ import {
   VectorCountSchema,
   VectorStatsSchema,
   VectorDimensionsSchema,
-} from "./schemas.js";
+} from "../../schemas/vector.js";
 
 /**
  * Count vectors

@@ -5,15 +5,8 @@ import type {
 } from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import {
-  MIGRATIONS_TABLE,
-  MigrationRecordSchema,
-  MigrationRecordValidationSchema,
-  MigrationRecordOutputSchema,
-  hashMigration,
-  isMigrationTableInitialized,
-  toMigrationRecord,
-} from "../schemas.js";
+import { MigrationRecordSchema, MigrationRecordValidationSchema, MigrationRecordOutputSchema } from "../../../schemas/migration.js";
+import { MIGRATIONS_TABLE, hashMigration, isMigrationTableInitialized, toMigrationRecord } from "../helpers.js";
 
 export function createMigrationRecordTool(
   adapter: SqliteAdapter,

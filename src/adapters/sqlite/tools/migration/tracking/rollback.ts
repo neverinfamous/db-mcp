@@ -5,14 +5,8 @@ import type {
 } from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import {
-  MIGRATIONS_TABLE,
-  MigrationRollbackSchema,
-  MigrationRollbackValidationSchema,
-  MigrationRollbackOutputSchema,
-  isMigrationTableInitialized,
-  toMigrationRecord,
-} from "../schemas.js";
+import { MigrationRollbackSchema, MigrationRollbackValidationSchema, MigrationRollbackOutputSchema } from "../../../schemas/migration.js";
+import { MIGRATIONS_TABLE, isMigrationTableInitialized, toMigrationRecord } from "../helpers.js";
 
 export function createMigrationRollbackTool(
   adapter: SqliteAdapter,

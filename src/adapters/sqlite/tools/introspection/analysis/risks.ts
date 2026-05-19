@@ -11,18 +11,13 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { MigrationRisksOutputSchema } from "../../../schemas/introspection.js";
+import { MigrationRisksOutputSchema, MigrationRisksSchema } from "../../../schemas/introspection.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
 
-const MigrationRisksSchema = z.object({
-  statements: z
-    .array(z.string())
-    .describe("Array of DDL statements to analyze for risks"),
-});
+
 
 // =============================================================================
 // Tool Creator

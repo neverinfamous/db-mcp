@@ -12,64 +12,14 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { ConstraintAnalysisOutputSchema } from "../../../schemas/introspection.js";
+import { ConstraintAnalysisOutputSchema, ConstraintAnalysisSchema } from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Enum Coercers (prevent raw MCP -32602 from z.enum validation)
 // =============================================================================
 
-const VALID_CHECKS = [
-  "missing_pk",
-  "missing_not_null",
-  "unindexed_fk",
-  "missing_fk",
-] as const;
 
-/** Filter array to only valid check values; pass non-arrays through for Zod to reject */
-const coerceChecks = (val: unknown): unknown =>
-  Array.isArray(val)
-    ? val.filter(
-        (v) =>
-          typeof v === "string" &&
-          (VALID_CHECKS as readonly string[]).includes(v),
-      )
-    : val;
-
-// =============================================================================
-// Schemas
-// =============================================================================
-
-const ConstraintAnalysisSchema = z
-  .object({
-    table: z
-      .string()
-      .optional()
-      .describe("Analyze constraints for a specific table only"),
-    checks: z
-      .preprocess(
-        coerceChecks,
-        z
-          .array(
-            z.enum([
-              "missing_pk",
-              "missing_not_null",
-              "unindexed_fk",
-              "missing_fk",
-            ]),
-          )
-          .optional(),
-      )
-      .describe("Specific checks to run (default: all)"),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe(
-        "Exclude SpatiaLite system tables from constraint analysis (default: true)",
-      ),
-  })
-  .default({});
 
 // =============================================================================
 // Tool Creator

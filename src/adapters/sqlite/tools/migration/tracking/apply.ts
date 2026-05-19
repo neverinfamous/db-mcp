@@ -5,15 +5,8 @@ import type {
 } from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import {
-  MIGRATIONS_TABLE,
-  MigrationApplySchema,
-  MigrationApplyValidationSchema,
-  MigrationApplyOutputSchema,
-  hashMigration,
-  isMigrationTableInitialized,
-  toMigrationRecord,
-} from "../schemas.js";
+import { MigrationApplySchema, MigrationApplyValidationSchema, MigrationApplyOutputSchema } from "../../../schemas/migration.js";
+import { MIGRATIONS_TABLE, hashMigration, isMigrationTableInitialized, toMigrationRecord } from "../helpers.js";
 import { sendProgress, buildProgressContext } from "../../../../../utils/progress-utils.js";
 
 export function createMigrationApplyTool(

@@ -1,4 +1,4 @@
-import { VALID_PHONETIC_ALGORITHMS, VALID_SEARCH_TECHNIQUES, validateColumnExists } from './helpers.js';
+import { VALID_PHONETIC_ALGORITHMS, VALID_SEARCH_TECHNIQUES, validateColumnExists } from "./helpers.js";
 /**
  * Text Search and Analysis Tools
  *

@@ -1,4 +1,4 @@
-import { VALID_NORMALIZE_MODES, VALID_VALIDATE_PATTERNS, validateColumnExists } from './helpers.js';
+import { VALID_NORMALIZE_MODES, VALID_VALIDATE_PATTERNS, validateColumnExists } from "./helpers.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,

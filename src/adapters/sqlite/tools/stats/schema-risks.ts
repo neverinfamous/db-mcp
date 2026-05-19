@@ -10,7 +10,7 @@
  *   - sqlite_stats_detect_schema_risks: multi-factor schema health scoring
  */
 
-import { z } from "zod";
+
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -18,7 +18,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import { StatsDetectSchemaRisksOutputSchema } from "../../schemas/stats.js";
+import { StatsDetectSchemaRisksOutputSchema, DetectSchemaRisksSchema } from "../../schemas/stats.js";
 import { toNum, riskFromScore } from "./anomaly-detection.js";
 import type { RiskLevel } from "./anomaly-detection.js";
 import { isSpatialiteSystemTable } from "../core/tables.js";
@@ -27,34 +27,7 @@ import { isSpatialiteSystemTable } from "../core/tables.js";
 // Schema
 // =============================================================================
 
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
 
-const DetectSchemaRisksSchema = z
-  .object({
-    limit: z.preprocess(
-      coerceNumber,
-      z
-        .number()
-        .optional()
-        .default(50)
-        .describe("Maximum tables to analyze (default: 50)"),
-    ),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe("Exclude SpatiaLite system tables (default: true)"),
-    includeZeroRisk: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe("Include tables with 0 risk score (default: false)"),
-  })
-  .default(() => ({ limit: 50, includeZeroRisk: false }));
 
 // =============================================================================
 // Tool Creator

@@ -5,7 +5,6 @@
  * 4 tools total.
  */
 
-import { z } from "zod";
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
@@ -13,12 +12,16 @@ import { sanitizeIdentifier } from "../../../utils/index.js";
 import { formatHandlerError, ValidationError } from "../../../utils/errors/index.js";
 import { validateTableExists } from "./column-validation.js";
 import {
+  FtsCreateSchema,
+  FtsSearchSchema,
+  FtsRebuildSchema,
+  FtsMatchInfoSchema,
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
   FtsRebuildOutputSchema,
   FtsHeadlineOutputSchema,
 } from "../schemas/fts.js";
-import { FtsHeadlineSchema } from "./text/helpers.js";
+import { FtsHeadlineSchema } from "../schemas/text.js";
 
 /**
  * Build error response for FTS5 unavailability in WASM mode
@@ -78,75 +81,6 @@ function buildFts5SearchUnavailableError(): {
   };
 }
 
-/**
- * Create a coercer for optional enum params with defaults.
- * Returns `undefined` for any value NOT in the allowed set
- * (including empty strings), so `.optional().default()` kicks in.
- * Prevents raw MCP -32602 for invalid enum values.
- */
-const coerceEnumValues =
-  (allowed: readonly string[]) =>
-  (val: unknown): unknown =>
-    typeof val === "string" && allowed.includes(val) ? val : undefined;
-
-// FTS schemas
-const FtsCreateSchema = z.object({
-  tableName: z.string().optional().describe("Name of the FTS table to create"),
-  ftsTable: z.string().optional().describe("Name of the FTS table to create (alias)"),
-  sourceTable: z.string().describe("Source table to index"),
-  columns: z.array(z.string()).describe("Columns to include in the index"),
-  contentTable: z
-    .string()
-    .optional()
-    .describe("Content table for external content FTS"),
-  tokenizer: z.preprocess(
-    coerceEnumValues(["unicode61", "ascii", "porter"]),
-    z.enum(["unicode61", "ascii", "porter"]).optional().default("unicode61"),
-  ),
-  createTriggers: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe(
-      "Create INSERT/UPDATE/DELETE triggers for auto-sync (only for external content tables)",
-    ),
-});
-
-const FtsSearchSchema = z.object({
-  table: z.string().describe("FTS table name"),
-  query: z.string().describe("Full-text search query"),
-  columns: z
-    .array(z.string())
-    .optional()
-    .describe("Specific columns to search"),
-  limit: z.preprocess(
-    (val) =>
-      typeof val === "string"
-        ? isNaN(Number(val))
-          ? undefined
-          : Number(val)
-        : val,
-    z.number().optional().default(100),
-  ),
-  highlight: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("Include highlighted snippets"),
-});
-
-const FtsRebuildSchema = z.object({
-  table: z.string().describe("FTS table name to rebuild"),
-});
-
-const FtsMatchInfoSchema = z.object({
-  table: z.string().describe("FTS table name"),
-  query: z.string().describe("Full-text search query"),
-  format: z.preprocess(
-    coerceEnumValues(["bm25", "rank"]),
-    z.enum(["bm25", "rank"]).optional().default("bm25"),
-  ),
-});
 
 /**
  * Get all FTS tools

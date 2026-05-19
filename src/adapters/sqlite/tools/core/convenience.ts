@@ -11,14 +11,8 @@ import { readOnly, write } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { resolveAliases } from "../../types.js";
 
-import {
-  validateTableExists,
-  UpsertSchema,
-  BatchInsertSchema,
-  CountSchema,
-  ExistsSchema,
-  TruncateSchema,
-} from "./convenience-schemas.js";
+import { UpsertSchema, BatchInsertSchema, CountSchema, ExistsSchema, TruncateSchema } from "../../schemas/core.js";
+import { validateTableExists } from "./convenience-schemas.js";
 
 import {
   WriteQueryOutputSchema,
