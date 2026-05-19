@@ -17,6 +17,8 @@
 
 **Step 2:** Please conduct an exhaustive test of the **text** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
 
+**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+
 **Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore them.
 
 ## Reporting Format

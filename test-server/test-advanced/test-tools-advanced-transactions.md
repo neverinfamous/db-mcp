@@ -7,6 +7,8 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+
 > **Note:** All 8 transaction tools are **`[NATIVE ONLY]`** — they are not available in WASM mode.
 
 ## WASM Mode

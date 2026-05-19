@@ -10,6 +10,8 @@
 
 **Step 2:** Validate that WASM-unavailable features degrade gracefully with structured errors, not crashes or raw MCP exceptions.
 
+**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+
 ## Purpose
 
 This prompt validates the **graceful degradation contract**: tools that are registered in WASM mode but rely on unavailable Native extensions must return structured `{success: false, error: "..."}` responses. It also validates that the Code Mode API bridge correctly reflects the reduced WASM tool surface.

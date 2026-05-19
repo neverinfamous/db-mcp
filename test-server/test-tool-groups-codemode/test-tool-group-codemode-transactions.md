@@ -7,6 +7,8 @@
 
 **Step 2:** Conduct an exhaustive test of the **transactions** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+
 > **Note:** All 8 transaction tools are **`[NATIVE ONLY]`** — they are not available in WASM mode.
 
 ## WASM Mode

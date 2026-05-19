@@ -7,6 +7,8 @@
 
 **Step 2:** Conduct an exhaustive test of the **migration** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+
 > **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and modifies schema. Always reset after.
 
 ## WASM Mode

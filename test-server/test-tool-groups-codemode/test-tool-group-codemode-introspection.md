@@ -7,6 +7,8 @@
 
 **Step 2:** Conduct an exhaustive test of the **introspection** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+
 ## WASM Mode
 
 > When testing against a **WASM backend** (`--sqlite` / sql.js): All 9 introspection tools are fully WASM-compatible. No phases to skip.

@@ -7,6 +7,8 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+
 > **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and may ALTER/CREATE/DROP tables. Always reset after.
 
 ## WASM Mode
