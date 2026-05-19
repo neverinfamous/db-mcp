@@ -37,7 +37,7 @@ export const ExecuteCodeSchema = z.object({
       .optional()
       .default(30000)
       .describe(
-        "Execution timeout in milliseconds (1000-30000, default: 30000)",
+        "Execution timeout in milliseconds (500-30000, default: 30000)",
       ),
   ),
   readonly: z

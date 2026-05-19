@@ -93,14 +93,14 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         const { code, timeout: timeoutMs, readonly: isReadonly } = parsed;
 
         // Validate timeout range (handler-level since schema refinements leak)
-        if (timeoutMs < 1000 || timeoutMs > 30000) {
+        if (timeoutMs < 500 || timeoutMs > 30000) {
           return {
             success: false,
-            error: `Timeout must be between 1000 and 30000 ms, got ${timeoutMs}`,
+            error: `Timeout must be between 500 and 30000 ms, got ${timeoutMs}`,
             code: "CODEMODE_VALIDATION_FAILED",
             category: "validation",
             suggestion:
-              "Provide a timeout value between 1000 and 30000 milliseconds.",
+              "Provide a timeout value between 500 and 30000 milliseconds.",
             recoverable: false,
             metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
           };

@@ -119,7 +119,7 @@ describe("sqlite_execute_code handler - validation", () => {
 
     expect(result.success).toBe(false);
     expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
-    expect(String(result.error)).toContain("between 1000 and 30000");
+    expect(String(result.error)).toContain("between 500 and 30000");
   });
 
   it("should reject timeout out of range (too high)", async () => {
