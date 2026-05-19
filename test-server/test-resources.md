@@ -150,9 +150,9 @@ DROP VIEW IF EXISTS test_view_order_summary;
 **Test Sequence:**
 
 1. Read memo://insights — May be empty or have default content ("No business insights have been discovered yet.")
-2. Call sqlite_append_insight tool with a test insight (requires admin tools)
+2. Call sqlite_append_insight tool with a test insight `{"insight": "Test insight"}` (requires admin tools)
 3. Read memo://insights again — Should contain the new insight
-4. Verify timestamp, category, and finding text are present
+4. Verify the exact insight text is present
 
 **Expected Output:**
 

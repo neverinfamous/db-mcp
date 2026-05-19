@@ -321,7 +321,13 @@ export class DbMcpServer {
     ];
 
     for (const { group, key } of groupHelpKeys) {
-      if (!this.toolFilter.enabledGroups.has(group)) continue;
+      const isCodemodeOnly =
+        this.toolFilter.enabledGroups.size === 1 &&
+        this.toolFilter.enabledGroups.has("codemode");
+
+      if (!this.toolFilter.enabledGroups.has(group) && !isCodemodeOnly) {
+        continue;
+      }
 
       const content = HELP_CONTENT.get(key);
       if (!content) continue;

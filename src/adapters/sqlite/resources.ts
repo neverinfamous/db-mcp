@@ -109,16 +109,29 @@ function createTableSchemaResource(adapter: SqliteAdapter): ResourceDefinition {
         );
       }
       const tableName = decodeURIComponent(match[1]);
-      const tableInfo = await adapter.describeTable(tableName);
-      return {
-        contents: [
-          {
-            uri,
-            mimeType: "application/json",
-            text: JSON.stringify(tableInfo, null, 2),
-          },
-        ],
-      };
+      try {
+        const tableInfo = await adapter.describeTable(tableName);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(tableInfo, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify({ success: false, error: msg }, null, 2),
+            },
+          ],
+        };
+      }
     },
   };
 }
