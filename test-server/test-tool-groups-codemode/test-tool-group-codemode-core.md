@@ -12,7 +12,7 @@
 > When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
 
 - All 14 core tools are fully WASM-compatible — no phases to skip.
-- **Phase 2.1** (top-level help): Expect fewer than 10 groups — `transactions` is not listed (0 tools registered in WASM). `totalMethods` will be ~125 instead of ~151.
+- **Phase 2.1** (top-level help): Expect fewer than 10 groups — `transactions` is not listed (0 tools registered in WASM). `totalMethods` will be ~125 instead of ~196.
 - **Phase 2.3** (all groups exist): The `transactions` group property exists on the `sqlite` object but returns 0 methods. Adjust the assertion to allow 0 methods for `transactions`.
 
 ## Reporting Format
