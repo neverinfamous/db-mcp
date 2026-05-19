@@ -96,7 +96,7 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 21. Insert a row into temp_cm_json with JSON data, then:
 22. `sqlite.json.set(...)` on temp_cm_json → set a JSON value
 23. `sqlite.json.update(...)` on temp_cm_json → update existing key
-24. `sqlite.json.insert(...)` on temp_cm_json → insert new key (distinct from set)
+24. `sqlite.json.insert(...)` on temp_cm_json → insert new row with JSON data (Note: db-mcp's json.insert creates a new row via SQL INSERT, it does not wrap json_insert())
 25. `sqlite.json.remove(...)` on temp_cm_json → remove a key
 26. `sqlite.json.arrayAppend(...)` on temp_cm_json → append to array
 27. `sqlite.json.merge({table: "test_jsonb_docs", column: "doc", mergeData: {"featured": true}, whereClause: "id = 999"})` → `{rowsAffected: 0}` (non-destructive)
