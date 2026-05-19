@@ -35,3 +35,36 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 6. **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
 7. **Documentation Parity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is correct and intended, but the documentation is inaccurate, outdated, or lacking specificity.
 8. **Testing Limits**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
+
+### 9. WASM Mode Execution
+
+When testing against a **WASM backend** (`--sqlite` flag, sql.js adapter), follow these additional rules:
+
+#### Skip Rules
+
+- **`[NATIVE ONLY]` items**: Skip all categories and individual test items annotated with `[NATIVE ONLY]`.
+- **Transactions prompt**: Skip entirely — all 8 transaction tools are `[NATIVE ONLY]`.
+- **Window function items** (stats Category 4): Skip — 6 window tools are Native-only.
+- **SpatiaLite items** (geo Category 5): Skip — 7 SpatiaLite tools are Native-only.
+- **FTS5 items** (text Category 6): Skip — 5 FTS5 tools are Native-only.
+
+#### Graceful Degradation (Don't Skip — Validate Errors)
+
+Several admin tools are **registered in WASM mode but return structured errors**. Test these as **negative validation**:
+
+| Tool | Expected WASM Behavior |
+|------|----------------------|
+| `sqlite.admin.backup(...)` | `{success: false, error: "...WASM mode"}` |
+| `sqlite.admin.restore(...)` | `{success: false, error: "...WASM mode"}` |
+| `sqlite.admin.verifyBackup(...)` | `{success: false, error: "...WASM mode"}` |
+| `sqlite.admin.createCsvTable(...)` | `{success: false}` — CSV extension unavailable |
+| `sqlite.admin.analyzeCsvSchema(...)` | `{success: false}` — CSV extension unavailable |
+| `sqlite.admin.createRtreeTable(...)` | `{success: false}` — R-Tree module unavailable |
+
+#### Adjusted Expectations
+
+| Item | Native Behavior | WASM Behavior |
+|------|----------------|---------------|
+| `sqlite.admin.dbstat({summarize: true})` | Per-table storage breakdown | Counts-only (JS fallback) |
+| `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` | Matches FTS5 | Matches FTS3 |
+| `test_articles_fts` in `listVirtualTables` | Present and queryable | May appear but FTS5 queries fail |

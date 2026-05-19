@@ -7,6 +7,12 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 9 introspection tools are fully WASM-compatible. No categories to skip.
+>
+> **Minor difference**: `schemaSnapshot` may report `test_articles_fts` in virtual tables but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
+
 > **Code Mode Required:** Several optional params (`table`, `direction`, `sections`, `compact`, `checks`, `includeTableDetails`, `limit`) are defined in tool schemas but NOT exposed in MCP tool definitions. Use `sqlite_execute_code` to test these params via `sqlite.introspection.*` API.
 
 ## Code Mode Execution

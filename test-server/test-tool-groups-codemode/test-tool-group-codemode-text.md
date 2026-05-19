@@ -7,6 +7,15 @@
 
 **Step 2:** Conduct an exhaustive test of the **text** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Skip Phase 2** entirely — all FTS5 tools (items 15-23) are `[NATIVE ONLY]`.
+- **Phase 4** (Domain Errors): Skip item 28 (`ftsSearch`) — `[NATIVE ONLY]`.
+- **Phase 5** (Zod Validation): Skip items 43-47 (`ftsCreate`, `ftsSearch`, `ftsRebuild`, `ftsMatchInfo`, `ftsHeadline`) — `[NATIVE ONLY]`.
+- All other phases (1, 3, 6) are fully WASM-compatible — 14 text tools work identically.
+
 ## Reporting Format
 
 - ❌ Fail: Tool errors or produces incorrect results

@@ -7,6 +7,14 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Skip Category 4** entirely (Window Functions — items 19-23) — `[NATIVE ONLY]`.
+- **Category 6** (WASM Boundary Verification) — execute only in WASM mode.
+- All other categories (1-3, 5) are fully WASM-compatible — 16 stats tools work identically.
+
 ## Code Mode Execution
 
 - **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.

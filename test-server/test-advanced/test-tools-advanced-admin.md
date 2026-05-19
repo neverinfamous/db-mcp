@@ -7,6 +7,16 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Category 2**: Item 6 (`createRtreeTable`) — returns `{success: false}` in WASM (R-Tree unavailable). Treat as **negative validation**. Item 7 (`listVirtualTables`) — `test_articles_fts` may appear but is not queryable.
+- **Category 3**: All 3 items (11-13) return `{success: false, error: "...WASM mode"}`. Treat as **negative validation** — verify the structured error, do not skip.
+- **Category 4**: Item 16 (`pragmaCompileOptions` FTS filter) — WASM shows FTS3 instead of FTS5.
+- **Category 5**: Items 21-22 (`analyzeCsvSchema`, `createCsvTable`) — return `{success: false}` in WASM (CSV extension unavailable). Treat as **negative validation**.
+- All other categories are WASM-compatible.
+
 ## Code Mode Execution
 
 - **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
@@ -142,7 +152,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 For WASM testing only:
 
-26. All 26 admin tools should work identically in WASM and Native (no admin tools are NATIVE ONLY — transactions are a separate group)
+26. Verify that backup/restore/verify, CSV, and R-Tree tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
 
 ---
 

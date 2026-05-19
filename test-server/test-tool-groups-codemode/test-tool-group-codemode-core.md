@@ -7,6 +7,14 @@
 
 **Step 2:** Conduct an exhaustive test of the **core** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- All 14 core tools are fully WASM-compatible — no phases to skip.
+- **Phase 2.1** (top-level help): Expect fewer than 10 groups — `transactions` is not listed (0 tools registered in WASM). `totalMethods` will be ~125 instead of ~151.
+- **Phase 2.3** (all groups exist): The `transactions` group property exists on the `sqlite` object but returns 0 methods. Adjust the assertion to allow 0 methods for `transactions`.
+
 ## Reporting Format
 
 - ❌ Fail: Tool errors or produces incorrect results (include error message)
@@ -142,7 +150,7 @@ Expected: structured handler error, NOT raw MCP `-32602`.
 return await sqlite.help();
 ```
 
-Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions).
+Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 125.
 
 ### 2.2 — Group help (core)
 
@@ -164,7 +172,7 @@ for (const g of groups) {
 return results;
 ```
 
-Expected: All 10 groups return >0 methods.
+Expected: All 10 groups return >0 methods. **WASM**: `transactions` returns 0 methods — adjust assertion to allow this.
 
 ### 2.4 — Method aliases resolve
 

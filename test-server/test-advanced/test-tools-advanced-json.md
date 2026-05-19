@@ -7,6 +7,10 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 24 JSON tools are fully WASM-compatible. No categories to skip or adjust.
+
 ## Code Mode Execution
 
 - **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.

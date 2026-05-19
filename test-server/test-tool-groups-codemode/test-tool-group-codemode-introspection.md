@@ -7,6 +7,12 @@
 
 **Step 2:** Conduct an exhaustive test of the **introspection** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 9 introspection tools are fully WASM-compatible. No phases to skip.
+>
+> **Minor difference**: `schemaSnapshot` may report `test_articles_fts` in virtual tables but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
+
 ## Reporting Format
 
 - ❌ Fail: Tool errors or produces incorrect results

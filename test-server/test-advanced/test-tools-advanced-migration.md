@@ -9,6 +9,10 @@
 
 > **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and may ALTER/CREATE/DROP tables. Always reset after.
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 6 migration tools are fully WASM-compatible. No categories to skip or adjust.
+
 ## Code Mode Execution
 
 - **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.

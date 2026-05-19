@@ -7,6 +7,16 @@
 
 **Step 2:** Conduct an exhaustive test of the **admin** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Phase 1**: Item 2 (`pragmaCompileOptions`) — WASM shows `FTS3` instead of `FTS5`. Item 3 (filter `"FTS"`) — matches FTS3. Item 9 (`dbstat`) — WASM returns counts-only (no per-table storage).
+- **Phase 3**: Item 13 (`listVirtualTables`) — `test_articles_fts` may appear but is not queryable. Item 16 (`createRtreeTable`) — returns `{success: false}` (R-Tree unavailable in WASM). Treat as **negative validation**.
+- **Phase 4** (Backup/Restore): All 3 items (19-21) return `{success: false, error: "...WASM mode"}`. Treat as **negative validation** — verify the structured error, do not skip.
+- **Phase 6** (CSV): Both items (25-26) return `{success: false}` (CSV extension unavailable in WASM). Treat as **negative validation**.
+- All other phases are WASM-compatible.
+
 ## Reporting Format
 
 - ❌ Fail: Tool errors or produces incorrect results

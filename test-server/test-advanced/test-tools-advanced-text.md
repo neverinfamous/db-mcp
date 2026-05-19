@@ -7,6 +7,16 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Skip Category 6** entirely (FTS5 State Integrity — items 21-26) — `[NATIVE ONLY]`.
+- **Category 7** (WASM Boundary Verification) — execute only in WASM mode.
+- **Category 8**: Skip item 32 (`ftsSearch`) — `[NATIVE ONLY]`.
+- **Final Cleanup**: Skip FTS integrity check with `ftsMatchInfo` — `[NATIVE ONLY]`.
+- All other categories (1-5, 7-8) are fully WASM-compatible — 14 text tools work identically.
+
 ## Code Mode Execution
 
 - **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.

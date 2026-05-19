@@ -41,6 +41,46 @@ Monitor `metrics.tokenEstimate` on every Code Mode response. Report the single m
 
 - **No Automated Execution**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
 
+### 7. WASM Mode Execution
+
+When testing against a **WASM backend** (`--sqlite` flag, sql.js adapter), follow these additional rules:
+
+#### Skip Rules
+
+- **`[NATIVE ONLY]` items**: Skip all phases and individual test items annotated with `[NATIVE ONLY]`. This annotation already exists in each prompt.
+- **Transactions prompt**: Skip entirely — the transactions group has 0 WASM tools. `sqlite.transactions.help()` returns an empty methods list.
+- **Window function items** (stats prompt Phases 3, 6): Skip — 6 window tools are Native-only.
+- **SpatiaLite items** (geo prompt Phase 2): Skip — 7 SpatiaLite tools are Native-only.
+- **FTS5 items** (text prompt Phase 2): Skip — 5 FTS5 tools are Native-only.
+
+#### Graceful Degradation (Don't Skip — Validate Errors)
+
+Several admin tools are **registered in WASM mode but return structured errors** instead of succeeding. Test these as **negative validation** — verify the structured error response, don't skip them:
+
+| Tool | Expected WASM Behavior |
+|------|----------------------|
+| `sqlite.admin.backup(...)` | `{success: false, error: "...WASM mode"}` |
+| `sqlite.admin.restore(...)` | `{success: false, error: "...WASM mode"}` |
+| `sqlite.admin.verifyBackup(...)` | `{success: false, error: "...WASM mode"}` |
+| `sqlite.admin.createCsvTable(...)` | `{success: false}` — CSV extension unavailable |
+| `sqlite.admin.analyzeCsvSchema(...)` | `{success: false}` — CSV extension unavailable |
+| `sqlite.admin.createRtreeTable(...)` | `{success: false}` — R-Tree module unavailable |
+
+#### Adjusted Expectations
+
+| Item | Native Behavior | WASM Behavior |
+|------|----------------|---------------|
+| `sqlite.admin.dbstat({summarize: true})` | Per-table storage breakdown | Counts-only (JS fallback) |
+| `sqlite.admin.pragmaCompileOptions()` | Includes `ENABLE_FTS5` | Shows `ENABLE_FTS3` instead |
+| `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` | Matches FTS5 | Matches FTS3 |
+| `sqlite.core.listTables()` / `sqlite.admin.listVirtualTables()` | `test_articles_fts` present and queryable | `test_articles_fts` may appear in sqlite_master but FTS5 queries fail |
+| `sqlite.help()` | `totalMethods` reflects 151 tools | `totalMethods` reflects 125 tools |
+| Phase 2.1 (core prompt) top-level help | 10 groups listed | `transactions` group shows 0 methods |
+
+#### WASM-Specific Degradation Prompt
+
+After completing the applicable prompts above, run `test-tool-group-codemode-wasm-degradation.md` — a dedicated prompt that validates graceful degradation patterns unique to WASM mode. This prompt should **only** be run against a WASM backend.
+
 ## File Inventory
 
 | File | Group | Tools |
@@ -55,8 +95,9 @@ Monitor `metrics.tokenEstimate` on every Code Mode response. Report the single m
 | `test-tool-group-codemode-geo.md` | geo | 11N/4W |
 | `test-tool-group-codemode-introspection.md` | introspection | 9 |
 | `test-tool-group-codemode-migration.md` | migration | 6 |
+| `test-tool-group-codemode-wasm-degradation.md` | cross-group | WASM-only graceful degradation |
 
-**Total**: 151 Native / 125 WASM tools across 10 groups.
+**Total**: 151 Native / 125 WASM tools across 10 groups + 1 WASM degradation prompt.
 
 ## Tool Groups Available
 

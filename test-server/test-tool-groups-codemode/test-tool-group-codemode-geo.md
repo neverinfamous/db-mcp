@@ -7,6 +7,14 @@
 
 **Step 2:** Conduct an exhaustive test of the **geo** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Skip Phase 2** entirely — all 7 SpatiaLite tools (items 7-14) are `[NATIVE ONLY]`.
+- **Phase 4** (Zod Validation): Skip items 22-27 (all `spatialite*` tools) — `[NATIVE ONLY]`.
+- Phases 1, 3, 5, 6 are fully WASM-compatible (4 Haversine tools: `distance`, `nearby`, `boundingBox`, `cluster`).
+
 ## Reporting Format
 
 - ❌ Fail: Tool errors or produces incorrect results

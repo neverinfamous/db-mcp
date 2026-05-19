@@ -7,6 +7,16 @@
 
 **Step 2:** Conduct an exhaustive test of the **stats** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Skip Phase 3** entirely — all 6 window function tools (items 18-23) are `[NATIVE ONLY]`.
+- **Phase 4**: Skip item 28 (`windowRowNumber`) — `[NATIVE ONLY]`.
+- **Phase 5**: Skip items 45-50 (all `window*` tools) — `[NATIVE ONLY]`.
+- **Phase 6**: Skip item 52 (`windowMovingAvg`) — `[NATIVE ONLY]`.
+- All other phases (1, 2, 7) are fully WASM-compatible.
+
 ## Reporting Format
 
 - ❌ Fail: Tool errors or produces incorrect results

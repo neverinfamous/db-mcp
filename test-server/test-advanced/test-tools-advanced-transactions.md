@@ -9,6 +9,11 @@
 
 > **Note:** All 8 transaction tools are **`[NATIVE ONLY]`** — they are not available in WASM mode.
 
+## WASM Mode
+
+> [!CAUTION]
+> **Skip this entire prompt in WASM mode.** All 8 transaction tools are `[NATIVE ONLY]` — they are not registered in the WASM adapter. The `sqlite.transactions` namespace exists but contains 0 methods. Use `test-tool-group-codemode-wasm-degradation.md` to verify this behavior.
+
 ## Code Mode Execution
 
 - **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.

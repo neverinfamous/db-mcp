@@ -41,6 +41,40 @@ When tasked with running tests from this folder, adhere to the following protoco
 
 - **No Automated Execution**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
 
+### 2.6 WASM Mode Execution
+
+When testing against a **WASM backend** (`sqlite-wasm` server entry, sql.js adapter), follow these additional rules:
+
+#### Skip Rules
+
+- **`[NATIVE ONLY]` items**: Skip all checklist items and Zod sweep items for tools annotated with `[NATIVE ONLY]`.
+- **Transactions prompt**: Skip entirely — all 8 transaction tools are `[NATIVE ONLY]`.
+- **Window function tools** (stats items 20-25): Skip — 6 window tools are Native-only.
+- **SpatiaLite tools** (geo items 8-14): Skip — 7 SpatiaLite tools are Native-only.
+- **FTS5 tools** (text items 18-22): Skip — 5 FTS5 tools are Native-only.
+- **Unregistered tools**: In WASM mode, `[NATIVE ONLY]` tools are not registered at all. Direct MCP calls to them will fail with an "unknown tool" error — this is expected, not a bug.
+
+#### Graceful Degradation (Don't Skip — Validate Errors)
+
+Several admin tools are **registered in WASM mode but return structured errors**. Test these as **negative validation**:
+
+| Tool | Expected WASM Behavior |
+|------|----------------------|
+| `sqlite_backup` | `{success: false, error: "...WASM mode"}` |
+| `sqlite_restore` | `{success: false, error: "...WASM mode"}` |
+| `sqlite_verify_backup` | `{success: false, error: "...WASM mode"}` |
+| `sqlite_create_csv_table` | `{success: false}` — CSV extension unavailable |
+| `sqlite_analyze_csv_schema` | `{success: false}` — CSV extension unavailable |
+| `sqlite_create_rtree_table` | `{success: false}` — R-Tree module unavailable |
+
+#### Adjusted Expectations
+
+| Item | Native Behavior | WASM Behavior |
+|------|----------------|---------------|
+| `sqlite_dbstat({summarize: true})` | Per-table storage breakdown | Counts-only (JS fallback) |
+| `sqlite_pragma_compile_options({filter: "FTS"})` | Matches FTS5 | Matches FTS3 |
+| `test_articles_fts` in `sqlite_list_virtual_tables` | Present and queryable | May appear but FTS5 queries fail |
+
 ### 3. Tracking Metrics & Progress
 
 - **Strict Coverage Matrix**: Maintain a table tracking your progress in `tmp/task.md` logging completion for:

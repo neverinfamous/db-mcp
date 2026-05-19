@@ -7,6 +7,15 @@
 
 **Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
 
+## WASM Mode
+
+> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+
+- **Skip Category 5** entirely (SpatiaLite Integration — items 15-23) — `[NATIVE ONLY]`.
+- **Category 6**: Skip item 26 (`spatialiteQuery`) — `[NATIVE ONLY]`.
+- **Category 7** (WASM Boundary Verification) — execute only in WASM mode.
+- Categories 1-4, 6 (items 24-25) are fully WASM-compatible (4 Haversine tools).
+
 ## Code Mode Execution
 
 - **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
