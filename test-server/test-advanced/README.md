@@ -33,7 +33,7 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 4. **Structured Error Adherence:** When testing boundary failure parameters, assert that the handler outputs a proper structured error (`{success: false, error: "..."}`) rather than leaking raw SQLite errors.
 5. **No Persistent Pollution:** After finishing a file, verify all `stress_*` tables/views/indexes are dropped. No test state should bleed into the next run.
 6. **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
-7. **Documentation Parity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is correct and intended, but the documentation is inaccurate, outdated, or lacking specificity.
+7. **Documentation Parity & Test Prompt Integrity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is mathematically/logically correct and intended, but the documentation is inaccurate, outdated, or lacking specificity. You SHOULD directly edit the markdown test files in this directory to fix factual errors, broken code blocks, or incorrect test assertions.
 8. **Testing Limits**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
 
 ### 9. WASM Mode Execution
