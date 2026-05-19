@@ -140,9 +140,9 @@ Rate each error response 1-5:
 
 ### Final Cleanup
 
-1. Drop `_mcp_migrations`: `sqlite.core.writeQuery("DROP TABLE IF EXISTS _mcp_migrations")`
-2. Drop `stress_migration_data`: `sqlite.core.writeQuery("DROP TABLE IF EXISTS stress_migration_data")`
-3. Drop `stress_idx_flag`: `sqlite.core.writeQuery("DROP INDEX IF EXISTS stress_idx_flag")`
+1. Drop `_mcp_migrations`: `sqlite.admin.dropTable({table: "_mcp_migrations"})`
+2. Drop `stress_migration_data`: `sqlite.admin.dropTable({table: "stress_migration_data"})`
+3. Drop `stress_idx_flag`: *Handled by database reset below*
 4. **Reset database** with `.\reset-database.ps1` to undo `stress_flag` column on `test_products`
 5. After reset, verify: `test_products` has 16 rows and original columns (no `stress_flag`)
 
