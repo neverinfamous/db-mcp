@@ -116,10 +116,15 @@ export function createDetectSchemaRisksTool(
           const qt = `"${tableName.replace(/"/g, '""')}"`;
 
           // Get column info
-          const colsResult = await adapter.executeReadQuery(
-            `PRAGMA table_info(${qt})`,
-          );
-          const columns = colsResult.rows ?? [];
+          let columns: Record<string, unknown>[] = [];
+          try {
+            const colsResult = await adapter.executeReadQuery(
+              `PRAGMA table_info(${qt})`,
+            );
+            columns = colsResult.rows ?? [];
+          } catch {
+            continue; // Skip virtual tables where PRAGMA table_info fails
+          }
           const columnCount = columns.length;
 
           // Check for primary key
