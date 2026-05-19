@@ -242,31 +242,43 @@ If DROP fails due to a database lock, note the leftover tables and move on — t
 12. `sqlite_read_query({query: "SELECT * FROM temp_core_test"})` → 2 rows
 13. `sqlite_create_index({table: "temp_core_test", columns: ["name"], indexName: "idx_temp_core_name"})` → success
 14. `sqlite_drop_table({table: "temp_core_test"})` → success
+15. `sqlite_count({table: "test_products"})` → `{count: 16}`
+16. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
+17. `sqlite_create_table({table: "temp_core_test2", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
+18. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 1, val: "a"}, {id: 2, val: "b"}]})` → `{rowsAffected: 2}`
+19. `sqlite_upsert({table: "temp_core_test2", data: {id: 1, val: "c"}, conflictColumns: ["id"]})` → `{rowsAffected: 1}`
+20. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
+21. `sqlite_drop_table({table: "temp_core_test2"})` → success
 
 **Code mode testing:**
 
-15. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
-16. `sqlite_execute_code({code: "const result = await sqlite.core.readQuery('SELECT COUNT(*) AS n FROM test_products'); return result;", readonly: true})` → `{rows: [{n: 16}]}` (verify readonly mode works)
-17. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
+22. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
+23. `sqlite_execute_code({code: "const result = await sqlite.core.readQuery('SELECT COUNT(*) AS n FROM test_products'); return result;", readonly: true})` → `{rows: [{n: 16}]}` (verify readonly mode works)
+24. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
 
 **Error path testing:**
 
-🔴 18. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
-🔴 19. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
-🔴 20. `sqlite_get_indexes({table: "nonexistent_table_xyz"})` → report behavior (structured error or empty result)
-🔴 21. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
+🔴 25. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
+🔴 26. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 27. `sqlite_get_indexes({table: "nonexistent_table_xyz"})` → report behavior (structured error or empty result)
+🔴 28. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Every response must be a handler error (`{success: false, error: "Validation error: ..."}`) — NOT a raw MCP error frame:
 
-🔴 22. `sqlite_read_query({})` → handler error
-🔴 23. `sqlite_write_query({})` → handler error
-🔴 24. `sqlite_create_table({})` → handler error
-🔴 25. `sqlite_describe_table({})` → handler error
-🔴 26. `sqlite_drop_table({})` → handler error
-🔴 27. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
-🔴 28. `sqlite_create_index({})` → handler error
-🔴 29. `sqlite_drop_index({})` → handler error
-🔴 30. `sqlite_execute_code({})` → handler error (has required `code` param)
+🔴 29. `sqlite_read_query({})` → handler error
+🔴 30. `sqlite_write_query({})` → handler error
+🔴 31. `sqlite_create_table({})` → handler error
+🔴 32. `sqlite_describe_table({})` → handler error
+🔴 33. `sqlite_drop_table({})` → handler error
+🔴 34. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
+🔴 35. `sqlite_create_index({})` → handler error
+🔴 36. `sqlite_drop_index({})` → handler error
+🔴 37. `sqlite_execute_code({})` → handler error (has required `code` param)
+🔴 38. `sqlite_upsert({})` → handler error
+🔴 39. `sqlite_batch_insert({})` → handler error
+🔴 40. `sqlite_count({})` → handler error
+🔴 41. `sqlite_exists({})` → handler error
+🔴 42. `sqlite_truncate({})` → handler error
 
 ---
 
