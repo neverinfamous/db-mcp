@@ -1,33 +1,51 @@
-# Advanced Stress Test — db-mcp — [transactions]
-
-## Test Progress
-
-| Step | Status | Findings |
-|---|---|---|
-| Category 1: Aborted Transaction Recovery | ✅ Complete | Returns `TRANSACTION_CONFLICT` on nested begin, properly clears aborted state via rollback. |
-| Category 2: Savepoint Stress Test | ✅ Complete | Successfully creates and rolls back to `sp1` and `sp2`. Clean isolation of statements. |
-| Category 3: Transaction Execute — Mixed Statements | ✅ Complete | Handled array of `CREATE TABLE` and `INSERT` safely. |
-| Category 4: Transaction Execute — Failure Rollback | ✅ Complete | Handled statement failure (`nonexistent_xyz`) safely and rolled back the transaction atomicity, including DDL statements. |
-| Category 5: Rapid State Transitions | ✅ Complete | Safely handles empty transaction lifecycles without leaking state. |
-| Category 6: Error Message Quality | ✅ Complete | High quality structured errors (`TRANSACTION_NOT_ACTIVE`, `SAVEPOINT_NOT_FOUND`). |
-| Category 7: WASM Boundary Verification | ✅ Complete | Confirmed via `getAllToolDefinitions` that transaction tools are not injected into WASM. |
-| Final Cleanup | ✅ Complete | Base tables (products=16, orders=20) unchanged. |
+# db-mcp (SQLite) Tool Group Testing: [geo]
 
 ## Coverage Matrix
 
-| Tool | Tested | Native |
-|---|---|---|
-| sqlite_transaction_begin | ✅ | ✅ |
-| sqlite_transaction_commit | ✅ | ✅ |
-| sqlite_transaction_rollback | ✅ | ✅ |
-| sqlite_transaction_savepoint | ✅ | ✅ |
-| sqlite_transaction_release | ✅ | ✅ |
-| sqlite_transaction_rollback_to | ✅ | ✅ |
-| sqlite_transaction_execute | ✅ | ✅ |
-| sqlite_transaction_status | ✅ | ✅ |
+### Built-in Tools
+- [x] `server_info`
+- [x] `server_health`
+- [x] `list_adapters`
 
-## Findings (❌, ⚠️, 📦)
+### geo Group Tools (Native)
+- [x] `sqlite_geo_distance`
+- [x] `sqlite_geo_nearby`
+- [x] `sqlite_geo_bounding_box`
+- [x] `sqlite_geo_cluster`
+- [x] `sqlite_spatialite_load`
+- [x] `sqlite_spatialite_create_table`
+- [x] `sqlite_spatialite_query`
+- [x] `sqlite_spatialite_transform`
+- [x] `sqlite_spatialite_import`
+- [x] `sqlite_spatialite_index`
+- [x] `sqlite_spatialite_analyze`
+- [x] `sqlite_execute_code`
 
-*   **None**. All tests passed with full operational integrity.
-*   **Token Audit**: Max token payload observed was ~378 tokens during Category 1 error path. Highly token efficient.
+### Checklist Execution
+1. [x] `sqlite_geo_distance({lat1: 40.7829, lon1: -73.9654, lat2: 48.8584, lon2: 2.2945})` -> 5825.879 km
+2. [x] `sqlite_geo_distance({lat1: 40.7829, lon1: -73.9654, lat2: 37.8199, lon2: -122.4783})` -> 4133.994 km
+3. [x] `sqlite_geo_nearby` (NYC) -> 3 results
+4. [x] `sqlite_geo_nearby` (Paris) -> 3 results
+5. [x] `sqlite_geo_bounding_box` -> 4 results
+6. [x] `sqlite_geo_cluster` -> 5 clusters
+7. [x] `sqlite_spatialite_load` -> success
+8. [x] `sqlite_spatialite_create_table` -> success
+9. [x] `sqlite_spatialite_import` -> success
+10. [x] `sqlite_spatialite_query` -> WKT geometry returned
+11. [x] `sqlite_spatialite_transform` -> buffered polygon returned
+12. [x] `sqlite_spatialite_index` -> success
+13. [x] `sqlite_spatialite_analyze` -> spatial extent returned
+14. [x] Cleanup: drop `temp_spatial_test` -> success
+15. [x] Code mode distance -> success
+16. [x] Code mode nearby -> success
+17. [x] Error path `sqlite_geo_nearby` (nonexistent table) -> `{success: false}`
+18. [x] Error path `sqlite_geo_distance` (lat: 91) -> `{success: false}` (handled gracefully without Zod leak)
+19-28. [x] Zod validation sweeps with `{}` -> all returned `{success: false}`
 
+## Findings
+
+No bugs, failures, or excessively large payloads were observed. The tools successfully adhere to the Structured Error Pattern, appropriately trapping errors inside `{ success: false, error: "..." }`. The Zod Refinement leak pattern is correctly mitigated for latitude checks.
+
+- ❌ Failures: None.
+- ⚠️ Issues: None.
+- 📦 Payloads: None identified as unnecessarily large.
