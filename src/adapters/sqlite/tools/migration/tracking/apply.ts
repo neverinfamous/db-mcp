@@ -14,6 +14,7 @@ import {
   isMigrationTableInitialized,
   toMigrationRecord,
 } from "../schemas.js";
+import { sendProgress } from "../../../../../utils/progress-utils.js";
 
 export function createMigrationApplyTool(
   adapter: SqliteAdapter,
@@ -76,7 +77,9 @@ export function createMigrationApplyTool(
         }
 
         try {
+          await sendProgress(_context.progressToken, 1, 2, `Applying migration ${input.version}...`);
           await adapter.executeQuery(actualSql);
+          await sendProgress(_context.progressToken, 2, 2, `Migration applied successfully`);
         } catch (execError) {
           if (existingId !== undefined) {
             await adapter.executeQuery(
