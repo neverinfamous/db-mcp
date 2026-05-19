@@ -1,3 +1,5 @@
+import { detectCycles, buildForeignKeyGraph } from './helpers.js';
+import type { ForeignKeyInfo } from './helpers.js';
 /**
  * Graph Tool Creators
  *
@@ -13,13 +15,11 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import type { ForeignKeyInfo } from "./helpers.js";
-import { buildForeignKeyGraph, detectCycles } from "./helpers.js";
 import {
   DependencyGraphOutputSchema,
   TopologicalSortOutputSchema,
   CascadeSimulatorOutputSchema,
-} from "../../../output-schemas/index.js";
+} from "../../../schemas/introspection.js";
 
 // =============================================================================
 // Enum Coercers (prevent raw MCP -32602 from z.enum validation)

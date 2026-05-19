@@ -1,3 +1,4 @@
+import { validateColumnExists, validateNumericColumn, VALID_STAT_TYPES } from './helpers.js';
 /**
  * Basic Statistics Tools
  *
@@ -26,17 +27,14 @@ import {
   StatsGroupByOutputSchema,
   StatsHistogramOutputSchema,
   StatsPercentileOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/stats.js";
 import {
-  validateColumnExists,
-  validateNumericColumn,
-  VALID_STAT_TYPES,
   BasicStatsSchema,
   CountSchema,
   GroupByStatsSchema,
   HistogramSchema,
   PercentileSchema,
-} from "./helpers.js";
+} from "../../schemas/stats.js";
 
 /**
  * Basic statistics (sum, avg, min, max, stdev)

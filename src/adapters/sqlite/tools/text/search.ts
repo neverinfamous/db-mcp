@@ -1,3 +1,4 @@
+import { VALID_PHONETIC_ALGORITHMS, VALID_SEARCH_TECHNIQUES, validateColumnExists } from './helpers.js';
 /**
  * Text Search and Analysis Tools
  *
@@ -22,17 +23,14 @@ import {
   FuzzySearchOutputSchema,
   SoundexOutputSchema,
   AdvancedSearchOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/text.js";
 import { levenshtein, metaphone, soundex } from "./formatting.js";
 
 import {
   FuzzyMatchSchema,
   PhoneticMatchSchema,
   AdvancedSearchSchema,
-  VALID_PHONETIC_ALGORITHMS,
-  VALID_SEARCH_TECHNIQUES,
-  validateColumnExists,
-} from "./helpers.js";
+  } from "../../schemas/text.js";
 
 export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
   return {

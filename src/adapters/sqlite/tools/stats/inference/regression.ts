@@ -1,3 +1,4 @@
+import { validateColumnExists, validateNumericColumn } from '../helpers.js';
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -14,11 +15,9 @@ import {
   ErrorCategory,
 } from "../../../../../utils/errors/index.js";
 import {
-  validateColumnExists,
-  validateNumericColumn,
   RegressionSchema,
-} from "../helpers.js";
-import { StatsRegressionOutputSchema } from "../../../output-schemas/index.js";
+} from "../../../schemas/stats.js";
+import { StatsRegressionOutputSchema } from "../../../schemas/stats.js";
 import {
   matrixTranspose,
   matrixMultiply,

@@ -1,3 +1,4 @@
+import { CreateTableSchema, ListTablesSchema, DescribeTableSchema, DropTableSchema } from "../../schemas/core.js";
 /**
  * Core Table Management Tools
  *
@@ -21,10 +22,6 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
-  CreateTableSchema,
-  ListTablesSchema,
-  DescribeTableSchema,
-  DropTableSchema,
   resolveAliases,
 } from "../../types.js";
 import {
@@ -32,7 +29,7 @@ import {
   ListTablesOutputSchema,
   DescribeTableOutputSchema,
   DropTableOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/core.js";
 
 // =============================================================================
 // SpatiaLite System Filters

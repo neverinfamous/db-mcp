@@ -17,7 +17,7 @@ import {
   FtsSearchOutputSchema,
   FtsRebuildOutputSchema,
   FtsHeadlineOutputSchema,
-} from "../output-schemas/index.js";
+} from "../schemas/fts.js";
 import { FtsHeadlineSchema } from "./text/helpers.js";
 
 /**

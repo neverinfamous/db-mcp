@@ -1,3 +1,4 @@
+import { JsonSetOutputSchema, JsonRemoveOutputSchema, ValidateJsonSchema, JsonExtractSchema, JsonSetSchema, JsonRemoveSchema } from "../../schemas/json.js";
 /**
  * JSON CRUD Tools
  *
@@ -18,22 +19,14 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   JsonValidOutputSchema,
   JsonExtractOutputSchema,
-  JsonSetOutputSchema,
-  JsonRemoveOutputSchema,
   JsonTypeOutputSchema,
   JsonArrayLengthOutputSchema,
-} from "../../output-schemas/index.js";
-import {
-  ValidateJsonSchema,
-  JsonExtractSchema,
-  JsonSetSchema,
-  JsonRemoveSchema,
-} from "../../types.js";
+} from "../../schemas/json.js";
 import {
   JsonTypeSchema,
   JsonArrayLengthSchema,
   JsonArrayAppendSchema,
-} from "./helpers.js";
+} from "../../schemas/json.js";
 
 /**
  * Validate JSON string

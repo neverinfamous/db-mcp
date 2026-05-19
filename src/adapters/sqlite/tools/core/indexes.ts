@@ -1,3 +1,4 @@
+import { GetIndexesSchema, CreateIndexSchema, DropIndexSchema } from "../../schemas/core.js";
 /**
  * Core Index Management Tools
  *
@@ -21,16 +22,13 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
-  GetIndexesSchema,
-  CreateIndexSchema,
-  DropIndexSchema,
   resolveAliases,
 } from "../../types.js";
 import {
   GetIndexesOutputSchema,
   CreateIndexOutputSchema,
   DropIndexOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/core.js";
 import { isSpatialiteSystemIndex } from "./tables.js";
 
 /**

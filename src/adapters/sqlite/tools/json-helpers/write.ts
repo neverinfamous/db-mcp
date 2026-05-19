@@ -1,3 +1,4 @@
+import { JsonInsertOutputSchema, JsonUpdateOutputSchema, JsonMergeOutputSchema, CreateJsonCollectionOutputSchema, JsonInsertSchema, JsonUpdateSchema, JsonMergeSchema, CreateJsonCollectionSchema, type JsonInsertInput, type JsonUpdateInput, type JsonMergeInput, type CreateJsonCollectionInput } from "../../schemas/json.js";
 /**
  * JSON Write Tools
  *
@@ -15,22 +16,7 @@ import {
   validateWhereClause,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import {
-  JsonInsertSchema,
-  JsonUpdateSchema,
-  JsonMergeSchema,
-  CreateJsonCollectionSchema,
-  type JsonInsertInput,
-  type JsonUpdateInput,
-  type JsonMergeInput,
-  type CreateJsonCollectionInput,
-} from "../../types.js";
-import {
-  JsonInsertOutputSchema,
-  JsonUpdateOutputSchema,
-  JsonMergeOutputSchema,
-  CreateJsonCollectionOutputSchema,
-} from "../../output-schemas/index.js";
+
 
 
 /**

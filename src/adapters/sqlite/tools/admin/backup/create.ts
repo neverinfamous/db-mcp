@@ -9,8 +9,8 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
-import { BackupOutputSchema } from "../../../output-schemas/index.js";
-import { BackupSchema } from "../helpers.js";
+import { BackupOutputSchema } from "../../../schemas/admin.js";
+import { BackupSchema } from "../../../schemas/admin.js";
 import { sendProgress, buildProgressContext } from "../../../../../utils/progress-utils.js";
 
 /**

@@ -1,3 +1,4 @@
+import { validateColumnExists, validateNumericColumn, VALID_TEST_TYPES } from '../helpers.js';
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -15,12 +16,9 @@ import {
   ValidationError,
 } from "../../../../../utils/errors/index.js";
 import {
-  validateColumnExists,
-  validateNumericColumn,
-  VALID_TEST_TYPES,
   HypothesisSchema,
-} from "../helpers.js";
-import { StatsHypothesisOutputSchema } from "../../../output-schemas/index.js";
+} from "../../../schemas/stats.js";
+import { StatsHypothesisOutputSchema } from "../../../schemas/stats.js";
 import { tDistPValue } from "../math-helpers.js";
 
 /**

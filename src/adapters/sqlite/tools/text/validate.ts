@@ -1,3 +1,4 @@
+import { VALID_NORMALIZE_MODES, VALID_VALIDATE_PATTERNS, validateColumnExists } from './helpers.js';
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -16,14 +17,11 @@ import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
 import {
   TextNormalizeSchema,
   TextValidateSchema,
-  VALID_NORMALIZE_MODES,
-  VALID_VALIDATE_PATTERNS,
-  validateColumnExists,
-} from "./helpers.js";
+  } from "../../schemas/text.js";
 import {
   TextNormalizeOutputSchema,
   TextValidateOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/text.js";
 
 /**
  * Normalize text (Unicode normalization or accent stripping)

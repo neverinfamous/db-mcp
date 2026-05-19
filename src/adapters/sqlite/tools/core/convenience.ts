@@ -24,7 +24,7 @@ import {
   WriteQueryOutputSchema,
   CountOutputSchema,
   ExistsOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/core.js";
 
 
 /**

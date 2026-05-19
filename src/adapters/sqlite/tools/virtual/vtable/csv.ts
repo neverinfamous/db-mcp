@@ -11,8 +11,8 @@ import {
   ExtensionNotAvailableError,
 } from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
-import { CreateCsvTableSchema } from "../helpers.js";
-import { CreateCsvTableOutputSchema } from "../../../output-schemas/index.js";
+import { CreateCsvTableSchema } from "../../../schemas/virtual.js";
+import { CreateCsvTableOutputSchema } from "../../../schemas/virtual.js";
 
 export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
   return {

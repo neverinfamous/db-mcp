@@ -1,3 +1,4 @@
+import { validateColumnExists } from './helpers.js';
 /**
  * Text Sentiment Analysis Tool
  *
@@ -15,8 +16,8 @@ import {
   sanitizeIdentifier,
   validateWhereClause,
 } from "../../../../utils/index.js";
-import { TextSentimentOutputSchema } from "../../output-schemas/index.js";
-import { TextSentimentSchema, validateColumnExists } from "./helpers.js";
+import { TextSentimentOutputSchema } from "../../schemas/text.js";
+import { TextSentimentSchema, } from "../../schemas/text.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
 const POSITIVE_WORDS = [

@@ -13,7 +13,7 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { z } from "zod";
-import { SchemaSnapshotOutputSchema } from "../../../output-schemas/index.js";
+import { SchemaSnapshotOutputSchema } from "../../../schemas/introspection.js";
 import {
   isSpatialiteSystemTable,
   isSpatialiteSystemView,

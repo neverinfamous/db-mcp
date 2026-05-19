@@ -1,3 +1,4 @@
+import { JsonSecurityScanOutputSchema, JsonSecurityScanSchema } from "../../schemas/json.js";
 /**
  * JSON Security Scan Tool
  *
@@ -18,8 +19,6 @@ import {
   validateWhereClause,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import { JsonSecurityScanOutputSchema } from "../../output-schemas/index.js";
-import { JsonSecurityScanSchema } from "../../types.js";
 
 // ---------------------------------------------------------------------------
 // Detection patterns (ported from postgres-mcp for cross-server parity)

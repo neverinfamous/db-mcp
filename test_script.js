@@ -1,0 +1,1 @@
+import initSqlJs from 'sql.js'; initSqlJs().then(SQL => { const db = new SQL.Database(); db.run('CREATE TABLE test_products (id INTEGER)'); const start = Date.now(); const res = db.exec('PRAGMA table_info(\"test_products\")'); console.log(Date.now()-start, 'ms. Result:', JSON.stringify(res)); }).catch(console.error);

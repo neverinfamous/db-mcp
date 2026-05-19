@@ -51,7 +51,7 @@ import {
   GeoWithinRadiusOutputSchema,
   GeoBoundingBoxOutputSchema,
   GeoClusterOutputSchema,
-} from "../output-schemas/index.js";
+} from "../schemas/geo.js";
 import { validateColumnExists } from "./column-validation.js";
 
 // Geo schemas

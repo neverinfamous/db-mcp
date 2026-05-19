@@ -1,3 +1,4 @@
+import { ReadQuerySchema, WriteQuerySchema } from "../../schemas/core.js";
 /**
  * Core Database Query Tools
  *
@@ -15,14 +16,12 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
-  ReadQuerySchema,
-  WriteQuerySchema,
   resolveAliases,
 } from "../../types.js";
 import {
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/core.js";
 
 /**
  * Execute a read-only SQL query

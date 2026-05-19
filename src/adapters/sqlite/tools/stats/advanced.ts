@@ -1,3 +1,4 @@
+import { validateColumnExists, isNumericType, NUMERIC_TYPES } from './helpers.js';
 /**
  * Advanced Statistics Tools
  *
@@ -24,17 +25,14 @@ import {
   StatsDistinctOutputSchema,
   StatsSummaryOutputSchema,
   StatsFrequencyOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/stats.js";
 import {
-  validateColumnExists,
-  isNumericType,
-  NUMERIC_TYPES,
   CorrelationSchema,
   TopNSchema,
   DistinctValuesSchema,
   SummaryStatsSchema,
   FrequencySchema,
-} from "./helpers.js";
+} from "../../schemas/stats.js";
 
 /**
  * Correlation between two columns

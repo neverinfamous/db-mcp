@@ -8,8 +8,6 @@
  * Provides 70-90% token reduction by replacing multiple tool calls with
  * a single code execution containing the equivalent logic.
  */
-
-import { z } from "zod";
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import {
@@ -30,18 +28,10 @@ import {
   DbMcpError,
   ErrorCategory,
 } from "../../../utils/errors/index.js";
-import { ExecuteCodeOutputSchema } from "../output-schemas/index.js";
-
-/**
- * Coerce string values to numbers for MCP parameter safety.
- * Returns undefined for unparseable values so `.default()` kicks in.
- */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? Number.isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+import {
+  ExecuteCodeSchema,
+  ExecuteCodeOutputSchema,
+} from "../schemas/codemode.js";
 
 // =============================================================================
 // Module State
@@ -54,35 +44,6 @@ let pool: ISandboxPool | null = null;
 const codemodeRateLimit = Number(process.env["MCP_CODEMODE_RATE_LIMIT"]) || 60;
 const security = new CodeModeSecurityManager({
   maxExecutionsPerMinute: codemodeRateLimit,
-});
-
-// =============================================================================
-// Schemas
-// =============================================================================
-
-const ExecuteCodeSchema = z.object({
-  code: z
-    .string()
-    .describe(
-      "JavaScript code to execute. Access all SQLite tools via sqlite.* API. " +
-        "Use sqlite.help() to discover groups, sqlite.<group>.help() for methods. " +
-        "Example: const tables = await sqlite.core.listTables(); return tables;",
-    ),
-  timeout: z.preprocess(
-    coerceNumber,
-    z
-      .number()
-      .optional()
-      .default(30000)
-      .describe(
-        "Execution timeout in milliseconds (1000-30000, default: 30000)",
-      ),
-  ),
-  readonly: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("Restrict to read-only operations (default: false)"),
 });
 
 

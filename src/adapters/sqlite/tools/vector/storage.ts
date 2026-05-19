@@ -1,3 +1,4 @@
+import { CreateTableOutputSchema } from "../../schemas/core.js";
 /**
  * Vector Storage Tool Implementations
  *
@@ -17,11 +18,10 @@ import {
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
-  CreateTableOutputSchema,
   VectorStoreOutputSchema,
   VectorBatchStoreOutputSchema,
   VectorDeleteOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/vector.js";
 import {
   VectorStoreSchema,
   VectorCreateTableSchema,

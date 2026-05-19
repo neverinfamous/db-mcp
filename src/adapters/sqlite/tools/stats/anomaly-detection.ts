@@ -1,3 +1,4 @@
+import { validateColumnExists, isNumericType } from './helpers.js';
 /**
  * SQLite Anomaly Detection Tools
  *
@@ -24,8 +25,8 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   StatsDetectAnomaliesOutputSchema,
   StatsDetectBloatOutputSchema,
-} from "../../output-schemas/index.js";
-import { validateColumnExists, isNumericType } from "./helpers.js";
+} from "../../schemas/stats.js";
+import { } from "../../schemas/stats.js";
 import { isSpatialiteSystemTable } from "../core/tables.js";
 
 // =============================================================================

@@ -1,3 +1,4 @@
+import { VacuumOutputSchema } from "../../schemas/admin.js";
 /**
  * Database Analysis Tools
  *
@@ -14,8 +15,7 @@ import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   DbstatOutputSchema,
-  VacuumOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/virtual.js";
 import {
   buildProgressContext,
   sendProgress,
@@ -24,7 +24,7 @@ import {
   isSpatialiteSystemTable,
   isSpatialiteSystemIndex,
 } from "../core/index.js";
-import { DbStatSchema, VacuumSchema } from "./helpers.js";
+import { DbStatSchema, VacuumSchema } from "../../schemas/virtual.js";
 
 export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
   return {

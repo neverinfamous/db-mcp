@@ -1,3 +1,4 @@
+import { VALID_TEXT_CASE_MODES, VALID_TRIM_MODES, validateColumnExists, validateColumnsExist } from './helpers.js';
 /**
  * Text Formatting Tools
  *
@@ -24,18 +25,14 @@ import {
   TextTrimOutputSchema,
   TextCaseOutputSchema,
   TextSubstringOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/text.js";
 import {
   TextConcatSchema,
   TextReplaceSchema,
   TextTrimSchema,
   TextCaseSchema,
   TextSubstringSchema,
-  VALID_TEXT_CASE_MODES,
-  VALID_TRIM_MODES,
-  validateColumnExists,
-  validateColumnsExist,
-} from "./helpers.js";
+  } from "../../schemas/text.js";
 
 export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
   return {

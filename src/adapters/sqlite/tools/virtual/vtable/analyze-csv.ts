@@ -10,8 +10,8 @@ import {
   ExtensionNotAvailableError,
 } from "../../../../../utils/errors/index.js";
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
-import { AnalyzeCsvSchemaSchema } from "../helpers.js";
-import { AnalyzeCsvSchemaOutputSchema } from "../../../output-schemas/index.js";
+import { AnalyzeCsvSchemaSchema } from "../../../schemas/virtual.js";
+import { AnalyzeCsvSchemaOutputSchema } from "../../../schemas/virtual.js";
 
 export function createAnalyzeCsvSchemaTool(
   adapter: SqliteAdapter,

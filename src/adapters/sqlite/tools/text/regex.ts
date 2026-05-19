@@ -1,3 +1,4 @@
+import { validateColumnExists } from './helpers.js';
 /**
  * Regex and Split Tools
  *
@@ -18,13 +19,12 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/text.js";
 import {
   RegexExtractSchema,
   RegexMatchSchema,
   TextSplitSchema,
-  validateColumnExists,
-} from "./helpers.js";
+  } from "../../schemas/text.js";
 
 /**
  * Extract text using regex pattern

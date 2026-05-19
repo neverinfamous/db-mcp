@@ -21,8 +21,8 @@ import { isSpatialiteSystemIndex } from "../core/index.js";
 import {
   VerifyBackupOutputSchema,
   IndexStatsOutputSchema,
-} from "../../output-schemas/index.js";
-import { VerifyBackupSchema, IndexStatsSchema } from "./helpers.js";
+} from "../../schemas/admin.js";
+import { VerifyBackupSchema, IndexStatsSchema } from "../../schemas/admin.js";
 
 export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
   return {

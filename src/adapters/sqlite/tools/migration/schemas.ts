@@ -133,7 +133,7 @@ export {
   MigrationRollbackOutputSchema,
   MigrationHistoryOutputSchema,
   MigrationStatusOutputSchema,
-} from "../../output-schemas/migration.js";
+} from "../../schemas/migration.js";
 
 // =============================================================================
 // Utilities

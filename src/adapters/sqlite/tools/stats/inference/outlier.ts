@@ -1,3 +1,4 @@
+import { validateColumnExists, validateNumericColumn } from '../helpers.js';
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -10,11 +11,9 @@ import {
 } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
-  validateColumnExists,
-  validateNumericColumn,
   OutlierSchema,
-} from "../helpers.js";
-import { StatsOutliersOutputSchema } from "../../../output-schemas/index.js";
+} from "../../../schemas/stats.js";
+import { StatsOutliersOutputSchema } from "../../../schemas/stats.js";
 
 /**
  * Outlier detection using IQR or Z-score

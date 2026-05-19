@@ -4,7 +4,6 @@
  * SQLite pragma queries, settings management, and data insights.
  */
 
-import { z } from "zod";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -17,18 +16,18 @@ import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
   AppendInsightOutputSchema,
   PragmaCompileOptionsOutputSchema,
-  PragmaDatabaseListOutputSchema,
+  PragmaDatabaseListSchema, PragmaDatabaseListOutputSchema,
   PragmaOptimizeOutputSchema,
   PragmaSettingsOutputSchema,
   PragmaTableInfoOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/admin.js";
 import {
   PragmaCompileOptionsSchema,
   PragmaOptimizeSchema,
   PragmaSettingsSchema,
   PragmaTableInfoSchema,
   AppendInsightSchema,
-} from "./helpers.js";
+} from "../../schemas/admin.js";
 
 export function createPragmaCompileOptionsTool(
   adapter: SqliteAdapter,
@@ -79,7 +78,7 @@ export function createPragmaDatabaseListTool(
     name: "sqlite_pragma_database_list",
     description: "List all attached databases.",
     group: "admin",
-    inputSchema: z.object({}),
+    inputSchema: PragmaDatabaseListSchema,
     outputSchema: PragmaDatabaseListOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Database List"),

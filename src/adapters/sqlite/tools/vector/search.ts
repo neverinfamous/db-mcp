@@ -1,3 +1,4 @@
+import { cosineSimilarity, euclideanDistance, dotProduct, parseVector } from './helpers.js';
 /**
  * Vector Search Tool Implementations
  *
@@ -18,14 +19,8 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   VectorSearchOutputSchema,
   VectorGetOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/vector.js";
 import { VectorSearchSchema, VectorGetSchema } from "./schemas.js";
-import {
-  cosineSimilarity,
-  euclideanDistance,
-  dotProduct,
-  parseVector,
-} from "./helpers.js";
 
 /**
  * Vector similarity search

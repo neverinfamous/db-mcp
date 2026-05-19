@@ -18,7 +18,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import { StatsDetectSchemaRisksOutputSchema } from "../../output-schemas/index.js";
+import { StatsDetectSchemaRisksOutputSchema } from "../../schemas/stats.js";
 import { toNum, riskFromScore } from "./anomaly-detection.js";
 import type { RiskLevel } from "./anomaly-detection.js";
 import { isSpatialiteSystemTable } from "../core/tables.js";

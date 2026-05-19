@@ -1,3 +1,5 @@
+import { getUniqueColumnNames } from './helpers.js';
+import { JsonSelectOutputSchema, JsonSelectSchema, JsonQuerySchema, JsonValidatePathSchema, AnalyzeJsonSchemaSchema } from "../../schemas/json.js";
 /**
  * JSON Read Tools
  *
@@ -19,18 +21,11 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
-  JsonSelectSchema,
-  JsonQuerySchema,
-  JsonValidatePathSchema,
-  AnalyzeJsonSchemaSchema,
-} from "../../types.js";
-import {
-  JsonSelectOutputSchema,
   JsonQueryOutputSchema,
   JsonValidatePathOutputSchema,
   AnalyzeJsonSchemaOutputSchema,
-} from "../../output-schemas/index.js";
-import { getUniqueColumnNames } from "./helpers.js";
+} from "../../schemas/json.js";
+import { } from "../../schemas/json.js";
 
 /**
  * Select and extract JSON data

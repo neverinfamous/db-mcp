@@ -10,8 +10,8 @@ import {
   sendProgress,
 } from "../../../../../utils/progress-utils.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { OptimizeOutputSchema } from "../../../output-schemas/index.js";
-import { OptimizeSchema } from "../helpers.js";
+import { OptimizeOutputSchema } from "../../../schemas/admin.js";
+import { OptimizeSchema } from "../../../schemas/admin.js";
 
 /**
  * Optimize database

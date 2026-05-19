@@ -20,13 +20,13 @@ import {
   JsonEachOutputSchema,
   JsonGroupArrayOutputSchema,
   JsonGroupObjectOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/json.js";
 import {
   JsonKeysSchema,
   JsonEachSchema,
   JsonGroupArraySchema,
   JsonGroupObjectSchema,
-} from "./helpers.js";
+} from "../../schemas/json.js";
 
 export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
   return {
