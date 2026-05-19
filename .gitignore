@@ -61,6 +61,8 @@ keycloak/
 
 # Local config files with secrets
 config/*.local.json
+config/*.keycloak.json
+!config/*.keycloak.example.json
 config/secrets/
 
 # Database files
