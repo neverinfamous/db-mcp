@@ -54,6 +54,7 @@ const SavepointSchema = z.object({
 const ExecuteInTransactionSchema = z.object({
   statements: z
     .array(z.string())
+    .min(1, "Must provide at least one SQL statement")
     .describe("Array of SQL statements to execute in order"),
   rollbackOnError: z
     .boolean()
@@ -431,6 +432,7 @@ function createExecuteInTransactionTool(
 
         return {
           success,
+          error: success ? undefined : "Transaction completed with errors",
           message: success
             ? "Transaction completed successfully"
             : "Transaction completed with errors",
