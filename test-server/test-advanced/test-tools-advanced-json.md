@@ -26,7 +26,7 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 | test_events     | 100  | id, event_type, user_id, payload (JSON), event_date           |
 
 **test_jsonb_docs key data:**
-- Row 1: `doc.type="article"`, `doc.author="Updated Author"`, `doc.views=1250`, `doc.rating=4.5`
+- Row 1: `doc.type="article"`, `doc.author="Alice"`, `doc.views=1250`, `doc.rating=4.5`
 - Row 4: `doc.nested.level1.level2 = "deep value"`
 - Row 5: `doc.type="podcast"` (no `doc.views` field)
 
@@ -120,7 +120,7 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 > `sqlite_json_query` uses `filterPaths` (equality-only, `Record<path, value>`) and `selectPaths`.
 
 12. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article"}})` → 4 rows
-13. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article", "$.author": "Updated Author"}, selectPaths: ["$.title", "$.views"]})` → 1 row (Updated Author's article)
+13. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article", "$.author": "Alice"}, selectPaths: ["$.title", "$.views"]})` → 1 row (Alice's article)
 14. `sqlite.json.query({table: "test_events", column: "payload", filterPaths: {"$.page": "home"}})` → 25 rows (every 4th event)
 
 ---
