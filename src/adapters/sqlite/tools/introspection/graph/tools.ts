@@ -122,6 +122,7 @@ export function createDependencyGraphTool(
         const includeRowCounts = input.includeRowCounts !== false;
         const { nodes, edges } = await buildForeignKeyGraph(adapter, {
           excludeSystemTables: input.excludeSystemTables,
+          includeRowCounts,
         });
 
         // Build adjacency for cycle detection
@@ -312,7 +313,7 @@ export function createCascadeSimulatorTool(
           };
         }
 
-        const { nodes, fkInfo } = await buildForeignKeyGraph(adapter);
+        const { nodes, fkInfo } = await buildForeignKeyGraph(adapter, { includeRowCounts: true });
         const rowCounts = new Map(nodes.map((n) => [n.table, n.rowCount]));
 
         // Build reverse adjacency: for each table, find what references it

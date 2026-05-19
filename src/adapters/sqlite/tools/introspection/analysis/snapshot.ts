@@ -122,6 +122,9 @@ export function createSchemaSnapshotTool(
           if (excludeSystem) {
             tablesList = tablesList.filter((n) => !isSpatialiteSystemTable(n));
           }
+          
+          // Always filter out FTS shadow tables
+          tablesList = tablesList.filter((n) => !n.includes("_fts_"));
 
           const tables = [];
           for (const tableName of tablesList) {
@@ -174,6 +177,7 @@ export function createSchemaSnapshotTool(
           if (excludeSystem) {
             views = views.filter((v) => !isSpatialiteSystemView(v.name));
           }
+          views = views.filter((v) => !v.name.includes("_fts_"));
           snapshot["views"] = views;
           stats.views = views.length;
         }
@@ -195,6 +199,7 @@ export function createSchemaSnapshotTool(
                 !isSpatialiteSystemTable(idx.table),
             );
           }
+          indexes = indexes.filter((idx) => !idx.table.includes("_fts_"));
           snapshot["indexes"] = indexes;
           stats.indexes = indexes.length;
         }
@@ -213,6 +218,7 @@ export function createSchemaSnapshotTool(
               (t) => !isSpatialiteSystemTable(t.table),
             );
           }
+          triggers = triggers.filter((t) => !t.table.includes("_fts_"));
           snapshot["triggers"] = triggers;
           stats.triggers = triggers.length;
         }
