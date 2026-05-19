@@ -7,7 +7,7 @@
  *
  * Usage:
  *   npm run build
- *   node test-server/test-tool-annotations.mjs
+ *   node test-server/scripts/test-tool-annotations.mjs
  */
 
 import { spawn } from "child_process";
@@ -19,7 +19,7 @@ const proc = spawn(
     "dist/cli.js",
     "--instruction-level",
     "essential",
-    "--sqlite",
+    "--sqlite-native",
     "./test-server/test.db",
     "--tool-filter",
     "+all",
@@ -90,12 +90,17 @@ proc.stdout.on("data", (chunk) => {
         }
 
         // Verification
+        const expectedCount = 154; // 151 Native tools + 3 built-in tools
+        const hasExpectedCount = tools.length === expectedCount;
         const allHaveAnnotations = missing === 0;
         const allAreFalse =
           openWorldTrue === 0 && openWorldFalse === tools.length;
 
         console.log(
-          `\n  All tools have annotations: ${allHaveAnnotations ? "✅" : "❌"}`,
+          `\n  Has exactly ${expectedCount} tools: ${hasExpectedCount ? "✅" : "❌"} (actual: ${tools.length})`,
+        );
+        console.log(
+          `  All tools have annotations: ${allHaveAnnotations ? "✅" : "❌"}`,
         );
         console.log(
           `  All openWorldHint=false: ${allAreFalse ? "✅" : "⚠️ (some are true)"}`,
@@ -103,7 +108,7 @@ proc.stdout.on("data", (chunk) => {
 
         finished = true;
         proc.kill();
-        process.exit(allHaveAnnotations ? 0 : 1);
+        process.exit(allHaveAnnotations && hasExpectedCount ? 0 : 1);
       }
     } catch {
       // Not complete JSON yet

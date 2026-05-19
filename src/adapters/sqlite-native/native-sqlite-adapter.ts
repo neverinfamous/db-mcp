@@ -380,6 +380,25 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Get indexes, optionally for a specific table (cached via SchemaManager)
+   */
+  async getIndexes(table?: string): Promise<IndexInfo[]> {
+    this.ensureConnected();
+    if (this.schemaManager) {
+      if (table) {
+        return this.schemaManager.getTableIndexes(table);
+      }
+      return this.schemaManager.getAllIndexes();
+    }
+    // Fallback if no schema manager
+    const all = await this.getAllIndexes();
+    if (table) {
+      return all.filter((i) => i.tableName === table);
+    }
+    return all;
+  }
+
+  /**
    * Get all indexes in the database (cached via SchemaManager)
    * Required by sqlite_indexes resource
    */

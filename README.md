@@ -5,18 +5,17 @@
 **SQLite MCP Server** with 151 specialized tools, 11 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
-[![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)](https://github.com/neverinfamous/db-mcp/releases/latest)
+![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)
 [![npm](https://img.shields.io/npm/v/db-mcp)](https://www.npmjs.com/package/db-mcp)
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/db-mcp)](https://hub.docker.com/r/writenotenow/db-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Status](https://img.shields.io/badge/status-Production%2FStable-brightgreen)
-[![MCP Registry](https://img.shields.io/badge/MCP_Registry-Published-green)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.neverinfamous/db-mcp)
+[![MCP](https://img.shields.io/badge/MCP-Registry-green.svg)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.neverinfamous/db-mcp)
 [![Security](https://img.shields.io/badge/Security-Enhanced-green.svg)](SECURITY.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
-![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen)
-![E2E](https://img.shields.io/badge/E2E-1144%20passing%20%C2%B7%200%20skipped-blue.svg)
-![Coverage](https://img.shields.io/badge/Coverage-85.52%25-green.svg)
+[![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-85.49%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -125,16 +124,22 @@ npm run test
 - ✅ Docker installed and running (for Docker method)
 - ✅ Node.js 24+ (LTS) (for local installation)
 
-## 🎛️ Tool Filtering
+## Code Mode: Maximum Efficiency
 
-> [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 151 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+Code Mode (`sqlite_execute_code`) dramatically reduces token usage (70–90%) and is included by default in all presets.
 
-### Quick Start: Recommended Configurations
+Code executes in a **worker-thread sandbox** — a separate V8 isolate with its own memory space. All `sqlite.*` API calls are forwarded to the main thread via a `MessagePort`-based RPC bridge, where the actual database operations execute. This provides:
 
-#### ⭐ Recommended: Code Mode (Maximum Token Savings)
+- **Process-level isolation** — user code runs in a separate V8 instance with enforced heap limits
+- **Readonly enforcement** — when `readonly: true`, write methods return structured errors instead of executing
+- **Hard timeouts** — worker termination if execution exceeds the configured limit
+- **Full API access** — all 11 tool groups are available via `sqlite.*` (e.g., `sqlite.core.readQuery()`, `sqlite.json.extract()`)
 
-Code Mode (`sqlite_execute_code`) provides access to all 151 tools' worth of capability through a single, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all capabilities locally — reducing token overhead by up to 90%.
+Set `CODEMODE_ISOLATION=vm` to fall back to the in-process `vm` module sandbox if needed.
+
+### ⚡ Code Mode Only (Maximum Token Savings)
+
+If you control your own setup, you can run with **only Code Mode enabled** — a single tool that provides access to all 151 tools' worth of capability through the `sqlite.*` API:
 
 ```json
 {
@@ -142,11 +147,11 @@ Code Mode (`sqlite_execute_code`) provides access to all 151 tools' worth of cap
     "db-mcp-sqlite": {
       "command": "node",
       "args": [
-        "C:/path/to/db-mcp/dist/cli.js",
+        "/path/to/db-mcp/dist/cli.js",
         "--transport",
         "stdio",
         "--sqlite-native",
-        "C:/path/to/database.db",
+        "/path/to/database.db",
         "--tool-filter",
         "codemode"
       ]
@@ -155,7 +160,21 @@ Code Mode (`sqlite_execute_code`) provides access to all 151 tools' worth of cap
 }
 ```
 
-This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 10 tool groups, and returning exactly the data it needs — in one execution.
+This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 11 tool groups, and returning exactly the data it needs — in one execution. This mirrors the [Code Mode pattern](https://blog.cloudflare.com/code-mode-mcp/) pioneered by Cloudflare for their entire API: fixed token cost regardless of how many capabilities exist.
+
+> [!TIP]
+> **Maximize Token Savings:** Instruct your AI agent to prefer Code Mode over individual tool calls:
+>
+> _"When using db-mcp, prefer `sqlite_execute_code` (Code Mode) for multi-step database operations to minimize token usage."_
+
+---
+
+## 🎛️ Tool Filtering
+
+> [!IMPORTANT]
+> **AI-enabled IDEs like Cursor have tool limits.** With 151 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+
+### Quick Start: Recommended Configurations
 
 #### Starter (50 tools)
 
@@ -463,51 +482,65 @@ Add to your `~/.cursor/mcp.json`, Claude Desktop config, or equivalent:
 
 > See [Tool Filtering](#️-tool-filtering) to customize which tools are exposed.
 
-### HTTP/SSE Transport (Remote Access)
+## 🌐 HTTP/SSE Transport (Remote Access)
 
-For remote access, web-based clients, or MCP Inspector testing, run the server in HTTP mode:
-
-```bash
-node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --sqlite-native ./database.db
-```
-
-**Endpoints:**
-
-| Endpoint         | Description                                      | Mode     |
-| ---------------- | ------------------------------------------------ | -------- |
-| `GET /`          | Server info and available endpoints              | Both     |
-| `POST /mcp`      | JSON-RPC requests (initialize, tools/call, etc.) | Both     |
-| `GET /mcp`       | SSE stream for server-to-client notifications    | Stateful |
-| `DELETE /mcp`    | Session termination                              | Stateful |
-| `GET /sse`       | Legacy SSE connection (MCP 2024-11-05)           | Stateful |
-| `POST /messages` | Legacy SSE message endpoint                      | Stateful |
-| `GET /health`    | Health check (always public)                     | Both     |
-
-**Session Management:** The server uses stateful sessions by default. Include the `mcp-session-id` header (returned from initialization) in subsequent requests for session continuity.
-
-**Security Features:**
-
-- **7 Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Cache-Control`, `Referrer-Policy` (no-referrer), `Permissions-Policy` + opt-in `Strict-Transport-Security` via `enableHSTS`
-- **Server Timeouts** — Request, keep-alive, and headers timeouts prevent slowloris-style DoS
-- **Rate Limiting** — 100 requests/minute per IP (429 + Retry-After on excess, health checks exempt)
-- **CORS** — Configurable via `--cors-origins` (default: `*`, supports wildcard subdomains like `*.example.com`). ⚠️ **Security Warning:** The default `*` allows requests from any origin. For production HTTP deployments, explicitly configure this to your trusted domains.
-- **Trust Proxy** — Opt-in `trustProxy` for X-Forwarded-For IP extraction behind reverse proxies
-- **Body Size Limit** — Configurable via `--max-body-bytes` (default: 1 MB)
-- **404 Handler** — Unknown paths return `{ error: "Not found" }`
-- **Cross-Protocol Guard** — SSE session IDs rejected on `/mcp` and vice versa
-
-#### Stateless Mode (Serverless)
-
-For serverless deployments (AWS Lambda, Cloudflare Workers, Vercel), use stateless mode:
+For remote access, web-based clients, or HTTP-compatible MCP hosts, use the HTTP transport:
 
 ```bash
-node dist/cli.js --transport http --port 3000 --server-host 0.0.0.0 --stateless --sqlite-native :memory:
+node dist/cli.js \
+  --transport http \
+  --port 3000 \
+  --sqlite-native ./database.db
 ```
 
-| Mode                      | Progress Notifications | Legacy SSE | Serverless |
-| ------------------------- | ---------------------- | ---------- | ---------- |
-| Stateful (default)        | ✅ Yes                 | ✅ Yes     | ⚠️ Complex |
-| Stateless (`--stateless`) | ❌ No                  | ❌ No      | ✅ Native  |
+**Docker:**
+
+```bash
+docker run --rm -p 3000:3000 \
+  -v ./data:/app/data \
+  writenotenow/db-mcp:latest \
+  --transport http --port 3000 \
+  --sqlite-native /app/data/database.db
+```
+
+The server supports **two MCP transport protocols simultaneously**, enabling both modern and legacy clients to connect:
+
+### Streamable HTTP (Recommended)
+
+Modern protocol (MCP 2025-03-26) — single endpoint, session-based:
+
+| Method   | Endpoint | Purpose                                          |
+| -------- | -------- | ------------------------------------------------ |
+| `POST`   | `/mcp`   | JSON-RPC requests (initialize, tools/list, etc.) |
+| `GET`    | `/mcp`   | SSE stream for server notifications              |
+| `DELETE` | `/mcp`   | Session termination                              |
+
+Sessions are managed via the `Mcp-Session-Id` header.
+
+### Stateless Mode
+
+For serverless/stateless deployments where sessions are not needed:
+
+```bash
+node dist/cli.js --transport http --port 3000 --stateless --sqlite-native ./database.db
+```
+
+In stateless mode: `GET /mcp` returns 405, `DELETE /mcp` returns 204, `/sse` and `/messages` return 404. Each `POST /mcp` creates a fresh transport.
+
+### Legacy SSE (Backward Compatibility)
+
+Legacy protocol (MCP 2024-11-05) — for clients like Python `mcp.client.sse`:
+
+| Method | Endpoint                   | Purpose                                                       |
+| ------ | -------------------------- | ------------------------------------------------------------- |
+| `GET`  | `/sse`                     | Opens SSE stream, returns `/messages?sessionId=<id>` endpoint |
+| `POST` | `/messages?sessionId=<id>` | Send JSON-RPC messages to the session                         |
+
+### Utility Endpoints
+
+| Method | Endpoint  | Purpose                                                                |
+| ------ | --------- | ---------------------------------------------------------------------- |
+| `GET`  | `/health` | Health check (bypasses rate limiting, always available for monitoring) |
 
 ## 🔐 Authentication
 
@@ -517,15 +550,10 @@ db-mcp supports two authentication mechanisms for HTTP transport:
 
 Lightweight authentication for development or single-tenant deployments:
 
-Via CLI flag:
-
 ```bash
 node dist/cli.js --transport http --port 3000 --auth-token my-secret --sqlite-native ./database.db
-```
 
-Or via environment variable:
-
-```bash
+# Or via environment variable
 export MCP_AUTH_TOKEN=my-secret
 node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
 ```
@@ -536,15 +564,21 @@ Clients must include `Authorization: Bearer my-secret` on all requests. `/health
 
 Full OAuth 2.1 with RFC 9728/8414 compliance for production multi-tenant deployments:
 
-| Component                   | Status | Description                                      |
-| --------------------------- | ------ | ------------------------------------------------ |
-| Protected Resource Metadata | ✅     | RFC 9728 `/.well-known/oauth-protected-resource` |
-| Auth Server Discovery       | ✅     | RFC 8414 metadata discovery with caching         |
-| Token Validation            | ✅     | JWT validation with JWKS support                 |
-| Scope Enforcement           | ✅     | Granular `read`, `write`, `admin` scopes         |
-| HTTP Transport              | ✅     | Streamable HTTP with OAuth middleware            |
+```bash
+node dist/cli.js \
+  --transport http \
+  --port 3000 \
+  --sqlite-native ./database.db \
+  --oauth-enabled \
+  --oauth-issuer http://localhost:8080/realms/db-mcp \
+  --oauth-audience db-mcp-server
+```
 
-#### Supported Scopes
+> **Additional flags:** `--oauth-jwks-uri <url>` (auto-discovered if omitted), `--oauth-clock-tolerance <seconds>` (default: 60).
+
+### OAuth Scopes
+
+Access control is managed through OAuth scopes:
 
 | Scope                | Description                            |
 | -------------------- | -------------------------------------- |
@@ -554,23 +588,23 @@ Full OAuth 2.1 with RFC 9728/8414 compliance for production multi-tenant deploym
 | `db:{name}`          | Access to specific database only       |
 | `table:{db}:{table}` | Access to specific table only          |
 
-#### Quick Start with OAuth CLI Flags
+### RFC Compliance
 
-```bash
-node dist/cli.js --transport http --port 3000 \
-  --oauth-enabled \
-  --oauth-issuer http://localhost:8080/realms/db-mcp \
-  --oauth-audience db-mcp-server \
-  --sqlite-native ./database.db
-```
+This implementation follows:
 
-> **Additional flags:** `--oauth-jwks-uri <url>` (auto-discovered if omitted), `--oauth-clock-tolerance <seconds>` (default: 60).
+- **RFC 9728** — OAuth 2.1 Protected Resource Metadata
+- **RFC 8414** — OAuth 2.1 Authorization Server Metadata
+- **RFC 7591** — OAuth 2.1 Dynamic Client Registration
 
-#### Keycloak Integration
+The server exposes metadata at `/.well-known/oauth-protected-resource`.
 
-See [docs/KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md) for setting up Keycloak as your OAuth provider.
+> **Note for Keycloak users:** Add an **Audience mapper** to your client (Client → Client scopes → dedicated scope → Add mapper → Audience) to include the correct `aud` claim in tokens.
 
-> **Priority:** When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence. If neither is configured, the server warns and runs without authentication.
+> [!NOTE]
+> **Per-tool scope enforcement:** Scopes are enforced at the tool level — each tool group maps to a required scope (`read`, `write`, or `admin`). When OAuth is enabled, every tool invocation checks the calling token's scopes before execution. When OAuth is not configured, scope checks are skipped entirely.
+
+> [!WARNING]
+> **HTTP without authentication:** When using `--transport http` without enabling OAuth or `--auth-token`, all clients have full unrestricted access. Always enable authentication for production HTTP deployments. See [SECURITY.md](SECURITY.md) for details.
 
 ## 📊 Benchmarks
 

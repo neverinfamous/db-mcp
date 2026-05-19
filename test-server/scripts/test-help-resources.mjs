@@ -8,7 +8,7 @@
  *
  * Usage:
  *   npm run build
- *   node test-server/test-help-resources.mjs
+ *   node test-server/scripts/test-help-resources.mjs
  */
 
 import { spawn } from "child_process";
@@ -142,11 +142,15 @@ async function main() {
   console.log(`  Has sqlite://help: ${coreHasBaseHelp ? "✅" : "❌"}`);
   if (!coreHasBaseHelp) allPassed = false;
 
-  const coreNoGroupHelp = coreHelpUris.length === 1;
+  const coreHasCoreHelp = coreHelpUris.includes("sqlite://help/core");
+  console.log(`  Has sqlite://help/core: ${coreHasCoreHelp ? "✅" : "❌"}`);
+  if (!coreHasCoreHelp) allPassed = false;
+
+  const coreNoOtherGroupHelp = coreHelpUris.length === 2;
   console.log(
-    `  No group-specific help: ${coreNoGroupHelp ? "✅" : "❌"} (count: ${coreHelpUris.length})`,
+    `  No other group-specific help: ${coreNoOtherGroupHelp ? "✅" : "❌"} (count: ${coreHelpUris.length})`,
   );
-  if (!coreNoGroupHelp) allPassed = false;
+  if (!coreNoOtherGroupHelp) allPassed = false;
 
   // ── Test 3: Stats Filter ──
   console.log("\n=== Test 3: Stats Filter (--tool-filter stats) ===\n");
@@ -183,6 +187,7 @@ async function main() {
 
   const expectedMulti = [
     "sqlite://help",
+    "sqlite://help/core",
     "sqlite://help/json",
     "sqlite://help/text",
     "sqlite://help/stats",
@@ -212,17 +217,19 @@ async function main() {
 
   const expectedFull = [
     "sqlite://help",
+    "sqlite://help/core",
     "sqlite://help/json",
     "sqlite://help/text",
     "sqlite://help/stats",
     "sqlite://help/vector",
     "sqlite://help/geo",
     "sqlite://help/admin",
+    "sqlite://help/transactions",
     "sqlite://help/introspection",
     "sqlite://help/migration",
   ];
   const fullHasAll = expectedFull.every((u) => fullHelpUris.includes(u));
-  console.log(`  Has all 9 help resources: ${fullHasAll ? "✅" : "❌"}`);
+  console.log(`  Has all 11 help resources: ${fullHasAll ? "✅" : "❌"}`);
   if (!fullHasAll) allPassed = false;
 
   // ── Summary ──

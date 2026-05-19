@@ -1,4 +1,4 @@
-# db-mcp Help — Database Administration (26 Native / 26 WASM)
+# db-mcp Help — Database Administration (29 Native / 29 WASM)
 
 ## Maintenance
 
@@ -16,6 +16,14 @@ sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-on
 sqlite_backup({ targetPath: "/path/to/backup.db" });
 sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity without restoring
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
+```
+
+## Audit Backups (Requires --audit-backup)
+
+```javascript
+sqlite_audit_list_backups(); // list pre-mutation DDL snapshots
+sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific snapshot
+sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
 ```
 
 ## PRAGMA

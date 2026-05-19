@@ -64,7 +64,7 @@ test.describe("E2E Prompt Reads (via MCP SDK Client)", () => {
 
       expect(response.messages).toBeDefined();
       expect(response.messages.length).toBeGreaterThan(0);
-      expect(response.messages[0].role).toBe("assistant");
+      expect(response.messages[0].role).toBe("user");
       expect(response.messages[0].content.type).toBe("text");
     } finally {
       await client.close();

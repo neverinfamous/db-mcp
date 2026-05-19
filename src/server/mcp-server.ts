@@ -310,12 +310,14 @@ export class DbMcpServer {
 
     // Register group-specific help resources based on tool filter
     const groupHelpKeys: { group: ToolGroup; key: string }[] = [
+      { group: "core", key: "core" },
       { group: "json", key: "json" },
       { group: "text", key: "text" },
       { group: "stats", key: "stats" },
       { group: "vector", key: "vector" },
       { group: "geo", key: "geo" },
       { group: "admin", key: "admin" },
+      { group: "transactions", key: "transactions" },
       { group: "introspection", key: "introspection" },
       { group: "migration", key: "migration" },
     ];
