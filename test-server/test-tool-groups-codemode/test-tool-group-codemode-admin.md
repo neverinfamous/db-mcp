@@ -160,7 +160,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 ```javascript
 const failures = [];
 const integrity = await sqlite.admin.integrityCheck();
-if (!integrity) failures.push("integrity check failed");
+if (integrity.integrity !== "ok") failures.push("integrity check failed");
 
 const journal = await sqlite.admin.pragmaSettings({ pragma: "journal_mode" });
 if (journal.value !== "wal")
@@ -177,7 +177,7 @@ return {
     integrity: "ok",
     journalMode: journal.value,
     viewCount: views?.views?.length,
-    virtualTableCount: vtables?.tables?.length,
+    virtualTableCount: vtables?.virtualTables?.length,
   },
 };
 ```
