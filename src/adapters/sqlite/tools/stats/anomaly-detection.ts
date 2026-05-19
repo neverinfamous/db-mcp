@@ -91,8 +91,8 @@ const DetectBloatSchema = z
       z
         .number()
         .optional()
-        .default(50)
-        .describe("Maximum tables to analyze (default: 50)"),
+        .default(25)
+        .describe("Maximum tables to analyze (default: 25)"),
     ),
     excludeSystemTables: z
       .boolean()
@@ -104,7 +104,7 @@ const DetectBloatSchema = z
       .default(false)
       .describe("Include tables with 0 risk score (default: false)"),
   })
-  .default(() => ({ limit: 50, includeZeroRisk: false }));
+  .default(() => ({ limit: 25, includeZeroRisk: false }));
 
 // =============================================================================
 // Helper: get PRAGMA value

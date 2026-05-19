@@ -63,7 +63,7 @@ const RowNumberSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(50).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -86,7 +86,7 @@ const RankSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(50).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -115,7 +115,7 @@ const LagLeadSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(50).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -134,7 +134,7 @@ const RunningTotalSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(50).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -154,7 +154,7 @@ const MovingAverageSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(50).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -173,7 +173,7 @@ const NtileSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(50).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
