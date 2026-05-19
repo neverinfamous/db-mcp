@@ -110,6 +110,7 @@ test.describe("Code Mode: Sandbox Basics", () => {
 
 test.describe("Code Mode: API Discoverability", () => {
   test("sqlite.help() returns groups", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -118,7 +119,7 @@ test.describe("Code Mode: API Discoverability", () => {
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
       expect(Array.isArray(result.groups)).toBe(true);
-      expect((result.groups as string[]).length).toBe(10);
+      expect((result.groups as string[]).length).toBe(isWasm ? 9 : 10);
     } finally {
       await client.close();
     }
@@ -140,12 +141,20 @@ test.describe("Code Mode: API Discoverability", () => {
     }
   });
 
-  test("all 10 groups exist and have methods", async ({}, testInfo) => {
+  test("all expected groups exist and have methods", async ({}, testInfo) => {
     const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const p = await callToolAndParse(client, "sqlite_execute_code", {
-        code: `
+      // Dynamic filtering removes 'transactions' in WASM
+      const code = isWasm ? `
+          const groups = ["core","json","text","stats","vector","admin","geo","introspection","migration"];
+          const results = {};
+          for (const g of groups) {
+            const h = await sqlite[g].help();
+            results[g] = h.methods.length;
+          }
+          return results;
+        ` : `
           const groups = ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {
@@ -153,31 +162,20 @@ test.describe("Code Mode: API Discoverability", () => {
             results[g] = h.methods.length;
           }
           return results;
-        `,
-      });
+        `;
+
+      const p = await callToolAndParse(client, "sqlite_execute_code", { code });
       expectSuccess(p);
       const result = p.result as Record<string, number>;
-      for (const group of [
-        "core",
-        "json",
-        "text",
-        "stats",
-        "vector",
-        "admin",
-        "transactions",
-        "geo",
-        "introspection",
-        "migration",
-      ]) {
-        // transactions is Native-only — WASM has 0 methods
-        if (group === "transactions" && isWasm) {
-          expect(result[group], `${group} expected 0 on WASM`).toBe(0);
-        } else {
-          expect(
-            result[group],
-            `${group} should have methods`,
-          ).toBeGreaterThan(0);
-        }
+      const expectedGroups = isWasm 
+        ? ["core","json","text","stats","vector","admin","geo","introspection","migration"]
+        : ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
+      
+      for (const group of expectedGroups) {
+        expect(
+          result[group],
+          `${group} should have methods`,
+        ).toBeGreaterThan(0);
       }
     } finally {
       await client.close();
@@ -577,7 +575,8 @@ test.describe("Code Mode: Workflows", () => {
 // =============================================================================
 
 test.describe("Code Mode: API Discoverability", () => {
-  test("sqlite.help() returns all 10 groups", async ({}, testInfo) => {
+  test("sqlite.help() returns all expected groups", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -586,19 +585,10 @@ test.describe("Code Mode: API Discoverability", () => {
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
       const groups = result.groups as string[];
-      expect(groups.length).toBe(10);
-      const expected = [
-        "core",
-        "json",
-        "text",
-        "stats",
-        "vector",
-        "admin",
-        "transactions",
-        "geo",
-        "introspection",
-        "migration",
-      ];
+      expect(groups.length).toBe(isWasm ? 9 : 10);
+      const expected = isWasm 
+        ? ["core","json","text","stats","vector","admin","geo","introspection","migration"]
+        : ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
       for (const g of expected) {
         expect(groups).toContain(g);
       }
@@ -671,8 +661,15 @@ test.describe("Code Mode: API Discoverability", () => {
     const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const p = await callToolAndParse(client, "sqlite_execute_code", {
-        code: `
+      const code = isWasm ? `
+          const groups = ["core","json","text","stats","vector","admin","geo","introspection","migration"];
+          const results = {};
+          for (const g of groups) {
+            const h = await sqlite[g].help();
+            results[g] = h.methods.length;
+          }
+          return results;
+        ` : `
           const groups = ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {
@@ -680,18 +677,13 @@ test.describe("Code Mode: API Discoverability", () => {
             results[g] = h.methods.length;
           }
           return results;
-        `,
-      });
+        `;
+      const p = await callToolAndParse(client, "sqlite_execute_code", { code });
       expectSuccess(p);
       const result = p.result as Record<string, number>;
-      expect(Object.keys(result).length).toBe(10);
+      expect(Object.keys(result).length).toBe(isWasm ? 9 : 10);
       for (const [group, count] of Object.entries(result)) {
-        // transactions is Native-only — WASM has 0 methods
-        if (group === "transactions" && isWasm) {
-          expect(count, `${group} expected 0 on WASM`).toBe(0);
-        } else {
-          expect(count, `${group} should have >0 methods`).toBeGreaterThan(0);
-        }
+        expect(count, `${group} should have >0 methods`).toBeGreaterThan(0);
       }
     } finally {
       await client.close();

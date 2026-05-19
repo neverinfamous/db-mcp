@@ -304,6 +304,45 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Get tools filtered by adapter capabilities
+   * Used by Code Mode to accurately reflect available runtime features
+   */
+  getAvailableToolDefinitions(): ToolDefinition[] {
+    const allTools = this.getToolDefinitions();
+    const capabilities = this.getCapabilities();
+
+    return allTools.filter((tool) => {
+      if (!capabilities.transactions && tool.group === "transactions") {
+        return false;
+      }
+      if (!capabilities.vector && tool.group === "vector") {
+        return false;
+      }
+      if (!capabilities.geospatial) {
+        const spatialiteTools = [
+          "sqlite_geo_load_spatialite",
+          "sqlite_geo_spatial_table",
+          "sqlite_geo_spatial_query",
+          "sqlite_geo_spatial_analysis",
+          "sqlite_geo_spatial_index",
+          "sqlite_geo_transform",
+          "sqlite_geo_import",
+        ];
+        if (spatialiteTools.includes(tool.name)) {
+          return false;
+        }
+      }
+      
+      // Filter out FTS5 tools if FTS is not supported
+      if (!capabilities.fullTextSearch && tool.name.startsWith("sqlite_fts_")) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  /**
    * Get resource definitions
    */
   override getResourceDefinitions(): ResourceDefinition[] {

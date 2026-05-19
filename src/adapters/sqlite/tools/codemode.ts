@@ -181,8 +181,12 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Build API bindings from adapter's tool definitions
-        // Always use all tools so help() shows the complete API surface
-        const allTools = adapter.getToolDefinitions();
+        // Use capability-filtered tools if available to accurately reflect runtime
+        const allTools =
+          "getAvailableToolDefinitions" in adapter &&
+          typeof adapter.getAvailableToolDefinitions === "function"
+            ? adapter.getAvailableToolDefinitions()
+            : adapter.getToolDefinitions();
         const api = createSqliteApi(allTools);
         const bindings = api.createSandboxBindings();
 

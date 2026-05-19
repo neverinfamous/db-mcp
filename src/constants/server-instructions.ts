@@ -307,7 +307,9 @@ sqlite_spatialite_index({
 
 **Usage**: \`sqlite_execute_code({ code: "const tables = await sqlite.core.listTables(); return tables;" })\`
 **Discover**: \`sqlite.help()\` for all groups, \`sqlite.<group>.help()\` for methods.
-**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.transactions\`, \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
+**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.transactions\` (Native-only), \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
+
+> **Note**: Code Mode dynamically filters capabilities. In WASM environments, \`sqlite.help()\` will omit unsupported groups (e.g., \`transactions\`) and tools (e.g., FTS5) to accurately reflect the active runtime.
 
 ## Code Mode API Mapping
 
