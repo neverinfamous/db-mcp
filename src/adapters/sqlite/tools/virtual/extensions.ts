@@ -58,6 +58,7 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
           throw new ExtensionNotAvailableError("rtree", {
             suggestion:
               "R-Tree extension not available. Use a SQLite build with R-Tree support.",
+            wasmLimitation: true,
           });
         }
 

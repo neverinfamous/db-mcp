@@ -232,17 +232,22 @@ export class ExtensionNotAvailableError extends DbMcpError {
       suggestion?: string | undefined;
       details?: Record<string, unknown> | undefined;
       cause?: Error | undefined;
+      wasmLimitation?: boolean | undefined;
     },
   ) {
+    const isWasm = options?.wasmLimitation ?? options?.details?.["wasmLimitation"] ?? false;
+    const baseMessage = `Extension '${extensionName}' is not installed or available`;
+    const message = isWasm === true ? `${baseMessage} in WASM mode` : baseMessage;
+    
     super(
-      `Extension '${extensionName}' is not installed or available`,
+      message,
       "EXTENSION_MISSING",
       ErrorCategory.CONFIGURATION,
       {
         suggestion:
           options?.suggestion ??
           `Install or enable the '${extensionName}' extension. Check environment variable or CLI flag configuration.`,
-        details: { extension: extensionName, ...options?.details },
+        details: { extension: extensionName, ...options?.details, ...(isWasm === true ? { wasmLimitation: true } : {}) },
         recoverable: false,
         cause: options?.cause,
       },
