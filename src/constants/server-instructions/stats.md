@@ -105,3 +105,15 @@ sqlite_window_ntile({
   partitionBy: "department",
 }); // quartiles
 ```
+
+⚠️ **Payload Sizes**: Window functions retrieve all standard columns by default (up to the `limit`). When querying wide tables, this can result in large payloads. It is highly recommended to pass `selectColumns` to reduce token usage:
+
+```javascript
+sqlite_window_moving_avg({
+  table: "stock_prices",
+  column: "close_price",
+  orderBy: "date",
+  windowSize: 7,
+  selectColumns: ["date"]
+});
+```
