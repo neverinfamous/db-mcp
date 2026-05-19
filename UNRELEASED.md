@@ -23,8 +23,6 @@
 
 ### Documentation
 
-- **Introspection Suite Verification**: Completed exhaustive testing of the 9-tool `introspection` group (including `dependencyGraph`, `topologicalSort`, `cascadeSimulator`, and schema analysis) via Code Mode. Verified structural integrity of complex graph payloads and proper enforcement of structured errors for all domain and Zod validations.
-- **JSON Suite Verification**: Completed exhaustive testing of the 24-tool `json` group (including data extraction, modification, aggregations, and security scanning) via Code Mode. Verified perfect schema compliance, strict Zod validation rejections, and correct structured errors across all domain failures.
 - **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
 
 ### Security
@@ -82,3 +80,4 @@
 - **Help Resource Registration Leak**: Fixed a registration gap where group-specific help resources (e.g. `sqlite://help/admin`) were not properly exposed when the `codemode` tool filter was uniquely enabled. Refined the explicit check in `mcp-server.ts` to `this.toolFilter.enabledGroups.size === 1 && this.toolFilter.enabledGroups.has("codemode")`, ensuring sandbox agents retain full access to internal group documentation without accidentally leaking help files to restricted filter profiles.
 - **Test Documentation Alignment**: Updated `test-server/test-resources.md` to align with the canonical `sqlite_append_insight` tool schema, changing the documented manual test payload from `{ category, finding }` to the actually implemented `{ insight: "..." }`.
 - **Pragma Settings Exception Leak**: Fixed an issue in `sqlite_pragma_settings` where writing to pragmas that do not return data (e.g., `cache_size`) threw an internal "does not return data" `better-sqlite3` exception. The error was incorrectly caught and returned as a `VALIDATION_ERROR`. The handler now properly delegates PRAGMA writes to `executeWriteQuery`, ensuring successful writes complete without errors and no validation payload is incorrectly emitted.
+- **Migration Rollback Validation**: Fixed an issue in `MigrationRollbackValidationSchema` where an empty input `{}` bypassed Zod validation and triggered a downstream domain error. Added a requirement check in the `superRefine` block to enforce that either `id` or `version` must be provided, ensuring a `VALIDATION_ERROR` is correctly thrown before domain execution.

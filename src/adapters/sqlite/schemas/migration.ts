@@ -160,6 +160,13 @@ export const MigrationRollbackSchema = z.object({
 });
 
 export const MigrationRollbackValidationSchema = MigrationRollbackSchema.superRefine((data, ctx) => {
+  if (data.id === undefined && data.version === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["version"],
+      message: "Either id or version must be provided",
+    });
+  }
   if (data.version !== undefined && !/^[a-zA-Z0-9_.-]+$/.test(data.version)) {
     ctx.addIssue({
       code: "custom",
