@@ -14,15 +14,17 @@
  * The interceptor is injected into the registration layer
  * so that all tool handlers are audited without per-handler changes.
  *
- * Note: OAuth identity capture is deferred — `user` and `scopes`
- * fields are `null`/`[]` in audit entries until an auth context
- * accessor is wired for db-mcp.
+ * OAuth identity (`user`/`scopes`) is read from AsyncLocalStorage
+ * via `getAuthContext()`. When OAuth is configured, the HTTP
+ * transport binds the validated auth context before MCP dispatch.
+ * When OAuth is not configured (stdio, no auth), fields are `null`/`[]`.
  */
 
 import { performance } from "node:perf_hooks";
 import type { AuditLogger } from "./logger.js";
 import type { BackupManager, SnapshotQueryAdapter } from "./backup-manager.js";
 import type { AuditCategory } from "./types.js";
+import { getAuthContext } from "../auth/auth-context.js";
 import { getRequiredScope } from "../auth/scope-map.js";
 
 /**
@@ -93,6 +95,7 @@ export function createAuditInterceptor(
       }
 
       const isReadScope = scope === "read";
+      const authCtx = getAuthContext();
       const start = performance.now();
       let success = true;
       let error: string | undefined;
@@ -182,15 +185,14 @@ export function createAuditInterceptor(
             tokenEstimate,
           } as Parameters<typeof auditLogger.log>[0]);
         } else {
-          // OAuth identity deferred — user/scopes are null/[] until auth context is wired
           auditLogger.log({
             timestamp: new Date().toISOString(),
             requestId,
             tool: options?.logAs ?? toolName,
             category: scopeToCategory(scope),
             scope,
-            user: null,
-            scopes: [],
+            user: authCtx?.claims?.sub ?? null,
+            scopes: authCtx?.scopes ?? [],
             durationMs,
             success,
             error,

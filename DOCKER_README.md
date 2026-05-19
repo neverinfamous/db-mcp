@@ -342,6 +342,8 @@ docker run --rm -p 3000:3000 \
 
 > When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence.
 
+> **Audit identity:** When OAuth is enabled with audit logging (`--audit-log`), write/admin audit entries capture the authenticated user (`claims.sub`) and granted scopes — providing a forensic trail linking mutations to identities.
+
 ## 📦 Image Details
 
 | Platform                  | Features                            |

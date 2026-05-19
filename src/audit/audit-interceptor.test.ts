@@ -205,7 +205,7 @@ describe("AuditInterceptor", () => {
     expect(entry.category).toBe("admin");
   });
 
-  it("user and scopes are null/empty (deferred auth context)", async () => {
+  it("captures null user/scopes when no auth context is active", async () => {
     const config = makeConfig(dir);
     const logger = new AuditLogger(config);
     const interceptor = createAuditInterceptor(logger);
@@ -223,5 +223,73 @@ describe("AuditInterceptor", () => {
     const entry = JSON.parse(content.trim()) as AuditEntry;
     expect(entry.user).toBeNull();
     expect(entry.scopes).toEqual([]);
+  });
+
+  it("captures OAuth identity from AsyncLocalStorage", async () => {
+    const { runWithAuthContext } = await import("../auth/auth-context.js");
+    const config = makeConfig(dir);
+    const logger = new AuditLogger(config);
+    const interceptor = createAuditInterceptor(logger);
+
+    const authCtx = {
+      authenticated: true as const,
+      claims: {
+        sub: "user-42",
+        scopes: ["read", "write"],
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+      },
+      scopes: ["read", "write"],
+    };
+
+    await runWithAuthContext(authCtx, async () => {
+      await interceptor.around(
+        "migration_apply",
+        { sql: "INSERT INTO t VALUES (1)" },
+        "req-1",
+        async () => ({ success: true }),
+      );
+    });
+
+    await logger.close();
+
+    const content = await readFile(config.logPath, "utf-8");
+    const entry = JSON.parse(content.trim()) as AuditEntry;
+    expect(entry.user).toBe("user-42");
+    expect(entry.scopes).toEqual(["read", "write"]);
+  });
+
+  it("captures partial auth context (authenticated but no sub)", async () => {
+    const { runWithAuthContext } = await import("../auth/auth-context.js");
+    const config = makeConfig(dir);
+    const logger = new AuditLogger(config);
+    const interceptor = createAuditInterceptor(logger);
+
+    const authCtx = {
+      authenticated: true as const,
+      claims: {
+        sub: undefined as unknown as string,
+        scopes: ["read"],
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+      },
+      scopes: ["read"],
+    };
+
+    await runWithAuthContext(authCtx, async () => {
+      await interceptor.around(
+        "migration_apply",
+        { sql: "INSERT INTO t VALUES (1)" },
+        "req-1",
+        async () => ({ success: true }),
+      );
+    });
+
+    await logger.close();
+
+    const content = await readFile(config.logPath, "utf-8");
+    const entry = JSON.parse(content.trim()) as AuditEntry;
+    expect(entry.user).toBeNull();
+    expect(entry.scopes).toEqual(["read"]);
   });
 });

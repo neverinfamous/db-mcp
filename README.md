@@ -603,6 +603,9 @@ The server exposes metadata at `/.well-known/oauth-protected-resource`.
 > [!NOTE]
 > **Per-tool scope enforcement:** Scopes are enforced at the tool level — each tool group maps to a required scope (`read`, `write`, or `admin`). When OAuth is enabled, every tool invocation checks the calling token's scopes before execution. When OAuth is not configured, scope checks are skipped entirely.
 
+> [!TIP]
+> **Audit identity integration:** When OAuth is enabled alongside audit logging (`--audit-log`), audit entries for write/admin tools automatically capture the authenticated user (`claims.sub`) and granted scopes. This provides a complete forensic trail linking every mutation to a specific identity. Without OAuth, these fields are `null`/`[]`.
+
 > [!WARNING]
 > **HTTP without authentication:** When using `--transport http` without enabling OAuth or `--auth-token`, all clients have full unrestricted access. Always enable authentication for production HTTP deployments. See [SECURITY.md](SECURITY.md) for details.
 

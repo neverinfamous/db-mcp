@@ -37,6 +37,8 @@
 
 ### Changed
 
+- **OAuth Identity in Audit Logs**: Audit log entries now capture the authenticated user's identity (`user` field from `claims.sub`) and granted scopes (`scopes` array) when OAuth 2.1 is configured. Previously hardcoded as `null`/`[]`. Identity is read from `AsyncLocalStorage` via `getAuthContext()`, matching the postgres-mcp reference implementation. When OAuth is not configured (stdio transport, no auth), fields remain `null`/`[]` as before.
+
 - **Zero-Suppression Architecture**: Finalized the Zod Schema Registry by completely purging all inline `z.object` definitions and Zod imports from the `src/adapters/sqlite/tools/` directory. All schemas (including `geo`, `fts`, `admin`, `json-operations`, and `vector`) and their associated coercion utilities (`coerceNumber`, `coerceUnit`, `coerceEnumValues`) are now strictly centralized within `src/adapters/sqlite/schemas/`, ensuring 100% modular decoupling and zero-suppression compliance.
 
 - **Dependency Updates**: Updated `typescript` to `^6.0.3`, `zod` to `^4.4.3`, `jose` to `^6.2.3`, `typescript-eslint` to `^8.59.3`, and bumped various packages including `@playwright/test`, `@types/node`, `@modelcontextprotocol/sdk`, `eslint`, `vitest`, `tsx` to `^4.22.1`, and `better-sqlite3`. Updated Dockerfile overrides for `diff` (9.0.0), `tar` (7.5.15), and `minimatch` (10.2.5). Updated GitHub Actions to their latest SHA-pinned versions (`docker/build-push-action`, `actions/upload-artifact`, `docker/login-action`, `github/codeql-action`, `actions/cache`, `actions/setup-node`).

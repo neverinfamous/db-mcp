@@ -84,7 +84,7 @@ src/
 ├── audit/                          # Audit logging subsystem
 │   ├── types.ts                    # AuditEntry, AuditConfig, BackupConfig, SnapshotMetadata types
 │   ├── logger.ts                   # AuditLogger — async-buffered JSONL writer with rotation
-│   ├── interceptor.ts              # createAuditInterceptor() — wraps tool handlers with around()
+│   ├── interceptor.ts              # createAuditInterceptor() — wraps tool handlers with around(), reads OAuth identity from AsyncLocalStorage
 │   ├── backup-manager.ts           # BackupManager — pre-mutation DDL snapshots (gzip)
 │   └── index.ts                    # Barrel
 │
