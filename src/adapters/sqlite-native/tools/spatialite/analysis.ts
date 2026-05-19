@@ -27,7 +27,7 @@ import {
   SpatialiteAnalyzeOutputSchema,
   SpatialiteTransformOutputSchema,
   SpatialiteImportOutputSchema,
-} from "../../../sqlite/output-schemas/index.js";
+} from "../../../sqlite/schemas/index.js";
 
 /**
  * Spatial analysis

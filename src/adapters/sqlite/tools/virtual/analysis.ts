@@ -24,7 +24,7 @@ import {
   isSpatialiteSystemTable,
   isSpatialiteSystemIndex,
 } from "../core/index.js";
-import { DbStatSchema, VacuumSchema } from "../../schemas/virtual.js";
+import { DbStatSchema, VacuumIntoSchema } from "../../schemas/virtual.js";
 
 export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -198,14 +198,14 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
     description:
       "Rebuild the database to reclaim space and optimize structure.",
     group: "admin",
-    inputSchema: VacuumSchema,
+    inputSchema: VacuumIntoSchema,
     outputSchema: VacuumOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Vacuum Database"),
     handler: async (params: unknown, context: RequestContext) => {
       let input;
       try {
-        input = VacuumSchema.parse(params);
+        input = VacuumIntoSchema.parse(params);
       } catch (error) {
         return {
           ...formatHandlerError(error),

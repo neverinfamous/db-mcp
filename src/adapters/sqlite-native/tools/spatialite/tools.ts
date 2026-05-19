@@ -35,7 +35,7 @@ import {
   SpatialiteCreateTableOutputSchema,
   SpatialiteQueryOutputSchema,
   SpatialiteIndexOutputSchema,
-} from "../../../sqlite/output-schemas/index.js";
+} from "../../../sqlite/schemas/index.js";
 
 /**
  * Load SpatiaLite extension

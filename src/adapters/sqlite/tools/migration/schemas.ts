@@ -122,7 +122,7 @@ export const MigrationHistorySchema = z
 export const MigrationStatusSchema = z.object({}).default({});
 
 // =============================================================================
-// Output Schemas (re-exported from centralized output-schemas/)
+// Output Schemas (re-exported from centralized schemas/)
 // =============================================================================
 
 export {

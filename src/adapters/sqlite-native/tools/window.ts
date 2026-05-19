@@ -23,7 +23,7 @@ import {
   WindowRunningTotalOutputSchema,
   WindowMovingAvgOutputSchema,
   WindowNtileOutputSchema,
-} from "../../sqlite/output-schemas/index.js";
+} from "../../sqlite/schemas/index.js";
 
 /**
  * Coerce string-typed numbers to actual numbers.

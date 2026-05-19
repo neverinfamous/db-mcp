@@ -21,7 +21,7 @@ import {
   TransactionRollbackToOutputSchema,
   TransactionExecuteOutputSchema,
   TransactionStatusOutputSchema,
-} from "../../sqlite/output-schemas/index.js";
+} from "../../sqlite/schemas/index.js";
 
 // Valid enum values for transaction mode
 const VALID_MODES = ["deferred", "immediate", "exclusive"] as const;

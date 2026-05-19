@@ -222,7 +222,7 @@ export const DbStatSchema = z.object({
     ),
 });
 
-export const VacuumSchema = z.object({
+export const VacuumIntoSchema = z.object({
   into: z.string().optional().describe("Optional file path to vacuum into"),
 });
 
@@ -295,7 +295,7 @@ export type CreateViewInput = z.infer<typeof CreateViewSchema>;
 export type ListViewsInput = z.infer<typeof ListViewsSchema>;
 export type DropViewInput = z.infer<typeof DropViewSchema>;
 export type DbStatInput = z.infer<typeof DbStatSchema>;
-export type VacuumInput = z.infer<typeof VacuumSchema>;
+export type VacuumIntoInput = z.infer<typeof VacuumIntoSchema>;
 export type ListVirtualTablesInput = z.infer<typeof ListVirtualTablesSchema>;
 export type VirtualTableInfoInput = z.infer<typeof VirtualTableInfoSchema>;
 export type DropVirtualTableInput = z.infer<typeof DropVirtualTableSchema>;

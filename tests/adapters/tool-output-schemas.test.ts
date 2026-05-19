@@ -4,7 +4,7 @@
  * Structural invariant: EVERY tool must have an `outputSchema` defined,
  * the schema must be a valid Zod schema (has `.parse()`), and it must
  * NOT be defined inline (all schemas should be imported from the
- * centralized `output-schemas/` directory).
+ * centralized `schemas/` directory).
  *
  * Covers both WASM (SqliteAdapter) and Native (NativeSqliteAdapter) tool sets.
  */
@@ -15,7 +15,7 @@ import { SqliteAdapter } from "../../src/adapters/sqlite/sqlite-adapter.js";
 import type { ToolDefinition } from "../../src/types/index.js";
 
 // Import ALL exported output schemas from the barrel to verify wiring
-import * as OutputSchemas from "../../src/adapters/sqlite/output-schemas/index.js";
+import * as OutputSchemas from "../../src/adapters/sqlite/schemas/index.js";
 
 // =============================================================================
 // Test Helpers
@@ -216,7 +216,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
 
       expect(
         unexpectedInline,
-        `${unexpectedInline.length} tool(s) with inline outputSchema (not from output-schemas/):\n  ${unexpectedInline.join("\n  ")}\nKnown exceptions: ${[...knownInline].join(", ")}`,
+        `${unexpectedInline.length} tool(s) with inline outputSchema (not from schemas/):\n  ${unexpectedInline.join("\n  ")}\nKnown exceptions: ${[...knownInline].join(", ")}`,
       ).toHaveLength(0);
     });
   });
@@ -328,7 +328,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
           OutputSchemas[schemaName as keyof typeof OutputSchemas];
         expect(
           expectedSchema,
-          `schema '${schemaName}' not exported from output-schemas/`,
+          `schema '${schemaName}' not exported from schemas/`,
         ).toBeDefined();
 
         expect(
@@ -337,7 +337,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
         ).toBeDefined();
         expect(
           tool?.outputSchema === expectedSchema,
-          `${toolName} outputSchema does not reference ${schemaName} from output-schemas/`,
+          `${toolName} outputSchema does not reference ${schemaName} from schemas/`,
         ).toBe(true);
       });
     }
