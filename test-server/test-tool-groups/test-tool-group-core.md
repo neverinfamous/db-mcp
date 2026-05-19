@@ -263,7 +263,7 @@ If DROP fails due to a database lock, note the leftover tables and move on — t
 🔴 24. `sqlite_create_table({})` → handler error
 🔴 25. `sqlite_describe_table({})` → handler error
 🔴 26. `sqlite_drop_table({})` → handler error
-🔴 27. `sqlite_get_indexes({})` → handler error
+🔴 27. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
 🔴 28. `sqlite_create_index({})` → handler error
 🔴 29. `sqlite_drop_index({})` → handler error
 🔴 30. `sqlite_execute_code({})` → handler error (has required `code` param)
