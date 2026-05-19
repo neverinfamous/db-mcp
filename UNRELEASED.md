@@ -37,6 +37,8 @@
 
 ### Changed
 
+- **Geo Tool Suite Validation**: Verified 100% compliance with structured error response patterns and Zod validation bounds for all Geo Haversine tools (`distance`, `nearby`, `boundingBox`, `cluster`) operating within the WASM backend. No raw MCP errors leaked during bounds validation.
+
 - **OAuth Identity in Audit Logs**: Audit log entries now capture the authenticated user's identity (`user` field from `claims.sub`) and granted scopes (`scopes` array) when OAuth 2.1 is configured. Previously hardcoded as `null`/`[]`. Identity is read from `AsyncLocalStorage` via `getAuthContext()`, matching the postgres-mcp reference implementation. When OAuth is not configured (stdio transport, no auth), fields remain `null`/`[]` as before.
 
 - **Zero-Suppression Architecture**: Finalized the Zod Schema Registry by completely purging all inline `z.object` definitions and Zod imports from the `src/adapters/sqlite/tools/` directory. All schemas (including `geo`, `fts`, `admin`, `json-operations`, and `vector`) and their associated coercion utilities (`coerceNumber`, `coerceUnit`, `coerceEnumValues`) are now strictly centralized within `src/adapters/sqlite/schemas/`, ensuring 100% modular decoupling and zero-suppression compliance.
