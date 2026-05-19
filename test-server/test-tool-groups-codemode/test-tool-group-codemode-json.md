@@ -168,8 +168,8 @@ for (let i = 1; i <= 3; i++) {
 }
 const schema = await sqlite.json.analyzeSchema({table: "temp_cm_json_etl", column: "data"});
 const scan = await sqlite.json.securityScan({table: "temp_cm_json_etl", column: "data"});
-await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_json_etl");
-return { schemaFields: Object.keys(schema).length > 0, riskLevel: scan.riskLevel };
+await sqlite.core.writeQuery({query: "DROP TABLE IF EXISTS temp_cm_json_etl"});
+return { schemaFields: Object.keys(schema.schema.properties).length > 0, riskLevel: scan.riskLevel };
 ```
 
 ### 5.2 — Cross-group JSON + stats
@@ -191,7 +191,7 @@ await sqlite.core.writeQuery({
   query: `INSERT INTO temp_cm_json_sec (data) VALUES ('{"password": "secret123", "api_key": "sk-abc123", "query": "DROP TABLE users; --", "html": "<script>alert(1)</script>"}')`
 });
 const scan = await sqlite.json.securityScan({table: "temp_cm_json_sec", column: "data"});
-await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_json_sec");
+await sqlite.core.writeQuery({query: "DROP TABLE IF EXISTS temp_cm_json_sec"});
 if (scan.riskLevel === "low") failures.push("expected riskLevel > low for malicious data");
 return { failures, success: failures.length === 0, riskLevel: scan.riskLevel };
 ```

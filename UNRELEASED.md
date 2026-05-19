@@ -24,6 +24,7 @@
 ### Documentation
 
 - **Introspection Suite Verification**: Completed exhaustive testing of the 9-tool `introspection` group (including `dependencyGraph`, `topologicalSort`, `cascadeSimulator`, and schema analysis) via Code Mode. Verified structural integrity of complex graph payloads and proper enforcement of structured errors for all domain and Zod validations.
+- **JSON Suite Verification**: Completed exhaustive testing of the 24-tool `json` group (including data extraction, modification, aggregations, and security scanning) via Code Mode. Verified perfect schema compliance, strict Zod validation rejections, and correct structured errors across all domain failures.
 - **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
 
 ### Security
