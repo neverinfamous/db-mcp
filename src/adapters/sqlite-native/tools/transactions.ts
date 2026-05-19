@@ -54,7 +54,6 @@ const SavepointSchema = z.object({
 const ExecuteInTransactionSchema = z.object({
   statements: z
     .array(z.string())
-    .min(1, "Must provide at least one SQL statement")
     .describe("Array of SQL statements to execute in order"),
   rollbackOnError: z
     .boolean()
@@ -356,6 +355,9 @@ function createExecuteInTransactionTool(
       let input;
       try {
         input = ExecuteInTransactionSchema.parse(params);
+        if (input.statements.length === 0) {
+          throw new ValidationError("Must provide at least one SQL statement");
+        }
       } catch (error) {
         return {
           ...formatHandlerError(error),
