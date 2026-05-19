@@ -1,46 +1,76 @@
-# WASM JSON Tools Advanced Stress Testing (stats)
+# Admin Tool Group Test Report
 
-**Task:** Execute the `test-tools-advanced-stats.md` certification pass in WASM mode.
+## Built-in Tools
+1. `server_info` - ✅ Pass
+2. `server_health` - ✅ Pass 
+3. `list_adapters` - ✅ Pass
 
-## Results & Findings
+## Pragma & Inspection
+1. `sqlite_pragma_database_list` - ✅ Pass
+2. `sqlite_pragma_compile_options` - ✅ Pass
+3. `sqlite_pragma_compile_options({filter: "FTS"})` - ✅ Pass (Returned FTS3 instead of FTS5 as expected)
+4. `sqlite_pragma_settings({pragma: "journal_mode"})` - ✅ Pass (`wal`)
+5. `sqlite_pragma_table_info({table: "test_products"})` - ✅ Pass
+6. `sqlite_index_stats` - ✅ Pass
+7. `sqlite_integrity_check` - ✅ Pass (`ok`)
+8. `sqlite_analyze` - ✅ Pass
+9. `sqlite_dbstat({summarize: true})` - ✅ Pass (JS fallback for WASM)
 
-### Category 1: Boundary Values & Empty States
-- **1.1 Empty Table Statistics:** ✅ Graceful handling of empty state (`count: 0`, `min/max: 0/null` or empty `buckets: []`). No crashes.
-- **1.2 Single-Row Statistics:** ✅ All tools correctly process $n=1$, including `statsRegression` gracefully failing with `Insufficient data ... (need at least 2 points, got 1)`.
-- **1.3 NULL-Heavy Data:** ✅ Correctly excludes NULL values and counts `count: 2`.
-- **1.4 Extreme Numeric Values:** ✅ Safely calculates aggregates over `+/-99999999.99`.
+## View Management
+10. `sqlite_create_view` - ✅ Pass
+11. `sqlite_list_views` - ✅ Pass
+12. `sqlite_drop_view` - ✅ Pass
 
-### Category 2: Statistical Edge Cases
-- **2.1 Self-Correlation:** ✅ Computed self-correlation (id vs id) = `1.0`.
-- **2.2 Hypothesis:** ✅ Executed `ttest_one` on measurements returning extremely low `pValue` with `significant: true` for expected mean of 999.
-- **2.3 Outliers (IQR & Z-score):** ✅ Successfully computed bounds and found 0 outliers in `test_measurements`.
-- **2.4 Regression (Degree 2):** ✅ Calculated polynomial regression coefficients (`quadratic`, `linear`, `intercept`) safely.
+## Virtual Tables
+13. `sqlite_list_virtual_tables` - ✅ Pass
+14. `sqlite_virtual_table_info` - ✅ Pass
+15. `sqlite_generate_series` - ✅ Pass
+16. `sqlite_create_rtree_table` - ✅ Pass (Returned expected structured error for WASM)
+17. `sqlite_create_series_table` - ✅ Pass
+18. Cleanup - ✅ Pass
 
-### Category 3: Anomaly Detection Stress
-- **3.1 detectAnomalies (mixed data):** ✅ Graceful output `riskLevel: low`, correctly handled.
-- **3.2 detectBloat:** ✅ Completed with summary: `No high-risk bloat detected across 0 tables` (WASM fallback correctly runs without crashing but only reads available generic counts).
-- **3.3 detectSchemaRisks:** ✅ Executed successfully.
+## Backup/Restore
+19. `sqlite_backup` - ✅ Pass (Returned structured error for WASM)
+20. `sqlite_verify_backup` - ✅ Pass (Returned structured error for WASM)
+21. `sqlite_restore` - ✅ Pass (Returned structured error for WASM)
+22. Cleanup - N/A
 
-### Category 4: Window Functions
-- **Skipped** as per `[NATIVE ONLY]` directives.
+## Optimization
+23. `sqlite_vacuum` - ✅ Pass
+24. `sqlite_optimize` - ✅ Pass
+25. `sqlite_pragma_optimize` - ✅ Pass
 
-### Category 5: Error Message Quality
-- **5.1 Invalid Table:** ✅ `Table 'nonexistent_table_xyz' does not exist`
-- **5.2 Invalid Column:** ✅ `Column 'nonexistent_col' not found in table 'test_products'`
-- **5.3 Non-numeric column correlation:** ✅ `Column 'name' in table 'test_products' is not numeric (type: text). Correlation requires numeric columns.`
-- **5.4 Invalid Buckets (< 1):** ✅ `'buckets' must be at least 1 for table 'test_products'`
+## CSV
+26. `sqlite_analyze_csv_schema` - ✅ Pass (Structured Error)
+27. `sqlite_create_csv_table` - ✅ Pass (Structured Error)
+28. Cleanup - N/A
 
-### Category 6: WASM Boundary Verification
-- **6.1 Tool Exposure:** ✅ Confirmed via `sqlite.stats.help()` that all window function tools (`windowRowNumber`, `windowRank`, `windowLagLead`, `windowRunningTotal`, `windowMovingAvg`, `windowNtile`) are strictly omitted in WASM environments.
-- **6.2 Parity:** ✅ 16 generic stats tools are fully functionally aligned with the established output schemas.
+## Insights
+29. `sqlite_append_insight` - ✅ Pass
 
-## Remediation & Actions Taken
-- Created test table using Code Mode with the `sqlite.migration.migrationApply` tool because `CREATE TABLE` and other DML statements are restricted from `sqlite.core.writeQuery` for safety.
-- Tracked metrics and cleaned up the `stress_stats_table`.
-- Zero factual errors or syntax bugs discovered in the prompt documentation!
+## Code Mode Testing
+30. `sqlite_execute_code` (integrityCheck) - ✅ Pass (`ok`)
+31. `sqlite_execute_code` (pragmaSettings) - ✅ Pass (`wal`)
 
-**Token Audit:** 
-- The most expensive payload block was Category 1 (Boundary tests) at **~727** token estimate.
+## Error Path Testing
+32. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` - ✅ Pass (Structured Error)
+33. `sqlite_virtual_table_info({tableName: "nonexistent_table_xyz"})` - ✅ Pass (Structured Error)
+34. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` - ✅ Pass (Structured Error)
 
-## Next Steps
-All test procedures successfully completed. Awaiting user verification/Vitest execution.
+## Zod Validation Sweep
+35. `sqlite_backup({})` - ✅ Pass
+36. `sqlite_restore({})` - ✅ Pass
+37. `sqlite_verify_backup({})` - ✅ Pass
+38. `sqlite_pragma_table_info({})` - ✅ Pass
+39. `sqlite_pragma_settings({})` - ✅ Pass
+40. `sqlite_append_insight({})` - ✅ Pass
+41. `sqlite_create_view({})` - ✅ Pass
+42. `sqlite_drop_view({})` - ✅ Pass
+43. `sqlite_virtual_table_info({})` - ✅ Pass (Structured Error)
+44. `sqlite_drop_virtual_table({})` - ✅ Pass (Structured Error)
+45. `sqlite_create_csv_table({})` - ✅ Pass (Structured Error)
+46. `sqlite_analyze_csv_schema({})` - ✅ Pass (Structured Error)
+47. `sqlite_create_rtree_table({})` - ✅ Pass (Structured Error)
+48. `sqlite_create_series_table({})` - ✅ Pass (Structured Error)
+49. `sqlite_generate_series({})` - ✅ Pass (Structured Error)
+50. `sqlite_dbstat({})` - ✅ Pass (Success, no required parameters)
