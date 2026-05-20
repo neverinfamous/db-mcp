@@ -49,6 +49,8 @@
 
 ### Fixed
 
+- **JSON Group Object Defaults**: Fixed an issue in `sqlite_json_group_object` where `keyColumn` was strictly required by Zod. It now correctly defaults to `"rowid"` when omitted, allowing queries to easily map values without specifying a key column.
+- **JSON Read Numeric Coercion**: Fixed a regression in `coerceNumber` that returned unparseable strings (like `"abc"`) instead of `undefined`. This ensures parameters like `limit` and `sampleSize` correctly fall back to their defaults instead of throwing raw MCP `-32602` validation errors.
 - **Anomaly Detection Column Parsing**: Fixed an issue in `sqlite_stats_detect_anomalies` where providing a single `column` argument was ignored, causing the tool to fall back to analyzing all numeric columns. Added `column` to the `DetectAnomaliesSchema` and updated the tool handler to correctly prioritize single-column targets over the plural `columns` array.
 - **Resource Error Quality**: Improved the error mapping logic in `query-executor.ts` to intercept raw SQLite errors (`Query execution failed: no such table/column`) and translate them into strongly-typed `ResourceNotFoundError` objects. This elevates the error message quality from Level 3 (adequate) to Level 5 (excellent) by embedding the exact table/column name, appropriate `TABLE_NOT_FOUND` / `COLUMN_NOT_FOUND` codes, and actionable suggestions, completely replacing the raw SQLite fallback.
 - **JSON Security Scan Parity**: Fixed an issue in `sqlite_json_security_scan` where the ported SQL injection pattern did not detect `' OR 1=1` variants and command/template injection patterns (`${cmd}`) were missing entirely. Added a new `cmd_injection_pattern` to the Zod schema and expanded regex matching.

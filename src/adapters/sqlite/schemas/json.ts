@@ -7,7 +7,7 @@ import { z } from "zod";
 const coerceNumber = (val: unknown): unknown => {
   if (typeof val === 'number') return val;
   if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return Number(val);
-  return val;
+  return undefined;
 };
 
 import { RowRecordSchema } from "./common.js";
@@ -563,8 +563,9 @@ export const JsonGroupObjectSchema = z.object({
   table: z.string().describe("Table name"),
   keyColumn: z
     .string()
+    .optional()
     .describe(
-      "Column for object keys (or SQL expression if allowExpressions is true)",
+      "Column for object keys (or SQL expression if allowExpressions is true). Defaults to rowid.",
     ),
   valueColumn: z
     .string()
