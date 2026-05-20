@@ -588,6 +588,7 @@ export type DetectSchemaRisksInput = z.infer<typeof DetectSchemaRisksSchema>;
 
 export const DetectAnomaliesSchema = z.object({
   table: z.string().describe("Table name to analyze"),
+  column: z.string().optional().describe("Single numeric column to analyze (alternative to columns)"),
   columns: z
     .array(z.string())
     .optional()

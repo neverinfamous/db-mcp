@@ -21,7 +21,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
 import {
   StatsDetectAnomaliesOutputSchema,
   StatsDetectBloatOutputSchema,
@@ -113,20 +113,24 @@ export function createDetectAnomaliesTool(
           `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${input.table.replace(/'/g, "''")}'`,
         );
         if (!tableCheck.rows || tableCheck.rows.length === 0) {
-          return {
-            success: false,
-            error: `Table '${input.table}' does not exist`,
-            code: "TABLE_NOT_FOUND",
-            category: "resource",
-            suggestion: "Run sqlite_list_tables to see available tables.",
-            recoverable: false,
-          };
+          throw new ResourceNotFoundError(
+            `Table '${input.table}' does not exist`,
+            "TABLE_NOT_FOUND",
+            {
+              suggestion: "Run sqlite_list_tables to see available tables.",
+              resourceType: "table",
+              resourceName: input.table
+            }
+          );
         }
 
         // Determine columns to analyze
         const tableInfo = await adapter.describeTable(input.table);
         let columnsToAnalyze: string[];
-        if (input.columns && input.columns.length > 0) {
+        if (input.column) {
+          await validateColumnExists(adapter, input.table, input.column);
+          columnsToAnalyze = [input.column];
+        } else if (input.columns && input.columns.length > 0) {
           for (const col of input.columns) {
             await validateColumnExists(adapter, input.table, col);
           }
