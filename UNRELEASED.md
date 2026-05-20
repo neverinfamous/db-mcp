@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Tested
+
+- **Vector Group Stress Testing**: Successfully executed the advanced vector group stress tests in Native Mode. All 11 tools (createTable, store, batchStore, search, get, delete, count, stats, dimensions, normalize, distance) passed functional, boundary, distance metric, dimension mismatch, batching, and error handling tests with zero required code modifications. Token cost optimization was confirmed.
+
 ### Added
 
 - **Progress Notifications**: Added support for MCP long-running task progress notifications. Notifications are now correctly emitted during lengthy operations including `sqlite_backup` (admin/backup), `sqlite_migration_apply` (migration/apply), and `sqlite_virtual_analysis` (virtual/analysis), ensuring cross-server parity with postgres-mcp and mysql-mcp.
@@ -62,7 +66,6 @@
 - **Code Mode Text Tests** — Fixed a documentation discrepancy in `server-instructions/text.md` where `sqlite_text_replace` was documented with `search`/`replacement` instead of `searchPattern`/`replaceWith`.
 - **Code Mode Transactions Tests** — Remediated syntax discrepancies in the transactions tool group testing prompt where the test template incorrectly used `sqlite.transactions.transactionStatus()` instead of `sqlite.transactions.status()`.
 - **Testing Prompts**: Reverted `test-tool-group-codemode-vector.md` and E2E tests to enforce strict output schemas (`rows` instead of `results`, `distance` instead of `value`) under the Code-Over-Docs policy.
-- **Text Group Stress Testing**: Executed the Advanced Stress Test for the `text` group across all 8 categories (Regex, Fuzzy/Phonetic, Transformation, Validation, Sentiment, FTS5, and Error Messages). All 19 tools passed perfectly with correct validation, edge case handling (e.g. `NULL`/empty strings in sentiment), robust FTS5 integration, and Excellent (Rating 5) structured error responses. No code fixes were required.
 - **Vector Schema Parity**: Standardized vector search and distance tool outputs (`sqlite.vector.search` now returns `rows`; `sqlite.vector.distance` now returns `distance`) to align with cross-server canonical implementations (e.g., `postgres-mcp`).
 - **Gotchas Documentation**: Removed vector schema discrepancy caveats from `gotchas.md` now that the canonical outputs are enforced.
 - **Core Group Stress Testing**: Fixed schema aliases in `CountSchema` and `BasicStatsSchema` to properly accept `tableName` and `columnName` inputs, standardizing parameter names across the `core` and `stats` tool groups and resolving validation errors encountered during Code Mode execution.
