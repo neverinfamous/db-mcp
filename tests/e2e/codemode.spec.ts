@@ -451,11 +451,13 @@ test.describe("Code Mode: Security", () => {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.core.readQuery({ query: "SELECT * FROM _e2e_nonexistent_xyz" });`,
       });
-      // Due to the Code Mode silent failure fix, tool errors now throw in the sandbox.
-      // Thus, the execution fails and returns success: false at the top level.
-      expect(p.success).toBe(false);
-      expect(typeof p.error).toBe("string");
-      expect(String(p.error)).toContain("not found");
+      // Tool errors return structured error objects instead of throwing.
+      // The sandbox execution itself succeeds, returning the error object.
+      expectSuccess(p);
+      const result = p.result as Record<string, unknown>;
+      expect(result.success).toBe(false);
+      expect(typeof result.error).toBe("string");
+      expect(String(result.error)).toContain("not found");
     } finally {
       await client.close();
     }
