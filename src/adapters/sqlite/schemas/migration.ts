@@ -136,6 +136,13 @@ export const MigrationRecordValidationSchema = MigrationRecordSchema.superRefine
       message: "Version must contain only alphanumeric characters, dots, dashes, or underscores",
     });
   }
+  if (!data.migrationSql && !data.sql) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["sql"],
+      message: "Either sql or migrationSql must be provided",
+    });
+  }
 });
 
 export const MigrationApplySchema = MigrationRecordSchema;
