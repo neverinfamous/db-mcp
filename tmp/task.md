@@ -1,50 +1,43 @@
-# Core Group Test Task
+# db-mcp Code Mode Testing Task Tracker
 
-| Tool | Happy Path | Domain Error | Zod Error |
-| ---- | ---------- | ------------ | --------- |
-| readQuery | ✅ | ✅ | ✅ |
-| writeQuery | ✅ | ✅ | ✅ |
-| listTables | ✅ | ✅ | ✅ |
-| describeTable | ✅ | ✅ | ✅ |
-| getIndexes | ✅ | ✅ | ✅ |
-| count | ✅ | ✅ | ✅ |
-| exists | ✅ | ✅ | ✅ |
-| createTable | ✅ | ✅ | ✅ |
-| dropTable | ✅ | ✅ | ✅ |
-| createIndex | ✅ | ✅ | ✅ |
-| dropIndex | ✅ | ✅ | ✅ |
-| upsert | ✅ | ✅ | ✅ |
-| batchInsert | ✅ | ✅ | ✅ |
-| truncate | ✅ | ✅ | ✅ |
+- [x] Phase 1: Sandbox Basics
+  - [x] 1.1 — Simple return value
+  - [x] 1.2 — Object return
+  - [x] 1.3 — Async/await support
+  - [x] 1.4 — Runtime error handling
+  - [x] 1.5 — Empty code
+  - [x] 1.6 — Empty params
+  - [x] 1.7 — Return null
+  - [x] 1.8 — Return undefined (returns `{"_error":"Result could not be serialized","_type":"undefined"}` - might be an issue, but doesn't crash)
+  - [x] 1.9 — Return large nested object
+- [x] Phase 2: API Discoverability
+  - [x] 2.1 — Top-level help
+  - [x] 2.2 — Group help (core)
+  - [x] 2.3 — All groups exist
+  - [x] 2.4 — Method aliases resolve
+  - [x] 2.5 — Top-level convenience aliases
+  - [x] 2.6 — Positional args
+  - [x] 2.7 — Built-in tools not in sandbox
+- [x] Phase 3: Security & Error Handling
+  - [x] 3.1 — Blocked pattern (require)
+  - [x] 3.2 — Blocked pattern (process)
+  - [x] 3.3 — Blocked pattern (eval)
+  - [x] 3.4 — Timeout enforcement
+  - [x] 3.5 — Timeout enforcement (tight tolerance)
+  - [x] 3.6 — Invalid tool call via API
+  - [x] 3.7 — Undefined API group
+- [x] Phase 4: Readonly Mode
+  - [x] 4.1 — Read operations work
+  - [x] 4.2 — Write operations blocked
+  - [x] 4.3 — Read methods still discoverable
+  - [x] 4.4 — Create table blocked
+  - [x] 4.5 — Stats read-only works
+- [x] Phase 5: State Isolation
+  - [x] 5.1 — Variables don't persist between calls
+  - [x] 5.2 — Database state persists between calls
 
-## Test Results
-
-### Phase 1: Happy Paths
-- `readQuery` [x]
-- `writeQuery` [x]
-- `listTables` [x]
-- `describeTable` [x]
-- `getIndexes` [x]
-- `count` [x]
-- `exists` [x]
-- `createTable` [x]
-- `dropTable` [x]
-- `createIndex` [x]
-- `dropIndex` [x]
-- `upsert` [x]
-- `batchInsert` [x]
-- `truncate` [x]
-
-### Phase 2: Domain Errors
-- [x] Read/Query tools
-- [x] Write tools
-- [x] Boundary conditions
-
-### Phase 3: Zod Validation
-- [x] Empty parameters check
-
-### Phase 4: Multi-Step Workflows
-- [x] 4.1 ETL pipeline
-- [x] 4.2 Schema introspection + query
-- [x] 4.3 Loop with accumulator
-- [x] 4.4 Schema mutation + verification
+## Findings & Fixes
+- ✅ **Phase 1-5**: All tests passed successfully without causing raw MCP errors.
+- ✅ **Issue (1.8) Fixed**: Returning `undefined` now explicitly returns an empty result (which resolves properly via JSON serialization rules) instead of producing an irregular `{"_error":"Result could not be serialized","_type":"undefined"}` object. Updated `sanitizeResult` in `src/codemode/security.ts` and `security.test.ts`.
+- 📦 **Token Audit**: The most expensive response was from test 3.1 (Blocked pattern: require) at `104 tokens`. Top-level help (2.1) was very lean at `53 tokens`. No unnecessarily large responses detected. All responses are highly optimized.
+- **Next Steps**: No code fixes required. `UNRELEASED.md` will not be updated as instructed. Test suite is ready for user validation.

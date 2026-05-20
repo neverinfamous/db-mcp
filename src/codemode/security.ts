@@ -101,8 +101,15 @@ export class CodeModeSecurityManager {
    * Sanitize and truncate result if too large
    */
   sanitizeResult(result: unknown): unknown {
+    if (result === undefined) {
+      return undefined;
+    }
+
     try {
       const serialized = JSON.stringify(result);
+      if (serialized === undefined) {
+        throw new Error("Not serializable");
+      }
       if (serialized.length > this.config.maxResultSize) {
         return {
           _truncated: true,

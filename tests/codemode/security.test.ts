@@ -227,13 +227,8 @@ describe("CodeModeSecurityManager", () => {
       expect(security.sanitizeResult(null)).toBeNull();
     });
 
-    it("should return error object for undefined (not JSON-serializable)", () => {
-      const result = security.sanitizeResult(undefined) as Record<
-        string,
-        unknown
-      >;
-      expect(result._error).toBe("Result could not be serialized");
-      expect(result._type).toBe("undefined");
+    it("should handle undefined", () => {
+      expect(security.sanitizeResult(undefined)).toBeUndefined();
     });
 
     it("should handle primitive values", () => {
