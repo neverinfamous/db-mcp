@@ -455,7 +455,7 @@ test.describe("Code Mode: Security", () => {
       // Thus, the execution fails and returns success: false at the top level.
       expect(p.success).toBe(false);
       expect(typeof p.error).toBe("string");
-      expect(String(p.error)).toContain("no such table");
+      expect(String(p.error)).toContain("not found");
     } finally {
       await client.close();
     }

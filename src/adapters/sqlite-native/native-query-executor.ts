@@ -7,10 +7,9 @@
 
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import type { QueryResult } from "../../types/index.js";
-import { QueryError } from "../../utils/errors/index.js";
-import { ERROR_CODES } from "../../utils/logger/index.js";
 import type { ModuleLogger } from "../../utils/logger/index.js";
 import { normalizeSqliteParams } from "../sqlite-helpers.js";
+import { translateSqliteError } from "../sqlite/query-executor.js";
 
 /**
  * Execute a read-only query against a better-sqlite3 Database.
@@ -36,18 +35,7 @@ export function nativeExecuteRead(
       executionTimeMs: Date.now() - start,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    log.error(`Query failed: ${message}`, {
-      code: ERROR_CODES.DB.QUERY_FAILED.full,
-    });
-    throw new QueryError(
-      `Query execution failed: ${message}`,
-      "DB_QUERY_FAILED",
-      {
-        sql,
-        cause: error instanceof Error ? error : undefined,
-      },
-    );
+    translateSqliteError(error, sql, "Query execution", log);
   }
 }
 
@@ -79,14 +67,7 @@ export function nativeExecuteWrite(
     }
     return Promise.resolve(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    log.error(`Write query failed: ${message}`, {
-      code: ERROR_CODES.DB.QUERY_FAILED.full,
-    });
-    throw new QueryError(`Write query failed: ${message}`, "DB_WRITE_FAILED", {
-      sql,
-      cause: error instanceof Error ? error : undefined,
-    });
+    translateSqliteError(error, sql, "Write query", log);
   }
 }
 

@@ -49,6 +49,7 @@
 
 ### Fixed
 
+- **Resource Error Quality**: Improved the error mapping logic in `query-executor.ts` to intercept raw SQLite errors (`Query execution failed: no such table/column`) and translate them into strongly-typed `ResourceNotFoundError` objects. This elevates the error message quality from Level 3 (adequate) to Level 5 (excellent) by embedding the exact table/column name, appropriate `TABLE_NOT_FOUND` / `COLUMN_NOT_FOUND` codes, and actionable suggestions, completely replacing the raw SQLite fallback.
 - **JSON Security Scan Parity**: Fixed an issue in `sqlite_json_security_scan` where the ported SQL injection pattern did not detect `' OR 1=1` variants and command/template injection patterns (`${cmd}`) were missing entirely. Added a new `cmd_injection_pattern` to the Zod schema and expanded regex matching.
 - **Code Mode Undefined Serialization**: Fixed an issue where returning `undefined` from the sandbox resulted in a serialized error object (`{"_error":"Result could not be serialized","_type":"undefined"}`) rather than properly handling it as an empty result. `sanitizeResult` now explicitly handles `undefined` while preserving the serialization catch for unsupported types like functions or symbols.
 - **E2E Transport Timeouts**: Resolved intermittent 60-second timeouts (`TypeError: Expected a ServerResponse`) in the WASM Playwright E2E suite by introducing a `connectionMutex` in `session.ts` to strictly serialize `McpServer` connection handoffs and synchronously clean up legacy `Protocol._transport` states.
