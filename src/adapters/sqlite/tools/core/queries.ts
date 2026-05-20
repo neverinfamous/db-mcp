@@ -229,7 +229,12 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           ? `Statement type not allowed: ${rejectedPrefix} is not a SELECT query. Use sqlite_write_query for INSERT/UPDATE/DELETE, or appropriate admin tools for DDL.`
           : "Statement type not allowed in sqlite_read_query. Only SELECT, PRAGMA, EXPLAIN, or WITH statements are permitted.";
         return {
-          ...formatHandlerError(new ValidationError(message)),
+          ...formatHandlerError(
+            new ValidationError(message, "VALIDATION_ERROR", {
+              suggestion: "Check your query syntax. For DML or DDL operations, use sqlite_write_query or appropriate admin tools.",
+              details: { sql: input.query },
+            }),
+          ),
           rowCount: 0,
           rows: [],
         };
@@ -247,7 +252,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           upperForLimit.startsWith("SELECT") ||
           upperForLimit.startsWith("WITH");
         if (isLimitable && !/\bLIMIT\b/i.test(finalQuery)) {
-          finalQuery = `${finalQuery} LIMIT 1000`;
+          finalQuery = `${finalQuery} LIMIT 50`;
         }
 
         const result = await adapter.executeReadQuery(finalQuery, input.params);
@@ -345,6 +350,11 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
             ...formatHandlerError(
               new ValidationError(
                 `Statement type not allowed: ${rejectedPrefix} is not a DML statement. Use sqlite_read_query for SELECT, or appropriate admin tools for DDL.`,
+                "VALIDATION_ERROR",
+                {
+                  suggestion: "Use the appropriate tool for this operation.",
+                  details: { sql: input.query },
+                }
               ),
             ),
             rowsAffected: 0,
@@ -354,6 +364,11 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
           ...formatHandlerError(
             new ValidationError(
               `Unrecognized statement type. sqlite_write_query only accepts INSERT, UPDATE, DELETE, or REPLACE statements.`,
+              "VALIDATION_ERROR",
+              {
+                suggestion: "Check your query syntax. For SELECT, use sqlite_read_query.",
+                details: { sql: input.query },
+              }
             ),
           ),
           rowsAffected: 0,
