@@ -136,7 +136,7 @@ const pairs = [
 const distances = {};
 for (const p of pairs) {
   const d = await sqlite.geo.distance({lat1: 40.7829, lon1: -73.9654, lat2: p.lat, lon2: p.lon});
-  distances[p.name] = d;
+  distances[p.name] = d.distance;
 }
 
 // Nearby search

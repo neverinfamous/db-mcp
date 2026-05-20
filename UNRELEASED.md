@@ -2,7 +2,6 @@
 
 ### Added
 
-- **Core Code Mode Test Validation**: Validated all 14 tools in the `core` group using `sqlite_execute_code` across Happy Paths, Domain Errors, Zod Validation, and Multi-Step workflows. The test suite passed successfully with zero handler errors or raw MCP bugs discovered.
 - **Progress Notifications**: Added support for MCP long-running task progress notifications. Notifications are now correctly emitted during lengthy operations including `sqlite_backup` (admin/backup), `sqlite_migration_apply` (migration/apply), and `sqlite_virtual_analysis` (virtual/analysis), ensuring cross-server parity with postgres-mcp and mysql-mcp.
 
 - **Initialization SQL**: Added `initializationSql?: string[]` to `SqliteConfig` for SQLite connections, enabling per-connection session setup (e.g. `PRAGMA foreign_keys = ON;`). This executes exactly once when the adapter connects, satisfying the requirement for session-level guardrails across both Native (`better-sqlite3`) and WASM (`sql.js`) backends.
