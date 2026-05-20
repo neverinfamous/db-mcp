@@ -222,7 +222,7 @@ test.describe("Code Mode: Readonly", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
-        code: `return await sqlite.core.writeQuery("CREATE TABLE IF NOT EXISTS _e2e_readonly_test (id INTEGER)");`,
+        code: `return await sqlite.core.createTable({ table: "_e2e_readonly_test", columns: [{name: "id", type: "INTEGER"}] });`,
         readonly: true,
       });
       // Native: success: false with CODEMODE_READONLY_VIOLATION
@@ -231,7 +231,7 @@ test.describe("Code Mode: Readonly", () => {
       // Cleanup in case WASM created it
       if (p.success) {
         await callToolAndParse(client, "sqlite_execute_code", {
-          code: `return await sqlite.core.writeQuery("DROP TABLE IF EXISTS _e2e_readonly_test");`,
+          code: `return await sqlite.core.dropTable({ table: "_e2e_readonly_test" });`,
         });
       }
     } finally {
@@ -451,9 +451,11 @@ test.describe("Code Mode: Security", () => {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.core.readQuery({ query: "SELECT * FROM _e2e_nonexistent_xyz" });`,
       });
-      expectSuccess(p);
-      const result = p.result as Record<string, unknown>;
-      expect(result.success).toBe(false);
+      // Due to the Code Mode silent failure fix, tool errors now throw in the sandbox.
+      // Thus, the execution fails and returns success: false at the top level.
+      expect(p.success).toBe(false);
+      expect(typeof p.error).toBe("string");
+      expect(String(p.error)).toContain("no such table");
     } finally {
       await client.close();
     }
@@ -470,13 +472,14 @@ test.describe("Code Mode: Workflows", () => {
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `
-          await sqlite.core.writeQuery("CREATE TABLE IF NOT EXISTS _e2e_cm_etl (id INTEGER PRIMARY KEY, raw TEXT, processed TEXT)");
+          try { await sqlite.core.dropTable({ table: "_e2e_cm_etl" }); } catch (e) {}
+          await sqlite.core.createTable({ table: "_e2e_cm_etl", columns: [{ name: "id", type: "INTEGER", primaryKey: true }, { name: "raw", type: "TEXT" }, { name: "processed", type: "TEXT" }] });
           for (let i = 1; i <= 5; i++) {
             await sqlite.core.writeQuery({ query: \`INSERT INTO _e2e_cm_etl (raw) VALUES ('item_\${i}')\` });
           }
           await sqlite.core.writeQuery("UPDATE _e2e_cm_etl SET processed = UPPER(raw)");
           const result = await sqlite.core.readQuery("SELECT * FROM _e2e_cm_etl");
-          await sqlite.core.writeQuery("DROP TABLE IF EXISTS _e2e_cm_etl");
+          await sqlite.core.dropTable({ table: "_e2e_cm_etl" });
           return result;
         `,
       });
@@ -494,7 +497,7 @@ test.describe("Code Mode: Workflows", () => {
       // Cleanup in case DROP TABLE didn't run
       try {
         await callToolAndParse(client, "sqlite_execute_code", {
-          code: `await sqlite.core.writeQuery("DROP TABLE IF EXISTS _e2e_cm_etl"); return { cleaned: true };`,
+          code: `await sqlite.core.dropTable({ table: "_e2e_cm_etl" }); return { cleaned: true };`,
         });
       } catch {
         /* ignore cleanup errors */

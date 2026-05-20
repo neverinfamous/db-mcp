@@ -167,7 +167,30 @@ function createGroupApi(
         timestamp: new Date(),
         requestId: crypto.randomUUID(),
       };
-      return tool.handler(normalizedParams, context);
+      
+      const result = await tool.handler(normalizedParams, context);
+
+      // Fail fast in the JS Sandbox by throwing on success: false
+      if (
+        typeof result === "object" &&
+        result !== null &&
+        "success" in result &&
+        (result as Record<string, unknown>)["success"] === false
+      ) {
+        const errorRecord = result as Record<string, unknown>;
+        const errMessage = typeof errorRecord["error"] === "string" 
+          ? errorRecord["error"] 
+          : "Tool operation failed";
+        
+        const err = new Error(errMessage);
+        
+        // Expose structured error properties (code, category, details, etc.) to the sandbox catch blocks
+        Object.assign(err, result);
+        
+        throw err;
+      }
+
+      return result;
     };
   }
 

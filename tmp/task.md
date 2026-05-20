@@ -1,43 +1,54 @@
-# db-mcp Code Mode Testing Task Tracker
+# JSON Group Tools Stress Test
 
-- [x] Phase 1: Sandbox Basics
-  - [x] 1.1 — Simple return value
-  - [x] 1.2 — Object return
-  - [x] 1.3 — Async/await support
-  - [x] 1.4 — Runtime error handling
-  - [x] 1.5 — Empty code
-  - [x] 1.6 — Empty params
-  - [x] 1.7 — Return null
-  - [x] 1.8 — Return undefined (returns `{"_error":"Result could not be serialized","_type":"undefined"}` - might be an issue, but doesn't crash)
-  - [x] 1.9 — Return large nested object
-- [x] Phase 2: API Discoverability
-  - [x] 2.1 — Top-level help
-  - [x] 2.2 — Group help (core)
-  - [x] 2.3 — All groups exist
-  - [x] 2.4 — Method aliases resolve
-  - [x] 2.5 — Top-level convenience aliases
-  - [x] 2.6 — Positional args
-  - [x] 2.7 — Built-in tools not in sandbox
-- [x] Phase 3: Security & Error Handling
-  - [x] 3.1 — Blocked pattern (require)
-  - [x] 3.2 — Blocked pattern (process)
-  - [x] 3.3 — Blocked pattern (eval)
-  - [x] 3.4 — Timeout enforcement
-  - [x] 3.5 — Timeout enforcement (tight tolerance)
-  - [x] 3.6 — Invalid tool call via API
-  - [x] 3.7 — Undefined API group
-- [x] Phase 4: Readonly Mode
-  - [x] 4.1 — Read operations work
-  - [x] 4.2 — Write operations blocked
-  - [x] 4.3 — Read methods still discoverable
-  - [x] 4.4 — Create table blocked
-  - [x] 4.5 — Stats read-only works
-- [x] Phase 5: State Isolation
-  - [x] 5.1 — Variables don't persist between calls
-  - [x] 5.2 — Database state persists between calls
+## Test Database Setup
+- [x] Create `test_jsonb_docs` table with 6 rows (pre-existed in DB)
+- [x] Create `test_events` table with 100 rows (pre-existed in DB)
 
-## Findings & Fixes
-- ✅ **Phase 1-5**: All tests passed successfully without causing raw MCP errors.
-- ✅ **Issue (1.8) Fixed**: Returning `undefined` now explicitly returns an empty result (which resolves properly via JSON serialization rules) instead of producing an irregular `{"_error":"Result could not be serialized","_type":"undefined"}` object. Updated `sanitizeResult` in `src/codemode/security.ts` and `security.test.ts`.
-- 📦 **Token Audit**: The most expensive response was from test 3.1 (Blocked pattern: require) at `104 tokens`. Top-level help (2.1) was very lean at `53 tokens`. No unnecessarily large responses detected. All responses are highly optimized.
-- **Next Steps**: No code fixes required. `UNRELEASED.md` will not be updated as instructed. Test suite is ready for user validation.
+## Category 1: Deep JSON Operations
+- [x] 1.1 Deeply Nested Access (extract deep, nonexistent nested, nonexistent key)
+- [x] 1.2 Array Manipulation (arrayLength on existing, arrayLength on empty, each on empty)
+- [x] 1.3 Merge Conflict Behavior (merge object, merge array)
+- [x] 1.4 Type Coercion (integer, real, object)
+
+## Category 2: JSON Query & Filter Stress
+- [x] 2.1 Query filtering (equality, multiple filters & select, filtering in test_events)
+
+## Category 3: Error Message Quality
+- [x] 3.1 Nonexistent table
+- [x] 3.2 Nonexistent column
+- [x] 3.3 Set on nonexistent row
+- [x] 3.4 Empty validatePath
+
+## Category 4: Write Operation Safety
+- [x] 4.1 Set, remove, insert on `stress_json_write`
+- [x] 4.2 normalizeColumn
+
+## Category 5: Security Scan Stress
+- [x] 5.1 Basic scan
+- [x] 5.2 Scan on injected malicious data
+
+## Cleanup & Reporting
+- [x] Cleanup `stress_*` tables
+- [x] Update UNRELEASED.md
+- [x] Fix any handler code violations
+
+## Coverage Matrix & Findings
+
+| Category | Test | Result | Notes / Finding |
+|----------|------|--------|-----------------|
+| 1.1 | Deeply Nested Access | ✅ Confirmed | extract returned "deep value" and nulls respectively. |
+| 1.2 | Array Manipulation | ✅ Confirmed | arrayLength correctly returned 3, and 0 for empty array. each returned 0 rows. |
+| 1.3 | Merge Conflict Behavior | ✅ Confirmed | Deep merge replaced arrays per RFC 7396 and merged object keys correctly. |
+| 1.4 | Type Coercion | ✅ Confirmed | Returned "integer", "real", and "object" as expected. |
+| 2.1 | JSON Query & Filter | 📦 Payload | Successfully queried. t14 (event filter) returned 25 rows. Entire block tokenEstimate was highest (~918). |
+| 3.1 | Nonexistent Table | ✅ Confirmed | Excellent quality (5/5). Returned structured error TABLE_NOT_FOUND with context and SQL. |
+| 3.2 | Nonexistent Column | ✅ Confirmed | Excellent quality (5/5). Returned structured error COLUMN_NOT_FOUND with suggestion. |
+| 3.3 | Set on nonexistent row | ✅ Confirmed | Returned success: true, rowsAffected: 0 with a warning message. |
+| 3.4 | Empty validatePath | ✅ Confirmed | Handled gracefully with valid: false and syntax issues array. |
+| 4.1 | Write Operations | ✅ Confirmed | set, remove, insert all mutated records correctly. json_insert required column parameter per schema. |
+| 4.2 | normalizeColumn | ✅ Confirmed | Successfully executed and returned unchanged: 3. |
+| 5.1 | Basic Security Scan | ✅ Confirmed | Returned 6 scanned rows with low risk level. |
+| 5.2 | Injected Security Scan | ✅ Confirmed | Returned high risk and detected xss, sql_injection, and cmd_injection patterns accurately. |
+| General | `sqlite_write_query` | ⚠️ Issue | `sqlite.core.writeQuery` blocks DDL (CREATE) via MCP validation, but in JS Code Mode it returns `{success: false}` instead of throwing an error. Developers must manually check `success` or use `createTable`. |
+
+**Most Expensive Block Audit**: Category 2 tests (`sqlite.json.query`) consumed ~918 tokens, largely due to returning 25 full JSON strings from `test_events`.
