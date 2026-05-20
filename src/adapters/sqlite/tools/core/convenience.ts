@@ -79,8 +79,12 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
         sql = `INSERT OR REPLACE INTO "${input.table}" ("${columns.join('", "')}") VALUES (${placeholders})`;
       }
 
-      if (input.returning && input.returning.length > 0) {
-        sql += ` RETURNING "${input.returning.join('", "')}"`;
+      if (input.returning !== undefined && input.returning !== false) {
+        if (input.returning === true) {
+          sql += ` RETURNING *`;
+        } else if (Array.isArray(input.returning) && input.returning.length > 0) {
+          sql += ` RETURNING "${input.returning.join('", "')}"`;
+        }
       }
 
       try {
@@ -88,6 +92,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: true,
           rowsAffected: result.rowsAffected,
+          rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
       } catch (error) {
@@ -151,8 +156,12 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
 
       let sql = `INSERT INTO "${input.table}" ("${columns.join('", "')}") VALUES ${valueGroups.join(", ")}`;
 
-      if (input.returning && input.returning.length > 0) {
-        sql += ` RETURNING "${input.returning.join('", "')}"`;
+      if (input.returning !== undefined && input.returning !== false) {
+        if (input.returning === true) {
+          sql += ` RETURNING *`;
+        } else if (Array.isArray(input.returning) && input.returning.length > 0) {
+          sql += ` RETURNING "${input.returning.join('", "')}"`;
+        }
       }
 
       try {
@@ -160,6 +169,7 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: true,
           rowsAffected: result.rowsAffected,
+          rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
       } catch (error) {

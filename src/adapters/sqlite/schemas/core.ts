@@ -25,6 +25,7 @@ export const WriteQueryOutputSchema = z
   .object({
     success: z.boolean(),
     rowsAffected: z.number().optional(),
+    rows: z.array(RowRecordSchema).optional(),
     executionTimeMs: z.number().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
@@ -272,7 +273,7 @@ export const UpsertSchema = z.object({
   conflictColumns: z.union([z.array(z.string()), z.string()]).optional().describe("Columns that form the unique constraint (ON CONFLICT). If omitted, falls back to INSERT OR REPLACE."),
   conflictColumn: z.union([z.string(), z.array(z.string())]).optional().describe("Alias for conflictColumns"),
   updateColumns: z.array(z.string()).optional().describe("Columns to update on conflict (default: all except conflict columns). Only used if conflictColumns is provided."),
-  returning: z.array(z.string()).optional().describe("Columns to return"),
+  returning: z.union([z.boolean(), z.array(z.string())]).optional().describe("Columns to return, or true for all columns"),
 });
 
 // =============================================================================
@@ -283,7 +284,7 @@ export const BatchInsertSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   rows: z.array(z.record(z.string(), z.unknown())).describe("Array of row objects to insert"),
-  returning: z.array(z.string()).optional().describe("Columns to return"),
+  returning: z.union([z.boolean(), z.array(z.string())]).optional().describe("Columns to return, or true for all columns"),
 });
 
 // =============================================================================

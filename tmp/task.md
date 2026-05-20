@@ -1,16 +1,28 @@
-# Vector Tools Stress Test Progress
-
-## Test Coverage Matrix
-
-- [x] Category 1: Boundary Values
-- [x] Category 2: Distance Metric Verification
-- [x] Category 3: Dimension Mismatch
-- [x] Category 4: Batch Operations
-- [x] Category 5: Category Filtering
-- [x] Category 6: Error Message Quality
-
-## Findings
-
-| Category | Test | Finding | Type (❌/⚠️/📦) | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| Category 1 | `sqlite.vector.stats` | Returns `count` instead of `sampleSize` when table is empty | ⚠️ | Fixed |
+- [x] Read server help content (gotchas.md)
+- [x] Test checklist:
+  - [x] 1. server_info
+  - [x] 2. server_health
+  - [x] 3. list_adapters
+  - [x] 4. sqlite_read_query (count test_products)
+  - [x] 5. sqlite_read_query (params binding)
+  - [x] 6. sqlite_read_query (count test_orders)
+  - [x] 7. sqlite_write_query (create table temp_core_test2) - *Failed due to intentional DDL block; used sqlite_create_table instead.*
+  - [x] 8. sqlite_batch_insert (temp_core_test2 returning) - *Failed with Zod validation on `returning: true`. Fixed.*
+  - [x] 9. sqlite_upsert (temp_core_test2 returning) - *Failed with Zod validation on `returning: true`. Fixed.*
+  - [x] 10. sqlite_count (test_products)
+  - [x] 11. sqlite_exists (test_products)
+  - [x] 12. sqlite_truncate (temp_core_test2)
+  - [x] 13. sqlite_write_query (drop temp_core_test2) - *Failed due to intentional DDL block; used sqlite_drop_table instead.*
+- [x] Test error path:
+  - [x] 14. sqlite_read_query (nonexistent_table_xyz)
+- [x] Test Zod validation sweep (empty params):
+  - [x] 15. sqlite_read_query ({})
+  - [x] 16. sqlite_write_query ({})
+  - [x] 17. sqlite_upsert ({})
+  - [x] 18. sqlite_batch_insert ({})
+  - [x] 19. sqlite_count ({})
+  - [x] 20. sqlite_exists ({})
+  - [x] 21. sqlite_truncate ({})
+- [x] Fix identified issues in handler code and documentation
+- [x] Stage and commit changes (but do not push)
+- [ ] Final summary

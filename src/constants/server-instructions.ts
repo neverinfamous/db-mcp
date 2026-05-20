@@ -157,8 +157,8 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 
 ## Convenience Tools (High-Level Data Operations)
 
-- \`sqlite_upsert({ table: "users", data: [{ id: 1, name: "Alice" }], conflictColumns: ["id"], updateColumns: ["name"] })\` — insert or update rows using \`ON CONFLICT\` (or \`REPLACE\` fallback)
-- \`sqlite_batch_insert({ table: "users", data: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }] })\` — insert multiple rows in a single batch
+- \`sqlite_upsert({ table: "users", data: [{ id: 1, name: "Alice" }], conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update rows using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns.
+- \`sqlite_batch_insert({ table: "users", data: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })\` — insert multiple rows in a single batch. Supports \`returning: true\` or array of columns.
 - \`sqlite_count({ table: "users", whereClause?: "status = 'active'" })\` — count rows in a table (faster than a full query)
 - \`sqlite_exists({ table: "users", whereClause: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
 - \`sqlite_truncate({ table: "users" })\` — quickly delete all rows from a table (executes \`DELETE FROM table\`)`],

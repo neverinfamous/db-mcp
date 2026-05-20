@@ -148,10 +148,22 @@ export function executeWrite(
 
   try {
     const normalizedParams = normalizeSqliteParams(params) as SqlJsParams;
-    if (normalizedParams) {
-      db.run(sql, normalizedParams);
+    let rows: Record<string, unknown>[] = [];
+    
+    // sql.js db.run does not return rows. If RETURNING is used, we must use exec.
+    if (/\bRETURNING\b/i.test(sql)) {
+      const results = normalizedParams
+        ? db.exec(sql, normalizedParams)
+        : db.exec(sql);
+      if (results.length > 0 && results[0]) {
+        rows = rowsFromSqlJsResult(results[0]);
+      }
     } else {
-      db.run(sql);
+      if (normalizedParams) {
+        db.run(sql, normalizedParams);
+      } else {
+        db.run(sql);
+      }
     }
 
     const changes = db.getRowsModified();
@@ -167,6 +179,7 @@ export function executeWrite(
     }
 
     const result: QueryResult = {
+      rows,
       rowsAffected: changes,
       executionTimeMs: Date.now() - start,
     };

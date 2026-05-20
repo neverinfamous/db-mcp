@@ -55,6 +55,17 @@ export function nativeExecuteWrite(
   try {
     const stmt = db.prepare(sql);
     const normalizedParams = normalizeSqliteParams(params);
+    
+    if (stmt.reader) {
+      // If the query returns data (e.g., INSERT ... RETURNING)
+      const rows = normalizedParams ? stmt.all(...normalizedParams) : stmt.all();
+      return Promise.resolve({
+        rows: rows as Record<string, unknown>[],
+        rowsAffected: rows.length, // .all() does not return changes, but we know it's rows.length for RETURNING
+        executionTimeMs: Date.now() - start,
+      });
+    }
+
     const info = normalizedParams ? stmt.run(...normalizedParams) : stmt.run();
 
     const result: QueryResult = {
