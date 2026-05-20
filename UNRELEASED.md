@@ -49,6 +49,7 @@
 
 ### Fixed
 
+- **Geo Tool Validation**: Executed Advanced Stress Test for the geo tool group across 26 boundary cases and schema edge cases. All Haversine and SpatiaLite tools correctly return strictly-typed JSON errors. No handler logic fixes were required.
 - **E2E Transport Timeouts**: Resolved intermittent 60-second timeouts (`TypeError: Expected a ServerResponse`) in the WASM Playwright E2E suite by introducing a `connectionMutex` in `session.ts` to strictly serialize `McpServer` connection handoffs and synchronously clean up legacy `Protocol._transport` states.
 - **Reset Script**: Fixed a PowerShell here-string syntax error (`ParseException` due to missing terminator) in `test-server/reset-database.ps1` that prevented the test database from being reset.
 - Fixed OAuth scope enforcement gap where tools were missing authorization level verification at the HTTP transport layer before being dispatched to the MCP handler.
