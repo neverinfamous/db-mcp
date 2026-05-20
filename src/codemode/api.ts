@@ -185,7 +185,10 @@ function createGroupApi(
         const err = new Error(errMessage);
         
         // Expose structured error properties (code, category, details, etc.) to the sandbox catch blocks
-        Object.assign(err, result);
+        // Be careful not to overwrite the native error message if the tool happens to return a 'message' field
+        const resultWithoutMessage = { ...errorRecord };
+        delete resultWithoutMessage["message"];
+        Object.assign(err, resultWithoutMessage);
         
         throw err;
       }

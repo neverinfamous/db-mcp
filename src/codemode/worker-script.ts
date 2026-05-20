@@ -30,6 +30,7 @@ interface RpcResponse {
   id: number;
   result?: unknown;
   error?: string;
+  errorDetails?: Record<string, unknown>;
 }
 
 /**
@@ -52,8 +53,12 @@ function buildSqliteProxy(
     const p = pending.get(msg.id);
     if (p) {
       pending.delete(msg.id);
-      if (msg.error) {
-        p.reject(new Error(msg.error));
+      if (msg.error !== undefined) {
+        const err = new Error(msg.error || "Empty error message");
+        if (msg.errorDetails) {
+          Object.assign(err, msg.errorDetails);
+        }
+        p.reject(err);
       } else {
         p.resolve(msg.result);
       }
