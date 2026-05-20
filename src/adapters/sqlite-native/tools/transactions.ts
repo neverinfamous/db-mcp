@@ -378,9 +378,14 @@ function createExecuteInTransactionTool(
       let success = true;
 
       let transactionStarted = false;
+      const db = adapter.getDatabase();
+      const originallyInTransaction = db.inTransaction;
+
       try {
-        adapter.beginTransaction();
-        transactionStarted = true;
+        if (!originallyInTransaction) {
+          adapter.beginTransaction();
+          transactionStarted = true;
+        }
 
         for (const statement of input.statements) {
           try {
@@ -433,7 +438,9 @@ function createExecuteInTransactionTool(
           }
         }
 
-        adapter.commitTransaction();
+        if (transactionStarted) {
+          adapter.commitTransaction();
+        }
 
         return {
           success,
@@ -447,6 +454,13 @@ function createExecuteInTransactionTool(
       } catch (error) {
         let rollbackFailure: string | undefined;
         if (transactionStarted) {
+          try {
+            adapter.rollbackTransaction();
+          } catch (rbError) {
+            rollbackFailure =
+              rbError instanceof Error ? rbError.message : String(rbError);
+          }
+        } else if (originallyInTransaction && input.rollbackOnError) {
           try {
             adapter.rollbackTransaction();
           } catch (rbError) {
