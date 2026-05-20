@@ -377,8 +377,10 @@ function createExecuteInTransactionTool(
       }[] = [];
       let success = true;
 
+      let transactionStarted = false;
       try {
         adapter.beginTransaction();
+        transactionStarted = true;
 
         for (const statement of input.statements) {
           try {
@@ -444,17 +446,21 @@ function createExecuteInTransactionTool(
         };
       } catch (error) {
         let rollbackFailure: string | undefined;
-        try {
-          adapter.rollbackTransaction();
-        } catch (rbError) {
-          rollbackFailure =
-            rbError instanceof Error ? rbError.message : String(rbError);
+        if (transactionStarted) {
+          try {
+            adapter.rollbackTransaction();
+          } catch (rbError) {
+            rollbackFailure =
+              rbError instanceof Error ? rbError.message : String(rbError);
+          }
         }
         const message = error instanceof Error ? error.message : String(error);
         const formatted = formatHandlerError(error);
         let rollbackMessage = `Transaction rolled back: ${message}`;
         if (rollbackFailure) {
           rollbackMessage += ` (rollback error: ${rollbackFailure})`;
+        } else if (!transactionStarted) {
+          rollbackMessage = `Transaction failed to start: ${message}`;
         }
 
         return {
