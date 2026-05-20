@@ -110,7 +110,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
         if (vectors.length === 0) {
           return {
             success: true,
-            count: 0,
+            sampleSize: 0,
             message: "No valid vectors found",
           };
         }
@@ -119,7 +119,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
         if (!firstVector) {
           return {
             success: true,
-            count: 0,
+            sampleSize: 0,
             message: "No valid vectors found",
           };
         }

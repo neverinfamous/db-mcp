@@ -57,12 +57,11 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Only validate numeric column for t-tests — chi-square operates on categorical data
         if (input.testType !== "chi_square") {
-          const numericError = await validateNumericColumn(
+          await validateNumericColumn(
             adapter,
             input.table,
             input.column,
           );
-          if (numericError) return numericError;
         }
 
         if (input.whereClause) {

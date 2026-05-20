@@ -55,12 +55,11 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
         const input = BasicStatsSchema.parse(aliasedParams);
 
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
+        await validateNumericColumn(
           adapter,
           input.table,
           input.column,
         );
-        if (numericError) return numericError;
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -209,12 +208,11 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.groupByColumn);
 
         if (input.stat !== "count") {
-          const numericError = await validateNumericColumn(
+          await validateNumericColumn(
             adapter,
             input.table,
             input.valueColumn,
           );
-          if (numericError) return numericError;
         }
 
         const table = sanitizeIdentifier(input.table);
@@ -267,22 +265,25 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         const input = HistogramSchema.parse(params);
 
         if (input.buckets < 1) {
-          return {
-            success: false,
-            error: `'buckets' must be at least 1 for table '${input.table}'`,
-            code: "INVALID_INPUT",
-            category: "validation",
-            recoverable: false,
-          };
+          throw new ValidationError(
+            `'buckets' must be at least 1 for column '${input.column}' in table '${input.table}'`,
+            "INVALID_INPUT",
+            {
+              details: {
+                resourceType: "column",
+                resourceName: input.column,
+                tableName: input.table
+              }
+            }
+          );
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
+        await validateNumericColumn(
           adapter,
           input.table,
           input.column,
         );
-        if (numericError) return numericError;
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -390,22 +391,23 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
           (p) => p < 0 || p > 100,
         );
         if (invalidPercentiles.length > 0) {
-          return {
-            success: false,
-            error: `Percentile values must be between 0 and 100. Invalid: ${invalidPercentiles.join(", ")}`,
-            code: "INVALID_INPUT",
-            category: "validation",
-            recoverable: false,
-          };
+          throw new ValidationError(
+            `Percentile values must be between 0 and 100. Invalid: ${invalidPercentiles.join(", ")}`,
+            "INVALID_INPUT",
+            {
+              details: {
+                invalidPercentiles
+              }
+            }
+          );
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
+        await validateNumericColumn(
           adapter,
           input.table,
           input.column,
         );
-        if (numericError) return numericError;
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

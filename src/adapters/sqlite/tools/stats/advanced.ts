@@ -18,6 +18,7 @@ import {
 import {
   formatHandlerError,
   ResourceNotFoundError,
+  ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
   StatsCorrelationOutputSchema,
@@ -68,15 +69,18 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
           const nonNumeric = !isNumericType(col1Type)
             ? input.column1
             : input.column2;
-          return {
-            success: false,
-            error: `Column '${nonNumeric}' in table '${input.table}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
-            code: "INVALID_INPUT",
-            category: "validation",
-            suggestion:
-              "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for correlation analysis.",
-            recoverable: false,
-          };
+          throw new ValidationError(
+            `Column '${nonNumeric}' in table '${input.table}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
+            "INVALID_INPUT",
+            {
+              suggestion: "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for correlation analysis.",
+              details: {
+                resourceType: "column",
+                resourceName: nonNumeric,
+                tableName: input.table
+              }
+            }
+          );
         }
 
         const table = sanitizeIdentifier(input.table);

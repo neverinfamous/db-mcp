@@ -10,6 +10,8 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
 
 
+import { ValidationError } from "../../../../utils/errors/index.js";
+
 /**
  * Valid enum values for handler-side validation.
  * Required enums use z.string() in schema + handler validation against these.
@@ -58,14 +60,7 @@ export async function validateNumericColumn(
   adapter: SqliteAdapter,
   tableName: string,
   columnName: string,
-): Promise<{
-  success: false;
-  error: string;
-  code: string;
-  category: string;
-  suggestion: string;
-  recoverable: false;
-} | null> {
+): Promise<void> {
   const tableInfo = await adapter.describeTable(tableName);
   const columnMap = new Map(
     (tableInfo.columns ?? []).map((c) => [
@@ -76,18 +71,19 @@ export async function validateNumericColumn(
   const colType = columnMap.get(columnName.toLowerCase()) ?? "";
 
   if (!isNumericType(colType)) {
-    return {
-      success: false,
-      error: `Column '${columnName}' in table '${tableName}' is not numeric (type: ${colType || "unknown"}). This operation requires a numeric column.`,
-      code: "INVALID_INPUT",
-      category: "validation",
-      suggestion:
-        "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for statistical analysis.",
-      recoverable: false,
-    };
+    throw new ValidationError(
+      `Column '${columnName}' in table '${tableName}' is not numeric (type: ${colType || "unknown"}). This operation requires a numeric column.`,
+      "INVALID_INPUT",
+      {
+        suggestion: "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for statistical analysis.",
+        details: {
+          resourceType: "column",
+          resourceName: columnName,
+          tableName: tableName
+        }
+      }
+    );
   }
-
-  return null;
 }
 
 // =============================================================================

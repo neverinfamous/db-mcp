@@ -54,18 +54,16 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.xColumn);
         await validateColumnExists(adapter, input.table, input.yColumn);
 
-        const xNumericError = await validateNumericColumn(
+        await validateNumericColumn(
           adapter,
           input.table,
           input.xColumn,
         );
-        if (xNumericError) return xNumericError;
-        const yNumericError = await validateNumericColumn(
+        await validateNumericColumn(
           adapter,
           input.table,
           input.yColumn,
         );
-        if (yNumericError) return yNumericError;
 
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.xColumn);

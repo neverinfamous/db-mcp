@@ -47,12 +47,11 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
+        await validateNumericColumn(
           adapter,
           input.table,
           input.column,
         );
-        if (numericError) return numericError;
 
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);
