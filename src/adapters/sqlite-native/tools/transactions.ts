@@ -359,9 +359,10 @@ function createExecuteInTransactionTool(
           throw new ValidationError("Must provide at least one SQL statement");
         }
       } catch (error) {
+        const errObj = formatHandlerError(error);
         return {
-          ...formatHandlerError(error),
-          message: "",
+          ...errObj,
+          message: errObj.error || "Transaction execution failed",
           statementsExecuted: 0,
           results: [],
         };
