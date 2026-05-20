@@ -46,7 +46,7 @@ const SENSITIVE_KEYS = new Set([
  * Equivalent to the postgres-mcp `~*` regex, translated to JS RegExp.
  */
 const SQL_INJECTION_PATTERN =
-  /\bSELECT\s+.+\bFROM\b|\bINSERT\s+INTO\b|\bUPDATE\s+.+\bSET\b|\bDELETE\s+FROM\b|\bDROP\s+(?:TABLE|DATABASE|INDEX)\b|\bUNION\s+(?:ALL\s+)?SELECT\b|--\s*$|;\s*(?:SELECT|INSERT|UPDATE|DELETE)\b/i;
+  /\bSELECT\s+.+\bFROM\b|\bINSERT\s+INTO\b|\bUPDATE\s+.+\bSET\b|\bDELETE\s+FROM\b|\bDROP\s+(?:TABLE|DATABASE|INDEX)\b|\bUNION\s+(?:ALL\s+)?SELECT\b|--\s*$|;\s*(?:SELECT|INSERT|UPDATE|DELETE)\b|'\s*OR\s+\d+\s*=\s*\d+/i;
 
 /**
  * XSS patterns — matches common cross-site scripting attack vectors.
@@ -54,6 +54,12 @@ const SQL_INJECTION_PATTERN =
  */
 const XSS_PATTERN =
   /<script|javascript:|on(?:click|load|error|mouseover)\s*=|<iframe|<object|<embed|<svg[^>]+on|<img[^>]+onerror/i;
+
+/**
+ * Command injection patterns — matches common shell/template injection vectors.
+ */
+const CMD_INJECTION_PATTERN =
+  /\$\{.*?\}/;
 
 // ---------------------------------------------------------------------------
 // Tool factory
@@ -182,6 +188,21 @@ export function createJsonSecurityScanTool(
               } else {
                 issueMap.set(mapKey, {
                   type: "xss_pattern",
+                  key,
+                  count: 1,
+                });
+              }
+            }
+
+            // 4. Command injection pattern detection
+            if (CMD_INJECTION_PATTERN.test(value)) {
+              const mapKey = `cmd_injection_pattern:${key}`;
+              const existing = issueMap.get(mapKey);
+              if (existing) {
+                existing.count++;
+              } else {
+                issueMap.set(mapKey, {
+                  type: "cmd_injection_pattern",
                   key,
                   count: 1,
                 });

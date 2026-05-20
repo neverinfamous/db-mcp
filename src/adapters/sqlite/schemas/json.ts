@@ -336,7 +336,7 @@ export const JsonSecurityScanOutputSchema = z
           type: z
             .string()
             .describe(
-              "Issue type: sensitive_key | sql_injection_pattern | xss_pattern",
+              "Issue type: sensitive_key | sql_injection_pattern | xss_pattern | cmd_injection_pattern",
             ),
           key: z.string().optional().describe("Affected JSON key"),
           count: z.number().optional().describe("Occurrence count"),

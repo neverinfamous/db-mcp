@@ -49,6 +49,7 @@
 
 ### Fixed
 
+- **JSON Security Scan Parity**: Fixed an issue in `sqlite_json_security_scan` where the ported SQL injection pattern did not detect `' OR 1=1` variants and command/template injection patterns (`${cmd}`) were missing entirely. Added a new `cmd_injection_pattern` to the Zod schema and expanded regex matching.
 - **Code Mode Undefined Serialization**: Fixed an issue where returning `undefined` from the sandbox resulted in a serialized error object (`{"_error":"Result could not be serialized","_type":"undefined"}`) rather than properly handling it as an empty result. `sanitizeResult` now explicitly handles `undefined` while preserving the serialization catch for unsupported types like functions or symbols.
 - **E2E Transport Timeouts**: Resolved intermittent 60-second timeouts (`TypeError: Expected a ServerResponse`) in the WASM Playwright E2E suite by introducing a `connectionMutex` in `session.ts` to strictly serialize `McpServer` connection handoffs and synchronously clean up legacy `Protocol._transport` states.
 - **Reset Script**: Fixed a PowerShell here-string syntax error (`ParseException` due to missing terminator) in `test-server/reset-database.ps1` that prevented the test database from being reset.
