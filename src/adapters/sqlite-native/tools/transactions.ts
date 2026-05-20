@@ -473,7 +473,7 @@ function createExecuteInTransactionTool(
         let rollbackMessage = `Transaction rolled back: ${message}`;
         if (rollbackFailure) {
           rollbackMessage += ` (rollback error: ${rollbackFailure})`;
-        } else if (!transactionStarted) {
+        } else if (!transactionStarted && !originallyInTransaction) {
           rollbackMessage = `Transaction failed to start: ${message}`;
         }
 
