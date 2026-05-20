@@ -1,9 +1,5 @@
 ## [Unreleased]
 
-### Tested
-
-- **Vector Group Stress Testing**: Successfully executed the advanced vector group stress tests in Native Mode. All 11 tools (createTable, store, batchStore, search, get, delete, count, stats, dimensions, normalize, distance) passed functional, boundary, distance metric, dimension mismatch, batching, and error handling tests with zero required code modifications. Token cost optimization was confirmed.
-
 ### Added
 
 - **Progress Notifications**: Added support for MCP long-running task progress notifications. Notifications are now correctly emitted during lengthy operations including `sqlite_backup` (admin/backup), `sqlite_migration_apply` (migration/apply), and `sqlite_virtual_analysis` (virtual/analysis), ensuring cross-server parity with postgres-mcp and mysql-mcp.
@@ -62,6 +58,8 @@
 - **Code Mode Discovery parity** — `sqlite.help()` within Code Mode worker processes now properly computes and returns `totalMethods` and `usage` instructions to match the top-level API shape.
 - **Audit Logging Silent Failure** — Fixed a bug where audit logs were not writing to the configured JSONL file despite being enabled. Tool names in `toolScopeMap` were missing their `sqlite_` prefix (e.g., `"execute_code"` instead of `"sqlite_execute_code"`), causing them to fall back to the `read` scope and skip logging when `--audit-reads` was false. Added correct prefixing during scope map initialization and fixed `typescript-eslint` typing strictness issues (`no-unsafe-call`, `strict-boolean-expressions`) in the audit interceptor.
 - **Migration Tools Hardening** — Standardized the migration SQL payload property to `migrationSql` (from `sql`) across the SQLite handler code, Zod schemas, unit tests, and Playwright E2E tests, ensuring strict symmetry with `rollbackSql` and resolving validation discrepancies.
+- **Admin Code Mode Tests**: Fully validated the `admin` tool group within Code Mode (`sqlite_execute_code`), achieving 100% pass rate across 52 happy-path, domain error, and Zod validation checks. No handler code changes were required as all validation boundaries strictly adhere to the Structured Error format (`{success: false, error: "..."}`).
+- **Admin Code Mode Prompt**: Fixed a syntax error in the admin code mode test prompt (`test-tool-group-codemode-admin.md`) where `sqlite.core.describeTable("...")` was incorrectly used instead of the object-parameter syntax `sqlite.core.describeTable({table: "..."})`.
 - **Automated Coverage & E2E Badges** — Ported `update-badges.ts` script to automatically update the `README.md` and `DOCKER_README.md` coverage and E2E statistics. Updated `vitest.config.ts` and `playwright.config.ts` to output `json-summary` and `json` results respectively, and hooked the badge updater into the `test:coverage` and `test:e2e` npm scripts.
 - **Code Mode Text Tests** — Fixed a documentation discrepancy in `server-instructions/text.md` where `sqlite_text_replace` was documented with `search`/`replacement` instead of `searchPattern`/`replaceWith`.
 - **Code Mode Transactions Tests** — Remediated syntax discrepancies in the transactions tool group testing prompt where the test template incorrectly used `sqlite.transactions.transactionStatus()` instead of `sqlite.transactions.status()`.

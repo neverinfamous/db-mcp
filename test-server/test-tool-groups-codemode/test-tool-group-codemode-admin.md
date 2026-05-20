@@ -159,7 +159,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 49. `sqlite.admin.generateSeries({start: 1, stop: 10, step: 2})` → 5 values: 1, 3, 5, 7, 9 (non-default step value)
 50. `sqlite.admin.pragmaSettings({pragma: "cache_size", value: "2000"})` → set cache_size, then `sqlite.admin.pragmaSettings({pragma: "cache_size"})` → verify read-back returns the set value
-51. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable("temp_cm_series_regular")` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
+51. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable({table: "temp_cm_series_regular"})` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
 52. `sqlite.admin.dropVirtualTable({tableName: "test_products"})` → `{success: false}` — test_products is a regular table, not a virtual table (domain error)
 
 ---
