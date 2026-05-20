@@ -170,28 +170,6 @@ function createGroupApi(
       
       const result = await tool.handler(normalizedParams, context);
 
-      // Fail fast in the JS Sandbox by throwing on success: false
-      if (
-        typeof result === "object" &&
-        result !== null &&
-        "success" in result &&
-        (result as Record<string, unknown>)["success"] === false
-      ) {
-        const errorRecord = result as Record<string, unknown>;
-        const errMessage = typeof errorRecord["error"] === "string" 
-          ? errorRecord["error"] 
-          : "Tool operation failed";
-        
-        const err = new Error(errMessage);
-        
-        // Expose structured error properties (code, category, details, etc.) to the sandbox catch blocks
-        // Be careful not to overwrite the native error message if the tool happens to return a 'message' field
-        const resultWithoutMessage = { ...errorRecord };
-        delete resultWithoutMessage["message"];
-        Object.assign(err, resultWithoutMessage);
-        
-        throw err;
-      }
 
       return result;
     };
