@@ -212,13 +212,13 @@ DROP TABLE IF EXISTS temp_core_test;
 4. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
 5. `sqlite_read_query({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99) (Note: Parameter binding test)
 6. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
-7. `sqlite_write_query({query: "CREATE TABLE temp_core_test2 (id INTEGER PRIMARY KEY, val TEXT)"})` → success
+7. `sqlite_create_table({table: "temp_core_test2", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
 8. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 1, val: "a"}, {id: 2, val: "b"}], returning: true})` → `{rowsAffected: 2}` and returns inserted rows (Note: Test `returning` parameter)
 9. `sqlite_upsert({table: "temp_core_test2", data: {id: 1, val: "c"}, conflictColumns: ["id"], updateColumns: ["val"], returning: true})` → `{rowsAffected: 1}` and returns updated row
 10. `sqlite_count({table: "test_products"})` → `{count: 16}`
 11. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
 12. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
-13. `sqlite_write_query({query: "DROP TABLE temp_core_test2"})` → success
+13. `sqlite_drop_table({table: "temp_core_test2"})` → success
 
 **Error path testing:**
 
