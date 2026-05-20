@@ -2,7 +2,6 @@
 
 ### Added
 
-- **Vector Tools Parity & Validation**: Verified that all 11 vector tools work flawlessly in both Native and WASM modes via Code Mode testing, including happy paths, Zod validation, and structured domain errors.
 - **Progress Notifications**: Added support for MCP long-running task progress notifications. Notifications are now correctly emitted during lengthy operations including `sqlite_backup` (admin/backup), `sqlite_migration_apply` (migration/apply), and `sqlite_virtual_analysis` (virtual/analysis), ensuring cross-server parity with postgres-mcp and mysql-mcp.
 
 - **Initialization SQL**: Added `initializationSql?: string[]` to `SqliteConfig` for SQLite connections, enabling per-connection session setup (e.g. `PRAGMA foreign_keys = ON;`). This executes exactly once when the adapter connects, satisfying the requirement for session-level guardrails across both Native (`better-sqlite3`) and WASM (`sql.js`) backends.
@@ -84,3 +83,4 @@
 - **Migration Rollback Validation**: Fixed an issue in `MigrationRollbackValidationSchema` where an empty input `{}` bypassed Zod validation and triggered a downstream domain error. Added a requirement check in the `superRefine` block to enforce that either `id` or `version` must be provided, ensuring a `VALIDATION_ERROR` is correctly thrown before domain execution.
 - **Code Mode Timeout Enforcement**: Fixed an issue where the `timeout` parameter in `sqlite_execute_code` enforced a minimum of `1000ms`, despite allowing configurations down to `500ms`. Updated both the Zod schema (`ExecuteCodeSchema`) and the handler-level guard in `codemode.ts` to correctly allow timeouts down to `500ms`.
 - **Gotchas Documentation**: Removed the obsolete FTS5 rebuild requirement (Gotcha #5) from `gotchas.md` since `sqlite_fts_create` automatically populates the index upon creation.
+- **Admin WASM Boundary Validation**: Successfully executed the advanced stress test for the `admin` tool suite in both Native code mode and verified WASM graceful degradation. All tools (backup, restore, verify, csv, rtree) correctly utilize structured validation/extension errors (`formatHandlerError`) when executing in a WASM runtime, preventing unhandled exceptions.
