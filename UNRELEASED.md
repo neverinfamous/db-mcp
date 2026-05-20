@@ -49,7 +49,6 @@
 
 ### Fixed
 
-- **JSON Tools Stress Testing**: Executed the advanced stress test suite for all 24 JSON tools (including validation, extraction, mutation, aggregation, schema analysis, and security scanning). All tools passed edge cases and strict Zod schema validations seamlessly.
 - **E2E Transport Timeouts**: Resolved intermittent 60-second timeouts (`TypeError: Expected a ServerResponse`) in the WASM Playwright E2E suite by introducing a `connectionMutex` in `session.ts` to strictly serialize `McpServer` connection handoffs and synchronously clean up legacy `Protocol._transport` states.
 - **Reset Script**: Fixed a PowerShell here-string syntax error (`ParseException` due to missing terminator) in `test-server/reset-database.ps1` that prevented the test database from being reset.
 - Fixed OAuth scope enforcement gap where tools were missing authorization level verification at the HTTP transport layer before being dispatched to the MCP handler.
@@ -86,3 +85,4 @@
 - **Gotchas Documentation**: Removed the obsolete FTS5 rebuild requirement (Gotcha #5) from `gotchas.md` since `sqlite_fts_create` automatically populates the index upon creation.
 - **Read Query Validator Context**: Fixed an issue where the `sqlite_read_query` and `sqlite_write_query` validators blocked invalid statements (e.g., misspelled keywords) with a generic `VALIDATION_ERROR` but provided no SQL context. Added the original query string to the error `details.sql` to satisfy "structured error with SQL syntax context" testing requirements.
 - **Query Pagination Default**: Lowered the default safety limit for unbounded SELECT queries from `1000` to `50` to prevent unnecessary payload bloat (e.g., returning 36KB JSON for a stress test) and align with token-efficiency guidelines.
+- **Stats Stress Tests**: Executed the Advanced Stress Test for the db-mcp stats group via Code Mode. Verified 22 stats tools including boundary values, statistical edge cases, anomaly detection, window functions, and error message quality. No code fixes were required; all tools gracefully handled edge cases and returned 100% structured error parity.
