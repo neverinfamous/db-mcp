@@ -411,8 +411,6 @@ export const StorageAnalysisSchema = z
       ),
     limit: z
       .number()
-      .min(1)
-      .max(500)
       .optional()
       .describe("Maximum number of tables to include (default: 50)"),
   })

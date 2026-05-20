@@ -71,6 +71,9 @@ export function createStorageAnalysisTool(
         const includeDetails = input.includeTableDetails !== false;
         const excludeSystem = input.excludeSystemTables !== false;
         const limit = input.limit ?? 50;
+        if (limit < 1 || limit > 500) {
+          throw new Error("Validation Error: limit must be between 1 and 500");
+        }
         // Gather database-level metrics
         const pageSize = await getPragmaNumber(adapter, "page_size");
         const totalPages = await getPragmaNumber(adapter, "page_count");
