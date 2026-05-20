@@ -12,6 +12,7 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
+import { ValidationError } from "../../../../../utils/errors/classes.js";
 import { StorageAnalysisOutputSchema, StorageAnalysisSchema } from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
@@ -72,7 +73,7 @@ export function createStorageAnalysisTool(
         const excludeSystem = input.excludeSystemTables !== false;
         const limit = input.limit ?? 50;
         if (limit < 1 || limit > 500) {
-          throw new Error("Validation Error: limit must be between 1 and 500");
+          throw new ValidationError("limit must be between 1 and 500");
         }
         // Gather database-level metrics
         const pageSize = await getPragmaNumber(adapter, "page_size");
