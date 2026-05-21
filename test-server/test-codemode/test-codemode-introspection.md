@@ -5,7 +5,6 @@
 > If there is nothing to fix, don't update UNRELEASED.md.
 > We're currently testing Native mode.
 
-
 **Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
 
 **Step 2:** Conduct an exhaustive test of the **introspection** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
