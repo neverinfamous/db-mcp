@@ -77,69 +77,73 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 12. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature"})` → outlier detection result
 13. `sqlite.stats.statsRegression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
 14. `sqlite.stats.statsHypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → `statistic` and `pValue` present
+15. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 10})` → `sampleSize: 10`, `totalRows: 200`, `rows` array with ≤ 10 rows
+16. `sqlite.stats.statsSample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → rows contain only `name` and `price` columns
 
 ---
 
 ## Phase 2: Anomaly Detection Suite — Happy Paths (batched)
 
-15. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → `anomalies` array present, `riskLevel` low
-16. `sqlite.stats.detectBloat()` → bloat detection (may return empty if no bloat)
-17. `sqlite.stats.detectSchemaRisks()` → `tables` array present, `highRiskCount` 0
+17. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → `anomalies` array present, `riskLevel` low
+18. `sqlite.stats.detectBloat()` → bloat detection (may return empty if no bloat)
+19. `sqlite.stats.detectSchemaRisks()` → `tables` array present, `highRiskCount` 0
 
 ---
 
 ## Phase 3: Window Functions `[NATIVE ONLY]` — Happy Paths (batched)
 
-18. `sqlite.stats.windowRowNumber({table: "test_products", orderBy: "price DESC"})` → ranked by price
-19. `sqlite.stats.windowRank({table: "test_products", orderBy: "price DESC"})` → rank with ties
-20. `sqlite.stats.windowRunningTotal({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → cumulative totals
-21. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 5, orderBy: "measured_at"})` → moving averages
-22. `sqlite.stats.windowLagLead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag values
-23. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → quartiles
+20. `sqlite.stats.windowRowNumber({table: "test_products", orderBy: "price DESC"})` → ranked by price
+21. `sqlite.stats.windowRank({table: "test_products", orderBy: "price DESC"})` → rank with ties
+22. `sqlite.stats.windowRunningTotal({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → cumulative totals
+23. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 5, orderBy: "measured_at"})` → moving averages
+24. `sqlite.stats.windowLagLead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag values
+25. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → quartiles
 
 ---
 
 ## Phase 4: Stats Domain Errors (batched)
 
-🔴 24. `sqlite.stats.statsBasic({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
-🔴 25. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → report behavior
-🔴 26. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric
-🔴 27. `sqlite.stats.detectAnomalies({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
-🔴 28. `sqlite.stats.windowRowNumber({table: "nonexistent_xyz", orderBy: "x"})` `[NATIVE ONLY]` → `{success: false}`
+🔴 26. `sqlite.stats.statsBasic({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
+🔴 27. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → report behavior
+🔴 28. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric
+🔴 29. `sqlite.stats.detectAnomalies({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
+🔴 30. `sqlite.stats.statsSample({table: "nonexistent_xyz", sampleSize: 5})` → `{success: false}`
+🔴 31. `sqlite.stats.windowRowNumber({table: "nonexistent_xyz", orderBy: "x"})` `[NATIVE ONLY]` → `{success: false}`
 
 ---
 
 ## Phase 5: Stats Zod Validation (batched)
 
-🔴 29. `sqlite.stats.statsBasic({})` → `{success: false}`
-🔴 30. `sqlite.stats.statsCount({})` → `{success: false}`
-🔴 31. `sqlite.stats.statsGroupBy({})` → `{success: false}`
-🔴 32. `sqlite.stats.statsHistogram({})` → `{success: false}`
-🔴 33. `sqlite.stats.statsPercentile({})` → `{success: false}`
-🔴 34. `sqlite.stats.statsCorrelation({})` → `{success: false}`
-🔴 35. `sqlite.stats.statsTopN({})` → `{success: false}`
-🔴 36. `sqlite.stats.statsDistinct({})` → `{success: false}`
-🔴 37. `sqlite.stats.statsSummary({})` → `{success: false}`
-🔴 38. `sqlite.stats.statsFrequency({})` → `{success: false}`
-🔴 39. `sqlite.stats.statsOutliers({})` → `{success: false}`
-🔴 40. `sqlite.stats.statsRegression({})` → `{success: false}`
-🔴 41. `sqlite.stats.statsHypothesis({})` → `{success: false}`
-🔴 42. `sqlite.stats.detectAnomalies({})` → `{success: false}`
-🔴 43. `sqlite.stats.detectBloat({})` → `{success: false}` or success (no required params)
-🔴 44. `sqlite.stats.detectSchemaRisks({})` → `{success: false}` or success (no required params)
-🔴 45. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 46. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 47. `sqlite.stats.windowLagLead({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 48. `sqlite.stats.windowRunningTotal({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 49. `sqlite.stats.windowMovingAvg({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 50. `sqlite.stats.windowNtile({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 32. `sqlite.stats.statsBasic({})` → `{success: false}`
+🔴 33. `sqlite.stats.statsCount({})` → `{success: false}`
+🔴 34. `sqlite.stats.statsGroupBy({})` → `{success: false}`
+🔴 35. `sqlite.stats.statsHistogram({})` → `{success: false}`
+🔴 36. `sqlite.stats.statsPercentile({})` → `{success: false}`
+🔴 37. `sqlite.stats.statsCorrelation({})` → `{success: false}`
+🔴 38. `sqlite.stats.statsTopN({})` → `{success: false}`
+🔴 39. `sqlite.stats.statsDistinct({})` → `{success: false}`
+🔴 40. `sqlite.stats.statsSummary({})` → `{success: false}`
+🔴 41. `sqlite.stats.statsFrequency({})` → `{success: false}`
+🔴 42. `sqlite.stats.statsOutliers({})` → `{success: false}`
+🔴 43. `sqlite.stats.statsRegression({})` → `{success: false}`
+🔴 44. `sqlite.stats.statsHypothesis({})` → `{success: false}`
+🔴 45. `sqlite.stats.detectAnomalies({})` → `{success: false}`
+🔴 46. `sqlite.stats.detectBloat({})` → `{success: false}` or success (no required params)
+🔴 47. `sqlite.stats.detectSchemaRisks({})` → `{success: false}` or success (no required params)
+🔴 48. `sqlite.stats.statsSample({})` → `{success: false}` handler error
+🔴 49. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 50. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 51. `sqlite.stats.windowLagLead({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 52. `sqlite.stats.windowRunningTotal({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 53. `sqlite.stats.windowMovingAvg({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 54. `sqlite.stats.windowNtile({})` `[NATIVE ONLY]` → `{success: false}`
 
 ---
 
 ## Phase 6: Wrong-Type Numeric Coercion (batched)
 
-🔴 51. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → coerced default (success) or handler error, NOT raw MCP
-🔴 52. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → coerced default (success) or handler error
+🔴 55. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → coerced default (success) or handler error, NOT raw MCP
+🔴 56. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → coerced default (success) or handler error
 
 ---
 

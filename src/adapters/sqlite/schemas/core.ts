@@ -158,6 +158,18 @@ export const ExistsOutputSchema = z
   .extend(ErrorFieldsMixin.shape);
 
 // =============================================================================
+// Date Math Output
+// =============================================================================
+
+export const DateMathOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rows: z.array(z.record(z.string(), z.unknown())).optional(),
+    count: z.number().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+// =============================================================================
 // Input Schemas
 // =============================================================================
 
@@ -251,6 +263,66 @@ export const ListTablesSchema = z.object({
 });
 
 // =============================================================================
+// List Triggers Schema
+// =============================================================================
+
+export const ListTriggersSchema = z.object({
+  table: z
+    .string()
+    .optional()
+    .describe("Filter triggers by associated table name"),
+});
+
+const TriggerEntrySchema = z.object({
+  name: z.string(),
+  table: z.string(),
+  event: z.string().describe("INSERT, UPDATE, or DELETE"),
+  timing: z.string().describe("BEFORE, AFTER, or INSTEAD OF"),
+  sql: z.string(),
+});
+
+export const ListTriggersOutputSchema = z
+  .object({
+    success: z.boolean(),
+    count: z.number().optional(),
+    triggers: z.array(TriggerEntrySchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+// =============================================================================
+// List Constraints Schema
+// =============================================================================
+
+export const ListConstraintsSchema = z.object({
+  table: z.string().describe("Table name to inspect constraints for"),
+});
+
+const ForeignKeyEntrySchema = z.object({
+  id: z.number(),
+  table: z.string(),
+  from: z.string(),
+  to: z.string(),
+  onUpdate: z.string(),
+  onDelete: z.string(),
+});
+
+const UniqueIndexEntrySchema = z.object({
+  name: z.string(),
+  columns: z.array(z.string()),
+});
+
+export const ListConstraintsOutputSchema = z
+  .object({
+    success: z.boolean(),
+    table: z.string().optional(),
+    primaryKey: z.array(z.string()).optional(),
+    foreignKeys: z.array(ForeignKeyEntrySchema).optional(),
+    uniqueIndexes: z.array(UniqueIndexEntrySchema).optional(),
+    checkConstraints: z.array(z.string()).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -263,6 +335,8 @@ export type CreateIndexInput = z.infer<typeof CreateIndexSchema>;
 export type GetIndexesInput = z.infer<typeof GetIndexesSchema>;
 export type DropIndexInput = z.infer<typeof DropIndexSchema>;
 export type ListTablesInput = z.infer<typeof ListTablesSchema>;
+export type ListTriggersInput = z.infer<typeof ListTriggersSchema>;
+export type ListConstraintsInput = z.infer<typeof ListConstraintsSchema>;
 
 export const UpsertSchema = z.object({
   table: z.string().describe("Table name"),
@@ -372,4 +446,24 @@ export const TruncateSchema = z.object({
     .boolean()
     .optional()
     .describe("Restart identity sequences (DELETE FROM sqlite_sequence)"),
+});
+
+// =============================================================================
+// Date and Time Math Schemas
+// =============================================================================
+
+export const DateAddSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("Column containing date/time values"),
+  amount: z.number().describe("Amount of time to add (use negative to subtract)"),
+  unit: z.enum(["days", "months", "years", "hours", "minutes", "seconds"]).describe("Time unit"),
+  whereClause: z.string().optional().describe("Optional WHERE clause to filter rows"),
+});
+
+export const DateDiffSchema = z.object({
+  table: z.string().describe("Table name"),
+  column1: z.string().describe("First date/time column"),
+  column2: z.string().describe("Second date/time column (column1 - column2)"),
+  unit: z.enum(["days", "hours", "minutes", "seconds"]).describe("Unit for the difference result"),
+  whereClause: z.string().optional().describe("Optional WHERE clause to filter rows"),
 });

@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: May 16, 2026
+> Last updated: May 21, 2026
 
 ---
 
@@ -155,18 +155,21 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `core/convenience.ts`                     | 5     | `sqlite_upsert`, `sqlite_batch_insert`, `sqlite_count`, `sqlite_exists`, `sqlite_truncate`                                    |
 |                   | `core/tables.ts`                          | 4     | `create_table`, `list_tables`, `describe_table`, `drop_table`                                                                 |
 |                   | `core/indexes.ts`                         | 3     | `get_indexes`, `create_index`, `drop_index`                                                                                   |
+|                   | `core/triggers.ts`                        | 1     | `list_triggers`                                                                                                               |
+|                   | `core/constraints.ts`                     | 1     | `list_constraints`                                                                                                            |
 | **json**          | `json-operations/crud.ts`                 | 3     | `json_insert`, `json_update`, `json_select`                                                                                   |
 |                   | `json-operations/query.ts`                | 4     | `json_query`, `json_validate_path`, `json_merge`, `json_analyze_schema`                                                       |
 |                   | `json-operations/transform.ts`            | 4     | `json_valid`, `json_extract`, `json_set`, `json_remove`                                                                       |
 |                   | `json-helpers/read.ts`                    | 7     | `json_type`, `json_array_length`, `json_keys`, `json_each`, `json_pretty`, `json_storage_info`, `json_group_array`            |
 |                   | `json-helpers/write.ts`                   | 5     | `json_array_append`, `json_group_object`, `jsonb_convert`, `json_normalize_column`, `create_json_collection`                  |
+|                   | `json-operations/diff.ts`                 | 1     | `json_diff`                                                                                                                   |
 | **text**          | `text/regex.ts`                           | 2     | `regex_extract`, `regex_match`                                                                                                |
 |                   | `text/formatting.ts`                      | 6     | `text_split`, `text_concat`, `text_replace`, `text_trim`, `text_case`, `text_substring`                                       |
 |                   | `text/search.ts`                          | 3     | `fuzzy_match`, `phonetic_match`, `advanced_search`                                                                            |
 |                   | `text/validate.ts`                        | 2     | `text_normalize`, `text_validate`                                                                                             |
 |                   | `text/sentiment.ts`                       | 1     | `text_sentiment`                                                                                                              |
 | **text** (FTS5)   | `fts.ts`                                  | 5     | `fts_create`, `fts_search`, `fts_rebuild`, `fts_match_info`, `fts_headline`                                                   |
-| **stats**         | `stats/basic.ts`                          | 7     | `stats_basic`, `stats_count`, `stats_group_by`, `stats_histogram`, `stats_percentile`, `stats_correlation`, `stats_top_n`     |
+| **stats**         | `stats/basic.ts`                          | 8     | `stats_basic`, `stats_count`, `stats_group_by`, `stats_histogram`, `stats_percentile`, `stats_correlation`, `stats_top_n`, `stats_sample` |
 |                   | `stats/advanced.ts`                       | 6     | `stats_distinct`, `stats_summary`, `stats_frequency`, `stats_outliers`, `stats_regression`, `stats_hypothesis`                |
 |                   | `stats/anomaly-detection.ts`              | 2     | `stats_detect_anomalies`, `stats_detect_bloat`                                                                                |
 |                   | `stats/schema-risks.ts`                   | 1     | `stats_detect_schema_risks`                                                                                                   |
@@ -174,13 +177,13 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `vector/search.ts`                        | 2     | `vector_search`, `vector_get`                                                                                                 |
 |                   | `vector/metadata.ts`                      | 5     | `vector_count`, `vector_stats`, `vector_dimensions`, `vector_normalize`, `vector_distance`                                    |
 | **geo**           | `geo.ts`                                  | 4     | `geo_distance`, `geo_nearby`, `geo_bounding_box`, `geo_cluster`                                                               |
-| **admin**         | `admin/backup/create.ts`                  | 1     | `backup`                                                                                                                      |
+| **admin**         | `admin/backup/create.ts`                  | 2     | `backup`, `vacuum_into`                                                                                                       |
 |                   | `admin/backup/restore.ts`                 | 1     | `restore`                                                                                                                     |
 |                   | `admin/backup/analyze.ts`                 | 1     | `analyze`                                                                                                                     |
 |                   | `admin/backup/integrity.ts`               | 1     | `integrity_check`                                                                                                             |
 |                   | `admin/backup/optimize.ts`                | 1     | `optimize`                                                                                                                    |
 |                   | `admin/verify.ts`                         | 2     | `verify_backup`, `index_stats`                                                                                                |
-|                   | `admin/pragma.ts`                         | 6     | `pragma_compile_options`, `pragma_database_list`, `pragma_optimize`, `pragma_settings`, `pragma_table_info`, `append_insight` |
+|                   | `admin/pragma.ts`                         | 8     | `pragma_compile_options`, `pragma_database_list`, `pragma_optimize`, `pragma_settings`, `pragma_table_info`, `append_insight`, `attach_database`, `detach_database` |
 |                   | `virtual/views.ts`                        | 3     | `create_view`, `list_views`, `drop_view`                                                                                      |
 |                   | `virtual/vtable.ts`                       | 5     | `list_virtual_tables`, `virtual_table_info`, `drop_virtual_table`, `create_csv_table`, `analyze_csv_schema`                   |
 |                   | `virtual/extensions.ts`                   | 2     | `create_rtree_table`, `create_series_table`                                                                                   |

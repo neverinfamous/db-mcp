@@ -172,7 +172,7 @@ DROP TABLE IF EXISTS temp_core_test;
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### core-schema Group Tools (8)
+### core-schema Group Tools (10)
 
 1. sqlite_list_tables
 2. sqlite_describe_table
@@ -181,7 +181,9 @@ DROP TABLE IF EXISTS temp_core_test;
 5. sqlite_get_indexes
 6. sqlite_create_index
 7. sqlite_drop_index
-8. sqlite_execute_code
+8. sqlite_list_triggers
+9. sqlite_list_constraints
+10. sqlite_execute_code
 
 **Checklist:**
 
@@ -193,26 +195,34 @@ DROP TABLE IF EXISTS temp_core_test;
 6. `sqlite_create_index({table: "temp_core_test", columns: ["name"], indexName: "idx_temp_core_name", unique: false, ifNotExists: true})` → success
 7. `sqlite_drop_index({indexName: "idx_temp_core_name", ifExists: true})` → success
 8. `sqlite_drop_table({table: "temp_core_test", ifExists: true})` → success
+9. `sqlite_list_triggers({})` → list of triggers (may be empty in test DB), verify `{triggers: [], count: 0}` structure
+10. `sqlite_list_triggers({table: "test_orders"})` → filtered results
+11. `sqlite_list_constraints({table: "test_orders"})` → verify `primaryKey`, `foreignKeys` (FK to test_products), `uniqueIndexes`
+12. `sqlite_list_constraints({table: "test_products"})` → verify PK on `id`
 
 **Code mode testing:**
 
-9. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
-10. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
+13. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
+14. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
+15. `sqlite_execute_code({code: "const r = await sqlite.core.listConstraints({table: 'test_orders'}); return r;"})` → structured constraint data
 
 **Error path testing:**
 
-🔴 11. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
-🔴 12. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
+🔴 16. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
+🔴 17. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
+🔴 18. `sqlite_list_constraints({table: "nonexistent_xyz"})` → structured error
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Every response must be a handler error (`{success: false, error: "Validation error: ..."}`) — NOT a raw MCP error frame:
 
-🔴 13. `sqlite_create_table({})` → handler error
-🔴 14. `sqlite_describe_table({})` → handler error
-🔴 15. `sqlite_drop_table({})` → handler error
-🔴 16. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
-🔴 17. `sqlite_create_index({})` → handler error
-🔴 18. `sqlite_drop_index({})` → handler error
-🔴 19. `sqlite_execute_code({})` → handler error (has required `code` param)
+🔴 19. `sqlite_create_table({})` → handler error
+🔴 20. `sqlite_describe_table({})` → handler error
+🔴 21. `sqlite_drop_table({})` → handler error
+🔴 22. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
+🔴 23. `sqlite_create_index({})` → handler error
+🔴 24. `sqlite_drop_index({})` → handler error
+🔴 25. `sqlite_execute_code({})` → handler error (has required `code` param)
+🔴 26. `sqlite_list_triggers({})` → success (table is optional)
+🔴 27. `sqlite_list_constraints({})` → handler error (table is required)
 
 ---
 

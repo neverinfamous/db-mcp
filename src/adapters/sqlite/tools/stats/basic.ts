@@ -31,6 +31,7 @@ import {
   StatsGroupByOutputSchema,
   StatsHistogramOutputSchema,
   StatsPercentileOutputSchema,
+  StatsSampleOutputSchema,
 } from "../../schemas/stats.js";
 import {
   BasicStatsSchema,
@@ -38,6 +39,7 @@ import {
   GroupByStatsSchema,
   HistogramSchema,
   PercentileSchema,
+  StatsSampleSchema,
 } from "../../schemas/stats.js";
 
 /**
@@ -440,6 +442,76 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
           column: input.column,
           count: values.length,
           percentiles,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
+    },
+  };
+}
+
+/** Hard cap for sample size to prevent excessive memory usage */
+const MAX_SAMPLE_SIZE = 1000;
+
+/**
+ * Random sample
+ */
+export function createSampleTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_stats_sample",
+    description:
+      "Get a random sample of rows for exploratory analysis. Uses ORDER BY RANDOM() which is O(N) — may be slow on very large tables (>1M rows).",
+    group: "stats",
+    inputSchema: StatsSampleSchema,
+    outputSchema: StatsSampleOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("Random Sample"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      try {
+        const input = StatsSampleSchema.parse(params);
+        const effectiveSize = Math.min(input.sampleSize, MAX_SAMPLE_SIZE);
+
+        if (effectiveSize < 1) {
+          throw new ValidationError(
+            "sampleSize must be at least 1",
+            "INVALID_INPUT",
+          );
+        }
+
+        const table = sanitizeIdentifier(input.table);
+
+        // Build column list
+        let columns = "*";
+        if (input.selectColumns && input.selectColumns.length > 0) {
+          columns = input.selectColumns
+            .map((c) => sanitizeIdentifier(c))
+            .join(", ");
+        }
+
+        // Get total row count for context
+        let countSql = `SELECT COUNT(*) as total FROM ${table}`;
+        if (input.whereClause) {
+          validateWhereClause(input.whereClause);
+          countSql += ` WHERE ${input.whereClause}`;
+        }
+        const countResult = await adapter.executeReadQuery(countSql);
+        const totalRows = (countResult.rows?.[0]?.["total"] as number) ?? 0;
+
+        // Get random sample
+        let sql = `SELECT ${columns} FROM ${table}`;
+        if (input.whereClause) {
+          sql += ` WHERE ${input.whereClause}`;
+        }
+        sql += ` ORDER BY RANDOM() LIMIT ${effectiveSize}`;
+
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          table: input.table,
+          sampleSize: result.rows?.length ?? 0,
+          totalRows,
+          rows: result.rows,
         };
       } catch (error) {
         return formatHandlerError(error);

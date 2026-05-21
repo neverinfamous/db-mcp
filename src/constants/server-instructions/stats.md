@@ -14,6 +14,7 @@ sqlite_stats_percentile({
 sqlite_stats_histogram({ table: "products", column: "price", buckets: 10 });
 sqlite_stats_correlation({ table: "data", column1: "x", column2: "y" }); // Pearson coefficient
 sqlite_stats_distinct({ table: "orders", column: "status" }); // distinct values
+sqlite_stats_sample({ table: "orders", sampleSize: 100 }); // random sample
 sqlite_stats_summary({
   table: "data",
   columns: ["price", "quantity", "discount"],

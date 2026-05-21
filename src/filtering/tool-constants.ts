@@ -4,18 +4,18 @@
  * Defines the tool groups and meta-groups used for filtering.
  *
  * Actual tool groups (from code audit):
- *   core: 14 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts)
- *   json: 24 tools (json-operations/crud+query+transform+security.ts, json-helpers/read+write.ts)
+ *   core: 16 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts, core/triggers.ts, core/constraints.ts)
+ *   json: 25 tools (json-operations/crud+query+transform+security+diff.ts, json-helpers/read+write.ts)
  *   text: 14 WASM / 19 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
- *   stats: 16 WASM / 22 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
+ *   stats: 17 WASM / 23 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
- *   admin: 26 WASM / 26 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts)
+ *   admin: 29 WASM / 29 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts)
  *   transactions: 8 Native (native: transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
  *   introspection: 9 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Total: 125 WASM / 151 Native tools
+ *   Total: 132 WASM / 158 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -60,6 +60,10 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "count",
     "exists",
     "truncate",
+    "list_triggers",
+    "list_constraints",
+    "date_add",
+    "date_diff",
   ],
   json: [
     // CRUD + Query + Collection (8: crud.ts, query.ts, write.ts)
@@ -90,6 +94,8 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "json_normalize_column",
     // Security (1: security.ts)
     "json_security_scan",
+    // Diff (1: diff.ts)
+    "json_diff",
   ],
   text: [
     // Text Tools (14 WASM)
@@ -140,6 +146,8 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "window_running_total",
     "window_moving_avg",
     "window_ntile",
+    // Sampling (1 WASM)
+    "stats_sample",
   ],
   vector: [
     "vector_create_table",
@@ -183,6 +191,11 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "analyze_csv_schema",
     "create_rtree_table",
     "create_series_table",
+    // Database management (3: pragma.ts, backup/create.ts)
+    "attach_database",
+    "detach_database",
+    "vacuum_into",
+    "dump",
   ],
   transactions: [
     // Transaction Tools (8 Native-only)

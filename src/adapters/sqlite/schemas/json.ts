@@ -482,6 +482,41 @@ export const JsonSecurityScanSchema = z.object({
 });
 
 // =============================================================================
+// JSON Diff Schema
+// =============================================================================
+
+const JsonDiffEntrySchema = z.object({
+  rowid: z.number().optional(),
+  path1Value: z.unknown(),
+  path2Value: z.unknown(),
+  identical: z.boolean(),
+});
+
+export const JsonDiffSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("JSON column name"),
+  path1: z.string().describe("First JSON path to compare (e.g., $.before)"),
+  path2: z.string().describe("Second JSON path to compare (e.g., $.after)"),
+  whereClause: z.string().optional().describe("Optional WHERE clause filter"),
+  limit: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(50)
+      .describe("Maximum rows to compare (default: 50, max: 100)"),
+  ),
+});
+
+export const JsonDiffOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number().optional(),
+    diffs: z.array(JsonDiffEntrySchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -500,6 +535,7 @@ export type CreateJsonCollectionInput = z.infer<
   typeof CreateJsonCollectionSchema
 >;
 export type JsonSecurityScanInput = z.infer<typeof JsonSecurityScanSchema>;
+export type JsonDiffInput = z.infer<typeof JsonDiffSchema>;
 
 // Additional schemas for JSON operations
 export const JsonTypeSchema = z.object({

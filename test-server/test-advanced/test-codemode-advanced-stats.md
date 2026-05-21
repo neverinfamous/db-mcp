@@ -162,12 +162,22 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 ---
 
-### Category 6: WASM Boundary Verification
+### Category 6: Stats Sample Edge Cases
+
+29. `sqlite.stats.statsSample({table: "stress_empty_table", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
+30. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
+31. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
+32. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
+33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
+
+---
+
+### Category 7: WASM Boundary Verification
 
 For WASM testing only:
 
-29. Confirm window function tools are NOT present in the tool list
-30. All 16 non-window stats tools should produce identical results in WASM and Native
+34. Confirm window function tools are NOT present in the tool list
+35. All 17 non-window stats tools should produce identical results in WASM and Native
 
 ---
 

@@ -536,6 +536,39 @@ export const HypothesisSchema = z.object({
 });
 
 // =============================================================================
+// Stats Sample Schema
+// =============================================================================
+
+export const StatsSampleSchema = z.object({
+  table: z.string().describe("Table name"),
+  sampleSize: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(100)
+      .describe(
+        "Number of random rows to return (default: 100, max: 1000). WARNING: Uses ORDER BY RANDOM() which is O(N) — slow on very large tables.",
+      ),
+  ),
+  whereClause: z.string().optional().describe("Optional WHERE clause filter"),
+  selectColumns: z
+    .array(z.string())
+    .optional()
+    .describe("Columns to include in result (default: all columns)"),
+});
+
+export const StatsSampleOutputSchema = z
+  .object({
+    success: z.boolean(),
+    table: z.string().optional(),
+    sampleSize: z.number().optional(),
+    totalRows: z.number().optional(),
+    rows: z.array(StatsRowRecordSchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -552,6 +585,7 @@ export type FrequencyInput = z.infer<typeof FrequencySchema>;
 export type OutlierInput = z.infer<typeof OutlierSchema>;
 export type RegressionInput = z.infer<typeof RegressionSchema>;
 export type HypothesisInput = z.infer<typeof HypothesisSchema>;
+export type StatsSampleInput = z.infer<typeof StatsSampleSchema>;
 
 // // const coerceNumber = (val: unknown): unknown =>
 //   typeof val === "string"

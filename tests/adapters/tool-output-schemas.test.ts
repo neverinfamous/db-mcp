@@ -237,6 +237,8 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_get_indexes", "GetIndexesOutputSchema"],
       ["sqlite_create_index", "CreateIndexOutputSchema"],
       ["sqlite_drop_index", "DropIndexOutputSchema"],
+      ["sqlite_list_triggers", "ListTriggersOutputSchema"],
+      ["sqlite_list_constraints", "ListConstraintsOutputSchema"],
 
       // Stats tools
       ["sqlite_stats_basic", "StatsBasicOutputSchema"],
@@ -258,6 +260,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
         "sqlite_stats_detect_schema_risks",
         "StatsDetectSchemaRisksOutputSchema",
       ],
+      ["sqlite_stats_sample", "StatsSampleOutputSchema"],
 
       // Window function tools
       ["sqlite_window_row_number", "WindowRowNumberOutputSchema"],
@@ -295,6 +298,9 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_fts_rebuild", "FtsRebuildOutputSchema"],
       ["sqlite_fts_match_info", "FtsSearchOutputSchema"],
 
+      // JSON tools
+      ["sqlite_json_diff", "JsonDiffOutputSchema"],
+
       // Admin tools
       ["sqlite_vacuum", "VacuumOutputSchema"],
       ["sqlite_backup", "BackupOutputSchema"],
@@ -311,6 +317,9 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_index_stats", "IndexStatsOutputSchema"],
       ["sqlite_append_insight", "AppendInsightOutputSchema"],
       ["sqlite_dbstat", "DbstatOutputSchema"],
+      ["sqlite_attach_database", "AttachDatabaseOutputSchema"],
+      ["sqlite_detach_database", "DetachDatabaseOutputSchema"],
+      ["sqlite_vacuum_into", "VacuumIntoCopyOutputSchema"],
 
       // SpatiaLite tools
       ["sqlite_spatialite_load", "SpatialiteLoadOutputSchema"],

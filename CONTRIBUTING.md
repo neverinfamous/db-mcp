@@ -1,6 +1,6 @@
-# Contributing to postgres-mcp
+# Contributing to db-mcp
 
-Thank you for your interest in contributing to postgres-mcp! This project is built by developers, for developers, and we welcome contributions that make the PostgreSQL MCP experience better for everyone.
+Thank you for your interest in contributing to db-mcp! This project is built by developers, for developers, and we welcome contributions that make the SQLite MCP experience better for everyone.
 
 ## 🚀 Quick Start
 
@@ -24,8 +24,8 @@ Thank you for your interest in contributing to postgres-mcp! This project is bui
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/postgres-mcp.git
-cd postgres-mcp
+git clone https://github.com/YOUR_USERNAME/db-mcp.git
+cd db-mcp
 
 # Install dependencies
 npm install
@@ -43,23 +43,23 @@ npm run check   # Runs ESLint + TypeScript strict-mode type checking
 ### Running the Server Locally
 
 ```bash
-# Connect to a local PostgreSQL instance via stdio
-node dist/cli.js --transport stdio --postgres "postgresql://user:pass@localhost:5432/mydb"
+# Connect to a local SQLite instance via stdio
+node dist/cli.js --transport stdio --sqlite-native ./test.db
 
 # HTTP transport (for testing with an MCP client)
-node dist/cli.js --transport http --port 3000 --postgres "postgresql://user:pass@localhost:5432/mydb"
+node dist/cli.js --transport http --port 3000 --sqlite-native ./test.db
 ```
 
-> **Connection string required.** The server requires a valid PostgreSQL connection string. For local testing, you can use a `.env` file or pass the string directly. Never commit credentials to version control.
+> **Database path required.** The server requires a valid SQLite database path. For local testing, you can use a `.env` file or pass the string directly.
 
 ### Docker Development (Optional)
 
 ```bash
 # Build the Docker image locally
-docker build -f Dockerfile -t postgres-mcp-dev .
+docker build -f Dockerfile -t db-mcp-dev .
 
 # Run with a connection string
-docker run --rm -i postgres-mcp-dev --transport stdio --postgres "postgresql://user:pass@host:5432/mydb"
+docker run --rm -i db-mcp-dev --transport stdio --sqlite-native /app/data/test.db
 ```
 
 ## 📋 What We're Looking For
@@ -76,14 +76,14 @@ We especially welcome contributions in these areas:
 ### 🔍 Medium Priority
 
 - **Enhanced Code Mode** worker-thread operations and sandbox capabilities
-- **Additional PostGIS / pgvector** advanced spatial/math tool coverage
-- **New PostgreSQL extensions integrations** (e.g., TimescaleDB)
+- **Additional SpatiaLite** advanced spatial/math tool coverage
+- **New SQLite extensions integrations** (e.g., pgvector equivalent, full-text search improvements)
 - **Documentation improvements** and Playwright end-to-end examples
 
 ### 💡 Future Features
 
-- **New tool groups** for specialized PostgreSQL workflows
-- **Additional PostgreSQL extension** integrations
+- **New tool groups** for specialized SQLite workflows
+- **Additional SQLite extension** integrations
 - **Performance benchmarks** for new hot paths
 - **IDE-specific integrations** beyond MCP
 
@@ -131,14 +131,14 @@ Add your local build to `~/.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "postgres-mcp-dev": {
+    "db-mcp-dev": {
       "command": "node",
       "args": [
-        "path/to/your/postgres-mcp/dist/cli.js",
+        "path/to/your/db-mcp/dist/cli.js",
         "--transport",
         "stdio",
-        "--postgres",
-        "postgresql://user:pass@localhost:5432/mydb"
+        "--sqlite-native",
+        "./test.db"
       ]
     }
   }
@@ -149,8 +149,8 @@ Add your local build to `~/.cursor/mcp.json`:
 
 ```bash
 # Build and run locally
-docker build -f Dockerfile -t postgres-mcp-dev .
-docker run --rm -i postgres-mcp-dev --transport stdio --postgres "postgresql://user:pass@host:5432/mydb"
+docker build -f Dockerfile -t db-mcp-dev .
+docker run --rm -i db-mcp-dev --transport stdio --sqlite-native /app/data/test.db
 ```
 
 ## 📝 Coding Standards
@@ -186,7 +186,7 @@ Every tool must return structured error responses — never raw exceptions:
 }
 ```
 
-Error logic should leverage the `PostgresMcpError` hierarchy (e.g., `ValidationError`, `QueryError`). Our Auto-refinement system automatically maps generic codes to specific ones (e.g., `QUERY_ERROR` → `TABLE_NOT_FOUND`) and populates suggestions. Catch at the handler boundary and return `formatHandlerError(error)` to ensure a highly-compliant JSON payload. Always propagate stack traces — don't swallow errors.
+Error logic should leverage the `SqliteMcpError` hierarchy (e.g., `ValidationError`, `QueryError`). Our Auto-refinement system automatically maps generic codes to specific ones (e.g., `QUERY_ERROR` → `TABLE_NOT_FOUND`) and populates suggestions. Catch at the handler boundary and return `formatHandlerError(error)` to ensure a highly-compliant JSON payload. Always propagate stack traces — don't swallow errors.
 
 ### Input Validation
 
@@ -208,10 +208,10 @@ Use the centralized logger with structured payloads. Include: `module`, `operati
 
 ## 🔧 Adding or Modifying Tools
 
-postgres-mcp organizes tools into groups covering: `core`, `schema`, `introspection`, `migration`, `monitoring`, `performance`, `stats`, `text`, `jsonb`, `vector`, `admin`, `transactions`, `partitioning`, `backup`, `codemode`, and PostgreSQL extensions (`postgis`, `ltree`, `citext`, `pgcrypto`, `partman`, `cron`, `kcache`). When adding a new tool:
+db-mcp organizes tools into groups covering: `core`, `json`, `text`, `stats`, `vector`, `admin`, `transactions`, `geo`, `introspection`, `migration`, and `codemode`. When adding a new tool:
 
-1. **Define the tool input and output schemas** using Zod in the appropriate group under `src/adapters/postgresql/schemas/`
-2. **Implement the handler** in the corresponding adapter directory under `src/adapters/postgresql/tools/`
+1. **Define the tool input and output schemas** using Zod in the appropriate group under `src/adapters/sqlite/schemas/`
+2. **Implement the handler** in the corresponding adapter directory under `src/adapters/sqlite/tools/`
 3. **Add structured error handling** by letting the handler return `formatHandlerError()` when exceptions are caught
 4. **Write meaningful Vitest tests** and update E2E spec files if making systemic changes
 5. **Add the tool to the group's help resource** (the markdown file under `src/constants/server-instructions/`)
@@ -225,7 +225,7 @@ When reporting bugs, please include:
 1. **Environment details** (OS, Node.js version, npm version)
 2. **Steps to reproduce** the issue
 3. **Expected vs actual behavior**
-4. **PostgreSQL version** and relevant extensions enabled
+4. **SQLite version** and relevant extensions enabled
 5. **MCP client details** (Cursor version, Claude Desktop, configuration)
 6. **Relevant logs** or error messages
 
@@ -294,7 +294,7 @@ Log all changes in **[`UNRELEASED.md`](UNRELEASED.md)** at the project root usin
 
 ### Working with MCP
 
-- **Test with a real PostgreSQL instance** — behaviour varies across versions and extension states
+- **Test with a real SQLite database** — behaviour varies across versions and extension states
 - **Check tool responses** — Ensure JSON responses are well-formed
 - **Output schemas** — All tools have Zod output schemas; error responses must pass validation
 - **Dual-schema pattern** — Relaxed schemas for SDK validation, strict schemas inside handlers
@@ -303,7 +303,7 @@ Log all changes in **[`UNRELEASED.md`](UNRELEASED.md)** at the project root usin
 
 ```
 src/
-├── adapters/       # PostgreSQL queries, handlers, Zod schemas, prompts, and resources
+├── adapters/       # SQLite queries, handlers, Zod schemas, prompts, and resources
 ├── audit/          # JSONL audit trail with session token estimates, pre-mutation snapshots, interceptor
 ├── auth/           # Transport-agnostic OAuth 2.1, scopes, RFC 6750 enforcement
 ├── cli/            # CLI argument parsing and server bootstrap
@@ -364,7 +364,7 @@ When contributing code, follow these security practices:
 ## 📞 Getting Help
 
 - **GitHub Issues** — Bug reports and feature requests
-- **Documentation** — Check [README.md](README.md), [Wiki](https://github.com/neverinfamous/postgres-mcp/wiki), and Docker guides first
+- **Documentation** — Check [README.md](README.md), [Wiki](https://github.com/neverinfamous/db-mcp/wiki), and Docker guides first
 - **Email** — **admin@adamic.tech**
 
 ## 🏆 Recognition
@@ -375,4 +375,4 @@ Contributors are recognized in:
 - **README** — Contributor acknowledgments
 - **Git history** — Your commits are permanent record
 
-Thank you for helping make postgres-mcp better for the developer community! 🚀
+Thank you for helping make db-mcp better for the developer community! 🚀

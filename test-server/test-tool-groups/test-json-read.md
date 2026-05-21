@@ -105,7 +105,7 @@ The MCP SDK enforces `additionalProperties: false` on **output** schemas. If a h
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
 
-### json-read Group Tools (18)
+### json-read Group Tools (19)
 
 1. sqlite_json_valid
 2. sqlite_json_extract
@@ -124,7 +124,8 @@ The MCP SDK enforces `additionalProperties: false` on **output** schemas. If a h
 15. sqlite_json_validate_path
 16. sqlite_json_analyze_schema
 17. sqlite_json_security_scan
-18. sqlite_execute_code
+18. sqlite_json_diff
+19. sqlite_execute_code
 
 **Test data reference (test_jsonb_docs):**
 
@@ -160,38 +161,42 @@ Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 17. `sqlite_jsonb_convert({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → JSONB binary conversion result
 18. `sqlite_json_normalize_column({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → normalization report for the doc column as raw text (Tests `outputFormat` parameter)
 19. `sqlite_json_security_scan({table: "test_events", column: "payload"})` → security scan report
+20. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.author"})` → `diffs` array with per-row comparisons showing `path1Value`, `path2Value`, `identical` (should be `false` for most rows since type≠author)
+21. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type"})` → all rows `identical: true` (same path compared to itself)
 
 **Code mode testing:**
 
-20. `sqlite_execute_code({code: "const result = await sqlite.json.extract({table: 'test_jsonb_docs', column: 'doc', path: '$.author', whereClause: 'id = 1'}); return result;"})` → result contains `"Alice"`
-21. `sqlite_execute_code({code: "const keys = await sqlite.json.keys({table: 'test_jsonb_docs', column: 'doc', whereClause: 'id = 1'}); return keys;"})` → keys include `type`, `title`, `author`
+22. `sqlite_execute_code({code: "const result = await sqlite.json.extract({table: 'test_jsonb_docs', column: 'doc', path: '$.author', whereClause: 'id = 1'}); return result;"})` → result contains `"Alice"`
+23. `sqlite_execute_code({code: "const keys = await sqlite.json.keys({table: 'test_jsonb_docs', column: 'doc', whereClause: 'id = 1'}); return keys;"})` → keys include `type`, `title`, `author`
 
 **Error path testing:**
 
-🔴 22. `sqlite_json_extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error
-🔴 23. `sqlite_json_extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
-🔴 24. `sqlite_json_validate_path({path: "invalid path !@#"})` → report behavior
+🔴 24. `sqlite_json_extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error
+🔴 25. `sqlite_json_extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
+🔴 26. `sqlite_json_validate_path({path: "invalid path !@#"})` → report behavior
+🔴 27. `sqlite_json_diff({table: "nonexistent_xyz", column: "doc", path1: "$.x", path2: "$.y"})` → `{success: false}`
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
 
-🔴 25. `sqlite_json_valid({})` → handler error
-🔴 26. `sqlite_json_extract({})` → handler error
-🔴 27. `sqlite_json_type({})` → handler error
-🔴 28. `sqlite_json_array_length({})` → handler error
-🔴 29. `sqlite_json_keys({})` → handler error
-🔴 30. `sqlite_json_each({})` → handler error
-🔴 31. `sqlite_json_group_array({})` → handler error
-🔴 32. `sqlite_json_group_object({})` → handler error
-🔴 33. `sqlite_json_pretty({})` → handler error
-🔴 34. `sqlite_jsonb_convert({})` → handler error
-🔴 35. `sqlite_json_storage_info({})` → handler error
-🔴 36. `sqlite_json_normalize_column({})` → handler error
-🔴 37. `sqlite_json_select({})` → handler error
-🔴 38. `sqlite_json_query({})` → handler error
-🔴 39. `sqlite_json_validate_path({})` → handler error
-🔴 40. `sqlite_json_analyze_schema({})` → handler error
-🔴 41. `sqlite_json_security_scan({})` → handler error
-🔴 42. `sqlite_execute_code({})` → handler error
+🔴 28. `sqlite_json_valid({})` → handler error
+🔴 29. `sqlite_json_extract({})` → handler error
+🔴 30. `sqlite_json_type({})` → handler error
+🔴 31. `sqlite_json_array_length({})` → handler error
+🔴 32. `sqlite_json_keys({})` → handler error
+🔴 33. `sqlite_json_each({})` → handler error
+🔴 34. `sqlite_json_group_array({})` → handler error
+🔴 35. `sqlite_json_group_object({})` → handler error
+🔴 36. `sqlite_json_pretty({})` → handler error
+🔴 37. `sqlite_jsonb_convert({})` → handler error
+🔴 38. `sqlite_json_storage_info({})` → handler error
+🔴 39. `sqlite_json_normalize_column({})` → handler error
+🔴 40. `sqlite_json_select({})` → handler error
+🔴 41. `sqlite_json_query({})` → handler error
+🔴 42. `sqlite_json_validate_path({})` → handler error
+🔴 43. `sqlite_json_analyze_schema({})` → handler error
+🔴 44. `sqlite_json_security_scan({})` → handler error
+🔴 45. `sqlite_json_diff({})` → handler error
+🔴 46. `sqlite_execute_code({})` → handler error
 
 ---
 

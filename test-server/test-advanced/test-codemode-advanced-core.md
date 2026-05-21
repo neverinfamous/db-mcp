@@ -75,7 +75,7 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 
 ---
 
-## core Group Tools (14 + codemode)
+## core Group Tools (16 + codemode)
 
 1. sqlite_read_query
 2. sqlite_write_query
@@ -91,6 +91,8 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 12. sqlite_upsert
 13. sqlite_batch_insert
 14. sqlite_truncate
+15. sqlite_date_add
+16. sqlite_date_diff
 
 ---
 
@@ -175,6 +177,37 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 28. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements"})` → 200 rows — verify response size, check if truncation is applied
 29. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
 30. `sqlite.core.readQuery({query: "SELECT * FROM test_events"})` → 100 rows — check payload size
+
+---
+
+### Category 5: Trigger & Constraint Edge Cases
+
+**5.1 — Trigger lifecycle stress**
+
+31. `sqlite.core.createTable({table: "stress_trigger_table", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "INTEGER"}]})` → success
+32. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_b_ins BEFORE INSERT ON stress_trigger_table BEGIN SELECT 1; END;")` → success
+33. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_a_del AFTER DELETE ON stress_trigger_table BEGIN SELECT 1; END;")` → success
+34. `sqlite.core.listTriggers()` → verify both triggers appear
+35. `sqlite.core.listTriggers({table: "stress_trigger_table"})` → verify both appear and are filtered to 2
+36. `sqlite.core.dropTable({table: "stress_trigger_table"})` → success (drops table and triggers)
+37. `sqlite.core.listTriggers({table: "stress_trigger_table"})` → report behavior (table gone, triggers should be gone)
+
+**5.2 — Constraint introspection on complex schema**
+
+38. `sqlite.core.createTable({table: "stress_constraints_table", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "pid", type: "INTEGER"}, {name: "name", type: "TEXT"}]})` → success
+39. `sqlite.core.writeQuery("ALTER TABLE stress_constraints_table ADD CONSTRAINT fk_pid FOREIGN KEY (pid) REFERENCES test_products(id)")` → success (or use CREATE TABLE with FK if ALTER fails)
+40. `sqlite.core.createIndex({table: "stress_constraints_table", columns: ["name"], indexName: "stress_idx_name_uniq", unique: true})` → success
+41. `sqlite.core.listConstraints({table: "stress_constraints_table"})` → verify PK, FK (if added), and UNIQUE index detected
+42. `sqlite.core.listConstraints({table: "stress_constraints_table"})` → call twice to verify idempotency/caching
+43. Cleanup: drop `stress_constraints_table`
+
+---
+
+### Category 6: Date Math Edge Cases
+
+44. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: -9999, unit: "years"})` → should handle extreme negative dates
+45. `sqlite.core.dateDiff({table: "test_events", column1: "event_date", column2: "invalid_date_col", unit: "days"})` → should return a structured error about invalid column
+46. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: 0, unit: "days"})` → valid delta 0
 
 ---
 

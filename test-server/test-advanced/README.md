@@ -19,7 +19,7 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 | `test-codemode-advanced-text.md`          | Text          | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]`             |
 | `test-codemode-advanced-stats.md`         | Stats         | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]`       |
 | `test-codemode-advanced-vector.md`        | Vector        | Empty tables, distance metrics, dimension mismatch, batch operations                      |
-| `test-codemode-advanced-admin.md`         | Admin         | View lifecycle, virtual tables, backup/restore, pragma edge cases                         |
+| `test-codemode-advanced-admin.md`         | Admin         | View lifecycle, virtual tables, backup/restore, pragma edge cases, database attachment, VACUUM INTO, path traversal security |
 | `test-codemode-advanced-transactions.md`  | Transactions  | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]`                        |
 | `test-codemode-advanced-geo.md`           | Geo           | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]`              |
 | `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, storage/index audit, query plan depth                    |
@@ -57,6 +57,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.backup(...)`           | `{success: false, error: "...WASM mode"}`      |
 | `sqlite.admin.restore(...)`          | `{success: false, error: "...WASM mode"}`      |
 | `sqlite.admin.verifyBackup(...)`     | `{success: false, error: "...WASM mode"}`      |
+| `sqlite.admin.vacuumInto(...)`       | `{success: false, error: "...WASM mode"}`      |
 | `sqlite.admin.createCsvTable(...)`   | `{success: false}` — CSV extension unavailable |
 | `sqlite.admin.analyzeCsvSchema(...)` | `{success: false}` — CSV extension unavailable |
 | `sqlite.admin.createRtreeTable(...)` | `{success: false}` — R-Tree module unavailable |

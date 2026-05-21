@@ -1,4 +1,4 @@
-# db-mcp Help — Database Administration (29 Native / 29 WASM)
+# db-mcp Help — Database Administration (30 Native / 29 WASM)
 
 ## Maintenance
 
@@ -14,6 +14,8 @@ sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-on
 
 ```javascript
 sqlite_backup({ targetPath: "/path/to/backup.db" });
+sqlite_vacuum_into({ outputPath: "/path/to/compact.db" }); // create defragmented copy
+sqlite_dump({ outputPath: "/path/to/dump.sql" }); // export SQL text dump
 sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity without restoring
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
 ```
@@ -23,6 +25,8 @@ sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replace
 ```javascript
 sqlite_audit_list_backups(); // list pre-mutation DDL snapshots
 sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific snapshot
+sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
+sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot
 sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
 ```
 
@@ -34,6 +38,8 @@ sqlite_pragma_settings({ pragma: "cache_size", value: 10000 }); // set value
 sqlite_pragma_table_info({ table: "users" }); // column details
 sqlite_pragma_compile_options({ filter: "FTS" }); // ⚠️ WASM may show FTS3, not FTS5
 sqlite_pragma_database_list(); // list attached databases
+sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB
+sqlite_detach_database({ alias: "archive" }); // detach DB
 sqlite_pragma_optimize(); // run PRAGMA optimize
 ```
 

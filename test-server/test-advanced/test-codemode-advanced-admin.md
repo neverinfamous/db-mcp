@@ -64,7 +64,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
-## admin Group Tools (26)
+## admin Group Tools (27)
 
 1. sqlite_pragma_database_list
 2. sqlite_pragma_compile_options
@@ -92,6 +92,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 24. sqlite_restore
 25. sqlite_verify_backup
 26. sqlite_append_insight
+27. sqlite_dump
 
 ---
 
@@ -122,7 +123,9 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 11. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db"})` → success
 12. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db"})` → integrity verified
 13. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → structured error
-14. Note backup file for manual removal
+14. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-dump.sql"})` → success
+15. `sqlite.admin.dump({outputPath: "C:\\Windows\\System32\\stress-dump.sql"})` → structured security error
+16. Note backup and dump files for manual removal
 
 ---
 
@@ -144,19 +147,32 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
-### Category 6: Error Message Quality
+### Category 6: Database Management Edge Cases
 
-23. `sqlite.admin.dropView({viewName: "nonexistent_view_xyz"})` → structured error
-24. `sqlite.admin.verifyBackup({backupPath: "nonexistent_backup.db"})` → structured error
-25. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
+23. `sqlite.admin.attachDatabase({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-backup.db", alias: "stress_attached"})` → success (attaches backup from Category 3)
+24. `sqlite.admin.attachDatabase({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-backup.db", alias: "stress_attached"})` → error (alias in use)
+25. `sqlite.admin.detachDatabase({alias: "stress_attached"})` → success
+26. `sqlite.admin.detachDatabase({alias: "stress_attached"})` → error (already detached)
+27. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-vacuum.db"})` → success
+28. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-vacuum.db"})` → error (file already exists)
+29. Note vacuum file for manual removal
 
 ---
 
-### Category 7: WASM Boundary Verification
+### Category 7: Error Message Quality
+
+30. `sqlite.admin.dropView({viewName: "nonexistent_view_xyz"})` → structured error
+31. `sqlite.admin.verifyBackup({backupPath: "nonexistent_backup.db"})` → structured error
+32. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
+33. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → structured error (path traversal)
+
+---
+
+### Category 8: WASM Boundary Verification
 
 For WASM testing only:
 
-26. Verify that backup/restore/verify, CSV, and R-Tree tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
+34. Verify that backup/restore/verify, CSV, R-Tree, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
 
 ---
 

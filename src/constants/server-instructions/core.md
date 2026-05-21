@@ -1,4 +1,4 @@
-# db-mcp Help — Core Operations (14 tools)
+# db-mcp Help — Core Operations (16 tools)
 
 ## Basic Queries
 
@@ -11,6 +11,8 @@
 - `sqlite_describe_table({ table: "users" })` — get detailed schema, columns, and foreign keys for a specific table
 - `sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })` — create a new table
 - `sqlite_drop_table({ table: "users", ifExists?: true })` — drop an existing table
+- `sqlite_list_triggers({ table?: "users" })` — list database triggers, optionally filtered by table
+- `sqlite_list_constraints({ table: "users" })` — list primary key, foreign key, unique, and check constraints for a table
 
 ## Indexes
 
@@ -25,3 +27,5 @@
 - `sqlite_count({ table: "users", whereClause?: "status = 'active'" })` — count rows in a table (faster than a full query)
 - `sqlite_exists({ table: "users", whereClause: "email = 'test@example.com'" })` — check if a row exists (stops at first match)
 - `sqlite_truncate({ table: "users" })` — quickly delete all rows from a table (executes `DELETE FROM table`)
+- `sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })` — add or subtract time intervals from a date column
+- `sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })` — calculate the difference between two date columns

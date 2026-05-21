@@ -91,67 +91,71 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 17. `sqlite.json.jsonbConvert({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → conversion result
 18. `sqlite.json.normalizeColumn({table: "test_jsonb_docs", column: "doc"})` → normalization report
 19. `sqlite.json.securityScan({table: "test_jsonb_docs", column: "doc"})` → security scan result with riskLevel
+20. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.author"})` → `diffs` array with per-row comparisons showing `path1Value`, `path2Value`, `identical: false`
+21. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type"})` → all rows `identical: true`
 
 ---
 
 ## Phase 2: JSON Write Tools — Happy Paths (temp table)
 
-20. `sqlite.json.createJsonCollection({tableName: "temp_cm_json"})` → creates collection table
-21. Insert a row into temp_cm_json with JSON data, then:
-22. `sqlite.json.set(...)` on temp_cm_json → set a JSON value
-23. `sqlite.json.update(...)` on temp_cm_json → update existing key
-24. `sqlite.json.insert(...)` on temp_cm_json → insert new row with JSON data (Note: db-mcp's json.insert creates a new row via SQL INSERT, it does not wrap json_insert())
-25. `sqlite.json.remove(...)` on temp_cm_json → remove a key
-26. `sqlite.json.arrayAppend(...)` on temp_cm_json → append to array
-27. `sqlite.json.merge({table: "test_jsonb_docs", column: "doc", mergeData: {"featured": true}, whereClause: "id = 999"})` → `{rowsAffected: 0}` (non-destructive)
-28. Cleanup: drop temp_cm_json
+22. `sqlite.json.createJsonCollection({tableName: "temp_cm_json"})` → creates collection table
+23. Insert a row into temp_cm_json with JSON data, then:
+24. `sqlite.json.set(...)` on temp_cm_json → set a JSON value
+25. `sqlite.json.update(...)` on temp_cm_json → update existing key
+26. `sqlite.json.insert(...)` on temp_cm_json → insert new row with JSON data (Note: db-mcp's json.insert creates a new row via SQL INSERT, it does not wrap json_insert())
+27. `sqlite.json.remove(...)` on temp_cm_json → remove a key
+28. `sqlite.json.arrayAppend(...)` on temp_cm_json → append to array
+29. `sqlite.json.merge({table: "test_jsonb_docs", column: "doc", mergeData: {"featured": true}, whereClause: "id = 999"})` → `{rowsAffected: 0}` (non-destructive)
+30. Cleanup: drop temp_cm_json
 
 ---
 
 ## Phase 3: JSON Domain Errors (batched)
 
-🔴 29. `sqlite.json.extract({table: "nonexistent_xyz", column: "doc", path: "$.x"})` → `{success: false}`
-🔴 30. `sqlite.json.extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
-🔴 31. `sqlite.json.validatePath({path: "invalid path !@#"})` → report behavior
-🔴 32. `sqlite.json.securityScan({table: "nonexistent_xyz", column: "doc"})` → `{success: false}`
+🔴 31. `sqlite.json.extract({table: "nonexistent_xyz", column: "doc", path: "$.x"})` → `{success: false}`
+🔴 32. `sqlite.json.extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
+🔴 33. `sqlite.json.validatePath({path: "invalid path !@#"})` → report behavior
+🔴 34. `sqlite.json.securityScan({table: "nonexistent_xyz", column: "doc"})` → `{success: false}`
+🔴 35. `sqlite.json.diff({table: "nonexistent_xyz", column: "doc", path1: "$.x", path2: "$.y"})` → `{success: false}`
 
 ---
 
 ## Phase 4: JSON Zod Validation (batched)
 
-🔴 33. `sqlite.json.valid({})` → `{success: false}`
-🔴 34. `sqlite.json.extract({})` → `{success: false}`
-🔴 35. `sqlite.json.set({})` → `{success: false}`
-🔴 36. `sqlite.json.remove({})` → `{success: false}`
-🔴 37. `sqlite.json.type({})` → `{success: false}`
-🔴 38. `sqlite.json.arrayLength({})` → `{success: false}`
-🔴 39. `sqlite.json.arrayAppend({})` → `{success: false}`
-🔴 40. `sqlite.json.keys({})` → `{success: false}`
-🔴 41. `sqlite.json.each({})` → `{success: false}`
-🔴 42. `sqlite.json.groupArray({})` → `{success: false}`
-🔴 43. `sqlite.json.groupObject({})` → `{success: false}`
-🔴 44. `sqlite.json.pretty({})` → `{success: false}`
-🔴 45. `sqlite.json.jsonbConvert({})` → `{success: false}`
-🔴 46. `sqlite.json.storageInfo({})` → `{success: false}`
-🔴 47. `sqlite.json.normalizeColumn({})` → `{success: false}`
-🔴 48. `sqlite.json.insert({})` → `{success: false}`
-🔴 49. `sqlite.json.update({})` → `{success: false}`
-🔴 50. `sqlite.json.select({})` → `{success: false}`
-🔴 51. `sqlite.json.query({})` → `{success: false}`
-🔴 52. `sqlite.json.validatePath({})` → `{success: false}`
-🔴 53. `sqlite.json.merge({})` → `{success: false}`
-🔴 54. `sqlite.json.analyzeSchema({})` → `{success: false}`
-🔴 55. `sqlite.json.createJsonCollection({})` → `{success: false}`
-🔴 56. `sqlite.json.securityScan({})` → `{success: false}`
+🔴 36. `sqlite.json.valid({})` → `{success: false}`
+🔴 37. `sqlite.json.extract({})` → `{success: false}`
+🔴 38. `sqlite.json.set({})` → `{success: false}`
+🔴 39. `sqlite.json.remove({})` → `{success: false}`
+🔴 40. `sqlite.json.type({})` → `{success: false}`
+🔴 41. `sqlite.json.arrayLength({})` → `{success: false}`
+🔴 42. `sqlite.json.arrayAppend({})` → `{success: false}`
+🔴 43. `sqlite.json.keys({})` → `{success: false}`
+🔴 44. `sqlite.json.each({})` → `{success: false}`
+🔴 45. `sqlite.json.groupArray({})` → `{success: false}`
+🔴 46. `sqlite.json.groupObject({})` → `{success: false}`
+🔴 47. `sqlite.json.pretty({})` → `{success: false}`
+🔴 48. `sqlite.json.jsonbConvert({})` → `{success: false}`
+🔴 49. `sqlite.json.storageInfo({})` → `{success: false}`
+🔴 50. `sqlite.json.normalizeColumn({})` → `{success: false}`
+🔴 51. `sqlite.json.insert({})` → `{success: false}`
+🔴 52. `sqlite.json.update({})` → `{success: false}`
+🔴 53. `sqlite.json.select({})` → `{success: false}`
+🔴 54. `sqlite.json.query({})` → `{success: false}`
+🔴 55. `sqlite.json.validatePath({})` → `{success: false}`
+🔴 56. `sqlite.json.merge({})` → `{success: false}`
+🔴 57. `sqlite.json.analyzeSchema({})` → `{success: false}`
+🔴 58. `sqlite.json.createJsonCollection({})` → `{success: false}`
+🔴 59. `sqlite.json.securityScan({})` → `{success: false}`
+🔴 60. `sqlite.json.diff({})` → `{success: false}` handler error
 
 ---
 
 ## Phase 4.5: Gotcha Edge Cases (batched)
 
-57. `sqlite.json.each({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1", limit: 2})` → only 2 rows returned (not all array items) — `limit` param prevents row multiplication bloat (gotcha #6)
-58. `sqlite.json.groupObject({table: "test_jsonb_docs", keyColumn: "id", valueColumn: "json_extract(doc, '$.author')", allowExpressions: true})` → 6 key-value pairs with unique keys — verify behavior when keys are guaranteed unique (gotcha #7)
-59. `sqlite.json.normalizeColumn({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → verify explicit text output differs from default `preserve` mode (gotcha #9)
-60. `sqlite.json.groupArray({table: "test_jsonb_docs", valueColumn: "COUNT(*)", allowExpressions: true})` → report behavior — `allowExpressions` is designed for column extraction (e.g., `json_extract`), NOT aggregate functions (gotcha #8)
+61. `sqlite.json.each({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1", limit: 2})` → only 2 rows returned (not all array items) — `limit` param prevents row multiplication bloat (gotcha #6)
+62. `sqlite.json.groupObject({table: "test_jsonb_docs", keyColumn: "id", valueColumn: "json_extract(doc, '$.author')", allowExpressions: true})` → 6 key-value pairs with unique keys — verify behavior when keys are guaranteed unique (gotcha #7)
+63. `sqlite.json.normalizeColumn({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → verify explicit text output differs from default `preserve` mode (gotcha #9)
+64. `sqlite.json.groupArray({table: "test_jsonb_docs", valueColumn: "COUNT(*)", allowExpressions: true})` → report behavior — `allowExpressions` is designed for column extraction (e.g., `json_extract`), NOT aggregate functions (gotcha #8)
 
 ---
 

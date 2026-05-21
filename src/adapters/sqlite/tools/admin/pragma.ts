@@ -21,6 +21,8 @@ import {
   PragmaOptimizeOutputSchema,
   PragmaSettingsOutputSchema,
   PragmaTableInfoOutputSchema,
+  AttachDatabaseOutputSchema,
+  DetachDatabaseOutputSchema,
 } from "../../schemas/admin.js";
 import {
   PragmaCompileOptionsSchema,
@@ -28,6 +30,8 @@ import {
   PragmaSettingsSchema,
   PragmaTableInfoSchema,
   AppendInsightSchema,
+  AttachDatabaseSchema,
+  DetachDatabaseSchema,
 } from "../../schemas/admin.js";
 
 export function createPragmaCompileOptionsTool(
@@ -352,3 +356,115 @@ export function createAppendInsightTool(): ToolDefinition {
     },
   };
 }
+
+/**
+ * Attach an external database
+ */
+export function createAttachDatabaseTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
+  return {
+    name: "sqlite_attach_database",
+    description:
+      "Attach an external SQLite database file under a schema alias. The filepath must be in the same directory as the primary database (security restriction). Use DETACH DATABASE to remove.",
+    group: "admin",
+    inputSchema: AttachDatabaseSchema,
+    outputSchema: AttachDatabaseOutputSchema,
+    requiredScopes: ["admin"],
+    annotations: admin("Attach Database"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      try {
+        const input = AttachDatabaseSchema.parse(params);
+
+        // Prevent attaching as 'main' or 'temp'
+        const aliasLower = input.alias.toLowerCase();
+        if (aliasLower === "main" || aliasLower === "temp") {
+          return {
+            success: false,
+            error: `Cannot attach using reserved alias '${input.alias}'`,
+            code: "VALIDATION_ERROR",
+          };
+        }
+
+        // Security: validate filepath is within the same directory as the primary DB
+        const { resolve, dirname, normalize } = await import("node:path");
+        const configuredPath = adapter.getConfiguredPath();
+
+        // Skip path validation for in-memory databases
+        if (configuredPath !== ":memory:") {
+          const dbDir = dirname(resolve(configuredPath));
+          const resolvedTarget = resolve(input.filepath);
+          const normalizedTarget = normalize(resolvedTarget);
+          const normalizedDir = normalize(dbDir);
+
+          if (!normalizedTarget.startsWith(normalizedDir)) {
+            return {
+              success: false,
+              error: `Security: filepath must be within the database directory (${dbDir}). Path traversal is not allowed.`,
+              code: "SECURITY_ERROR",
+            };
+          }
+        }
+
+        const escapedPath = input.filepath.replace(/'/g, "''");
+        await adapter.executeQuery(
+          `ATTACH DATABASE '${escapedPath}' AS "${input.alias.replace(/"/g, '""')}"`,
+        );
+
+        return {
+          success: true,
+          message: `Database attached as '${input.alias}'`,
+          alias: input.alias,
+          filepath: input.filepath,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
+    },
+  };
+}
+
+/**
+ * Detach an attached database
+ */
+export function createDetachDatabaseTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
+  return {
+    name: "sqlite_detach_database",
+    description:
+      "Detach a previously attached database by its schema alias. Cannot detach 'main' or 'temp'.",
+    group: "admin",
+    inputSchema: DetachDatabaseSchema,
+    outputSchema: DetachDatabaseOutputSchema,
+    requiredScopes: ["admin"],
+    annotations: admin("Detach Database"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      try {
+        const input = DetachDatabaseSchema.parse(params);
+
+        const aliasLower = input.alias.toLowerCase();
+        if (aliasLower === "main" || aliasLower === "temp") {
+          return {
+            success: false,
+            error: `Cannot detach reserved schema '${input.alias}'`,
+            code: "VALIDATION_ERROR",
+          };
+        }
+
+        await adapter.executeQuery(
+          `DETACH DATABASE "${input.alias.replace(/"/g, '""')}"`,
+        );
+
+        return {
+          success: true,
+          message: `Database '${input.alias}' detached`,
+          alias: input.alias,
+        };
+      } catch (error) {
+        return formatHandlerError(error);
+      }
+    },
+  };
+}
+

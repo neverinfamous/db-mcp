@@ -7,7 +7,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 7 core data tools are fully WASM-compatible. No items to skip or adjust.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 9 core data tools are fully WASM-compatible. No items to skip or adjust.
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
@@ -196,7 +196,7 @@ DROP TABLE IF EXISTS temp_core_test;
 2. server_health
 3. list_adapters
 
-### core-data Group Tools (7)
+### core-data Group Tools (9)
 
 4. sqlite_read_query
 5. sqlite_write_query
@@ -205,6 +205,8 @@ DROP TABLE IF EXISTS temp_core_test;
 8. sqlite_count
 9. sqlite_exists
 10. sqlite_truncate
+11. sqlite_date_add
+12. sqlite_date_diff
 
 **Checklist:**
 
@@ -221,20 +223,24 @@ DROP TABLE IF EXISTS temp_core_test;
 11. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
 12. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
 13. `sqlite_drop_table({table: "temp_core_test2"})` → success
+14. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
+15. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
 
 **Error path testing:**
 
-🔴 14. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 16. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Every response must be a handler error (`{success: false, error: "Validation error: ..."}`) — NOT a raw MCP error frame:
 
-🔴 15. `sqlite_read_query({})` → handler error
-🔴 16. `sqlite_write_query({})` → handler error
-🔴 17. `sqlite_upsert({})` → handler error
-🔴 18. `sqlite_batch_insert({})` → handler error
-🔴 19. `sqlite_count({})` → handler error
-🔴 20. `sqlite_exists({})` → handler error
-🔴 21. `sqlite_truncate({})` → handler error
+🔴 17. `sqlite_read_query({})` → handler error
+🔴 18. `sqlite_write_query({})` → handler error
+🔴 19. `sqlite_upsert({})` → handler error
+🔴 20. `sqlite_batch_insert({})` → handler error
+🔴 21. `sqlite_count({})` → handler error
+🔴 22. `sqlite_exists({})` → handler error
+🔴 23. `sqlite_truncate({})` → handler error
+🔴 24. `sqlite_date_add({})` → handler error
+🔴 25. `sqlite_date_diff({})` → handler error
 
 ---
 

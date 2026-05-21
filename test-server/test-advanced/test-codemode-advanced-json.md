@@ -155,6 +155,14 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 
 ---
 
+### Category 6: JSON Diff Edge Cases
+
+24. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.nonexistent"})` → verify `path2Value` is null/missing, `identical: false`
+25. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.missing_1", path2: "$.missing_2"})` → both null/missing, `identical: true`
+26. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type", whereClause: "id = 1"})` → only 1 diff object returned, `identical: true`
+
+---
+
 ### Final Cleanup
 
 Drop all `stress_*` tables. Confirm `test_jsonb_docs` row count is still 6 and contents unchanged.

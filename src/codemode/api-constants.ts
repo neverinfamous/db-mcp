@@ -26,6 +26,8 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
     schema: "describeTable",
     describe: "describeTable",
     indexes: "getIndexes",
+    triggers: "listTriggers",
+    constraints: "listConstraints",
   },
   json: {
     get: "extract",
@@ -49,6 +51,7 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
     detectAnomalies: "statsDetectAnomalies",
     detectBloat: "statsDetectBloat",
     detectSchemaRisks: "statsDetectSchemaRisks",
+    sample: "statsSample",
   },
   vector: {
     find: "search",
@@ -174,6 +177,10 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   dropIndex: "indexName",
   createTable: ["table", "columns"],
   createIndex: ["table", "columns", "indexName"],
+  listTriggers: "table",
+  listConstraints: "table",
+  dateAdd: ["table", "column", "amount", "unit", "whereClause"],
+  dateDiff: ["table", "column1", "column2", "unit", "whereClause"],
 
   // JSON
   extract: ["table", "column", "path", "whereClause"],
@@ -244,6 +251,7 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   statsDetectAnomalies: ["table", "threshold", "limit", "whereClause"],
   statsDetectBloat: "limit",
   statsDetectSchemaRisks: "limit",
+  statsSample: ["table", "sampleSize", "whereClause"],
 
   // Vector
   vectorCreateTable: ["tableName", "dimensions"],
@@ -270,6 +278,10 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   createRtreeTable: "tableName",
   createCsvTable: ["tableName", "filePath"],
   analyzeCsvSchema: "filePath",
+  attachDatabase: ["filepath", "alias"],
+  detachDatabase: "alias",
+  vacuumInto: "outputPath",
+  dump: "outputPath",
 
   // Transactions
   begin: "mode",

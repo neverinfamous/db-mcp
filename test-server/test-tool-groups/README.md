@@ -7,17 +7,18 @@
 | File                                | Group                     | Tools          | Notes                            |
 | ----------------------------------- | ------------------------- | -------------- | -------------------------------- |
 | `test-core-data.md`                 | core-data                 | 7              | Identical Native/WASM            |
-| `test-core-schema.md`               | core-schema               | 8 + Code Mode  | Identical Native/WASM            |
-| `test-json-read.md`                 | json-read                 | 18             | Identical Native/WASM            |
+| `test-core-schema.md`               | core-schema               | 10 + Code Mode | Identical Native/WASM            |
+| `test-json-read.md`                 | json-read                 | 19             | Identical Native/WASM            |
 | `test-json-write.md`                | json-write                | 7              | Identical Native/WASM            |
 | `test-text-basic.md`                | text-basic                | 11 + Code Mode | Identical Native/WASM            |
 | `test-text-advanced.md`             | text-advanced             | 9N/4W          | FTS5 tools `[NATIVE ONLY]`       |
-| `test-stats-basic.md`               | stats-basic               | 16 + Code Mode | Identical Native/WASM            |
+| `test-stats-basic.md`               | stats-basic               | 17 + Code Mode | Identical Native/WASM            |
 | `test-stats-advanced.md`            | stats-advanced            | 6N/0W          | Window functions `[NATIVE ONLY]` |
 | `test-vector-read.md`               | vector-read               | 7 + Code Mode  | Identical Native/WASM            |
 | `test-vector-write.md`              | vector-write              | 4              | Identical Native/WASM            |
-| `test-admin-core.md`                | admin-core                | 19 + Code Mode | Identical Native/WASM            |
+| `test-admin-core.md`                | admin-core                | 22 + Code Mode | Identical Native/WASM            |
 | `test-admin-extensions.md`          | admin-extensions          | 8              | CSV, series, rtree               |
+| `test-admin-audit.md`               | admin-audit               | 2              | Requires `--audit-backup` flag   |
 | `test-transactions.md`              | transactions              | 8 + Code Mode  | `[NATIVE ONLY]`                  |
 | `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode  | Identical Native/WASM            |
 | `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W          | SpatiaLite `[NATIVE ONLY]`       |
@@ -25,7 +26,7 @@
 | `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode  | Identical Native/WASM            |
 | `test-migration.md`                 | migration                 | 6 + Code Mode  | Identical Native/WASM            |
 
-**Total**: 151 Native / 125 WASM tools across 10 groups + Code Mode.
+**Total**: 160 Native / 134 WASM tools across 11 groups + Code Mode.
 
 ## Agent Instructions
 
@@ -71,6 +72,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite_backup`             | `{success: false, error: "...WASM mode"}`      |
 | `sqlite_restore`            | `{success: false, error: "...WASM mode"}`      |
 | `sqlite_verify_backup`      | `{success: false, error: "...WASM mode"}`      |
+| `sqlite_vacuum_into`        | `{success: false, error: "...WASM mode"}`      |
 | `sqlite_create_csv_table`   | `{success: false}` — CSV extension unavailable |
 | `sqlite_analyze_csv_schema` | `{success: false}` — CSV extension unavailable |
 | `sqlite_create_rtree_table` | `{success: false}` — R-Tree module unavailable |

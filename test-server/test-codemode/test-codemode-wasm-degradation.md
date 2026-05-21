@@ -116,9 +116,9 @@ Expected: `ftsMethods` is empty. The 5 FTS5 tools should not appear.
 
 ---
 
-## Phase 2: Backup/Restore/Verify — Graceful Errors (batched)
+## Phase 2: Backup/Restore/Verify/Dump — Graceful Errors (batched)
 
-> These 3 tools are registered in WASM but return structured errors because file system access is unavailable.
+> These 4 tools are registered in WASM but return structured errors because file system access is unavailable.
 
 ```javascript
 const failures = [];
@@ -157,6 +157,18 @@ if (verify.success !== false)
 if (!verify.error || !verify.error.toLowerCase().includes("wasm")) {
   failures.push(
     "verifyBackup: error message should mention WASM — got: " + verify.error,
+  );
+}
+
+// 2.4 — Dump
+const dump = await sqlite.admin.dump({
+  outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-wasm-dump.sql",
+});
+if (dump.success !== false)
+  failures.push("dump: expected {success: false}");
+if (!dump.error || !dump.error.toLowerCase().includes("wasm")) {
+  failures.push(
+    "dump: error message should mention WASM — got: " + dump.error,
   );
 }
 
@@ -308,6 +320,7 @@ const zodTests = [
   { name: "backup", fn: () => sqlite.admin.backup({}) },
   { name: "restore", fn: () => sqlite.admin.restore({}) },
   { name: "verifyBackup", fn: () => sqlite.admin.verifyBackup({}) },
+  { name: "dump", fn: () => sqlite.admin.dump({}) },
   { name: "createCsvTable", fn: () => sqlite.admin.createCsvTable({}) },
   { name: "analyzeCsvSchema", fn: () => sqlite.admin.analyzeCsvSchema({}) },
   { name: "createRtreeTable", fn: () => sqlite.admin.createRtreeTable({}) },

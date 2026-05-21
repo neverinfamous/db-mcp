@@ -77,7 +77,7 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### admin-core Group Tools (19)
+### admin-core Group Tools (23)
 
 1. sqlite_create_view
 2. sqlite_list_views
@@ -96,10 +96,15 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 15. sqlite_pragma_optimize
 16. sqlite_pragma_settings
 17. sqlite_pragma_table_info
-18. sqlite_append_insight
-19. sqlite_execute_code
+18. sqlite_pragma_database_list
+19. sqlite_append_insight
+20. sqlite_attach_database
+21. sqlite_detach_database
+22. sqlite_vacuum_into
+23. sqlite_dump
+24. sqlite_execute_code
 
-**Checklist — Pragma & Inspection:**
+**Checklist — PRAGMA Diagnostics:**
 
 1. `sqlite_pragma_database_list` → verify database path matches `test.db`
 2. `sqlite_index_stats` → verify index statistics for test database
@@ -119,39 +124,56 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 13. `sqlite_backup({targetPath: "<absolute-path>/test-server/test-backup.db"})` → success with backup file info (⚠️ use absolute path — relative paths resolve from IDE CWD)
 14. `sqlite_verify_backup({backupPath: "<absolute-path>/test-server/test-backup.db"})` → integrity verified
 15. `sqlite_restore({sourcePath: "<absolute-path>/test-server/test-backup.db"})` → restore from backup, verify success
-16. Cleanup: note backup file location for manual removal if desired
+16. `sqlite_dump({outputPath: "<absolute-path>/test-server/test-dump.sql"})` → success with `path` and `durationMs`
+17. Cleanup: note backup file location for manual removal if desired
+
+**Checklist — Database Management:**
+
+17. `sqlite_attach_database({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-backup.db", alias: "temp_attached"})` → Expect structured success with `alias` and `filepath`. (Requires test-backup.db from step 13)
+18. `sqlite_pragma_database_list()` → verify `temp_attached` appears in attached databases list
+19. `sqlite_detach_database({alias: "temp_attached"})` → success with `message`
+20. `sqlite_vacuum_into({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
 
 **Checklist — View Management:**
 
-17. `sqlite_create_view({viewName: "temp_view_orders", selectQuery: "SELECT product_id, COUNT(*) as order_count, SUM(total_price) as revenue FROM test_orders GROUP BY product_id"})` → success
-18. `sqlite_list_views` → verify `temp_view_orders` present
-19. `sqlite_drop_view({viewName: "temp_view_orders"})` → success
+21. `sqlite_create_view({viewName: "temp_view_orders", selectQuery: "SELECT product_id, COUNT(*) as order_count, SUM(total_price) as revenue FROM test_orders GROUP BY product_id"})` → success
+22. `sqlite_list_views` → verify `temp_view_orders` present
+23. `sqlite_drop_view({viewName: "temp_view_orders"})` → success
 
 **Checklist — Insights:**
 
-20. `sqlite_append_insight({insight: "Test insight for verification"})` → success
+24. `sqlite_append_insight({insight: "Test insight for verification"})` → success
 
 **Code mode testing:**
 
-21. `sqlite_execute_code({code: "const result = await sqlite.admin.integrityCheck(); return result;"})` → `ok` result
-22. `sqlite_execute_code({code: "const result = await sqlite.admin.pragmaSettings({pragma: 'journal_mode'}); return result;"})` → `{pragma: "journal_mode", value: "wal"}`
+25. `sqlite_execute_code({code: "const result = await sqlite.admin.integrityCheck(); return result;"})` → `ok` result
+26. `sqlite_execute_code({code: "const result = await sqlite.admin.pragmaSettings({pragma: 'journal_mode'}); return result;"})` → `{pragma: "journal_mode", value: "wal"}`
 
 **Error path testing:**
 
-🔴 23. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` → report behavior
-🔴 24. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
+🔴 27. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` → report behavior
+🔴 29. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
+🔴 30. `sqlite_attach_database({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
+🔴 31. `sqlite_attach_database({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
+🔴 32. `sqlite_detach_database({alias: "main"})` → `{success: false}` (cannot detach main)
+🔴 33. `sqlite_detach_database({alias: "nonexistent_alias"})` → `{success: false}`
+🔴 34. `sqlite_dump({outputPath: "../../../etc/passwd"})` → `{success: false}` (path traversal rejection)
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
 
-🔴 25. `sqlite_backup({})` → handler error
-🔴 26. `sqlite_restore({})` → handler error
-🔴 27. `sqlite_verify_backup({})` → handler error
-🔴 28. `sqlite_pragma_table_info({})` → handler error
-🔴 29. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
-🔴 30. `sqlite_append_insight({})` → handler error
-🔴 31. `sqlite_create_view({})` → handler error
-🔴 32. `sqlite_drop_view({})` → handler error
-🔴 33. `sqlite_dbstat({})` → handler error (or success if no required params)
+🔴 35. `sqlite_backup({})` → handler error
+🔴 36. `sqlite_restore({})` → handler error
+🔴 37. `sqlite_verify_backup({})` → handler error
+🔴 38. `sqlite_pragma_table_info({})` → handler error
+🔴 39. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
+🔴 40. `sqlite_append_insight({})` → handler error
+🔴 41. `sqlite_create_view({})` → handler error
+🔴 42. `sqlite_drop_view({})` → handler error
+🔴 43. `sqlite_dbstat({})` → handler error (or success if no required params)
+🔴 44. `sqlite_attach_database({})` → handler error
+🔴 45. `sqlite_detach_database({})` → handler error
+🔴 46. `sqlite_vacuum_into({})` → handler error
+🔴 47. `sqlite_dump({})` → handler error
 
 ---
 

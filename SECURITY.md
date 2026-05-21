@@ -47,6 +47,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **Zod schemas** — all tool inputs validated at tool boundaries before database operations
 - ✅ **Parameterized queries** used throughout — never string interpolation
 - ✅ **Identifier sanitization** — table, column, schema, and index names validated against injection
+- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`).
 
 ## 🧪 **Code Mode Sandbox Security**
 

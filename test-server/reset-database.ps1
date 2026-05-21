@@ -109,6 +109,17 @@ if ($backupFiles) {
     Write-Success "Cleaned up $($backupFiles.Count) backup file(s)"
 }
 
+# Remove dump .sql files left by sqlite_dump tests
+$dumpFiles = Get-ChildItem -Path $ScriptDir -Filter "*.sql" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "test-database.sql" }
+if ($dumpFiles) {
+    foreach ($df in $dumpFiles) {
+        Remove-Item $df.FullName -Force -ErrorAction SilentlyContinue
+        if ($Verbose) { Write-Info "Deleted dump: $($df.Name)" }
+    }
+    Write-Success "Cleaned up $($dumpFiles.Count) dump file(s)"
+}
+
 # Warn about any node processes that hold the database file open (e.g. MCP servers)
 $resolvePath = Resolve-Path $DatabasePath -ErrorAction SilentlyContinue
 $dbFullPath = if ($resolvePath) { $resolvePath.Path } else { $DatabasePath }

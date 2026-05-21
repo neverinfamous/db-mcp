@@ -77,7 +77,7 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### stats-basic Group Tools (16)
+### stats-basic Group Tools (17)
 
 1. sqlite_stats_basic
 2. sqlite_stats_count
@@ -95,7 +95,8 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 14. sqlite_stats_detect_anomalies
 15. sqlite_stats_detect_bloat
 16. sqlite_stats_detect_schema_risks
-17. sqlite_execute_code
+17. sqlite_stats_sample
+18. sqlite_execute_code
 
 **Checklist:**
 
@@ -113,36 +114,40 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 12. `sqlite_stats_outliers({table: "test_measurements", column: "temperature"})` → outlier detection result
 13. `sqlite_stats_regression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
 14. `sqlite_stats_hypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → verify `statistic` and `pValue` present
+15. `sqlite_stats_sample({table: "test_measurements", sampleSize: 10})` → verify `sampleSize`, `totalRows: 200`, `rows` array with ≤ 10 items
+16. `sqlite_stats_sample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → verify column filtering
 
 **Code mode testing:**
 
-15. `sqlite_execute_code({code: "const result = await sqlite.stats.statsBasic({table: 'test_measurements', column: 'temperature'}); return result;"})` → verify `count: 200`, `min`, `max`, `avg` present
-16. `sqlite_execute_code({code: "const result = await sqlite.stats.statsPercentile({table: 'test_measurements', column: 'temperature', percentiles: [50]}); return result;"})` → median value
+17. `sqlite_execute_code({code: "const result = await sqlite.stats.statsBasic({table: 'test_measurements', column: 'temperature'}); return result;"})` → verify `count: 200`, `min`, `max`, `avg` present
+18. `sqlite_execute_code({code: "const result = await sqlite.stats.statsPercentile({table: 'test_measurements', column: 'temperature', percentiles: [50]}); return result;"})` → median value
 
 **Error path testing:**
 
-🔴 17. `sqlite_stats_basic({table: "nonexistent_table_xyz", column: "x"})` → structured error
-🔴 18. `sqlite_stats_correlation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
+🔴 19. `sqlite_stats_basic({table: "nonexistent_table_xyz", column: "x"})` → structured error
+🔴 20. `sqlite_stats_correlation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
+🔴 21. `sqlite_stats_sample({table: "nonexistent_xyz", sampleSize: 5})` → structured error
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
 
-🔴 19. `sqlite_stats_basic({})` → handler error
-🔴 20. `sqlite_stats_count({})` → handler error
-🔴 21. `sqlite_stats_group_by({})` → handler error
-🔴 22. `sqlite_stats_histogram({})` → handler error
-🔴 23. `sqlite_stats_percentile({})` → handler error
-🔴 24. `sqlite_stats_correlation({})` → handler error
-🔴 25. `sqlite_stats_top_n({})` → handler error
-🔴 26. `sqlite_stats_distinct({})` → handler error
-🔴 27. `sqlite_stats_summary({})` → handler error
-🔴 28. `sqlite_stats_frequency({})` → handler error
-🔴 29. `sqlite_stats_outliers({})` → handler error
-🔴 30. `sqlite_stats_regression({})` → handler error
-🔴 31. `sqlite_stats_hypothesis({})` → handler error
-🔴 32. `sqlite_stats_detect_anomalies({})` → handler error
-✅ 33. `sqlite_stats_detect_bloat({})` → success (no required params)
-✅ 34. `sqlite_stats_detect_schema_risks({})` → success (no required params)
-🔴 35. `sqlite_execute_code({})` → handler error
+🔴 22. `sqlite_stats_basic({})` → handler error
+🔴 23. `sqlite_stats_count({})` → handler error
+🔴 24. `sqlite_stats_group_by({})` → handler error
+🔴 25. `sqlite_stats_histogram({})` → handler error
+🔴 26. `sqlite_stats_percentile({})` → handler error
+🔴 27. `sqlite_stats_correlation({})` → handler error
+🔴 28. `sqlite_stats_top_n({})` → handler error
+🔴 29. `sqlite_stats_distinct({})` → handler error
+🔴 30. `sqlite_stats_summary({})` → handler error
+🔴 31. `sqlite_stats_frequency({})` → handler error
+🔴 32. `sqlite_stats_outliers({})` → handler error
+🔴 33. `sqlite_stats_regression({})` → handler error
+🔴 34. `sqlite_stats_hypothesis({})` → handler error
+🔴 35. `sqlite_stats_detect_anomalies({})` → handler error
+✅ 36. `sqlite_stats_detect_bloat({})` → success (no required params)
+✅ 37. `sqlite_stats_detect_schema_risks({})` → success (no required params)
+🔴 38. `sqlite_stats_sample({})` → handler error
+🔴 39. `sqlite_execute_code({})` → handler error
 
 ---
 

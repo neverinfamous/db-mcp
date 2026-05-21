@@ -118,6 +118,60 @@ export const VacuumSchema = z.object({
     .describe("Run ANALYZE after VACUUM"),
 });
 
+export const AttachDatabaseSchema = z.object({
+  filepath: z.string().describe("Path to the database file to attach"),
+  alias: z
+    .string()
+    .regex(
+      /^[a-zA-Z_]\w*$/,
+      "Alias must start with a letter or underscore and contain only alphanumeric characters",
+    )
+    .describe("Schema alias for the attached database (e.g., 'analytics')"),
+});
+
+export const DetachDatabaseSchema = z.object({
+  alias: z
+    .string()
+    .describe("Schema alias of the database to detach (cannot be 'main')"),
+});
+
+export const VacuumIntoCopySchema = z.object({
+  outputPath: z
+    .string()
+    .describe(
+      "Path for the output database file. Creates a compacted copy of the database.",
+    ),
+});
+
+export const AuditRestoreBackupSchema = z.object({
+  filename: z
+    .string()
+    .describe(
+      "Snapshot filename from sqlite_audit_list_backups results (e.g., '2025-01-01T00-00-00-000Z_sqlite_drop_table_users.snapshot.json.gz')",
+    ),
+  dryRun: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "If true, returns the DDL that would be executed without applying changes",
+    ),
+});
+
+export const AuditDiffBackupSchema = z.object({
+  filename: z
+    .string()
+    .describe("Snapshot filename to compare against the live database schema"),
+});
+
+export const SqlDumpSchema = z.object({
+  outputPath: z
+    .string()
+    .describe(
+      "Absolute path where the SQL text dump file will be written (e.g. '/path/to/dump.sql')",
+    ),
+});
+
 // =============================================================================
 // Output Schemas
 // =============================================================================
@@ -147,6 +201,16 @@ export const BackupOutputSchema = z
     durationMs: z.number().optional(),
     wasmLimitation: z.boolean().optional(),
     note: z.string().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const SqlDumpOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    path: z.string().optional(),
+    durationMs: z.number().optional(),
+    wasmLimitation: z.boolean().optional(),
   })
   .extend(ErrorResponseFields.shape);
 
@@ -288,6 +352,36 @@ export const AppendInsightOutputSchema = z
   })
   .extend(ErrorResponseFields.shape);
 
+export const AttachDatabaseOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    alias: z.string().optional(),
+    filepath: z.string().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const DetachDatabaseOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    alias: z.string().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const VacuumIntoCopyOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    outputPath: z.string().optional(),
+    sizeBytes: z.number().optional(),
+    durationMs: z.number().optional(),
+    wasmLimitation: z.boolean().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -308,3 +402,9 @@ export type PragmaCompileOptionsInput = z.infer<
 export type PragmaDatabaseListInput = z.infer<typeof PragmaDatabaseListSchema>;
 export type AppendInsightInput = z.infer<typeof AppendInsightSchema>;
 export type VacuumInput = z.infer<typeof VacuumSchema>;
+export type AttachDatabaseInput = z.infer<typeof AttachDatabaseSchema>;
+export type DetachDatabaseInput = z.infer<typeof DetachDatabaseSchema>;
+export type VacuumIntoCopyInput = z.infer<typeof VacuumIntoCopySchema>;
+export type AuditRestoreBackupInput = z.infer<typeof AuditRestoreBackupSchema>;
+export type AuditDiffBackupInput = z.infer<typeof AuditDiffBackupSchema>;
+

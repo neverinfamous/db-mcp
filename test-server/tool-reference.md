@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **151 Native / 125 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **161 Native / 132 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -18,7 +18,7 @@ Sandboxed JavaScript execution that exposes all 9 tool groups through the `sqlit
 
 ---
 
-## core (14 tools + Code Mode)
+## core (18 tools + Code Mode)
 
 Read/write queries, table and index management, and schema discovery.
 
@@ -38,10 +38,14 @@ Read/write queries, table and index management, and schema discovery.
 | `sqlite_get_indexes`    | List all indexes in the database, optionally filtered by table.                                           |
 | `sqlite_create_index`   | Create an index on one or more columns to improve query performance.                                      |
 | `sqlite_drop_index`     | Drop (delete) an index from the database.                                                                 |
+| `sqlite_list_triggers`    | List database triggers with optional table filter. Shows name, table, event type, timing, and full SQL.   |
+| `sqlite_list_constraints` | List all constraints for a table: primary key columns, foreign keys, unique indexes, and CHECK constraints. |
+| `sqlite_date_add`         | Add or subtract time from a date/time column using native SQLite datetime modifiers.                      |
+| `sqlite_date_diff`        | Calculate the difference between two date/time columns, returning the result in days, hours, minutes, or seconds. |
 
 ---
 
-## json (24 tools + Code Mode)
+## json (25 tools + Code Mode)
 
 Comprehensive JSON manipulation — read, write, transform, validate, and analyze JSON documents stored in SQLite.
 
@@ -71,6 +75,7 @@ Comprehensive JSON manipulation — read, write, transform, validate, and analyz
 | `sqlite_json_storage_info`      | Analyze storage format of a JSON column (text vs JSONB) and report statistics.                                       |
 | `sqlite_json_normalize_column`  | Normalize JSON data in a column (sort keys, compact format) for consistent storage and comparison.                   |
 | `sqlite_json_security_scan`     | Scan JSON columns for sensitive keys (PII/credentials), SQL injection patterns, and XSS attack vectors.              |
+| `sqlite_json_diff`              | Compare two JSON paths within the same row to find differences. Useful for before/after comparisons.                 |
 
 ---
 
@@ -102,7 +107,7 @@ Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and
 
 ---
 
-## stats (22 Native / 16 WASM tools + Code Mode)
+## stats (23 Native / 17 WASM tools + Code Mode)
 
 Statistical analysis — descriptive stats, percentiles, correlation, regression, distributions, anomaly detection, and window functions.
 
@@ -124,6 +129,7 @@ Statistical analysis — descriptive stats, percentiles, correlation, regression
 | `sqlite_stats_detect_anomalies`    | Detect data distribution anomalies using z-score analysis across numeric columns. Returns per-column risk assessment.   |
 | `sqlite_stats_detect_bloat`        | Score tables by fragmentation/bloat risk using PRAGMA + dbstat metrics. Returns weighted risk scores (0-100).           |
 | `sqlite_stats_detect_schema_risks` | Score tables by schema health risk: missing FK indexes, no PKs, wide tables, large unindexed tables. Risk scores 0-100. |
+| `sqlite_stats_sample`              | Get a random sample of rows for exploratory analysis. Configurable sample size (max 1000).                              |
 | `sqlite_window_row_number`         | Assign sequential row numbers based on ordering. Useful for pagination and ranking. `[NATIVE ONLY]`                     |
 | `sqlite_window_rank`               | Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0–1 range. `[NATIVE ONLY]` |
 | `sqlite_window_lag_lead`           | Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows. `[NATIVE ONLY]`                 |
@@ -153,7 +159,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (26 Native / 26 WASM tools + Code Mode)
+## admin (30 Native / 29 WASM tools + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 
@@ -185,6 +191,10 @@ Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 | `sqlite_analyze_csv_schema`     | Analyze a CSV file structure and infer column types. Uses a temporary virtual table.                                      |
 | `sqlite_create_rtree_table`     | Create an R-Tree virtual table for spatial indexing. Supports 2–5 dimensions.                                             |
 | `sqlite_create_series_table`    | Create a table populated with a series of numbers. Unlike `generate_series`, this creates a persistent table.             |
+| `sqlite_attach_database`        | Attach an external SQLite database file under a schema alias. Restricted to same directory as primary database.           |
+| `sqlite_detach_database`        | Detach a previously attached database by its schema alias. Cannot detach 'main' or 'temp'.                                |
+| `sqlite_vacuum_into`            | Create a compacted, defragmented copy of the database using VACUUM INTO. Does not modify the original.                    |
+| `sqlite_dump`                   | Export the database schema and data as a SQL text dump to a specified file. `[NATIVE ONLY]`                               |
 
 ---
 

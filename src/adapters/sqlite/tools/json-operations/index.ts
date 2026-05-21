@@ -26,6 +26,7 @@ import {
   createJsonNormalizeColumnTool,
 } from "./transform.js";
 import { createJsonSecurityScanTool } from "./security.js";
+import { createJsonDiffTool } from "./diff.js";
 
 /**
  * Get all JSON operation tools
@@ -50,5 +51,6 @@ export function getJsonOperationTools(
     createJsonStorageInfoTool(adapter),
     createJsonNormalizeColumnTool(adapter),
     createJsonSecurityScanTool(adapter),
+    createJsonDiffTool(adapter),
   ];
 }

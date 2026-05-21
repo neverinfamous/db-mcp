@@ -100,6 +100,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 19. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → success
 20. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → integrity verified
 21. `sqlite.admin.restore({sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → restore success
+22. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql"})` → success with `path` and `durationMs`
 
 ---
 
@@ -127,48 +128,69 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
-## Phase 8: Admin Domain Errors (batched)
+## Phase 8: Database Management (batched)
 
-🔴 29. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → report behavior
-🔴 30. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
-🔴 31. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
-🔴 32. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
+> Use absolute paths where required
 
----
-
-## Phase 9: Admin Zod Validation (batched)
-
-🔴 33. `sqlite.admin.backup({})` → `{success: false}`
-🔴 34. `sqlite.admin.restore({})` → `{success: false}`
-🔴 35. `sqlite.admin.verifyBackup({})` → `{success: false}`
-🔴 36. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
-🔴 37. `sqlite.admin.pragmaSettings({})` → `{success: false}`
-🔴 38. `sqlite.admin.appendInsight({})` → `{success: false}`
-🔴 39. `sqlite.admin.createView({})` → `{success: false}`
-🔴 40. `sqlite.admin.dropView({})` → `{success: false}`
-🔴 41. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
-🔴 42. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
-🔴 43. `sqlite.admin.createCsvTable({})` → `{success: false}`
-🔴 44. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
-🔴 45. `sqlite.admin.createRtreeTable({})` → `{success: false}`
-🔴 46. `sqlite.admin.createSeriesTable({})` → `{success: false}`
-🔴 47. `sqlite.admin.generateSeries({})` → `{success: false}`
-🔴 48. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
+29. `sqlite.admin.attachDatabase({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`.
+30. `sqlite.admin.pragmaDatabaseList()` → verify `temp_attached` appears in attached databases list
+31. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
+32. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
 
 ---
 
-## Phase 9.5: Gotcha Edge Cases (batched)
+## Phase 9: Admin Domain Errors (batched)
 
-49. `sqlite.admin.generateSeries({start: 1, stop: 10, step: 2})` → 5 values: 1, 3, 5, 7, 9 (non-default step value)
-50. `sqlite.admin.pragmaSettings({pragma: "cache_size", value: "2000"})` → set cache_size, then `sqlite.admin.pragmaSettings({pragma: "cache_size"})` → verify read-back returns the set value
-51. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable({table: "temp_cm_series_regular"})` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
-52. `sqlite.admin.dropVirtualTable({tableName: "test_products"})` → `{success: false}` — test_products is a regular table, not a virtual table (domain error)
+🔴 33. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → report behavior
+🔴 34. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
+🔴 35. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
+🔴 36. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
+🔴 37. `sqlite.admin.attachDatabase({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
+🔴 38. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
+🔴 39. `sqlite.admin.detachDatabase({alias: "main"})` → `{success: false}` (cannot detach main)
+🔴 40. `sqlite.admin.detachDatabase({alias: "nonexistent_alias"})` → `{success: false}`
+🔴 41. `sqlite.admin.vacuumInto({outputPath: "../../../tmp/evil.db"})` → `{success: false}` (path traversal rejection)
+🔴 42. `sqlite.admin.dump({outputPath: "../../../tmp/evil.sql"})` → `{success: false}` (path traversal rejection)
 
 ---
 
-## Phase 10: Multi-Step Workflow
+## Phase 10: Admin Zod Validation (batched)
 
-### 10.1 — Database health check pipeline
+🔴 42. `sqlite.admin.backup({})` → `{success: false}`
+🔴 43. `sqlite.admin.restore({})` → `{success: false}`
+🔴 44. `sqlite.admin.verifyBackup({})` → `{success: false}`
+🔴 45. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
+🔴 46. `sqlite.admin.pragmaSettings({})` → `{success: false}`
+🔴 47. `sqlite.admin.appendInsight({})` → `{success: false}`
+🔴 48. `sqlite.admin.createView({})` → `{success: false}`
+🔴 49. `sqlite.admin.dropView({})` → `{success: false}`
+🔴 50. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
+🔴 51. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
+🔴 52. `sqlite.admin.createCsvTable({})` → `{success: false}`
+🔴 53. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
+🔴 54. `sqlite.admin.createRtreeTable({})` → `{success: false}`
+🔴 55. `sqlite.admin.createSeriesTable({})` → `{success: false}`
+🔴 56. `sqlite.admin.generateSeries({})` → `{success: false}`
+🔴 57. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
+🔴 58. `sqlite.admin.attachDatabase({})` → `{success: false}` handler error
+🔴 59. `sqlite.admin.detachDatabase({})` → `{success: false}` handler error
+🔴 60. `sqlite.admin.vacuumInto({})` → `{success: false}` handler error
+🔴 61. `sqlite.admin.dump({})` → `{success: false}` handler error
+
+---
+
+## Phase 10.5: Gotcha Edge Cases (batched)
+
+61. `sqlite.admin.generateSeries({start: 1, stop: 10, step: 2})` → 5 values: 1, 3, 5, 7, 9 (non-default step value)
+62. `sqlite.admin.pragmaSettings({pragma: "cache_size", value: "2000"})` → set cache_size, then `sqlite.admin.pragmaSettings({pragma: "cache_size"})` → verify read-back returns the set value
+63. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable({table: "temp_cm_series_regular"})` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
+64. `sqlite.admin.dropVirtualTable({tableName: "test_products"})` → `{success: false}` — test_products is a regular table, not a virtual table (domain error)
+
+---
+
+## Phase 11: Multi-Step Workflow
+
+### 11.1 — Database health check pipeline
 
 ```javascript
 const failures = [];

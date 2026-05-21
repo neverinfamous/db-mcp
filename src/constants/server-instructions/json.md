@@ -62,6 +62,7 @@ sqlite_json_group_object({
 - `sqlite_json_pretty({ table, column, whereClause? })` — format JSON with indentation
 - `sqlite_json_valid({ table, column })` — check if values are valid JSON
 - `sqlite_json_analyze_schema({ table, column })` — infer schema types
+- `sqlite_json_diff({ table, column, path1, path2 })` — compare two JSON paths within the same row
 
 ## Security
 
