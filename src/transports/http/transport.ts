@@ -26,7 +26,6 @@ import {
   HTTP_HEADERS_TIMEOUT_MS,
   type HttpTransportConfig,
   type HttpTransportState,
-  type RateLimitEntry,
 } from "./types.js";
 import {
   setupSecurityHeaders,
@@ -85,8 +84,6 @@ export class HttpTransport {
       authServerDiscovery: null,
       tokenValidator: null,
       mcpServer: null,
-      rateLimitMap: new Map<string, RateLimitEntry>(),
-      rateLimitCleanupTimer: null,
     };
   }
 
@@ -276,12 +273,6 @@ export class HttpTransport {
    * Stop the server and close all active sessions
    */
   async stop(): Promise<void> {
-    // Stop rate limit cleanup timer
-    if (this.state.rateLimitCleanupTimer) {
-      clearInterval(this.state.rateLimitCleanupTimer);
-      this.state.rateLimitCleanupTimer = null;
-    }
-
     // Close all active Streamable HTTP transports
     for (const [sessionId, transport] of this.state.transports) {
       try {
