@@ -6,7 +6,7 @@
 > We're currently testing WASM mode.
 
 > [!CAUTION]
-> **WASM ONLY** — This prompt must be run against a WASM backend (`--sqlite` flag). Running it against Native will produce false results since the tools being tested are expected to *fail* in WASM but *succeed* in Native.
+> **WASM ONLY** — This prompt must be run against a WASM backend (`--sqlite` flag). Running it against Native will produce false results since the tools being tested are expected to _fail_ in WASM but _succeed_ in Native.
 
 **Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
 
@@ -45,10 +45,10 @@ Same seed database as all other prompts. Key difference: `test_articles_fts` (FT
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | What you see                                          | Verdict    |
-| -------------------- | ----------------------------------------------------- | ---------- |
-| **Handler error** ✅ | JSON object with `success` and `error` fields         | Correct    |
-| **MCP error** ❌     | Raw text, `isError: true`, no `success` field         | Bug        |
+| Type                 | What you see                                  | Verdict |
+| -------------------- | --------------------------------------------- | ------- |
+| **Handler error** ✅ | JSON object with `success` and `error` fields | Correct |
+| **MCP error** ❌     | Raw text, `isError: true`, no `success` field | Bug     |
 
 ---
 
@@ -69,7 +69,11 @@ Expected: `totalMethods` should be significantly less than 151 (the Native count
 
 ```javascript
 const txHelp = await sqlite.transactions.help();
-return { group: txHelp.group, methodCount: txHelp.methods.length, methods: txHelp.methods };
+return {
+  group: txHelp.group,
+  methodCount: txHelp.methods.length,
+  methods: txHelp.methods,
+};
 ```
 
 Expected: `methodCount: 0` (or only `help` itself). No transaction methods should be available.
@@ -78,7 +82,7 @@ Expected: `methodCount: 0` (or only `help` itself). No transaction methods shoul
 
 ```javascript
 const statsHelp = await sqlite.stats.help();
-const windowMethods = statsHelp.methods.filter(m => m.startsWith("window"));
+const windowMethods = statsHelp.methods.filter((m) => m.startsWith("window"));
 return { totalStatsMethods: statsHelp.methods.length, windowMethods };
 ```
 
@@ -88,8 +92,14 @@ Expected: `windowMethods` is empty (`[]`). The 6 window tools should not appear.
 
 ```javascript
 const geoHelp = await sqlite.geo.help();
-const spatialMethods = geoHelp.methods.filter(m => m.startsWith("spatialite"));
-return { totalGeoMethods: geoHelp.methods.length, spatialMethods, haversineMethods: geoHelp.methods };
+const spatialMethods = geoHelp.methods.filter((m) =>
+  m.startsWith("spatialite"),
+);
+return {
+  totalGeoMethods: geoHelp.methods.length,
+  spatialMethods,
+  haversineMethods: geoHelp.methods,
+};
 ```
 
 Expected: `spatialMethods` is empty. Only 4 Haversine methods remain: `distance`, `nearby`, `boundingBox`, `cluster`.
@@ -98,7 +108,7 @@ Expected: `spatialMethods` is empty. Only 4 Haversine methods remain: `distance`
 
 ```javascript
 const textHelp = await sqlite.text.help();
-const ftsMethods = textHelp.methods.filter(m => m.startsWith("fts"));
+const ftsMethods = textHelp.methods.filter((m) => m.startsWith("fts"));
 return { totalTextMethods: textHelp.methods.length, ftsMethods };
 ```
 
@@ -115,29 +125,39 @@ const failures = [];
 
 // 2.1 — Backup
 const backup = await sqlite.admin.backup({
-  targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-wasm-backup.db"
+  targetPath:
+    "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-wasm-backup.db",
 });
-if (backup.success !== false) failures.push("backup: expected {success: false}");
+if (backup.success !== false)
+  failures.push("backup: expected {success: false}");
 if (!backup.error || !backup.error.toLowerCase().includes("wasm")) {
-  failures.push("backup: error message should mention WASM — got: " + backup.error);
+  failures.push(
+    "backup: error message should mention WASM — got: " + backup.error,
+  );
 }
 
 // 2.2 — Restore
 const restore = await sqlite.admin.restore({
-  sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test.db"
+  sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test.db",
 });
-if (restore.success !== false) failures.push("restore: expected {success: false}");
+if (restore.success !== false)
+  failures.push("restore: expected {success: false}");
 if (!restore.error || !restore.error.toLowerCase().includes("wasm")) {
-  failures.push("restore: error message should mention WASM — got: " + restore.error);
+  failures.push(
+    "restore: error message should mention WASM — got: " + restore.error,
+  );
 }
 
 // 2.3 — Verify Backup
 const verify = await sqlite.admin.verifyBackup({
-  backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test.db"
+  backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test.db",
 });
-if (verify.success !== false) failures.push("verifyBackup: expected {success: false}");
+if (verify.success !== false)
+  failures.push("verifyBackup: expected {success: false}");
 if (!verify.error || !verify.error.toLowerCase().includes("wasm")) {
-  failures.push("verifyBackup: error message should mention WASM — got: " + verify.error);
+  failures.push(
+    "verifyBackup: error message should mention WASM — got: " + verify.error,
+  );
 }
 
 return { failures, success: failures.length === 0 };
@@ -155,15 +175,17 @@ const failures = [];
 // 3.1 — Create CSV Table
 const csvCreate = await sqlite.admin.createCsvTable({
   tableName: "temp_wasm_csv",
-  filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"
+  filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv",
 });
-if (csvCreate.success !== false) failures.push("createCsvTable: expected {success: false}");
+if (csvCreate.success !== false)
+  failures.push("createCsvTable: expected {success: false}");
 
 // 3.2 — Analyze CSV Schema
 const csvAnalyze = await sqlite.admin.analyzeCsvSchema({
-  filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"
+  filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv",
 });
-if (csvAnalyze.success !== false) failures.push("analyzeCsvSchema: expected {success: false}");
+if (csvAnalyze.success !== false)
+  failures.push("analyzeCsvSchema: expected {success: false}");
 
 return { failures, success: failures.length === 0 };
 ```
@@ -179,9 +201,10 @@ const failures = [];
 
 const rtree = await sqlite.admin.createRtreeTable({
   tableName: "temp_wasm_rtree",
-  dimensions: 2
+  dimensions: 2,
 });
-if (rtree.success !== false) failures.push("createRtreeTable: expected {success: false}");
+if (rtree.success !== false)
+  failures.push("createRtreeTable: expected {success: false}");
 
 return { failures, success: failures.length === 0 };
 ```
@@ -197,21 +220,26 @@ const failures = [];
 
 // 5.1 — Verify phantom table appears in sqlite_master
 const tables = await sqlite.core.readQuery(
-  "SELECT name, type FROM sqlite_master WHERE name = 'test_articles_fts'"
+  "SELECT name, type FROM sqlite_master WHERE name = 'test_articles_fts'",
 );
 if (!tables.rows || tables.rows.length === 0) {
-  failures.push("test_articles_fts not found in sqlite_master — seed may not include FTS5");
+  failures.push(
+    "test_articles_fts not found in sqlite_master — seed may not include FTS5",
+  );
 }
 
 // 5.2 — Attempting FTS5 query should fail gracefully
 const ftsQuery = await sqlite.core.readQuery({
-  query: "SELECT * FROM test_articles_fts WHERE test_articles_fts MATCH 'SQLite' LIMIT 1"
+  query:
+    "SELECT * FROM test_articles_fts WHERE test_articles_fts MATCH 'SQLite' LIMIT 1",
 });
 // This should either return {success: false} or empty results — it should NOT crash
 if (ftsQuery.success === false) {
   // Expected: structured error
 } else if (ftsQuery.rows && ftsQuery.rows.length > 0) {
-  failures.push("FTS5 query succeeded in WASM — unexpected (sql.js should not support FTS5)");
+  failures.push(
+    "FTS5 query succeeded in WASM — unexpected (sql.js should not support FTS5)",
+  );
 }
 
 return { failures, success: failures.length === 0 };
@@ -235,7 +263,7 @@ if (dbstat.success === false) {
 return {
   failures,
   success: failures.length === 0,
-  dbstatResult: dbstat
+  dbstatResult: dbstat,
 };
 ```
 
@@ -251,8 +279,8 @@ const failures = [];
 const options = await sqlite.admin.pragmaCompileOptions({});
 const optionList = options.compileOptions || options.options || [];
 
-const hasFTS5 = optionList.some(o => o.toUpperCase().includes("FTS5"));
-const hasFTS3 = optionList.some(o => o.toUpperCase().includes("FTS3"));
+const hasFTS5 = optionList.some((o) => o.toUpperCase().includes("FTS5"));
+const hasFTS3 = optionList.some((o) => o.toUpperCase().includes("FTS3"));
 
 if (hasFTS5) {
   failures.push("WASM should NOT have FTS5 compile option");
@@ -263,7 +291,7 @@ return {
   success: failures.length === 0,
   hasFTS3,
   hasFTS5,
-  optionCount: optionList.length
+  optionCount: optionList.length,
 };
 ```
 
@@ -318,19 +346,24 @@ for (const g of groups) {
 
 // Step 3: Verify transactions is empty
 if (groupSizes.transactions > 0) {
-  failures.push(`transactions should have 0 methods, got ${groupSizes.transactions}`);
+  failures.push(
+    `transactions should have 0 methods, got ${groupSizes.transactions}`,
+  );
 }
 
 // Step 4: Verify no window methods in stats
 const statsHelp = await sqlite.stats.help();
-const windowMethods = statsHelp.methods.filter(m => m.startsWith("window"));
+const windowMethods = statsHelp.methods.filter((m) => m.startsWith("window"));
 if (windowMethods.length > 0) {
-  failures.push(`stats should have 0 window methods, got ${windowMethods.length}`);
+  failures.push(
+    `stats should have 0 window methods, got ${windowMethods.length}`,
+  );
 }
 
 // Step 5: Test a WASM-compatible tool works
 const count = await sqlite.core.count({ table: "test_products" });
-if (count.count !== 16) failures.push(`expected 16 products, got ${count.count}`);
+if (count.count !== 16)
+  failures.push(`expected 16 products, got ${count.count}`);
 
 // Step 6: Test a degraded tool fails gracefully
 const backup = await sqlite.admin.backup({ targetPath: "wasm-test.db" });
@@ -343,8 +376,8 @@ return {
     totalGroups: groups.length,
     totalMethods,
     groupSizes,
-    wasmCompatible: true
-  }
+    wasmCompatible: true,
+  },
 };
 ```
 

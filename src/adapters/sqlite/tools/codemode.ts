@@ -46,8 +46,6 @@ const security = new CodeModeSecurityManager({
   maxExecutionsPerMinute: codemodeRateLimit,
 });
 
-
-
 // =============================================================================
 // Tool Definition
 // =============================================================================
@@ -186,9 +184,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         if (sanitizedResult !== undefined) {
           try {
             const json = JSON.stringify(sanitizedResult);
-            tokenEstimate = Math.ceil(
-              Buffer.byteLength(json, "utf8") / 4,
-            );
+            tokenEstimate = Math.ceil(Buffer.byteLength(json, "utf8") / 4);
           } catch {
             // Serialization failure — leave at 0
           }

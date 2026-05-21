@@ -21,26 +21,26 @@
 
 All tests via `sqlite_execute_code`. Translation table:
 
-| Direct Tool Call | Code Mode Equivalent |
-| --- | --- |
-| `sqlite_read_query({query: "..."})` | `sqlite.core.readQuery({query: "..."})` |
-| `sqlite_write_query({query: "..."})` | `sqlite.core.writeQuery({query: "..."})` |
-| `sqlite_create_table({...})` | `sqlite.core.createTable({...})` |
-| `sqlite_describe_table({tableName: "..."})` | `sqlite.core.describeTable("...")` |
-| `sqlite_drop_table({tableName: "..."})` | `sqlite.core.dropTable({tableName: "..."})` |
-| `sqlite_create_index({...})` | `sqlite.core.createIndex({...})` |
-| `sqlite_get_indexes({...})` | `sqlite.core.getIndexes({...})` |
+| Direct Tool Call                            | Code Mode Equivalent                        |
+| ------------------------------------------- | ------------------------------------------- |
+| `sqlite_read_query({query: "..."})`         | `sqlite.core.readQuery({query: "..."})`     |
+| `sqlite_write_query({query: "..."})`        | `sqlite.core.writeQuery({query: "..."})`    |
+| `sqlite_create_table({...})`                | `sqlite.core.createTable({...})`            |
+| `sqlite_describe_table({tableName: "..."})` | `sqlite.core.describeTable("...")`          |
+| `sqlite_drop_table({tableName: "..."})`     | `sqlite.core.dropTable({tableName: "..."})` |
+| `sqlite_create_index({...})`                | `sqlite.core.createIndex({...})`            |
+| `sqlite_get_indexes({...})`                 | `sqlite.core.getIndexes({...})`             |
 
 **Key rules:** State persists across calls. Do NOT pass `readonly: true`. Group related tests into single calls.
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, description, price (REAL), category, created_at     |
-| test_orders       | 20   | id, product_id (FK→test_products), total_price, status        |
-| test_measurements | 200  | id, sensor_id (1-5), temperature, humidity, pressure          |
-| test_events       | 100  | id, event_type, user_id, payload (JSON), event_date           |
+| Table             | Rows | Key Columns                                               |
+| ----------------- | ---- | --------------------------------------------------------- |
+| test_products     | 16   | id, name, description, price (REAL), category, created_at |
+| test_orders       | 20   | id, product_id (FK→test_products), total_price, status    |
+| test_measurements | 200  | id, sensor_id (1-5), temperature, humidity, pressure      |
+| test_events       | 100  | id, event_type, user_id, payload (JSON), event_date       |
 
 ## Naming & Cleanup
 
@@ -57,13 +57,13 @@ All tests via `sqlite_execute_code`. Translation table:
 
 ### Error Message Quality Rating
 
-| Quality Level | Example | Verdict |
-| --- | --- | --- |
-| **5 - Excellent** | `Table 'stress_empty_table' does not exist (code: TABLE_NOT_FOUND)` | ✅ |
-| **4 - Good** | `Table 'stress_empty_table' does not exist` | ✅ |
-| **3 - Adequate** | `SQLITE_ERROR: no such table: stress_empty_table` | ⚠️ |
-| **2 - Poor** | `SQLITE_ERROR: no such table` | ⚠️ |
-| **1 - Useless** | `Query failed` or generic `Error occurred` | ❌ |
+| Quality Level     | Example                                                             | Verdict |
+| ----------------- | ------------------------------------------------------------------- | ------- |
+| **5 - Excellent** | `Table 'stress_empty_table' does not exist (code: TABLE_NOT_FOUND)` | ✅      |
+| **4 - Good**      | `Table 'stress_empty_table' does not exist`                         | ✅      |
+| **3 - Adequate**  | `SQLITE_ERROR: no such table: stress_empty_table`                   | ⚠️      |
+| **2 - Poor**      | `SQLITE_ERROR: no such table`                                       | ⚠️      |
+| **1 - Useless**   | `Query failed` or generic `Error occurred`                          | ❌      |
 
 ### Error Code Consistency
 

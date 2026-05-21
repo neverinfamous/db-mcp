@@ -6,10 +6,6 @@
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
-
-
-
-
 import { ValidationError } from "../../../../utils/errors/index.js";
 
 /**
@@ -75,13 +71,14 @@ export async function validateNumericColumn(
       `Column '${columnName}' in table '${tableName}' is not numeric (type: ${colType || "unknown"}). This operation requires a numeric column.`,
       "INVALID_INPUT",
       {
-        suggestion: "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for statistical analysis.",
+        suggestion:
+          "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for statistical analysis.",
         details: {
           resourceType: "column",
           resourceName: columnName,
-          tableName: tableName
-        }
-      }
+          tableName: tableName,
+        },
+      },
     );
   }
 }
@@ -89,4 +86,3 @@ export async function validateNumericColumn(
 // =============================================================================
 // Input Schemas
 // =============================================================================
-

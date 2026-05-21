@@ -22,7 +22,10 @@ function tempDir(): string {
 }
 
 /** Create a default test config */
-function makeConfig(dir: string, overrides: Partial<AuditConfig> = {}): AuditConfig {
+function makeConfig(
+  dir: string,
+  overrides: Partial<AuditConfig> = {},
+): AuditConfig {
   return {
     enabled: true,
     logPath: join(dir, "audit.jsonl"),
@@ -187,12 +190,9 @@ describe("AuditInterceptor", () => {
     const logger = new AuditLogger(config);
     const interceptor = createAuditInterceptor(logger);
 
-    await interceptor.around(
-      "vacuum",
-      {},
-      "req-1",
-      async () => ({ success: true }),
-    );
+    await interceptor.around("vacuum", {}, "req-1", async () => ({
+      success: true,
+    }));
 
     await logger.close();
 

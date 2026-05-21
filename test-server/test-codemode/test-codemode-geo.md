@@ -27,9 +27,9 @@
 
 ## Test Database Schema
 
-| Table          | Rows | Key Columns                                       |
-| -------------- | ---- | ------------------------------------------------- |
-| test_locations | 15   | id, name, city, latitude, longitude, type         |
+| Table          | Rows | Key Columns                               |
+| -------------- | ---- | ----------------------------------------- |
+| test_locations | 15   | id, name, city, latitude, longitude, type |
 
 **Key coordinates:**
 
@@ -131,23 +131,37 @@ Geo tools have coordinate params with `.min(-90).max(90)` / `.min(-180).max(180)
 const failures = [];
 // NYC to major cities
 const pairs = [
-  {name: "Paris", lat: 48.8584, lon: 2.2945},
-  {name: "London", lat: 51.5007, lon: -0.1246},
-  {name: "Tokyo", lat: 35.6586, lon: 139.7454},
+  { name: "Paris", lat: 48.8584, lon: 2.2945 },
+  { name: "London", lat: 51.5007, lon: -0.1246 },
+  { name: "Tokyo", lat: 35.6586, lon: 139.7454 },
 ];
 const distances = {};
 for (const p of pairs) {
-  const d = await sqlite.geo.distance({lat1: 40.7829, lon1: -73.9654, lat2: p.lat, lon2: p.lon});
+  const d = await sqlite.geo.distance({
+    lat1: 40.7829,
+    lon1: -73.9654,
+    lat2: p.lat,
+    lon2: p.lon,
+  });
   distances[p.name] = d.distance;
 }
 
 // Nearby search
 const nearby = await sqlite.geo.nearby({
-  table: "test_locations", latColumn: "latitude", lonColumn: "longitude",
-  centerLat: 40.758, centerLon: -73.9855, radius: 50
+  table: "test_locations",
+  latColumn: "latitude",
+  lonColumn: "longitude",
+  centerLat: 40.758,
+  centerLon: -73.9855,
+  radius: 50,
 });
 
-return { failures, success: failures.length === 0, distances, nearbyCount: nearby?.rowCount || nearby?.results?.length };
+return {
+  failures,
+  success: failures.length === 0,
+  distances,
+  nearbyCount: nearby?.rowCount || nearby?.results?.length,
+};
 ```
 
 ---
@@ -155,9 +169,9 @@ return { failures, success: failures.length === 0, distances, nearbyCount: nearb
 ## Post-Test Procedures
 
 1. **Cleanup**: Drop `temp_*` spatial tables
-3. **Triage findings**: Create implementation plan if issues found
-4. **Scope of fixes**: Handler code, server-instructions, this prompt
-5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-6. **Commit**: Stage and commit — do NOT push
-7. **Token audit**: Report most expensive block
-8. **Final summary**: After testing/re-testing
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, this prompt
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

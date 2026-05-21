@@ -4,26 +4,26 @@
 
 ## File Inventory
 
-| File | Group | Tools | Notes |
-|------|-------|-------|-------|
-| `test-core-data.md` | core-data | 7 | Identical Native/WASM |
-| `test-core-schema.md` | core-schema | 8 + Code Mode | Identical Native/WASM |
-| `test-json-read.md` | json-read | 18 | Identical Native/WASM |
-| `test-json-write.md` | json-write | 7 | Identical Native/WASM |
-| `test-text-basic.md` | text-basic | 11 + Code Mode | Identical Native/WASM |
-| `test-text-advanced.md` | text-advanced | 9N/4W | FTS5 tools `[NATIVE ONLY]` |
-| `test-stats-basic.md` | stats-basic | 16 + Code Mode | Identical Native/WASM |
-| `test-stats-advanced.md` | stats-advanced | 6N/0W | Window functions `[NATIVE ONLY]` |
-| `test-vector-read.md` | vector-read | 7 + Code Mode | Identical Native/WASM |
-| `test-vector-write.md` | vector-write | 4 | Identical Native/WASM |
-| `test-admin-core.md` | admin-core | 19 + Code Mode | Identical Native/WASM |
-| `test-admin-extensions.md` | admin-extensions | 8 | CSV, series, rtree |
-| `test-transactions.md` | transactions | 8 + Code Mode | `[NATIVE ONLY]` |
-| `test-geo-haversine.md` | geo-haversine | 4 + Code Mode | Identical Native/WASM |
-| `test-geo-spatialite.md` | geo-spatialite | 7N/0W | SpatiaLite `[NATIVE ONLY]` |
-| `test-introspection-schema.md` | introspection-schema | 6 | Identical Native/WASM |
-| `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode | Identical Native/WASM |
-| `test-migration.md` | migration | 6 + Code Mode | Identical Native/WASM |
+| File                                | Group                     | Tools          | Notes                            |
+| ----------------------------------- | ------------------------- | -------------- | -------------------------------- |
+| `test-core-data.md`                 | core-data                 | 7              | Identical Native/WASM            |
+| `test-core-schema.md`               | core-schema               | 8 + Code Mode  | Identical Native/WASM            |
+| `test-json-read.md`                 | json-read                 | 18             | Identical Native/WASM            |
+| `test-json-write.md`                | json-write                | 7              | Identical Native/WASM            |
+| `test-text-basic.md`                | text-basic                | 11 + Code Mode | Identical Native/WASM            |
+| `test-text-advanced.md`             | text-advanced             | 9N/4W          | FTS5 tools `[NATIVE ONLY]`       |
+| `test-stats-basic.md`               | stats-basic               | 16 + Code Mode | Identical Native/WASM            |
+| `test-stats-advanced.md`            | stats-advanced            | 6N/0W          | Window functions `[NATIVE ONLY]` |
+| `test-vector-read.md`               | vector-read               | 7 + Code Mode  | Identical Native/WASM            |
+| `test-vector-write.md`              | vector-write              | 4              | Identical Native/WASM            |
+| `test-admin-core.md`                | admin-core                | 19 + Code Mode | Identical Native/WASM            |
+| `test-admin-extensions.md`          | admin-extensions          | 8              | CSV, series, rtree               |
+| `test-transactions.md`              | transactions              | 8 + Code Mode  | `[NATIVE ONLY]`                  |
+| `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode  | Identical Native/WASM            |
+| `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W          | SpatiaLite `[NATIVE ONLY]`       |
+| `test-introspection-schema.md`      | introspection-schema      | 6              | Identical Native/WASM            |
+| `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode  | Identical Native/WASM            |
+| `test-migration.md`                 | migration                 | 6 + Code Mode  | Identical Native/WASM            |
 
 **Total**: 151 Native / 125 WASM tools across 10 groups + Code Mode.
 
@@ -66,22 +66,22 @@ When testing against a **WASM backend** (`sqlite-wasm` server entry, sql.js adap
 
 Several admin tools are **registered in WASM mode but return structured errors**. Test these as **negative validation**:
 
-| Tool | Expected WASM Behavior |
-|------|----------------------|
-| `sqlite_backup` | `{success: false, error: "...WASM mode"}` |
-| `sqlite_restore` | `{success: false, error: "...WASM mode"}` |
-| `sqlite_verify_backup` | `{success: false, error: "...WASM mode"}` |
-| `sqlite_create_csv_table` | `{success: false}` — CSV extension unavailable |
+| Tool                        | Expected WASM Behavior                         |
+| --------------------------- | ---------------------------------------------- |
+| `sqlite_backup`             | `{success: false, error: "...WASM mode"}`      |
+| `sqlite_restore`            | `{success: false, error: "...WASM mode"}`      |
+| `sqlite_verify_backup`      | `{success: false, error: "...WASM mode"}`      |
+| `sqlite_create_csv_table`   | `{success: false}` — CSV extension unavailable |
 | `sqlite_analyze_csv_schema` | `{success: false}` — CSV extension unavailable |
 | `sqlite_create_rtree_table` | `{success: false}` — R-Tree module unavailable |
 
 #### Adjusted Expectations
 
-| Item | Native Behavior | WASM Behavior |
-|------|----------------|---------------|
-| `sqlite_dbstat({summarize: true})` | Per-table storage breakdown | Counts-only (JS fallback) |
-| `sqlite_pragma_compile_options({filter: "FTS"})` | Matches FTS5 | Matches FTS3 |
-| `test_articles_fts` in `sqlite_list_virtual_tables` | Present and queryable | May appear but FTS5 queries fail |
+| Item                                                | Native Behavior             | WASM Behavior                    |
+| --------------------------------------------------- | --------------------------- | -------------------------------- |
+| `sqlite_dbstat({summarize: true})`                  | Per-table storage breakdown | Counts-only (JS fallback)        |
+| `sqlite_pragma_compile_options({filter: "FTS"})`    | Matches FTS5                | Matches FTS3                     |
+| `test_articles_fts` in `sqlite_list_virtual_tables` | Present and queryable       | May appear but FTS5 queries fail |
 
 ### 3. Tracking Metrics & Progress
 

@@ -1,4 +1,7 @@
-import { JsonSecurityScanOutputSchema, JsonSecurityScanSchema } from "../../schemas/json.js";
+import {
+  JsonSecurityScanOutputSchema,
+  JsonSecurityScanSchema,
+} from "../../schemas/json.js";
 /**
  * JSON Security Scan Tool
  *
@@ -58,8 +61,7 @@ const XSS_PATTERN =
 /**
  * Command injection patterns — matches common shell/template injection vectors.
  */
-const CMD_INJECTION_PATTERN =
-  /\$\{.*?\}/;
+const CMD_INJECTION_PATTERN = /\$\{.*?\}/;
 
 // ---------------------------------------------------------------------------
 // Tool factory
@@ -112,7 +114,10 @@ export function createJsonSecurityScanTool(
         const rows = result.rows ?? [];
 
         // Accumulate issues per (type, key) pair
-        const issueMap = new Map<string, { type: string; key: string; count: number }>();
+        const issueMap = new Map<
+          string,
+          { type: string; key: string; count: number }
+        >();
 
         for (let i = 0; i < rows.length; i++) {
           // Yield to event loop every 500 rows for large scans
@@ -222,11 +227,7 @@ export function createJsonSecurityScanTool(
           success: true,
           scannedRows: rows.length,
           riskLevel:
-            issues.length === 0
-              ? "low"
-              : issues.length < 3
-                ? "medium"
-                : "high",
+            issues.length === 0 ? "low" : issues.length < 3 ? "medium" : "high",
         };
         if (issues.length > 0) response.issues = issues;
 

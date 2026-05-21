@@ -29,10 +29,10 @@ State persists across calls. Do NOT pass `readonly: true`.
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price, category                                     |
-| test_orders       | 20   | id, product_id (FK), total_price, status                      |
+| Table         | Rows | Key Columns                              |
+| ------------- | ---- | ---------------------------------------- |
+| test_products | 16   | id, name, price, category                |
+| test_orders   | 20   | id, product_id (FK), total_price, status |
 
 ## Naming & Cleanup
 

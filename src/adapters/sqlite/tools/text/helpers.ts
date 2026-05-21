@@ -4,7 +4,6 @@
  * Shared schemas and validation functions for text tools.
  */
 
-
 /**
  * Valid enum values for handler-side validation.
  * These are validated inside the handler's try/catch to produce structured
@@ -40,4 +39,3 @@ export {
  * Coerce string-typed numbers to actual numbers.
  * Returns undefined for non-numeric strings so the schema default kicks in.
  */
-

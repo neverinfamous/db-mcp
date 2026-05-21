@@ -59,10 +59,10 @@
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | Source                                                             | What you see                                                      | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields           | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field      | Bug — report as ❌ |
+| Type                 | Source                                                             | What you see                                                | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields     | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field | Bug — report as ❌ |
 
 ### Zod Validation Errors
 
@@ -183,6 +183,7 @@ Verify parameter visibility and alias acceptance.
 ### Migration state is dirty
 
 If previous migration test left the database in a bad state:
+
 1. Run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to regenerate the test database from `test-database.sql`
 2. This drops and recreates all tables, including removing `_mcp_migrations`
 

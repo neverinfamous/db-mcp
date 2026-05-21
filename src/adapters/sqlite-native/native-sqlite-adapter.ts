@@ -142,13 +142,19 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         return versionResult?.["sqlite_version()"] ?? "0.0.0";
       }, log);
 
-      if (sqliteConfig.initializationSql && Array.isArray(sqliteConfig.initializationSql)) {
+      if (
+        sqliteConfig.initializationSql &&
+        Array.isArray(sqliteConfig.initializationSql)
+      ) {
         for (const sql of sqliteConfig.initializationSql) {
           db.exec(sql);
         }
-        log.info(`Executed ${sqliteConfig.initializationSql.length} initialization SQL statements`, {
-          code: "SQLITE_INIT_SQL",
-        });
+        log.info(
+          `Executed ${sqliteConfig.initializationSql.length} initialization SQL statements`,
+          {
+            code: "SQLITE_INIT_SQL",
+          },
+        );
       }
 
       // Initialize SchemaManager with this adapter as the executor

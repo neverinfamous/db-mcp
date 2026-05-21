@@ -369,7 +369,9 @@ describe("Statistics Tools", () => {
   describe("sqlite_stats_detect_anomalies", () => {
     it("should detect anomalies in numeric columns", async () => {
       // First, insert an outlier
-      await adapter.executeWriteQuery(`INSERT INTO sales (id, product, category, price, quantity, date) VALUES (11, 'Golden Apple', 'Fruit', 100.0, 10, '2024-01-11')`);
+      await adapter.executeWriteQuery(
+        `INSERT INTO sales (id, product, category, price, quantity, date) VALUES (11, 'Golden Apple', 'Fruit', 100.0, 10, '2024-01-11')`,
+      );
       const result = (await tools.get("sqlite_stats_detect_anomalies")?.({
         table: "sales",
         threshold: 1.0,
@@ -429,7 +431,9 @@ describe("Statistics Tools", () => {
   describe("sqlite_stats_detect_schema_risks", () => {
     it("should analyze schema risks successfully", async () => {
       // Create a table missing a primary key and with many columns to trigger some risk
-      await adapter.executeWriteQuery(`CREATE TABLE risk_test (col1 TEXT, col2 INTEGER)`);
+      await adapter.executeWriteQuery(
+        `CREATE TABLE risk_test (col1 TEXT, col2 INTEGER)`,
+      );
       // Insert some rows to ensure it might show up in risks if rowCount > threshold, but we're including zero risk
       const result = (await tools.get("sqlite_stats_detect_schema_risks")?.({
         limit: 10,
@@ -442,7 +446,9 @@ describe("Statistics Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.tables.length).toBeGreaterThan(0);
-      const riskTestTable = result.tables.find((t: any) => t.name === "risk_test");
+      const riskTestTable = result.tables.find(
+        (t: any) => t.name === "risk_test",
+      );
       expect(riskTestTable).toBeDefined();
       expect((riskTestTable as any)?.hasPrimaryKey).toBe(false);
     });

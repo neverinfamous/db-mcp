@@ -375,7 +375,6 @@ export const StatsDetectSchemaRisksOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
@@ -536,7 +535,6 @@ export const HypothesisSchema = z.object({
   whereClause: z.string().optional(),
 });
 
-
 // =============================================================================
 // Types
 // =============================================================================
@@ -554,7 +552,6 @@ export type FrequencyInput = z.infer<typeof FrequencySchema>;
 export type OutlierInput = z.infer<typeof OutlierSchema>;
 export type RegressionInput = z.infer<typeof RegressionSchema>;
 export type HypothesisInput = z.infer<typeof HypothesisSchema>;
-
 
 // // const coerceNumber = (val: unknown): unknown =>
 //   typeof val === "string"
@@ -588,7 +585,10 @@ export type DetectSchemaRisksInput = z.infer<typeof DetectSchemaRisksSchema>;
 
 export const DetectAnomaliesSchema = z.object({
   table: z.string().describe("Table name to analyze"),
-  column: z.string().optional().describe("Single numeric column to analyze (alternative to columns)"),
+  column: z
+    .string()
+    .optional()
+    .describe("Single numeric column to analyze (alternative to columns)"),
   columns: z
     .array(z.string())
     .optional()

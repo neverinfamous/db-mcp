@@ -24,9 +24,9 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ## Test Database Schema
 
-| Table           | Rows | Key Columns                                                     |
-| --------------- | ---- | --------------------------------------------------------------- |
-| test_embeddings | 20   | id, content, category, embedding (8-dim JSON float array)       |
+| Table           | Rows | Key Columns                                               |
+| --------------- | ---- | --------------------------------------------------------- |
+| test_embeddings | 20   | id, content, category, embedding (8-dim JSON float array) |
 
 **Categories**: database, fitness, food, tech, travel (each ~4 rows)
 **Row 1**: content="Machine learning fundamentals", embedding=[0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01]

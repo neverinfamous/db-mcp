@@ -8,6 +8,7 @@
 ## WASM Mode
 
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js), apply these adjustments:
+>
 > - **Items 3-4** (`sqlite_create_csv_table`, `sqlite_analyze_csv_schema`) — return `{success: false}` in WASM (CSV extension unavailable). Treat as **negative validation**.
 > - **Item 5** (`sqlite_create_rtree_table`) — returns `{success: false}` in WASM (R-Tree unavailable). Treat as **negative validation**.
 > - **Item 1** (`sqlite_list_virtual_tables`) — `test_articles_fts` may appear but is not queryable.
@@ -57,10 +58,10 @@
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | Source                                                             | What you see                                                      | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields           | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field      | Bug — report as ❌ |
+| Type                 | Source                                                             | What you see                                                | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields     | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field | Bug — report as ❌ |
 
 ### Zod Validation Errors
 

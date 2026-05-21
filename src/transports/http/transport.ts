@@ -38,7 +38,11 @@ import {
   setupStatefulEndpoints,
   setupLegacySSEEndpoints,
 } from "./session.js";
-import { applyAuthMiddleware, setupOAuth, applyScopeEnforcementMiddleware } from "./oauth.js";
+import {
+  applyAuthMiddleware,
+  setupOAuth,
+  applyScopeEnforcementMiddleware,
+} from "./oauth.js";
 import type { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { runWithAuthContext } from "../../auth/auth-context.js";
 import type { AuthenticatedContext } from "../../auth/middleware/index.js";

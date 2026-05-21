@@ -299,10 +299,10 @@ export function createSpatialIndexTool(
         // Helper: check if spatial index exists for this table/column
         const indexExists = async (): Promise<boolean> => {
           const idxCheck = await adapter.executeReadQuery(
-            `SELECT spatial_index_enabled FROM geometry_columns WHERE f_table_name = '${input.tableName}' AND f_geometry_column = '${input.geometryColumn}'`
+            `SELECT spatial_index_enabled FROM geometry_columns WHERE f_table_name = '${input.tableName}' AND f_geometry_column = '${input.geometryColumn}'`,
           );
-          const val = idxCheck.rows?.[0]?.['spatial_index_enabled'];
-          return val === 1 || val === '1';
+          const val = idxCheck.rows?.[0]?.["spatial_index_enabled"];
+          return val === 1 || val === "1";
         };
 
         switch (input.action) {
@@ -319,7 +319,7 @@ export function createSpatialIndexTool(
             const createRes = await adapter.executeReadQuery(
               `SELECT CreateSpatialIndex('${input.tableName}', '${input.geometryColumn}') as res`,
             );
-            if (createRes.rows?.[0]?.['res'] === 0) {
+            if (createRes.rows?.[0]?.["res"] === 0) {
               return {
                 success: false,
                 error: `Failed to create spatial index on ${input.tableName}.${input.geometryColumn}`,
@@ -348,7 +348,7 @@ export function createSpatialIndexTool(
             const dropRes = await adapter.executeReadQuery(
               `SELECT DisableSpatialIndex('${input.tableName}', '${input.geometryColumn}') as res`,
             );
-            if (dropRes.rows?.[0]?.['res'] === 0) {
+            if (dropRes.rows?.[0]?.["res"] === 0) {
               return {
                 success: false,
                 error: `Failed to drop spatial index on ${input.tableName}.${input.geometryColumn}`,

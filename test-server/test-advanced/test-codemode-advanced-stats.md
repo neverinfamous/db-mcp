@@ -28,11 +28,11 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price (REAL), category (3 values)                   |
-| test_orders       | 20   | id, product_id, total_price, order_date, status               |
-| test_measurements | 200  | id, sensor_id (1-5), temperature, humidity, pressure          |
+| Table             | Rows | Key Columns                                          |
+| ----------------- | ---- | ---------------------------------------------------- |
+| test_products     | 16   | id, name, price (REAL), category (3 values)          |
+| test_orders       | 20   | id, product_id, total_price, order_date, status      |
+| test_measurements | 200  | id, sensor_id (1-5), temperature, humidity, pressure |
 
 ## Naming & Cleanup
 
@@ -44,13 +44,13 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ### Error Message Quality Rating
 
-| Level | Verdict |
-| --- | --- |
-| 5 - Excellent (name + code + context) | ✅ |
-| 4 - Good (name) | ✅ |
-| 3 - Adequate (raw SQLite, informative) | ⚠️ |
-| 2 - Poor (no object name) | ⚠️ |
-| 1 - Useless (generic) | ❌ |
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
 ## Structured Error Response Pattern
 

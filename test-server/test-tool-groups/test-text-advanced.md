@@ -8,6 +8,7 @@
 ## WASM Mode
 
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js), apply these adjustments:
+>
 > - **Skip FTS5 tools** (items 5-9: `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`, `sqlite_fts_headline`) — `[NATIVE ONLY]`. These tools are not registered in WASM and direct calls will fail with "unknown tool".
 > - **Skip FTS5 checklist items** 6-11 — all require FTS5 tools.
 > - **Skip error items** for FTS5 (item 14).

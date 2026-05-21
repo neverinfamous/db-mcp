@@ -24,48 +24,65 @@ vi.mock("node:worker_threads", async (importOriginal) => {
       constructor(script: string, options: any) {
         super();
         setTimeout(() => {
-           const code = options.workerData.code;
-           const port = options.workerData.rpcPort;
-           
-           if (code.includes("42")) {
-             this.emit("message", { success: true, result: 42 });
-           } else if (code.includes("topLevelRpc")) {
-             port.postMessage({ id: 1, group: "core", method: "testRpc", args: [21] });
-             
-             let responses = 0;
-             let a = 0;
-             let b = 0;
-             
-             port.on("message", (msg: any) => {
-                if (msg.id === 1) {
-                  a = msg.result;
-                  responses++;
-                  port.postMessage({ id: 2, group: "_topLevel", method: "topLevelRpc", args: [1] });
-                } else if (msg.id === 2) {
-                  b = msg.result;
-                  responses++;
-                }
-                
-                if (responses === 2) {
-                  this.emit("message", { success: true, result: a + b });
-                }
-             });
-           } else if (code.includes("setTimeout")) {
-             // Do nothing to trigger timeout
-           } else if (code.includes("core.throwError()")) {
-             port.postMessage({ id: 1, group: "core", method: "throwError", args: [] });
-             port.on("message", (msg: any) => {
-               if (msg.error) {
-                 this.emit("message", { success: false, error: msg.error });
-               }
-             });
-           } else if (code.includes("Worker Error")) {
-             this.emit("error", new Error("Worker Error"));
-           }
+          const code = options.workerData.code;
+          const port = options.workerData.rpcPort;
+
+          if (code.includes("42")) {
+            this.emit("message", { success: true, result: 42 });
+          } else if (code.includes("topLevelRpc")) {
+            port.postMessage({
+              id: 1,
+              group: "core",
+              method: "testRpc",
+              args: [21],
+            });
+
+            let responses = 0;
+            let a = 0;
+            let b = 0;
+
+            port.on("message", (msg: any) => {
+              if (msg.id === 1) {
+                a = msg.result;
+                responses++;
+                port.postMessage({
+                  id: 2,
+                  group: "_topLevel",
+                  method: "topLevelRpc",
+                  args: [1],
+                });
+              } else if (msg.id === 2) {
+                b = msg.result;
+                responses++;
+              }
+
+              if (responses === 2) {
+                this.emit("message", { success: true, result: a + b });
+              }
+            });
+          } else if (code.includes("setTimeout")) {
+            // Do nothing to trigger timeout
+          } else if (code.includes("core.throwError()")) {
+            port.postMessage({
+              id: 1,
+              group: "core",
+              method: "throwError",
+              args: [],
+            });
+            port.on("message", (msg: any) => {
+              if (msg.error) {
+                this.emit("message", { success: false, error: msg.error });
+              }
+            });
+          } else if (code.includes("Worker Error")) {
+            this.emit("error", new Error("Worker Error"));
+          }
         }, 5);
       }
-      terminate() { return Promise.resolve(); }
-    }
+      terminate() {
+        return Promise.resolve();
+      }
+    },
   };
 });
 
@@ -195,7 +212,10 @@ describe("WorkerSandbox", () => {
         },
         topLevelRpc: async (x: number) => x + 1,
       };
-      const result = await sandbox.execute("const a = await core.testRpc(21); const b = await topLevelRpc(1); return a + b;", bindings);
+      const result = await sandbox.execute(
+        "const a = await core.testRpc(21); const b = await topLevelRpc(1); return a + b;",
+        bindings,
+      );
       expect(result.success).toBe(true);
       expect(result.result).toBe(44);
       sandbox.dispose();
@@ -204,7 +224,10 @@ describe("WorkerSandbox", () => {
     it("should handle execution timeout", async () => {
       const sandbox = WorkerSandbox.create({ timeoutMs: 100 });
       // Long wait
-      const result = await sandbox.execute("await new Promise(r => setTimeout(r, 1000)); return 1;", {});
+      const result = await sandbox.execute(
+        "await new Promise(r => setTimeout(r, 1000)); return 1;",
+        {},
+      );
       expect(result.success).toBe(false);
       expect(result.error).toContain("timed out");
       sandbox.dispose();
@@ -214,10 +237,15 @@ describe("WorkerSandbox", () => {
       const sandbox = WorkerSandbox.create();
       const bindings = {
         core: {
-          throwError: async () => { throw new Error("RPC Failure"); }
-        }
+          throwError: async () => {
+            throw new Error("RPC Failure");
+          },
+        },
       };
-      const result = await sandbox.execute("await core.throwError();", bindings);
+      const result = await sandbox.execute(
+        "await core.throwError();",
+        bindings,
+      );
       expect(result.success).toBe(false);
       expect(result.error).toContain("RPC Failure");
       sandbox.dispose();
@@ -229,7 +257,10 @@ describe("WorkerSandbox", () => {
       // We have to bypass the sandbox serialization check for this test or just call a method on an object that exists but has no function mapped
       // Actually, if we just call it in the sandbox it will fail early.
       // But let's just make the execution throw a normal error to test worker exit/error
-      const result = await sandbox.execute("throw new Error('Worker Error');", {});
+      const result = await sandbox.execute(
+        "throw new Error('Worker Error');",
+        {},
+      );
       expect(result.success).toBe(false);
       expect(result.error).toContain("Worker Error");
       sandbox.dispose();

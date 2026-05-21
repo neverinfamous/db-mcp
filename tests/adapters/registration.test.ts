@@ -185,7 +185,10 @@ describe("registerToolImpl", () => {
 
     expect(result.structuredContent).toEqual(mockResult);
     // content[0].text includes _meta.tokenEstimate injected by registration layer
-    const parsed = JSON.parse(result.content[0].text) as Record<string, unknown>;
+    const parsed = JSON.parse(result.content[0].text) as Record<
+      string,
+      unknown
+    >;
     expect(parsed).toMatchObject(mockResult);
     expect(parsed._meta).toEqual({ tokenEstimate: expect.any(Number) });
   });
@@ -205,7 +208,10 @@ describe("registerToolImpl", () => {
 
     expect(result.structuredContent).toBeUndefined();
     // content[0].text includes _meta.tokenEstimate injected by registration layer
-    const parsed = JSON.parse(result.content[0].text) as Record<string, unknown>;
+    const parsed = JSON.parse(result.content[0].text) as Record<
+      string,
+      unknown
+    >;
     expect(parsed).toMatchObject({ tables: ["a"] });
     expect(parsed._meta).toEqual({ tokenEstimate: expect.any(Number) });
   });

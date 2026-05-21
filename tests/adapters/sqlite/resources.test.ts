@@ -155,15 +155,19 @@ describe("SQLite Resources", () => {
 
     it("should handle error when describeTable throws", async () => {
       const resources = adapter.getResourceDefinitions();
-      const tableSchemaResource = resources.find((r) => r.name === "sqlite_table_schema");
-      
-      vi.spyOn(adapter, "describeTable").mockRejectedValueOnce(new Error("Table not found"));
-      
+      const tableSchemaResource = resources.find(
+        (r) => r.name === "sqlite_table_schema",
+      );
+
+      vi.spyOn(adapter, "describeTable").mockRejectedValueOnce(
+        new Error("Table not found"),
+      );
+
       const result = (await tableSchemaResource!.handler(
         "sqlite://table/missing/schema",
         ctx,
       )) as { contents: { text: string }[] };
-      
+
       const response = JSON.parse(result.contents[0].text);
       expect(response.success).toBe(false);
       expect(response.error).toBe("Table not found");
@@ -245,13 +249,15 @@ describe("SQLite Resources", () => {
     it("should handle errors when querying pragmas", async () => {
       const resources = adapter.getResourceDefinitions();
       const metaResource = resources.find((r) => r.name === "sqlite_meta");
-      
-      vi.spyOn(adapter, "executeReadQuery").mockRejectedValueOnce(new Error("Query failed"));
-      
+
+      vi.spyOn(adapter, "executeReadQuery").mockRejectedValueOnce(
+        new Error("Query failed"),
+      );
+
       const result = (await metaResource!.handler("sqlite://meta", ctx)) as {
         contents: { text: string }[];
       };
-      
+
       const meta = JSON.parse(result.contents[0].text);
       expect(meta.database_list).toBeNull();
     });
@@ -278,13 +284,18 @@ describe("SQLite Resources", () => {
   describe("sqlite_compile_options resource", () => {
     it("should return compile options with highlights", async () => {
       const resources = adapter.getResourceDefinitions();
-      const compileOptionsResource = resources.find((r) => r.name === "sqlite_compile_options");
+      const compileOptionsResource = resources.find(
+        (r) => r.name === "sqlite_compile_options",
+      );
       expect(compileOptionsResource).toBeDefined();
 
-      const result = (await compileOptionsResource!.handler("sqlite://compile_options", ctx)) as {
+      const result = (await compileOptionsResource!.handler(
+        "sqlite://compile_options",
+        ctx,
+      )) as {
         contents: { text: string }[];
       };
-      
+
       const data = JSON.parse(result.contents[0].text);
       expect(data.options).toBeDefined();
       expect(data.count).toBeDefined();
@@ -298,25 +309,33 @@ describe("SQLite Resources", () => {
       const pragmaResource = resources.find((r) => r.name === "sqlite_pragma");
       expect(pragmaResource).toBeDefined();
 
-      const result = (await pragmaResource!.handler("sqlite://pragma", ctx)) as {
+      const result = (await pragmaResource!.handler(
+        "sqlite://pragma",
+        ctx,
+      )) as {
         contents: { text: string }[];
       };
-      
+
       const data = JSON.parse(result.contents[0].text);
       expect(data.settings).toBeDefined();
       expect(data.settingsCount).toBeGreaterThan(0);
     });
-    
+
     it("should handle pragma query failures", async () => {
       const resources = adapter.getResourceDefinitions();
       const pragmaResource = resources.find((r) => r.name === "sqlite_pragma");
-      
-      vi.spyOn(adapter, "executeReadQuery").mockRejectedValueOnce(new Error("Pragma failed"));
-      
-      const result = (await pragmaResource!.handler("sqlite://pragma", ctx)) as {
+
+      vi.spyOn(adapter, "executeReadQuery").mockRejectedValueOnce(
+        new Error("Pragma failed"),
+      );
+
+      const result = (await pragmaResource!.handler(
+        "sqlite://pragma",
+        ctx,
+      )) as {
         contents: { text: string }[];
       };
-      
+
       const data = JSON.parse(result.contents[0].text);
       expect(data.settings.page_size.value).toBeNull(); // Falls back to null on error
     });

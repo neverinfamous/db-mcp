@@ -11,13 +11,14 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { MigrationRisksOutputSchema, MigrationRisksSchema } from "../../../schemas/introspection.js";
+import {
+  MigrationRisksOutputSchema,
+  MigrationRisksSchema,
+} from "../../../schemas/introspection.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-
 
 // =============================================================================
 // Tool Creator
@@ -47,7 +48,7 @@ export function createMigrationRisksTool(
             recoverable: false,
           };
         }
-        
+
         interface Risk {
           statement: string;
           statementIndex: number;

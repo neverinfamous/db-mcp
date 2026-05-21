@@ -18,8 +18,8 @@ const mockContext = {
   scopes: ["read", "write", "admin"],
   progressToken: "123",
   mcpServer: {
-    sendProgress: vi.fn()
-  }
+    sendProgress: vi.fn(),
+  },
 } as unknown as RequestContext;
 
 describe("Analysis Tools", () => {
@@ -27,29 +27,36 @@ describe("Analysis Tools", () => {
     it("should fallback to PRAGMA page_count and estimated rows when dbstat fails", async () => {
       const adapter = createMockAdapter();
       // Throw on the first dbstat query, but succeed on fallback queries
-      vi.mocked(adapter.executeReadQuery).mockImplementation(async (sql: string) => {
-        if (sql.includes("dbstat")) {
-          throw new Error("dbstat not available");
-        }
-        if (sql.includes("PRAGMA page_count")) {
-          return { rows: [{ page_count: 5 }] };
-        }
-        if (sql.includes("sqlite_master WHERE type='table' AND name='my_table'")) {
-          return { rows: [{ name: "my_table" }] };
-        }
-        if (sql.includes("COUNT(*) as count")) {
-          return { rows: [{ count: 1050 }] };
-        }
-        if (sql.includes("NOT LIKE 'sqlite_%'")) {
-          return { rows: [{ cnt: 3 }] };
-        }
-        return { rows: [] };
-      });
+      vi.mocked(adapter.executeReadQuery).mockImplementation(
+        async (sql: string) => {
+          if (sql.includes("dbstat")) {
+            throw new Error("dbstat not available");
+          }
+          if (sql.includes("PRAGMA page_count")) {
+            return { rows: [{ page_count: 5 }] };
+          }
+          if (
+            sql.includes("sqlite_master WHERE type='table' AND name='my_table'")
+          ) {
+            return { rows: [{ name: "my_table" }] };
+          }
+          if (sql.includes("COUNT(*) as count")) {
+            return { rows: [{ count: 1050 }] };
+          }
+          if (sql.includes("NOT LIKE 'sqlite_%'")) {
+            return { rows: [{ cnt: 3 }] };
+          }
+          return { rows: [] };
+        },
+      );
 
       const tool = createDbStatTool(adapter);
-      
+
       // Test fallback for specific table
-      const resultTable = await tool.handler({ table: "my_table", limit: 10 }, mockContext) as any;
+      const resultTable = (await tool.handler(
+        { table: "my_table", limit: 10 },
+        mockContext,
+      )) as any;
       expect(resultTable.success).toBe(true);
       expect(resultTable.table).toBe("my_table");
       expect(resultTable.rowCount).toBe(1050);
@@ -57,12 +64,18 @@ describe("Analysis Tools", () => {
       expect(resultTable.totalDatabasePages).toBe(5);
 
       // Test fallback for missing table
-      const resultMissing = await tool.handler({ table: "missing", limit: 10 }, mockContext) as any;
+      const resultMissing = (await tool.handler(
+        { table: "missing", limit: 10 },
+        mockContext,
+      )) as any;
       expect(resultMissing.success).toBe(false);
       expect(resultMissing.message).toContain("not found");
 
       // Test fallback without specific table
-      const resultGeneral = await tool.handler({ limit: 10 }, mockContext) as any;
+      const resultGeneral = (await tool.handler(
+        { limit: 10 },
+        mockContext,
+      )) as any;
       expect(resultGeneral.success).toBe(true);
       expect(resultGeneral.pageCount).toBe(5);
       expect(resultGeneral.tableCount).toBe(3);
@@ -73,8 +86,8 @@ describe("Analysis Tools", () => {
     it("should execute vacuum successfully", async () => {
       const adapter = createMockAdapter();
       const tool = createVacuumTool(adapter);
-      
-      const result = await tool.handler({}, mockContext) as any;
+
+      const result = (await tool.handler({}, mockContext)) as any;
       expect(result.success).toBe(true);
       expect(result.durationMs).toBeDefined();
     });
@@ -82,28 +95,38 @@ describe("Analysis Tools", () => {
     it("should execute vacuum into successfully", async () => {
       const adapter = createMockAdapter();
       const tool = createVacuumTool(adapter);
-      
-      const result = await tool.handler({ into: "backup.db" }, mockContext) as any;
+
+      const result = (await tool.handler(
+        { into: "backup.db" },
+        mockContext,
+      )) as any;
       expect(result.success).toBe(true);
-      expect(vi.mocked(adapter.executeQuery)).toHaveBeenCalledWith("VACUUM INTO 'backup.db'");
+      expect(vi.mocked(adapter.executeQuery)).toHaveBeenCalledWith(
+        "VACUUM INTO 'backup.db'",
+      );
     });
 
     it("should fail vacuum into if not native backend", async () => {
       const adapter = createMockAdapter();
       vi.mocked(adapter.isNativeBackend).mockReturnValue(false);
       const tool = createVacuumTool(adapter);
-      
-      const result = await tool.handler({ into: "backup.db" }, mockContext) as any;
+
+      const result = (await tool.handler(
+        { into: "backup.db" },
+        mockContext,
+      )) as any;
       expect(result.success).toBe(false);
       expect(result.error).toContain("VACUUM INTO not available");
     });
 
     it("should handle vacuum errors", async () => {
       const adapter = createMockAdapter();
-      vi.mocked(adapter.executeQuery).mockRejectedValue(new Error("Vacuum failed"));
+      vi.mocked(adapter.executeQuery).mockRejectedValue(
+        new Error("Vacuum failed"),
+      );
       const tool = createVacuumTool(adapter);
-      
-      const result = await tool.handler({}, mockContext) as any;
+
+      const result = (await tool.handler({}, mockContext)) as any;
       expect(result.success).toBe(false);
       expect(result.error).toContain("Vacuum failed");
     });

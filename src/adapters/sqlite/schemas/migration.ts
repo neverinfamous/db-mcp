@@ -100,7 +100,6 @@ export const MigrationStatusOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
@@ -115,8 +114,14 @@ export const MigrationRecordSchema = z.object({
     .string()
     .optional()
     .describe("Human-readable description of the migration"),
-  migrationSql: z.string().optional().describe("The DDL/SQL statements applied"),
-  sql: z.string().optional().describe("The DDL/SQL statements applied (alias for migrationSql)"),
+  migrationSql: z
+    .string()
+    .optional()
+    .describe("The DDL/SQL statements applied"),
+  sql: z
+    .string()
+    .optional()
+    .describe("The DDL/SQL statements applied (alias for migrationSql)"),
   rollbackSql: z.string().optional().describe("SQL to reverse this migration"),
   sourceSystem: z
     .string()
@@ -128,22 +133,24 @@ export const MigrationRecordSchema = z.object({
     .describe("Who/what applied this migration (e.g., agent name, user)"),
 });
 
-export const MigrationRecordValidationSchema = MigrationRecordSchema.superRefine((data, ctx) => {
-  if (!/^[a-zA-Z0-9_.-]+$/.test(data.version)) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["version"],
-      message: "Version must contain only alphanumeric characters, dots, dashes, or underscores",
-    });
-  }
-  if (!data.migrationSql && !data.sql) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["sql"],
-      message: "Either sql or migrationSql must be provided",
-    });
-  }
-});
+export const MigrationRecordValidationSchema =
+  MigrationRecordSchema.superRefine((data, ctx) => {
+    if (!/^[a-zA-Z0-9_.-]+$/.test(data.version)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["version"],
+        message:
+          "Version must contain only alphanumeric characters, dots, dashes, or underscores",
+      });
+    }
+    if (!data.migrationSql && !data.sql) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sql"],
+        message: "Either sql or migrationSql must be provided",
+      });
+    }
+  });
 
 export const MigrationApplySchema = MigrationRecordSchema;
 
@@ -166,22 +173,24 @@ export const MigrationRollbackSchema = z.object({
     ),
 });
 
-export const MigrationRollbackValidationSchema = MigrationRollbackSchema.superRefine((data, ctx) => {
-  if (data.id === undefined && data.version === undefined) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["version"],
-      message: "Either id or version must be provided",
-    });
-  }
-  if (data.version !== undefined && !/^[a-zA-Z0-9_.-]+$/.test(data.version)) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["version"],
-      message: "Version must contain only alphanumeric characters, dots, dashes, or underscores",
-    });
-  }
-});
+export const MigrationRollbackValidationSchema =
+  MigrationRollbackSchema.superRefine((data, ctx) => {
+    if (data.id === undefined && data.version === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["version"],
+        message: "Either id or version must be provided",
+      });
+    }
+    if (data.version !== undefined && !/^[a-zA-Z0-9_.-]+$/.test(data.version)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["version"],
+        message:
+          "Version must contain only alphanumeric characters, dots, dashes, or underscores",
+      });
+    }
+  });
 
 export const MigrationHistorySchema = z
   .object({
@@ -209,17 +218,22 @@ export const MigrationHistorySchema = z
 
 export const MigrationStatusSchema = z.object({}).default({});
 
-
 // =============================================================================
 // Types
 // =============================================================================
 
 export type MigrationInitInput = z.infer<typeof MigrationInitSchema>;
 export type MigrationRecordInput = z.infer<typeof MigrationRecordSchema>;
-export type MigrationRecordValidationInput = z.infer<typeof MigrationRecordValidationSchema>;
+export type MigrationRecordValidationInput = z.infer<
+  typeof MigrationRecordValidationSchema
+>;
 export type MigrationApplyInput = z.infer<typeof MigrationApplySchema>;
-export type MigrationApplyValidationInput = z.infer<typeof MigrationApplyValidationSchema>;
+export type MigrationApplyValidationInput = z.infer<
+  typeof MigrationApplyValidationSchema
+>;
 export type MigrationRollbackInput = z.infer<typeof MigrationRollbackSchema>;
-export type MigrationRollbackValidationInput = z.infer<typeof MigrationRollbackValidationSchema>;
+export type MigrationRollbackValidationInput = z.infer<
+  typeof MigrationRollbackValidationSchema
+>;
 export type MigrationHistoryInput = z.infer<typeof MigrationHistorySchema>;
 export type MigrationStatusInput = z.infer<typeof MigrationStatusSchema>;

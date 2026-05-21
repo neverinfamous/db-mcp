@@ -27,10 +27,18 @@ export async function createClient(baseURL: string): Promise<Client> {
         { name: "playwright-payload-test", version: "1.0.0" },
         { capabilities: {} },
       );
-      console.log('Connecting...'); await client.connect(transport); console.log('Connected!');
+      console.log("Connecting...");
+      await client.connect(transport);
+      console.log("Connected!");
       return client;
     } catch (error) {
-      require('fs').appendFileSync('test-connect-error.log', String(attempt) + ' : ' + (error instanceof Error ? error.stack : String(error)) + '\n');
+      require("fs").appendFileSync(
+        "test-connect-error.log",
+        String(attempt) +
+          " : " +
+          (error instanceof Error ? error.stack : String(error)) +
+          "\n",
+      );
       if (attempt === maxAttempts) throw error;
       const backoffMs = attempt * 2000;
       await delay(backoffMs);
@@ -55,7 +63,9 @@ export async function callToolAndParse(
   name: string,
   args: Record<string, unknown> = {},
 ): Promise<Record<string, unknown>> {
-  console.log('Calling tool:', name); const response = await client.callTool({ name, arguments: args }); console.log('Tool returned!');
+  console.log("Calling tool:", name);
+  const response = await client.callTool({ name, arguments: args });
+  console.log("Tool returned!");
   const text = (response.content as { type: string; text: string }[])[0].text;
   return JSON.parse(text) as Record<string, unknown>;
 }

@@ -27,10 +27,10 @@
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, description, price (REAL), category (TEXT lowercase), created_at |
-| test_orders       | 20   | id, product_id (FK→test_products), customer_name, quantity, total_price, order_date, status |
+| Table         | Rows | Key Columns                                                                                 |
+| ------------- | ---- | ------------------------------------------------------------------------------------------- |
+| test_products | 16   | id, name, description, price (REAL), category (TEXT lowercase), created_at                  |
+| test_orders   | 20   | id, product_id (FK→test_products), customer_name, quantity, total_price, order_date, status |
 
 > **Note:** This prompt tests the sandbox execution environment, not specific tool groups. It uses `test_products` and `test_orders` as representative tables for validation.
 
@@ -50,10 +50,10 @@
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | What you see                                          | Verdict    |
-| -------------------- | ----------------------------------------------------- | ---------- |
-| **Handler error** ✅ | JSON object with `success` and `error` fields         | Correct    |
-| **MCP error** ❌     | Raw text, `isError: true`, no `success` field         | Bug        |
+| Type                 | What you see                                  | Verdict |
+| -------------------- | --------------------------------------------- | ------- |
+| **Handler error** ✅ | JSON object with `success` and `error` fields | Correct |
+| **MCP error** ❌     | Raw text, `isError: true`, no `success` field | Bug     |
 
 ---
 
@@ -156,7 +156,18 @@ Expected: `{group: "core", methods: [...]}` with methods including `readQuery`, 
 ### 2.3 — All groups exist
 
 ```javascript
-const groups = ["core", "json", "text", "stats", "vector", "admin", "transactions", "geo", "introspection", "migration"];
+const groups = [
+  "core",
+  "json",
+  "text",
+  "stats",
+  "vector",
+  "admin",
+  "transactions",
+  "geo",
+  "introspection",
+  "migration",
+];
 const results = {};
 for (const g of groups) {
   const h = await sqlite[g].help();
@@ -289,7 +300,9 @@ Expected: `{success: true, rows: [{cnt: 16}]}`
 
 ```javascript
 // readonly: true
-return await sqlite.core.writeQuery("INSERT INTO test_products (name) VALUES ('blocked')");
+return await sqlite.core.writeQuery(
+  "INSERT INTO test_products (name) VALUES ('blocked')",
+);
 ```
 
 Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
@@ -299,7 +312,10 @@ Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
 ```javascript
 // readonly: true
 const help = await sqlite.core.help();
-return { hasWriteQuery: help.methods.includes("writeQuery"), methods: help.methods };
+return {
+  hasWriteQuery: help.methods.includes("writeQuery"),
+  methods: help.methods,
+};
 ```
 
 Expected: `writeQuery` still appears in help (for discoverability) but is guarded.
@@ -308,7 +324,9 @@ Expected: `writeQuery` still appears in help (for discoverability) but is guarde
 
 ```javascript
 // readonly: true
-return await sqlite.core.writeQuery("CREATE TABLE temp_readonly_test (id INTEGER)");
+return await sqlite.core.writeQuery(
+  "CREATE TABLE temp_readonly_test (id INTEGER)",
+);
 ```
 
 Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
@@ -317,7 +335,10 @@ Expected: `{success: false, code: "CODEMODE_READONLY_VIOLATION"}`
 
 ```javascript
 // readonly: true
-return await sqlite.stats.statsBasic({ table: "test_products", column: "price" });
+return await sqlite.stats.statsBasic({
+  table: "test_products",
+  column: "price",
+});
 ```
 
 Expected: succeeds — stats tools are read-only.
@@ -331,12 +352,14 @@ Expected: succeeds — stats tools are read-only.
 Run two separate `sqlite_execute_code` calls:
 
 **Call 1:**
+
 ```javascript
 var persistTest = "should not persist";
 return persistTest;
 ```
 
 **Call 2:**
+
 ```javascript
 try {
   return { persisted: typeof persistTest !== "undefined", value: persistTest };
@@ -352,19 +375,26 @@ Expected: Call 2 returns `{persisted: false}` — variables from Call 1 must not
 Run two separate `sqlite_execute_code` calls:
 
 **Call 1:**
+
 ```javascript
 await sqlite.core.createTable({
   table: "temp_cm_iso_test",
-  columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]
+  columns: [
+    { name: "id", type: "INTEGER", primaryKey: true },
+    { name: "val", type: "TEXT" },
+  ],
 });
-await sqlite.core.writeQuery("INSERT INTO temp_cm_iso_test VALUES (1, 'persisted')");
+await sqlite.core.writeQuery(
+  "INSERT INTO temp_cm_iso_test VALUES (1, 'persisted')",
+);
 return "created";
 ```
 
 **Call 2:**
+
 ```javascript
 const result = await sqlite.core.readQuery("SELECT * FROM temp_cm_iso_test");
-await sqlite.core.dropTable({table: "temp_cm_iso_test", ifExists: true});
+await sqlite.core.dropTable({ table: "temp_cm_iso_test", ifExists: true });
 return result;
 ```
 

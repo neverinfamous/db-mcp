@@ -1,4 +1,7 @@
-import { CreateTableOutputSchema, DropTableOutputSchema } from "../../schemas/core.js";
+import {
+  CreateTableOutputSchema,
+  DropTableOutputSchema,
+} from "../../schemas/core.js";
 /**
  * View Management Tools
  *

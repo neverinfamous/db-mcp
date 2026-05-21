@@ -13,8 +13,6 @@ import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
 export const MIGRATIONS_TABLE = "_mcp_migrations";
 
-
-
 // =============================================================================
 // Utilities
 // =============================================================================

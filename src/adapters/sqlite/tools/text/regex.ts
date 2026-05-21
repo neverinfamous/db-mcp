@@ -24,7 +24,7 @@ import {
   RegexExtractSchema,
   RegexMatchSchema,
   TextSplitSchema,
-  } from "../../schemas/text.js";
+} from "../../schemas/text.js";
 
 /**
  * Extract text using regex pattern

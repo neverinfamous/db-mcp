@@ -11,7 +11,6 @@
  * 13 tools total.
  */
 
-
 /**
  * Coerce string values to numbers for MCP parameter safety.
  * Returns undefined for unparseable values so `.default()` kicks in.

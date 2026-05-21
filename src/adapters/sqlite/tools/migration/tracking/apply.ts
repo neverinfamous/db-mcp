@@ -5,9 +5,21 @@ import type {
 } from "../../../../../types/index.js";
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { MigrationApplySchema, MigrationApplyValidationSchema, MigrationApplyOutputSchema } from "../../../schemas/migration.js";
-import { MIGRATIONS_TABLE, hashMigration, isMigrationTableInitialized, toMigrationRecord } from "../helpers.js";
-import { sendProgress, buildProgressContext } from "../../../../../utils/progress-utils.js";
+import {
+  MigrationApplySchema,
+  MigrationApplyValidationSchema,
+  MigrationApplyOutputSchema,
+} from "../../../schemas/migration.js";
+import {
+  MIGRATIONS_TABLE,
+  hashMigration,
+  isMigrationTableInitialized,
+  toMigrationRecord,
+} from "../helpers.js";
+import {
+  sendProgress,
+  buildProgressContext,
+} from "../../../../../utils/progress-utils.js";
 
 export function createMigrationApplyTool(
   adapter: SqliteAdapter,
@@ -56,7 +68,7 @@ export function createMigrationApplyTool(
           [input.version],
         );
         let existingId: number | undefined = undefined;
-        
+
         if ((versionCheck.rows?.length ?? 0) > 0) {
           const existing = versionCheck.rows?.[0];
           if (existing?.["status"] === "applied") {
@@ -71,7 +83,12 @@ export function createMigrationApplyTool(
 
         try {
           const progress = buildProgressContext(_context);
-          await sendProgress(progress, 1, 2, `Applying migration ${input.version}...`);
+          await sendProgress(
+            progress,
+            1,
+            2,
+            `Applying migration ${input.version}...`,
+          );
           await adapter.executeQuery(actualSql);
           await sendProgress(progress, 2, 2, `Migration applied successfully`);
         } catch (execError) {
@@ -84,7 +101,7 @@ export function createMigrationApplyTool(
                 hash,
                 input.sourceSystem ?? "agent",
                 input.appliedBy ?? null,
-                existingId
+                existingId,
               ],
             );
           } else {
@@ -119,7 +136,7 @@ export function createMigrationApplyTool(
               hash,
               input.sourceSystem ?? "agent",
               input.appliedBy ?? null,
-              existingId
+              existingId,
             ],
           );
         } else {

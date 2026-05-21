@@ -6,7 +6,10 @@ import { validateColumnExists } from "./helpers.js";
  * Ported from postgres-mcp pg_text_sentiment for cross-server parity.
  */
 
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   formatHandlerError,
@@ -17,7 +20,7 @@ import {
   validateWhereClause,
 } from "../../../../utils/index.js";
 import { TextSentimentOutputSchema } from "../../schemas/text.js";
-import { TextSentimentSchema, } from "../../schemas/text.js";
+import { TextSentimentSchema } from "../../schemas/text.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 
 const POSITIVE_WORDS = [
@@ -75,10 +78,13 @@ const NEGATIVE_WORDS = [
 /**
  * Create the text sentiment analysis tool.
  */
-export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition {
+export function createTextSentimentTool(
+  adapter: SqliteAdapter,
+): ToolDefinition {
   return {
     name: "sqlite_text_sentiment",
-    description: "Perform basic sentiment analysis on text column using keyword matching.",
+    description:
+      "Perform basic sentiment analysis on text column using keyword matching.",
     group: "text",
     inputSchema: TextSentimentSchema,
     outputSchema: TextSentimentOutputSchema,
@@ -87,27 +93,29 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const parsed = TextSentimentSchema.parse(params ?? {});
-        
+
         interface AnalyzeTextReturn {
-             sentiment: string;
-             score: number;
-             confidence: string;
-             positiveCount: number;
-             negativeCount: number;
-             matchedPositive?: string[] | undefined;
-             matchedNegative?: string[] | undefined;
+          sentiment: string;
+          score: number;
+          confidence: string;
+          positiveCount: number;
+          negativeCount: number;
+          matchedPositive?: string[] | undefined;
+          matchedNegative?: string[] | undefined;
         }
 
         // Define analysis function
-        const analyzeText = (original: string | null | undefined): AnalyzeTextReturn => {
+        const analyzeText = (
+          original: string | null | undefined,
+        ): AnalyzeTextReturn => {
           if (!original || original.trim() === "") {
-             return {
-               sentiment: "neutral",
-               score: 0,
-               confidence: "low",
-               positiveCount: 0,
-               negativeCount: 0
-             };
+            return {
+              sentiment: "neutral",
+              score: 0,
+              confidence: "low",
+              positiveCount: 0,
+              negativeCount: 0,
+            };
           }
 
           const textStr = original.toLowerCase();
@@ -127,35 +135,47 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
           const negativeScore = matchedNegative.length;
           const totalScore = positiveScore - negativeScore;
 
-          let sentiment: "very_positive" | "positive" | "neutral" | "negative" | "very_negative";
+          let sentiment:
+            | "very_positive"
+            | "positive"
+            | "neutral"
+            | "negative"
+            | "very_negative";
           if (totalScore > 2) sentiment = "very_positive";
           else if (totalScore > 0) sentiment = "positive";
           else if (totalScore < -2) sentiment = "very_negative";
           else if (totalScore < 0) sentiment = "negative";
           else sentiment = "neutral";
-          
+
           return {
-             sentiment,
-             score: totalScore,
-             confidence: positiveScore + negativeScore > 3 ? "high" : positiveScore + negativeScore > 1 ? "medium" : "low",
-             positiveCount: positiveScore,
-             negativeCount: negativeScore,
-             matchedPositive: parsed.returnWords ? matchedPositive : undefined,
-             matchedNegative: parsed.returnWords ? matchedNegative : undefined
+            sentiment,
+            score: totalScore,
+            confidence:
+              positiveScore + negativeScore > 3
+                ? "high"
+                : positiveScore + negativeScore > 1
+                  ? "medium"
+                  : "low",
+            positiveCount: positiveScore,
+            negativeCount: negativeScore,
+            matchedPositive: parsed.returnWords ? matchedPositive : undefined,
+            matchedNegative: parsed.returnWords ? matchedNegative : undefined,
           };
         };
 
         if (parsed.text !== undefined) {
-           // Standalone text mode
-           const res = analyzeText(parsed.text);
-           return {
-             success: true,
-             ...res
-           };
+          // Standalone text mode
+          const res = analyzeText(parsed.text);
+          return {
+            success: true,
+            ...res,
+          };
         }
 
         if (!parsed.table || !parsed.column) {
-           throw new ValidationError("Must provide either 'text' or both 'table' and 'column'");
+          throw new ValidationError(
+            "Must provide either 'text' or both 'table' and 'column'",
+          );
         }
 
         // Table mode
@@ -182,30 +202,30 @@ export function createTextSentimentTool(adapter: SqliteAdapter): ToolDefinition 
                 : JSON.stringify(rawOriginal);
 
           const res = analyzeText(original);
-          
+
           interface SentimentResult {
-             rowid?: number | undefined;
-             sentiment: string;
-             score: number;
-             confidence: string;
-             positiveCount: number;
-             negativeCount: number;
-             matchedPositive?: string[] | undefined;
-             matchedNegative?: string[] | undefined;
+            rowid?: number | undefined;
+            sentiment: string;
+            score: number;
+            confidence: string;
+            positiveCount: number;
+            negativeCount: number;
+            matchedPositive?: string[] | undefined;
+            matchedNegative?: string[] | undefined;
           }
 
           const resObj: SentimentResult = {
-             rowid: row["id"] as number | undefined,
-             ...res
+            rowid: row["id"] as number | undefined,
+            ...res,
           };
-          
+
           return resObj;
         });
 
         return {
           success: true,
           rowCount: rows.length,
-          results: rows
+          results: rows,
         };
       } catch (error) {
         return formatHandlerError(error);

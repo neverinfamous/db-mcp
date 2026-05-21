@@ -16,7 +16,10 @@ import {
   ExtensionNotAvailableError,
 } from "../../../../utils/errors/index.js";
 import { isModuleAvailable } from "./analysis.js";
-import { CreateRtreeTableSchema, CreateSeriesTableSchema } from "../../schemas/virtual.js";
+import {
+  CreateRtreeTableSchema,
+  CreateSeriesTableSchema,
+} from "../../schemas/virtual.js";
 import {
   CreateRtreeTableOutputSchema,
   CreateSeriesTableOutputSchema,

@@ -63,18 +63,25 @@ export function registerPromptImpl(
           role: "user" | "assistant";
           content: { type: "text"; text: string };
         }[])
-      : (result !== null && result !== undefined && typeof result === "object" && "messages" in result && Array.isArray(result.messages))
-      ? (result.messages as { role: "user" | "assistant"; content: { type: "text"; text: string } }[])
-      : [
-          {
-            role: "assistant" as const,
-            content: {
-              type: "text" as const,
-              text:
-                typeof result === "string" ? result : JSON.stringify(result),
+      : result !== null &&
+          result !== undefined &&
+          typeof result === "object" &&
+          "messages" in result &&
+          Array.isArray(result.messages)
+        ? (result.messages as {
+            role: "user" | "assistant";
+            content: { type: "text"; text: string };
+          }[])
+        : [
+            {
+              role: "assistant" as const,
+              content: {
+                type: "text" as const,
+                text:
+                  typeof result === "string" ? result : JSON.stringify(result),
+              },
             },
-          },
-        ];
+          ];
     return { messages };
   };
 

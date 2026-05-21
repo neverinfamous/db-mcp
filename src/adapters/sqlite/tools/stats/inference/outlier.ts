@@ -10,9 +10,7 @@ import {
   sanitizeIdentifier,
 } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import {
-  OutlierSchema,
-} from "../../../schemas/stats.js";
+import { OutlierSchema } from "../../../schemas/stats.js";
 import { StatsOutliersOutputSchema } from "../../../schemas/stats.js";
 
 /**
@@ -47,11 +45,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
+        await validateNumericColumn(adapter, input.table, input.column);
 
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);

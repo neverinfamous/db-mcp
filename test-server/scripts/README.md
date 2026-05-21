@@ -1,6 +1,6 @@
 # db-mcp Test Scripts
 
-This directory contains integration test scripts that verify the functional parity and proper configuration of the `db-mcp` server. 
+This directory contains integration test scripts that verify the functional parity and proper configuration of the `db-mcp` server.
 
 ## Running the tests
 

@@ -25,10 +25,10 @@
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price, category                                     |
-| test_orders       | 20   | id, product_id (FK), total_price, status                      |
+| Table         | Rows | Key Columns                              |
+| ------------- | ---- | ---------------------------------------- |
+| test_products | 16   | id, name, price, category                |
+| test_orders   | 20   | id, product_id (FK), total_price, status |
 
 ## Testing Requirements
 
@@ -82,7 +82,8 @@ Expected: No migrations applied.
 return await sqlite.migration.migrationRecord({
   version: "1.0.0",
   description: "Create temp table",
-  migrationSql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
+  migrationSql:
+    "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)",
 });
 ```
 
@@ -114,7 +115,8 @@ Expected: Version 1.0.0 listed.
 return await sqlite.migration.migrationApply({
   version: "1.0.1",
   description: "Create applied table",
-  migrationSql: "CREATE TABLE temp_cm_mig_applied (id INTEGER PRIMARY KEY, value TEXT)"
+  migrationSql:
+    "CREATE TABLE temp_cm_mig_applied (id INTEGER PRIMARY KEY, value TEXT)",
 });
 ```
 
@@ -123,7 +125,9 @@ Expected: Applied (SQL executed AND recorded).
 ### 2.2 — Verify table exists
 
 ```javascript
-return await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_applied'");
+return await sqlite.core.readQuery(
+  "SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_applied'",
+);
 ```
 
 Expected: Table exists.
@@ -146,7 +150,8 @@ Expected: Both 1.0.0 and 1.0.1 listed.
 return await sqlite.migration.migrationRecord({
   version: "1.0.2",
   description: "Duplicate test",
-  migrationSql: "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)"
+  migrationSql:
+    "CREATE TABLE temp_cm_mig_test (id INTEGER PRIMARY KEY, name TEXT)",
 });
 ```
 
@@ -171,7 +176,7 @@ return await sqlite.migration.migrationApply({
   version: "1.0.3",
   description: "With rollback",
   migrationSql: "CREATE TABLE temp_cm_mig_rollback (id INTEGER PRIMARY KEY)",
-  rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_rollback"
+  rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_rollback",
 });
 ```
 
@@ -188,7 +193,9 @@ Expected: Rollback SQL executed.
 ### 4.4 — Verify table gone
 
 ```javascript
-return await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_rollback'");
+return await sqlite.core.readQuery(
+  "SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_rollback'",
+);
 ```
 
 Expected: Table does NOT exist.
@@ -226,23 +233,35 @@ await sqlite.migration.migrationInit();
 await sqlite.migration.migrationApply({
   version: "9.9.1",
   description: "Lifecycle test",
-  migrationSql: "CREATE TABLE temp_cm_mig_lifecycle (id INTEGER PRIMARY KEY, val TEXT)",
-  rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_lifecycle"
+  migrationSql:
+    "CREATE TABLE temp_cm_mig_lifecycle (id INTEGER PRIMARY KEY, val TEXT)",
+  rollbackSql: "DROP TABLE IF EXISTS temp_cm_mig_lifecycle",
 });
 
 // Verify
 const status = await sqlite.migration.migrationStatus();
 const history = await sqlite.migration.migrationHistory();
-const tableExists = await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_lifecycle'");
+const tableExists = await sqlite.core.readQuery(
+  "SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_lifecycle'",
+);
 
-if (!tableExists.rows || tableExists.rows.length === 0) failures.push("table not created after apply");
+if (!tableExists.rows || tableExists.rows.length === 0)
+  failures.push("table not created after apply");
 
 // Rollback
-await sqlite.migration.migrationRollback({version: "9.9.1"});
-const afterRollback = await sqlite.core.readQuery("SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_lifecycle'");
-if (afterRollback.rows && afterRollback.rows.length > 0) failures.push("table still exists after rollback");
+await sqlite.migration.migrationRollback({ version: "9.9.1" });
+const afterRollback = await sqlite.core.readQuery(
+  "SELECT name FROM sqlite_master WHERE name = 'temp_cm_mig_lifecycle'",
+);
+if (afterRollback.rows && afterRollback.rows.length > 0)
+  failures.push("table still exists after rollback");
 
-return { failures, success: failures.length === 0, statusBefore: status, historyEntries: history };
+return {
+  failures,
+  success: failures.length === 0,
+  statusBefore: status,
+  historyEntries: history,
+};
 ```
 
 ---

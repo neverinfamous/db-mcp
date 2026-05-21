@@ -58,7 +58,7 @@ test.describe("Numeric Coercion: Stats", () => {
       });
       const text = response.content[0]?.text;
       expect(text).toBeDefined();
-      
+
       try {
         const parsed = JSON.parse(text);
         expect(typeof parsed.success).toBe("boolean");

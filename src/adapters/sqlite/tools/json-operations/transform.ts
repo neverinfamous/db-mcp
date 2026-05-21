@@ -1,4 +1,7 @@
-import { JsonNormalizeColumnOutputSchema, JsonbConvertOutputSchema } from '../../schemas/json.js';
+import {
+  JsonNormalizeColumnOutputSchema,
+  JsonbConvertOutputSchema,
+} from "../../schemas/json.js";
 /**
  * JSON Transform Tools
  *
@@ -24,7 +27,7 @@ import {
 import {
   JsonPrettyOutputSchema,
   JsonStorageInfoOutputSchema,
-  } from "../../schemas/json.js";
+} from "../../schemas/json.js";
 import {
   JsonPrettySchema,
   JsonbConvertSchema,

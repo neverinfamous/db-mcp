@@ -309,19 +309,24 @@ function createCompileOptionsResource(
     mimeType: "application/json",
     annotations: ASSISTANT_FOCUSED,
     handler: async () => {
-      const result = await adapter.executeReadQuery(
-        "PRAGMA compile_options",
+      const result = await adapter.executeReadQuery("PRAGMA compile_options");
+
+      const options = (result.rows ?? []).map((r) =>
+        String(r["compile_options"]),
       );
 
-      const options = (result.rows ?? []).map((r) => String(r["compile_options"]));
-      
       // Extract notable features to highlight
       const highlights = [];
       const notablePatterns = [
-        "FTS5", "JSON1", "RTREE", "MATH_FUNCTIONS", 
-        "ENABLE_GEOPOLY", "ENABLE_STAT4", "THREADSAFE"
+        "FTS5",
+        "JSON1",
+        "RTREE",
+        "MATH_FUNCTIONS",
+        "ENABLE_GEOPOLY",
+        "ENABLE_STAT4",
+        "THREADSAFE",
       ];
-      
+
       for (const opt of options) {
         for (const pattern of notablePatterns) {
           if (opt.includes(pattern)) {
@@ -365,12 +370,21 @@ function createPragmaResource(adapter: SqliteAdapter): ResourceDefinition {
       // Group PRAGMAs by category
       const pragmaGroups = {
         storage: ["page_size", "page_count", "max_page_count", "auto_vacuum"],
-        performance: ["cache_size", "mmap_size", "temp_store", "journal_mode", "synchronous"],
+        performance: [
+          "cache_size",
+          "mmap_size",
+          "temp_store",
+          "journal_mode",
+          "synchronous",
+        ],
         safety: ["foreign_keys", "secure_delete", "locking_mode"],
         behavior: ["wal_autocheckpoint", "busy_timeout", "encoding"],
       };
 
-      const settings: Record<string, { value: unknown; category: string; description: string }> = {};
+      const settings: Record<
+        string,
+        { value: unknown; category: string; description: string }
+      > = {};
       const descriptions: Record<string, string> = {
         page_size: "Database page size in bytes",
         page_count: "Current number of pages",
@@ -378,8 +392,10 @@ function createPragmaResource(adapter: SqliteAdapter): ResourceDefinition {
         auto_vacuum: "Auto-vacuum mode (0=none, 1=full, 2=incremental)",
         cache_size: "Suggested max number of database disk pages in memory",
         mmap_size: "Max bytes that can be memory-mapped",
-        temp_store: "Where to store temporary tables (0=default, 1=file, 2=memory)",
-        journal_mode: "Transaction journal mode (e.g., DELETE, TRUNCATE, PERSIST, MEMORY, WAL)",
+        temp_store:
+          "Where to store temporary tables (0=default, 1=file, 2=memory)",
+        journal_mode:
+          "Transaction journal mode (e.g., DELETE, TRUNCATE, PERSIST, MEMORY, WAL)",
         synchronous: "Sync disk writes (0=OFF, 1=NORMAL, 2=FULL, 3=EXTRA)",
         foreign_keys: "Foreign key constraint enforcement",
         secure_delete: "Overwrite deleted content with zeros",
@@ -392,9 +408,7 @@ function createPragmaResource(adapter: SqliteAdapter): ResourceDefinition {
       for (const [category, pragmas] of Object.entries(pragmaGroups)) {
         for (const pragma of pragmas) {
           try {
-            const result = await adapter.executeReadQuery(
-              `PRAGMA ${pragma}`,
-            );
+            const result = await adapter.executeReadQuery(`PRAGMA ${pragma}`);
             settings[pragma] = {
               value: result.rows?.[0]?.[pragma] ?? null,
               category,

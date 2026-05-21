@@ -24,12 +24,13 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ## Test Database Schema
 
-| Table           | Rows | Key Columns                                                   |
-| --------------- | ---- | ------------------------------------------------------------- |
+| Table           | Rows | Key Columns                                                    |
+| --------------- | ---- | -------------------------------------------------------------- |
 | test_jsonb_docs | 6    | id, doc (JSON), metadata (JSON), tags (JSON array), created_at |
-| test_events     | 100  | id, event_type, user_id, payload (JSON), event_date           |
+| test_events     | 100  | id, event_type, user_id, payload (JSON), event_date            |
 
 **test_jsonb_docs key data:**
+
 - Row 1: `doc.type="article"`, `doc.author="Alice"`, `doc.views=1250`, `doc.rating=4.5`
 - Row 4: `doc.nested.level1.level2 = "deep value"`
 - Row 5: `doc.type="podcast"` (no `doc.views` field)
@@ -45,13 +46,13 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ### Error Message Quality Rating
 
-| Level | Verdict |
-| --- | --- |
-| 5 - Excellent (name + code + context) | ✅ |
-| 4 - Good (name) | ✅ |
-| 3 - Adequate (raw SQLite, informative) | ⚠️ |
-| 2 - Poor (no object name) | ⚠️ |
-| 1 - Useless (generic) | ❌ |
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
 ## Structured Error Response Pattern
 

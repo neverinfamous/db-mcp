@@ -28,13 +28,14 @@
 
 ## Test Database Schema
 
-| Table         | Rows | Key Columns                                       |
-| ------------- | ---- | ------------------------------------------------- |
+| Table         | Rows | Key Columns                                                       |
+| ------------- | ---- | ----------------------------------------------------------------- |
 | test_products | 16   | id, name (row 16: `Café Décor Light` — accented), price, category |
-| test_users    | 9    | id, username, email, phone, bio                   |
-| test_articles | 8    | id, title, body, author, category, published_at   |
+| test_users    | 9    | id, username, email, phone, bio                                   |
+| test_articles | 8    | id, title, body, author, category, published_at                   |
 
 **Test data:**
+
 - Emails: `@example.com`, `@company.org`, `@gmail.com`, etc. One user (`testuser`) has `test.user@gmail.com`
 - Phone formats: `+1-555-0101`, `+44-20-7123-4567`, `+82-2-1234-5678`
 - FTS searchable terms: `SQLite`, `database`, `JSON`, `FTS`, `vector`, `API`, `search`, `MCP`
@@ -150,13 +151,35 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 ```javascript
 const failures = [];
 // Validate emails, extract domains, search fuzzy, combine results
-const validation = await sqlite.text.validate({table: "test_users", column: "email", pattern: "email"});
-const domains = await sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1});
-const fuzzy = await sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "keybord", maxDistance: 3});
+const validation = await sqlite.text.validate({
+  table: "test_users",
+  column: "email",
+  pattern: "email",
+});
+const domains = await sqlite.text.regexExtract({
+  table: "test_users",
+  column: "email",
+  pattern: "@([^.]+)\\.",
+  groupIndex: 1,
+});
+const fuzzy = await sqlite.text.fuzzyMatch({
+  table: "test_products",
+  column: "name",
+  search: "keybord",
+  maxDistance: 3,
+});
 if (!validation.success) failures.push("validation failed");
 if (!domains.success) failures.push("domain extraction failed");
 if (!fuzzy.success) failures.push("fuzzy search failed");
-return { failures, success: failures.length === 0, summary: { validEmails: validation?.validCount, domainCount: domains?.matches?.length, fuzzyHits: fuzzy?.matches?.length } };
+return {
+  failures,
+  success: failures.length === 0,
+  summary: {
+    validEmails: validation?.validCount,
+    domainCount: domains?.matches?.length,
+    fuzzyHits: fuzzy?.matches?.length,
+  },
+};
 ```
 
 ---
@@ -166,18 +189,37 @@ return { failures, success: failures.length === 0, summary: { validEmails: valid
 ```javascript
 const failures = [];
 // Create FTS5 table
-await sqlite.text.ftsCreate({sourceTable: "test_users", columns: ["username", "bio"], tableName: "temp_cm_fts_rebuild"});
+await sqlite.text.ftsCreate({
+  sourceTable: "test_users",
+  columns: ["username", "bio"],
+  tableName: "temp_cm_fts_rebuild",
+});
 // Search BEFORE rebuild — should return 0 results
-const before = await sqlite.text.ftsSearch({table: "temp_cm_fts_rebuild", query: "admin"});
-if (before.rows?.length > 0) failures.push("FTS5 search returned results before rebuild — gotcha #5 may not apply");
+const before = await sqlite.text.ftsSearch({
+  table: "temp_cm_fts_rebuild",
+  query: "admin",
+});
+if (before.rows?.length > 0)
+  failures.push(
+    "FTS5 search returned results before rebuild — gotcha #5 may not apply",
+  );
 // Rebuild to populate index
-await sqlite.text.ftsRebuild({table: "temp_cm_fts_rebuild"});
+await sqlite.text.ftsRebuild({ table: "temp_cm_fts_rebuild" });
 // Search AFTER rebuild — should return results
-const after = await sqlite.text.ftsSearch({table: "temp_cm_fts_rebuild", query: "admin"});
-if (!after.rows || after.rows.length === 0) failures.push("FTS5 search returned 0 results after rebuild");
+const after = await sqlite.text.ftsSearch({
+  table: "temp_cm_fts_rebuild",
+  query: "admin",
+});
+if (!after.rows || after.rows.length === 0)
+  failures.push("FTS5 search returned 0 results after rebuild");
 // Cleanup
 await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_fts_rebuild");
-return { failures, success: failures.length === 0, beforeCount: before.rows?.length || 0, afterCount: after.rows?.length || 0 };
+return {
+  failures,
+  success: failures.length === 0,
+  beforeCount: before.rows?.length || 0,
+  afterCount: after.rows?.length || 0,
+};
 ```
 
 Expected: `beforeCount: 0`, `afterCount: > 0` — validates that `ftsRebuild` is required after `ftsCreate` to populate the index (gotcha #5).
@@ -187,9 +229,9 @@ Expected: `beforeCount: 0`, `afterCount: > 0` — validates that `ftsRebuild` is
 ## Post-Test Procedures
 
 1. **Cleanup**: Drop `temp_*` FTS tables
-3. **Triage findings**: Create implementation plan if issues found
-4. **Scope of fixes**: Handler code, server-instructions, this prompt
-5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-6. **Commit**: Stage and commit — do NOT push
-7. **Token audit**: Report most expensive block
-8. **Final summary**: After testing/re-testing
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, this prompt
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

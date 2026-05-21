@@ -12,18 +12,18 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 
 ## File Inventory
 
-| File | Primary Focus | Key Validations |
-| ---- | ------------- | --------------- |
-| `test-codemode-advanced-core.md` | Core | Boundary values, empty states, state pollution, idempotency, error quality, payload sizes |
-| `test-codemode-advanced-json.md` | JSON | Deep nesting, merge conflicts (RFC 7396), type coercion, write safety |
-| `test-codemode-advanced-text.md` | Text | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]` |
-| `test-codemode-advanced-stats.md` | Stats | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]` |
-| `test-codemode-advanced-vector.md` | Vector | Empty tables, distance metrics, dimension mismatch, batch operations |
-| `test-codemode-advanced-admin.md` | Admin | View lifecycle, virtual tables, backup/restore, pragma edge cases |
-| `test-codemode-advanced-transactions.md` | Transactions | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]` |
-| `test-codemode-advanced-geo.md` | Geo | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]` |
-| `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, storage/index audit, query plan depth |
-| `test-codemode-advanced-migration.md` | Migration | Lifecycle, state pollution, SHA-256 dedup, error paths |
+| File                                      | Primary Focus | Key Validations                                                                           |
+| ----------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- |
+| `test-codemode-advanced-core.md`          | Core          | Boundary values, empty states, state pollution, idempotency, error quality, payload sizes |
+| `test-codemode-advanced-json.md`          | JSON          | Deep nesting, merge conflicts (RFC 7396), type coercion, write safety                     |
+| `test-codemode-advanced-text.md`          | Text          | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]`             |
+| `test-codemode-advanced-stats.md`         | Stats         | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]`       |
+| `test-codemode-advanced-vector.md`        | Vector        | Empty tables, distance metrics, dimension mismatch, batch operations                      |
+| `test-codemode-advanced-admin.md`         | Admin         | View lifecycle, virtual tables, backup/restore, pragma edge cases                         |
+| `test-codemode-advanced-transactions.md`  | Transactions  | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]`                        |
+| `test-codemode-advanced-geo.md`           | Geo           | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]`              |
+| `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, storage/index audit, query plan depth                    |
+| `test-codemode-advanced-migration.md`     | Migration     | Lifecycle, state pollution, SHA-256 dedup, error paths                                    |
 
 ## Agent Execution Protocol
 
@@ -52,19 +52,19 @@ When testing against a **WASM backend** (`--sqlite` flag, sql.js adapter), follo
 
 Several admin tools are **registered in WASM mode but return structured errors**. Test these as **negative validation**:
 
-| Tool | Expected WASM Behavior |
-|------|----------------------|
-| `sqlite.admin.backup(...)` | `{success: false, error: "...WASM mode"}` |
-| `sqlite.admin.restore(...)` | `{success: false, error: "...WASM mode"}` |
-| `sqlite.admin.verifyBackup(...)` | `{success: false, error: "...WASM mode"}` |
-| `sqlite.admin.createCsvTable(...)` | `{success: false}` — CSV extension unavailable |
+| Tool                                 | Expected WASM Behavior                         |
+| ------------------------------------ | ---------------------------------------------- |
+| `sqlite.admin.backup(...)`           | `{success: false, error: "...WASM mode"}`      |
+| `sqlite.admin.restore(...)`          | `{success: false, error: "...WASM mode"}`      |
+| `sqlite.admin.verifyBackup(...)`     | `{success: false, error: "...WASM mode"}`      |
+| `sqlite.admin.createCsvTable(...)`   | `{success: false}` — CSV extension unavailable |
 | `sqlite.admin.analyzeCsvSchema(...)` | `{success: false}` — CSV extension unavailable |
 | `sqlite.admin.createRtreeTable(...)` | `{success: false}` — R-Tree module unavailable |
 
 #### Adjusted Expectations
 
-| Item | Native Behavior | WASM Behavior |
-|------|----------------|---------------|
-| `sqlite.admin.dbstat({summarize: true})` | Per-table storage breakdown | Counts-only (JS fallback) |
-| `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` | Matches FTS5 | Matches FTS3 |
-| `test_articles_fts` in `listVirtualTables` | Present and queryable | May appear but FTS5 queries fail |
+| Item                                                 | Native Behavior             | WASM Behavior                    |
+| ---------------------------------------------------- | --------------------------- | -------------------------------- |
+| `sqlite.admin.dbstat({summarize: true})`             | Per-table storage breakdown | Counts-only (JS fallback)        |
+| `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` | Matches FTS5                | Matches FTS3                     |
+| `test_articles_fts` in `listVirtualTables`           | Present and queryable       | May appear but FTS5 queries fail |

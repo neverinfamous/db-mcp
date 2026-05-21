@@ -45,7 +45,10 @@ export interface GraphEdge {
  */
 export async function buildForeignKeyGraph(
   adapter: SqliteAdapter,
-  options: { excludeSystemTables?: boolean | undefined; includeRowCounts?: boolean | undefined } = {},
+  options: {
+    excludeSystemTables?: boolean | undefined;
+    includeRowCounts?: boolean | undefined;
+  } = {},
 ): Promise<{
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -87,7 +90,9 @@ export async function buildForeignKeyGraph(
     let rowCount = 0;
     if (options.includeRowCounts) {
       try {
-        const countRes = await adapter.executeReadQuery(`SELECT COUNT(*) as count FROM "${tableName}"`);
+        const countRes = await adapter.executeReadQuery(
+          `SELECT COUNT(*) as count FROM "${tableName}"`,
+        );
         rowCount = Number(countRes.rows?.[0]?.["count"]) || 0;
       } catch {
         // Ignore if we can't count rows (e.g. some virtual tables)

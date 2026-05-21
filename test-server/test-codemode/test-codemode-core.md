@@ -23,18 +23,18 @@
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, description, price (REAL), category (TEXT lowercase), created_at |
+| Table             | Rows | Key Columns                                                                                 |
+| ----------------- | ---- | ------------------------------------------------------------------------------------------- |
+| test_products     | 16   | id, name, description, price (REAL), category (TEXT lowercase), created_at                  |
 | test_orders       | 20   | id, product_id (FK→test_products), customer_name, quantity, total_price, order_date, status |
-| test_jsonb_docs   | 6    | id, doc (JSON), metadata (JSON), tags (JSON array), created_at |
-| test_articles     | 8    | id, title, body, author, category, published_at               |
-| test_users        | 9    | id, username, email, phone, bio, created_at                   |
-| test_measurements | 200  | id, sensor_id (INT 1-5), temperature, humidity, pressure, measured_at |
-| test_embeddings   | 20   | id, content, category, embedding (8-dim JSON array)           |
-| test_locations    | 15   | id, name, city, latitude, longitude, type                     |
-| test_categories   | 17   | id, name, path, level                                         |
-| test_events       | 100  | id, event_type, user_id (INT), payload (JSON), event_date     |
+| test_jsonb_docs   | 6    | id, doc (JSON), metadata (JSON), tags (JSON array), created_at                              |
+| test_articles     | 8    | id, title, body, author, category, published_at                                             |
+| test_users        | 9    | id, username, email, phone, bio, created_at                                                 |
+| test_measurements | 200  | id, sensor_id (INT 1-5), temperature, humidity, pressure, measured_at                       |
+| test_embeddings   | 20   | id, content, category, embedding (8-dim JSON array)                                         |
+| test_locations    | 15   | id, name, city, latitude, longitude, type                                                   |
+| test_categories   | 17   | id, name, path, level                                                                       |
+| test_events       | 100  | id, event_type, user_id (INT), payload (JSON), event_date                                   |
 
 > **Note:** `sensor_id` is INTEGER (1-5). String values use **lowercase**. Do **not** pass `readonly: true` unless specifically testing readonly filtering.
 
@@ -56,10 +56,10 @@
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | What you see                                          | Verdict    |
-| -------------------- | ----------------------------------------------------- | ---------- |
-| **Handler error** ✅ | JSON object with `success` and `error` fields         | Correct    |
-| **MCP error** ❌     | Raw text, `isError: true`, no `success` field         | Bug        |
+| Type                 | What you see                                  | Verdict |
+| -------------------- | --------------------------------------------- | ------- |
+| **Handler error** ✅ | JSON object with `success` and `error` fields | Correct |
+| **MCP error** ❌     | Raw text, `isError: true`, no `success` field | Bug     |
 
 ### Zod Refinement Leak Pattern
 
@@ -75,16 +75,21 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 const failures = [];
 
 // Happy path
-const count = await sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_products"});
-if (!count.rows || count.rows[0].n !== 16) failures.push("readQuery: expected 16 products");
+const count = await sqlite.core.readQuery({
+  query: "SELECT COUNT(*) AS n FROM test_products",
+});
+if (!count.rows || count.rows[0].n !== 16)
+  failures.push("readQuery: expected 16 products");
 
 // Domain error
 const err = await sqlite.core.describeTable("nonexistent_xyz");
-if (err.success !== false) failures.push("describeTable(nonexistent): expected {success: false}");
+if (err.success !== false)
+  failures.push("describeTable(nonexistent): expected {success: false}");
 
 // Zod empty params
 const zod = await sqlite.core.createTable({});
-if (zod.success !== false) failures.push("createTable({}): expected validation error");
+if (zod.success !== false)
+  failures.push("createTable({}): expected validation error");
 
 return { failures, success: failures.length === 0 };
 ```
@@ -193,14 +198,20 @@ return { failures, success: failures.length === 0 };
 ```javascript
 await sqlite.core.createTable({
   table: "temp_cm_etl",
-  columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "raw", type: "TEXT"}, {name: "processed", type: "TEXT"}]
+  columns: [
+    { name: "id", type: "INTEGER", primaryKey: true },
+    { name: "raw", type: "TEXT" },
+    { name: "processed", type: "TEXT" },
+  ],
 });
 for (let i = 1; i <= 5; i++) {
-  await sqlite.core.writeQuery({ query: `INSERT INTO temp_cm_etl (raw) VALUES ('item_${i}')` });
+  await sqlite.core.writeQuery({
+    query: `INSERT INTO temp_cm_etl (raw) VALUES ('item_${i}')`,
+  });
 }
 await sqlite.core.writeQuery("UPDATE temp_cm_etl SET processed = UPPER(raw)");
 const result = await sqlite.core.readQuery("SELECT * FROM temp_cm_etl");
-await sqlite.core.dropTable({table: "temp_cm_etl", ifExists: true});
+await sqlite.core.dropTable({ table: "temp_cm_etl", ifExists: true });
 return result;
 ```
 
@@ -210,8 +221,14 @@ return result;
 const tables = await sqlite.core.listTables();
 const first = tables.tables[0].name;
 const schema = await sqlite.core.describeTable(first);
-const sample = await sqlite.core.readQuery({ query: `SELECT * FROM ${first} LIMIT 3` });
-return { table: first, columnCount: schema.columns?.length, sampleRows: sample.rows?.length };
+const sample = await sqlite.core.readQuery({
+  query: `SELECT * FROM ${first} LIMIT 3`,
+});
+return {
+  table: first,
+  columnCount: schema.columns?.length,
+  sampleRows: sample.rows?.length,
+};
 ```
 
 ### 4.3 — Loop with accumulator
@@ -233,16 +250,23 @@ const failures = [];
 // Create table and verify it appears in introspection
 await sqlite.core.createTable({
   table: "temp_cm_intro_check",
-  columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "data", type: "TEXT"}]
+  columns: [
+    { name: "id", type: "INTEGER", primaryKey: true },
+    { name: "data", type: "TEXT" },
+  ],
 });
-const snapshot = await sqlite.introspection.schemaSnapshot({compact: true});
-const found = snapshot.snapshot?.tables?.some(t => t.name === "temp_cm_intro_check");
+const snapshot = await sqlite.introspection.schemaSnapshot({ compact: true });
+const found = snapshot.snapshot?.tables?.some(
+  (t) => t.name === "temp_cm_intro_check",
+);
 if (!found) failures.push("temp table not in schema snapshot after creation");
 
 // Drop table and verify it's gone
-await sqlite.core.dropTable({table: "temp_cm_intro_check"});
-const after = await sqlite.introspection.schemaSnapshot({compact: true});
-const stillThere = after.snapshot?.tables?.some(t => t.name === "temp_cm_intro_check");
+await sqlite.core.dropTable({ table: "temp_cm_intro_check" });
+const after = await sqlite.introspection.schemaSnapshot({ compact: true });
+const stillThere = after.snapshot?.tables?.some(
+  (t) => t.name === "temp_cm_intro_check",
+);
 if (stillThere) failures.push("temp table still in snapshot after drop");
 
 return { failures, success: failures.length === 0 };
@@ -253,10 +277,10 @@ return { failures, success: failures.length === 0 };
 ## Post-Test Procedures
 
 1. **Cleanup**: Confirm all `temp_*` tables are removed
-3. **Triage findings**: Create implementation plan if issues found
-4. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-6. **Commit**: Stage and commit — do NOT push
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit — do NOT push
 6. **Live re-test**: After server rebuild
 7. **Token audit**: Report `metrics.tokenEstimate` for the most expensive block
 8. **Final summary**: After testing/re-testing

@@ -135,44 +135,9 @@ export function resolveAliases(
 
 // Core Tool Schemas
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // JSON Helper Schemas
 
-
-
-
-
-
-
-
-
-
-
-
 // JSON Operation Schemas
-
-
-
-
-
-
-
 
 // Vacuum Schema
 export const VacuumSchema = z.object({
@@ -185,33 +150,8 @@ export const VacuumSchema = z.object({
 
 // Analyze JSON Schema
 
-
 // Create JSON Collection
-
 
 // JSON Security Scan
 
-
 // Export schema types
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

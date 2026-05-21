@@ -114,6 +114,6 @@ sqlite_window_moving_avg({
   column: "close_price",
   orderBy: "date",
   windowSize: 7,
-  selectColumns: ["date"]
+  selectColumns: ["date"],
 });
 ```

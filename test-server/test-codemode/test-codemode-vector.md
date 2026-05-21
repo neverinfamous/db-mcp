@@ -23,9 +23,9 @@
 
 ## Test Database Schema
 
-| Table           | Rows | Key Columns                                                     |
-| --------------- | ---- | --------------------------------------------------------------- |
-| test_embeddings | 20   | id, content, category, embedding (8-dim JSON float array)       |
+| Table           | Rows | Key Columns                                               |
+| --------------- | ---- | --------------------------------------------------------- |
+| test_embeddings | 20   | id, content, category, embedding (8-dim JSON float array) |
 
 **Categories**: database, fitness, food, tech, travel (each ~4 rows)
 **Row 1**: content="Machine learning fundamentals", category="tech", embedding=[0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01]
@@ -112,42 +112,72 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 ```javascript
 const failures = [];
 // Get first embedding
-const row1 = await sqlite.core.readQuery("SELECT embedding FROM test_embeddings WHERE id = 1");
+const row1 = await sqlite.core.readQuery(
+  "SELECT embedding FROM test_embeddings WHERE id = 1",
+);
 const vec = JSON.parse(row1.rows[0].embedding);
 
 // Search for similar
 const similar = await sqlite.vector.search({
-  table: "test_embeddings", vectorColumn: "embedding",
-  queryVector: vec, metric: "cosine", limit: 5
+  table: "test_embeddings",
+  vectorColumn: "embedding",
+  queryVector: vec,
+  metric: "cosine",
+  limit: 5,
 });
-if (!similar || !similar.rows || similar.rows.length < 1) failures.push("search returned no results");
+if (!similar || !similar.rows || similar.rows.length < 1)
+  failures.push("search returned no results");
 
 // Get stats
-const vstats = await sqlite.vector.stats({table: "test_embeddings", vectorColumn: "embedding"});
+const vstats = await sqlite.vector.stats({
+  table: "test_embeddings",
+  vectorColumn: "embedding",
+});
 if (!vstats) failures.push("stats failed");
 
 // Distance calc
-const dist = await sqlite.vector.distance({vector1: vec, vector2: vec, metric: "cosine"});
+const dist = await sqlite.vector.distance({
+  vector1: vec,
+  vector2: vec,
+  metric: "cosine",
+});
 // Self-distance should be 0 (or very close)
 
-return { failures, success: failures.length === 0, resultCount: similar?.rows?.length, selfDistance: dist.distance };
+return {
+  failures,
+  success: failures.length === 0,
+  resultCount: similar?.rows?.length,
+  selfDistance: dist.distance,
+};
 ```
 
 ### 5.2 — Create → populate → search → teardown
 
 ```javascript
 const failures = [];
-await sqlite.vector.createTable({tableName: "temp_cm_vec_pipe", dimensions: 3});
+await sqlite.vector.createTable({
+  tableName: "temp_cm_vec_pipe",
+  dimensions: 3,
+});
 await sqlite.vector.batchStore({
-  table: "temp_cm_vec_pipe", idColumn: "id", vectorColumn: "vector",
-  items: [{id: 1, vector: [1, 0, 0]}, {id: 2, vector: [0, 1, 0]}, {id: 3, vector: [0, 0, 1]}]
+  table: "temp_cm_vec_pipe",
+  idColumn: "id",
+  vectorColumn: "vector",
+  items: [
+    { id: 1, vector: [1, 0, 0] },
+    { id: 2, vector: [0, 1, 0] },
+    { id: 3, vector: [0, 0, 1] },
+  ],
 });
 const results = await sqlite.vector.search({
-  table: "temp_cm_vec_pipe", vectorColumn: "vector",
-  queryVector: [1, 0, 0], metric: "cosine", limit: 3
+  table: "temp_cm_vec_pipe",
+  vectorColumn: "vector",
+  queryVector: [1, 0, 0],
+  metric: "cosine",
+  limit: 3,
 });
 if (results.rows[0].id !== 1) failures.push("expected row 1 as closest match");
-await sqlite.core.dropTable({tableName: "temp_cm_vec_pipe"});
+await sqlite.core.dropTable({ tableName: "temp_cm_vec_pipe" });
 return { failures, success: failures.length === 0 };
 ```
 
@@ -161,28 +191,44 @@ const failures = [];
 await sqlite.vector.createTable({
   tableName: "temp_cm_vec_json",
   dimensions: 3,
-  additionalColumns: [{name: "metadata", type: "TEXT"}]
+  additionalColumns: [{ name: "metadata", type: "TEXT" }],
 });
 // Store vector with JSON metadata
 await sqlite.vector.store({
-  table: "temp_cm_vec_json", idColumn: "id", vectorColumn: "vector",
-  id: 1, vector: [1, 0, 0]
+  table: "temp_cm_vec_json",
+  idColumn: "id",
+  vectorColumn: "vector",
+  id: 1,
+  vector: [1, 0, 0],
 });
 await sqlite.core.writeQuery({
-  query: `UPDATE temp_cm_vec_json SET metadata = '{"category": "test", "score": 0.95}' WHERE id = 1`
+  query: `UPDATE temp_cm_vec_json SET metadata = '{"category": "test", "score": 0.95}' WHERE id = 1`,
 });
 // Search and extract JSON from results
 const results = await sqlite.vector.search({
-  table: "temp_cm_vec_json", vectorColumn: "vector",
-  queryVector: [1, 0, 0], metric: "cosine", limit: 1
+  table: "temp_cm_vec_json",
+  vectorColumn: "vector",
+  queryVector: [1, 0, 0],
+  metric: "cosine",
+  limit: 1,
 });
-if (!results.rows || results.rows.length === 0) failures.push("vector search returned no results");
+if (!results.rows || results.rows.length === 0)
+  failures.push("vector search returned no results");
 const meta = await sqlite.json.extract({
-  table: "temp_cm_vec_json", column: "metadata", path: "$.category", whereClause: "id = 1"
+  table: "temp_cm_vec_json",
+  column: "metadata",
+  path: "$.category",
+  whereClause: "id = 1",
 });
-if (!meta || meta.success === false) failures.push("JSON extract from vector table failed");
-await sqlite.core.dropTable({tableName: "temp_cm_vec_json"});
-return { failures, success: failures.length === 0, searchResult: results, jsonMeta: meta };
+if (!meta || meta.success === false)
+  failures.push("JSON extract from vector table failed");
+await sqlite.core.dropTable({ tableName: "temp_cm_vec_json" });
+return {
+  failures,
+  success: failures.length === 0,
+  searchResult: results,
+  jsonMeta: meta,
+};
 ```
 
 ---
@@ -190,9 +236,9 @@ return { failures, success: failures.length === 0, searchResult: results, jsonMe
 ## Post-Test Procedures
 
 1. **Cleanup**: Drop `temp_*` tables
-3. **Triage findings**: Create implementation plan if issues found
-4. **Scope of fixes**: Handler code, server-instructions, this prompt
-5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-6. **Commit**: Stage and commit — do NOT push
-7. **Token audit**: Report most expensive block
-8. **Final summary**: After testing/re-testing
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, this prompt
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

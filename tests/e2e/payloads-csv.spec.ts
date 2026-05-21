@@ -45,11 +45,12 @@ test.describe("Payload Contracts: CSV Tools", () => {
       );
 
       if (!payload.success) {
-        // CSV extension not available — skip remaining tests
-        const msg = (payload.error ?? payload.message) as string;
-        if (msg && (msg.includes("not available") || msg.includes("CSV"))) {
+        // CSV extension not available — mark remaining tests for skip
+        const msg = String(payload.error ?? payload.message ?? "");
+        if (msg.includes("not available") || msg.includes("csv") || msg.includes("CSV") || msg.includes("EXTENSION_MISSING")) {
           csvAvailable = false;
-          test.skip();
+          // Extension unavailability is an expected condition — pass gracefully
+          expect(payload.code).toBe("EXTENSION_MISSING");
           return;
         }
       }

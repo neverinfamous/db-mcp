@@ -151,7 +151,6 @@ export const CreateSeriesTableOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
@@ -285,7 +284,6 @@ export const CreateSeriesTableSchema = z.object({
   columnName: z.string().optional().default("value").describe("Column name"),
 });
 
-
 // =============================================================================
 // Types
 // =============================================================================
@@ -303,7 +301,6 @@ export type CreateCsvTableInput = z.infer<typeof CreateCsvTableSchema>;
 export type AnalyzeCsvSchemaInput = z.infer<typeof AnalyzeCsvSchemaSchema>;
 export type CreateRtreeTableInput = z.infer<typeof CreateRtreeTableSchema>;
 export type CreateSeriesTableInput = z.infer<typeof CreateSeriesTableSchema>;
-
 
 const DbstatObjectSchema = z.object({
   name: z.string(),

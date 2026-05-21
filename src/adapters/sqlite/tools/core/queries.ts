@@ -15,9 +15,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../utils/errors/index.js";
-import {
-  resolveAliases,
-} from "../../types.js";
+import { resolveAliases } from "../../types.js";
 import {
   ReadQueryOutputSchema,
   WriteQueryOutputSchema,
@@ -213,10 +211,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         const mainStmt = foundMain
           ? trimmedUpper.slice(i).trim()
           : trimmedUpper.slice(i).trim();
-        if (
-          !mainStmt.startsWith("SELECT") &&
-          !mainStmt.startsWith("EXPLAIN")
-        ) {
+        if (!mainStmt.startsWith("SELECT") && !mainStmt.startsWith("EXPLAIN")) {
           isAllowed = false;
         }
       }
@@ -231,7 +226,8 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           ...formatHandlerError(
             new ValidationError(message, "VALIDATION_ERROR", {
-              suggestion: "Check your query syntax. For DML or DDL operations, use sqlite_write_query or appropriate admin tools.",
+              suggestion:
+                "Check your query syntax. For DML or DDL operations, use sqlite_write_query or appropriate admin tools.",
               details: { sql: input.query },
             }),
           ),
@@ -354,7 +350,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
                 {
                   suggestion: "Use the appropriate tool for this operation.",
                   details: { sql: input.query },
-                }
+                },
               ),
             ),
             rowsAffected: 0,
@@ -366,9 +362,10 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
               `Unrecognized statement type. sqlite_write_query only accepts INSERT, UPDATE, DELETE, or REPLACE statements.`,
               "VALIDATION_ERROR",
               {
-                suggestion: "Check your query syntax. For SELECT, use sqlite_read_query.",
+                suggestion:
+                  "Check your query syntax. For SELECT, use sqlite_read_query.",
                 details: { sql: input.query },
-              }
+              },
             ),
           ),
           rowsAffected: 0,

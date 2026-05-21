@@ -75,9 +75,7 @@ describe("createJsonSecurityScanTool", () => {
   it("should detect sensitive keys case-insensitively", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [
-        { json_data: '{"API_KEY": "abc123", "SSN": "111-22-3333"}' },
-      ],
+      rows: [{ json_data: '{"API_KEY": "abc123", "SSN": "111-22-3333"}' }],
     });
     const tool = createJsonSecurityScanTool(adapter);
     const result = (await tool.handler(
@@ -141,9 +139,7 @@ describe("createJsonSecurityScanTool", () => {
     expect(result.success).toBe(true);
     expect(result.issues).toBeDefined();
 
-    const xssIssue = result.issues.find(
-      (i: any) => i.type === "xss_pattern",
-    );
+    const xssIssue = result.issues.find((i: any) => i.type === "xss_pattern");
     expect(xssIssue).toBeDefined();
     expect(xssIssue.key).toBe("bio");
   });
@@ -204,10 +200,7 @@ describe("createJsonSecurityScanTool", () => {
   it("should skip NULL json_data rows", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({
-      rows: [
-        { json_data: null },
-        { json_data: '{"name": "clean"}' },
-      ],
+      rows: [{ json_data: null }, { json_data: '{"name": "clean"}' }],
     });
     const tool = createJsonSecurityScanTool(adapter);
     const result = (await tool.handler(
@@ -273,10 +266,7 @@ describe("createJsonSecurityScanTool", () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonSecurityScanTool(adapter);
-    await tool.handler(
-      { table: "users", column: "data", sampleSize: 50 },
-      ctx,
-    );
+    await tool.handler({ table: "users", column: "data", sampleSize: 50 }, ctx);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
       expect.stringContaining("LIMIT 50"),
     );

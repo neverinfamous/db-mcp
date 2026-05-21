@@ -167,9 +167,8 @@ function createGroupApi(
         timestamp: new Date(),
         requestId: crypto.randomUUID(),
       };
-      
-      const result = await tool.handler(normalizedParams, context);
 
+      const result = await tool.handler(normalizedParams, context);
 
       return result;
     };

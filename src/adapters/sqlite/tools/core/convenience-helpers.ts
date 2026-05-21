@@ -34,7 +34,8 @@ export async function validateTableExists(
       error: `Table or view '${table}' not found. Use sqlite_list_tables to see available tables.`,
       code: "TABLE_NOT_FOUND",
       category: ErrorCategory.RESOURCE,
-      suggestion: "Table or view does not exist. Run sqlite_list_tables to see available tables.",
+      suggestion:
+        "Table or view does not exist. Run sqlite_list_tables to see available tables.",
       details: undefined,
       recoverable: false,
     };
@@ -53,5 +54,3 @@ export async function validateTableExists(
 export function preprocessTableParams(input: unknown): unknown {
   return resolveAliases(input, { table: "tableName", name: "table" });
 }
-
-

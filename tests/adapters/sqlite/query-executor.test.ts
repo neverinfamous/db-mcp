@@ -14,7 +14,10 @@ import {
   executeGeneral,
   rowsFromSqlJsResult,
 } from "../../../src/adapters/sqlite/query-executor.js";
-import { QueryError, ResourceNotFoundError } from "../../../src/utils/errors/index.js";
+import {
+  QueryError,
+  ResourceNotFoundError,
+} from "../../../src/utils/errors/index.js";
 
 // =============================================================================
 // Test Setup

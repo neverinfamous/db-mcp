@@ -1,4 +1,9 @@
-import { VALID_TEXT_CASE_MODES, VALID_TRIM_MODES, validateColumnExists, validateColumnsExist } from "./helpers.js";
+import {
+  VALID_TEXT_CASE_MODES,
+  VALID_TRIM_MODES,
+  validateColumnExists,
+  validateColumnsExist,
+} from "./helpers.js";
 /**
  * Text Formatting Tools
  *
@@ -32,7 +37,7 @@ import {
   TextTrimSchema,
   TextCaseSchema,
   TextSubstringSchema,
-  } from "../../schemas/text.js";
+} from "../../schemas/text.js";
 
 export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -174,7 +179,12 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
 
         const results = (result.rows ?? []).map((row) => {
           const rawRowid = row["__rowid"];
-          const rowid = typeof rawRowid === "number" ? rawRowid : typeof rawRowid === "string" ? parseInt(rawRowid, 10) || 0 : 0;
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
           return { rowid, trimmed: row["trimmed"] };
         });
 
@@ -236,7 +246,12 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
 
         const results = (result.rows ?? []).map((row) => {
           const rawRowid = row["__rowid"];
-          const rowid = typeof rawRowid === "number" ? rawRowid : typeof rawRowid === "string" ? parseInt(rawRowid, 10) || 0 : 0;
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
           return { rowid, transformed: row["transformed"] };
         });
 
@@ -298,7 +313,12 @@ export function createTextSubstringTool(
 
         const results = (result.rows ?? []).map((row) => {
           const rawRowid = row["__rowid"];
-          const rowid = typeof rawRowid === "number" ? rawRowid : typeof rawRowid === "string" ? parseInt(rawRowid, 10) || 0 : 0;
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
           return { rowid, substring: row["substring"] };
         });
 

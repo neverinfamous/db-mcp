@@ -1,4 +1,8 @@
-import { validateColumnExists, isNumericType, NUMERIC_TYPES } from "./helpers.js";
+import {
+  validateColumnExists,
+  isNumericType,
+  NUMERIC_TYPES,
+} from "./helpers.js";
 /**
  * Advanced Statistics Tools
  *
@@ -73,13 +77,14 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
             `Column '${nonNumeric}' in table '${input.table}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
             "INVALID_INPUT",
             {
-              suggestion: "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for correlation analysis.",
+              suggestion:
+                "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for correlation analysis.",
               details: {
                 resourceType: "column",
                 resourceName: nonNumeric,
-                tableName: input.table
-              }
-            }
+                tableName: input.table,
+              },
+            },
           );
         }
 

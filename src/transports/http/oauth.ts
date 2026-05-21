@@ -113,7 +113,9 @@ function createSimpleBearerAuth(expectedToken: string): RequestHandler {
  * Parses the tool name from the JSON-RPC body and checks against the
  * OAuth scopes provided in req.auth.
  */
-export function applyScopeEnforcementMiddleware(state: HttpTransportState): void {
+export function applyScopeEnforcementMiddleware(
+  state: HttpTransportState,
+): void {
   if (!state.app) return;
 
   state.app.use((req, res, next) => {
@@ -121,7 +123,7 @@ export function applyScopeEnforcementMiddleware(state: HttpTransportState): void
       method?: string;
       params?: { name?: string };
     }
-    
+
     // Only intercept JSON-RPC POST requests for tools/call
     const body = req.body as JsonRpcBody | null | undefined;
     if (req.method !== "POST" || body?.method !== "tools/call") {

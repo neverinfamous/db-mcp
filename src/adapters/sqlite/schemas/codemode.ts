@@ -65,7 +65,10 @@ export const ExecuteCodeOutputSchema = z
         wallTimeMs: z.number().describe("Wall clock time in milliseconds"),
         cpuTimeMs: z.number().describe("CPU time in milliseconds"),
         memoryUsedMb: z.number().describe("Memory used in MB"),
-        tokenEstimate: z.number().optional().describe("Estimated token count of the result"),
+        tokenEstimate: z
+          .number()
+          .optional()
+          .describe("Estimated token count of the result"),
       })
       .optional()
       .describe("Execution performance metrics"),

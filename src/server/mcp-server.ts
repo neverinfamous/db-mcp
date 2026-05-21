@@ -167,41 +167,37 @@ export class DbMcpServer {
     };
 
     // Server info tool
-    this.server.registerTool(
-      "server_info",
-      serverInfoOpts,
-      () => {
-        const adapterInfo = [];
-        for (const [id, adapter] of this.adapters) {
-          adapterInfo.push({
-            id,
-            ...adapter.getInfo(),
-          });
-        }
+    this.server.registerTool("server_info", serverInfoOpts, () => {
+      const adapterInfo = [];
+      for (const [id, adapter] of this.adapters) {
+        adapterInfo.push({
+          id,
+          ...adapter.getInfo(),
+        });
+      }
 
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  name: this.config.name,
-                  version: this.config.version,
-                  transport: this.config.transport,
-                  adapters: adapterInfo,
-                  toolFilter: {
-                    raw: this.toolFilter.raw,
-                    enabledGroups: [...this.toolFilter.enabledGroups],
-                  },
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(
+              {
+                name: this.config.name,
+                version: this.config.version,
+                transport: this.config.transport,
+                adapters: adapterInfo,
+                toolFilter: {
+                  raw: this.toolFilter.raw,
+                  enabledGroups: [...this.toolFilter.enabledGroups],
                 },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
-      },
-    );
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      };
+    });
 
     // Health check tool
     const healthOpts: Record<string, unknown> = {
@@ -211,38 +207,34 @@ export class DbMcpServer {
       annotations: READ_ONLY,
     };
 
-    this.server.registerTool(
-      "server_health",
-      healthOpts,
-      async () => {
-        const health: Record<string, unknown> = {
-          server: "healthy",
-          timestamp: new Date().toISOString(),
-          adapters: {},
-        };
+    this.server.registerTool("server_health", healthOpts, async () => {
+      const health: Record<string, unknown> = {
+        server: "healthy",
+        timestamp: new Date().toISOString(),
+        adapters: {},
+      };
 
-        for (const [id, adapter] of this.adapters) {
-          try {
-            const adapterHealth = await adapter.getHealth();
-            (health["adapters"] as Record<string, unknown>)[id] = adapterHealth;
-          } catch (error) {
-            (health["adapters"] as Record<string, unknown>)[id] = {
-              connected: false,
-              error: error instanceof Error ? error.message : "Unknown error",
-            };
-          }
+      for (const [id, adapter] of this.adapters) {
+        try {
+          const adapterHealth = await adapter.getHealth();
+          (health["adapters"] as Record<string, unknown>)[id] = adapterHealth;
+        } catch (error) {
+          (health["adapters"] as Record<string, unknown>)[id] = {
+            connected: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
         }
+      }
 
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(health, null, 2),
-            },
-          ],
-        };
-      },
-    );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(health, null, 2),
+          },
+        ],
+      };
+    });
 
     // List adapters tool
     const listAdaptersOpts: Record<string, unknown> = {
@@ -252,31 +244,27 @@ export class DbMcpServer {
       annotations: READ_ONLY,
     };
 
-    this.server.registerTool(
-      "list_adapters",
-      listAdaptersOpts,
-      () => {
-        const adapters = [];
-        for (const [id, adapter] of this.adapters) {
-          adapters.push({
-            id,
-            type: adapter.type,
-            name: adapter.name,
-            version: adapter.version,
-            connected: adapter.isConnected(),
-          });
-        }
+    this.server.registerTool("list_adapters", listAdaptersOpts, () => {
+      const adapters = [];
+      for (const [id, adapter] of this.adapters) {
+        adapters.push({
+          id,
+          type: adapter.type,
+          name: adapter.name,
+          version: adapter.version,
+          connected: adapter.isConnected(),
+        });
+      }
 
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(adapters, null, 2),
-            },
-          ],
-        };
-      },
-    );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(adapters, null, 2),
+          },
+        ],
+      };
+    });
   }
 
   /**
@@ -605,10 +593,7 @@ export class DbMcpServer {
                   count: snapshots.length,
                   _meta: {
                     tokenEstimate: Math.ceil(
-                      Buffer.byteLength(
-                        JSON.stringify(snapshots),
-                        "utf8",
-                      ) / 4,
+                      Buffer.byteLength(JSON.stringify(snapshots), "utf8") / 4,
                     ),
                   },
                 },

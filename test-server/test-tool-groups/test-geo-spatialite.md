@@ -8,6 +8,7 @@
 ## WASM Mode
 
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js), apply these adjustments:
+>
 > - **Skip SpatiaLite tools** (items 1-7: `sqlite_spatialite_load`, `sqlite_spatialite_create_table`, `sqlite_spatialite_query`, `sqlite_spatialite_analyze`, `sqlite_spatialite_index`, `sqlite_spatialite_transform`, `sqlite_spatialite_import`) — `[NATIVE ONLY]`. These tools are not registered in WASM.
 > - **Skip all checklist items** — all require SpatiaLite.
 > - **Skip all Zod items** (SpatiaLite tools) — `[NATIVE ONLY]`.
@@ -42,10 +43,10 @@
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | Source                                                             | What you see                                                      | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields           | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field      | Bug — report as ❌ |
+| Type                 | Source                                                             | What you see                                                | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields     | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field | Bug — report as ❌ |
 
 ### Zod Validation Errors
 

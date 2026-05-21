@@ -216,7 +216,7 @@ const SentimentResultItemSchema = z.object({
 export const TextSentimentOutputSchema = z
   .object({
     success: z.boolean(),
-    
+
     sentiment: z.string().optional(),
     score: z.number().optional(),
     confidence: z.string().optional(),
@@ -229,8 +229,6 @@ export const TextSentimentOutputSchema = z
     results: z.array(SentimentResultItemSchema).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
-
-
 
 // =============================================================================
 // Input Schemas
@@ -455,7 +453,6 @@ export const FtsHeadlineSchema = z.object({
   ),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
-
 
 // =============================================================================
 // Types

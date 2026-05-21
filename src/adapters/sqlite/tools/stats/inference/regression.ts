@@ -14,9 +14,7 @@ import {
   DbMcpError,
   ErrorCategory,
 } from "../../../../../utils/errors/index.js";
-import {
-  RegressionSchema,
-} from "../../../schemas/stats.js";
+import { RegressionSchema } from "../../../schemas/stats.js";
 import { StatsRegressionOutputSchema } from "../../../schemas/stats.js";
 import {
   matrixTranspose,
@@ -54,16 +52,8 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.xColumn);
         await validateColumnExists(adapter, input.table, input.yColumn);
 
-        await validateNumericColumn(
-          adapter,
-          input.table,
-          input.xColumn,
-        );
-        await validateNumericColumn(
-          adapter,
-          input.table,
-          input.yColumn,
-        );
+        await validateNumericColumn(adapter, input.table, input.xColumn);
+        await validateNumericColumn(adapter, input.table, input.yColumn);
 
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.xColumn);

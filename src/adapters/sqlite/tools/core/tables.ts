@@ -1,4 +1,9 @@
-import { CreateTableSchema, ListTablesSchema, DescribeTableSchema, DropTableSchema } from "../../schemas/core.js";
+import {
+  CreateTableSchema,
+  ListTablesSchema,
+  DescribeTableSchema,
+  DropTableSchema,
+} from "../../schemas/core.js";
 /**
  * Core Table Management Tools
  *
@@ -21,9 +26,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../utils/errors/index.js";
-import {
-  resolveAliases,
-} from "../../types.js";
+import { resolveAliases } from "../../types.js";
 import {
   CreateTableOutputSchema,
   ListTablesOutputSchema,
@@ -425,13 +428,18 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
                 sql.includes(`INTO "${input.table}"`) ||
                 sql.includes(`INTO ${input.table}`)
               ) {
-                await adapter.executeQuery(`DROP TRIGGER IF EXISTS "${triggerName}"`);
+                await adapter.executeQuery(
+                  `DROP TRIGGER IF EXISTS "${triggerName}"`,
+                );
               }
             }
           }
         } catch (err) {
           // Ignore cleanup errors to ensure the primary DROP TABLE operation proceeds
-          console.warn(`Failed to clean up FTS triggers for ${input.table}:`, err);
+          console.warn(
+            `Failed to clean up FTS triggers for ${input.table}:`,
+            err,
+          );
         }
 
         const sql = `DROP TABLE "${input.table}"`;

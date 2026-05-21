@@ -317,7 +317,8 @@ describe("createSpatialIndexTool", () => {
   it("should return already-dropped for drop", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("geometry_columns")) return Promise.resolve({ rows: [] }); // No index
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [] }); // No index
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       return Promise.resolve({ rows: [] });
@@ -395,7 +396,8 @@ describe("createSpatialIndexTool", () => {
   it("should check no-index case", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("geometry_columns")) return Promise.resolve({ rows: [] });
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [] });
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       return Promise.resolve({ rows: [] });

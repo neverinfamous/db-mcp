@@ -412,7 +412,8 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       await callToolAndParse(client, "sqlite_write_query", {
-        query: "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.e2e_insert_test') IS NOT NULL",
+        query:
+          "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.e2e_insert_test') IS NOT NULL",
       });
     } finally {
       await client.close();

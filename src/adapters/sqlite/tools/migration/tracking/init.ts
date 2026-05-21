@@ -5,7 +5,10 @@ import type {
 } from "../../../../../types/index.js";
 import { idempotent } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { MigrationInitSchema, MigrationInitOutputSchema } from "../../../schemas/migration.js";
+import {
+  MigrationInitSchema,
+  MigrationInitOutputSchema,
+} from "../../../schemas/migration.js";
 import { MIGRATIONS_TABLE, isMigrationTableInitialized } from "../helpers.js";
 
 export function createMigrationInitTool(

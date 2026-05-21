@@ -29,13 +29,13 @@
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price (REAL), category (3 values: electronics, accessories, office) |
-| test_orders       | 20   | id, product_id, total_price, order_date, status               |
-| test_measurements | 200  | id, sensor_id (INT 1-5), temperature, humidity, pressure, measured_at |
+| Table             | Rows | Key Columns                                                                     |
+| ----------------- | ---- | ------------------------------------------------------------------------------- |
+| test_products     | 16   | id, name, price (REAL), category (3 values: electronics, accessories, office)   |
+| test_orders       | 20   | id, product_id, total_price, order_date, status                                 |
+| test_measurements | 200  | id, sensor_id (INT 1-5), temperature, humidity, pressure, measured_at           |
 | test_events       | 100  | id, event_type (page_view, click, purchase, login, search), user_id, event_date |
-| test_locations    | 15   | id, name, city (6 cities), latitude, longitude                |
+| test_locations    | 15   | id, name, city (6 cities), latitude, longitude                                  |
 
 ## Testing Requirements
 
@@ -158,12 +158,28 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ```javascript
 const failures = [];
-const basic = await sqlite.stats.statsBasic({table: "test_measurements", column: "temperature"});
-if (!basic || basic.stats.count !== 200) failures.push("basic stats: count mismatch");
+const basic = await sqlite.stats.statsBasic({
+  table: "test_measurements",
+  column: "temperature",
+});
+if (!basic || basic.stats.count !== 200)
+  failures.push("basic stats: count mismatch");
 
-const pct = await sqlite.stats.statsPercentile({table: "test_measurements", column: "temperature", percentiles: [50]});
-const corr = await sqlite.stats.statsCorrelation({table: "test_measurements", column1: "temperature", column2: "humidity"});
-const top = await sqlite.stats.statsTopN({table: "test_products", column: "price", n: 3});
+const pct = await sqlite.stats.statsPercentile({
+  table: "test_measurements",
+  column: "temperature",
+  percentiles: [50],
+});
+const corr = await sqlite.stats.statsCorrelation({
+  table: "test_measurements",
+  column1: "temperature",
+  column2: "humidity",
+});
+const top = await sqlite.stats.statsTopN({
+  table: "test_products",
+  column: "price",
+  n: 3,
+});
 
 return {
   failures,
@@ -172,8 +188,8 @@ return {
     tempRange: `${basic.stats.min} - ${basic.stats.max}`,
     median: pct.percentiles,
     correlation: corr.correlation,
-    topProducts: top.rows
-  }
+    topProducts: top.rows,
+  },
 };
 ```
 
@@ -185,16 +201,22 @@ return {
 const failures = [];
 await sqlite.core.createTable({
   table: "temp_cm_stats_empty",
-  columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "value", type: "REAL"}]
+  columns: [
+    { name: "id", type: "INTEGER", primaryKey: true },
+    { name: "value", type: "REAL" },
+  ],
 });
-const basic = await sqlite.stats.statsBasic({table: "temp_cm_stats_empty", column: "value"});
+const basic = await sqlite.stats.statsBasic({
+  table: "temp_cm_stats_empty",
+  column: "value",
+});
 // Should return count: 0 or {success: false} — must not crash
 if (basic.success === false) {
   // Structured error is acceptable for empty table
 } else if (basic.stats?.count !== 0) {
   failures.push("expected count 0 for empty table, got: " + basic.stats?.count);
 }
-await sqlite.core.dropTable({table: "temp_cm_stats_empty"});
+await sqlite.core.dropTable({ table: "temp_cm_stats_empty" });
 return { failures, success: failures.length === 0, basicResult: basic };
 ```
 

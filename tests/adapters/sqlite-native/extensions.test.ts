@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { loadSpatialite, loadCsvExtension } from "../../../src/adapters/sqlite-native/extensions.js";
+import {
+  loadSpatialite,
+  loadCsvExtension,
+} from "../../../src/adapters/sqlite-native/extensions.js";
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import type { ModuleLogger } from "../../../src/utils/logger/index.js";
 
@@ -11,12 +14,15 @@ describe("Native Extensions Loader", () => {
       loadExtension: (extPath: string) => {
         pathsTried.push(extPath);
         // Fail the first few, succeed on one to simulate fallback
-        if (extPath.includes("mod_spatialite.dll") || extPath.includes("mod_spatialite.so")) {
+        if (
+          extPath.includes("mod_spatialite.dll") ||
+          extPath.includes("mod_spatialite.so")
+        ) {
           loadExtensionCalled = true;
           return;
         }
         throw new Error("Cannot load");
-      }
+      },
     } as unknown as BetterSqliteDb;
 
     const mockLog: ModuleLogger = {
@@ -32,7 +38,7 @@ describe("Native Extensions Loader", () => {
     expect(loadExtensionCalled).toBe(true);
     expect(mockLog.info).toHaveBeenCalledWith(
       expect.stringContaining("Loaded SpatiaLite extension"),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
@@ -40,7 +46,7 @@ describe("Native Extensions Loader", () => {
     const mockDb = {
       loadExtension: () => {
         throw new Error("Cannot load");
-      }
+      },
     } as unknown as BetterSqliteDb;
 
     const mockLog = {
@@ -53,7 +59,7 @@ describe("Native Extensions Loader", () => {
     loadSpatialite(mockDb, mockLog);
     expect(mockLog.warning).toHaveBeenCalledWith(
       expect.stringContaining("SpatiaLite extension not available"),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
@@ -66,7 +72,7 @@ describe("Native Extensions Loader", () => {
           return;
         }
         throw new Error("Cannot load");
-      }
+      },
     } as unknown as BetterSqliteDb;
 
     const mockLog = {
@@ -81,7 +87,7 @@ describe("Native Extensions Loader", () => {
     expect(loadExtensionCalled).toBe(true);
     expect(mockLog.info).toHaveBeenCalledWith(
       expect.stringContaining("Loaded CSV extension"),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
@@ -89,7 +95,7 @@ describe("Native Extensions Loader", () => {
     const mockDb = {
       loadExtension: () => {
         throw new Error("Cannot load");
-      }
+      },
     } as unknown as BetterSqliteDb;
 
     const mockLog = {
@@ -102,7 +108,7 @@ describe("Native Extensions Loader", () => {
     loadCsvExtension(mockDb, mockLog);
     expect(mockLog.warning).toHaveBeenCalledWith(
       expect.stringContaining("CSV extension not available"),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 });

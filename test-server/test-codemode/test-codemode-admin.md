@@ -215,9 +215,9 @@ return { failures, success: failures.length === 0 };
 ## Post-Test Procedures
 
 1. **Cleanup**: Drop `temp_*` tables, views, and virtual tables
-3. **Triage findings**: Create implementation plan if issues found
-4. **Scope of fixes**: Handler code, server-instructions, this prompt
-5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-6. **Commit**: Stage and commit — do NOT push
-7. **Token audit**: Report most expensive block
-8. **Final summary**: After testing/re-testing
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, this prompt
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

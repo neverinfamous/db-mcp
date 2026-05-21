@@ -60,4 +60,3 @@ export interface McpServerConfig {
   /** Audit logging configuration */
   audit?: AuditConfig;
 }
-

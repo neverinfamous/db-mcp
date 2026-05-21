@@ -1,4 +1,17 @@
-import { JsonInsertOutputSchema, JsonUpdateOutputSchema, JsonMergeOutputSchema, CreateJsonCollectionOutputSchema, JsonInsertSchema, JsonUpdateSchema, JsonMergeSchema, CreateJsonCollectionSchema, type JsonInsertInput, type JsonUpdateInput, type JsonMergeInput, type CreateJsonCollectionInput } from "../../schemas/json.js";
+import {
+  JsonInsertOutputSchema,
+  JsonUpdateOutputSchema,
+  JsonMergeOutputSchema,
+  CreateJsonCollectionOutputSchema,
+  JsonInsertSchema,
+  JsonUpdateSchema,
+  JsonMergeSchema,
+  CreateJsonCollectionSchema,
+  type JsonInsertInput,
+  type JsonUpdateInput,
+  type JsonMergeInput,
+  type CreateJsonCollectionInput,
+} from "../../schemas/json.js";
 /**
  * JSON Write Tools
  *
@@ -15,9 +28,10 @@ import {
   sanitizeIdentifier,
   validateWhereClause,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
-
-
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 
 /**
  * Insert JSON data as a new row
@@ -25,7 +39,8 @@ import { formatHandlerError, ValidationError } from "../../../../utils/errors/in
 export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_insert",
-    description: "Insert a new row with JSON data into a JSON column. Note: This creates a new table row, rather than modifying an existing JSON object.",
+    description:
+      "Insert a new row with JSON data into a JSON column. Note: This creates a new table row, rather than modifying an existing JSON object.",
     group: "json",
     inputSchema: JsonInsertSchema,
     outputSchema: JsonInsertOutputSchema,
@@ -45,9 +60,13 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.column);
 
         if (input.data === undefined) {
-          throw new ValidationError("Missing required parameter: data", "VALIDATION_ERROR", {
-            suggestion: "Provide JSON data to insert.",
-          });
+          throw new ValidationError(
+            "Missing required parameter: data",
+            "VALIDATION_ERROR",
+            {
+              suggestion: "Provide JSON data to insert.",
+            },
+          );
         }
 
         const valueJson = JSON.stringify(input.data);
@@ -84,7 +103,8 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
 export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_update",
-    description: "Update a value at a specific JSON path using json_replace(). Only updates if the key already exists.",
+    description:
+      "Update a value at a specific JSON path using json_replace(). Only updates if the key already exists.",
     group: "json",
     inputSchema: JsonUpdateSchema,
     outputSchema: JsonUpdateOutputSchema,
@@ -105,15 +125,24 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Validate JSON path format
         if (!input.path.startsWith("$")) {
-          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
-            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
-          });
+          throw new ValidationError(
+            "JSON path must start with $",
+            "VALIDATION_ERROR",
+            {
+              suggestion:
+                "Use a valid JSON path starting with $. For example: $.key or $[0]",
+            },
+          );
         }
 
         if (input.value === undefined) {
-          throw new ValidationError("Missing required parameter: value", "VALIDATION_ERROR", {
-            suggestion: "Provide a value to update.",
-          });
+          throw new ValidationError(
+            "Missing required parameter: value",
+            "VALIDATION_ERROR",
+            {
+              suggestion: "Provide a value to update.",
+            },
+          );
         }
 
         const valueJson = JSON.stringify(input.value);
@@ -168,9 +197,13 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.column);
 
         if (input.mergeData === undefined) {
-          throw new ValidationError("Missing required parameter: mergeData", "VALIDATION_ERROR", {
-            suggestion: "Provide JSON data to merge.",
-          });
+          throw new ValidationError(
+            "Missing required parameter: mergeData",
+            "VALIDATION_ERROR",
+            {
+              suggestion: "Provide JSON data to merge.",
+            },
+          );
         }
 
         const mergeJson = JSON.stringify(input.mergeData);
@@ -235,9 +268,14 @@ export function createJsonCollectionTool(
         if (input.indexes) {
           for (const idx of input.indexes) {
             if (!idx.path.startsWith("$")) {
-              throw new ValidationError(`JSON path must start with $: ${idx.path}`, "VALIDATION_ERROR", {
-                suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
-              });
+              throw new ValidationError(
+                `JSON path must start with $: ${idx.path}`,
+                "VALIDATION_ERROR",
+                {
+                  suggestion:
+                    "Use a valid JSON path starting with $. For example: $.key or $[0]",
+                },
+              );
             }
           }
         }

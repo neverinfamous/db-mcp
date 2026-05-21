@@ -8,6 +8,7 @@
 ## WASM Mode
 
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js), apply these adjustments:
+>
 > - **Skip window function tools** (items 1-6: `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`) — `[NATIVE ONLY]`. These tools are not registered in WASM.
 > - **Skip checklist items** 1-6.
 > - **Skip Zod items** 7-12.
@@ -57,10 +58,10 @@
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | Source                                                             | What you see                                                      | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields           | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field      | Bug — report as ❌ |
+| Type                 | Source                                                             | What you see                                                | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields     | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field | Bug — report as ❌ |
 
 ### Zod Validation Errors
 

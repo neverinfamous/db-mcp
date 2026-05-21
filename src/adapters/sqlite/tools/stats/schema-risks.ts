@@ -10,7 +10,6 @@
  *   - sqlite_stats_detect_schema_risks: multi-factor schema health scoring
  */
 
-
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -18,7 +17,10 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import { StatsDetectSchemaRisksOutputSchema, DetectSchemaRisksSchema } from "../../schemas/stats.js";
+import {
+  StatsDetectSchemaRisksOutputSchema,
+  DetectSchemaRisksSchema,
+} from "../../schemas/stats.js";
 import { toNum, riskFromScore } from "./anomaly-detection.js";
 import type { RiskLevel } from "./anomaly-detection.js";
 import { isSpatialiteSystemTable } from "../core/tables.js";
@@ -26,8 +28,6 @@ import { isSpatialiteSystemTable } from "../core/tables.js";
 // =============================================================================
 // Schema
 // =============================================================================
-
-
 
 // =============================================================================
 // Tool Creator
@@ -240,7 +240,7 @@ export function createDetectSchemaRisksTool(
         if (!input.includeZeroRisk) {
           tables = tables.filter((t) => t.riskScore > 0);
         }
-        
+
         tables.sort((a, b) => b.riskScore - a.riskScore);
         tables = tables.slice(0, limit);
 

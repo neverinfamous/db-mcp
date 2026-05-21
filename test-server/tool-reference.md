@@ -106,30 +106,30 @@ Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and
 
 Statistical analysis — descriptive stats, percentiles, correlation, regression, distributions, anomaly detection, and window functions.
 
-| Tool                                | Description                                                                                                             |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_stats_basic`                | Get basic statistics (count, sum, avg, min, max) for a numeric column.                                                  |
-| `sqlite_stats_count`                | Count rows, optionally distinct values in a column.                                                                     |
-| `sqlite_stats_group_by`             | Aggregate statistics grouped by a column.                                                                               |
-| `sqlite_stats_histogram`            | Create a histogram with specified number of buckets.                                                                    |
-| `sqlite_stats_percentile`           | Calculate percentiles (median, quartiles, etc.) for a column.                                                           |
-| `sqlite_stats_correlation`          | Calculate Pearson correlation coefficient between two numeric columns.                                                  |
-| `sqlite_stats_top_n`                | Get top N values from a column.                                                                                         |
-| `sqlite_stats_distinct`             | Get distinct values from a column.                                                                                      |
-| `sqlite_stats_summary`              | Get summary statistics for multiple columns at once.                                                                    |
-| `sqlite_stats_frequency`            | Get frequency distribution of values in a column.                                                                       |
-| `sqlite_stats_outliers`             | Detect outliers using IQR (Interquartile Range) or Z-score method.                                                      |
-| `sqlite_stats_regression`           | Perform linear or polynomial regression analysis between two columns.                                                   |
-| `sqlite_stats_hypothesis`           | Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.                         |
-| `sqlite_stats_detect_anomalies`     | Detect data distribution anomalies using z-score analysis across numeric columns. Returns per-column risk assessment.   |
-| `sqlite_stats_detect_bloat`         | Score tables by fragmentation/bloat risk using PRAGMA + dbstat metrics. Returns weighted risk scores (0-100).            |
-| `sqlite_stats_detect_schema_risks`  | Score tables by schema health risk: missing FK indexes, no PKs, wide tables, large unindexed tables. Risk scores 0-100. |
-| `sqlite_window_row_number`          | Assign sequential row numbers based on ordering. Useful for pagination and ranking. `[NATIVE ONLY]`                     |
-| `sqlite_window_rank`                | Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0–1 range. `[NATIVE ONLY]` |
-| `sqlite_window_lag_lead`            | Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows. `[NATIVE ONLY]`                 |
-| `sqlite_window_running_total`       | Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics. `[NATIVE ONLY]`                  |
-| `sqlite_window_moving_avg`          | Calculate moving (rolling) average. Useful for smoothing time series data. `[NATIVE ONLY]`                              |
-| `sqlite_window_ntile`               | Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles. `[NATIVE ONLY]`               |
+| Tool                               | Description                                                                                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `sqlite_stats_basic`               | Get basic statistics (count, sum, avg, min, max) for a numeric column.                                                  |
+| `sqlite_stats_count`               | Count rows, optionally distinct values in a column.                                                                     |
+| `sqlite_stats_group_by`            | Aggregate statistics grouped by a column.                                                                               |
+| `sqlite_stats_histogram`           | Create a histogram with specified number of buckets.                                                                    |
+| `sqlite_stats_percentile`          | Calculate percentiles (median, quartiles, etc.) for a column.                                                           |
+| `sqlite_stats_correlation`         | Calculate Pearson correlation coefficient between two numeric columns.                                                  |
+| `sqlite_stats_top_n`               | Get top N values from a column.                                                                                         |
+| `sqlite_stats_distinct`            | Get distinct values from a column.                                                                                      |
+| `sqlite_stats_summary`             | Get summary statistics for multiple columns at once.                                                                    |
+| `sqlite_stats_frequency`           | Get frequency distribution of values in a column.                                                                       |
+| `sqlite_stats_outliers`            | Detect outliers using IQR (Interquartile Range) or Z-score method.                                                      |
+| `sqlite_stats_regression`          | Perform linear or polynomial regression analysis between two columns.                                                   |
+| `sqlite_stats_hypothesis`          | Perform statistical hypothesis tests: one-sample t-test, two-sample t-test, or chi-square test.                         |
+| `sqlite_stats_detect_anomalies`    | Detect data distribution anomalies using z-score analysis across numeric columns. Returns per-column risk assessment.   |
+| `sqlite_stats_detect_bloat`        | Score tables by fragmentation/bloat risk using PRAGMA + dbstat metrics. Returns weighted risk scores (0-100).           |
+| `sqlite_stats_detect_schema_risks` | Score tables by schema health risk: missing FK indexes, no PKs, wide tables, large unindexed tables. Risk scores 0-100. |
+| `sqlite_window_row_number`         | Assign sequential row numbers based on ordering. Useful for pagination and ranking. `[NATIVE ONLY]`                     |
+| `sqlite_window_rank`               | Calculate rank of rows. RANK leaves gaps after ties, DENSE_RANK does not, PERCENT_RANK gives 0–1 range. `[NATIVE ONLY]` |
+| `sqlite_window_lag_lead`           | Access previous (LAG) or next (LEAD) row values. Useful for comparing consecutive rows. `[NATIVE ONLY]`                 |
+| `sqlite_window_running_total`      | Calculate running (cumulative) total. Useful for balance tracking, cumulative metrics. `[NATIVE ONLY]`                  |
+| `sqlite_window_moving_avg`         | Calculate moving (rolling) average. Useful for smoothing time series data. `[NATIVE ONLY]`                              |
+| `sqlite_window_ntile`              | Divide rows into N buckets. E.g., 4 buckets = quartiles, 10 = deciles, 100 = percentiles. `[NATIVE ONLY]`               |
 
 ---
 
@@ -157,34 +157,34 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 
-| Tool                             | Description                                                                                                                       |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_backup`                  | Create a backup of the database to a file.                                                                                        |
-| `sqlite_analyze`                 | Analyze table statistics to improve query performance.                                                                            |
-| `sqlite_integrity_check`         | Check database integrity for corruption or errors.                                                                                |
-| `sqlite_optimize`                | Optimize database by reindexing and/or analyzing.                                                                                 |
-| `sqlite_restore`                 | Restore database from a backup file. WARNING: This replaces the current database.                                                 |
-| `sqlite_verify_backup`           | Verify a backup file's integrity without restoring it.                                                                            |
-| `sqlite_index_stats`             | Get detailed statistics for database indexes.                                                                                     |
-| `sqlite_pragma_compile_options`  | Get the compile-time options used to build SQLite. Use the `filter` parameter to reduce output (~50+ options by default).         |
-| `sqlite_pragma_database_list`    | List all attached databases.                                                                                                      |
-| `sqlite_pragma_optimize`         | Run `PRAGMA optimize` to improve query performance based on usage patterns.                                                       |
-| `sqlite_pragma_settings`         | Get or set a PRAGMA value.                                                                                                        |
-| `sqlite_pragma_table_info`       | Get detailed column information for a table.                                                                                      |
-| `sqlite_append_insight`          | Add a business insight to the `memo://insights` resource. Use this to capture key findings during data analysis.                  |
-| `sqlite_generate_series`         | Generate a series of numbers using `generate_series()` virtual table.                                                             |
-| `sqlite_create_view`             | Create a view based on a SELECT query.                                                                                            |
-| `sqlite_list_views`              | List all views in the database.                                                                                                   |
-| `sqlite_drop_view`               | Drop (delete) a view from the database.                                                                                           |
-| `sqlite_dbstat`                  | Get database storage statistics using dbstat virtual table.                                                                       |
-| `sqlite_vacuum`                  | Rebuild the database to reclaim space and optimize structure.                                                                     |
-| `sqlite_list_virtual_tables`     | List all virtual tables in the database.                                                                                          |
-| `sqlite_virtual_table_info`      | Get metadata about a specific virtual table.                                                                                      |
-| `sqlite_drop_virtual_table`      | Drop a virtual table.                                                                                                             |
-| `sqlite_create_csv_table`        | Create a virtual table from a CSV file. Requires the csv extension.                                                               |
-| `sqlite_analyze_csv_schema`      | Analyze a CSV file structure and infer column types. Uses a temporary virtual table.                                              |
-| `sqlite_create_rtree_table`      | Create an R-Tree virtual table for spatial indexing. Supports 2–5 dimensions.                                                     |
-| `sqlite_create_series_table`     | Create a table populated with a series of numbers. Unlike `generate_series`, this creates a persistent table.                     |
+| Tool                            | Description                                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `sqlite_backup`                 | Create a backup of the database to a file.                                                                                |
+| `sqlite_analyze`                | Analyze table statistics to improve query performance.                                                                    |
+| `sqlite_integrity_check`        | Check database integrity for corruption or errors.                                                                        |
+| `sqlite_optimize`               | Optimize database by reindexing and/or analyzing.                                                                         |
+| `sqlite_restore`                | Restore database from a backup file. WARNING: This replaces the current database.                                         |
+| `sqlite_verify_backup`          | Verify a backup file's integrity without restoring it.                                                                    |
+| `sqlite_index_stats`            | Get detailed statistics for database indexes.                                                                             |
+| `sqlite_pragma_compile_options` | Get the compile-time options used to build SQLite. Use the `filter` parameter to reduce output (~50+ options by default). |
+| `sqlite_pragma_database_list`   | List all attached databases.                                                                                              |
+| `sqlite_pragma_optimize`        | Run `PRAGMA optimize` to improve query performance based on usage patterns.                                               |
+| `sqlite_pragma_settings`        | Get or set a PRAGMA value.                                                                                                |
+| `sqlite_pragma_table_info`      | Get detailed column information for a table.                                                                              |
+| `sqlite_append_insight`         | Add a business insight to the `memo://insights` resource. Use this to capture key findings during data analysis.          |
+| `sqlite_generate_series`        | Generate a series of numbers using `generate_series()` virtual table.                                                     |
+| `sqlite_create_view`            | Create a view based on a SELECT query.                                                                                    |
+| `sqlite_list_views`             | List all views in the database.                                                                                           |
+| `sqlite_drop_view`              | Drop (delete) a view from the database.                                                                                   |
+| `sqlite_dbstat`                 | Get database storage statistics using dbstat virtual table.                                                               |
+| `sqlite_vacuum`                 | Rebuild the database to reclaim space and optimize structure.                                                             |
+| `sqlite_list_virtual_tables`    | List all virtual tables in the database.                                                                                  |
+| `sqlite_virtual_table_info`     | Get metadata about a specific virtual table.                                                                              |
+| `sqlite_drop_virtual_table`     | Drop a virtual table.                                                                                                     |
+| `sqlite_create_csv_table`       | Create a virtual table from a CSV file. Requires the csv extension.                                                       |
+| `sqlite_analyze_csv_schema`     | Analyze a CSV file structure and infer column types. Uses a temporary virtual table.                                      |
+| `sqlite_create_rtree_table`     | Create an R-Tree virtual table for spatial indexing. Supports 2–5 dimensions.                                             |
+| `sqlite_create_series_table`    | Create a table populated with a series of numbers. Unlike `generate_series`, this creates a persistent table.             |
 
 ---
 

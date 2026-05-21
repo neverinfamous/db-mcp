@@ -1,4 +1,8 @@
-import { VALID_NORMALIZE_MODES, VALID_VALIDATE_PATTERNS, validateColumnExists } from "./helpers.js";
+import {
+  VALID_NORMALIZE_MODES,
+  VALID_VALIDATE_PATTERNS,
+  validateColumnExists,
+} from "./helpers.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -14,10 +18,7 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
-import {
-  TextNormalizeSchema,
-  TextValidateSchema,
-  } from "../../schemas/text.js";
+import { TextNormalizeSchema, TextValidateSchema } from "../../schemas/text.js";
 import {
   TextNormalizeOutputSchema,
   TextValidateOutputSchema,
@@ -70,7 +71,12 @@ export function createTextNormalizeTool(
 
         const rows = (result.rows ?? []).map((row) => {
           const rawRowid = row["id"];
-          const rowid = typeof rawRowid === "number" ? rawRowid : typeof rawRowid === "string" ? parseInt(rawRowid, 10) || 0 : 0;
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
           const rawOriginal = row["value"];
           const original =
             typeof rawOriginal === "string"
@@ -142,7 +148,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
             throw new ValidationError(
               "customPattern is required when pattern='custom'",
               "VALIDATION_ERROR",
-              { details: { parameter: "customPattern" } }
+              { details: { parameter: "customPattern" } },
             );
           }
           // Normalize pattern: handle common JSON double-escaping issues

@@ -4,19 +4,19 @@ Please test all db-mcp resources (11 data + up to 9 help) using the test databas
 
 ## Resources to Test
 
-| #   | Resource Name       | URI                          | Type      | Expected Data Source                       |
-| --- | ------------------- | ---------------------------- | --------- | ------------------------------------------ |
-| 1   | sqlite_schema       | sqlite://schema              | Static    | Full schema via adapter.getSchema()        |
-| 2   | sqlite_tables       | sqlite://tables              | Static    | Table list via adapter.listTables()        |
-| 3   | sqlite_table_schema | sqlite://table/{name}/schema | Templated | Specific table via adapter.describeTable() |
-| 4   | sqlite_indexes      | sqlite://indexes             | Static    | All indexes via adapter.getAllIndexes()    |
-| 5   | sqlite_views        | sqlite://views               | Static    | Views from sqlite_master                   |
-| 6   | sqlite_health       | sqlite://health              | Static    | Connection health via adapter.getHealth()  |
-| 7   | sqlite_meta         | sqlite://meta                | Static    | PRAGMA values + adapter info               |
-| 8   | sqlite_compile_options | sqlite://compile_options | Static    | SQLite compile-time build options          |
-| 9   | sqlite_pragma       | sqlite://pragma              | Static    | Runtime PRAGMA config snapshot             |
-| 10  | sqlite_insights     | memo://insights              | Static    | In-memory insights memo                    |
-| 11  | sqlite_audit        | sqlite://audit               | Static    | Audit log access (if enabled)              |
+| #   | Resource Name          | URI                          | Type      | Expected Data Source                       |
+| --- | ---------------------- | ---------------------------- | --------- | ------------------------------------------ |
+| 1   | sqlite_schema          | sqlite://schema              | Static    | Full schema via adapter.getSchema()        |
+| 2   | sqlite_tables          | sqlite://tables              | Static    | Table list via adapter.listTables()        |
+| 3   | sqlite_table_schema    | sqlite://table/{name}/schema | Templated | Specific table via adapter.describeTable() |
+| 4   | sqlite_indexes         | sqlite://indexes             | Static    | All indexes via adapter.getAllIndexes()    |
+| 5   | sqlite_views           | sqlite://views               | Static    | Views from sqlite_master                   |
+| 6   | sqlite_health          | sqlite://health              | Static    | Connection health via adapter.getHealth()  |
+| 7   | sqlite_meta            | sqlite://meta                | Static    | PRAGMA values + adapter info               |
+| 8   | sqlite_compile_options | sqlite://compile_options     | Static    | SQLite compile-time build options          |
+| 9   | sqlite_pragma          | sqlite://pragma              | Static    | Runtime PRAGMA config snapshot             |
+| 10  | sqlite_insights        | memo://insights              | Static    | In-memory insights memo                    |
+| 11  | sqlite_audit           | sqlite://audit               | Static    | Audit log access (if enabled)              |
 
 ---
 

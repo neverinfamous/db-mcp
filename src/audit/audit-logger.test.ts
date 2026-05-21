@@ -7,17 +7,14 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { AuditLogger } from "./logger.js";
-import { readFile, rm, stat, mkdir } from "node:fs/promises";
+import { readFile, rm, stat, mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { AuditEntry, AuditConfig } from "./types.js";
 
 /** Create a temporary directory for each test */
-function tempDir(): string {
-  return join(
-    tmpdir(),
-    `db-mcp-audit-test-${Date.now()}-${String(Math.random()).slice(2, 8)}`,
-  );
+async function tempDir(): Promise<string> {
+  return mkdtemp(join(tmpdir(), "db-mcp-audit-test-"));
 }
 
 /** Create a minimal audit entry */
@@ -37,7 +34,10 @@ function makeEntry(overrides: Partial<AuditEntry> = {}): AuditEntry {
 }
 
 /** Create a default test config */
-function makeConfig(dir: string, overrides: Partial<AuditConfig> = {}): AuditConfig {
+function makeConfig(
+  dir: string,
+  overrides: Partial<AuditConfig> = {},
+): AuditConfig {
   return {
     enabled: true,
     logPath: join(dir, "audit.jsonl"),
@@ -52,8 +52,7 @@ describe("AuditLogger", () => {
   let dir: string;
 
   beforeEach(async () => {
-    dir = tempDir();
-    await mkdir(dir, { recursive: true });
+    dir = await tempDir();
   });
 
   afterEach(async () => {

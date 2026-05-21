@@ -1,5 +1,11 @@
-import { getUniqueColumnNames } from './helpers.js';
-import { JsonSelectOutputSchema, JsonSelectSchema, JsonQuerySchema, JsonValidatePathSchema, AnalyzeJsonSchemaSchema } from "../../schemas/json.js";
+import { getUniqueColumnNames } from "./helpers.js";
+import {
+  JsonSelectOutputSchema,
+  JsonSelectSchema,
+  JsonQuerySchema,
+  JsonValidatePathSchema,
+  AnalyzeJsonSchemaSchema,
+} from "../../schemas/json.js";
 /**
  * JSON Read Tools
  *
@@ -25,7 +31,7 @@ import {
   JsonValidatePathOutputSchema,
   AnalyzeJsonSchemaOutputSchema,
 } from "../../schemas/json.js";
-import { } from "../../schemas/json.js";
+import {} from "../../schemas/json.js";
 
 /**
  * Select and extract JSON data
@@ -132,8 +138,14 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Build where clause from filters
         const conditions: string[] = [];
-        if (input.filterPaths !== undefined && input.filterPaths !== null && typeof input.filterPaths === "object") {
-          for (const [path, value] of Object.entries(input.filterPaths as Record<string, unknown>)) {
+        if (
+          input.filterPaths !== undefined &&
+          input.filterPaths !== null &&
+          typeof input.filterPaths === "object"
+        ) {
+          for (const [path, value] of Object.entries(
+            input.filterPaths as Record<string, unknown>,
+          )) {
             if (!path.startsWith("$")) {
               throw new ValidationError(`JSON path must start with $: ${path}`);
             }

@@ -332,7 +332,7 @@ export class SqliteAdapter extends DatabaseAdapter {
           return false;
         }
       }
-      
+
       // Filter out FTS5 tools if FTS is not supported
       if (!capabilities.fullTextSearch && tool.name.startsWith("sqlite_fts_")) {
         return false;

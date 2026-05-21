@@ -42,7 +42,9 @@ function createMockAdapter(
       if (sql.includes("sqlite_master") && sql.includes("sql")) {
         return {
           rows: [
-            { sql: 'CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT)' },
+            {
+              sql: "CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT)",
+            },
           ],
         };
       }
@@ -227,9 +229,7 @@ describe("BackupManager", () => {
       const snapshots = await manager.listSnapshots();
       expect(snapshots.length).toBeGreaterThanOrEqual(2);
       // Newest first
-      expect(
-        snapshots[0]!.timestamp >= snapshots[1]!.timestamp,
-      ).toBe(true);
+      expect(snapshots[0]!.timestamp >= snapshots[1]!.timestamp).toBe(true);
     });
   });
 
@@ -238,7 +238,9 @@ describe("BackupManager", () => {
       const config = makeConfig();
       const manager = new BackupManager(config, auditLogPath);
 
-      const snapshot = await manager.getSnapshot("nonexistent.snapshot.json.gz");
+      const snapshot = await manager.getSnapshot(
+        "nonexistent.snapshot.json.gz",
+      );
       expect(snapshot).toBeNull();
     });
 

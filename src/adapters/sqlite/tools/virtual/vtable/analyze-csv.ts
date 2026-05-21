@@ -50,8 +50,6 @@ export function createAnalyzeCsvSchemaTool(
         };
       }
 
-
-
       const tempName = `_csv_analyze_${Date.now()}`;
 
       try {

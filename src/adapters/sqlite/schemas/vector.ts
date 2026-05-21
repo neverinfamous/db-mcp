@@ -6,25 +6,28 @@ import { z } from "zod";
 
 const coerceNumberArray = (val: unknown): unknown => {
   if (Array.isArray(val)) return val;
-  if (typeof val === 'string') {
+  if (typeof val === "string") {
     try {
       const parsed = JSON.parse(val) as unknown;
       if (Array.isArray(parsed)) return parsed;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   return val;
 };
 const coerceArray = (val: unknown): unknown => {
   if (Array.isArray(val)) return val;
-  if (typeof val === 'string') {
+  if (typeof val === "string") {
     try {
       const parsed = JSON.parse(val) as unknown;
       if (Array.isArray(parsed)) return parsed;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   return val;
 };
-
 
 const coerceNumber = (val: unknown): unknown =>
   typeof val === "string"
@@ -174,7 +177,6 @@ export const VectorDistanceOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
@@ -292,7 +294,6 @@ export const VectorDimensionsSchema = z.object({
   table: z.string().describe("Table name"),
   vectorColumn: z.string().describe("Vector column name"),
 });
-
 
 // =============================================================================
 // Types

@@ -23,22 +23,22 @@
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price (REAL), category (TEXT lowercase)             |
-| test_jsonb_docs   | 6    | id, doc (JSON), metadata (JSON), tags (JSON array), created_at |
-| test_events       | 100  | id, event_type, user_id (INT), payload (JSON), event_date     |
+| Table           | Rows | Key Columns                                                    |
+| --------------- | ---- | -------------------------------------------------------------- |
+| test_products   | 16   | id, name, price (REAL), category (TEXT lowercase)              |
+| test_jsonb_docs | 6    | id, doc (JSON), metadata (JSON), tags (JSON array), created_at |
+| test_events     | 100  | id, event_type, user_id (INT), payload (JSON), event_date      |
 
 **test_jsonb_docs data:**
 
-| id | doc.type | doc.author | doc.views | metadata.source | tags |
-|----|----------|------------|-----------|-----------------|------|
-| 1  | article  | Alice      | 1250      | blog            | ["database","tutorial","beginner"] |
-| 2  | article  | Bob        | 890       | docs            | ["json","advanced","sqlite"] |
-| 3  | video    | Carol      | 5400      | youtube         | ["mcp","protocol","ai"] |
-| 4  | article  | David      | 670       | wiki            | ["fts5","search","indexing"] |
-| 5  | podcast  | Eve        | —         | spotify         | ["performance","tips","podcast"] |
-| 6  | article  | Frank      | 2100      | medium          | ["vector","embeddings","similarity"] |
+| id  | doc.type | doc.author | doc.views | metadata.source | tags                                 |
+| --- | -------- | ---------- | --------- | --------------- | ------------------------------------ |
+| 1   | article  | Alice      | 1250      | blog            | ["database","tutorial","beginner"]   |
+| 2   | article  | Bob        | 890       | docs            | ["json","advanced","sqlite"]         |
+| 3   | video    | Carol      | 5400      | youtube         | ["mcp","protocol","ai"]              |
+| 4   | article  | David      | 670       | wiki            | ["fts5","search","indexing"]         |
+| 5   | podcast  | Eve        | —         | spotify         | ["performance","tips","podcast"]     |
+| 6   | article  | Frank      | 2100      | medium          | ["vector","embeddings","similarity"] |
 
 Row 4 has nested: `doc.nested.level1.level2 = "deep value"`
 
@@ -161,24 +161,42 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 
 ```javascript
 // Create collection, populate, analyze, clean up
-await sqlite.json.createJsonCollection({tableName: "temp_cm_json_etl"});
+await sqlite.json.createJsonCollection({ tableName: "temp_cm_json_etl" });
 // Insert 3 documents
 for (let i = 1; i <= 3; i++) {
   await sqlite.core.writeQuery({
-    query: `INSERT INTO temp_cm_json_etl (data) VALUES ('{"index":${i},"label":"item_${i}","tags":["test"]}')`
+    query: `INSERT INTO temp_cm_json_etl (data) VALUES ('{"index":${i},"label":"item_${i}","tags":["test"]}')`,
   });
 }
-const schema = await sqlite.json.analyzeSchema({table: "temp_cm_json_etl", column: "data"});
-const scan = await sqlite.json.securityScan({table: "temp_cm_json_etl", column: "data"});
-await sqlite.core.writeQuery({query: "DROP TABLE IF EXISTS temp_cm_json_etl"});
-return { schemaFields: Object.keys(schema.schema.properties).length > 0, riskLevel: scan.riskLevel };
+const schema = await sqlite.json.analyzeSchema({
+  table: "temp_cm_json_etl",
+  column: "data",
+});
+const scan = await sqlite.json.securityScan({
+  table: "temp_cm_json_etl",
+  column: "data",
+});
+await sqlite.core.writeQuery({
+  query: "DROP TABLE IF EXISTS temp_cm_json_etl",
+});
+return {
+  schemaFields: Object.keys(schema.schema.properties).length > 0,
+  riskLevel: scan.riskLevel,
+};
 ```
 
 ### 5.2 — Cross-group JSON + stats
 
 ```javascript
-const extract = await sqlite.json.extract({table: "test_jsonb_docs", column: "doc", path: "$.views"});
-const stats = await sqlite.stats.statsBasic({table: "test_products", column: "price"});
+const extract = await sqlite.json.extract({
+  table: "test_jsonb_docs",
+  column: "doc",
+  path: "$.views",
+});
+const stats = await sqlite.stats.statsBasic({
+  table: "test_products",
+  column: "price",
+});
 return { jsonExtract: extract, priceStats: stats };
 ```
 
@@ -188,13 +206,19 @@ return { jsonExtract: extract, priceStats: stats };
 
 ```javascript
 const failures = [];
-await sqlite.json.createJsonCollection({tableName: "temp_cm_json_sec"});
+await sqlite.json.createJsonCollection({ tableName: "temp_cm_json_sec" });
 await sqlite.core.writeQuery({
-  query: `INSERT INTO temp_cm_json_sec (data) VALUES ('{"password": "secret123", "api_key": "sk-abc123", "query": "DROP TABLE users; --", "html": "<script>alert(1)</script>"}')`
+  query: `INSERT INTO temp_cm_json_sec (data) VALUES ('{"password": "secret123", "api_key": "sk-abc123", "query": "DROP TABLE users; --", "html": "<script>alert(1)</script>"}')`,
 });
-const scan = await sqlite.json.securityScan({table: "temp_cm_json_sec", column: "data"});
-await sqlite.core.writeQuery({query: "DROP TABLE IF EXISTS temp_cm_json_sec"});
-if (scan.riskLevel === "low") failures.push("expected riskLevel > low for malicious data");
+const scan = await sqlite.json.securityScan({
+  table: "temp_cm_json_sec",
+  column: "data",
+});
+await sqlite.core.writeQuery({
+  query: "DROP TABLE IF EXISTS temp_cm_json_sec",
+});
+if (scan.riskLevel === "low")
+  failures.push("expected riskLevel > low for malicious data");
 return { failures, success: failures.length === 0, riskLevel: scan.riskLevel };
 ```
 
@@ -205,9 +229,9 @@ Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`)
 ## Post-Test Procedures
 
 1. **Cleanup**: Confirm all `temp_*` tables removed
-3. **Triage findings**: Create implementation plan if issues found
-4. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
-5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-6. **Commit**: Stage and commit — do NOT push
-7. **Token audit**: Report most expensive block
-8. **Final summary**: After testing/re-testing
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

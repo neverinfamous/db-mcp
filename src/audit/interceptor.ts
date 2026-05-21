@@ -106,18 +106,22 @@ export function createAuditInterceptor(
       if (
         backupManager !== undefined &&
         queryAdapter !== undefined &&
-        (backupManager as { shouldSnapshot(t: string): boolean }).shouldSnapshot(toolName)
+        (
+          backupManager as { shouldSnapshot(t: string): boolean }
+        ).shouldSnapshot(toolName)
       ) {
         try {
-          backupRef = await (backupManager as {
-            createSnapshot(
-              t: string,
-              a: unknown,
-              r: string,
-              qa: SnapshotQueryAdapter,
-              l?: string,
-            ): Promise<string | undefined>;
-          }).createSnapshot(
+          backupRef = await (
+            backupManager as {
+              createSnapshot(
+                t: string,
+                a: unknown,
+                r: string,
+                qa: SnapshotQueryAdapter,
+                l?: string,
+              ): Promise<string | undefined>;
+            }
+          ).createSnapshot(
             toolName,
             args ?? {},
             requestId,

@@ -9,7 +9,10 @@ import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../utils/errors/index.js";
 import { validateTableExists } from "./column-validation.js";
 import {
   FtsCreateSchema,
@@ -81,7 +84,6 @@ function buildFts5SearchUnavailableError(): {
   };
 }
 
-
 /**
  * Get all FTS tools
  */
@@ -110,10 +112,12 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsCreateSchema.parse(params);
-        
+
         const targetTableName = input.tableName || input.ftsTable;
         if (!targetTableName) {
-          throw new ValidationError("Must provide either tableName or ftsTable");
+          throw new ValidationError(
+            "Must provide either tableName or ftsTable",
+          );
         }
 
         // Validate identifiers (FTS5 uses raw column names, not quoted)
@@ -163,7 +167,8 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
       } catch (error) {
         if (isFts5UnavailableError(error)) {
           return buildFts5UnavailableError(
-            (params as { tableName?: string } | null)?.tableName || (params as { ftsTable?: string } | null)?.ftsTable,
+            (params as { tableName?: string } | null)?.tableName ||
+              (params as { ftsTable?: string } | null)?.ftsTable,
           );
         }
         return formatHandlerError(error);

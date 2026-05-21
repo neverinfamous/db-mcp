@@ -29,9 +29,9 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ## Test Database Schema
 
-| Table          | Rows | Key Columns                                       |
-| -------------- | ---- | ------------------------------------------------- |
-| test_locations | 15   | id, name, city, latitude, longitude, type         |
+| Table          | Rows | Key Columns                               |
+| -------------- | ---- | ----------------------------------------- |
+| test_locations | 15   | id, name, city, latitude, longitude, type |
 
 **Key coordinates:**
 

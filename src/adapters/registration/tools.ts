@@ -140,9 +140,7 @@ export function registerToolImpl(
               {
                 type: "text" as const,
                 text:
-                  typeof result === "string"
-                    ? result
-                    : JSON.stringify(result),
+                  typeof result === "string" ? result : JSON.stringify(result),
               },
             ],
           };

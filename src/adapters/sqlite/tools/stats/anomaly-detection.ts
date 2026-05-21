@@ -14,21 +14,23 @@ import { validateColumnExists, isNumericType } from "./helpers.js";
  *   - toNum, riskFromScore, RiskLevel
  */
 
-
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import { formatHandlerError, ResourceNotFoundError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ResourceNotFoundError,
+} from "../../../../utils/errors/index.js";
 import {
   StatsDetectAnomaliesOutputSchema,
   StatsDetectBloatOutputSchema,
   DetectAnomaliesSchema,
   DetectBloatSchema,
 } from "../../schemas/stats.js";
-import { } from "../../schemas/stats.js";
+import {} from "../../schemas/stats.js";
 import { isSpatialiteSystemTable } from "../core/tables.js";
 
 // =============================================================================
@@ -50,8 +52,6 @@ export function riskFromScore(score: number): RiskLevel {
 // =============================================================================
 // Input Schema Helpers
 // =============================================================================
-
-
 
 // =============================================================================
 // Helper: get PRAGMA value
@@ -119,8 +119,8 @@ export function createDetectAnomaliesTool(
             {
               suggestion: "Run sqlite_list_tables to see available tables.",
               resourceType: "table",
-              resourceName: input.table
-            }
+              resourceName: input.table,
+            },
           );
         }
 
@@ -236,11 +236,13 @@ async function analyzeColumns(
       stddev: Math.round(stddev * 10000) / 10000,
       anomalyCount,
       totalRows: count,
-      topDeviations: (deviations.rows ?? []).map((r: Record<string, unknown>) => ({
-        rowid: toNum(r["rowid"]),
-        value: toNum(r["value"]),
-        zScore: Math.round(toNum(r["z_score"]) * 100) / 100,
-      })),
+      topDeviations: (deviations.rows ?? []).map(
+        (r: Record<string, unknown>) => ({
+          rowid: toNum(r["rowid"]),
+          value: toNum(r["value"]),
+          zScore: Math.round(toNum(r["z_score"]) * 100) / 100,
+        }),
+      ),
     });
   }
 
@@ -273,9 +275,7 @@ async function analyzeColumns(
 // 2. sqlite_stats_detect_bloat
 // =============================================================================
 
-export function createDetectBloatTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createDetectBloatTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_stats_detect_bloat",
     description:
@@ -397,7 +397,16 @@ async function gatherTableBloat(
       const pc = toNum(row["page_count"]);
       const rc = await safeRowCount(adapter, name);
       tables.push(
-        scoreBloat(name, sizeBytes, pc, rc, totalSizeBytes, dbFragPct, autoVacuum, journalMode),
+        scoreBloat(
+          name,
+          sizeBytes,
+          pc,
+          rc,
+          totalSizeBytes,
+          dbFragPct,
+          autoVacuum,
+          journalMode,
+        ),
       );
     }
   } catch {
@@ -411,7 +420,16 @@ async function gatherTableBloat(
       const rc = await safeRowCount(adapter, name);
       const est = rc * 100;
       tables.push(
-        scoreBloat(name, est, Math.max(1, Math.ceil(est / pageSize)), rc, totalSizeBytes, dbFragPct, autoVacuum, journalMode),
+        scoreBloat(
+          name,
+          est,
+          Math.max(1, Math.ceil(est / pageSize)),
+          rc,
+          totalSizeBytes,
+          dbFragPct,
+          autoVacuum,
+          journalMode,
+        ),
       );
     }
   }
@@ -419,7 +437,10 @@ async function gatherTableBloat(
   return tables;
 }
 
-async function safeRowCount(adapter: SqliteAdapter, table: string): Promise<number> {
+async function safeRowCount(
+  adapter: SqliteAdapter,
+  table: string,
+): Promise<number> {
   try {
     const r = await adapter.executeReadQuery(
       `SELECT COUNT(*) as cnt FROM "${table.replace(/"/g, '""')}"`,
@@ -474,11 +495,17 @@ function scoreBloat(
 
   const recommendations: string[] = [];
   if (dbFragPct >= 10)
-    recommendations.push(`Database has ${String(dbFragPct)}% fragmentation. Run VACUUM to reclaim space.`);
+    recommendations.push(
+      `Database has ${String(dbFragPct)}% fragmentation. Run VACUUM to reclaim space.`,
+    );
   if (autoVacuum === "none" && dbFragPct > 5)
-    recommendations.push("auto_vacuum is disabled. Enable with PRAGMA auto_vacuum = INCREMENTAL or run periodic VACUUM.");
+    recommendations.push(
+      "auto_vacuum is disabled. Enable with PRAGMA auto_vacuum = INCREMENTAL or run periodic VACUUM.",
+    );
   if (journalMode !== "wal" && sizeMB >= 10)
-    recommendations.push("Consider switching to WAL mode (PRAGMA journal_mode = WAL) for better concurrent performance.");
+    recommendations.push(
+      "Consider switching to WAL mode (PRAGMA journal_mode = WAL) for better concurrent performance.",
+    );
 
   return {
     name,

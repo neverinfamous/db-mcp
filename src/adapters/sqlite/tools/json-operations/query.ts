@@ -268,7 +268,9 @@ export function createJsonGroupObjectTool(
           // Build the key column expression
           const keyCol = input.allowExpressions
             ? (input.keyColumn ?? "rowid")
-            : (input.keyColumn ? sanitizeIdentifier(input.keyColumn) : "rowid");
+            : input.keyColumn
+              ? sanitizeIdentifier(input.keyColumn)
+              : "rowid";
 
           // Build subquery that computes the aggregate grouped by key
           let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
@@ -332,7 +334,9 @@ export function createJsonGroupObjectTool(
           valueColumn = input.valueColumn;
         } else {
           // Validate as identifiers (default, safe behavior)
-          keyColumn = input.keyColumn ? sanitizeIdentifier(input.keyColumn) : "rowid";
+          keyColumn = input.keyColumn
+            ? sanitizeIdentifier(input.keyColumn)
+            : "rowid";
           valueColumn = sanitizeIdentifier(input.valueColumn);
         }
 

@@ -6,12 +6,21 @@
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { resolveAliases } from "../../types.js";
 
-import { UpsertSchema, BatchInsertSchema, CountSchema, ExistsSchema, TruncateSchema } from "../../schemas/core.js";
+import {
+  UpsertSchema,
+  BatchInsertSchema,
+  CountSchema,
+  ExistsSchema,
+  TruncateSchema,
+} from "../../schemas/core.js";
 import { validateTableExists } from "./convenience-schemas.js";
 
 import {
@@ -20,14 +29,14 @@ import {
   ExistsOutputSchema,
 } from "../../schemas/core.js";
 
-
 /**
  * Execute an upsert (INSERT ... ON CONFLICT DO UPDATE)
  */
 export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_upsert",
-    description: "Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).",
+    description:
+      "Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).",
     group: "core",
     inputSchema: UpsertSchema,
     outputSchema: WriteQueryOutputSchema,
@@ -36,16 +45,24 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        const aliasedParams = resolveAliases(params, { tableName: "table", values: "data", conflictColumn: "conflictColumns" });
+        const aliasedParams = resolveAliases(params, {
+          tableName: "table",
+          values: "data",
+          conflictColumn: "conflictColumns",
+        });
         const parsed = UpsertSchema.parse(aliasedParams);
         input = {
           ...parsed,
           data: parsed.data ?? parsed.values ?? {},
-          conflictColumns: parsed.conflictColumns !== undefined
-            ? (Array.isArray(parsed.conflictColumns) ? parsed.conflictColumns : [parsed.conflictColumns])
-            : [],
+          conflictColumns:
+            parsed.conflictColumns !== undefined
+              ? Array.isArray(parsed.conflictColumns)
+                ? parsed.conflictColumns
+                : [parsed.conflictColumns]
+              : [],
         };
-        if (Object.keys(input.data).length === 0) throw new Error("data (or values alias) is required");
+        if (Object.keys(input.data).length === 0)
+          throw new Error("data (or values alias) is required");
       } catch (error) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
@@ -56,20 +73,25 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
       const columns = Object.keys(input.data);
       const values = Object.values(input.data);
       const placeholders = columns.map(() => "?").join(", ");
-      
+
       let sql = `INSERT INTO "${input.table}" ("${columns.join('", "')}") VALUES (${placeholders})`;
       const queryParams: unknown[] = [...values];
 
       if (input.conflictColumns.length > 0) {
-        const conflictCols = input.conflictColumns.map((c: string) => `"${c}"`).join(", ");
-        
+        const conflictCols = input.conflictColumns
+          .map((c: string) => `"${c}"`)
+          .join(", ");
+
         // Determine which columns to update
-        const colsToUpdate = input.updateColumns !== undefined && input.updateColumns.length > 0
-          ? input.updateColumns
-          : columns.filter(c => !input.conflictColumns.includes(c));
+        const colsToUpdate =
+          input.updateColumns !== undefined && input.updateColumns.length > 0
+            ? input.updateColumns
+            : columns.filter((c) => !input.conflictColumns.includes(c));
 
         if (colsToUpdate.length > 0) {
-          const updateSets = colsToUpdate.map((c: string) => `"${c}" = EXCLUDED."${c}"`).join(", ");
+          const updateSets = colsToUpdate
+            .map((c: string) => `"${c}" = EXCLUDED."${c}"`)
+            .join(", ");
           sql += ` ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSets}`;
         } else {
           sql += ` ON CONFLICT (${conflictCols}) DO NOTHING`;
@@ -82,7 +104,10 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.returning !== undefined && input.returning !== false) {
         if (input.returning === true) {
           sql += ` RETURNING *`;
-        } else if (Array.isArray(input.returning) && input.returning.length > 0) {
+        } else if (
+          Array.isArray(input.returning) &&
+          input.returning.length > 0
+        ) {
           sql += ` RETURNING "${input.returning.join('", "')}"`;
         }
       }
@@ -123,7 +148,10 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
           ...parsed,
           rows: parsed.rows ?? [],
         };
-        if (input.rows.length === 0) throw new Error("rows must not be empty. Provide at least one row to insert.");
+        if (input.rows.length === 0)
+          throw new Error(
+            "rows must not be empty. Provide at least one row to insert.",
+          );
       } catch (error) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
@@ -138,7 +166,7 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
       // Collect all unique columns across all rows to ensure consistent structure
       const columnSet = new Set<string>();
       for (const row of input.rows) {
-        Object.keys(row).forEach(k => columnSet.add(k));
+        Object.keys(row).forEach((k) => columnSet.add(k));
       }
       const columns = Array.from(columnSet);
 
@@ -159,7 +187,10 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.returning !== undefined && input.returning !== false) {
         if (input.returning === true) {
           sql += ` RETURNING *`;
-        } else if (Array.isArray(input.returning) && input.returning.length > 0) {
+        } else if (
+          Array.isArray(input.returning) &&
+          input.returning.length > 0
+        ) {
           sql += ` RETURNING "${input.returning.join('", "')}"`;
         }
       }
@@ -185,7 +216,8 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
 export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_count",
-    description: "Count rows in a table, optionally filtered by a WHERE clause.",
+    description:
+      "Count rows in a table, optionally filtered by a WHERE clause.",
     group: "core",
     inputSchema: CountSchema,
     outputSchema: CountOutputSchema,
@@ -194,13 +226,28 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
-        let aliasedParams = resolveAliases(params, { tableName: "table", columnName: "column" });
-        aliasedParams = resolveAliases(aliasedParams, { condition: "where", filter: "where", whereClause: "where" });
+        let aliasedParams = resolveAliases(params, {
+          tableName: "table",
+          columnName: "column",
+        });
+        aliasedParams = resolveAliases(aliasedParams, {
+          condition: "where",
+          filter: "where",
+          whereClause: "where",
+        });
         const parsed = CountSchema.parse(aliasedParams);
         input = {
           ...parsed,
-          where: parsed.where ?? parsed.condition ?? parsed.filter ?? parsed.whereClause,
-          params: Array.isArray(parsed.params) ? parsed.params : (parsed.params !== undefined && parsed.params !== null ? [parsed.params] : []),
+          where:
+            parsed.where ??
+            parsed.condition ??
+            parsed.filter ??
+            parsed.whereClause,
+          params: Array.isArray(parsed.params)
+            ? parsed.params
+            : parsed.params !== undefined && parsed.params !== null
+              ? [parsed.params]
+              : [],
         };
       } catch (error) {
         return { ...formatHandlerError(error) };
@@ -209,10 +256,11 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return validationError;
 
-      const column = input.column && input.column !== "*" ? `"${input.column}"` : "*";
+      const column =
+        input.column && input.column !== "*" ? `"${input.column}"` : "*";
       const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
       let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM "${input.table}"`;
-      
+
       if (input.where) {
         sql += ` WHERE ${input.where}`;
       }
@@ -236,7 +284,8 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
 export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_exists",
-    description: "Check whether rows exist in a table, optionally filtered by a WHERE clause.",
+    description:
+      "Check whether rows exist in a table, optionally filtered by a WHERE clause.",
     group: "core",
     inputSchema: ExistsSchema,
     outputSchema: ExistsOutputSchema,
@@ -246,12 +295,24 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
       let input;
       try {
         let aliasedParams = resolveAliases(params, { tableName: "table" });
-        aliasedParams = resolveAliases(aliasedParams, { condition: "where", filter: "where", whereClause: "where" });
+        aliasedParams = resolveAliases(aliasedParams, {
+          condition: "where",
+          filter: "where",
+          whereClause: "where",
+        });
         const parsed = ExistsSchema.parse(aliasedParams);
         input = {
           ...parsed,
-          where: parsed.where ?? parsed.condition ?? parsed.filter ?? parsed.whereClause,
-          params: Array.isArray(parsed.params) ? parsed.params : (parsed.params !== undefined && parsed.params !== null ? [parsed.params] : []),
+          where:
+            parsed.where ??
+            parsed.condition ??
+            parsed.filter ??
+            parsed.whereClause,
+          params: Array.isArray(parsed.params)
+            ? parsed.params
+            : parsed.params !== undefined && parsed.params !== null
+              ? [parsed.params]
+              : [],
         };
       } catch (error) {
         return { ...formatHandlerError(error) };
@@ -261,11 +322,11 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
       if (validationError) return validationError;
 
       let sql = `SELECT 1 FROM "${input.table}"`;
-      
+
       if (input.where) {
         sql += ` WHERE ${input.where}`;
       }
-      
+
       sql += " LIMIT 1";
 
       try {
@@ -312,7 +373,10 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
 
         if (input.restartIdentity) {
           try {
-            await adapter.executeWriteQuery(`DELETE FROM sqlite_sequence WHERE name = ?`, [input.table]);
+            await adapter.executeWriteQuery(
+              `DELETE FROM sqlite_sequence WHERE name = ?`,
+              [input.table],
+            );
           } catch {
             // Ignore error if sqlite_sequence doesn't exist
           }

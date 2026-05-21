@@ -8,6 +8,7 @@
 ## WASM Mode
 
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js), apply these adjustments:
+>
 > - **Items 13-15** (`sqlite_backup`, `sqlite_verify_backup`, `sqlite_restore`) — return `{success: false, error: "...WASM mode"}`. Treat as **negative validation** — verify the structured error, do not skip.
 > - **Item 10** (`sqlite_pragma_compile_options` FTS filter) — WASM shows FTS3 instead of FTS5.
 > - **Item 3** (`sqlite_dbstat` with `summarize: true`) — WASM returns counts-only (JS fallback) instead of per-table storage breakdown.
@@ -57,10 +58,10 @@
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | Source                                                             | What you see                                                      | Verdict            |
-| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
-| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields           | Correct            |
-| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field      | Bug — report as ❌ |
+| Type                 | Source                                                             | What you see                                                | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields     | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, `isError: true` — no `success` field | Bug — report as ❌ |
 
 ### Zod Validation Errors
 

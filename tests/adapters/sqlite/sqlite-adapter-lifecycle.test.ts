@@ -107,7 +107,9 @@ describe("connectSqliteDatabase", () => {
       } as any,
     );
 
-    const queryResult = result.db.exec("SELECT val FROM init_test WHERE id = 1");
+    const queryResult = result.db.exec(
+      "SELECT val FROM init_test WHERE id = 1",
+    );
     expect(queryResult[0]?.values[0]?.[0]).toBe("initialized");
 
     result.db.close();

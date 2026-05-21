@@ -30,14 +30,15 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                     |
-| ----------------- | ---- | --------------------------------------------------------------- |
-| test_products     | 16   | id, name (row 16: `Café Décor Light`), price, category          |
-| test_users        | 9    | id, username, email, phone, bio                                  |
-| test_articles     | 8    | id, title, body, author, category                                |
-| test_articles_fts | —    | FTS5 virtual table (title, body columns) `[NATIVE ONLY]`        |
+| Table             | Rows | Key Columns                                              |
+| ----------------- | ---- | -------------------------------------------------------- |
+| test_products     | 16   | id, name (row 16: `Café Décor Light`), price, category   |
+| test_users        | 9    | id, username, email, phone, bio                          |
+| test_articles     | 8    | id, title, body, author, category                        |
+| test_articles_fts | —    | FTS5 virtual table (title, body columns) `[NATIVE ONLY]` |
 
 **Key data:**
+
 - Emails: `@example.com`, `@company.org`, `@gmail.com`; one dotted local: `test.user@gmail.com`
 - Phones: `+1-555-0101`, `+44-20-7123-4567`, `+82-2-1234-5678` (1 NULL)
 - Usernames: lowercase single-word (`johndoe`, `janesmith`, `testuser`, etc.)
@@ -52,13 +53,13 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ### Error Message Quality Rating
 
-| Level | Verdict |
-| --- | --- |
-| 5 - Excellent (name + code + context) | ✅ |
-| 4 - Good (name) | ✅ |
-| 3 - Adequate (raw SQLite, informative) | ⚠️ |
-| 2 - Poor (no object name) | ⚠️ |
-| 1 - Useless (generic) | ❌ |
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
 ## Structured Error Response Pattern
 

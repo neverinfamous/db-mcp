@@ -30,11 +30,11 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price, category, created_at                         |
-| test_orders       | 20   | id, product_id (FK→test_products), total_price, status        |
-| test_articles_fts | —    | FTS5 virtual table (title, body) `[NATIVE ONLY]`              |
+| Table             | Rows | Key Columns                                            |
+| ----------------- | ---- | ------------------------------------------------------ |
+| test_products     | 16   | id, name, price, category, created_at                  |
+| test_orders       | 20   | id, product_id (FK→test_products), total_price, status |
+| test_articles_fts | —    | FTS5 virtual table (title, body) `[NATIVE ONLY]`       |
 
 > **CSV testing**: Use absolute path `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv`.
 
@@ -50,13 +50,13 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ### Error Message Quality Rating
 
-| Level | Verdict |
-| --- | --- |
-| 5 - Excellent (name + code + context) | ✅ |
-| 4 - Good (name) | ✅ |
-| 3 - Adequate (raw SQLite, informative) | ⚠️ |
-| 2 - Poor (no object name) | ⚠️ |
-| 1 - Useless (generic) | ❌ |
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
 ## Structured Error Response Pattern
 

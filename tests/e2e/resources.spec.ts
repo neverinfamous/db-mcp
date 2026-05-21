@@ -122,7 +122,9 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
   });
 
   test("should read sqlite://compile_options resource", async () => {
-    const response = await client.readResource({ uri: "sqlite://compile_options" });
+    const response = await client.readResource({
+      uri: "sqlite://compile_options",
+    });
 
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);

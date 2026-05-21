@@ -302,7 +302,9 @@ export type IndexStatsInput = z.infer<typeof IndexStatsSchema>;
 export type PragmaOptimizeInput = z.infer<typeof PragmaOptimizeSchema>;
 export type PragmaSettingsInput = z.infer<typeof PragmaSettingsSchema>;
 export type PragmaTableInfoInput = z.infer<typeof PragmaTableInfoSchema>;
-export type PragmaCompileOptionsInput = z.infer<typeof PragmaCompileOptionsSchema>;
+export type PragmaCompileOptionsInput = z.infer<
+  typeof PragmaCompileOptionsSchema
+>;
 export type PragmaDatabaseListInput = z.infer<typeof PragmaDatabaseListSchema>;
 export type AppendInsightInput = z.infer<typeof AppendInsightSchema>;
 export type VacuumInput = z.infer<typeof VacuumSchema>;

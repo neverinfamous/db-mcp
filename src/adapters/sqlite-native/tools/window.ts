@@ -275,15 +275,15 @@ async function resolveSelectColumns(
 ): Promise<{ columnList: string; hint?: string }> {
   if (selectColumns && selectColumns.length > 0) {
     return {
-      columnList: selectColumns.map((c) => `"${c}"`).join(", ")
+      columnList: selectColumns.map((c) => `"${c}"`).join(", "),
     };
   }
 
   // Auto-limit: exclude TEXT/BLOB columns likely to hold long content
   const tableInfo = await adapter.executeReadQuery(
-    `PRAGMA table_info("${table}")`
+    `PRAGMA table_info("${table}")`,
   );
-  
+
   const TEXT_TYPES = new Set([
     "text",
     "blob",
@@ -311,24 +311,24 @@ async function resolveSelectColumns(
     "log",
     "blob",
   ];
-  
+
   const excluded: string[] = [];
   const included: string[] = [];
 
   for (const c of tableInfo.rows ?? []) {
     const colName = c["name"] as string;
-    const colType = (c["type"] as string ?? "").toLowerCase();
+    const colType = ((c["type"] as string) ?? "").toLowerCase();
     const nameLower = colName.toLowerCase();
-    
+
     const isText = [...TEXT_TYPES].some(
-      (t) => colType === t || colType.startsWith(t)
+      (t) => colType === t || colType.startsWith(t),
     );
     const isRankCol = rankCol ? nameLower === rankCol.toLowerCase() : false;
     const isLongContent = LONG_CONTENT_PATTERNS.some(
       (p) =>
         nameLower === p ||
         nameLower.endsWith(`_${p}`) ||
-        nameLower.startsWith(`${p}_`)
+        nameLower.startsWith(`${p}_`),
     );
 
     if (isText && !isRankCol && isLongContent) {
@@ -382,7 +382,11 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const { columnList: columns, hint } = await resolveSelectColumns(adapter, input.table, input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -435,7 +439,11 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const { columnList: columns, hint } = await resolveSelectColumns(adapter, input.table, input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -509,7 +517,12 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateColumnInTable(adapter, input.table, input.column);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const { columnList: columns, hint } = await resolveSelectColumns(adapter, input.table, input.selectColumns, input.column);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+          input.column,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -570,7 +583,12 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateColumnInTable(adapter, input.table, input.column);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const { columnList: columns, hint } = await resolveSelectColumns(adapter, input.table, input.selectColumns, input.column);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+          input.column,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -637,7 +655,12 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateColumnInTable(adapter, input.table, input.column);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const { columnList: columns, hint } = await resolveSelectColumns(adapter, input.table, input.selectColumns, input.column);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+          input.column,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -703,7 +726,11 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const { columnList: columns, hint } = await resolveSelectColumns(adapter, input.table, input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";

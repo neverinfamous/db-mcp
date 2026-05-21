@@ -26,10 +26,10 @@
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price, category                                     |
-| test_orders       | 20   | id, product_id (FK), total_price, status                      |
+| Table         | Rows | Key Columns                              |
+| ------------- | ---- | ---------------------------------------- |
+| test_products | 16   | id, name, price, category                |
+| test_orders   | 20   | id, product_id (FK), total_price, status |
 
 ## Testing Requirements
 
@@ -107,9 +107,9 @@ Expected: `{status: "none", active: false}`
 
 ```javascript
 await sqlite.transactions.begin();
-await sqlite.transactions.savepoint({name: "sp1"});
-await sqlite.transactions.rollbackTo({name: "sp1"});
-await sqlite.transactions.release({name: "sp1"});
+await sqlite.transactions.savepoint({ name: "sp1" });
+await sqlite.transactions.rollbackTo({ name: "sp1" });
+await sqlite.transactions.release({ name: "sp1" });
 const result = await sqlite.transactions.commit();
 return result;
 ```
@@ -118,7 +118,7 @@ return result;
 
 ```javascript
 return await sqlite.transactions.execute({
-  statements: ["SELECT 1 AS test", "SELECT 2 AS test2"]
+  statements: ["SELECT 1 AS test", "SELECT 2 AS test2"],
 });
 ```
 
@@ -132,7 +132,7 @@ Expected: Success with 2 statements executed.
 
 ```javascript
 return await sqlite.transactions.execute({
-  statements: ["INSERT INTO nonexistent_table VALUES (1)"]
+  statements: ["INSERT INTO nonexistent_table VALUES (1)"],
 });
 ```
 
@@ -158,7 +158,9 @@ Report behavior when no transaction is active.
 
 ```javascript
 await sqlite.transactions.begin();
-const result = await sqlite.transactions.release({name: "nonexistent_sp_xyz"});
+const result = await sqlite.transactions.release({
+  name: "nonexistent_sp_xyz",
+});
 await sqlite.transactions.rollback(); // cleanup
 return result;
 ```
@@ -192,13 +194,14 @@ const result = await sqlite.transactions.execute({
   statements: [
     "CREATE TABLE temp_cm_txn (id INTEGER PRIMARY KEY, val TEXT)",
     "INSERT INTO temp_cm_txn VALUES (1, 'alpha')",
-    "INSERT INTO temp_cm_txn VALUES (2, 'beta')"
-  ]
+    "INSERT INTO temp_cm_txn VALUES (2, 'beta')",
+  ],
 });
-if (!result || result.success === false) failures.push("transactionExecute failed");
+if (!result || result.success === false)
+  failures.push("transactionExecute failed");
 
 // Verify data was committed
-const count = await sqlite.core.count({table: "temp_cm_txn"});
+const count = await sqlite.core.count({ table: "temp_cm_txn" });
 if (count.count !== 2) failures.push(`expected 2 rows, got ${count.count}`);
 
 // Cleanup
@@ -212,7 +215,7 @@ return { failures, success: failures.length === 0 };
 ```javascript
 const before = await sqlite.transactions.status();
 const exec = await sqlite.transactions.execute({
-  statements: ["SELECT COUNT(*) AS n FROM test_products"]
+  statements: ["SELECT COUNT(*) AS n FROM test_products"],
 });
 const after = await sqlite.transactions.status();
 return { before, exec, after };
@@ -225,9 +228,9 @@ Expected: `before.active === false`, `after.active === false` (execute is self-c
 ## Post-Test Procedures
 
 1. **Cleanup**: Ensure no active transaction is left open
-3. **Triage findings**: Create implementation plan if issues found
-4. **Scope of fixes**: Handler code, server-instructions, this prompt
-5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-6. **Commit**: Stage and commit — do NOT push
-7. **Token audit**: Report most expensive block
-8. **Final summary**: After testing/re-testing
+2. **Triage findings**: Create implementation plan if issues found
+3. **Scope of fixes**: Handler code, server-instructions, this prompt
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit — do NOT push
+6. **Token audit**: Report most expensive block
+7. **Final summary**: After testing/re-testing

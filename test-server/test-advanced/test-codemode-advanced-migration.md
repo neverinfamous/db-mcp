@@ -28,10 +28,10 @@ State persists across calls. Do NOT pass `readonly: true`.
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price, category                                     |
-| test_orders       | 20   | id, product_id (FK), total_price, status                      |
+| Table         | Rows | Key Columns                              |
+| ------------- | ---- | ---------------------------------------- |
+| test_products | 16   | id, name, price, category                |
+| test_orders   | 20   | id, product_id (FK), total_price, status |
 
 ## Naming & Cleanup
 
@@ -146,7 +146,7 @@ Rate each error response 1-5:
 
 1. Drop `_mcp_migrations`: `sqlite.admin.dropTable({table: "_mcp_migrations"})`
 2. Drop `stress_migration_data`: `sqlite.admin.dropTable({table: "stress_migration_data"})`
-3. Drop `stress_idx_flag`: *Handled by database reset below*
+3. Drop `stress_idx_flag`: _Handled by database reset below_
 4. **Reset database** with `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to undo `stress_flag` column on `test_products`
 5. After reset, verify: `test_products` has 16 rows and original columns (no `stress_flag`)
 

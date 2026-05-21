@@ -12,7 +12,10 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { QueryPlanOutputSchema, QueryPlanSchema } from "../../../schemas/introspection.js";
+import {
+  QueryPlanOutputSchema,
+  QueryPlanSchema,
+} from "../../../schemas/introspection.js";
 
 // Synthetic EXPLAIN table names that are not real tables
 const SYNTHETIC_TABLES = new Set([
@@ -25,8 +28,6 @@ const SYNTHETIC_TABLES = new Set([
 // =============================================================================
 // Input Schema
 // =============================================================================
-
-
 
 // =============================================================================
 // Tool Creator
@@ -121,7 +122,8 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
             const scanMatch = /SCAN\s+(?:TABLE\s+)?([^\s(]+)/i.exec(detail);
             table = scanMatch?.[1];
 
-            const indexMatch = /USING\s+(?:COVERING\s+)?INDEX\s+([^\s(]+)/i.exec(detail);
+            const indexMatch =
+              /USING\s+(?:COVERING\s+)?INDEX\s+([^\s(]+)/i.exec(detail);
             const indexName = indexMatch?.[1] ?? table;
 
             if (detailUpper.includes("COVERING INDEX")) {
@@ -141,7 +143,8 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
             scanType = "search";
             const searchMatch = /SEARCH\s+(?:TABLE\s+)?([^\s(]+)/i.exec(detail);
             table = searchMatch?.[1];
-            const indexMatch = /USING\s+(?:COVERING\s+)?INDEX\s+([^\s(]+)/i.exec(detail);
+            const indexMatch =
+              /USING\s+(?:COVERING\s+)?INDEX\s+([^\s(]+)/i.exec(detail);
             const indexName = indexMatch?.[1] ?? table;
             if (indexName && !SYNTHETIC_TABLES.has(indexName.toUpperCase())) {
               if (detailUpper.includes("COVERING INDEX")) {

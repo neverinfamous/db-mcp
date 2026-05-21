@@ -1,4 +1,8 @@
-import { GetIndexesSchema, CreateIndexSchema, DropIndexSchema } from "../../schemas/core.js";
+import {
+  GetIndexesSchema,
+  CreateIndexSchema,
+  DropIndexSchema,
+} from "../../schemas/core.js";
 /**
  * Core Index Management Tools
  *
@@ -21,9 +25,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../utils/errors/index.js";
-import {
-  resolveAliases,
-} from "../../types.js";
+import { resolveAliases } from "../../types.js";
 import {
   GetIndexesOutputSchema,
   CreateIndexOutputSchema,

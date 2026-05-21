@@ -12,14 +12,15 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { ConstraintAnalysisOutputSchema, ConstraintAnalysisSchema } from "../../../schemas/introspection.js";
+import {
+  ConstraintAnalysisOutputSchema,
+  ConstraintAnalysisSchema,
+} from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Enum Coercers (prevent raw MCP -32602 from z.enum validation)
 // =============================================================================
-
-
 
 // =============================================================================
 // Tool Creator

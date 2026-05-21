@@ -49,7 +49,7 @@ describe("Text Sentiment Tool", () => {
   describe("sentiment classification", () => {
     it("should classify very positive text", async () => {
       const result = (await sentimentTool({
-        text: 'This is amazing, wonderful, fantastic, and absolutely brilliant!'
+        text: "This is amazing, wonderful, fantastic, and absolutely brilliant!",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -61,7 +61,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should classify positive text", async () => {
       const result = (await sentimentTool({
-        text: 'This product is good and helpful.'
+        text: "This product is good and helpful.",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -72,7 +72,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should classify neutral text", async () => {
       const result = (await sentimentTool({
-        text: 'The weather is clear today with some clouds.'
+        text: "The weather is clear today with some clouds.",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -82,7 +82,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should classify negative text", async () => {
       const result = (await sentimentTool({
-        text: 'This is a terrible experience.'
+        text: "This is a terrible experience.",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -92,7 +92,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should classify very negative text", async () => {
       const result = (await sentimentTool({
-        text: 'This is terrible, awful, horrible, and completely useless!'
+        text: "This is terrible, awful, horrible, and completely useless!",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -102,7 +102,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should classify mixed sentiment as balanced", async () => {
       const result = (await sentimentTool({
-        text: 'The product is great but the service was terrible.'
+        text: "The product is great but the service was terrible.",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -115,7 +115,7 @@ describe("Text Sentiment Tool", () => {
   describe("confidence levels", () => {
     it("should return low confidence for few matches", async () => {
       const result = (await sentimentTool({
-        text: 'This is good.'
+        text: "This is good.",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -124,7 +124,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should return medium confidence for moderate matches", async () => {
       const result = (await sentimentTool({
-        text: 'This is good and great.'
+        text: "This is good and great.",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -133,7 +133,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should return high confidence for many matches", async () => {
       const result = (await sentimentTool({
-        text: 'This is amazing, wonderful, fantastic, and absolutely brilliant!'
+        text: "This is amazing, wonderful, fantastic, and absolutely brilliant!",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -144,7 +144,7 @@ describe("Text Sentiment Tool", () => {
   describe("returnWords option", () => {
     it("should not include matched words by default", async () => {
       const result = (await sentimentTool({
-        text: 'This product is amazing and wonderful!'
+        text: "This product is amazing and wonderful!",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -154,7 +154,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should include matched words when returnWords is true", async () => {
       const result = (await sentimentTool({
-        text: 'This product is amazing and wonderful!',
+        text: "This product is amazing and wonderful!",
         returnWords: true,
       })) as SentimentResult;
 
@@ -167,7 +167,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should include both positive and negative matched words", async () => {
       const result = (await sentimentTool({
-        text: 'Great service but slow delivery',
+        text: "Great service but slow delivery",
         returnWords: true,
       })) as SentimentResult;
 
@@ -180,7 +180,7 @@ describe("Text Sentiment Tool", () => {
   describe("edge cases", () => {
     it("should handle single word text", async () => {
       const result = (await sentimentTool({
-        text: 'excellent'
+        text: "excellent",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -190,7 +190,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should handle empty text without failing", async () => {
       const result = (await sentimentTool({
-        text: ''
+        text: "",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -200,7 +200,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should handle whitespace-only text without failing", async () => {
       const result = (await sentimentTool({
-        text: '   '
+        text: "   ",
       })) as SentimentResult;
 
       expect(result.success).toBe(true);
@@ -210,7 +210,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should handle text with punctuation", async () => {
       const result = (await sentimentTool({
-        text: 'Wow! This is amazing!!! Truly wonderful.',
+        text: "Wow! This is amazing!!! Truly wonderful.",
         returnWords: true,
       })) as SentimentResult;
 
@@ -221,7 +221,7 @@ describe("Text Sentiment Tool", () => {
 
     it("should be case-insensitive", async () => {
       const result = (await sentimentTool({
-        text: 'AMAZING WONDERFUL FANTASTIC',
+        text: "AMAZING WONDERFUL FANTASTIC",
         returnWords: true,
       })) as SentimentResult;
 
@@ -231,4 +231,3 @@ describe("Text Sentiment Tool", () => {
     });
   });
 });
-

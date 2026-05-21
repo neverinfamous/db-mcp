@@ -166,7 +166,8 @@ export class WorkerSandbox {
               mainPort.postMessage({
                 id: msg.id,
                 error: err instanceof Error ? err.message : String(err),
-                errorDetails: Object.keys(details).length > 0 ? details : undefined,
+                errorDetails:
+                  Object.keys(details).length > 0 ? details : undefined,
               });
             }
           })();

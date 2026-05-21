@@ -1,5 +1,5 @@
-import { detectCycles, buildForeignKeyGraph } from './helpers.js';
-import type { ForeignKeyInfo } from './helpers.js';
+import { detectCycles, buildForeignKeyGraph } from "./helpers.js";
+import type { ForeignKeyInfo } from "./helpers.js";
 /**
  * Graph Tool Creators
  *
@@ -22,8 +22,6 @@ import {
   TopologicalSortSchema,
   CascadeSimulatorSchema,
 } from "../../../schemas/introspection.js";
-
-
 
 // =============================================================================
 // Tool Creators
@@ -238,7 +236,9 @@ export function createCascadeSimulatorTool(
           };
         }
 
-        const { nodes, fkInfo } = await buildForeignKeyGraph(adapter, { includeRowCounts: true });
+        const { nodes, fkInfo } = await buildForeignKeyGraph(adapter, {
+          includeRowCounts: true,
+        });
         const rowCounts = new Map(nodes.map((n) => [n.table, n.rowCount]));
 
         // Build reverse adjacency: for each table, find what references it

@@ -155,14 +155,14 @@ During testing, check for these inconsistencies across tool groups:
 
 For each tool group under test, verify at least one scenario from each applicable row:
 
-| Error Scenario | Tool Groups to Test | Example Input |
-|----------------|-------------------|---------------|
-| Nonexistent table | All table-accepting tools | `table: "nonexistent_xyz"` |
-| Invalid SQL syntax | Core (`read_query`, `write_query`) | `query: "SELEKT * FROM"` |
-| Invalid column name | Stats, JSON, text, vector, geo | `column: "nonexistent_col"` |
-| Missing required field | All tools with required params | Omit `table`, `query`, etc. |
+| Error Scenario                    | Tool Groups to Test                 | Example Input                                                           |
+| --------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| Nonexistent table                 | All table-accepting tools           | `table: "nonexistent_xyz"`                                              |
+| Invalid SQL syntax                | Core (`read_query`, `write_query`)  | `query: "SELEKT * FROM"`                                                |
+| Invalid column name               | Stats, JSON, text, vector, geo      | `column: "nonexistent_col"`                                             |
+| Missing required field            | All tools with required params      | Omit `table`, `query`, etc.                                             |
 | **Zod validation (empty params)** | **Every tool with required params** | `{}` (empty object — must return handler error, not MCP `-32602` error) |
-| **Zod validation (wrong type)** | **Tools with typed params** | Pass string where number expected, etc. |
+| **Zod validation (wrong type)**   | **Tools with typed params**         | Pass string where number expected, etc.                                 |
 
 ### Split Schema Pattern Verification
 

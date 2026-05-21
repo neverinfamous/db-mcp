@@ -70,11 +70,9 @@ export const GeoClusterOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
-
 
 /**
  * Coerce string-typed numbers to actual numbers.
@@ -99,11 +97,26 @@ const coerceUnit = (val: unknown): unknown =>
       : val;
 
 export const GeoDistanceSchema = z.object({
-  lat1: z.preprocess(coerceNumber, z.number().optional().describe("Latitude of point 1")),
-  lon1: z.preprocess(coerceNumber, z.number().optional().describe("Longitude of point 1")),
-  lat2: z.preprocess(coerceNumber, z.number().optional().describe("Latitude of point 2")),
-  lon2: z.preprocess(coerceNumber, z.number().optional().describe("Longitude of point 2")),
-  unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
+  lat1: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Latitude of point 1"),
+  ),
+  lon1: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Longitude of point 1"),
+  ),
+  lat2: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Latitude of point 2"),
+  ),
+  lon2: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Longitude of point 2"),
+  ),
+  unit: z.preprocess(
+    coerceUnit,
+    z.enum(["km", "miles", "meters"]).optional().default("km"),
+  ),
 });
 export type GeoDistanceInput = z.infer<typeof GeoDistanceSchema>;
 
@@ -111,10 +124,19 @@ export const GeoNearbySchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  centerLat: z.preprocess(coerceNumber, z.number().optional().describe("Center latitude")),
-  centerLon: z.preprocess(coerceNumber, z.number().optional().describe("Center longitude")),
+  centerLat: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Center latitude"),
+  ),
+  centerLon: z.preprocess(
+    coerceNumber,
+    z.number().optional().describe("Center longitude"),
+  ),
   radius: z.preprocess(coerceNumber, z.number().optional().describe("Radius")),
-  unit: z.preprocess(coerceUnit, z.enum(["km", "miles", "meters"]).optional().default("km")),
+  unit: z.preprocess(
+    coerceUnit,
+    z.enum(["km", "miles", "meters"]).optional().default("km"),
+  ),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   returnColumns: z.array(z.string()).optional(),
 });
@@ -137,7 +159,10 @@ export const GeoClusterSchema = z.object({
   table: z.string().describe("Table name"),
   latColumn: z.string().describe("Latitude column"),
   lonColumn: z.string().describe("Longitude column"),
-  gridSize: z.preprocess(coerceNumber, z.number().optional().default(0.1).describe("Grid size in degrees")),
+  gridSize: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(0.1).describe("Grid size in degrees"),
+  ),
   whereClause: z.string().optional(),
 });
 export type GeoClusterInput = z.infer<typeof GeoClusterSchema>;

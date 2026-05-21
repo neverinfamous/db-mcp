@@ -5,8 +5,9 @@
 import { z } from "zod";
 
 const coerceNumber = (val: unknown): unknown => {
-  if (typeof val === 'number') return val;
-  if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return Number(val);
+  if (typeof val === "number") return val;
+  if (typeof val === "string" && val.trim() !== "" && !isNaN(Number(val)))
+    return Number(val);
   return undefined;
 };
 
@@ -351,8 +352,6 @@ export const JsonSecurityScanOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
@@ -395,10 +394,7 @@ export const JsonQuerySchema = z.object({
     .optional()
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),
-  limit: z.preprocess(
-    coerceNumber,
-    z.number().optional().default(100),
-  ),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const JsonValidatePathSchema = z.object({
@@ -485,7 +481,6 @@ export const JsonSecurityScanSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
 });
 
-
 // =============================================================================
 // Types
 // =============================================================================
@@ -501,9 +496,10 @@ export type JsonExtractInput = z.infer<typeof JsonExtractSchema>;
 export type JsonSetInput = z.infer<typeof JsonSetSchema>;
 export type JsonRemoveInput = z.infer<typeof JsonRemoveSchema>;
 export type AnalyzeJsonSchemaInput = z.infer<typeof AnalyzeJsonSchemaSchema>;
-export type CreateJsonCollectionInput = z.infer<typeof CreateJsonCollectionSchema>;
+export type CreateJsonCollectionInput = z.infer<
+  typeof CreateJsonCollectionSchema
+>;
 export type JsonSecurityScanInput = z.infer<typeof JsonSecurityScanSchema>;
-
 
 // Additional schemas for JSON operations
 export const JsonTypeSchema = z.object({
@@ -540,10 +536,7 @@ export const JsonEachSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to expand (defaults to $)"),
   whereClause: z.string().optional(),
-  limit: z.preprocess(
-    coerceNumber,
-    z.number().optional().default(100),
-  ),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
 export const JsonGroupArraySchema = z.object({

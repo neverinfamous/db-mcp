@@ -13,9 +13,7 @@ import type {
 import { readOnly, admin } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import {
-  DbstatOutputSchema,
-} from "../../schemas/virtual.js";
+import { DbstatOutputSchema } from "../../schemas/virtual.js";
 import {
   buildProgressContext,
   sendProgress,

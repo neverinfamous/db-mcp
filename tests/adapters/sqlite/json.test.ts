@@ -143,7 +143,11 @@ describe("JSON Tools", () => {
         table: "profiles",
         column: "data",
         data: { name: "Charlie", age: 40 },
-      })) as { success: boolean; rowsAffected: number; lastInsertRowid: number };
+      })) as {
+        success: boolean;
+        rowsAffected: number;
+        lastInsertRowid: number;
+      };
 
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);

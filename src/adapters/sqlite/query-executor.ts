@@ -7,7 +7,11 @@
 
 import type { Database } from "sql.js";
 import type { QueryResult, ColumnInfo } from "../../types/index.js";
-import { QueryError, ResourceNotFoundError, findSuggestion } from "../../utils/errors/index.js";
+import {
+  QueryError,
+  ResourceNotFoundError,
+  findSuggestion,
+} from "../../utils/errors/index.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { ModuleLogger } from "../../utils/logger/index.js";
 import { normalizeSqliteParams } from "../sqlite-helpers.js";
@@ -17,31 +21,50 @@ const log = createModuleLogger("SQLITE");
 /**
  * Helper to translate raw SQLite errors into typed db-mcp errors with better messages.
  */
-export function translateSqliteError(error: unknown, sql: string, operation: string, overrideLog?: ModuleLogger): never {
+export function translateSqliteError(
+  error: unknown,
+  sql: string,
+  operation: string,
+  overrideLog?: ModuleLogger,
+): never {
   const message = error instanceof Error ? error.message : String(error);
   const match = findSuggestion(message);
-  
+
   // Extract table/column names if possible for better error messages
   const improvedMessage = `${operation} failed: ${message}`;
   const details: Record<string, unknown> = { sql };
-  
+
   if (match?.code === "TABLE_NOT_FOUND") {
     const tableMatch = /no such table[:\s]*(['"]?)(\w+)\1/i.exec(message);
     const tableName = tableMatch ? tableMatch[2] : "unknown";
     throw new ResourceNotFoundError(
       `Table '${tableName}' not found`,
       "TABLE_NOT_FOUND",
-      { resourceType: "table", resourceName: tableName, details, suggestion: match.suggestion, cause: error instanceof Error ? error : undefined }
+      {
+        resourceType: "table",
+        resourceName: tableName,
+        details,
+        suggestion: match.suggestion,
+        cause: error instanceof Error ? error : undefined,
+      },
     );
   }
-  
+
   if (match?.code === "COLUMN_NOT_FOUND") {
-    const colMatch = /no such column[:\s]*(['"]?)(\w+)\1/i.exec(message) ?? /has no column named[:\s]*(['"]?)(\w+)\1/i.exec(message);
+    const colMatch =
+      /no such column[:\s]*(['"]?)(\w+)\1/i.exec(message) ??
+      /has no column named[:\s]*(['"]?)(\w+)\1/i.exec(message);
     const colName = colMatch ? colMatch[2] : "unknown";
     throw new ResourceNotFoundError(
       `Column '${colName}' not found`,
       "COLUMN_NOT_FOUND",
-      { resourceType: "column", resourceName: colName, details, suggestion: match.suggestion, cause: error instanceof Error ? error : undefined }
+      {
+        resourceType: "column",
+        resourceName: colName,
+        details,
+        suggestion: match.suggestion,
+        cause: error instanceof Error ? error : undefined,
+      },
     );
   }
 
@@ -49,12 +72,12 @@ export function translateSqliteError(error: unknown, sql: string, operation: str
   loggerToUse.error(`${operation} failed: ${message}`, {
     code: ERROR_CODES.DB.QUERY_FAILED.full,
   });
-  
-  throw new QueryError(
-    improvedMessage,
-    match?.code ?? "DB_QUERY_FAILED",
-    { sql, cause: error instanceof Error ? error : undefined, suggestion: match?.suggestion }
-  );
+
+  throw new QueryError(improvedMessage, match?.code ?? "DB_QUERY_FAILED", {
+    sql,
+    cause: error instanceof Error ? error : undefined,
+    suggestion: match?.suggestion,
+  });
 }
 
 /** sql.js binding parameter types */
@@ -149,7 +172,7 @@ export function executeWrite(
   try {
     const normalizedParams = normalizeSqliteParams(params) as SqlJsParams;
     let rows: Record<string, unknown>[] = [];
-    
+
     // sql.js db.run does not return rows. If RETURNING is used, we must use exec.
     if (/\bRETURNING\b/i.test(sql)) {
       const results = normalizedParams

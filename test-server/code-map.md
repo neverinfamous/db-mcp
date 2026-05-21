@@ -201,12 +201,12 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 
 ### Native-Only Handlers (`src/adapters/sqlite-native/tools/`)
 
-| Group                    | Handler File             | Tools | Notes                                                                                                              |
-| ------------------------ | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------ |
-| **stats** (window)       | `window.ts`              | 6     | `window_row_number`, `window_rank`, `window_lag_lead`, `window_running_total`, `window_moving_avg`, `window_ntile` |
-| **transactions**         | `transactions.ts`        | 8     | `transaction_begin/status/commit/rollback/savepoint/release/rollback_to/execute`                               |
-| **geo** (SpatiaLite)     | `spatialite/tools.ts`    | 4     | `spatialite_load/create_table/query/index`                                                                         |
-|                          | `spatialite/analysis.ts` | 3     | `spatialite_analyze/transform/import`                                                                              |
+| Group                | Handler File             | Tools | Notes                                                                                                              |
+| -------------------- | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------ |
+| **stats** (window)   | `window.ts`              | 6     | `window_row_number`, `window_rank`, `window_lag_lead`, `window_running_total`, `window_moving_avg`, `window_ntile` |
+| **transactions**     | `transactions.ts`        | 8     | `transaction_begin/status/commit/rollback/savepoint/release/rollback_to/execute`                                   |
+| **geo** (SpatiaLite) | `spatialite/tools.ts`    | 4     | `spatialite_load/create_table/query/index`                                                                         |
+|                      | `spatialite/analysis.ts` | 3     | `spatialite_analyze/transform/import`                                                                              |
 
 ### Utility Files (no tools, shared helpers)
 
@@ -322,13 +322,13 @@ catch (error) {
 
 ## Key Constants & Config
 
-| What                               | Where                                  | Notes                                                                                                |
-| ---------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Server instructions (agent prompt) | `src/constants/server-instructions.ts` | Generated: slim `INSTRUCTIONS` (~680 chars) + `HELP_CONTENT` map. Source: `server-instructions/*.md` |
-| Tool group arrays                  | `src/filtering/tool-constants.ts`      | `TOOL_GROUPS` map, `META_GROUPS` shortcuts                                                           |
-| Tool filter logic                  | `src/filtering/tool-filter.ts`         | `ToolFilter` class                                                                                   |
-| JSON-RPC constants                 | `src/codemode/api-constants.ts`        | Error codes, method names for sandbox RPC                                                            |
-| Logger error codes                 | `src/utils/logger/error-codes.ts`      | Module-prefixed codes (`DB_`, `AUTH_`, etc.)                                                         |
+| What                               | Where                                  | Notes                                                                                                         |
+| ---------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Server instructions (agent prompt) | `src/constants/server-instructions.ts` | Generated: slim `INSTRUCTIONS` (~680 chars) + `HELP_CONTENT` map. Source: `server-instructions/*.md`          |
+| Tool group arrays                  | `src/filtering/tool-constants.ts`      | `TOOL_GROUPS` map, `META_GROUPS` shortcuts                                                                    |
+| Tool filter logic                  | `src/filtering/tool-filter.ts`         | `ToolFilter` class                                                                                            |
+| JSON-RPC constants                 | `src/codemode/api-constants.ts`        | Error codes, method names for sandbox RPC                                                                     |
+| Logger error codes                 | `src/utils/logger/error-codes.ts`      | Module-prefixed codes (`DB_`, `AUTH_`, etc.)                                                                  |
 | Version SSoT                       | `src/version.ts`                       | Reads from `package.json` at runtime. Both adapters `import { VERSION }` — **never hardcode version strings** |
 
 ---

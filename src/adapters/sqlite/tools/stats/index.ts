@@ -56,4 +56,3 @@ export function getStatsTools(adapter: SqliteAdapter): ToolDefinition[] {
     createDetectSchemaRisksTool(adapter),
   ];
 }
-

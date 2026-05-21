@@ -129,6 +129,9 @@ sqlite_advanced_search({
 sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });
 // → { sentiment: "very_positive", score: 2, confidence: "medium" }
 
-sqlite_text_sentiment({ text: "Great service but slow delivery", returnWords: true });
+sqlite_text_sentiment({
+  text: "Great service but slow delivery",
+  returnWords: true,
+});
 // → { sentiment: "neutral", score: 0, matchedPositive: ["great"], matchedNegative: ["slow"] }
 ```

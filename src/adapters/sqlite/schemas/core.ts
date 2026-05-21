@@ -157,7 +157,6 @@ export const ExistsOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
@@ -251,7 +250,6 @@ export const ListTablesSchema = z.object({
     ),
 });
 
-
 // =============================================================================
 // Types
 // =============================================================================
@@ -269,12 +267,33 @@ export type ListTablesInput = z.infer<typeof ListTablesSchema>;
 export const UpsertSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  data: z.record(z.string(), z.unknown()).describe("Column-value pairs to insert"),
-  values: z.record(z.string(), z.unknown()).optional().describe("Alias for data"),
-  conflictColumns: z.union([z.array(z.string()), z.string()]).optional().describe("Columns that form the unique constraint (ON CONFLICT). If omitted, falls back to INSERT OR REPLACE."),
-  conflictColumn: z.union([z.string(), z.array(z.string())]).optional().describe("Alias for conflictColumns"),
-  updateColumns: z.array(z.string()).optional().describe("Columns to update on conflict (default: all except conflict columns). Only used if conflictColumns is provided."),
-  returning: z.union([z.boolean(), z.array(z.string())]).optional().describe("Columns to return, or true for all columns"),
+  data: z
+    .record(z.string(), z.unknown())
+    .describe("Column-value pairs to insert"),
+  values: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe("Alias for data"),
+  conflictColumns: z
+    .union([z.array(z.string()), z.string()])
+    .optional()
+    .describe(
+      "Columns that form the unique constraint (ON CONFLICT). If omitted, falls back to INSERT OR REPLACE.",
+    ),
+  conflictColumn: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .describe("Alias for conflictColumns"),
+  updateColumns: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Columns to update on conflict (default: all except conflict columns). Only used if conflictColumns is provided.",
+    ),
+  returning: z
+    .union([z.boolean(), z.array(z.string())])
+    .optional()
+    .describe("Columns to return, or true for all columns"),
 });
 
 // =============================================================================
@@ -284,8 +303,13 @@ export const UpsertSchema = z.object({
 export const BatchInsertSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  rows: z.array(z.record(z.string(), z.unknown())).describe("Array of row objects to insert"),
-  returning: z.union([z.boolean(), z.array(z.string())]).optional().describe("Columns to return, or true for all columns"),
+  rows: z
+    .array(z.record(z.string(), z.unknown()))
+    .describe("Array of row objects to insert"),
+  returning: z
+    .union([z.boolean(), z.array(z.string())])
+    .optional()
+    .describe("Columns to return, or true for all columns"),
 });
 
 // =============================================================================
@@ -295,14 +319,26 @@ export const BatchInsertSchema = z.object({
 export const CountSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  where: z.string().optional().describe("WHERE clause (supports ? placeholders)"),
-  params: z.unknown().optional().describe("Parameters for WHERE clause placeholders"),
+  where: z
+    .string()
+    .optional()
+    .describe("WHERE clause (supports ? placeholders)"),
+  params: z
+    .unknown()
+    .optional()
+    .describe("Parameters for WHERE clause placeholders"),
   condition: z.string().optional().describe("Alias for where"),
   filter: z.string().optional().describe("Alias for where"),
   whereClause: z.string().optional().describe("Alias for where"),
-  column: z.string().optional().describe("Column to count (default: * for all rows)"),
+  column: z
+    .string()
+    .optional()
+    .describe("Column to count (default: * for all rows)"),
   columnName: z.string().optional().describe("Alias for column"),
-  distinct: z.boolean().optional().describe("Count distinct values of the specified column"),
+  distinct: z
+    .boolean()
+    .optional()
+    .describe("Count distinct values of the specified column"),
 });
 
 // =============================================================================
@@ -312,8 +348,14 @@ export const CountSchema = z.object({
 export const ExistsSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  where: z.string().optional().describe("WHERE clause (supports ? placeholders)"),
-  params: z.unknown().optional().describe("Parameters for WHERE clause placeholders"),
+  where: z
+    .string()
+    .optional()
+    .describe("WHERE clause (supports ? placeholders)"),
+  params: z
+    .unknown()
+    .optional()
+    .describe("Parameters for WHERE clause placeholders"),
   condition: z.string().optional().describe("Alias for where"),
   filter: z.string().optional().describe("Alias for where"),
   whereClause: z.string().optional().describe("Alias for where"),
@@ -326,5 +368,8 @@ export const ExistsSchema = z.object({
 export const TruncateSchema = z.object({
   table: z.string().describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  restartIdentity: z.boolean().optional().describe("Restart identity sequences (DELETE FROM sqlite_sequence)"),
+  restartIdentity: z
+    .boolean()
+    .optional()
+    .describe("Restart identity sequences (DELETE FROM sqlite_sequence)"),
 });

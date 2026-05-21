@@ -22,9 +22,11 @@ import {
   stat,
   unlink,
   rename,
+  mkdtemp,
+  rmdir,
 } from "node:fs/promises";
 
-import { join, dirname, basename } from "node:path";
+import { join, dirname, basename, sep } from "node:path";
 import { gunzipSync, gzip as gzipCb } from "node:zlib";
 import { promisify } from "node:util";
 
@@ -500,17 +502,20 @@ export class BackupManager {
     const compressed = await gzipAsync(Buffer.from(finalJson, "utf-8"));
     const filePath = join(this.snapshotDir, filename);
 
-    // Async atomic write (tmp → rename) + fire-and-forget
-    const tmpPath = `${filePath}.tmp`;
-    const writePromise = writeFile(tmpPath, compressed)
-      .then(() => rename(tmpPath, filePath))
+    // Async atomic write (secure temp dir → rename) + fire-and-forget
+    const writePromise = mkdtemp(`${this.snapshotDir}${sep}.tmp-`)
+      .then(async (tempDir) => {
+        const tmpPath = join(tempDir, filename);
+        await writeFile(tmpPath, compressed, { flag: "wx" });
+        await rename(tmpPath, filePath);
+        // Best-effort cleanup of the temp directory
+        await rmdir(tempDir).catch(() => null);
+      })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         process.stderr.write(
           `[AUDIT-BACKUP] Async write failed for ${filename}: ${msg}\n`,
         );
-        // Best-effort cleanup of the temp file on failure
-        void unlink(tmpPath).catch(() => null);
       });
     this.pendingWrites.add(writePromise);
     void writePromise.finally(() => {

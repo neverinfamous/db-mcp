@@ -28,11 +28,11 @@ State persists across calls. All introspection tools are **read-only** — no cl
 
 ## Test Database Schema
 
-| Table             | Rows | Key Columns                                                   |
-| ----------------- | ---- | ------------------------------------------------------------- |
-| test_products     | 16   | id, name, price, category                                     |
-| test_orders       | 20   | id, product_id (FK→test_products), total_price, status        |
-| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure                |
+| Table             | Rows | Key Columns                                            |
+| ----------------- | ---- | ------------------------------------------------------ |
+| test_products     | 16   | id, name, price, category                              |
+| test_orders       | 20   | id, product_id (FK→test_products), total_price, status |
+| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure         |
 
 **Key FK:** `test_orders.product_id → test_products.id`
 **Redundant index (intentional):** `idx_orders_status` is a prefix of `idx_orders_status_date` — used to test index audit.

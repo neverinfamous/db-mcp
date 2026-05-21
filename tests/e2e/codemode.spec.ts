@@ -146,7 +146,8 @@ test.describe("Code Mode: API Discoverability", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // Dynamic filtering removes 'transactions' in WASM
-      const code = isWasm ? `
+      const code = isWasm
+        ? `
           const groups = ["core","json","text","stats","vector","admin","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {
@@ -154,7 +155,8 @@ test.describe("Code Mode: API Discoverability", () => {
             results[g] = h.methods.length;
           }
           return results;
-        ` : `
+        `
+        : `
           const groups = ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {
@@ -167,15 +169,35 @@ test.describe("Code Mode: API Discoverability", () => {
       const p = await callToolAndParse(client, "sqlite_execute_code", { code });
       expectSuccess(p);
       const result = p.result as Record<string, number>;
-      const expectedGroups = isWasm 
-        ? ["core","json","text","stats","vector","admin","geo","introspection","migration"]
-        : ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
-      
+      const expectedGroups = isWasm
+        ? [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "geo",
+            "introspection",
+            "migration",
+          ]
+        : [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "transactions",
+            "geo",
+            "introspection",
+            "migration",
+          ];
+
       for (const group of expectedGroups) {
-        expect(
-          result[group],
-          `${group} should have methods`,
-        ).toBeGreaterThan(0);
+        expect(result[group], `${group} should have methods`).toBeGreaterThan(
+          0,
+        );
       }
     } finally {
       await client.close();
@@ -591,9 +613,30 @@ test.describe("Code Mode: API Discoverability", () => {
       const result = p.result as Record<string, unknown>;
       const groups = result.groups as string[];
       expect(groups.length).toBe(isWasm ? 9 : 10);
-      const expected = isWasm 
-        ? ["core","json","text","stats","vector","admin","geo","introspection","migration"]
-        : ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
+      const expected = isWasm
+        ? [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "geo",
+            "introspection",
+            "migration",
+          ]
+        : [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "transactions",
+            "geo",
+            "introspection",
+            "migration",
+          ];
       for (const g of expected) {
         expect(groups).toContain(g);
       }
@@ -666,7 +709,8 @@ test.describe("Code Mode: API Discoverability", () => {
     const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const code = isWasm ? `
+      const code = isWasm
+        ? `
           const groups = ["core","json","text","stats","vector","admin","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {
@@ -674,7 +718,8 @@ test.describe("Code Mode: API Discoverability", () => {
             results[g] = h.methods.length;
           }
           return results;
-        ` : `
+        `
+        : `
           const groups = ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {

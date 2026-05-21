@@ -1,4 +1,8 @@
-import { VALID_PHONETIC_ALGORITHMS, VALID_SEARCH_TECHNIQUES, validateColumnExists } from "./helpers.js";
+import {
+  VALID_PHONETIC_ALGORITHMS,
+  VALID_SEARCH_TECHNIQUES,
+  validateColumnExists,
+} from "./helpers.js";
 /**
  * Text Search and Analysis Tools
  *
@@ -30,7 +34,7 @@ import {
   FuzzyMatchSchema,
   PhoneticMatchSchema,
   AdvancedSearchSchema,
-  } from "../../schemas/text.js";
+} from "../../schemas/text.js";
 
 export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
   return {

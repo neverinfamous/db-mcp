@@ -103,13 +103,13 @@ describe("connectSqliteDatabase", () => {
   it("should load database from existing file", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "existing.db" };
-    
+
     vi.mock("fs", () => {
       return {
         existsSync: () => true,
         promises: {
           readFile: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-        }
+        },
       };
     });
 
@@ -121,13 +121,13 @@ describe("connectSqliteDatabase", () => {
   it("should create new database if file doesn't exist", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "new.db" };
-    
+
     vi.mock("fs", () => {
       return {
         existsSync: () => false,
         promises: {
           readFile: vi.fn(),
-        }
+        },
       };
     });
 
@@ -139,13 +139,13 @@ describe("connectSqliteDatabase", () => {
   it("should fallback to memory if fs throws error during connect", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "error.db" };
-    
+
     vi.mock("fs", () => {
       return {
         existsSync: () => true,
         promises: {
           readFile: vi.fn().mockRejectedValue(new Error("File access error")),
-        }
+        },
       };
     });
 
@@ -156,13 +156,13 @@ describe("connectSqliteDatabase", () => {
 
   it("should catch and wrap initial connection errors", async () => {
     const adapter = createMockAdapter();
-    const config = { 
-      type: "sqlite", 
+    const config = {
+      type: "sqlite",
       get filePath(): string {
         throw new Error("Simulated connection error");
-      }
+      },
     } as unknown as SqliteConfig;
-    
+
     await expect(
       connectSqliteDatabase(adapter as never, config),
     ).rejects.toThrow("SQLite connection failed: Simulated connection error");
@@ -208,7 +208,7 @@ describe("disconnectSqliteDatabase", () => {
   it("should save database to file if path is not :memory:", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "test.db" };
-    
+
     // We mock fs in a specific test so it doesn't leak
     vi.mock("fs", () => {
       return {
@@ -216,16 +216,16 @@ describe("disconnectSqliteDatabase", () => {
         promises: {
           readFile: vi.fn(),
           writeFile: vi.fn().mockResolvedValue(undefined),
-        }
+        },
       };
     });
-    
+
     const { db } = await connectSqliteDatabase(adapter as never, config);
     // Overwrite the export method for testing
     db.export = vi.fn().mockReturnValue(new Uint8Array([1, 2, 3]));
-    
+
     await disconnectSqliteDatabase(db, config);
-    
+
     // vitest unmock
     vi.unmock("fs");
   });
@@ -233,19 +233,19 @@ describe("disconnectSqliteDatabase", () => {
   it("should handle error when saving database to file", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "test.db" };
-    
+
     vi.mock("fs", () => {
       return {
         existsSync: () => false,
         promises: {
           writeFile: vi.fn().mockRejectedValue(new Error("Save failed")),
-        }
+        },
       };
     });
-    
+
     const { db } = await connectSqliteDatabase(adapter as never, config);
     await disconnectSqliteDatabase(db, config); // Should log warning but not throw
-    
+
     vi.unmock("fs");
   });
 });

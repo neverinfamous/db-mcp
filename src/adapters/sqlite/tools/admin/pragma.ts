@@ -16,7 +16,8 @@ import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
   AppendInsightOutputSchema,
   PragmaCompileOptionsOutputSchema,
-  PragmaDatabaseListSchema, PragmaDatabaseListOutputSchema,
+  PragmaDatabaseListSchema,
+  PragmaDatabaseListOutputSchema,
   PragmaOptimizeOutputSchema,
   PragmaSettingsOutputSchema,
   PragmaTableInfoOutputSchema,
@@ -197,7 +198,11 @@ export function createPragmaSettingsTool(
           const oldValue = oldResult.rows?.[0]?.[input.pragma];
 
           // Set new value
-          await adapter.executeWriteQuery(`PRAGMA ${input.pragma} = ${input.value}`, undefined, true);
+          await adapter.executeWriteQuery(
+            `PRAGMA ${input.pragma} = ${input.value}`,
+            undefined,
+            true,
+          );
 
           // Verify new value
           const newResult = await adapter.executeReadQuery(

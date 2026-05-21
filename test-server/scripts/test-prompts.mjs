@@ -7,7 +7,13 @@ const projectDir = resolve(__dirname, "../..");
 
 const proc = spawn(
   "node",
-  ["dist/cli.js", "--sqlite-native", "./test-server/test.db", "--log-level", "error"],
+  [
+    "dist/cli.js",
+    "--sqlite-native",
+    "./test-server/test.db",
+    "--log-level",
+    "error",
+  ],
   {
     cwd: projectDir,
     stdio: ["pipe", "pipe", "pipe"],
@@ -89,7 +95,11 @@ async function main() {
     // Required-argument prompts
     {
       name: "sqlite_query_builder",
-      args: { operation: "SELECT", tables: "users", description: "find active" },
+      args: {
+        operation: "SELECT",
+        tables: "users",
+        description: "find active",
+      },
       expect: "",
     },
     {

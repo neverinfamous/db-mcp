@@ -22,20 +22,22 @@ vi.mock("node:worker_threads", async (importOriginal) => {
       constructor(script: string, options: any) {
         super();
         setTimeout(() => {
-           const code = options.workerData.code;
-           if (code.includes("42")) {
-             this.emit("message", { success: true, result: 42 });
-           } else if (code.includes("Worker Error")) {
-             this.emit("message", { success: false, error: "Worker Error" });
-           } else if (code.includes("timeout")) {
-             // simulate timeout by doing nothing
-           } else {
-             this.emit("message", { success: true });
-           }
+          const code = options.workerData.code;
+          if (code.includes("42")) {
+            this.emit("message", { success: true, result: 42 });
+          } else if (code.includes("Worker Error")) {
+            this.emit("message", { success: false, error: "Worker Error" });
+          } else if (code.includes("timeout")) {
+            // simulate timeout by doing nothing
+          } else {
+            this.emit("message", { success: true });
+          }
         }, 5);
       }
-      terminate() { return Promise.resolve(); }
-    }
+      terminate() {
+        return Promise.resolve();
+      }
+    },
   };
 });
 

@@ -12,14 +12,15 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { IndexAuditOutputSchema, IndexAuditSchema } from "../../../schemas/introspection.js";
+import {
+  IndexAuditOutputSchema,
+  IndexAuditSchema,
+} from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-
 
 // =============================================================================
 // Tool Creator

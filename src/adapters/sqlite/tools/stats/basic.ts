@@ -1,4 +1,8 @@
-import { validateColumnExists, validateNumericColumn, VALID_STAT_TYPES } from "./helpers.js";
+import {
+  validateColumnExists,
+  validateNumericColumn,
+  VALID_STAT_TYPES,
+} from "./helpers.js";
 /**
  * Basic Statistics Tools
  *
@@ -51,15 +55,14 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const aliasedParams = resolveAliases(params, { tableName: "table", columnName: "column" });
+        const aliasedParams = resolveAliases(params, {
+          tableName: "table",
+          columnName: "column",
+        });
         const input = BasicStatsSchema.parse(aliasedParams);
 
         await validateColumnExists(adapter, input.table, input.column);
-        await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
+        await validateNumericColumn(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -121,7 +124,10 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const aliasedParams = resolveAliases(params, { tableName: "table", columnName: "column" });
+        const aliasedParams = resolveAliases(params, {
+          tableName: "table",
+          columnName: "column",
+        });
         const input = StatsCountSchema.parse(aliasedParams);
 
         if (input.column) {
@@ -208,11 +214,7 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.groupByColumn);
 
         if (input.stat !== "count") {
-          await validateNumericColumn(
-            adapter,
-            input.table,
-            input.valueColumn,
-          );
+          await validateNumericColumn(adapter, input.table, input.valueColumn);
         }
 
         const table = sanitizeIdentifier(input.table);
@@ -272,18 +274,14 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
               details: {
                 resourceType: "column",
                 resourceName: input.column,
-                tableName: input.table
-              }
-            }
+                tableName: input.table,
+              },
+            },
           );
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
+        await validateNumericColumn(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -396,18 +394,14 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
             "INVALID_INPUT",
             {
               details: {
-                invalidPercentiles
-              }
-            }
+                invalidPercentiles,
+              },
+            },
           );
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
+        await validateNumericColumn(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

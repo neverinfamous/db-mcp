@@ -12,7 +12,10 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { SchemaSnapshotOutputSchema, SchemaSnapshotSchema } from "../../../schemas/introspection.js";
+import {
+  SchemaSnapshotOutputSchema,
+  SchemaSnapshotSchema,
+} from "../../../schemas/introspection.js";
 import {
   isSpatialiteSystemTable,
   isSpatialiteSystemView,
@@ -22,8 +25,6 @@ import {
 // =============================================================================
 // Enum Coercers (prevent raw MCP -32602 from z.enum validation)
 // =============================================================================
-
-
 
 // =============================================================================
 // Tool Creator
@@ -84,7 +85,7 @@ export function createSchemaSnapshotTool(
           if (excludeSystem) {
             tablesList = tablesList.filter((n) => !isSpatialiteSystemTable(n));
           }
-          
+
           // Always filter out FTS shadow tables
           tablesList = tablesList.filter((n) => !n.includes("_fts_"));
 

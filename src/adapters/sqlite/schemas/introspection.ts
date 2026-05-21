@@ -343,12 +343,9 @@ export const QueryPlanOutputSchema = z
   })
   .extend(ErrorFieldsMixin.shape);
 
-
 // =============================================================================
 // Input Schemas
 // =============================================================================
-
-
 
 const VALID_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
 

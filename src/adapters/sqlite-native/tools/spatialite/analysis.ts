@@ -374,7 +374,7 @@ export function createSpatialImportTool(
 
             // Validate GeoJSON by attempting to parse it in SQLite
             const geojsonCheck = await adapter.executeReadQuery(
-              `SELECT GeomFromGeoJSON('${input.data}') as geom`
+              `SELECT GeomFromGeoJSON('${input.data}') as geom`,
             );
             const parsedGeom = geojsonCheck.rows?.[0]?.["geom"];
             if (parsedGeom === null || parsedGeom === undefined) {

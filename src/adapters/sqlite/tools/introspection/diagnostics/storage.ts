@@ -13,14 +13,15 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { ValidationError } from "../../../../../utils/errors/classes.js";
-import { StorageAnalysisOutputSchema, StorageAnalysisSchema } from "../../../schemas/introspection.js";
+import {
+  StorageAnalysisOutputSchema,
+  StorageAnalysisSchema,
+} from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-
 
 // =============================================================================
 // Helper: get pragma value as string
