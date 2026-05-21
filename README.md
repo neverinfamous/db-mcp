@@ -28,10 +28,9 @@
 | **151 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
 | **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a fast, secure JavaScript sandbox. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 151 capabilities locally, reducing token overhead by up to 90% and supercharging AI agent reasoning              |
-| **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access. Large datasets include metadata so agents always know the full picture  |
-| **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                   |
-| **Performance**                  | **⚠️ WASM Caution:** Synchronous execution blocks Node Event Loop on heavy workloads. **🚀 Native:** High-performance concurrent execution.                                                                                                                                                                              |
+| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 151 capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning              |
+| **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `_meta.tokenEstimate` on every response so agents know their token cost. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access  |
+| **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for high-performance concurrent execution with full features including transactions, window functions, and SpatiaLite GIS                                                                                                                         |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                       |
 | **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                         |
 | **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) for modern clients + legacy SSE (`/sse`) for backward compatibility — both protocols supported simultaneously with security headers, rate limiting, health check, and stateless mode for serverless                                                                                             |
@@ -280,7 +279,7 @@ If you start with a negative filter (e.g., `-vector,-geo`), it assumes you want 
 --tool-filter "-stats,-vector,-geo,-backup,-monitoring,-transactions,-window"
 ```
 
-## � SQLite Extensions
+## 🔌 SQLite Extensions
 
 SQLite supports both **built-in** extensions (compiled into better-sqlite3) and **loadable** extensions (require separate binaries).
 
@@ -613,12 +612,13 @@ The server exposes metadata at `/.well-known/oauth-protected-resource`.
 
 Performance benchmarks measure framework overhead on critical hot paths using [Vitest bench](https://vitest.dev/guide/features.html#benchmarking) (tinybench). The suite validates that framework plumbing stays negligible relative to actual database I/O:
 
-- **Tool dispatch:** ~11M ops/sec — Map-based lookup is effectively zero-cost
-- **Auth scope checks:** 7–9M ops/sec — OAuth middleware adds no measurable latency
-- **Identifier validation:** 6.4M ops/sec — SQL sanitization is near-instant
-- **Schema cache hits:** 4.3M ops/sec — metadata lookups avoid redundant queries
-- **Debug log (filtered):** 9.5M ops/sec — disabled log levels are true no-ops (50× faster than actual writes)
-- **Code Mode security:** 1.2M validations/sec for typical code, blocked patterns rejected in <1 µs
+- **Tool dispatch:** 11–14M ops/sec — Map-based lookup is effectively zero-cost
+- **Auth scope checks:** 6–8M ops/sec — OAuth middleware adds no measurable latency
+- **Identifier validation:** 6–7M ops/sec — SQL sanitization is near-instant
+- **Schema cache hits:** 4–6M ops/sec — metadata lookups avoid redundant queries
+- **Debug log (filtered):** 10–11M ops/sec — disabled log levels are true no-ops
+- **Code Mode security:** 1–1.3M validations/sec for typical code, blocked patterns rejected in <1 µs
+- **Sandbox execution:** ~4.4–4.9K executions/sec — trivial code round-trips through V8 isolate in ~0.2 ms
 
 ```bash
 npm run bench            # Run all benchmarks
