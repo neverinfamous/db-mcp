@@ -90,7 +90,7 @@ Verify parameter visibility and alias acceptance.
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-> **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and modifies the database schema. Always reset the database after completing migration tests.
+> **⚠️ After testing, run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and modifies the database schema. Always reset the database after completing migration tests.
 
 ### Built-in Tools (3)
 
@@ -161,7 +161,7 @@ Verify parameter visibility and alias acceptance.
 
 ### After Testing
 
-1. **⚠️ Reset database**: Run `.\reset-database.ps1` to clean up migration artifacts (`_mcp_migrations` table and any `temp_migration_*` tables)
+1. **⚠️ Reset database**: Run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to clean up migration artifacts (`_mcp_migrations` table and any `temp_migration_*` tables)
 2. **Triage findings**: Create implementation plan if issues found
 3. **Scope of fixes**: Handler code, server-instructions, test database, this prompt
 4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
@@ -181,7 +181,7 @@ Verify parameter visibility and alias acceptance.
 ### Migration state is dirty
 
 If previous migration test left the database in a bad state:
-1. Run `.\reset-database.ps1` to regenerate the test database from `test-database.sql`
+1. Run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to regenerate the test database from `test-database.sql`
 2. This drops and recreates all tables, including removing `_mcp_migrations`
 
 ### Reset script fails

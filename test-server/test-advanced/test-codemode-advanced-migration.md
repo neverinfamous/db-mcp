@@ -10,7 +10,7 @@
 
 **Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
 
-> **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and may ALTER/CREATE/DROP tables. Always reset after.
+> **⚠️ After testing, run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and may ALTER/CREATE/DROP tables. Always reset after.
 
 ## WASM Mode
 
@@ -35,7 +35,7 @@ State persists across calls. Do NOT pass `readonly: true`.
 ## Naming & Cleanup
 
 - **Temporary tables**: `stress_*` prefix.
-- **After testing**: Run `reset-database.ps1` to undo schema modifications.
+- **After testing**: Run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to undo schema modifications.
 
 ## Reporting Format
 
@@ -146,12 +146,12 @@ Rate each error response 1-5:
 1. Drop `_mcp_migrations`: `sqlite.admin.dropTable({table: "_mcp_migrations"})`
 2. Drop `stress_migration_data`: `sqlite.admin.dropTable({table: "stress_migration_data"})`
 3. Drop `stress_idx_flag`: *Handled by database reset below*
-4. **Reset database** with `.\reset-database.ps1` to undo `stress_flag` column on `test_products`
+4. **Reset database** with `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to undo `stress_flag` column on `test_products`
 5. After reset, verify: `test_products` has 16 rows and original columns (no `stress_flag`)
 
 ## Post-Test Procedures
 
-1. **⚠️ Reset database**: `.\reset-database.ps1`
+1. **⚠️ Reset database**: `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1`
 2. **Fix EVERY finding** — ❌, ⚠️, 📦
 3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
 4. **Commit**: Stage and commit — do NOT push

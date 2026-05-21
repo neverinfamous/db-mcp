@@ -8,7 +8,7 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 
 1. Basic deterministic tool group checklists (located in `../test-tool-groups/*.md`) MUST be successfully passed before running these advanced tests.
 2. Code Mode basic tests (located in `../test-tool-groups-codemode/*.md`) MUST be successfully passed.
-3. The testing database MUST be freshly seeded via `../reset-database.ps1` to ensure deterministic results.
+3. The testing database MUST be freshly seeded via `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to ensure deterministic results.
 
 ## File Inventory
 

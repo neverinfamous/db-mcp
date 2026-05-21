@@ -10,7 +10,7 @@
 
 **Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
 
-> **⚠️ After testing, run `.\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and modifies schema. Always reset after.
+> **⚠️ After testing, run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1`** — migration testing creates the `_mcp_migrations` tracking table and modifies schema. Always reset after.
 
 ## WASM Mode
 
@@ -249,7 +249,7 @@ return { failures, success: failures.length === 0, statusBefore: status, history
 ## Post-Test Procedures
 
 1. **⚠️ Explicit Cleanup**: Execute a final Code Mode script to `DROP TABLE IF EXISTS` all `temp_*` tables created during the test, as the active MCP server lock prevents the reset script from clearing them.
-2. **⚠️ Reset database**: Run `.\test-server\reset-database.ps1` to re-seed the test database.
+2. **⚠️ Reset database**: Run `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to re-seed the test database.
 3. **Triage findings**: Create implementation plan if issues found
 4. **Scope of fixes**: Handler code, server-instructions, this prompt
 5. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
