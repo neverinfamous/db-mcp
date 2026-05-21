@@ -2,6 +2,8 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
+> We're currently in Native mode.
+> If there is nothing to fix, don't update UNRELEASED.md.
 
 > [!CAUTION]
 > **WASM ONLY** — This prompt must be run against a WASM backend (`--sqlite` flag). Running it against Native will produce false results since the tools being tested are expected to *fail* in WASM but *succeed* in Native.
