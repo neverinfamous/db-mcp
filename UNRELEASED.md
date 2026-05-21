@@ -31,6 +31,7 @@
   - Added Trivy container scan + SARIF upload to `docker-publish.yml` security-scan job
   - Added `.gitleaks.toml` and `.trivyignore` configuration files
 - **Vulnerability Remediation**: Resolved Vite, Hono, path-to-regexp, fast-uri, Picomatch, and ip-address vulnerabilities via `npm update` and transitive lockfile resolutions.
+- **Docker Image Hardening**: Pinned Alpine edge packages (`openssl`, `musl`, `nghttp2`) and manually updated npm's bundled `brace-expansion` to resolve multiple Docker Scout CVEs.
 
 ### Changed
 

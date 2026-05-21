@@ -7,7 +7,7 @@ WORKDIR /app
 # Install build dependencies for better-sqlite3 native compilation
 # Use Alpine edge for latest security patches
 RUN apk add --no-cache python3 make g++ && \
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl openssl musl nghttp2
 
 # Upgrade npm globally (no patches here — builder is discarded, only production stage is scanned)
 RUN npm install -g npm@latest --force && npm cache clean --force
@@ -40,7 +40,7 @@ WORKDIR /app
 
 # Install runtime dependencies with security fixes
 RUN apk add --no-cache ca-certificates && \
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl && \
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl openssl musl nghttp2 && \
     apk upgrade --no-cache && \
     npm install -g npm@latest --force && npm cache clean --force
 
@@ -79,6 +79,14 @@ RUN cd /usr/local/lib/node_modules/npm && \
     tar -xzf minimatch-10.2.5.tgz && \
     mv package node_modules/minimatch && \
     rm minimatch-10.2.5.tgz
+
+# Fix CVE-2026-45149, CVE-2026-33750: Manually update npm's bundled brace-expansion to 5.0.6
+RUN cd /usr/local/lib/node_modules/npm && \
+    npm pack brace-expansion@5.0.6 && \
+    rm -rf node_modules/brace-expansion && \
+    tar -xzf brace-expansion-5.0.6.tgz && \
+    mv package node_modules/brace-expansion && \
+    rm brace-expansion-5.0.6.tgz
 
 # Copy built artifacts and production dependencies
 COPY --from=builder /app/dist ./dist
