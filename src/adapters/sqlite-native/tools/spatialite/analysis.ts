@@ -372,6 +372,21 @@ export function createSpatialImportTool(
             // Validate JSON to ensure it's valid GeoJSON
             JSON.parse(input.data);
 
+            // Validate GeoJSON by attempting to parse it in SQLite
+            const geojsonCheck = await adapter.executeReadQuery(
+              `SELECT GeomFromGeoJSON('${input.data}') as geom`
+            );
+            const parsedGeom = geojsonCheck.rows?.[0]?.["geom"];
+            if (parsedGeom === null || parsedGeom === undefined) {
+              return {
+                success: false,
+                error: `Invalid GeoJSON geometry: could not be parsed by SpatiaLite (must be a valid Geometry object)`,
+                code: "VALIDATION_ERROR",
+                category: "validation" as const,
+                recoverable: false,
+              };
+            }
+
             // Build INSERT with additional columns (matching WKT path)
             // Use SetSRID(GeomFromGeoJSON(...), srid) to ensure SRID is set correctly
             const columns = ["geom"];
