@@ -14,8 +14,8 @@ import {
   buildProgressContext,
   sendProgress,
 } from "../../../../../utils/progress-utils.js";
-import { RestoreOutputSchema } from "../../../output-schemas/index.js";
-import { RestoreSchema } from "../helpers.js";
+import { RestoreOutputSchema } from "../../../schemas/admin.js";
+import { RestoreSchema } from "../../../schemas/admin.js";
 
 /**
  * Restore database from backup

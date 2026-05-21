@@ -5,18 +5,26 @@
  * 4 tools total.
  */
 
-import { z } from "zod";
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly, idempotent, admin } from "../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../utils/index.js";
-import { formatHandlerError } from "../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../utils/errors/index.js";
 import { validateTableExists } from "./column-validation.js";
 import {
+  FtsCreateSchema,
+  FtsSearchSchema,
+  FtsRebuildSchema,
+  FtsMatchInfoSchema,
   FtsCreateOutputSchema,
   FtsSearchOutputSchema,
   FtsRebuildOutputSchema,
-} from "../output-schemas/index.js";
+  FtsHeadlineOutputSchema,
+} from "../schemas/fts.js";
+import { FtsHeadlineSchema } from "../schemas/text.js";
 
 /**
  * Build error response for FTS5 unavailability in WASM mode
@@ -77,75 +85,6 @@ function buildFts5SearchUnavailableError(): {
 }
 
 /**
- * Create a coercer for optional enum params with defaults.
- * Returns `undefined` for any value NOT in the allowed set
- * (including empty strings), so `.optional().default()` kicks in.
- * Prevents raw MCP -32602 for invalid enum values.
- */
-const coerceEnumValues =
-  (allowed: readonly string[]) =>
-  (val: unknown): unknown =>
-    typeof val === "string" && allowed.includes(val) ? val : undefined;
-
-// FTS schemas
-const FtsCreateSchema = z.object({
-  tableName: z.string().describe("Name of the FTS table to create"),
-  sourceTable: z.string().describe("Source table to index"),
-  columns: z.array(z.string()).describe("Columns to include in the index"),
-  contentTable: z
-    .string()
-    .optional()
-    .describe("Content table for external content FTS"),
-  tokenizer: z.preprocess(
-    coerceEnumValues(["unicode61", "ascii", "porter"]),
-    z.enum(["unicode61", "ascii", "porter"]).optional().default("unicode61"),
-  ),
-  createTriggers: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe(
-      "Create INSERT/UPDATE/DELETE triggers for auto-sync (only for external content tables)",
-    ),
-});
-
-const FtsSearchSchema = z.object({
-  table: z.string().describe("FTS table name"),
-  query: z.string().describe("Full-text search query"),
-  columns: z
-    .array(z.string())
-    .optional()
-    .describe("Specific columns to search"),
-  limit: z.preprocess(
-    (val) =>
-      typeof val === "string"
-        ? isNaN(Number(val))
-          ? undefined
-          : Number(val)
-        : val,
-    z.number().optional().default(100),
-  ),
-  highlight: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("Include highlighted snippets"),
-});
-
-const FtsRebuildSchema = z.object({
-  table: z.string().describe("FTS table name to rebuild"),
-});
-
-const FtsMatchInfoSchema = z.object({
-  table: z.string().describe("FTS table name"),
-  query: z.string().describe("Full-text search query"),
-  format: z.preprocess(
-    coerceEnumValues(["bm25", "rank"]),
-    z.enum(["bm25", "rank"]).optional().default("bm25"),
-  ),
-});
-
-/**
  * Get all FTS tools
  */
 export function getFtsTools(adapter: SqliteAdapter): ToolDefinition[] {
@@ -154,6 +93,7 @@ export function getFtsTools(adapter: SqliteAdapter): ToolDefinition[] {
     createFtsSearchTool(adapter),
     createFtsRebuildTool(adapter),
     createFtsMatchInfoTool(adapter),
+    createFtsHeadlineTool(adapter),
   ];
 }
 
@@ -173,8 +113,15 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const input = FtsCreateSchema.parse(params);
 
+        const targetTableName = input.tableName || input.ftsTable;
+        if (!targetTableName) {
+          throw new ValidationError(
+            "Must provide either tableName or ftsTable",
+          );
+        }
+
         // Validate identifiers (FTS5 uses raw column names, not quoted)
-        sanitizeIdentifier(input.tableName);
+        sanitizeIdentifier(targetTableName);
         sanitizeIdentifier(input.sourceTable);
         for (const col of input.columns) {
           sanitizeIdentifier(col);
@@ -188,7 +135,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(effectiveContentTable);
         options += `, content="${effectiveContentTable}"`;
 
-        const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${input.tableName}" USING fts5(${columnList}, ${options})`;
+        const sql = `CREATE VIRTUAL TABLE IF NOT EXISTS "${targetTableName}" USING fts5(${columnList}, ${options})`;
         await adapter.executeQuery(sql);
 
         // Create sync triggers for external content FTS tables
@@ -196,7 +143,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.createTriggers) {
           triggersCreated = await createSyncTriggers(
             adapter,
-            input.tableName,
+            targetTableName,
             effectiveContentTable,
             input.columns,
           );
@@ -204,23 +151,24 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Populate the FTS index with existing data
         await adapter.executeQuery(
-          `INSERT INTO "${input.tableName}"("${input.tableName}") VALUES('rebuild')`,
+          `INSERT INTO "${targetTableName}"("${targetTableName}") VALUES('rebuild')`,
         );
 
         const message = triggersCreated.length
-          ? `FTS5 table '${input.tableName}' created with ${triggersCreated.length} sync triggers`
-          : `FTS5 table '${input.tableName}' created`;
+          ? `FTS5 table '${targetTableName}' created with ${triggersCreated.length} sync triggers`
+          : `FTS5 table '${targetTableName}' created`;
 
         return {
           success: true,
           message,
-          tableName: input.tableName,
+          tableName: targetTableName,
           triggersCreated: triggersCreated.length ? triggersCreated : undefined,
         };
       } catch (error) {
         if (isFts5UnavailableError(error)) {
           return buildFts5UnavailableError(
-            (params as { tableName?: string } | null)?.tableName,
+            (params as { tableName?: string } | null)?.tableName ||
+              (params as { ftsTable?: string } | null)?.ftsTable,
           );
         }
         return formatHandlerError(error);
@@ -434,6 +382,89 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
+        const result = await adapter.executeReadQuery(sql);
+
+        return {
+          success: true,
+          rowCount: result.rows?.length ?? 0,
+          results: result.rows,
+        };
+      } catch (error) {
+        if (isFts5UnavailableError(error)) {
+          return buildFts5SearchUnavailableError();
+        }
+        return formatHandlerError(error);
+      }
+    },
+  };
+}
+
+/**
+ * FTS5 headline/snippet — highlighted search result excerpts
+ */
+function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_fts_headline",
+    description:
+      "Generate highlighted snippets from FTS5 full-text search results. Returns headline (highlight) and snippet (context window) for each match.",
+    group: "text",
+    inputSchema: FtsHeadlineSchema,
+    outputSchema: FtsHeadlineOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("FTS Headline"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      try {
+        const input = FtsHeadlineSchema.parse(params);
+
+        // Upfront FTS5 availability check
+        if (!isFts5Available(adapter)) {
+          return buildFts5SearchUnavailableError();
+        }
+
+        // Validate FTS table name and existence
+        sanitizeIdentifier(input.table);
+        await validateTableExists(adapter, input.table);
+
+        // Escape single quotes in query
+        const queryEscaped = input.query.replace(/'/g, "''");
+
+        // Determine column index for highlight/snippet (default: 0)
+        let columnIndex = 0;
+        if (input.column) {
+          // Look up column index from FTS table structure
+          const colResult = await adapter.executeReadQuery(
+            `PRAGMA table_info("${input.table}")`,
+          );
+          const colRows = colResult.rows ?? [];
+          const found = colRows.findIndex(
+            (r) => String(r["name"]) === input.column,
+          );
+          if (found >= 0) {
+            columnIndex = found;
+          }
+        }
+
+        // Escape markers for SQL
+        const startSel = input.startSel.replace(/'/g, "''");
+        const stopSel = input.stopSel.replace(/'/g, "''");
+
+        // Build SELECT with highlight() and snippet()
+        const highlightExpr = `highlight("${input.table}", ${String(columnIndex)}, '${startSel}', '${stopSel}')`;
+        const snippetExpr = `snippet("${input.table}", ${String(columnIndex)}, '${startSel}', '${stopSel}', '...', ${String(input.snippetWords)})`;
+
+        // Handle wildcard query — return all rows without MATCH
+        if (input.query === "*" || input.query.trim() === "") {
+          const sql = `SELECT *, NULL as headline, NULL as snippet, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${String(input.limit)}`;
+          const result = await adapter.executeReadQuery(sql);
+          return {
+            success: true,
+            rowCount: result.rows?.length ?? 0,
+            results: result.rows,
+          };
+        }
+
+        const sql = `SELECT ${highlightExpr} as headline, ${snippetExpr} as snippet, rank FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY rank LIMIT ${String(input.limit)}`;
+
         const result = await adapter.executeReadQuery(sql);
 
         return {

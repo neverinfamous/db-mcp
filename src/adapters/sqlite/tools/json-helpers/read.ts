@@ -1,3 +1,11 @@
+import { getUniqueColumnNames } from "./helpers.js";
+import {
+  JsonSelectOutputSchema,
+  JsonSelectSchema,
+  JsonQuerySchema,
+  JsonValidatePathSchema,
+  AnalyzeJsonSchemaSchema,
+} from "../../schemas/json.js";
 /**
  * JSON Read Tools
  *
@@ -19,18 +27,11 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
-  JsonSelectSchema,
-  JsonQuerySchema,
-  JsonValidatePathSchema,
-  AnalyzeJsonSchemaSchema,
-} from "../../types.js";
-import {
-  JsonSelectOutputSchema,
   JsonQueryOutputSchema,
   JsonValidatePathOutputSchema,
   AnalyzeJsonSchemaOutputSchema,
-} from "../../output-schemas/index.js";
-import { getUniqueColumnNames } from "./helpers.js";
+} from "../../schemas/json.js";
+import {} from "../../schemas/json.js";
 
 /**
  * Select and extract JSON data
@@ -137,8 +138,14 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Build where clause from filters
         const conditions: string[] = [];
-        if (input.filterPaths) {
-          for (const [path, value] of Object.entries(input.filterPaths)) {
+        if (
+          input.filterPaths !== undefined &&
+          input.filterPaths !== null &&
+          typeof input.filterPaths === "object"
+        ) {
+          for (const [path, value] of Object.entries(
+            input.filterPaths as Record<string, unknown>,
+          )) {
             if (!path.startsWith("$")) {
               throw new ValidationError(`JSON path must start with $: ${path}`);
             }
@@ -207,7 +214,7 @@ export function createJsonValidatePathTool(): ToolDefinition {
       }
 
       return Promise.resolve({
-        success: issues.length === 0,
+        success: true,
         path,
         valid: issues.length === 0,
         issues: issues.length > 0 ? issues : undefined,

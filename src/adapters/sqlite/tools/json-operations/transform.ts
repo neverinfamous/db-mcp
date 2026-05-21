@@ -1,3 +1,7 @@
+import {
+  JsonNormalizeColumnOutputSchema,
+  JsonbConvertOutputSchema,
+} from "../../schemas/json.js";
 /**
  * JSON Transform Tools
  *
@@ -22,16 +26,14 @@ import {
 } from "../../json-utils.js";
 import {
   JsonPrettyOutputSchema,
-  JsonbConvertOutputSchema,
   JsonStorageInfoOutputSchema,
-  JsonNormalizeColumnOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/json.js";
 import {
   JsonPrettySchema,
   JsonbConvertSchema,
   JsonStorageInfoSchema,
   JsonNormalizeColumnSchema,
-} from "./helpers.js";
+} from "../../schemas/json.js";
 
 export function createJsonPrettyTool(): ToolDefinition {
   return {

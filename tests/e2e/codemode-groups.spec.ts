@@ -269,7 +269,7 @@ test.describe("Code Mode Groups: Vector", () => {
       });
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
-      expect(Array.isArray(result.results)).toBe(true);
+      expect(Array.isArray(result.rows)).toBe(true);
     } finally {
       await client.close();
     }

@@ -19,6 +19,13 @@ import {
   createCreateIndexTool,
   createDropIndexTool,
 } from "./indexes.js";
+import {
+  createUpsertTool,
+  createBatchInsertTool,
+  createCountTool,
+  createExistsTool,
+  createTruncateTool,
+} from "./convenience.js";
 
 // Re-export SpatiaLite system filters for external use
 export {
@@ -41,5 +48,10 @@ export function getCoreTools(adapter: SqliteAdapter): ToolDefinition[] {
     createGetIndexesTool(adapter),
     createCreateIndexTool(adapter),
     createDropIndexTool(adapter),
+    createUpsertTool(adapter),
+    createBatchInsertTool(adapter),
+    createCountTool(adapter),
+    createExistsTool(adapter),
+    createTruncateTool(adapter),
   ];
 }

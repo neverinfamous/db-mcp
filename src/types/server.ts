@@ -7,6 +7,7 @@
 
 import type { DatabaseConfig } from "./database.js";
 import type { OAuthConfig } from "./auth.js";
+import type { AuditConfig } from "../audit/types.js";
 
 // =============================================================================
 // MCP Server Types
@@ -55,4 +56,7 @@ export interface McpServerConfig {
    */
   statelessHttp?: boolean;
   enableHSTS?: boolean;
+
+  /** Audit logging configuration */
+  audit?: AuditConfig;
 }

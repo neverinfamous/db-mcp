@@ -1,3 +1,8 @@
+import {
+  validateColumnExists,
+  validateNumericColumn,
+  VALID_TEST_TYPES,
+} from "../helpers.js";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -14,13 +19,8 @@ import {
   ErrorCategory,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
-import {
-  validateColumnExists,
-  validateNumericColumn,
-  VALID_TEST_TYPES,
-  HypothesisSchema,
-} from "../helpers.js";
-import { StatsHypothesisOutputSchema } from "../../../output-schemas/index.js";
+import { HypothesisSchema } from "../../../schemas/stats.js";
+import { StatsHypothesisOutputSchema } from "../../../schemas/stats.js";
 import { tDistPValue } from "../math-helpers.js";
 
 /**
@@ -37,9 +37,9 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Hypothesis Testing"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = HypothesisSchema.parse(params);
-
       try {
+        const input = HypothesisSchema.parse(params);
+
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
           !input.testType ||
@@ -59,12 +59,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Only validate numeric column for t-tests — chi-square operates on categorical data
         if (input.testType !== "chi_square") {
-          const numericError = await validateNumericColumn(
-            adapter,
-            input.table,
-            input.column,
-          );
-          if (numericError) return numericError;
+          await validateNumericColumn(adapter, input.table, input.column);
         }
 
         if (input.whereClause) {

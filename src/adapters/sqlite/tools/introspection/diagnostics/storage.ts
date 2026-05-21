@@ -12,34 +12,16 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { StorageAnalysisOutputSchema } from "../../../output-schemas/index.js";
+import { ValidationError } from "../../../../../utils/errors/classes.js";
+import {
+  StorageAnalysisOutputSchema,
+  StorageAnalysisSchema,
+} from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-const StorageAnalysisSchema = z
-  .object({
-    includeTableDetails: z
-      .boolean()
-      .optional()
-      .describe("Include per-table size breakdown (default: true)"),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe(
-        "Exclude SpatiaLite system tables from per-table breakdown (default: true)",
-      ),
-    limit: z
-      .number()
-      .min(1)
-      .max(500)
-      .optional()
-      .describe("Maximum number of tables to include (default: 50)"),
-  })
-  .default({});
 
 // =============================================================================
 // Helper: get pragma value as string
@@ -91,6 +73,9 @@ export function createStorageAnalysisTool(
         const includeDetails = input.includeTableDetails !== false;
         const excludeSystem = input.excludeSystemTables !== false;
         const limit = input.limit ?? 50;
+        if (limit < 1 || limit > 500) {
+          throw new ValidationError("limit must be between 1 and 500");
+        }
         // Gather database-level metrics
         const pageSize = await getPragmaNumber(adapter, "page_size");
         const totalPages = await getPragmaNumber(adapter, "page_count");

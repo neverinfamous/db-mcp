@@ -1,3 +1,5 @@
+import { euclideanDistance, dotProduct, cosineSimilarity } from "./helpers.js";
+import { normalizeVector, parseVector } from "./helpers.js";
 /**
  * Vector Metadata Tool Implementations
  *
@@ -18,21 +20,14 @@ import {
   VectorDimensionsOutputSchema,
   VectorNormalizeOutputSchema,
   VectorDistanceOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/vector.js";
 import {
   VectorNormalizeSchema,
   VectorDistanceSchema,
   VectorCountSchema,
   VectorStatsSchema,
   VectorDimensionsSchema,
-} from "./schemas.js";
-import {
-  cosineSimilarity,
-  euclideanDistance,
-  dotProduct,
-  normalizeVector,
-  parseVector,
-} from "./helpers.js";
+} from "../../schemas/vector.js";
 
 /**
  * Count vectors
@@ -115,7 +110,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
         if (vectors.length === 0) {
           return {
             success: true,
-            count: 0,
+            sampleSize: 0,
             message: "No valid vectors found",
           };
         }
@@ -124,7 +119,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
         if (!firstVector) {
           return {
             success: true,
-            count: 0,
+            sampleSize: 0,
             message: "No valid vectors found",
           };
         }
@@ -226,6 +221,9 @@ export function createVectorNormalizeTool(): ToolDefinition {
             success: false,
             error:
               "vector is required and must be a non-empty array of numbers",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
           });
         }
 
@@ -267,6 +265,9 @@ export function createVectorDistanceTool(): ToolDefinition {
             success: false,
             error:
               "vector1 and vector2 are required and must be non-empty arrays of numbers",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
           });
         }
 
@@ -293,13 +294,16 @@ export function createVectorDistanceTool(): ToolDefinition {
             return Promise.resolve({
               success: false,
               error: `Invalid metric '${input.metric}'. Valid values: cosine, euclidean, dot`,
+              code: "VALIDATION_ERROR",
+              category: "validation",
+              recoverable: false,
             });
         }
 
         return Promise.resolve({
           success: true,
           metric: input.metric,
-          value: Math.round(result * 10000) / 10000,
+          distance: Math.round(result * 10000) / 10000,
         });
       } catch (error) {
         return Promise.resolve(formatHandlerError(error));

@@ -1,3 +1,17 @@
+import {
+  JsonInsertOutputSchema,
+  JsonUpdateOutputSchema,
+  JsonMergeOutputSchema,
+  CreateJsonCollectionOutputSchema,
+  JsonInsertSchema,
+  JsonUpdateSchema,
+  JsonMergeSchema,
+  CreateJsonCollectionSchema,
+  type JsonInsertInput,
+  type JsonUpdateInput,
+  type JsonMergeInput,
+  type CreateJsonCollectionInput,
+} from "../../schemas/json.js";
 /**
  * JSON Write Tools
  *
@@ -14,36 +28,26 @@ import {
   sanitizeIdentifier,
   validateWhereClause,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
-  JsonInsertSchema,
-  JsonUpdateSchema,
-  JsonMergeSchema,
-  CreateJsonCollectionSchema,
-} from "../../types.js";
-import {
-  JsonInsertOutputSchema,
-  JsonUpdateOutputSchema,
-  JsonMergeOutputSchema,
-  CreateJsonCollectionOutputSchema,
-} from "../../output-schemas/index.js";
-import { normalizeJson } from "../../json-utils.js";
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 
 /**
- * Insert JSON data with auto-normalization
+ * Insert JSON data as a new row
  */
 export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_insert",
     description:
-      "Insert a row with JSON data. Automatically normalizes JSON for consistent storage.",
+      "Insert a new row with JSON data into a JSON column. Note: This creates a new table row, rather than modifying an existing JSON object.",
     group: "json",
     inputSchema: JsonInsertSchema,
     outputSchema: JsonInsertOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSON Insert"),
     handler: async (params: unknown, _context: RequestContext) => {
-      let input;
+      let input: JsonInsertInput;
       try {
         input = JsonInsertSchema.parse(params);
       } catch (error) {
@@ -51,48 +55,41 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       try {
+        // Validate table and column names
+        sanitizeIdentifier(input.table);
+        sanitizeIdentifier(input.column);
+
         if (input.data === undefined) {
-          return {
-            success: false,
-            error: "Missing required parameter: data",
-          };
+          throw new ValidationError(
+            "Missing required parameter: data",
+            "VALIDATION_ERROR",
+            {
+              suggestion: "Provide JSON data to insert.",
+            },
+          );
         }
 
-        // Normalize JSON data for consistent storage
-        const rawJson =
-          typeof input.data === "string"
-            ? input.data
-            : JSON.stringify(input.data);
+        const valueJson = JSON.stringify(input.data);
+        const sql = `INSERT INTO "${input.table}" ("${input.column}") VALUES (json('${valueJson.replace(/'/g, "''")}'))`;
 
-        const { normalized: jsonStr } = normalizeJson(rawJson);
+        const result = await adapter.executeWriteQuery(sql);
 
-        // Build column list
-        const columns = [input.column];
-        const placeholders = ["?"];
-        const values: unknown[] = [jsonStr];
+        const response: Record<string, unknown> = {
+          success: true,
+          message: `Inserted new row into ${input.table}.${input.column}`,
+          rowsAffected: result.rowsAffected,
+        };
 
-        if (input.additionalColumns) {
-          for (const [col, val] of Object.entries(input.additionalColumns)) {
-            // Validate column name
-            sanitizeIdentifier(col);
-            columns.push(col);
-            placeholders.push("?");
-            values.push(typeof val === "object" ? JSON.stringify(val) : val);
+        if (result.lastInsertId !== undefined) {
+          response["lastInsertRowid"] = Number(result.lastInsertId);
+        } else if ("lastInsertRowid" in result) {
+          const res = result as Record<string, unknown>;
+          if (res["lastInsertRowid"] !== undefined) {
+            response["lastInsertRowid"] = Number(res["lastInsertRowid"]);
           }
         }
 
-        // Validate table name
-        sanitizeIdentifier(input.table);
-
-        const sql = `INSERT INTO "${input.table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${placeholders.join(", ")})`;
-
-        const result = await adapter.executeWriteQuery(sql, values);
-
-        return {
-          success: true,
-          message: `Inserted row into ${input.table}`,
-          rowsAffected: result.rowsAffected,
-        };
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
@@ -106,14 +103,15 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
 export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_json_update",
-    description: "Update a value at a specific JSON path using json_set().",
+    description:
+      "Update a value at a specific JSON path using json_replace(). Only updates if the key already exists.",
     group: "json",
     inputSchema: JsonUpdateSchema,
     outputSchema: JsonUpdateOutputSchema,
     requiredScopes: ["write"],
     annotations: write("JSON Update"),
     handler: async (params: unknown, _context: RequestContext) => {
-      let input;
+      let input: JsonUpdateInput;
       try {
         input = JsonUpdateSchema.parse(params);
       } catch (error) {
@@ -127,30 +125,29 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Validate JSON path format
         if (!input.path.startsWith("$")) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError(
+            "JSON path must start with $",
+            "VALIDATION_ERROR",
+            {
+              suggestion:
+                "Use a valid JSON path starting with $. For example: $.key or $[0]",
+            },
+          );
         }
 
         if (input.value === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: value",
-          };
+          throw new ValidationError(
+            "Missing required parameter: value",
+            "VALIDATION_ERROR",
+            {
+              suggestion: "Provide a value to update.",
+            },
+          );
         }
 
-        // String values must be JSON-stringified to produce valid JSON
-        // e.g., "New Title" -> '"New Title"' (with JSON quotes inside SQL quotes)
-        const valueStr =
-          typeof input.value === "string"
-            ? `'${JSON.stringify(input.value).replace(/'/g, "''")}'`
-            : JSON.stringify(input.value);
-
+        const valueJson = JSON.stringify(input.value);
         validateWhereClause(input.whereClause);
-        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_set("${input.column}", '${input.path}', json(${valueStr})) WHERE ${input.whereClause}`;
+        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_replace("${input.column}", '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
 
         const result = await adapter.executeWriteQuery(sql);
 
@@ -187,7 +184,7 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Merge"),
     handler: async (params: unknown, _context: RequestContext) => {
-      let input;
+      let input: JsonMergeInput;
       try {
         input = JsonMergeSchema.parse(params);
       } catch (error) {
@@ -200,11 +197,13 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.column);
 
         if (input.mergeData === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: mergeData",
-          };
+          throw new ValidationError(
+            "Missing required parameter: mergeData",
+            "VALIDATION_ERROR",
+            {
+              suggestion: "Provide JSON data to merge.",
+            },
+          );
         }
 
         const mergeJson = JSON.stringify(input.mergeData);
@@ -250,7 +249,7 @@ export function createJsonCollectionTool(
     requiredScopes: ["write"],
     annotations: write("Create JSON Collection"),
     handler: async (params: unknown, _context: RequestContext) => {
-      let input;
+      let input: CreateJsonCollectionInput;
       try {
         input = CreateJsonCollectionSchema.parse(params);
       } catch (error) {
@@ -269,10 +268,14 @@ export function createJsonCollectionTool(
         if (input.indexes) {
           for (const idx of input.indexes) {
             if (!idx.path.startsWith("$")) {
-              return {
-                success: false,
-                error: `JSON path must start with $: ${idx.path}`,
-              };
+              throw new ValidationError(
+                `JSON path must start with $: ${idx.path}`,
+                "VALIDATION_ERROR",
+                {
+                  suggestion:
+                    "Use a valid JSON path starting with $. For example: $.key or $[0]",
+                },
+              );
             }
           }
         }

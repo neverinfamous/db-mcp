@@ -1,3 +1,8 @@
+import {
+  VALID_NORMALIZE_MODES,
+  VALID_VALIDATE_PATTERNS,
+  validateColumnExists,
+} from "./helpers.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -13,17 +18,11 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import { stripAccents, VALIDATION_PATTERNS } from "./formatting.js";
-import {
-  TextNormalizeSchema,
-  TextValidateSchema,
-  VALID_NORMALIZE_MODES,
-  VALID_VALIDATE_PATTERNS,
-  validateColumnExists,
-} from "./helpers.js";
+import { TextNormalizeSchema, TextValidateSchema } from "../../schemas/text.js";
 import {
   TextNormalizeOutputSchema,
   TextValidateOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/text.js";
 
 /**
  * Normalize text (Unicode normalization or accent stripping)
@@ -61,7 +60,7 @@ export function createTextNormalizeTool(
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
-        let sql = `SELECT ${column} as original FROM ${table}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -71,7 +70,14 @@ export function createTextNormalizeTool(
         const result = await adapter.executeReadQuery(sql);
 
         const rows = (result.rows ?? []).map((row) => {
-          const rawOriginal = row["original"];
+          const rawRowid = row["id"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
+          const rawOriginal = row["value"];
           const original =
             typeof rawOriginal === "string"
               ? rawOriginal
@@ -86,7 +92,7 @@ export function createTextNormalizeTool(
             );
           }
 
-          return { original, normalized };
+          return { rowid, normalized };
         });
 
         return {
@@ -141,6 +147,8 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           if (!input.customPattern) {
             throw new ValidationError(
               "customPattern is required when pattern='custom'",
+              "VALIDATION_ERROR",
+              { details: { parameter: "customPattern" } },
             );
           }
           // Normalize pattern: handle common JSON double-escaping issues
@@ -162,7 +170,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           pattern = foundPattern;
         }
 
-        let sql = `SELECT rowid, ${column} as value FROM ${table}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -193,7 +201,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
           if (pattern.test(value)) {
             validCount++;
           } else {
-            const rowid = row["rowid"];
+            const rowid = row["id"];
             if (typeof rowid === "number") {
               invalidRows.push({ value: displayValue, rowid });
             } else {

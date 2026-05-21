@@ -16,4 +16,5 @@ export default defineConfig({
   outDir: "dist",
   target: "es2022",
   external: ["sql.js", "better-sqlite3"],
+  tsconfig: "tsconfig.build.json",
 });

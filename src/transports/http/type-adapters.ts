@@ -14,7 +14,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
  * Safe at runtime — Express Request extends IncomingMessage.
  */
 export function asIncoming(req: Request): IncomingMessage {
-  return req as unknown as IncomingMessage;
+  return req;
 }
 
 /**
@@ -22,5 +22,5 @@ export function asIncoming(req: Request): IncomingMessage {
  * Safe at runtime — Express Response extends ServerResponse.
  */
 export function asServerResponse(res: Response): ServerResponse {
-  return res as unknown as ServerResponse;
+  return res;
 }

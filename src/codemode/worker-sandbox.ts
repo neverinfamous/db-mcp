@@ -155,9 +155,19 @@ export class WorkerSandbox {
                 });
               }
             } catch (err) {
+              const details: Record<string, unknown> = {};
+              if (err instanceof Error) {
+                for (const [key, value] of Object.entries(err)) {
+                  if (key !== "message" && key !== "stack") {
+                    details[key] = value;
+                  }
+                }
+              }
               mainPort.postMessage({
                 id: msg.id,
                 error: err instanceof Error ? err.message : String(err),
+                errorDetails:
+                  Object.keys(details).length > 0 ? details : undefined,
               });
             }
           })();

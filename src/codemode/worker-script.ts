@@ -10,6 +10,7 @@
 
 import { parentPort, workerData, type MessagePort } from "node:worker_threads";
 import vm from "node:vm";
+import { transformAutoReturn } from "./auto-return.js";
 
 interface WorkerData {
   code: string;
@@ -29,6 +30,7 @@ interface RpcResponse {
   id: number;
   result?: unknown;
   error?: string;
+  errorDetails?: Record<string, unknown>;
 }
 
 /**
@@ -51,8 +53,12 @@ function buildSqliteProxy(
     const p = pending.get(msg.id);
     if (p) {
       pending.delete(msg.id);
-      if (msg.error) {
-        p.reject(new Error(msg.error));
+      if (msg.error !== undefined) {
+        const err = new Error(msg.error || "Empty error message");
+        if (msg.errorDetails) {
+          Object.assign(err, msg.errorDetails);
+        }
+        p.reject(err);
       } else {
         p.resolve(msg.result);
       }
@@ -95,9 +101,24 @@ function buildSqliteProxy(
     for (const method of topLevel) {
       if (method === "help") {
         // Top-level help returns all groups
-        sqlite["help"] = (): { groups: string[] } => ({
-          groups: groupNames,
-        });
+        sqlite["help"] = (): {
+          groups: string[];
+          totalMethods: number;
+          usage: string;
+        } => {
+          let totalMethods = 0;
+          for (const k of groupNames) {
+            totalMethods += (bindings[k] ?? []).filter(
+              (m: string) => m !== "help",
+            ).length;
+          }
+          return {
+            groups: groupNames,
+            totalMethods,
+            usage:
+              "Use sqlite.<group>.help() for group details. Example: sqlite.core.help()",
+          };
+        };
       } else {
         // Top-level aliases forward via _topLevel group
         sqlite[method] = (...args: unknown[]): Promise<unknown> =>
@@ -117,9 +138,24 @@ function buildSqliteProxy(
 
   // If no top-level help was set, add one
   if (sqlite["help"] === undefined) {
-    sqlite["help"] = (): { groups: string[] } => ({
-      groups: groupNames,
-    });
+    sqlite["help"] = (): {
+      groups: string[];
+      totalMethods: number;
+      usage: string;
+    } => {
+      let totalMethods = 0;
+      for (const k of groupNames) {
+        totalMethods += (bindings[k] ?? []).filter(
+          (m: string) => m !== "help",
+        ).length;
+      }
+      return {
+        groups: groupNames,
+        totalMethods,
+        usage:
+          "Use sqlite.<group>.help() for group details. Example: sqlite.core.help()",
+      };
+    };
   }
 
   return sqlite;
@@ -175,7 +211,7 @@ async function executeInWorker(): Promise<void> {
     });
 
     // Wrap in async IIFE for top-level await
-    const wrappedCode = `(async () => { ${code} })()`;
+    const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
 
     const script = new vm.Script(wrappedCode, {
       filename: "user-code.js",

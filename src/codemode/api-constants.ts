@@ -46,6 +46,9 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
     summary: "statsSummary",
     describe: "statsSummary",
     average: "statsBasic",
+    detectAnomalies: "statsDetectAnomalies",
+    detectBloat: "statsDetectBloat",
+    detectSchemaRisks: "statsDetectSchemaRisks",
   },
   vector: {
     find: "search",
@@ -57,6 +60,11 @@ export const METHOD_ALIASES: Record<string, Record<string, string>> = {
     check: "integrityCheck",
     tables: "listVirtualTables",
     pragma: "pragmaSettings",
+  },
+  transactions: {
+    start: "begin",
+    save: "savepoint",
+    exec: "execute",
   },
   geo: {
     near: "nearby",
@@ -119,6 +127,12 @@ export const GROUP_EXAMPLES: Record<string, string[]> = {
     'sqlite.admin.analyze({ table: "orders" })',
     'sqlite.admin.backup({ targetPath: "/path/to/backup.db" })',
   ],
+  transactions: [
+    'sqlite.transactions.begin({ mode: "immediate" })',
+    'sqlite.transactions.execute({ statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"] })',
+    "sqlite.transactions.status()",
+    "sqlite.transactions.commit()",
+  ],
   geo: [
     "sqlite.geo.distance({ lat1: 40.7128, lon1: -74.006, lat2: 34.0522, lon2: -118.2437 })",
     'sqlite.geo.nearby({ table: "stores", latColumn: "lat", lonColumn: "lon", centerLat: 40.7, centerLon: -74, radius: 10 })',
@@ -131,7 +145,7 @@ export const GROUP_EXAMPLES: Record<string, string[]> = {
   ],
   migration: [
     "sqlite.migration.migrationInit()",
-    'sqlite.migration.migrationApply({ version: "1.0.0", migrationSql: "ALTER TABLE users ADD COLUMN email TEXT" })',
+    'sqlite.migration.migrationApply({ version: "1.0.0", sql: "ALTER TABLE users ADD COLUMN email TEXT" })',
     "sqlite.migration.migrationStatus()",
     'sqlite.migration.migrationHistory({ status: "applied" })',
   ],
@@ -227,6 +241,9 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
     "expectedMean",
     "whereClause",
   ],
+  statsDetectAnomalies: ["table", "threshold", "limit", "whereClause"],
+  statsDetectBloat: "limit",
+  statsDetectSchemaRisks: "limit",
 
   // Vector
   vectorCreateTable: ["tableName", "dimensions"],
@@ -254,6 +271,13 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   createCsvTable: ["tableName", "filePath"],
   analyzeCsvSchema: "filePath",
 
+  // Transactions
+  begin: "mode",
+  savepoint: "name",
+  release: "name",
+  rollbackTo: "name",
+  execute: "statements",
+
   // Introspection
   cascadeSimulator: "table",
   constraintAnalysis: "table",
@@ -279,6 +303,7 @@ export const GROUP_PREFIX_MAP: Record<string, string> = {
   vector: "vector_",
   geo: "geo_",
   admin: "", // Admin tools have varied prefixes — handled case-by-case
+  transactions: "transaction_", // sqlite_transaction_* → begin, commit, etc.
   introspection: "", // Introspection tools have varied prefixes
   migration: "migration_", // sqlite_migration_* → migration*
   codemode: "execute_",

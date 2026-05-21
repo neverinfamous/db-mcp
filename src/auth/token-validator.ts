@@ -172,7 +172,7 @@ export class TokenValidator {
     if (error instanceof jose.errors.JWTExpired) {
       logger.warning("Token has expired", {
         code: ERROR_CODES.AUTH.TOKEN_EXPIRED.full,
-        error: error as Error,
+        error: error,
       });
 
       return {

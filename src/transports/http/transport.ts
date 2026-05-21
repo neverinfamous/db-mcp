@@ -38,8 +38,14 @@ import {
   setupStatefulEndpoints,
   setupLegacySSEEndpoints,
 } from "./session.js";
-import { applyAuthMiddleware, setupOAuth } from "./oauth.js";
+import {
+  applyAuthMiddleware,
+  setupOAuth,
+  applyScopeEnforcementMiddleware,
+} from "./oauth.js";
 import type { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
+import { runWithAuthContext } from "../../auth/auth-context.js";
+import type { AuthenticatedContext } from "../../auth/middleware/index.js";
 
 const logger = createModuleLogger("HTTP");
 
@@ -104,7 +110,7 @@ export class HttpTransport {
     this.state.app = express();
 
     // DNS rebinding protection — reject requests with unrecognized Host headers
-    this.state.app.use(localhostHostValidation() as unknown as RequestHandler);
+    this.state.app.use(localhostHostValidation());
 
     // Security headers on all responses
     setupSecurityHeaders(this.state);
@@ -166,6 +172,25 @@ export class HttpTransport {
 
     // Apply auth middleware before MCP endpoints
     applyAuthMiddleware(this.state);
+    applyScopeEnforcementMiddleware(this.state);
+
+    // Bind authenticated context to AsyncLocalStorage for audit identity capture.
+    // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint
+    // setup (which dispatches tool handlers that invoke the audit interceptor).
+    this.state.app.use((req, _res, next) => {
+      if (req.auth) {
+        const authCtx: AuthenticatedContext = {
+          authenticated: true,
+          claims: req.auth,
+          scopes: req.auth.scopes,
+        };
+        runWithAuthContext(authCtx, () => {
+          next();
+        });
+      } else {
+        next();
+      }
+    });
 
     // Set up MCP endpoints based on mode
     if (this.state.config.stateless) {

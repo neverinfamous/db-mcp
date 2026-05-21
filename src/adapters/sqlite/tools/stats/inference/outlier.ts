@@ -1,3 +1,4 @@
+import { validateColumnExists, validateNumericColumn } from "../helpers.js";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -9,12 +10,8 @@ import {
   sanitizeIdentifier,
 } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import {
-  validateColumnExists,
-  validateNumericColumn,
-  OutlierSchema,
-} from "../helpers.js";
-import { StatsOutliersOutputSchema } from "../../../output-schemas/index.js";
+import { OutlierSchema } from "../../../schemas/stats.js";
+import { StatsOutliersOutputSchema } from "../../../schemas/stats.js";
 
 /**
  * Outlier detection using IQR or Z-score
@@ -30,9 +27,9 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Outlier Detection"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = OutlierSchema.parse(params);
-
       try {
+        const input = OutlierSchema.parse(params);
+
         // Validate maxOutliers bounds (was previously .min(1).max(500) in schema, moved here to avoid refinement leak)
         if (
           input.maxOutliers !== undefined &&
@@ -48,12 +45,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
-        if (numericError) return numericError;
+        await validateNumericColumn(adapter, input.table, input.column);
 
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);

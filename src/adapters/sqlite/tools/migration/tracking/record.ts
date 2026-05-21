@@ -6,13 +6,16 @@ import type {
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
-  MIGRATIONS_TABLE,
   MigrationRecordSchema,
+  MigrationRecordValidationSchema,
   MigrationRecordOutputSchema,
+} from "../../../schemas/migration.js";
+import {
+  MIGRATIONS_TABLE,
   hashMigration,
   isMigrationTableInitialized,
   toMigrationRecord,
-} from "../schemas.js";
+} from "../helpers.js";
 
 export function createMigrationRecordTool(
   adapter: SqliteAdapter,
@@ -28,7 +31,8 @@ export function createMigrationRecordTool(
     annotations: write("Migration Record"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = MigrationRecordSchema.parse(params);
+        const input = MigrationRecordValidationSchema.parse(params);
+
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
@@ -38,7 +42,8 @@ export function createMigrationRecordTool(
           };
         }
 
-        const hash = hashMigration(input.migrationSql);
+        const actualSql = input.migrationSql ?? input.sql ?? "";
+        const hash = hashMigration(actualSql);
 
         const dupCheck = await adapter.executeReadQuery(
           `SELECT id, version FROM "${MIGRATIONS_TABLE}" WHERE migration_hash = ?`,
@@ -73,7 +78,7 @@ export function createMigrationRecordTool(
           [
             input.version,
             input.description ?? null,
-            input.migrationSql,
+            actualSql,
             input.rollbackSql ?? null,
             hash,
             input.sourceSystem ?? "manual",

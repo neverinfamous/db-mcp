@@ -32,6 +32,7 @@ import {
  *   sqlite_geo_distance (geo) → distance
  *   sqlite_backup (admin) → backup
  *   sqlite_transaction_begin (admin) → transactionBegin
+ *   sqlite_transaction_begin (transactions) → begin
  */
 export function toolNameToMethodName(
   toolName: string,
@@ -166,7 +167,10 @@ function createGroupApi(
         timestamp: new Date(),
         requestId: crypto.randomUUID(),
       };
-      return tool.handler(normalizedParams, context);
+
+      const result = await tool.handler(normalizedParams, context);
+
+      return result;
     };
   }
 
@@ -215,6 +219,7 @@ export class SqliteApi {
   readonly stats: GroupApiRecord;
   readonly vector: GroupApiRecord;
   readonly admin: GroupApiRecord;
+  readonly transactions: GroupApiRecord;
   readonly geo: GroupApiRecord;
   readonly introspection: GroupApiRecord;
   readonly migration: GroupApiRecord;
@@ -243,6 +248,10 @@ export class SqliteApi {
       this.toolsByGroup.get("vector") ?? [],
     );
     this.admin = createGroupApi("admin", this.toolsByGroup.get("admin") ?? []);
+    this.transactions = createGroupApi(
+      "transactions",
+      this.toolsByGroup.get("transactions") ?? [],
+    );
     this.geo = createGroupApi("geo", this.toolsByGroup.get("geo") ?? []);
     this.introspection = createGroupApi(
       "introspection",
@@ -280,42 +289,42 @@ export class SqliteApi {
    * Includes group namespaces + top-level aliases for common operations.
    */
   createSandboxBindings(): Record<string, unknown> {
-    const bindings: Record<string, unknown> = {
-      // Group namespaces
-      core: this.core,
-      json: this.json,
-      text: this.text,
-      stats: this.stats,
-      vector: this.vector,
-      admin: this.admin,
-      geo: this.geo,
-      introspection: this.introspection,
-      migration: this.migration,
+    const bindings: Record<string, unknown> = {};
 
-      // Top-level convenience aliases
-      readQuery: this.core["readQuery"],
-      writeQuery: this.core["writeQuery"],
-      listTables: this.core["listTables"],
-      describeTable: this.core["describeTable"],
+    // Only expose groups that actually have tools in the current environment
+    const activeGroups = this.getGroups();
+    for (const group of activeGroups) {
+      const groupApi = this[group as keyof SqliteApi];
+      if (groupApi !== undefined) {
+        bindings[group] = groupApi;
+      }
+    }
 
-      // Top-level help
-      help: (): Promise<{
-        groups: string[];
-        totalMethods: number;
-        usage: string;
-      }> => {
-        const groups = this.getGroups();
-        let totalMethods = 0;
-        for (const group of groups) {
-          totalMethods += this.getGroupMethods(group as ToolGroup).length;
-        }
-        return Promise.resolve({
-          groups,
-          totalMethods,
-          usage:
-            "Use sqlite.<group>.help() for group details. Example: sqlite.core.help()",
-        });
-      },
+    // Top-level convenience aliases (if core group is active)
+    if (activeGroups.includes("core")) {
+      bindings["readQuery"] = this.core["readQuery"];
+      bindings["writeQuery"] = this.core["writeQuery"];
+      bindings["listTables"] = this.core["listTables"];
+      bindings["describeTable"] = this.core["describeTable"];
+    }
+
+    // Top-level help
+    bindings["help"] = (): Promise<{
+      groups: string[];
+      totalMethods: number;
+      usage: string;
+    }> => {
+      const groups = this.getGroups();
+      let totalMethods = 0;
+      for (const group of groups) {
+        totalMethods += this.getGroupMethods(group as ToolGroup).length;
+      }
+      return Promise.resolve({
+        groups,
+        totalMethods,
+        usage:
+          "Use sqlite.<group>.help() for group details. Example: sqlite.core.help()",
+      });
     };
 
     return bindings;

@@ -9,10 +9,15 @@ import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
 import { VERSION } from "./version.js";
 import type {
   McpServerConfig,
-  TransportType,
   DatabaseConfig,
   OAuthConfig,
 } from "./types/index.js";
+import {
+  DEFAULT_AUDIT_LOG_MAX_SIZE_BYTES,
+  DEFAULT_AUDIT_BACKUP_MAX_DATA_SIZE_BYTES,
+  DEFAULT_AUDIT_BACKUP_MAX_AGE_DAYS,
+  DEFAULT_AUDIT_BACKUP_MAX_COUNT,
+} from "./audit/types.js";
 
 /**
  * Parse command line arguments
@@ -26,13 +31,20 @@ function parseArgs(): Partial<McpServerConfig> {
   let enableCsv = false;
   let enableSpatialite = false;
 
+  // Track audit flags
+  let auditLogPath: string | undefined;
+  let auditRedact = false;
+  let auditReads = false;
+  let auditBackup = false;
+  let auditBackupData = false;
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
     if (arg === "--transport" || arg === "-t") {
       const value = args[++i];
       if (value === "stdio" || value === "http" || value === "sse") {
-        config.transport = value as TransportType;
+        config.transport = value;
       }
     } else if (arg === "--port" || arg === "-p") {
       const portValue = args[++i];
@@ -119,7 +131,7 @@ function parseArgs(): Partial<McpServerConfig> {
             csv: enableCsv,
             spatialite: enableSpatialite,
           },
-        } as DatabaseConfig);
+        });
       }
     } else if (arg === "--csv") {
       enableCsv = true;
@@ -135,6 +147,19 @@ function parseArgs(): Partial<McpServerConfig> {
       if (lastDb?.options && "backend" in lastDb.options) {
         lastDb.options["spatialite"] = true;
       }
+    } else if (arg === "--audit-log") {
+      const logPath = args[++i];
+      if (logPath) {
+        auditLogPath = logPath;
+      }
+    } else if (arg === "--audit-redact") {
+      auditRedact = true;
+    } else if (arg === "--audit-reads") {
+      auditReads = true;
+    } else if (arg === "--audit-backup") {
+      auditBackup = true;
+    } else if (arg === "--audit-backup-data") {
+      auditBackupData = true;
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -143,6 +168,26 @@ function parseArgs(): Partial<McpServerConfig> {
 
   if (databases.length > 0) {
     config.databases = databases;
+  }
+
+  // Build audit config if --audit-log was specified
+  if (auditLogPath) {
+    config.audit = {
+      enabled: true,
+      logPath: auditLogPath,
+      redact: auditRedact,
+      auditReads: auditReads,
+      maxSizeBytes: DEFAULT_AUDIT_LOG_MAX_SIZE_BYTES,
+      ...(auditBackup && {
+        backup: {
+          enabled: true,
+          includeData: auditBackupData,
+          maxAgeDays: DEFAULT_AUDIT_BACKUP_MAX_AGE_DAYS,
+          maxCount: DEFAULT_AUDIT_BACKUP_MAX_COUNT,
+          maxDataSizeBytes: DEFAULT_AUDIT_BACKUP_MAX_DATA_SIZE_BYTES,
+        },
+      }),
+    };
   }
 
   return config;
@@ -183,6 +228,13 @@ Extension Options (Native only):
   --csv                     Load CSV extension for CSV virtual tables
   --spatialite              Load SpatiaLite extension for GIS capabilities
 
+Audit Options:
+  --audit-log <path>        Enable audit logging (JSONL file path, or "stderr")
+  --audit-redact            Redact tool arguments from audit entries
+  --audit-reads             Also log read-scoped tool invocations
+  --audit-backup            Enable pre-mutation DDL snapshots
+  --audit-backup-data       Include sample data rows in snapshots
+
 Server Options:
   --name <name>             Server name (default: db-mcp)
   --version <version>       Server version (default: ${VERSION})
@@ -205,6 +257,11 @@ Environment Variables:
   SQLITE_DATABASE           SQLite database path
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
   SPATIALITE_PATH           Custom path to SpatiaLite extension binary
+  AUDIT_LOG                 Audit log file path (or "stderr")
+  AUDIT_REDACT              Redact arguments (true/false)
+  AUDIT_READS               Log reads (true/false)
+  AUDIT_BACKUP              Enable backups (true/false)
+  AUDIT_BACKUP_DATA         Include data (true/false)
 
 Examples:
   db-mcp --sqlite-native ./data.db
@@ -258,6 +315,27 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     process.env["DB_MCP_TOOL_FILTER"] ?? process.env["TOOL_FILTER"];
   if (toolFilter) {
     config.toolFilter = toolFilter;
+  }
+
+  // Audit from environment
+  const auditLog = process.env["AUDIT_LOG"];
+  if (auditLog) {
+    config.audit = {
+      enabled: true,
+      logPath: auditLog,
+      redact: process.env["AUDIT_REDACT"] === "true",
+      auditReads: process.env["AUDIT_READS"] === "true",
+      maxSizeBytes: DEFAULT_AUDIT_LOG_MAX_SIZE_BYTES,
+      ...(process.env["AUDIT_BACKUP"] === "true" && {
+        backup: {
+          enabled: true,
+          includeData: process.env["AUDIT_BACKUP_DATA"] === "true",
+          maxAgeDays: DEFAULT_AUDIT_BACKUP_MAX_AGE_DAYS,
+          maxCount: DEFAULT_AUDIT_BACKUP_MAX_COUNT,
+          maxDataSizeBytes: DEFAULT_AUDIT_BACKUP_MAX_DATA_SIZE_BYTES,
+        },
+      }),
+    };
   }
 
   // SQLite database from environment

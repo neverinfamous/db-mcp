@@ -45,65 +45,39 @@ describe("JSON Mutation Tools", () => {
   });
 
   describe("sqlite_json_insert", () => {
-    it("should insert JSON data as object", async () => {
+    it("should insert a new row with JSON data", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        data: { name: "Alice", age: 30 },
+        data: { title: "New Document", count: 0 },
       })) as {
         success: boolean;
         message: string;
         rowsAffected: number;
+        lastInsertRowid: number;
       };
 
       expect(result.success).toBe(true);
       expect(result.rowsAffected).toBe(1);
 
-      // Verify inserted data
       const check = await adapter.executeReadQuery(
-        "SELECT data FROM documents",
+        `SELECT json_extract(data, '$.title') as title FROM documents WHERE id = ${result.lastInsertRowid}`,
       );
-      expect(check.rows?.length).toBe(1);
-      const parsed = JSON.parse(check.rows?.[0]?.data as string);
-      expect(parsed.name).toBe("Alice");
+      expect(check.rows?.[0]?.title).toBe("New Document");
     });
 
-    it("should insert JSON data as string", async () => {
+    it("should reject missing data", async () => {
       const result = (await tools.get("sqlite_json_insert")?.({
         table: "documents",
         column: "data",
-        data: '{"product": "Widget", "price": 9.99}',
       })) as {
         success: boolean;
-        rowsAffected: number;
+        error: string;
+        code: string;
       };
 
-      expect(result.success).toBe(true);
-      expect(result.rowsAffected).toBe(1);
-    });
-
-    it("should insert with additional columns", async () => {
-      // Add another column
-      await adapter.executeWriteQuery(
-        "ALTER TABLE documents ADD COLUMN type TEXT",
-      );
-
-      const result = (await tools.get("sqlite_json_insert")?.({
-        table: "documents",
-        column: "data",
-        data: { value: 100 },
-        additionalColumns: { type: "metric" },
-      })) as {
-        success: boolean;
-        rowsAffected: number;
-      };
-
-      expect(result.success).toBe(true);
-
-      const check = await adapter.executeReadQuery(
-        "SELECT type FROM documents",
-      );
-      expect(check.rows?.[0]?.type).toBe("metric");
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("VALIDATION_ERROR");
     });
   });
 

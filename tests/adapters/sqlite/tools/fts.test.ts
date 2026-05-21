@@ -42,15 +42,14 @@ describe("FTS Tools", () => {
 
   describe("FTS tools registration (native adapter)", () => {
     it("should register FTS tools in native adapter", () => {
-      // NativeSqliteAdapter includes FTS tools directly
       expect(tools.has("sqlite_fts_create")).toBe(true);
       expect(tools.has("sqlite_fts_search")).toBe(true);
       expect(tools.has("sqlite_fts_rebuild")).toBe(true);
       expect(tools.has("sqlite_fts_match_info")).toBe(true);
+      expect(tools.has("sqlite_fts_headline")).toBe(true);
     });
 
     it("should NOT include FTS tools in shared WASM tool index", async () => {
-      // The shared getAllToolDefinitions (used by WASM adapter) should not include FTS
       const { getAllToolDefinitions } =
         await import("../../../../src/adapters/sqlite/tools/index.js");
       const sharedTools = getAllToolDefinitions(
@@ -60,6 +59,144 @@ describe("FTS Tools", () => {
         t.name.includes("fts"),
       );
       expect(ftsTools).toHaveLength(0);
+    });
+  });
+
+  describe("FTS Execution", () => {
+    beforeEach(async () => {
+      await adapter.executeWriteQuery(
+        `CREATE TABLE documents (id INTEGER PRIMARY KEY, title TEXT, body TEXT)`,
+      );
+      await adapter.executeWriteQuery(
+        `INSERT INTO documents (title, body) VALUES ('First Post', 'Hello world, this is a test.')`,
+      );
+      await adapter.executeWriteQuery(
+        `INSERT INTO documents (title, body) VALUES ('Second Post', 'FTS5 is a powerful full-text search engine.')`,
+      );
+    });
+
+    it("should create FTS table and triggers", async () => {
+      const result = (await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+        createTriggers: true,
+      })) as any;
+      expect(result.success).toBe(true);
+      expect(result.tableName).toBe("documents_fts");
+      expect(result.triggersCreated).toBeDefined();
+      expect(result.triggersCreated?.length).toBe(3);
+    });
+
+    it("should search FTS table", async () => {
+      // First create
+      await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+      });
+
+      const searchAll = (await tools.get("sqlite_fts_search")?.({
+        table: "documents_fts",
+        query: "*",
+        limit: 10,
+      })) as any;
+      expect(searchAll.success).toBe(true);
+      expect(searchAll.rowCount).toBeGreaterThan(0);
+
+      const searchSpecific = (await tools.get("sqlite_fts_search")?.({
+        table: "documents_fts",
+        query: "powerful",
+        highlight: true,
+        limit: 10,
+      })) as any;
+      expect(searchSpecific.success).toBe(true);
+      expect(searchSpecific.results[0].snippet).toBeDefined();
+    });
+
+    it("should search with column filters", async () => {
+      await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+      });
+      const searchSpecific = (await tools.get("sqlite_fts_search")?.({
+        table: "documents_fts",
+        query: "Hello",
+        columns: ["body"],
+        limit: 10,
+      })) as any;
+      expect(searchSpecific.success).toBe(true);
+      expect(searchSpecific.results[0].body).toContain("Hello");
+    });
+
+    it("should rebuild FTS index", async () => {
+      await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+      });
+      const rebuild = (await tools.get("sqlite_fts_rebuild")?.({
+        table: "documents_fts",
+      })) as any;
+      expect(rebuild.success).toBe(true);
+    });
+
+    it("should return match info", async () => {
+      await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+      });
+      const matchInfo = (await tools.get("sqlite_fts_match_info")?.({
+        table: "documents_fts",
+        query: "test",
+        format: "bm25",
+      })) as any;
+      expect(matchInfo.success).toBe(true);
+      expect(matchInfo.results[0].score).toBeDefined();
+    });
+
+    it("should generate headlines", async () => {
+      await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+      });
+      const headline = (await tools.get("sqlite_fts_headline")?.({
+        table: "documents_fts",
+        query: "engine",
+        column: "body",
+      })) as any;
+      expect(headline.success).toBe(true);
+      expect(headline.results[0].headline).toBeDefined();
+      expect(headline.results[0].snippet).toBeDefined();
+
+      const wildcard = (await tools.get("sqlite_fts_headline")?.({
+        table: "documents_fts",
+        query: "*",
+        column: "body",
+      })) as any;
+      expect(wildcard.success).toBe(true);
+    });
+  });
+
+  describe("Error Paths", () => {
+    it("should handle missing table in create", async () => {
+      const result = (await tools.get("sqlite_fts_create")?.({
+        columns: ["title"],
+      })) as any;
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("should handle invalid table in search", async () => {
+      const result = (await tools.get("sqlite_fts_search")?.({
+        table: "nonexistent",
+        query: "test",
+      })) as any;
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("TABLE_NOT_FOUND");
     });
   });
 });

@@ -110,6 +110,7 @@ test.describe("Code Mode: Sandbox Basics", () => {
 
 test.describe("Code Mode: API Discoverability", () => {
   test("sqlite.help() returns groups", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -118,7 +119,7 @@ test.describe("Code Mode: API Discoverability", () => {
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
       expect(Array.isArray(result.groups)).toBe(true);
-      expect((result.groups as string[]).length).toBe(9);
+      expect((result.groups as string[]).length).toBe(isWasm ? 9 : 10);
     } finally {
       await client.close();
     }
@@ -140,11 +141,13 @@ test.describe("Code Mode: API Discoverability", () => {
     }
   });
 
-  test("all 9 groups exist and have methods", async ({}, testInfo) => {
+  test("all expected groups exist and have methods", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const p = await callToolAndParse(client, "sqlite_execute_code", {
-        code: `
+      // Dynamic filtering removes 'transactions' in WASM
+      const code = isWasm
+        ? `
           const groups = ["core","json","text","stats","vector","admin","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {
@@ -152,21 +155,46 @@ test.describe("Code Mode: API Discoverability", () => {
             results[g] = h.methods.length;
           }
           return results;
-        `,
-      });
+        `
+        : `
+          const groups = ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
+          const results = {};
+          for (const g of groups) {
+            const h = await sqlite[g].help();
+            results[g] = h.methods.length;
+          }
+          return results;
+        `;
+
+      const p = await callToolAndParse(client, "sqlite_execute_code", { code });
       expectSuccess(p);
       const result = p.result as Record<string, number>;
-      for (const group of [
-        "core",
-        "json",
-        "text",
-        "stats",
-        "vector",
-        "admin",
-        "geo",
-        "introspection",
-        "migration",
-      ]) {
+      const expectedGroups = isWasm
+        ? [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "geo",
+            "introspection",
+            "migration",
+          ]
+        : [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "transactions",
+            "geo",
+            "introspection",
+            "migration",
+          ];
+
+      for (const group of expectedGroups) {
         expect(result[group], `${group} should have methods`).toBeGreaterThan(
           0,
         );
@@ -216,7 +244,7 @@ test.describe("Code Mode: Readonly", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
-        code: `return await sqlite.core.writeQuery("CREATE TABLE IF NOT EXISTS _e2e_readonly_test (id INTEGER)");`,
+        code: `return await sqlite.core.createTable({ table: "_e2e_readonly_test", columns: [{name: "id", type: "INTEGER"}] });`,
         readonly: true,
       });
       // Native: success: false with CODEMODE_READONLY_VIOLATION
@@ -225,7 +253,7 @@ test.describe("Code Mode: Readonly", () => {
       // Cleanup in case WASM created it
       if (p.success) {
         await callToolAndParse(client, "sqlite_execute_code", {
-          code: `return await sqlite.core.writeQuery("DROP TABLE IF EXISTS _e2e_readonly_test");`,
+          code: `return await sqlite.core.dropTable({ table: "_e2e_readonly_test" });`,
         });
       }
     } finally {
@@ -445,9 +473,13 @@ test.describe("Code Mode: Security", () => {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `return await sqlite.core.readQuery({ query: "SELECT * FROM _e2e_nonexistent_xyz" });`,
       });
+      // Tool errors return structured error objects instead of throwing.
+      // The sandbox execution itself succeeds, returning the error object.
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
       expect(result.success).toBe(false);
+      expect(typeof result.error).toBe("string");
+      expect(String(result.error)).toContain("not found");
     } finally {
       await client.close();
     }
@@ -464,13 +496,14 @@ test.describe("Code Mode: Workflows", () => {
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
         code: `
-          await sqlite.core.writeQuery("CREATE TABLE IF NOT EXISTS _e2e_cm_etl (id INTEGER PRIMARY KEY, raw TEXT, processed TEXT)");
+          try { await sqlite.core.dropTable({ table: "_e2e_cm_etl" }); } catch (e) {}
+          await sqlite.core.createTable({ table: "_e2e_cm_etl", columns: [{ name: "id", type: "INTEGER", primaryKey: true }, { name: "raw", type: "TEXT" }, { name: "processed", type: "TEXT" }] });
           for (let i = 1; i <= 5; i++) {
             await sqlite.core.writeQuery({ query: \`INSERT INTO _e2e_cm_etl (raw) VALUES ('item_\${i}')\` });
           }
           await sqlite.core.writeQuery("UPDATE _e2e_cm_etl SET processed = UPPER(raw)");
           const result = await sqlite.core.readQuery("SELECT * FROM _e2e_cm_etl");
-          await sqlite.core.writeQuery("DROP TABLE IF EXISTS _e2e_cm_etl");
+          await sqlite.core.dropTable({ table: "_e2e_cm_etl" });
           return result;
         `,
       });
@@ -488,7 +521,7 @@ test.describe("Code Mode: Workflows", () => {
       // Cleanup in case DROP TABLE didn't run
       try {
         await callToolAndParse(client, "sqlite_execute_code", {
-          code: `await sqlite.core.writeQuery("DROP TABLE IF EXISTS _e2e_cm_etl"); return { cleaned: true };`,
+          code: `await sqlite.core.dropTable({ table: "_e2e_cm_etl" }); return { cleaned: true };`,
         });
       } catch {
         /* ignore cleanup errors */
@@ -569,7 +602,8 @@ test.describe("Code Mode: Workflows", () => {
 // =============================================================================
 
 test.describe("Code Mode: API Discoverability", () => {
-  test("sqlite.help() returns all 9 groups", async ({}, testInfo) => {
+  test("sqlite.help() returns all expected groups", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {
@@ -578,18 +612,31 @@ test.describe("Code Mode: API Discoverability", () => {
       expectSuccess(p);
       const result = p.result as Record<string, unknown>;
       const groups = result.groups as string[];
-      expect(groups.length).toBe(9);
-      const expected = [
-        "core",
-        "json",
-        "text",
-        "stats",
-        "vector",
-        "admin",
-        "geo",
-        "introspection",
-        "migration",
-      ];
+      expect(groups.length).toBe(isWasm ? 9 : 10);
+      const expected = isWasm
+        ? [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "geo",
+            "introspection",
+            "migration",
+          ]
+        : [
+            "core",
+            "json",
+            "text",
+            "stats",
+            "vector",
+            "admin",
+            "transactions",
+            "geo",
+            "introspection",
+            "migration",
+          ];
       for (const g of expected) {
         expect(groups).toContain(g);
       }
@@ -659,10 +706,11 @@ test.describe("Code Mode: API Discoverability", () => {
   });
 
   test("all groups return >0 methods from help()", async ({}, testInfo) => {
+    const isWasm = testInfo.project.name === "wasm";
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const p = await callToolAndParse(client, "sqlite_execute_code", {
-        code: `
+      const code = isWasm
+        ? `
           const groups = ["core","json","text","stats","vector","admin","geo","introspection","migration"];
           const results = {};
           for (const g of groups) {
@@ -670,11 +718,20 @@ test.describe("Code Mode: API Discoverability", () => {
             results[g] = h.methods.length;
           }
           return results;
-        `,
-      });
+        `
+        : `
+          const groups = ["core","json","text","stats","vector","admin","transactions","geo","introspection","migration"];
+          const results = {};
+          for (const g of groups) {
+            const h = await sqlite[g].help();
+            results[g] = h.methods.length;
+          }
+          return results;
+        `;
+      const p = await callToolAndParse(client, "sqlite_execute_code", { code });
       expectSuccess(p);
       const result = p.result as Record<string, number>;
-      expect(Object.keys(result).length).toBe(9);
+      expect(Object.keys(result).length).toBe(isWasm ? 9 : 10);
       for (const [group, count] of Object.entries(result)) {
         expect(count, `${group} should have >0 methods`).toBeGreaterThan(0);
       }

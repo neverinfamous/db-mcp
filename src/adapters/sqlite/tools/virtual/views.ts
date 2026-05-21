@@ -1,3 +1,7 @@
+import {
+  CreateTableOutputSchema,
+  DropTableOutputSchema,
+} from "../../schemas/core.js";
 /**
  * View Management Tools
  *
@@ -18,17 +22,15 @@ import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   GenerateSeriesOutputSchema,
-  CreateTableOutputSchema,
   ListViewsOutputSchema,
-  DropTableOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/virtual.js";
 import { isSpatialiteSystemView } from "../core/index.js";
 import {
   GenerateSeriesSchema,
   CreateViewSchema,
   ListViewsSchema,
   DropViewSchema,
-} from "./helpers.js";
+} from "../../schemas/virtual.js";
 
 export function createGenerateSeriesTool(
   _adapter: SqliteAdapter,
@@ -61,6 +63,8 @@ export function createGenerateSeriesTool(
           count: 0,
           values: [],
           error: "start and stop are required parameters",
+          code: "VALIDATION_ERROR",
+          category: "validation",
         });
       }
 

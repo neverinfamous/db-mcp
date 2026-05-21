@@ -110,8 +110,8 @@ if ($backupFiles) {
 }
 
 # Warn about any node processes that hold the database file open (e.g. MCP servers)
-$dbFullPath = (Resolve-Path $DatabasePath -ErrorAction SilentlyContinue)?.Path
-if (-not $dbFullPath) { $dbFullPath = $DatabasePath }
+$resolvePath = Resolve-Path $DatabasePath -ErrorAction SilentlyContinue
+$dbFullPath = if ($resolvePath) { $resolvePath.Path } else { $DatabasePath }
 $dbNameEscaped = [regex]::Escape(($dbFullPath -replace '\\', '/'))
 $dbNameEscapedBackslash = [regex]::Escape($dbFullPath)
 
@@ -122,7 +122,7 @@ if ($nodeProcesses) {
     foreach ($proc in $nodeProcesses) {
         Write-Warn "Node process PID $($proc.ProcessId) is using this database (likely an MCP server)"
     }
-    Write-Info "The database file will be replaced in-place — existing connections will pick up the new data."
+    Write-Info "The database file will be replaced in-place - existing connections will pick up the new data."
 }
 
 $filesToDelete = @(
@@ -181,7 +181,7 @@ if (-not $useCli) {
 } else {
     # Use Node.js with better-sqlite3 via inline script
     $dbMcpRoot = Split-Path -Parent $ScriptDir
-    $nodeScript = @"
+    $nodeScript = @'
 import Database from 'better-sqlite3';
 import { readFileSync } from 'fs';
 
@@ -198,7 +198,7 @@ try {
     console.error('ERROR:', err.message);
     process.exit(1);
 }
-"@
+'@
 
     # Write temp script to project directory so node can resolve dependencies
     $tempScript = Join-Path $dbMcpRoot ".create-test-db.js"
@@ -269,7 +269,7 @@ if (-not $SkipVerify) {
         "_mcp_migrations"
     )
 
-    $verifyScript = @"
+    $verifyScript = @'
 import Database from 'better-sqlite3';
 const db = new Database(process.argv[2], { readonly: true });
 
@@ -282,7 +282,7 @@ for (const table of tables) {
 }
 
 db.close();
-"@
+'@
 
     $dbMcpRoot = Split-Path -Parent $ScriptDir
     # Write temp script to project directory so node can resolve dependencies
@@ -329,35 +329,77 @@ db.close();
         Write-Host "`n  Artifact check:" -ForegroundColor Yellow
         $allTableNames = ($output | Where-Object { $_ -match "^TABLES:" }) -replace "^TABLES:", ""
         # Get ALL tables from sqlite_master, not just test_* ones
-        $allTablesScript = @"
+        $allTablesScript = @'
 import Database from 'better-sqlite3';
 const db = new Database(process.argv[2], { readonly: true });
 const all = db.prepare("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') ORDER BY name").all();
 for (const t of all) console.log('ALL:' + t.name);
 db.close();
-"@
+'@
         $tempAllTables = Join-Path $dbMcpRoot ".check-artifacts.js"
         $allTablesScript | Out-File -FilePath $tempAllTables -Encoding utf8 -NoNewline
         $allOutput = node $tempAllTables $DatabasePath 2>&1
         Remove-Item $tempAllTables -Force -ErrorAction SilentlyContinue
 
+        $temporaryTables = @()
         $unexpectedTables = @()
+        
         foreach ($line in $allOutput | Where-Object { $_ -match "^ALL:" }) {
             $name = ($line -replace "^ALL:", "").Trim()
             $isExpected = $expectedTables.ContainsKey($name) -or $knownSystemTables -contains $name
             if (-not $isExpected) {
-                $unexpectedTables += $name
+                if ($name.StartsWith("stress_") -or $name.StartsWith("idx_stress_") -or $name.StartsWith("temp_") -or $name.StartsWith("idx_temp_")) {
+                    $temporaryTables += $name
+                } else {
+                    $unexpectedTables += $name
+                }
             }
         }
 
-        if ($unexpectedTables.Count -gt 0) {
-            Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) — possible stale test artifacts:"
-            foreach ($ut in $unexpectedTables) {
-                Write-Host "    [stale] " -ForegroundColor Yellow -NoNewline
-                Write-Host $ut -ForegroundColor Gray
+        $allTablesToDrop = $temporaryTables + $unexpectedTables
+
+        if ($allTablesToDrop.Count -gt 0) {
+            if ($unexpectedTables.Count -gt 0) {
+                Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) - stale test artifacts:"
             }
-            Write-Info "These may be R-Tree shadow tables, _mcp_migrations, temp_* leftovers, or FTS tables from testing."
-            Write-Info "Consider running a full reset to remove them."
+            if ($temporaryTables.Count -gt 0) {
+                Write-Info "Found $($temporaryTables.Count) temporary test table(s) (stress_*, temp_*) - cleaning up:"
+            }
+            
+            $dropScript = "import Database from 'better-sqlite3'; const db = new Database(process.argv[2]); db.pragma('foreign_keys = OFF'); "
+            
+            # First pass: drop main tables (non-shadow)
+            foreach ($ut in $allTablesToDrop) {
+                if ($ut -notmatch "_(data|idx|docsize|config|content|node|parent|rowid)$") {
+                    $prefix = if ($unexpectedTables -contains $ut) { "    [dropping] " } else { "    [cleaning temp] " }
+                    $color = if ($unexpectedTables -contains $ut) { "Yellow" } else { "Cyan" }
+                    Write-Host $prefix -ForegroundColor $color -NoNewline
+                    Write-Host $ut -ForegroundColor Gray
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                }
+            }
+            # Second pass: drop any remaining tables (shadow tables left behind)
+            foreach ($ut in $allTablesToDrop) {
+                if ($ut -match "_(data|idx|docsize|config|content|node|parent|rowid)$") {
+                    $prefix = if ($unexpectedTables -contains $ut) { "    [dropping shadow] " } else { "    [cleaning temp shadow] " }
+                    $color = if ($unexpectedTables -contains $ut) { "DarkYellow" } else { "DarkCyan" }
+                    Write-Host $prefix -ForegroundColor $color -NoNewline
+                    Write-Host $ut -ForegroundColor Gray
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                }
+            }
+            $dropScript += "db.pragma('foreign_keys = ON'); db.close();"
+            
+            $tempDrop = Join-Path $dbMcpRoot ".drop-artifacts.js"
+            $dropScript | Out-File -FilePath $tempDrop -Encoding utf8 -NoNewline
+            node $tempDrop $DatabasePath | Out-Null
+            Remove-Item $tempDrop -Force -ErrorAction SilentlyContinue
+            
+            if ($unexpectedTables.Count -gt 0) {
+                Write-Success "Cleaned up stale test artifacts"
+            } else {
+                Write-Success "Cleaned up temporary test tables"
+            }
         } else {
             Write-Success "No stale test artifacts found"
         }

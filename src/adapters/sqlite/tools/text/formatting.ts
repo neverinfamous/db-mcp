@@ -1,3 +1,9 @@
+import {
+  VALID_TEXT_CASE_MODES,
+  VALID_TRIM_MODES,
+  validateColumnExists,
+  validateColumnsExist,
+} from "./helpers.js";
 /**
  * Text Formatting Tools
  *
@@ -24,18 +30,14 @@ import {
   TextTrimOutputSchema,
   TextCaseOutputSchema,
   TextSubstringOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/text.js";
 import {
   TextConcatSchema,
   TextReplaceSchema,
   TextTrimSchema,
   TextCaseSchema,
   TextSubstringSchema,
-  VALID_TEXT_CASE_MODES,
-  VALID_TRIM_MODES,
-  validateColumnExists,
-  validateColumnsExist,
-} from "./helpers.js";
+} from "../../schemas/text.js";
 
 export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -166,7 +168,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
             trimFunc = "trim";
         }
 
-        let sql = `SELECT rowid, ${column} as original, ${trimFunc}(${column}) as trimmed FROM ${table}`;
+        let sql = `SELECT rowid as __rowid, ${trimFunc}(${column}) as trimmed FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -175,10 +177,21 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
+        const results = (result.rows ?? []).map((row) => {
+          const rawRowid = row["__rowid"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
+          return { rowid, trimmed: row["trimmed"] };
+        });
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          results: result.rows,
+          rowCount: results.length,
+          results,
         };
       } catch (error) {
         return formatHandlerError(error);
@@ -222,7 +235,7 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
 
         const caseFunc = input.mode === "upper" ? "upper" : "lower";
 
-        let sql = `SELECT rowid, ${column} as original, ${caseFunc}(${column}) as transformed FROM ${table}`;
+        let sql = `SELECT rowid as __rowid, ${caseFunc}(${column}) as transformed FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -231,10 +244,21 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
+        const results = (result.rows ?? []).map((row) => {
+          const rawRowid = row["__rowid"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
+          return { rowid, transformed: row["transformed"] };
+        });
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          results: result.rows,
+          rowCount: results.length,
+          results,
         };
       } catch (error) {
         return formatHandlerError(error);
@@ -278,7 +302,7 @@ export function createTextSubstringTool(
             ? `substr(${column}, ${input.start}, ${input.length})`
             : `substr(${column}, ${input.start})`;
 
-        let sql = `SELECT rowid, ${column} as original, ${substrExpr} as substring FROM ${table}`;
+        let sql = `SELECT rowid as __rowid, ${substrExpr} as substring FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
@@ -287,10 +311,21 @@ export function createTextSubstringTool(
 
         const result = await adapter.executeReadQuery(sql);
 
+        const results = (result.rows ?? []).map((row) => {
+          const rawRowid = row["__rowid"];
+          const rowid =
+            typeof rawRowid === "number"
+              ? rawRowid
+              : typeof rawRowid === "string"
+                ? parseInt(rawRowid, 10) || 0
+                : 0;
+          return { rowid, substring: row["substring"] };
+        });
+
         return {
           success: true,
-          rowCount: result.rows?.length ?? 0,
-          results: result.rows,
+          rowCount: results.length,
+          results,
         };
       } catch (error) {
         return formatHandlerError(error);

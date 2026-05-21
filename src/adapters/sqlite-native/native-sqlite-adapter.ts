@@ -86,8 +86,9 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Returns the user-configured path, not internal WASM virtual filesystem paths.
    */
   getConfiguredPath(): string {
-    const config = this.config as SqliteConfig | null;
-    return config?.filePath ?? config?.connectionString ?? ":memory:";
+    const config = this.config as SqliteConfig | undefined;
+    const path = config?.filePath ?? config?.connectionString ?? ":memory:";
+    return path;
   }
 
   private db: BetterSqliteDb | null = null;
@@ -140,6 +141,21 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
           | undefined;
         return versionResult?.["sqlite_version()"] ?? "0.0.0";
       }, log);
+
+      if (
+        sqliteConfig.initializationSql &&
+        Array.isArray(sqliteConfig.initializationSql)
+      ) {
+        for (const sql of sqliteConfig.initializationSql) {
+          db.exec(sql);
+        }
+        log.info(
+          `Executed ${sqliteConfig.initializationSql.length} initialization SQL statements`,
+          {
+            code: "SQLITE_INIT_SQL",
+          },
+        );
+      }
 
       // Initialize SchemaManager with this adapter as the executor
       this.schemaManager = new SchemaManager(this);
@@ -367,6 +383,25 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    */
   override listSchemas(): Promise<string[]> {
     return Promise.resolve(["main"]);
+  }
+
+  /**
+   * Get indexes, optionally for a specific table (cached via SchemaManager)
+   */
+  async getIndexes(table?: string): Promise<IndexInfo[]> {
+    this.ensureConnected();
+    if (this.schemaManager) {
+      if (table) {
+        return this.schemaManager.getTableIndexes(table);
+      }
+      return this.schemaManager.getAllIndexes();
+    }
+    // Fallback if no schema manager
+    const all = await this.getAllIndexes();
+    if (table) {
+      return all.filter((i) => i.tableName === table);
+    }
+    return all;
   }
 
   /**

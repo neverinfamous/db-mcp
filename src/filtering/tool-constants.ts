@@ -4,17 +4,18 @@
  * Defines the tool groups and meta-groups used for filtering.
  *
  * Actual tool groups (from code audit):
- *   core: 9 tools (core/queries.ts, core/tables.ts, core/indexes.ts)
- *   json: 23 tools (json-operations/crud+query+transform.ts, json-helpers/read+write.ts)
- *   text: 13 WASM / 17 Native (text/regex+formatting+search+validate.ts, fts.ts)
- *   stats: 13 WASM / 19 Native (stats/basic+advanced.ts, native: window.ts)
+ *   core: 14 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts)
+ *   json: 24 tools (json-operations/crud+query+transform+security.ts, json-helpers/read+write.ts)
+ *   text: 14 WASM / 19 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
+ *   stats: 16 WASM / 22 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
- *   admin: 26 WASM / 33 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts, native: transactions.ts)
+ *   admin: 26 WASM / 26 Native (admin/backup+verify+pragma.ts, virtual/views+vtable+extensions+analysis.ts)
+ *   transactions: 8 Native (native: transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
  *   introspection: 9 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Total: 115 WASM / 139 Native tools
+ *   Total: 125 WASM / 151 Native tools
  *
  * Note: 3 built-in server tools (server_info, server_health, list_adapters)
  * are always available regardless of filter settings.
@@ -32,6 +33,7 @@ export const ALL_TOOL_GROUPS: ToolGroup[] = [
   "stats",
   "vector",
   "admin",
+  "transactions",
   "geo",
   "introspection",
   "migration",
@@ -53,6 +55,11 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "get_indexes",
     "create_index",
     "drop_index",
+    "upsert",
+    "batch_insert",
+    "count",
+    "exists",
+    "truncate",
   ],
   json: [
     // CRUD + Query + Collection (8: crud.ts, query.ts, write.ts)
@@ -81,9 +88,11 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "jsonb_convert",
     "json_storage_info",
     "json_normalize_column",
+    // Security (1: security.ts)
+    "json_security_scan",
   ],
   text: [
-    // Text Tools (13 WASM)
+    // Text Tools (14 WASM)
     "regex_extract",
     "regex_match",
     "text_split",
@@ -97,14 +106,16 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "text_normalize",
     "text_validate",
     "advanced_search",
-    // FTS5 Tools (4 Native-only)
+    "text_sentiment",
+    // FTS5 Tools (5 Native-only)
     "fts_create",
     "fts_search",
     "fts_rebuild",
     "fts_match_info",
+    "fts_headline",
   ],
   stats: [
-    // Stats Tools (13 WASM)
+    // Stats Tools (16 WASM)
     "stats_basic",
     "stats_count",
     "stats_group_by",
@@ -118,6 +129,10 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "stats_outliers",
     "stats_regression",
     "stats_hypothesis",
+    // Anomaly Detection (3 WASM)
+    "stats_detect_anomalies",
+    "stats_detect_bloat",
+    "stats_detect_schema_risks",
     // Window Tools (6 Native-only)
     "window_row_number",
     "window_rank",
@@ -168,8 +183,11 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "analyze_csv_schema",
     "create_rtree_table",
     "create_series_table",
-    // Transaction Tools (7 Native-only)
+  ],
+  transactions: [
+    // Transaction Tools (8 Native-only)
     "transaction_begin",
+    "transaction_status",
     "transaction_commit",
     "transaction_rollback",
     "transaction_savepoint",
@@ -221,25 +239,25 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text + Codemode (46 WASM / 50 Native)
+  // General development - Core + JSON + Text + Codemode (53 WASM / 58 Native)
   starter: ["core", "json", "text", "codemode"],
 
-  // Data analysis - Core + JSON + Stats + Codemode (46 WASM / 52 Native)
+  // Data analysis - Core + JSON + Stats + Codemode (55 WASM / 61 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector + Codemode (34 WASM / 38 Native)
+  // Search workloads - Core + Text + Vector + Codemode (40 WASM / 45 Native)
   search: ["core", "text", "vector", "codemode"],
 
-  // Geospatial workloads - Core + Geo + Vector + Codemode (25 WASM / 32 Native)
+  // Geospatial workloads - Core + Geo + Vector + Codemode (30 WASM / 37 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
-  // Schema development - Core + Introspection + Migration + Codemode (25 tools)
+  // Schema development - Core + Introspection + Migration + Codemode (30 tools)
   "dev-schema": ["core", "introspection", "migration", "codemode"],
 
-  // Bare minimum - Core + Codemode (10 tools)
+  // Bare minimum - Core + Codemode (15 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (115 WASM / 139 Native)
+  // All tools enabled (125 WASM / 151 Native)
   full: [
     "core",
     "json",
@@ -247,6 +265,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
     "stats",
     "vector",
     "admin",
+    "transactions",
     "geo",
     "introspection",
     "migration",

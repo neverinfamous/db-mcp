@@ -1,3 +1,8 @@
+import {
+  validateColumnExists,
+  validateNumericColumn,
+  VALID_STAT_TYPES,
+} from "./helpers.js";
 /**
  * Basic Statistics Tools
  *
@@ -9,6 +14,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
+import { resolveAliases } from "../../types.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   validateWhereClause,
@@ -25,17 +31,14 @@ import {
   StatsGroupByOutputSchema,
   StatsHistogramOutputSchema,
   StatsPercentileOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/stats.js";
 import {
-  validateColumnExists,
-  validateNumericColumn,
-  VALID_STAT_TYPES,
   BasicStatsSchema,
-  CountSchema,
+  StatsCountSchema,
   GroupByStatsSchema,
   HistogramSchema,
   PercentileSchema,
-} from "./helpers.js";
+} from "../../schemas/stats.js";
 
 /**
  * Basic statistics (sum, avg, min, max, stdev)
@@ -51,16 +54,15 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = BasicStatsSchema.parse(params);
-
       try {
+        const aliasedParams = resolveAliases(params, {
+          tableName: "table",
+          columnName: "column",
+        });
+        const input = BasicStatsSchema.parse(aliasedParams);
+
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
-        if (numericError) return numericError;
+        await validateNumericColumn(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -116,14 +118,18 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     name: "sqlite_stats_count",
     description: "Count rows, optionally distinct values in a column.",
     group: "stats",
-    inputSchema: CountSchema,
+    inputSchema: StatsCountSchema,
     outputSchema: StatsCountOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CountSchema.parse(params);
-
       try {
+        const aliasedParams = resolveAliases(params, {
+          tableName: "table",
+          columnName: "column",
+        });
+        const input = StatsCountSchema.parse(aliasedParams);
+
         if (input.column) {
           await validateColumnExists(adapter, input.table, input.column);
         } else {
@@ -189,9 +195,9 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Group By Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = GroupByStatsSchema.parse(params);
-
       try {
+        const input = GroupByStatsSchema.parse(params);
+
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
           !input.stat ||
@@ -208,12 +214,7 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.groupByColumn);
 
         if (input.stat !== "count") {
-          const numericError = await validateNumericColumn(
-            adapter,
-            input.table,
-            input.valueColumn,
-          );
-          if (numericError) return numericError;
+          await validateNumericColumn(adapter, input.table, input.valueColumn);
         }
 
         const table = sanitizeIdentifier(input.table);
@@ -262,26 +263,25 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Histogram"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = HistogramSchema.parse(params);
-
       try {
+        const input = HistogramSchema.parse(params);
+
         if (input.buckets < 1) {
-          return {
-            success: false,
-            error: "'buckets' must be at least 1",
-            code: "INVALID_INPUT",
-            category: "validation",
-            recoverable: false,
-          };
+          throw new ValidationError(
+            `'buckets' must be at least 1 for column '${input.column}' in table '${input.table}'`,
+            "INVALID_INPUT",
+            {
+              details: {
+                resourceType: "column",
+                resourceName: input.column,
+                tableName: input.table,
+              },
+            },
+          );
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
-        if (numericError) return numericError;
+        await validateNumericColumn(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -382,29 +382,26 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Percentile"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = PercentileSchema.parse(params);
-
       try {
+        const input = PercentileSchema.parse(params);
+
         const invalidPercentiles = input.percentiles.filter(
           (p) => p < 0 || p > 100,
         );
         if (invalidPercentiles.length > 0) {
-          return {
-            success: false,
-            error: `Percentile values must be between 0 and 100. Invalid: ${invalidPercentiles.join(", ")}`,
-            code: "INVALID_INPUT",
-            category: "validation",
-            recoverable: false,
-          };
+          throw new ValidationError(
+            `Percentile values must be between 0 and 100. Invalid: ${invalidPercentiles.join(", ")}`,
+            "INVALID_INPUT",
+            {
+              details: {
+                invalidPercentiles,
+              },
+            },
+          );
         }
 
         await validateColumnExists(adapter, input.table, input.column);
-        const numericError = await validateNumericColumn(
-          adapter,
-          input.table,
-          input.column,
-        );
-        if (numericError) return numericError;
+        await validateNumericColumn(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);

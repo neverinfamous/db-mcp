@@ -14,7 +14,10 @@ import {
   executeGeneral,
   rowsFromSqlJsResult,
 } from "../../../src/adapters/sqlite/query-executor.js";
-import { QueryError } from "../../../src/utils/errors/index.js";
+import {
+  QueryError,
+  ResourceNotFoundError,
+} from "../../../src/utils/errors/index.js";
 
 // =============================================================================
 // Test Setup
@@ -125,11 +128,11 @@ describe("executeRead", () => {
     db.close();
   });
 
-  it("should throw QueryError for non-existent table", async () => {
+  it("should throw ResourceNotFoundError for non-existent table", async () => {
     const db = await createTestDb();
 
     expect(() => executeRead(db, "SELECT * FROM nonexistent")).toThrow(
-      QueryError,
+      ResourceNotFoundError,
     );
 
     db.close();

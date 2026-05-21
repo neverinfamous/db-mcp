@@ -12,8 +12,10 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { QueryPlanOutputSchema } from "../../../output-schemas/index.js";
+import {
+  QueryPlanOutputSchema,
+  QueryPlanSchema,
+} from "../../../schemas/introspection.js";
 
 // Synthetic EXPLAIN table names that are not real tables
 const SYNTHETIC_TABLES = new Set([
@@ -26,10 +28,6 @@ const SYNTHETIC_TABLES = new Set([
 // =============================================================================
 // Input Schema
 // =============================================================================
-
-const QueryPlanSchema = z.object({
-  sql: z.string().describe("SQL query to analyze (SELECT only)"),
-});
 
 // =============================================================================
 // Tool Creator
@@ -121,17 +119,21 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
 
           if (detailUpper.includes("SCAN")) {
             // Extract table name: "SCAN table_name" or "SCAN TABLE table_name"
-            const scanMatch = /SCAN\s+(?:TABLE\s+)?(\S+)/i.exec(detail);
+            const scanMatch = /SCAN\s+(?:TABLE\s+)?([^\s(]+)/i.exec(detail);
             table = scanMatch?.[1];
+
+            const indexMatch =
+              /USING\s+(?:COVERING\s+)?INDEX\s+([^\s(]+)/i.exec(detail);
+            const indexName = indexMatch?.[1] ?? table;
 
             if (detailUpper.includes("COVERING INDEX")) {
               scanType = "covering_index";
-              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase()))
-                coveringIndexes.push(table);
+              if (indexName && !SYNTHETIC_TABLES.has(indexName.toUpperCase()))
+                coveringIndexes.push(indexName);
             } else if (detailUpper.includes("USING INDEX")) {
               scanType = "index_scan";
-              if (table && !SYNTHETIC_TABLES.has(table.toUpperCase()))
-                indexScans.push(table);
+              if (indexName && !SYNTHETIC_TABLES.has(indexName.toUpperCase()))
+                indexScans.push(indexName);
             } else {
               scanType = "full_scan";
               if (table && !SYNTHETIC_TABLES.has(table.toUpperCase()))
@@ -139,9 +141,19 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
             }
           } else if (detailUpper.includes("SEARCH")) {
             scanType = "search";
-            const searchMatch = /SEARCH\s+(?:TABLE\s+)?(\S+)/i.exec(detail);
+            const searchMatch = /SEARCH\s+(?:TABLE\s+)?([^\s(]+)/i.exec(detail);
             table = searchMatch?.[1];
-            if (table) indexScans.push(table);
+            const indexMatch =
+              /USING\s+(?:COVERING\s+)?INDEX\s+([^\s(]+)/i.exec(detail);
+            const indexName = indexMatch?.[1] ?? table;
+            if (indexName && !SYNTHETIC_TABLES.has(indexName.toUpperCase())) {
+              if (detailUpper.includes("COVERING INDEX")) {
+                scanType = "covering_index";
+                coveringIndexes.push(indexName);
+              } else {
+                indexScans.push(indexName);
+              }
+            }
           } else if (
             detailUpper.includes("SUBQUERY") ||
             detailUpper.includes("CORRELATED")

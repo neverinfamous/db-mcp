@@ -12,34 +12,15 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { IndexAuditOutputSchema } from "../../../output-schemas/index.js";
+import {
+  IndexAuditOutputSchema,
+  IndexAuditSchema,
+} from "../../../schemas/introspection.js";
 import { isSpatialiteSystemTable } from "../../core/tables.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-const IndexAuditSchema = z
-  .object({
-    table: z
-      .string()
-      .optional()
-      .describe("Optional table name to audit (default: all tables)"),
-    excludeSystemTables: z
-      .boolean()
-      .optional()
-      .describe(
-        "Exclude SpatiaLite system tables from audit findings (default: true)",
-      ),
-    minSeverity: z
-      .enum(["info", "warning", "error"])
-      .optional()
-      .describe(
-        "Minimum severity to include in findings (default: all). Reduces payload for large databases.",
-      ),
-  })
-  .default({});
 
 // =============================================================================
 // Tool Creator

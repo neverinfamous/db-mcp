@@ -297,7 +297,7 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
       const payload = await callToolAndParse(client, "sqlite_json_insert", {
         table: "test_jsonb_docs",
         column: "doc",
-        data: { type: "test", title: "E2E Payload Test", author: "Playwright" },
+        data: { e2e_insert_test: "Playwright" },
       });
 
       expectSuccess(payload);
@@ -413,7 +413,7 @@ test.describe("Payload Contracts: JSON Write Extended", () => {
     try {
       await callToolAndParse(client, "sqlite_write_query", {
         query:
-          "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.title') = 'E2E Payload Test'",
+          "DELETE FROM test_jsonb_docs WHERE json_extract(doc, '$.e2e_insert_test') IS NOT NULL",
       });
     } finally {
       await client.close();

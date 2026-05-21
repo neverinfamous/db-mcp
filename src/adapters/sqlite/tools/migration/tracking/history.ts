@@ -6,12 +6,14 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
-  MIGRATIONS_TABLE,
   MigrationHistorySchema,
   MigrationHistoryOutputSchema,
+} from "../../../schemas/migration.js";
+import {
+  MIGRATIONS_TABLE,
   isMigrationTableInitialized,
   toMigrationRecord,
-} from "../schemas.js";
+} from "../helpers.js";
 
 export function createMigrationHistoryTool(
   adapter: SqliteAdapter,

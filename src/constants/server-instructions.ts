@@ -31,7 +31,7 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 ## Help Resources
 
 Read \`sqlite://help\` for gotchas and critical usage patterns.
-Read \`sqlite://help/{group}\` for group-specific tool reference (json, text, stats, vector, geo, admin, introspection, migration).
+Read \`sqlite://help/{group}\` for group-specific tool reference (json, text, stats, vector, geo, admin, transactions, introspection, migration).
 Only help resources for your enabled tool groups are registered.`;
 
 /**
@@ -42,22 +42,7 @@ Only help resources for your enabled tool groups are registered.`;
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
   [
     "admin",
-    `# db-mcp Help — Database Administration (33 Native / 26 WASM)
-
-## Transactions (7 tools, Native only)
-
-\`\`\`javascript
-// Atomic multi-statement execution (preferred for simple cases)
-sqlite_transaction_execute({ statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"] });
-
-// Manual transaction control
-sqlite_transaction_begin({ mode: "immediate" }); // or "deferred", "exclusive"
-sqlite_transaction_savepoint({ name: "checkpoint" });
-sqlite_transaction_rollback_to({ name: "checkpoint" });
-sqlite_transaction_release({ name: "checkpoint" });
-sqlite_transaction_commit();
-sqlite_transaction_rollback();
-\`\`\`
+    `# db-mcp Help — Database Administration (29 Native / 29 WASM)
 
 ## Maintenance
 
@@ -75,6 +60,14 @@ sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-on
 sqlite_backup({ targetPath: "/path/to/backup.db" });
 sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity without restoring
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
+\`\`\`
+
+## Audit Backups (Requires --audit-backup)
+
+\`\`\`javascript
+sqlite_audit_list_backups(); // list pre-mutation DDL snapshots
+sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific snapshot
+sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
 \`\`\`
 
 ## PRAGMA
@@ -95,7 +88,10 @@ sqlite_pragma_optimize(); // run PRAGMA optimize
 ## Views
 
 \`\`\`javascript
-sqlite_create_view({ viewName: "active_orders", selectQuery: "SELECT * FROM orders WHERE status = 'active'" });
+sqlite_create_view({
+  viewName: "active_orders",
+  selectQuery: "SELECT * FROM orders WHERE status = 'active'",
+});
 sqlite_create_view({ viewName: "v", selectQuery: "...", replace: true }); // CREATE OR REPLACE
 sqlite_list_views(); // list all views
 sqlite_drop_view({ viewName: "active_orders" });
@@ -130,7 +126,10 @@ sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }); // 2D:
 
 \`\`\`javascript
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" }); // analyze CSV structure
-sqlite_create_csv_table({ tableName: "csv_data", filePath: "/absolute/path/to/data.csv" });
+sqlite_create_csv_table({
+  tableName: "csv_data",
+  filePath: "/absolute/path/to/data.csv",
+});
 \`\`\`
 
 ## Business Insights
@@ -140,22 +139,72 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 \`\`\``,
   ],
   [
+    "core",
+    `# db-mcp Help — Core Operations (14 tools)
+
+## Basic Queries
+
+- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10" })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements
+- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, or DDL statements
+
+## Tables & Schema
+
+- \`sqlite_list_tables({ excludeSystemTables?: boolean })\` — list all tables in the database (system tables excluded by default)
+- \`sqlite_describe_table({ table: "users" })\` — get detailed schema, columns, and foreign keys for a specific table
+- \`sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })\` — create a new table
+- \`sqlite_drop_table({ table: "users", ifExists?: true })\` — drop an existing table
+
+## Indexes
+
+- \`sqlite_get_indexes({ table?: "users", excludeSystemIndexes?: true })\` — list indexes (optionally filtered by table)
+- \`sqlite_create_index({ indexName: "idx_users_email", table: "users", columns: ["email"], unique?: true })\` — create a new index
+- \`sqlite_drop_index({ indexName: "idx_users_email", ifExists?: true })\` — drop an existing index
+
+## Convenience Tools (High-Level Data Operations)
+
+- \`sqlite_upsert({ table: "users", data: [{ id: 1, name: "Alice" }], conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update rows using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns.
+- \`sqlite_batch_insert({ table: "users", data: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })\` — insert multiple rows in a single batch. Supports \`returning: true\` or array of columns.
+- \`sqlite_count({ table: "users", whereClause?: "status = 'active'" })\` — count rows in a table (faster than a full query)
+- \`sqlite_exists({ table: "users", whereClause: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
+- \`sqlite_truncate({ table: "users" })\` — quickly delete all rows from a table (executes \`DELETE FROM table\`)`,
+  ],
+  [
     "geo",
     `# db-mcp Help — Geospatial Operations (4 basic + 7 SpatiaLite)
 
 ## Basic Geo (always available — Haversine formula)
 
 \`\`\`javascript
-sqlite_geo_distance({ lat1: 40.7128, lon1: -74.006, lat2: 34.0522, lon2: -118.2437 }); // returns km
+sqlite_geo_distance({
+  lat1: 40.7128,
+  lon1: -74.006,
+  lat2: 34.0522,
+  lon2: -118.2437,
+}); // returns km
 sqlite_geo_bounding_box({
-  table: "stores", latColumn: "lat", lonColumn: "lon",
-  minLat: 40, maxLat: 41, minLon: -75, maxLon: -73,
+  table: "stores",
+  latColumn: "lat",
+  lonColumn: "lon",
+  minLat: 40,
+  maxLat: 41,
+  minLon: -75,
+  maxLon: -73,
 });
 sqlite_geo_nearby({
-  table: "stores", latColumn: "lat", lonColumn: "lon",
-  centerLat: 40.7, centerLon: -74, radius: 10, unit: "km",
+  table: "stores",
+  latColumn: "lat",
+  lonColumn: "lon",
+  centerLat: 40.7,
+  centerLon: -74,
+  radius: 10,
+  unit: "km",
 });
-sqlite_geo_cluster({ table: "customers", latColumn: "lat", lonColumn: "lon", gridSize: 0.1 });
+sqlite_geo_cluster({
+  table: "customers",
+  latColumn: "lat",
+  lonColumn: "lon",
+  gridSize: 0.1,
+});
 \`\`\`
 
 ## SpatiaLite (7 tools, Native only)
@@ -165,30 +214,67 @@ sqlite_geo_cluster({ table: "customers", latColumn: "lat", lonColumn: "lon", gri
 sqlite_spatialite_load(); // ⚠️ Required before using other spatial tools
 
 // Create spatial table with geometry column
-sqlite_spatialite_create_table({ tableName: "places", geometryColumn: "geom", geometryType: "POINT", srid: 4326 });
+sqlite_spatialite_create_table({
+  tableName: "places",
+  geometryColumn: "geom",
+  geometryType: "POINT",
+  srid: 4326,
+});
 
 // Import data (WKT or GeoJSON)
-sqlite_spatialite_import({ tableName: "places", format: "wkt", data: "POINT(-73.99 40.75)", additionalData: { name: "NYC" } });
-sqlite_spatialite_import({ tableName: "places", format: "geojson", data: '{"type":"Point","coordinates":[-73.99,40.75]}' });
+sqlite_spatialite_import({
+  tableName: "places",
+  format: "wkt",
+  data: "POINT(-73.99 40.75)",
+  additionalData: { name: "NYC" },
+});
+sqlite_spatialite_import({
+  tableName: "places",
+  format: "geojson",
+  data: '{"type":"Point","coordinates":[-73.99,40.75]}',
+});
 
 // Spatial queries (SELECT only)
-sqlite_spatialite_query({ query: "SELECT name, AsText(geom) FROM places WHERE ST_Within(geom, ...)" });
+sqlite_spatialite_query({
+  query: "SELECT name, AsText(geom) FROM places WHERE ST_Within(geom, ...)",
+});
 
 // Spatial analysis
 // analysisType: "spatial_extent" | "point_in_polygon" | "nearest_neighbor" | "distance_matrix"
 // ⚠️ nearest_neighbor/distance_matrix return CARTESIAN distance (degrees), not geodetic (km/miles)
 // For same source/target table, use excludeSelf: true to avoid self-matches
-sqlite_spatialite_analyze({ analysisType: "spatial_extent", sourceTable: "places", geometryColumn: "geom" });
-sqlite_spatialite_analyze({ analysisType: "nearest_neighbor", sourceTable: "pts", targetTable: "pts", excludeSelf: true });
+sqlite_spatialite_analyze({
+  analysisType: "spatial_extent",
+  sourceTable: "places",
+  geometryColumn: "geom",
+});
+sqlite_spatialite_analyze({
+  analysisType: "nearest_neighbor",
+  sourceTable: "pts",
+  targetTable: "pts",
+  excludeSelf: true,
+});
 
 // Geometry transforms
 // buffer: 'distance' = radius; simplify: 'distance' = tolerance (0.0001 for lat/lon)
 // ⚠️ Buffer auto-simplifies output by default (tolerance=0.0001). Use simplifyTolerance: 0 to disable
-sqlite_spatialite_transform({ operation: "buffer", geometry1: "POINT(-73.99 40.75)", distance: 0.01 });
-sqlite_spatialite_transform({ operation: "simplify", geometry1: "...", distance: 0.001 });
+sqlite_spatialite_transform({
+  operation: "buffer",
+  geometry1: "POINT(-73.99 40.75)",
+  distance: 0.01,
+});
+sqlite_spatialite_transform({
+  operation: "simplify",
+  geometry1: "...",
+  distance: 0.001,
+});
 
 // Spatial index (R-Tree)
-sqlite_spatialite_index({ tableName: "places", geometryColumn: "geom", action: "create" }); // create, drop, or check
+sqlite_spatialite_index({
+  tableName: "places",
+  geometryColumn: "geom",
+  action: "create",
+}); // create, drop, or check
 \`\`\``,
   ],
   [
@@ -201,26 +287,27 @@ sqlite_spatialite_index({ tableName: "places", geometryColumn: "geom", action: "
 2. **Regex patterns**: Double-escape backslashes (\`\\\\\\\\\`) when passing through JSON/MCP
 3. **FTS5 virtual tables**: \`*_fts\` and shadow tables \`*_fts_*\` are hidden from \`sqlite_list_tables\` for cleaner output
 4. **FTS5 boolean logic**: Uses AND by default — \`"machine learning"\` = rows with BOTH words. Use OR explicitly: \`"machine OR learning"\`
-5. **FTS5 rebuild**: After \`sqlite_fts_create\`, must call \`sqlite_fts_rebuild\` to populate index with existing data
-6. **json_each row multiplication**: Expands arrays to rows — use \`limit\` param for large arrays
-7. **json_group_object without groupByColumn**: Each row creates a key-value pair; duplicate keys result if key values aren't unique
-8. **allowExpressions**: For column extraction ONLY (e.g., \`json_extract\`), NOT aggregate functions — use \`aggregateFunction\` param instead
-9. **sqlite_json_normalize_column**: Defaults to \`preserve\` (maintains original format); use \`outputFormat: 'text'\` to force text
-10. **Fuzzy matching tokenization**: Matches WORD TOKENS by default — \`"laptop"\` matches \`"Laptop Pro 15"\` (distance 0 on first token). Use \`tokenize: false\` for full-string matching
-11. **SpatiaLite distances**: \`nearest_neighbor\`/\`distance_matrix\` return CARTESIAN distance (degrees), not geodetic (km/miles)
-12. **SpatiaLite buffer**: Auto-simplifies output by default (tolerance=0.0001). Use \`simplifyTolerance: 0\` to disable
-13. **sqlite_stats_top_n**: Auto-excludes long-content columns (description, body, notes, etc.) when \`selectColumns\` is omitted. Use \`selectColumns\` to override
-14. **CSV virtual tables**: Require ABSOLUTE file paths
-15. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use \`sqlite_drop_table\` to remove
-16. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
-17. **PRAGMA compile options**: WASM may show FTS3, not FTS5
+5. **json_each row multiplication**: Expands arrays to rows — use \`limit\` param for large arrays
+6. **json_group_object without groupByColumn**: Each row creates a key-value pair; duplicate keys result if key values aren't unique
+7. **allowExpressions**: For column extraction ONLY (e.g., \`json_extract\`), NOT aggregate functions — use \`aggregateFunction\` param instead
+8. **sqlite_json_normalize_column**: Defaults to \`preserve\` (maintains original format); use \`outputFormat: 'text'\` to force text
+9. **Fuzzy matching tokenization**: Matches WORD TOKENS by default — \`"laptop"\` matches \`"Laptop Pro 15"\` (distance 0 on first token). Use \`tokenize: false\` for full-string matching
+10. **SpatiaLite distances**: \`nearest_neighbor\`/\`distance_matrix\` return CARTESIAN distance (degrees), not geodetic (km/miles)
+11. **SpatiaLite buffer**: Auto-simplifies output by default (tolerance=0.0001). Use \`simplifyTolerance: 0\` to disable
+12. **sqlite_stats_top_n**: Auto-excludes long-content columns (description, body, notes, etc.) when \`selectColumns\` is omitted. Use \`selectColumns\` to override
+13. **CSV virtual tables**: Require ABSOLUTE file paths
+14. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use \`sqlite_drop_table\` to remove
+15. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
+16. **PRAGMA compile options**: WASM may show FTS3, not FTS5
+17. **Vector tool schemas**: Vector tools use distinct schemas for specific operations. E.g., \`sqlite.vector.dimensions\` requires \`vectorColumn\`. Additionally, \`sqlite.vector.get\` wraps metadata inside a \`metadata\` object (e.g., \`metadata.content\`), and \`sqlite.vector.stats\` returns \`sampleSize\` and \`magnitudeStats\` (not \`count\` and \`stats\`).
+18. **FTS5 trigger cleanup**: Dropping an FTS5 table with \`sqlite_drop_table\` automatically finds and removes the associated \`_ai\`, \`_ad\`, and \`_au\` sync triggers from the source table.
 
 ## WASM vs Native
 
 | Feature                                           | Native                | WASM        | Fallback         |
 | ------------------------------------------------- | --------------------- | ----------- | ---------------- |
 | FTS5 full-text search                             | ✅                    | ❌          | None             |
-| Transactions (7 tools)                            | ✅                    | ❌          | None             |
+| Transactions (8 tools)                            | ✅                    | ❌          | None             |
 | Window functions (6 tools in stats group)         | ✅                    | ❌          | None             |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅                    | ❌          | None             |
 | Backup/Restore (3 tools)                          | ✅                    | ❌          | Graceful error   |
@@ -238,7 +325,9 @@ sqlite_spatialite_index({ tableName: "places", geometryColumn: "geom", action: "
 
 **Usage**: \`sqlite_execute_code({ code: "const tables = await sqlite.core.listTables(); return tables;" })\`
 **Discover**: \`sqlite.help()\` for all groups, \`sqlite.<group>.help()\` for methods.
-**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
+**Groups**: \`sqlite.core\`, \`sqlite.json\`, \`sqlite.text\`, \`sqlite.stats\`, \`sqlite.vector\`, \`sqlite.admin\`, \`sqlite.transactions\` (Native-only), \`sqlite.geo\`, \`sqlite.introspection\`, \`sqlite.migration\`
+
+> **Note**: Code Mode dynamically filters capabilities. In WASM environments, \`sqlite.help()\` will omit unsupported groups (e.g., \`transactions\`) and tools (e.g., FTS5) to accurately reflect the active runtime.
 
 ## Code Mode API Mapping
 
@@ -274,22 +363,36 @@ sqlite_cascade_simulator({ table: "users", operation: "drop", compact: true }); 
 
 \`\`\`javascript
 // Full schema in one call — compact: true omits column details, sections limits scope
-sqlite_schema_snapshot({ sections: ["tables", "indexes"], excludeSystemTables: true });
+sqlite_schema_snapshot({
+  sections: ["tables", "indexes"],
+  excludeSystemTables: true,
+});
 sqlite_schema_snapshot({ compact: true }); // lighter payload
 
 // Find constraint health issues — missing PKs, nullable FKs, unindexed FKs
 sqlite_constraint_analysis({ excludeSystemTables: true });
-sqlite_constraint_analysis({ table: "orders", checks: ["missing_pk", "unindexed_fk"] }); // limit scope
+sqlite_constraint_analysis({
+  table: "orders",
+  checks: ["missing_pk", "unindexed_fk"],
+}); // limit scope
 
 // Analyze DDL for SQLite-specific risks — does NOT execute the statements
-sqlite_migration_risks({ statements: ["ALTER TABLE users ADD COLUMN email TEXT", "DROP TABLE old_logs"] });
+sqlite_migration_risks({
+  statements: [
+    "ALTER TABLE users ADD COLUMN email TEXT",
+    "DROP TABLE old_logs",
+  ],
+});
 \`\`\`
 
 ## Diagnostics (3 tools)
 
 \`\`\`javascript
 // Fragmentation, per-table size breakdown, optimization recommendations
-sqlite_storage_analysis({ includeTableDetails: true, excludeSystemTables: true });
+sqlite_storage_analysis({
+  includeTableDetails: true,
+  excludeSystemTables: true,
+});
 sqlite_storage_analysis({ limit: 10 }); // top 10 tables only
 
 // Audit index effectiveness — find redundant, missing FK, unindexed large tables
@@ -307,7 +410,7 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
   ],
   [
     "json",
-    `# db-mcp Help — JSON Operations (23 tools)
+    `# db-mcp Help — JSON Operations (24 tools)
 
 ## Collection & CRUD
 
@@ -338,7 +441,11 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
 
 \`\`\`javascript
 // Regular tables: use column names directly
-sqlite_json_group_array({ table: "events", valueColumn: "user_id", groupByColumn: "event_type" });
+sqlite_json_group_array({
+  table: "events",
+  valueColumn: "user_id",
+  groupByColumn: "event_type",
+});
 
 // JSON collections: use allowExpressions with json_extract for both columns
 // ⚠️ allowExpressions is for column extraction ONLY, NOT aggregate functions
@@ -351,14 +458,26 @@ sqlite_json_group_array({
 });
 
 // For aggregate values (COUNT, SUM, AVG), use aggregateFunction parameter instead
-sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" });
-sqlite_json_group_object({ table: "orders", keyColumn: "status", aggregateFunction: "SUM(total)" });
+sqlite_json_group_object({
+  table: "events",
+  keyColumn: "event_type",
+  aggregateFunction: "COUNT(*)",
+});
+sqlite_json_group_object({
+  table: "orders",
+  keyColumn: "status",
+  aggregateFunction: "SUM(total)",
+});
 \`\`\`
 
 - \`sqlite_json_keys({ table, column, path? })\` — get distinct keys of JSON objects
 - \`sqlite_json_pretty({ table, column, whereClause? })\` — format JSON with indentation
 - \`sqlite_json_valid({ table, column })\` — check if values are valid JSON
 - \`sqlite_json_analyze_schema({ table, column })\` — infer schema types
+
+## Security
+
+- \`sqlite_json_security_scan({ table, column, sampleSize?, whereClause? })\` — scan JSON column for sensitive keys (password, token, ssn, etc.), SQL injection patterns, and XSS patterns. Returns \`riskLevel\` (low/medium/high) and issue details. Use larger \`sampleSize\` for thorough scans
 
 ## JSONB Optimization (SQLite 3.45+)
 
@@ -381,7 +500,8 @@ sqlite_migration_init();
 sqlite_migration_apply({
   version: "2024-01-15-add-users",
   description: "Create users table",
-  migrationSql: "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE)",
+  sql:
+    "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE)",
   rollbackSql: "DROP TABLE users",
   sourceSystem: "agent",
   appliedBy: "claude",
@@ -391,7 +511,7 @@ sqlite_migration_apply({
 sqlite_migration_record({
   version: "2024-01-10-initial",
   description: "Initial schema (pre-existing)",
-  migrationSql: "CREATE TABLE orders (...)",
+  sql: "CREATE TABLE orders (...)",
   sourceSystem: "manual",
 });
 
@@ -414,7 +534,7 @@ sqlite_migration_status();
   ],
   [
     "stats",
-    `# db-mcp Help — Statistical Analysis (13 core + 6 window)
+    `# db-mcp Help — Statistical Analysis (16 core + 6 window)
 
 ## Core Statistics (always available)
 
@@ -422,16 +542,33 @@ sqlite_migration_status();
 sqlite_stats_basic({ table: "employees", column: "salary" }); // count, sum, avg, min, max
 sqlite_stats_count({ table: "orders", column: "status", distinct: true }); // count rows, optionally distinct
 sqlite_stats_group_by({ table: "orders", column: "total", groupBy: "status" }); // aggregate by group
-sqlite_stats_percentile({ table: "sales", column: "revenue", percentiles: [25, 50, 75, 90] });
+sqlite_stats_percentile({
+  table: "sales",
+  column: "revenue",
+  percentiles: [25, 50, 75, 90],
+});
 sqlite_stats_histogram({ table: "products", column: "price", buckets: 10 });
 sqlite_stats_correlation({ table: "data", column1: "x", column2: "y" }); // Pearson coefficient
 sqlite_stats_distinct({ table: "orders", column: "status" }); // distinct values
-sqlite_stats_summary({ table: "data", columns: ["price", "quantity", "discount"] }); // multi-column summary
+sqlite_stats_summary({
+  table: "data",
+  columns: ["price", "quantity", "discount"],
+}); // multi-column summary
 sqlite_stats_frequency({ table: "orders", column: "status" }); // frequency distribution
 sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue" }); // linear
-sqlite_stats_regression({ table: "data", xColumn: "year", yColumn: "revenue", degree: 2 }); // quadratic
+sqlite_stats_regression({
+  table: "data",
+  xColumn: "year",
+  yColumn: "revenue",
+  degree: 2,
+}); // quadratic
 sqlite_stats_outliers({ table: "sales", column: "amount", method: "iqr" }); // or "zscore". Use maxOutliers to limit payload
-sqlite_stats_hypothesis({ table: "samples", column: "value", testType: "ttest_one", expectedMean: 100 });
+sqlite_stats_hypothesis({
+  table: "samples",
+  column: "value",
+  testType: "ttest_one",
+  expectedMean: 100,
+});
 \`\`\`
 
 ⚠️ \`sqlite_stats_top_n\` — always use \`selectColumns\` to avoid returning all columns (large payloads with text fields):
@@ -445,73 +582,249 @@ sqlite_stats_top_n({
 });
 \`\`\`
 
+## Anomaly Detection (3 tools)
+
+\`\`\`javascript
+// Data distribution anomaly detection — z-score analysis on numeric columns
+sqlite_stats_detect_anomalies({ table: "sales", threshold: 2.0 }); // auto-detects numeric columns
+sqlite_stats_detect_anomalies({
+  table: "metrics",
+  columns: ["latency_ms", "error_rate"],
+  threshold: 3.0,
+  limit: 20,
+});
+
+// Fragmentation/bloat risk scoring — PRAGMA + dbstat analysis
+sqlite_stats_detect_bloat(); // riskiest tables (>0 score), default limit 50
+sqlite_stats_detect_bloat({ includeZeroRisk: true, limit: 10 }); // include zero risk, top 10
+
+// Schema health risk scoring — FK indexes, PKs, wide tables
+sqlite_stats_detect_schema_risks(); // riskiest tables (>0 score)
+sqlite_stats_detect_schema_risks({ excludeSystemTables: false }); // include SpatiaLite tables
+\`\`\`
+
 ## Window Functions (6 tools, Native only)
 
 \`\`\`javascript
-sqlite_window_row_number({ table: "employees", orderBy: "hire_date", partitionBy: "department" });
-sqlite_window_rank({ table: "sales", orderBy: "revenue DESC", partitionBy: "region", rankType: "dense_rank" });
-sqlite_window_lag_lead({ table: "sales", orderBy: "date", column: "revenue", partitionBy: "region" }); // access previous/next row values
-sqlite_window_running_total({ table: "transactions", column: "amount", orderBy: "date" });
-sqlite_window_moving_avg({ table: "stock_prices", column: "close_price", orderBy: "date", windowSize: 7 });
-sqlite_window_ntile({ table: "employees", orderBy: "salary DESC", buckets: 4, partitionBy: "department" }); // quartiles
+sqlite_window_row_number({
+  table: "employees",
+  orderBy: "hire_date",
+  partitionBy: "department",
+});
+sqlite_window_rank({
+  table: "sales",
+  orderBy: "revenue DESC",
+  partitionBy: "region",
+  rankType: "dense_rank",
+});
+sqlite_window_lag_lead({
+  table: "sales",
+  orderBy: "date",
+  column: "revenue",
+  partitionBy: "region",
+}); // access previous/next row values
+sqlite_window_running_total({
+  table: "transactions",
+  column: "amount",
+  orderBy: "date",
+});
+sqlite_window_moving_avg({
+  table: "stock_prices",
+  column: "close_price",
+  orderBy: "date",
+  windowSize: 7,
+});
+sqlite_window_ntile({
+  table: "employees",
+  orderBy: "salary DESC",
+  buckets: 4,
+  partitionBy: "department",
+}); // quartiles
+\`\`\`
+
+⚠️ **Payload Sizes**: Window functions retrieve all standard columns by default (up to the \`limit\`). When querying wide tables, this can result in large payloads. It is highly recommended to pass \`selectColumns\` to reduce token usage:
+
+\`\`\`javascript
+sqlite_window_moving_avg({
+  table: "stock_prices",
+  column: "close_price",
+  orderBy: "date",
+  windowSize: 7,
+  selectColumns: ["date"]
+});
 \`\`\``,
   ],
   [
     "text",
     `# db-mcp Help — Text Processing & FTS5
 
-## Full-Text Search / FTS5 (4 tools, Native only)
+## Full-Text Search / FTS5 (5 tools, Native only)
 
 \`\`\`javascript
 // Create FTS5 table with triggers for auto-sync on future changes
-sqlite_fts_create({ tableName: "articles_fts", sourceTable: "articles", columns: ["title", "content"] });
+// (Dropping this FTS table via sqlite_drop_table will automatically clean up these sync triggers)
+sqlite_fts_create({
+  tableName: "articles_fts",
+  sourceTable: "articles",
+  columns: ["title", "content"],
+});
 sqlite_fts_rebuild({ table: "articles_fts" }); // ⚠️ Required: populate index with existing data
 
 // FTS5 uses AND by default: "machine learning" = rows containing BOTH words
 // Use OR explicitly: "machine OR learning" for rows containing EITHER word
-sqlite_fts_search({ table: "articles_fts", query: "machine learning", limit: 10 });
+sqlite_fts_search({
+  table: "articles_fts",
+  query: "machine learning",
+  limit: 10,
+});
 sqlite_fts_match_info({ table: "articles_fts", query: "machine learning" }); // bm25 ranking info
+
+// Highlighted snippets from FTS5 search matches (headline/snippet)
+sqlite_fts_headline({ table: "articles_fts", query: "machine learning" });
+// → results with <b>machine</b> <b>learning</b> highlighted in context
+
+// Custom markers and snippet window
+sqlite_fts_headline({
+  table: "articles_fts",
+  query: "database",
+  startSel: "**",
+  stopSel: "**",
+  snippetWords: 5,
+});
 \`\`\`
 
 ⚠️ FTS5 virtual tables (\`*_fts\`) and shadow tables (\`*_fts_*\`) are hidden from \`sqlite_list_tables\` for cleaner output
 
-## Text Processing (13 tools)
+## Text Processing (14 tools)
 
 \`\`\`javascript
 // Regex patterns: ⚠️ Double-escape backslashes (\\\\) when passing through JSON/MCP
-sqlite_regex_match({ table: "logs", column: "message", pattern: "ERROR:\\\\\\\\s+(\\\\\\\\w+)" });
-sqlite_regex_extract({ table: "users", column: "email", pattern: "@([a-zA-Z0-9.-]+)", groupIndex: 1 });
+sqlite_regex_match({
+  table: "logs",
+  column: "message",
+  pattern: "ERROR:\\\\\\\\s+(\\\\\\\\w+)",
+});
+sqlite_regex_extract({
+  table: "users",
+  column: "email",
+  pattern: "@([a-zA-Z0-9.-]+)",
+  groupIndex: 1,
+});
 
 // Text manipulation
 sqlite_text_split({ table: "users", column: "email", delimiter: "@" }); // split into parts array
-sqlite_text_concat({ table: "users", columns: ["first_name", "last_name"], separator: " " });
-sqlite_text_replace({ table: "docs", column: "content", search: "old", replacement: "new" });
+sqlite_text_concat({
+  table: "users",
+  columns: ["first_name", "last_name"],
+  separator: " ",
+});
+sqlite_text_replace({
+  table: "docs",
+  column: "content",
+  searchPattern: "old",
+  replaceWith: "new",
+});
 sqlite_text_trim({ table: "users", column: "name" }); // trim whitespace
 sqlite_text_case({ table: "products", column: "name", mode: "upper" }); // or "lower"
 sqlite_text_substring({ table: "codes", column: "value", start: 1, length: 3 }); // extract substring
-sqlite_text_normalize({ table: "docs", column: "content", mode: "strip_accents" }); // or nfc, nfd, nfkc, nfkd
+sqlite_text_normalize({
+  table: "docs",
+  column: "content",
+  mode: "strip_accents",
+}); // or nfc, nfd, nfkc, nfkd
 
 // Validation patterns: email, phone, url, uuid, ipv4, custom
 sqlite_text_validate({ table: "users", column: "email", pattern: "email" });
-sqlite_text_validate({ table: "data", column: "field", pattern: "custom", customPattern: "^[A-Z]{2}[0-9]{4}$" });
+sqlite_text_validate({
+  table: "data",
+  column: "field",
+  pattern: "custom",
+  customPattern: "^[A-Z]{2}[0-9]{4}$",
+});
 
 // Fuzzy matching — matches WORD TOKENS by default (not entire value)
 // "laptop" matches "Laptop Pro 15" (distance 0 on first token). Use tokenize: false for full-string matching.
-sqlite_fuzzy_match({ table: "products", column: "name", search: "laptop", maxDistance: 2 });
-sqlite_fuzzy_match({ table: "products", column: "name", search: "laptob", maxDistance: 2, tokenize: false }); // full value
+sqlite_fuzzy_match({
+  table: "products",
+  column: "name",
+  search: "laptop",
+  maxDistance: 2,
+});
+sqlite_fuzzy_match({
+  table: "products",
+  column: "name",
+  search: "laptob",
+  maxDistance: 2,
+  tokenize: false,
+}); // full value
 
 // Phonetic matching — finds words that sound alike (matches against any word in value)
 // Use includeRowData: false for lighter payloads when only matching values are needed
-sqlite_phonetic_match({ table: "products", column: "name", search: "laptop", algorithm: "soundex" });
-sqlite_phonetic_match({ table: "products", column: "name", search: "laptop", includeRowData: false }); // lighter
+sqlite_phonetic_match({
+  table: "products",
+  column: "name",
+  search: "laptop",
+  algorithm: "soundex",
+});
+sqlite_phonetic_match({
+  table: "products",
+  column: "name",
+  search: "laptop",
+  includeRowData: false,
+}); // lighter
 
 // Advanced search — combines exact, fuzzy, and phonetic techniques
 // fuzzyThreshold: 0.3-0.4 = loose matching (more results), 0.6-0.8 = strict matching (fewer results)
 sqlite_advanced_search({
-  table: "products", column: "name", searchTerm: "laptop",
-  techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold: 0.4,
+  table: "products",
+  column: "name",
+  searchTerm: "laptop",
+  techniques: ["exact", "fuzzy", "phonetic"],
+  fuzzyThreshold: 0.4,
 });
+
+// Sentiment analysis — pure text analysis, no database query needed
+sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });
+// → { sentiment: "very_positive", score: 2, confidence: "medium" }
+
+sqlite_text_sentiment({ text: "Great service but slow delivery", returnWords: true });
+// → { sentiment: "neutral", score: 0, matchedPositive: ["great"], matchedNegative: ["slow"] }
 \`\`\``,
+  ],
+  [
+    "transactions",
+    `# db-mcp Help — Transactions (8 tools, Native only)
+
+## Atomic Execution (preferred for simple cases)
+
+\`\`\`javascript
+sqlite_transaction_execute({
+  statements: ["UPDATE a SET x=1", "UPDATE b SET y=2"],
+});
+\`\`\`
+
+## Manual Transaction Control
+
+\`\`\`javascript
+sqlite_transaction_begin({ mode: "immediate" }); // or "deferred", "exclusive"
+sqlite_transaction_savepoint({ name: "checkpoint" });
+sqlite_transaction_rollback_to({ name: "checkpoint" });
+sqlite_transaction_release({ name: "checkpoint" });
+sqlite_transaction_commit();
+sqlite_transaction_rollback();
+\`\`\`
+
+## Transaction State (read-only)
+
+\`\`\`javascript
+sqlite_transaction_status(); // → { status: "active" | "none", active: true/false }
+\`\`\`
+
+## ⚠️ Gotchas
+
+- Transaction tools are **Native only** — WASM adapter does not support transactions
+- Use \`sqlite_transaction_execute\` for simple multi-statement operations; manual \`begin\`/\`commit\` for complex flows with savepoints
+- \`sqlite_transaction_status\` is read-only and requires only \`read\` scope; all other transaction tools require \`write\` scope`,
   ],
   [
     "vector",
@@ -526,21 +839,21 @@ sqlite_vector_store({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1,
 sqlite_vector_batch_store({ table: "docs", idColumn: "id", vectorColumn: "emb", items: [{ id: 1, vector: [...] }, { id: 2, vector: [...] }] });
 
 // Search vectors (returnColumns omits vector data from results for smaller payloads)
-sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10, returnColumns: ["id", "title"] });
+sqlite_vector_search({ table: "docs", vectorColumn: "emb", queryVector: [...], limit: 10, returnColumns: ["id", "title"] }); // returns { results: [...] } instead of rows
 
 // Retrieve and delete vectors
-// Note: sqlite_vector_get returns parsed 'vector' array + raw JSON string in 'metadata' for flexibility
+// Note: sqlite_vector_get returns parsed 'vector' array + additional columns in a 'metadata' object for flexibility
 sqlite_vector_get({ table: "docs", idColumn: "id", vectorColumn: "emb", id: 1 });
 sqlite_vector_delete({ table: "docs", idColumn: "id", ids: [1, 2, 3] });
 
 // Vector metadata
 sqlite_vector_count({ table: "docs" }); // or with dimensions filter: { table: "docs", dimensions: 384 }
 sqlite_vector_dimensions({ table: "docs", vectorColumn: "emb" });
-sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }); // magnitude min/max/avg
+sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }); // returns sampleSize, magnitudeStats (min/max/avg)
 
 // Utility tools for preprocessing
 sqlite_vector_normalize({ vector: [3, 4, 0, 0] }); // returns unit vector [0.6, 0.8, 0, 0]
-sqlite_vector_distance({ vector1: [...], vector2: [...], metric: "cosine" }); // or "euclidean", "dot"
+sqlite_vector_distance({ vector1: [...], vector2: [...], metric: "cosine" }); // returns { value: <number> }
 \`\`\``,
   ],
 ]);

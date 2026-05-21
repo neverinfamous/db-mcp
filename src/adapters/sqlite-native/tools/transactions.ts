@@ -11,7 +11,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../utils/errors/index.js";
-import { write } from "../../../utils/annotations.js";
+import { readOnly, write } from "../../../utils/annotations.js";
 import {
   TransactionBeginOutputSchema,
   TransactionCommitOutputSchema,
@@ -20,7 +20,8 @@ import {
   TransactionReleaseOutputSchema,
   TransactionRollbackToOutputSchema,
   TransactionExecuteOutputSchema,
-} from "../../sqlite/output-schemas/index.js";
+  TransactionStatusOutputSchema,
+} from "../../sqlite/schemas/index.js";
 
 // Valid enum values for transaction mode
 const VALID_MODES = ["deferred", "immediate", "exclusive"] as const;
@@ -69,6 +70,7 @@ export function getTransactionTools(
 ): ToolDefinition[] {
   return [
     createBeginTransactionTool(adapter),
+    createTransactionStatusTool(adapter),
     createCommitTransactionTool(adapter),
     createRollbackTransactionTool(adapter),
     createSavepointTool(adapter),
@@ -88,7 +90,7 @@ function createBeginTransactionTool(
     name: "sqlite_transaction_begin",
     description:
       "Begin a new transaction. Use immediate or exclusive mode for write-heavy operations.",
-    group: "admin",
+    group: "transactions",
     inputSchema: BeginTransactionSchema,
     outputSchema: TransactionBeginOutputSchema,
     annotations: write("Begin Transaction"),
@@ -113,6 +115,42 @@ function createBeginTransactionTool(
 }
 
 /**
+ * Transaction status — read-only check
+ */
+function createTransactionStatusTool(
+  adapter: NativeSqliteAdapter,
+): ToolDefinition {
+  return {
+    name: "sqlite_transaction_status",
+    description:
+      "Check whether a transaction is currently active. " +
+      "Returns status and a boolean flag. Read-only — does not alter transaction state.",
+    group: "transactions",
+    inputSchema: z.object({}),
+    outputSchema: TransactionStatusOutputSchema,
+    annotations: readOnly("Transaction Status"),
+    requiredScopes: ["read"],
+    handler: (_params: unknown, _context: RequestContext) => {
+      try {
+        const db = adapter.getDatabase();
+        const active = db.inTransaction;
+
+        return Promise.resolve({
+          success: true,
+          status: active ? "active" : "none",
+          active,
+          message: active
+            ? "A transaction is currently active."
+            : "No transaction is active.",
+        });
+      } catch (error) {
+        return Promise.resolve(formatHandlerError(error));
+      }
+    },
+  };
+}
+
+/**
  * Commit transaction
  */
 function createCommitTransactionTool(
@@ -122,7 +160,7 @@ function createCommitTransactionTool(
     name: "sqlite_transaction_commit",
     description:
       "Commit the current transaction, making all changes permanent.",
-    group: "admin",
+    group: "transactions",
     inputSchema: z.object({}),
     outputSchema: TransactionCommitOutputSchema,
     annotations: write("Commit Transaction"),
@@ -151,7 +189,7 @@ function createRollbackTransactionTool(
   return {
     name: "sqlite_transaction_rollback",
     description: "Rollback the current transaction, discarding all changes.",
-    group: "admin",
+    group: "transactions",
     outputSchema: TransactionRollbackOutputSchema,
     inputSchema: z.object({}),
     annotations: write("Rollback Transaction"),
@@ -179,7 +217,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     name: "sqlite_transaction_savepoint",
     description:
       "Create a savepoint within the current transaction for partial rollback.",
-    group: "admin",
+    group: "transactions",
     outputSchema: TransactionSavepointOutputSchema,
     inputSchema: SavepointSchema,
     annotations: write("Create Savepoint"),
@@ -222,7 +260,7 @@ function createReleaseSavepointTool(
     name: "sqlite_transaction_release",
     description:
       "Release a savepoint, keeping the changes made since it was created.",
-    group: "admin",
+    group: "transactions",
     inputSchema: SavepointSchema,
     outputSchema: TransactionReleaseOutputSchema,
     annotations: write("Release Savepoint"),
@@ -265,7 +303,7 @@ function createRollbackToSavepointTool(
     name: "sqlite_transaction_rollback_to",
     description:
       "Rollback to a savepoint, discarding changes made after it was created.",
-    group: "admin",
+    group: "transactions",
     inputSchema: SavepointSchema,
     outputSchema: TransactionRollbackToOutputSchema,
     annotations: write("Rollback to Savepoint"),
@@ -308,7 +346,7 @@ function createExecuteInTransactionTool(
     name: "sqlite_transaction_execute",
     description:
       "Execute multiple SQL statements in a single transaction. Automatically commits on success or rolls back on error.",
-    group: "admin",
+    group: "transactions",
     outputSchema: TransactionExecuteOutputSchema,
     inputSchema: ExecuteInTransactionSchema,
     annotations: write("Execute in Transaction"),
@@ -317,10 +355,14 @@ function createExecuteInTransactionTool(
       let input;
       try {
         input = ExecuteInTransactionSchema.parse(params);
+        if (input.statements.length === 0) {
+          throw new ValidationError("Must provide at least one SQL statement");
+        }
       } catch (error) {
+        const errObj = formatHandlerError(error);
         return {
-          ...formatHandlerError(error),
-          message: "",
+          ...errObj,
+          message: errObj.error || "Transaction execution failed",
           statementsExecuted: 0,
           results: [],
         };
@@ -335,8 +377,15 @@ function createExecuteInTransactionTool(
       }[] = [];
       let success = true;
 
+      let transactionStarted = false;
+      const db = adapter.getDatabase();
+      const originallyInTransaction = db.inTransaction;
+
       try {
-        adapter.beginTransaction();
+        if (!originallyInTransaction) {
+          adapter.beginTransaction();
+          transactionStarted = true;
+        }
 
         for (const statement of input.statements) {
           try {
@@ -389,10 +438,13 @@ function createExecuteInTransactionTool(
           }
         }
 
-        adapter.commitTransaction();
+        if (transactionStarted) {
+          adapter.commitTransaction();
+        }
 
         return {
           success,
+          error: success ? undefined : "Transaction completed with errors",
           message: success
             ? "Transaction completed successfully"
             : "Transaction completed with errors",
@@ -401,17 +453,28 @@ function createExecuteInTransactionTool(
         };
       } catch (error) {
         let rollbackFailure: string | undefined;
-        try {
-          adapter.rollbackTransaction();
-        } catch (rbError) {
-          rollbackFailure =
-            rbError instanceof Error ? rbError.message : String(rbError);
+        if (transactionStarted) {
+          try {
+            adapter.rollbackTransaction();
+          } catch (rbError) {
+            rollbackFailure =
+              rbError instanceof Error ? rbError.message : String(rbError);
+          }
+        } else if (originallyInTransaction && input.rollbackOnError) {
+          try {
+            adapter.rollbackTransaction();
+          } catch (rbError) {
+            rollbackFailure =
+              rbError instanceof Error ? rbError.message : String(rbError);
+          }
         }
         const message = error instanceof Error ? error.message : String(error);
         const formatted = formatHandlerError(error);
         let rollbackMessage = `Transaction rolled back: ${message}`;
         if (rollbackFailure) {
           rollbackMessage += ` (rollback error: ${rollbackFailure})`;
+        } else if (!transactionStarted && !originallyInTransaction) {
+          rollbackMessage = `Transaction failed to start: ${message}`;
         }
 
         return {

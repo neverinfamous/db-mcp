@@ -22,6 +22,7 @@ import {
   createAdvancedSearchTool,
 } from "./search.js";
 import { createTextNormalizeTool, createTextValidateTool } from "./validate.js";
+import { createTextSentimentTool } from "./sentiment.js";
 
 /**
  * Get all text processing tools
@@ -41,5 +42,6 @@ export function getTextTools(adapter: SqliteAdapter): ToolDefinition[] {
     createTextNormalizeTool(adapter),
     createTextValidateTool(adapter),
     createAdvancedSearchTool(adapter),
+    createTextSentimentTool(adapter),
   ];
 }

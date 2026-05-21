@@ -232,7 +232,7 @@ describe("SqliteAdapter", () => {
     it("should return resource definitions", () => {
       const resources = adapter.getResourceDefinitions();
 
-      expect(resources.length).toBe(8);
+      expect(resources.length).toBe(10);
     });
   });
 

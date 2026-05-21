@@ -104,7 +104,7 @@ export interface ToolDefinition {
   group: ToolGroup;
 
   /** Zod schema for input validation */
-  inputSchema: unknown;
+  inputSchema?: unknown;
 
   /** Zod schema for output validation (MCP 2025-11-25) */
   outputSchema?: unknown;

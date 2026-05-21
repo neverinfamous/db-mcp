@@ -6,8 +6,8 @@ import type {
 import { destructive } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { DropVirtualTableSchema } from "../helpers.js";
-import { DropVirtualTableOutputSchema } from "../../../output-schemas/index.js";
+import { DropVirtualTableSchema } from "../../../schemas/virtual.js";
+import { DropVirtualTableOutputSchema } from "../../../schemas/virtual.js";
 
 export function createDropVirtualTableTool(
   adapter: SqliteAdapter,

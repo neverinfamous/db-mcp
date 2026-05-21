@@ -1,3 +1,4 @@
+import { VacuumOutputSchema } from "../../schemas/admin.js";
 /**
  * Database Analysis Tools
  *
@@ -12,10 +13,7 @@ import type {
 import { readOnly, admin } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import {
-  DbstatOutputSchema,
-  VacuumOutputSchema,
-} from "../../output-schemas/index.js";
+import { DbstatOutputSchema } from "../../schemas/virtual.js";
 import {
   buildProgressContext,
   sendProgress,
@@ -24,7 +22,7 @@ import {
   isSpatialiteSystemTable,
   isSpatialiteSystemIndex,
 } from "../core/index.js";
-import { DbStatSchema, VacuumSchema } from "./helpers.js";
+import { DbStatSchema, VacuumIntoSchema } from "../../schemas/virtual.js";
 
 export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -198,14 +196,14 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
     description:
       "Rebuild the database to reclaim space and optimize structure.",
     group: "admin",
-    inputSchema: VacuumSchema,
+    inputSchema: VacuumIntoSchema,
     outputSchema: VacuumOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Vacuum Database"),
     handler: async (params: unknown, context: RequestContext) => {
       let input;
       try {
-        input = VacuumSchema.parse(params);
+        input = VacuumIntoSchema.parse(params);
       } catch (error) {
         return {
           ...formatHandlerError(error),

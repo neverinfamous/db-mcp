@@ -1,3 +1,8 @@
+import {
+  validateColumnExists,
+  isNumericType,
+  NUMERIC_TYPES,
+} from "./helpers.js";
 /**
  * Advanced Statistics Tools
  *
@@ -17,6 +22,7 @@ import {
 import {
   formatHandlerError,
   ResourceNotFoundError,
+  ValidationError,
 } from "../../../../utils/errors/index.js";
 import {
   StatsCorrelationOutputSchema,
@@ -24,17 +30,14 @@ import {
   StatsDistinctOutputSchema,
   StatsSummaryOutputSchema,
   StatsFrequencyOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/stats.js";
 import {
-  validateColumnExists,
-  isNumericType,
-  NUMERIC_TYPES,
   CorrelationSchema,
   TopNSchema,
   DistinctValuesSchema,
   SummaryStatsSchema,
   FrequencySchema,
-} from "./helpers.js";
+} from "../../schemas/stats.js";
 
 /**
  * Correlation between two columns
@@ -50,9 +53,9 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Correlation"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = CorrelationSchema.parse(params);
-
       try {
+        const input = CorrelationSchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column1);
         await validateColumnExists(adapter, input.table, input.column2);
 
@@ -70,15 +73,19 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
           const nonNumeric = !isNumericType(col1Type)
             ? input.column1
             : input.column2;
-          return {
-            success: false,
-            error: `Column '${nonNumeric}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
-            code: "INVALID_INPUT",
-            category: "validation",
-            suggestion:
-              "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for correlation analysis.",
-            recoverable: false,
-          };
+          throw new ValidationError(
+            `Column '${nonNumeric}' in table '${input.table}' is not numeric (type: ${columnMap.get(nonNumeric.toLowerCase()) ?? "unknown"}). Correlation requires numeric columns.`,
+            "INVALID_INPUT",
+            {
+              suggestion:
+                "Use numeric columns (INTEGER, REAL, FLOAT, etc.) for correlation analysis.",
+              details: {
+                resourceType: "column",
+                resourceName: nonNumeric,
+                tableName: input.table,
+              },
+            },
+          );
         }
 
         const table = sanitizeIdentifier(input.table);
@@ -151,9 +158,9 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Top N Values"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = TopNSchema.parse(params);
-
       try {
+        const input = TopNSchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
@@ -276,9 +283,9 @@ export function createDistinctValuesTool(
     requiredScopes: ["read"],
     annotations: readOnly("Distinct Values"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = DistinctValuesSchema.parse(params);
-
       try {
+        const input = DistinctValuesSchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);
@@ -321,9 +328,9 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Summary Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = SummaryStatsSchema.parse(params);
-
       try {
+        const input = SummaryStatsSchema.parse(params);
+
         const table = sanitizeIdentifier(input.table);
 
         const tableCheck = await adapter.executeReadQuery(
@@ -481,9 +488,9 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Frequency"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = FrequencySchema.parse(params);
-
       try {
+        const input = FrequencySchema.parse(params);
+
         await validateColumnExists(adapter, input.table, input.column);
 
         const table = sanitizeIdentifier(input.table);

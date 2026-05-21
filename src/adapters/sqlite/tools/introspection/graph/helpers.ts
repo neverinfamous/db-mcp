@@ -45,7 +45,10 @@ export interface GraphEdge {
  */
 export async function buildForeignKeyGraph(
   adapter: SqliteAdapter,
-  options: { excludeSystemTables?: boolean | undefined } = {},
+  options: {
+    excludeSystemTables?: boolean | undefined;
+    includeRowCounts?: boolean | undefined;
+  } = {},
 ): Promise<{
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -80,8 +83,22 @@ export async function buildForeignKeyGraph(
     ? tableNames.filter((name) => !isSpatialiteSystemTable(name))
     : tableNames;
 
-  for (const tableName of filteredNames) {
-    nodes.push({ table: tableName, rowCount: 0 });
+  // Filter out FTS shadow tables
+  const targetTables = filteredNames.filter((name) => !name.includes("_fts_"));
+
+  for (const tableName of targetTables) {
+    let rowCount = 0;
+    if (options.includeRowCounts) {
+      try {
+        const countRes = await adapter.executeReadQuery(
+          `SELECT COUNT(*) as count FROM "${tableName}"`,
+        );
+        rowCount = Number(countRes.rows?.[0]?.["count"]) || 0;
+      } catch {
+        // Ignore if we can't count rows (e.g. some virtual tables)
+      }
+    }
+    nodes.push({ table: tableName, rowCount });
 
     // Get foreign keys (may fail for virtual tables in WASM)
     try {

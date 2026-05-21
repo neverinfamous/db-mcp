@@ -1,3 +1,4 @@
+import { validateColumnExists } from "./helpers.js";
 /**
  * Regex and Split Tools
  *
@@ -18,13 +19,12 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   RegexMatchOutputSchema,
   TextSplitOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/text.js";
 import {
   RegexExtractSchema,
   RegexMatchSchema,
   TextSplitSchema,
-  validateColumnExists,
-} from "./helpers.js";
+} from "../../schemas/text.js";
 
 /**
  * Extract text using regex pattern
@@ -77,7 +77,6 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
                   : 0;
             return {
               rowid,
-              original: value,
               extracted: match ? (match[input.groupIndex] ?? match[0]) : null,
             };
           })
@@ -208,7 +207,6 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
           const parts = original.split(input.delimiter);
           return {
             rowid,
-            original: rawValue === null ? null : original,
             parts,
           };
         });

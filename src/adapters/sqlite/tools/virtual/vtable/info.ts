@@ -6,8 +6,8 @@ import type {
 import { readOnly } from "../../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { VirtualTableInfoSchema } from "../helpers.js";
-import { VirtualTableInfoOutputSchema } from "../../../output-schemas/index.js";
+import { VirtualTableInfoSchema } from "../../../schemas/virtual.js";
+import { VirtualTableInfoOutputSchema } from "../../../schemas/virtual.js";
 
 export function createVirtualTableInfoTool(
   adapter: SqliteAdapter,

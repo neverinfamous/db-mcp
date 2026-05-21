@@ -40,6 +40,8 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(uris).toContain("sqlite://schema");
     expect(uris).toContain("sqlite://tables");
     expect(uris).toContain("sqlite://health");
+    expect(uris).toContain("sqlite://compile_options");
+    expect(uris).toContain("sqlite://pragma");
   });
 
   test("should read sqlite://schema resource", async () => {
@@ -48,7 +50,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     // Handler returns {contents: [{text: JSON.stringify(schema)}]}
     const schema = JSON.parse(wrapper.contents[0].text);
@@ -62,7 +64,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const tables = JSON.parse(wrapper.contents[0].text);
     // Tables response is an array of TableInfo objects
@@ -75,7 +77,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const health = JSON.parse(wrapper.contents[0].text);
     expect(health).toHaveProperty("connected");
@@ -88,7 +90,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const indexes = JSON.parse(wrapper.contents[0].text);
     // Indexes response should be valid JSON (may be empty object if no user indexes)
@@ -101,7 +103,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const views = JSON.parse(wrapper.contents[0].text);
     expect(views).toBeDefined();
@@ -113,10 +115,39 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const meta = JSON.parse(wrapper.contents[0].text);
     expect(meta).toHaveProperty("adapter");
+  });
+
+  test("should read sqlite://compile_options resource", async () => {
+    const response = await client.readResource({
+      uri: "sqlite://compile_options",
+    });
+
+    expect(response.contents).toBeDefined();
+    expect(response.contents.length).toBeGreaterThan(0);
+
+    const text = (response.contents[0] as { text: string }).text;
+    const wrapper = JSON.parse(text);
+    const compileOptions = JSON.parse(wrapper.contents[0].text);
+    expect(compileOptions).toHaveProperty("options");
+    expect(Array.isArray(compileOptions.options)).toBe(true);
+    expect(compileOptions.options.length).toBeGreaterThan(0);
+  });
+
+  test("should read sqlite://pragma resource", async () => {
+    const response = await client.readResource({ uri: "sqlite://pragma" });
+
+    expect(response.contents).toBeDefined();
+    expect(response.contents.length).toBeGreaterThan(0);
+
+    const text = (response.contents[0] as { text: string }).text;
+    const wrapper = JSON.parse(text);
+    const pragma = JSON.parse(wrapper.contents[0].text);
+    expect(pragma).toHaveProperty("settings");
+    expect(pragma.settings).toHaveProperty("journal_mode");
   });
 
   test("should read memo://insights resource", async () => {
@@ -126,7 +157,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents.length).toBeGreaterThan(0);
 
     // Insights is text/plain, so the inner text is a plain string (not JSON)
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     expect(wrapper).toHaveProperty("contents");
     expect(typeof wrapper.contents[0].text).toBe("string");
@@ -149,7 +180,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
   test("sqlite://schema contains ≥11 tables with expected names", async () => {
     const response = await client.readResource({ uri: "sqlite://schema" });
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const schema = JSON.parse(wrapper.contents[0].text);
     const tables = schema.tables as { name: string }[];
@@ -182,7 +213,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(response.contents).toBeDefined();
     expect(response.contents.length).toBeGreaterThan(0);
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const tableSchema = JSON.parse(wrapper.contents[0].text);
 
@@ -202,7 +233,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     });
     expect(response.contents).toBeDefined();
 
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const tableSchema = JSON.parse(wrapper.contents[0].text);
 
@@ -226,7 +257,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
         uri: "sqlite://table/nonexistent_table/schema",
       });
       // If it returns instead of throwing, check for error indicator
-      const text = response.contents[0]!.text as string;
+      const text = (response.contents[0] as { text: string }).text;
       expect(text.toLowerCase()).toMatch(
         /not (found|exist)|error|no such table/,
       );
@@ -242,7 +273,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
   test("sqlite://indexes contains known test indexes", async () => {
     const response = await client.readResource({ uri: "sqlite://indexes" });
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const indexes = JSON.parse(wrapper.contents[0].text);
     const serialized = JSON.stringify(indexes);
@@ -258,7 +289,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
   test("sqlite://health includes backend info", async () => {
     const response = await client.readResource({ uri: "sqlite://health" });
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const health = JSON.parse(wrapper.contents[0].text);
 
@@ -273,7 +304,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
   test("sqlite://meta contains PRAGMA values", async () => {
     const response = await client.readResource({ uri: "sqlite://meta" });
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const meta = JSON.parse(wrapper.contents[0].text);
 
@@ -289,7 +320,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
   test("sqlite://views returns valid array", async () => {
     const response = await client.readResource({ uri: "sqlite://views" });
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const views = JSON.parse(wrapper.contents[0].text);
 
@@ -315,7 +346,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
     // Re-read insights resource — should contain the new insight
     const response = await client.readResource({ uri: "memo://insights" });
-    const text = response.contents[0]!.text as string;
+    const text = (response.contents[0] as { text: string }).text;
     const wrapper = JSON.parse(text);
     const insights = wrapper.contents[0].text as string;
 

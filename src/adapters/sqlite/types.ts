@@ -58,6 +58,9 @@ export interface SqliteConfig extends DatabaseConfig {
   /** Path to SQLite database file (use ':memory:' for in-memory) */
   filePath?: string;
 
+  /** Optional SQL statements to run immediately after connection */
+  initializationSql?: string[];
+
   /** SQLite-specific options */
   options?: SqliteOptions;
 }
@@ -110,6 +113,12 @@ export interface JsonNormalizationResult {
  * because wrapping in `z.preprocess()` turns `ZodObject` into `ZodEffects`
  * which breaks the SDK's `.partial()` call in `registerToolImpl`.
  */
+
+/**
+ * Coerce string-typed numbers to actual numbers.
+ * Returns undefined for non-numeric strings so the schema default kicks in.
+ */
+
 export function resolveAliases(
   params: unknown,
   aliasMap: Record<string, string>,
@@ -125,172 +134,10 @@ export function resolveAliases(
 }
 
 // Core Tool Schemas
-export const ReadQuerySchema = z.object({
-  query: z.string().describe("SELECT query to execute"),
-  params: z
-    .array(z.unknown())
-    .optional()
-    .describe("Query parameters for prepared statements"),
-});
-
-export const WriteQuerySchema = z.object({
-  query: z.string().describe("INSERT/UPDATE/DELETE query to execute"),
-  params: z
-    .array(z.unknown())
-    .optional()
-    .describe("Query parameters for prepared statements"),
-});
-
-export const CreateTableSchema = z.object({
-  table: z.string().describe("Name of the table to create"),
-  columns: z
-    .array(
-      z.object({
-        name: z.string(),
-        type: z.string(),
-        nullable: z.boolean().optional().default(true),
-        primaryKey: z.boolean().optional().default(false),
-        unique: z.boolean().optional().default(false),
-        defaultValue: z.unknown().optional(),
-      }),
-    )
-    .describe("Column definitions"),
-  ifNotExists: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe("Add IF NOT EXISTS clause"),
-});
-
-export const DescribeTableSchema = z.object({
-  table: z.string().describe("Name of the table to describe"),
-});
-
-export const DropTableSchema = z.object({
-  table: z.string().describe("Name of the table to drop"),
-  ifExists: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe("Add IF EXISTS clause"),
-});
-
-export const CreateIndexSchema = z.object({
-  indexName: z.string().describe("Name of the index"),
-  table: z.string().describe("Table to create index on"),
-  columns: z.array(z.string()).describe("Columns to index"),
-  unique: z.boolean().optional().default(false).describe("Create unique index"),
-  ifNotExists: z.boolean().optional().default(true),
-});
-
-export const GetIndexesSchema = z.object({
-  table: z.string().optional().describe("Filter indexes by table name"),
-  excludeSystemIndexes: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe(
-      "Exclude SpatiaLite system indexes (idx_spatial_ref_sys, idx_srid_geocols, etc.)",
-    ),
-});
-
-export const DropIndexSchema = z.object({
-  indexName: z.string().describe("Name of the index to drop"),
-  ifExists: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe("Add IF EXISTS clause"),
-});
-
-export const ListTablesSchema = z.object({
-  excludeSystemTables: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe(
-      "Exclude SpatiaLite system tables (geometry_columns, spatial_ref_sys, etc.)",
-    ),
-});
 
 // JSON Helper Schemas
-export const JsonInsertSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  data: z.unknown().describe("JSON data to insert (auto-normalized)"),
-  additionalColumns: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe("Other column values"),
-});
-
-export const JsonUpdateSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  path: z.string().describe("JSON path (e.g., $.key.subkey)"),
-  value: z.unknown().describe("New value"),
-  whereClause: z.string().describe("WHERE clause to identify rows"),
-});
-
-export const JsonSelectSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  paths: z.array(z.string()).optional().describe("JSON paths to extract"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
-});
-
-export const JsonQuerySchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  filterPaths: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe("Path-value filters"),
-  selectPaths: z.array(z.string()).optional().describe("Paths to select"),
-  limit: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
-    z.number().optional().default(100),
-  ),
-});
-
-export const JsonValidatePathSchema = z.object({
-  path: z.string().describe("JSON path to validate"),
-});
-
-export const JsonMergeSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  mergeData: z.unknown().describe("JSON object to merge"),
-  whereClause: z.string().describe("WHERE clause to identify rows"),
-  deep: z.boolean().optional().default(false).describe("Deep merge"),
-});
 
 // JSON Operation Schemas
-export const ValidateJsonSchema = z.object({
-  json: z.string().describe("JSON string to validate"),
-});
-
-export const JsonExtractSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  path: z.string().describe("JSON path to extract"),
-  whereClause: z.string().optional(),
-});
-
-export const JsonSetSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  path: z.string().describe("JSON path"),
-  value: z.unknown().describe("Value to set"),
-  whereClause: z.string().describe("WHERE clause"),
-});
-
-export const JsonRemoveSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column name"),
-  path: z.string().describe("JSON path to remove"),
-  whereClause: z.string().describe("WHERE clause"),
-});
 
 // Vacuum Schema
 export const VacuumSchema = z.object({
@@ -302,64 +149,9 @@ export const VacuumSchema = z.object({
 });
 
 // Analyze JSON Schema
-export const AnalyzeJsonSchemaSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("JSON column to analyze"),
-  sampleSize: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
-    z.number().optional().default(100).describe("Number of rows to sample"),
-  ),
-});
 
 // Create JSON Collection
-export const CreateJsonCollectionSchema = z.object({
-  tableName: z.string().describe("Collection table name"),
-  idColumn: z.string().optional().default("id").describe("ID column name"),
-  dataColumn: z
-    .string()
-    .optional()
-    .default("data")
-    .describe("JSON data column name"),
-  timestamps: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe("Add created_at/updated_at columns"),
-  indexes: z
-    .array(
-      z.object({
-        path: z.string().describe("JSON path to index (e.g., $.name)"),
-        name: z
-          .string()
-          .optional()
-          .describe("Index name (auto-generated if omitted)"),
-      }),
-    )
-    .optional()
-    .describe("JSON path indexes to create"),
-});
+
+// JSON Security Scan
 
 // Export schema types
-export type ReadQueryInput = z.infer<typeof ReadQuerySchema>;
-export type WriteQueryInput = z.infer<typeof WriteQuerySchema>;
-export type CreateTableInput = z.infer<typeof CreateTableSchema>;
-export type DescribeTableInput = z.infer<typeof DescribeTableSchema>;
-export type DropTableInput = z.infer<typeof DropTableSchema>;
-export type CreateIndexInput = z.infer<typeof CreateIndexSchema>;
-export type GetIndexesInput = z.infer<typeof GetIndexesSchema>;
-export type DropIndexInput = z.infer<typeof DropIndexSchema>;
-export type JsonInsertInput = z.infer<typeof JsonInsertSchema>;
-export type JsonUpdateInput = z.infer<typeof JsonUpdateSchema>;
-export type JsonSelectInput = z.infer<typeof JsonSelectSchema>;
-export type JsonQueryInput = z.infer<typeof JsonQuerySchema>;
-export type JsonValidatePathInput = z.infer<typeof JsonValidatePathSchema>;
-export type JsonMergeInput = z.infer<typeof JsonMergeSchema>;
-export type ValidateJsonInput = z.infer<typeof ValidateJsonSchema>;
-export type JsonExtractInput = z.infer<typeof JsonExtractSchema>;
-export type JsonSetInput = z.infer<typeof JsonSetSchema>;
-export type JsonRemoveInput = z.infer<typeof JsonRemoveSchema>;
-export type VacuumInput = z.infer<typeof VacuumSchema>;
-export type AnalyzeJsonSchemaInput = z.infer<typeof AnalyzeJsonSchemaSchema>;
-export type CreateJsonCollectionInput = z.infer<
-  typeof CreateJsonCollectionSchema
->;

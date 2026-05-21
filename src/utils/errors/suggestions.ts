@@ -95,6 +95,14 @@ const ERROR_SUGGESTIONS: {
     suggestion:
       "Table already exists. Use CREATE TABLE IF NOT EXISTS or drop the existing table first.",
     category: ErrorCategory.RESOURCE,
+    code: "TABLE_ALREADY_EXISTS",
+  },
+  {
+    pattern: /index .* already exists/i,
+    suggestion:
+      "Index already exists. Use CREATE INDEX IF NOT EXISTS or drop the existing index first.",
+    category: ErrorCategory.RESOURCE,
+    code: "INDEX_ALREADY_EXISTS",
   },
 
   // JSON-specific errors — often caused by wrong column name
@@ -118,24 +126,28 @@ const ERROR_SUGGESTIONS: {
     suggestion:
       "A row with this value already exists. Use UPDATE to modify existing data or check for duplicates.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /FOREIGN KEY constraint failed/i,
     suggestion:
       "The referenced row does not exist. Ensure the parent record exists before inserting.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /NOT NULL constraint failed/i,
     suggestion:
       "A required column is missing a value. Provide a value or set a default.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /CHECK constraint failed/i,
     suggestion:
       "The value does not meet the column's check constraint requirements.",
     category: ErrorCategory.QUERY,
+    code: "CONSTRAINT_VIOLATION",
   },
   {
     pattern: /incomplete input/i,
@@ -169,6 +181,20 @@ const ERROR_SUGGESTIONS: {
       "A transaction is already active. Commit or rollback the current transaction first, or use sqlite_transaction_execute for atomic multi-statement operations.",
     category: ErrorCategory.QUERY,
     code: "TRANSACTION_CONFLICT",
+  },
+  {
+    pattern: /no transaction is active/i,
+    suggestion:
+      "No transaction is active. Start a transaction using sqlite_transaction_begin first.",
+    category: ErrorCategory.QUERY,
+    code: "TRANSACTION_NOT_ACTIVE",
+  },
+  {
+    pattern: /no such savepoint/i,
+    suggestion:
+      "The specified savepoint does not exist. Verify the savepoint name and ensure it hasn't already been released or rolled back.",
+    category: ErrorCategory.QUERY,
+    code: "SAVEPOINT_NOT_FOUND",
   },
   {
     pattern: /database is locked/i,
@@ -214,6 +240,15 @@ const ERROR_SUGGESTIONS: {
     pattern: /sandbox.*not initialized/i,
     suggestion: "Internal sandbox error. Retry the operation.",
     category: ErrorCategory.INTERNAL,
+  },
+
+  // Extension errors
+  {
+    pattern: /extension.*not (available|installed|loaded|found)/i,
+    suggestion:
+      "Extension is not available. Check CLI flags, environment variables, or platform compatibility.",
+    category: ErrorCategory.CONFIGURATION,
+    code: "EXTENSION_MISSING",
   },
 ];
 

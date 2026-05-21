@@ -6,12 +6,15 @@ import type {
 import { write } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import {
-  MIGRATIONS_TABLE,
   MigrationRollbackSchema,
+  MigrationRollbackValidationSchema,
   MigrationRollbackOutputSchema,
+} from "../../../schemas/migration.js";
+import {
+  MIGRATIONS_TABLE,
   isMigrationTableInitialized,
   toMigrationRecord,
-} from "../schemas.js";
+} from "../helpers.js";
 
 export function createMigrationRollbackTool(
   adapter: SqliteAdapter,
@@ -26,23 +29,14 @@ export function createMigrationRollbackTool(
     requiredScopes: ["admin"],
     annotations: write("Migration Rollback"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = MigrationRollbackSchema.parse(params);
-
       try {
+        const input = MigrationRollbackValidationSchema.parse(params);
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
             error:
               "Migration tracking not initialized. Run sqlite_migration_init first.",
             code: "MIGRATION_NOT_INITIALIZED",
-          };
-        }
-
-        if (input.id === undefined && input.version === undefined) {
-          return {
-            success: false,
-            error: "Either 'id' or 'version' must be provided",
-            code: "VALIDATION_ERROR",
           };
         }
 
@@ -113,7 +107,7 @@ export function createMigrationRollbackTool(
           return {
             success: false,
             rollbackSql: null,
-            error: "No rollback SQL recorded for this migration",
+            error: `No rollback SQL recorded for migration '${migration["version"] as string}' (id=${String(migration["id"])})`,
             code: "ROLLBACK_SQL_MISSING",
           };
         }

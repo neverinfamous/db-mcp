@@ -1,3 +1,9 @@
+import {
+  cosineSimilarity,
+  euclideanDistance,
+  dotProduct,
+  parseVector,
+} from "./helpers.js";
 /**
  * Vector Search Tool Implementations
  *
@@ -18,14 +24,8 @@ import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   VectorSearchOutputSchema,
   VectorGetOutputSchema,
-} from "../../output-schemas/index.js";
-import { VectorSearchSchema, VectorGetSchema } from "./schemas.js";
-import {
-  cosineSimilarity,
-  euclideanDistance,
-  dotProduct,
-  parseVector,
-} from "./helpers.js";
+} from "../../schemas/vector.js";
+import { VectorSearchSchema, VectorGetSchema } from "../../schemas/vector.js";
 
 /**
  * Vector similarity search
@@ -58,10 +58,9 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Build select clause
         // Determine if vector column should be included in final results
+        // Exclude by default to prevent massive payload bloat, unless explicitly requested
         const includeVectorInResults =
-          !input.returnColumns ||
-          input.returnColumns.length === 0 ||
-          input.returnColumns.includes(input.vectorColumn);
+          input.returnColumns?.includes(input.vectorColumn) ?? false;
 
         let selectCols = "*";
         if (input.returnColumns && input.returnColumns.length > 0) {
@@ -161,7 +160,7 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           metric: input.metric,
           count: results.length,
-          results,
+          rows: results,
         };
 
         if (skipped > 0) {
@@ -233,12 +232,16 @@ export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
         }
         const vectorData = parseVector(rawVector);
 
+        const metadata = Object.fromEntries(
+          Object.entries(row).filter(([key]) => key !== input.vectorColumn),
+        );
+
         return {
           success: true,
           id: input.id,
           dimensions: vectorData.length,
           vector: vectorData,
-          metadata: row,
+          metadata,
         };
       } catch (error) {
         return formatHandlerError(error);

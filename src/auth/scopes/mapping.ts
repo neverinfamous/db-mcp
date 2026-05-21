@@ -14,6 +14,7 @@ export const TOOL_GROUP_SCOPES: Record<ToolGroup, StandardScope> = {
   geo: SCOPES.READ,
   introspection: SCOPES.READ,
   migration: SCOPES.WRITE,
+  transactions: SCOPES.WRITE,
   admin: SCOPES.ADMIN,
   codemode: SCOPES.ADMIN,
 };

@@ -11,13 +11,19 @@ import type {
 } from "../../../../types/index.js";
 import { idempotent } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ExtensionNotAvailableError,
+} from "../../../../utils/errors/index.js";
 import { isModuleAvailable } from "./analysis.js";
-import { CreateRtreeTableSchema, CreateSeriesTableSchema } from "./helpers.js";
+import {
+  CreateRtreeTableSchema,
+  CreateSeriesTableSchema,
+} from "../../schemas/virtual.js";
 import {
   CreateRtreeTableOutputSchema,
   CreateSeriesTableOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/virtual.js";
 
 export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -52,17 +58,11 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
         // Check if rtree module is available
         const rtreeAvailable = await isModuleAvailable(adapter, "rtree");
         if (!rtreeAvailable) {
-          return {
-            success: false,
-            error:
-              "R-Tree extension not available. Use a SQLite build with rtree support.",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            message: "",
-            sql: "",
-            columns: [],
+          throw new ExtensionNotAvailableError("rtree", {
+            suggestion:
+              "R-Tree extension not available. Use a SQLite build with R-Tree support.",
             wasmLimitation: true,
-          };
+          });
         }
 
         // Build column list based on dimensions
@@ -116,6 +116,8 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
           return {
             success: false,
             error: "start and stop are required parameters",
+            code: "VALIDATION_ERROR",
+            category: "validation",
             message: "",
             rowCount: 0,
           };

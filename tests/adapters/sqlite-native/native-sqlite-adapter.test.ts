@@ -58,6 +58,25 @@ describe("NativeSqliteAdapter", () => {
       expect(adapter.isConnected()).toBe(true);
     });
 
+    it("should execute initializationSql on connect", async () => {
+      const config: SqliteConfig = {
+        type: "sqlite",
+        filePath: ":memory:",
+        initializationSql: [
+          "CREATE TABLE init_test (id INTEGER PRIMARY KEY, val TEXT)",
+          "INSERT INTO init_test (id, val) VALUES (1, 'initialized')",
+        ],
+      };
+
+      await adapter.connect(config);
+      expect(adapter.isConnected()).toBe(true);
+
+      const result = await adapter.executeReadQuery(
+        "SELECT val FROM init_test WHERE id = 1",
+      );
+      expect(result.rows?.[0]).toEqual({ val: "initialized" });
+    });
+
     it("should reject non-sqlite config type", () => {
       const invalidConfig = {
         type: "postgres",

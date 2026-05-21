@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: March 18, 2026
+> Last updated: May 16, 2026
 
 ---
 
@@ -81,6 +81,13 @@ src/
 │   ├── errors.ts                   # OAuth-specific error classes
 │   └── types.ts                    # OAuth TypeScript types
 │
+├── audit/                          # Audit logging subsystem
+│   ├── types.ts                    # AuditEntry, AuditConfig, BackupConfig, SnapshotMetadata types
+│   ├── logger.ts                   # AuditLogger — async-buffered JSONL writer with rotation
+│   ├── interceptor.ts              # createAuditInterceptor() — wraps tool handlers with around(), reads OAuth identity from AsyncLocalStorage
+│   ├── backup-manager.ts           # BackupManager — pre-mutation DDL snapshots (gzip)
+│   └── index.ts                    # Barrel
+│
 ├── transports/
 │   └── http/
 │       ├── transport.ts            # HTTP/SSE transport (Streamable HTTP + legacy SSE)
@@ -94,6 +101,7 @@ src/
 ├── codemode/                       # Code Mode sandbox (secure JS execution)
 │   ├── sandbox.ts                  # SandboxPool lifecycle manager
 │   ├── sandbox-factory.ts          # Sandbox creation factory
+│   ├── auto-return.ts              # Last-expression auto-return transform (IIFE helper)
 │   ├── worker-sandbox.ts           # Worker thread sandbox (MessagePort RPC bridge)
 │   ├── worker-script.ts            # Worker thread entry point (runs inside vm)
 │   ├── api.ts                      # sqlite.* API bridge (exposes tools to sandbox)
@@ -113,7 +121,7 @@ src/
 │   │   ├── schema-manager.ts       # Schema cache + metadata (TTL-based)
 │   │   ├── json-utils.ts           # JSON column detection and normalization
 │   │   ├── types.ts                # WASM-specific Zod schemas + TS types
-│   │   ├── resources.ts            # 8 data MCP resources (schema, tables, indexes, etc.)
+│   │   ├── resources.ts            # 10 data MCP resources (schema, tables, indexes, compile_options, etc.)
 │   │   ├── index.ts                # Barrel
 │   │   ├── output-schemas/         # Zod outputSchema definitions per group (see § below)
 │   │   ├── prompts/                # 10 MCP prompts (see § below)
@@ -144,6 +152,7 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | ----------------- | ----------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------- |
 | **codemode**      | `codemode.ts`                             | 1     | `sqlite_execute_code`                                                                                                         |
 | **core**          | `core/queries.ts`                         | 2     | `sqlite_read_query`, `sqlite_write_query`                                                                                     |
+|                   | `core/convenience.ts`                     | 5     | `sqlite_upsert`, `sqlite_batch_insert`, `sqlite_count`, `sqlite_exists`, `sqlite_truncate`                                    |
 |                   | `core/tables.ts`                          | 4     | `create_table`, `list_tables`, `describe_table`, `drop_table`                                                                 |
 |                   | `core/indexes.ts`                         | 3     | `get_indexes`, `create_index`, `drop_index`                                                                                   |
 | **json**          | `json-operations/crud.ts`                 | 3     | `json_insert`, `json_update`, `json_select`                                                                                   |
@@ -155,9 +164,12 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `text/formatting.ts`                      | 6     | `text_split`, `text_concat`, `text_replace`, `text_trim`, `text_case`, `text_substring`                                       |
 |                   | `text/search.ts`                          | 3     | `fuzzy_match`, `phonetic_match`, `advanced_search`                                                                            |
 |                   | `text/validate.ts`                        | 2     | `text_normalize`, `text_validate`                                                                                             |
-| **text** (FTS5)   | `fts.ts`                                  | 4     | `fts_create`, `fts_search`, `fts_rebuild`, `fts_match_info`                                                                   |
+|                   | `text/sentiment.ts`                       | 1     | `text_sentiment`                                                                                                              |
+| **text** (FTS5)   | `fts.ts`                                  | 5     | `fts_create`, `fts_search`, `fts_rebuild`, `fts_match_info`, `fts_headline`                                                   |
 | **stats**         | `stats/basic.ts`                          | 7     | `stats_basic`, `stats_count`, `stats_group_by`, `stats_histogram`, `stats_percentile`, `stats_correlation`, `stats_top_n`     |
 |                   | `stats/advanced.ts`                       | 6     | `stats_distinct`, `stats_summary`, `stats_frequency`, `stats_outliers`, `stats_regression`, `stats_hypothesis`                |
+|                   | `stats/anomaly-detection.ts`              | 2     | `stats_detect_anomalies`, `stats_detect_bloat`                                                                                |
+|                   | `stats/schema-risks.ts`                   | 1     | `stats_detect_schema_risks`                                                                                                   |
 | **vector**        | `vector/storage.ts`                       | 4     | `vector_create_table`, `vector_store`, `vector_batch_store`, `vector_delete`                                                  |
 |                   | `vector/search.ts`                        | 2     | `vector_search`, `vector_get`                                                                                                 |
 |                   | `vector/metadata.ts`                      | 5     | `vector_count`, `vector_stats`, `vector_dimensions`, `vector_normalize`, `vector_distance`                                    |
@@ -189,12 +201,12 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 
 ### Native-Only Handlers (`src/adapters/sqlite-native/tools/`)
 
-| Group                    | Handler File             | Tools | Notes                                                                                                              |
-| ------------------------ | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------ |
-| **stats** (window)       | `window.ts`              | 6     | `window_row_number`, `window_rank`, `window_lag_lead`, `window_running_total`, `window_moving_avg`, `window_ntile` |
-| **admin** (transactions) | `transactions.ts`        | 7     | `transaction_begin/commit/rollback/savepoint/release/rollback_to/execute`                                          |
-| **geo** (SpatiaLite)     | `spatialite/tools.ts`    | 4     | `spatialite_load/create_table/query/index`                                                                         |
-|                          | `spatialite/analysis.ts` | 3     | `spatialite_analyze/transform/import`                                                                              |
+| Group                | Handler File             | Tools | Notes                                                                                                              |
+| -------------------- | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------ |
+| **stats** (window)   | `window.ts`              | 6     | `window_row_number`, `window_rank`, `window_lag_lead`, `window_running_total`, `window_moving_avg`, `window_ntile` |
+| **transactions**     | `transactions.ts`        | 8     | `transaction_begin/status/commit/rollback/savepoint/release/rollback_to/execute`                                   |
+| **geo** (SpatiaLite) | `spatialite/tools.ts`    | 4     | `spatialite_load/create_table/query/index`                                                                         |
+|                      | `spatialite/analysis.ts` | 3     | `spatialite_analyze/transform/import`                                                                              |
 
 ### Utility Files (no tools, shared helpers)
 
@@ -241,7 +253,7 @@ Zod schemas that define the `outputSchema` for MCP tool responses. All output sc
 | `introspection.ts` | Introspection group output schemas (9 schemas: DependencyGraph, TopologicalSort, CascadeSimulator, SchemaSnapshot, ConstraintAnalysis, MigrationRisks, StorageAnalysis, IndexAudit, QueryPlan) |
 | `migration.ts`     | Migration group output schemas (7 schemas: MigrationInit, MigrationRecord, MigrationApply, MigrationRollback, MigrationHistory, MigrationStatus + MigrationRecordEntry)                        |
 | `virtual.ts`       | Virtual table output schemas (7 schemas: ListVirtualTables, VirtualTableInfo, DropVirtualTable, CreateCsvTable, AnalyzeCsvSchema, CreateRtreeTable, CreateSeriesTable)                         |
-| `native.ts`        | Native-only output schemas (transactions — 7 schemas, window functions — 6 schemas)                                                                                                            |
+| `native.ts`        | Native-only output schemas (transactions — 8 schemas, window functions — 6 schemas)                                                                                                            |
 | `spatialite.ts`    | SpatiaLite output schemas (7 tools — native only)                                                                                                                                              |
 | `server.ts`        | Type aliases for core output schemas (built-in tools use `content` pattern, not `structuredContent`)                                                                                           |
 | `index.ts`         | Barrel re-export                                                                                                                                                                               |
@@ -269,15 +281,17 @@ The `DbMcpError` constructor auto-refines generic codes (`DB_QUERY_FAILED`, `DB_
 
 ```
 DbMcpError (base.ts)
-├── ValidationError         code: VALIDATION_ERROR      category: validation
-├── ConnectionError         code: CONNECTION_ERROR       category: connection      recoverable: true
-├── QueryError              code: QUERY_ERROR            category: query            accepts: sql option
-├── PermissionError         code: PERMISSION_ERROR       category: permission
-├── ResourceNotFoundError   code: RESOURCE_NOT_FOUND     category: resource         accepts: resourceType, resourceName
-├── ConfigurationError      code: CONFIG_ERROR           category: config
-├── InternalError           code: INTERNAL_ERROR         category: internal
-├── AuthenticationError     code: AUTHENTICATION_ERROR   category: authentication
-└── AuthorizationError      code: AUTHORIZATION_ERROR    category: authorization
+├── ValidationError              code: VALIDATION_ERROR      category: validation
+├── ConnectionError              code: CONNECTION_ERROR       category: connection      recoverable: true
+├── QueryError                   code: QUERY_ERROR            category: query            accepts: sql option
+├── PermissionError              code: PERMISSION_ERROR       category: permission
+├── ResourceNotFoundError        code: RESOURCE_NOT_FOUND     category: resource         accepts: resourceType, resourceName
+├── ConfigurationError           code: CONFIG_ERROR           category: config
+├── InternalError                code: INTERNAL_ERROR         category: internal
+├── AuthenticationError          code: AUTHENTICATION_ERROR   category: authentication
+├── AuthorizationError           code: AUTHORIZATION_ERROR    category: authorization
+├── TransactionError             code: TRANSACTION_ERROR      category: query            recoverable: true
+└── ExtensionNotAvailableError   code: EXTENSION_MISSING      category: config           accepts: extensionName
 ```
 
 **Usage pattern** — all tool handlers:
@@ -308,14 +322,14 @@ catch (error) {
 
 ## Key Constants & Config
 
-| What                               | Where                                  | Notes                                                                                                |
-| ---------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Server instructions (agent prompt) | `src/constants/server-instructions.ts` | Generated: slim `INSTRUCTIONS` (~680 chars) + `HELP_CONTENT` map. Source: `server-instructions/*.md` |
-| Tool group arrays                  | `src/filtering/tool-constants.ts`      | `TOOL_GROUPS` map, `META_GROUPS` shortcuts                                                           |
-| Tool filter logic                  | `src/filtering/tool-filter.ts`         | `ToolFilter` class                                                                                   |
-| JSON-RPC constants                 | `src/codemode/api-constants.ts`        | Error codes, method names for sandbox RPC                                                            |
-| Logger error codes                 | `src/utils/logger/error-codes.ts`      | Module-prefixed codes (`DB_`, `AUTH_`, etc.)                                                         |
-| Version SSoT                       | `src/version.ts`                       | Reads from `package.json` at build time                                                              |
+| What                               | Where                                  | Notes                                                                                                         |
+| ---------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Server instructions (agent prompt) | `src/constants/server-instructions.ts` | Generated: slim `INSTRUCTIONS` (~680 chars) + `HELP_CONTENT` map. Source: `server-instructions/*.md`          |
+| Tool group arrays                  | `src/filtering/tool-constants.ts`      | `TOOL_GROUPS` map, `META_GROUPS` shortcuts                                                                    |
+| Tool filter logic                  | `src/filtering/tool-filter.ts`         | `ToolFilter` class                                                                                            |
+| JSON-RPC constants                 | `src/codemode/api-constants.ts`        | Error codes, method names for sandbox RPC                                                                     |
+| Logger error codes                 | `src/utils/logger/error-codes.ts`      | Module-prefixed codes (`DB_`, `AUTH_`, etc.)                                                                  |
+| Version SSoT                       | `src/version.ts`                       | Reads from `package.json` at runtime. Both adapters `import { VERSION }` — **never hardcode version strings** |
 
 ---
 
@@ -356,13 +370,11 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Complete 139/115 tool inventory with descriptions                                                                  |
+| `test-server/tool-reference.md`              | Complete 151/125 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
-| `test-server/test-tools.md`                  | Entry-point protocol (schema ref, reporting format)                                                                |
-| `test-server/test-group-tools.md`            | Per-group deterministic checklists                                                                                 |
-| `test-server/test-tools-advanced-1.md`       | Advanced stress test prompts (part 1)                                                                              |
-| `test-server/test-tools-advanced-2.md`       | Advanced stress test prompts (part 2)                                                                              |
-| `test-server/test-tools-codemode.md`         | Code mode specific test prompts                                                                                    |
+| `test-server/test-tool-groups/`              | 10 self-contained test prompts — one per tool group. Direct calls only.                                            |
+| `test-server/test-codemode/`                 | 10 self-contained test prompts — one per tool group. Code Mode execution only.                                     |
+| `test-server/test-advanced/`                 | 10 self-contained advanced stress test prompts — one per tool group.                                               |
 | `test-server/test-resources.md`              | MCP resource verification prompts                                                                                  |
 | `test-server/test-prompts.md`                | MCP prompt verification prompts                                                                                    |
 | `test-server/test-agent-experience.md`       | 20 open-ended scenarios — validates help resource sufficiency                                                      |

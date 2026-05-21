@@ -7,10 +7,9 @@
 
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import type { QueryResult } from "../../types/index.js";
-import { QueryError } from "../../utils/errors/index.js";
-import { ERROR_CODES } from "../../utils/logger/index.js";
 import type { ModuleLogger } from "../../utils/logger/index.js";
 import { normalizeSqliteParams } from "../sqlite-helpers.js";
+import { translateSqliteError } from "../sqlite/query-executor.js";
 
 /**
  * Execute a read-only query against a better-sqlite3 Database.
@@ -36,18 +35,7 @@ export function nativeExecuteRead(
       executionTimeMs: Date.now() - start,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    log.error(`Query failed: ${message}`, {
-      code: ERROR_CODES.DB.QUERY_FAILED.full,
-    });
-    throw new QueryError(
-      `Query execution failed: ${message}`,
-      "DB_QUERY_FAILED",
-      {
-        sql,
-        cause: error instanceof Error ? error : undefined,
-      },
-    );
+    translateSqliteError(error, sql, "Query execution", log);
   }
 }
 
@@ -67,22 +55,32 @@ export function nativeExecuteWrite(
   try {
     const stmt = db.prepare(sql);
     const normalizedParams = normalizeSqliteParams(params);
+
+    if (stmt.reader) {
+      // If the query returns data (e.g., INSERT ... RETURNING)
+      const rows = normalizedParams
+        ? stmt.all(...normalizedParams)
+        : stmt.all();
+      return Promise.resolve({
+        rows: rows as Record<string, unknown>[],
+        rowsAffected: rows.length, // .all() does not return changes, but we know it's rows.length for RETURNING
+        executionTimeMs: Date.now() - start,
+      });
+    }
+
     const info = normalizedParams ? stmt.run(...normalizedParams) : stmt.run();
 
-    return Promise.resolve({
+    const result: QueryResult = {
       rows: [],
       rowsAffected: info.changes,
       executionTimeMs: Date.now() - start,
-    });
+    };
+    if (info.lastInsertRowid !== undefined) {
+      result.lastInsertId = Number(info.lastInsertRowid);
+    }
+    return Promise.resolve(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    log.error(`Write query failed: ${message}`, {
-      code: ERROR_CODES.DB.QUERY_FAILED.full,
-    });
-    throw new QueryError(`Write query failed: ${message}`, "DB_WRITE_FAILED", {
-      sql,
-      cause: error instanceof Error ? error : undefined,
-    });
+    translateSqliteError(error, sql, "Write query", log);
   }
 }
 

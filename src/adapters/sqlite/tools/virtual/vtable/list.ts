@@ -5,8 +5,8 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { ListVirtualTablesSchema } from "../helpers.js";
-import { ListVirtualTablesOutputSchema } from "../../../output-schemas/index.js";
+import { ListVirtualTablesSchema } from "../../../schemas/virtual.js";
+import { ListVirtualTablesOutputSchema } from "../../../schemas/virtual.js";
 
 export function createListVirtualTablesTool(
   adapter: SqliteAdapter,

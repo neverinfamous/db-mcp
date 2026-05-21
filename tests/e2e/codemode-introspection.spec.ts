@@ -14,7 +14,7 @@
  * These params shape/filter output and are high-value regression targets.
  * Native-only (code mode uses better-sqlite3).
  *
- * Schema shapes (from output-schemas/introspection.ts):
+ * Schema shapes (from schemas/introspection.ts):
  * - schemaSnapshot → { success, snapshot: { tables[], views[], indexes[], triggers[] }, stats: {...} }
  * - constraintAnalysis → { success, findings[], summary: { byType, bySeverity } }
  * - storageAnalysis → { success, database: { totalSizeBytes, ... }, tables[] }

@@ -366,6 +366,94 @@ describe("Statistics Tools", () => {
     });
   });
 
+  describe("sqlite_stats_detect_anomalies", () => {
+    it("should detect anomalies in numeric columns", async () => {
+      // First, insert an outlier
+      await adapter.executeWriteQuery(
+        `INSERT INTO sales (id, product, category, price, quantity, date) VALUES (11, 'Golden Apple', 'Fruit', 100.0, 10, '2024-01-11')`,
+      );
+      const result = (await tools.get("sqlite_stats_detect_anomalies")?.({
+        table: "sales",
+        threshold: 1.0,
+      })) as {
+        success: boolean;
+        anomalies: Record<string, unknown>[];
+        summary: string;
+        riskLevel: string;
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.anomalies.length).toBeGreaterThan(0);
+      expect(result.riskLevel).toBeDefined();
+    });
+
+    it("should handle single column selection and where clause", async () => {
+      const result = (await tools.get("sqlite_stats_detect_anomalies")?.({
+        table: "sales",
+        column: "price",
+        threshold: 1.0,
+        whereClause: "price < 10.0",
+      })) as { success: boolean; anomalies: Record<string, unknown>[] };
+
+      expect(result.success).toBe(true);
+      // Wait, there might be anomalies within the normal range depending on stats
+      expect(Array.isArray(result.anomalies)).toBe(true);
+    });
+
+    it("should handle multiple columns selection", async () => {
+      const result = (await tools.get("sqlite_stats_detect_anomalies")?.({
+        table: "sales",
+        columns: ["price", "quantity"],
+        threshold: 1.0,
+      })) as { success: boolean; anomalies: Record<string, unknown>[] };
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("sqlite_stats_detect_bloat", () => {
+    it("should analyze database bloat successfully", async () => {
+      const result = (await tools.get("sqlite_stats_detect_bloat")?.({
+        limit: 10,
+        includeZeroRisk: true,
+      })) as {
+        success: boolean;
+        database: Record<string, unknown>;
+        tables: Record<string, unknown>[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.database).toBeDefined();
+      expect(result.tables.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("sqlite_stats_detect_schema_risks", () => {
+    it("should analyze schema risks successfully", async () => {
+      // Create a table missing a primary key and with many columns to trigger some risk
+      await adapter.executeWriteQuery(
+        `CREATE TABLE risk_test (col1 TEXT, col2 INTEGER)`,
+      );
+      // Insert some rows to ensure it might show up in risks if rowCount > threshold, but we're including zero risk
+      const result = (await tools.get("sqlite_stats_detect_schema_risks")?.({
+        limit: 10,
+        includeZeroRisk: true,
+      })) as {
+        success: boolean;
+        tables: Record<string, unknown>[];
+        summary: string;
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.tables.length).toBeGreaterThan(0);
+      const riskTestTable = result.tables.find(
+        (t: any) => t.name === "risk_test",
+      );
+      expect(riskTestTable).toBeDefined();
+      expect((riskTestTable as any)?.hasPrimaryKey).toBe(false);
+    });
+  });
+
   // =========================================================================
   // Error Path Tests
   // =========================================================================
@@ -523,6 +611,25 @@ describe("Statistics Tools", () => {
         column: "nonexistent_col",
         testType: "ttest_one",
         expectedMean: 0,
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("COLUMN_NOT_FOUND");
+    });
+
+    it("should return TABLE_NOT_FOUND for nonexistent table (anomalies)", async () => {
+      const result = (await tools.get("sqlite_stats_detect_anomalies")?.({
+        table: "nonexistent_table",
+      })) as { success: boolean; code?: string };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("TABLE_NOT_FOUND");
+    });
+
+    it("should return COLUMN_NOT_FOUND for nonexistent column (anomalies)", async () => {
+      const result = (await tools.get("sqlite_stats_detect_anomalies")?.({
+        table: "sales",
+        column: "nonexistent_col",
       })) as { success: boolean; code?: string };
 
       expect(result.success).toBe(false);

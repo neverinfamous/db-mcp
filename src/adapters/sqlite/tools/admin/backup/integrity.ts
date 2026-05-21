@@ -5,8 +5,8 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { IntegrityCheckOutputSchema } from "../../../output-schemas/index.js";
-import { IntegrityCheckSchema } from "../helpers.js";
+import { IntegrityCheckOutputSchema } from "../../../schemas/admin.js";
+import { IntegrityCheckSchema } from "../../../schemas/admin.js";
 
 /**
  * Check database integrity

@@ -13,6 +13,34 @@ import {
 } from "../../../../src/adapters/sqlite/tools/codemode.js";
 import type { ToolDefinition } from "../../../../src/types/index.js";
 
+vi.mock("node:worker_threads", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:worker_threads")>();
+  const { EventEmitter } = await import("node:events");
+  return {
+    ...actual,
+    Worker: class MockWorker extends EventEmitter {
+      constructor(script: string, options: any) {
+        super();
+        setTimeout(() => {
+          const code = options.workerData.code;
+          if (code.includes("42")) {
+            this.emit("message", { success: true, result: 42 });
+          } else if (code.includes("Worker Error")) {
+            this.emit("message", { success: false, error: "Worker Error" });
+          } else if (code.includes("timeout")) {
+            // simulate timeout by doing nothing
+          } else {
+            this.emit("message", { success: true });
+          }
+        }, 5);
+      }
+      terminate() {
+        return Promise.resolve();
+      }
+    },
+  };
+});
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -119,7 +147,7 @@ describe("sqlite_execute_code handler - validation", () => {
 
     expect(result.success).toBe(false);
     expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
-    expect(String(result.error)).toContain("between 1000 and 30000");
+    expect(String(result.error)).toContain("between 500 and 30000");
   });
 
   it("should reject timeout out of range (too high)", async () => {
@@ -135,19 +163,31 @@ describe("sqlite_execute_code handler - validation", () => {
     expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
   });
 
-  it("should fail gracefully when worker-script is unavailable", async () => {
+  it("should execute code successfully", async () => {
     const adapter = createMockAdapter();
     const tool = getCodeModeTools(adapter as any)[0]!;
 
-    // Valid code, but worker-script.js isn't built during vitest runs
     const result = (await tool.handler(
       { code: "return 42;" },
       { timestamp: new Date(), requestId: "test" },
     )) as Record<string, unknown>;
 
-    // Should return an error result (not crash)
+    expect(result.success).toBe(true);
+    expect(result.result).toBe(42);
+    expect(result.metrics).toBeDefined();
+  });
+
+  it("should handle worker errors", async () => {
+    const adapter = createMockAdapter();
+    const tool = getCodeModeTools(adapter as any)[0]!;
+
+    const result = (await tool.handler(
+      { code: "throw new Error('Worker Error');" },
+      { timestamp: new Date(), requestId: "test" },
+    )) as Record<string, unknown>;
+
     expect(result.success).toBe(false);
-    expect(result.error).toContain("worker-script");
+    expect(result.error).toContain("Worker Error");
   });
 });
 
@@ -203,9 +243,9 @@ describe("sqlite_execute_code handler - readonly guards", () => {
     )) as Record<string, unknown>;
 
     // Should not be a validation error from timeout — defaults to 30000
-    expect(result.success).toBe(false);
-    // Error is about worker-script, not timeout
-    expect(result.code).not.toBe("CODEMODE_VALIDATION_FAILED");
+    expect(result.success).toBe(true);
+    // Since worker executes with a mock, there's no CODEMODE_VALIDATION_FAILED
+    expect(result.code).toBeUndefined();
   });
 });
 

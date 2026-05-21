@@ -20,13 +20,13 @@ import {
   JsonEachOutputSchema,
   JsonGroupArrayOutputSchema,
   JsonGroupObjectOutputSchema,
-} from "../../output-schemas/index.js";
+} from "../../schemas/json.js";
 import {
   JsonKeysSchema,
   JsonEachSchema,
   JsonGroupArraySchema,
   JsonGroupObjectSchema,
-} from "./helpers.js";
+} from "../../schemas/json.js";
 
 export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -267,8 +267,10 @@ export function createJsonGroupObjectTool(
         if (input.aggregateFunction) {
           // Build the key column expression
           const keyCol = input.allowExpressions
-            ? input.keyColumn
-            : sanitizeIdentifier(input.keyColumn);
+            ? (input.keyColumn ?? "rowid")
+            : input.keyColumn
+              ? sanitizeIdentifier(input.keyColumn)
+              : "rowid";
 
           // Build subquery that computes the aggregate grouped by key
           let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
@@ -328,11 +330,13 @@ export function createJsonGroupObjectTool(
         let valueColumn: string;
         if (input.allowExpressions) {
           // Use expressions directly (user takes responsibility for SQL safety)
-          keyColumn = input.keyColumn;
+          keyColumn = input.keyColumn ?? "rowid";
           valueColumn = input.valueColumn;
         } else {
           // Validate as identifiers (default, safe behavior)
-          keyColumn = sanitizeIdentifier(input.keyColumn);
+          keyColumn = input.keyColumn
+            ? sanitizeIdentifier(input.keyColumn)
+            : "rowid";
           valueColumn = sanitizeIdentifier(input.valueColumn);
         }
 

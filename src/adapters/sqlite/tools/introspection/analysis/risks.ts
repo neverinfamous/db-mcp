@@ -11,18 +11,14 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
-import { z } from "zod";
-import { MigrationRisksOutputSchema } from "../../../output-schemas/index.js";
+import {
+  MigrationRisksOutputSchema,
+  MigrationRisksSchema,
+} from "../../../schemas/introspection.js";
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-const MigrationRisksSchema = z.object({
-  statements: z
-    .array(z.string())
-    .describe("Array of DDL statements to analyze for risks"),
-});
 
 // =============================================================================
 // Tool Creator
@@ -43,6 +39,16 @@ export function createMigrationRisksTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = MigrationRisksSchema.parse(params);
+        if (input.statements.length === 0) {
+          return {
+            success: false,
+            error: "statements array cannot be empty",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
+
         interface Risk {
           statement: string;
           statementIndex: number;
@@ -215,7 +221,7 @@ export function createMigrationRisksTool(
           if (upper.startsWith("DELETE") && !upper.includes("WHERE")) {
             addRisk(
               "critical",
-              "destructive",
+              "data_loss",
               "DELETE without WHERE clause will remove all rows from the table.",
               "Add a WHERE clause to target specific rows.",
             );

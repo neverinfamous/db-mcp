@@ -25,6 +25,11 @@ import {
   createRegressionTool,
   createHypothesisTool,
 } from "./inference/index.js";
+import {
+  createDetectAnomaliesTool,
+  createDetectBloatTool,
+} from "./anomaly-detection.js";
+import { createDetectSchemaRisksTool } from "./schema-risks.js";
 
 /**
  * Get all statistics tools
@@ -41,9 +46,13 @@ export function getStatsTools(adapter: SqliteAdapter): ToolDefinition[] {
     createDistinctValuesTool(adapter),
     createSummaryStatsTool(adapter),
     createFrequencyTool(adapter),
-    // New statistical tools
+    // Statistical inference tools
     createOutlierTool(adapter),
     createRegressionTool(adapter),
     createHypothesisTool(adapter),
+    // Anomaly detection suite
+    createDetectAnomaliesTool(adapter),
+    createDetectBloatTool(adapter),
+    createDetectSchemaRisksTool(adapter),
   ];
 }

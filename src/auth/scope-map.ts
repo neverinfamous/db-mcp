@@ -24,6 +24,7 @@ for (const [group, tools] of Object.entries(TOOL_GROUPS)) {
   if (scope) {
     for (const toolName of tools) {
       toolScopeMap.set(toolName, scope);
+      toolScopeMap.set(`sqlite_${toolName}`, scope);
     }
   }
 }

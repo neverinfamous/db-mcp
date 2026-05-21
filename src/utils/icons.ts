@@ -34,6 +34,9 @@ const TOOL_GROUP_ICONS: Record<ToolGroup, McpIcon[]> = {
     { src: `${MDI_BASE}/vector-polyline.svg`, mimeType: "image/svg+xml" },
   ],
   admin: [{ src: `${MDI_BASE}/cog.svg`, mimeType: "image/svg+xml" }],
+  transactions: [
+    { src: `${MDI_BASE}/swap-horizontal.svg`, mimeType: "image/svg+xml" },
+  ],
   geo: [{ src: `${MDI_BASE}/earth.svg`, mimeType: "image/svg+xml" }],
   introspection: [
     { src: `${MDI_BASE}/graph-outline.svg`, mimeType: "image/svg+xml" },

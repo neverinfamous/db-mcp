@@ -463,7 +463,7 @@ describe("Introspection Schema Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.summary.highestRisk).toBe("critical");
-      const deleteRisk = result.risks.find((r) => r.category === "destructive");
+      const deleteRisk = result.risks.find((r) => r.category === "data_loss");
       expect(deleteRisk).toBeDefined();
     });
 

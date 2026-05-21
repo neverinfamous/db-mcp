@@ -1,19 +1,22 @@
 # db-mcp Resource Testing Plan
 
-Please test all db-mcp resources (8 data + up to 9 help) using the test database (test-server/test.db) and concisely report any issues.
+Please test all db-mcp resources (11 data + up to 9 help) using the test database (test-server/test.db) and concisely report any issues.
 
 ## Resources to Test
 
-| #   | Resource Name       | URI                          | Type      | Expected Data Source                       |
-| --- | ------------------- | ---------------------------- | --------- | ------------------------------------------ |
-| 1   | sqlite_schema       | sqlite://schema              | Static    | Full schema via adapter.getSchema()        |
-| 2   | sqlite_tables       | sqlite://tables              | Static    | Table list via adapter.listTables()        |
-| 3   | sqlite_table_schema | sqlite://table/{name}/schema | Templated | Specific table via adapter.describeTable() |
-| 4   | sqlite_indexes      | sqlite://indexes             | Static    | All indexes via adapter.getAllIndexes()    |
-| 5   | sqlite_views        | sqlite://views               | Static    | Views from sqlite_master                   |
-| 6   | sqlite_health       | sqlite://health              | Static    | Connection health via adapter.getHealth()  |
-| 7   | sqlite_meta         | sqlite://meta                | Static    | PRAGMA values + adapter info               |
-| 8   | sqlite_insights     | memo://insights              | Static    | In-memory insights memo                    |
+| #   | Resource Name          | URI                          | Type      | Expected Data Source                       |
+| --- | ---------------------- | ---------------------------- | --------- | ------------------------------------------ |
+| 1   | sqlite_schema          | sqlite://schema              | Static    | Full schema via adapter.getSchema()        |
+| 2   | sqlite_tables          | sqlite://tables              | Static    | Table list via adapter.listTables()        |
+| 3   | sqlite_table_schema    | sqlite://table/{name}/schema | Templated | Specific table via adapter.describeTable() |
+| 4   | sqlite_indexes         | sqlite://indexes             | Static    | All indexes via adapter.getAllIndexes()    |
+| 5   | sqlite_views           | sqlite://views               | Static    | Views from sqlite_master                   |
+| 6   | sqlite_health          | sqlite://health              | Static    | Connection health via adapter.getHealth()  |
+| 7   | sqlite_meta            | sqlite://meta                | Static    | PRAGMA values + adapter info               |
+| 8   | sqlite_compile_options | sqlite://compile_options     | Static    | SQLite compile-time build options          |
+| 9   | sqlite_pragma          | sqlite://pragma              | Static    | Runtime PRAGMA config snapshot             |
+| 10  | sqlite_insights        | memo://insights              | Static    | In-memory insights memo                    |
+| 11  | sqlite_audit           | sqlite://audit               | Static    | Audit log access (if enabled)              |
 
 ---
 
@@ -147,9 +150,9 @@ DROP VIEW IF EXISTS test_view_order_summary;
 **Test Sequence:**
 
 1. Read memo://insights — May be empty or have default content ("No business insights have been discovered yet.")
-2. Call sqlite_append_insight tool with a test insight (requires admin tools)
+2. Call sqlite_append_insight tool with a test insight `{"insight": "Test insight"}` (requires admin tools)
 3. Read memo://insights again — Should contain the new insight
-4. Verify timestamp, category, and finding text are present
+4. Verify the exact insight text is present
 
 **Expected Output:**
 
@@ -158,7 +161,31 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 9. Help Resources — On-Demand Reference Documentation
+### 9. sqlite_compile_options — Compile-Time Options
+
+**URI:** `sqlite://compile_options`  
+**Test:** Read the compile options resource.
+
+**Expected Output:**
+
+- JSON with an `options` array, `count`, and `highlights` array.
+- Should contain fundamental build options (e.g., `THREADSAFE`).
+
+---
+
+### 10. sqlite_pragma — Runtime Configuration Snapshot
+
+**URI:** `sqlite://pragma`  
+**Test:** Read the pragma configuration resource.
+
+**Expected Output:**
+
+- JSON with a `settings` object grouping configuration into categories (storage, performance, safety, behavior).
+- Each setting should include `value`, `category`, and `description`.
+
+---
+
+### 11. Help Resources — On-Demand Reference Documentation
 
 **Test A — sqlite://help (always registered):**
 
@@ -231,9 +258,9 @@ Use live MCP resource reads via the `read_resource` tool against the running sql
 
 | Metric                    | Value                                        |
 | ------------------------- | -------------------------------------------- |
-| Data resources to test    | 8                                            |
+| Data resources to test    | 10                                           |
 | Help resources to test    | 1 (sqlite://help) + up to 8 group-specific   |
-| Static resources          | 7                                            |
+| Static resources          | 9                                            |
 | Templated resources       | 1 (sqlite_table_schema with URI parameter)   |
 | Protocol validation tests | 2 (help resource content + tool annotations) |
 | Error cases to test       | 1 (nonexistent table in template)            |

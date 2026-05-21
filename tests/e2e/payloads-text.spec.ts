@@ -245,7 +245,7 @@ test.describe("Payload Contracts: Text", () => {
 
       if ((payload.rowCount as number) > 0) {
         const r = (payload.rows as Record<string, unknown>[])[0];
-        expect(r).toHaveProperty("original");
+        expect(r).toHaveProperty("rowid");
         expect(r).toHaveProperty("normalized");
       }
     } finally {

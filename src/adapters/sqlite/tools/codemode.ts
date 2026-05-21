@@ -8,8 +8,6 @@
  * Provides 70-90% token reduction by replacing multiple tool calls with
  * a single code execution containing the equivalent logic.
  */
-
-import { z } from "zod";
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import {
@@ -30,18 +28,10 @@ import {
   DbMcpError,
   ErrorCategory,
 } from "../../../utils/errors/index.js";
-import { ErrorResponseFields } from "../../../utils/errors/error-response-fields.js";
-
-/**
- * Coerce string values to numbers for MCP parameter safety.
- * Returns undefined for unparseable values so `.default()` kicks in.
- */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? Number.isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+import {
+  ExecuteCodeSchema,
+  ExecuteCodeOutputSchema,
+} from "../schemas/codemode.js";
 
 // =============================================================================
 // Module State
@@ -55,75 +45,6 @@ const codemodeRateLimit = Number(process.env["MCP_CODEMODE_RATE_LIMIT"]) || 60;
 const security = new CodeModeSecurityManager({
   maxExecutionsPerMinute: codemodeRateLimit,
 });
-
-// =============================================================================
-// Schemas
-// =============================================================================
-
-const ExecuteCodeSchema = z.object({
-  code: z
-    .string()
-    .describe(
-      "JavaScript code to execute. Access all SQLite tools via sqlite.* API. " +
-        "Use sqlite.help() to discover groups, sqlite.<group>.help() for methods. " +
-        "Example: const tables = await sqlite.core.listTables(); return tables;",
-    ),
-  timeout: z.preprocess(
-    coerceNumber,
-    z
-      .number()
-      .optional()
-      .default(30000)
-      .describe(
-        "Execution timeout in milliseconds (1000-30000, default: 30000)",
-      ),
-  ),
-  readonly: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("Restrict to read-only operations (default: false)"),
-});
-
-const ExecuteCodeOutputSchema = z
-  .object({
-    success: z.boolean().describe("Whether execution completed successfully"),
-    result: z.unknown().optional().describe("Return value from the code"),
-    error: z.string().optional().describe("Error message if execution failed"),
-    code: z
-      .string()
-      .optional()
-      .describe(
-        "Error code for programmatic handling (e.g., CODEMODE_VALIDATION_FAILED)",
-      ),
-    category: z
-      .string()
-      .optional()
-      .describe(
-        "Error category: validation, permission, query, resource, internal",
-      ),
-    suggestion: z
-      .string()
-      .optional()
-      .describe("Actionable suggestion for resolving the error"),
-    recoverable: z
-      .boolean()
-      .optional()
-      .describe("Whether the error is recoverable by retrying"),
-    consoleOutput: z
-      .array(z.string())
-      .optional()
-      .describe("Console output captured during execution"),
-    metrics: z
-      .object({
-        wallTimeMs: z.number().describe("Wall clock time in milliseconds"),
-        cpuTimeMs: z.number().describe("CPU time in milliseconds"),
-        memoryUsedMb: z.number().describe("Memory used in MB"),
-      })
-      .optional()
-      .describe("Execution performance metrics"),
-  })
-  .extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Tool Definition
@@ -170,14 +91,14 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         const { code, timeout: timeoutMs, readonly: isReadonly } = parsed;
 
         // Validate timeout range (handler-level since schema refinements leak)
-        if (timeoutMs < 1000 || timeoutMs > 30000) {
+        if (timeoutMs < 500 || timeoutMs > 30000) {
           return {
             success: false,
-            error: `Timeout must be between 1000 and 30000 ms, got ${timeoutMs}`,
+            error: `Timeout must be between 500 and 30000 ms, got ${timeoutMs}`,
             code: "CODEMODE_VALIDATION_FAILED",
             category: "validation",
             suggestion:
-              "Provide a timeout value between 1000 and 30000 milliseconds.",
+              "Provide a timeout value between 500 and 30000 milliseconds.",
             recoverable: false,
             metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
           };
@@ -219,8 +140,12 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Build API bindings from adapter's tool definitions
-        // Always use all tools so help() shows the complete API surface
-        const allTools = adapter.getToolDefinitions();
+        // Use capability-filtered tools if available to accurately reflect runtime
+        const allTools =
+          "getAvailableToolDefinitions" in adapter &&
+          typeof adapter.getAvailableToolDefinitions === "function"
+            ? adapter.getAvailableToolDefinitions()
+            : adapter.getToolDefinitions();
         const api = createSqliteApi(allTools);
         const bindings = api.createSandboxBindings();
 
@@ -254,11 +179,25 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         );
         security.auditLog(record);
 
+        // Compute token estimate from result (~4 bytes per token)
+        let tokenEstimate = 0;
+        if (sanitizedResult !== undefined) {
+          try {
+            const json = JSON.stringify(sanitizedResult);
+            tokenEstimate = Math.ceil(Buffer.byteLength(json, "utf8") / 4);
+          } catch {
+            // Serialization failure — leave at 0
+          }
+        }
+
         return {
           success: result.success,
           result: sanitizedResult,
           error: result.error,
-          metrics: result.metrics,
+          metrics: {
+            ...result.metrics,
+            tokenEstimate,
+          },
         };
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);

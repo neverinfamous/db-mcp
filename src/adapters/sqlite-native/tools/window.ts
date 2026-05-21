@@ -23,18 +23,19 @@ import {
   WindowRunningTotalOutputSchema,
   WindowMovingAvgOutputSchema,
   WindowNtileOutputSchema,
-} from "../../sqlite/output-schemas/index.js";
+} from "../../sqlite/schemas/index.js";
 
 /**
  * Coerce string-typed numbers to actual numbers.
- * Returns undefined for non-numeric strings so the schema default kicks in.
+ * Returns the original string for non-numeric strings so Zod validation fails.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    const num = Number(val);
+    return isNaN(num) ? undefined : num;
+  }
+  return val;
+};
 
 /**
  * Create a coercer for optional enum params with defaults.
@@ -62,7 +63,7 @@ const RowNumberSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -85,7 +86,7 @@ const RankSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -114,7 +115,7 @@ const LagLeadSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -133,7 +134,7 @@ const RunningTotalSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -153,7 +154,7 @@ const MovingAverageSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -172,7 +173,7 @@ const NtileSchema = z.object({
   whereClause: z.string().optional().describe("Optional WHERE clause"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum rows to return"),
+    z.number().optional().default(20).describe("Maximum rows to return"),
   ),
 });
 
@@ -264,13 +265,87 @@ async function validateOrderByColumns(
 }
 
 /**
- * Helper to format column selection
+ * Helper to format column selection and omit long content columns by default
  */
-function formatColumns(selectColumns: string[] | undefined): string {
-  if (selectColumns === undefined || selectColumns.length === 0) {
-    return "*";
+async function resolveSelectColumns(
+  adapter: NativeSqliteAdapter,
+  table: string,
+  selectColumns: string[] | undefined,
+  rankCol?: string,
+): Promise<{ columnList: string; hint?: string }> {
+  if (selectColumns && selectColumns.length > 0) {
+    return {
+      columnList: selectColumns.map((c) => `"${c}"`).join(", "),
+    };
   }
-  return selectColumns.map((c) => `"${c}"`).join(", ");
+
+  // Auto-limit: exclude TEXT/BLOB columns likely to hold long content
+  const tableInfo = await adapter.executeReadQuery(
+    `PRAGMA table_info("${table}")`,
+  );
+
+  const TEXT_TYPES = new Set([
+    "text",
+    "blob",
+    "clob",
+    "varchar",
+    "nvarchar",
+    "char",
+  ]);
+  const LONG_CONTENT_PATTERNS = [
+    "description",
+    "body",
+    "bio",
+    "content",
+    "notes",
+    "summary",
+    "comment",
+    "details",
+    "html",
+    "markdown",
+    "text",
+    "message",
+    "payload",
+    "raw",
+    "data",
+    "log",
+    "blob",
+  ];
+
+  const excluded: string[] = [];
+  const included: string[] = [];
+
+  for (const c of tableInfo.rows ?? []) {
+    const colName = c["name"] as string;
+    const colType = ((c["type"] as string) ?? "").toLowerCase();
+    const nameLower = colName.toLowerCase();
+
+    const isText = [...TEXT_TYPES].some(
+      (t) => colType === t || colType.startsWith(t),
+    );
+    const isRankCol = rankCol ? nameLower === rankCol.toLowerCase() : false;
+    const isLongContent = LONG_CONTENT_PATTERNS.some(
+      (p) =>
+        nameLower === p ||
+        nameLower.endsWith(`_${p}`) ||
+        nameLower.startsWith(`${p}_`),
+    );
+
+    if (isText && !isRankCol && isLongContent) {
+      excluded.push(colName);
+    } else {
+      included.push(colName);
+    }
+  }
+
+  if (excluded.length > 0 && included.length > 0) {
+    return {
+      columnList: included.map((c) => `"${c}"`).join(", "),
+      hint: `Excluded ${excluded.length} long-content column(s) (${excluded.join(", ")}) to reduce payload. Use selectColumns to override.`,
+    };
+  }
+
+  return { columnList: "*" };
 }
 
 /**
@@ -307,7 +382,11 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const columns = formatColumns(input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -326,11 +405,13 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
+        if (hint) response["hint"] = hint;
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
@@ -358,7 +439,11 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const columns = formatColumns(input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -378,12 +463,14 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           rankType: input.rankType,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
+        if (hint) response["hint"] = hint;
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
@@ -430,7 +517,12 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateColumnInTable(adapter, input.table, input.column);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const columns = formatColumns(input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+          input.column,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -452,13 +544,15 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           direction: normalizedDirection,
           offset: input.offset,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
+        if (hint) response["hint"] = hint;
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
@@ -489,7 +583,12 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateColumnInTable(adapter, input.table, input.column);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const columns = formatColumns(input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+          input.column,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -508,12 +607,14 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           valueColumn: input.column,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
+        if (hint) response["hint"] = hint;
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
@@ -554,7 +655,12 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateColumnInTable(adapter, input.table, input.column);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const columns = formatColumns(input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+          input.column,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -574,13 +680,15 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           valueColumn: input.column,
           windowSize: input.windowSize,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
+        if (hint) response["hint"] = hint;
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }
@@ -618,7 +726,11 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
-        const columns = formatColumns(input.selectColumns);
+        const { columnList: columns, hint } = await resolveSelectColumns(
+          adapter,
+          input.table,
+          input.selectColumns,
+        );
         const partition = input.partitionBy
           ? `PARTITION BY ${input.partitionBy}`
           : "";
@@ -637,12 +749,14 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql);
 
-        return {
+        const response: Record<string, unknown> = {
           success: true,
           buckets: input.buckets,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
+        if (hint) response["hint"] = hint;
+        return response;
       } catch (error) {
         return formatHandlerError(error);
       }

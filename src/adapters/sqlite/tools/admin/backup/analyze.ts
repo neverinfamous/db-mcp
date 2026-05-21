@@ -6,8 +6,8 @@ import type {
 import { admin } from "../../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { sanitizeIdentifier } from "../../../../../utils/index.js";
-import { AnalyzeOutputSchema } from "../../../output-schemas/index.js";
-import { AnalyzeSchema } from "../helpers.js";
+import { AnalyzeOutputSchema } from "../../../schemas/admin.js";
+import { AnalyzeSchema } from "../../../schemas/admin.js";
 
 /**
  * Analyze tables for query optimization

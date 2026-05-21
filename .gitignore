@@ -14,6 +14,7 @@ out/
 
 # Logs
 logs/
+!logs/.gitkeep
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -42,6 +43,7 @@ test-results.json
 # Playwright
 test-results/
 playwright-report/
+playwright-results.json
 
 # TypeScript
 *.tsbuildinfo
@@ -59,6 +61,8 @@ keycloak/
 
 # Local config files with secrets
 config/*.local.json
+config/*.keycloak.json
+!config/*.keycloak.example.json
 config/secrets/
 
 # Database files

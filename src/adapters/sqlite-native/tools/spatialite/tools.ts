@@ -35,7 +35,7 @@ import {
   SpatialiteCreateTableOutputSchema,
   SpatialiteQueryOutputSchema,
   SpatialiteIndexOutputSchema,
-} from "../../../sqlite/output-schemas/index.js";
+} from "../../../sqlite/schemas/index.js";
 
 /**
  * Load SpatiaLite extension
@@ -299,9 +299,10 @@ export function createSpatialIndexTool(
         // Helper: check if spatial index exists for this table/column
         const indexExists = async (): Promise<boolean> => {
           const idxCheck = await adapter.executeReadQuery(
-            `SELECT name FROM sqlite_master WHERE type='table' AND name='idx_${input.tableName}_${input.geometryColumn}'`,
+            `SELECT spatial_index_enabled FROM geometry_columns WHERE f_table_name = '${input.tableName}' AND f_geometry_column = '${input.geometryColumn}'`,
           );
-          return (idxCheck.rows?.length ?? 0) > 0;
+          const val = idxCheck.rows?.[0]?.["spatial_index_enabled"];
+          return val === 1 || val === "1";
         };
 
         switch (input.action) {
@@ -315,9 +316,18 @@ export function createSpatialIndexTool(
               };
             }
             // NOTE: CreateSpatialIndex is a SELECT function, must use executeReadQuery
-            await adapter.executeReadQuery(
-              `SELECT CreateSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
+            const createRes = await adapter.executeReadQuery(
+              `SELECT CreateSpatialIndex('${input.tableName}', '${input.geometryColumn}') as res`,
             );
+            if (createRes.rows?.[0]?.["res"] === 0) {
+              return {
+                success: false,
+                error: `Failed to create spatial index on ${input.tableName}.${input.geometryColumn}`,
+                code: "SPATIAL_INDEX_CREATE_FAILED",
+                category: "internal",
+                recoverable: false,
+              };
+            }
             return {
               success: true,
               message: `Spatial index created on ${input.tableName}.${input.geometryColumn}`,
@@ -335,9 +345,18 @@ export function createSpatialIndexTool(
               };
             }
             // NOTE: DisableSpatialIndex is a SELECT function, must use executeReadQuery
-            await adapter.executeReadQuery(
-              `SELECT DisableSpatialIndex('${input.tableName}', '${input.geometryColumn}')`,
+            const dropRes = await adapter.executeReadQuery(
+              `SELECT DisableSpatialIndex('${input.tableName}', '${input.geometryColumn}') as res`,
             );
+            if (dropRes.rows?.[0]?.["res"] === 0) {
+              return {
+                success: false,
+                error: `Failed to drop spatial index on ${input.tableName}.${input.geometryColumn}`,
+                code: "SPATIAL_INDEX_DROP_FAILED",
+                category: "internal",
+                recoverable: false,
+              };
+            }
             return {
               success: true,
               message: `Spatial index dropped from ${input.tableName}.${input.geometryColumn}`,

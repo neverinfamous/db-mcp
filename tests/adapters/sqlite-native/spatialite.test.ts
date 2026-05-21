@@ -259,12 +259,12 @@ describe("createSpatialIndexTool", () => {
   it("should create spatial index", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("sqlite_master") && sql.includes("name='idx_"))
+      if (sql.includes("geometry_columns"))
         return Promise.resolve({ rows: [] }); // Index doesn't exist
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] }); // Table exists
       if (sql.includes("CreateSpatialIndex"))
-        return Promise.resolve({ rows: [{ result: 1 }] });
+        return Promise.resolve({ rows: [{ res: 1 }] });
       return Promise.resolve({ rows: [] });
     });
     const tool = createSpatialIndexTool(adapter);
@@ -279,8 +279,10 @@ describe("createSpatialIndexTool", () => {
   it("should return already-exists for create", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [{ spatial_index_enabled: 1 }] });
       if (sql.includes("sqlite_master"))
-        return Promise.resolve({ rows: [{ name: "idx" }] }); // both table & index exist
+        return Promise.resolve({ rows: [{ name: "places" }] }); // Table exists
       return Promise.resolve({ rows: [] });
     });
     const tool = createSpatialIndexTool(adapter);
@@ -295,12 +297,12 @@ describe("createSpatialIndexTool", () => {
   it("should drop spatial index", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_"))
-        return Promise.resolve({ rows: [{ name: "idx_places_geom" }] });
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [{ spatial_index_enabled: 1 }] });
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       if (sql.includes("DisableSpatialIndex"))
-        return Promise.resolve({ rows: [] });
+        return Promise.resolve({ rows: [{ res: 1 }] });
       return Promise.resolve({ rows: [] });
     });
     const tool = createSpatialIndexTool(adapter);
@@ -315,7 +317,8 @@ describe("createSpatialIndexTool", () => {
   it("should return already-dropped for drop", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_")) return Promise.resolve({ rows: [] }); // No index
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [] }); // No index
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       return Promise.resolve({ rows: [] });
@@ -332,8 +335,8 @@ describe("createSpatialIndexTool", () => {
   it("should check valid index (returns 1)", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_"))
-        return Promise.resolve({ rows: [{ name: "idx_places_geom" }] });
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [{ spatial_index_enabled: 1 }] });
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       if (sql.includes("CheckSpatialIndex"))
@@ -353,8 +356,8 @@ describe("createSpatialIndexTool", () => {
   it("should check invalid index (returns 0)", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_"))
-        return Promise.resolve({ rows: [{ name: "idx_places_geom" }] });
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [{ spatial_index_enabled: 1 }] });
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       if (sql.includes("CheckSpatialIndex"))
@@ -373,8 +376,8 @@ describe("createSpatialIndexTool", () => {
   it("should check inconclusive index (returns null)", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_"))
-        return Promise.resolve({ rows: [{ name: "idx_places_geom" }] });
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [{ spatial_index_enabled: 1 }] });
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       if (sql.includes("CheckSpatialIndex"))
@@ -393,7 +396,8 @@ describe("createSpatialIndexTool", () => {
   it("should check no-index case", async () => {
     const adapter = createMockAdapter();
     adapter.executeReadQuery.mockImplementation((sql: string) => {
-      if (sql.includes("name='idx_")) return Promise.resolve({ rows: [] });
+      if (sql.includes("geometry_columns"))
+        return Promise.resolve({ rows: [] });
       if (sql.includes("sqlite_master"))
         return Promise.resolve({ rows: [{ name: "places" }] });
       return Promise.resolve({ rows: [] });
@@ -837,6 +841,7 @@ describe("createSpatialImportTool", () => {
 
   it("should import GeoJSON geometry", async () => {
     const adapter = createMockAdapter();
+    adapter.executeReadQuery.mockResolvedValue({ rows: [{ geom: "blob" }] });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createSpatialImportTool(adapter);
     const result = (await tool.handler(
@@ -854,6 +859,7 @@ describe("createSpatialImportTool", () => {
 
   it("should import GeoJSON with additional data", async () => {
     const adapter = createMockAdapter();
+    adapter.executeReadQuery.mockResolvedValue({ rows: [{ geom: "blob" }] });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createSpatialImportTool(adapter);
     const result = (await tool.handler(
@@ -910,6 +916,7 @@ describe("createSpatialImportTool", () => {
 
   it("should reject invalid column names in additionalData (GeoJSON)", async () => {
     const adapter = createMockAdapter();
+    adapter.executeReadQuery.mockResolvedValue({ rows: [{ geom: "blob" }] });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createSpatialImportTool(adapter);
     const result = (await tool.handler(

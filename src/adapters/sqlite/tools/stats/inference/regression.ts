@@ -1,3 +1,4 @@
+import { validateColumnExists, validateNumericColumn } from "../helpers.js";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -13,12 +14,8 @@ import {
   DbMcpError,
   ErrorCategory,
 } from "../../../../../utils/errors/index.js";
-import {
-  validateColumnExists,
-  validateNumericColumn,
-  RegressionSchema,
-} from "../helpers.js";
-import { StatsRegressionOutputSchema } from "../../../output-schemas/index.js";
+import { RegressionSchema } from "../../../schemas/stats.js";
+import { StatsRegressionOutputSchema } from "../../../schemas/stats.js";
 import {
   matrixTranspose,
   matrixMultiply,
@@ -39,9 +36,9 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Regression Analysis"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = RegressionSchema.parse(params);
-
       try {
+        const input = RegressionSchema.parse(params);
+
         if (input.degree < 1 || input.degree > 3) {
           return {
             success: false,
@@ -55,18 +52,8 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.xColumn);
         await validateColumnExists(adapter, input.table, input.yColumn);
 
-        const xNumericError = await validateNumericColumn(
-          adapter,
-          input.table,
-          input.xColumn,
-        );
-        if (xNumericError) return xNumericError;
-        const yNumericError = await validateNumericColumn(
-          adapter,
-          input.table,
-          input.yColumn,
-        );
-        if (yNumericError) return yNumericError;
+        await validateNumericColumn(adapter, input.table, input.xColumn);
+        await validateNumericColumn(adapter, input.table, input.yColumn);
 
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.xColumn);
@@ -93,7 +80,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
 
         if (pairs.length < degree + 1) {
           throw new DbMcpError(
-            `Insufficient data for degree ${degree} regression (need at least ${degree + 1} points, got ${pairs.length})`,
+            `Insufficient data in table '${input.table}' for degree ${degree} regression (need at least ${degree + 1} points, got ${pairs.length})`,
             "STATS_INSUFFICIENT_SAMPLE",
             ErrorCategory.VALIDATION,
           );

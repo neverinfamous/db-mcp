@@ -1,4 +1,4 @@
-# db-mcp Help — Statistical Analysis (13 core + 6 window)
+# db-mcp Help — Statistical Analysis (16 core + 6 window)
 
 ## Core Statistics (always available)
 
@@ -46,6 +46,27 @@ sqlite_stats_top_n({
 });
 ```
 
+## Anomaly Detection (3 tools)
+
+```javascript
+// Data distribution anomaly detection — z-score analysis on numeric columns
+sqlite_stats_detect_anomalies({ table: "sales", threshold: 2.0 }); // auto-detects numeric columns
+sqlite_stats_detect_anomalies({
+  table: "metrics",
+  columns: ["latency_ms", "error_rate"],
+  threshold: 3.0,
+  limit: 20,
+});
+
+// Fragmentation/bloat risk scoring — PRAGMA + dbstat analysis
+sqlite_stats_detect_bloat(); // riskiest tables (>0 score), default limit 50
+sqlite_stats_detect_bloat({ includeZeroRisk: true, limit: 10 }); // include zero risk, top 10
+
+// Schema health risk scoring — FK indexes, PKs, wide tables
+sqlite_stats_detect_schema_risks(); // riskiest tables (>0 score)
+sqlite_stats_detect_schema_risks({ excludeSystemTables: false }); // include SpatiaLite tables
+```
+
 ## Window Functions (6 tools, Native only)
 
 ```javascript
@@ -83,4 +104,16 @@ sqlite_window_ntile({
   buckets: 4,
   partitionBy: "department",
 }); // quartiles
+```
+
+⚠️ **Payload Sizes**: Window functions retrieve all standard columns by default (up to the `limit`). When querying wide tables, this can result in large payloads. It is highly recommended to pass `selectColumns` to reduce token usage:
+
+```javascript
+sqlite_window_moving_avg({
+  table: "stock_prices",
+  column: "close_price",
+  orderBy: "date",
+  windowSize: 7,
+  selectColumns: ["date"],
+});
 ```

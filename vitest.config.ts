@@ -13,6 +13,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       exclude: ["**/__tests__/**", "**/node_modules/**"],
+      reporter: ["text", "json", "json-summary"],
     },
     benchmark: {
       include: ["tests/benchmarks/**/*.bench.ts"],

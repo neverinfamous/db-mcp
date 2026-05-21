@@ -20,6 +20,33 @@ import { ErrorCategory } from "../../utils/errors/categories.js";
 
 const logger = createModuleLogger("HTTP");
 
+class Mutex {
+  private queue: (() => void)[] = [];
+  private locked = false;
+
+  async acquire(): Promise<() => void> {
+    return new Promise((resolve) => {
+      const lock = (): void => {
+        this.locked = true;
+        resolve(() => {
+          this.locked = false;
+          if (this.queue.length > 0) {
+            const next = this.queue.shift();
+            next?.();
+          }
+        });
+      };
+      if (this.locked) {
+        this.queue.push(lock);
+      } else {
+        lock();
+      }
+    });
+  }
+}
+
+const connectionMutex = new Mutex();
+
 // =============================================================================
 // Stateless Endpoints
 // =============================================================================
@@ -172,17 +199,60 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
 
           // Connect transport to server before handling request
           // SDK McpServer only supports one active transport — close first
-          try {
-            await server.connect(
-              newTransport as Parameters<typeof server.connect>[0],
-            );
-          } catch {
-            // Close existing connection and retry
-            await server.close();
-            await server.connect(
-              newTransport as Parameters<typeof server.connect>[0],
-            );
-          }
+          await connectionMutex.acquire().then(async (release) => {
+            try {
+              if (server.server.transport) {
+                const oldTransport = server.server.transport;
+                logger.info("Captured oldTransport in /mcp", {
+                  hasOldTransport: oldTransport !== undefined,
+                  hasOnclose: oldTransport.onclose !== undefined,
+                });
+
+                try {
+                  await Promise.race([
+                    server.close(),
+                    new Promise((_, reject) =>
+                      setTimeout(
+                        () => reject(new Error("server.close timeout")),
+                        2000,
+                      ),
+                    ),
+                  ]);
+                  logger.info("server.close() succeeded in /mcp");
+                } catch (closeErr) {
+                  logger.error("server.close() failed or timed out in /mcp", {
+                    error:
+                      closeErr instanceof Error
+                        ? closeErr
+                        : new Error(String(closeErr)),
+                  });
+                }
+
+                // For SSE, server.close() only triggers res.end() asynchronously, so Protocol._transport is still set.
+                // We MUST manually invoke onclose() to synchronously clear it before the new connection.
+                if (
+                  server.server.transport === oldTransport &&
+                  oldTransport.onclose !== undefined
+                ) {
+                  logger.info(
+                    "Manually invoking oldTransport.onclose() to clear Protocol state in /mcp",
+                  );
+                  oldTransport.onclose();
+                }
+
+                // Clear onclose BEFORE the async res.on('close') can fire it again and wipe out the NEW transport
+                delete oldTransport.onclose;
+              }
+
+              logger.info("Attempting server.connect(newTransport)");
+              await server.connect(
+                newTransport as Parameters<typeof server.connect>[0],
+              );
+              logger.info("server.connect succeeded in /mcp");
+            } finally {
+              release();
+            }
+          });
           await newTransport.handleRequest(
             asIncoming(req),
             asServerResponse(res),
@@ -313,17 +383,73 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
         // Connect SSE transport to server
         // SDK McpServer only supports one active transport — close first if needed
         // Note: connect() auto-calls start() on SSE transports — do NOT call start() separately
-        try {
-          await server.connect(
-            sseTransport as Parameters<typeof server.connect>[0],
-          );
-        } catch {
-          // Close existing connection and retry
-          await server.close();
-          await server.connect(
-            sseTransport as Parameters<typeof server.connect>[0],
-          );
-        }
+        const origSend = sseTransport.send.bind(sseTransport);
+        sseTransport.send = async (message) => {
+          try {
+            logger.info("SSE SEND", {
+              sessionId: sseTransport.sessionId,
+              msg: JSON.stringify(message).substring(0, 1000),
+            });
+          } catch (e) {
+            logger.error("SSE SEND Stringify Error", {
+              error: e instanceof Error ? e : new Error(String(e)),
+            });
+          }
+          return origSend(message);
+        };
+
+        await connectionMutex.acquire().then(async (release) => {
+          try {
+            if (server.server.transport) {
+              const oldTransport = server.server.transport;
+              logger.info("Captured oldTransport", {
+                hasOldTransport: oldTransport !== undefined,
+                hasOnclose: oldTransport.onclose !== undefined,
+              });
+
+              try {
+                await Promise.race([
+                  server.close(),
+                  new Promise((_, reject) =>
+                    setTimeout(
+                      () => reject(new Error("server.close timeout")),
+                      2000,
+                    ),
+                  ),
+                ]);
+                logger.info("server.close() succeeded");
+              } catch (closeErr) {
+                logger.error("server.close() failed or timed out", {
+                  error:
+                    closeErr instanceof Error
+                      ? closeErr
+                      : new Error(String(closeErr)),
+                });
+              }
+
+              // For SSE, server.close() only triggers res.end() asynchronously, so Protocol._transport is still set.
+              // We MUST manually invoke onclose() to synchronously clear it before the new connection.
+              if (
+                server.server.transport === oldTransport &&
+                oldTransport.onclose !== undefined
+              ) {
+                logger.info(
+                  "Manually invoking oldTransport.onclose() to clear Protocol state",
+                );
+                oldTransport.onclose();
+              }
+
+              // Clear onclose BEFORE the async res.on('close') can fire it again and wipe out the NEW transport
+              delete oldTransport.onclose;
+            }
+
+            logger.info("Attempting server.connect(sseTransport)");
+            await server.connect(sseTransport);
+            logger.info("server.connect succeeded");
+          } finally {
+            release();
+          }
+        });
       } catch (error) {
         logger.error("Error starting SSE transport", {
           code: ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
@@ -373,10 +499,19 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
       return;
     }
 
-    void sseTransport.handlePostMessage(
-      asIncoming(req),
-      asServerResponse(res),
-      req.body as unknown,
-    );
+    void sseTransport
+      .handlePostMessage(
+        asIncoming(req),
+        asServerResponse(res),
+        req.body as unknown,
+      )
+      .then(() => {
+        logger.info("handlePostMessage completed", { sessionId });
+      })
+      .catch((e: unknown) => {
+        logger.error("handlePostMessage error", {
+          error: e instanceof Error ? e : new Error(String(e)),
+        });
+      });
   });
 }

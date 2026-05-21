@@ -154,6 +154,7 @@ describe("Tool Annotation Invariants (Native)", () => {
       "text",
       "vector",
       "admin",
+      "transactions",
       "geo",
       "migration",
     ];
