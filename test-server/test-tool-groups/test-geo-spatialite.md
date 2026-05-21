@@ -1,7 +1,8 @@
-# db-mcp (SQLite) Tool Group Testing: [geo-spatialite]
+# db-mcp Tool Group Testing: [geo-spatialite]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in C:\Users\chris\Desktop\db-mcp\tmp\task.md. However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
+> We're in Native mode. If there is nothing to fix, don't update UNRELEASED.md.
 
 ## WASM Mode
 
@@ -80,7 +81,7 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 5. `sqlite_spatialite_transform({operation: "buffer", geometry1: "POINT(-73.9654 40.7829)", distance: 0.01, srid: 4326})` → buffered polygon
 6. `sqlite_spatialite_index({tableName: "temp_spatial_test", geometryColumn: "geom", action: "create"})` → R-Tree index created
 7. `sqlite_spatialite_analyze({analysisType: "spatial_extent", sourceTable: "temp_spatial_test", geometryColumn: "geom"})` → spatial extent
-8. Cleanup: drop `temp_spatial_test` (using core tools if drop tool not available here)
+8. Cleanup: drop R-Tree index (`sqlite_spatialite_index` with `action: "drop"`), then drop `temp_spatial_test`
 
 **Error path testing:**
 

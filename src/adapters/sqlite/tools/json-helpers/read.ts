@@ -132,8 +132,8 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Build where clause from filters
         const conditions: string[] = [];
-        if (input.filterPaths) {
-          for (const [path, value] of Object.entries(input.filterPaths)) {
+        if (input.filterPaths !== undefined && input.filterPaths !== null && typeof input.filterPaths === "object") {
+          for (const [path, value] of Object.entries(input.filterPaths as Record<string, unknown>)) {
             if (!path.startsWith("$")) {
               throw new ValidationError(`JSON path must start with $: ${path}`);
             }

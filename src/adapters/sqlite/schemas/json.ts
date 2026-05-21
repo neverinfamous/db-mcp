@@ -382,7 +382,16 @@ export const JsonQuerySchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   filterPaths: z
-    .record(z.string(), z.unknown())
+    .union([
+      z.string().transform((val) => {
+        try {
+          return JSON.parse(val) as unknown;
+        } catch {
+          return val;
+        }
+      }),
+      z.record(z.string(), z.unknown()),
+    ])
     .optional()
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),

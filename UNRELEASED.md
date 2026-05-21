@@ -49,6 +49,7 @@
 
 ### Fixed
 
+- **json-read**: Fixed a Zod validation leak in `sqlite_json_query` where `filterPaths` would throw a raw MCP `-32602` error if a client or LLM sent it as a stringified object instead of a record.
 - **JSON Group Object Defaults**: Fixed an issue in `sqlite_json_group_object` where `keyColumn` was strictly required by Zod. It now correctly defaults to `"rowid"` when omitted, allowing queries to easily map values without specifying a key column.
 - **JSON Read Numeric Coercion**: Fixed a regression in `coerceNumber` that returned unparseable strings (like `"abc"`) instead of `undefined`. This ensures parameters like `limit` and `sampleSize` correctly fall back to their defaults instead of throwing raw MCP `-32602` validation errors.
 - **Anomaly Detection Column Parsing**: Fixed an issue in `sqlite_stats_detect_anomalies` where providing a single `column` argument was ignored, causing the tool to fall back to analyzing all numeric columns. Added `column` to the `DetectAnomaliesSchema` and updated the tool handler to correctly prioritize single-column targets over the plural `columns` array.

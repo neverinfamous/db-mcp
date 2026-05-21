@@ -1,7 +1,8 @@
-# db-mcp (SQLite) Tool Group Testing: [introspection-schema]
+# db-mcp Tool Group Testing: [introspection-schema]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in C:\Users\chris\Desktop\db-mcp\tmp\task.md. However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
+> We're in Native mode. If there is nothing to fix, don't update UNRELEASED.md.
 
 ## WASM Mode
 

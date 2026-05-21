@@ -348,7 +348,7 @@ db.close();
             $name = ($line -replace "^ALL:", "").Trim()
             $isExpected = $expectedTables.ContainsKey($name) -or $knownSystemTables -contains $name
             if (-not $isExpected) {
-                if ($name.StartsWith("stress_") -or $name.StartsWith("idx_stress_")) {
+                if ($name.StartsWith("stress_") -or $name.StartsWith("idx_stress_") -or $name.StartsWith("temp_") -or $name.StartsWith("idx_temp_")) {
                     $temporaryTables += $name
                 } else {
                     $unexpectedTables += $name
@@ -363,14 +363,14 @@ db.close();
                 Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) - stale test artifacts:"
             }
             if ($temporaryTables.Count -gt 0) {
-                Write-Info "Found $($temporaryTables.Count) temporary test table(s) (stress_*) - cleaning up:"
+                Write-Info "Found $($temporaryTables.Count) temporary test table(s) (stress_*, temp_*) - cleaning up:"
             }
             
             $dropScript = "import Database from 'better-sqlite3'; const db = new Database(process.argv[2]); db.pragma('foreign_keys = OFF'); "
             
             # First pass: drop main tables (non-shadow)
             foreach ($ut in $allTablesToDrop) {
-                if ($ut -notmatch "_(data|idx|docsize|config|content)$") {
+                if ($ut -notmatch "_(data|idx|docsize|config|content|node|parent|rowid)$") {
                     $prefix = if ($unexpectedTables -contains $ut) { "    [dropping] " } else { "    [cleaning temp] " }
                     $color = if ($unexpectedTables -contains $ut) { "Yellow" } else { "Cyan" }
                     Write-Host $prefix -ForegroundColor $color -NoNewline
@@ -380,7 +380,7 @@ db.close();
             }
             # Second pass: drop any remaining tables (shadow tables left behind)
             foreach ($ut in $allTablesToDrop) {
-                if ($ut -match "_(data|idx|docsize|config|content)$") {
+                if ($ut -match "_(data|idx|docsize|config|content|node|parent|rowid)$") {
                     $prefix = if ($unexpectedTables -contains $ut) { "    [dropping shadow] " } else { "    [cleaning temp shadow] " }
                     $color = if ($unexpectedTables -contains $ut) { "DarkYellow" } else { "DarkCyan" }
                     Write-Host $prefix -ForegroundColor $color -NoNewline
