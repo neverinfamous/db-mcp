@@ -21,10 +21,6 @@
 - **WASM Mode Advanced Tests**: Added inline `## WASM Mode` sections to all 10 advanced stress test prompts (`test-advanced/`) with per-prompt skip rules, graceful degradation guidance, and adjusted expectations. Fixed admin Category 7 which incorrectly claimed all 26 admin tools work identically in WASM.
 - **WASM Mode Standard Tests**: Added inline `## WASM Mode` sections to all 10 direct-tool test prompts (`test-tool-groups/`), replacing the static `Ignore WASM content. Test Native Mode Only` directive. Each prompt now contains self-contained WASM skip rules with specific item numbers. Added `§2.6 WASM Mode Execution` section to the README with skip rules, graceful degradation table, adjusted expectations, and the "unknown tool" note for unregistered Native-only tools.
 
-### Documentation
-
-- **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
-
 ### Security
 
 - **CI/CD Hardening**: Added `--provenance` flag to `npm publish` in `publish-npm.yml` for SLSA Build L3 attestation. Added `id-token: write` permission for OIDC provenance token generation.
@@ -37,6 +33,9 @@
 
 ### Changed
 
+- **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
+
+- **Resource Payload Filtration Findings**: Completed comprehensive testing of all 20 db-mcp resources (11 data + 9 help). Discovered that `sqlite_schema`, `sqlite_tables`, and `sqlite_views` include internal Spatialite metadata tables/views (e.g., `geometry_columns`, `vector_layers`). Recommendation: Filter out Spatialite internal objects similarly to FTS5 shadow tables to keep resource listings clean. All other resources (including schema templates, PRAGMA snapshots, Code Mode insights, and help files) and base tool annotations (`openWorldHint: false`) successfully passed validation.
 - **Dependency Updates**: Updated `vitest` and `@vitest/coverage-v8` to `4.1.7`.
 - **OAuth Identity in Audit Logs**: Audit log entries now capture the authenticated user's identity (`user` field from `claims.sub`) and granted scopes (`scopes` array) when OAuth 2.1 is configured. Previously hardcoded as `null`/`[]`. Identity is read from `AsyncLocalStorage` via `getAuthContext()`, matching the postgres-mcp reference implementation. When OAuth is not configured (stdio transport, no auth), fields remain `null`/`[]` as before.
 
