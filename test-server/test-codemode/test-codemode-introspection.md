@@ -2,8 +2,9 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> We're currently in Native mode.
 > If there is nothing to fix, don't update UNRELEASED.md.
+> We're currently testing Native mode.
+
 
 **Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
 
