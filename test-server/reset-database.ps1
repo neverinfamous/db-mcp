@@ -341,32 +341,49 @@ db.close();
         $allOutput = node $tempAllTables $DatabasePath 2>&1
         Remove-Item $tempAllTables -Force -ErrorAction SilentlyContinue
 
+        $temporaryTables = @()
         $unexpectedTables = @()
+        
         foreach ($line in $allOutput | Where-Object { $_ -match "^ALL:" }) {
             $name = ($line -replace "^ALL:", "").Trim()
             $isExpected = $expectedTables.ContainsKey($name) -or $knownSystemTables -contains $name
             if (-not $isExpected) {
-                $unexpectedTables += $name
+                if ($name.StartsWith("stress_")) {
+                    $temporaryTables += $name
+                } else {
+                    $unexpectedTables += $name
+                }
             }
         }
 
-        if ($unexpectedTables.Count -gt 0) {
-            Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) - stale test artifacts:"
+        $allTablesToDrop = $temporaryTables + $unexpectedTables
+
+        if ($allTablesToDrop.Count -gt 0) {
+            if ($unexpectedTables.Count -gt 0) {
+                Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) - stale test artifacts:"
+            }
+            if ($temporaryTables.Count -gt 0) {
+                Write-Info "Found $($temporaryTables.Count) temporary test table(s) (stress_*) - cleaning up:"
+            }
             
             $dropScript = "import Database from 'better-sqlite3'; const db = new Database(process.argv[2]); db.pragma('foreign_keys = OFF'); "
             
             # First pass: drop main tables (non-shadow)
-            foreach ($ut in $unexpectedTables) {
+            foreach ($ut in $allTablesToDrop) {
                 if ($ut -notmatch "_(data|idx|docsize|config|content)$") {
-                    Write-Host "    [dropping] " -ForegroundColor Yellow -NoNewline
+                    $prefix = if ($unexpectedTables -contains $ut) { "    [dropping] " } else { "    [cleaning temp] " }
+                    $color = if ($unexpectedTables -contains $ut) { "Yellow" } else { "Cyan" }
+                    Write-Host $prefix -ForegroundColor $color -NoNewline
                     Write-Host $ut -ForegroundColor Gray
                     $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
             }
             # Second pass: drop any remaining tables (shadow tables left behind)
-            foreach ($ut in $unexpectedTables) {
+            foreach ($ut in $allTablesToDrop) {
                 if ($ut -match "_(data|idx|docsize|config|content)$") {
-                    Write-Host "    [dropping shadow] " -ForegroundColor DarkYellow -NoNewline
+                    $prefix = if ($unexpectedTables -contains $ut) { "    [dropping shadow] " } else { "    [cleaning temp shadow] " }
+                    $color = if ($unexpectedTables -contains $ut) { "DarkYellow" } else { "DarkCyan" }
+                    Write-Host $prefix -ForegroundColor $color -NoNewline
                     Write-Host $ut -ForegroundColor Gray
                     $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
@@ -378,7 +395,11 @@ db.close();
             node $tempDrop $DatabasePath | Out-Null
             Remove-Item $tempDrop -Force -ErrorAction SilentlyContinue
             
-            Write-Success "Cleaned up stale test artifacts"
+            if ($unexpectedTables.Count -gt 0) {
+                Write-Success "Cleaned up stale test artifacts"
+            } else {
+                Write-Success "Cleaned up temporary test tables"
+            }
         } else {
             Write-Success "No stale test artifacts found"
         }

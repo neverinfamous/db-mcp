@@ -45,7 +45,7 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 
 ## Naming & Cleanup
 
-- **Temporary tables**: `stress_*` prefix. Drop at end.
+- **Temporary tables**: `stress_*` prefix. Drop at end using `sqlite.core.dropTable({table: "..."})`. Do NOT use `writeQuery` for `DROP TABLE` as DDL commands are blocked by the query executor.
 
 ## Reporting Format
 
@@ -144,7 +144,7 @@ For WASM testing only:
 
 ### Final Cleanup
 
-Drop `stress_geo_spatial` (if created). Confirm `test_locations` count is still 15.
+Drop `stress_*` tables (if created) using `sqlite.core.dropTable({table: "..."})`. Confirm `test_locations` count is still 15.
 
 ## Post-Test Procedures
 
