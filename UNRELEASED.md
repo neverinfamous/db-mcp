@@ -50,6 +50,7 @@
 
 ### Fixed
 
+- **Vector Tool Group Testing**: Completed exhaustive stress testing of the 11 vector tool handlers using Native Code Mode. Verified boundary values, distance metrics (cosine/euclidean/normalized), dimension mismatch validations, batch operations, category filtering, and error message quality. All tools passed flawlessly with strict adherence to structured error formats (`DIMENSION_MISMATCH`, `TABLE_NOT_FOUND`, `VECTOR_NOT_FOUND`) and optimal payload efficiencies (zero token bloat). No code changes were required.
 - **json-read**: Fixed a Zod validation leak in `sqlite_json_query` where `filterPaths` would throw a raw MCP `-32602` error if a client or LLM sent it as a stringified object instead of a record.
 - **JSON Group Object Defaults**: Fixed an issue in `sqlite_json_group_object` where `keyColumn` was strictly required by Zod. It now correctly defaults to `"rowid"` when omitted, allowing queries to easily map values without specifying a key column.
 - **JSON Read Numeric Coercion**: Fixed a regression in `coerceNumber` that returned unparseable strings (like `"abc"`) instead of `undefined`. This ensures parameters like `limit` and `sampleSize` correctly fall back to their defaults instead of throwing raw MCP `-32602` validation errors.
