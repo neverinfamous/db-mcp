@@ -63,35 +63,35 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ### Category 1: Aborted Transaction Recovery
 
-15. `sqlite.transactions.transactionBegin()` → get transaction ID
-16. `sqlite.transactions.transactionExecute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → should fail
+15. `sqlite.transactions.begin()` → get transaction ID
+16. `sqlite.transactions.execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → should fail
 17. Start new transaction → verify it works normally (no lingering aborted state)
 
 ---
 
 ### Category 2: Savepoint Stress Test
 
-18. `sqlite.transactions.transactionBegin()` → begin
+18. `sqlite.transactions.begin()` → begin
 19. Create savepoint `sp1`
 20. `sqlite.core.writeQuery("INSERT INTO stress_tx_sp (id, val) VALUES (1, 'a')")` → insert within transaction (create `stress_tx_sp` first)
 21. Create savepoint `sp2`
 22. `sqlite.core.writeQuery("INSERT INTO stress_tx_sp (id, val) VALUES (2, 'b')")` → insert
-23. `sqlite.transactions.transactionRollbackTo({name: "sp2"})` → should undo sp2's insert
-24. `sqlite.transactions.transactionRollbackTo({name: "sp1"})` → should undo all inserts
-25. `sqlite.transactions.transactionCommit()` → only pre-sp1 state persists
+23. `sqlite.transactions.rollbackTo({name: "sp2"})` → should undo sp2's insert
+24. `sqlite.transactions.rollbackTo({name: "sp1"})` → should undo all inserts
+25. `sqlite.transactions.commit()` → only pre-sp1 state persists
 
 ---
 
 ### Category 3: Transaction Execute — Mixed Statements
 
-26. `sqlite.transactions.transactionExecute({statements: ["CREATE TABLE stress_tx_test (id INTEGER PRIMARY KEY, name TEXT)", "INSERT INTO stress_tx_test VALUES (1, 'alpha')", "INSERT INTO stress_tx_test VALUES (2, 'beta')"]})` → success, 3 statements
+26. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_test (id INTEGER PRIMARY KEY, name TEXT)", "INSERT INTO stress_tx_test VALUES (1, 'alpha')", "INSERT INTO stress_tx_test VALUES (2, 'beta')"]})` → success, 3 statements
 27. Verify `stress_tx_test` exists with 2 rows
 
 ---
 
 ### Category 4: Transaction Execute — Failure Rollback
 
-28. `sqlite.transactions.transactionExecute({statements: ["CREATE TABLE stress_tx_fail (id INT)", "INSERT INTO nonexistent_xyz VALUES (1)", "CREATE TABLE stress_tx_fail2 (id INT)"]})` → failure
+28. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_fail (id INT)", "INSERT INTO nonexistent_xyz VALUES (1)", "CREATE TABLE stress_tx_fail2 (id INT)"]})` → failure
 29. Verify: `stress_tx_fail` does NOT exist (atomic rollback worked)
 
 ---
@@ -100,16 +100,16 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 30. Begin → commit immediately (empty transaction)
 31. Begin → rollback immediately (empty transaction)
-32. `sqlite.transactions.transactionStatus()` → verify `{active: false}` after both
+32. `sqlite.transactions.status()` → verify `{active: false}` after both
 33. Begin → savepoint → release → commit (minimal lifecycle)
 
 ---
 
 ### Category 6: Error Message Quality
 
-34. `sqlite.transactions.transactionRollback()` with no active transaction → report behavior
-35. `sqlite.transactions.transactionRelease({name: "nonexistent_sp_xyz"})` → structured error
-36. `sqlite.transactions.transactionExecute({statements: []})` → report behavior for empty array
+34. `sqlite.transactions.rollback()` with no active transaction → report behavior
+35. `sqlite.transactions.release({name: "nonexistent_sp_xyz"})` → structured error
+36. `sqlite.transactions.execute({statements: []})` → report behavior for empty array
 
 ---
 
