@@ -837,6 +837,7 @@ describe("createSpatialImportTool", () => {
 
   it("should import GeoJSON geometry", async () => {
     const adapter = createMockAdapter();
+    adapter.executeReadQuery.mockResolvedValue({ rows: [{ geom: "blob" }] });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createSpatialImportTool(adapter);
     const result = (await tool.handler(
@@ -854,6 +855,7 @@ describe("createSpatialImportTool", () => {
 
   it("should import GeoJSON with additional data", async () => {
     const adapter = createMockAdapter();
+    adapter.executeReadQuery.mockResolvedValue({ rows: [{ geom: "blob" }] });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createSpatialImportTool(adapter);
     const result = (await tool.handler(
@@ -910,6 +912,7 @@ describe("createSpatialImportTool", () => {
 
   it("should reject invalid column names in additionalData (GeoJSON)", async () => {
     const adapter = createMockAdapter();
+    adapter.executeReadQuery.mockResolvedValue({ rows: [{ geom: "blob" }] });
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 1 });
     const tool = createSpatialImportTool(adapter);
     const result = (await tool.handler(
