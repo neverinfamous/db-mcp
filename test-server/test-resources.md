@@ -30,7 +30,7 @@ Please test all db-mcp resources (11 data + up to 9 help) using the test databas
 **Expected Output:**
 
 - JSON with table definitions including columns, types, and constraints
-- Should include: test_products, test_orders, test_jsonb_docs, test_articles, test_users, test_measurements, test_embeddings, test_locations, test_categories, test_events, temp_text_test
+- Should include: test_products, test_orders, test_jsonb_docs, test_articles, test_users, test_measurements, test_embeddings, test_locations, test_categories, test_events
 - **Note:** FTS5 virtual tables (test_articles_fts and shadow tables) are intentionally filtered out
 
 ---
@@ -43,7 +43,7 @@ Please test all db-mcp resources (11 data + up to 9 help) using the test databas
 **Expected Output:**
 
 - JSON array of table objects
-- Should list **11 tables** (FTS5 virtual tables are intentionally filtered for cleaner output)
+- Should list **10 tables** (FTS5 virtual tables are intentionally filtered for cleaner output)
 - Each entry should have: name, type, columns (array with full column definitions)
 
 ---

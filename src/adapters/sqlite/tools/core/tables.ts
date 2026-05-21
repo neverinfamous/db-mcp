@@ -55,6 +55,7 @@ const SPATIALITE_SYSTEM_PREFIXES = [
   "SpatialIndex",
   "KNN",
   "KNN2",
+  "idx",
 ];
 
 /**
