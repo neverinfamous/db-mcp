@@ -139,8 +139,8 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 🔴 30. `sqlite_stats_regression({})` → handler error
 🔴 31. `sqlite_stats_hypothesis({})` → handler error
 🔴 32. `sqlite_stats_detect_anomalies({})` → handler error
-🔴 33. `sqlite_stats_detect_bloat({})` → handler error
-🔴 34. `sqlite_stats_detect_schema_risks({})` → handler error
+✅ 33. `sqlite_stats_detect_bloat({})` → success (no required params)
+✅ 34. `sqlite_stats_detect_schema_risks({})` → success (no required params)
 🔴 35. `sqlite_execute_code({})` → handler error
 
 ---
