@@ -32,7 +32,7 @@ import {
 const coerceNumber = (val: unknown): unknown => {
   if (typeof val === "string") {
     const num = Number(val);
-    return isNaN(num) ? val : num;
+    return isNaN(num) ? undefined : num;
   }
   return val;
 };
