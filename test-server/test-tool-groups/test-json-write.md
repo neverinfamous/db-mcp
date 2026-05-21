@@ -103,13 +103,13 @@ The MCP SDK enforces `additionalProperties: false` on **output** schemas. If a h
 
 **Write operations (use temp tables):**
 
-1. `sqlite_create_json_collection({tableName: "temp_json_test"})` → creates table with JSON columns
-2. `sqlite_json_insert({table: "temp_json_test", column: "document", path: "$.key", value: "val", whereClause: "1=1"})` → insert new key (ensure table has a row first via core write_query if needed, or if json collection starts empty, create row)
-3. `sqlite_json_set({table: "temp_json_test", column: "document", path: "$.key", value: "new_val", whereClause: "1=1"})` → modify a JSON value
-4. `sqlite_json_update({table: "temp_json_test", column: "document", path: "$.key", value: "updated_val", whereClause: "1=1"})` → update an existing key's value (distinct from json_set: update requires key to exist)
-5. `sqlite_json_merge({table: "temp_json_test", column: "document", mergeData: {"new_key": true}, whereClause: "1=1"})` → merge a JSON object
-6. `sqlite_json_array_append({table: "temp_json_test", column: "document", path: "$.arr", value: "item", whereClause: "1=1"})` → add to array (may need to set an empty array first if path $.arr doesn't exist)
-7. `sqlite_json_remove({table: "temp_json_test", column: "document", paths: ["$.key"], whereClause: "1=1"})` → remove a key
+1. `sqlite_create_json_collection({tableName: "temp_json_test"})` → creates table with JSON columns (the default column name is 'data')
+2. `sqlite_json_insert({table: "temp_json_test", column: "data", data: {"key": "val"}})` → insert new row with JSON data
+3. `sqlite_json_set({table: "temp_json_test", column: "data", path: "$.key", value: "new_val", whereClause: "1=1"})` → modify a JSON value
+4. `sqlite_json_update({table: "temp_json_test", column: "data", path: "$.key", value: "updated_val", whereClause: "1=1"})` → update an existing key's value (distinct from json_set: update requires key to exist)
+5. `sqlite_json_merge({table: "temp_json_test", column: "data", mergeData: {"new_key": true}, whereClause: "1=1"})` → merge a JSON object
+6. `sqlite_json_array_append({table: "temp_json_test", column: "data", path: "$.arr", value: "item", whereClause: "1=1"})` → add to array (may need to set an empty array first if path $.arr doesn't exist)
+7. `sqlite_json_remove({table: "temp_json_test", column: "data", path: "$.key", whereClause: "1=1"})` → remove a key
 
 **Cleanup:**
 

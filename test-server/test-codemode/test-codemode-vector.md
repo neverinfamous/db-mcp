@@ -2,6 +2,7 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in C:\Users\chris\Desktop\db-mcp\tmp\task.md. However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
+> We're in Native mode. If there is nothing to fix, don't update UNRELEASED.md.
 
 **Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
 
@@ -75,7 +76,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 14. `sqlite.vector.search({table: "temp_cm_vector", vectorColumn: "vector", queryVector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], metric: "cosine", limit: 2})` → row 1 first
 15. `sqlite.vector.delete({table: "temp_cm_vector", idColumn: "id", ids: [1]})` → success
 16. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 2}`
-17. Cleanup: `sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_vector")`
+17. Cleanup: `sqlite.core.dropTable({tableName: "temp_cm_vector"})`
 
 ---
 
@@ -145,7 +146,7 @@ const results = await sqlite.vector.search({
   queryVector: [1, 0, 0], metric: "cosine", limit: 3
 });
 if (results.rows[0].id !== 1) failures.push("expected row 1 as closest match");
-await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_vec_pipe");
+await sqlite.core.dropTable({tableName: "temp_cm_vec_pipe"});
 return { failures, success: failures.length === 0 };
 ```
 
@@ -179,7 +180,7 @@ const meta = await sqlite.json.extract({
   table: "temp_cm_vec_json", column: "metadata", path: "$.category", whereClause: "id = 1"
 });
 if (!meta || meta.success === false) failures.push("JSON extract from vector table failed");
-await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_vec_json");
+await sqlite.core.dropTable({tableName: "temp_cm_vec_json"});
 return { failures, success: failures.length === 0, searchResult: results, jsonMeta: meta };
 ```
 

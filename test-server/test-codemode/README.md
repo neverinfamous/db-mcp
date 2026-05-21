@@ -79,33 +79,33 @@ Several admin tools are **registered in WASM mode but return structured errors**
 
 #### WASM-Specific Degradation Prompt
 
-After completing the applicable prompts above, run `test-tool-group-codemode-wasm-degradation.md` — a dedicated prompt that validates graceful degradation patterns unique to WASM mode. This prompt should **only** be run against a WASM backend.
+After completing the applicable prompts above, run `test-codemode-wasm-degradation.md` — a dedicated prompt that validates graceful degradation patterns unique to WASM mode. This prompt should **only** be run against a WASM backend.
 
 ## File Inventory
 
 | File | Group | Tools |
 |------|-------|-------|
-| `test-tool-group-codemode-sandbox.md` | sandbox | Sandbox basics, API discoverability, security, readonly, state isolation |
-| `test-tool-group-codemode-core.md` | core | 14 |
-| `test-tool-group-codemode-json.md` | json | 24 |
-| `test-tool-group-codemode-text.md` | text | 19N/14W |
-| `test-tool-group-codemode-stats.md` | stats | 22N/16W |
-| `test-tool-group-codemode-vector.md` | vector | 11 |
-| `test-tool-group-codemode-admin.md` | admin | 26 |
-| `test-tool-group-codemode-transactions.md` | transactions | 8 `[NATIVE ONLY]` |
-| `test-tool-group-codemode-geo.md` | geo | 11N/4W |
-| `test-tool-group-codemode-introspection.md` | introspection | 9 |
-| `test-tool-group-codemode-migration.md` | migration | 6 |
-| `test-tool-group-codemode-wasm-degradation.md` | cross-group | WASM-only graceful degradation |
+| `test-codemode-sandbox.md` | sandbox | Sandbox basics, API discoverability, security, readonly, state isolation |
+| `test-codemode-core.md` | core | 14 |
+| `test-codemode-json.md` | json | 24 |
+| `test-codemode-text.md` | text | 19N/14W |
+| `test-codemode-stats.md` | stats | 22N/16W |
+| `test-codemode-vector.md` | vector | 11 |
+| `test-codemode-admin.md` | admin | 26 |
+| `test-codemode-transactions.md` | transactions | 8 `[NATIVE ONLY]` |
+| `test-codemode-geo.md` | geo | 11N/4W |
+| `test-codemode-introspection.md` | introspection | 9 |
+| `test-codemode-migration.md` | migration | 6 |
+| `test-codemode-wasm-degradation.md` | cross-group | WASM-only graceful degradation |
 
 **Total**: 151 Native / 125 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt.
 
 ## Recommended Execution Order
 
-1. **`test-tool-group-codemode-sandbox.md`** — Run first. Validates the sandbox execution environment (return values, API discoverability, security blocks, readonly mode, state isolation). If this fails, subsequent prompts will not work correctly.
-2. **`test-tool-group-codemode-core.md`** — Run second. Tests the core tool group (read/write queries, tables, indexes, parameter binding).
+1. **`test-codemode-sandbox.md`** — Run first. Validates the sandbox execution environment (return values, API discoverability, security blocks, readonly mode, state isolation). If this fails, subsequent prompts will not work correctly.
+2. **`test-codemode-core.md`** — Run second. Tests the core tool group (read/write queries, tables, indexes, parameter binding).
 3. **Remaining group prompts** — Run in any order: `json`, `text`, `stats`, `vector`, `admin`, `transactions`, `geo`, `introspection`, `migration`.
-4. **`test-tool-group-codemode-wasm-degradation.md`** — Run last, WASM only. Validates graceful degradation patterns.
+4. **`test-codemode-wasm-degradation.md`** — Run last, WASM only. Validates graceful degradation patterns.
 
 ## Tool Groups Available
 

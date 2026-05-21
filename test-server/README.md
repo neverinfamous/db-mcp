@@ -7,7 +7,7 @@
 | File                         | Size  | Purpose                                                                                                                                                        | When to Read                                                                        |
 | ---------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `test-tool-groups/`          | —     | **10 self-contained test prompts** — one per tool group. Each is a complete, standalone prompt (paste directly). See `test-tool-groups/README.md` for details. | **Primary testing method** — use instead of `test-tools.md` + `test-group-tools.md` |
-| `test-tool-groups-codemode/` | —     | **10 self-contained Code Mode test prompts** — one per tool group. Tests via `sqlite_execute_code` only. See `test-tool-groups-codemode/README.md`.            | **Primary Code Mode testing method**                                                |
+| `test-codemode/`             | —     | **10 self-contained Code Mode test prompts** — one per tool group. Tests via `sqlite_execute_code` only. See `test-codemode/README.md`.                        | **Primary Code Mode testing method**                                                |
 | `test-advanced/`             | —     | **10 self-contained advanced stress test prompts** — one per tool group. Second-pass edge cases via Code Mode. See `test-advanced/README.md`.                  | **Primary advanced testing method**                                                 |
 | `test-resources.md`          | ~6KB  | Resource testing plan (8 data + 7 help resources via `read_resource`)                                                                                          | When testing resources                                                              |
 | `test-preflight.md`          | ~2KB  | **Pre-flight check** — validates slim instructions, help resources, data resources, and tool-filter alignment in 5 steps                                       | Before any test pass                                                                |
@@ -108,8 +108,8 @@ node test-server/test-tool-annotations.mjs
 ## Agent Workflow
 
 1. Read `sqlite://help` resource (or `view_file` on `src/constants/server-instructions/gotchas.md`).
-2. Open the target group prompt from `test-tool-groups/` (e.g., `test-tool-group-core.md`). Each file is self-contained.
+2. Open the target group prompt from `test-tool-groups/` (e.g., `test-admin-core.md`). Each file is self-contained.
 3. Execute via direct MCP tool calls to test logic. Run both happy-path and error-path tests.
 4. Clean up any temporary tables generated during execution.
 5. Report findings using the designated reporting convention.
-6. (Optional) Run stress tests from `test-tools-advanced-1.md` or `test-tools-advanced-2.md`.
+6. (Optional) Run stress tests from `test-advanced/` folder.

@@ -372,11 +372,9 @@ catch (error) {
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
 | `test-server/tool-reference.md`              | Complete 151/125 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
-| `test-server/test-tools.md`                  | Entry-point protocol (schema ref, reporting format)                                                                |
-| `test-server/test-group-tools.md`            | Per-group deterministic checklists                                                                                 |
-| `test-server/test-tools-advanced-1.md`       | Advanced stress test prompts (part 1)                                                                              |
-| `test-server/test-tools-advanced-2.md`       | Advanced stress test prompts (part 2)                                                                              |
-| `test-server/test-tools-codemode.md`         | Code mode specific test prompts                                                                                    |
+| `test-server/test-tool-groups/`              | 10 self-contained test prompts — one per tool group. Direct calls only.                                            |
+| `test-server/test-codemode/`                 | 10 self-contained test prompts — one per tool group. Code Mode execution only.                                     |
+| `test-server/test-advanced/`                 | 10 self-contained advanced stress test prompts — one per tool group.                                               |
 | `test-server/test-resources.md`              | MCP resource verification prompts                                                                                  |
 | `test-server/test-prompts.md`                | MCP prompt verification prompts                                                                                    |
 | `test-server/test-agent-experience.md`       | 20 open-ended scenarios — validates help resource sufficiency                                                      |

@@ -2,6 +2,7 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in C:\Users\chris\Desktop\db-mcp\tmp\task.md. However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
+> We're in Native mode. If there is nothing to fix, don't update UNRELEASED.md.
 
 **Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
 
@@ -55,7 +56,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ## Cleanup
 
-- Temporary FTS tables: `temp_*` prefix. Drop at end of script.
+- Temporary tables: `temp_*` and any created `test_articles_fts`. Drop at end of script using `DROP TABLE IF EXISTS`.
 
 ---
 

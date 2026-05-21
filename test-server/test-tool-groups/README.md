@@ -6,24 +6,24 @@
 
 | File | Group | Tools | Notes |
 |------|-------|-------|-------|
-| `test-tool-group-core-data.md` | core-data | 7 | Identical Native/WASM |
-| `test-tool-group-core-schema.md` | core-schema | 8 + Code Mode | Identical Native/WASM |
-| `test-tool-group-json-read.md` | json-read | 18 | Identical Native/WASM |
-| `test-tool-group-json-write.md` | json-write | 7 | Identical Native/WASM |
-| `test-tool-group-text-basic.md` | text-basic | 11 + Code Mode | Identical Native/WASM |
-| `test-tool-group-text-advanced.md` | text-advanced | 9N/4W | FTS5 tools `[NATIVE ONLY]` |
-| `test-tool-group-stats-basic.md` | stats-basic | 16 + Code Mode | Identical Native/WASM |
-| `test-tool-group-stats-advanced.md` | stats-advanced | 6N/0W | Window functions `[NATIVE ONLY]` |
-| `test-tool-group-vector-read.md` | vector-read | 7 + Code Mode | Identical Native/WASM |
-| `test-tool-group-vector-write.md` | vector-write | 4 | Identical Native/WASM |
-| `test-tool-group-admin-core.md` | admin-core | 19 + Code Mode | Identical Native/WASM |
-| `test-tool-group-admin-extensions.md` | admin-extensions | 8 | CSV, series, rtree |
-| `test-tool-group-transactions.md` | transactions | 8 + Code Mode | `[NATIVE ONLY]` |
-| `test-tool-group-geo-haversine.md` | geo-haversine | 4 + Code Mode | Identical Native/WASM |
-| `test-tool-group-geo-spatialite.md` | geo-spatialite | 7N/0W | SpatiaLite `[NATIVE ONLY]` |
-| `test-tool-group-introspection-schema.md` | introspection-schema | 6 | Identical Native/WASM |
-| `test-tool-group-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode | Identical Native/WASM |
-| `test-tool-group-migration.md` | migration | 6 + Code Mode | Identical Native/WASM |
+| `test-core-data.md` | core-data | 7 | Identical Native/WASM |
+| `test-core-schema.md` | core-schema | 8 + Code Mode | Identical Native/WASM |
+| `test-json-read.md` | json-read | 18 | Identical Native/WASM |
+| `test-json-write.md` | json-write | 7 | Identical Native/WASM |
+| `test-text-basic.md` | text-basic | 11 + Code Mode | Identical Native/WASM |
+| `test-text-advanced.md` | text-advanced | 9N/4W | FTS5 tools `[NATIVE ONLY]` |
+| `test-stats-basic.md` | stats-basic | 16 + Code Mode | Identical Native/WASM |
+| `test-stats-advanced.md` | stats-advanced | 6N/0W | Window functions `[NATIVE ONLY]` |
+| `test-vector-read.md` | vector-read | 7 + Code Mode | Identical Native/WASM |
+| `test-vector-write.md` | vector-write | 4 | Identical Native/WASM |
+| `test-admin-core.md` | admin-core | 19 + Code Mode | Identical Native/WASM |
+| `test-admin-extensions.md` | admin-extensions | 8 | CSV, series, rtree |
+| `test-transactions.md` | transactions | 8 + Code Mode | `[NATIVE ONLY]` |
+| `test-geo-haversine.md` | geo-haversine | 4 + Code Mode | Identical Native/WASM |
+| `test-geo-spatialite.md` | geo-spatialite | 7N/0W | SpatiaLite `[NATIVE ONLY]` |
+| `test-introspection-schema.md` | introspection-schema | 6 | Identical Native/WASM |
+| `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode | Identical Native/WASM |
+| `test-migration.md` | migration | 6 + Code Mode | Identical Native/WASM |
 
 **Total**: 151 Native / 125 WASM tools across 10 groups + Code Mode.
 
@@ -97,4 +97,4 @@ Several admin tools are **registered in WASM mode but return structured errors**
 
 ## Execution
 
-Begin with any requested group prompt from this folder (e.g., `test-tool-group-admin.md`), and execute the deterministic checklist line-by-line using direct tool calls only.
+Begin with any requested group prompt from this folder (e.g., `test-admin.md`), and execute the deterministic checklist line-by-line using direct tool calls only.

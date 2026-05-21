@@ -351,13 +351,34 @@ db.close();
         }
 
         if ($unexpectedTables.Count -gt 0) {
-            Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) - possible stale test artifacts:"
+            Write-Warn "Found $($unexpectedTables.Count) unexpected table(s) - stale test artifacts:"
+            
+            $dropScript = "import Database from 'better-sqlite3'; const db = new Database(process.argv[2]); db.pragma('foreign_keys = OFF'); "
+            
+            # First pass: drop main tables (non-shadow)
             foreach ($ut in $unexpectedTables) {
-                Write-Host "    [stale] " -ForegroundColor Yellow -NoNewline
-                Write-Host $ut -ForegroundColor Gray
+                if ($ut -notmatch "_(data|idx|docsize|config|content)$") {
+                    Write-Host "    [dropping] " -ForegroundColor Yellow -NoNewline
+                    Write-Host $ut -ForegroundColor Gray
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                }
             }
-            Write-Info "These may be R-Tree shadow tables, _mcp_migrations, temp_* leftovers, or FTS tables from testing."
-            Write-Info "Consider running a full reset to remove them."
+            # Second pass: drop any remaining tables (shadow tables left behind)
+            foreach ($ut in $unexpectedTables) {
+                if ($ut -match "_(data|idx|docsize|config|content)$") {
+                    Write-Host "    [dropping shadow] " -ForegroundColor DarkYellow -NoNewline
+                    Write-Host $ut -ForegroundColor Gray
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                }
+            }
+            $dropScript += "db.pragma('foreign_keys = ON'); db.close();"
+            
+            $tempDrop = Join-Path $dbMcpRoot ".drop-artifacts.js"
+            $dropScript | Out-File -FilePath $tempDrop -Encoding utf8 -NoNewline
+            node $tempDrop $DatabasePath | Out-Null
+            Remove-Item $tempDrop -Force -ErrorAction SilentlyContinue
+            
+            Write-Success "Cleaned up stale test artifacts"
         } else {
             Write-Success "No stale test artifacts found"
         }

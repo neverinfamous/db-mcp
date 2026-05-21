@@ -14,16 +14,16 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 
 | File | Primary Focus | Key Validations |
 | ---- | ------------- | --------------- |
-| `test-tools-advanced-core.md` | Core | Boundary values, empty states, state pollution, idempotency, error quality, payload sizes |
-| `test-tools-advanced-json.md` | JSON | Deep nesting, merge conflicts (RFC 7396), type coercion, write safety |
-| `test-tools-advanced-text.md` | Text | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]` |
-| `test-tools-advanced-stats.md` | Stats | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]` |
-| `test-tools-advanced-vector.md` | Vector | Empty tables, distance metrics, dimension mismatch, batch operations |
-| `test-tools-advanced-admin.md` | Admin | View lifecycle, virtual tables, backup/restore, pragma edge cases |
-| `test-tools-advanced-transactions.md` | Transactions | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]` |
-| `test-tools-advanced-geo.md` | Geo | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]` |
-| `test-tools-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, storage/index audit, query plan depth |
-| `test-tools-advanced-migration.md` | Migration | Lifecycle, state pollution, SHA-256 dedup, error paths |
+| `test-codemode-advanced-core.md` | Core | Boundary values, empty states, state pollution, idempotency, error quality, payload sizes |
+| `test-codemode-advanced-json.md` | JSON | Deep nesting, merge conflicts (RFC 7396), type coercion, write safety |
+| `test-codemode-advanced-text.md` | Text | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]` |
+| `test-codemode-advanced-stats.md` | Stats | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]` |
+| `test-codemode-advanced-vector.md` | Vector | Empty tables, distance metrics, dimension mismatch, batch operations |
+| `test-codemode-advanced-admin.md` | Admin | View lifecycle, virtual tables, backup/restore, pragma edge cases |
+| `test-codemode-advanced-transactions.md` | Transactions | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]` |
+| `test-codemode-advanced-geo.md` | Geo | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]` |
+| `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, storage/index audit, query plan depth |
+| `test-codemode-advanced-migration.md` | Migration | Lifecycle, state pollution, SHA-256 dedup, error paths |
 
 ## Agent Execution Protocol
 
