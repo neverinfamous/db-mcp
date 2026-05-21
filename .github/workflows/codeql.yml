@@ -1,51 +1,41 @@
-name: "CodeQL Analysis"
+name: CodeQL
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    branches: [main]
+  workflow_call:
   schedule:
-    - cron: "0 0 * * 1"
+    - cron: '23 2 * * 1'
   workflow_dispatch:
 
 jobs:
   analyze:
+    name: Analyze
     runs-on: ubuntu-latest
-    # Only run if there are JS/TS files in the repo
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'pull_request' }}
     permissions:
       actions: read
       contents: read
       security-events: write
+
     strategy:
       fail-fast: false
       matrix:
-        language: ["javascript-typescript"]
+        language: ['javascript-typescript', 'actions']
+
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - name: Check for JS/TS files
-        id: check-files
-        run: |
-          if find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.mjs" -o -name "*.cjs" \) | grep -q .; then
-            echo "has_code=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_code=false" >> $GITHUB_OUTPUT
-          fi
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
-        if: steps.check-files.outputs.has_code == 'true'
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
+
       - name: Autobuild
         uses: github/codeql-action/autobuild@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
-        if: steps.check-files.outputs.has_code == 'true'
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
-        if: steps.check-files.outputs.has_code == 'true'
         with:
-          category: "/language:${{matrix.language}}"
-      - name: Skip notification
-        if: steps.check-files.outputs.has_code == 'false'
-        run: echo "No JavaScript/TypeScript files found. Skipping CodeQL analysis."
+          upload: always

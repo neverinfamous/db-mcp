@@ -1,23 +1,106 @@
+# Dependabot configuration for db-mcp
+# TypeScript/Node.js project — npm, github-actions, and docker ecosystems
+
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  # NPM dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/New_York'
+    open-pull-requests-limit: 10
+    reviewers:
+      - 'neverinfamous'
     labels:
-      - "dependencies"
-      - "npm"
+      - 'dependencies'
+      - 'npm'
     commit-message:
-      prefix: "chore"
+      prefix: 'chore'
+    groups:
+      mcp-sdk:
+        patterns:
+          - '@modelcontextprotocol/*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      database:
+        patterns:
+          - 'better-sqlite3*'
+          - 'sql.js*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      validation:
+        patterns:
+          - 'zod*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      build-tools:
+        patterns:
+          - 'typescript*'
+          - 'tsup*'
+          - '@types/*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      linting:
+        patterns:
+          - 'eslint*'
+          - '@eslint/*'
+          - 'typescript-eslint*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      testing:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - '@playwright/*'
+        update-types:
+          - 'minor'
+          - 'patch'
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  # GitHub Actions
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
+      time: '10:00'
+      timezone: 'America/New_York'
+    open-pull-requests-limit: 5
+    reviewers:
+      - 'neverinfamous'
     labels:
-      - "dependencies"
-      - "github-actions"
+      - 'dependencies'
+      - 'github-actions'
     commit-message:
-      prefix: "chore"
+      prefix: 'chore'
+    groups:
+      actions:
+        patterns:
+          - 'actions/*'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # Docker dependencies
+  - package-ecosystem: 'docker'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'tuesday'
+      time: '09:00'
+      timezone: 'America/New_York'
+    open-pull-requests-limit: 3
+    reviewers:
+      - 'neverinfamous'
+    labels:
+      - 'dependencies'
+      - 'docker'
+    commit-message:
+      prefix: 'chore'

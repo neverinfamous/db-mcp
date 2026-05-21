@@ -1,10 +1,10 @@
 # Docker Deployment Setup Guide
 
-_Last Updated: February 4, 2026 - v1.0.0_
+_Last Updated: May 21, 2026_
 
 ## 🚀 Automated Docker Deployment
 
-This repository is configured for **automatic Docker image deployment** to Docker Hub on every push to the `main` branch after tests pass.
+This repository uses a **gatekeeper-orchestrated CI/CD pipeline** that fans out all security checks in parallel and gates Docker + npm publishing behind ALL of them. Publishing is triggered by tag pushes (`v*`) only.
 
 ## 📋 Current Status
 
@@ -72,39 +72,46 @@ Before the Docker deployment workflow can run, add these secrets to your GitHub 
 - **linux/amd64** - x86_64 architecture
 - **linux/arm64** - Apple Silicon / ARM64
 
-### Tags Generated on Each Push
+### Tags Generated on Tag Push
 
-When you push to `main` branch, the workflow automatically creates:
+When you push a `v*` tag and all gates pass, the pipeline creates:
 
-- `latest` - Always points to most recent main branch build
-- `v1.0.0` - Current version from package.json
+- `latest` - Always points to most recent tagged release
+- `vX.Y.Z` - Version from package.json
 - `sha-XXXXXXX` - Git commit SHA pinned tag
 
 ## 🔄 Deployment Triggers
 
-### Automatic Deployment
+### Gatekeeper Pipeline (push to main or tag)
 
-- ✅ **Push to main** → Runs `lint-and-test`, then builds and pushes Docker images
-- ✅ **Pull requests** → Runs `lint-and-test` only (no Docker push)
+1. **Fan-out**: `lint-and-test`, `codeql`, `secrets-scanning`, `security-update` run in parallel
+2. **Gate**: ALL four must pass before publish
+3. **Publish**: Only on `v*` tag pushes → Docker build → npm publish (last)
 
-### Manual Deployment
+### PR Checks
+
+- ✅ **Pull requests** → Runs `lint-and-test`, `codeql`, `secrets-scanning`, `e2e` individually
+
+### Release Workflow
+
+Use the `/bump-deploy` workflow for releases:
 
 ```bash
-# Create and push a release tag
-git tag v1.0.0
-git push origin v1.0.0
+# After PR is merged to main:
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin main --follow-tags
+gh release create vX.Y.Z --title "vX.Y.Z" --notes-file releases/vX.Y.Z.md
 ```
 
 ## 🛡️ Security Features
 
-### Multi-Layer Security Scanning
+### Multi-Layer Security Scanning (All Gate Publish)
 
-1. **Docker Scout CLI** - Runs during build, blocks critical/high vulnerabilities
-   - Scans single-platform (linux/amd64) image locally
-   - 8-minute timeout for efficient CI/CD
-   - Blocks deployment if fixable critical/high CVEs detected
-
-2. **npm audit** - Runs during lint-and-test workflow
+1. **CodeQL** — Static analysis for JavaScript/TypeScript + GitHub Actions injection vulnerabilities
+2. **TruffleHog + Gitleaks** — Dual secret scanning (verified secrets only)
+3. **Trivy** — Docker image vulnerability scan (SARIF upload to Security tab + blocking table scan)
+4. **Docker Scout** — Docker image CVE scan via official action (blocks fixable critical/high)
+5. **npm audit** — Dependency vulnerability scan (all + production-only)
 
 ### Image Optimization
 
@@ -115,18 +122,20 @@ git push origin v1.0.0
 
 ### Supply Chain Security
 
-- **Attestations**: Enabled for all images
-- **Provenance**: Full build provenance tracking
-- **SBOM**: Software Bill of Materials generated
+- **Build Provenance Attestation**: Signed provenance pushed to registry
+- **Provenance**: Full build provenance tracking (`mode=max`)
+- **SBOM**: Software Bill of Materials generated for every image
 
 ## 🧪 Testing
 
 ### Automated CI/CD Tests
 
-- ✅ **Linting** - ESLint code quality checks
-- ✅ **TypeScript check** - Type safety verification
-- ✅ **Test suite** - 941 tests with Vitest
-- ✅ **Multi-version** - Node.js 22.x, 24.x, 25.x
+- ✅ **Linting** — ESLint code quality checks
+- ✅ **TypeScript check** — Type safety verification
+- ✅ **Test suite** — Vitest unit tests
+- ✅ **E2E tests** — Playwright with SQLite test database
+- ✅ **Multi-version** — Node.js 22.x, 24.x, 25.x
+- ✅ **Documentation drift** — Copilot-powered doc consistency audit on PRs
 
 ### Manual Testing
 
