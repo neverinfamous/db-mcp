@@ -46,6 +46,7 @@
 - **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, `test-server/tool-reference.md`, and `test-server/code-map.md` to reflect the expanded inventory (151 Native / 125 WASM tools), including the 5 new core convenience tools, JSON security scan, text sentiment, and FTS5 headline.
 - **Transaction Group Split**: Moved 8 transaction tools (`sqlite_transaction_begin`, `sqlite_transaction_status`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute`) from `admin` group into a dedicated `transactions` group for improved discoverability. OAuth scope for transactions changed from `admin` to `write` (matching mysql-mcp and postgres-mcp). Code Mode exposes transactions via `sqlite.transactions.*` namespace.
 - **Text Group Payload Optimization**: Removed the redundant `original` string field from the output schemas of 6 text tools (`sqlite_text_case`, `sqlite_text_normalize`, `sqlite_text_split`, `sqlite_text_substring`, `sqlite_text_trim`, and `sqlite_text_sentiment`). Tools now return `rowid` for traceability, immediately cutting JSON payload sizes by up to 50% for operations on large text columns.
+- **Testing Prompts**: Updated all 40 advanced and standard test prompts to default to the internal agent task tracking system instead of hardcoding a temporary local workspace file.
 
 ### Fixed
 
