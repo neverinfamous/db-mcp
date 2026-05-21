@@ -272,7 +272,7 @@ describe("setupRateLimiting", () => {
     vi.restoreAllMocks();
   });
 
-  it("should allow requests under the limit", () => {
+  it("should allow requests under the limit", async () => {
     const state = createMockState();
     setupRateLimiting(state);
 
@@ -281,15 +281,12 @@ describe("setupRateLimiting", () => {
     const res = createMockRes();
     const next = vi.fn();
 
-    middleware(req, res, next);
+    await middleware(req, res, next);
 
     expect(next).toHaveBeenCalled();
-
-    // Clean up timer
-    if (state.rateLimitCleanupTimer) clearInterval(state.rateLimitCleanupTimer);
   });
 
-  it("should bypass rate limit for /health path", () => {
+  it("should bypass rate limit for /health path", async () => {
     const state = createMockState();
     setupRateLimiting(state);
 
@@ -298,11 +295,9 @@ describe("setupRateLimiting", () => {
     const res = createMockRes();
     const next = vi.fn();
 
-    middleware(req, res, next);
+    await middleware(req, res, next);
 
     expect(next).toHaveBeenCalled();
-
-    if (state.rateLimitCleanupTimer) clearInterval(state.rateLimitCleanupTimer);
   });
 
   it("should not throw when app is null", () => {
