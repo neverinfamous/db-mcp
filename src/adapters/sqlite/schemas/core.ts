@@ -222,6 +222,7 @@ export const CreateIndexSchema = z.object({
 
 export const GetIndexesSchema = z.object({
   table: z.string().optional().describe("Filter indexes by table name"),
+  tableName: z.string().optional().describe("Alias for table"),
   excludeSystemIndexes: z
     .boolean()
     .optional()
