@@ -15,7 +15,7 @@ import {
   sanitizeIdentifier,
   validateWhereClause,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 
 
 
@@ -45,11 +45,9 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.column);
 
         if (input.data === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: data",
-          };
+          throw new ValidationError("Missing required parameter: data", "VALIDATION_ERROR", {
+            suggestion: "Provide JSON data to insert.",
+          });
         }
 
         const valueJson = JSON.stringify(input.data);
@@ -107,19 +105,15 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Validate JSON path format
         if (!input.path.startsWith("$")) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
+            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+          });
         }
 
         if (input.value === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: value",
-          };
+          throw new ValidationError("Missing required parameter: value", "VALIDATION_ERROR", {
+            suggestion: "Provide a value to update.",
+          });
         }
 
         const valueJson = JSON.stringify(input.value);
@@ -174,11 +168,9 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.column);
 
         if (input.mergeData === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: mergeData",
-          };
+          throw new ValidationError("Missing required parameter: mergeData", "VALIDATION_ERROR", {
+            suggestion: "Provide JSON data to merge.",
+          });
         }
 
         const mergeJson = JSON.stringify(input.mergeData);
@@ -243,10 +235,9 @@ export function createJsonCollectionTool(
         if (input.indexes) {
           for (const idx of input.indexes) {
             if (!idx.path.startsWith("$")) {
-              return {
-                success: false,
-                error: `JSON path must start with $: ${idx.path}`,
-              };
+              throw new ValidationError(`JSON path must start with $: ${idx.path}`, "VALIDATION_ERROR", {
+                suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+              });
             }
           }
         }

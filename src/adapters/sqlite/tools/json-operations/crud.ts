@@ -15,7 +15,7 @@ import {
   sanitizeIdentifier,
   validateWhereClause,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   JsonValidOutputSchema,
   JsonExtractOutputSchema,
@@ -92,12 +92,9 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         if (!input.path.startsWith("$")) {
-          return {
-            success: false,
-            rowCount: 0,
-            values: [],
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
+            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+          });
         }
 
         let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
@@ -146,19 +143,15 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         if (!input.path.startsWith("$")) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
+            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+          });
         }
 
         if (input.value === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: value",
-          };
+          throw new ValidationError("Missing required parameter: value", "VALIDATION_ERROR", {
+            suggestion: "Provide a value to set.",
+          });
         }
 
         const valueJson = JSON.stringify(input.value);
@@ -209,11 +202,9 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         if (!input.path.startsWith("$")) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
+            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+          });
         }
 
         validateWhereClause(input.whereClause);
@@ -266,12 +257,9 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
 
         const path = input.path ?? "$";
         if (!path.startsWith("$")) {
-          return {
-            success: false,
-            rowCount: 0,
-            types: [],
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
+            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+          });
         }
 
         let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
@@ -323,12 +311,9 @@ export function createJsonArrayLengthTool(
 
         const path = input.path ?? "$";
         if (!path.startsWith("$")) {
-          return {
-            success: false,
-            rowCount: 0,
-            lengths: [],
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
+            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+          });
         }
 
         let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
@@ -378,19 +363,15 @@ export function createJsonArrayAppendTool(
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         if (!input.path.startsWith("$")) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "JSON path must start with $",
-          };
+          throw new ValidationError("JSON path must start with $", "VALIDATION_ERROR", {
+            suggestion: "Use a valid JSON path starting with $. For example: $.key or $[0]",
+          });
         }
 
         if (input.value === undefined) {
-          return {
-            success: false,
-            rowsAffected: 0,
-            error: "Missing required parameter: value",
-          };
+          throw new ValidationError("Missing required parameter: value", "VALIDATION_ERROR", {
+            suggestion: "Provide a value to append.",
+          });
         }
 
         const valueJson = JSON.stringify(input.value);
