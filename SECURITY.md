@@ -1,6 +1,6 @@
 # 🔒 Security Policy
 
-The postgres-mcp PostgreSQL MCP server implements comprehensive security measures to protect your databases across stdio, HTTP, and SSE transports.
+The db-mcp SQLite MCP server implements comprehensive security measures to protect your databases across stdio, HTTP, and SSE transports.
 
 ## 🛡️ **Database Security**
 
@@ -8,9 +8,9 @@ The postgres-mcp PostgreSQL MCP server implements comprehensive security measure
 
 **Identifier Sanitization** (`src/utils/identifiers.ts`)
 
-- ✅ **Comprehensive coverage** — all table, column, schema, and index names validated and quoted across every tool group (admin, backup, core, jsonb, monitoring, partitioning, performance, postgis, schema, stats, text, vector)
-- ✅ **PostgreSQL identifier rules enforced** — start with letter/underscore, contain only alphanumerics, underscores, or $ signs
-- ✅ **63-character limit** enforced (PostgreSQL maximum)
+- ✅ **Comprehensive coverage** — all table, column, and index names validated and quoted across every tool group (admin, core, json, stats, geo, introspection, migration, text, vector)
+- ✅ **SQLite identifier rules enforced** — start with letter/underscore, contain only alphanumerics, underscores, or $ signs
+- ✅ **Length limits** enforced for compatibility and safety
 - ✅ **Invalid identifiers** throw `InvalidIdentifierError`
 
 Key functions:
@@ -40,7 +40,7 @@ Every tool returns structured error responses — never raw exceptions or intern
 }
 ```
 
-Error codes are module-prefixed (e.g., `PG_CONNECTION_FAILED`, `SCHEMA_NOT_FOUND`). Internal stack traces are logged server-side but never exposed to clients.
+Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FOUND`). Internal stack traces are logged server-side but never exposed to clients.
 
 ## 🔐 **Input Validation**
 
@@ -111,7 +111,7 @@ Full OAuth 2.1 for production multi-tenant deployments:
 - ✅ **RFC 9728** Protected Resource Metadata (`/.well-known/oauth-protected-resource`)
 - ✅ **RFC 8414** Authorization Server Discovery with caching
 - ✅ **JWT validation** with JWKS support (TTL: 1 hour, configurable)
-- ✅ **PostgreSQL-specific scopes**: `read`, `write`, `admin`, `full`, `db:{name}`, `schema:{name}`, `table:{schema}:{table}`
+- ✅ **SQLite-specific scopes**: `read`, `write`, `admin`, `full`, `db:{name}`, `table:{name}`
 - ✅ **Per-tool scope enforcement** via `AsyncLocalStorage` context threading
 
 > **⚠️ HTTP without OAuth:** When OAuth is not configured, all scope checks are bypassed. If you expose the HTTP transport without enabling OAuth, any client has full unrestricted access. Always enable OAuth for production HTTP deployments.
@@ -145,14 +145,14 @@ The Dockerfile patches npm-bundled transitive dependencies for Docker Scout comp
 
 ```bash
 # Secure volume mounting
-docker run -v ./data:/app/data:rw,noexec,nosuid,nodev neverinfamous/postgres-mcp:latest
+docker run -v ./data:/app/data:rw,noexec,nosuid,nodev writenotenow/db-mcp:latest
 ```
 
 ### **Resource Limits**
 
 ```bash
 # Apply resource limits
-docker run --memory=1g --cpus=1 neverinfamous/postgres-mcp:latest
+docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 ```
 
 ## 🔐 **Logging Security**
@@ -193,7 +193,7 @@ docker run --memory=1g --cpus=1 neverinfamous/postgres-mcp:latest
 6. **Configure CORS origins explicitly** — avoid wildcards
 7. **Use resource limits** — apply Docker `--memory` and `--cpus` limits
 8. **Apply rate limiting at the proxy layer** when deploying behind a reverse proxy
-9. **For cloud-managed databases** with IAM authentication (e.g., AWS RDS), set `POSTGRES_POOL_MIN=2` to reduce connection establishment latency
+9. **For WAL mode performance**, consider enabling `PRAGMA journal_mode=WAL;` in your initialization script.
 10. **Consider SHA-pinning** critical GitHub Actions in CI workflows for supply-chain defense-in-depth
 
 ### **For Developers**
@@ -222,7 +222,7 @@ docker run --memory=1g --cpus=1 neverinfamous/postgres-mcp:latest
 - [x] Security headers (CSP, X-Content-Type-Options, X-Frame-Options, Cache-Control, Referrer-Policy, Permissions-Policy)
 - [x] HSTS (opt-in)
 - [x] OAuth 2.1 with JWT/JWKS validation (RFC 9728, RFC 8414)
-- [x] PostgreSQL-specific scope enforcement (`read`, `write`, `admin`, `full`, `db:*`, `schema:*`, `table:*:*:*`)
+- [x] SQLite-specific scope enforcement (`read`, `write`, `admin`, `full`, `db:*`, `table:*`)
 - [x] Per-tool scope enforcement via `AsyncLocalStorage`
 - [x] Credential redaction in logs
 - [x] Log injection prevention
@@ -263,4 +263,4 @@ We appreciate responsible disclosure and will acknowledge your contribution in o
 - **Database maintenance**: Run `ANALYZE` and `VACUUM` regularly for optimal performance
 - **Security patches**: Apply host system security updates
 
-The postgres-mcp PostgreSQL MCP server is designed with **security-first principles** to protect your databases while maintaining excellent performance and full PostgreSQL capability.
+The db-mcp SQLite MCP server is designed with **security-first principles** to protect your databases while maintaining excellent performance and full SQLite capability.
