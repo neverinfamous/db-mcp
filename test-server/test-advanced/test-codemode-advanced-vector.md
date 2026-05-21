@@ -1,4 +1,4 @@
-# Advanced Stress Test — db-mcp — [vector]
+# db-mcp Advanced Stress Test — [vector]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
