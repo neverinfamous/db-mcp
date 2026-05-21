@@ -18,10 +18,6 @@ import type { Express } from "express";
 // Rate Limiting
 // =============================================================================
 
-export interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
 
 export const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
 export const DEFAULT_RATE_LIMIT_MAX = 100;
@@ -168,7 +164,4 @@ export interface HttpTransportState {
   // Reference to the MCP server for stateful connections
   mcpServer: McpServer | null;
 
-  // Rate limiting state
-  rateLimitMap: Map<string, RateLimitEntry>;
-  rateLimitCleanupTimer: ReturnType<typeof setInterval> | null;
 }

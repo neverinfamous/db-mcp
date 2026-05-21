@@ -139,12 +139,14 @@ export function setupCors(state: HttpTransportState): void {
   }
 }
 
+import rateLimit from "express-rate-limit";
+
 // =============================================================================
 // Rate Limiting
 // =============================================================================
 
 /**
- * Set up per-IP sliding-window rate limiting
+ * Set up per-IP sliding-window rate limiting using express-rate-limit
  */
 export function setupRateLimiting(state: HttpTransportState): void {
   if (!state.app) return;
@@ -155,46 +157,20 @@ export function setupRateLimiting(state: HttpTransportState): void {
     : DEFAULT_RATE_LIMIT_MAX;
   const trustProxy = state.config.trustProxy ?? false;
 
-  // Periodic cleanup of expired entries
-  state.rateLimitCleanupTimer = setInterval(() => {
-    const now = Date.now();
-    for (const [ip, entry] of state.rateLimitMap) {
-      if (now >= entry.resetAt) {
-        state.rateLimitMap.delete(ip);
-      }
-    }
-  }, windowMs);
-  // Don't block process exit
-  state.rateLimitCleanupTimer.unref();
-
-  state.app.use((req: Request, res: Response, next: () => void) => {
-    // Skip rate limiting for health checks
-    if (req.path === "/health") {
-      next();
-      return;
-    }
-
-    const ip = getClientIp(req, trustProxy);
-    const now = Date.now();
-    let entry = state.rateLimitMap.get(ip);
-
-    if (!entry || now >= entry.resetAt) {
-      entry = { count: 0, resetAt: now + windowMs };
-      state.rateLimitMap.set(ip, entry);
-    }
-
-    entry.count++;
-
-    if (entry.count > maxRequests) {
-      const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-      res.setHeader("Retry-After", String(retryAfter));
-      res.status(429).json({
+  const limiter = rateLimit({
+    windowMs,
+    max: maxRequests,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => getClientIp(req, trustProxy),
+    skip: (req) => req.path === "/health",
+    handler: (_req, res, _next, options) => {
+      res.status(options.statusCode).json({
         error: "Too Many Requests",
-        retryAfter,
+        retryAfter: Math.ceil(windowMs / 1000),
       });
-      return;
-    }
-
-    next();
+    },
   });
+
+  state.app.use(limiter);
 }
