@@ -348,7 +348,7 @@ db.close();
             $name = ($line -replace "^ALL:", "").Trim()
             $isExpected = $expectedTables.ContainsKey($name) -or $knownSystemTables -contains $name
             if (-not $isExpected) {
-                if ($name.StartsWith("stress_")) {
+                if ($name.StartsWith("stress_") -or $name.StartsWith("idx_stress_")) {
                     $temporaryTables += $name
                 } else {
                     $unexpectedTables += $name
