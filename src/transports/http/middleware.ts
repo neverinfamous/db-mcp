@@ -6,6 +6,7 @@
  */
 
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import type { Request, Response, RequestHandler } from "express";
 import {
   DEFAULT_RATE_LIMIT_WINDOW_MS,
@@ -139,7 +140,6 @@ export function setupCors(state: HttpTransportState): void {
   }
 }
 
-import rateLimit from "express-rate-limit";
 
 // =============================================================================
 // Rate Limiting
@@ -167,7 +167,6 @@ export function setupRateLimiting(state: HttpTransportState): void {
     handler: (_req, res, _next, options) => {
       res.status(options.statusCode).json({
         error: "Too Many Requests",
-        retryAfter: Math.ceil(windowMs / 1000),
       });
     },
   });
