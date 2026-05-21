@@ -7,7 +7,7 @@
  * ensureConnected, ensureDb, getDatabase, rawQuery.
  */
 
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   SqliteAdapter,
   createSqliteAdapter,
@@ -278,5 +278,77 @@ describe("SqliteAdapter - connected (in-memory)", () => {
     await adapter.connect({ type: "sqlite" });
     await adapter.disconnect();
     await adapter.disconnect();
+  });
+
+  it("ensureConnected should throw if db is null but connected is true", () => {
+    adapter = createSqliteAdapter();
+    (adapter as any).connected = true;
+    (adapter as any).db = null;
+    
+    expect(() => adapter.executeReadQuery("SELECT 1")).toThrow("Not connected to database");
+  });
+
+  it("getAvailableToolDefinitions should filter tools based on capabilities", async () => {
+    adapter = createSqliteAdapter();
+    await adapter.connect({ type: "sqlite" });
+    
+    const originalGetTools = adapter.getToolDefinitions.bind(adapter);
+    adapter.getToolDefinitions = () => [
+      ...originalGetTools(),
+      { name: "sqlite_geo_spatial_query", group: "geo", handler: vi.fn(), description: "", schema: {} as any },
+      { name: "sqlite_fts_search", group: "text", handler: vi.fn(), description: "", schema: {} as any }
+    ];
+
+    let tools = adapter.getAvailableToolDefinitions();
+    let names = tools.map(t => t.name);
+    
+    expect(names).toContain("sqlite_vector_search");
+    expect(names).not.toContain("sqlite_geo_spatial_query"); // filtered out (geo=false)
+    expect(names).not.toContain("sqlite_fts_search"); // filtered out (fts=false)
+    
+    const originalCaps = adapter.getCapabilities.bind(adapter);
+    adapter.getCapabilities = () => ({
+      ...originalCaps(),
+      vector: false,
+      geospatial: true,
+      fullTextSearch: true,
+      transactions: false
+    });
+    
+    tools = adapter.getAvailableToolDefinitions();
+    names = tools.map(t => t.name);
+    
+    expect(names).not.toContain("sqlite_vector_search"); // filtered out (vector=false)
+    expect(names).toContain("sqlite_geo_spatial_query"); // included (geo=true)
+    expect(names).toContain("sqlite_fts_search"); // included (fts=true)
+    expect(names).not.toContain("sqlite_transaction_begin"); // filtered out (transactions=false)
+  });
+
+  describe("Fallback schema methods", () => {
+    it("should use fallback methods for getSchema, listTables, describeTable, getIndexes", async () => {
+      adapter = createSqliteAdapter();
+      await adapter.connect({ type: "sqlite" });
+      
+      await adapter.executeWriteQuery("CREATE TABLE fallback_test (id INTEGER PRIMARY KEY)");
+      await adapter.executeWriteQuery("CREATE INDEX idx_fallback ON fallback_test(id)");
+      
+      // Force schemaManager to be null to test fallbacks
+      (adapter as any).schemaManager = null;
+      
+      const schemas = await adapter.getSchema();
+      expect(schemas.tables).toBeDefined();
+      
+      const tables = await adapter.listTables();
+      expect(tables.length).toBeGreaterThan(0);
+      
+      const tableInfo = await adapter.describeTable("fallback_test");
+      expect(tableInfo.name).toBe("fallback_test");
+      
+      const allIndexes = await adapter.getIndexes();
+      expect(allIndexes.length).toBeGreaterThan(0);
+      
+      const tableIndexes = await adapter.getIndexes("fallback_test");
+      expect(tableIndexes.length).toBeGreaterThan(0);
+    });
   });
 });

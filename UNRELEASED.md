@@ -2,6 +2,7 @@
 
 ### Added
 
+- **Test Coverage**: Added comprehensive test suites for anomaly detection (`sqlite_stats_detect_anomalies`), bloat detection (`sqlite_stats_detect_bloat`), schema risk detection (`sqlite_stats_detect_schema_risks`), native extension loading (`loadSpatialite`, `loadCsvExtension`), `BackupManager` snapshot generation/cleanup, FTS5 execution paths, `WorkerSandbox` API bindings and RPC functionality, resource error handling (`sqlite_table_schema`, `sqlite_meta`, `sqlite_pragma`, `sqlite_compile_options`), and adapter lifecycle fallback paths, reaching the 90.34% test coverage milestone.
 - **Progress Notifications**: Added support for MCP long-running task progress notifications. Notifications are now correctly emitted during lengthy operations including `sqlite_backup` (admin/backup), `sqlite_migration_apply` (migration/apply), and `sqlite_virtual_analysis` (virtual/analysis), ensuring cross-server parity with postgres-mcp and mysql-mcp.
 
 - **Initialization SQL**: Added `initializationSql?: string[]` to `SqliteConfig` for SQLite connections, enabling per-connection session setup (e.g. `PRAGMA foreign_keys = ON;`). This executes exactly once when the adapter connects, satisfying the requirement for session-level guardrails across both Native (`better-sqlite3`) and WASM (`sql.js`) backends.
