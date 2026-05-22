@@ -3,13 +3,13 @@
 ## Basic Queries
 
 - `sqlite_read_query({ query: "SELECT * FROM users LIMIT 10" })` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements
-- `sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })` — execute INSERT, UPDATE, DELETE, or DDL statements
-
+- `sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })` — execute INSERT, UPDATE, DELETE, or REPLACE statements (Strictly DML)
+  
 ## Tables & Schema
 
 - `sqlite_list_tables({ excludeSystemTables?: boolean })` — list all tables in the database (system tables excluded by default)
 - `sqlite_describe_table({ table: "users" })` — get detailed schema, columns, and foreign keys for a specific table. Detects generated columns (VIRTUAL/STORED) with expression.
-- `sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })` — create a new table. Use `strict: true` for STRICT mode (SQLite 3.37+) to enforce column type checking.
+- `sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }], foreignKeys: [{ column: "role_id", targetTable: "roles" }], checkConstraints: ["price > 0"] })` — create a new table with optional table-level constraints. Use `strict: true` for STRICT mode (SQLite 3.37+) to enforce column type checking.
 - `sqlite_drop_table({ table: "users", ifExists?: true })` — drop an existing table
 - `sqlite_alter_table({ table: "users", operation: "add_column", column: "age", type: "INTEGER", nullable: true })` — add, rename, or drop columns, or rename a table. Operations: `add_column`, `rename_column`, `drop_column`, `rename_table`.
 - `sqlite_list_triggers({ table?: "users" })` — list database triggers, optionally filtered by table

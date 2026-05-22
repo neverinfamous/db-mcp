@@ -37,7 +37,7 @@
 
 ### Changed
 
-- `sqlite_create_table` now accepts `strict: true` parameter to create STRICT tables (SQLite 3.37+) that enforce column type checking.
+- `sqlite_create_table` now accepts `strict: true` parameter to create STRICT tables (SQLite 3.37+) that enforce column type checking, and natively supports `foreignKeys` and `checkConstraints` to allow full relational schema modeling without requiring raw DDL execution.
 - `sqlite_describe_table` now detects and reports generated columns (VIRTUAL/STORED) including their expression, via PRAGMA table_xinfo enrichment.
 - Refactored `mcp-server.ts` into smaller registration modules (`built-in-tools.ts`, `help-resources.ts`, `audit-tools.ts`) to adhere to the 500-line soft limit.
 - Refactored `session.ts` into `stateless.ts` and `stateful.ts` to adhere to the 500-line soft limit.

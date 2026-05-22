@@ -2,7 +2,7 @@
 
 ## ⚠️ Critical Gotchas
 
-1. **sqlite_write_query**: ⛔ Only INSERT/UPDATE/DELETE — use `sqlite_read_query` for SELECT
+1. **sqlite_write_query**: ⛔ Strictly DML only (INSERT/UPDATE/DELETE/REPLACE) — use `sqlite_read_query` for SELECT, and `sqlite_create_table` (which supports `foreignKeys` and `checkConstraints`) for schema creation.
 2. **Regex patterns**: Double-escape backslashes (`\\\\`) when passing through JSON/MCP
 3. **FTS5 virtual tables**: `*_fts` and shadow tables `*_fts_*` are hidden from `sqlite_list_tables` for cleaner output
 4. **FTS5 boolean logic**: Uses AND by default — `"machine learning"` = rows with BOTH words. Use OR explicitly: `"machine OR learning"`

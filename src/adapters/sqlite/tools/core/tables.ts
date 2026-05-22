@@ -208,9 +208,29 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
         return parts.join(" ");
       });
 
+      // Build table-level constraints
+      const tableConstraints: string[] = [];
+      
+      if (input.foreignKeys && input.foreignKeys.length > 0) {
+        for (const fk of input.foreignKeys) {
+          let fkStr = `FOREIGN KEY ("${fk.column}") REFERENCES "${fk.targetTable}"`;
+          if (fk.targetColumn) fkStr += `("${fk.targetColumn}")`;
+          if (fk.onDelete) fkStr += ` ON DELETE ${fk.onDelete}`;
+          if (fk.onUpdate) fkStr += ` ON UPDATE ${fk.onUpdate}`;
+          tableConstraints.push(fkStr);
+        }
+      }
+
+      if (input.checkConstraints && input.checkConstraints.length > 0) {
+        for (const chk of input.checkConstraints) {
+          tableConstraints.push(`CHECK (${chk})`);
+        }
+      }
+
+      const allDefs = [...columnDefs, ...tableConstraints];
       const ifNotExists = input.ifNotExists ? "IF NOT EXISTS " : "";
       const strictSuffix = input.strict ? " STRICT" : "";
-      const sql = `CREATE TABLE ${ifNotExists}"${input.table}" (${columnDefs.join(", ")})${strictSuffix}`;
+      const sql = `CREATE TABLE ${ifNotExists}"${input.table}" (${allDefs.join(", ")})${strictSuffix}`;
 
       try {
         await adapter.executeQuery(sql);

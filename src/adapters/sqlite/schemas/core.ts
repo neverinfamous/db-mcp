@@ -206,6 +206,22 @@ export const CreateTableSchema = z.object({
       }),
     )
     .describe("Column definitions"),
+  foreignKeys: z
+    .array(
+      z.object({
+        column: z.string().describe("Local column name"),
+        targetTable: z.string().describe("Target table name"),
+        targetColumn: z.string().optional().describe("Target column name (defaults to primary key)"),
+        onDelete: z.enum(["NO ACTION", "RESTRICT", "SET NULL", "SET DEFAULT", "CASCADE"]).optional(),
+        onUpdate: z.enum(["NO ACTION", "RESTRICT", "SET NULL", "SET DEFAULT", "CASCADE"]).optional(),
+      }),
+    )
+    .optional()
+    .describe("Foreign key constraints"),
+  checkConstraints: z
+    .array(z.string())
+    .optional()
+    .describe("CHECK constraints (e.g., 'price > 0')"),
   ifNotExists: z
     .boolean()
     .optional()
