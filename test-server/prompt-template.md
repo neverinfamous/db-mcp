@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Testing: [migration]
+# db-mcp {{TITLE_TYPE}}: [{{GROUP_NAME}}]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+{{SCHEMA_REF}}
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -72,104 +72,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## Group Focus: migration
-
-> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
-
-### Code Mode Methods
-
-- `sqlite.migration.migrationInit`
-- `sqlite.migration.migrationRecord`
-- `sqlite.migration.migrationApply`
-- `sqlite.migration.migrationRollback`
-- `sqlite.migration.migrationHistory`
-- `sqlite.migration.migrationStatus`
-
-## Phase 1: Initialization & Idempotency (batched)
-
-1. `sqlite.migration.migrationInit({})` → success, `_mcp_migrations` table created
-2. `sqlite.migration.migrationInit({})` → idempotent: should succeed without error
-3. `sqlite.migration.migrationStatus({})` → empty/clean state
-4. `sqlite.migration.migrationHistory({})` → empty list
-
-
-## Phase 2: Full Lifecycle (Record → Apply → Rollback) (batched)
-
-**2.1 Simple ALTER TABLE Migration**
-
-5. `sqlite.migration.migrationRecord({version: "stress_001_add_col", description: "Add stress flag", sql: "ALTER TABLE test_products ADD COLUMN stress_flag INTEGER DEFAULT 0"})` → recorded (SQL not executed)
-6. `sqlite.migration.migrationStatus({})` → shows 1 recorded migration
-7. Verify column is NOT yet added
-8. `sqlite.migration.migrationApply({version: "stress_001_add_col", description: "Add stress flag", sql: "ALTER TABLE test_products ADD COLUMN stress_flag INTEGER DEFAULT 0"})` → applied (SQL executed)
-9. `sqlite.migration.migrationStatus({})` → shows 1 applied
-
-**2.2 CREATE TABLE Migration**
-
-10. `sqlite.migration.migrationApply({version: "stress_002_create_table", description: "Create data table", sql: "CREATE TABLE stress_migration_data (id INTEGER PRIMARY KEY, name TEXT NOT NULL, value REAL)", rollbackSql: "DROP TABLE IF EXISTS stress_migration_data"})` → applied
-11. `sqlite.migration.migrationHistory({})` → both migrations with timestamps
-
-**2.3 Rollback Chain**
-
-12. `sqlite.migration.migrationRollback({version: "stress_002_create_table"})` → rollback with stored rollbackSql
-13. Verify `stress_migration_data` is gone
-14. `sqlite.migration.migrationHistory({})` → check status
-
-
-## Phase 3: State Pollution & Ordering (batched)
-
-**3.1 Re-Record After Rollback**
-
-15. `sqlite.migration.migrationApply({version: "stress_003_recreate", description: "Recreate", sql: "CREATE TABLE stress_migration_data (id INTEGER PRIMARY KEY, value TEXT)", rollbackSql: "DROP TABLE IF EXISTS stress_migration_data"})` → applied
-16. `sqlite.migration.migrationStatus({})` → verify counts
-
-**3.2 Duplicate Detection**
-
-17. `sqlite.migration.migrationRecord({version: "stress_001_add_col", description: "Duplicate", sql: "SELECT 1"})` → report behavior: should error (duplicate version) or allow?
-
-**3.3 SHA-256 Duplicate SQL Detection**
-
-18. `sqlite.migration.migrationRecord({version: "stress_004_dup_sql", description: "Dup SQL", sql: "ALTER TABLE test_products ADD COLUMN stress_flag INTEGER DEFAULT 0"})` → report behavior: same SQL hash as stress_001
-
-**3.4 Multi-Statement Apply Verification**
-
-19. `sqlite.migration.migrationApply({version: "stress_005_index", description: "Add index", sql: "CREATE INDEX stress_idx_flag ON test_products(stress_flag)", rollbackSql: "DROP INDEX IF EXISTS stress_idx_flag"})` → applied
-20. Verify index created with `sqlite.core.getIndexes({table: "test_products"})`
-
-
-## Phase 4: Error Message Quality (batched)
-
-Rate each error response 1-5:
-
-21. `sqlite.migration.migrationRollback({version: "nonexistent_migration_xyz"})` → does it mention the version?
-22. `sqlite.migration.migrationRecord({})` → does it list missing required fields?
-23. `sqlite.migration.migrationRollback({version: "stress_001_add_col"})` → rate error clarity (no rollbackSql stored)
-
-
-### Final Cleanup
-
-24. Drop `_mcp_migrations`: `sqlite.admin.dropTable({table: "_mcp_migrations"})`
-25. Drop `stress_migration_data`: `sqlite.admin.dropTable({table: "stress_migration_data"})`
-26. Drop `stress_idx_flag`: _Handled by database reset below_
-27. **Reset database** with `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to undo `stress_flag` column on `test_products`
-28. After reset, verify: `test_products` has 16 rows and original columns (no `stress_flag`)
-
-
-## Phase 5: Error Paths & Recovery (batched)
-
-**4.1 Apply Failures**
-
-🔴 29. `sqlite.migration.migrationApply({version: "stress_006_bad_sql", description: "Bad SQL", sql: "ALTER TABLE nonexistent_xyz ADD COLUMN foo TEXT"})` → records but execute fails
-🔴 30. `sqlite.migration.migrationStatus({})` → verify failed migration state is tracked
-
-**4.2 Nonexistent Migration Operations**
-
-🔴 31. `sqlite.migration.migrationRollback({version: "nonexistent_migration_xyz"})` → structured error (not raw MCP)
-
-**4.3 Zod Validation Errors**
-
-🔴 32. `sqlite.migration.migrationRecord({})` → Zod error for missing required params — must be handler error
-🔴 33. `sqlite.migration.migrationApply({})` → Zod error for missing required params
-🔴 34. `sqlite.migration.migrationRollback({})` → Zod error for missing `version`
+{{TEST_CONTENT}}
 
 ---
 

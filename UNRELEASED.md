@@ -41,6 +41,9 @@
 - Expanded testing coverage across all three test suites (`test-tool-groups`, `test-codemode`, `test-advanced`) to cover new features, including `sqlite_schema_diff`, `sqlite_alter_table`, `sqlite_create_trigger`, `sqlite_drop_trigger`, `sqlite_reindex`, `sqlite_wal`, STRICT tables, and generated columns.
 - Standardized 41 testing prompts across test suites into a single cohesive format covering boilerplate instructions, reporting rules, error expectations, and payload limits.
 - Automated the formatting of all 41 test prompts using a Node script to decouple tool lists from test steps, convert tool lists to bullet points, and renumber all test steps sequentially from 1 to optimize for Agent consumption.
+- Extracted the testing prompt boilerplate into a dedicated `test-server/prompt-template.md` file to simplify future rule changes without editing Javascript template strings.
+- Fixed the `test-server/standardize-prompts.js` script to correctly assign the "Code Mode Testing" title to files in the `test-codemode` directory and use dynamic pathing to run from any directory.
+- Updated the testing boilerplate to loosen upgrade restrictions, mandating proactive functionality, performance, and efficiency improvements while enforcing strict architectural consistency.
 
 ### Fixed
 
