@@ -336,7 +336,9 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         }
       }
 
-      const isAllowed = allowedPrefixes.includes(leadingKeyword);
+      const isAllowed = allowedPrefixes.includes(leadingKeyword) || 
+                        (leadingKeyword === "CREATE" && /^CREATE\s+(TEMP\s+|TEMPORARY\s+)?TRIGGER/i.test(trimmedUpper)) || 
+                        (leadingKeyword === "DROP" && /^DROP\s+TRIGGER/i.test(trimmedUpper));
       if (!isAllowed) {
         const rejectedPrefix = rejectedPrefixes.find(
           (p) => p === leadingKeyword,

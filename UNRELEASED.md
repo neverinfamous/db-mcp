@@ -2,6 +2,7 @@
 
 ### Fixed
 
+- Fixed `sqlite_write_query` to explicitly allow `CREATE TRIGGER` and `DROP TRIGGER` statements, enabling trigger DDL operations within write queries while maintaining strict DML validations.
 - Fixed `sqlite_list_triggers` not showing triggers created on temporary tables by querying `sqlite_temp_master` alongside `sqlite_master`.
 - Fixed `sqlite_drop_trigger` incorrectly returning success when dropping a non-existent trigger (changed `DropTriggerSchema` `ifExists` default to `false`).
 - Fixed `sqlite_date_diff` to correctly handle string and numeric literal values without aggressively quoting them as column identifiers.
