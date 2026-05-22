@@ -61,9 +61,12 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "exists",
     "truncate",
     "list_triggers",
+    "create_trigger",
+    "drop_trigger",
     "list_constraints",
     "date_add",
     "date_diff",
+    "alter_table",
   ],
   json: [
     // CRUD + Query + Collection (8: crud.ts, query.ts, write.ts)
@@ -163,7 +166,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "vector_distance",
   ],
   admin: [
-    // Admin Tools (13: backup.ts, verify.ts, pragma.ts)
+    // Admin Tools (15: backup.ts, verify.ts, pragma.ts, reindex.ts, wal.ts)
     "backup",
     "analyze",
     "integrity_check",
@@ -191,11 +194,13 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "analyze_csv_schema",
     "create_rtree_table",
     "create_series_table",
-    // Database management (3: pragma.ts, backup/create.ts)
+    // Database management (5: pragma.ts, backup/create.ts, reindex.ts, wal.ts)
     "attach_database",
     "detach_database",
     "vacuum_into",
     "dump",
+    "reindex",
+    "wal",
   ],
   transactions: [
     // Transaction Tools (8 Native-only)
@@ -253,25 +258,25 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text + Codemode (58 WASM / 63 Native)
+  // General development - Core + JSON + Text + Codemode (61 WASM / 66 Native)
   starter: ["core", "json", "text", "codemode"],
 
-  // Data analysis - Core + JSON + Stats + Codemode (61 WASM / 67 Native)
+  // Data analysis - Core + JSON + Stats + Codemode (64 WASM / 70 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector + Codemode (44 WASM / 49 Native)
+  // Search workloads - Core + Text + Vector + Codemode (47 WASM / 52 Native)
   search: ["core", "text", "vector", "codemode"],
 
-  // Geospatial workloads - Core + Geo + Vector + Codemode (34 WASM / 41 Native)
+  // Geospatial workloads - Core + Geo + Vector + Codemode (37 WASM / 44 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
-  // Schema development - Core + Introspection + Migration + Codemode (35 tools)
+  // Schema development - Core + Introspection + Migration + Codemode (38 tools)
   "dev-schema": ["core", "introspection", "migration", "codemode"],
 
-  // Bare minimum - Core + Codemode (19 tools)
+  // Bare minimum - Core + Codemode (22 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (135 WASM / 162 Native)
+  // All tools enabled (140 WASM / 167 Native)
   full: [
     "core",
     "json",

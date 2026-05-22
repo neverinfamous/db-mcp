@@ -128,6 +128,18 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
+## Phase 8.5: REINDEX & WAL Management (batched)
+
+29. `sqlite.admin.reindex()` → reindex entire database, success with `durationMs`
+30. `sqlite.admin.reindex({target: "test_products"})` → reindex all indexes on specific table, success
+31. `sqlite.admin.reindex({target: "idx_orders_status"})` → reindex specific index, success
+32. `sqlite.admin.wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
+33. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
+34. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`
+35. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success with checkpoint stats
+
+---
+
 ## Phase 8: Database Management (batched)
 
 > Use absolute paths where required
@@ -141,41 +153,45 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ## Phase 9: Admin Domain Errors (batched)
 
-🔴 33. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → report behavior
-🔴 34. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
-🔴 35. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
-🔴 36. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
-🔴 37. `sqlite.admin.attachDatabase({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
-🔴 38. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
-🔴 39. `sqlite.admin.detachDatabase({alias: "main"})` → `{success: false}` (cannot detach main)
-🔴 40. `sqlite.admin.detachDatabase({alias: "nonexistent_alias"})` → `{success: false}`
-🔴 41. `sqlite.admin.vacuumInto({outputPath: "../../../tmp/evil.db"})` → `{success: false}` (path traversal rejection)
-🔴 42. `sqlite.admin.dump({outputPath: "../../../tmp/evil.sql"})` → `{success: false}` (path traversal rejection)
+🔴 38. `sqlite.admin.pragmaTableInfo({table: "nonexistent_xyz"})` → report behavior
+🔴 39. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_xyz"})` → `{success: false}`
+🔴 40. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → `{success: false}`
+🔴 41. `sqlite.admin.dropView({viewName: "nonexistent_xyz", ifExists: false})` → `{success: false}`
+🔴 42. `sqlite.admin.attachDatabase({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
+🔴 43. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
+🔴 44. `sqlite.admin.detachDatabase({alias: "main"})` → `{success: false}` (cannot detach main)
+🔴 45. `sqlite.admin.detachDatabase({alias: "nonexistent_alias"})` → `{success: false}`
+🔴 46. `sqlite.admin.vacuumInto({outputPath: "../../../tmp/evil.db"})` → `{success: false}` (path traversal rejection)
+🔴 47. `sqlite.admin.dump({outputPath: "../../../tmp/evil.sql"})` → `{success: false}` (path traversal rejection)
+🔴 48. `sqlite.admin.reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
+🔴 49. `sqlite.admin.reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
 
 ---
 
 ## Phase 10: Admin Zod Validation (batched)
 
-🔴 42. `sqlite.admin.backup({})` → `{success: false}`
-🔴 43. `sqlite.admin.restore({})` → `{success: false}`
-🔴 44. `sqlite.admin.verifyBackup({})` → `{success: false}`
-🔴 45. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
-🔴 46. `sqlite.admin.pragmaSettings({})` → `{success: false}`
-🔴 47. `sqlite.admin.appendInsight({})` → `{success: false}`
-🔴 48. `sqlite.admin.createView({})` → `{success: false}`
-🔴 49. `sqlite.admin.dropView({})` → `{success: false}`
-🔴 50. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
-🔴 51. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
-🔴 52. `sqlite.admin.createCsvTable({})` → `{success: false}`
-🔴 53. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
-🔴 54. `sqlite.admin.createRtreeTable({})` → `{success: false}`
-🔴 55. `sqlite.admin.createSeriesTable({})` → `{success: false}`
-🔴 56. `sqlite.admin.generateSeries({})` → `{success: false}`
-🔴 57. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
-🔴 58. `sqlite.admin.attachDatabase({})` → `{success: false}` handler error
-🔴 59. `sqlite.admin.detachDatabase({})` → `{success: false}` handler error
-🔴 60. `sqlite.admin.vacuumInto({})` → `{success: false}` handler error
-🔴 61. `sqlite.admin.dump({})` → `{success: false}` handler error
+🔴 50. `sqlite.admin.backup({})` → `{success: false}`
+🔴 51. `sqlite.admin.restore({})` → `{success: false}`
+🔴 52. `sqlite.admin.verifyBackup({})` → `{success: false}`
+🔴 53. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
+🔴 54. `sqlite.admin.pragmaSettings({})` → `{success: false}`
+🔴 55. `sqlite.admin.appendInsight({})` → `{success: false}`
+🔴 56. `sqlite.admin.createView({})` → `{success: false}`
+🔴 57. `sqlite.admin.dropView({})` → `{success: false}`
+🔴 58. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
+🔴 59. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
+🔴 60. `sqlite.admin.createCsvTable({})` → `{success: false}`
+🔴 61. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
+🔴 62. `sqlite.admin.createRtreeTable({})` → `{success: false}`
+🔴 63. `sqlite.admin.createSeriesTable({})` → `{success: false}`
+🔴 64. `sqlite.admin.generateSeries({})` → `{success: false}`
+🔴 65. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
+🔴 66. `sqlite.admin.attachDatabase({})` → `{success: false}` handler error
+🔴 67. `sqlite.admin.detachDatabase({})` → `{success: false}` handler error
+🔴 68. `sqlite.admin.vacuumInto({})` → `{success: false}` handler error
+🔴 69. `sqlite.admin.dump({})` → `{success: false}` handler error
+🔴 70. `sqlite.admin.reindex({})` → success (target is optional — reindexes entire database)
+🔴 71. `sqlite.admin.wal({})` → `{success: false}` handler error (action is required)
 
 ---
 

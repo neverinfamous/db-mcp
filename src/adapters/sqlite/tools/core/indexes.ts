@@ -60,7 +60,11 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      let sql = `SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL`;
+      let sql = `
+        SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL
+        UNION ALL
+        SELECT name, tbl_name, sql FROM sqlite_temp_master WHERE type = 'index' AND sql IS NOT NULL
+      `;
 
       if (input.table) {
         // Validate table name
@@ -187,8 +191,8 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       let indexExisted = false;
       if (input.ifNotExists) {
         const checkResult = await adapter.executeReadQuery(
-          `SELECT 1 FROM sqlite_master WHERE type='index' AND name=?`,
-          [input.indexName],
+          `SELECT 1 FROM sqlite_master WHERE type='index' AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type='index' AND name=?`,
+          [input.indexName, input.indexName],
         );
         indexExisted = (checkResult.rows?.length ?? 0) > 0;
       }
@@ -247,8 +251,8 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Check if index exists before dropping
       const checkResult = await adapter.executeReadQuery(
-        `SELECT 1 FROM sqlite_master WHERE type='index' AND name=?`,
-        [input.indexName],
+        `SELECT 1 FROM sqlite_master WHERE type='index' AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type='index' AND name=?`,
+        [input.indexName, input.indexName],
       );
       const indexExists = (checkResult.rows?.length ?? 0) > 0;
 

@@ -1,4 +1,4 @@
-# db-mcp Help — Database Administration (30 Native / 29 WASM)
+# db-mcp Help — Database Administration (32 Native / 31 WASM)
 
 ## Maintenance
 
@@ -8,6 +8,9 @@ sqlite_optimize({ analyze: true, reindex: true }); // optimize performance
 sqlite_vacuum(); // reclaim space
 sqlite_analyze({ table: "orders" }); // update statistics for query planner
 sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-only; WASM returns counts only)
+sqlite_reindex(); // rebuild all indexes
+sqlite_reindex({ target: "idx_users_email" }); // rebuild specific index
+sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table
 ```
 
 ## Backup/Restore (Native only)
@@ -41,6 +44,16 @@ sqlite_pragma_database_list(); // list attached databases
 sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB
 sqlite_detach_database({ alias: "archive" }); // detach DB
 sqlite_pragma_optimize(); // run PRAGMA optimize
+```
+
+## WAL Management
+
+```javascript
+sqlite_wal({ action: "status" }); // check current journal mode
+sqlite_wal({ action: "enable" }); // switch to WAL mode
+sqlite_wal({ action: "disable" }); // switch back to DELETE journal mode
+sqlite_wal({ action: "checkpoint" }); // run default checkpoint
+sqlite_wal({ action: "checkpoint", checkpointMode: "TRUNCATE" }); // checkpoint and truncate WAL file
 ```
 
 ## Index & Stats
@@ -99,3 +112,4 @@ sqlite_create_csv_table({
 ```javascript
 sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to memo://insights
 ```
+

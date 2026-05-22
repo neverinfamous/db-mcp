@@ -304,8 +304,8 @@ export function createDropTriggerTool(
 
       // Check if trigger exists
       const triggerCheck = await adapter.executeReadQuery(
-        `SELECT 1 FROM sqlite_master WHERE type='trigger' AND name=?`,
-        [input.name],
+        `SELECT 1 FROM sqlite_master WHERE type='trigger' AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type='trigger' AND name=?`,
+        [input.name, input.name],
       );
       const triggerExists = (triggerCheck.rows?.length ?? 0) > 0;
 

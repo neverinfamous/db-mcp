@@ -19,6 +19,7 @@
 - **Category 3**: All 3 items (11-13) return `{success: false, error: "...WASM mode"}`. Treat as **negative validation** — verify the structured error, do not skip.
 - **Category 4**: Item 16 (`pragmaCompileOptions` FTS filter) — WASM shows FTS3 instead of FTS5.
 - **Category 5**: Items 21-22 (`analyzeCsvSchema`, `createCsvTable`) — return `{success: false}` in WASM (CSV extension unavailable). Treat as **negative validation**.
+- **Category 9**: `sqlite_reindex` and `sqlite_wal` are fully WASM-compatible. No adjustments.
 - All other categories are WASM-compatible.
 
 ## Code Mode Execution
@@ -64,7 +65,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
-## admin Group Tools (27)
+## admin Group Tools (32)
 
 1. sqlite_pragma_database_list
 2. sqlite_pragma_compile_options
@@ -93,6 +94,11 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 25. sqlite_verify_backup
 26. sqlite_append_insight
 27. sqlite_dump
+28. sqlite_attach_database
+29. sqlite_detach_database
+30. sqlite_vacuum_into
+31. sqlite_reindex
+32. sqlite_wal
 
 ---
 
@@ -173,6 +179,19 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 For WASM testing only:
 
 34. Verify that backup/restore/verify, CSV, R-Tree, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
+
+---
+
+### Category 9: REINDEX & WAL Edge Cases
+
+35. `sqlite.admin.reindex()` → full DB reindex, verify `durationMs > 0`
+36. `sqlite.admin.reindex({target: "test_products"})` → table-specific, verify success
+37. `sqlite.admin.reindex({target: "idx_orders_status"})` → index-specific, verify success
+38. `sqlite.admin.reindex({target: "../../etc/passwd"})` → structured error (identifier validation rejects non-alphanumeric)
+39. `sqlite.admin.wal({action: "status"})` → verify `journalMode` matches expectation (should be "wal")
+40. `sqlite.admin.wal({action: "enable"})` → already WAL → "already enabled" message, not error
+41. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "PASSIVE"})` → success with `walPages` and `checkpointedPages`
+42. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "TRUNCATE"})` → success, verify pages
 
 ---
 

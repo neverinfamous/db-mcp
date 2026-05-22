@@ -24,6 +24,8 @@ import {
   createAttachDatabaseTool,
   createDetachDatabaseTool,
 } from "./pragma.js";
+import { createReindexTool } from "./reindex.js";
+import { createWalTool } from "./wal.js";
 
 /**
  * Get all admin tools
@@ -47,5 +49,7 @@ export function getAdminTools(adapter: SqliteAdapter): ToolDefinition[] {
     createDetachDatabaseTool(adapter),
     createVacuumIntoTool(adapter),
     createDumpTool(adapter),
+    createReindexTool(adapter),
+    createWalTool(adapter),
   ];
 }

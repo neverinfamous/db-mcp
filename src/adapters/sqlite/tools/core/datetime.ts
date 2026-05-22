@@ -73,9 +73,15 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const { table, column1, column2, unit, whereClause } = input;
+      const formatOperand = (val: string): string => {
+        if (val.startsWith("'") && val.endsWith("'")) return val;
+        if (!isNaN(Number(val))) return val;
+        return `"${val.replace(/"/g, '""')}"`;
+      };
+
       const quotedTable = `"${table.replace(/"/g, '""')}"`;
-      const quotedCol1 = `"${column1.replace(/"/g, '""')}"`;
-      const quotedCol2 = `"${column2.replace(/"/g, '""')}"`;
+      const quotedCol1 = formatOperand(column1);
+      const quotedCol2 = formatOperand(column2);
 
       // SQLite's julianday() returns days. We convert based on requested unit.
       let multiplier = 1;

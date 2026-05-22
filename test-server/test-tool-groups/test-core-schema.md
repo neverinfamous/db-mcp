@@ -7,7 +7,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 10 core schema tools are fully WASM-compatible. No items to skip or adjust.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 13 core schema tools are fully WASM-compatible. No items to skip or adjust.
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
@@ -172,7 +172,7 @@ DROP TABLE IF EXISTS temp_core_test;
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### core-schema Group Tools (10)
+### core-schema Group Tools (13)
 
 1. sqlite_list_tables
 2. sqlite_describe_table
@@ -183,46 +183,97 @@ DROP TABLE IF EXISTS temp_core_test;
 7. sqlite_drop_index
 8. sqlite_list_triggers
 9. sqlite_list_constraints
-10. sqlite_execute_code
+10. sqlite_alter_table
+11. sqlite_create_trigger
+12. sqlite_drop_trigger
+13. sqlite_execute_code
 
-**Checklist:**
+**Checklist — Read & Introspection:**
 
 1. `sqlite_list_tables({excludeSystemTables: true})` → verify `test_products`, `test_orders`, etc. all present, but `sqlite_master` or `sqlite_sequence` absent
 2. `sqlite_describe_table({table: "test_products"})` → verify columns include `id` (INTEGER), `name` (TEXT), `price` (REAL), `category` (TEXT)
 3. `sqlite_get_indexes({table: "test_orders", excludeSystemIndexes: true})` → verify `idx_orders_status` and `idx_orders_date` present
+
+**Checklist — Table & Index Lifecycle:**
+
 4. `sqlite_create_table({table: "temp_core_test", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}, {name: "value", type: "REAL"}], ifNotExists: true})` → success
 5. `sqlite_create_table({table: "temp_core_test", columns: [{name: "id", type: "INTEGER", primaryKey: true}], ifNotExists: true})` → success (should not fail if table already exists due to ifNotExists)
 6. `sqlite_create_index({table: "temp_core_test", columns: ["name"], indexName: "idx_temp_core_name", unique: false, ifNotExists: true})` → success
 7. `sqlite_drop_index({indexName: "idx_temp_core_name", ifExists: true})` → success
 8. `sqlite_drop_table({table: "temp_core_test", ifExists: true})` → success
+
+**Checklist — Triggers & Constraints:**
+
 9. `sqlite_list_triggers({})` → list of triggers (may be empty in test DB), verify `{triggers: [], count: 0}` structure
 10. `sqlite_list_triggers({table: "test_orders"})` → filtered results
 11. `sqlite_list_constraints({table: "test_orders"})` → verify `primaryKey`, `foreignKeys` (FK to test_products), `uniqueIndexes`
 12. `sqlite_list_constraints({table: "test_products"})` → verify PK on `id`
 
+**Checklist — ALTER TABLE Lifecycle:**
+
+13. `sqlite_create_table({table: "temp_core_alter", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}], ifNotExists: true})` → success (setup)
+14. `sqlite_alter_table({table: "temp_core_alter", operation: "add_column", column: "status", type: "TEXT", nullable: true})` → success, message confirms column added
+15. `sqlite_alter_table({table: "temp_core_alter", operation: "add_column", column: "score", type: "INTEGER", nullable: false, defaultValue: 0})` → success (NOT NULL with default)
+16. `sqlite_describe_table({table: "temp_core_alter"})` → verify `status` (TEXT) and `score` (INTEGER) columns present
+17. `sqlite_alter_table({table: "temp_core_alter", operation: "rename_column", column: "status", newName: "state"})` → success
+18. `sqlite_alter_table({table: "temp_core_alter", operation: "drop_column", column: "state"})` → success
+19. `sqlite_alter_table({table: "temp_core_alter", operation: "rename_table", newName: "temp_core_renamed"})` → success
+20. `sqlite_alter_table({table: "temp_core_renamed", operation: "rename_table", newName: "temp_core_alter"})` → rename back
+21. `sqlite_drop_table({table: "temp_core_alter", ifExists: true})` → cleanup
+
+**Checklist — Trigger Lifecycle:**
+
+22. `sqlite_create_table({table: "temp_core_triggers", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}], ifNotExists: true})` → setup
+23. `sqlite_create_trigger({name: "temp_trg_audit", table: "temp_core_triggers", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → success, `sql` returned
+24. `sqlite_list_triggers({table: "temp_core_triggers"})` → 1 trigger with `name: "temp_trg_audit"`, `event: "INSERT"`, `timing: "AFTER"`
+25. `sqlite_create_trigger({name: "temp_trg_del", table: "temp_core_triggers", event: "DELETE", timing: "BEFORE", body: "SELECT 1;"})` → success
+26. `sqlite_list_triggers({table: "temp_core_triggers"})` → 2 triggers
+27. `sqlite_drop_trigger({name: "temp_trg_audit"})` → success
+28. `sqlite_drop_trigger({name: "temp_trg_del", ifExists: true})` → success
+29. `sqlite_list_triggers({table: "temp_core_triggers"})` → 0 triggers
+30. `sqlite_drop_table({table: "temp_core_triggers", ifExists: true})` → cleanup
+
+**Checklist — STRICT Table & Generated Column Enhancements:**
+
+31. `sqlite_create_table({table: "temp_strict_test", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}], strict: true})` → success
+32. `sqlite_describe_table({table: "temp_strict_test"})` → verify structure (STRICT enforcement is at insert-time, schema looks normal)
+33. `sqlite_drop_table({table: "temp_strict_test", ifExists: true})` → cleanup
+
 **Code mode testing:**
 
-13. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
-14. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
-15. `sqlite_execute_code({code: "const r = await sqlite.core.listConstraints({table: 'test_orders'}); return r;"})` → structured constraint data
+34. `sqlite_execute_code({code: "const tables = await sqlite.core.listTables(); return tables;"})` → returns list of tables including `test_products`, `test_orders`, etc.
+35. `sqlite_execute_code({code: "const result = await sqlite.core.writeQuery('INSERT INTO test_products VALUES (999, \"x\", \"x\", 0, \"x\", \"x\")'); return result;", readonly: true})` → `result` contains `{success: false, code: "CODEMODE_READONLY_VIOLATION"}` (code mode returns errors as values, not thrown exceptions)
+36. `sqlite_execute_code({code: "const r = await sqlite.core.listConstraints({table: 'test_orders'}); return r;"})` → structured constraint data
 
 **Error path testing:**
 
-🔴 16. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
-🔴 17. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
-🔴 18. `sqlite_list_constraints({table: "nonexistent_xyz"})` → structured error
+🔴 37. `sqlite_describe_table({table: "nonexistent_table_xyz"})` → structured error response, NOT a raw MCP exception
+🔴 38. `sqlite_drop_table({table: "nonexistent_table_xyz"})` → structured error or `{existed: false}` style response
+🔴 39. `sqlite_list_constraints({table: "nonexistent_xyz"})` → structured error
+🔴 40. `sqlite_alter_table({table: "nonexistent_xyz", operation: "add_column", column: "x", type: "TEXT", nullable: true})` → `{success: false}` (TABLE_NOT_FOUND)
+🔴 41. `sqlite_alter_table({table: "test_products", operation: "add_column", column: "name", type: "TEXT", nullable: true})` → `{success: false}` (COLUMN_EXISTS)
+🔴 42. `sqlite_alter_table({table: "test_products", operation: "add_column", column: "x", type: "TEXT"})` → `{success: false}` (NOT NULL without default — `nullable` defaults to false)
+🔴 43. `sqlite_alter_table({table: "test_products", operation: "rename_column", column: "nonexistent_col", newName: "x"})` → `{success: false}` (COLUMN_NOT_FOUND)
+🔴 44. `sqlite_alter_table({table: "test_products", operation: "rename_table", newName: "test_orders"})` → `{success: false}` (TABLE_EXISTS)
+🔴 45. `sqlite_create_trigger({name: "bad_trg", table: "nonexistent_xyz", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → `{success: false}` (TABLE_NOT_FOUND)
+🔴 46. `sqlite_create_trigger({name: "bad_trg", table: "test_products", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → `{success: false}` (INSTEAD OF only on views)
+🔴 47. `sqlite_drop_trigger({name: "nonexistent_trigger_xyz"})` → `{success: false}` (TRIGGER_NOT_FOUND)
+🔴 48. `sqlite_drop_trigger({name: "nonexistent_trigger_xyz", ifExists: true})` → `{success: true}` (no-op, no error)
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Every response must be a handler error (`{success: false, error: "Validation error: ..."}`) — NOT a raw MCP error frame:
 
-🔴 19. `sqlite_create_table({})` → handler error
-🔴 20. `sqlite_describe_table({})` → handler error
-🔴 21. `sqlite_drop_table({})` → handler error
-🔴 22. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
-🔴 23. `sqlite_create_index({})` → handler error
-🔴 24. `sqlite_drop_index({})` → handler error
-🔴 25. `sqlite_execute_code({})` → handler error (has required `code` param)
-🔴 26. `sqlite_list_triggers({})` → success (table is optional)
-🔴 27. `sqlite_list_constraints({})` → handler error (table is required)
+🔴 49. `sqlite_create_table({})` → handler error
+🔴 50. `sqlite_describe_table({})` → handler error
+🔴 51. `sqlite_drop_table({})` → handler error
+🔴 52. `sqlite_get_indexes({})` → success (returns all indexes, table is optional)
+🔴 53. `sqlite_create_index({})` → handler error
+🔴 54. `sqlite_drop_index({})` → handler error
+🔴 55. `sqlite_execute_code({})` → handler error (has required `code` param)
+🔴 56. `sqlite_list_triggers({})` → success (table is optional)
+🔴 57. `sqlite_list_constraints({})` → handler error (table is required)
+🔴 58. `sqlite_alter_table({})` → handler error
+🔴 59. `sqlite_create_trigger({})` → handler error
+🔴 60. `sqlite_drop_trigger({})` → handler error
 
 ---
 

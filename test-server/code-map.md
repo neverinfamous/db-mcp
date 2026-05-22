@@ -156,7 +156,8 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `core/convenience.ts`                     | 5     | `sqlite_upsert`, `sqlite_batch_insert`, `sqlite_count`, `sqlite_exists`, `sqlite_truncate`                                    |
 |                   | `core/tables.ts`                          | 4     | `create_table`, `list_tables`, `describe_table`, `drop_table`                                                                 |
 |                   | `core/indexes.ts`                         | 3     | `get_indexes`, `create_index`, `drop_index`                                                                                   |
-|                   | `core/triggers.ts`                        | 1     | `list_triggers`                                                                                                               |
+|                   | `core/triggers.ts`                        | 3     | `list_triggers`, `create_trigger`, `drop_trigger`                                                                             |
+|                   | `core/alter-table.ts`                     | 1     | `alter_table`                                                                                                                 |
 |                   | `core/constraints.ts`                     | 1     | `list_constraints`                                                                                                            |
 | **json**          | `json-operations/crud.ts`                 | 3     | `json_insert`, `json_update`, `json_select`                                                                                   |
 |                   | `json-operations/query.ts`                | 4     | `json_query`, `json_validate_path`, `json_merge`, `json_analyze_schema`                                                       |
@@ -189,6 +190,8 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `virtual/vtable.ts`                       | 5     | `list_virtual_tables`, `virtual_table_info`, `drop_virtual_table`, `create_csv_table`, `analyze_csv_schema`                   |
 |                   | `virtual/extensions.ts`                   | 2     | `create_rtree_table`, `create_series_table`                                                                                   |
 |                   | `virtual/analysis.ts`                     | 3     | `generate_series`, `dbstat`, `vacuum`                                                                                         |
+|                   | `admin/reindex.ts`                        | 1     | `reindex`                                                                                                                     |
+|                   | `admin/wal.ts`                            | 1     | `wal`                                                                                                                         |
 | **introspection** | `introspection/graph/tools.ts`            | 3     | `dependency_graph`, `topological_sort`, `cascade_simulator`                                                                   |
 |                   | `introspection/analysis/constraints.ts`   | 1     | `constraint_analysis`                                                                                                         |
 |                   | `introspection/analysis/risks.ts`         | 1     | `migration_risks`                                                                                                             |

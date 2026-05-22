@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **162 Native / 135 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **167 Native / 140 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -18,7 +18,7 @@ Sandboxed JavaScript execution that exposes all 9 tool groups through the `sqlit
 
 ---
 
-## core (18 tools + Code Mode)
+## core (21 tools + Code Mode)
 
 Read/write queries, table and index management, and schema discovery.
 
@@ -42,6 +42,9 @@ Read/write queries, table and index management, and schema discovery.
 | `sqlite_list_constraints` | List all constraints for a table: primary key columns, foreign keys, unique indexes, and CHECK constraints. |
 | `sqlite_date_add`         | Add or subtract time from a date/time column using native SQLite datetime modifiers.                      |
 | `sqlite_date_diff`        | Calculate the difference between two date/time columns, returning the result in days, hours, minutes, or seconds. |
+| `sqlite_alter_table`        | Alter a table's structure: add, rename, or drop columns, or rename the table. Validates constraints and SQLite-specific limitations.  |
+| `sqlite_create_trigger`     | Create a database trigger with BEFORE/AFTER/INSTEAD OF timing, column-specific UPDATE triggers, and optional WHEN conditions.        |
+| `sqlite_drop_trigger`       | Drop a database trigger with existence checking.                                                                                      |
 
 ---
 
@@ -159,7 +162,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (30 Native / 29 WASM tools + Code Mode)
+## admin (32 Native / 31 WASM tools + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 
@@ -195,6 +198,8 @@ Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 | `sqlite_detach_database`        | Detach a previously attached database by its schema alias. Cannot detach 'main' or 'temp'.                                |
 | `sqlite_vacuum_into`            | Create a compacted, defragmented copy of the database using VACUUM INTO. Does not modify the original.                    |
 | `sqlite_dump`                   | Export the database schema and data as a SQL text dump to a specified file. `[NATIVE ONLY]`                               |
+| `sqlite_reindex`                | Rebuild indexes targeting a specific index, table, or the entire database.                                                |
+| `sqlite_wal`                    | WAL mode management: check status, enable/disable WAL mode, or run checkpoints with configurable modes.                   |
 
 ---
 

@@ -1,4 +1,4 @@
-# db-mcp Help — Core Operations (16 tools)
+# db-mcp Help — Core Operations (21 tools)
 
 ## Basic Queries
 
@@ -8,10 +8,13 @@
 ## Tables & Schema
 
 - `sqlite_list_tables({ excludeSystemTables?: boolean })` — list all tables in the database (system tables excluded by default)
-- `sqlite_describe_table({ table: "users" })` — get detailed schema, columns, and foreign keys for a specific table
-- `sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })` — create a new table
+- `sqlite_describe_table({ table: "users" })` — get detailed schema, columns, and foreign keys for a specific table. Detects generated columns (VIRTUAL/STORED) with expression.
+- `sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })` — create a new table. Use `strict: true` for STRICT mode (SQLite 3.37+) to enforce column type checking.
 - `sqlite_drop_table({ table: "users", ifExists?: true })` — drop an existing table
+- `sqlite_alter_table({ table: "users", operation: "add_column", column: "age", type: "INTEGER", nullable: true })` — add, rename, or drop columns, or rename a table. Operations: `add_column`, `rename_column`, `drop_column`, `rename_table`.
 - `sqlite_list_triggers({ table?: "users" })` — list database triggers, optionally filtered by table
+- `sqlite_create_trigger({ name: "trg_updated", table: "users", timing: "AFTER", event: "UPDATE", body: "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id" })` — create a trigger with BEFORE/AFTER/INSTEAD OF timing, optional column-specific UPDATE triggers and WHEN conditions
+- `sqlite_drop_trigger({ name: "trg_updated" })` — drop a database trigger
 - `sqlite_list_constraints({ table: "users" })` — list primary key, foreign key, unique, and check constraints for a table
 
 ## Indexes
@@ -29,3 +32,4 @@
 - `sqlite_truncate({ table: "users" })` — quickly delete all rows from a table (executes `DELETE FROM table`)
 - `sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })` — add or subtract time intervals from a date column
 - `sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })` — calculate the difference between two date columns
+

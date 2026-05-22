@@ -380,7 +380,57 @@ export const VacuumIntoCopyOutputSchema = z
   })
   .extend(ErrorResponseFields.shape);
 
+// =============================================================================
+// REINDEX Schema
+// =============================================================================
 
+export const ReindexSchema = z.object({
+  target: z
+    .string()
+    .optional()
+    .describe(
+      "Index name, table name, or collation name to reindex. Omit to reindex the entire database.",
+    ),
+});
+
+export const ReindexOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+    durationMs: z.number().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+// =============================================================================
+// WAL Management Schema
+// =============================================================================
+
+export const WalSchema = z.object({
+  action: z
+    .enum(["status", "enable", "disable", "checkpoint"])
+    .describe(
+      "WAL action: 'status' = check journal_mode, 'enable' = switch to WAL, 'disable' = switch to DELETE (default journal mode), 'checkpoint' = force WAL checkpoint",
+    ),
+  checkpointMode: z
+    .enum(["PASSIVE", "FULL", "RESTART", "TRUNCATE"])
+    .optional()
+    .default("PASSIVE")
+    .describe(
+      "Checkpoint mode (only used with 'checkpoint' action). PASSIVE = checkpoint without blocking readers (default). FULL = wait for readers to finish. RESTART = same as FULL but restart WAL file. TRUNCATE = same as RESTART but truncate WAL file to zero bytes.",
+    ),
+});
+
+export const WalOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    journalMode: z.string().optional(),
+    previousMode: z.string().optional(),
+    walPages: z.number().optional(),
+    checkpointedPages: z.number().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
 
 // =============================================================================
 // Types
@@ -407,4 +457,6 @@ export type DetachDatabaseInput = z.infer<typeof DetachDatabaseSchema>;
 export type VacuumIntoCopyInput = z.infer<typeof VacuumIntoCopySchema>;
 export type AuditRestoreBackupInput = z.infer<typeof AuditRestoreBackupSchema>;
 export type AuditDiffBackupInput = z.infer<typeof AuditDiffBackupSchema>;
+export type ReindexInput = z.infer<typeof ReindexSchema>;
+export type WalInput = z.infer<typeof WalSchema>;
 

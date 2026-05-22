@@ -77,7 +77,7 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### admin-core Group Tools (23)
+### admin-core Group Tools (25)
 
 1. sqlite_create_view
 2. sqlite_list_views
@@ -96,13 +96,14 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 15. sqlite_pragma_optimize
 16. sqlite_pragma_settings
 17. sqlite_pragma_table_info
-18. sqlite_pragma_database_list
-19. sqlite_append_insight
-20. sqlite_attach_database
-21. sqlite_detach_database
-22. sqlite_vacuum_into
-23. sqlite_dump
-24. sqlite_execute_code
+18. sqlite_append_insight
+19. sqlite_attach_database
+20. sqlite_detach_database
+21. sqlite_vacuum_into
+22. sqlite_dump
+23. sqlite_reindex
+24. sqlite_wal
+25. sqlite_execute_code
 
 **Checklist — PRAGMA Diagnostics:**
 
@@ -144,6 +145,19 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 
 24. `sqlite_append_insight({insight: "Test insight for verification"})` → success
 
+**Checklist — REINDEX:**
+
+25. `sqlite_reindex({})` → reindex entire database, success with `durationMs`
+26. `sqlite_reindex({target: "test_products"})` → reindex all indexes on specific table, success
+27. `sqlite_reindex({target: "idx_orders_status"})` → reindex specific index, success
+
+**Checklist — WAL Management:**
+
+28. `sqlite_wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
+29. `sqlite_wal({action: "enable"})` → `{success: true, message: "WAL mode is already enabled"}` (already in WAL)
+30. `sqlite_wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`
+31. `sqlite_wal({action: "checkpoint", checkpointMode: "FULL"})` → success with checkpoint stats
+
 **Code mode testing:**
 
 25. `sqlite_execute_code({code: "const result = await sqlite.admin.integrityCheck(); return result;"})` → `ok` result
@@ -151,29 +165,33 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 
 **Error path testing:**
 
-🔴 27. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` → report behavior
-🔴 29. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
-🔴 30. `sqlite_attach_database({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
-🔴 31. `sqlite_attach_database({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
-🔴 32. `sqlite_detach_database({alias: "main"})` → `{success: false}` (cannot detach main)
-🔴 33. `sqlite_detach_database({alias: "nonexistent_alias"})` → `{success: false}`
-🔴 34. `sqlite_dump({outputPath: "../../../etc/passwd"})` → `{success: false}` (path traversal rejection)
+🔴 32. `sqlite_pragma_table_info({table: "nonexistent_table_xyz"})` → report behavior
+🔴 33. `sqlite_verify_backup({backupPath: "nonexistent_file.db"})` → structured error
+🔴 34. `sqlite_attach_database({filepath: "nonexistent_file.db", alias: "bad_db"})` → `{success: false}`
+🔴 35. `sqlite_attach_database({filepath: "../../../etc/passwd", alias: "evil"})` → `{success: false}` (path traversal rejection)
+🔴 36. `sqlite_detach_database({alias: "main"})` → `{success: false}` (cannot detach main)
+🔴 37. `sqlite_detach_database({alias: "nonexistent_alias"})` → `{success: false}`
+🔴 38. `sqlite_dump({outputPath: "../../../etc/passwd"})` → `{success: false}` (path traversal rejection)
+🔴 39. `sqlite_reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
+🔴 40. `sqlite_reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
 
-🔴 35. `sqlite_backup({})` → handler error
-🔴 36. `sqlite_restore({})` → handler error
-🔴 37. `sqlite_verify_backup({})` → handler error
-🔴 38. `sqlite_pragma_table_info({})` → handler error
-🔴 39. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
-🔴 40. `sqlite_append_insight({})` → handler error
-🔴 41. `sqlite_create_view({})` → handler error
-🔴 42. `sqlite_drop_view({})` → handler error
-🔴 43. `sqlite_dbstat({})` → handler error (or success if no required params)
-🔴 44. `sqlite_attach_database({})` → handler error
-🔴 45. `sqlite_detach_database({})` → handler error
-🔴 46. `sqlite_vacuum_into({})` → handler error
-🔴 47. `sqlite_dump({})` → handler error
+🔴 41. `sqlite_backup({})` → handler error
+🔴 42. `sqlite_restore({})` → handler error
+🔴 43. `sqlite_verify_backup({})` → handler error
+🔴 44. `sqlite_pragma_table_info({})` → handler error
+🔴 45. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
+🔴 46. `sqlite_append_insight({})` → handler error
+🔴 47. `sqlite_create_view({})` → handler error
+🔴 48. `sqlite_drop_view({})` → handler error
+🔴 49. `sqlite_dbstat({})` → handler error (or success if no required params)
+🔴 50. `sqlite_attach_database({})` → handler error
+🔴 51. `sqlite_detach_database({})` → handler error
+🔴 52. `sqlite_vacuum_into({})` → handler error
+🔴 53. `sqlite_dump({})` → handler error
+🔴 54. `sqlite_reindex({})` → success (target is optional — reindexes entire database)
+🔴 55. `sqlite_wal({})` → handler error (action is required)
 
 ---
 

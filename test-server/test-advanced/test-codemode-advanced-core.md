@@ -13,7 +13,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js): All 14 core tools are fully WASM-compatible. No categories to skip or adjust.
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 21 core tools are fully WASM-compatible. No categories to skip or adjust.
 
 ## Code Mode Execution
 
@@ -75,7 +75,7 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 
 ---
 
-## core Group Tools (16 + codemode)
+## core Group Tools (21 + codemode)
 
 1. sqlite_read_query
 2. sqlite_write_query
@@ -93,6 +93,11 @@ Handler error ✅ = JSON with `success` + `error` fields. MCP error ❌ = raw te
 14. sqlite_truncate
 15. sqlite_date_add
 16. sqlite_date_diff
+17. sqlite_list_triggers
+18. sqlite_list_constraints
+19. sqlite_alter_table
+20. sqlite_create_trigger
+21. sqlite_drop_trigger
 
 ---
 
@@ -208,6 +213,41 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 44. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: -9999, unit: "years"})` → should handle extreme negative dates
 45. `sqlite.core.dateDiff({table: "test_events", column1: "event_date", column2: "invalid_date_col", unit: "days"})` → should return a structured error about invalid column
 46. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: 0, unit: "days"})` → valid delta 0
+
+---
+
+### Category 7: ALTER TABLE Edge Cases
+
+47. Create `stress_alter_table (id INTEGER PRIMARY KEY, name TEXT, value REAL)`, then:
+48. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "ts", type: "TEXT", nullable: true, defaultValue: "CURRENT_TIMESTAMP"})` → success (SQL expression default)
+49. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "empty", type: "TEXT", nullable: true, defaultValue: ""})` → success (empty string default)
+50. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "bad_pk", type: "INTEGER PRIMARY KEY"})` → structured error (SQLITE_LIMITATION — cannot add PRIMARY KEY)
+51. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "bad_uq", type: "TEXT UNIQUE"})` → structured error (SQLITE_LIMITATION — cannot add UNIQUE)
+52. `sqlite.core.alterTable({table: "stress_alter_table", operation: "rename_column", column: "nonexistent", newName: "x"})` → structured error (COLUMN_NOT_FOUND)
+53. Add 2 more columns, then drop all non-PK columns one by one until only `id` remains:
+    - `sqlite.core.alterTable({table: "stress_alter_table", operation: "drop_column", column: "name"})` → success
+    - Continue dropping until 1 column left
+    - `sqlite.core.alterTable({table: "stress_alter_table", operation: "drop_column", column: "id"})` → structured error (SQLITE_LIMITATION — cannot drop last column)
+54. `sqlite.core.alterTable({table: "stress_alter_table", operation: "rename_table", newName: "test_products"})` → structured error (TABLE_EXISTS)
+55. Full lifecycle: rename table → verify with listTables → rename back → verify → cleanup
+
+---
+
+### Category 8: Trigger Stress
+
+56. Create `stress_trg_table (id INTEGER PRIMARY KEY, val TEXT, updated_at TEXT)`, then:
+57. `sqlite.core.createTrigger({name: "stress_trg_insert", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "SELECT 1;", forEachRow: true})` → success
+58. `sqlite.core.createTrigger({name: "stress_trg_update_cols", table: "stress_trg_table", event: "UPDATE", timing: "BEFORE", columns: ["val"], body: "SELECT 1;"})` → success (column-specific UPDATE trigger)
+59. `sqlite.core.createTrigger({name: "stress_trg_when", table: "stress_trg_table", event: "DELETE", timing: "AFTER", body: "SELECT 1;", whenClause: "OLD.val IS NOT NULL"})` → success (WHEN clause)
+60. `sqlite.core.listTriggers({table: "stress_trg_table"})` → 3 triggers with correct event/timing
+61. `sqlite.core.createTrigger({name: "stress_trg_insert", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "SELECT 1;", ifNotExists: true})` → success (no-op, trigger already exists)
+62. `sqlite.core.createTrigger({name: "stress_trg_instead", table: "stress_trg_table", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → structured error (INSTEAD OF only on views)
+63. `sqlite.core.createTrigger({name: "stress_trg_bad_cols", table: "stress_trg_table", event: "INSERT", timing: "AFTER", columns: ["val"], body: "SELECT 1;"})` → structured error (columns only for UPDATE)
+64. `sqlite.core.createTrigger({name: "stress_trg_empty", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "   "})` → structured error (empty body)
+65. `sqlite.core.dropTrigger({name: "stress_trg_nonexist", ifExists: true})` → `{success: true}` (no-op)
+66. `sqlite.core.dropTrigger({name: "stress_trg_nonexist"})` → structured error (TRIGGER_NOT_FOUND)
+67. Drop `stress_trg_table` → success (cascade-deletes triggers)
+68. `sqlite.core.listTriggers({table: "stress_trg_table"})` → verify triggers are gone (table dropped)
 
 ---
 

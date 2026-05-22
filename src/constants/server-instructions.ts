@@ -40,7 +40,7 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (30 Native / 29 WASM)
+  ["admin", `# db-mcp Help — Database Administration (32 Native / 31 WASM)
 
 ## Maintenance
 
@@ -50,6 +50,9 @@ sqlite_optimize({ analyze: true, reindex: true }); // optimize performance
 sqlite_vacuum(); // reclaim space
 sqlite_analyze({ table: "orders" }); // update statistics for query planner
 sqlite_dbstat({ summarize: true }); // storage stats (⚠️ summarize native-only; WASM returns counts only)
+sqlite_reindex(); // rebuild all indexes
+sqlite_reindex({ target: "idx_users_email" }); // rebuild specific index
+sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table
 \`\`\`
 
 ## Backup/Restore (Native only)
@@ -83,6 +86,16 @@ sqlite_pragma_database_list(); // list attached databases
 sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB
 sqlite_detach_database({ alias: "archive" }); // detach DB
 sqlite_pragma_optimize(); // run PRAGMA optimize
+\`\`\`
+
+## WAL Management
+
+\`\`\`javascript
+sqlite_wal({ action: "status" }); // check current journal mode
+sqlite_wal({ action: "enable" }); // switch to WAL mode
+sqlite_wal({ action: "disable" }); // switch back to DELETE journal mode
+sqlite_wal({ action: "checkpoint" }); // run default checkpoint
+sqlite_wal({ action: "checkpoint", checkpointMode: "TRUNCATE" }); // checkpoint and truncate WAL file
 \`\`\`
 
 ## Index & Stats
@@ -141,7 +154,7 @@ sqlite_create_csv_table({
 \`\`\`javascript
 sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to memo://insights
 \`\`\``],
-  ["core", `# db-mcp Help — Core Operations (16 tools)
+  ["core", `# db-mcp Help — Core Operations (21 tools)
 
 ## Basic Queries
 
@@ -151,10 +164,13 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 ## Tables & Schema
 
 - \`sqlite_list_tables({ excludeSystemTables?: boolean })\` — list all tables in the database (system tables excluded by default)
-- \`sqlite_describe_table({ table: "users" })\` — get detailed schema, columns, and foreign keys for a specific table
-- \`sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })\` — create a new table
+- \`sqlite_describe_table({ table: "users" })\` — get detailed schema, columns, and foreign keys for a specific table. Detects generated columns (VIRTUAL/STORED) with expression.
+- \`sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })\` — create a new table. Use \`strict: true\` for STRICT mode (SQLite 3.37+) to enforce column type checking.
 - \`sqlite_drop_table({ table: "users", ifExists?: true })\` — drop an existing table
+- \`sqlite_alter_table({ table: "users", operation: "add_column", column: "age", type: "INTEGER", nullable: true })\` — add, rename, or drop columns, or rename a table. Operations: \`add_column\`, \`rename_column\`, \`drop_column\`, \`rename_table\`.
 - \`sqlite_list_triggers({ table?: "users" })\` — list database triggers, optionally filtered by table
+- \`sqlite_create_trigger({ name: "trg_updated", table: "users", timing: "AFTER", event: "UPDATE", body: "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id" })\` — create a trigger with BEFORE/AFTER/INSTEAD OF timing, optional column-specific UPDATE triggers and WHEN conditions
+- \`sqlite_drop_trigger({ name: "trg_updated" })\` — drop a database trigger
 - \`sqlite_list_constraints({ table: "users" })\` — list primary key, foreign key, unique, and check constraints for a table
 
 ## Indexes

@@ -114,8 +114,8 @@ export function createListConstraintsTool(
 
         // 4. Parse CHECK constraints from DDL
         const ddlResult = await adapter.executeReadQuery(
-          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
-          [input.table],
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ? UNION ALL SELECT sql FROM sqlite_temp_master WHERE type = 'table' AND name = ?",
+          [input.table, input.table],
         );
         const ddl = (ddlResult.rows?.[0]?.["sql"] as string) ?? "";
         const checkConstraints = parseCheckConstraints(ddl);
