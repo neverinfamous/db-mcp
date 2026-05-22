@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: text-advanced
@@ -127,6 +128,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 40. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
 🔴 41. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
 🔴 42. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
+
 
 ---
 

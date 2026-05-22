@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [migration]
+# db-mcp Advanced Stress Testing: [migration]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,20 +68,22 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: migration
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-8. sqlite_migration_init
-9. sqlite_migration_record
-10. sqlite_migration_apply
-11. sqlite_migration_rollback
-12. sqlite_migration_history
-13. sqlite_migration_status
+### Code Mode Methods
 
----
+8. sqlite.migration.migrationInit
+9. sqlite.migration.migrationRecord
+10. sqlite.migration.migrationApply
+11. sqlite.migration.migrationRollback
+12. sqlite.migration.migrationHistory
+13. sqlite.migration.migrationStatus
+
 
 ## Phase 1: Initialization & Idempotency (batched)
 
@@ -90,7 +92,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 16. `sqlite.migration.migrationStatus({})` → empty/clean state
 17. `sqlite.migration.migrationHistory({})` → empty list
 
----
 
 ## Phase 2: Full Lifecycle (Record → Apply → Rollback) (batched)
 
@@ -113,7 +114,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 26. Verify `stress_migration_data` is gone
 27. `sqlite.migration.migrationHistory({})` → check status
 
----
 
 ## Phase 3: State Pollution & Ordering (batched)
 
@@ -135,28 +135,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 32. `sqlite.migration.migrationApply({version: "stress_005_index", description: "Add index", sql: "CREATE INDEX stress_idx_flag ON test_products(stress_flag)", rollbackSql: "DROP INDEX IF EXISTS stress_idx_flag"})` → applied
 33. Verify index created with `sqlite.core.getIndexes({table: "test_products"})`
 
----
 
-## Phase 4: Error Paths & Recovery (batched)
-
-**4.1 Apply Failures**
-
-34. `sqlite.migration.migrationApply({version: "stress_006_bad_sql", description: "Bad SQL", sql: "ALTER TABLE nonexistent_xyz ADD COLUMN foo TEXT"})` → records but execute fails
-35. `sqlite.migration.migrationStatus({})` → verify failed migration state is tracked
-
-**4.2 Nonexistent Migration Operations**
-
-36. `sqlite.migration.migrationRollback({version: "nonexistent_migration_xyz"})` → structured error (not raw MCP)
-
-**4.3 Zod Validation Errors**
-
-37. `sqlite.migration.migrationRecord({})` → Zod error for missing required params — must be handler error
-38. `sqlite.migration.migrationApply({})` → Zod error for missing required params
-39. `sqlite.migration.migrationRollback({})` → Zod error for missing `version`
-
----
-
-## Phase 5: Error Message Quality (batched)
+## Phase 4: Error Message Quality (batched)
 
 Rate each error response 1-5:
 
@@ -164,7 +144,6 @@ Rate each error response 1-5:
 41. `sqlite.migration.migrationRecord({})` → does it list missing required fields?
 42. `sqlite.migration.migrationRollback({version: "stress_001_add_col"})` → rate error clarity (no rollbackSql stored)
 
----
 
 ### Final Cleanup
 
@@ -173,6 +152,25 @@ Rate each error response 1-5:
 45. Drop `stress_idx_flag`: _Handled by database reset below_
 46. **Reset database** with `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to undo `stress_flag` column on `test_products`
 47. After reset, verify: `test_products` has 16 rows and original columns (no `stress_flag`)
+
+
+## Phase 5: Error Paths & Recovery (batched)
+
+**4.1 Apply Failures**
+
+🔴 34. `sqlite.migration.migrationApply({version: "stress_006_bad_sql", description: "Bad SQL", sql: "ALTER TABLE nonexistent_xyz ADD COLUMN foo TEXT"})` → records but execute fails
+🔴 35. `sqlite.migration.migrationStatus({})` → verify failed migration state is tracked
+
+**4.2 Nonexistent Migration Operations**
+
+🔴 36. `sqlite.migration.migrationRollback({version: "nonexistent_migration_xyz"})` → structured error (not raw MCP)
+
+**4.3 Zod Validation Errors**
+
+🔴 37. `sqlite.migration.migrationRecord({})` → Zod error for missing required params — must be handler error
+🔴 38. `sqlite.migration.migrationApply({})` → Zod error for missing required params
+🔴 39. `sqlite.migration.migrationRollback({})` → Zod error for missing `version`
+
 
 ---
 

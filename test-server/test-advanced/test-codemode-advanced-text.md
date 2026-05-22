@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [text]
+# db-mcp Advanced Stress Testing: [text]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: text
@@ -83,7 +84,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 10. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@(.+)$", groupIndex: 1})` → full domain extraction
 11. `sqlite.text.regexMatch({table: "test_users", column: "bio", pattern: ".*"})` → should match all non-NULL bios (all 9 users have bios)
 
----
 
 ## Phase 2: Fuzzy/Phonetic Matching Stress (batched)
 
@@ -94,7 +94,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 16. `sqlite.text.phoneticMatch({table: "test_users", column: "username", search: "smith", algorithm: "soundex"})` → report behavior (janesmith contains "smith" as suffix)
 17. `sqlite.text.advancedSearch({table: "test_users", column: "username", searchTerm: "jhn", techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold: 0.3})` → should find John via fuzzy/phonetic
 
----
 
 ## Phase 3: Text Transformation Edge Cases (batched)
 
@@ -104,7 +103,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 21. `sqlite.text.case({table: "test_users", column: "username", mode: "lower"})` → idempotent (already lowercase)
 22. `sqlite.text.substring({table: "test_users", column: "email", start: 1, length: 3})` → first 3 chars of each email
 
----
 
 ## Phase 4: Validation Patterns (batched)
 
@@ -112,14 +110,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 24. `sqlite.text.validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid/null counts
 25. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom", customPattern: "^.+@.+\\..{2,}$"})` → custom regex validation
 
----
 
 ## Phase 5: Sentiment Analysis Edge Cases (batched)
 
 26. `sqlite.text.sentiment({table: "test_articles", column: "body"})` → sentiment scores for all 8 articles
 27. Create `stress_sentiment_test` with rows: `"I love this!"` (positive), `"This is terrible"` (negative), `""` (empty), `NULL` → report behavior for edge cases
 
----
 
 ## Phase 6: FTS5 State Integrity `[NATIVE ONLY]` (batched)
 
@@ -130,7 +126,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 32. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
 33. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
 
----
 
 ## Phase 7: WASM Boundary Verification (batched)
 
@@ -139,7 +134,6 @@ For WASM testing only:
 34. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
 35. All 14 non-FTS text tools should work identically in WASM and Native
 
----
 
 ## Phase 8: Error Message Quality (batched)
 
@@ -148,11 +142,11 @@ For WASM testing only:
 38. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
 39. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
 
----
 
 ### Final Cleanup
 
 Drop `stress_*` tables. Confirm `test_articles` row count is still 8. Verify FTS index integrity with `sqlite.text.ftsMatchInfo` `[NATIVE ONLY]`.
+
 
 ---
 

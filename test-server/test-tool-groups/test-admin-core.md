@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: admin-core
@@ -191,6 +192,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 88. `sqlite_dump({})` → handler error
 🔴 89. `sqlite_reindex({})` → success (target is optional — reindexes entire database)
 🔴 90. `sqlite_wal({})` → handler error (action is required)
+
 
 ---
 

@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: wasm-degradation
@@ -154,7 +155,6 @@ return { totalTextMethods: textHelp.methods.length, ftsMethods };
 
 Expected: `ftsMethods` is empty. The 5 FTS5 tools should not appear.
 
----
 
 ## Phase 2: Backup/Restore/Verify/Dump — Graceful Errors (batched)
 
@@ -215,7 +215,6 @@ if (!dump.error || !dump.error.toLowerCase().includes("wasm")) {
 return { failures, success: failures.length === 0 };
 ```
 
----
 
 ## Phase 3: CSV Tools — Graceful Errors (batched)
 
@@ -242,7 +241,6 @@ if (csvAnalyze.success !== false)
 return { failures, success: failures.length === 0 };
 ```
 
----
 
 ## Phase 4: R-Tree — Graceful Error
 
@@ -261,7 +259,6 @@ if (rtree.success !== false)
 return { failures, success: failures.length === 0 };
 ```
 
----
 
 ## Phase 5: FTS5 — Phantom Table Behavior (batched)
 
@@ -297,7 +294,6 @@ if (ftsQuery.success === false) {
 return { failures, success: failures.length === 0 };
 ```
 
----
 
 ## Phase 6: dbstat WASM Fallback
 
@@ -319,7 +315,6 @@ return {
 };
 ```
 
----
 
 ## Phase 7: PRAGMA Compile Options — FTS3 vs FTS5
 
@@ -347,38 +342,8 @@ return {
 };
 ```
 
----
 
-## Phase 8: Zod Validation — WASM-Degraded Tools (batched)
-
-> Even though these tools degrade gracefully for domain reasons, their Zod validation must also work. Passing `{}` should return a structured error, not a raw MCP exception.
-
-```javascript
-const failures = [];
-
-const zodTests = [
-  { name: "backup", fn: () => sqlite.admin.backup({}) },
-  { name: "restore", fn: () => sqlite.admin.restore({}) },
-  { name: "verifyBackup", fn: () => sqlite.admin.verifyBackup({}) },
-  { name: "dump", fn: () => sqlite.admin.dump({}) },
-  { name: "createCsvTable", fn: () => sqlite.admin.createCsvTable({}) },
-  { name: "analyzeCsvSchema", fn: () => sqlite.admin.analyzeCsvSchema({}) },
-  { name: "createRtreeTable", fn: () => sqlite.admin.createRtreeTable({}) },
-];
-
-for (const test of zodTests) {
-  const result = await test.fn();
-  if (result.success !== false) {
-    failures.push(`${test.name}({}): expected {success: false}`);
-  }
-}
-
-return { failures, success: failures.length === 0 };
-```
-
----
-
-## Phase 9: Multi-Step WASM Workflow
+## Phase 8: Multi-Step WASM Workflow
 
 ### 9.1 — WASM capability audit pipeline
 
@@ -433,6 +398,35 @@ return {
   },
 };
 ```
+
+
+## Phase 9: Zod Validation Sweep
+
+> Even though these tools degrade gracefully for domain reasons, their Zod validation must also work. Passing `{}` should return a structured error, not a raw MCP exception.
+
+```javascript
+const failures = [];
+
+const zodTests = [
+  { name: "backup", fn: () => sqlite.admin.backup({}) },
+  { name: "restore", fn: () => sqlite.admin.restore({}) },
+  { name: "verifyBackup", fn: () => sqlite.admin.verifyBackup({}) },
+  { name: "dump", fn: () => sqlite.admin.dump({}) },
+  { name: "createCsvTable", fn: () => sqlite.admin.createCsvTable({}) },
+  { name: "analyzeCsvSchema", fn: () => sqlite.admin.analyzeCsvSchema({}) },
+  { name: "createRtreeTable", fn: () => sqlite.admin.createRtreeTable({}) },
+];
+
+for (const test of zodTests) {
+  const result = await test.fn();
+  if (result.success !== false) {
+    failures.push(`${test.name}({}): expected {success: false}`);
+  }
+}
+
+return { failures, success: failures.length === 0 };
+```
+
 
 ---
 

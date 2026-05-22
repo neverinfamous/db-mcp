@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: transactions
@@ -131,7 +132,6 @@ return await sqlite.transactions.status();
 
 Expected: `{status: "none", active: false}`
 
----
 
 ## Phase 2: Savepoints — Happy Paths (sequential)
 
@@ -156,7 +156,6 @@ return await sqlite.transactions.execute({
 
 Expected: Success with 2 statements executed.
 
----
 
 ## Phase 3: Transaction Domain Errors (batched where possible)
 
@@ -199,22 +198,8 @@ return result;
 
 Expected: `{success: false}` — structured error.
 
----
 
-## Phase 4: Transaction Zod Validation (batched)
-
-🔴 4.1. `sqlite.transactions.begin({})` → success or handler error (no required params)
-🔴 4.2. `sqlite.transactions.status({})` → success or handler error (no required params)
-🔴 4.3. `sqlite.transactions.commit({})` → success or handler error (no required params)
-🔴 4.4. `sqlite.transactions.rollback({})` → success or handler error (no required params)
-🔴 4.5. `sqlite.transactions.execute({})` → `{success: false}` (missing `statements`)
-🔴 4.6. `sqlite.transactions.savepoint({})` → `{success: false}` (missing `name`)
-🔴 4.7. `sqlite.transactions.release({})` → `{success: false}` (missing `name`)
-🔴 4.8. `sqlite.transactions.rollbackTo({})` → `{success: false}` (missing `name`)
-
----
-
-## Phase 5: Multi-Step Workflow
+## Phase 4: Multi-Step Workflow
 
 ### 5.1 — Transactional write with verification
 
@@ -254,6 +239,19 @@ return { before, exec, after };
 ```
 
 Expected: `before.active === false`, `after.active === false` (execute is self-contained).
+
+
+## Phase 5: Zod Validation Sweep
+
+🔴 4.1. `sqlite.transactions.begin({})` → success or handler error (no required params)
+🔴 4.2. `sqlite.transactions.status({})` → success or handler error (no required params)
+🔴 4.3. `sqlite.transactions.commit({})` → success or handler error (no required params)
+🔴 4.4. `sqlite.transactions.rollback({})` → success or handler error (no required params)
+🔴 4.5. `sqlite.transactions.execute({})` → `{success: false}` (missing `statements`)
+🔴 4.6. `sqlite.transactions.savepoint({})` → `{success: false}` (missing `name`)
+🔴 4.7. `sqlite.transactions.release({})` → `{success: false}` (missing `name`)
+🔴 4.8. `sqlite.transactions.rollbackTo({})` → `{success: false}` (missing `name`)
+
 
 ---
 

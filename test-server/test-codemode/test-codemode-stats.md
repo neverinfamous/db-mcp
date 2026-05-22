@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: stats
@@ -123,7 +124,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 22. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 10})` → `sampleSize: 10`, `totalRows: 200`, `rows` array with ≤ 10 rows
 23. `sqlite.stats.statsSample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → rows contain only `name` and `price` columns
 
----
 
 ## Phase 2: Anomaly Detection Suite — Happy Paths (batched)
 
@@ -131,7 +131,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 25. `sqlite.stats.detectBloat()` → bloat detection (may return empty if no bloat)
 26. `sqlite.stats.detectSchemaRisks()` → `tables` array present, `highRiskCount` 0
 
----
 
 ## Phase 3: Window Functions `[NATIVE ONLY]` — Happy Paths (batched)
 
@@ -142,7 +141,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 31. `sqlite.stats.windowLagLead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag values
 32. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → quartiles
 
----
 
 ## Phase 4: Stats Domain Errors (batched)
 
@@ -153,53 +151,22 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 37. `sqlite.stats.statsSample({table: "nonexistent_xyz", sampleSize: 5})` → `{success: false}`
 🔴 38. `sqlite.stats.windowRowNumber({table: "nonexistent_xyz", orderBy: "x"})` `[NATIVE ONLY]` → `{success: false}`
 
----
 
-## Phase 5: Stats Zod Validation (batched)
-
-🔴 39. `sqlite.stats.statsBasic({})` → `{success: false}`
-🔴 40. `sqlite.stats.statsCount({})` → `{success: false}`
-🔴 41. `sqlite.stats.statsGroupBy({})` → `{success: false}`
-🔴 42. `sqlite.stats.statsHistogram({})` → `{success: false}`
-🔴 43. `sqlite.stats.statsPercentile({})` → `{success: false}`
-🔴 44. `sqlite.stats.statsCorrelation({})` → `{success: false}`
-🔴 45. `sqlite.stats.statsTopN({})` → `{success: false}`
-🔴 46. `sqlite.stats.statsDistinct({})` → `{success: false}`
-🔴 47. `sqlite.stats.statsSummary({})` → `{success: false}`
-🔴 48. `sqlite.stats.statsFrequency({})` → `{success: false}`
-🔴 49. `sqlite.stats.statsOutliers({})` → `{success: false}`
-🔴 50. `sqlite.stats.statsRegression({})` → `{success: false}`
-🔴 51. `sqlite.stats.statsHypothesis({})` → `{success: false}`
-🔴 52. `sqlite.stats.detectAnomalies({})` → `{success: false}`
-🔴 53. `sqlite.stats.detectBloat({})` → `{success: false}` or success (no required params)
-🔴 54. `sqlite.stats.detectSchemaRisks({})` → `{success: false}` or success (no required params)
-🔴 55. `sqlite.stats.statsSample({})` → `{success: false}` handler error
-🔴 56. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 57. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 58. `sqlite.stats.windowLagLead({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 59. `sqlite.stats.windowRunningTotal({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 60. `sqlite.stats.windowMovingAvg({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 61. `sqlite.stats.windowNtile({})` `[NATIVE ONLY]` → `{success: false}`
-
----
-
-## Phase 6: Wrong-Type Numeric Coercion (batched)
+## Phase 5: Wrong-Type Numeric Coercion (batched)
 
 🔴 62. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → coerced default (success) or handler error, NOT raw MCP
 🔴 63. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → coerced default (success) or handler error
 
----
 
-## Phase 7: Gotcha Edge Cases (batched)
+## Phase 6: Gotcha Edge Cases (batched)
 
 64. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3})` → verify auto-exclusion of long-content columns (`body`, `description`, `notes`, etc.) from output when `selectColumns` is omitted (gotcha #13)
 65. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3, selectColumns: ["title", "body"]})` → explicit `selectColumns` overrides auto-exclusion — `body` should appear in results (gotcha #13)
 66. `sqlite.stats.detectBloat({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
 67. `sqlite.stats.detectSchemaRisks({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
 
----
 
-## Phase 8: Multi-Step Workflow
+## Phase 7: Multi-Step Workflow
 
 ### 7.1 — Statistical analysis pipeline
 
@@ -240,7 +207,6 @@ return {
 };
 ```
 
----
 
 ### 7.2 — Empty table boundary
 
@@ -266,6 +232,34 @@ if (basic.success === false) {
 await sqlite.core.dropTable({ table: "temp_cm_stats_empty" });
 return { failures, success: failures.length === 0, basicResult: basic };
 ```
+
+
+## Phase 8: Zod Validation Sweep
+
+🔴 39. `sqlite.stats.statsBasic({})` → `{success: false}`
+🔴 40. `sqlite.stats.statsCount({})` → `{success: false}`
+🔴 41. `sqlite.stats.statsGroupBy({})` → `{success: false}`
+🔴 42. `sqlite.stats.statsHistogram({})` → `{success: false}`
+🔴 43. `sqlite.stats.statsPercentile({})` → `{success: false}`
+🔴 44. `sqlite.stats.statsCorrelation({})` → `{success: false}`
+🔴 45. `sqlite.stats.statsTopN({})` → `{success: false}`
+🔴 46. `sqlite.stats.statsDistinct({})` → `{success: false}`
+🔴 47. `sqlite.stats.statsSummary({})` → `{success: false}`
+🔴 48. `sqlite.stats.statsFrequency({})` → `{success: false}`
+🔴 49. `sqlite.stats.statsOutliers({})` → `{success: false}`
+🔴 50. `sqlite.stats.statsRegression({})` → `{success: false}`
+🔴 51. `sqlite.stats.statsHypothesis({})` → `{success: false}`
+🔴 52. `sqlite.stats.detectAnomalies({})` → `{success: false}`
+🔴 53. `sqlite.stats.detectBloat({})` → `{success: false}` or success (no required params)
+🔴 54. `sqlite.stats.detectSchemaRisks({})` → `{success: false}` or success (no required params)
+🔴 55. `sqlite.stats.statsSample({})` → `{success: false}` handler error
+🔴 56. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 57. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 58. `sqlite.stats.windowLagLead({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 59. `sqlite.stats.windowRunningTotal({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 60. `sqlite.stats.windowMovingAvg({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 61. `sqlite.stats.windowNtile({})` `[NATIVE ONLY]` → `{success: false}`
+
 
 ---
 

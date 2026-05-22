@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: geo-spatialite
@@ -111,6 +112,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 27. `sqlite_spatialite_index({})` `[NATIVE ONLY]` → handler error
 🔴 28. `sqlite_spatialite_transform({})` `[NATIVE ONLY]` → handler error
 🔴 29. `sqlite_spatialite_import({})` `[NATIVE ONLY]` → handler error
+
 
 ---
 

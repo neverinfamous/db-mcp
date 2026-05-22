@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: migration
@@ -139,7 +140,6 @@ return await sqlite.migration.migrationHistory();
 
 Expected: Version 1.0.0 listed.
 
----
 
 ## Phase 2: Apply & Execute — Happy Paths (sequential)
 
@@ -174,7 +174,6 @@ return await sqlite.migration.migrationHistory();
 
 Expected: Both 1.0.0 and 1.0.1 listed.
 
----
 
 ## Phase 3: SHA-256 Deduplication
 
@@ -191,7 +190,6 @@ return await sqlite.migration.migrationRecord({
 
 Expected: Fail — duplicate SQL hash detected.
 
----
 
 ## Phase 4: Rollback — Happy Paths (sequential)
 
@@ -234,27 +232,14 @@ return await sqlite.core.readQuery(
 
 Expected: Table does NOT exist.
 
----
 
 ## Phase 5: Migration Domain Errors (batched)
 
 🔴 5.1. `sqlite.migration.migrationApply({version: "bad version!", description: "Invalid", migrationSql: "SELECT 1"})` → report behavior
 🔴 5.2. `sqlite.migration.migrationRollback({version: "nonexistent_version"})` → `{success: false}`
 
----
 
-## Phase 6: Migration Zod Validation (batched)
-
-🔴 6.1. `sqlite.migration.migrationInit({})` → success (no required params)
-🔴 6.2. `sqlite.migration.migrationRecord({})` → `{success: false}` (missing required params)
-🔴 6.3. `sqlite.migration.migrationApply({})` → `{success: false}` (missing required params)
-🔴 6.4. `sqlite.migration.migrationRollback({})` → `{success: false}` (missing `version`)
-🔴 6.5. `sqlite.migration.migrationHistory({})` → success (no required params)
-🔴 6.6. `sqlite.migration.migrationStatus({})` → success (no required params)
-
----
-
-## Phase 7: Multi-Step Workflow
+## Phase 6: Multi-Step Workflow
 
 ### 7.1 — Full migration lifecycle
 
@@ -297,6 +282,17 @@ return {
   historyEntries: history,
 };
 ```
+
+
+## Phase 7: Zod Validation Sweep
+
+🔴 6.1. `sqlite.migration.migrationInit({})` → success (no required params)
+🔴 6.2. `sqlite.migration.migrationRecord({})` → `{success: false}` (missing required params)
+🔴 6.3. `sqlite.migration.migrationApply({})` → `{success: false}` (missing required params)
+🔴 6.4. `sqlite.migration.migrationRollback({})` → `{success: false}` (missing `version`)
+🔴 6.5. `sqlite.migration.migrationHistory({})` → success (no required params)
+🔴 6.6. `sqlite.migration.migrationStatus({})` → success (no required params)
+
 
 ---
 

@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: vector-read
@@ -121,6 +122,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 32. `sqlite_vector_dimensions({})` → handler error
 🔴 33. `sqlite_vector_normalize({})` → handler error
 🔴 34. `sqlite_vector_distance({})` → handler error
+
 
 ---
 

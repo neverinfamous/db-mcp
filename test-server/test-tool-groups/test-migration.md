@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: migration
@@ -140,6 +141,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 41. `sqlite_migration_rollback({})` → handler error
 🔴 42. `sqlite_migration_history({})` → handler error (or success if no required params)
 🔴 43. `sqlite_migration_status({})` → handler error (or success if no required params)
+
 
 ---
 

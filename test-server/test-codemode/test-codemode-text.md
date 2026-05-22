@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: text
@@ -116,7 +117,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. `sqlite.text.sentiment({text: "I love this product"})` → sentiment scores
 21. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → finds `Mechanical Keyboard`
 
----
 
 ## Phase 2: FTS5 Tools `[NATIVE ONLY]` — Happy Paths (batched)
 
@@ -130,14 +130,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "MCP protocol"})` → article 3
 30. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
 
----
 
 ## Phase 3: Text Write Tool (temp table)
 
 31. `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
 32. Revert: `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
 
----
 
 ## Phase 4: Text Domain Errors (batched)
 
@@ -145,41 +143,15 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 34. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → `{success: false}`
 🔴 35. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → `{success: false}`
 
----
 
-## Phase 5: Text Zod Validation (batched)
-
-🔴 36. `sqlite.text.regexExtract({})` → `{success: false}`
-🔴 37. `sqlite.text.regexMatch({})` → `{success: false}`
-🔴 38. `sqlite.text.split({})` → `{success: false}`
-🔴 39. `sqlite.text.concat({})` → `{success: false}`
-🔴 40. `sqlite.text.replace({})` → `{success: false}`
-🔴 41. `sqlite.text.trim({})` → `{success: false}`
-🔴 42. `sqlite.text.case({})` → `{success: false}`
-🔴 43. `sqlite.text.substring({})` → `{success: false}`
-🔴 44. `sqlite.text.fuzzyMatch({})` → `{success: false}`
-🔴 45. `sqlite.text.phoneticMatch({})` → `{success: false}`
-🔴 46. `sqlite.text.normalize({})` → `{success: false}`
-🔴 47. `sqlite.text.validate({})` → `{success: false}`
-🔴 48. `sqlite.text.advancedSearch({})` → `{success: false}`
-🔴 49. `sqlite.text.sentiment({})` → `{success: false}`
-🔴 50. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 51. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 52. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 53. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 54. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
-
----
-
-## Phase 6: Gotcha Edge Cases (batched)
+## Phase 5: Gotcha Edge Cases (batched)
 
 55. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
 56. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
 57. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
 
----
 
-## Phase 7: Multi-Step Workflow
+## Phase 6: Multi-Step Workflow
 
 ### 6.1 — Text analysis pipeline
 
@@ -217,7 +189,6 @@ return {
 };
 ```
 
----
 
 ### 6.2 — FTS5 rebuild requirement verification `[NATIVE ONLY]`
 
@@ -258,6 +229,30 @@ return {
 ```
 
 Expected: `beforeCount: > 0`, `afterCount: > 0` — validates that `ftsCreate` automatically populates the index (bypassing old gotcha expectations), and that `ftsRebuild` executes successfully.
+
+
+## Phase 7: Zod Validation Sweep
+
+🔴 36. `sqlite.text.regexExtract({})` → `{success: false}`
+🔴 37. `sqlite.text.regexMatch({})` → `{success: false}`
+🔴 38. `sqlite.text.split({})` → `{success: false}`
+🔴 39. `sqlite.text.concat({})` → `{success: false}`
+🔴 40. `sqlite.text.replace({})` → `{success: false}`
+🔴 41. `sqlite.text.trim({})` → `{success: false}`
+🔴 42. `sqlite.text.case({})` → `{success: false}`
+🔴 43. `sqlite.text.substring({})` → `{success: false}`
+🔴 44. `sqlite.text.fuzzyMatch({})` → `{success: false}`
+🔴 45. `sqlite.text.phoneticMatch({})` → `{success: false}`
+🔴 46. `sqlite.text.normalize({})` → `{success: false}`
+🔴 47. `sqlite.text.validate({})` → `{success: false}`
+🔴 48. `sqlite.text.advancedSearch({})` → `{success: false}`
+🔴 49. `sqlite.text.sentiment({})` → `{success: false}`
+🔴 50. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 51. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 52. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 53. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 54. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
+
 
 ---
 

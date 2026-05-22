@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [core]
+# db-mcp Advanced Stress Testing: [core]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -73,35 +73,37 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: core
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-8. sqlite_read_query
-9. sqlite_write_query
-10. sqlite_create_table
-11. sqlite_list_tables
-12. sqlite_describe_table
-13. sqlite_drop_table
-14. sqlite_get_indexes
-15. sqlite_create_index
-16. sqlite_drop_index
-17. sqlite_count
-18. sqlite_exists
-19. sqlite_upsert
-20. sqlite_batch_insert
-21. sqlite_truncate
-22. sqlite_date_add
-23. sqlite_date_diff
-24. sqlite_list_triggers
-25. sqlite_list_constraints
-26. sqlite_alter_table
-27. sqlite_create_trigger
-28. sqlite_drop_trigger
+### Code Mode Methods
 
----
+8. sqlite.core.readQuery
+9. sqlite.core.writeQuery
+10. sqlite.core.createTable
+11. sqlite.core.listTables
+12. sqlite.core.describeTable
+13. sqlite.core.dropTable
+14. sqlite.core.getIndexes
+15. sqlite.core.createIndex
+16. sqlite.core.dropIndex
+17. sqlite.core.count
+18. sqlite.core.exists
+19. sqlite.core.upsert
+20. sqlite.core.batchInsert
+21. sqlite.core.truncate
+22. sqlite.core.dateAdd
+23. sqlite.core.dateDiff
+24. sqlite.core.listTriggers
+25. sqlite.core.listConstraints
+26. sqlite.core.alterTable
+27. sqlite.core.createTrigger
+28. sqlite.core.dropTrigger
+
 
 ## Phase 1: Boundary Values & Empty States (batched)
 
@@ -137,7 +139,6 @@ Insert: `(value: 99999999.99)`, `(value: -99999999.99)`, `(value: 0.0)`, `(value
 
 40. `sqlite.stats.statsBasic({table: "stress_empty_table", column: "value"})` → verify min/max/avg handle extreme values
 
----
 
 ## Phase 2: State Pollution & Idempotency (batched)
 
@@ -155,7 +156,6 @@ Insert: `(value: 99999999.99)`, `(value: -99999999.99)`, `(value: 0.0)`, `(value
 47. `sqlite.core.createTable(...)` with table name `test_products` → expect error or "already exists"
 48. `sqlite.core.createIndex(...)` on existing `idx_orders_status` → expect error or "already exists"
 
----
 
 ## Phase 3: Error Message Quality (batched)
 
@@ -177,7 +177,6 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 
 55. `sqlite.core.writeQuery("INSERT INTO test_products (id, name, price, category) VALUES (1, 'dup', 10.0, 'cat')")` → duplicate primary key error (id=1 exists)
 
----
 
 ## Phase 4: Large Payload & Truncation Verification (batched)
 
@@ -185,7 +184,6 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 57. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
 58. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100"})` → 100 rows — check payload size
 
----
 
 ## Phase 5: Trigger & Constraint Edge Cases (batched)
 
@@ -208,7 +206,6 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 70. `sqlite.core.listConstraints({table: "stress_constraints_table"})` → call twice to verify idempotency/caching
 71. Cleanup: drop `stress_constraints_table`
 
----
 
 ## Phase 6: Date Math Edge Cases (batched)
 
@@ -216,7 +213,6 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 73. `sqlite.core.dateDiff({table: "test_events", column1: "event_date", column2: "invalid_date_col", unit: "days"})` → should return a structured error about invalid column
 74. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: 0, unit: "days"})` → valid delta 0
 
----
 
 ## Phase 7: ALTER TABLE Edge Cases (batched)
 
@@ -233,7 +229,6 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 82. `sqlite.core.alterTable({table: "stress_alter_table", operation: "rename_table", newName: "test_products"})` → structured error (TABLE_EXISTS)
 83. Full lifecycle: rename table → verify with listTables → rename back → verify → cleanup
 
----
 
 ## Phase 8: Trigger Stress (batched)
 
@@ -251,11 +246,11 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 95. Drop `stress_trg_table` → success (cascade-deletes triggers)
 96. `sqlite.core.listTriggers({table: "stress_trg_table"})` → verify triggers are gone (table dropped)
 
----
 
 ### Final Cleanup
 
 Drop all `stress_*` tables. Confirm `test_products` row count is still 16 (no pollution).
+
 
 ---
 

@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [vector]
+# db-mcp Advanced Stress Testing: [vector]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,25 +68,27 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: vector
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-8. sqlite_vector_create_table
-9. sqlite_vector_store
-10. sqlite_vector_batch_store
-11. sqlite_vector_search
-12. sqlite_vector_get
-13. sqlite_vector_delete
-14. sqlite_vector_count
-15. sqlite_vector_stats
-16. sqlite_vector_dimensions
-17. sqlite_vector_normalize
-18. sqlite_vector_distance
+### Code Mode Methods
 
----
+8. sqlite.vector.vectorCreateTable
+9. sqlite.vector.vectorStore
+10. sqlite.vector.vectorBatchStore
+11. sqlite.vector.vectorSearch
+12. sqlite.vector.vectorGet
+13. sqlite.vector.vectorDelete
+14. sqlite.vector.vectorCount
+15. sqlite.vector.vectorStats
+16. sqlite.vector.vectorDimensions
+17. sqlite.vector.vectorNormalize
+18. sqlite.vector.vectorDistance
+
 
 ## Phase 1: Boundary Values (batched)
 
@@ -105,7 +107,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 24. `sqlite.vector.store({table: "stress_vec_empty", idColumn: "id", vectorColumn: "vector", id: 1, vector: [1, 0, 0, 0]})` → success
 25. `sqlite.vector.search({table: "stress_vec_empty", vectorColumn: "vector", queryVector: [1, 0, 0, 0], metric: "cosine", limit: 5})` → 1 result, similarity ≈ 1
 
----
 
 ## Phase 2: Distance Metric Verification (batched)
 
@@ -117,7 +118,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 31. `sqlite.vector.normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5.0}`
 32. `sqlite.vector.normalize({vector: [0, 0, 0]})` → `{normalized: [0, 0, 0], originalMagnitude: 0}` (zero vector, no crash)
 
----
 
 ## Phase 3: Dimension Mismatch (batched)
 
@@ -127,7 +127,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 34. `sqlite.vector.search({table: "stress_vec_empty", vectorColumn: "vector", queryVector: [1, 2], metric: "cosine"})` → search runs (dimension mismatch silently handled via try/catch)
 35. `sqlite.vector.distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → structured error: "Vector dimensions must match"
 
----
 
 ## Phase 4: Batch Operations (batched)
 
@@ -135,14 +134,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 37. `sqlite.vector.batchStore(...)` with 50 vectors into `stress_vec_empty` → `{stored: 50}`
 38. `sqlite.vector.count({table: "stress_vec_empty"})` → `{count: 51}` (1 from earlier + 50 batch)
 
----
 
 ## Phase 5: Category Filtering (batched)
 
 39. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 20, whereClause: "category = 'tech'"})` → only tech results (4 rows)
 40. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 20, whereClause: "category = 'nonexistent'"})` → 0 results (not error)
 
----
 
 ## Phase 6: Error Message Quality (batched)
 
@@ -150,11 +147,11 @@ All tools should return errors as structured objects instead of throwing. The ex
 42. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 99999})` → `{success: false, error: "Vector not found"}`
 43. `sqlite.vector.delete({table: "test_embeddings", idColumn: "id", ids: [99999]})` → `{success: true, deleted: 0}` (idempotent)
 
----
 
 ### Final Cleanup
 
 Drop `stress_vec_empty`. Confirm `test_embeddings` count is still 20.
+
 
 ---
 

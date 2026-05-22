@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: introspection
@@ -94,7 +95,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 10. `sqlite.introspection.cascadeSimulator({table: "test_products"})` → affectedTables includes `test_orders`
 11. `sqlite.introspection.cascadeSimulator({table: "test_measurements"})` → affectedTables empty
 
----
 
 ## Phase 2: Schema Analysis — Happy Paths (batched)
 
@@ -106,7 +106,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 17. `sqlite.introspection.schemaDiff({baseline: "current", target: "current"})` → `summary.totalChanges: 0`, `severity: "none"` (self-diff = no drift)
 18. `sqlite.introspection.schemaDiff({baseline: "current", target: "current", sections: ["tables"]})` → `sections.tables` populated, `sections.views`/`indexes`/`triggers` absent
 
----
 
 ## Phase 3: Diagnostics — Happy Paths (batched)
 
@@ -116,7 +115,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 22. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan array contains `idx_orders_status_date`
 23. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan array contains `test_products` (no index on name)
 
----
 
 ## Phase 4: Advanced Optional Parameters (batched)
 
@@ -130,34 +128,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 29. `sqlite.introspection.indexAudit({table: "test_orders"})` → filtered to test_orders indexes only
 30. `sqlite.introspection.topologicalSort({direction: "drop"})` → drop order: test_orders before test_products
 
----
 
-## Phase 5: Introspection Domain Errors (batched)
-
-🔴 31. `sqlite.introspection.cascadeSimulator({table: "nonexistent_xyz"})` → `{success: false}`
-🔴 32. `sqlite.introspection.queryPlan({sql: "DELETE FROM test_products WHERE id = 1"})` → `{success: false, error: "...only SELECT..."}`
-🔴 33. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod validation error (min: 1)
-🔴 34. `sqlite.introspection.migrationRisks({statements: []})` → report behavior for empty array
-🔴 35. `sqlite.introspection.schemaDiff({baseline: "current"})` → Zod error for missing `target`
-
----
-
-## Phase 6: Introspection Zod Validation (batched)
-
-🔴 36. `sqlite.introspection.dependencyGraph({})` → success or handler error (no required params)
-🔴 37. `sqlite.introspection.topologicalSort({})` → success or handler error (no required params)
-🔴 38. `sqlite.introspection.cascadeSimulator({})` → `{success: false}` (missing `table`)
-🔴 39. `sqlite.introspection.schemaSnapshot({})` → success or handler error (no required params)
-🔴 40. `sqlite.introspection.schemaDiff({})` → `{success: false}` (missing `baseline` and `target`)
-🔴 41. `sqlite.introspection.constraintAnalysis({})` → success or handler error (no required params)
-🔴 42. `sqlite.introspection.migrationRisks({})` → `{success: false}` (missing `statements`)
-🔴 43. `sqlite.introspection.storageAnalysis({})` → success or handler error (no required params)
-🔴 44. `sqlite.introspection.indexAudit({})` → success or handler error (no required params)
-🔴 45. `sqlite.introspection.queryPlan({})` → `{success: false}` (missing `sql`)
-
----
-
-## Phase 7: Multi-Step Workflow
+## Phase 5: Multi-Step Workflow
 
 ### 7.1 — Full database audit pipeline
 
@@ -214,6 +186,21 @@ for (const sql of queries) {
 }
 return plans;
 ```
+
+
+## Phase 6: Zod Validation Sweep
+
+🔴 36. `sqlite.introspection.dependencyGraph({})` → success or handler error (no required params)
+🔴 37. `sqlite.introspection.topologicalSort({})` → success or handler error (no required params)
+🔴 38. `sqlite.introspection.cascadeSimulator({})` → `{success: false}` (missing `table`)
+🔴 39. `sqlite.introspection.schemaSnapshot({})` → success or handler error (no required params)
+🔴 40. `sqlite.introspection.schemaDiff({})` → `{success: false}` (missing `baseline` and `target`)
+🔴 41. `sqlite.introspection.constraintAnalysis({})` → success or handler error (no required params)
+🔴 42. `sqlite.introspection.migrationRisks({})` → `{success: false}` (missing `statements`)
+🔴 43. `sqlite.introspection.storageAnalysis({})` → success or handler error (no required params)
+🔴 44. `sqlite.introspection.indexAudit({})` → success or handler error (no required params)
+🔴 45. `sqlite.introspection.queryPlan({})` → `{success: false}` (missing `sql`)
+
 
 ---
 

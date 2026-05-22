@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [geo]
+# db-mcp Advanced Stress Testing: [geo]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: geo
@@ -84,7 +85,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 11. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → report behavior for out-of-bounds latitude (>90°)
 12. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → report behavior for out-of-bounds longitude (>180°)
 
----
 
 ## Phase 2: Nearby Search Edge Cases (batched)
 
@@ -92,7 +92,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 14. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.7829, centerLon: -73.9654, radius: 50000})` → very large radius — ALL 15 locations
 15. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 0, centerLon: 0, radius: 100})` → no locations near (0,0) — 0 results (not error)
 
----
 
 ## Phase 3: Bounding Box Edge Cases (batched)
 
@@ -100,7 +99,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 17. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 0, maxLat: 0, minLon: 0, maxLon: 0})` → 0 results (point bounding box)
 18. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 50, maxLat: 52, minLon: -1, maxLon: 1})` → London locations (Big Ben, Tower Bridge, Buckingham Palace)
 
----
 
 ## Phase 4: Clustering Edge Cases (batched)
 
@@ -108,7 +106,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 0.001})` → ~15 clusters (tiny grid, one per location)
 21. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 0.1})` → approximately one cluster per city
 
----
 
 ## Phase 5: SpatiaLite Integration `[NATIVE ONLY]` (batched)
 
@@ -122,7 +119,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 29. `sqlite.geo.spatialiteIndex({tableName: "stress_geo_spatial", geometryColumn: "geom", action: "check"})` → index integrity
 30. `sqlite.geo.spatialiteAnalyze({analysisType: "spatial_extent", sourceTable: "stress_geo_spatial", geometryColumn: "geom"})` → spatial extent
 
----
 
 ## Phase 6: Error Message Quality (batched)
 
@@ -130,7 +126,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 32. `sqlite.geo.nearby({table: "test_locations", latColumn: "nonexistent_col", lonColumn: "longitude", centerLat: 0, centerLon: 0, radius: 100})` → structured error about column
 33. `sqlite.geo.spatialiteQuery({query: "SELECT * FROM nonexistent_table_xyz"})` `[NATIVE ONLY]` → structured error
 
----
 
 ## Phase 7: WASM Boundary Verification (batched)
 
@@ -139,11 +134,11 @@ For WASM testing only:
 34. Confirm SpatiaLite tools (items 5-11) are NOT present in the tool list
 35. All 4 Haversine tools should produce identical results in WASM and Native
 
----
 
 ### Final Cleanup
 
 Drop `stress_*` tables (if created) using `sqlite.core.dropTable({table: "..."})`. (Note: SpatiaLite index shadow tables like `idx_stress_*` will be automatically cleaned up by `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1`). Confirm `test_locations` count is still 15.
+
 
 ---
 

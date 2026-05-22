@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [stats]
+# db-mcp Advanced Stress Testing: [stats]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: stats
@@ -107,7 +108,6 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 16. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → verify min/max/avg handle extreme values
 
----
 
 ## Phase 2: Statistical Edge Cases (batched)
 
@@ -117,7 +117,6 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 20. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature", method: "zscore"})` → Z-score outliers (compare with IQR)
 21. `sqlite.stats.statsRegression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 2})` → quadratic regression
 
----
 
 ## Phase 3: Anomaly Detection Stress (batched)
 
@@ -126,7 +125,6 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 24. `sqlite.stats.detectBloat()` → bloat detection
 25. `sqlite.stats.detectSchemaRisks()` → schema risk assessment
 
----
 
 ## Phase 4: Window Functions `[NATIVE ONLY]` (batched)
 
@@ -137,7 +135,6 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 29. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 10, orderBy: "measured_at"})` → 10-row moving average
 30. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → 4 groups of ~4 products
 
----
 
 ## Phase 5: Error Message Quality (batched)
 
@@ -147,7 +144,6 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 34. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: 0})` → error (must be > 0)
 35. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: -1})` → error
 
----
 
 ## Phase 6: Stats Sample Edge Cases (batched)
 
@@ -157,7 +153,6 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 39. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
 40. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
 
----
 
 ## Phase 7: WASM Boundary Verification (batched)
 
@@ -166,11 +161,11 @@ For WASM testing only:
 41. Confirm window function tools are NOT present in the tool list
 42. All 17 non-window stats tools should produce identical results in WASM and Native
 
----
 
 ### Final Cleanup
 
 Drop `stress_stats_table`. Confirm `test_measurements` (200 rows) and `test_products` (16 rows) unchanged.
+
 
 ---
 

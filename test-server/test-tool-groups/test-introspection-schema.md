@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: introspection-schema
@@ -84,41 +85,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 13. sqlite_constraint_analysis
 14. sqlite_migration_risks
 
-## Phase 1: Core Check (batched)
-
-**Graph Analysis:**
-
-15. `sqlite_dependency_graph({})` → nodes ≥ 2, edges includes `test_orders → test_products` (FK); stats.totalRelationships ≥ 1
-16. `sqlite_topological_sort({})` → order array with `test_products` before `test_orders` (FK dependency); hasCycles = false
-17. `sqlite_topological_sort({direction: "drop"})` → order array with `test_orders` before `test_products` (reverse topo sort)
-18. `sqlite_cascade_simulator({table: "test_products"})` → affectedTables includes `test_orders` (FK dependent)
-19. `sqlite_cascade_simulator({table: "test_measurements"})` → affectedTables is empty (no tables reference it via FK)
-20. `sqlite_cascade_simulator({table: "nonexistent_table_xyz"})` → `{success: false, error: "..."}`
-
-**Schema Analysis:**
-
-21. `sqlite_schema_snapshot({})` → snapshot.tables ≥ 11 (10 test\_ tables + FTS virtual); stats.indexes ≥ 4; generatedAt present
-22. `sqlite_schema_snapshot({sections: ["tables"]})` → snapshot.tables is populated, but views/indexes should be missing or empty
-23. `sqlite_schema_snapshot({compact: true})` → columns array should be omitted or minimal
-24. `sqlite_constraint_analysis({})` → findings array; summary.totalFindings ≥ 0; summary.byType and bySeverity objects present
-25. `sqlite_constraint_analysis({table: "test_orders"})` → findings restricted to `test_orders`
-26. `sqlite_constraint_analysis({checks: ["unindexed_fk"]})` → findings restricted to `unindexed_fk`
-27. `sqlite_migration_risks({statements: ["DROP TABLE test_products"]})` → risks array non-empty; risk category includes data_loss or destructive
-28. `sqlite_migration_risks({statements: ["ALTER TABLE test_users ADD COLUMN age INTEGER"]})` → low risk
-29. `sqlite_migration_risks({statements: ["CREATE TABLE new_table (id INTEGER PRIMARY KEY)", "DROP TABLE test_products"]})` → summary.totalStatements = 2; summary.highestRisk ≥ "high"
-
-**Schema Diff:**
-
-30. `sqlite_schema_diff({baseline: "current", target: "current"})` → `summary.totalChanges: 0`, `severity: "none"` (self-diff = no drift)
-31. `sqlite_schema_diff({baseline: "current", target: "current", sections: ["tables"]})` → `sections.tables` populated, `sections.views`/`indexes`/`triggers` absent
-
-**Error path testing:**
-
-🔴 32. `sqlite_cascade_simulator({})` → Zod validation error (missing required `table`). Must be handler error, NOT raw MCP error.
-🔴 33. `sqlite_migration_risks({statements: []})` → report behavior for empty array
-🔴 34. `sqlite_schema_diff({baseline: "current"})` → Zod error for missing `target`. Must be handler error.
-
-## Phase 2: Zod Validation Sweep
+## Phase 1: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
@@ -128,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 38. `sqlite_schema_diff({})` → handler error (both `baseline` and `target` required)
 🔴 39. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
 🔴 40. `sqlite_migration_risks({})` → handler error
+
 
 ---
 

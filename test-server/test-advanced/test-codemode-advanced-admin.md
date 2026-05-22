@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [admin]
+# db-mcp Advanced Stress Testing: [admin]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -70,46 +70,48 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: admin
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-8. sqlite_pragma_database_list
-9. sqlite_pragma_compile_options
-10. sqlite_pragma_settings
-11. sqlite_pragma_table_info
-12. sqlite_pragma_optimize
-13. sqlite_index_stats
-14. sqlite_integrity_check
-15. sqlite_analyze
-16. sqlite_dbstat
-17. sqlite_vacuum
-18. sqlite_optimize
-19. sqlite_create_view
-20. sqlite_list_views
-21. sqlite_drop_view
-22. sqlite_list_virtual_tables
-23. sqlite_virtual_table_info
-24. sqlite_drop_virtual_table
-25. sqlite_create_csv_table
-26. sqlite_analyze_csv_schema
-27. sqlite_create_rtree_table
-28. sqlite_create_series_table
-29. sqlite_generate_series
-30. sqlite_backup
-31. sqlite_restore
-32. sqlite_verify_backup
-33. sqlite_append_insight
-34. sqlite_dump
-35. sqlite_attach_database
-36. sqlite_detach_database
-37. sqlite_vacuum_into
-38. sqlite_reindex
-39. sqlite_wal
+### Code Mode Methods
 
----
+8. sqlite.admin.pragmaDatabaseList
+9. sqlite.admin.pragmaCompileOptions
+10. sqlite.admin.pragmaSettings
+11. sqlite.admin.pragmaTableInfo
+12. sqlite.admin.pragmaOptimize
+13. sqlite.admin.indexStats
+14. sqlite.admin.integrityCheck
+15. sqlite.admin.analyze
+16. sqlite.admin.dbstat
+17. sqlite.admin.vacuum
+18. sqlite.admin.optimize
+19. sqlite.admin.createView
+20. sqlite.admin.listViews
+21. sqlite.admin.dropView
+22. sqlite.admin.listVirtualTables
+23. sqlite.admin.virtualTableInfo
+24. sqlite.admin.dropVirtualTable
+25. sqlite.admin.createCsvTable
+26. sqlite.admin.analyzeCsvSchema
+27. sqlite.admin.createRtreeTable
+28. sqlite.admin.createSeriesTable
+29. sqlite.admin.generateSeries
+30. sqlite.admin.backup
+31. sqlite.admin.restore
+32. sqlite.admin.verifyBackup
+33. sqlite.admin.appendInsight
+34. sqlite.admin.dump
+35. sqlite.admin.attachDatabase
+36. sqlite.admin.detachDatabase
+37. sqlite.admin.vacuumInto
+38. sqlite.admin.reindex
+39. sqlite.admin.wal
+
 
 ## Phase 1: View Lifecycle Stress (batched)
 
@@ -119,7 +121,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 43. `sqlite.admin.dropView({viewName: "stress_view_orders"})` → structured error or "not found" (not raw crash)
 44. `sqlite.admin.createView({viewName: "stress_view_orders", selectQuery: "SELECT product_id, COUNT(*) as cnt FROM test_orders GROUP BY product_id"})` → recreate success
 
----
 
 ## Phase 2: Virtual Table Edge Cases (batched)
 
@@ -129,7 +130,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 48. `sqlite.admin.dropVirtualTable({tableName: "stress_rtree_test"})` → success
 49. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_vtable_xyz"})` → structured error
 
----
 
 ## Phase 3: Backup/Restore Integrity (batched)
 
@@ -142,7 +142,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 54. `sqlite.admin.dump({outputPath: "C:\\Windows\\System32\\stress-dump.sql"})` → structured security error
 55. Note backup and dump files for manual removal
 
----
 
 ## Phase 4: Pragma Edge Cases (batched)
 
@@ -151,7 +150,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 58. `sqlite.admin.pragmaSettings({pragma: "journal_mode"})` → `{value: "wal"}`
 59. `sqlite.admin.pragmaTableInfo({table: "nonexistent_table_xyz"})` → report behavior
 
----
 
 ## Phase 5: Series & CSV Edge Cases (batched)
 
@@ -160,7 +158,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 62. `sqlite.admin.analyzeCsvSchema({filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → inferred types
 63. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
 
----
 
 ## Phase 6: Database Management Edge Cases (batched)
 
@@ -172,7 +169,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 69. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-vacuum.db"})` → error (file already exists)
 70. Note vacuum file for manual removal
 
----
 
 ## Phase 7: Error Message Quality (batched)
 
@@ -181,7 +177,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 73. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
 74. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → structured error (path traversal)
 
----
 
 ## Phase 8: WASM Boundary Verification (batched)
 
@@ -189,7 +184,6 @@ For WASM testing only:
 
 75. Verify that backup/restore/verify, CSV, R-Tree, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
 
----
 
 ## Phase 9: REINDEX & WAL Edge Cases (batched)
 
@@ -202,11 +196,11 @@ For WASM testing only:
 82. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "PASSIVE"})` → success with `walPages` and `checkpointedPages`
 83. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "TRUNCATE"})` → success, verify pages
 
----
 
 ### Final Cleanup
 
 Drop all `stress_*` tables and views. Confirm `test_products` (16 rows) and `test_orders` (20 rows) unchanged.
+
 
 ---
 

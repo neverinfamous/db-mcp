@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: geo
@@ -99,7 +100,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 12. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 35, maxLat: 55, minLon: -130, maxLon: -70})` → US locations (4 results)
 13. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 5})` → ~5 clusters
 
----
 
 ## Phase 2: SpatiaLite Tools `[NATIVE ONLY]` — Happy Paths (sequential)
 
@@ -112,7 +112,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. `sqlite.geo.spatialiteAnalyze({analysisType: "spatial_extent", sourceTable: "temp_cm_spatial", geometryColumn: "geom"})` → spatial extent
 21. Cleanup: drop `temp_cm_spatial`
 
----
 
 ## Phase 3: Geo Domain Errors (batched)
 
@@ -120,30 +119,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 23. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → `{success: false, error: "Invalid lat1: 91..."}` — handler error, NOT raw MCP `-32602` (Zod refinement leak test)
 🔴 24. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → `{success: false}` — invalid longitude
 
----
 
-## Phase 4: Geo Zod Validation (batched)
-
-🔴 25. `sqlite.geo.distance({})` → `{success: false}`
-🔴 26. `sqlite.geo.nearby({})` → `{success: false}`
-🔴 27. `sqlite.geo.boundingBox({})` → `{success: false}`
-🔴 28. `sqlite.geo.cluster({})` → `{success: false}`
-🔴 29. `sqlite.geo.spatialiteCreateTable({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 30. `sqlite.geo.spatialiteQuery({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 31. `sqlite.geo.spatialiteAnalyze({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 32. `sqlite.geo.spatialiteIndex({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 33. `sqlite.geo.spatialiteTransform({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 34. `sqlite.geo.spatialiteImport({})` `[NATIVE ONLY]` → `{success: false}`
-
----
-
-## Phase 5: Wrong-Type Numeric Coercion
+## Phase 4: Wrong-Type Numeric Coercion
 
 🔴 35. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.758, centerLon: -73.9855, radius: "abc"})` → handler error, NOT raw MCP
 
----
 
-## Phase 6: Multi-Step Workflow
+## Phase 5: Multi-Step Workflow
 
 ### 6.1 — Proximity analysis pipeline
 
@@ -183,6 +165,21 @@ return {
   nearbyCount: nearby?.rowCount || nearby?.results?.length,
 };
 ```
+
+
+## Phase 6: Zod Validation Sweep
+
+🔴 25. `sqlite.geo.distance({})` → `{success: false}`
+🔴 26. `sqlite.geo.nearby({})` → `{success: false}`
+🔴 27. `sqlite.geo.boundingBox({})` → `{success: false}`
+🔴 28. `sqlite.geo.cluster({})` → `{success: false}`
+🔴 29. `sqlite.geo.spatialiteCreateTable({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 30. `sqlite.geo.spatialiteQuery({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 31. `sqlite.geo.spatialiteAnalyze({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 32. `sqlite.geo.spatialiteIndex({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 33. `sqlite.geo.spatialiteTransform({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 34. `sqlite.geo.spatialiteImport({})` `[NATIVE ONLY]` → `{success: false}`
+
 
 ---
 

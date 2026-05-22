@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: text-basic
@@ -130,6 +131,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 40. `sqlite_text_normalize({})` → handler error
 🔴 41. `sqlite_text_validate({})` → handler error
 🔴 42. `sqlite_execute_code({})` → handler error
+
 
 ---
 

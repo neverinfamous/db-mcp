@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: sandbox
@@ -161,7 +162,6 @@ return nested;
 
 Expected: `{success: true}` — sandbox must serialize deeply nested objects.
 
----
 
 ## Phase 2: API Discoverability (7 tests)
 
@@ -246,7 +246,6 @@ return {
 
 Expected: All values are `"undefined"`. The 3 built-in tools (`server_info`, `server_health`, `list_adapters`) are always-on MCP tools available outside Code Mode but must NOT be accessible in the `sqlite.*` sandbox namespace.
 
----
 
 ## Phase 3: Security & Error Handling (7 tests)
 
@@ -309,7 +308,6 @@ return await sqlite.nonexistent.help();
 
 Expected: runtime error, not crash.
 
----
 
 ## Phase 4: Readonly Mode (5 tests)
 
@@ -371,7 +369,6 @@ return await sqlite.stats.statsBasic({
 
 Expected: succeeds — stats tools are read-only.
 
----
 
 ## Phase 5: State Isolation (2 tests)
 
@@ -427,6 +424,7 @@ return result;
 ```
 
 Expected: Call 2 reads the row inserted in Call 1 — database state persists across sandbox invocations (sandbox is stateless, database is not).
+
 
 ---
 

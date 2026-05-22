@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: json-read
@@ -168,6 +169,7 @@ Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 🔴 70. `sqlite_json_security_scan({})` → handler error
 🔴 71. `sqlite_json_diff({})` → handler error
 🔴 72. `sqlite_execute_code({})` → handler error
+
 
 ---
 

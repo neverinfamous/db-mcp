@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [transactions]
+# db-mcp Advanced Stress Testing: [transactions]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: transactions
@@ -82,7 +83,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 9. `sqlite.transactions.execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → should fail
 10. Start new transaction → verify it works normally (no lingering aborted state)
 
----
 
 ## Phase 2: Savepoint Stress Test (batched)
 
@@ -95,21 +95,18 @@ All tools should return errors as structured objects instead of throwing. The ex
 17. `sqlite.transactions.rollbackTo({name: "sp1"})` → should undo all inserts
 18. `sqlite.transactions.commit()` → only pre-sp1 state persists
 
----
 
 ## Phase 3: Transaction Execute — Mixed Statements (batched)
 
 19. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_test (id INTEGER PRIMARY KEY, name TEXT)", "INSERT INTO stress_tx_test VALUES (1, 'alpha')", "INSERT INTO stress_tx_test VALUES (2, 'beta')"]})` → success, 3 statements
 20. Verify `stress_tx_test` exists with 2 rows
 
----
 
 ## Phase 4: Transaction Execute — Failure Rollback (batched)
 
 21. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_fail (id INT)", "INSERT INTO nonexistent_xyz VALUES (1)", "CREATE TABLE stress_tx_fail2 (id INT)"]})` → failure
 22. Verify: `stress_tx_fail` does NOT exist (atomic rollback worked)
 
----
 
 ## Phase 5: Rapid State Transitions (batched)
 
@@ -118,7 +115,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 25. `sqlite.transactions.status()` → verify `{active: false}` after both
 26. Begin → savepoint → release → commit (minimal lifecycle)
 
----
 
 ## Phase 6: Error Message Quality (batched)
 
@@ -126,7 +122,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 28. `sqlite.transactions.release({name: "nonexistent_sp_xyz"})` → structured error
 29. `sqlite.transactions.execute({statements: []})` → report behavior for empty array
 
----
 
 ## Phase 7: WASM Boundary Verification (batched)
 
@@ -134,11 +129,11 @@ For WASM testing only:
 
 30. Confirm all 8 transaction tools are NOT present in the tool list
 
----
 
 ### Final Cleanup
 
 Drop `stress_tx_sp`, `stress_tx_test`, `stress_tx_fail` if they exist. Confirm `test_products` (16 rows) and `test_orders` (20 rows) unchanged.
+
 
 ---
 

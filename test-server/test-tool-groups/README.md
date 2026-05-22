@@ -101,6 +101,8 @@ Several admin tools are **registered in WASM mode but return structured errors**
 
 Begin with any requested group prompt from this folder (e.g., `test-admin.md`), and execute the deterministic checklist line-by-line using direct tool calls only.
 
+---
+
 ## Post-Test Procedures
 
 ### Reporting Rules

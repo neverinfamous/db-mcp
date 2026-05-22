@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [json]
+# db-mcp Advanced Stress Testing: [json]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,38 +68,40 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: json
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-8. sqlite_json_valid
-9. sqlite_json_extract
-10. sqlite_json_set
-11. sqlite_json_remove
-12. sqlite_json_type
-13. sqlite_json_array_length
-14. sqlite_json_array_append
-15. sqlite_json_keys
-16. sqlite_json_each
-17. sqlite_json_group_array
-18. sqlite_json_group_object
-19. sqlite_json_pretty
-20. sqlite_jsonb_convert
-21. sqlite_json_storage_info
-22. sqlite_json_normalize_column
-23. sqlite_json_insert
-24. sqlite_json_update
-25. sqlite_json_select
-26. sqlite_json_query
-27. sqlite_json_validate_path
-28. sqlite_json_merge
-29. sqlite_json_analyze_schema
-30. sqlite_create_json_collection
-31. sqlite_json_security_scan
+### Code Mode Methods
 
----
+8. sqlite.json.jsonValid
+9. sqlite.json.jsonExtract
+10. sqlite.json.jsonSet
+11. sqlite.json.jsonRemove
+12. sqlite.json.jsonType
+13. sqlite.json.jsonArrayLength
+14. sqlite.json.jsonArrayAppend
+15. sqlite.json.jsonKeys
+16. sqlite.json.jsonEach
+17. sqlite.json.jsonGroupArray
+18. sqlite.json.jsonGroupObject
+19. sqlite.json.jsonPretty
+20. sqlite.json.jsonbConvert
+21. sqlite.json.jsonStorageInfo
+22. sqlite.json.jsonNormalizeColumn
+23. sqlite.json.jsonInsert
+24. sqlite.json.jsonUpdate
+25. sqlite.json.jsonSelect
+26. sqlite.json.jsonQuery
+27. sqlite.json.jsonValidatePath
+28. sqlite.json.jsonMerge
+29. sqlite.json.jsonAnalyzeSchema
+30. sqlite.json.createJsonCollection
+31. sqlite.json.jsonSecurityScan
+
 
 ## Phase 1: Deep JSON Operations (batched)
 
@@ -130,7 +132,6 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 41. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.rating", whereClause: "id = 1"})` → `"real"` (rating=4.5)
 42. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.nested", whereClause: "id = 4"})` → `"object"`
 
----
 
 ## Phase 2: JSON Query & Filter Stress (batched)
 
@@ -140,7 +141,6 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 44. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article", "$.author": "Alice"}, selectPaths: ["$.title", "$.views"]})` → 1 row (Alice's article)
 45. `sqlite.json.query({table: "test_events", column: "payload", filterPaths: {"$.page": "home"}})` → 25 rows (every 4th event)
 
----
 
 ## Phase 3: Error Message Quality (batched)
 
@@ -149,7 +149,6 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 48. `sqlite.json.set({table: "test_jsonb_docs", column: "doc", path: "$.author", value: "\"Modified\"", whereClause: "id = 99999"})` → report behavior for nonexistent row
 49. `sqlite.json.validatePath({path: ""})` → report behavior for empty path
 
----
 
 ## Phase 4: Write Operation Safety (batched)
 
@@ -157,7 +156,6 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
     > **Note:** `sqlite_json_insert` is a **row-level INSERT** (creates new row with JSON data, provided via the `data` parameter), not a path-level JSON insert.
 51. `sqlite.json.normalizeColumn(...)` on `stress_json_write` → verify keys sorted/compacted without data loss
 
----
 
 ## Phase 5: Security Scan Stress (batched)
 
@@ -165,7 +163,6 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 53. Create `stress_json_inject` with rows containing suspicious patterns (`<script>`, `' OR 1=1`, `${cmd}`) → `sqlite.json.securityScan` → verify detection
 54. Cleanup: drop `stress_json_inject`
 
----
 
 ## Phase 6: JSON Diff Edge Cases (batched)
 
@@ -173,11 +170,11 @@ Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row
 56. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.missing_1", path2: "$.missing_2"})` → both null/missing, `identical: true`
 57. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type", whereClause: "id = 1"})` → only 1 diff object returned, `identical: true`
 
----
 
 ### Final Cleanup
 
 Drop all `stress_*` tables. Confirm `test_jsonb_docs` row count is still 6 and contents unchanged.
+
 
 ---
 

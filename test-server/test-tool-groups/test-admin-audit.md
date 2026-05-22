@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: admin-audit
@@ -115,6 +116,7 @@ Note: The audit tools are server-level and may not be exposed in Code Mode. If t
 🔴 29. `sqlite_audit_get_backup({})` → handler error
 🔴 30. `sqlite_audit_diff_backup({})` → handler error
 🔴 31. `sqlite_audit_restore_backup({})` → handler error
+
 
 ---
 

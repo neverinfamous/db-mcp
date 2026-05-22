@@ -121,6 +121,8 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 13. `introspection`
 14. `migration`
 
+---
+
 ## Post-Test Procedures
 
 ### Reporting Rules

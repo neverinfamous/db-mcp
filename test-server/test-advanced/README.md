@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [README]
+# db-mcp Advanced Stress Testing: [README]
 
 > **This document is optimized for AI agent consumption.** It provides context and execution rules for the advanced stress testing suite located in this directory.
 
@@ -69,6 +69,8 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.dbstat({summarize: true})`             | Per-table storage breakdown | Counts-only (JS fallback)        |
 | `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` | Matches FTS5                | Matches FTS3                     |
 | `test_articles_fts` in `listVirtualTables`           | Present and queryable       | May appear but FTS5 queries fail |
+
+---
 
 ## Post-Test Procedures
 

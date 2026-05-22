@@ -70,6 +70,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: admin
@@ -125,7 +126,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 15. `sqlite.admin.analyze()` → success
 16. `sqlite.admin.dbstat({summarize: true})` → per-table storage
 
----
 
 ## Phase 2: View Management (batched)
 
@@ -133,7 +133,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 18. `sqlite.admin.listViews()` → `temp_view_orders` present
 19. `sqlite.admin.dropView({viewName: "temp_view_orders"})` → success
 
----
 
 ## Phase 3: Virtual Tables (batched)
 
@@ -144,7 +143,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 24. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series", start: 1, stop: 10})` → regular table with 10 rows
 25. Cleanup: drop `temp_cm_rtree` (virtual) and `temp_cm_series` (regular)
 
----
 
 ## Phase 4: Backup/Restore (batched)
 
@@ -155,7 +153,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 28. `sqlite.admin.restore({sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → restore success
 29. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql"})` → success with `path` and `durationMs`
 
----
 
 ## Phase 5: Optimization (batched)
 
@@ -163,7 +160,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 31. `sqlite.admin.optimize()` → optimization details
 32. `sqlite.admin.pragmaOptimize()` → distinct from `optimize` — runs `PRAGMA optimize`
 
----
 
 ## Phase 6: CSV (batched)
 
@@ -173,13 +169,11 @@ All tools should return errors as structured objects instead of throwing. The ex
 34. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → virtual table
 35. Cleanup: drop `temp_cm_csv` (virtual)
 
----
 
 ## Phase 7: Insights
 
 36. `sqlite.admin.appendInsight({insight: "Test insight from codemode"})` → success
 
----
 
 ## Phase 8: REINDEX & WAL Management (batched)
 
@@ -191,7 +185,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 42. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`
 43. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success with checkpoint stats
 
----
 
 ## Phase 9: Database Management (batched)
 
@@ -202,7 +195,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 46. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
 47. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
 
----
 
 ## Phase 10: Admin Domain Errors (batched)
 
@@ -219,45 +211,16 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 58. `sqlite.admin.reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
 🔴 59. `sqlite.admin.reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
 
----
 
-## Phase 11: Admin Zod Validation (batched)
-
-🔴 60. `sqlite.admin.backup({})` → `{success: false}`
-🔴 61. `sqlite.admin.restore({})` → `{success: false}`
-🔴 62. `sqlite.admin.verifyBackup({})` → `{success: false}`
-🔴 63. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
-🔴 64. `sqlite.admin.pragmaSettings({})` → `{success: false}`
-🔴 65. `sqlite.admin.appendInsight({})` → `{success: false}`
-🔴 66. `sqlite.admin.createView({})` → `{success: false}`
-🔴 67. `sqlite.admin.dropView({})` → `{success: false}`
-🔴 68. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
-🔴 69. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
-🔴 70. `sqlite.admin.createCsvTable({})` → `{success: false}`
-🔴 71. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
-🔴 72. `sqlite.admin.createRtreeTable({})` → `{success: false}`
-🔴 73. `sqlite.admin.createSeriesTable({})` → `{success: false}`
-🔴 74. `sqlite.admin.generateSeries({})` → `{success: false}`
-🔴 75. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
-🔴 76. `sqlite.admin.attachDatabase({})` → `{success: false}` handler error
-🔴 77. `sqlite.admin.detachDatabase({})` → `{success: false}` handler error
-🔴 78. `sqlite.admin.vacuumInto({})` → `{success: false}` handler error
-🔴 79. `sqlite.admin.dump({})` → `{success: false}` handler error
-🔴 80. `sqlite.admin.reindex({})` → success (target is optional — reindexes entire database)
-🔴 81. `sqlite.admin.wal({})` → `{success: false}` handler error (action is required)
-
----
-
-## Phase 12: Gotcha Edge Cases (batched)
+## Phase 11: Gotcha Edge Cases (batched)
 
 82. `sqlite.admin.generateSeries({start: 1, stop: 10, step: 2})` → 5 values: 1, 3, 5, 7, 9 (non-default step value)
 83. `sqlite.admin.pragmaSettings({pragma: "cache_size", value: "2000"})` → set cache_size, then `sqlite.admin.pragmaSettings({pragma: "cache_size"})` → verify read-back returns the set value
 84. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable({table: "temp_cm_series_regular"})` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
 85. `sqlite.admin.dropVirtualTable({tableName: "test_products"})` → `{success: false}` — test_products is a regular table, not a virtual table (domain error)
 
----
 
-## Phase 13: Multi-Step Workflow
+## Phase 12: Multi-Step Workflow
 
 ### 11.1 — Database health check pipeline
 
@@ -300,6 +263,33 @@ if (!found) failures.push("view not found after creation");
 await sqlite.admin.dropView({ viewName: "temp_view_cm_test" });
 return { failures, success: failures.length === 0 };
 ```
+
+
+## Phase 13: Zod Validation Sweep
+
+🔴 60. `sqlite.admin.backup({})` → `{success: false}`
+🔴 61. `sqlite.admin.restore({})` → `{success: false}`
+🔴 62. `sqlite.admin.verifyBackup({})` → `{success: false}`
+🔴 63. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
+🔴 64. `sqlite.admin.pragmaSettings({})` → `{success: false}`
+🔴 65. `sqlite.admin.appendInsight({})` → `{success: false}`
+🔴 66. `sqlite.admin.createView({})` → `{success: false}`
+🔴 67. `sqlite.admin.dropView({})` → `{success: false}`
+🔴 68. `sqlite.admin.virtualTableInfo({})` → `{success: false}`
+🔴 69. `sqlite.admin.dropVirtualTable({})` → `{success: false}`
+🔴 70. `sqlite.admin.createCsvTable({})` → `{success: false}`
+🔴 71. `sqlite.admin.analyzeCsvSchema({})` → `{success: false}`
+🔴 72. `sqlite.admin.createRtreeTable({})` → `{success: false}`
+🔴 73. `sqlite.admin.createSeriesTable({})` → `{success: false}`
+🔴 74. `sqlite.admin.generateSeries({})` → `{success: false}`
+🔴 75. `sqlite.admin.dbstat({})` → `{success: false}` or success (no required params)
+🔴 76. `sqlite.admin.attachDatabase({})` → `{success: false}` handler error
+🔴 77. `sqlite.admin.detachDatabase({})` → `{success: false}` handler error
+🔴 78. `sqlite.admin.vacuumInto({})` → `{success: false}` handler error
+🔴 79. `sqlite.admin.dump({})` → `{success: false}` handler error
+🔴 80. `sqlite.admin.reindex({})` → success (target is optional — reindexes entire database)
+🔴 81. `sqlite.admin.wal({})` → `{success: false}` handler error (action is required)
+
 
 ---
 

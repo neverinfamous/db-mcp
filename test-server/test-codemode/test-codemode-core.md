@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: core
@@ -194,7 +195,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 60. `sqlite.core.describeTable("temp_cm_strict")` → verify structure
 61. `sqlite.core.dropTable({table: "temp_cm_strict"})` → cleanup
 
----
 
 ## Phase 2: Core Group — Domain & Separation Errors (batched)
 
@@ -229,32 +229,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 78. `sqlite.core.createTrigger({name: "bad", table: "test_products", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → `{success: false}` (INSTEAD OF only on views)
 🔴 79. `sqlite.core.dropTrigger({name: "nonexistent_xyz"})` → `{success: false}` (TRIGGER_NOT_FOUND)
 
----
 
-## Phase 3: Core Group — Zod Validation (batched)
-
-🔴 80. `sqlite.core.readQuery({})` → `{success: false}` handler error
-🔴 81. `sqlite.core.writeQuery({})` → `{success: false}` handler error
-🔴 82. `sqlite.core.createTable({})` → `{success: false}` handler error
-🔴 83. `sqlite.core.describeTable({})` → `{success: false}` handler error
-🔴 84. `sqlite.core.dropTable({})` → `{success: false}` handler error
-🔴 85. `sqlite.core.createIndex({})` → `{success: false}` handler error
-🔴 86. `sqlite.core.dropIndex({})` → `{success: false}` handler error
-🔴 87. `sqlite.core.dateAdd({})` → `{success: false}` handler error
-🔴 88. `sqlite.core.dateDiff({})` → `{success: false}` handler error
-🔴 89. `sqlite.core.getIndexes({})` → success (returns all indexes, table is optional)
-🔴 90. `sqlite.core.listTriggers({})` → success (returns all triggers, table is optional)
-🔴 91. `sqlite.core.listConstraints({})` → `{success: false}` (table is required)
-🔴 92. `sqlite.core.count({})` → `{success: false}` handler error
-🔴 93. `sqlite.core.exists({})` → `{success: false}` handler error
-🔴 94. `sqlite.core.truncate({})` → `{success: false}` handler error
-🔴 95. `sqlite.core.alterTable({})` → `{success: false}` handler error
-🔴 96. `sqlite.core.createTrigger({})` → `{success: false}` handler error
-🔴 97. `sqlite.core.dropTrigger({})` → `{success: false}` handler error
-
----
-
-## Phase 4: Multi-Step Workflow (4 tests)
+## Phase 3: Multi-Step Workflow (4 tests)
 
 ### 4.1 — ETL pipeline
 
@@ -334,6 +310,29 @@ if (stillThere) failures.push("temp table still in snapshot after drop");
 
 return { failures, success: failures.length === 0 };
 ```
+
+
+## Phase 4: Zod Validation Sweep
+
+🔴 80. `sqlite.core.readQuery({})` → `{success: false}` handler error
+🔴 81. `sqlite.core.writeQuery({})` → `{success: false}` handler error
+🔴 82. `sqlite.core.createTable({})` → `{success: false}` handler error
+🔴 83. `sqlite.core.describeTable({})` → `{success: false}` handler error
+🔴 84. `sqlite.core.dropTable({})` → `{success: false}` handler error
+🔴 85. `sqlite.core.createIndex({})` → `{success: false}` handler error
+🔴 86. `sqlite.core.dropIndex({})` → `{success: false}` handler error
+🔴 87. `sqlite.core.dateAdd({})` → `{success: false}` handler error
+🔴 88. `sqlite.core.dateDiff({})` → `{success: false}` handler error
+🔴 89. `sqlite.core.getIndexes({})` → success (returns all indexes, table is optional)
+🔴 90. `sqlite.core.listTriggers({})` → success (returns all triggers, table is optional)
+🔴 91. `sqlite.core.listConstraints({})` → `{success: false}` (table is required)
+🔴 92. `sqlite.core.count({})` → `{success: false}` handler error
+🔴 93. `sqlite.core.exists({})` → `{success: false}` handler error
+🔴 94. `sqlite.core.truncate({})` → `{success: false}` handler error
+🔴 95. `sqlite.core.alterTable({})` → `{success: false}` handler error
+🔴 96. `sqlite.core.createTrigger({})` → `{success: false}` handler error
+🔴 97. `sqlite.core.dropTrigger({})` → `{success: false}` handler error
+
 
 ---
 

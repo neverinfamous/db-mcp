@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: vector
@@ -104,7 +105,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 15. `sqlite.vector.normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5}`
 16. `sqlite.vector.stats({table: "test_embeddings", vectorColumn: "embedding"})` → min/max/avg magnitude
 
----
 
 ## Phase 2: Vector Write Tools — Happy Paths (temp table)
 
@@ -117,7 +117,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 23. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 2}`
 24. Cleanup: `sqlite.core.dropTable({tableName: "temp_cm_vector"})`
 
----
 
 ## Phase 3: Vector Domain Errors (batched)
 
@@ -125,25 +124,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 26. `sqlite.vector.distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
 🔴 27. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 9999})` → report behavior (nonexistent row)
 
----
 
-## Phase 4: Vector Zod Validation (batched)
-
-🔴 28. `sqlite.vector.createTable({})` → `{success: false}`
-🔴 29. `sqlite.vector.store({})` → `{success: false}`
-🔴 30. `sqlite.vector.batchStore({})` → `{success: false}`
-🔴 31. `sqlite.vector.search({})` → `{success: false}`
-🔴 32. `sqlite.vector.get({})` → `{success: false}`
-🔴 33. `sqlite.vector.delete({})` → `{success: false}`
-🔴 34. `sqlite.vector.count({})` → `{success: false}`
-🔴 35. `sqlite.vector.stats({})` → `{success: false}`
-🔴 36. `sqlite.vector.dimensions({})` → `{success: false}`
-🔴 37. `sqlite.vector.normalize({})` → `{success: false}`
-🔴 38. `sqlite.vector.distance({})` → `{success: false}`
-
----
-
-## Phase 5: Multi-Step Workflow
+## Phase 4: Multi-Step Workflow
 
 ### 5.1 — Similarity search pipeline
 
@@ -219,7 +201,6 @@ await sqlite.core.dropTable({ tableName: "temp_cm_vec_pipe" });
 return { failures, success: failures.length === 0 };
 ```
 
----
 
 ### 5.3 — Vector + JSON cross-group
 
@@ -268,6 +249,22 @@ return {
   jsonMeta: meta,
 };
 ```
+
+
+## Phase 5: Zod Validation Sweep
+
+🔴 28. `sqlite.vector.createTable({})` → `{success: false}`
+🔴 29. `sqlite.vector.store({})` → `{success: false}`
+🔴 30. `sqlite.vector.batchStore({})` → `{success: false}`
+🔴 31. `sqlite.vector.search({})` → `{success: false}`
+🔴 32. `sqlite.vector.get({})` → `{success: false}`
+🔴 33. `sqlite.vector.delete({})` → `{success: false}`
+🔴 34. `sqlite.vector.count({})` → `{success: false}`
+🔴 35. `sqlite.vector.stats({})` → `{success: false}`
+🔴 36. `sqlite.vector.dimensions({})` → `{success: false}`
+🔴 37. `sqlite.vector.normalize({})` → `{success: false}`
+🔴 38. `sqlite.vector.distance({})` → `{success: false}`
+
 
 ---
 

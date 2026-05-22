@@ -1,4 +1,4 @@
-# db-mcp Advanced Stress Test: [introspection]
+# db-mcp Advanced Stress Testing: [introspection]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -68,24 +68,26 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: introspection
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-8. sqlite_dependency_graph
-9. sqlite_topological_sort
-10. sqlite_cascade_simulator
-11. sqlite_schema_snapshot
-12. sqlite_schema_diff
-13. sqlite_constraint_analysis
-14. sqlite_migration_risks
-15. sqlite_storage_analysis
-16. sqlite_index_audit
-17. sqlite_query_plan
+### Code Mode Methods
 
----
+8. sqlite.introspection.dependencyGraph
+9. sqlite.introspection.topologicalSort
+10. sqlite.introspection.cascadeSimulator
+11. sqlite.introspection.schemaSnapshot
+12. sqlite.introspection.schemaDiff
+13. sqlite.introspection.constraintAnalysis
+14. sqlite.introspection.migrationRisks
+15. sqlite.introspection.storageAnalysis
+16. sqlite.introspection.indexAudit
+17. sqlite.introspection.queryPlan
+
 
 ## Phase 1: Graph Analysis Edge Cases (batched)
 
@@ -107,7 +109,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 25. `sqlite.introspection.cascadeSimulator({table: "test_measurements"})` → affectedTables empty (leaf table)
 26. `sqlite.introspection.cascadeSimulator({table: "test_orders"})` → affectedTables empty (nothing references test_orders via FK)
 
----
 
 ## Phase 2: Schema Snapshot Completeness (batched)
 
@@ -120,7 +121,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 30. `sqlite.introspection.schemaSnapshot({compact: true})` → tables present but columns arrays absent
 31. `sqlite.introspection.schemaSnapshot({compact: false})` → column details (name, type, nullable, pk) present
 
----
 
 ## Phase 3: Constraint Analysis Stress (batched)
 
@@ -129,7 +129,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 34. `sqlite.introspection.constraintAnalysis({table: "test_users"})` → only test_users findings. No other tables referenced.
 35. `sqlite.introspection.constraintAnalysis({table: "nonexistent_table_xyz"})` → report behavior: empty findings or structured error?
 
----
 
 ## Phase 4: Storage Analysis & Index Audit Depth (batched)
 
@@ -149,7 +148,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 44. `sqlite.introspection.indexAudit({table: "test_products"})` → only test_products findings. `idx_products_category` NOT redundant.
 45. `sqlite.introspection.indexAudit({table: "test_measurements"})` → 200 rows, no secondary indexes. `unindexed_large_table` threshold is 1000 → no finding expected.
 
----
 
 ## Phase 5: Query Plan Deep Analysis (batched)
 
@@ -160,7 +158,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 50. `sqlite.introspection.queryPlan({sql: "SELECT COUNT(*) FROM test_measurements GROUP BY sensor_id"})` → GROUP BY without dedicated index. Expect full scan.
 51. `sqlite.introspection.queryPlan({sql: "WITH top_orders AS (SELECT * FROM test_orders ORDER BY total_price DESC LIMIT 5) SELECT t.*, p.name FROM top_orders t JOIN test_products p ON p.id = t.product_id"})` → CTE + JOIN plan.
 
----
 
 ## Phase 6: Migration Risk Assessment Depth (batched)
 
@@ -170,7 +167,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 55. `sqlite.introspection.migrationRisks({statements: ["DROP INDEX idx_orders_status"]})` → medium risk. Verify `riskLevel: "medium"`, `category: "index_removal"`.
 56. `sqlite.introspection.migrationRisks({statements: ["ALTER TABLE test_products ADD COLUMN temp1 TEXT", "DROP TABLE test_orders", "CREATE TABLE new_orders (id INTEGER PRIMARY KEY)"]})` → 3 statements, mixed risk. `summary.totalStatements = 3`, `summary.highestRisk ≥ "high"`.
 
----
 
 ## Phase 7: Schema Diff Stress (batched)
 
@@ -195,7 +191,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 60. `sqlite.introspection.schemaDiff({baseline: "current"})` → Zod error for missing `target` — must be handler error, NOT raw MCP
 61. `sqlite.introspection.schemaDiff({})` → Zod error for missing both `baseline` and `target`
 
----
 
 ## Phase 8: Error Message Quality (batched)
 
@@ -207,11 +202,11 @@ All tools should return errors as structured objects instead of throwing. The ex
 67. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod error (min: 1)
 68. `sqlite.introspection.storageAnalysis({limit: -5})` → Zod error
 
----
 
 ### Final Cleanup
 
 All tools read-only — no cleanup needed. Confirm `test_products` (16), `test_orders` (20), `test_measurements` (200) unchanged.
+
 
 ---
 

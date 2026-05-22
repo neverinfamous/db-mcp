@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: json-write
@@ -113,6 +114,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 28. `sqlite_json_remove({})` → handler error
 🔴 29. `sqlite_json_array_append({})` → handler error
 🔴 30. `sqlite_json_merge({})` → handler error
+
 
 ---
 

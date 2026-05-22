@@ -68,6 +68,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
 
+
 ---
 
 ## Group Focus: json
@@ -130,7 +131,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 27. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.author"})` → `diffs` array with per-row comparisons showing `path1Value`, `path2Value`, `identical: false`
 28. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type"})` → all rows `identical: true`
 
----
 
 ## Phase 2: JSON Write Tools — Happy Paths (temp table)
 
@@ -144,7 +144,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 36. `sqlite.json.merge({table: "test_jsonb_docs", column: "doc", mergeData: {"featured": true}, whereClause: "id = 999"})` → `{rowsAffected: 0}` (non-destructive)
 37. Cleanup: drop temp_cm_json
 
----
 
 ## Phase 3: JSON Domain Errors (batched)
 
@@ -154,48 +153,16 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 41. `sqlite.json.securityScan({table: "nonexistent_xyz", column: "doc"})` → `{success: false}`
 🔴 42. `sqlite.json.diff({table: "nonexistent_xyz", column: "doc", path1: "$.x", path2: "$.y"})` → `{success: false}`
 
----
 
-## Phase 4: JSON Zod Validation (batched)
-
-🔴 43. `sqlite.json.valid({})` → `{success: false}`
-🔴 44. `sqlite.json.extract({})` → `{success: false}`
-🔴 45. `sqlite.json.set({})` → `{success: false}`
-🔴 46. `sqlite.json.remove({})` → `{success: false}`
-🔴 47. `sqlite.json.type({})` → `{success: false}`
-🔴 48. `sqlite.json.arrayLength({})` → `{success: false}`
-🔴 49. `sqlite.json.arrayAppend({})` → `{success: false}`
-🔴 50. `sqlite.json.keys({})` → `{success: false}`
-🔴 51. `sqlite.json.each({})` → `{success: false}`
-🔴 52. `sqlite.json.groupArray({})` → `{success: false}`
-🔴 53. `sqlite.json.groupObject({})` → `{success: false}`
-🔴 54. `sqlite.json.pretty({})` → `{success: false}`
-🔴 55. `sqlite.json.jsonbConvert({})` → `{success: false}`
-🔴 56. `sqlite.json.storageInfo({})` → `{success: false}`
-🔴 57. `sqlite.json.normalizeColumn({})` → `{success: false}`
-🔴 58. `sqlite.json.insert({})` → `{success: false}`
-🔴 59. `sqlite.json.update({})` → `{success: false}`
-🔴 60. `sqlite.json.select({})` → `{success: false}`
-🔴 61. `sqlite.json.query({})` → `{success: false}`
-🔴 62. `sqlite.json.validatePath({})` → `{success: false}`
-🔴 63. `sqlite.json.merge({})` → `{success: false}`
-🔴 64. `sqlite.json.analyzeSchema({})` → `{success: false}`
-🔴 65. `sqlite.json.createJsonCollection({})` → `{success: false}`
-🔴 66. `sqlite.json.securityScan({})` → `{success: false}`
-🔴 67. `sqlite.json.diff({})` → `{success: false}` handler error
-
----
-
-## Phase 5: Gotcha Edge Cases (batched)
+## Phase 4: Gotcha Edge Cases (batched)
 
 68. `sqlite.json.each({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1", limit: 2})` → only 2 rows returned (not all array items) — `limit` param prevents row multiplication bloat (gotcha #6)
 69. `sqlite.json.groupObject({table: "test_jsonb_docs", keyColumn: "id", valueColumn: "json_extract(doc, '$.author')", allowExpressions: true})` → 6 key-value pairs with unique keys — verify behavior when keys are guaranteed unique (gotcha #7)
 70. `sqlite.json.normalizeColumn({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → verify explicit text output differs from default `preserve` mode (gotcha #9)
 71. `sqlite.json.groupArray({table: "test_jsonb_docs", valueColumn: "COUNT(*)", allowExpressions: true})` → report behavior — `allowExpressions` is designed for column extraction (e.g., `json_extract`), NOT aggregate functions (gotcha #8)
 
----
 
-## Phase 6: Multi-Step Workflow
+## Phase 5: Multi-Step Workflow
 
 ### 5.1 — JSON ETL pipeline
 
@@ -240,7 +207,6 @@ const stats = await sqlite.stats.statsBasic({
 return { jsonExtract: extract, priceStats: stats };
 ```
 
----
 
 ### 5.3 — Security scan positive detection
 
@@ -263,6 +229,36 @@ return { failures, success: failures.length === 0, riskLevel: scan.riskLevel };
 ```
 
 Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`) and/or injection/XSS patterns.
+
+
+## Phase 6: Zod Validation Sweep
+
+🔴 43. `sqlite.json.valid({})` → `{success: false}`
+🔴 44. `sqlite.json.extract({})` → `{success: false}`
+🔴 45. `sqlite.json.set({})` → `{success: false}`
+🔴 46. `sqlite.json.remove({})` → `{success: false}`
+🔴 47. `sqlite.json.type({})` → `{success: false}`
+🔴 48. `sqlite.json.arrayLength({})` → `{success: false}`
+🔴 49. `sqlite.json.arrayAppend({})` → `{success: false}`
+🔴 50. `sqlite.json.keys({})` → `{success: false}`
+🔴 51. `sqlite.json.each({})` → `{success: false}`
+🔴 52. `sqlite.json.groupArray({})` → `{success: false}`
+🔴 53. `sqlite.json.groupObject({})` → `{success: false}`
+🔴 54. `sqlite.json.pretty({})` → `{success: false}`
+🔴 55. `sqlite.json.jsonbConvert({})` → `{success: false}`
+🔴 56. `sqlite.json.storageInfo({})` → `{success: false}`
+🔴 57. `sqlite.json.normalizeColumn({})` → `{success: false}`
+🔴 58. `sqlite.json.insert({})` → `{success: false}`
+🔴 59. `sqlite.json.update({})` → `{success: false}`
+🔴 60. `sqlite.json.select({})` → `{success: false}`
+🔴 61. `sqlite.json.query({})` → `{success: false}`
+🔴 62. `sqlite.json.validatePath({})` → `{success: false}`
+🔴 63. `sqlite.json.merge({})` → `{success: false}`
+🔴 64. `sqlite.json.analyzeSchema({})` → `{success: false}`
+🔴 65. `sqlite.json.createJsonCollection({})` → `{success: false}`
+🔴 66. `sqlite.json.securityScan({})` → `{success: false}`
+🔴 67. `sqlite.json.diff({})` → `{success: false}` handler error
+
 
 ---
 
