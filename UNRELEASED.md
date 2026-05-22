@@ -16,6 +16,8 @@
 - `sqlite_schema_diff` — compare two schema snapshots and report structured drift analysis with severity scoring (introspection group)
 
 ### Changed
+- Refactored `mcp-server.ts` into smaller registration modules (`built-in-tools.ts`, `help-resources.ts`, `audit-tools.ts`) to adhere to the 500-line soft limit.
+- Refactored `session.ts` into `stateless.ts` and `stateful.ts` to adhere to the 500-line soft limit.
 - Filtered internal SpatiaLite and db-mcp system tables/views/indexes from SQLite MCP resources (`sqlite_schema`, `sqlite_tables`, `sqlite_views`, `sqlite_indexes`).
 - Expanded SpatiaLite system filter to correctly exclude R-Tree virtual index shadow tables (`idx__...`).
 - Updated E2E Playwright test assertions (`resources.spec.ts`) and test documentation (`test-resources.md`) to reflect the accurate count of 10 tables after the successful application of the SpatiaLite shadow table filter.
