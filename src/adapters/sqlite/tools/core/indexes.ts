@@ -61,9 +61,11 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       let sql = `
-        SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL
-        UNION ALL
-        SELECT name, tbl_name, sql FROM sqlite_temp_master WHERE type = 'index' AND sql IS NOT NULL
+        SELECT name, tbl_name, sql FROM (
+          SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL
+          UNION ALL
+          SELECT name, tbl_name, sql FROM sqlite_temp_master WHERE type = 'index' AND sql IS NOT NULL
+        ) WHERE 1=1
       `;
 
       if (input.table) {
