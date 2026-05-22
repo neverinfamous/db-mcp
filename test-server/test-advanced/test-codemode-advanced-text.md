@@ -75,72 +75,87 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
+### Code Mode Methods
 
+- `sqlite.text.regexMatch`
+- `sqlite.text.regexExtract`
+- `sqlite.text.fuzzyMatch`
+- `sqlite.text.phoneticMatch`
+- `sqlite.text.advancedSearch`
+- `sqlite.text.normalize`
+- `sqlite.text.case`
+- `sqlite.text.substring`
+- `sqlite.text.validate`
+- `sqlite.text.sentiment`
+- `sqlite.text.ftsSearch`
+- `sqlite.text.ftsRebuild`
+- `sqlite.text.ftsHeadline`
+- `sqlite.text.ftsMatchInfo`
 
 ## Phase 1: Regex Edge Cases (batched)
 
-8. `sqlite.text.regexMatch({table: "test_users", column: "email", pattern: "^[a-z]+\\.[a-z]+@"})` → match dotted local parts (test.user)
-9. `sqlite.text.regexMatch({table: "test_users", column: "phone", pattern: "^\\+1"})` → US phone numbers only (6 users, 1 NULL excluded)
-10. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@(.+)$", groupIndex: 1})` → full domain extraction
-11. `sqlite.text.regexMatch({table: "test_users", column: "bio", pattern: ".*"})` → should match all non-NULL bios (all 9 users have bios)
+1. `sqlite.text.regexMatch({table: "test_users", column: "email", pattern: "^[a-z]+\\.[a-z]+@"})` → match dotted local parts (test.user)
+2. `sqlite.text.regexMatch({table: "test_users", column: "phone", pattern: "^\\+1"})` → US phone numbers only (6 users, 1 NULL excluded)
+3. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@(.+)$", groupIndex: 1})` → full domain extraction
+4. `sqlite.text.regexMatch({table: "test_users", column: "bio", pattern: ".*"})` → should match all non-NULL bios (all 9 users have bios)
 
 
 ## Phase 2: Fuzzy/Phonetic Matching Stress (batched)
 
-12. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Keyborad", maxDistance: 3})` → find "Mechanical Keyboard" (Levenshtein)
-13. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "LAPTOP", maxDistance: 2, tokenize: true})` → match "Laptop" token in "Laptop Pro 15"
-14. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "xyznonexistent", maxDistance: 1})` → 0 results
-15. `sqlite.text.phoneticMatch({table: "test_users", column: "username", search: "jon", algorithm: "soundex"})` → 0 results (Soundex: "jon"=J500 ≠ "johndoe"=J530; single-word usernames aren't tokenized)
-16. `sqlite.text.phoneticMatch({table: "test_users", column: "username", search: "smith", algorithm: "soundex"})` → report behavior (janesmith contains "smith" as suffix)
-17. `sqlite.text.advancedSearch({table: "test_users", column: "username", searchTerm: "jhn", techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold: 0.3})` → should find John via fuzzy/phonetic
+5. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Keyborad", maxDistance: 3})` → find "Mechanical Keyboard" (Levenshtein)
+6. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "LAPTOP", maxDistance: 2, tokenize: true})` → match "Laptop" token in "Laptop Pro 15"
+7. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "xyznonexistent", maxDistance: 1})` → 0 results
+8. `sqlite.text.phoneticMatch({table: "test_users", column: "username", search: "jon", algorithm: "soundex"})` → 0 results (Soundex: "jon"=J500 ≠ "johndoe"=J530; single-word usernames aren't tokenized)
+9. `sqlite.text.phoneticMatch({table: "test_users", column: "username", search: "smith", algorithm: "soundex"})` → report behavior (janesmith contains "smith" as suffix)
+10. `sqlite.text.advancedSearch({table: "test_users", column: "username", searchTerm: "jhn", techniques: ["exact", "fuzzy", "phonetic"], fuzzyThreshold: 0.3})` → should find John via fuzzy/phonetic
 
 
 ## Phase 3: Text Transformation Edge Cases (batched)
 
-18. `sqlite.text.normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `"Café Décor Light"` → `"Cafe Decor Light"` — verify ALL rows returned
-19. `sqlite.text.normalize({table: "test_products", column: "name", mode: "nfkc"})` → NFKC normalization
-20. `sqlite.text.case({table: "test_users", column: "username", mode: "upper"})` → verify 9 uppercased usernames
-21. `sqlite.text.case({table: "test_users", column: "username", mode: "lower"})` → idempotent (already lowercase)
-22. `sqlite.text.substring({table: "test_users", column: "email", start: 1, length: 3})` → first 3 chars of each email
+11. `sqlite.text.normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `"Café Décor Light"` → `"Cafe Decor Light"` — verify ALL rows returned
+12. `sqlite.text.normalize({table: "test_products", column: "name", mode: "nfkc"})` → NFKC normalization
+13. `sqlite.text.case({table: "test_users", column: "username", mode: "upper"})` → verify 9 uppercased usernames
+14. `sqlite.text.case({table: "test_users", column: "username", mode: "lower"})` → idempotent (already lowercase)
+15. `sqlite.text.substring({table: "test_users", column: "email", start: 1, length: 3})` → first 3 chars of each email
 
 
 ## Phase 4: Validation Patterns (batched)
 
-23. `sqlite.text.validate({table: "test_users", column: "email", pattern: "email"})` → expect all 9 valid
-24. `sqlite.text.validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid/null counts
-25. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom", customPattern: "^.+@.+\\..{2,}$"})` → custom regex validation
+16. `sqlite.text.validate({table: "test_users", column: "email", pattern: "email"})` → expect all 9 valid
+17. `sqlite.text.validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid/null counts
+18. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom", customPattern: "^.+@.+\\..{2,}$"})` → custom regex validation
 
 
 ## Phase 5: Sentiment Analysis Edge Cases (batched)
 
-26. `sqlite.text.sentiment({table: "test_articles", column: "body"})` → sentiment scores for all 8 articles
-27. Create `stress_sentiment_test` with rows: `"I love this!"` (positive), `"This is terrible"` (negative), `""` (empty), `NULL` → report behavior for edge cases
+19. `sqlite.text.sentiment({table: "test_articles", column: "body"})` → sentiment scores for all 8 articles
+20. Create `stress_sentiment_test` with rows: `"I love this!"` (positive), `"This is terrible"` (negative), `""` (empty), `NULL` → report behavior for edge cases
 
 
 ## Phase 6: FTS5 State Integrity `[NATIVE ONLY]` (batched)
 
-28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → results about databases
-29. `sqlite.text.ftsRebuild({table: "test_articles_fts"})` → success
-30. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
-31. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
-32. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
-33. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+21. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → results about databases
+22. `sqlite.text.ftsRebuild({table: "test_articles_fts"})` → success
+23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
+24. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
+25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
+26. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
 
 
 ## Phase 7: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-34. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
-35. All 14 non-FTS text tools should work identically in WASM and Native
+27. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
+28. All 14 non-FTS text tools should work identically in WASM and Native
 
 
 ## Phase 8: Error Message Quality (batched)
 
-36. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
-37. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
-38. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
-39. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+29. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
+30. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
+31. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
+32. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
 
 
 ### Final Cleanup

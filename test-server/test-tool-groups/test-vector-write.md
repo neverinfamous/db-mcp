@@ -75,37 +75,37 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### vector-write Group Tools (4)
+### Group Tools (4)
 
-8. sqlite_vector_create_table
-9. sqlite_vector_store
-10. sqlite_vector_batch_store
-11. sqlite_vector_delete
+- `sqlite_vector_create_table`
+- `sqlite_vector_store`
+- `sqlite_vector_batch_store`
+- `sqlite_vector_delete`
 
 ## Phase 1: Core Check (batched)
 
 **Write operations (use temp tables):**
 
-12. `sqlite_vector_create_table({tableName: "temp_vector_test", dimensions: 8, additionalColumns: [{name: "content", type: "TEXT"}, {name: "category", type: "TEXT"}]})` → success
-13. `sqlite_vector_store({table: "temp_vector_test", idColumn: "id", vectorColumn: "vector", id: 1, vector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]})` → success
-14. `sqlite_vector_batch_store({table: "temp_vector_test", idColumn: "id", vectorColumn: "vector", items: [{id: 2, vector: [0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88]}, {id: 3, vector: [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]}]})` → `{stored: 2}`
-15. Verify rows stored: `sqlite_vector_count({table: "temp_vector_test"})` → `{count: 3}` (use the direct tool or code mode)
-16. `sqlite_vector_delete({table: "temp_vector_test", idColumn: "id", ids: [1]})` → success
-17. Verify deletion: `sqlite_vector_count({table: "temp_vector_test"})` → `{count: 2}`
-18. Cleanup: `sqlite_drop_table({table: "temp_vector_test"})` (using core tool)
+1. `sqlite_vector_create_table({tableName: "temp_vector_test", dimensions: 8, additionalColumns: [{name: "content", type: "TEXT"}, {name: "category", type: "TEXT"}]})` → success
+2. `sqlite_vector_store({table: "temp_vector_test", idColumn: "id", vectorColumn: "vector", id: 1, vector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]})` → success
+3. `sqlite_vector_batch_store({table: "temp_vector_test", idColumn: "id", vectorColumn: "vector", items: [{id: 2, vector: [0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88]}, {id: 3, vector: [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]}]})` → `{stored: 2}`
+4. Verify rows stored: `sqlite_vector_count({table: "temp_vector_test"})` → `{count: 3}` (use the direct tool or code mode)
+5. `sqlite_vector_delete({table: "temp_vector_test", idColumn: "id", ids: [1]})` → success
+6. Verify deletion: `sqlite_vector_count({table: "temp_vector_test"})` → `{count: 2}`
+7. Cleanup: `sqlite_drop_table({table: "temp_vector_test"})` (using core tool)
 
 **Error path testing:**
 
-🔴 19. `sqlite_vector_store({table: "nonexistent_table_xyz", idColumn: "id", vectorColumn: "vec", id: 1, vector: [1,2,3]})` → structured error
+🔴 8. `sqlite_vector_store({table: "nonexistent_table_xyz", idColumn: "id", vectorColumn: "vec", id: 1, vector: [1,2,3]})` → structured error
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 20. `sqlite_vector_create_table({})` → handler error
-🔴 21. `sqlite_vector_store({})` → handler error
-🔴 22. `sqlite_vector_batch_store({})` → handler error
-🔴 23. `sqlite_vector_delete({})` → handler error
+🔴 9. `sqlite_vector_create_table({})` → handler error
+🔴 10. `sqlite_vector_store({})` → handler error
+🔴 11. `sqlite_vector_batch_store({})` → handler error
+🔴 12. `sqlite_vector_delete({})` → handler error
 
 
 ---

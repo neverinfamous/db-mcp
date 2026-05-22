@@ -75,19 +75,19 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### introspection-diagnostics Group Tools (4)
+### Group Tools (4)
 
-8. sqlite_storage_analysis
-9. sqlite_index_audit
-10. sqlite_query_plan
-11. sqlite_execute_code
+- `sqlite_storage_analysis`
+- `sqlite_index_audit`
+- `sqlite_query_plan`
+- `sqlite_execute_code`
 
 ## Phase 1: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 26. `sqlite_storage_analysis({})` → handler error (or success if no required params)
-🔴 27. `sqlite_index_audit({})` → handler error (or success if no required params)
+🔴 1. `sqlite_storage_analysis({})` → handler error (or success if no required params)
+🔴 2. `sqlite_index_audit({})` → handler error (or success if no required params)
 
 
 ---

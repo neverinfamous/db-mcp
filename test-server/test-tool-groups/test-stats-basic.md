@@ -75,79 +75,79 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### stats-basic Group Tools (17)
+### Group Tools (18)
 
-8. sqlite_stats_basic
-9. sqlite_stats_count
-10. sqlite_stats_group_by
-11. sqlite_stats_histogram
-12. sqlite_stats_percentile
-13. sqlite_stats_correlation
-14. sqlite_stats_top_n
-15. sqlite_stats_distinct
-16. sqlite_stats_summary
-17. sqlite_stats_frequency
-18. sqlite_stats_outliers
-19. sqlite_stats_regression
-20. sqlite_stats_hypothesis
-21. sqlite_stats_detect_anomalies
-22. sqlite_stats_detect_bloat
-23. sqlite_stats_detect_schema_risks
-24. sqlite_stats_sample
-25. sqlite_execute_code
+- `sqlite_stats_basic`
+- `sqlite_stats_count`
+- `sqlite_stats_group_by`
+- `sqlite_stats_histogram`
+- `sqlite_stats_percentile`
+- `sqlite_stats_correlation`
+- `sqlite_stats_top_n`
+- `sqlite_stats_distinct`
+- `sqlite_stats_summary`
+- `sqlite_stats_frequency`
+- `sqlite_stats_outliers`
+- `sqlite_stats_regression`
+- `sqlite_stats_hypothesis`
+- `sqlite_stats_detect_anomalies`
+- `sqlite_stats_detect_bloat`
+- `sqlite_stats_detect_schema_risks`
+- `sqlite_stats_sample`
+- `sqlite_execute_code`
 
 ## Phase 1: Core Check (batched)
 
-26. `sqlite_stats_basic({table: "test_measurements", column: "temperature"})` → verify `count: 200`, `min`, `max`, `avg` present
-27. `sqlite_stats_count({table: "test_products"})` → `{count: 16}`
-28. `sqlite_stats_count({table: "test_products", column: "category", distinct: true})` → distinct category count (electronics, accessories, office = 3)
-29. `sqlite_stats_group_by({table: "test_measurements", groupByColumn: "sensor_id", valueColumn: "temperature", stat: "avg"})` → 5 groups (sensor_id 1-5) with average temperatures
-30. `sqlite_stats_histogram({table: "test_measurements", column: "temperature", buckets: 5})` → 5 buckets
-31. `sqlite_stats_percentile({table: "test_measurements", column: "temperature", percentiles: [25, 50, 75, 90]})` → 4 percentile values
-32. `sqlite_stats_correlation({table: "test_measurements", column1: "temperature", column2: "humidity"})` → correlation value between -1 and 1
-33. `sqlite_stats_top_n({table: "test_products", column: "price", n: 3, orderDirection: "desc"})` → top 3 most expensive products
-34. `sqlite_stats_distinct({table: "test_locations", column: "city"})` → distinct city count (6)
-35. `sqlite_stats_summary({table: "test_measurements", columns: ["temperature", "humidity", "pressure"]})` → summaries array with 3 entries
-36. `sqlite_stats_frequency({table: "test_events", column: "event_type"})` → distribution
-37. `sqlite_stats_outliers({table: "test_measurements", column: "temperature"})` → outlier detection result
-38. `sqlite_stats_regression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
-39. `sqlite_stats_hypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → verify `statistic` and `pValue` present
-40. `sqlite_stats_sample({table: "test_measurements", sampleSize: 10})` → verify `sampleSize`, `totalRows: 200`, `rows` array with ≤ 10 items
-41. `sqlite_stats_sample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → verify column filtering
+1. `sqlite_stats_basic({table: "test_measurements", column: "temperature"})` → verify `count: 200`, `min`, `max`, `avg` present
+2. `sqlite_stats_count({table: "test_products"})` → `{count: 16}`
+3. `sqlite_stats_count({table: "test_products", column: "category", distinct: true})` → distinct category count (electronics, accessories, office = 3)
+4. `sqlite_stats_group_by({table: "test_measurements", groupByColumn: "sensor_id", valueColumn: "temperature", stat: "avg"})` → 5 groups (sensor_id 1-5) with average temperatures
+5. `sqlite_stats_histogram({table: "test_measurements", column: "temperature", buckets: 5})` → 5 buckets
+6. `sqlite_stats_percentile({table: "test_measurements", column: "temperature", percentiles: [25, 50, 75, 90]})` → 4 percentile values
+7. `sqlite_stats_correlation({table: "test_measurements", column1: "temperature", column2: "humidity"})` → correlation value between -1 and 1
+8. `sqlite_stats_top_n({table: "test_products", column: "price", n: 3, orderDirection: "desc"})` → top 3 most expensive products
+9. `sqlite_stats_distinct({table: "test_locations", column: "city"})` → distinct city count (6)
+10. `sqlite_stats_summary({table: "test_measurements", columns: ["temperature", "humidity", "pressure"]})` → summaries array with 3 entries
+11. `sqlite_stats_frequency({table: "test_events", column: "event_type"})` → distribution
+12. `sqlite_stats_outliers({table: "test_measurements", column: "temperature"})` → outlier detection result
+13. `sqlite_stats_regression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
+14. `sqlite_stats_hypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → verify `statistic` and `pValue` present
+15. `sqlite_stats_sample({table: "test_measurements", sampleSize: 10})` → verify `sampleSize`, `totalRows: 200`, `rows` array with ≤ 10 items
+16. `sqlite_stats_sample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → verify column filtering
 
 **Code mode testing:**
 
-42. `sqlite_execute_code({code: "const result = await sqlite.stats.statsBasic({table: 'test_measurements', column: 'temperature'}); return result;"})` → verify `count: 200`, `min`, `max`, `avg` present
-43. `sqlite_execute_code({code: "const result = await sqlite.stats.statsPercentile({table: 'test_measurements', column: 'temperature', percentiles: [50]}); return result;"})` → median value
+17. `sqlite_execute_code({code: "const result = await sqlite.stats.statsBasic({table: 'test_measurements', column: 'temperature'}); return result;"})` → verify `count: 200`, `min`, `max`, `avg` present
+18. `sqlite_execute_code({code: "const result = await sqlite.stats.statsPercentile({table: 'test_measurements', column: 'temperature', percentiles: [50]}); return result;"})` → median value
 
 **Error path testing:**
 
-🔴 44. `sqlite_stats_basic({table: "nonexistent_table_xyz", column: "x"})` → structured error
-🔴 45. `sqlite_stats_correlation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
-🔴 46. `sqlite_stats_sample({table: "nonexistent_xyz", sampleSize: 5})` → structured error
+🔴 19. `sqlite_stats_basic({table: "nonexistent_table_xyz", column: "x"})` → structured error
+🔴 20. `sqlite_stats_correlation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
+🔴 21. `sqlite_stats_sample({table: "nonexistent_xyz", sampleSize: 5})` → structured error
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 47. `sqlite_stats_basic({})` → handler error
-🔴 48. `sqlite_stats_count({})` → handler error
-🔴 49. `sqlite_stats_group_by({})` → handler error
-🔴 50. `sqlite_stats_histogram({})` → handler error
-🔴 51. `sqlite_stats_percentile({})` → handler error
-🔴 52. `sqlite_stats_correlation({})` → handler error
-🔴 53. `sqlite_stats_top_n({})` → handler error
-🔴 54. `sqlite_stats_distinct({})` → handler error
-🔴 55. `sqlite_stats_summary({})` → handler error
-🔴 56. `sqlite_stats_frequency({})` → handler error
-🔴 57. `sqlite_stats_outliers({})` → handler error
-🔴 58. `sqlite_stats_regression({})` → handler error
-🔴 59. `sqlite_stats_hypothesis({})` → handler error
-🔴 60. `sqlite_stats_detect_anomalies({})` → handler error
+🔴 22. `sqlite_stats_basic({})` → handler error
+🔴 23. `sqlite_stats_count({})` → handler error
+🔴 24. `sqlite_stats_group_by({})` → handler error
+🔴 25. `sqlite_stats_histogram({})` → handler error
+🔴 26. `sqlite_stats_percentile({})` → handler error
+🔴 27. `sqlite_stats_correlation({})` → handler error
+🔴 28. `sqlite_stats_top_n({})` → handler error
+🔴 29. `sqlite_stats_distinct({})` → handler error
+🔴 30. `sqlite_stats_summary({})` → handler error
+🔴 31. `sqlite_stats_frequency({})` → handler error
+🔴 32. `sqlite_stats_outliers({})` → handler error
+🔴 33. `sqlite_stats_regression({})` → handler error
+🔴 34. `sqlite_stats_hypothesis({})` → handler error
+🔴 35. `sqlite_stats_detect_anomalies({})` → handler error
 ✅ 36. `sqlite_stats_detect_bloat({})` → success (no required params)
 ✅ 37. `sqlite_stats_detect_schema_risks({})` → success (no required params)
-🔴 61. `sqlite_stats_sample({})` → handler error
-🔴 62. `sqlite_execute_code({})` → handler error
+🔴 36. `sqlite_stats_sample({})` → handler error
+🔴 37. `sqlite_execute_code({})` → handler error
 
 
 ---

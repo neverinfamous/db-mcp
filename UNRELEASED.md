@@ -23,6 +23,7 @@
 
 ### Changed
 
+- Updated `C:\Users\chris\Desktop\db-mcp\test-server\tool-reference.md` to include both the MCP tool name and matching Code Mode method name for every single tool.
 - Standardized `CHANGELOG.md` to adhere to Keep a Changelog standards, consolidating headers, grouping entries, and eliminating duplicates.
 - Updated `sqlite_create_table` to support the `strict` parameter (for `STRICT` tables), `foreignKeys`, and `checkConstraints` natively.
 - Updated `sqlite_describe_table` to detect and report virtual or stored generated columns and their expressions via `PRAGMA table_xinfo`.
@@ -38,6 +39,7 @@
 - Synchronized tool and file counts across all test suites, including test READMEs and WASM notes (167 Native / 140 WASM).
 - Expanded testing coverage across all three test suites (`test-tool-groups`, `test-codemode`, `test-advanced`) to cover new features, including `sqlite_schema_diff`, `sqlite_alter_table`, `sqlite_create_trigger`, `sqlite_drop_trigger`, `sqlite_reindex`, `sqlite_wal`, STRICT tables, and generated columns.
 - Standardized 41 testing prompts across test suites into a single cohesive format covering boilerplate instructions, reporting rules, error expectations, and payload limits.
+- Automated the formatting of all 41 test prompts using a Node script to decouple tool lists from test steps, convert tool lists to bullet points, and renumber all test steps sequentially from 1 to optimize for Agent consumption.
 
 ### Fixed
 

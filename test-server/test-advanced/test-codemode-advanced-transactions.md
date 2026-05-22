@@ -75,59 +75,68 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
+### Code Mode Methods
 
+- `sqlite.transactions.begin`
+- `sqlite.transactions.execute`
+- `sqlite.core.writeQuery`
+- `sqlite.transactions.rollbackTo`
+- `sqlite.transactions.commit`
+- `sqlite.transactions.status`
+- `sqlite.transactions.rollback`
+- `sqlite.transactions.release`
 
 ## Phase 1: Aborted Transaction Recovery (batched)
 
-8. `sqlite.transactions.begin()` → get transaction ID
-9. `sqlite.transactions.execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → should fail
-10. Start new transaction → verify it works normally (no lingering aborted state)
+1. `sqlite.transactions.begin()` → get transaction ID
+2. `sqlite.transactions.execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → should fail
+3. Start new transaction → verify it works normally (no lingering aborted state)
 
 
 ## Phase 2: Savepoint Stress Test (batched)
 
-11. `sqlite.transactions.begin()` → begin
-12. Create savepoint `sp1`
-13. `sqlite.core.writeQuery("INSERT INTO stress_tx_sp (id, val) VALUES (1, 'a')")` → insert within transaction (create `stress_tx_sp` first)
-14. Create savepoint `sp2`
-15. `sqlite.core.writeQuery("INSERT INTO stress_tx_sp (id, val) VALUES (2, 'b')")` → insert
-16. `sqlite.transactions.rollbackTo({name: "sp2"})` → should undo sp2's insert
-17. `sqlite.transactions.rollbackTo({name: "sp1"})` → should undo all inserts
-18. `sqlite.transactions.commit()` → only pre-sp1 state persists
+4. `sqlite.transactions.begin()` → begin
+5. Create savepoint `sp1`
+6. `sqlite.core.writeQuery("INSERT INTO stress_tx_sp (id, val) VALUES (1, 'a')")` → insert within transaction (create `stress_tx_sp` first)
+7. Create savepoint `sp2`
+8. `sqlite.core.writeQuery("INSERT INTO stress_tx_sp (id, val) VALUES (2, 'b')")` → insert
+9. `sqlite.transactions.rollbackTo({name: "sp2"})` → should undo sp2's insert
+10. `sqlite.transactions.rollbackTo({name: "sp1"})` → should undo all inserts
+11. `sqlite.transactions.commit()` → only pre-sp1 state persists
 
 
 ## Phase 3: Transaction Execute — Mixed Statements (batched)
 
-19. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_test (id INTEGER PRIMARY KEY, name TEXT)", "INSERT INTO stress_tx_test VALUES (1, 'alpha')", "INSERT INTO stress_tx_test VALUES (2, 'beta')"]})` → success, 3 statements
-20. Verify `stress_tx_test` exists with 2 rows
+12. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_test (id INTEGER PRIMARY KEY, name TEXT)", "INSERT INTO stress_tx_test VALUES (1, 'alpha')", "INSERT INTO stress_tx_test VALUES (2, 'beta')"]})` → success, 3 statements
+13. Verify `stress_tx_test` exists with 2 rows
 
 
 ## Phase 4: Transaction Execute — Failure Rollback (batched)
 
-21. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_fail (id INT)", "INSERT INTO nonexistent_xyz VALUES (1)", "CREATE TABLE stress_tx_fail2 (id INT)"]})` → failure
-22. Verify: `stress_tx_fail` does NOT exist (atomic rollback worked)
+14. `sqlite.transactions.execute({statements: ["CREATE TABLE stress_tx_fail (id INT)", "INSERT INTO nonexistent_xyz VALUES (1)", "CREATE TABLE stress_tx_fail2 (id INT)"]})` → failure
+15. Verify: `stress_tx_fail` does NOT exist (atomic rollback worked)
 
 
 ## Phase 5: Rapid State Transitions (batched)
 
-23. Begin → commit immediately (empty transaction)
-24. Begin → rollback immediately (empty transaction)
-25. `sqlite.transactions.status()` → verify `{active: false}` after both
-26. Begin → savepoint → release → commit (minimal lifecycle)
+16. Begin → commit immediately (empty transaction)
+17. Begin → rollback immediately (empty transaction)
+18. `sqlite.transactions.status()` → verify `{active: false}` after both
+19. Begin → savepoint → release → commit (minimal lifecycle)
 
 
 ## Phase 6: Error Message Quality (batched)
 
-27. `sqlite.transactions.rollback()` with no active transaction → report behavior
-28. `sqlite.transactions.release({name: "nonexistent_sp_xyz"})` → structured error
-29. `sqlite.transactions.execute({statements: []})` → report behavior for empty array
+20. `sqlite.transactions.rollback()` with no active transaction → report behavior
+21. `sqlite.transactions.release({name: "nonexistent_sp_xyz"})` → structured error
+22. `sqlite.transactions.execute({statements: []})` → report behavior for empty array
 
 
 ## Phase 7: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-30. Confirm all 8 transaction tools are NOT present in the tool list
+23. Confirm all 8 transaction tools are NOT present in the tool list
 
 
 ### Final Cleanup

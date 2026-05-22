@@ -77,21 +77,21 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-8. `sqlite.transactions.help`
-9. `sqlite.stats.help`
-10. `sqlite.geo.help`
-11. `sqlite.text.help`
-12. `sqlite.admin.backup`
-13. `sqlite.admin.restore`
-14. `sqlite.admin.verifyBackup`
-15. `sqlite.admin.dump`
-16. `sqlite.admin.createCsvTable`
-17. `sqlite.admin.analyzeCsvSchema`
-18. `sqlite.admin.createRtreeTable`
-19. `sqlite.core.readQuery`
-20. `sqlite.admin.dbstat`
-21. `sqlite.admin.pragmaCompileOptions`
-22. `sqlite.core.count`
+- `sqlite.transactions.help`
+- `sqlite.stats.help`
+- `sqlite.geo.help`
+- `sqlite.text.help`
+- `sqlite.admin.backup`
+- `sqlite.admin.restore`
+- `sqlite.admin.verifyBackup`
+- `sqlite.admin.dump`
+- `sqlite.admin.createCsvTable`
+- `sqlite.admin.analyzeCsvSchema`
+- `sqlite.admin.createRtreeTable`
+- `sqlite.core.readQuery`
+- `sqlite.admin.dbstat`
+- `sqlite.admin.pragmaCompileOptions`
+- `sqlite.core.count`
 
 ## Phase 1: API Surface Verification (3 tests)
 

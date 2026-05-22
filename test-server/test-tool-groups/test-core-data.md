@@ -77,57 +77,57 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Built-in Tools (3)
 
-8. server_info
-9. server_health
-10. list_adapters
+- `server_info`
+- `server_health`
+- `list_adapters`
 
-### core-data Group Tools (9)
+### Group Tools (9)
 
-11. sqlite_read_query
-12. sqlite_write_query
-13. sqlite_upsert
-14. sqlite_batch_insert
-15. sqlite_count
-16. sqlite_exists
-17. sqlite_truncate
-18. sqlite_date_add
-19. sqlite_date_diff
+- `sqlite_read_query`
+- `sqlite_write_query`
+- `sqlite_upsert`
+- `sqlite_batch_insert`
+- `sqlite_count`
+- `sqlite_exists`
+- `sqlite_truncate`
+- `sqlite_date_add`
+- `sqlite_date_diff`
 
 ## Phase 1: Core Check (batched)
 
-20. `server_info` → verify server name, version, adapter info present
-21. `server_health` → verify healthy status
-22. `list_adapters` → verify at least one adapter listed
-23. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
-24. `sqlite_read_query({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99) (Note: Parameter binding test)
-25. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
-26. `sqlite_create_table({table: "temp_core_test2", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
-27. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 1, val: "a"}, {id: 2, val: "b"}], returning: true})` → `{rowsAffected: 2}` and returns inserted rows (Note: Test `returning` parameter)
-28. `sqlite_upsert({table: "temp_core_test2", data: {id: 1, val: "c"}, conflictColumns: ["id"], updateColumns: ["val"], returning: true})` → `{rowsAffected: 1}` and returns updated row
-29. `sqlite_count({table: "test_products"})` → `{count: 16}`
-30. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
-31. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
-32. `sqlite_drop_table({table: "temp_core_test2"})` → success
-33. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
-34. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
+1. `server_info` → verify server name, version, adapter info present
+2. `server_health` → verify healthy status
+3. `list_adapters` → verify at least one adapter listed
+4. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
+5. `sqlite_read_query({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99) (Note: Parameter binding test)
+6. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
+7. `sqlite_create_table({table: "temp_core_test2", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
+8. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 1, val: "a"}, {id: 2, val: "b"}], returning: true})` → `{rowsAffected: 2}` and returns inserted rows (Note: Test `returning` parameter)
+9. `sqlite_upsert({table: "temp_core_test2", data: {id: 1, val: "c"}, conflictColumns: ["id"], updateColumns: ["val"], returning: true})` → `{rowsAffected: 1}` and returns updated row
+10. `sqlite_count({table: "test_products"})` → `{count: 16}`
+11. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
+12. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
+13. `sqlite_drop_table({table: "temp_core_test2"})` → success
+14. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
+15. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
 
 **Error path testing:**
 
-🔴 35. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 16. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 36. `sqlite_read_query({})` → handler error
-🔴 37. `sqlite_write_query({})` → handler error
-🔴 38. `sqlite_upsert({})` → handler error
-🔴 39. `sqlite_batch_insert({})` → handler error
-🔴 40. `sqlite_count({})` → handler error
-🔴 41. `sqlite_exists({})` → handler error
-🔴 42. `sqlite_truncate({})` → handler error
-🔴 43. `sqlite_date_add({})` → handler error
-🔴 44. `sqlite_date_diff({})` → handler error
+🔴 17. `sqlite_read_query({})` → handler error
+🔴 18. `sqlite_write_query({})` → handler error
+🔴 19. `sqlite_upsert({})` → handler error
+🔴 20. `sqlite_batch_insert({})` → handler error
+🔴 21. `sqlite_count({})` → handler error
+🔴 22. `sqlite_exists({})` → handler error
+🔴 23. `sqlite_truncate({})` → handler error
+🔴 24. `sqlite_date_add({})` → handler error
+🔴 25. `sqlite_date_diff({})` → handler error
 
 
 ---

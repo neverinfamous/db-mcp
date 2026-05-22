@@ -77,13 +77,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-8. `sqlite.migration.migrationInit`
-9. `sqlite.migration.migrationStatus`
-10. `sqlite.migration.migrationRecord`
-11. `sqlite.migration.migrationHistory`
-12. `sqlite.migration.migrationApply`
-13. `sqlite.core.readQuery`
-14. `sqlite.migration.migrationRollback`
+- `sqlite.migration.migrationInit`
+- `sqlite.migration.migrationStatus`
+- `sqlite.migration.migrationRecord`
+- `sqlite.migration.migrationHistory`
+- `sqlite.migration.migrationApply`
+- `sqlite.core.readQuery`
+- `sqlite.migration.migrationRollback`
 
 ## Phase 1: Initialization & Recording — Happy Paths (sequential)
 

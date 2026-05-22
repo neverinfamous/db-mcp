@@ -77,16 +77,16 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-8. `sqlite.transactions.status`
-9. `sqlite.transactions.begin`
-10. `sqlite.transactions.rollback`
-11. `sqlite.transactions.savepoint`
-12. `sqlite.transactions.rollbackTo`
-13. `sqlite.transactions.release`
-14. `sqlite.transactions.commit`
-15. `sqlite.transactions.execute`
-16. `sqlite.core.count`
-17. `sqlite.core.writeQuery`
+- `sqlite.transactions.status`
+- `sqlite.transactions.begin`
+- `sqlite.transactions.rollback`
+- `sqlite.transactions.savepoint`
+- `sqlite.transactions.rollbackTo`
+- `sqlite.transactions.release`
+- `sqlite.transactions.commit`
+- `sqlite.transactions.execute`
+- `sqlite.core.count`
+- `sqlite.core.writeQuery`
 
 ## Phase 1: Transaction Lifecycle — Happy Paths (sequential)
 

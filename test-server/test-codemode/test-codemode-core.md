@@ -77,28 +77,28 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-8. `sqlite.core.readQuery`
-9. `sqlite.core.listTables`
-10. `sqlite.core.describeTable`
-11. `sqlite.core.getIndexes`
-12. `sqlite.core.count`
-13. `sqlite.core.exists`
-14. `sqlite.core.dateAdd`
-15. `sqlite.core.dateDiff`
-16. `sqlite.core.createTable`
-17. `sqlite.core.writeQuery`
-18. `sqlite.core.upsert`
-19. `sqlite.core.batchInsert`
-20. `sqlite.core.truncate`
-21. `sqlite.core.createIndex`
-22. `sqlite.core.dropIndex`
-23. `sqlite.core.dropTable`
-24. `sqlite.core.listTriggers`
-25. `sqlite.core.createTrigger`
-26. `sqlite.core.listConstraints`
-27. `sqlite.core.dropTrigger`
-28. `sqlite.core.alterTable`
-29. `sqlite.introspection.schemaSnapshot`
+- `sqlite.core.readQuery`
+- `sqlite.core.listTables`
+- `sqlite.core.describeTable`
+- `sqlite.core.getIndexes`
+- `sqlite.core.count`
+- `sqlite.core.exists`
+- `sqlite.core.dateAdd`
+- `sqlite.core.dateDiff`
+- `sqlite.core.createTable`
+- `sqlite.core.writeQuery`
+- `sqlite.core.upsert`
+- `sqlite.core.batchInsert`
+- `sqlite.core.truncate`
+- `sqlite.core.createIndex`
+- `sqlite.core.dropIndex`
+- `sqlite.core.dropTable`
+- `sqlite.core.listTriggers`
+- `sqlite.core.createTrigger`
+- `sqlite.core.listConstraints`
+- `sqlite.core.dropTrigger`
+- `sqlite.core.alterTable`
+- `sqlite.introspection.schemaSnapshot`
 
 ## Phase 1: Core Group — Happy Paths (batched)
 
@@ -106,59 +106,59 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **Read/Query tools:**
 
-8. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
-9. `sqlite.core.readQuery("SELECT name, price FROM test_products WHERE price > 500")` → 1 result: `Laptop Pro 15` (1299.99)
-10. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
-11. `sqlite.core.listTables()` → tables array includes `test_products`, `test_orders`, etc.
-12. `sqlite.core.describeTable("test_products")` → columns include `id` (INTEGER), `name` (TEXT), `price` (REAL)
-13. `sqlite.core.getIndexes({table: "test_orders"})` → includes `idx_orders_status`
+1. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
+2. `sqlite.core.readQuery("SELECT name, price FROM test_products WHERE price > 500")` → 1 result: `Laptop Pro 15` (1299.99)
+3. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
+4. `sqlite.core.listTables()` → tables array includes `test_products`, `test_orders`, etc.
+5. `sqlite.core.describeTable("test_products")` → columns include `id` (INTEGER), `name` (TEXT), `price` (REAL)
+6. `sqlite.core.getIndexes({table: "test_orders"})` → includes `idx_orders_status`
 
 **Convenience tools:**
 
-14. `sqlite.core.count({table: "test_products"})` → `{count: 16}`
-15. `sqlite.core.count({table: "test_products", column: "category", distinct: true})` → distinct category count
-16. `sqlite.core.exists({table: "test_products", whereClause: "price > 1000"})` → `{exists: true}`
-17. `sqlite.core.exists({table: "test_products", whereClause: "price > 99999"})` → `{exists: false}`
-18. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → returns `date_add_result` correctly calculated
-19. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → returns `date_diff_result` in days
+7. `sqlite.core.count({table: "test_products"})` → `{count: 16}`
+8. `sqlite.core.count({table: "test_products", column: "category", distinct: true})` → distinct category count
+9. `sqlite.core.exists({table: "test_products", whereClause: "price > 1000"})` → `{exists: true}`
+10. `sqlite.core.exists({table: "test_products", whereClause: "price > 99999"})` → `{exists: false}`
+11. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → returns `date_add_result` correctly calculated
+12. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → returns `date_diff_result` in days
 
 **Write tools (use temp tables):**
 
-20. `sqlite.core.createTable({table: "temp_cm_core", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}, {name: "value", type: "REAL"}]})` → success
-21. `sqlite.core.writeQuery("INSERT INTO temp_cm_core (id, name, value) VALUES (1, 'alpha', 10.5), (2, 'beta', 20.0)")` → `{rowsAffected: 2}`
-22. `sqlite.core.upsert({table: "temp_cm_core", data: {id: 1, name: "alpha_updated", value: 15.0}, conflictColumn: "id"})` → success, row 1 updated
-23. `sqlite.core.batchInsert({table: "temp_cm_core", rows: [{id: 3, name: "gamma", value: 30.0}, {id: 4, name: "delta", value: 40.0}]})` → 2 rows inserted
-24. `sqlite.core.count({table: "temp_cm_core"})` → `{count: 4}`
-25. `sqlite.core.truncate({table: "temp_cm_core"})` → success
-26. `sqlite.core.count({table: "temp_cm_core"})` → `{count: 0}`
+13. `sqlite.core.createTable({table: "temp_cm_core", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}, {name: "value", type: "REAL"}]})` → success
+14. `sqlite.core.writeQuery("INSERT INTO temp_cm_core (id, name, value) VALUES (1, 'alpha', 10.5), (2, 'beta', 20.0)")` → `{rowsAffected: 2}`
+15. `sqlite.core.upsert({table: "temp_cm_core", data: {id: 1, name: "alpha_updated", value: 15.0}, conflictColumn: "id"})` → success, row 1 updated
+16. `sqlite.core.batchInsert({table: "temp_cm_core", rows: [{id: 3, name: "gamma", value: 30.0}, {id: 4, name: "delta", value: 40.0}]})` → 2 rows inserted
+17. `sqlite.core.count({table: "temp_cm_core"})` → `{count: 4}`
+18. `sqlite.core.truncate({table: "temp_cm_core"})` → success
+19. `sqlite.core.count({table: "temp_cm_core"})` → `{count: 0}`
 
 **Index lifecycle:**
 
-27. `sqlite.core.writeQuery("INSERT INTO temp_cm_core (id, name) VALUES (1, 'test')")` → re-populate
-28. `sqlite.core.createIndex({table: "temp_cm_core", columns: ["name"], indexName: "idx_temp_cm_name"})` → success
-29. `sqlite.core.getIndexes({table: "temp_cm_core"})` → includes `idx_temp_cm_name`
-30. `sqlite.core.dropIndex({indexName: "idx_temp_cm_name"})` → success
-31. `sqlite.core.dropTable({table: "temp_cm_core"})` → success
+20. `sqlite.core.writeQuery("INSERT INTO temp_cm_core (id, name) VALUES (1, 'test')")` → re-populate
+21. `sqlite.core.createIndex({table: "temp_cm_core", columns: ["name"], indexName: "idx_temp_cm_name"})` → success
+22. `sqlite.core.getIndexes({table: "temp_cm_core"})` → includes `idx_temp_cm_name`
+23. `sqlite.core.dropIndex({indexName: "idx_temp_cm_name"})` → success
+24. `sqlite.core.dropTable({table: "temp_cm_core"})` → success
 
 **Parameter binding:**
 
-32. `sqlite.core.readQuery({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99)
-33. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → verify multi-parameter binding returns correct subset
+25. `sqlite.core.readQuery({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99)
+26. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → verify multi-parameter binding returns correct subset
 
 **Trigger & constraint introspection:**
 
-34. `sqlite.core.listTriggers()` → `triggers` array (may be empty in test DB — verify structure: `{triggers: [], count: 0}`)
-35. `sqlite.core.listTriggers({table: "test_orders"})` → filtered by table (may be empty)
-36. Create a trigger on a temp table for testing:
+27. `sqlite.core.listTriggers()` → `triggers` array (may be empty in test DB — verify structure: `{triggers: [], count: 0}`)
+28. `sqlite.core.listTriggers({table: "test_orders"})` → filtered by table (may be empty)
+29. Create a trigger on a temp table for testing:
     ```javascript
     await sqlite.core.createTable({table: "temp_cm_triggers", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}]});
     await sqlite.core.createTrigger({name: "temp_trg_insert", table: "temp_cm_triggers", event: "INSERT", timing: "AFTER", body: "INSERT INTO temp_cm_triggers (name) VALUES ('fired')"});
     return {success: true};
     ```
-37. `sqlite.core.listTriggers({table: "temp_cm_triggers"})` → 1 trigger with `name: "temp_trg_insert"`, `event: "INSERT"`, `timing: "AFTER"`
-38. `sqlite.core.listConstraints({table: "test_orders"})` → `primaryKey` includes `id`, `foreignKeys` includes FK to `test_products`, `uniqueIndexes` array present
-39. `sqlite.core.listConstraints({table: "test_products"})` → `primaryKey` includes `id`, verify structure
-40. Cleanup: drop trigger and temp table:
+30. `sqlite.core.listTriggers({table: "temp_cm_triggers"})` → 1 trigger with `name: "temp_trg_insert"`, `event: "INSERT"`, `timing: "AFTER"`
+31. `sqlite.core.listConstraints({table: "test_orders"})` → `primaryKey` includes `id`, `foreignKeys` includes FK to `test_products`, `uniqueIndexes` array present
+32. `sqlite.core.listConstraints({table: "test_products"})` → `primaryKey` includes `id`, verify structure
+33. Cleanup: drop trigger and temp table:
     ```javascript
     await sqlite.core.dropTrigger({name: "temp_trg_insert"});
     await sqlite.core.dropTable({table: "temp_cm_triggers"});
@@ -167,67 +167,67 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **ALTER TABLE lifecycle:**
 
-41. `sqlite.core.createTable({table: "temp_cm_alter", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}]})` → setup
-42. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "add_column", column: "status", type: "TEXT", nullable: true})` → success
-43. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "add_column", column: "score", type: "INTEGER", nullable: false, defaultValue: 0})` → success (NOT NULL with default)
-44. `sqlite.core.describeTable("temp_cm_alter")` → verify `status` and `score` columns present
-45. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "rename_column", column: "status", newName: "state"})` → success
-46. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "drop_column", column: "state"})` → success
-47. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "rename_table", newName: "temp_cm_alter_renamed"})` → success
-48. `sqlite.core.alterTable({table: "temp_cm_alter_renamed", operation: "rename_table", newName: "temp_cm_alter"})` → rename back
-49. `sqlite.core.dropTable({table: "temp_cm_alter"})` → cleanup
+34. `sqlite.core.createTable({table: "temp_cm_alter", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}]})` → setup
+35. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "add_column", column: "status", type: "TEXT", nullable: true})` → success
+36. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "add_column", column: "score", type: "INTEGER", nullable: false, defaultValue: 0})` → success (NOT NULL with default)
+37. `sqlite.core.describeTable("temp_cm_alter")` → verify `status` and `score` columns present
+38. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "rename_column", column: "status", newName: "state"})` → success
+39. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "drop_column", column: "state"})` → success
+40. `sqlite.core.alterTable({table: "temp_cm_alter", operation: "rename_table", newName: "temp_cm_alter_renamed"})` → success
+41. `sqlite.core.alterTable({table: "temp_cm_alter_renamed", operation: "rename_table", newName: "temp_cm_alter"})` → rename back
+42. `sqlite.core.dropTable({table: "temp_cm_alter"})` → cleanup
 
 **Trigger lifecycle (structured API):**
 
-50. `sqlite.core.createTable({table: "temp_cm_trg", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → setup
-51. `sqlite.core.createTrigger({name: "temp_trg_cm_audit", table: "temp_cm_trg", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → success with `sql`
-52. `sqlite.core.listTriggers({table: "temp_cm_trg"})` → 1 trigger
-53. `sqlite.core.createTrigger({name: "temp_trg_cm_del", table: "temp_cm_trg", event: "DELETE", timing: "BEFORE", body: "SELECT 1;"})` → success
-54. `sqlite.core.listTriggers({table: "temp_cm_trg"})` → 2 triggers
-55. `sqlite.core.dropTrigger({name: "temp_trg_cm_audit"})` → success
-56. `sqlite.core.dropTrigger({name: "temp_trg_cm_del", ifExists: true})` → success
-57. `sqlite.core.dropTrigger({name: "temp_trg_cm_nonexist", ifExists: true})` → `{success: true}` (no-op, no error)
-58. `sqlite.core.dropTable({table: "temp_cm_trg"})` → cleanup
+43. `sqlite.core.createTable({table: "temp_cm_trg", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → setup
+44. `sqlite.core.createTrigger({name: "temp_trg_cm_audit", table: "temp_cm_trg", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → success with `sql`
+45. `sqlite.core.listTriggers({table: "temp_cm_trg"})` → 1 trigger
+46. `sqlite.core.createTrigger({name: "temp_trg_cm_del", table: "temp_cm_trg", event: "DELETE", timing: "BEFORE", body: "SELECT 1;"})` → success
+47. `sqlite.core.listTriggers({table: "temp_cm_trg"})` → 2 triggers
+48. `sqlite.core.dropTrigger({name: "temp_trg_cm_audit"})` → success
+49. `sqlite.core.dropTrigger({name: "temp_trg_cm_del", ifExists: true})` → success
+50. `sqlite.core.dropTrigger({name: "temp_trg_cm_nonexist", ifExists: true})` → `{success: true}` (no-op, no error)
+51. `sqlite.core.dropTable({table: "temp_cm_trg"})` → cleanup
 
 **STRICT table & generated column enhancements:**
 
-59. `sqlite.core.createTable({table: "temp_cm_strict", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}], strict: true})` → success
-60. `sqlite.core.describeTable("temp_cm_strict")` → verify structure
-61. `sqlite.core.dropTable({table: "temp_cm_strict"})` → cleanup
+52. `sqlite.core.createTable({table: "temp_cm_strict", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}], strict: true})` → success
+53. `sqlite.core.describeTable("temp_cm_strict")` → verify structure
+54. `sqlite.core.dropTable({table: "temp_cm_strict"})` → cleanup
 
 
 ## Phase 2: Core Group — Domain & Separation Errors (batched)
 
-🔴 62. `sqlite.core.readQuery({query: "SELECT * FROM nonexistent_table"})` → `{success: false}`
-🔴 63. `sqlite.core.writeQuery({query: "DROP TABLE nonexistent_table"})` → `{success: false}`
-🔴 64. `sqlite.core.describeTable({table: "nonexistent_table"})` → `{success: false}`
-🔴 65. `sqlite.core.getIndexes({table: "nonexistent_table"})` → `{success: false}`
-🔴 66. `sqlite.core.createIndex({table: "nonexistent_table", columns: ["id"], indexName: "idx_bad"})` → `{success: false}`
-🔴 67. `sqlite.core.listTriggers({table: "nonexistent_xyz"})` → report behavior (may return empty or error)
-🔴 68. `sqlite.core.listConstraints({table: "nonexistent_xyz"})` → `{success: false}`
+🔴 55. `sqlite.core.readQuery({query: "SELECT * FROM nonexistent_table"})` → `{success: false}`
+🔴 56. `sqlite.core.writeQuery({query: "DROP TABLE nonexistent_table"})` → `{success: false}`
+🔴 57. `sqlite.core.describeTable({table: "nonexistent_table"})` → `{success: false}`
+🔴 58. `sqlite.core.getIndexes({table: "nonexistent_table"})` → `{success: false}`
+🔴 59. `sqlite.core.createIndex({table: "nonexistent_table", columns: ["id"], indexName: "idx_bad"})` → `{success: false}`
+🔴 60. `sqlite.core.listTriggers({table: "nonexistent_xyz"})` → report behavior (may return empty or error)
+🔴 61. `sqlite.core.listConstraints({table: "nonexistent_xyz"})` → `{success: false}`
 
 **Write/read separation (gotcha #1):**
 
-🔴 69. `sqlite.core.writeQuery("SELECT * FROM test_products")` → `{success: false}` — writeQuery rejects SELECT statements
-🔴 70. `sqlite.core.readQuery("INSERT INTO test_products (name) VALUES ('bad')")` → `{success: false}` — readQuery rejects INSERT/UPDATE/DELETE
+🔴 62. `sqlite.core.writeQuery("SELECT * FROM test_products")` → `{success: false}` — writeQuery rejects SELECT statements
+🔴 63. `sqlite.core.readQuery("INSERT INTO test_products (name) VALUES ('bad')")` → `{success: false}` — readQuery rejects INSERT/UPDATE/DELETE
 
 **Boundary conditions:**
 
-🔴 71. `sqlite.core.batchInsert({table: "test_products", rows: []})` → report behavior (empty rows array)
+🔴 64. `sqlite.core.batchInsert({table: "test_products", rows: []})` → report behavior (empty rows array)
 
 **ALTER TABLE domain errors:**
 
-🔴 72. `sqlite.core.alterTable({table: "nonexistent_xyz", operation: "add_column", column: "x", type: "TEXT", nullable: true})` → `{success: false}` (TABLE_NOT_FOUND)
-🔴 73. `sqlite.core.alterTable({table: "test_products", operation: "add_column", column: "name", type: "TEXT", nullable: true})` → `{success: false}` (COLUMN_EXISTS)
-🔴 74. `sqlite.core.alterTable({table: "test_products", operation: "add_column", column: "x", type: "TEXT", nullable: false})` → `{success: false}` (NOT NULL without default)
-🔴 75. `sqlite.core.alterTable({table: "test_products", operation: "rename_column", column: "nonexistent_col", newName: "x"})` → `{success: false}` (COLUMN_NOT_FOUND)
-🔴 76. `sqlite.core.alterTable({table: "test_products", operation: "rename_table", newName: "test_orders"})` → `{success: false}` (TABLE_EXISTS)
+🔴 65. `sqlite.core.alterTable({table: "nonexistent_xyz", operation: "add_column", column: "x", type: "TEXT", nullable: true})` → `{success: false}` (TABLE_NOT_FOUND)
+🔴 66. `sqlite.core.alterTable({table: "test_products", operation: "add_column", column: "name", type: "TEXT", nullable: true})` → `{success: false}` (COLUMN_EXISTS)
+🔴 67. `sqlite.core.alterTable({table: "test_products", operation: "add_column", column: "x", type: "TEXT", nullable: false})` → `{success: false}` (NOT NULL without default)
+🔴 68. `sqlite.core.alterTable({table: "test_products", operation: "rename_column", column: "nonexistent_col", newName: "x"})` → `{success: false}` (COLUMN_NOT_FOUND)
+🔴 69. `sqlite.core.alterTable({table: "test_products", operation: "rename_table", newName: "test_orders"})` → `{success: false}` (TABLE_EXISTS)
 
 **Trigger domain errors:**
 
-🔴 77. `sqlite.core.createTrigger({name: "bad", table: "nonexistent_xyz", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → `{success: false}`
-🔴 78. `sqlite.core.createTrigger({name: "bad", table: "test_products", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → `{success: false}` (INSTEAD OF only on views)
-🔴 79. `sqlite.core.dropTrigger({name: "nonexistent_xyz"})` → `{success: false}` (TRIGGER_NOT_FOUND)
+🔴 70. `sqlite.core.createTrigger({name: "bad", table: "nonexistent_xyz", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → `{success: false}`
+🔴 71. `sqlite.core.createTrigger({name: "bad", table: "test_products", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → `{success: false}` (INSTEAD OF only on views)
+🔴 72. `sqlite.core.dropTrigger({name: "nonexistent_xyz"})` → `{success: false}` (TRIGGER_NOT_FOUND)
 
 
 ## Phase 3: Multi-Step Workflow (4 tests)
@@ -314,24 +314,24 @@ return { failures, success: failures.length === 0 };
 
 ## Phase 4: Zod Validation Sweep
 
-🔴 80. `sqlite.core.readQuery({})` → `{success: false}` handler error
-🔴 81. `sqlite.core.writeQuery({})` → `{success: false}` handler error
-🔴 82. `sqlite.core.createTable({})` → `{success: false}` handler error
-🔴 83. `sqlite.core.describeTable({})` → `{success: false}` handler error
-🔴 84. `sqlite.core.dropTable({})` → `{success: false}` handler error
-🔴 85. `sqlite.core.createIndex({})` → `{success: false}` handler error
-🔴 86. `sqlite.core.dropIndex({})` → `{success: false}` handler error
-🔴 87. `sqlite.core.dateAdd({})` → `{success: false}` handler error
-🔴 88. `sqlite.core.dateDiff({})` → `{success: false}` handler error
-🔴 89. `sqlite.core.getIndexes({})` → success (returns all indexes, table is optional)
-🔴 90. `sqlite.core.listTriggers({})` → success (returns all triggers, table is optional)
-🔴 91. `sqlite.core.listConstraints({})` → `{success: false}` (table is required)
-🔴 92. `sqlite.core.count({})` → `{success: false}` handler error
-🔴 93. `sqlite.core.exists({})` → `{success: false}` handler error
-🔴 94. `sqlite.core.truncate({})` → `{success: false}` handler error
-🔴 95. `sqlite.core.alterTable({})` → `{success: false}` handler error
-🔴 96. `sqlite.core.createTrigger({})` → `{success: false}` handler error
-🔴 97. `sqlite.core.dropTrigger({})` → `{success: false}` handler error
+🔴 73. `sqlite.core.readQuery({})` → `{success: false}` handler error
+🔴 74. `sqlite.core.writeQuery({})` → `{success: false}` handler error
+🔴 75. `sqlite.core.createTable({})` → `{success: false}` handler error
+🔴 76. `sqlite.core.describeTable({})` → `{success: false}` handler error
+🔴 77. `sqlite.core.dropTable({})` → `{success: false}` handler error
+🔴 78. `sqlite.core.createIndex({})` → `{success: false}` handler error
+🔴 79. `sqlite.core.dropIndex({})` → `{success: false}` handler error
+🔴 80. `sqlite.core.dateAdd({})` → `{success: false}` handler error
+🔴 81. `sqlite.core.dateDiff({})` → `{success: false}` handler error
+🔴 82. `sqlite.core.getIndexes({})` → success (returns all indexes, table is optional)
+🔴 83. `sqlite.core.listTriggers({})` → success (returns all triggers, table is optional)
+🔴 84. `sqlite.core.listConstraints({})` → `{success: false}` (table is required)
+🔴 85. `sqlite.core.count({})` → `{success: false}` handler error
+🔴 86. `sqlite.core.exists({})` → `{success: false}` handler error
+🔴 87. `sqlite.core.truncate({})` → `{success: false}` handler error
+🔴 88. `sqlite.core.alterTable({})` → `{success: false}` handler error
+🔴 89. `sqlite.core.createTrigger({})` → `{success: false}` handler error
+🔴 90. `sqlite.core.dropTrigger({})` → `{success: false}` handler error
 
 
 ---

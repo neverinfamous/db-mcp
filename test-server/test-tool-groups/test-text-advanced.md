@@ -75,59 +75,57 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-> **FTS Testing Notes:** After `sqlite_fts_create`, always call `sqlite_fts_rebuild` before searching. `test_articles` searchable terms: `SQLite`, `database`, `JSON`, `FTS`, `vector`, `API`, `search`, `MCP`.
+### Group Tools (9)
 
-### text-advanced Group Tools (9)
-
-8. sqlite_fuzzy_match
-9. sqlite_phonetic_match
-10. sqlite_advanced_search
-11. sqlite_text_sentiment
-12. sqlite_fts_create `[NATIVE ONLY]`
-13. sqlite_fts_search `[NATIVE ONLY]`
-14. sqlite_fts_rebuild `[NATIVE ONLY]`
-15. sqlite_fts_match_info `[NATIVE ONLY]`
-16. sqlite_fts_headline `[NATIVE ONLY]`
+- `sqlite_fuzzy_match`
+- `sqlite_phonetic_match`
+- `sqlite_advanced_search`
+- `sqlite_text_sentiment`
+- `sqlite_fts_create [NATIVE ONLY]`
+- `sqlite_fts_search [NATIVE ONLY]`
+- `sqlite_fts_rebuild [NATIVE ONLY]`
+- `sqlite_fts_match_info [NATIVE ONLY]`
+- `sqlite_fts_headline [NATIVE ONLY]`
 
 ## Phase 1: Core Check (batched)
 
-17. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "Laptp", maxDistance: 3})` → results include `Laptop Pro 15`
-18. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "Laptp", tokenize: false})` → verify behavior without tokenization
-19. `sqlite_phonetic_match({table: "test_products", column: "name", search: "Labtop"})` → should find `Laptop Pro 15` via Soundex (both produce L131)
-20. `sqlite_phonetic_match({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test metaphone algorithm
-21. `sqlite_advanced_search({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → should find `Mechanical Keyboard`
-22. `sqlite_advanced_search({table: "test_products", column: "name", searchTerm: "Labtop", techniques: ["phonetic"]})` → test with single technique
+1. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "Laptp", maxDistance: 3})` → results include `Laptop Pro 15`
+2. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "Laptp", tokenize: false})` → verify behavior without tokenization
+3. `sqlite_phonetic_match({table: "test_products", column: "name", search: "Labtop"})` → should find `Laptop Pro 15` via Soundex (both produce L131)
+4. `sqlite_phonetic_match({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test metaphone algorithm
+5. `sqlite_advanced_search({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → should find `Mechanical Keyboard`
+6. `sqlite_advanced_search({table: "test_products", column: "name", searchTerm: "Labtop", techniques: ["phonetic"]})` → test with single technique
 
 **FTS5 tools `[NATIVE ONLY]`:**
 
-23. `sqlite_fts_create({sourceTable: "test_users", columns: ["username", "bio"], ftsTable: "temp_users_fts"})` → FTS5 virtual table created
-24. `sqlite_fts_rebuild({table: "temp_users_fts"})` → rebuild index before searching
-25. `sqlite_fts_search({table: "temp_users_fts", query: "test*"})` → verify results from test_users data (prefix query needed since no standalone "test" token exists)
-26. Cleanup: `sqlite_drop_table({table: "temp_users_fts"})` (drop the temp FTS table using sqlite_write_query or core drop_table)
-27. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite"})` → at least 1 result (article 1: "Introduction to SQLite")
-28. `sqlite_fts_search({table: "test_articles_fts", query: "MCP protocol"})` → matches article 3: "The Model Context Protocol Explained"
-29. `sqlite_fts_search({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
-30. `sqlite_fts_match_info({table: "test_articles_fts", query: "database"})` → match info with scoring data
-31. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
+7. `sqlite_fts_create({sourceTable: "test_users", columns: ["username", "bio"], ftsTable: "temp_users_fts"})` → FTS5 virtual table created
+8. `sqlite_fts_rebuild({table: "temp_users_fts"})` → rebuild index before searching
+9. `sqlite_fts_search({table: "temp_users_fts", query: "test*"})` → verify results from test_users data (prefix query needed since no standalone "test" token exists)
+10. Cleanup: `sqlite_drop_table({table: "temp_users_fts"})` (drop the temp FTS table using sqlite_write_query or core drop_table)
+11. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite"})` → at least 1 result (article 1: "Introduction to SQLite")
+12. `sqlite_fts_search({table: "test_articles_fts", query: "MCP protocol"})` → matches article 3: "The Model Context Protocol Explained"
+13. `sqlite_fts_search({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
+14. `sqlite_fts_match_info({table: "test_articles_fts", query: "database"})` → match info with scoring data
+15. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
 
 **Error path testing:**
 
-🔴 32. `sqlite_fuzzy_match({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error with code `COLUMN_NOT_FOUND`
-🔴 33. `sqlite_fts_search({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+🔴 16. `sqlite_fuzzy_match({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error with code `COLUMN_NOT_FOUND`
+🔴 17. `sqlite_fts_search({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 34. `sqlite_fuzzy_match({})` → handler error
-🔴 35. `sqlite_phonetic_match({})` → handler error
-🔴 36. `sqlite_advanced_search({})` → handler error
-🔴 37. `sqlite_text_sentiment({})` → handler error
-🔴 38. `sqlite_fts_create({})` `[NATIVE ONLY]` → handler error
-🔴 39. `sqlite_fts_search({})` `[NATIVE ONLY]` → handler error
-🔴 40. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
-🔴 41. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
-🔴 42. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
+🔴 18. `sqlite_fuzzy_match({})` → handler error
+🔴 19. `sqlite_phonetic_match({})` → handler error
+🔴 20. `sqlite_advanced_search({})` → handler error
+🔴 21. `sqlite_text_sentiment({})` → handler error
+🔴 22. `sqlite_fts_create({})` `[NATIVE ONLY]` → handler error
+🔴 23. `sqlite_fts_search({})` `[NATIVE ONLY]` → handler error
+🔴 24. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
+🔴 25. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
+🔴 26. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
 
 
 ---

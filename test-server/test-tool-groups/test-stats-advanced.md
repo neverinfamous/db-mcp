@@ -75,36 +75,36 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### stats-advanced Group Tools (6)
+### Group Tools (6)
 
-8. sqlite_window_row_number `[NATIVE ONLY]`
-9. sqlite_window_rank `[NATIVE ONLY]`
-10. sqlite_window_lag_lead `[NATIVE ONLY]`
-11. sqlite_window_running_total `[NATIVE ONLY]`
-12. sqlite_window_moving_avg `[NATIVE ONLY]`
-13. sqlite_window_ntile `[NATIVE ONLY]`
+- `sqlite_window_row_number [NATIVE ONLY]`
+- `sqlite_window_rank [NATIVE ONLY]`
+- `sqlite_window_lag_lead [NATIVE ONLY]`
+- `sqlite_window_running_total [NATIVE ONLY]`
+- `sqlite_window_moving_avg [NATIVE ONLY]`
+- `sqlite_window_ntile [NATIVE ONLY]`
 
 ## Phase 1: Core Check (batched)
 
 **Window functions `[NATIVE ONLY]`:**
 
-14. `sqlite_window_row_number({table: "test_products", orderBy: "price DESC"})` → products ranked by price
-15. `sqlite_window_rank({table: "test_products", orderBy: "price DESC"})` → rank with ties
-16. `sqlite_window_running_total({table: "test_orders", column: "total_price", orderBy: "order_date"})` → cumulative totals
-17. `sqlite_window_moving_avg({table: "test_measurements", column: "temperature", windowSize: 5, orderBy: "measured_at"})` → moving averages
-18. `sqlite_window_lag_lead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag/lead values
-19. `sqlite_window_ntile({table: "test_products", buckets: 4, orderBy: "price"})` → quartile assignments
+1. `sqlite_window_row_number({table: "test_products", orderBy: "price DESC"})` → products ranked by price
+2. `sqlite_window_rank({table: "test_products", orderBy: "price DESC"})` → rank with ties
+3. `sqlite_window_running_total({table: "test_orders", column: "total_price", orderBy: "order_date"})` → cumulative totals
+4. `sqlite_window_moving_avg({table: "test_measurements", column: "temperature", windowSize: 5, orderBy: "measured_at"})` → moving averages
+5. `sqlite_window_lag_lead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag/lead values
+6. `sqlite_window_ntile({table: "test_products", buckets: 4, orderBy: "price"})` → quartile assignments
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 20. `sqlite_window_row_number({})` `[NATIVE ONLY]` → handler error
-🔴 21. `sqlite_window_rank({})` `[NATIVE ONLY]` → handler error
-🔴 22. `sqlite_window_lag_lead({})` `[NATIVE ONLY]` → handler error
-🔴 23. `sqlite_window_running_total({})` `[NATIVE ONLY]` → handler error
-🔴 24. `sqlite_window_moving_avg({})` `[NATIVE ONLY]` → handler error
-🔴 25. `sqlite_window_ntile({})` `[NATIVE ONLY]` → handler error
+🔴 7. `sqlite_window_row_number({})` `[NATIVE ONLY]` → handler error
+🔴 8. `sqlite_window_rank({})` `[NATIVE ONLY]` → handler error
+🔴 9. `sqlite_window_lag_lead({})` `[NATIVE ONLY]` → handler error
+🔴 10. `sqlite_window_running_total({})` `[NATIVE ONLY]` → handler error
+🔴 11. `sqlite_window_moving_avg({})` `[NATIVE ONLY]` → handler error
+🔴 12. `sqlite_window_ntile({})` `[NATIVE ONLY]` → handler error
 
 
 ---

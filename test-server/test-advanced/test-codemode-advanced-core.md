@@ -82,28 +82,27 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-8. sqlite.core.readQuery
-9. sqlite.core.writeQuery
-10. sqlite.core.createTable
-11. sqlite.core.listTables
-12. sqlite.core.describeTable
-13. sqlite.core.dropTable
-14. sqlite.core.getIndexes
-15. sqlite.core.createIndex
-16. sqlite.core.dropIndex
-17. sqlite.core.count
-18. sqlite.core.exists
-19. sqlite.core.upsert
-20. sqlite.core.batchInsert
-21. sqlite.core.truncate
-22. sqlite.core.dateAdd
-23. sqlite.core.dateDiff
-24. sqlite.core.listTriggers
-25. sqlite.core.listConstraints
-26. sqlite.core.alterTable
-27. sqlite.core.createTrigger
-28. sqlite.core.dropTrigger
-
+- `sqlite.core.readQuery`
+- `sqlite.core.writeQuery`
+- `sqlite.core.createTable`
+- `sqlite.core.listTables`
+- `sqlite.core.describeTable`
+- `sqlite.core.dropTable`
+- `sqlite.core.getIndexes`
+- `sqlite.core.createIndex`
+- `sqlite.core.dropIndex`
+- `sqlite.core.count`
+- `sqlite.core.exists`
+- `sqlite.core.upsert`
+- `sqlite.core.batchInsert`
+- `sqlite.core.truncate`
+- `sqlite.core.dateAdd`
+- `sqlite.core.dateDiff`
+- `sqlite.core.listTriggers`
+- `sqlite.core.listConstraints`
+- `sqlite.core.alterTable`
+- `sqlite.core.createTrigger`
+- `sqlite.core.dropTrigger`
 
 ## Phase 1: Boundary Values & Empty States (batched)
 
@@ -111,50 +110,50 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 Create `stress_empty_table (id INTEGER PRIMARY KEY, name TEXT, value REAL)`, then test:
 
-29. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM stress_empty_table"})` → `{rows: [{n: 0}]}`
-30. `sqlite.core.describeTable("stress_empty_table")` → valid schema with 3 columns
-31. `sqlite.core.getIndexes({table: "stress_empty_table"})` → empty or primary key only
-32. `sqlite.core.count({table: "stress_empty_table"})` → `{count: 0}`
-33. `sqlite.core.exists({table: "stress_empty_table"})` → `{exists: false}` (no rows)
+1. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM stress_empty_table"})` → `{rows: [{n: 0}]}`
+2. `sqlite.core.describeTable("stress_empty_table")` → valid schema with 3 columns
+3. `sqlite.core.getIndexes({table: "stress_empty_table"})` → empty or primary key only
+4. `sqlite.core.count({table: "stress_empty_table"})` → `{count: 0}`
+5. `sqlite.core.exists({table: "stress_empty_table"})` → `{exists: false}` (no rows)
 
 **1.2 Single-Row Table**
 
 Insert one row: `(1, 'solo', 42.0)`, then:
 
-34. `sqlite.core.readQuery({query: "SELECT * FROM stress_empty_table"})` → exactly 1 row
-35. `sqlite.core.exists({table: "stress_empty_table"})` → `{exists: true}`
-36. `sqlite.core.count({table: "stress_empty_table"})` → `{count: 1}`
+6. `sqlite.core.readQuery({query: "SELECT * FROM stress_empty_table"})` → exactly 1 row
+7. `sqlite.core.exists({table: "stress_empty_table"})` → `{exists: true}`
+8. `sqlite.core.count({table: "stress_empty_table"})` → `{count: 1}`
 
 **1.3 NULL-Heavy Data**
 
 Insert 4 more rows: 3 with `name IS NULL AND value IS NULL`, 1 with actual values:
 
-37. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM stress_empty_table WHERE value IS NULL"})` → `{rows: [{n: 3}]}`
-38. `sqlite.core.readQuery({query: "SELECT COUNT(value) AS n FROM stress_empty_table"})` → `{rows: [{n: 2}]}` (COUNT of non-null)
-39. `sqlite.core.count({table: "stress_empty_table", column: "value"})` → 2 (non-null count)
+9. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM stress_empty_table WHERE value IS NULL"})` → `{rows: [{n: 3}]}`
+10. `sqlite.core.readQuery({query: "SELECT COUNT(value) AS n FROM stress_empty_table"})` → `{rows: [{n: 2}]}` (COUNT of non-null)
+11. `sqlite.core.count({table: "stress_empty_table", column: "value"})` → 2 (non-null count)
 
 **1.4 Extreme Numeric Values**
 
 Insert: `(value: 99999999.99)`, `(value: -99999999.99)`, `(value: 0.0)`, `(value: 0.01)`:
 
-40. `sqlite.stats.statsBasic({table: "stress_empty_table", column: "value"})` → verify min/max/avg handle extreme values
+12. `sqlite.stats.statsBasic({table: "stress_empty_table", column: "value"})` → verify min/max/avg handle extreme values
 
 
 ## Phase 2: State Pollution & Idempotency (batched)
 
 **2.1 Create-Drop-Recreate Cycles**
 
-41. `sqlite.core.createTable(...)` → create `stress_cycle_table (id INTEGER PRIMARY KEY, data TEXT)`
-42. `sqlite.core.createIndex({table: "stress_cycle_table", columns: ["data"], indexName: "stress_idx_cycle"})` → success
-43. `sqlite.core.dropTable({table: "stress_cycle_table"})` → success
-44. `sqlite.core.dropTable({table: "stress_cycle_table"})` → success with "does not exist" message (not raw crash)
-45. `sqlite.core.createTable(...)` → recreate `stress_cycle_table` → success (no orphaned metadata)
-46. Cleanup: drop `stress_cycle_table`
+13. `sqlite.core.createTable(...)` → create `stress_cycle_table (id INTEGER PRIMARY KEY, data TEXT)`
+14. `sqlite.core.createIndex({table: "stress_cycle_table", columns: ["data"], indexName: "stress_idx_cycle"})` → success
+15. `sqlite.core.dropTable({table: "stress_cycle_table"})` → success
+16. `sqlite.core.dropTable({table: "stress_cycle_table"})` → success with "does not exist" message (not raw crash)
+17. `sqlite.core.createTable(...)` → recreate `stress_cycle_table` → success (no orphaned metadata)
+18. Cleanup: drop `stress_cycle_table`
 
 **2.2 Duplicate Object Detection**
 
-47. `sqlite.core.createTable(...)` with table name `test_products` → expect error or "already exists"
-48. `sqlite.core.createIndex(...)` on existing `idx_orders_status` → expect error or "already exists"
+19. `sqlite.core.createTable(...)` with table name `test_products` → expect error or "already exists"
+20. `sqlite.core.createIndex(...)` on existing `idx_orders_status` → expect error or "already exists"
 
 
 ## Phase 3: Error Message Quality (batched)
@@ -163,88 +162,88 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 
 **3.1 Nonexistent Objects**
 
-49. `sqlite.core.describeTable("nonexistent_table_xyz")` → error should mention table name
-50. `sqlite.core.readQuery({query: "SELECT * FROM nonexistent_table_xyz"})` → error should mention table name
-51. `sqlite.core.getIndexes({table: "nonexistent_table_xyz"})` → report behavior
-52. `sqlite.core.writeQuery("INSERT INTO nonexistent_table_xyz VALUES (1)")` → structured error
+21. `sqlite.core.describeTable("nonexistent_table_xyz")` → error should mention table name
+22. `sqlite.core.readQuery({query: "SELECT * FROM nonexistent_table_xyz"})` → error should mention table name
+23. `sqlite.core.getIndexes({table: "nonexistent_table_xyz"})` → report behavior
+24. `sqlite.core.writeQuery("INSERT INTO nonexistent_table_xyz VALUES (1)")` → structured error
 
 **3.2 Invalid SQL**
 
-53. `sqlite.core.readQuery({query: "SELEKT * FROM test_products"})` → structured error with SQL syntax context
-54. `sqlite.core.writeQuery("INSERT INTO test_products (nonexistent_col) VALUES (1)")` → structured error mentioning column
+25. `sqlite.core.readQuery({query: "SELEKT * FROM test_products"})` → structured error with SQL syntax context
+26. `sqlite.core.writeQuery("INSERT INTO test_products (nonexistent_col) VALUES (1)")` → structured error mentioning column
 
 **3.3 Type/Constraint Violations**
 
-55. `sqlite.core.writeQuery("INSERT INTO test_products (id, name, price, category) VALUES (1, 'dup', 10.0, 'cat')")` → duplicate primary key error (id=1 exists)
+27. `sqlite.core.writeQuery("INSERT INTO test_products (id, name, price, category) VALUES (1, 'dup', 10.0, 'cat')")` → duplicate primary key error (id=1 exists)
 
 
 ## Phase 4: Large Payload & Truncation Verification (batched)
 
-56. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements"})` → exactly 50 rows (default limit applied) — verify response size
-57. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
-58. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100"})` → 100 rows — check payload size
+28. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements"})` → exactly 50 rows (default limit applied) — verify response size
+29. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
+30. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100"})` → 100 rows — check payload size
 
 
 ## Phase 5: Trigger & Constraint Edge Cases (batched)
 
 **5.1 — Trigger lifecycle stress**
 
-59. `sqlite.core.createTable({table: "stress_trigger_table", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "INTEGER"}]})` → success
-60. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_b_ins BEFORE INSERT ON stress_trigger_table BEGIN SELECT 1; END;")` → success
-61. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_a_del AFTER DELETE ON stress_trigger_table BEGIN SELECT 1; END;")` → success
-62. `sqlite.core.listTriggers()` → verify both triggers appear
-63. `sqlite.core.listTriggers({table: "stress_trigger_table"})` → verify both appear and are filtered to 2
-64. `sqlite.core.dropTable({table: "stress_trigger_table"})` → success (drops table and triggers)
-65. `sqlite.core.listTriggers({table: "stress_trigger_table"})` → report behavior (table gone, triggers should be gone)
+31. `sqlite.core.createTable({table: "stress_trigger_table", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "INTEGER"}]})` → success
+32. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_b_ins BEFORE INSERT ON stress_trigger_table BEGIN SELECT 1; END;")` → success
+33. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_a_del AFTER DELETE ON stress_trigger_table BEGIN SELECT 1; END;")` → success
+34. `sqlite.core.listTriggers()` → verify both triggers appear
+35. `sqlite.core.listTriggers({table: "stress_trigger_table"})` → verify both appear and are filtered to 2
+36. `sqlite.core.dropTable({table: "stress_trigger_table"})` → success (drops table and triggers)
+37. `sqlite.core.listTriggers({table: "stress_trigger_table"})` → report behavior (table gone, triggers should be gone)
 
 **5.2 — Constraint introspection on complex schema**
 
-66. `sqlite.core.createTable({table: "stress_constraints_table", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "pid", type: "INTEGER"}, {name: "name", type: "TEXT"}], foreignKeys: [{column: "pid", targetTable: "test_products", targetColumn: "id"}]})` → success
-67. `sqlite.core.writeQuery("ALTER TABLE stress_constraints_table ADD CONSTRAINT fk_pid FOREIGN KEY (pid) REFERENCES test_products(id)")` → failure (by design, `sqlite_write_query` strictly rejects DDL to prevent accidental schema changes)
-68. `sqlite.core.createIndex({table: "stress_constraints_table", columns: ["name"], indexName: "stress_idx_name_uniq", unique: true})` → success
-69. `sqlite.core.listConstraints({table: "stress_constraints_table"})` → verify PK, FK (if added), and UNIQUE index detected
-70. `sqlite.core.listConstraints({table: "stress_constraints_table"})` → call twice to verify idempotency/caching
-71. Cleanup: drop `stress_constraints_table`
+38. `sqlite.core.createTable({table: "stress_constraints_table", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "pid", type: "INTEGER"}, {name: "name", type: "TEXT"}], foreignKeys: [{column: "pid", targetTable: "test_products", targetColumn: "id"}]})` → success
+39. `sqlite.core.writeQuery("ALTER TABLE stress_constraints_table ADD CONSTRAINT fk_pid FOREIGN KEY (pid) REFERENCES test_products(id)")` → failure (by design, `sqlite_write_query` strictly rejects DDL to prevent accidental schema changes)
+40. `sqlite.core.createIndex({table: "stress_constraints_table", columns: ["name"], indexName: "stress_idx_name_uniq", unique: true})` → success
+41. `sqlite.core.listConstraints({table: "stress_constraints_table"})` → verify PK, FK (if added), and UNIQUE index detected
+42. `sqlite.core.listConstraints({table: "stress_constraints_table"})` → call twice to verify idempotency/caching
+43. Cleanup: drop `stress_constraints_table`
 
 
 ## Phase 6: Date Math Edge Cases (batched)
 
-72. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: -9999, unit: "years"})` → should handle extreme negative dates
-73. `sqlite.core.dateDiff({table: "test_events", column1: "event_date", column2: "invalid_date_col", unit: "days"})` → should return a structured error about invalid column
-74. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: 0, unit: "days"})` → valid delta 0
+44. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: -9999, unit: "years"})` → should handle extreme negative dates
+45. `sqlite.core.dateDiff({table: "test_events", column1: "event_date", column2: "invalid_date_col", unit: "days"})` → should return a structured error about invalid column
+46. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: 0, unit: "days"})` → valid delta 0
 
 
 ## Phase 7: ALTER TABLE Edge Cases (batched)
 
-75. Create `stress_alter_table (id INTEGER PRIMARY KEY, name TEXT, value REAL)`, then:
-76. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "ts", type: "TEXT", nullable: true, defaultValue: "CURRENT_TIMESTAMP"})` → success (SQL expression default)
-77. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "empty", type: "TEXT", nullable: true, defaultValue: ""})` → success (empty string default)
-78. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "bad_pk", type: "INTEGER PRIMARY KEY"})` → structured error (SQLITE_LIMITATION — cannot add PRIMARY KEY)
-79. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "bad_uq", type: "TEXT UNIQUE"})` → structured error (SQLITE_LIMITATION — cannot add UNIQUE)
-80. `sqlite.core.alterTable({table: "stress_alter_table", operation: "rename_column", column: "nonexistent", newName: "x"})` → structured error (COLUMN_NOT_FOUND)
-81. Add 2 more columns, then drop all non-PK columns one by one until only `id` remains:
+47. Create `stress_alter_table (id INTEGER PRIMARY KEY, name TEXT, value REAL)`, then:
+48. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "ts", type: "TEXT", nullable: true, defaultValue: "CURRENT_TIMESTAMP"})` → success (SQL expression default)
+49. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "empty", type: "TEXT", nullable: true, defaultValue: ""})` → success (empty string default)
+50. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "bad_pk", type: "INTEGER PRIMARY KEY"})` → structured error (SQLITE_LIMITATION — cannot add PRIMARY KEY)
+51. `sqlite.core.alterTable({table: "stress_alter_table", operation: "add_column", column: "bad_uq", type: "TEXT UNIQUE"})` → structured error (SQLITE_LIMITATION — cannot add UNIQUE)
+52. `sqlite.core.alterTable({table: "stress_alter_table", operation: "rename_column", column: "nonexistent", newName: "x"})` → structured error (COLUMN_NOT_FOUND)
+53. Add 2 more columns, then drop all non-PK columns one by one until only `id` remains:
     - `sqlite.core.alterTable({table: "stress_alter_table", operation: "drop_column", column: "name"})` → success
     - Continue dropping until 1 column left
     - `sqlite.core.alterTable({table: "stress_alter_table", operation: "drop_column", column: "id"})` → structured error (SQLITE_LIMITATION — cannot drop last column)
-82. `sqlite.core.alterTable({table: "stress_alter_table", operation: "rename_table", newName: "test_products"})` → structured error (TABLE_EXISTS)
-83. Full lifecycle: rename table → verify with listTables → rename back → verify → cleanup
+54. `sqlite.core.alterTable({table: "stress_alter_table", operation: "rename_table", newName: "test_products"})` → structured error (TABLE_EXISTS)
+55. Full lifecycle: rename table → verify with listTables → rename back → verify → cleanup
 
 
 ## Phase 8: Trigger Stress (batched)
 
-84. Create `stress_trg_table (id INTEGER PRIMARY KEY, val TEXT, updated_at TEXT)`, then:
-85. `sqlite.core.createTrigger({name: "stress_trg_insert", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "SELECT 1;", forEachRow: true})` → success
-86. `sqlite.core.createTrigger({name: "stress_trg_update_cols", table: "stress_trg_table", event: "UPDATE", timing: "BEFORE", columns: ["val"], body: "SELECT 1;"})` → success (column-specific UPDATE trigger)
-87. `sqlite.core.createTrigger({name: "stress_trg_when", table: "stress_trg_table", event: "DELETE", timing: "AFTER", body: "SELECT 1;", whenClause: "OLD.val IS NOT NULL"})` → success (WHEN clause)
-88. `sqlite.core.listTriggers({table: "stress_trg_table"})` → 3 triggers with correct event/timing
-89. `sqlite.core.createTrigger({name: "stress_trg_insert", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "SELECT 1;", ifNotExists: true})` → success (no-op, trigger already exists)
-90. `sqlite.core.createTrigger({name: "stress_trg_instead", table: "stress_trg_table", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → structured error (INSTEAD OF only on views)
-91. `sqlite.core.createTrigger({name: "stress_trg_bad_cols", table: "stress_trg_table", event: "INSERT", timing: "AFTER", columns: ["val"], body: "SELECT 1;"})` → structured error (columns only for UPDATE)
-92. `sqlite.core.createTrigger({name: "stress_trg_empty", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "   "})` → structured error (empty body)
-93. `sqlite.core.dropTrigger({name: "stress_trg_nonexist", ifExists: true})` → `{success: true}` (no-op)
-94. `sqlite.core.dropTrigger({name: "stress_trg_nonexist"})` → structured error (TRIGGER_NOT_FOUND)
-95. Drop `stress_trg_table` → success (cascade-deletes triggers)
-96. `sqlite.core.listTriggers({table: "stress_trg_table"})` → verify triggers are gone (table dropped)
+56. Create `stress_trg_table (id INTEGER PRIMARY KEY, val TEXT, updated_at TEXT)`, then:
+57. `sqlite.core.createTrigger({name: "stress_trg_insert", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "SELECT 1;", forEachRow: true})` → success
+58. `sqlite.core.createTrigger({name: "stress_trg_update_cols", table: "stress_trg_table", event: "UPDATE", timing: "BEFORE", columns: ["val"], body: "SELECT 1;"})` → success (column-specific UPDATE trigger)
+59. `sqlite.core.createTrigger({name: "stress_trg_when", table: "stress_trg_table", event: "DELETE", timing: "AFTER", body: "SELECT 1;", whenClause: "OLD.val IS NOT NULL"})` → success (WHEN clause)
+60. `sqlite.core.listTriggers({table: "stress_trg_table"})` → 3 triggers with correct event/timing
+61. `sqlite.core.createTrigger({name: "stress_trg_insert", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "SELECT 1;", ifNotExists: true})` → success (no-op, trigger already exists)
+62. `sqlite.core.createTrigger({name: "stress_trg_instead", table: "stress_trg_table", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → structured error (INSTEAD OF only on views)
+63. `sqlite.core.createTrigger({name: "stress_trg_bad_cols", table: "stress_trg_table", event: "INSERT", timing: "AFTER", columns: ["val"], body: "SELECT 1;"})` → structured error (columns only for UPDATE)
+64. `sqlite.core.createTrigger({name: "stress_trg_empty", table: "stress_trg_table", event: "INSERT", timing: "AFTER", body: "   "})` → structured error (empty body)
+65. `sqlite.core.dropTrigger({name: "stress_trg_nonexist", ifExists: true})` → `{success: true}` (no-op)
+66. `sqlite.core.dropTrigger({name: "stress_trg_nonexist"})` → structured error (TRIGGER_NOT_FOUND)
+67. Drop `stress_trg_table` → success (cascade-deletes triggers)
+68. `sqlite.core.listTriggers({table: "stress_trg_table"})` → verify triggers are gone (table dropped)
 
 
 ### Final Cleanup

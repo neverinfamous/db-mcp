@@ -77,14 +77,14 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-8. `sqlite.core.help`
-9. `sqlite.core.query`
-10. `sqlite.core.readQuery`
-11. `sqlite.nonexistent.help`
-12. `sqlite.core.writeQuery`
-13. `sqlite.stats.statsBasic`
-14. `sqlite.core.createTable`
-15. `sqlite.core.dropTable`
+- `sqlite.core.help`
+- `sqlite.core.query`
+- `sqlite.core.readQuery`
+- `sqlite.nonexistent.help`
+- `sqlite.core.writeQuery`
+- `sqlite.stats.statsBasic`
+- `sqlite.core.createTable`
+- `sqlite.core.dropTable`
 
 ## Phase 1: Sandbox Basics (9 tests)
 

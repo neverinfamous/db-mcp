@@ -75,26 +75,26 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### introspection-schema Group Tools (7)
+### Group Tools (7)
 
-8. sqlite_dependency_graph
-9. sqlite_topological_sort
-10. sqlite_cascade_simulator
-11. sqlite_schema_snapshot
-12. sqlite_schema_diff
-13. sqlite_constraint_analysis
-14. sqlite_migration_risks
+- `sqlite_dependency_graph`
+- `sqlite_topological_sort`
+- `sqlite_cascade_simulator`
+- `sqlite_schema_snapshot`
+- `sqlite_schema_diff`
+- `sqlite_constraint_analysis`
+- `sqlite_migration_risks`
 
 ## Phase 1: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 35. `sqlite_dependency_graph({})` → handler error (or success if no required params)
-🔴 36. `sqlite_topological_sort({})` → handler error (or success if no required params)
-🔴 37. `sqlite_schema_snapshot({})` → handler error (or success if no required params)
-🔴 38. `sqlite_schema_diff({})` → handler error (both `baseline` and `target` required)
-🔴 39. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
-🔴 40. `sqlite_migration_risks({})` → handler error
+🔴 1. `sqlite_dependency_graph({})` → handler error (or success if no required params)
+🔴 2. `sqlite_topological_sort({})` → handler error (or success if no required params)
+🔴 3. `sqlite_schema_snapshot({})` → handler error (or success if no required params)
+🔴 4. `sqlite_schema_diff({})` → handler error (both `baseline` and `target` required)
+🔴 5. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
+🔴 6. `sqlite_migration_risks({})` → handler error
 
 
 ---
