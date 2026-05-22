@@ -12,6 +12,7 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly, idempotent, destructive } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { isSpatialiteSystemTable } from "./tables.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -83,7 +84,9 @@ export function createListTriggersTool(
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
-        const triggers = (result.rows ?? []).map((row) => {
+        const triggers = (result.rows ?? [])
+          .filter((row) => !isSpatialiteSystemTable(row["tbl_name"] as string))
+          .map((row) => {
           const triggerSql = (row["sql"] as string) ?? "";
           return {
             name: row["name"] as string,

@@ -144,7 +144,7 @@ Insert: `(value: 99999999.99)`, `(value: -99999999.99)`, `(value: 0.0)`, `(value
 13. `sqlite.core.createTable(...)` → create `stress_cycle_table (id INTEGER PRIMARY KEY, data TEXT)`
 14. `sqlite.core.createIndex({table: "stress_cycle_table", columns: ["data"], indexName: "stress_idx_cycle"})` → success
 15. `sqlite.core.dropTable({table: "stress_cycle_table"})` → success
-16. `sqlite.core.dropTable({table: "stress_cycle_table"})` → expect structured error or `{existed: false}` (not raw crash)
+16. `sqlite.core.dropTable({table: "stress_cycle_table"})` → success with "does not exist" message (not raw crash)
 17. `sqlite.core.createTable(...)` → recreate `stress_cycle_table` → success (no orphaned metadata)
 18. Cleanup: drop `stress_cycle_table`
 
@@ -179,7 +179,7 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 
 ### Category 4: Large Payload & Truncation Verification
 
-28. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements"})` → 200 rows — verify response size, check if truncation is applied
+28. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements"})` → exactly 50 rows (default limit applied) — verify response size
 29. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
 30. `sqlite.core.readQuery({query: "SELECT * FROM test_events"})` → 100 rows — check payload size
 
