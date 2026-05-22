@@ -181,7 +181,7 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 
 28. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements"})` → exactly 50 rows (default limit applied) — verify response size
 29. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
-30. `sqlite.core.readQuery({query: "SELECT * FROM test_events"})` → 100 rows — check payload size
+30. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100"})` → 100 rows — check payload size
 
 ---
 
