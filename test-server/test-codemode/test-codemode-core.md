@@ -153,7 +153,7 @@ return { failures, success: failures.length === 0 };
 29. Create a trigger on a temp table for testing:
     ```javascript
     await sqlite.core.createTable({table: "temp_cm_triggers", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}]});
-    await sqlite.core.writeQuery("CREATE TRIGGER temp_trg_insert AFTER INSERT ON temp_cm_triggers BEGIN SELECT 1; END");
+    await sqlite.core.createTrigger({name: "temp_trg_insert", table: "temp_cm_triggers", event: "INSERT", timing: "AFTER", body: "INSERT INTO temp_cm_triggers (name) VALUES ('fired')"});
     return {success: true};
     ```
 30. `sqlite.core.listTriggers({table: "temp_cm_triggers"})` → 1 trigger with `name: "temp_trg_insert"`, `event: "INSERT"`, `timing: "AFTER"`
@@ -161,7 +161,7 @@ return { failures, success: failures.length === 0 };
 32. `sqlite.core.listConstraints({table: "test_products"})` → `primaryKey` includes `id`, verify structure
 33. Cleanup: drop trigger and temp table:
     ```javascript
-    await sqlite.core.writeQuery("DROP TRIGGER IF EXISTS temp_trg_insert");
+    await sqlite.core.dropTrigger({name: "temp_trg_insert"});
     await sqlite.core.dropTable({table: "temp_cm_triggers"});
     return {success: true};
     ```
