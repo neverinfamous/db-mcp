@@ -70,6 +70,33 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: text
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.text.regexMatch`
+9. `sqlite.text.regexExtract`
+10. `sqlite.text.fuzzyMatch`
+11. `sqlite.text.phoneticMatch`
+12. `sqlite.text.validate`
+13. `sqlite.text.case`
+14. `sqlite.text.normalize`
+15. `sqlite.text.split`
+16. `sqlite.text.concat`
+17. `sqlite.text.trim`
+18. `sqlite.text.substring`
+19. `sqlite.text.sentiment`
+20. `sqlite.text.advancedSearch`
+21. `sqlite.text.ftsCreate`
+22. `sqlite.text.ftsRebuild`
+23. `sqlite.text.ftsSearch`
+24. `sqlite.text.ftsMatchInfo`
+25. `sqlite.text.ftsHeadline`
+26. `sqlite.text.replace`
+27. `sqlite.admin.dropTable`
+
 ## Phase 1: Text Tools — Happy Paths (batched)
 
 > Bundle items 1-14 into 1-2 `sqlite_execute_code` calls.

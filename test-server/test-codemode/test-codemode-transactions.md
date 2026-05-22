@@ -70,6 +70,23 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: transactions
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.transactions.status`
+9. `sqlite.transactions.begin`
+10. `sqlite.transactions.rollback`
+11. `sqlite.transactions.savepoint`
+12. `sqlite.transactions.rollbackTo`
+13. `sqlite.transactions.release`
+14. `sqlite.transactions.commit`
+15. `sqlite.transactions.execute`
+16. `sqlite.core.count`
+17. `sqlite.core.writeQuery`
+
 ## Phase 1: Transaction Lifecycle — Happy Paths (sequential)
 
 > Run each as an individual `sqlite_execute_code` call to verify state transitions.

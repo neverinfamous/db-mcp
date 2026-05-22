@@ -70,7 +70,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## introspection Group Tools (10)
+## Group Focus: introspection
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
 8. sqlite_dependency_graph
 9. sqlite_topological_sort

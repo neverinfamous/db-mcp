@@ -72,6 +72,47 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: admin
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.admin.pragmaDatabaseList`
+9. `sqlite.admin.pragmaCompileOptions`
+10. `sqlite.admin.pragmaSettings`
+11. `sqlite.admin.pragmaTableInfo`
+12. `sqlite.admin.indexStats`
+13. `sqlite.admin.integrityCheck`
+14. `sqlite.admin.analyze`
+15. `sqlite.admin.dbstat`
+16. `sqlite.admin.createView`
+17. `sqlite.admin.listViews`
+18. `sqlite.admin.dropView`
+19. `sqlite.admin.listVirtualTables`
+20. `sqlite.admin.virtualTableInfo`
+21. `sqlite.admin.generateSeries`
+22. `sqlite.admin.createRtreeTable`
+23. `sqlite.admin.createSeriesTable`
+24. `sqlite.admin.backup`
+25. `sqlite.admin.verifyBackup`
+26. `sqlite.admin.restore`
+27. `sqlite.admin.dump`
+28. `sqlite.admin.vacuum`
+29. `sqlite.admin.optimize`
+30. `sqlite.admin.pragmaOptimize`
+31. `sqlite.admin.analyzeCsvSchema`
+32. `sqlite.admin.createCsvTable`
+33. `sqlite.admin.appendInsight`
+34. `sqlite.admin.reindex`
+35. `sqlite.admin.wal`
+36. `sqlite.admin.attachDatabase`
+37. `sqlite.admin.detachDatabase`
+38. `sqlite.admin.vacuumInto`
+39. `sqlite.admin.dropVirtualTable`
+40. `sqlite.core.describeTable`
+41. `sqlite.core.dropTable`
+
 ## Phase 1: Pragma & Inspection — Happy Paths (batched)
 
 8. `sqlite.admin.pragmaDatabaseList()` → verify database path matches `test.db`

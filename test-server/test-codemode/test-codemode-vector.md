@@ -70,6 +70,28 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: vector
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.vector.count`
+9. `sqlite.vector.dimensions`
+10. `sqlite.vector.get`
+11. `sqlite.vector.search`
+12. `sqlite.vector.distance`
+13. `sqlite.vector.normalize`
+14. `sqlite.vector.stats`
+15. `sqlite.vector.createTable`
+16. `sqlite.vector.store`
+17. `sqlite.vector.batchStore`
+18. `sqlite.vector.delete`
+19. `sqlite.core.dropTable`
+20. `sqlite.core.readQuery`
+21. `sqlite.core.writeQuery`
+22. `sqlite.json.extract`
+
 ## Phase 1: Vector Read Tools — Happy Paths (batched)
 
 8. `sqlite.vector.count({table: "test_embeddings"})` → `{count: 20}`

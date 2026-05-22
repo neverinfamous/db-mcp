@@ -70,6 +70,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: text
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+
+
 ## Phase 1: Regex Edge Cases (batched)
 
 8. `sqlite.text.regexMatch({table: "test_users", column: "email", pattern: "^[a-z]+\\.[a-z]+@"})` → match dotted local parts (test.user)

@@ -70,6 +70,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: geo
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+
+
 ## Phase 1: Haversine Boundary Conditions (batched)
 
 8. `sqlite.geo.distance({lat1: 0, lon1: 0, lat2: 0, lon2: 0})` → distance = 0 (same point)

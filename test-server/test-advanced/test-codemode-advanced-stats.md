@@ -70,6 +70,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: stats
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+
+
 ## Phase 1: Boundary Values & Empty States (batched)
 
 Create `stress_stats_table (id INTEGER PRIMARY KEY, value REAL, category TEXT)`:

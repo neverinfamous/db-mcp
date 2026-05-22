@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> _No specific table schema required for this test group._
 
 > **CSV testing**: Use absolute path `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv`.
 
@@ -72,7 +72,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## admin Group Tools (32)
+## Group Focus: admin
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
 8. sqlite_pragma_database_list
 9. sqlite_pragma_compile_options

@@ -70,7 +70,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## json Group Tools (24 + codemode)
+## Group Focus: json
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
 8. sqlite_json_valid
 9. sqlite_json_extract

@@ -70,6 +70,24 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: geo
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.geo.distance`
+9. `sqlite.geo.nearby`
+10. `sqlite.geo.boundingBox`
+11. `sqlite.geo.cluster`
+12. `sqlite.geo.spatialiteLoad`
+13. `sqlite.geo.spatialiteCreateTable`
+14. `sqlite.geo.spatialiteImport`
+15. `sqlite.geo.spatialiteQuery`
+16. `sqlite.geo.spatialiteTransform`
+17. `sqlite.geo.spatialiteIndex`
+18. `sqlite.geo.spatialiteAnalyze`
+
 ## Phase 1: Haversine Tools — Happy Paths (batched)
 
 > These 4 tools work in both Native and WASM modes.

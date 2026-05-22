@@ -70,6 +70,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: transactions
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+
+
 ## Phase 1: Aborted Transaction Recovery (batched)
 
 8. `sqlite.transactions.begin()` → get transaction ID

@@ -70,7 +70,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## vector Group Tools (11)
+## Group Focus: vector
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
 8. sqlite_vector_create_table
 9. sqlite_vector_store

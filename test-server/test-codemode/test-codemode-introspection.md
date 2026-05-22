@@ -70,6 +70,23 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: introspection
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.introspection.dependencyGraph`
+9. `sqlite.introspection.topologicalSort`
+10. `sqlite.introspection.cascadeSimulator`
+11. `sqlite.introspection.schemaSnapshot`
+12. `sqlite.introspection.constraintAnalysis`
+13. `sqlite.introspection.migrationRisks`
+14. `sqlite.introspection.schemaDiff`
+15. `sqlite.introspection.storageAnalysis`
+16. `sqlite.introspection.indexAudit`
+17. `sqlite.introspection.queryPlan`
+
 ## Phase 1: Graph Analysis — Happy Paths (batched)
 
 8. `sqlite.introspection.dependencyGraph({})` → nodes ≥ 2, edges includes `test_orders → test_products` (using `from` and `to`)

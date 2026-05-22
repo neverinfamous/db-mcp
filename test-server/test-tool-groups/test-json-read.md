@@ -72,7 +72,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Group Focus: json-read
 
-> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
 ### json-read Group Tools (19)
 

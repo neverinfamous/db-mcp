@@ -70,6 +70,40 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: json
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.json.extract`
+9. `sqlite.json.keys`
+10. `sqlite.json.type`
+11. `sqlite.json.arrayLength`
+12. `sqlite.json.valid`
+13. `sqlite.json.validatePath`
+14. `sqlite.json.pretty`
+15. `sqlite.json.each`
+16. `sqlite.json.analyzeSchema`
+17. `sqlite.json.select`
+18. `sqlite.json.query`
+19. `sqlite.json.storageInfo`
+20. `sqlite.json.groupArray`
+21. `sqlite.json.groupObject`
+22. `sqlite.json.jsonbConvert`
+23. `sqlite.json.normalizeColumn`
+24. `sqlite.json.securityScan`
+25. `sqlite.json.diff`
+26. `sqlite.json.createJsonCollection`
+27. `sqlite.json.set`
+28. `sqlite.json.update`
+29. `sqlite.json.insert`
+30. `sqlite.json.remove`
+31. `sqlite.json.arrayAppend`
+32. `sqlite.json.merge`
+33. `sqlite.core.writeQuery`
+34. `sqlite.stats.statsBasic`
+
 ## Phase 1: JSON Read Tools — Happy Paths (batched)
 
 > Bundle items 1-19 into 1-2 `sqlite_execute_code` calls.

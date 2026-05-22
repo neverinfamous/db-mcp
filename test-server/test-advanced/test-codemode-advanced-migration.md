@@ -70,7 +70,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## migration Group Tools (6)
+## Group Focus: migration
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
 8. sqlite_migration_init
 9. sqlite_migration_record

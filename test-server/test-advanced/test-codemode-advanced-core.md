@@ -75,7 +75,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## core Group Tools (21 + codemode)
+## Group Focus: core
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
 8. sqlite_read_query
 9. sqlite_write_query

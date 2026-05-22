@@ -70,6 +70,21 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: sandbox
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.core.help`
+9. `sqlite.core.query`
+10. `sqlite.core.readQuery`
+11. `sqlite.nonexistent.help`
+12. `sqlite.core.writeQuery`
+13. `sqlite.stats.statsBasic`
+14. `sqlite.core.createTable`
+15. `sqlite.core.dropTable`
+
 ## Phase 1: Sandbox Basics (9 tests)
 
 > These tests validate the Code Mode sandbox itself — run them first.

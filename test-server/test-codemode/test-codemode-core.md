@@ -70,6 +70,35 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: core
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.core.readQuery`
+9. `sqlite.core.listTables`
+10. `sqlite.core.describeTable`
+11. `sqlite.core.getIndexes`
+12. `sqlite.core.count`
+13. `sqlite.core.exists`
+14. `sqlite.core.dateAdd`
+15. `sqlite.core.dateDiff`
+16. `sqlite.core.createTable`
+17. `sqlite.core.writeQuery`
+18. `sqlite.core.upsert`
+19. `sqlite.core.batchInsert`
+20. `sqlite.core.truncate`
+21. `sqlite.core.createIndex`
+22. `sqlite.core.dropIndex`
+23. `sqlite.core.dropTable`
+24. `sqlite.core.listTriggers`
+25. `sqlite.core.createTrigger`
+26. `sqlite.core.listConstraints`
+27. `sqlite.core.dropTrigger`
+28. `sqlite.core.alterTable`
+29. `sqlite.introspection.schemaSnapshot`
+
 ## Phase 1: Core Group — Happy Paths (batched)
 
 > **Instructions**: Construct a single `sqlite_execute_code` script to execute the numbered items below. Use the `sqlite.*` namespace. Compare responses against expected results and push deviations to a `failures` array.

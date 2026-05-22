@@ -70,6 +70,38 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
+## Group Focus: stats
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+8. `sqlite.stats.statsBasic`
+9. `sqlite.stats.statsCount`
+10. `sqlite.stats.statsGroupBy`
+11. `sqlite.stats.statsHistogram`
+12. `sqlite.stats.statsPercentile`
+13. `sqlite.stats.statsCorrelation`
+14. `sqlite.stats.statsTopN`
+15. `sqlite.stats.statsDistinct`
+16. `sqlite.stats.statsSummary`
+17. `sqlite.stats.statsFrequency`
+18. `sqlite.stats.statsOutliers`
+19. `sqlite.stats.statsRegression`
+20. `sqlite.stats.statsHypothesis`
+21. `sqlite.stats.statsSample`
+22. `sqlite.stats.detectAnomalies`
+23. `sqlite.stats.detectBloat`
+24. `sqlite.stats.detectSchemaRisks`
+25. `sqlite.stats.windowRowNumber`
+26. `sqlite.stats.windowRank`
+27. `sqlite.stats.windowRunningTotal`
+28. `sqlite.stats.windowMovingAvg`
+29. `sqlite.stats.windowLagLead`
+30. `sqlite.stats.windowNtile`
+31. `sqlite.core.createTable`
+32. `sqlite.core.dropTable`
+
 ## Phase 1: Core Stats — Happy Paths (batched)
 
 > Bundle items 1-14 into 1-2 `sqlite_execute_code` calls.
