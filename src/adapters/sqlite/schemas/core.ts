@@ -71,6 +71,9 @@ const ColumnInfoSchema = z.object({
   nullable: z.boolean().optional(),
   primaryKey: z.boolean().optional(),
   defaultValue: z.unknown().optional(),
+  isGenerated: z.boolean().optional(),
+  generatedExpression: z.string().optional(),
+  generatedType: z.enum(["VIRTUAL", "STORED"]).optional(),
 });
 
 /**
@@ -208,6 +211,13 @@ export const CreateTableSchema = z.object({
     .optional()
     .default(true)
     .describe("Add IF NOT EXISTS clause"),
+  strict: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Create a STRICT table (SQLite 3.37+). Enforces column type checking instead of dynamic typing.",
+    ),
 });
 
 export const DescribeTableSchema = z.object({
@@ -467,3 +477,123 @@ export const DateDiffSchema = z.object({
   unit: z.enum(["days", "hours", "minutes", "seconds"]).describe("Unit for the difference result"),
   whereClause: z.string().optional().describe("Optional WHERE clause to filter rows"),
 });
+
+// =============================================================================
+// ALTER TABLE Schema
+// =============================================================================
+
+export const AlterTableSchema = z.object({
+  table: z.string().describe("Table name to alter"),
+  operation: z
+    .enum(["add_column", "rename_column", "drop_column", "rename_table"])
+    .describe("ALTER TABLE operation to perform"),
+  column: z
+    .string()
+    .optional()
+    .describe(
+      "Column name (required for add_column, rename_column, drop_column)",
+    ),
+  newName: z
+    .string()
+    .optional()
+    .describe(
+      "New name for the column (rename_column) or table (rename_table)",
+    ),
+  type: z
+    .string()
+    .optional()
+    .describe("Column type (required for add_column, e.g. 'TEXT', 'INTEGER')"),
+  nullable: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Allow NULL values for the new column (add_column only)"),
+  defaultValue: z
+    .unknown()
+    .optional()
+    .describe(
+      "Default value for the new column (add_column only). Required when nullable is false.",
+    ),
+});
+
+export const AlterTableOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+export type AlterTableInput = z.infer<typeof AlterTableSchema>;
+
+// =============================================================================
+// CREATE / DROP TRIGGER Schemas
+// =============================================================================
+
+export const CreateTriggerSchema = z.object({
+  name: z.string().describe("Trigger name"),
+  table: z.string().describe("Table the trigger is attached to"),
+  timing: z
+    .enum(["BEFORE", "AFTER", "INSTEAD OF"])
+    .describe("When the trigger fires relative to the event"),
+  event: z
+    .enum(["INSERT", "UPDATE", "DELETE"])
+    .describe("DML event that activates the trigger"),
+  body: z
+    .string()
+    .describe(
+      "SQL statements to execute (e.g. \"INSERT INTO log(msg) VALUES ('row changed')\")",
+    ),
+  columns: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Specific columns for UPDATE triggers (e.g. ['name', 'email'] → UPDATE OF name, email)",
+    ),
+  whenClause: z
+    .string()
+    .optional()
+    .describe("Optional WHEN condition (e.g. \"NEW.status != OLD.status\")"),
+  forEachRow: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("FOR EACH ROW (default: true). SQLite only supports row-level triggers."),
+  ifNotExists: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Add IF NOT EXISTS clause"),
+  temporary: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Create a temporary trigger (TEMP)"),
+});
+
+export const CreateTriggerOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+export const DropTriggerSchema = z.object({
+  name: z.string().describe("Trigger name to drop"),
+  ifExists: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Add IF EXISTS clause"),
+});
+
+export const DropTriggerOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+export type CreateTriggerInput = z.infer<typeof CreateTriggerSchema>;
+export type DropTriggerInput = z.infer<typeof DropTriggerSchema>;
