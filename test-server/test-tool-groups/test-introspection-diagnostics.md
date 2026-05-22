@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -111,7 +110,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 🔴 15. `sqlite_storage_analysis({})` → handler error (or success if no required params)
 🔴 16. `sqlite_index_audit({})` → handler error (or success if no required params)
-
 
 ---
 

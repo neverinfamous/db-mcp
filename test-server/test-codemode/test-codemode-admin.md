@@ -260,7 +260,6 @@ await sqlite.admin.dropView({ viewName: "temp_view_cm_test" });
 return { failures, success: failures.length === 0 };
 ```
 
-
 ---
 
 ## Post-Test Procedures

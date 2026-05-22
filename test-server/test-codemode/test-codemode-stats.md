@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -235,7 +234,6 @@ if (basic.success === false) {
 await sqlite.core.dropTable({ table: "temp_cm_stats_empty" });
 return { failures, success: failures.length === 0, basicResult: basic };
 ```
-
 
 ---
 

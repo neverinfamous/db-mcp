@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -232,7 +231,6 @@ return {
 ```
 
 Expected: `beforeCount: > 0`, `afterCount: > 0` — validates that `ftsCreate` automatically populates the index (bypassing old gotcha expectations), and that `ftsRebuild` executes successfully.
-
 
 ---
 

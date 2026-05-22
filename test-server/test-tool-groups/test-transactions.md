@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -129,7 +128,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 21. `sqlite_transaction_savepoint({})` → handler error
 🔴 22. `sqlite_transaction_release({})` → handler error
 🔴 23. `sqlite_transaction_rollback_to({})` → handler error
-
 
 ---
 

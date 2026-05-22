@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -103,7 +102,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 10. `sqlite_window_running_total({})` `[NATIVE ONLY]` → handler error
 🔴 11. `sqlite_window_moving_avg({})` `[NATIVE ONLY]` → handler error
 🔴 12. `sqlite_window_ntile({})` `[NATIVE ONLY]` → handler error
-
 
 ---
 

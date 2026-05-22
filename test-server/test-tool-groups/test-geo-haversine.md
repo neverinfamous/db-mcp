@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -119,7 +118,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 12. `sqlite_geo_nearby({})` → handler error
 🔴 13. `sqlite_geo_bounding_box({})` → handler error
 🔴 14. `sqlite_geo_cluster({})` → handler error
-
 
 ---
 

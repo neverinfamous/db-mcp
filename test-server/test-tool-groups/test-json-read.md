@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -167,7 +166,6 @@ Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 🔴 44. `sqlite_json_security_scan({})` → handler error
 🔴 45. `sqlite_json_diff({})` → handler error
 🔴 46. `sqlite_execute_code({})` → handler error
-
 
 ---
 

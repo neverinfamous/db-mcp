@@ -19,15 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-| Name               | City          | Lat      | Lng       |
-| ------------------ | ------------- | -------- | --------- |
-| Central Park       | New York      | 40.7829  | -73.9654  |
-| Eiffel Tower       | Paris         | 48.8584  | 2.2945    |
-| Big Ben            | London        | 51.5007  | -0.1246   |
-| Tokyo Tower        | Tokyo         | 35.6586  | 139.7454  |
-| Sydney Opera House | Sydney        | -33.8568 | 151.2153  |
-| Golden Gate Bridge | San Francisco | 37.8199  | -122.4783 |
-
+> *No specific table schema required for this test group.*
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)

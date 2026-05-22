@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -190,7 +189,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 53. `sqlite_dump({})` → handler error
 🔴 54. `sqlite_reindex({})` → success (target is optional — reindexes entire database)
 🔴 55. `sqlite_wal({})` → handler error (action is required)
-
 
 ---
 

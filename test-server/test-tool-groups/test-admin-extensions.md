@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -118,7 +117,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 15. `sqlite_create_rtree_table({})` → handler error
 🔴 16. `sqlite_create_series_table({})` → handler error
 🔴 17. `sqlite_generate_series({})` → handler error
-
 
 ---
 

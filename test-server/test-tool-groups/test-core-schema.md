@@ -19,14 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-| Error Scenario                    | Tool Groups to Test                   | Example Input                                                           |
-| --------------------------------- | ------------------------------------- | ----------------------------------------------------------------------- |
-| Nonexistent table                 | All table-accepting tools             | `table: "nonexistent_xyz"`                                              |
-| Duplicate table/index             | Core (`create_table`, `create_index`) | Create existing table                                                   |
-| Missing required field            | All tools with required params        | Omit `table`, `query`, etc.                                             |
-| **Zod validation (empty params)** | **Every tool with required params**   | `{}` (empty object — must return handler error, not MCP `-32602` error) |
-| **Zod validation (wrong type)**   | **Tools with typed params**           | Pass string where number expected, etc.                                 |
-
+> *No specific table schema required for this test group.*
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -183,7 +176,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 58. `sqlite_alter_table({})` → handler error
 🔴 59. `sqlite_create_trigger({})` → handler error
 🔴 60. `sqlite_drop_trigger({})` → handler error
-
 
 ---
 

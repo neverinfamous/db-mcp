@@ -19,15 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-| id  | doc.type | doc.author | doc.views | metadata.source | tags                                 |
-| --- | -------- | ---------- | --------- | --------------- | ------------------------------------ |
-| 1   | article  | Alice      | 1250      | blog            | ["database","tutorial","beginner"]   |
-| 2   | article  | Bob        | 890       | docs            | ["json","advanced","sqlite"]         |
-| 3   | video    | Carol      | 5400      | youtube         | ["mcp","protocol","ai"]              |
-| 4   | article  | David      | 670       | wiki            | ["fts5","search","indexing"]         |
-| 5   | podcast  | Eve        | —         | spotify         | ["performance","tips","podcast"]     |
-| 6   | article  | Frank      | 2100      | medium          | ["vector","embeddings","similarity"] |
-
+> *No specific table schema required for this test group.*
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -237,7 +229,6 @@ return { failures, success: failures.length === 0, riskLevel: scan.riskLevel };
 ```
 
 Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`) and/or injection/XSS patterns.
-
 
 ---
 

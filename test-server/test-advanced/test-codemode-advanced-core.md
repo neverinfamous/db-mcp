@@ -26,7 +26,6 @@
 | test_measurements | 200  | id, sensor_id (1-5), temperature, humidity, pressure      |
 | test_events       | 100  | id, event_type, user_id, payload (JSON), event_date       |
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity

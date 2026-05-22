@@ -19,15 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-| Error Scenario                    | Tool Groups to Test                 | Example Input                                                           |
-| --------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
-| Nonexistent table                 | All table-accepting tools           | `table: "nonexistent_xyz"`                                              |
-| Invalid SQL syntax                | Core (`read_query`, `write_query`)  | `query: "SELEKT * FROM"`                                                |
-| Invalid column name               | Stats, JSON, text, vector, geo      | `column: "nonexistent_col"`                                             |
-| Missing required field            | All tools with required params      | Omit `table`, `query`, etc.                                             |
-| **Zod validation (empty params)** | **Every tool with required params** | `{}` (empty object — must return handler error, not MCP `-32602` error) |
-| **Zod validation (wrong type)**   | **Tools with typed params**         | Pass string where number expected, etc.                                 |
-
+> *No specific table schema required for this test group.*
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -133,7 +125,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 23. `sqlite_truncate({})` → handler error
 🔴 24. `sqlite_date_add({})` → handler error
 🔴 25. `sqlite_date_diff({})` → handler error
-
 
 ---
 

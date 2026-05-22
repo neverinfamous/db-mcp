@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -126,7 +125,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 24. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
 🔴 25. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
 🔴 26. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
-
 
 ---
 

@@ -21,7 +21,6 @@
 ### Test Schema Reference
 > *No specific table schema required for this test group.*
 
-
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
@@ -104,7 +103,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 10. `sqlite_vector_store({})` → handler error
 🔴 11. `sqlite_vector_batch_store({})` → handler error
 🔴 12. `sqlite_vector_delete({})` → handler error
-
 
 ---
 
