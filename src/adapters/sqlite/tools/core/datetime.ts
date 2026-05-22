@@ -1,7 +1,7 @@
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { DateAddSchema, DateDiffSchema } from "../../schemas/core.js";
 import { DateMathOutputSchema } from "../../schemas/core.js";
 
@@ -44,6 +44,25 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
 
       try {
         const result = await adapter.executeReadQuery(query);
+
+        // SQLite's datetime() silently returns NULL if the resulting date is outside 
+        // the supported bounds of 0000-01-01 to 9999-12-31. Detect this by checking 
+        // if the original column was non-null but the result is null.
+        if (result.rows && result.rows.length > 0) {
+          const outOfBounds = result.rows.some((row: Record<string, unknown>) => row[column] !== null && row["date_add_result"] === null);
+          if (outOfBounds) {
+            return formatHandlerError(
+              new ValidationError(
+                "Date calculation out of bounds. The resulting date exceeds SQLite's supported range (0000-01-01 to 9999-12-31).",
+                "VALIDATION_ERROR",
+                {
+                  suggestion: "Reduce the amount to stay within the supported 0000-9999 year range.",
+                }
+              )
+            );
+          }
+        }
+
         return {
           success: true,
           rows: result.rows,
