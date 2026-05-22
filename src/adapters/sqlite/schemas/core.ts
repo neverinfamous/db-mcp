@@ -468,6 +468,7 @@ export const DateAddSchema = z.object({
   amount: z.number().describe("Amount of time to add (use negative to subtract)"),
   unit: z.enum(["days", "months", "years", "hours", "minutes", "seconds"]).describe("Time unit"),
   whereClause: z.string().optional().describe("Optional WHERE clause to filter rows"),
+  limit: z.number().optional().default(50).describe("Maximum number of rows to return (default: 50)"),
 });
 
 export const DateDiffSchema = z.object({
@@ -476,6 +477,7 @@ export const DateDiffSchema = z.object({
   column2: z.string().describe("Second date/time column (column1 - column2)"),
   unit: z.enum(["days", "hours", "minutes", "seconds"]).describe("Unit for the difference result"),
   whereClause: z.string().optional().describe("Optional WHERE clause to filter rows"),
+  limit: z.number().optional().default(50).describe("Maximum number of rows to return (default: 50)"),
 });
 
 // =============================================================================

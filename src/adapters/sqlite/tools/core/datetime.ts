@@ -25,7 +25,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
         return formatHandlerError(error);
       }
 
-      const { table, column, amount, unit, whereClause } = input;
+      const { table, column, amount, unit, whereClause, limit } = input;
       const quotedTable = `"${table.replace(/"/g, '""')}"`;
       const quotedColumn = `"${column.replace(/"/g, '""')}"`;
 
@@ -36,6 +36,10 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       
       if (whereClause) {
         query += ` WHERE ${whereClause}`;
+      }
+      
+      if (limit !== undefined && limit !== null) {
+        query += ` LIMIT ${limit}`;
       }
 
       try {
@@ -72,7 +76,7 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
         return formatHandlerError(error);
       }
 
-      const { table, column1, column2, unit, whereClause } = input;
+      const { table, column1, column2, unit, whereClause, limit } = input;
       const formatOperand = (val: string): string => {
         if (val.startsWith("'") && val.endsWith("'")) return val;
         if (!isNaN(Number(val))) return val;
@@ -95,6 +99,10 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       
       if (whereClause) {
         query += ` WHERE ${whereClause}`;
+      }
+
+      if (limit !== undefined && limit !== null) {
+        query += ` LIMIT ${limit}`;
       }
 
       try {

@@ -7,6 +7,7 @@
 - Fixed `sqlite_date_diff` to correctly handle string and numeric literal values without aggressively quoting them as column identifiers.
 - Fixed `sqlite_list_indexes`, `sqlite_create_index`, `sqlite_drop_index`, `sqlite_create_table`, `sqlite_describe_table`, `sqlite_drop_table`, `sqlite_alter_table`, and `sqlite_list_constraints` to correctly handle temporary objects by querying `sqlite_temp_master` in addition to `sqlite_master`.
 - Fixed `sqlite_get_indexes` filtering bug where `UNION ALL` resulted in the table filter only applying to `sqlite_temp_master` instead of both schema sources.
+- Fixed `sqlite_date_add` and `sqlite_date_diff` missing limit parameter, which bypassed truncation safeguards and returned unlimited rows.
 
 ### Added
 
