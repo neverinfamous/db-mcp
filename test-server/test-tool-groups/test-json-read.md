@@ -76,25 +76,25 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### json-read Group Tools (19)
 
-1. sqlite_json_valid
-2. sqlite_json_extract
-3. sqlite_json_type
-4. sqlite_json_array_length
-5. sqlite_json_keys
-6. sqlite_json_each
-7. sqlite_json_group_array
-8. sqlite_json_group_object
-9. sqlite_json_pretty
-10. sqlite_jsonb_convert
-11. sqlite_json_storage_info
-12. sqlite_json_normalize_column
-13. sqlite_json_select
-14. sqlite_json_query
-15. sqlite_json_validate_path
-16. sqlite_json_analyze_schema
-17. sqlite_json_security_scan
-18. sqlite_json_diff
-19. sqlite_execute_code
+8. sqlite_json_valid
+9. sqlite_json_extract
+10. sqlite_json_type
+11. sqlite_json_array_length
+12. sqlite_json_keys
+13. sqlite_json_each
+14. sqlite_json_group_array
+15. sqlite_json_group_object
+16. sqlite_json_pretty
+17. sqlite_jsonb_convert
+18. sqlite_json_storage_info
+19. sqlite_json_normalize_column
+20. sqlite_json_select
+21. sqlite_json_query
+22. sqlite_json_validate_path
+23. sqlite_json_analyze_schema
+24. sqlite_json_security_scan
+25. sqlite_json_diff
+26. sqlite_execute_code
 
 **Test data reference (test_jsonb_docs):**
 
@@ -109,63 +109,65 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
-1. `sqlite_json_extract({table: "test_jsonb_docs", column: "doc", path: "$.author", whereClause: "id = 1"})` → result contains `"Alice"`
-2. `sqlite_json_extract({table: "test_jsonb_docs", column: "doc", path: "$.nested.level1.level2", whereClause: "id = 4"})` → result contains `"deep value"`
-3. `sqlite_json_keys({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → keys include `type`, `title`, `author`, `views`, `rating`
-4. `sqlite_json_type({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1"})` → `"array"`
-5. `sqlite_json_type({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → `"object"`
-6. `sqlite_json_array_length({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1"})` → `3`
-7. `sqlite_json_valid({json: "{\"type\":\"article\",\"title\":\"Getting Started with SQLite\",\"author\":\"Alice\",\"views\":1250,\"rating\":4.5}"})` → `{valid: true}`
-8. `sqlite_json_validate_path({path: "$.author"})` → valid
-9. `sqlite_json_pretty({json: "{\"type\":\"article\",\"author\":\"Alice\",\"views\":1250}"})` → formatted JSON with indentation
-10. `sqlite_json_each({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1", limit: 2})` → exactly 2 expanded rows: `database`, `tutorial` (Tests `limit` parameter)
-11. `sqlite_json_analyze_schema({table: "test_jsonb_docs", column: "doc"})` → inferred schema with `type`, `author`, etc.
-12. `sqlite_json_select({table: "test_jsonb_docs", column: "doc", paths: ["$.author", "$.views"]})` → rows with author and views columns
-13. `sqlite_json_query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article"}, limit: 2})` → exactly 2 rows (Tests `limit` parameter)
-14. `sqlite_json_storage_info({table: "test_jsonb_docs", column: "doc"})` → storage analysis
-15. `sqlite_json_group_array({table: "test_jsonb_docs", valueColumn: "json_extract(doc, '$.author')", allowExpressions: true})` → array of all authors
-16. `sqlite_json_group_object({table: "test_jsonb_docs", valueColumn: "json_extract(doc, '$.views')", allowExpressions: true})` → object mapping keys (rowid by default) to view counts (Tests missing groupByColumn parameter)
-17. `sqlite_jsonb_convert({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → JSONB binary conversion result
-18. `sqlite_json_normalize_column({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → normalization report for the doc column as raw text (Tests `outputFormat` parameter)
-19. `sqlite_json_security_scan({table: "test_events", column: "payload"})` → security scan report
-20. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.author"})` → `diffs` array with per-row comparisons showing `path1Value`, `path2Value`, `identical` (should be `false` for most rows since type≠author)
-21. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type"})` → all rows `identical: true` (same path compared to itself)
+27. `sqlite_json_extract({table: "test_jsonb_docs", column: "doc", path: "$.author", whereClause: "id = 1"})` → result contains `"Alice"`
+28. `sqlite_json_extract({table: "test_jsonb_docs", column: "doc", path: "$.nested.level1.level2", whereClause: "id = 4"})` → result contains `"deep value"`
+29. `sqlite_json_keys({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → keys include `type`, `title`, `author`, `views`, `rating`
+30. `sqlite_json_type({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1"})` → `"array"`
+31. `sqlite_json_type({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → `"object"`
+32. `sqlite_json_array_length({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1"})` → `3`
+33. `sqlite_json_valid({json: "{\"type\":\"article\",\"title\":\"Getting Started with SQLite\",\"author\":\"Alice\",\"views\":1250,\"rating\":4.5}"})` → `{valid: true}`
+34. `sqlite_json_validate_path({path: "$.author"})` → valid
+35. `sqlite_json_pretty({json: "{\"type\":\"article\",\"author\":\"Alice\",\"views\":1250}"})` → formatted JSON with indentation
+36. `sqlite_json_each({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1", limit: 2})` → exactly 2 expanded rows: `database`, `tutorial` (Tests `limit` parameter)
+37. `sqlite_json_analyze_schema({table: "test_jsonb_docs", column: "doc"})` → inferred schema with `type`, `author`, etc.
+38. `sqlite_json_select({table: "test_jsonb_docs", column: "doc", paths: ["$.author", "$.views"]})` → rows with author and views columns
+39. `sqlite_json_query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article"}, limit: 2})` → exactly 2 rows (Tests `limit` parameter)
+40. `sqlite_json_storage_info({table: "test_jsonb_docs", column: "doc"})` → storage analysis
+41. `sqlite_json_group_array({table: "test_jsonb_docs", valueColumn: "json_extract(doc, '$.author')", allowExpressions: true})` → array of all authors
+42. `sqlite_json_group_object({table: "test_jsonb_docs", valueColumn: "json_extract(doc, '$.views')", allowExpressions: true})` → object mapping keys (rowid by default) to view counts (Tests missing groupByColumn parameter)
+43. `sqlite_jsonb_convert({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → JSONB binary conversion result
+44. `sqlite_json_normalize_column({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → normalization report for the doc column as raw text (Tests `outputFormat` parameter)
+45. `sqlite_json_security_scan({table: "test_events", column: "payload"})` → security scan report
+46. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.author"})` → `diffs` array with per-row comparisons showing `path1Value`, `path2Value`, `identical` (should be `false` for most rows since type≠author)
+47. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type"})` → all rows `identical: true` (same path compared to itself)
 
 **Code mode testing:**
 
-22. `sqlite_execute_code({code: "const result = await sqlite.json.extract({table: 'test_jsonb_docs', column: 'doc', path: '$.author', whereClause: 'id = 1'}); return result;"})` → result contains `"Alice"`
-23. `sqlite_execute_code({code: "const keys = await sqlite.json.keys({table: 'test_jsonb_docs', column: 'doc', whereClause: 'id = 1'}); return keys;"})` → keys include `type`, `title`, `author`
+48. `sqlite_execute_code({code: "const result = await sqlite.json.extract({table: 'test_jsonb_docs', column: 'doc', path: '$.author', whereClause: 'id = 1'}); return result;"})` → result contains `"Alice"`
+49. `sqlite_execute_code({code: "const keys = await sqlite.json.keys({table: 'test_jsonb_docs', column: 'doc', whereClause: 'id = 1'}); return keys;"})` → keys include `type`, `title`, `author`
 
 **Error path testing:**
 
-🔴 24. `sqlite_json_extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error
-🔴 25. `sqlite_json_extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
-🔴 26. `sqlite_json_validate_path({path: "invalid path !@#"})` → report behavior
-🔴 27. `sqlite_json_diff({table: "nonexistent_xyz", column: "doc", path1: "$.x", path2: "$.y"})` → `{success: false}`
+🔴 50. `sqlite_json_extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error
+🔴 51. `sqlite_json_extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
+🔴 52. `sqlite_json_validate_path({path: "invalid path !@#"})` → report behavior
+🔴 53. `sqlite_json_diff({table: "nonexistent_xyz", column: "doc", path1: "$.x", path2: "$.y"})` → `{success: false}`
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 28. `sqlite_json_valid({})` → handler error
-🔴 29. `sqlite_json_extract({})` → handler error
-🔴 30. `sqlite_json_type({})` → handler error
-🔴 31. `sqlite_json_array_length({})` → handler error
-🔴 32. `sqlite_json_keys({})` → handler error
-🔴 33. `sqlite_json_each({})` → handler error
-🔴 34. `sqlite_json_group_array({})` → handler error
-🔴 35. `sqlite_json_group_object({})` → handler error
-🔴 36. `sqlite_json_pretty({})` → handler error
-🔴 37. `sqlite_jsonb_convert({})` → handler error
-🔴 38. `sqlite_json_storage_info({})` → handler error
-🔴 39. `sqlite_json_normalize_column({})` → handler error
-🔴 40. `sqlite_json_select({})` → handler error
-🔴 41. `sqlite_json_query({})` → handler error
-🔴 42. `sqlite_json_validate_path({})` → handler error
-🔴 43. `sqlite_json_analyze_schema({})` → handler error
-🔴 44. `sqlite_json_security_scan({})` → handler error
-🔴 45. `sqlite_json_diff({})` → handler error
-🔴 46. `sqlite_execute_code({})` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 54. `sqlite_json_valid({})` → handler error
+🔴 55. `sqlite_json_extract({})` → handler error
+🔴 56. `sqlite_json_type({})` → handler error
+🔴 57. `sqlite_json_array_length({})` → handler error
+🔴 58. `sqlite_json_keys({})` → handler error
+🔴 59. `sqlite_json_each({})` → handler error
+🔴 60. `sqlite_json_group_array({})` → handler error
+🔴 61. `sqlite_json_group_object({})` → handler error
+🔴 62. `sqlite_json_pretty({})` → handler error
+🔴 63. `sqlite_jsonb_convert({})` → handler error
+🔴 64. `sqlite_json_storage_info({})` → handler error
+🔴 65. `sqlite_json_normalize_column({})` → handler error
+🔴 66. `sqlite_json_select({})` → handler error
+🔴 67. `sqlite_json_query({})` → handler error
+🔴 68. `sqlite_json_validate_path({})` → handler error
+🔴 69. `sqlite_json_analyze_schema({})` → handler error
+🔴 70. `sqlite_json_security_scan({})` → handler error
+🔴 71. `sqlite_json_diff({})` → handler error
+🔴 72. `sqlite_execute_code({})` → handler error
 
 ---
 

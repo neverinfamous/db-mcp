@@ -72,46 +72,46 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## json Group Tools (24 + codemode)
 
-1. sqlite_json_valid
-2. sqlite_json_extract
-3. sqlite_json_set
-4. sqlite_json_remove
-5. sqlite_json_type
-6. sqlite_json_array_length
-7. sqlite_json_array_append
-8. sqlite_json_keys
-9. sqlite_json_each
-10. sqlite_json_group_array
-11. sqlite_json_group_object
-12. sqlite_json_pretty
-13. sqlite_jsonb_convert
-14. sqlite_json_storage_info
-15. sqlite_json_normalize_column
-16. sqlite_json_insert
-17. sqlite_json_update
-18. sqlite_json_select
-19. sqlite_json_query
-20. sqlite_json_validate_path
-21. sqlite_json_merge
-22. sqlite_json_analyze_schema
-23. sqlite_create_json_collection
-24. sqlite_json_security_scan
+8. sqlite_json_valid
+9. sqlite_json_extract
+10. sqlite_json_set
+11. sqlite_json_remove
+12. sqlite_json_type
+13. sqlite_json_array_length
+14. sqlite_json_array_append
+15. sqlite_json_keys
+16. sqlite_json_each
+17. sqlite_json_group_array
+18. sqlite_json_group_object
+19. sqlite_json_pretty
+20. sqlite_jsonb_convert
+21. sqlite_json_storage_info
+22. sqlite_json_normalize_column
+23. sqlite_json_insert
+24. sqlite_json_update
+25. sqlite_json_select
+26. sqlite_json_query
+27. sqlite_json_validate_path
+28. sqlite_json_merge
+29. sqlite_json_analyze_schema
+30. sqlite_create_json_collection
+31. sqlite_json_security_scan
 
 ---
 
-### Category 1: Deep JSON Operations
+## Phase 1: Deep JSON Operations (batched)
 
 **1.1 Deeply Nested Access**
 
-1. `sqlite.json.extract({table: "test_jsonb_docs", column: "doc", path: "$.nested.level1.level2", whereClause: "id = 4"})` → `"deep value"`
-2. `sqlite.json.extract({table: "test_jsonb_docs", column: "doc", path: "$.nested.level1.nonexistent", whereClause: "id = 4"})` → null or empty (not error)
-3. `sqlite.json.extract({table: "test_jsonb_docs", column: "doc", path: "$.nonexistent_key", whereClause: "id = 1"})` → null or empty
+32. `sqlite.json.extract({table: "test_jsonb_docs", column: "doc", path: "$.nested.level1.level2", whereClause: "id = 4"})` → `"deep value"`
+33. `sqlite.json.extract({table: "test_jsonb_docs", column: "doc", path: "$.nested.level1.nonexistent", whereClause: "id = 4"})` → null or empty (not error)
+34. `sqlite.json.extract({table: "test_jsonb_docs", column: "doc", path: "$.nonexistent_key", whereClause: "id = 1"})` → null or empty
 
 **1.2 Array Manipulation Edge Cases**
 
-4. `sqlite.json.arrayLength({table: "test_jsonb_docs", column: "tags", whereClause: "id = 3"})` → 3 (["mcp","protocol","ai"])
-5. Create `stress_json_test` with a row containing `tags = '[]'` (empty array) → `sqlite.json.arrayLength` → 0
-6. `sqlite.json.each` on an empty array → 0 expanded rows (not error)
+35. `sqlite.json.arrayLength({table: "test_jsonb_docs", column: "tags", whereClause: "id = 3"})` → 3 (["mcp","protocol","ai"])
+36. Create `stress_json_test` with a row containing `tags = '[]'` (empty array) → `sqlite.json.arrayLength` → 0
+37. `sqlite.json.each` on an empty array → 0 expanded rows (not error)
 
 **1.3 Merge Conflict Behavior**
 
@@ -119,57 +119,57 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 Insert test rows into `stress_json_test`: row 2 = `{"a": 1, "b": {"c": 2}}`, row 3 = `{"a": [1, 2]}`:
 
-7. `sqlite.json.merge({table: "stress_json_test", column: "tags", mergeData: {"b": {"d": 3}}, whereClause: "id = 2"})` → verify deep merge: `b.c` preserved, `b.d` added
-8. `sqlite.json.merge({table: "stress_json_test", column: "tags", mergeData: {"a": [3, 4]}, whereClause: "id = 3"})` → arrays replaced (not concatenated) per RFC 7396
+38. `sqlite.json.merge({table: "stress_json_test", column: "tags", mergeData: {"b": {"d": 3}}, whereClause: "id = 2"})` → verify deep merge: `b.c` preserved, `b.d` added
+39. `sqlite.json.merge({table: "stress_json_test", column: "tags", mergeData: {"a": [3, 4]}, whereClause: "id = 3"})` → arrays replaced (not concatenated) per RFC 7396
 
 **1.4 Type Coercion Edge Cases**
 
-9. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.views", whereClause: "id = 1"})` → `"integer"` (views=1250)
-10. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.rating", whereClause: "id = 1"})` → `"real"` (rating=4.5)
-11. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.nested", whereClause: "id = 4"})` → `"object"`
+40. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.views", whereClause: "id = 1"})` → `"integer"` (views=1250)
+41. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.rating", whereClause: "id = 1"})` → `"real"` (rating=4.5)
+42. `sqlite.json.type({table: "test_jsonb_docs", column: "doc", path: "$.nested", whereClause: "id = 4"})` → `"object"`
 
 ---
 
-### Category 2: JSON Query & Filter Stress
+## Phase 2: JSON Query & Filter Stress (batched)
 
 > `sqlite_json_query` uses `filterPaths` (equality-only, `Record<path, value>`) and `selectPaths`.
 
-12. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article"}})` → 4 rows
-13. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article", "$.author": "Alice"}, selectPaths: ["$.title", "$.views"]})` → 1 row (Alice's article)
-14. `sqlite.json.query({table: "test_events", column: "payload", filterPaths: {"$.page": "home"}})` → 25 rows (every 4th event)
+43. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article"}})` → 4 rows
+44. `sqlite.json.query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article", "$.author": "Alice"}, selectPaths: ["$.title", "$.views"]})` → 1 row (Alice's article)
+45. `sqlite.json.query({table: "test_events", column: "payload", filterPaths: {"$.page": "home"}})` → 25 rows (every 4th event)
 
 ---
 
-### Category 3: Error Message Quality
+## Phase 3: Error Message Quality (batched)
 
-15. `sqlite.json.extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error mentioning table name
-16. `sqlite.json.extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → structured error mentioning column
-17. `sqlite.json.set({table: "test_jsonb_docs", column: "doc", path: "$.author", value: "\"Modified\"", whereClause: "id = 99999"})` → report behavior for nonexistent row
-18. `sqlite.json.validatePath({path: ""})` → report behavior for empty path
+46. `sqlite.json.extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error mentioning table name
+47. `sqlite.json.extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → structured error mentioning column
+48. `sqlite.json.set({table: "test_jsonb_docs", column: "doc", path: "$.author", value: "\"Modified\"", whereClause: "id = 99999"})` → report behavior for nonexistent row
+49. `sqlite.json.validatePath({path: ""})` → report behavior for empty path
 
 ---
 
-### Category 4: Write Operation Safety
+## Phase 4: Write Operation Safety (batched)
 
-19. Create `stress_json_write` table → insert 3 JSON documents → perform `sqlite.json.set`, `sqlite.json.remove`, `sqlite.json.insert` → verify mutations → cleanup
+50. Create `stress_json_write` table → insert 3 JSON documents → perform `sqlite.json.set`, `sqlite.json.remove`, `sqlite.json.insert` → verify mutations → cleanup
     > **Note:** `sqlite_json_insert` is a **row-level INSERT** (creates new row with JSON data, provided via the `data` parameter), not a path-level JSON insert.
-20. `sqlite.json.normalizeColumn(...)` on `stress_json_write` → verify keys sorted/compacted without data loss
+51. `sqlite.json.normalizeColumn(...)` on `stress_json_write` → verify keys sorted/compacted without data loss
 
 ---
 
-### Category 5: Security Scan Stress
+## Phase 5: Security Scan Stress (batched)
 
-21. `sqlite.json.securityScan({table: "test_jsonb_docs", column: "doc"})` → scan result with `riskLevel`
-22. Create `stress_json_inject` with rows containing suspicious patterns (`<script>`, `' OR 1=1`, `${cmd}`) → `sqlite.json.securityScan` → verify detection
-23. Cleanup: drop `stress_json_inject`
+52. `sqlite.json.securityScan({table: "test_jsonb_docs", column: "doc"})` → scan result with `riskLevel`
+53. Create `stress_json_inject` with rows containing suspicious patterns (`<script>`, `' OR 1=1`, `${cmd}`) → `sqlite.json.securityScan` → verify detection
+54. Cleanup: drop `stress_json_inject`
 
 ---
 
-### Category 6: JSON Diff Edge Cases
+## Phase 6: JSON Diff Edge Cases (batched)
 
-24. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.nonexistent"})` → verify `path2Value` is null/missing, `identical: false`
-25. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.missing_1", path2: "$.missing_2"})` → both null/missing, `identical: true`
-26. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type", whereClause: "id = 1"})` → only 1 diff object returned, `identical: true`
+55. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.nonexistent"})` → verify `path2Value` is null/missing, `identical: false`
+56. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.missing_1", path2: "$.missing_2"})` → both null/missing, `identical: true`
+57. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type", whereClause: "id = 1"})` → only 1 diff object returned, `identical: true`
 
 ---
 

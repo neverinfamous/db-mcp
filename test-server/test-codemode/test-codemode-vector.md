@@ -1,4 +1,4 @@
-# db-mcp Tool Group Testing: [vector]
+# db-mcp Code Mode Testing: [vector]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -72,52 +72,52 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: Vector Read Tools — Happy Paths (batched)
 
-1. `sqlite.vector.count({table: "test_embeddings"})` → `{count: 20}`
-2. `sqlite.vector.dimensions({table: "test_embeddings", vectorColumn: "embedding"})` → `{dimensions: 8}`
-3. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 1})` → content="Machine learning fundamentals", 8 dims
-4. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3})` → row 1 first (exact match, similarity ≈ 1)
-5. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3, whereClause: "category = 'database'"})` → only database results
-6. `sqlite.vector.distance({vector1: [1, 0, 0], vector2: [0, 1, 0], metric: "cosine"})` → ≈ 1.0 (orthogonal)
-7. `sqlite.vector.distance({vector1: [3, 4], vector2: [0, 0], metric: "euclidean"})` → 5.0
-8. `sqlite.vector.normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5}`
-9. `sqlite.vector.stats({table: "test_embeddings", vectorColumn: "embedding"})` → min/max/avg magnitude
+8. `sqlite.vector.count({table: "test_embeddings"})` → `{count: 20}`
+9. `sqlite.vector.dimensions({table: "test_embeddings", vectorColumn: "embedding"})` → `{dimensions: 8}`
+10. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 1})` → content="Machine learning fundamentals", 8 dims
+11. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3})` → row 1 first (exact match, similarity ≈ 1)
+12. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3, whereClause: "category = 'database'"})` → only database results
+13. `sqlite.vector.distance({vector1: [1, 0, 0], vector2: [0, 1, 0], metric: "cosine"})` → ≈ 1.0 (orthogonal)
+14. `sqlite.vector.distance({vector1: [3, 4], vector2: [0, 0], metric: "euclidean"})` → 5.0
+15. `sqlite.vector.normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5}`
+16. `sqlite.vector.stats({table: "test_embeddings", vectorColumn: "embedding"})` → min/max/avg magnitude
 
 ---
 
 ## Phase 2: Vector Write Tools — Happy Paths (temp table)
 
-10. `sqlite.vector.createTable({tableName: "temp_cm_vector", dimensions: 8, additionalColumns: [{name: "content", type: "TEXT"}, {name: "category", type: "TEXT"}]})` → success
-11. `sqlite.vector.store({table: "temp_cm_vector", idColumn: "id", vectorColumn: "vector", id: 1, vector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]})` → success
-12. `sqlite.vector.batchStore({table: "temp_cm_vector", idColumn: "id", vectorColumn: "vector", items: [{id: 2, vector: [0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88]}, {id: 3, vector: [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]}]})` → `{stored: 2}`
-13. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 3}`
-14. `sqlite.vector.search({table: "temp_cm_vector", vectorColumn: "vector", queryVector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], metric: "cosine", limit: 2})` → row 1 first
-15. `sqlite.vector.delete({table: "temp_cm_vector", idColumn: "id", ids: [1]})` → success
-16. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 2}`
-17. Cleanup: `sqlite.core.dropTable({tableName: "temp_cm_vector"})`
+17. `sqlite.vector.createTable({tableName: "temp_cm_vector", dimensions: 8, additionalColumns: [{name: "content", type: "TEXT"}, {name: "category", type: "TEXT"}]})` → success
+18. `sqlite.vector.store({table: "temp_cm_vector", idColumn: "id", vectorColumn: "vector", id: 1, vector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]})` → success
+19. `sqlite.vector.batchStore({table: "temp_cm_vector", idColumn: "id", vectorColumn: "vector", items: [{id: 2, vector: [0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88]}, {id: 3, vector: [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]}]})` → `{stored: 2}`
+20. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 3}`
+21. `sqlite.vector.search({table: "temp_cm_vector", vectorColumn: "vector", queryVector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], metric: "cosine", limit: 2})` → row 1 first
+22. `sqlite.vector.delete({table: "temp_cm_vector", idColumn: "id", ids: [1]})` → success
+23. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 2}`
+24. Cleanup: `sqlite.core.dropTable({tableName: "temp_cm_vector"})`
 
 ---
 
 ## Phase 3: Vector Domain Errors (batched)
 
-🔴 18. `sqlite.vector.search({table: "nonexistent_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → `{success: false}`
-🔴 19. `sqlite.vector.distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
-🔴 20. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 9999})` → report behavior (nonexistent row)
+🔴 25. `sqlite.vector.search({table: "nonexistent_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → `{success: false}`
+🔴 26. `sqlite.vector.distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
+🔴 27. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 9999})` → report behavior (nonexistent row)
 
 ---
 
 ## Phase 4: Vector Zod Validation (batched)
 
-🔴 21. `sqlite.vector.createTable({})` → `{success: false}`
-🔴 22. `sqlite.vector.store({})` → `{success: false}`
-🔴 23. `sqlite.vector.batchStore({})` → `{success: false}`
-🔴 24. `sqlite.vector.search({})` → `{success: false}`
-🔴 25. `sqlite.vector.get({})` → `{success: false}`
-🔴 26. `sqlite.vector.delete({})` → `{success: false}`
-🔴 27. `sqlite.vector.count({})` → `{success: false}`
-🔴 28. `sqlite.vector.stats({})` → `{success: false}`
-🔴 29. `sqlite.vector.dimensions({})` → `{success: false}`
-🔴 30. `sqlite.vector.normalize({})` → `{success: false}`
-🔴 31. `sqlite.vector.distance({})` → `{success: false}`
+🔴 28. `sqlite.vector.createTable({})` → `{success: false}`
+🔴 29. `sqlite.vector.store({})` → `{success: false}`
+🔴 30. `sqlite.vector.batchStore({})` → `{success: false}`
+🔴 31. `sqlite.vector.search({})` → `{success: false}`
+🔴 32. `sqlite.vector.get({})` → `{success: false}`
+🔴 33. `sqlite.vector.delete({})` → `{success: false}`
+🔴 34. `sqlite.vector.count({})` → `{success: false}`
+🔴 35. `sqlite.vector.stats({})` → `{success: false}`
+🔴 36. `sqlite.vector.dimensions({})` → `{success: false}`
+🔴 37. `sqlite.vector.normalize({})` → `{success: false}`
+🔴 38. `sqlite.vector.distance({})` → `{success: false}`
 
 ---
 

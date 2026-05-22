@@ -76,39 +76,41 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### geo-spatialite Group Tools (7)
 
-1. sqlite_spatialite_load `[NATIVE ONLY]`
-2. sqlite_spatialite_create_table `[NATIVE ONLY]`
-3. sqlite_spatialite_query `[NATIVE ONLY]`
-4. sqlite_spatialite_analyze `[NATIVE ONLY]`
-5. sqlite_spatialite_index `[NATIVE ONLY]`
-6. sqlite_spatialite_transform `[NATIVE ONLY]`
-7. sqlite_spatialite_import `[NATIVE ONLY]`
+8. sqlite_spatialite_load `[NATIVE ONLY]`
+9. sqlite_spatialite_create_table `[NATIVE ONLY]`
+10. sqlite_spatialite_query `[NATIVE ONLY]`
+11. sqlite_spatialite_analyze `[NATIVE ONLY]`
+12. sqlite_spatialite_index `[NATIVE ONLY]`
+13. sqlite_spatialite_transform `[NATIVE ONLY]`
+14. sqlite_spatialite_import `[NATIVE ONLY]`
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
 **SpatiaLite tools `[NATIVE ONLY]`:**
 
-1. `sqlite_spatialite_load` → load SpatiaLite extension, verify version
-2. `sqlite_spatialite_create_table({tableName: "temp_spatial_test", geometryColumn: "geom", geometryType: "POINT", srid: 4326, additionalColumns: [{name: "name", type: "TEXT"}]})` → success
-3. `sqlite_spatialite_import({tableName: "temp_spatial_test", format: "wkt", data: "POINT(-73.9654 40.7829)", additionalData: {name: "Test Point"}})` → success
-4. `sqlite_spatialite_query({query: "SELECT name, AsText(geom) as geom_text FROM temp_spatial_test"})` → WKT geometry returned
-5. `sqlite_spatialite_transform({operation: "buffer", geometry1: "POINT(-73.9654 40.7829)", distance: 0.01, srid: 4326})` → buffered polygon
-6. `sqlite_spatialite_index({tableName: "temp_spatial_test", geometryColumn: "geom", action: "create"})` → R-Tree index created
-7. `sqlite_spatialite_analyze({analysisType: "spatial_extent", sourceTable: "temp_spatial_test", geometryColumn: "geom"})` → spatial extent
-8. Cleanup: drop R-Tree index (`sqlite_spatialite_index` with `action: "drop"`), then drop `temp_spatial_test`
+15. `sqlite_spatialite_load` → load SpatiaLite extension, verify version
+16. `sqlite_spatialite_create_table({tableName: "temp_spatial_test", geometryColumn: "geom", geometryType: "POINT", srid: 4326, additionalColumns: [{name: "name", type: "TEXT"}]})` → success
+17. `sqlite_spatialite_import({tableName: "temp_spatial_test", format: "wkt", data: "POINT(-73.9654 40.7829)", additionalData: {name: "Test Point"}})` → success
+18. `sqlite_spatialite_query({query: "SELECT name, AsText(geom) as geom_text FROM temp_spatial_test"})` → WKT geometry returned
+19. `sqlite_spatialite_transform({operation: "buffer", geometry1: "POINT(-73.9654 40.7829)", distance: 0.01, srid: 4326})` → buffered polygon
+20. `sqlite_spatialite_index({tableName: "temp_spatial_test", geometryColumn: "geom", action: "create"})` → R-Tree index created
+21. `sqlite_spatialite_analyze({analysisType: "spatial_extent", sourceTable: "temp_spatial_test", geometryColumn: "geom"})` → spatial extent
+22. Cleanup: drop R-Tree index (`sqlite_spatialite_index` with `action: "drop"`), then drop `temp_spatial_test`
 
 **Error path testing:**
 
-🔴 9. `sqlite_spatialite_query({query: "SELECT name FROM nonexistent_table_xyz"})` `[NATIVE ONLY]` → structured error
+🔴 23. `sqlite_spatialite_query({query: "SELECT name FROM nonexistent_table_xyz"})` `[NATIVE ONLY]` → structured error
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 10. `sqlite_spatialite_create_table({})` `[NATIVE ONLY]` → handler error
-🔴 11. `sqlite_spatialite_query({})` `[NATIVE ONLY]` → handler error
-🔴 12. `sqlite_spatialite_analyze({})` `[NATIVE ONLY]` → handler error
-🔴 13. `sqlite_spatialite_index({})` `[NATIVE ONLY]` → handler error
-🔴 14. `sqlite_spatialite_transform({})` `[NATIVE ONLY]` → handler error
-🔴 15. `sqlite_spatialite_import({})` `[NATIVE ONLY]` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 24. `sqlite_spatialite_create_table({})` `[NATIVE ONLY]` → handler error
+🔴 25. `sqlite_spatialite_query({})` `[NATIVE ONLY]` → handler error
+🔴 26. `sqlite_spatialite_analyze({})` `[NATIVE ONLY]` → handler error
+🔴 27. `sqlite_spatialite_index({})` `[NATIVE ONLY]` → handler error
+🔴 28. `sqlite_spatialite_transform({})` `[NATIVE ONLY]` → handler error
+🔴 29. `sqlite_spatialite_import({})` `[NATIVE ONLY]` → handler error
 
 ---
 

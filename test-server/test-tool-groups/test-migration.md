@@ -78,66 +78,68 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Built-in Tools (3)
 
-1. server_info
-2. server_health
-3. list_adapters
+8. server_info
+9. server_health
+10. list_adapters
 
 ### migration Group Tools (6)
 
-4. sqlite_migration_init
-5. sqlite_migration_record
-6. sqlite_migration_apply
-7. sqlite_migration_rollback
-8. sqlite_migration_history
-9. sqlite_migration_status
-10. sqlite_execute_code
+11. sqlite_migration_init
+12. sqlite_migration_record
+13. sqlite_migration_apply
+14. sqlite_migration_rollback
+15. sqlite_migration_history
+16. sqlite_migration_status
+17. sqlite_execute_code
 
-**Checklist — Initialization & Recording:**
+## Phase 1: Initialization & Recording (batched)
 
-1. `sqlite_migration_init` → `{success: true}`, creates `_mcp_migrations` table (idempotent — safe to call multiple times)
-2. `sqlite_migration_init` → call again to verify idempotency (should succeed without error)
-3. `sqlite_migration_status` → verify empty state (no migrations applied yet)
-4. `sqlite_migration_record({version: "1.0.0", description: "Create temp table", sql: "CREATE TABLE temp_migration_test (id INTEGER PRIMARY KEY, name TEXT)"})` → recorded (not executed — only logged)
-5. `sqlite_migration_status` → verify migration count incremented
-6. `sqlite_migration_history` → verify migration 1.0.0 listed with status "recorded"
+18. `sqlite_migration_init` → `{success: true}`, creates `_mcp_migrations` table (idempotent — safe to call multiple times)
+19. `sqlite_migration_init` → call again to verify idempotency (should succeed without error)
+20. `sqlite_migration_status` → verify empty state (no migrations applied yet)
+21. `sqlite_migration_record({version: "1.0.0", description: "Create temp table", sql: "CREATE TABLE temp_migration_test (id INTEGER PRIMARY KEY, name TEXT)"})` → recorded (not executed — only logged)
+22. `sqlite_migration_status` → verify migration count incremented
+23. `sqlite_migration_history` → verify migration 1.0.0 listed with status "recorded"
 
-**Checklist — Apply & Execute:**
+## Phase 2: Apply & Execute (batched)
 
-7. `sqlite_migration_apply({version: "1.0.1", description: "Create temp migration table", sql: "CREATE TABLE temp_migration_applied (id INTEGER PRIMARY KEY, value TEXT)"})` → applied (SQL executed AND recorded)
-8. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_applied'"})` → table exists
-9. `sqlite_migration_history` → verify both 1.0.0 and 1.0.1 listed
-10. `sqlite_migration_status` → verify count shows 2 migrations
+24. `sqlite_migration_apply({version: "1.0.1", description: "Create temp migration table", sql: "CREATE TABLE temp_migration_applied (id INTEGER PRIMARY KEY, value TEXT)"})` → applied (SQL executed AND recorded)
+25. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_applied'"})` → table exists
+26. `sqlite_migration_history` → verify both 1.0.0 and 1.0.1 listed
+27. `sqlite_migration_status` → verify count shows 2 migrations
 
-**Checklist — SHA-256 Deduplication:**
+## Phase 3: SHA-256 Deduplication (batched)
 
-11. `sqlite_migration_record({version: "1.0.2", description: "Duplicate test", sql: "CREATE TABLE temp_migration_test (id INTEGER PRIMARY KEY, name TEXT)"})` → should fail (duplicate SQL detected via SHA-256 hash)
+28. `sqlite_migration_record({version: "1.0.2", description: "Duplicate test", sql: "CREATE TABLE temp_migration_test (id INTEGER PRIMARY KEY, name TEXT)"})` → should fail (duplicate SQL detected via SHA-256 hash)
 
-**Checklist — Rollback:**
+## Phase 4: Rollback (batched)
 
-12. `sqlite_migration_rollback({version: "1.0.1"})` → report behavior (rollback requires rollback SQL to have been recorded; if none was provided during apply, rollback should return an informative error)
-13. `sqlite_migration_apply({version: "1.0.3", description: "With rollback", sql: "CREATE TABLE temp_migration_rollback (id INTEGER PRIMARY KEY)", rollbackSql: "DROP TABLE IF EXISTS temp_migration_rollback"})` → applied with rollback SQL stored
-14. `sqlite_migration_rollback({version: "1.0.3"})` → should execute the rollback SQL
-15. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_rollback'"})` → table should NOT exist
-16. `sqlite_migration_rollback({version: "1.0.3", dryRun: true})` → report behavior (preview mode)
+29. `sqlite_migration_rollback({version: "1.0.1"})` → report behavior (rollback requires rollback SQL to have been recorded; if none was provided during apply, rollback should return an informative error)
+30. `sqlite_migration_apply({version: "1.0.3", description: "With rollback", sql: "CREATE TABLE temp_migration_rollback (id INTEGER PRIMARY KEY)", rollbackSql: "DROP TABLE IF EXISTS temp_migration_rollback"})` → applied with rollback SQL stored
+31. `sqlite_migration_rollback({version: "1.0.3"})` → should execute the rollback SQL
+32. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_rollback'"})` → table should NOT exist
+33. `sqlite_migration_rollback({version: "1.0.3", dryRun: true})` → report behavior (preview mode)
 
 **Code mode testing:**
 
-17. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationStatus(); return result;"})` → migration status summary
-18. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationHistory(); return result;"})` → migration history list
+34. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationStatus(); return result;"})` → migration status summary
+35. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationHistory(); return result;"})` → migration history list
 
 **Error path testing:**
 
-🔴 19. `sqlite_migration_apply({version: "bad version!", description: "Invalid", sql: "SELECT 1"})` → report behavior (invalid version format)
-🔴 20. `sqlite_migration_rollback({version: "nonexistent_version"})` → structured error
+🔴 36. `sqlite_migration_apply({version: "bad version!", description: "Invalid", sql: "SELECT 1"})` → report behavior (invalid version format)
+🔴 37. `sqlite_migration_rollback({version: "nonexistent_version"})` → structured error
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 5: Zod Validation Sweep
 
-🔴 21. `sqlite_migration_init({})` → handler error (or success if no required params)
-🔴 22. `sqlite_migration_record({})` → handler error
-🔴 23. `sqlite_migration_apply({})` → handler error
-🔴 24. `sqlite_migration_rollback({})` → handler error
-🔴 25. `sqlite_migration_history({})` → handler error (or success if no required params)
-🔴 26. `sqlite_migration_status({})` → handler error (or success if no required params)
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 38. `sqlite_migration_init({})` → handler error (or success if no required params)
+🔴 39. `sqlite_migration_record({})` → handler error
+🔴 40. `sqlite_migration_apply({})` → handler error
+🔴 41. `sqlite_migration_rollback({})` → handler error
+🔴 42. `sqlite_migration_history({})` → handler error (or success if no required params)
+🔴 43. `sqlite_migration_status({})` → handler error (or success if no required params)
 
 ---
 

@@ -1,4 +1,4 @@
-# db-mcp Tool Group Testing: [geo]
+# db-mcp Code Mode Testing: [geo]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -74,54 +74,54 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > These 4 tools work in both Native and WASM modes.
 
-1. `sqlite.geo.distance({lat1: 40.7829, lon1: -73.9654, lat2: 48.8584, lon2: 2.2945})` → NYC to Paris ≈ 5,837 km (±50 km)
-2. `sqlite.geo.distance({lat1: 40.7829, lon1: -73.9654, lat2: 37.8199, lon2: -122.4783})` → NYC to SF ≈ 4,130 km
-3. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.758, centerLon: -73.9855, radius: 10})` → 3 NYC locations
-4. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 48.8584, centerLon: 2.2945, radius: 10})` → 3 Paris locations
-5. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 35, maxLat: 55, minLon: -130, maxLon: -70})` → US locations (4 results)
-6. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 5})` → ~5 clusters
+8. `sqlite.geo.distance({lat1: 40.7829, lon1: -73.9654, lat2: 48.8584, lon2: 2.2945})` → NYC to Paris ≈ 5,837 km (±50 km)
+9. `sqlite.geo.distance({lat1: 40.7829, lon1: -73.9654, lat2: 37.8199, lon2: -122.4783})` → NYC to SF ≈ 4,130 km
+10. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.758, centerLon: -73.9855, radius: 10})` → 3 NYC locations
+11. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 48.8584, centerLon: 2.2945, radius: 10})` → 3 Paris locations
+12. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 35, maxLat: 55, minLon: -130, maxLon: -70})` → US locations (4 results)
+13. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 5})` → ~5 clusters
 
 ---
 
 ## Phase 2: SpatiaLite Tools `[NATIVE ONLY]` — Happy Paths (sequential)
 
-7. `sqlite.geo.spatialiteLoad()` → load extension, verify version
-8. `sqlite.geo.spatialiteCreateTable({tableName: "temp_cm_spatial", geometryColumn: "geom", geometryType: "POINT", srid: 4326, additionalColumns: [{name: "name", type: "TEXT"}]})` → success
-9. `sqlite.geo.spatialiteImport({tableName: "temp_cm_spatial", format: "wkt", data: "POINT(-73.9654 40.7829)", additionalData: {name: "Test Point"}})` → success
-10. `sqlite.geo.spatialiteQuery({query: "SELECT name, AsText(geom) as geom_text FROM temp_cm_spatial"})` → WKT geometry
-11. `sqlite.geo.spatialiteTransform({operation: "buffer", geometry1: "POINT(-73.9654 40.7829)", distance: 0.01, srid: 4326})` → buffered polygon
-12. `sqlite.geo.spatialiteIndex({tableName: "temp_cm_spatial", geometryColumn: "geom", action: "create"})` → R-Tree index
-13. `sqlite.geo.spatialiteAnalyze({analysisType: "spatial_extent", sourceTable: "temp_cm_spatial", geometryColumn: "geom"})` → spatial extent
-14. Cleanup: drop `temp_cm_spatial`
+14. `sqlite.geo.spatialiteLoad()` → load extension, verify version
+15. `sqlite.geo.spatialiteCreateTable({tableName: "temp_cm_spatial", geometryColumn: "geom", geometryType: "POINT", srid: 4326, additionalColumns: [{name: "name", type: "TEXT"}]})` → success
+16. `sqlite.geo.spatialiteImport({tableName: "temp_cm_spatial", format: "wkt", data: "POINT(-73.9654 40.7829)", additionalData: {name: "Test Point"}})` → success
+17. `sqlite.geo.spatialiteQuery({query: "SELECT name, AsText(geom) as geom_text FROM temp_cm_spatial"})` → WKT geometry
+18. `sqlite.geo.spatialiteTransform({operation: "buffer", geometry1: "POINT(-73.9654 40.7829)", distance: 0.01, srid: 4326})` → buffered polygon
+19. `sqlite.geo.spatialiteIndex({tableName: "temp_cm_spatial", geometryColumn: "geom", action: "create"})` → R-Tree index
+20. `sqlite.geo.spatialiteAnalyze({analysisType: "spatial_extent", sourceTable: "temp_cm_spatial", geometryColumn: "geom"})` → spatial extent
+21. Cleanup: drop `temp_cm_spatial`
 
 ---
 
 ## Phase 3: Geo Domain Errors (batched)
 
-🔴 15. `sqlite.geo.nearby({table: "nonexistent_xyz", latColumn: "lat", lonColumn: "lng", centerLat: 0, centerLon: 0, radius: 100})` → `{success: false}`
-🔴 16. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → `{success: false, error: "Invalid lat1: 91..."}` — handler error, NOT raw MCP `-32602` (Zod refinement leak test)
-🔴 17. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → `{success: false}` — invalid longitude
+🔴 22. `sqlite.geo.nearby({table: "nonexistent_xyz", latColumn: "lat", lonColumn: "lng", centerLat: 0, centerLon: 0, radius: 100})` → `{success: false}`
+🔴 23. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → `{success: false, error: "Invalid lat1: 91..."}` — handler error, NOT raw MCP `-32602` (Zod refinement leak test)
+🔴 24. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → `{success: false}` — invalid longitude
 
 ---
 
 ## Phase 4: Geo Zod Validation (batched)
 
-🔴 18. `sqlite.geo.distance({})` → `{success: false}`
-🔴 19. `sqlite.geo.nearby({})` → `{success: false}`
-🔴 20. `sqlite.geo.boundingBox({})` → `{success: false}`
-🔴 21. `sqlite.geo.cluster({})` → `{success: false}`
-🔴 22. `sqlite.geo.spatialiteCreateTable({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 23. `sqlite.geo.spatialiteQuery({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 24. `sqlite.geo.spatialiteAnalyze({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 25. `sqlite.geo.spatialiteIndex({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 26. `sqlite.geo.spatialiteTransform({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 27. `sqlite.geo.spatialiteImport({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 25. `sqlite.geo.distance({})` → `{success: false}`
+🔴 26. `sqlite.geo.nearby({})` → `{success: false}`
+🔴 27. `sqlite.geo.boundingBox({})` → `{success: false}`
+🔴 28. `sqlite.geo.cluster({})` → `{success: false}`
+🔴 29. `sqlite.geo.spatialiteCreateTable({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 30. `sqlite.geo.spatialiteQuery({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 31. `sqlite.geo.spatialiteAnalyze({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 32. `sqlite.geo.spatialiteIndex({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 33. `sqlite.geo.spatialiteTransform({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 34. `sqlite.geo.spatialiteImport({})` `[NATIVE ONLY]` → `{success: false}`
 
 ---
 
 ## Phase 5: Wrong-Type Numeric Coercion
 
-🔴 28. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.758, centerLon: -73.9855, radius: "abc"})` → handler error, NOT raw MCP
+🔴 35. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.758, centerLon: -73.9855, radius: "abc"})` → handler error, NOT raw MCP
 
 ---
 

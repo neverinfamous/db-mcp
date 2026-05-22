@@ -78,47 +78,49 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### vector-read Group Tools (7)
 
-1. sqlite_vector_search
-2. sqlite_vector_get
-3. sqlite_vector_count
-4. sqlite_vector_stats
-5. sqlite_vector_dimensions
-6. sqlite_vector_distance
-7. sqlite_vector_normalize
+8. sqlite_vector_search
+9. sqlite_vector_get
+10. sqlite_vector_count
+11. sqlite_vector_stats
+12. sqlite_vector_dimensions
+13. sqlite_vector_distance
+14. sqlite_vector_normalize
 
 **Test data:** `test_embeddings` (20 rows, 8-dim vectors, categories: tech, database, food, fitness, travel). Row 1: content="Machine learning fundamentals", embedding=[0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01].
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
-1. `sqlite_vector_count({table: "test_embeddings"})` → `{count: 20}`
-2. `sqlite_vector_dimensions({table: "test_embeddings", vectorColumn: "embedding"})` → `{dimensions: 8}`
-3. `sqlite_vector_get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 1})` → verify content="Machine learning fundamentals", category="tech", embedding has 8 dimensions
-4. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3})` → top result should be row 1 (exact match, \_similarity ≈ 1)
-5. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3, whereClause: "category = 'database'"})` → only database category results
-6. `sqlite_vector_distance({vector1: [1, 0, 0], vector2: [0, 1, 0], metric: "cosine"})` → distance ≈ 1.0 (orthogonal vectors)
-7. `sqlite_vector_distance({vector1: [3, 4], vector2: [0, 0], metric: "euclidean"})` → distance = 5.0
-8. `sqlite_vector_normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5}`
-9. `sqlite_vector_stats({table: "test_embeddings", vectorColumn: "embedding"})` → verify min/max/avg magnitude
+15. `sqlite_vector_count({table: "test_embeddings"})` → `{count: 20}`
+16. `sqlite_vector_dimensions({table: "test_embeddings", vectorColumn: "embedding"})` → `{dimensions: 8}`
+17. `sqlite_vector_get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 1})` → verify content="Machine learning fundamentals", category="tech", embedding has 8 dimensions
+18. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3})` → top result should be row 1 (exact match, \_similarity ≈ 1)
+19. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3, whereClause: "category = 'database'"})` → only database category results
+20. `sqlite_vector_distance({vector1: [1, 0, 0], vector2: [0, 1, 0], metric: "cosine"})` → distance ≈ 1.0 (orthogonal vectors)
+21. `sqlite_vector_distance({vector1: [3, 4], vector2: [0, 0], metric: "euclidean"})` → distance = 5.0
+22. `sqlite_vector_normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5}`
+23. `sqlite_vector_stats({table: "test_embeddings", vectorColumn: "embedding"})` → verify min/max/avg magnitude
 
 **Code mode testing:**
 
-10. `sqlite_execute_code({code: "const result = await sqlite.vector.count({table: 'test_embeddings'}); return result;"})` → `{count: 20}`
-11. `sqlite_execute_code({code: "const result = await sqlite.vector.distance({vector1: [3, 4], vector2: [0, 0], metric: 'euclidean'}); return result;"})` → distance = 5.0
+24. `sqlite_execute_code({code: "const result = await sqlite.vector.count({table: 'test_embeddings'}); return result;"})` → `{count: 20}`
+25. `sqlite_execute_code({code: "const result = await sqlite.vector.distance({vector1: [3, 4], vector2: [0, 0], metric: 'euclidean'}); return result;"})` → distance = 5.0
 
 **Error path testing:**
 
-🔴 12. `sqlite_vector_search({table: "nonexistent_table_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → structured error
-🔴 13. `sqlite_vector_distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
+🔴 26. `sqlite_vector_search({table: "nonexistent_table_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → structured error
+🔴 27. `sqlite_vector_distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 14. `sqlite_vector_search({})` → handler error
-🔴 15. `sqlite_vector_get({})` → handler error
-🔴 16. `sqlite_vector_count({})` → handler error
-🔴 17. `sqlite_vector_stats({})` → handler error
-🔴 18. `sqlite_vector_dimensions({})` → handler error
-🔴 19. `sqlite_vector_normalize({})` → handler error
-🔴 20. `sqlite_vector_distance({})` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 28. `sqlite_vector_search({})` → handler error
+🔴 29. `sqlite_vector_get({})` → handler error
+🔴 30. `sqlite_vector_count({})` → handler error
+🔴 31. `sqlite_vector_stats({})` → handler error
+🔴 32. `sqlite_vector_dimensions({})` → handler error
+🔴 33. `sqlite_vector_normalize({})` → handler error
+🔴 34. `sqlite_vector_distance({})` → handler error
 
 ---
 

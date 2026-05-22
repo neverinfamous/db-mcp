@@ -76,58 +76,60 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### text-basic Group Tools (11)
 
-1. sqlite_regex_extract
-2. sqlite_regex_match
-3. sqlite_text_split
-4. sqlite_text_concat
-5. sqlite_text_replace
-6. sqlite_text_trim
-7. sqlite_text_case
-8. sqlite_text_substring
-9. sqlite_text_validate
-10. sqlite_text_normalize
-11. sqlite_execute_code
+8. sqlite_regex_extract
+9. sqlite_regex_match
+10. sqlite_text_split
+11. sqlite_text_concat
+12. sqlite_text_replace
+13. sqlite_text_trim
+14. sqlite_text_case
+15. sqlite_text_substring
+16. sqlite_text_validate
+17. sqlite_text_normalize
+18. sqlite_execute_code
 
 **Test data reference:**
 
 - `test_users` (9 rows): Emails include `@example.com`, `@company.org`, `@gmail.com`, etc. One user (`testuser`) has `test.user@gmail.com`. Phone formats: `+1-555-0101`, `+44-20-7123-4567`, `+82-2-1234-5678`
 - `test_products` row 16: `name = 'Café Décor Light'` — has accented characters for `strip_accents` testing
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
-1. `sqlite_regex_match({table: "test_users", column: "email", pattern: "@gmail\\.com$"})` → at least 1 result (`test.user@gmail.com`)
-2. `sqlite_regex_extract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → extract domain parts (example, company, startup, etc.)
-3. `sqlite_text_validate({table: "test_users", column: "email", pattern: "email"})` → all 9 rows should be valid emails
-4. `sqlite_text_validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid counts (one user has NULL phone)
-5. `sqlite_text_case({table: "test_users", column: "username", mode: "upper"})` → all usernames uppercased
-6. `sqlite_text_normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` becomes `Cafe Decor Light`
-7. `sqlite_text_split({table: "test_users", column: "email", delimiter: "@"})` → each email split into local + domain parts
-8. `sqlite_text_concat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated strings
-9. `sqlite_text_replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected (write operation — revert with `searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"` afterward)
-10. `sqlite_text_trim({table: "test_users", column: "bio"})` → trimmed bios
-11. `sqlite_text_substring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars of each username
+19. `sqlite_regex_match({table: "test_users", column: "email", pattern: "@gmail\\.com$"})` → at least 1 result (`test.user@gmail.com`)
+20. `sqlite_regex_extract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → extract domain parts (example, company, startup, etc.)
+21. `sqlite_text_validate({table: "test_users", column: "email", pattern: "email"})` → all 9 rows should be valid emails
+22. `sqlite_text_validate({table: "test_users", column: "phone", pattern: "phone"})` → report valid/invalid counts (one user has NULL phone)
+23. `sqlite_text_case({table: "test_users", column: "username", mode: "upper"})` → all usernames uppercased
+24. `sqlite_text_normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` becomes `Cafe Decor Light`
+25. `sqlite_text_split({table: "test_users", column: "email", delimiter: "@"})` → each email split into local + domain parts
+26. `sqlite_text_concat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated strings
+27. `sqlite_text_replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected (write operation — revert with `searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"` afterward)
+28. `sqlite_text_trim({table: "test_users", column: "bio"})` → trimmed bios
+29. `sqlite_text_substring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars of each username
 
 **Code mode testing:**
 
-12. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\\\.com$'}); return result;"})` → at least 1 result
+30. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\\\.com$'}); return result;"})` → at least 1 result
 
 **Error path testing:**
 
-🔴 13. `sqlite_regex_match({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
+🔴 31. `sqlite_regex_match({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 14. `sqlite_regex_extract({})` → handler error
-🔴 15. `sqlite_regex_match({})` → handler error
-🔴 16. `sqlite_text_split({})` → handler error
-🔴 17. `sqlite_text_concat({})` → handler error
-🔴 18. `sqlite_text_replace({})` → handler error
-🔴 19. `sqlite_text_trim({})` → handler error
-🔴 20. `sqlite_text_case({})` → handler error
-🔴 21. `sqlite_text_substring({})` → handler error
-🔴 22. `sqlite_text_normalize({})` → handler error
-🔴 23. `sqlite_text_validate({})` → handler error
-🔴 24. `sqlite_execute_code({})` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 32. `sqlite_regex_extract({})` → handler error
+🔴 33. `sqlite_regex_match({})` → handler error
+🔴 34. `sqlite_text_split({})` → handler error
+🔴 35. `sqlite_text_concat({})` → handler error
+🔴 36. `sqlite_text_replace({})` → handler error
+🔴 37. `sqlite_text_trim({})` → handler error
+🔴 38. `sqlite_text_case({})` → handler error
+🔴 39. `sqlite_text_substring({})` → handler error
+🔴 40. `sqlite_text_normalize({})` → handler error
+🔴 41. `sqlite_text_validate({})` → handler error
+🔴 42. `sqlite_execute_code({})` → handler error
 
 ---
 

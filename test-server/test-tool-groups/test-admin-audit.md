@@ -76,43 +76,45 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### admin-audit Group Tools (5)
 
-1. sqlite_audit_list_backups
-2. sqlite_audit_get_backup
-3. sqlite_audit_diff_backup
-4. sqlite_audit_restore_backup
-5. sqlite_audit_cleanup
+8. sqlite_audit_list_backups
+9. sqlite_audit_get_backup
+10. sqlite_audit_diff_backup
+11. sqlite_audit_restore_backup
+12. sqlite_audit_cleanup
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
-1. `sqlite_core_execute({query: "CREATE TABLE temp_audit_test (id INTEGER PRIMARY KEY)"})` → This will trigger an automatic schema backup if the server is run with `--audit-backup`. Wait for it to complete.
-2. `sqlite_audit_list_backups({})` → Verify the resulting list of backups contains at least one snapshot filename (e.g., `..._temp_audit_test.snapshot.json.gz`). Note the filename.
-3. `sqlite_audit_get_backup({filename: "<filename_from_step_2>"})` → Retrieve the backup. Verify it contains `schema` and `timestamp`.
-4. `sqlite_audit_diff_backup({filename: "<filename_from_step_2>"})` → Compare the backup to the current live schema. Should show no differences or minimal differences since we just made it.
-5. `sqlite_core_execute({query: "DROP TABLE temp_audit_test"})` → Drop the table to change the live schema.
-6. `sqlite_audit_diff_backup({filename: "<filename_from_step_2>"})` → Compare again. Should now show `temp_audit_test` as deleted or missing.
-7. `sqlite_audit_restore_backup({filename: "<filename_from_step_2>", dryRun: true})` → Dry run a restore. Verify the preview shows `temp_audit_test` will be recreated.
-8. `sqlite_audit_restore_backup({filename: "<filename_from_step_2>", dryRun: false})` → Actually restore the backup.
-9. `sqlite_core_describe_table({table: "temp_audit_test"})` → Verify the table exists again.
-10. `sqlite_core_execute({query: "DROP TABLE temp_audit_test"})` → Cleanup.
-11. `sqlite_audit_cleanup({})` → Enforce retention policy (should succeed and report removed count).
+13. `sqlite_core_execute({query: "CREATE TABLE temp_audit_test (id INTEGER PRIMARY KEY)"})` → This will trigger an automatic schema backup if the server is run with `--audit-backup`. Wait for it to complete.
+14. `sqlite_audit_list_backups({})` → Verify the resulting list of backups contains at least one snapshot filename (e.g., `..._temp_audit_test.snapshot.json.gz`). Note the filename.
+15. `sqlite_audit_get_backup({filename: "<filename_from_step_2>"})` → Retrieve the backup. Verify it contains `schema` and `timestamp`.
+16. `sqlite_audit_diff_backup({filename: "<filename_from_step_2>"})` → Compare the backup to the current live schema. Should show no differences or minimal differences since we just made it.
+17. `sqlite_core_execute({query: "DROP TABLE temp_audit_test"})` → Drop the table to change the live schema.
+18. `sqlite_audit_diff_backup({filename: "<filename_from_step_2>"})` → Compare again. Should now show `temp_audit_test` as deleted or missing.
+19. `sqlite_audit_restore_backup({filename: "<filename_from_step_2>", dryRun: true})` → Dry run a restore. Verify the preview shows `temp_audit_test` will be recreated.
+20. `sqlite_audit_restore_backup({filename: "<filename_from_step_2>", dryRun: false})` → Actually restore the backup.
+21. `sqlite_core_describe_table({table: "temp_audit_test"})` → Verify the table exists again.
+22. `sqlite_core_execute({query: "DROP TABLE temp_audit_test"})` → Cleanup.
+23. `sqlite_audit_cleanup({})` → Enforce retention policy (should succeed and report removed count).
 
 **Code mode testing:**
 
 Note: The audit tools are server-level and may not be exposed in Code Mode. If they are not exposed, this is expected behavior. If they are, test them via code mode.
-12. `sqlite_execute_code({code: "return typeof sqlite.admin.auditListBackups"})` → If exposed, should be `"function"`. If not exposed, it will throw an error or be `"undefined"`. Document the result.
+24. `sqlite_execute_code({code: "return typeof sqlite.admin.auditListBackups"})` → If exposed, should be `"function"`. If not exposed, it will throw an error or be `"undefined"`. Document the result.
 
 **Error path testing:**
 
-🔴 13. `sqlite_audit_get_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
-🔴 14. `sqlite_audit_diff_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
-🔴 15. `sqlite_audit_restore_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
-🔴 16. `sqlite_audit_get_backup({filename: "../../../etc/passwd"})` → structured error (path traversal rejection)
+🔴 25. `sqlite_audit_get_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
+🔴 26. `sqlite_audit_diff_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
+🔴 27. `sqlite_audit_restore_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
+🔴 28. `sqlite_audit_get_backup({filename: "../../../etc/passwd"})` → structured error (path traversal rejection)
 
-**Zod validation sweep** — call each tool with `{}` (empty params) if it has required parameters. Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 17. `sqlite_audit_get_backup({})` → handler error
-🔴 18. `sqlite_audit_diff_backup({})` → handler error
-🔴 19. `sqlite_audit_restore_backup({})` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 29. `sqlite_audit_get_backup({})` → handler error
+🔴 30. `sqlite_audit_diff_backup({})` → handler error
+🔴 31. `sqlite_audit_restore_backup({})` → handler error
 
 ---
 

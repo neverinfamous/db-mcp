@@ -76,40 +76,42 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### introspection-diagnostics Group Tools (4)
 
-1. sqlite_storage_analysis
-2. sqlite_index_audit
-3. sqlite_query_plan
-4. sqlite_execute_code
+8. sqlite_storage_analysis
+9. sqlite_index_audit
+10. sqlite_query_plan
+11. sqlite_execute_code
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
 **Diagnostics:**
 
-1. `sqlite_storage_analysis({})` → database.pageSize > 0, database.totalPages > 0, database.totalSizeBytes = pageSize × totalPages; recommendations array present
-2. `sqlite_storage_analysis({})` → tables array contains "test_measurements" (largest by row count); verify each entry has name, sizeBytes, rowCount
-3. `sqlite_storage_analysis({includeTableDetails: false})` → tables array should be missing or empty
-4. `sqlite_index_audit({})` → findings array present; summary has redundant, missingFk, total fields
-5. `sqlite_index_audit({})` → findings includes type="redundant" for `idx_orders_status` (prefix of `idx_orders_status_date`)
-6. `sqlite_index_audit({table: "test_orders"})` → findings restricted to `test_orders`
-7. `sqlite_query_plan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty; analysis.fullScans may or may not include test_products (idx_products_category exists)
-8. `sqlite_query_plan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → analysis.indexScans present (idx_orders_status exists)
-9. `sqlite_query_plan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → analysis.fullScans includes test_products (no index on name); suggestions non-empty
-10. `sqlite_query_plan({sql: "WITH recent AS (SELECT * FROM test_orders ORDER BY order_date DESC LIMIT 5) SELECT * FROM recent"})` → plan contains CTE-related entries
+12. `sqlite_storage_analysis({})` → database.pageSize > 0, database.totalPages > 0, database.totalSizeBytes = pageSize × totalPages; recommendations array present
+13. `sqlite_storage_analysis({})` → tables array contains "test_measurements" (largest by row count); verify each entry has name, sizeBytes, rowCount
+14. `sqlite_storage_analysis({includeTableDetails: false})` → tables array should be missing or empty
+15. `sqlite_index_audit({})` → findings array present; summary has redundant, missingFk, total fields
+16. `sqlite_index_audit({})` → findings includes type="redundant" for `idx_orders_status` (prefix of `idx_orders_status_date`)
+17. `sqlite_index_audit({table: "test_orders"})` → findings restricted to `test_orders`
+18. `sqlite_query_plan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty; analysis.fullScans may or may not include test_products (idx_products_category exists)
+19. `sqlite_query_plan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → analysis.indexScans present (idx_orders_status exists)
+20. `sqlite_query_plan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → analysis.fullScans includes test_products (no index on name); suggestions non-empty
+21. `sqlite_query_plan({sql: "WITH recent AS (SELECT * FROM test_orders ORDER BY order_date DESC LIMIT 5) SELECT * FROM recent"})` → plan contains CTE-related entries
 
 **Code mode testing:**
 
-11. `sqlite_execute_code({code: "const result = await sqlite.introspection.queryPlan({sql: 'SELECT * FROM test_products WHERE category = \\u0027electronics\\u0027'}); return result;"})` → plan array present
+22. `sqlite_execute_code({code: "const result = await sqlite.introspection.queryPlan({sql: 'SELECT * FROM test_products WHERE category = \\u0027electronics\\u0027'}); return result;"})` → plan array present
 
 **Error path testing:**
 
-🔴 12. `sqlite_query_plan({sql: "DELETE FROM test_products WHERE id = 1"})` → `{success: false, error: "...only SELECT..."}` (non-SELECT rejected)
-🔴 13. `sqlite_query_plan({})` → Zod validation error (missing required `sql`). Must be handler error, NOT raw MCP error.
-🔴 14. `sqlite_storage_analysis({limit: 0})` → Call via direct tool or code mode to verify Zod validation error (min: 1). Must be handler error.
+🔴 23. `sqlite_query_plan({sql: "DELETE FROM test_products WHERE id = 1"})` → `{success: false, error: "...only SELECT..."}` (non-SELECT rejected)
+🔴 24. `sqlite_query_plan({})` → Zod validation error (missing required `sql`). Must be handler error, NOT raw MCP error.
+🔴 25. `sqlite_storage_analysis({limit: 0})` → Call via direct tool or code mode to verify Zod validation error (min: 1). Must be handler error.
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 15. `sqlite_storage_analysis({})` → handler error (or success if no required params)
-🔴 16. `sqlite_index_audit({})` → handler error (or success if no required params)
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 26. `sqlite_storage_analysis({})` → handler error (or success if no required params)
+🔴 27. `sqlite_index_audit({})` → handler error (or success if no required params)
 
 ---
 

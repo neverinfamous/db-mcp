@@ -1,4 +1,4 @@
-# db-mcp Standard Testing Suite
+# db-mcp Tool Group Testing: [README]
 
 **Directory Purpose**: This folder contains 10 self-contained, modular test prompts covering every tool group in `db-mcp`. Each file is a **complete, standalone prompt** — paste it directly into a conversation to test that tool group without needing any other files.
 
@@ -100,3 +100,23 @@ Several admin tools are **registered in WASM mode but return structured errors**
 ## Execution
 
 Begin with any requested group prompt from this folder (e.g., `test-admin.md`), and execute the deterministic checklist line-by-line using direct tool calls only.
+
+## Post-Test Procedures
+
+### Reporting Rules
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+4. **Commit**: Stage and commit all changes — do NOT push
+5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
+6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

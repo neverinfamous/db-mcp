@@ -1,4 +1,4 @@
-# db-mcp Tool Group Testing: [stats]
+# db-mcp Code Mode Testing: [stats]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -74,100 +74,100 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > Bundle items 1-14 into 1-2 `sqlite_execute_code` calls.
 
-1. `sqlite.stats.statsBasic({table: "test_measurements", column: "temperature"})` → `count: 200`, `min`, `max`, `avg` present inside `stats` object
-2. `sqlite.stats.statsCount({table: "test_products"})` → `{count: 16}`
-3. `sqlite.stats.statsCount({table: "test_products", column: "category", distinct: true})` → 3 (electronics, accessories, office)
-4. `sqlite.stats.statsGroupBy({table: "test_measurements", groupByColumn: "sensor_id", valueColumn: "temperature", stat: "avg"})` → 5 results in `results` array
-5. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: 5})` → 5 buckets
-6. `sqlite.stats.statsPercentile({table: "test_measurements", column: "temperature", percentiles: [25, 50, 75, 90]})` → 4 values
-7. `sqlite.stats.statsCorrelation({table: "test_measurements", column1: "temperature", column2: "humidity"})` → value between -1 and 1
-8. `sqlite.stats.statsTopN({table: "test_products", column: "price", n: 3, orderDirection: "desc"})` → top 3 in `rows` array, `Laptop Pro 15` at 1299.99 first
-9. `sqlite.stats.statsDistinct({table: "test_locations", column: "city"})` → 6 cities
-10. `sqlite.stats.statsSummary({table: "test_measurements", columns: ["temperature", "humidity", "pressure"]})` → 3 summaries
-11. `sqlite.stats.statsFrequency({table: "test_events", column: "event_type"})` → 5 event types in `distribution` array, ~20 each
-12. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature"})` → outlier detection result
-13. `sqlite.stats.statsRegression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
-14. `sqlite.stats.statsHypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → `statistic` and `pValue` present
-15. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 10})` → `sampleSize: 10`, `totalRows: 200`, `rows` array with ≤ 10 rows
-16. `sqlite.stats.statsSample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → rows contain only `name` and `price` columns
+8. `sqlite.stats.statsBasic({table: "test_measurements", column: "temperature"})` → `count: 200`, `min`, `max`, `avg` present inside `stats` object
+9. `sqlite.stats.statsCount({table: "test_products"})` → `{count: 16}`
+10. `sqlite.stats.statsCount({table: "test_products", column: "category", distinct: true})` → 3 (electronics, accessories, office)
+11. `sqlite.stats.statsGroupBy({table: "test_measurements", groupByColumn: "sensor_id", valueColumn: "temperature", stat: "avg"})` → 5 results in `results` array
+12. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: 5})` → 5 buckets
+13. `sqlite.stats.statsPercentile({table: "test_measurements", column: "temperature", percentiles: [25, 50, 75, 90]})` → 4 values
+14. `sqlite.stats.statsCorrelation({table: "test_measurements", column1: "temperature", column2: "humidity"})` → value between -1 and 1
+15. `sqlite.stats.statsTopN({table: "test_products", column: "price", n: 3, orderDirection: "desc"})` → top 3 in `rows` array, `Laptop Pro 15` at 1299.99 first
+16. `sqlite.stats.statsDistinct({table: "test_locations", column: "city"})` → 6 cities
+17. `sqlite.stats.statsSummary({table: "test_measurements", columns: ["temperature", "humidity", "pressure"]})` → 3 summaries
+18. `sqlite.stats.statsFrequency({table: "test_events", column: "event_type"})` → 5 event types in `distribution` array, ~20 each
+19. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature"})` → outlier detection result
+20. `sqlite.stats.statsRegression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
+21. `sqlite.stats.statsHypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → `statistic` and `pValue` present
+22. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 10})` → `sampleSize: 10`, `totalRows: 200`, `rows` array with ≤ 10 rows
+23. `sqlite.stats.statsSample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → rows contain only `name` and `price` columns
 
 ---
 
 ## Phase 2: Anomaly Detection Suite — Happy Paths (batched)
 
-17. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → `anomalies` array present, `riskLevel` low
-18. `sqlite.stats.detectBloat()` → bloat detection (may return empty if no bloat)
-19. `sqlite.stats.detectSchemaRisks()` → `tables` array present, `highRiskCount` 0
+24. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → `anomalies` array present, `riskLevel` low
+25. `sqlite.stats.detectBloat()` → bloat detection (may return empty if no bloat)
+26. `sqlite.stats.detectSchemaRisks()` → `tables` array present, `highRiskCount` 0
 
 ---
 
 ## Phase 3: Window Functions `[NATIVE ONLY]` — Happy Paths (batched)
 
-20. `sqlite.stats.windowRowNumber({table: "test_products", orderBy: "price DESC"})` → ranked by price
-21. `sqlite.stats.windowRank({table: "test_products", orderBy: "price DESC"})` → rank with ties
-22. `sqlite.stats.windowRunningTotal({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → cumulative totals
-23. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 5, orderBy: "measured_at"})` → moving averages
-24. `sqlite.stats.windowLagLead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag values
-25. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → quartiles
+27. `sqlite.stats.windowRowNumber({table: "test_products", orderBy: "price DESC"})` → ranked by price
+28. `sqlite.stats.windowRank({table: "test_products", orderBy: "price DESC"})` → rank with ties
+29. `sqlite.stats.windowRunningTotal({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → cumulative totals
+30. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 5, orderBy: "measured_at"})` → moving averages
+31. `sqlite.stats.windowLagLead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → lag values
+32. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → quartiles
 
 ---
 
 ## Phase 4: Stats Domain Errors (batched)
 
-🔴 26. `sqlite.stats.statsBasic({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
-🔴 27. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → report behavior
-🔴 28. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric
-🔴 29. `sqlite.stats.detectAnomalies({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
-🔴 30. `sqlite.stats.statsSample({table: "nonexistent_xyz", sampleSize: 5})` → `{success: false}`
-🔴 31. `sqlite.stats.windowRowNumber({table: "nonexistent_xyz", orderBy: "x"})` `[NATIVE ONLY]` → `{success: false}`
+🔴 33. `sqlite.stats.statsBasic({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
+🔴 34. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → report behavior
+🔴 35. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric
+🔴 36. `sqlite.stats.detectAnomalies({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
+🔴 37. `sqlite.stats.statsSample({table: "nonexistent_xyz", sampleSize: 5})` → `{success: false}`
+🔴 38. `sqlite.stats.windowRowNumber({table: "nonexistent_xyz", orderBy: "x"})` `[NATIVE ONLY]` → `{success: false}`
 
 ---
 
 ## Phase 5: Stats Zod Validation (batched)
 
-🔴 32. `sqlite.stats.statsBasic({})` → `{success: false}`
-🔴 33. `sqlite.stats.statsCount({})` → `{success: false}`
-🔴 34. `sqlite.stats.statsGroupBy({})` → `{success: false}`
-🔴 35. `sqlite.stats.statsHistogram({})` → `{success: false}`
-🔴 36. `sqlite.stats.statsPercentile({})` → `{success: false}`
-🔴 37. `sqlite.stats.statsCorrelation({})` → `{success: false}`
-🔴 38. `sqlite.stats.statsTopN({})` → `{success: false}`
-🔴 39. `sqlite.stats.statsDistinct({})` → `{success: false}`
-🔴 40. `sqlite.stats.statsSummary({})` → `{success: false}`
-🔴 41. `sqlite.stats.statsFrequency({})` → `{success: false}`
-🔴 42. `sqlite.stats.statsOutliers({})` → `{success: false}`
-🔴 43. `sqlite.stats.statsRegression({})` → `{success: false}`
-🔴 44. `sqlite.stats.statsHypothesis({})` → `{success: false}`
-🔴 45. `sqlite.stats.detectAnomalies({})` → `{success: false}`
-🔴 46. `sqlite.stats.detectBloat({})` → `{success: false}` or success (no required params)
-🔴 47. `sqlite.stats.detectSchemaRisks({})` → `{success: false}` or success (no required params)
-🔴 48. `sqlite.stats.statsSample({})` → `{success: false}` handler error
-🔴 49. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 50. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 51. `sqlite.stats.windowLagLead({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 52. `sqlite.stats.windowRunningTotal({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 53. `sqlite.stats.windowMovingAvg({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 54. `sqlite.stats.windowNtile({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 39. `sqlite.stats.statsBasic({})` → `{success: false}`
+🔴 40. `sqlite.stats.statsCount({})` → `{success: false}`
+🔴 41. `sqlite.stats.statsGroupBy({})` → `{success: false}`
+🔴 42. `sqlite.stats.statsHistogram({})` → `{success: false}`
+🔴 43. `sqlite.stats.statsPercentile({})` → `{success: false}`
+🔴 44. `sqlite.stats.statsCorrelation({})` → `{success: false}`
+🔴 45. `sqlite.stats.statsTopN({})` → `{success: false}`
+🔴 46. `sqlite.stats.statsDistinct({})` → `{success: false}`
+🔴 47. `sqlite.stats.statsSummary({})` → `{success: false}`
+🔴 48. `sqlite.stats.statsFrequency({})` → `{success: false}`
+🔴 49. `sqlite.stats.statsOutliers({})` → `{success: false}`
+🔴 50. `sqlite.stats.statsRegression({})` → `{success: false}`
+🔴 51. `sqlite.stats.statsHypothesis({})` → `{success: false}`
+🔴 52. `sqlite.stats.detectAnomalies({})` → `{success: false}`
+🔴 53. `sqlite.stats.detectBloat({})` → `{success: false}` or success (no required params)
+🔴 54. `sqlite.stats.detectSchemaRisks({})` → `{success: false}` or success (no required params)
+🔴 55. `sqlite.stats.statsSample({})` → `{success: false}` handler error
+🔴 56. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 57. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 58. `sqlite.stats.windowLagLead({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 59. `sqlite.stats.windowRunningTotal({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 60. `sqlite.stats.windowMovingAvg({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 61. `sqlite.stats.windowNtile({})` `[NATIVE ONLY]` → `{success: false}`
 
 ---
 
 ## Phase 6: Wrong-Type Numeric Coercion (batched)
 
-🔴 55. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → coerced default (success) or handler error, NOT raw MCP
-🔴 56. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → coerced default (success) or handler error
+🔴 62. `sqlite.stats.statsHistogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → coerced default (success) or handler error, NOT raw MCP
+🔴 63. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → coerced default (success) or handler error
 
 ---
 
-## Phase 6.5: Gotcha Edge Cases (batched)
+## Phase 7: Gotcha Edge Cases (batched)
 
-53. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3})` → verify auto-exclusion of long-content columns (`body`, `description`, `notes`, etc.) from output when `selectColumns` is omitted (gotcha #13)
-54. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3, selectColumns: ["title", "body"]})` → explicit `selectColumns` overrides auto-exclusion — `body` should appear in results (gotcha #13)
-55. `sqlite.stats.detectBloat({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
-56. `sqlite.stats.detectSchemaRisks({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
+64. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3})` → verify auto-exclusion of long-content columns (`body`, `description`, `notes`, etc.) from output when `selectColumns` is omitted (gotcha #13)
+65. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3, selectColumns: ["title", "body"]})` → explicit `selectColumns` overrides auto-exclusion — `body` should appear in results (gotcha #13)
+66. `sqlite.stats.detectBloat({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
+67. `sqlite.stats.detectSchemaRisks({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
 
 ---
 
-## Phase 7: Multi-Step Workflow
+## Phase 8: Multi-Step Workflow
 
 ### 7.1 — Statistical analysis pipeline
 

@@ -78,45 +78,47 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### admin-extensions Group Tools (8)
 
-1. sqlite_generate_series
-2. sqlite_list_virtual_tables
-3. sqlite_virtual_table_info
-4. sqlite_drop_virtual_table
-5. sqlite_create_csv_table
-6. sqlite_analyze_csv_schema
-7. sqlite_create_rtree_table
-8. sqlite_create_series_table
+8. sqlite_generate_series
+9. sqlite_list_virtual_tables
+10. sqlite_virtual_table_info
+11. sqlite_drop_virtual_table
+12. sqlite_create_csv_table
+13. sqlite_analyze_csv_schema
+14. sqlite_create_rtree_table
+15. sqlite_create_series_table
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
 **Virtual Tables:**
 
-1. `sqlite_list_virtual_tables` → verify `test_articles_fts` present (Native)
-2. `sqlite_virtual_table_info({tableName: "test_articles_fts"})` → verify module and column info (Native)
-3. `sqlite_generate_series({start: 1, stop: 5, step: 1})` → 5 values
-4. `sqlite_create_rtree_table({tableName: "temp_rtree_test", dimensions: 2})` → R-Tree virtual table created with 2D bounding box columns
-5. `sqlite_create_series_table({tableName: "temp_series_test", start: 1, stop: 10})` → regular table created with 10 rows (not a virtual table — see gotcha #14)
-6. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_rtree_test"})` and `sqlite_drop_table({table: "temp_series_test"})` (series is a regular table — use core `sqlite_drop_table`)
+16. `sqlite_list_virtual_tables` → verify `test_articles_fts` present (Native)
+17. `sqlite_virtual_table_info({tableName: "test_articles_fts"})` → verify module and column info (Native)
+18. `sqlite_generate_series({start: 1, stop: 5, step: 1})` → 5 values
+19. `sqlite_create_rtree_table({tableName: "temp_rtree_test", dimensions: 2})` → R-Tree virtual table created with 2D bounding box columns
+20. `sqlite_create_series_table({tableName: "temp_series_test", start: 1, stop: 10})` → regular table created with 10 rows (not a virtual table — see gotcha #14)
+21. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_rtree_test"})` and `sqlite_drop_table({table: "temp_series_test"})` (series is a regular table — use core `sqlite_drop_table`)
 
 **CSV:**
 
-7. `sqlite_analyze_csv_schema({filePath: "<absolute-path>/test-server/sample.csv"})` → inferred column types (⚠️ CSV requires absolute paths — see gotcha #13)
-8. `sqlite_create_csv_table({tableName: "temp_csv_test", filePath: "<absolute-path>/test-server/sample.csv"})` → virtual table created
-9. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_csv_test"})`
+22. `sqlite_analyze_csv_schema({filePath: "<absolute-path>/test-server/sample.csv"})` → inferred column types (⚠️ CSV requires absolute paths — see gotcha #13)
+23. `sqlite_create_csv_table({tableName: "temp_csv_test", filePath: "<absolute-path>/test-server/sample.csv"})` → virtual table created
+24. Cleanup: `sqlite_drop_virtual_table({tableName: "temp_csv_test"})`
 
 **Error path testing:**
 
-🔴 10. `sqlite_virtual_table_info({tableName: "nonexistent_table_xyz"})` → structured error
+🔴 25. `sqlite_virtual_table_info({tableName: "nonexistent_table_xyz"})` → structured error
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 11. `sqlite_virtual_table_info({})` → handler error
-🔴 12. `sqlite_drop_virtual_table({})` → handler error
-🔴 13. `sqlite_create_csv_table({})` → handler error
-🔴 14. `sqlite_analyze_csv_schema({})` → handler error
-🔴 15. `sqlite_create_rtree_table({})` → handler error
-🔴 16. `sqlite_create_series_table({})` → handler error
-🔴 17. `sqlite_generate_series({})` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 26. `sqlite_virtual_table_info({})` → handler error
+🔴 27. `sqlite_drop_virtual_table({})` → handler error
+🔴 28. `sqlite_create_csv_table({})` → handler error
+🔴 29. `sqlite_analyze_csv_schema({})` → handler error
+🔴 30. `sqlite_create_rtree_table({})` → handler error
+🔴 31. `sqlite_create_series_table({})` → handler error
+🔴 32. `sqlite_generate_series({})` → handler error
 
 ---
 

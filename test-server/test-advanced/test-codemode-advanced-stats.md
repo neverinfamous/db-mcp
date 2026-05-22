@@ -70,95 +70,95 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-### Category 1: Boundary Values & Empty States
+## Phase 1: Boundary Values & Empty States (batched)
 
 Create `stress_stats_table (id INTEGER PRIMARY KEY, value REAL, category TEXT)`:
 
 **1.1 Empty Table Statistics**
 
-1. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → graceful error or empty stats (not crash)
-2. `sqlite.stats.statsCount({table: "stress_stats_table"})` → `{count: 0}`
-3. `sqlite.stats.statsHistogram({table: "stress_stats_table", column: "value", buckets: 5})` → graceful handling
+8. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → graceful error or empty stats (not crash)
+9. `sqlite.stats.statsCount({table: "stress_stats_table"})` → `{count: 0}`
+10. `sqlite.stats.statsHistogram({table: "stress_stats_table", column: "value", buckets: 5})` → graceful handling
 
 **1.2 Single-Row Statistics**
 
 Insert one row: `(1, 42.0, 'test')`:
 
-4. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → count=1, min=max=avg=42.0
-5. `sqlite.stats.statsPercentile({table: "stress_stats_table", column: "value", percentiles: [25, 50, 75]})` → all equal 42
-6. `sqlite.stats.statsRegression({table: "stress_stats_table", xColumn: "id", yColumn: "value", degree: 1})` → graceful handling (regression undefined for n=1)
+11. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → count=1, min=max=avg=42.0
+12. `sqlite.stats.statsPercentile({table: "stress_stats_table", column: "value", percentiles: [25, 50, 75]})` → all equal 42
+13. `sqlite.stats.statsRegression({table: "stress_stats_table", xColumn: "id", yColumn: "value", degree: 1})` → graceful handling (regression undefined for n=1)
 
 **1.3 NULL-Heavy Data**
 
 Insert 5 rows: 3 with `value IS NULL`, 2 with actual values:
 
-7. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → only count non-null values (3 total)
-8. `sqlite.stats.statsCount({table: "stress_stats_table", column: "value"})` → non-null count only
+14. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → only count non-null values (3 total)
+15. `sqlite.stats.statsCount({table: "stress_stats_table", column: "value"})` → non-null count only
 
 **1.4 Extreme Numeric Values**
 
 Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
-9. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → verify min/max/avg handle extreme values
+16. `sqlite.stats.statsBasic({table: "stress_stats_table", column: "value"})` → verify min/max/avg handle extreme values
 
 ---
 
-### Category 2: Statistical Edge Cases
+## Phase 2: Statistical Edge Cases (batched)
 
-10. `sqlite.stats.statsCorrelation({table: "test_products", column1: "id", column2: "id"})` → self-correlation = 1.0
-11. `sqlite.stats.statsHypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 999})` → should reject null hypothesis
-12. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature", method: "iqr"})` → IQR-based outliers
-13. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature", method: "zscore"})` → Z-score outliers (compare with IQR)
-14. `sqlite.stats.statsRegression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 2})` → quadratic regression
-
----
-
-### Category 3: Anomaly Detection Stress
-
-15. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → anomaly detection result
-16. `sqlite.stats.detectAnomalies({table: "stress_stats_table", column: "value"})` → graceful handling on mixed NULL/extreme data
-17. `sqlite.stats.detectBloat()` → bloat detection
-18. `sqlite.stats.detectSchemaRisks()` → schema risk assessment
+17. `sqlite.stats.statsCorrelation({table: "test_products", column1: "id", column2: "id"})` → self-correlation = 1.0
+18. `sqlite.stats.statsHypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 999})` → should reject null hypothesis
+19. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature", method: "iqr"})` → IQR-based outliers
+20. `sqlite.stats.statsOutliers({table: "test_measurements", column: "temperature", method: "zscore"})` → Z-score outliers (compare with IQR)
+21. `sqlite.stats.statsRegression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 2})` → quadratic regression
 
 ---
 
-### Category 4: Window Functions `[NATIVE ONLY]`
+## Phase 3: Anomaly Detection Stress (batched)
 
-19. `sqlite.stats.windowRowNumber({table: "test_products", orderBy: "price DESC"})` → 16 rows, Laptop Pro 15 at #1
+22. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → anomaly detection result
+23. `sqlite.stats.detectAnomalies({table: "stress_stats_table", column: "value"})` → graceful handling on mixed NULL/extreme data
+24. `sqlite.stats.detectBloat()` → bloat detection
+25. `sqlite.stats.detectSchemaRisks()` → schema risk assessment
+
+---
+
+## Phase 4: Window Functions `[NATIVE ONLY]` (batched)
+
+26. `sqlite.stats.windowRowNumber({table: "test_products", orderBy: "price DESC"})` → 16 rows, Laptop Pro 15 at #1
     > **Note:** `window_row_number` and `window_rank` do NOT have a `direction` param — embed in `orderBy` string.
-20. `sqlite.stats.windowRank({table: "test_orders", orderBy: "total_price DESC"})` → ranks with potential ties
-21. `sqlite.stats.windowRunningTotal({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → monotonically increasing cumulative total
-22. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 10, orderBy: "measured_at"})` → 10-row moving average
-23. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → 4 groups of ~4 products
+27. `sqlite.stats.windowRank({table: "test_orders", orderBy: "total_price DESC"})` → ranks with potential ties
+28. `sqlite.stats.windowRunningTotal({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → monotonically increasing cumulative total
+29. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 10, orderBy: "measured_at"})` → 10-row moving average
+30. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → 4 groups of ~4 products
 
 ---
 
-### Category 5: Error Message Quality
+## Phase 5: Error Message Quality (batched)
 
-24. `sqlite.stats.statsBasic({table: "nonexistent_table_xyz", column: "x"})` → structured error mentioning table name
-25. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → structured error mentioning column
-26. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
-27. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: 0})` → error (must be > 0)
-28. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: -1})` → error
-
----
-
-### Category 6: Stats Sample Edge Cases
-
-29. `sqlite.stats.statsSample({table: "stress_empty_table", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
-30. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
-31. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
-32. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
-33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
+31. `sqlite.stats.statsBasic({table: "nonexistent_table_xyz", column: "x"})` → structured error mentioning table name
+32. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → structured error mentioning column
+33. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
+34. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: 0})` → error (must be > 0)
+35. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: -1})` → error
 
 ---
 
-### Category 7: WASM Boundary Verification
+## Phase 6: Stats Sample Edge Cases (batched)
+
+36. `sqlite.stats.statsSample({table: "stress_empty_table", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
+37. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
+38. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
+39. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
+40. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
+
+---
+
+## Phase 7: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-34. Confirm window function tools are NOT present in the tool list
-35. All 17 non-window stats tools should produce identical results in WASM and Native
+41. Confirm window function tools are NOT present in the tool list
+42. All 17 non-window stats tools should produce identical results in WASM and Native
 
 ---
 

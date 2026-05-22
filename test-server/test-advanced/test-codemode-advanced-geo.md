@@ -70,68 +70,68 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-### Category 1: Haversine Boundary Conditions
+## Phase 1: Haversine Boundary Conditions (batched)
 
-1. `sqlite.geo.distance({lat1: 0, lon1: 0, lat2: 0, lon2: 0})` → distance = 0 (same point)
-2. `sqlite.geo.distance({lat1: 90, lon1: 0, lat2: -90, lon2: 0})` → antipodal ≈ 20,015 km (half Earth circumference)
-3. `sqlite.geo.distance({lat1: 0, lon1: -180, lat2: 0, lon2: 180})` → ≈ 0 (same point, opposite notation)
-4. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → report behavior for out-of-bounds latitude (>90°)
-5. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → report behavior for out-of-bounds longitude (>180°)
-
----
-
-### Category 2: Nearby Search Edge Cases
-
-6. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.7829, centerLon: -73.9654, radius: 0.1})` → very small radius — only Central Park (within 100m)
-7. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.7829, centerLon: -73.9654, radius: 50000})` → very large radius — ALL 15 locations
-8. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 0, centerLon: 0, radius: 100})` → no locations near (0,0) — 0 results (not error)
+8. `sqlite.geo.distance({lat1: 0, lon1: 0, lat2: 0, lon2: 0})` → distance = 0 (same point)
+9. `sqlite.geo.distance({lat1: 90, lon1: 0, lat2: -90, lon2: 0})` → antipodal ≈ 20,015 km (half Earth circumference)
+10. `sqlite.geo.distance({lat1: 0, lon1: -180, lat2: 0, lon2: 180})` → ≈ 0 (same point, opposite notation)
+11. `sqlite.geo.distance({lat1: 91, lon1: 0, lat2: 0, lon2: 0})` → report behavior for out-of-bounds latitude (>90°)
+12. `sqlite.geo.distance({lat1: 0, lon1: 181, lat2: 0, lon2: 0})` → report behavior for out-of-bounds longitude (>180°)
 
 ---
 
-### Category 3: Bounding Box Edge Cases
+## Phase 2: Nearby Search Edge Cases (batched)
 
-9. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: -90, maxLat: 90, minLon: -180, maxLon: 180})` → all 15 locations (global bounding box)
-10. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 0, maxLat: 0, minLon: 0, maxLon: 0})` → 0 results (point bounding box)
-11. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 50, maxLat: 52, minLon: -1, maxLon: 1})` → London locations (Big Ben, Tower Bridge, Buckingham Palace)
-
----
-
-### Category 4: Clustering Edge Cases
-
-12. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 180})` → ~3 clusters (huge grid splits logically along Prime Meridian/Equator)
-13. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 0.001})` → ~15 clusters (tiny grid, one per location)
-14. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 0.1})` → approximately one cluster per city
+13. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.7829, centerLon: -73.9654, radius: 0.1})` → very small radius — only Central Park (within 100m)
+14. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.7829, centerLon: -73.9654, radius: 50000})` → very large radius — ALL 15 locations
+15. `sqlite.geo.nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 0, centerLon: 0, radius: 100})` → no locations near (0,0) — 0 results (not error)
 
 ---
 
-### Category 5: SpatiaLite Integration `[NATIVE ONLY]`
+## Phase 3: Bounding Box Edge Cases (batched)
 
-15. `sqlite.geo.spatialiteLoad()` → verify version string returned
-16. `sqlite.geo.spatialiteCreateTable({tableName: "stress_geo_spatial", geometryColumn: "geom", geometryType: "POINT", srid: 4326, additionalColumns: [{name: "name", type: "TEXT"}, {name: "type", type: "TEXT"}]})` → success
-17. Import 3 points (NYC, Paris, Tokyo) via `sqlite.geo.spatialiteImport`
-18. `sqlite.geo.spatialiteQuery({query: "SELECT name, AsText(geom) FROM stress_geo_spatial"})` → 3 rows with WKT
-19. `sqlite.geo.spatialiteTransform({operation: "buffer", geometry1: "POINT(-73.9654 40.7829)", distance: 0.01})` → buffered polygon
-20. `sqlite.geo.spatialiteTransform({operation: "centroid", geometry1: "POLYGON((-74 40, -74 41, -73 41, -73 40, -74 40))"})` → centroid point
-21. `sqlite.geo.spatialiteIndex({tableName: "stress_geo_spatial", geometryColumn: "geom", action: "create"})` → R-Tree index
-22. `sqlite.geo.spatialiteIndex({tableName: "stress_geo_spatial", geometryColumn: "geom", action: "check"})` → index integrity
-23. `sqlite.geo.spatialiteAnalyze({analysisType: "spatial_extent", sourceTable: "stress_geo_spatial", geometryColumn: "geom"})` → spatial extent
+16. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: -90, maxLat: 90, minLon: -180, maxLon: 180})` → all 15 locations (global bounding box)
+17. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 0, maxLat: 0, minLon: 0, maxLon: 0})` → 0 results (point bounding box)
+18. `sqlite.geo.boundingBox({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", minLat: 50, maxLat: 52, minLon: -1, maxLon: 1})` → London locations (Big Ben, Tower Bridge, Buckingham Palace)
 
 ---
 
-### Category 6: Error Message Quality
+## Phase 4: Clustering Edge Cases (batched)
 
-24. `sqlite.geo.nearby({table: "nonexistent_table_xyz", latColumn: "lat", lonColumn: "lon", centerLat: 0, centerLon: 0, radius: 100})` → structured error
-25. `sqlite.geo.nearby({table: "test_locations", latColumn: "nonexistent_col", lonColumn: "longitude", centerLat: 0, centerLon: 0, radius: 100})` → structured error about column
-26. `sqlite.geo.spatialiteQuery({query: "SELECT * FROM nonexistent_table_xyz"})` `[NATIVE ONLY]` → structured error
+19. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 180})` → ~3 clusters (huge grid splits logically along Prime Meridian/Equator)
+20. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 0.001})` → ~15 clusters (tiny grid, one per location)
+21. `sqlite.geo.cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: 0.1})` → approximately one cluster per city
 
 ---
 
-### Category 7: WASM Boundary Verification
+## Phase 5: SpatiaLite Integration `[NATIVE ONLY]` (batched)
+
+22. `sqlite.geo.spatialiteLoad()` → verify version string returned
+23. `sqlite.geo.spatialiteCreateTable({tableName: "stress_geo_spatial", geometryColumn: "geom", geometryType: "POINT", srid: 4326, additionalColumns: [{name: "name", type: "TEXT"}, {name: "type", type: "TEXT"}]})` → success
+24. Import 3 points (NYC, Paris, Tokyo) via `sqlite.geo.spatialiteImport`
+25. `sqlite.geo.spatialiteQuery({query: "SELECT name, AsText(geom) FROM stress_geo_spatial"})` → 3 rows with WKT
+26. `sqlite.geo.spatialiteTransform({operation: "buffer", geometry1: "POINT(-73.9654 40.7829)", distance: 0.01})` → buffered polygon
+27. `sqlite.geo.spatialiteTransform({operation: "centroid", geometry1: "POLYGON((-74 40, -74 41, -73 41, -73 40, -74 40))"})` → centroid point
+28. `sqlite.geo.spatialiteIndex({tableName: "stress_geo_spatial", geometryColumn: "geom", action: "create"})` → R-Tree index
+29. `sqlite.geo.spatialiteIndex({tableName: "stress_geo_spatial", geometryColumn: "geom", action: "check"})` → index integrity
+30. `sqlite.geo.spatialiteAnalyze({analysisType: "spatial_extent", sourceTable: "stress_geo_spatial", geometryColumn: "geom"})` → spatial extent
+
+---
+
+## Phase 6: Error Message Quality (batched)
+
+31. `sqlite.geo.nearby({table: "nonexistent_table_xyz", latColumn: "lat", lonColumn: "lon", centerLat: 0, centerLon: 0, radius: 100})` → structured error
+32. `sqlite.geo.nearby({table: "test_locations", latColumn: "nonexistent_col", lonColumn: "longitude", centerLat: 0, centerLon: 0, radius: 100})` → structured error about column
+33. `sqlite.geo.spatialiteQuery({query: "SELECT * FROM nonexistent_table_xyz"})` `[NATIVE ONLY]` → structured error
+
+---
+
+## Phase 7: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-27. Confirm SpatiaLite tools (items 5-11) are NOT present in the tool list
-28. All 4 Haversine tools should produce identical results in WASM and Native
+34. Confirm SpatiaLite tools (items 5-11) are NOT present in the tool list
+35. All 4 Haversine tools should produce identical results in WASM and Native
 
 ---
 

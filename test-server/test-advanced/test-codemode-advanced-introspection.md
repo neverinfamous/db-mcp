@@ -72,108 +72,108 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## introspection Group Tools (10)
 
-1. sqlite_dependency_graph
-2. sqlite_topological_sort
-3. sqlite_cascade_simulator
-4. sqlite_schema_snapshot
-5. sqlite_schema_diff
-6. sqlite_constraint_analysis
-7. sqlite_migration_risks
-8. sqlite_storage_analysis
-9. sqlite_index_audit
-10. sqlite_query_plan
+8. sqlite_dependency_graph
+9. sqlite_topological_sort
+10. sqlite_cascade_simulator
+11. sqlite_schema_snapshot
+12. sqlite_schema_diff
+13. sqlite_constraint_analysis
+14. sqlite_migration_risks
+15. sqlite_storage_analysis
+16. sqlite_index_audit
+17. sqlite_query_plan
 
 ---
 
-### Category 1: Graph Analysis Edge Cases
+## Phase 1: Graph Analysis Edge Cases (batched)
 
 **1.1 Full Dependency Graph**
 
-1. `sqlite.introspection.dependencyGraph({})` → full graph. Verify edge `test_orders → test_products` present.
-2. `sqlite.introspection.dependencyGraph({includeRowCounts: false})` → verify rowCount omitted.
-3. Verify `stats.rootTables` and `stats.leafTables` are populated and disjoint.
+18. `sqlite.introspection.dependencyGraph({})` → full graph. Verify edge `test_orders → test_products` present.
+19. `sqlite.introspection.dependencyGraph({includeRowCounts: false})` → verify rowCount omitted.
+20. Verify `stats.rootTables` and `stats.leafTables` are populated and disjoint.
 
 **1.2 Topological Sort Direction Stress**
 
-4. `sqlite.introspection.topologicalSort({direction: "create"})` → `test_products` BEFORE `test_orders`
-5. `sqlite.introspection.topologicalSort({direction: "drop"})` → `test_orders` BEFORE `test_products`
-6. Verify both directions list the same set of tables (just reordered)
+21. `sqlite.introspection.topologicalSort({direction: "create"})` → `test_products` BEFORE `test_orders`
+22. `sqlite.introspection.topologicalSort({direction: "drop"})` → `test_orders` BEFORE `test_products`
+23. Verify both directions list the same set of tables (just reordered)
 
 **1.3 Cascade Chains**
 
-7. `sqlite.introspection.cascadeSimulator({table: "test_products"})` → affectedTables includes `test_orders` with FK action
-8. `sqlite.introspection.cascadeSimulator({table: "test_measurements"})` → affectedTables empty (leaf table)
-9. `sqlite.introspection.cascadeSimulator({table: "test_orders"})` → affectedTables empty (nothing references test_orders via FK)
+24. `sqlite.introspection.cascadeSimulator({table: "test_products"})` → affectedTables includes `test_orders` with FK action
+25. `sqlite.introspection.cascadeSimulator({table: "test_measurements"})` → affectedTables empty (leaf table)
+26. `sqlite.introspection.cascadeSimulator({table: "test_orders"})` → affectedTables empty (nothing references test_orders via FK)
 
 ---
 
-### Category 2: Schema Snapshot Completeness
+## Phase 2: Schema Snapshot Completeness (batched)
 
-10. `sqlite.introspection.schemaSnapshot({})` → full snapshot:
+27. `sqlite.introspection.schemaSnapshot({})` → full snapshot:
     - tables ≥ 11 (10 regular + FTS virtual)
     - indexes ≥ 4 (`idx_orders_status`, `idx_orders_date`, `idx_products_category`, `idx_orders_status_date`)
     - generatedAt is valid ISO timestamp
-11. `sqlite.introspection.schemaSnapshot({sections: ["indexes"]})` → only indexes section. Tables absent.
-12. `sqlite.introspection.schemaSnapshot({sections: ["tables", "indexes"]})` → both sections present
-13. `sqlite.introspection.schemaSnapshot({compact: true})` → tables present but columns arrays absent
-14. `sqlite.introspection.schemaSnapshot({compact: false})` → column details (name, type, nullable, pk) present
+28. `sqlite.introspection.schemaSnapshot({sections: ["indexes"]})` → only indexes section. Tables absent.
+29. `sqlite.introspection.schemaSnapshot({sections: ["tables", "indexes"]})` → both sections present
+30. `sqlite.introspection.schemaSnapshot({compact: true})` → tables present but columns arrays absent
+31. `sqlite.introspection.schemaSnapshot({compact: false})` → column details (name, type, nullable, pk) present
 
 ---
 
-### Category 3: Constraint Analysis Stress
+## Phase 3: Constraint Analysis Stress (batched)
 
-15. `sqlite.introspection.constraintAnalysis({})` → all tables analyzed. Verify summary.byType and summary.bySeverity keys.
-16. `sqlite.introspection.constraintAnalysis({checks: ["unindexed_fk"]})` → only unindexed FK findings.
-17. `sqlite.introspection.constraintAnalysis({table: "test_users"})` → only test_users findings. No other tables referenced.
-18. `sqlite.introspection.constraintAnalysis({table: "nonexistent_table_xyz"})` → report behavior: empty findings or structured error?
+32. `sqlite.introspection.constraintAnalysis({})` → all tables analyzed. Verify summary.byType and summary.bySeverity keys.
+33. `sqlite.introspection.constraintAnalysis({checks: ["unindexed_fk"]})` → only unindexed FK findings.
+34. `sqlite.introspection.constraintAnalysis({table: "test_users"})` → only test_users findings. No other tables referenced.
+35. `sqlite.introspection.constraintAnalysis({table: "nonexistent_table_xyz"})` → report behavior: empty findings or structured error?
 
 ---
 
-### Category 4: Storage Analysis & Index Audit Depth
+## Phase 4: Storage Analysis & Index Audit Depth (batched)
 
 **4.1 Storage Analysis Verification**
 
-19. `sqlite.introspection.storageAnalysis({})` → verify database.totalSizeBytes = pageSize × totalPages (arithmetic check)
-20. `sqlite.introspection.storageAnalysis({})` → verify tables sorted by size descending
-21. `sqlite.introspection.storageAnalysis({includeTableDetails: false})` → tables absent. Database-level metrics present.
-22. `sqlite.introspection.storageAnalysis({limit: 3})` → only top 3 tables (if supported)
-23. `sqlite.introspection.storageAnalysis({})` → verify fragmentationPct 0-100, journalMode and autoVacuum non-empty
+36. `sqlite.introspection.storageAnalysis({})` → verify database.totalSizeBytes = pageSize × totalPages (arithmetic check)
+37. `sqlite.introspection.storageAnalysis({})` → verify tables sorted by size descending
+38. `sqlite.introspection.storageAnalysis({includeTableDetails: false})` → tables absent. Database-level metrics present.
+39. `sqlite.introspection.storageAnalysis({limit: 3})` → only top 3 tables (if supported)
+40. `sqlite.introspection.storageAnalysis({})` → verify fragmentationPct 0-100, journalMode and autoVacuum non-empty
 
 **4.2 Index Audit Cross-Validation**
 
-24. `sqlite.introspection.indexAudit({})` → flag `idx_orders_status` as `type: "redundant"` (prefix of `idx_orders_status_date`). Field name is `index`.
-25. `sqlite.introspection.indexAudit({})` → verify `redundantOf` points to `idx_orders_status_date`
-26. `sqlite.introspection.indexAudit({})` → check for `missing_fk_index` on `test_orders.product_id`
-27. `sqlite.introspection.indexAudit({table: "test_products"})` → only test_products findings. `idx_products_category` NOT redundant.
-28. `sqlite.introspection.indexAudit({table: "test_measurements"})` → 200 rows, no secondary indexes. `unindexed_large_table` threshold is 1000 → no finding expected.
+41. `sqlite.introspection.indexAudit({})` → flag `idx_orders_status` as `type: "redundant"` (prefix of `idx_orders_status_date`). Field name is `index`.
+42. `sqlite.introspection.indexAudit({})` → verify `redundantOf` points to `idx_orders_status_date`
+43. `sqlite.introspection.indexAudit({})` → check for `missing_fk_index` on `test_orders.product_id`
+44. `sqlite.introspection.indexAudit({table: "test_products"})` → only test_products findings. `idx_products_category` NOT redundant.
+45. `sqlite.introspection.indexAudit({table: "test_measurements"})` → 200 rows, no secondary indexes. `unindexed_large_table` threshold is 1000 → no finding expected.
 
 ---
 
-### Category 5: Query Plan Deep Analysis
+## Phase 5: Query Plan Deep Analysis (batched)
 
-29. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → use `idx_orders_status`
-30. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan (no index on name). Verify `analysis.fullScans` includes `test_products`, `suggestions` array exists.
-31. `sqlite.introspection.queryPlan({sql: "SELECT p.name, o.quantity FROM test_products p JOIN test_orders o ON o.product_id = p.id WHERE o.status = 'completed'"})` → join plan with multiple entries.
-32. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed' AND order_date > '2026-01-20'"})` → compound WHERE. Verify index choice.
-33. `sqlite.introspection.queryPlan({sql: "SELECT COUNT(*) FROM test_measurements GROUP BY sensor_id"})` → GROUP BY without dedicated index. Expect full scan.
-34. `sqlite.introspection.queryPlan({sql: "WITH top_orders AS (SELECT * FROM test_orders ORDER BY total_price DESC LIMIT 5) SELECT t.*, p.name FROM top_orders t JOIN test_products p ON p.id = t.product_id"})` → CTE + JOIN plan.
-
----
-
-### Category 6: Migration Risk Assessment Depth
-
-35. `sqlite.introspection.migrationRisks({statements: ["DROP TABLE test_products"]})` → critical/high risk. Mentions FK dependents.
-36. `sqlite.introspection.migrationRisks({statements: ["ALTER TABLE test_products ADD COLUMN temp_col TEXT"]})` → low risk (additive)
-37. `sqlite.introspection.migrationRisks({statements: ["CREATE INDEX idx_temp ON test_products(name)"]})` → low risk
-38. `sqlite.introspection.migrationRisks({statements: ["DROP INDEX idx_orders_status"]})` → medium risk. Verify `riskLevel: "medium"`, `category: "index_removal"`.
-39. `sqlite.introspection.migrationRisks({statements: ["ALTER TABLE test_products ADD COLUMN temp1 TEXT", "DROP TABLE test_orders", "CREATE TABLE new_orders (id INTEGER PRIMARY KEY)"]})` → 3 statements, mixed risk. `summary.totalStatements = 3`, `summary.highestRisk ≥ "high"`.
+46. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → use `idx_orders_status`
+47. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan (no index on name). Verify `analysis.fullScans` includes `test_products`, `suggestions` array exists.
+48. `sqlite.introspection.queryPlan({sql: "SELECT p.name, o.quantity FROM test_products p JOIN test_orders o ON o.product_id = p.id WHERE o.status = 'completed'"})` → join plan with multiple entries.
+49. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed' AND order_date > '2026-01-20'"})` → compound WHERE. Verify index choice.
+50. `sqlite.introspection.queryPlan({sql: "SELECT COUNT(*) FROM test_measurements GROUP BY sensor_id"})` → GROUP BY without dedicated index. Expect full scan.
+51. `sqlite.introspection.queryPlan({sql: "WITH top_orders AS (SELECT * FROM test_orders ORDER BY total_price DESC LIMIT 5) SELECT t.*, p.name FROM top_orders t JOIN test_products p ON p.id = t.product_id"})` → CTE + JOIN plan.
 
 ---
 
-### Category 8: Schema Diff Stress
+## Phase 6: Migration Risk Assessment Depth (batched)
 
-47. `sqlite.introspection.schemaDiff({baseline: "current", target: "current"})` → self-diff: `summary.totalChanges: 0`, `severity: "none"`, all sections empty
-48. Mutation-diff workflow:
+52. `sqlite.introspection.migrationRisks({statements: ["DROP TABLE test_products"]})` → critical/high risk. Mentions FK dependents.
+53. `sqlite.introspection.migrationRisks({statements: ["ALTER TABLE test_products ADD COLUMN temp_col TEXT"]})` → low risk (additive)
+54. `sqlite.introspection.migrationRisks({statements: ["CREATE INDEX idx_temp ON test_products(name)"]})` → low risk
+55. `sqlite.introspection.migrationRisks({statements: ["DROP INDEX idx_orders_status"]})` → medium risk. Verify `riskLevel: "medium"`, `category: "index_removal"`.
+56. `sqlite.introspection.migrationRisks({statements: ["ALTER TABLE test_products ADD COLUMN temp1 TEXT", "DROP TABLE test_orders", "CREATE TABLE new_orders (id INTEGER PRIMARY KEY)"]})` → 3 statements, mixed risk. `summary.totalStatements = 3`, `summary.highestRisk ≥ "high"`.
+
+---
+
+## Phase 7: Schema Diff Stress (batched)
+
+57. `sqlite.introspection.schemaDiff({baseline: "current", target: "current"})` → self-diff: `summary.totalChanges: 0`, `severity: "none"`, all sections empty
+58. Mutation-diff workflow:
     ```javascript
     // Take baseline snapshot
     const baseline = (await sqlite.introspection.schemaSnapshot({compact: false})).snapshot;
@@ -189,21 +189,21 @@ All tools should return errors as structured objects instead of throwing. The ex
     if (diff.summary?.severity !== "low") failures.push(`expected severity 'low' for add-only, got '${diff.summary?.severity}'`);
     return {failures, success: failures.length === 0, diff: diff.summary};
     ```
-49. `sqlite.introspection.schemaDiff({baseline: "current", target: "current", sections: ["indexes"]})` → only `sections.indexes` populated; `sections.tables`/`views`/`triggers` absent
-50. `sqlite.introspection.schemaDiff({baseline: "current"})` → Zod error for missing `target` — must be handler error, NOT raw MCP
-51. `sqlite.introspection.schemaDiff({})` → Zod error for missing both `baseline` and `target`
+59. `sqlite.introspection.schemaDiff({baseline: "current", target: "current", sections: ["indexes"]})` → only `sections.indexes` populated; `sections.tables`/`views`/`triggers` absent
+60. `sqlite.introspection.schemaDiff({baseline: "current"})` → Zod error for missing `target` — must be handler error, NOT raw MCP
+61. `sqlite.introspection.schemaDiff({})` → Zod error for missing both `baseline` and `target`
 
 ---
 
-### Category 9: Error Message Quality
+## Phase 8: Error Message Quality (batched)
 
-52. `sqlite.introspection.queryPlan({sql: "DELETE FROM test_products WHERE id = 1"})` → structured error rejecting non-SELECT
-53. `sqlite.introspection.queryPlan({sql: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table
-54. `sqlite.introspection.queryPlan({})` → Zod error for missing `sql` — must be handler error, NOT raw MCP
-55. `sqlite.introspection.cascadeSimulator({})` → Zod error for missing `table`
-56. `sqlite.introspection.migrationRisks({})` → Zod error for missing `statements`
-57. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod error (min: 1)
-58. `sqlite.introspection.storageAnalysis({limit: -5})` → Zod error
+62. `sqlite.introspection.queryPlan({sql: "DELETE FROM test_products WHERE id = 1"})` → structured error rejecting non-SELECT
+63. `sqlite.introspection.queryPlan({sql: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table
+64. `sqlite.introspection.queryPlan({})` → Zod error for missing `sql` — must be handler error, NOT raw MCP
+65. `sqlite.introspection.cascadeSimulator({})` → Zod error for missing `table`
+66. `sqlite.introspection.migrationRisks({})` → Zod error for missing `statements`
+67. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod error (min: 1)
+68. `sqlite.introspection.storageAnalysis({limit: -5})` → Zod error
 
 ---
 

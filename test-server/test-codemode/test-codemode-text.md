@@ -1,4 +1,4 @@
-# db-mcp Tool Group Testing: [text]
+# db-mcp Code Mode Testing: [text]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -74,85 +74,85 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > Bundle items 1-14 into 1-2 `sqlite_execute_code` calls.
 
-1. `sqlite.text.regexMatch({table: "test_users", column: "email", pattern: "@gmail\\.com$"})` → at least 1 result
-2. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → domain parts
-3. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptp", maxDistance: 3})` → `Laptop Pro 15`
-4. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop"})` → `Laptop Pro 15`
-5. `sqlite.text.validate({table: "test_users", column: "email", pattern: "email"})` → all 9 valid
-6. `sqlite.text.validate({table: "test_users", column: "phone", pattern: "phone"})` → valid/invalid counts
-7. `sqlite.text.case({table: "test_users", column: "username", mode: "upper"})` → uppercased
-8. `sqlite.text.normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` → `Cafe Decor Light`
-9. `sqlite.text.split({table: "test_users", column: "email", delimiter: "@"})` → local + domain parts
-10. `sqlite.text.concat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated
-11. `sqlite.text.trim({table: "test_users", column: "bio"})` → trimmed
-12. `sqlite.text.substring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars
-13. `sqlite.text.sentiment({text: "I love this product"})` → sentiment scores
-14. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → finds `Mechanical Keyboard`
+8. `sqlite.text.regexMatch({table: "test_users", column: "email", pattern: "@gmail\\.com$"})` → at least 1 result
+9. `sqlite.text.regexExtract({table: "test_users", column: "email", pattern: "@([^.]+)\\.", groupIndex: 1})` → domain parts
+10. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptp", maxDistance: 3})` → `Laptop Pro 15`
+11. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop"})` → `Laptop Pro 15`
+12. `sqlite.text.validate({table: "test_users", column: "email", pattern: "email"})` → all 9 valid
+13. `sqlite.text.validate({table: "test_users", column: "phone", pattern: "phone"})` → valid/invalid counts
+14. `sqlite.text.case({table: "test_users", column: "username", mode: "upper"})` → uppercased
+15. `sqlite.text.normalize({table: "test_products", column: "name", mode: "strip_accents"})` → `Café Décor Light` → `Cafe Decor Light`
+16. `sqlite.text.split({table: "test_users", column: "email", delimiter: "@"})` → local + domain parts
+17. `sqlite.text.concat({table: "test_users", columns: ["username", "email"], separator: " - "})` → concatenated
+18. `sqlite.text.trim({table: "test_users", column: "bio"})` → trimmed
+19. `sqlite.text.substring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars
+20. `sqlite.text.sentiment({text: "I love this product"})` → sentiment scores
+21. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → finds `Mechanical Keyboard`
 
 ---
 
 ## Phase 2: FTS5 Tools `[NATIVE ONLY]` — Happy Paths (batched)
 
-15. `sqlite.text.ftsCreate({sourceTable: "test_users", columns: ["username", "bio"], tableName: "temp_cm_fts"})` → created
-16. `sqlite.text.ftsRebuild({table: "temp_cm_fts"})` → rebuilt
-17. `sqlite.text.ftsSearch({table: "temp_cm_fts", query: "test*"})` → results
-18. `sqlite.text.ftsMatchInfo({table: "temp_cm_fts", query: "test*"})` → match info with scoring
-19. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
-20. Cleanup: drop `temp_cm_fts` (automatically drops associated sync triggers)
-21. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite"})` → at least 1 result
-22. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "MCP protocol"})` → article 3
-23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
+22. `sqlite.text.ftsCreate({sourceTable: "test_users", columns: ["username", "bio"], tableName: "temp_cm_fts"})` → created
+23. `sqlite.text.ftsRebuild({table: "temp_cm_fts"})` → rebuilt
+24. `sqlite.text.ftsSearch({table: "temp_cm_fts", query: "test*"})` → results
+25. `sqlite.text.ftsMatchInfo({table: "temp_cm_fts", query: "test*"})` → match info with scoring
+26. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+27. Cleanup: drop `temp_cm_fts` (automatically drops associated sync triggers)
+28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite"})` → at least 1 result
+29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "MCP protocol"})` → article 3
+30. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
 
 ---
 
 ## Phase 3: Text Write Tool (temp table)
 
-24. `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
-25. Revert: `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
+31. `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@example.com", replaceWith: "@test.org", whereClause: "email LIKE '%@example.com'"})` → 1 row affected
+32. Revert: `sqlite.text.replace({table: "test_users", column: "email", searchPattern: "@test.org", replaceWith: "@example.com", whereClause: "email LIKE '%@test.org'"})` → 1 row reverted
 
 ---
 
 ## Phase 4: Text Domain Errors (batched)
 
-🔴 26. `sqlite.text.regexMatch({table: "nonexistent_xyz", column: "x", pattern: "."})` → `{success: false}`
-🔴 27. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → `{success: false}`
-🔴 28. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → `{success: false}`
+🔴 33. `sqlite.text.regexMatch({table: "nonexistent_xyz", column: "x", pattern: "."})` → `{success: false}`
+🔴 34. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → `{success: false}`
+🔴 35. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → `{success: false}`
 
 ---
 
 ## Phase 5: Text Zod Validation (batched)
 
-🔴 29. `sqlite.text.regexExtract({})` → `{success: false}`
-🔴 30. `sqlite.text.regexMatch({})` → `{success: false}`
-🔴 31. `sqlite.text.split({})` → `{success: false}`
-🔴 32. `sqlite.text.concat({})` → `{success: false}`
-🔴 33. `sqlite.text.replace({})` → `{success: false}`
-🔴 34. `sqlite.text.trim({})` → `{success: false}`
-🔴 35. `sqlite.text.case({})` → `{success: false}`
-🔴 36. `sqlite.text.substring({})` → `{success: false}`
-🔴 37. `sqlite.text.fuzzyMatch({})` → `{success: false}`
-🔴 38. `sqlite.text.phoneticMatch({})` → `{success: false}`
-🔴 39. `sqlite.text.normalize({})` → `{success: false}`
-🔴 40. `sqlite.text.validate({})` → `{success: false}`
-🔴 41. `sqlite.text.advancedSearch({})` → `{success: false}`
-🔴 42. `sqlite.text.sentiment({})` → `{success: false}`
-🔴 43. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 44. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 45. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 46. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
-🔴 47. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 36. `sqlite.text.regexExtract({})` → `{success: false}`
+🔴 37. `sqlite.text.regexMatch({})` → `{success: false}`
+🔴 38. `sqlite.text.split({})` → `{success: false}`
+🔴 39. `sqlite.text.concat({})` → `{success: false}`
+🔴 40. `sqlite.text.replace({})` → `{success: false}`
+🔴 41. `sqlite.text.trim({})` → `{success: false}`
+🔴 42. `sqlite.text.case({})` → `{success: false}`
+🔴 43. `sqlite.text.substring({})` → `{success: false}`
+🔴 44. `sqlite.text.fuzzyMatch({})` → `{success: false}`
+🔴 45. `sqlite.text.phoneticMatch({})` → `{success: false}`
+🔴 46. `sqlite.text.normalize({})` → `{success: false}`
+🔴 47. `sqlite.text.validate({})` → `{success: false}`
+🔴 48. `sqlite.text.advancedSearch({})` → `{success: false}`
+🔴 49. `sqlite.text.sentiment({})` → `{success: false}`
+🔴 50. `sqlite.text.ftsCreate({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 51. `sqlite.text.ftsSearch({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 52. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 53. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 54. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
 
 ---
 
-## Phase 5.5: Gotcha Edge Cases (batched)
+## Phase 6: Gotcha Edge Cases (batched)
 
-48. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
-49. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
-50. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
+55. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
+56. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
+57. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
 
 ---
 
-## Phase 6: Multi-Step Workflow
+## Phase 7: Multi-Step Workflow
 
 ### 6.1 — Text analysis pipeline
 
