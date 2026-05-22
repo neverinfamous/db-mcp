@@ -24,6 +24,7 @@
 ### Changed
 
 - Updated `C:\Users\chris\Desktop\db-mcp\test-server\tool-reference.md` to include both the MCP tool name and matching Code Mode method name for every single tool.
+- Fixed inaccuracies and standardized prefix conventions in `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` to establish absolute prefix consistency and file accuracy across all tool groups.
 - Standardized `CHANGELOG.md` to adhere to Keep a Changelog standards, consolidating headers, grouping entries, and eliminating duplicates.
 - Updated `sqlite_create_table` to support the `strict` parameter (for `STRICT` tables), `foreignKeys`, and `checkConstraints` natively.
 - Updated `sqlite_describe_table` to detect and report virtual or stored generated columns and their expressions via `PRAGMA table_xinfo`.

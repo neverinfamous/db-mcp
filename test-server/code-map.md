@@ -154,67 +154,69 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | **codemode**      | `codemode.ts`                             | 1     | `sqlite_execute_code`                                                                                                         |
 | **core**          | `core/queries.ts`                         | 2     | `sqlite_read_query`, `sqlite_write_query`                                                                                     |
 |                   | `core/convenience.ts`                     | 5     | `sqlite_upsert`, `sqlite_batch_insert`, `sqlite_count`, `sqlite_exists`, `sqlite_truncate`                                    |
-|                   | `core/tables.ts`                          | 4     | `create_table`, `list_tables`, `describe_table`, `drop_table`                                                                 |
-|                   | `core/indexes.ts`                         | 3     | `get_indexes`, `create_index`, `drop_index`                                                                                   |
-|                   | `core/triggers.ts`                        | 3     | `list_triggers`, `create_trigger`, `drop_trigger`                                                                             |
-|                   | `core/alter-table.ts`                     | 1     | `alter_table`                                                                                                                 |
-|                   | `core/constraints.ts`                     | 1     | `list_constraints`                                                                                                            |
-| **json**          | `json-operations/crud.ts`                 | 3     | `json_insert`, `json_update`, `json_select`                                                                                   |
-|                   | `json-operations/query.ts`                | 4     | `json_query`, `json_validate_path`, `json_merge`, `json_analyze_schema`                                                       |
-|                   | `json-operations/transform.ts`            | 4     | `json_valid`, `json_extract`, `json_set`, `json_remove`                                                                       |
-|                   | `json-helpers/read.ts`                    | 7     | `json_type`, `json_array_length`, `json_keys`, `json_each`, `json_pretty`, `json_storage_info`, `json_group_array`            |
-|                   | `json-helpers/write.ts`                   | 5     | `json_array_append`, `json_group_object`, `jsonb_convert`, `json_normalize_column`, `create_json_collection`                  |
-|                   | `json-operations/diff.ts`                 | 1     | `json_diff`                                                                                                                   |
-| **text**          | `text/regex.ts`                           | 2     | `regex_extract`, `regex_match`                                                                                                |
-|                   | `text/formatting.ts`                      | 6     | `text_split`, `text_concat`, `text_replace`, `text_trim`, `text_case`, `text_substring`                                       |
-|                   | `text/search.ts`                          | 3     | `fuzzy_match`, `phonetic_match`, `advanced_search`                                                                            |
-|                   | `text/validate.ts`                        | 2     | `text_normalize`, `text_validate`                                                                                             |
-|                   | `text/sentiment.ts`                       | 1     | `text_sentiment`                                                                                                              |
-| **text** (FTS5)   | `fts.ts`                                  | 5     | `fts_create`, `fts_search`, `fts_rebuild`, `fts_match_info`, `fts_headline`                                                   |
-| **stats**         | `stats/basic.ts`                          | 8     | `stats_basic`, `stats_count`, `stats_group_by`, `stats_histogram`, `stats_percentile`, `stats_correlation`, `stats_top_n`, `stats_sample` |
-|                   | `stats/advanced.ts`                       | 6     | `stats_distinct`, `stats_summary`, `stats_frequency`, `stats_outliers`, `stats_regression`, `stats_hypothesis`                |
-|                   | `stats/anomaly-detection.ts`              | 2     | `stats_detect_anomalies`, `stats_detect_bloat`                                                                                |
-|                   | `stats/schema-risks.ts`                   | 1     | `stats_detect_schema_risks`                                                                                                   |
-| **vector**        | `vector/storage.ts`                       | 4     | `vector_create_table`, `vector_store`, `vector_batch_store`, `vector_delete`                                                  |
-|                   | `vector/search.ts`                        | 2     | `vector_search`, `vector_get`                                                                                                 |
-|                   | `vector/metadata.ts`                      | 5     | `vector_count`, `vector_stats`, `vector_dimensions`, `vector_normalize`, `vector_distance`                                    |
-| **geo**           | `geo.ts`                                  | 4     | `geo_distance`, `geo_nearby`, `geo_bounding_box`, `geo_cluster`                                                               |
-| **admin**         | `admin/backup/create.ts`                  | 2     | `backup`, `vacuum_into`                                                                                                       |
-|                   | `admin/backup/restore.ts`                 | 1     | `restore`                                                                                                                     |
-|                   | `admin/backup/analyze.ts`                 | 1     | `analyze`                                                                                                                     |
-|                   | `admin/backup/integrity.ts`               | 1     | `integrity_check`                                                                                                             |
-|                   | `admin/backup/optimize.ts`                | 1     | `optimize`                                                                                                                    |
-|                   | `admin/verify.ts`                         | 2     | `verify_backup`, `index_stats`                                                                                                |
-|                   | `admin/pragma.ts`                         | 8     | `pragma_compile_options`, `pragma_database_list`, `pragma_optimize`, `pragma_settings`, `pragma_table_info`, `append_insight`, `attach_database`, `detach_database` |
-|                   | `virtual/views.ts`                        | 3     | `create_view`, `list_views`, `drop_view`                                                                                      |
-|                   | `virtual/vtable.ts`                       | 5     | `list_virtual_tables`, `virtual_table_info`, `drop_virtual_table`, `create_csv_table`, `analyze_csv_schema`                   |
-|                   | `virtual/extensions.ts`                   | 2     | `create_rtree_table`, `create_series_table`                                                                                   |
-|                   | `virtual/analysis.ts`                     | 3     | `generate_series`, `dbstat`, `vacuum`                                                                                         |
-|                   | `admin/reindex.ts`                        | 1     | `reindex`                                                                                                                     |
-|                   | `admin/wal.ts`                            | 1     | `wal`                                                                                                                         |
-| **introspection** | `introspection/graph/tools.ts`            | 3     | `dependency_graph`, `topological_sort`, `cascade_simulator`                                                                   |
-|                   | `introspection/analysis/constraints.ts`   | 1     | `constraint_analysis`                                                                                                         |
-|                   | `introspection/analysis/risks.ts`         | 1     | `migration_risks`                                                                                                             |
-|                   | `introspection/analysis/snapshot.ts`      | 1     | `schema_snapshot` (also exports `captureSchemaSnapshot` helper)                                           |
-|                   | `introspection/analysis/diff.ts`          | 1     | `schema_diff`                                                                                                             |
-|                   | `introspection/diagnostics/storage.ts`    | 1     | `storage_analysis`                                                                                                            |
-|                   | `introspection/diagnostics/indexes.ts`    | 1     | `index_audit`                                                                                                                 |
-|                   | `introspection/diagnostics/query-plan.ts` | 1     | `query_plan`                                                                                                                  |
-| **migration**     | `migration/tracking/init.ts`              | 1     | `migration_init`                                                                                                              |
-|                   | `migration/tracking/record.ts`            | 1     | `migration_record`                                                                                                            |
-|                   | `migration/tracking/apply.ts`             | 1     | `migration_apply`                                                                                                             |
-|                   | `migration/tracking/rollback.ts`          | 1     | `migration_rollback`                                                                                                          |
-|                   | `migration/tracking/history.ts`           | 1     | `migration_history`                                                                                                           |
-|                   | `migration/tracking/status.ts`            | 1     | `migration_status`                                                                                                            |
+|                   | `core/tables.ts`                          | 4     | `sqlite_create_table`, `sqlite_list_tables`, `sqlite_describe_table`, `sqlite_drop_table`                                     |
+|                   | `core/indexes.ts`                         | 3     | `sqlite_get_indexes`, `sqlite_create_index`, `sqlite_drop_index`                                                              |
+|                   | `core/triggers.ts`                        | 3     | `sqlite_list_triggers`, `sqlite_create_trigger`, `sqlite_drop_trigger`                                                        |
+|                   | `core/alter-table.ts`                     | 1     | `sqlite_alter_table`                                                                                                          |
+|                   | `core/constraints.ts`                     | 1     | `sqlite_list_constraints`                                                                                                     |
+|                   | `core/datetime.ts`                        | 2     | `sqlite_date_add`, `sqlite_date_diff`                                                                                         |
+| **json**          | `json-operations/crud.ts`                 | 7     | `sqlite_json_valid`, `sqlite_json_extract`, `sqlite_json_set`, `sqlite_json_remove`, `sqlite_json_type`, `sqlite_json_array_length`, `sqlite_json_array_append` |
+|                   | `json-operations/query.ts`                | 4     | `sqlite_json_keys`, `sqlite_json_each`, `sqlite_json_group_array`, `sqlite_json_group_object`                                 |
+|                   | `json-operations/transform.ts`            | 4     | `sqlite_json_pretty`, `sqlite_jsonb_convert`, `sqlite_json_storage_info`, `sqlite_json_normalize_column`                      |
+|                   | `json-operations/security.ts`             | 1     | `sqlite_json_security_scan`                                                                                                   |
+|                   | `json-operations/diff.ts`                 | 1     | `sqlite_json_diff`                                                                                                            |
+|                   | `json-helpers/read.ts`                    | 4     | `sqlite_json_select`, `sqlite_json_query`, `sqlite_json_validate_path`, `sqlite_json_analyze_schema`                          |
+|                   | `json-helpers/write.ts`                   | 4     | `sqlite_json_insert`, `sqlite_json_update`, `sqlite_json_merge`, `sqlite_create_json_collection`                              |
+| **text**          | `text/regex.ts`                           | 2     | `sqlite_regex_extract`, `sqlite_regex_match`                                                                                  |
+|                   | `text/formatting.ts`                      | 6     | `sqlite_text_split`, `sqlite_text_concat`, `sqlite_text_replace`, `sqlite_text_trim`, `sqlite_text_case`, `sqlite_text_substring` |
+|                   | `text/search.ts`                          | 3     | `sqlite_fuzzy_match`, `sqlite_phonetic_match`, `sqlite_advanced_search`                                                       |
+|                   | `text/validate.ts`                        | 2     | `sqlite_text_normalize`, `sqlite_text_validate`                                                                               |
+|                   | `text/sentiment.ts`                       | 1     | `sqlite_text_sentiment`                                                                                                       |
+| **text** (FTS5)   | `fts.ts`                                  | 5     | `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`, `sqlite_fts_headline`                |
+| **stats**         | `stats/basic.ts`                          | 8     | `sqlite_stats_basic`, `sqlite_stats_count`, `sqlite_stats_group_by`, `sqlite_stats_histogram`, `sqlite_stats_percentile`, `sqlite_stats_correlation`, `sqlite_stats_top_n`, `sqlite_stats_sample` |
+|                   | `stats/advanced.ts`                       | 6     | `sqlite_stats_distinct`, `sqlite_stats_summary`, `sqlite_stats_frequency`, `sqlite_stats_outliers`, `sqlite_stats_regression`, `sqlite_stats_hypothesis` |
+|                   | `stats/anomaly-detection.ts`              | 2     | `sqlite_stats_detect_anomalies`, `sqlite_stats_detect_bloat`                                                                  |
+|                   | `stats/schema-risks.ts`                   | 1     | `sqlite_stats_detect_schema_risks`                                                                                            |
+| **vector**        | `vector/storage.ts`                       | 4     | `sqlite_vector_create_table`, `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_delete`                      |
+|                   | `vector/search.ts`                        | 2     | `sqlite_vector_search`, `sqlite_vector_get`                                                                                   |
+|                   | `vector/metadata.ts`                      | 5     | `sqlite_vector_count`, `sqlite_vector_stats`, `sqlite_vector_dimensions`, `sqlite_vector_normalize`, `sqlite_vector_distance` |
+| **geo**           | `geo.ts`                                  | 4     | `sqlite_geo_distance`, `sqlite_geo_nearby`, `sqlite_geo_bounding_box`, `sqlite_geo_cluster`                                   |
+| **admin**         | `admin/backup/create.ts`                  | 2     | `sqlite_backup`, `sqlite_vacuum_into`                                                                                         |
+|                   | `admin/backup/restore.ts`                 | 1     | `sqlite_restore`                                                                                                              |
+|                   | `admin/backup/analyze.ts`                 | 1     | `sqlite_analyze`                                                                                                              |
+|                   | `admin/backup/integrity.ts`               | 1     | `sqlite_integrity_check`                                                                                                      |
+|                   | `admin/backup/optimize.ts`                | 1     | `sqlite_optimize`                                                                                                             |
+|                   | `admin/verify.ts`                         | 2     | `sqlite_verify_backup`, `sqlite_index_stats`                                                                                  |
+|                   | `admin/pragma.ts`                         | 8     | `sqlite_pragma_compile_options`, `sqlite_pragma_database_list`, `sqlite_pragma_optimize`, `sqlite_pragma_settings`, `sqlite_pragma_table_info`, `sqlite_append_insight`, `sqlite_attach_database`, `sqlite_detach_database` |
+|                   | `virtual/views.ts`                        | 3     | `sqlite_create_view`, `sqlite_list_views`, `sqlite_drop_view`                                                                 |
+|                   | `virtual/vtable.ts`                       | 5     | `sqlite_list_virtual_tables`, `sqlite_virtual_table_info`, `sqlite_drop_virtual_table`, `sqlite_create_csv_table`, `sqlite_analyze_csv_schema` |
+|                   | `virtual/extensions.ts`                   | 2     | `sqlite_create_rtree_table`, `sqlite_create_series_table`                                                                     |
+|                   | `virtual/analysis.ts`                     | 3     | `sqlite_generate_series`, `sqlite_dbstat`, `sqlite_vacuum`                                                                    |
+|                   | `admin/reindex.ts`                        | 1     | `sqlite_reindex`                                                                                                              |
+|                   | `admin/wal.ts`                            | 1     | `sqlite_wal`                                                                                                                  |
+| **introspection** | `introspection/graph/tools.ts`            | 3     | `sqlite_dependency_graph`, `sqlite_topological_sort`, `sqlite_cascade_simulator`                                              |
+|                   | `introspection/analysis/constraints.ts`   | 1     | `sqlite_constraint_analysis`                                                                                                  |
+|                   | `introspection/analysis/risks.ts`         | 1     | `sqlite_migration_risks`                                                                                                      |
+|                   | `introspection/analysis/snapshot.ts`      | 1     | `sqlite_schema_snapshot`                                                                                                      |
+|                   | `introspection/analysis/diff.ts`          | 1     | `sqlite_schema_diff`                                                                                                          |
+|                   | `introspection/diagnostics/storage.ts`    | 1     | `sqlite_storage_analysis`                                                                                                     |
+|                   | `introspection/diagnostics/indexes.ts`    | 1     | `sqlite_index_audit`                                                                                                          |
+|                   | `introspection/diagnostics/query-plan.ts` | 1     | `sqlite_query_plan`                                                                                                           |
+| **migration**     | `migration/tracking/init.ts`              | 1     | `sqlite_migration_init`                                                                                                       |
+|                   | `migration/tracking/record.ts`            | 1     | `sqlite_migration_record`                                                                                                     |
+|                   | `migration/tracking/apply.ts`             | 1     | `sqlite_migration_apply`                                                                                                      |
+|                   | `migration/tracking/rollback.ts`          | 1     | `sqlite_migration_rollback`                                                                                                   |
+|                   | `migration/tracking/history.ts`           | 1     | `sqlite_migration_history`                                                                                                    |
+|                   | `migration/tracking/status.ts`            | 1     | `sqlite_migration_status`                                                                                                     |
 
 ### Native-Only Handlers (`src/adapters/sqlite-native/tools/`)
 
-| Group                | Handler File             | Tools | Notes                                                                                                              |
-| -------------------- | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------ |
-| **stats** (window)   | `window.ts`              | 6     | `window_row_number`, `window_rank`, `window_lag_lead`, `window_running_total`, `window_moving_avg`, `window_ntile` |
-| **transactions**     | `transactions.ts`        | 8     | `transaction_begin/status/commit/rollback/savepoint/release/rollback_to/execute`                                   |
-| **geo** (SpatiaLite) | `spatialite/tools.ts`    | 4     | `spatialite_load/create_table/query/index`                                                                         |
-|                      | `spatialite/analysis.ts` | 3     | `spatialite_analyze/transform/import`                                                                              |
+| Group                | Handler File             | Tools | Notes                                                                                                                                                 |
+| -------------------- | ------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **stats** (window)   | `window.ts`              | 6     | `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile` |
+| **transactions**     | `transactions.ts`        | 8     | `sqlite_transaction_begin`, `sqlite_transaction_status`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute` |
+| **geo** (SpatiaLite) | `spatialite/tools.ts`    | 4     | `sqlite_spatialite_load`, `sqlite_spatialite_create_table`, `sqlite_spatialite_query`, `sqlite_spatialite_index`                                      |
+|                      | `spatialite/analysis.ts` | 3     | `sqlite_spatialite_analyze`, `sqlite_spatialite_transform`, `sqlite_spatialite_import`                                                                |
 
 ### Utility Files (no tools, shared helpers)
 
