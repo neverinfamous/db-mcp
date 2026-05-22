@@ -378,7 +378,7 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Complete 151/125 tool inventory with descriptions                                                                  |
+| `test-server/tool-reference.md`              | Complete 167/140 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
 | `test-server/test-tool-groups/`              | 10 self-contained test prompts — one per tool group. Direct calls only.                                            |
 | `test-server/test-codemode/`                 | 10 self-contained test prompts — one per tool group. Code Mode execution only.                                     |

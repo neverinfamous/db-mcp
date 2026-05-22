@@ -118,6 +118,6 @@ CMD ["--transport", "stdio", "--sqlite-native", "/app/data/database.db"]
 
 # Labels for Docker Hub
 LABEL maintainer="Adamic.tech"
-LABEL description="SQLite MCP Server with OAuth 2.1, HTTP/SSE transport, 151 tools, and smart tool filtering"
+LABEL description="SQLite MCP Server with OAuth 2.1, HTTP/SSE transport, 167 tools, and smart tool filtering"
 LABEL org.opencontainers.image.source="https://github.com/neverinfamous/db-mcp"
 LABEL io.modelcontextprotocol.server.name="io.github.neverinfamous/db-mcp"

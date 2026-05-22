@@ -90,7 +90,7 @@ proc.stdout.on("data", (chunk) => {
         }
 
         // Verification
-        const expectedCount = 164; // 161 Native tools (including codemode) + 3 built-in tools
+        const expectedCount = 167; // 164 Native tools (including codemode) + 3 built-in tools
         const hasExpectedCount = tools.length === expectedCount;
         const allHaveAnnotations = missing === 0;
         const allAreFalse =

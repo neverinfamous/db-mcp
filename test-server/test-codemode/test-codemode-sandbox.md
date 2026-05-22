@@ -15,7 +15,7 @@
 
 > When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
 
-- **Phase 2.1** (top-level help): Expect fewer than 10 groups — `transactions` is not listed (0 tools registered in WASM). `totalMethods` will be ~125 instead of ~151.
+- **Phase 2.1** (top-level help): Expect fewer than 10 groups — `transactions` is not listed (0 tools registered in WASM). `totalMethods` will be ~140 instead of ~167.
 - **Phase 2.3** (all groups exist): The `transactions` group property exists on the `sqlite` object but returns 0 methods. Adjust the assertion to allow 0 methods for `transactions`.
 - **Phase 4.5** (stats read-only): Stats tools are fully WASM-compatible — no adjustment needed.
 
@@ -143,7 +143,7 @@ Expected: `{success: true}` — sandbox must serialize deeply nested objects.
 return await sqlite.help();
 ```
 
-Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 125.
+Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 140.
 
 ### 2.2 — Group help (core)
 
