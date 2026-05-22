@@ -1,11 +1,14 @@
 ## [Unreleased]
 
 ### Fixed
+
 - Fixed `sqlite_list_triggers` not showing triggers created on temporary tables by querying `sqlite_temp_master` alongside `sqlite_master`.
 - Fixed `sqlite_drop_trigger` incorrectly returning success when dropping a non-existent trigger (changed `DropTriggerSchema` `ifExists` default to `false`).
 - Fixed `sqlite_date_diff` to correctly handle string and numeric literal values without aggressively quoting them as column identifiers.
 - Fixed `sqlite_list_indexes`, `sqlite_create_index`, `sqlite_drop_index`, `sqlite_create_table`, `sqlite_describe_table`, `sqlite_drop_table`, `sqlite_alter_table`, and `sqlite_list_constraints` to correctly handle temporary objects by querying `sqlite_temp_master` in addition to `sqlite_master`.
+
 ### Added
+
 - `sqlite_list_triggers` — list database triggers with optional table filter (core group)
 - `sqlite_list_constraints` — unified view of table PK, FK, UNIQUE, and CHECK constraints (core group)
 - `sqlite_stats_sample` — random sampling for exploratory analysis with configurable size (stats group)
@@ -26,6 +29,7 @@
 - `sqlite_wal` — WAL mode management: status, enable, disable, checkpoint with mode selection (admin group)
 
 ### Changed
+
 - `sqlite_create_table` now accepts `strict: true` parameter to create STRICT tables (SQLite 3.37+) that enforce column type checking.
 - `sqlite_describe_table` now detects and reports generated columns (VIRTUAL/STORED) including their expression, via PRAGMA table_xinfo enrichment.
 - Refactored `mcp-server.ts` into smaller registration modules (`built-in-tools.ts`, `help-resources.ts`, `audit-tools.ts`) to adhere to the 500-line soft limit.

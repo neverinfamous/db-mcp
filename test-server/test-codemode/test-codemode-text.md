@@ -194,35 +194,35 @@ await sqlite.text.ftsCreate({
   columns: ["username", "bio"],
   tableName: "temp_cm_fts_rebuild",
 });
-// Search BEFORE rebuild — should return 0 results
+// Search BEFORE rebuild — should return >0 results since ftsCreate now auto-populates
 const before = await sqlite.text.ftsSearch({
   table: "temp_cm_fts_rebuild",
-  query: "admin",
+  query: "developer",
 });
-if (before.rows?.length > 0)
+if (!before.results || before.results.length === 0)
   failures.push(
-    "FTS5 search returned results before rebuild — gotcha #5 may not apply",
+    "FTS5 search returned 0 results before rebuild — ftsCreate did not auto-populate the index",
   );
-// Rebuild to populate index
+// Rebuild to ensure the tool itself works without error
 await sqlite.text.ftsRebuild({ table: "temp_cm_fts_rebuild" });
 // Search AFTER rebuild — should return results
 const after = await sqlite.text.ftsSearch({
   table: "temp_cm_fts_rebuild",
-  query: "admin",
+  query: "developer",
 });
-if (!after.rows || after.rows.length === 0)
+if (!after.results || after.results.length === 0)
   failures.push("FTS5 search returned 0 results after rebuild");
 // Cleanup
-await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_fts_rebuild");
+await sqlite.admin.dropTable({table: "temp_cm_fts_rebuild"});
 return {
   failures,
   success: failures.length === 0,
-  beforeCount: before.rows?.length || 0,
-  afterCount: after.rows?.length || 0,
+  beforeCount: before.results?.length || 0,
+  afterCount: after.results?.length || 0,
 };
 ```
 
-Expected: `beforeCount: 0`, `afterCount: > 0` — validates that `ftsRebuild` is required after `ftsCreate` to populate the index (gotcha #5).
+Expected: `beforeCount: > 0`, `afterCount: > 0` — validates that `ftsCreate` automatically populates the index (bypassing old gotcha expectations), and that `ftsRebuild` executes successfully.
 
 ---
 
