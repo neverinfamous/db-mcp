@@ -17,7 +17,6 @@ Thank you for your interest in contributing to db-mcp! This project is built by 
 - **Node.js 24+** (see `engines` in `package.json`)
 - **npm** (comes with Node.js)
 - **Git** (for version control)
-- **PostgreSQL** (local instance or Docker)
 - **Docker** (optional, for container testing)
 
 ### Local Development
@@ -70,7 +69,7 @@ We especially welcome contributions in these areas:
 
 - **Bug fixes** and stability improvements
 - **Performance improvements** (faster tool dispatch, reduced overhead, connection pool tuning)
-- **New tools** that extend PostgreSQL capabilities within existing groups
+- **New tools** that extend SQLite capabilities within existing groups
 - **Better error messages** with actionable remediation hints
 
 ### 🔍 Medium Priority

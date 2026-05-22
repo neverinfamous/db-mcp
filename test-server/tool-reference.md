@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **161 Native / 132 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **162 Native / 135 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -235,7 +235,7 @@ Geospatial operations — Haversine distance/radius queries and SpatiaLite advan
 
 ---
 
-## introspection (9 tools + Code Mode)
+## introspection (10 tools + Code Mode)
 
 Read-only schema analysis — dependency graphs, cascade simulation, diagnostics, and migration risk assessment.
 
@@ -245,6 +245,7 @@ Read-only schema analysis — dependency graphs, cascade simulation, diagnostics
 | `sqlite_topological_sort`    | Generate a safe DDL execution order for tables based on foreign key dependencies. `create` direction lists parent tables first; `drop` direction lists child tables first.                       |
 | `sqlite_cascade_simulator`   | Simulate the impact of a DELETE, DROP, or TRUNCATE on a table. Shows which tables would be affected through cascading foreign key actions, with severity scoring.                                |
 | `sqlite_schema_snapshot`     | Generate a comprehensive snapshot of the database schema — tables, views, indexes, and triggers — in a single call.                                                                              |
+| `sqlite_schema_diff`         | Compare two schema snapshots and report structured drift — added, removed, and modified tables, views, indexes, and triggers. Accepts 'current' for live DB or inline snapshot objects.           |
 | `sqlite_constraint_analysis` | Analyze database schema for constraint health issues: missing primary keys, columns that should be NOT NULL, foreign keys without indexes, and tables that could benefit from FK relationships.  |
 | `sqlite_migration_risks`     | Analyze DDL statements for SQLite-specific migration risks. Detects ALTER TABLE limitations, large table operations, column type changes, destructive operations, and FTS5 rebuild requirements. |
 | `sqlite_storage_analysis`    | Analyze database storage health: fragmentation, size breakdown per table, and optimization recommendations.                                                                                      |

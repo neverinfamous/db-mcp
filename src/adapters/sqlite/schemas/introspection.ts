@@ -1,8 +1,8 @@
 /**
- * Introspection Tool Output Schemas (9 tools)
+ * Introspection Tool Output Schemas (10 tools)
  *
  * Graph tools: dependency_graph, topological_sort, cascade_simulator
- * Analysis tools: schema_snapshot, constraint_analysis, migration_risks
+ * Analysis tools: schema_snapshot, schema_diff, constraint_analysis, migration_risks
  * Diagnostics tools: storage_analysis, index_audit, query_plan
  */
 
@@ -105,57 +105,61 @@ export const CascadeSimulatorOutputSchema = z
 // =============================================================================
 
 /**
+ * Reusable snapshot shape — shared between sqlite_schema_snapshot output
+ * and sqlite_schema_diff input so both reference the same definition.
+ */
+export const SchemaSnapshotShape = z.object({
+  tables: z
+    .array(
+      z.object({
+        name: z.string(),
+        columnCount: z.number(),
+        rowCount: z.number().optional(),
+        columns: z
+          .array(
+            z.object({
+              name: z.string(),
+              type: z.string(),
+              nullable: z.boolean(),
+              primaryKey: z.boolean(),
+              defaultValue: z.unknown().optional(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .optional(),
+  views: z
+    .array(z.object({ name: z.string(), sql: z.string() }))
+    .optional(),
+  indexes: z
+    .array(
+      z.object({
+        name: z.string(),
+        table: z.string(),
+        unique: z.boolean(),
+        sql: z.string(),
+      }),
+    )
+    .optional(),
+  triggers: z
+    .array(
+      z.object({
+        name: z.string(),
+        table: z.string(),
+        sql: z.string(),
+      }),
+    )
+    .optional(),
+});
+
+/**
  * sqlite_schema_snapshot output
  */
 export const SchemaSnapshotOutputSchema = z
   .object({
     success: z.boolean(),
-    snapshot: z
-      .object({
-        tables: z
-          .array(
-            z.object({
-              name: z.string(),
-              columnCount: z.number(),
-              rowCount: z.number().optional(),
-              columns: z
-                .array(
-                  z.object({
-                    name: z.string(),
-                    type: z.string(),
-                    nullable: z.boolean(),
-                    primaryKey: z.boolean(),
-                    defaultValue: z.unknown().optional(),
-                  }),
-                )
-                .optional(),
-            }),
-          )
-          .optional(),
-        views: z
-          .array(z.object({ name: z.string(), sql: z.string() }))
-          .optional(),
-        indexes: z
-          .array(
-            z.object({
-              name: z.string(),
-              table: z.string(),
-              unique: z.boolean(),
-              sql: z.string(),
-            }),
-          )
-          .optional(),
-        triggers: z
-          .array(
-            z.object({
-              name: z.string(),
-              table: z.string(),
-              sql: z.string(),
-            }),
-          )
-          .optional(),
-      })
-      .optional(),
+    snapshot: SchemaSnapshotShape.optional(),
     stats: z
       .object({
         tables: z.number(),
@@ -558,3 +562,138 @@ export const CascadeSimulatorSchema = z.object({
     ),
 });
 export type CascadeSimulatorInput = z.infer<typeof CascadeSimulatorSchema>;
+
+// =============================================================================
+// Schema Diff Schemas
+// =============================================================================
+
+/** Change descriptor for a single column-level diff */
+const ColumnChangeSchema = z.object({
+  type: z.enum([
+    "column_added",
+    "column_removed",
+    "column_type_changed",
+    "column_nullable_changed",
+    "column_pk_changed",
+    "column_default_changed",
+  ]),
+  column: z.string().optional(),
+  baseline: z.string().optional(),
+  target: z.string().optional(),
+});
+
+/** Change descriptor for a SQL-body diff (views, indexes, triggers) */
+const SqlBodyChangeSchema = z.object({
+  name: z.string(),
+  table: z.string().optional(),
+  baselineSql: z.string(),
+  targetSql: z.string(),
+});
+
+/** Named item with table association (indexes, triggers) */
+const NamedWithTableSchema = z.object({
+  name: z.string(),
+  table: z.string(),
+});
+
+/**
+ * sqlite_schema_diff output
+ */
+export const SchemaDiffOutputSchema = z
+  .object({
+    success: z.boolean(),
+    sections: z
+      .object({
+        tables: z
+          .object({
+            added: z.array(z.object({ name: z.string() })),
+            removed: z.array(z.object({ name: z.string() })),
+            modified: z.array(
+              z.object({
+                name: z.string(),
+                changes: z.array(ColumnChangeSchema),
+              }),
+            ),
+          })
+          .optional(),
+        views: z
+          .object({
+            added: z.array(z.object({ name: z.string() })),
+            removed: z.array(z.object({ name: z.string() })),
+            modified: z.array(SqlBodyChangeSchema),
+          })
+          .optional(),
+        indexes: z
+          .object({
+            added: z.array(NamedWithTableSchema),
+            removed: z.array(NamedWithTableSchema),
+            modified: z.array(SqlBodyChangeSchema),
+          })
+          .optional(),
+        triggers: z
+          .object({
+            added: z.array(NamedWithTableSchema),
+            removed: z.array(NamedWithTableSchema),
+            modified: z.array(SqlBodyChangeSchema),
+          })
+          .optional(),
+      })
+      .optional(),
+    summary: z
+      .object({
+        totalChanges: z.number(),
+        added: z.number(),
+        removed: z.number(),
+        modified: z.number(),
+        severity: z.enum(["none", "low", "medium", "high"]),
+      })
+      .optional(),
+    comparedAt: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+/**
+ * sqlite_schema_diff input
+ *
+ * Both baseline and target accept either "current" (capture live DB schema)
+ * or an inline snapshot object from a previous sqlite_schema_snapshot call.
+ */
+const VALID_DIFF_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
+
+const coerceDiffSections = (val: unknown): unknown =>
+  Array.isArray(val)
+    ? val.filter(
+        (v) =>
+          typeof v === "string" &&
+          (VALID_DIFF_SECTIONS as readonly string[]).includes(v),
+      )
+    : val;
+
+export const SchemaDiffSchema = z
+  .object({
+    baseline: z
+      .union([z.literal("current"), SchemaSnapshotShape])
+      .describe(
+        "Baseline schema — 'current' to snapshot live DB, or an inline snapshot object from a previous sqlite_schema_snapshot call",
+      ),
+    target: z
+      .union([z.literal("current"), SchemaSnapshotShape])
+      .describe(
+        "Target schema to compare against baseline — 'current' to snapshot live DB, or an inline snapshot object",
+      ),
+    sections: z
+      .preprocess(
+        coerceDiffSections,
+        z
+          .array(z.enum(["tables", "views", "indexes", "triggers"]))
+          .optional(),
+      )
+      .describe("Sections to compare (default: all)"),
+    excludeSystemTables: z
+      .boolean()
+      .optional()
+      .describe(
+        "Exclude SpatiaLite system tables when capturing live schema (default: true)",
+      ),
+  });
+export type SchemaDiffInput = z.infer<typeof SchemaDiffSchema>;

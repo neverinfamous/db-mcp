@@ -33,3 +33,5 @@ export {
   quoteIdentifier,
   needsQuoting,
 } from "./identifiers.js";
+
+export { validateSameDirPath } from "./validate-path.js";

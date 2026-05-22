@@ -75,7 +75,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.pragmaCompileOptions()`                           | Includes `ENABLE_FTS5`                    | Shows `ENABLE_FTS3` instead                                           |
 | `sqlite.admin.pragmaCompileOptions({filter: "FTS"})`            | Matches FTS5                              | Matches FTS3                                                          |
 | `sqlite.core.listTables()` / `sqlite.admin.listVirtualTables()` | `test_articles_fts` present and queryable | `test_articles_fts` may appear in sqlite_master but FTS5 queries fail |
-| `sqlite.help()`                                                 | `totalMethods` reflects 158 tools         | `totalMethods` reflects 132 tools                                     |
+| `sqlite.help()`                                                 | `totalMethods` reflects 162 tools         | `totalMethods` reflects 135 tools                                     |
 | Phase 2.1 (sandbox prompt) top-level help                       | 10 groups listed                          | `transactions` group shows 0 methods                                  |
 
 #### WASM-Specific Degradation Prompt
@@ -87,19 +87,19 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 | File                                | Group         | Tools                                                                    |
 | ----------------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `test-codemode-sandbox.md`          | sandbox       | Sandbox basics, API discoverability, security, readonly, state isolation |
-| `test-codemode-core.md`             | core          | 16                                                                       |
-| `test-codemode-json.md`             | json          | 25                                                                       |
+| `test-codemode-core.md`             | core          | 18                                                                       |
+| `test-codemode-json.md`             | json          | 26                                                                       |
 | `test-codemode-text.md`             | text          | 19N/14W                                                                  |
-| `test-codemode-stats.md`            | stats         | 23N/17W                                                                  |
+| `test-codemode-stats.md`            | stats         | 24N/18W                                                                  |
 | `test-codemode-vector.md`           | vector        | 11                                                                       |
-| `test-codemode-admin.md`            | admin         | 29                                                                       |
+| `test-codemode-admin.md`            | admin         | 30N/30W                                                                  |
 | `test-codemode-transactions.md`     | transactions  | 8 `[NATIVE ONLY]`                                                        |
 | `test-codemode-geo.md`              | geo           | 11N/4W                                                                   |
-| `test-codemode-introspection.md`    | introspection | 9                                                                        |
+| `test-codemode-introspection.md`    | introspection | 10                                                                       |
 | `test-codemode-migration.md`        | migration     | 6                                                                        |
 | `test-codemode-wasm-degradation.md` | cross-group   | WASM-only graceful degradation                                           |
 
-**Total**: 158 Native / 132 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt.
+**Total**: 162 Native / 135 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt.
 
 ## Recommended Execution Order
 

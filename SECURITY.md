@@ -22,7 +22,7 @@ Key functions:
 
 **Parameterized Queries**
 
-- ✅ **All user-provided values** use parameterized queries via `pg` library
+- ✅ **All user-provided values** use parameterized queries via `better-sqlite3` / `sql.js` bindings
 - ✅ **Identifier sanitization** complements parameterized values — defense in depth
 
 ### **Structured Error Handling**
@@ -189,7 +189,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 1. **Never commit database credentials** to version control — use environment variables
 2. **Use OAuth 2.1 authentication** for HTTP transport in production — never expose HTTP transport without OAuth
 3. **Restrict database user permissions** to minimum required
-4. **Enable SSL** for database connections in production (`--ssl` or `ssl=true` in connection string)
+4. **Restrict filesystem access** to only the required database directory
 5. **Enable HSTS** when running over HTTPS (`--enableHSTS`)
 6. **Configure CORS origins explicitly** — avoid wildcards
 7. **Use resource limits** — apply Docker `--memory` and `--cpus` limits

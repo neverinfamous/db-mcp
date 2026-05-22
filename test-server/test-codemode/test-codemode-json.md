@@ -13,7 +13,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js): All 24 JSON tools are fully WASM-compatible. No phases to skip or adjust.
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 26 JSON tools are fully WASM-compatible. No phases to skip or adjust.
 
 ## Reporting Format
 

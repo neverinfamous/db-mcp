@@ -10,7 +10,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { admin, readOnly } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
@@ -387,23 +387,16 @@ export function createAttachDatabaseTool(
         }
 
         // Security: validate filepath is within the same directory as the primary DB
-        const { resolve, dirname, normalize } = await import("node:path");
-        const configuredPath = adapter.getConfiguredPath();
-
-        // Skip path validation for in-memory databases
-        if (configuredPath !== ":memory:") {
-          const dbDir = dirname(resolve(configuredPath));
-          const resolvedTarget = resolve(input.filepath);
-          const normalizedTarget = normalize(resolvedTarget);
-          const normalizedDir = normalize(dbDir);
-
-          if (!normalizedTarget.startsWith(normalizedDir)) {
-            return {
-              success: false,
-              error: `Security: filepath must be within the database directory (${dbDir}). Path traversal is not allowed.`,
-              code: "SECURITY_ERROR",
-            };
-          }
+        const pathCheck = validateSameDirPath(
+          input.filepath,
+          adapter.getConfiguredPath(),
+        );
+        if (!pathCheck.valid) {
+          return {
+            success: false,
+            error: pathCheck.error,
+            code: "SECURITY_ERROR",
+          };
         }
 
         const escapedPath = input.filepath.replace(/'/g, "''");

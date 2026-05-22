@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: May 21, 2026
+> Last updated: May 22, 2026
 
 ---
 
@@ -51,6 +51,7 @@ src/
 │   ├── progress-utils.ts           # MCP progress notification helpers
 │   ├── resource-annotations.ts     # MCP resource annotation helpers
 │   ├── where-clause.ts             # WHERE clause builder/validator
+│   ├── validate-path.ts            # Path traversal validation (shared by attach_database, vacuum_into, dump)
 │   ├── index.ts                    # Barrel re-export
 │   ├── errors/                     # Error class hierarchy (see § Error Classes below)
 │   │   ├── base.ts                 # DbMcpError (abstract base) — auto-refines generic codes via suggestions
@@ -191,7 +192,8 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 | **introspection** | `introspection/graph/tools.ts`            | 3     | `dependency_graph`, `topological_sort`, `cascade_simulator`                                                                   |
 |                   | `introspection/analysis/constraints.ts`   | 1     | `constraint_analysis`                                                                                                         |
 |                   | `introspection/analysis/risks.ts`         | 1     | `migration_risks`                                                                                                             |
-|                   | `introspection/analysis/snapshot.ts`      | 1     | `schema_snapshot`                                                                                                             |
+|                   | `introspection/analysis/snapshot.ts`      | 1     | `schema_snapshot` (also exports `captureSchemaSnapshot` helper)                                           |
+|                   | `introspection/analysis/diff.ts`          | 1     | `schema_diff`                                                                                                             |
 |                   | `introspection/diagnostics/storage.ts`    | 1     | `storage_analysis`                                                                                                            |
 |                   | `introspection/diagnostics/indexes.ts`    | 1     | `index_audit`                                                                                                                 |
 |                   | `introspection/diagnostics/query-plan.ts` | 1     | `query_plan`                                                                                                                  |
@@ -253,7 +255,7 @@ Zod schemas that define the `outputSchema` for MCP tool responses. All output sc
 | `vector.ts`        | Vector group output schemas                                                                                                                                                                    |
 | `admin.ts`         | Admin group output schemas (incl. `AppendInsightOutputSchema`, `DbstatOutputSchema`)                                                                                                           |
 | `geo.ts`           | Geo group output schemas                                                                                                                                                                       |
-| `introspection.ts` | Introspection group output schemas (9 schemas: DependencyGraph, TopologicalSort, CascadeSimulator, SchemaSnapshot, ConstraintAnalysis, MigrationRisks, StorageAnalysis, IndexAudit, QueryPlan) |
+| `introspection.ts` | Introspection group output schemas (10 schemas: DependencyGraph, TopologicalSort, CascadeSimulator, SchemaSnapshotShape, SchemaSnapshot, SchemaDiff, ConstraintAnalysis, MigrationRisks, StorageAnalysis, IndexAudit, QueryPlan) |
 | `migration.ts`     | Migration group output schemas (7 schemas: MigrationInit, MigrationRecord, MigrationApply, MigrationRollback, MigrationHistory, MigrationStatus + MigrationRecordEntry)                        |
 | `virtual.ts`       | Virtual table output schemas (7 schemas: ListVirtualTables, VirtualTableInfo, DropVirtualTable, CreateCsvTable, AnalyzeCsvSchema, CreateRtreeTable, CreateSeriesTable)                         |
 | `native.ts`        | Native-only output schemas (transactions — 8 schemas, window functions — 6 schemas)                                                                                                            |

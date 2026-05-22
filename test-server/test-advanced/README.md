@@ -22,7 +22,7 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 | `test-codemode-advanced-admin.md`         | Admin         | View lifecycle, virtual tables, backup/restore, pragma edge cases, database attachment, VACUUM INTO, path traversal security |
 | `test-codemode-advanced-transactions.md`  | Transactions  | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]`                        |
 | `test-codemode-advanced-geo.md`           | Geo           | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]`              |
-| `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, storage/index audit, query plan depth                    |
+| `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, schema diff, storage/index audit, query plan depth    |
 | `test-codemode-advanced-migration.md`     | Migration     | Lifecycle, state pollution, SHA-256 dedup, error paths                                    |
 
 ## Agent Execution Protocol

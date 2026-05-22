@@ -13,7 +13,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js): All 9 introspection tools are fully WASM-compatible. No phases to skip.
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 10 introspection tools are fully WASM-compatible. No phases to skip.
 >
 > **Minor difference**: `schemaSnapshot` may report `test_articles_fts` in virtual tables but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
 
@@ -70,6 +70,8 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 7. `sqlite.introspection.migrationRisks({statements: ["DROP TABLE test_products"]})` → risks non-empty, category is "destructive"
 8. `sqlite.introspection.migrationRisks({statements: ["ALTER TABLE test_users ADD COLUMN age INTEGER"]})` → low risk
 9. `sqlite.introspection.migrationRisks({statements: ["CREATE TABLE new_table (id INTEGER PRIMARY KEY)", "DROP TABLE test_products"]})` → `summary.totalStatements: 2`, `summary.highestRisk` ≥ "high"
+10. `sqlite.introspection.schemaDiff({baseline: "current", target: "current"})` → `summary.totalChanges: 0`, `severity: "none"` (self-diff = no drift)
+11. `sqlite.introspection.schemaDiff({baseline: "current", target: "current", sections: ["tables"]})` → `sections.tables` populated, `sections.views`/`indexes`/`triggers` absent
 
 ---
 
@@ -103,20 +105,22 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 🔴 23. `sqlite.introspection.queryPlan({sql: "DELETE FROM test_products WHERE id = 1"})` → `{success: false, error: "...only SELECT..."}`
 🔴 24. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod validation error (min: 1)
 🔴 25. `sqlite.introspection.migrationRisks({statements: []})` → report behavior for empty array
+🔴 26. `sqlite.introspection.schemaDiff({baseline: "current"})` → Zod error for missing `target`
 
 ---
 
 ## Phase 6: Introspection Zod Validation (batched)
 
-🔴 26. `sqlite.introspection.dependencyGraph({})` → success or handler error (no required params)
-🔴 27. `sqlite.introspection.topologicalSort({})` → success or handler error (no required params)
-🔴 28. `sqlite.introspection.cascadeSimulator({})` → `{success: false}` (missing `table`)
-🔴 29. `sqlite.introspection.schemaSnapshot({})` → success or handler error (no required params)
-🔴 30. `sqlite.introspection.constraintAnalysis({})` → success or handler error (no required params)
-🔴 31. `sqlite.introspection.migrationRisks({})` → `{success: false}` (missing `statements`)
-🔴 32. `sqlite.introspection.storageAnalysis({})` → success or handler error (no required params)
-🔴 33. `sqlite.introspection.indexAudit({})` → success or handler error (no required params)
-🔴 34. `sqlite.introspection.queryPlan({})` → `{success: false}` (missing `sql`)
+🔴 27. `sqlite.introspection.dependencyGraph({})` → success or handler error (no required params)
+🔴 28. `sqlite.introspection.topologicalSort({})` → success or handler error (no required params)
+🔴 29. `sqlite.introspection.cascadeSimulator({})` → `{success: false}` (missing `table`)
+🔴 30. `sqlite.introspection.schemaSnapshot({})` → success or handler error (no required params)
+🔴 31. `sqlite.introspection.schemaDiff({})` → `{success: false}` (missing `baseline` and `target`)
+🔴 32. `sqlite.introspection.constraintAnalysis({})` → success or handler error (no required params)
+🔴 33. `sqlite.introspection.migrationRisks({})` → `{success: false}` (missing `statements`)
+🔴 34. `sqlite.introspection.storageAnalysis({})` → success or handler error (no required params)
+🔴 35. `sqlite.introspection.indexAudit({})` → success or handler error (no required params)
+🔴 36. `sqlite.introspection.queryPlan({})` → `{success: false}` (missing `sql`)
 
 ---
 

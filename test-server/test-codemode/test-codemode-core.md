@@ -13,7 +13,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js): All 14 core tools are fully WASM-compatible. No phases to skip or adjust.
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 18 core tools are fully WASM-compatible. No phases to skip or adjust.
 
 ## Reporting Format
 

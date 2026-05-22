@@ -13,7 +13,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js): All 9 introspection tools are fully WASM-compatible. No categories to skip.
+> When testing against a **WASM backend** (`--sqlite` / sql.js): All 10 introspection tools are fully WASM-compatible. No categories to skip.
 >
 > **Minor difference**: `schemaSnapshot` may report `test_articles_fts` in virtual tables but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
 
@@ -47,17 +47,18 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
-## introspection Group Tools (9)
+## introspection Group Tools (10)
 
 1. sqlite_dependency_graph
 2. sqlite_topological_sort
 3. sqlite_cascade_simulator
 4. sqlite_schema_snapshot
-5. sqlite_constraint_analysis
-6. sqlite_migration_risks
-7. sqlite_storage_analysis
-8. sqlite_index_audit
-9. sqlite_query_plan
+5. sqlite_schema_diff
+6. sqlite_constraint_analysis
+7. sqlite_migration_risks
+8. sqlite_storage_analysis
+9. sqlite_index_audit
+10. sqlite_query_plan
 
 ---
 
@@ -146,15 +147,40 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 
 ---
 
-### Category 7: Error Message Quality
+### Category 8: Schema Diff Stress
 
-40. `sqlite.introspection.queryPlan({sql: "DELETE FROM test_products WHERE id = 1"})` → structured error rejecting non-SELECT
-41. `sqlite.introspection.queryPlan({sql: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table
-42. `sqlite.introspection.queryPlan({})` → Zod error for missing `sql` — must be handler error, NOT raw MCP
-43. `sqlite.introspection.cascadeSimulator({})` → Zod error for missing `table`
-44. `sqlite.introspection.migrationRisks({})` → Zod error for missing `statements`
-45. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod error (min: 1)
-46. `sqlite.introspection.storageAnalysis({limit: -5})` → Zod error
+47. `sqlite.introspection.schemaDiff({baseline: "current", target: "current"})` → self-diff: `summary.totalChanges: 0`, `severity: "none"`, all sections empty
+48. Mutation-diff workflow:
+    ```javascript
+    // Take baseline snapshot
+    const baseline = (await sqlite.introspection.schemaSnapshot({compact: false})).snapshot;
+    // Create temp table to introduce drift
+    await sqlite.core.createTable({table: "stress_diff_temp", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]});
+    // Diff baseline against current (which now has the extra table)
+    const diff = await sqlite.introspection.schemaDiff({baseline, target: "current"});
+    // Cleanup
+    await sqlite.core.dropTable({table: "stress_diff_temp"});
+    const failures = [];
+    if (diff.summary?.totalChanges !== 1) failures.push(`expected 1 change, got ${diff.summary?.totalChanges}`);
+    if (!diff.sections?.tables?.added?.some(t => t.name === "stress_diff_temp")) failures.push("stress_diff_temp not in added tables");
+    if (diff.summary?.severity !== "low") failures.push(`expected severity 'low' for add-only, got '${diff.summary?.severity}'`);
+    return {failures, success: failures.length === 0, diff: diff.summary};
+    ```
+49. `sqlite.introspection.schemaDiff({baseline: "current", target: "current", sections: ["indexes"]})` → only `sections.indexes` populated; `sections.tables`/`views`/`triggers` absent
+50. `sqlite.introspection.schemaDiff({baseline: "current"})` → Zod error for missing `target` — must be handler error, NOT raw MCP
+51. `sqlite.introspection.schemaDiff({})` → Zod error for missing both `baseline` and `target`
+
+---
+
+### Category 9: Error Message Quality
+
+52. `sqlite.introspection.queryPlan({sql: "DELETE FROM test_products WHERE id = 1"})` → structured error rejecting non-SELECT
+53. `sqlite.introspection.queryPlan({sql: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table
+54. `sqlite.introspection.queryPlan({})` → Zod error for missing `sql` — must be handler error, NOT raw MCP
+55. `sqlite.introspection.cascadeSimulator({})` → Zod error for missing `table`
+56. `sqlite.introspection.migrationRisks({})` → Zod error for missing `statements`
+57. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod error (min: 1)
+58. `sqlite.introspection.storageAnalysis({limit: -5})` → Zod error
 
 ---
 

@@ -7,7 +7,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 8 core schema tools are fully WASM-compatible. No items to skip or adjust.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 10 core schema tools are fully WASM-compatible. No items to skip or adjust.
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 

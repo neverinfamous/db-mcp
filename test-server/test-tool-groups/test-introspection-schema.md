@@ -7,7 +7,7 @@
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 6 schema introspection tools are fully WASM-compatible. No items to skip.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 7 schema introspection tools are fully WASM-compatible. No items to skip.
 >
 > **Minor difference**: `sqlite_schema_snapshot` may report `test_articles_fts` in the `tables` array but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
 
@@ -76,14 +76,15 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### introspection-schema Group Tools (6)
+### introspection-schema Group Tools (7)
 
 1. sqlite_dependency_graph
 2. sqlite_topological_sort
 3. sqlite_cascade_simulator
 4. sqlite_schema_snapshot
-5. sqlite_constraint_analysis
-6. sqlite_migration_risks
+5. sqlite_schema_diff
+6. sqlite_constraint_analysis
+7. sqlite_migration_risks
 
 **Checklist:**
 
@@ -108,18 +109,25 @@ If valid inputs return raw MCP `-32602` mentioning "output schema", report as �
 14. `sqlite_migration_risks({statements: ["ALTER TABLE test_users ADD COLUMN age INTEGER"]})` → low risk
 15. `sqlite_migration_risks({statements: ["CREATE TABLE new_table (id INTEGER PRIMARY KEY)", "DROP TABLE test_products"]})` → summary.totalStatements = 2; summary.highestRisk ≥ "high"
 
+**Schema Diff:**
+
+16. `sqlite_schema_diff({baseline: "current", target: "current"})` → `summary.totalChanges: 0`, `severity: "none"` (self-diff = no drift)
+17. `sqlite_schema_diff({baseline: "current", target: "current", sections: ["tables"]})` → `sections.tables` populated, `sections.views`/`indexes`/`triggers` absent
+
 **Error path testing:**
 
-🔴 16. `sqlite_cascade_simulator({})` → Zod validation error (missing required `table`). Must be handler error, NOT raw MCP error.
-🔴 17. `sqlite_migration_risks({statements: []})` → report behavior for empty array
+🔴 18. `sqlite_cascade_simulator({})` → Zod validation error (missing required `table`). Must be handler error, NOT raw MCP error.
+🔴 19. `sqlite_migration_risks({statements: []})` → report behavior for empty array
+🔴 20. `sqlite_schema_diff({baseline: "current"})` → Zod error for missing `target`. Must be handler error.
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
 
-🔴 18. `sqlite_dependency_graph({})` → handler error (or success if no required params)
-🔴 19. `sqlite_topological_sort({})` → handler error (or success if no required params)
-🔴 20. `sqlite_schema_snapshot({})` → handler error (or success if no required params)
-🔴 21. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
-🔴 22. `sqlite_migration_risks({})` → handler error
+🔴 21. `sqlite_dependency_graph({})` → handler error (or success if no required params)
+🔴 22. `sqlite_topological_sort({})` → handler error (or success if no required params)
+🔴 23. `sqlite_schema_snapshot({})` → handler error (or success if no required params)
+🔴 24. `sqlite_schema_diff({})` → handler error (both `baseline` and `target` required)
+🔴 25. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
+🔴 26. `sqlite_migration_risks({})` → handler error
 
 ---
 

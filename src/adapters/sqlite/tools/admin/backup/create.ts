@@ -9,6 +9,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
+import { validateSameDirPath } from "../../../../../utils/index.js";
 import { BackupOutputSchema } from "../../../schemas/admin.js";
 import { BackupSchema, VacuumIntoCopySchema } from "../../../schemas/admin.js";
 import { VacuumIntoCopyOutputSchema } from "../../../schemas/admin.js";
@@ -129,20 +130,16 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       // Security: validate outputPath is within the same directory as the primary DB
-      const configuredPath = adapter.getConfiguredPath();
-      if (configuredPath !== ":memory:") {
-        const dbDir = nodePath.dirname(nodePath.resolve(configuredPath));
-        const resolvedOutput = nodePath.resolve(input.outputPath);
-        const normalizedOutput = nodePath.normalize(resolvedOutput);
-        const normalizedDir = nodePath.normalize(dbDir);
-
-        if (!normalizedOutput.startsWith(normalizedDir)) {
-          return {
-            success: false,
-            error: `Security: outputPath must be within the database directory (${dbDir}). Path traversal is not allowed.`,
-            code: "SECURITY_ERROR",
-          };
-        }
+      const pathCheck = validateSameDirPath(
+        input.outputPath,
+        adapter.getConfiguredPath(),
+      );
+      if (!pathCheck.valid) {
+        return {
+          success: false,
+          error: pathCheck.error,
+          code: "SECURITY_ERROR",
+        };
       }
 
       const resolvedPath = nodePath.resolve(input.outputPath);
