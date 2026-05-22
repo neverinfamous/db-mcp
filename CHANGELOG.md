@@ -31,17 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **WASM Mode Advanced Tests**: Added inline `## WASM Mode` sections to all 10 advanced stress test prompts (`test-advanced/`) with per-prompt skip rules, graceful degradation guidance, and adjusted expectations. Fixed admin Category 7 which incorrectly claimed all 26 admin tools work identically in WASM.
 - **WASM Mode Standard Tests**: Added inline `## WASM Mode` sections to all 10 direct-tool test prompts (`test-tool-groups/`), replacing the static `Ignore WASM content. Test Native Mode Only` directive. Each prompt now contains self-contained WASM skip rules with specific item numbers. Added `§2.6 WASM Mode Execution` section to the README with skip rules, graceful degradation table, adjusted expectations, and the "unknown tool" note for unregistered Native-only tools.
 
-### Security
-
-- **CI/CD Hardening**: Added `--provenance` flag to `npm publish` in `publish-npm.yml` for SLSA Build L3 attestation. Added `id-token: write` permission for OIDC provenance token generation.
-- **CI/CD Harmonization**:
-  - Added `secrets-scanning.yml` (TruffleHog + Gitleaks on every push/PR)
-  - Added `dependabot-auto-merge.yml` (auto-squash patch/minor, manual review for major)
-  - Added Trivy container scan + SARIF upload to `docker-publish.yml` security-scan job
-  - Added `.gitleaks.toml` and `.trivyignore` configuration files
-- **Vulnerability Remediation**: Resolved Vite, Hono, path-to-regexp, fast-uri, Picomatch, and ip-address vulnerabilities via `npm update` and transitive lockfile resolutions.
-- **Docker Image Hardening**: Pinned Alpine edge packages (`openssl`, `musl`, `nghttp2`) and manually updated npm's bundled `brace-expansion` to resolve multiple Docker Scout CVEs.
-
 ### Changed
 
 - **Doc Parity Audit**: Finalized repository documentation audit for v1.1.1. Synchronized all documentation across `README.md`, `DOCKER_README.md`, and `test-resources.md` to reflect the current state of 151 Native / 125 WASM tools, 10 Tool Groups, and 20 Resources.
@@ -58,16 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation Parity**: Updated all tool count references across `README.md`, `DOCKER_README.md`, `server.json`, `test-server/tool-reference.md`, and `test-server/code-map.md` to reflect the expanded inventory (151 Native / 125 WASM tools), including the 5 new core convenience tools, JSON security scan, text sentiment, and FTS5 headline.
 - **Testing Prompts**: Updated all 40 advanced and standard test prompts to default to the internal agent task tracking system instead of hardcoding a temporary local workspace file.
 
-### Breaking Changes
-
-- **Transaction Group Split**: Moved 8 transaction tools (`sqlite_transaction_begin`, `sqlite_transaction_status`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute`) from `admin` group into a dedicated `transactions` group for improved discoverability. OAuth scope for transactions changed from `admin` to `write` (matching mysql-mcp and postgres-mcp). Code Mode exposes transactions via `sqlite.transactions.*` namespace.
-- **Text Group Payload Optimization**: Removed the redundant `original` string field from the output schemas of 6 text tools (`sqlite_text_case`, `sqlite_text_normalize`, `sqlite_text_split`, `sqlite_text_substring`, `sqlite_text_trim`, and `sqlite_text_sentiment`). Tools now return `rowid` for traceability, immediately cutting JSON payload sizes by up to 50% for operations on large text columns.
-- **Vector Schema Parity**: Standardized vector search and distance tool outputs (`sqlite.vector.search` now returns `rows`; `sqlite.vector.distance` now returns `distance`) to align with cross-server canonical implementations (e.g., `postgres-mcp`).
-- **Query Pagination Default**: Lowered the default safety limit for unbounded SELECT queries from `1000` to `50` to prevent unnecessary payload bloat and align with token-efficiency guidelines.
-- **Phonetic Payload Bloat**: Changed `includeRowData` default in `PhoneticMatchSchema` from `true` to `false`.
-- **Migration Tools Hardening**: Standardized the migration SQL payload property to `migrationSql` (from `sql`) across the SQLite handler code, Zod schemas, unit tests, and Playwright E2E tests, ensuring strict symmetry with `rollbackSql`.
-
-### Dependencies
+- **BREAKING:** **Transaction Group Split**: Moved 8 transaction tools (`sqlite_transaction_begin`, `sqlite_transaction_status`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute`) from `admin` group into a dedicated `transactions` group for improved discoverability. OAuth scope for transactions changed from `admin` to `write` (matching mysql-mcp and postgres-mcp). Code Mode exposes transactions via `sqlite.transactions.*` namespace.
+- **BREAKING:** **Text Group Payload Optimization**: Removed the redundant `original` string field from the output schemas of 6 text tools (`sqlite_text_case`, `sqlite_text_normalize`, `sqlite_text_split`, `sqlite_text_substring`, `sqlite_text_trim`, and `sqlite_text_sentiment`). Tools now return `rowid` for traceability, immediately cutting JSON payload sizes by up to 50% for operations on large text columns.
+- **BREAKING:** **Vector Schema Parity**: Standardized vector search and distance tool outputs (`sqlite.vector.search` now returns `rows`; `sqlite.vector.distance` now returns `distance`) to align with cross-server canonical implementations (e.g., `postgres-mcp`).
+- **BREAKING:** **Query Pagination Default**: Lowered the default safety limit for unbounded SELECT queries from `1000` to `50` to prevent unnecessary payload bloat and align with token-efficiency guidelines.
+- **BREAKING:** **Phonetic Payload Bloat**: Changed `includeRowData` default in `PhoneticMatchSchema` from `true` to `false`.
+- **BREAKING:** **Migration Tools Hardening**: Standardized the migration SQL payload property to `migrationSql` (from `sql`) across the SQLite handler code, Zod schemas, unit tests, and Playwright E2E tests, ensuring strict symmetry with `rollbackSql`.
 
 - Updated `vitest` and `@vitest/coverage-v8` to `4.1.7`.
 - Updated `@types/node` to 25.9.1, `tsx` to 4.22.3, and `typescript-eslint` to 8.59.4.
@@ -136,7 +121,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E Test DB State Corruption**: Fixed E2E test suite cascading failures (`test_orders` row checks, constraint/cascade simulators, and prompt schema reads) caused by corrupted test database state left over from isolated Code Mode testing sessions. Reset `test.db` to its canonical seed state.
 - **Code Mode Schema Mismatch**: Added missing `tokenEstimate` field to `ExecuteCodeOutputSchema` metrics object to prevent silent output schema omissions and correctly validate `metrics.tokenEstimate` in Code Mode execution results.
 
+### Security
+
+- **CI/CD Hardening**: Added `--provenance` flag to `npm publish` in `publish-npm.yml` for SLSA Build L3 attestation. Added `id-token: write` permission for OIDC provenance token generation.
+- **CI/CD Harmonization**:
+  - Added `secrets-scanning.yml` (TruffleHog + Gitleaks on every push/PR)
+  - Added `dependabot-auto-merge.yml` (auto-squash patch/minor, manual review for major)
+  - Added Trivy container scan + SARIF upload to `docker-publish.yml` security-scan job
+  - Added `.gitleaks.toml` and `.trivyignore` configuration files
+- **Vulnerability Remediation**: Resolved Vite, Hono, path-to-regexp, fast-uri, Picomatch, and ip-address vulnerabilities via `npm update` and transitive lockfile resolutions.
+- **Docker Image Hardening**: Pinned Alpine edge packages (`openssl`, `musl`, `nghttp2`) and manually updated npm's bundled `brace-expansion` to resolve multiple Docker Scout CVEs.
+
 ## [1.1.1](https://github.com/neverinfamous/db-mcp/releases/tag/v1.1.1) - 2026-03-18
+
+### Changed
+
+- **Version Management**: Both SQLite adapters now import `VERSION` from `src/version.ts` — only `package.json` needs updating on version bumps
+- **Version Test**: Derive expected adapter version from `VERSION` constant instead of hardcoded string
 
 ### Fixed
 
@@ -146,11 +147,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Prompt Handler**: Made `args` optional in `handleResult` to prevent crash when SDK invokes prompts with `undefined` args
 - **Transaction Methods**: Replaced generic `Error` with `ValidationError` + `INVALID_SAVEPOINT_NAME` code for savepoint name validation
 - **Index Tools**: Centralized table existence checks via `validateTableExists()` from `column-validation.ts`
-
-### Changed
-
-- **Version Management**: Both SQLite adapters now import `VERSION` from `src/version.ts` — only `package.json` needs updating on version bumps
-- **Version Test**: Derive expected adapter version from `VERSION` constant instead of hardcoded string
 
 ## [1.1.0](https://github.com/neverinfamous/db-mcp/releases/tag/v1.1.0) - 2026-03-18
 
@@ -388,8 +384,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Test: `insightsManager.test.ts` → `insights-manager.test.ts`
   - Updated 6 files with corrected import paths
 - **`isDDL()` Helper Deduplication** — Extracted shared `isDDL()` function into `adapters/sqlite-helpers.ts`
-  - Removed identical copies from `sqlite-adapter.ts` and `native-sqlite-adapter.ts`
-  - Both adapters now import from the shared module
 - **Version Constant Deduplication** — `VERSION` and `NAME` now read from `package.json` at runtime via new `version.ts` module
   - Eliminated 3 hardcoded `"1.0.2"` strings in `index.ts`, `mcp-server.ts`, and `cli.ts`
   - `index.ts` re-exports from `version.ts`; `mcp-server.ts` and `cli.ts` import directly
@@ -442,8 +436,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_stats_basic`, `sqlite_stats_count`, `sqlite_stats_group_by`, `sqlite_stats_histogram`, `sqlite_stats_percentile`, `sqlite_stats_correlation`, `sqlite_stats_top_n`, `sqlite_stats_distinct`, `sqlite_stats_summary`, `sqlite_stats_frequency`, `sqlite_stats_outliers`, `sqlite_stats_regression`, `sqlite_stats_hypothesis`: Catch errors with `formatError()` and return structured `{success: false, error, code, suggestion}` instead of propagating as raw MCP exceptions
   - Mirrors the same pattern already applied to core, JSON, and text tool groups
 - **Stats Tool Column Existence Validation** — All 13 stats tools now validate column existence before query execution
-  - Prevents silent success on nonexistent columns (SQLite treats double-quoted nonexistent identifiers as string literals)
-  - Returns `{success: false, code: "COLUMN_NOT_FOUND"}` with suggestion to use `sqlite_describe_table`
   - `sqlite_stats_summary` validates user-specified columns; auto-detected columns skip validation
   - `sqlite_stats_correlation` validates both `column1` and `column2`; `sqlite_stats_regression` validates both `xColumn` and `yColumn`
   - `sqlite_stats_hypothesis` validates `column`, `column2` (ttest_two), and `groupColumn` (chi_square)
@@ -452,6 +444,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `tool-integration.test.ts`: 57 stats injection tests now use `assertRejectsInjection()` helper accepting either throws or `{success: false}` responses
   - `identifier-integration.test.ts`: 4 stats identifier injection tests updated from `rejects.toThrow()` to structured error assertions
   - Fixed `stats_group_by` identifier test using wrong parameter names (`column`/`groupColumn` → `valueColumn`/`groupByColumn`/`stat`)
+
+- **Compact JSON Serialization (R-1)** — Tool responses now use compact `JSON.stringify(result)` instead of pretty-printed `JSON.stringify(result, null, 2)`
+  - Reduces serialization overhead by ~15-20% on large payloads; MCP clients parse JSON programmatically
+  - Error responses retain pretty-print for debugging readability
+- **Incremental TypeScript Builds (B-1)** — Added `incremental: true` and `tsBuildInfoFile` to `tsconfig.json`
+  - Subsequent builds only recheck changed files, significantly reducing dev-loop build times
+- **Vitest Thread Pool (T-1)** — Configured `pool: "threads"` in `vitest.config.ts`
+  - Enables worker thread execution for test parallelism on multi-core machines
+- **`isDDL()` Helper Extraction (S-2/R-4)** — Replaced 3× duplicated DDL detection blocks with module-scope `isDDL()` function
+  - Eliminates redundant `sql.trim().toUpperCase()` allocations in `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`
+- **SchemaManager Array Pre-Allocation (R-7)** — `getAllIndexes()` now pre-allocates result array with `new Array(rows.length)`
+  - Avoids incremental `push()` resizing; improved documentation of PRAGMA batching constraints
+- **CI `node_modules` Caching (CI-1)** — Added `actions/cache@v4` for `node_modules` in `lint-and-test.yml`
+  - Keyed on `package-lock.json` hash per Node.js version; skips `npm ci` on cache hit (~20-30s savings per run)
+- **CI Benchmark Tracking (CI-2)** — New `benchmarks` job in `lint-and-test.yml` (main branch only)
+  - Runs `npm run bench` and uploads results as artifacts with 30-day retention for regression detection
+- **NativeSqliteAdapter SchemaManager Integration** — Schema metadata operations now use TTL-based caching
+  - `listTables()`, `describeTable()`, `getSchema()`, `getAllIndexes()` delegate through `SchemaManager` (5s TTL)
+  - Eliminates redundant `PRAGMA table_info()` queries on every metadata request
+  - Auto-invalidates schema cache on DDL operations (`CREATE`, `ALTER`, `DROP`)
+  - Matches the caching pattern already used by the WASM `SqliteAdapter`
+- **Cached Tool Definitions** — `NativeSqliteAdapter.getToolDefinitions()` now lazily caches results
+  - Tool definitions are immutable per adapter instance; avoids 13-way array spread on repeat calls
+- **Logger Taint-Breaking Optimization** — `writeToStderr()` uses `"".concat()` instead of per-character copy
+  - Previous O(n) character-by-character array+join replaced with single string concatenation
+  - Still breaks CodeQL taint tracking without the allocation overhead
+- **Logger Sensitive Key Matching** — Pre-computed `SENSITIVE_KEYS_ARRAY` at module scope
+  - Avoids spreading `Set` into a new array on every context key during `sanitizeContext()`
+- **Logger Regex Pre-Compilation** — `sanitizeMessage()` and `sanitizeStack()` regex patterns hoisted to module scope
+  - Avoids re-constructing `RegExp` objects (via `String.fromCharCode()`) on every log call
+- **SQL Validation Regex Pre-Compilation** — `DANGEROUS_SQL_PATTERNS` hoisted to module scope in `DatabaseAdapter.ts`
+  - Avoids re-allocating 5 `RegExp` objects per `validateQuery()` call
+- **CORS Preflight Caching** — Added `Access-Control-Max-Age: 86400` to OPTIONS responses
+  - Browsers cache preflight results for 24 hours, reducing repeated OPTIONS roundtrips
+- **Docker HTTP Healthcheck** — Healthcheck now validates `/health` endpoint for HTTP transport
+  - Falls back to basic Node.js check for stdio mode
+
+- Bumped `@eslint/js` from 9.39.2 to 10.0.1 (major)
+- Bumped `@modelcontextprotocol/sdk` from 1.25.3 to 1.27.1
+- Bumped `@types/node` from 25.2.0 to 25.5.0
+- Bumped `@vitest/coverage-v8` from 4.0.18 to 4.1.0
+- Bumped `better-sqlite3` from 12.6.2 to 12.8.0
+- Bumped `eslint` from 9.39.2 to 10.0.3 (major)
+- Bumped `globals` from 17.3.0 to 17.4.0
+- Bumped `jose` from 6.1.3 to 6.2.1
+- Bumped `rimraf` from 6.1.2 to 6.1.3
+- Bumped `sql.js` from 1.13.0 to 1.14.1
+- Bumped `typescript-eslint` from 8.54.0 to 8.57.1
+- Bumped `vitest` from 4.0.18 to 4.1.0
+- Removed unused `dotenv` production dependency (never imported in source)
+- Removed unused `pg` and `@types/pg` dependencies (never imported in source)
+- Dockerfile `tar` dependency pinned to 7.5.11 for security compliance
+- Bumped `@types/sql.js` from 1.4.9 to 1.4.10
+- Bumped `jose` from 6.2.1 to 6.2.2
+
+---
 
 ### Fixed
 
@@ -612,7 +660,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now surfaces a `warning: "N vector(s) skipped due to dimension mismatch or parse errors"` field in the response
   - Helps callers diagnose why `count` may be less than expected
 - **`sqlite_json_update` / `sqlite_json_merge` No-Match Warning** — Returns `warning` field when `rowsAffected: 0`
-  - Previously returned `{success: true, rowsAffected: 0}` with no indication that nothing was changed
   - Now includes `warning: "No rows matched the WHERE clause — nothing was updated/merged"`
   - Helps callers distinguish between a successful no-op and an actual problem
 - **`sqlite_stats_histogram` Empty Table Phantom Bucket** — Histogram on empty table no longer returns a phantom `{min: 0, max: 0, count: 1}` bucket
@@ -668,7 +715,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Admin Tool Zod Validation Error Handling** — 11 admin tool handlers now catch Zod/sanitizeIdentifier errors as structured `{success: false}` responses
   - `sqlite_pragma_table_info`, `sqlite_virtual_table_info`, `sqlite_create_csv_table`, `sqlite_create_rtree_table`, `sqlite_create_series_table`, `sqlite_append_insight`: Added try/catch around `Schema.parse(params)` and `sanitizeIdentifier()` calls
   - `sqlite_backup`, `sqlite_restore`, `sqlite_generate_series`, `sqlite_analyze_csv_schema`, `sqlite_transaction_execute`: Added try/catch around `Schema.parse(params)` calls
-  - Previously, calling these tools with empty or invalid parameters returned raw MCP error frames instead of structured handler errors
   - `AppendInsightSchema.insight` now requires `.min(1)` to reject empty strings (previously accepted `""` silently)
 - **Migration Tool Zod Validation Error Handling** — `sqlite_migration_record` and `sqlite_migration_apply` handlers now catch Zod validation errors as structured `{success: false}` responses
   - Moved `Schema.parse(params)` inside existing try/catch blocks in `tracking.ts`
@@ -858,7 +904,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
 - **`sqlite_restore` WASM False Positive** — Now returns WASM limitation error upfront before attempting ATTACH
   - Previously, ATTACH succeeded silently in WASM, causing restore to "succeed" by copying empty tables from a nonexistent backup
-  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
 - **`sqlite_pragma_table_info` Nonexistent Table Detection** — Returns `{success: false}` for nonexistent tables
   - Previously returned `{success: true, columns: []}` for tables that don't exist
   - Now checks if columns array is empty and returns `{success: false, error: "Table 'x' not found or has no columns"}`
@@ -1080,66 +1125,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `SECURITY.md` supported versions to `1.x.x`
   - Fixed Dockerfile labels (version `1.0.2`, tool count `124`)
 
-### Performance
-
-- **Compact JSON Serialization (R-1)** — Tool responses now use compact `JSON.stringify(result)` instead of pretty-printed `JSON.stringify(result, null, 2)`
-  - Reduces serialization overhead by ~15-20% on large payloads; MCP clients parse JSON programmatically
-  - Error responses retain pretty-print for debugging readability
-- **Incremental TypeScript Builds (B-1)** — Added `incremental: true` and `tsBuildInfoFile` to `tsconfig.json`
-  - Subsequent builds only recheck changed files, significantly reducing dev-loop build times
-- **Vitest Thread Pool (T-1)** — Configured `pool: "threads"` in `vitest.config.ts`
-  - Enables worker thread execution for test parallelism on multi-core machines
-- **`isDDL()` Helper Extraction (S-2/R-4)** — Replaced 3× duplicated DDL detection blocks with module-scope `isDDL()` function
-  - Eliminates redundant `sql.trim().toUpperCase()` allocations in `SqliteAdapter.ts` and `NativeSqliteAdapter.ts`
-- **SchemaManager Array Pre-Allocation (R-7)** — `getAllIndexes()` now pre-allocates result array with `new Array(rows.length)`
-  - Avoids incremental `push()` resizing; improved documentation of PRAGMA batching constraints
-- **CI `node_modules` Caching (CI-1)** — Added `actions/cache@v4` for `node_modules` in `lint-and-test.yml`
-  - Keyed on `package-lock.json` hash per Node.js version; skips `npm ci` on cache hit (~20-30s savings per run)
-- **CI Benchmark Tracking (CI-2)** — New `benchmarks` job in `lint-and-test.yml` (main branch only)
-  - Runs `npm run bench` and uploads results as artifacts with 30-day retention for regression detection
-- **NativeSqliteAdapter SchemaManager Integration** — Schema metadata operations now use TTL-based caching
-  - `listTables()`, `describeTable()`, `getSchema()`, `getAllIndexes()` delegate through `SchemaManager` (5s TTL)
-  - Eliminates redundant `PRAGMA table_info()` queries on every metadata request
-  - Auto-invalidates schema cache on DDL operations (`CREATE`, `ALTER`, `DROP`)
-  - Matches the caching pattern already used by the WASM `SqliteAdapter`
-- **Cached Tool Definitions** — `NativeSqliteAdapter.getToolDefinitions()` now lazily caches results
-  - Tool definitions are immutable per adapter instance; avoids 13-way array spread on repeat calls
-- **Logger Taint-Breaking Optimization** — `writeToStderr()` uses `"".concat()` instead of per-character copy
-  - Previous O(n) character-by-character array+join replaced with single string concatenation
-  - Still breaks CodeQL taint tracking without the allocation overhead
-- **Logger Sensitive Key Matching** — Pre-computed `SENSITIVE_KEYS_ARRAY` at module scope
-  - Avoids spreading `Set` into a new array on every context key during `sanitizeContext()`
-- **Logger Regex Pre-Compilation** — `sanitizeMessage()` and `sanitizeStack()` regex patterns hoisted to module scope
-  - Avoids re-constructing `RegExp` objects (via `String.fromCharCode()`) on every log call
-- **SQL Validation Regex Pre-Compilation** — `DANGEROUS_SQL_PATTERNS` hoisted to module scope in `DatabaseAdapter.ts`
-  - Avoids re-allocating 5 `RegExp` objects per `validateQuery()` call
-- **CORS Preflight Caching** — Added `Access-Control-Max-Age: 86400` to OPTIONS responses
-  - Browsers cache preflight results for 24 hours, reducing repeated OPTIONS roundtrips
-- **Docker HTTP Healthcheck** — Healthcheck now validates `/health` endpoint for HTTP transport
-  - Falls back to basic Node.js check for stdio mode
-
-### Dependencies
-
-- Bumped `@eslint/js` from 9.39.2 to 10.0.1 (major)
-- Bumped `@modelcontextprotocol/sdk` from 1.25.3 to 1.27.1
-- Bumped `@types/node` from 25.2.0 to 25.5.0
-- Bumped `@vitest/coverage-v8` from 4.0.18 to 4.1.0
-- Bumped `better-sqlite3` from 12.6.2 to 12.8.0
-- Bumped `eslint` from 9.39.2 to 10.0.3 (major)
-- Bumped `globals` from 17.3.0 to 17.4.0
-- Bumped `jose` from 6.1.3 to 6.2.1
-- Bumped `rimraf` from 6.1.2 to 6.1.3
-- Bumped `sql.js` from 1.13.0 to 1.14.1
-- Bumped `typescript-eslint` from 8.54.0 to 8.57.1
-- Bumped `vitest` from 4.0.18 to 4.1.0
-- Removed unused `dotenv` production dependency (never imported in source)
-- Removed unused `pg` and `@types/pg` dependencies (never imported in source)
-- Dockerfile `tar` dependency pinned to 7.5.11 for security compliance
-- Bumped `@types/sql.js` from 1.4.9 to 1.4.10
-- Bumped `jose` from 6.2.1 to 6.2.2
-
----
-
 ## [1.0.2] - 2026-02-04
 
 ### Added
@@ -1176,8 +1161,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `DOCKER_README.md`: Docker Hub README with quick start, tool filtering, security documentation
   - `DOCKER_DEPLOYMENT_SETUP.md`: Setup guide for GitHub secrets and deployment workflow
 
-### Added
-
 - **Security Test Coverage Expansion** — 12 new/enhanced test files improving coverage for security-critical utilities
   - `tests/utils/quoteIdentifier.test.ts`: 32 tests for identifier sanitization edge cases (empty, whitespace, control chars, quotes)
   - `tests/security/validateQuery.test.ts`: 23 tests for `DatabaseAdapter.validateQuery` security patterns
@@ -1192,6 +1175,223 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced `security-injection.test.ts` with `sanitizeWhereClause` tests
   - Enhanced `ToolFilter.test.ts` with edge case tests (comma-only strings, meta-group exclusion, summary generation)
   - Coverage improvements: `identifiers.ts` 65→97%, `where-clause.ts` 80→100%, `ToolFilter.ts` 91→96%, `resources.ts` 22→97%, `prompts.ts` 23→87%, `insightsManager.ts` 22→100%, `progress-utils.ts` 0→100%, `annotations.ts` 90→100%, `resourceAnnotations.ts` 66→100%, `json-utils.ts` 43→97%, `logger.ts` 85→97%, `NativeSqliteAdapter.ts` 49→65%+
+
+- **`sqlite_spatialite_analyze` Geometry Output Control** — New `includeGeometry` parameter to reduce payload size
+  - When `false` (default), omits full WKT geometry from `nearest_neighbor` and `point_in_polygon` results
+  - When `true`, includes `source_geom` and `target_geom` WKT fields as before
+  - Significantly reduces payload size for proximity analysis (geometry can be 100+ characters per row)
+
+- **`sqlite_dbstat` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
+  - When `true`, filters out SpatiaLite system tables from storage statistics (57 tables → ~12 user tables)
+  - Applies to both summarize mode and default raw page-level mode
+  - Provides parity with `sqlite_list_tables` and `sqlite_get_indexes` system table filtering
+  - Default is `false` to preserve backward compatibility
+
+- **`sqlite_list_tables` Tool Description** — Fixed misleading "row counts" description
+  - Changed tool description in `core.ts` from "row counts" to "column counts" to match actual output
+  - Tool returns `columnCount` per table, not row counts
+
+- **`sqlite_json_normalize_column` Output Format Control** — New `outputFormat` parameter for normalization output
+  - `preserve` (default): Keeps original format (text→text, JSONB→JSONB)
+  - `text`: Always outputs normalized JSON as text
+  - `jsonb`: Outputs normalized JSON in JSONB binary format
+  - Enables normalizing JSONB columns without losing binary format efficiency
+  - Response includes `outputFormat` field indicating which format was applied
+
+- **`sqlite_list_views` System View Filter** — New `excludeSystemViews` parameter to hide SpatiaLite views
+  - When `true` (default), filters out SpatiaLite system views (`geom_cols_ref_sys`, `spatial_ref_sys_all`, `vector_layers`, etc.)
+  - Reduces noise in view listings for spatial databases (7 views → 1 user view)
+  - Set to `false` to include all views
+
+- **`sqlite_get_indexes` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite indexes
+  - When `true`, filters out SpatiaLite system indexes (`idx_spatial_ref_sys`, `idx_srid_geocols`, `idx_viewsjoin`, `idx_virtssrid`, etc.)
+  - Provides parity with `sqlite_list_tables` parameter `excludeSystemTables`
+
+- **`sqlite_list_tables` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
+  - When `true`, filters out SpatiaLite system tables (`geometry_columns`, `spatial_ref_sys`, `spatialite_history`, `vector_layers`, etc.)
+  - Reduces noise in table listings for spatial databases (38 tables → 12 user tables)
+
+- **WASM vs Native Documentation** — Added feature comparison table to `ServerInstructions.ts`
+  - Lists FTS5, transactions, window functions, SpatiaLite, and soundex availability
+  - Token-efficient format optimized for AI agent consumption
+
+- **Polynomial Regression Support** — `sqlite_stats_regression` now supports degree 1-3 polynomial fits
+  - Linear (degree=1), quadratic (degree=2), and cubic (degree=3) regression via OLS normal equation
+  - Matrix operations (transpose, multiply, Gauss-Jordan inverse) implemented in pure TypeScript
+  - Output includes named coefficients (`intercept`, `linear`, `quadratic`, `cubic`) instead of generic `slope`
+  - R² calculation uses sum of squared residuals for accurate goodness-of-fit measurement
+  - Equation string displays polynomial terms (e.g., `y = 2.0000x² + 3.0000x + 5.0000`)
+
+- **WASM Mode Core Tool Compatibility** — Fixed issues discovered during WASM mode testing
+  - `server_health` now correctly reports `filePath` from `connectionString` when `filePath` is not set
+  - `sqlite_list_tables` now gracefully handles FTS5 virtual tables in WASM mode (sql.js lacks FTS5 module)
+  - FTS5 shadow tables (`_fts_*`) are automatically skipped in table listings
+  - Tables that fail `PRAGMA table_info()` are skipped rather than failing the entire operation
+  - `COUNT(*)` errors on virtual tables return `rowCount: 0` instead of throwing
+
+- **MCP Resource Template Registration** — Fixed `sqlite_table_schema` templated resource not matching client requests
+  - Updated `registerResource()` in `NativeSqliteAdapter` to detect URI templates (containing `{param}` placeholders)
+  - Template resources now use MCP SDK's `ResourceTemplate` class for proper URI matching
+  - Static resources continue using simple string URI registration
+  - Allows clients to request resources like `sqlite://table/test_products/schema` and have them matched correctly
+
+- **Missing `getAllIndexes()` Method** — Added `getAllIndexes()` to `NativeSqliteAdapter`
+  - Required by `sqlite_indexes` resource but was missing in native adapter
+  - Returns all user-created indexes with table name, column list, and uniqueness info
+  - Queries `sqlite_master` and `PRAGMA index_info()` for complete index metadata
+
+- **PRAGMA Compile Options Filter** — `sqlite_pragma_compile_options` now supports `filter` parameter
+  - Case-insensitive substring match to limit returned options (e.g., `filter: "FTS"` returns only FTS-related options)
+  - Reduces payload size for targeted queries (58 options → filtered subset)
+
+- **Database Stats Summarize Mode** — `sqlite_dbstat` now supports `summarize` parameter
+  - When `summarize: true`, returns aggregated per-table stats instead of raw page-level data
+  - Summary includes: `pageCount`, `totalPayload`, `totalUnused`, `totalCells`, `maxPayload` per table
+  - Reduces response size (27 rows → 1 row per table) while providing actionable storage metrics
+
+- **Stats Tool Column Selection** — `sqlite_stats_top_n` now supports `selectColumns` parameter
+  - Limits returned columns to only those specified (reduces payload size for large tables)
+  - Default behavior unchanged: returns all columns when `selectColumns` is not provided
+  - Columns are validated and sanitized for SQL injection protection
+
+- **FTS5 Auto-Sync Triggers** — `sqlite_fts_create` now automatically creates sync triggers
+  - INSERT/UPDATE/DELETE triggers keep FTS5 index synchronized with source table in real-time
+  - New `createTriggers` option (default: `true`) to control trigger creation
+  - FTS tables are automatically populated with existing data on creation via `rebuild`
+  - Trigger naming convention: `{ftsTable}_ai` (insert), `{ftsTable}_ad` (delete), `{ftsTable}_au` (update)
+  - Response includes `triggersCreated` array listing created trigger names
+
+- **FTS5 Wildcard Query Support** — `sqlite_fts_search` now supports list-all queries
+  - Query `*` or empty string returns all FTS table contents without MATCH filtering
+  - Useful for browsing FTS index contents or debugging FTS configuration
+  - Returns rows ordered by rowid with `rank: null`
+
+- **Phonetic Match Verbosity Control** — `sqlite_phonetic_match` now supports `includeRowData` option
+  - New `includeRowData` parameter (default: `true`) to control full row data inclusion
+  - Set to `false` for compact responses with only `value` and `phoneticCode` per match
+  - Backward compatible: existing calls behave identically
+
+- **SQLite Extension Support** — Added CLI flags and configuration for loadable SQLite extensions
+  - `--csv` flag to load CSV extension for CSV virtual tables
+  - `--spatialite` flag to load SpatiaLite extension for GIS capabilities
+  - `CSV_EXTENSION_PATH` and `SPATIALITE_PATH` environment variables for custom extension paths
+  - Platform-aware extension binary detection (Windows/Linux/macOS)
+  - README documentation for built-in vs loadable extensions with installation instructions
+- **Test Infrastructure** — Migrated tests to native SQLite adapter for full feature coverage
+  - Added `tests/utils/test-adapter.ts` factory for centralized adapter instantiation
+  - All 9 SQLite test files now use `NativeSqliteAdapter` (better-sqlite3) instead of sql.js WASM
+  - FTS5 tests now execute properly (previously skipped due to WASM limitations)
+
+- **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing
+  - `test-server/test-database.sql`: Seed data with 10 tables and 409 rows covering all 7 tool groups
+  - `test-server/reset-database.ps1`: PowerShell script to reset database to clean state with verification
+  - `test-server/test-groups/`: Individual test guides for each tool group (core, json, text, stats, vector, admin, geo)
+  - Uses ESM-compatible Node.js scripts with better-sqlite3 for cross-platform reset
+  - Test tables: products, orders, json_docs, articles, users, measurements, embeddings, locations, categories, events
+
+- **HTTP/SSE Streaming Transport** — Enhanced HTTP transport with session management and SSE
+  - **Stateful mode (default)**: Multi-session management with SSE streaming for notifications
+  - **Stateless mode (`--stateless`)**: Lightweight serverless-compatible mode for Lambda/Workers
+  - `POST /mcp`: JSON-RPC requests with session management
+  - `GET /mcp`: SSE stream for server-to-client notifications
+  - `DELETE /mcp`: Session termination endpoint
+  - Enhanced CORS headers for `mcp-session-id` and `Last-Event-ID`
+  - Health endpoint reports active session count and transport mode
+- **Business Insights Memo** — New tool and resource for capturing analysis insights
+  - `sqlite_append_insight` tool: Add business insights discovered during data analysis
+  - `memo://insights` resource: Synthesized memo of all captured insights
+  - Insights manager singleton for in-memory insight storage
+- **Summarize Table Prompt** — Intelligent table analysis workflow
+  - `sqlite_summarize_table` prompt with configurable analysis depth
+  - Supports basic, detailed, and comprehensive analysis modes
+- **Advanced Search Tool** — Multi-mode text search
+  - `sqlite_advanced_search` tool combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching
+  - Configurable threshold and technique selection
+- **Hybrid Search Workflow Prompt** — Combined FTS5 + vector search
+  - `sqlite_hybrid_search_workflow` prompt for hybrid search implementation
+  - Guides through schema setup, query structure, and weight tuning
+- **Interactive Demo Prompt** — Flagship MCP demonstration
+  - `sqlite_demo` prompt for interactive capability walkthrough
+  - Guides through data creation, querying, and insight capture
+- **MCP Progress Notifications (2025-11-25)** — Real-time progress updates for long-running operations
+  - New `src/utils/progress-utils.ts` module with `sendProgress()` and `buildProgressContext()` utilities
+  - Extended `RequestContext` interface with optional `server` and `progressToken` fields
+  - `sqlite_restore`: 3-phase progress (prepare → restore → verify)
+  - `sqlite_optimize`: Dynamic multi-phase progress (start → reindex → analyze → complete)
+  - `sqlite_vacuum`: 2-phase progress (start → complete)
+  - Notifications are best-effort and require client support for `progressToken` in `_meta`
+- **Modern Tool Registration** — Migrated from deprecated `server.tool()` to `server.registerTool()` API
+  - Both `SqliteAdapter` and `NativeSqliteAdapter` now use modern pattern
+  - Full `inputSchema`/`outputSchema` passed (not just `.shape`)
+  - MCP 2025-11-25 `structuredContent` returned when `outputSchema` is present
+  - Progress token extraction from `extra._meta` enables progress notifications
+  - Removed all eslint-disable comments for deprecated API usage
+- **Metadata Caching Pattern** — TTL-based schema caching ported from mysql-mcp
+  - New `SchemaManager.ts` module with configurable cache TTL (default: 5s)
+  - Schema, tables, and indexes cached to reduce repeated introspection queries
+  - Auto-invalidation on DDL operations (CREATE/ALTER/DROP) in all query methods
+  - Fixed N+1 query pattern in `sqlite://indexes` resource
+  - ToolFilter caching for O(1) tool group lookups
+  - `METADATA_CACHE_TTL_MS` environment variable for tuning (documented in README)
+
+- **SpatiaLite Geospatial Tools (Native-only)** — 7 new tools for GIS capabilities
+  - `sqlite_spatialite_load` — Load SpatiaLite extension
+  - `sqlite_spatialite_create_table` — Create tables with geometry columns
+  - `sqlite_spatialite_query` — Execute spatial SQL (ST_Distance, ST_Within, etc.)
+  - `sqlite_spatialite_analyze` — Spatial analysis (nearest neighbor, point-in-polygon)
+  - `sqlite_spatialite_index` — Create/manage spatial R-Tree indexes
+  - `sqlite_spatialite_transform` — Geometry operations (buffer, union, intersection)
+  - `sqlite_spatialite_import` — Import WKT/GeoJSON data
+  - Tools gracefully fail with helpful error if SpatiaLite extension not installed
+- **Geo Tool Group** — New dedicated group for geospatial tools
+  - Moved 4 Haversine-based geo tools from `admin` to `geo` group
+  - SpatiaLite tools also in `geo` group (7 Native-only tools)
+  - New `spatial` shortcut: Core + Geo + Vector (23 WASM / 30 Native tools)
+  - 7 tool groups now available (was 6)
+
+- **Admin/PRAGMA Tools** — Added 8 new database administration tools (100 total)
+  - `sqlite_restore`: Restore database from backup file
+  - `sqlite_verify_backup`: Verify backup file integrity without restoring
+  - `sqlite_index_stats`: Get detailed index statistics with column info
+  - `sqlite_pragma_compile_options`: List SQLite compile-time options
+  - `sqlite_pragma_database_list`: List all attached databases
+  - `sqlite_pragma_optimize`: Run PRAGMA optimize for performance tuning
+  - `sqlite_pragma_settings`: Get or set PRAGMA values
+  - `sqlite_pragma_table_info`: Get detailed table column metadata
+- **MCP Tool Annotations (2025-11-25 spec)** — Added behavioral hints to all 73 tools
+  - `readOnlyHint`: Indicates read-only tools (SELECT queries, schema inspection)
+  - `destructiveHint`: Warns about irreversible operations (DROP, DELETE, TRUNCATE)
+  - `idempotentHint`: Marks safe-to-retry operations (CREATE IF NOT EXISTS)
+  - Annotation presets in `src/utils/annotations.ts`: READ_ONLY, WRITE, DESTRUCTIVE, IDEMPOTENT, ADMIN
+  - Helper functions: `readOnly()`, `write()`, `destructive()`, `idempotent()`, `admin()`
+- **MCP Resource Annotations (2025-11-25 spec)** — Added metadata hints to all 7 resources
+  - `audience`: Intended consumer (`user`, `assistant`, or both)
+  - `priority`: Display ordering hint (0-1 range)
+  - `lastModified`: ISO 8601 timestamp for cache invalidation
+  - Annotation presets in `src/utils/resourceAnnotations.ts`: HIGH_PRIORITY, MEDIUM_PRIORITY, LOW_PRIORITY
+- **Whitelist-Style Tool Filtering** — Enhanced tool filtering to match postgres-mcp syntax
+  - **Whitelist mode**: Specify only the groups you want (e.g., `core,json,text`)
+  - **Shortcuts**: Predefined bundles (`starter`, `analytics`, `search`, `spatial`, `minimal`, `full`)
+  - **Mixed mode**: Combine whitelist with exclusions (e.g., `starter,-fts5`)
+  - **Backward compatible**: Legacy exclusion syntax (`-vector,-geo`) still works
+  - See README "Tool Filtering" section for documentation
+- **ServerInstructions for AI Agents** — Added automated instruction delivery to MCP clients
+  - New `src/constants/ServerInstructions.ts` with tiered instruction levels (essential/standard/full)
+  - Instructions automatically passed to MCP server during initialization
+  - Includes usage examples for JSON, Vector, FTS5, Stats, Geo, Window Functions, and Transactions
+  - Following patterns from memory-journal-mcp and postgres-mcp
+- **MCP Enhanced Logging** — Full MCP protocol-compliant structured logging
+  - RFC 5424 severity levels: debug, info, notice, warning, error, critical, alert, emergency
+  - Module-prefixed error codes (e.g., `DB_CONNECT_FAILED`, `AUTH_TOKEN_INVALID`)
+  - Structured log format: `[timestamp] [LEVEL] [MODULE] [CODE] message {context}`
+  - Module-scoped loggers via `logger.forModule()` and `logger.child()`
+  - Sensitive data redaction for OAuth 2.1 configuration fields
+  - Stack trace inclusion for error-level logs with sanitization
+  - Log injection prevention via control character sanitization
+- Initial repository setup
+- Project documentation (README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY)
+- GitHub workflows (CodeQL, Dependabot)
+- Issue and PR templates
 
 ### Changed
 
@@ -1210,15 +1410,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - dbstat returns storage stats for all database objects (tables and indexes), not just tables
   - More accurately reflects the actual content of the response
 
-### Added
-
-- **`sqlite_spatialite_analyze` Geometry Output Control** — New `includeGeometry` parameter to reduce payload size
-  - When `false` (default), omits full WKT geometry from `nearest_neighbor` and `point_in_polygon` results
-  - When `true`, includes `source_geom` and `target_geom` WKT fields as before
-  - Significantly reduces payload size for proximity analysis (geometry can be 100+ characters per row)
-
-### Changed
-
 - **`sqlite_spatialite_transform` Adaptive Buffer Simplification** — Buffer tolerance now scales with buffer distance
   - Default tolerance changed from fixed 0.0001 to adaptive `max(0.0001, distance * 0.01)`
   - Larger buffers (e.g., 0.1 degrees) now produce ~50 vertices instead of 96+ for more compact WKT
@@ -1228,8 +1419,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - When `true` (default), filters out SpatiaLite system indexes (`idx_spatial_ref_sys`, `idx_srid_geocols`, `idx_viewsjoin`, `idx_virtssrid`)
   - Provides parity with `sqlite_dbstat` and `sqlite_list_tables` system table filtering
   - Set to `false` to include all indexes
-
-### Changed
 
 - **`sqlite_pragma_compile_options` Description** — Enhanced tool description to mention filter parameter
   - Description now notes "Use the filter parameter to reduce output (~50+ options by default)"
@@ -1264,45 +1453,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Native `generate_series()` virtual table was always failing, wasting a database call
   - Now generates directly in JavaScript, eliminating the failed native attempt overhead
 
-### Fixed
-
-- **`sqlite_vector_search` returnColumns Consistency** — Fixed `returnColumns` being ignored for euclidean/dot metrics
-  - Previously, `returnColumns` only filtered output when using cosine similarity; euclidean and dot returned all columns
-  - Now consistently applies column filtering after similarity calculation for all three metrics
-  - Reduces payload size for non-cosine searches (previously ~3x larger due to full embedding vectors in output)
-
-### Changed
-
 - **ServerInstructions.ts `sqlite_stats_top_n` Documentation** — Strengthened payload optimization guidance
   - Changed comment from passive note to explicit ⚠️ warning: "Always use selectColumns to avoid returning all columns (large payloads with text fields)"
   - Emphasizes importance of column selection to reduce token usage
 
-### Added
-
-- **`sqlite_dbstat` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
-  - When `true`, filters out SpatiaLite system tables from storage statistics (57 tables → ~12 user tables)
-  - Applies to both summarize mode and default raw page-level mode
-  - Provides parity with `sqlite_list_tables` and `sqlite_get_indexes` system table filtering
-  - Default is `false` to preserve backward compatibility
-
-- **`sqlite_list_tables` Tool Description** — Fixed misleading "row counts" description
-  - Changed tool description in `core.ts` from "row counts" to "column counts" to match actual output
-  - Tool returns `columnCount` per table, not row counts
-
-- **`sqlite_json_normalize_column` Output Format Control** — New `outputFormat` parameter for normalization output
-  - `preserve` (default): Keeps original format (text→text, JSONB→JSONB)
-  - `text`: Always outputs normalized JSON as text
-  - `jsonb`: Outputs normalized JSON in JSONB binary format
-  - Enables normalizing JSONB columns without losing binary format efficiency
-  - Response includes `outputFormat` field indicating which format was applied
-
-### Changed
-
 - **`sqlite_json_normalize_column` Default Behavior** — Changed default `outputFormat` from `text` to `preserve`
   - Prevents accidental JSONB-to-text conversion when normalizing columns that were previously converted to JSONB
   - Use explicit `outputFormat: "text"` when text output is specifically needed
-
-### Changed
 
 - **ServerInstructions.ts `sqlite_json_each` Payload Warning** — Added explicit warning about output row multiplication
   - Comment now reads: "Note: json_each multiplies output rows—use limit param for large arrays"
@@ -1312,8 +1469,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added explicit `analysisType` options: `spatial_extent | point_in_polygon | nearest_neighbor | distance_matrix`
   - Documented `excludeSelf` parameter for same-table nearest_neighbor/distance_matrix queries
   - Added note clarifying that distances are returned in **Cartesian (degrees)**, not geodetic (km/miles)
-
-### Changed
 
 - **`sqlite_drop_virtual_table` Regular Table Validation** — Now validates target is actually a virtual table
   - Returns helpful error message if attempting to drop a regular table, directing to use `sqlite_drop_table` instead
@@ -1334,8 +1489,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ServerInstructions.ts `sqlite_list_tables` Documentation** — Clarified that views are listed via `sqlite_list_views`
   - Updated description to note that views require `sqlite_list_views` from admin group
 
-### Changed
-
 - **`sqlite_vector_search` Payload Optimization** — Vector data now excluded from results when not explicitly requested
   - When `returnColumns` is specified without the vector column, results omit vector data for smaller payloads
   - Reduces response size significantly for high-dimensional vectors (e.g., 384+ dimensions)
@@ -1350,66 +1503,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added PRAGMA utilities (`sqlite_pragma_compile_options/database_list/optimize`), `sqlite_index_stats`, `sqlite_dbstat`
   - Added `sqlite_generate_series`, `sqlite_create_series_table`, `sqlite_create_rtree_table`, `sqlite_append_insight`
 
-### Fixed
-
-- **`sqlite_backup` WASM Consistent Error Response** — Backup now returns `success: false` upfront in WASM mode
-  - Previously, backup attempted `VACUUM INTO` then caught errors, leading to inconsistent behavior: sometimes succeeding to ephemeral VFS, sometimes failing on path resolution
-  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
-  - Consistent with `sqlite_restore` and `sqlite_verify_backup` which already had upfront WASM checks
-  - Native mode behavior unchanged: backup still uses `VACUUM INTO` and returns structured errors on failure
-
-- **Stats Tool Group Bug Fixes** — Resolved 6 issues from comprehensive tool testing
-  - `sqlite_stats_histogram`: Fixed off-by-one bucket boundary that excluded max values (now uses `<=` for final bucket)
-  - `sqlite_stats_summary`: Auto-filters to numeric columns when no columns specified (prevents string min/max errors)
-  - `sqlite_stats_correlation`: Returns `null` instead of `NaN` for invalid correlations (schema-safe)
-  - `sqlite_stats_hypothesis`: Validates t-statistic is finite before returning (catches zero variance/non-numeric columns)
-  - `sqlite_stats_basic`: Ensures numeric type coercion for all stat values (converts strings to numbers or null)
-  - `sqlite_stats_group_by`: Validates both `valueColumn` and `groupByColumn` exist in table before execution
-
-- **NativeSqliteAdapter Missing Method** — Added `getConfiguredPath()` to match SqliteAdapter interface
-  - `sqlite_pragma_database_list` tool was failing in native mode due to missing method
-  - Now returns configured database path consistently across WASM and Native adapters
-
-- **`sqlite_dbstat` Table-Specific WASM Fallback** — Improved fallback when dbstat virtual table unavailable
-  - Previously, the `table` parameter was ignored in WASM mode, returning only total database page count
-  - Now provides table-specific estimates: `rowCount`, `estimatedPages` (~100 rows/page), and `totalDatabasePages`
-  - Returns `success: false` with appropriate message if specified table doesn't exist
-
-- **`sqlite_drop_virtual_table` Accurate Messaging** — Fixed misleading success message for non-existent tables
-  - Previously, dropping a non-existent table with `ifExists: true` reported "Dropped virtual table 'x'"
-  - Now returns accurate message: "Virtual table 'x' did not exist (no action taken)"
-  - Helps distinguish between actual drops and no-op operations
-
-- **FTS5 Tools WASM Upfront Check** — `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info` now check FTS5 availability upfront
-  - Previously, these tools threw raw "no such table" SQL errors in WASM mode when FTS tables couldn't be created
-  - Now return graceful error response with hint before attempting any SQL execution
-  - Consistent with `sqlite_fts_create` which already had upfront FTS5 detection
-
-- **WASM Adapter Templated Resource Support** — Fixed `sqlite://table/{name}/schema` resource returning "not found" in WASM mode
-  - Ported `ResourceTemplate` handling from `NativeSqliteAdapter` to `SqliteAdapter`
-  - Templated resources now properly register with MCP SDK's `ResourceTemplate` class
-  - Both static and templated resources now work consistently across WASM and Native backends
-
-- **Index Column Population in WASM Adapter** — Fixed `sqlite://indexes` resource returning empty `columns` array
-  - Added `PRAGMA index_info()` queries to populate column names for each index
-  - Updated both `SchemaManager.getAllIndexes()` and `SqliteAdapter.getIndexes()` fallback
-  - Index metadata now matches Native adapter behavior
-
-### Changed
-
 - **`sqlite_pragma_database_list` Configured Path Visibility** — Added `configuredPath` field to output
   - WASM mode shows internal virtual filesystem paths (e.g., `/dbfile_3503536817`) which can confuse users
   - Now includes `configuredPath` showing the user's original database file path
   - Adds explanatory `note` when internal path differs from configured path
 
-### Dependencies
-
 - **Dependency Updates** — Updated npm dependencies to latest versions
   - `@types/node`: 25.1.0 → 25.2.0
   - `globals`: 17.2.0 → 17.3.0
   - `pg`: 8.17.2 → 8.18.0
-
-### Changed
 
 - **ServerInstructions.ts FTS5 Documentation** — Added note that FTS5 virtual tables and shadow tables are hidden from `sqlite_list_tables` for cleaner output
 
@@ -1435,25 +1537,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Line 70: Changed "Window functions (6 tools)" to "Window functions (6 tools in stats group)"
   - Line 89: Changed "Stats(13-19)" to "Stats(19: 13 core + 6 window)" for clearer tool count breakdown
 
-### Added
-
-- **`sqlite_list_views` System View Filter** — New `excludeSystemViews` parameter to hide SpatiaLite views
-  - When `true` (default), filters out SpatiaLite system views (`geom_cols_ref_sys`, `spatial_ref_sys_all`, `vector_layers`, etc.)
-  - Reduces noise in view listings for spatial databases (7 views → 1 user view)
-  - Set to `false` to include all views
-
-- **`sqlite_get_indexes` System Index Filter** — New `excludeSystemIndexes` parameter to hide SpatiaLite indexes
-  - When `true`, filters out SpatiaLite system indexes (`idx_spatial_ref_sys`, `idx_srid_geocols`, `idx_viewsjoin`, `idx_virtssrid`, etc.)
-  - Provides parity with `sqlite_list_tables` parameter `excludeSystemTables`
-  - Default is `false` to preserve backward compatibility
-
-- **`sqlite_list_tables` System Table Filter** — New `excludeSystemTables` parameter to hide SpatiaLite metadata
-  - When `true`, filters out SpatiaLite system tables (`geometry_columns`, `spatial_ref_sys`, `spatialite_history`, `vector_layers`, etc.)
-  - Reduces noise in table listings for spatial databases (38 tables → 12 user tables)
-  - Default is `false` to preserve backward compatibility
-
-### Changed
-
 - **CSV Tools Path Validation** — Improved error messages for `sqlite_create_csv_table` and `sqlite_analyze_csv_schema`
   - Now validates that file paths are absolute before attempting to create virtual table
   - Returns helpful error message with suggested absolute path when relative path is provided
@@ -1463,28 +1546,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added required `sqlite_fts_rebuild` call after `sqlite_fts_create` (indexes are empty until rebuild)
   - Fixed parameter names: `table` → `tableName`/`sourceTable` to match actual tool schema
   - Added clarifying comment explaining that triggers sync future changes but don't populate existing data
-
-### Fixed
-
-- **`sqlite_list_tables` KNN2 Virtual Table** — KNN2 SpatiaLite virtual table now filtered by `excludeSystemTables`
-  - Added "KNN2" to the SpatiaLite system table exclusion list
-  - Previously KNN2 was shown despite `excludeSystemTables=true`
-
-- **`sqlite_json_group_object` Aggregate Function Support** — New `aggregateFunction` parameter for aggregate values
-  - Enables `COUNT(*)`, `SUM(amount)`, `AVG(price)`, and other aggregate functions as object values
-  - Uses subquery pattern to pre-aggregate results before wrapping in `json_group_object()`
-  - Example: `sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" })`
-  - `allowExpressions` parameter clarified: supports column extraction only, NOT aggregate functions
-  - **New**: Returns `hint` warning when using `allowExpressions` without `groupByColumn` (duplicate keys may result if key values aren't unique)
-
-### Fixed
-
-- **`server_health` SpatiaLite Status** — Health check now reports accurate SpatiaLite extension status
-  - Previously hardcoded `spatialite: false` regardless of actual extension state
-  - Now calls exported `isSpatialiteLoaded()` to reflect runtime extension status
-  - Helps users confirm SpatiaLite is loaded before using spatial tools
-
-### Changed
 
 - **`sqlite_list_tables` Documentation** — Updated tool description in ServerInstructions.ts
   - Now mentions `excludeSystemTables` parameter for filtering SpatiaLite metadata
@@ -1507,8 +1568,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now detects mixed format scenarios and recommends running `sqlite_jsonb_convert` to unify storage
   - Previously reported "Column already uses JSONB format" even when 50% of rows were still text JSON
 
-### Changed
-
 - **`sqlite_spatialite_transform` Buffer Auto-Simplification** — Buffer operation now auto-simplifies output by default
   - Reduces verbose WKT payload from ~2KB (64-point circle) to ~200 bytes
   - Default tolerance 0.0001 is suitable for lat/lon coordinates
@@ -1524,8 +1583,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Controls maximum number of tables/pages returned in both summarized and raw modes
   - Helps reduce payload size for large databases
   - Previously hardcoded to 100; now user-configurable
-
-### Changed
 
 - **`sqlite_fuzzy_match` Documentation** — Clarified that Levenshtein distance is computed against entire column values
   - Updated description to note comparison is against whole values, not word tokens
@@ -1571,7 +1628,157 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Each row now includes `rowid`, `original` value, and `parts` array
   - Enables correlation between split results and source rows
 
+- **ServerInstructions.ts WASM Tool Count** — Corrected `starter` preset count for WASM mode
+  - Changed from 48 to 44 (4 FTS5 tools unavailable in WASM)
+  - Added footnote: "_17_ = 13 in WASM (4 FTS5 tools require native)"
+
+- **ServerInstructions.ts JSONB Documentation** — Added note that `sqlite_json_normalize_column` converts JSONB back to text format
+  - The `json()` function used for normalization returns text JSON, not JSONB binary
+  - Users should run `sqlite_jsonb_convert` after normalization if JSONB format is desired
+
+- **ServerInstructions.ts Text Processing Documentation** — Added inline comment for regex escaping clarity
+  - Explains that regex patterns require double-escaping backslashes (`\\\\`) when passing through JSON/MCP transport
+
+- **ServerInstructions.ts CSV Path Documentation** — Added absolute path requirement note for CSV tools
+  - Updated WASM vs Native table: CSV virtual tables now note "(requires absolute paths)"
+  - Added CSV Virtual Tables examples to Database Administration section showing `sqlite_analyze_csv_schema` and `sqlite_create_csv_table` with absolute path usage
+
+- **ServerInstructions.ts Statistical Analysis Examples** — Added missing stats tool examples to TOOL_REFERENCE
+  - Added `sqlite_stats_outliers` example with IQR/Z-score method options
+  - Added `sqlite_stats_hypothesis` example with one-sample t-test usage
+
+- **JSON Aggregation Tool Documentation** — Clarified `groupByColumn` usage for JSON collection tables
+  - Updated `sqlite_json_group_array` and `sqlite_json_group_object` parameter descriptions
+  - For JSON collections, must use `allowExpressions: true` with `json_extract(data, '$.field')` for groupByColumn
+  - Updated ServerInstructions.ts examples to show both regular table and JSON collection patterns
+
+- **Tool Count Documentation Accuracy** — Fixed tool counts across all documentation files
+  - `text` group: 16 → 17 (added fuzzy_match, phonetic_match, text_normalize, text_validate, advanced_search, fts_rebuild, fts_match_info)
+  - `admin` group: 32 → 33
+  - `starter` preset: 47 → 48
+  - `search` preset: 35 → 36
+  - `full` preset: 120 → 122 Native, 100 → 102 WASM
+  - Updated ToolConstants.ts, ServerInstructions.ts, and README.md
+
+- **ServerInstructions.ts Text Processing Examples** — Updated TOOL_REFERENCE section
+  - Fixed `sqlite_fuzzy_search` example to correct tool name `sqlite_fuzzy_match` with proper parameters
+  - Replaced generic `sqlite_text_similarity` example with practical `sqlite_text_validate` (email/phone/url/uuid/ipv4)
+  - Added `sqlite_advanced_search` example demonstrating multi-technique search (exact/fuzzy/phonetic)
+
+- **ServerInstructions.ts Documentation Improvements** — Updated tool filtering reference for accuracy
+  - Corrected tool counts to match README (was showing outdated single-column counts)
+  - Added WASM/Native columns to shortcut table showing accurate counts per backend
+  - Added `spatial` shortcut (23 WASM / 30 Native tools)
+  - Added `geo` to groups list (was missing from documentation)
+  - Added Fallback column to WASM vs Native table documenting JS fallback availability
+  - Documented `generate_series`, `dbstat`, `soundex` JS fallbacks vs extension tools with no fallback
+  - Added Database Administration examples section with 6 common admin tools
+
+- **WASM Mode FTS5 Graceful Handling** — FTS5 tools now return helpful errors instead of crashes in WASM mode
+  - All 4 FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) detect "no such module: fts5" errors
+  - Returns structured error with `hint` directing to native SQLite backend (`--sqlite-native`)
+  - Prevents tool failures when running in WASM mode (sql.js) which lacks FTS5 module
+
+- **WASM Mode Soundex Fallback** — `sqlite_phonetic_match` now works with soundex algorithm in WASM mode
+  - JavaScript-based soundex implementation used as fallback when SQLite's native `soundex()` function unavailable
+  - Behavior matches metaphone algorithm path (fetch rows, filter in JS)
+  - Same output format and accuracy as native soundex
+  - Gracefully handles "no such function: soundex" error without user intervention
+
+- **SQLite-Focused Branding** — Updated project descriptions to reflect SQLite-only focus
+  - `package.json`: Updated description and removed unused database keywords (postgresql, mysql, mongodb, redis)
+  - `src/cli.ts`: Updated help text, removed dead CLI options and environment variable parsing for unsupported databases
+  - Updated header comments in `src/index.ts`, `src/server/McpServer.ts`, `src/adapters/DatabaseAdapter.ts`
+
+- **Simplified SpatiaLite Instructions** — Removed manual `sqlite_spatialite_load` step requirement
+  - SpatiaLite extension and metadata tables are now auto-initialized on first use of any spatial tool
+  - Removed "IMPORTANT" warning and step numbering from `ServerInstructions.ts`
+  - Added GeoJSON import example to instructions
+
+- **Node.js 24 LTS Baseline** — Upgraded from Node 20 to Node 24 LTS as the project baseline
+  - `package.json` now requires Node.js >=24.0.0 in `engines` field
+  - README prerequisites updated to specify Node.js 24+ (LTS)
+  - `@modelcontextprotocol/sdk`: 1.24.3 → 1.25.3
+  - `@types/node`: 25.0.2 → 25.1.0
+  - `better-sqlite3`: 12.5.0 → 12.6.2
+  - `cors`: 2.8.5 → 2.8.6
+  - `globals`: 16.5.0 → 17.2.0 (major version bump)
+  - `pg`: 8.16.3 → 8.17.2
+  - `typescript-eslint`: 8.49.0 → 8.54.0
+  - `vitest`: 4.0.15 → 4.0.18
+  - `zod`: 4.1.13 → 4.3.6
+
+- **OAuth 2.1 Implementation** — Tested with Keycloak 26.4.7
+  - Token validation with JWKS endpoint verified
+  - Scope enforcement (`read`, `write`, `admin`) working correctly
+  - RFC 9728 Protected Resource Metadata endpoint operational
+  - Added OAuth Quick Start section to README with usage examples
+
 ### Fixed
+
+- **`sqlite_vector_search` returnColumns Consistency** — Fixed `returnColumns` being ignored for euclidean/dot metrics
+  - Previously, `returnColumns` only filtered output when using cosine similarity; euclidean and dot returned all columns
+  - Now consistently applies column filtering after similarity calculation for all three metrics
+  - Reduces payload size for non-cosine searches (previously ~3x larger due to full embedding vectors in output)
+
+- **`sqlite_backup` WASM Consistent Error Response** — Backup now returns `success: false` upfront in WASM mode
+  - Previously, backup attempted `VACUUM INTO` then caught errors, leading to inconsistent behavior: sometimes succeeding to ephemeral VFS, sometimes failing on path resolution
+  - Now checks `isNativeBackend()` first and returns `{success: false, wasmLimitation: true}` immediately
+  - Consistent with `sqlite_restore` and `sqlite_verify_backup` which already had upfront WASM checks
+  - Native mode behavior unchanged: backup still uses `VACUUM INTO` and returns structured errors on failure
+
+- **Stats Tool Group Bug Fixes** — Resolved 6 issues from comprehensive tool testing
+  - `sqlite_stats_histogram`: Fixed off-by-one bucket boundary that excluded max values (now uses `<=` for final bucket)
+  - `sqlite_stats_summary`: Auto-filters to numeric columns when no columns specified (prevents string min/max errors)
+  - `sqlite_stats_correlation`: Returns `null` instead of `NaN` for invalid correlations (schema-safe)
+  - `sqlite_stats_hypothesis`: Validates t-statistic is finite before returning (catches zero variance/non-numeric columns)
+  - `sqlite_stats_basic`: Ensures numeric type coercion for all stat values (converts strings to numbers or null)
+  - `sqlite_stats_group_by`: Validates both `valueColumn` and `groupByColumn` exist in table before execution
+
+- **NativeSqliteAdapter Missing Method** — Added `getConfiguredPath()` to match SqliteAdapter interface
+  - `sqlite_pragma_database_list` tool was failing in native mode due to missing method
+  - Now returns configured database path consistently across WASM and Native adapters
+
+- **`sqlite_dbstat` Table-Specific WASM Fallback** — Improved fallback when dbstat virtual table unavailable
+  - Previously, the `table` parameter was ignored in WASM mode, returning only total database page count
+  - Now provides table-specific estimates: `rowCount`, `estimatedPages` (~100 rows/page), and `totalDatabasePages`
+  - Returns `success: false` with appropriate message if specified table doesn't exist
+
+- **`sqlite_drop_virtual_table` Accurate Messaging** — Fixed misleading success message for non-existent tables
+  - Previously, dropping a non-existent table with `ifExists: true` reported "Dropped virtual table 'x'"
+  - Now returns accurate message: "Virtual table 'x' did not exist (no action taken)"
+  - Helps distinguish between actual drops and no-op operations
+
+- **FTS5 Tools WASM Upfront Check** — `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info` now check FTS5 availability upfront
+  - Previously, these tools threw raw "no such table" SQL errors in WASM mode when FTS tables couldn't be created
+  - Now return graceful error response with hint before attempting any SQL execution
+  - Consistent with `sqlite_fts_create` which already had upfront FTS5 detection
+
+- **WASM Adapter Templated Resource Support** — Fixed `sqlite://table/{name}/schema` resource returning "not found" in WASM mode
+  - Ported `ResourceTemplate` handling from `NativeSqliteAdapter` to `SqliteAdapter`
+  - Templated resources now properly register with MCP SDK's `ResourceTemplate` class
+  - Both static and templated resources now work consistently across WASM and Native backends
+
+- **Index Column Population in WASM Adapter** — Fixed `sqlite://indexes` resource returning empty `columns` array
+  - Added `PRAGMA index_info()` queries to populate column names for each index
+  - Updated both `SchemaManager.getAllIndexes()` and `SqliteAdapter.getIndexes()` fallback
+  - Index metadata now matches Native adapter behavior
+
+- **`sqlite_list_tables` KNN2 Virtual Table** — KNN2 SpatiaLite virtual table now filtered by `excludeSystemTables`
+  - Added "KNN2" to the SpatiaLite system table exclusion list
+  - Previously KNN2 was shown despite `excludeSystemTables=true`
+
+- **`sqlite_json_group_object` Aggregate Function Support** — New `aggregateFunction` parameter for aggregate values
+  - Enables `COUNT(*)`, `SUM(amount)`, `AVG(price)`, and other aggregate functions as object values
+  - Uses subquery pattern to pre-aggregate results before wrapping in `json_group_object()`
+  - Example: `sqlite_json_group_object({ table: "events", keyColumn: "event_type", aggregateFunction: "COUNT(*)" })`
+  - `allowExpressions` parameter clarified: supports column extraction only, NOT aggregate functions
+  - **New**: Returns `hint` warning when using `allowExpressions` without `groupByColumn` (duplicate keys may result if key values aren't unique)
+
+- **`server_health` SpatiaLite Status** — Health check now reports accurate SpatiaLite extension status
+  - Previously hardcoded `spatialite: false` regardless of actual extension state
+  - Now calls exported `isSpatialiteLoaded()` to reflect runtime extension status
+  - Helps users confirm SpatiaLite is loaded before using spatial tools
 
 - **`sqlite_text_split` WASM Rowid Bug** — Fixed rows returning `rowid: 0` for all results
   - Changed SQL query from `SELECT rowid, column` to `SELECT rowid as id, column` for consistent behavior
@@ -1587,29 +1794,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Null/undefined values now display as `null` instead of artificial `"(empty)"` placeholder
   - Long values (>100 chars) are truncated with "..." for readability
 
-### Changed
-
-- **ServerInstructions.ts WASM Tool Count** — Corrected `starter` preset count for WASM mode
-  - Changed from 48 to 44 (4 FTS5 tools unavailable in WASM)
-  - Added footnote: "_17_ = 13 in WASM (4 FTS5 tools require native)"
-
-### Fixed
-
 - **`sqlite_json_group_array` and `sqlite_json_group_object` groupByColumn Expressions** — Extended `allowExpressions` to also apply to `groupByColumn` parameter
   - Previously `allowExpressions: true` only bypassed validation for `valueColumn`/`keyColumn`, not `groupByColumn`
   - Now enables grouping by JSON path expressions like `json_extract(data, '$.type')`
   - When using expressions for `groupByColumn`, output uses `group_key` alias for clarity
-
-### Changed
-
-- **ServerInstructions.ts JSONB Documentation** — Added note that `sqlite_json_normalize_column` converts JSONB back to text format
-  - The `json()` function used for normalization returns text JSON, not JSONB binary
-  - Users should run `sqlite_jsonb_convert` after normalization if JSONB format is desired
-
-- **ServerInstructions.ts Text Processing Documentation** — Added inline comment for regex escaping clarity
-  - Explains that regex patterns require double-escaping backslashes (`\\\\`) when passing through JSON/MCP transport
-
-### Fixed
 
 - **`sqlite_json_group_array` Expression Support** — Added `allowExpressions` option for consistency with `sqlite_json_group_object`
   - When `allowExpressions: true`, SQL expressions like `json_extract(data, '$.name')` are accepted for `valueColumn`
@@ -1639,36 +1827,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_restore` now attempts to recreate virtual tables (FTS5, R-Tree) in native mode instead of unconditionally skipping them
   - In native mode, actual file system errors are now properly thrown instead of being masked as WASM limitations
 
-### Changed
-
-- **ServerInstructions.ts CSV Path Documentation** — Added absolute path requirement note for CSV tools
-  - Updated WASM vs Native table: CSV virtual tables now note "(requires absolute paths)"
-  - Added CSV Virtual Tables examples to Database Administration section showing `sqlite_analyze_csv_schema` and `sqlite_create_csv_table` with absolute path usage
-
-- **ServerInstructions.ts Statistical Analysis Examples** — Added missing stats tool examples to TOOL_REFERENCE
-  - Added `sqlite_stats_outliers` example with IQR/Z-score method options
-  - Added `sqlite_stats_hypothesis` example with one-sample t-test usage
-
-- **JSON Aggregation Tool Documentation** — Clarified `groupByColumn` usage for JSON collection tables
-  - Updated `sqlite_json_group_array` and `sqlite_json_group_object` parameter descriptions
-  - For JSON collections, must use `allowExpressions: true` with `json_extract(data, '$.field')` for groupByColumn
-  - Updated ServerInstructions.ts examples to show both regular table and JSON collection patterns
-
-- **Tool Count Documentation Accuracy** — Fixed tool counts across all documentation files
-  - `text` group: 16 → 17 (added fuzzy_match, phonetic_match, text_normalize, text_validate, advanced_search, fts_rebuild, fts_match_info)
-  - `admin` group: 32 → 33
-  - `starter` preset: 47 → 48
-  - `search` preset: 35 → 36
-  - `full` preset: 120 → 122 Native, 100 → 102 WASM
-  - Updated ToolConstants.ts, ServerInstructions.ts, and README.md
-
-- **ServerInstructions.ts Text Processing Examples** — Updated TOOL_REFERENCE section
-  - Fixed `sqlite_fuzzy_search` example to correct tool name `sqlite_fuzzy_match` with proper parameters
-  - Replaced generic `sqlite_text_similarity` example with practical `sqlite_text_validate` (email/phone/url/uuid/ipv4)
-  - Added `sqlite_advanced_search` example demonstrating multi-technique search (exact/fuzzy/phonetic)
-
-### Fixed
-
 - **`sqlite_create_table` SQL Expression Default Values** — Fixed syntax error when using SQL expressions as default values
   - Expressions like `datetime('now')`, `CURRENT_TIMESTAMP`, `CURRENT_DATE`, `CURRENT_TIME` now wrapped in parentheses
   - Literal string values continue to be properly single-quoted with escape handling for embedded quotes
@@ -1681,8 +1839,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **ServerInstructions.ts Core Tools Table** — Added missing tools to documentation
   - Added `sqlite_drop_table` and `sqlite_get_indexes` to Core Tools table (was only showing 6 of 8 tools)
-
-### Fixed
 
 - **WASM Mode Admin Tool Graceful Handling** — 4 admin tools now return structured errors instead of throwing in WASM mode
   - `sqlite_virtual_table_info`: Returns `moduleAvailable: false` with partial metadata when module unavailable (e.g., FTS5)
@@ -1704,119 +1860,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `sqlite_create_csv_table`: Returns `success: false` with `wasmLimitation: true` when CSV extension not loaded
   - `sqlite_restore`: Now skips virtual tables with unavailable modules (FTS5, R-Tree) instead of failing entire restore
   - Added `skippedTables` and `note` fields to `RestoreOutputSchema` for partial restore reporting
-
-### Changed
-
-- **ServerInstructions.ts Documentation Improvements** — Updated tool filtering reference for accuracy
-  - Corrected tool counts to match README (was showing outdated single-column counts)
-  - Added WASM/Native columns to shortcut table showing accurate counts per backend
-  - Added `spatial` shortcut (23 WASM / 30 Native tools)
-  - Added `geo` to groups list (was missing from documentation)
-  - Added Fallback column to WASM vs Native table documenting JS fallback availability
-  - Documented `generate_series`, `dbstat`, `soundex` JS fallbacks vs extension tools with no fallback
-  - Added Database Administration examples section with 6 common admin tools
-
-- **WASM Mode FTS5 Graceful Handling** — FTS5 tools now return helpful errors instead of crashes in WASM mode
-  - All 4 FTS5 tools (`sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`) detect "no such module: fts5" errors
-  - Returns structured error with `hint` directing to native SQLite backend (`--sqlite-native`)
-  - Prevents tool failures when running in WASM mode (sql.js) which lacks FTS5 module
-
-- **WASM Mode Soundex Fallback** — `sqlite_phonetic_match` now works with soundex algorithm in WASM mode
-  - JavaScript-based soundex implementation used as fallback when SQLite's native `soundex()` function unavailable
-  - Behavior matches metaphone algorithm path (fetch rows, filter in JS)
-  - Same output format and accuracy as native soundex
-  - Gracefully handles "no such function: soundex" error without user intervention
-
-### Added
-
-- **WASM vs Native Documentation** — Added feature comparison table to `ServerInstructions.ts`
-  - Lists FTS5, transactions, window functions, SpatiaLite, and soundex availability
-  - Token-efficient format optimized for AI agent consumption
-
-- **Polynomial Regression Support** — `sqlite_stats_regression` now supports degree 1-3 polynomial fits
-  - Linear (degree=1), quadratic (degree=2), and cubic (degree=3) regression via OLS normal equation
-  - Matrix operations (transpose, multiply, Gauss-Jordan inverse) implemented in pure TypeScript
-  - Output includes named coefficients (`intercept`, `linear`, `quadratic`, `cubic`) instead of generic `slope`
-  - R² calculation uses sum of squared residuals for accurate goodness-of-fit measurement
-  - Equation string displays polynomial terms (e.g., `y = 2.0000x² + 3.0000x + 5.0000`)
-
-- **WASM Mode Core Tool Compatibility** — Fixed issues discovered during WASM mode testing
-  - `server_health` now correctly reports `filePath` from `connectionString` when `filePath` is not set
-  - `sqlite_list_tables` now gracefully handles FTS5 virtual tables in WASM mode (sql.js lacks FTS5 module)
-  - FTS5 shadow tables (`_fts_*`) are automatically skipped in table listings
-  - Tables that fail `PRAGMA table_info()` are skipped rather than failing the entire operation
-  - `COUNT(*)` errors on virtual tables return `rowCount: 0` instead of throwing
-
-- **MCP Resource Template Registration** — Fixed `sqlite_table_schema` templated resource not matching client requests
-  - Updated `registerResource()` in `NativeSqliteAdapter` to detect URI templates (containing `{param}` placeholders)
-  - Template resources now use MCP SDK's `ResourceTemplate` class for proper URI matching
-  - Static resources continue using simple string URI registration
-  - Allows clients to request resources like `sqlite://table/test_products/schema` and have them matched correctly
-
-- **Missing `getAllIndexes()` Method** — Added `getAllIndexes()` to `NativeSqliteAdapter`
-  - Required by `sqlite_indexes` resource but was missing in native adapter
-  - Returns all user-created indexes with table name, column list, and uniqueness info
-  - Queries `sqlite_master` and `PRAGMA index_info()` for complete index metadata
-
-### Added
-
-- **PRAGMA Compile Options Filter** — `sqlite_pragma_compile_options` now supports `filter` parameter
-  - Case-insensitive substring match to limit returned options (e.g., `filter: "FTS"` returns only FTS-related options)
-  - Reduces payload size for targeted queries (58 options → filtered subset)
-
-- **Database Stats Summarize Mode** — `sqlite_dbstat` now supports `summarize` parameter
-  - When `summarize: true`, returns aggregated per-table stats instead of raw page-level data
-  - Summary includes: `pageCount`, `totalPayload`, `totalUnused`, `totalCells`, `maxPayload` per table
-  - Reduces response size (27 rows → 1 row per table) while providing actionable storage metrics
-
-- **Stats Tool Column Selection** — `sqlite_stats_top_n` now supports `selectColumns` parameter
-  - Limits returned columns to only those specified (reduces payload size for large tables)
-  - Default behavior unchanged: returns all columns when `selectColumns` is not provided
-  - Columns are validated and sanitized for SQL injection protection
-
-- **FTS5 Auto-Sync Triggers** — `sqlite_fts_create` now automatically creates sync triggers
-  - INSERT/UPDATE/DELETE triggers keep FTS5 index synchronized with source table in real-time
-  - New `createTriggers` option (default: `true`) to control trigger creation
-  - FTS tables are automatically populated with existing data on creation via `rebuild`
-  - Trigger naming convention: `{ftsTable}_ai` (insert), `{ftsTable}_ad` (delete), `{ftsTable}_au` (update)
-  - Response includes `triggersCreated` array listing created trigger names
-
-- **FTS5 Wildcard Query Support** — `sqlite_fts_search` now supports list-all queries
-  - Query `*` or empty string returns all FTS table contents without MATCH filtering
-  - Useful for browsing FTS index contents or debugging FTS configuration
-  - Returns rows ordered by rowid with `rank: null`
-
-- **Phonetic Match Verbosity Control** — `sqlite_phonetic_match` now supports `includeRowData` option
-  - New `includeRowData` parameter (default: `true`) to control full row data inclusion
-  - Set to `false` for compact responses with only `value` and `phoneticCode` per match
-  - Backward compatible: existing calls behave identically
-
-- **SQLite Extension Support** — Added CLI flags and configuration for loadable SQLite extensions
-  - `--csv` flag to load CSV extension for CSV virtual tables
-  - `--spatialite` flag to load SpatiaLite extension for GIS capabilities
-  - `CSV_EXTENSION_PATH` and `SPATIALITE_PATH` environment variables for custom extension paths
-  - Platform-aware extension binary detection (Windows/Linux/macOS)
-  - README documentation for built-in vs loadable extensions with installation instructions
-- **Test Infrastructure** — Migrated tests to native SQLite adapter for full feature coverage
-  - Added `tests/utils/test-adapter.ts` factory for centralized adapter instantiation
-  - All 9 SQLite test files now use `NativeSqliteAdapter` (better-sqlite3) instead of sql.js WASM
-  - FTS5 tests now execute properly (previously skipped due to WASM limitations)
-
-### Changed
-
-- **SQLite-Focused Branding** — Updated project descriptions to reflect SQLite-only focus
-  - `package.json`: Updated description and removed unused database keywords (postgresql, mysql, mongodb, redis)
-  - `src/cli.ts`: Updated help text, removed dead CLI options and environment variable parsing for unsupported databases
-  - Updated header comments in `src/index.ts`, `src/server/McpServer.ts`, `src/adapters/DatabaseAdapter.ts`
-
-### Security
-
-- **Identifier Validation Centralization** — Migrated 83 tool handlers to use centralized `sanitizeIdentifier()` utility
-  - Replaced inline regex validations with type-safe `InvalidIdentifierError` handling
-  - Consistent security pattern across 10 files: `geo.ts`, `admin.ts`, `text.ts`, `vector.ts`, `virtual.ts`, `stats.ts`, `fts.ts`, `json-operations.ts`, `json-helpers.ts`, `core.ts`
-  - Updated security tests to expect new error message format
-
-### Fixed
 
 - **SpatiaLite Analyze WKT Output** — Fixed `sqlite_spatialite_analyze` binary geometry output
   - `nearest_neighbor` and `point_in_polygon` analysis types now return WKT via `AsText()` instead of raw binary blobs
@@ -1844,7 +1887,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **JSON Group Object Expression Support** — Added `allowExpressions` option to `sqlite_json_group_object`
   - When `allowExpressions: true`, SQL expressions like `json_extract(data, '$.name')` are accepted for `keyColumn` and `valueColumn`
   - Default behavior unchanged (validates as simple column identifiers for security)
-  - Enables advanced aggregation patterns combining JSON extraction with grouping
 
 - **JSONB Text Serialization Fix** — Fixed `sqlite_json_select` returning binary Buffer for JSONB data
   - Wrapped column selection with `json()` function to convert JSONB binary to readable text JSON
@@ -1953,84 +1995,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GeoJSON import now supports `additionalData` columns (was only available for WKT import)
   - Fixes "geom violates Geometry constraint [geom-type or SRID not allowed]" error
 
-### Changed
-
-- **Simplified SpatiaLite Instructions** — Removed manual `sqlite_spatialite_load` step requirement
-  - SpatiaLite extension and metadata tables are now auto-initialized on first use of any spatial tool
-  - Removed "IMPORTANT" warning and step numbering from `ServerInstructions.ts`
-  - Added GeoJSON import example to instructions
-
-### Added
-
-- **Comprehensive Test Infrastructure** — Test database setup for systematic tool group testing
-  - `test-server/test-database.sql`: Seed data with 10 tables and 409 rows covering all 7 tool groups
-  - `test-server/reset-database.ps1`: PowerShell script to reset database to clean state with verification
-  - `test-server/test-groups/`: Individual test guides for each tool group (core, json, text, stats, vector, admin, geo)
-  - Uses ESM-compatible Node.js scripts with better-sqlite3 for cross-platform reset
-  - Test tables: products, orders, json_docs, articles, users, measurements, embeddings, locations, categories, events
-
-- **HTTP/SSE Streaming Transport** — Enhanced HTTP transport with session management and SSE
-  - **Stateful mode (default)**: Multi-session management with SSE streaming for notifications
-  - **Stateless mode (`--stateless`)**: Lightweight serverless-compatible mode for Lambda/Workers
-  - `POST /mcp`: JSON-RPC requests with session management
-  - `GET /mcp`: SSE stream for server-to-client notifications
-  - `DELETE /mcp`: Session termination endpoint
-  - Enhanced CORS headers for `mcp-session-id` and `Last-Event-ID`
-  - Health endpoint reports active session count and transport mode
-- **Business Insights Memo** — New tool and resource for capturing analysis insights
-  - `sqlite_append_insight` tool: Add business insights discovered during data analysis
-  - `memo://insights` resource: Synthesized memo of all captured insights
-  - Insights manager singleton for in-memory insight storage
-- **Summarize Table Prompt** — Intelligent table analysis workflow
-  - `sqlite_summarize_table` prompt with configurable analysis depth
-  - Supports basic, detailed, and comprehensive analysis modes
-- **Advanced Search Tool** — Multi-mode text search
-  - `sqlite_advanced_search` tool combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching
-  - Configurable threshold and technique selection
-- **Hybrid Search Workflow Prompt** — Combined FTS5 + vector search
-  - `sqlite_hybrid_search_workflow` prompt for hybrid search implementation
-  - Guides through schema setup, query structure, and weight tuning
-- **Interactive Demo Prompt** — Flagship MCP demonstration
-  - `sqlite_demo` prompt for interactive capability walkthrough
-  - Guides through data creation, querying, and insight capture
-- **MCP Progress Notifications (2025-11-25)** — Real-time progress updates for long-running operations
-  - New `src/utils/progress-utils.ts` module with `sendProgress()` and `buildProgressContext()` utilities
-  - Extended `RequestContext` interface with optional `server` and `progressToken` fields
-  - `sqlite_restore`: 3-phase progress (prepare → restore → verify)
-  - `sqlite_optimize`: Dynamic multi-phase progress (start → reindex → analyze → complete)
-  - `sqlite_vacuum`: 2-phase progress (start → complete)
-  - Notifications are best-effort and require client support for `progressToken` in `_meta`
-- **Modern Tool Registration** — Migrated from deprecated `server.tool()` to `server.registerTool()` API
-  - Both `SqliteAdapter` and `NativeSqliteAdapter` now use modern pattern
-  - Full `inputSchema`/`outputSchema` passed (not just `.shape`)
-  - MCP 2025-11-25 `structuredContent` returned when `outputSchema` is present
-  - Progress token extraction from `extra._meta` enables progress notifications
-  - Removed all eslint-disable comments for deprecated API usage
-- **Metadata Caching Pattern** — TTL-based schema caching ported from mysql-mcp
-  - New `SchemaManager.ts` module with configurable cache TTL (default: 5s)
-  - Schema, tables, and indexes cached to reduce repeated introspection queries
-  - Auto-invalidation on DDL operations (CREATE/ALTER/DROP) in all query methods
-  - Fixed N+1 query pattern in `sqlite://indexes` resource
-  - ToolFilter caching for O(1) tool group lookups
-  - `METADATA_CACHE_TTL_MS` environment variable for tuning (documented in README)
-
-### Changed
-
-- **Node.js 24 LTS Baseline** — Upgraded from Node 20 to Node 24 LTS as the project baseline
-  - `package.json` now requires Node.js >=24.0.0 in `engines` field
-  - README prerequisites updated to specify Node.js 24+ (LTS)
-- **Dependency Updates** — Updated npm dependencies to latest versions
-  - `@modelcontextprotocol/sdk`: 1.24.3 → 1.25.3
-  - `@types/node`: 25.0.2 → 25.1.0
-  - `better-sqlite3`: 12.5.0 → 12.6.2
-  - `cors`: 2.8.5 → 2.8.6
-  - `globals`: 16.5.0 → 17.2.0 (major version bump)
-  - `pg`: 8.16.3 → 8.17.2
-  - `typescript-eslint`: 8.49.0 → 8.54.0
-  - `vitest`: 4.0.15 → 4.0.18
-  - `zod`: 4.1.13 → 4.3.6
+- **MCP SDK 1.25.2 Compatibility** — Fixed stricter transport type requirements
+  - Added onclose handler to StreamableHTTPServerTransport before connecting
+  - Used type assertion to satisfy SDK's narrower Transport type constraints
 
 ### Security
+
+- **Identifier Validation Centralization** — Migrated 83 tool handlers to use centralized `sanitizeIdentifier()` utility
+  - Replaced inline regex validations with type-safe `InvalidIdentifierError` handling
+  - Consistent security pattern across 10 files: `geo.ts`, `admin.ts`, `text.ts`, `vector.ts`, `virtual.ts`, `stats.ts`, `fts.ts`, `json-operations.ts`, `json-helpers.ts`, `core.ts`
+  - Updated security tests to expect new error message format
 
 - **Transitive Dependency Fixes** — Resolved vulnerabilities via npm audit fix
   - `hono`: 4.11.5 → 4.11.7 (moderate severity fix via `@modelcontextprotocol/sdk`)
@@ -2057,78 +2031,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Handler Security Hardening** — Added missing WHERE clause validation to tool handlers
   - `geo.ts`: Added `validateWhereClause()` to `sqlite_geo_cluster`
   - `stats.ts`: Added `validateWhereClause()` to `sqlite_stats_outliers`, `sqlite_stats_top_n`, `sqlite_stats_distinct`, `sqlite_stats_frequency`
-
-### Fixed
-
-- **MCP SDK 1.25.2 Compatibility** — Fixed stricter transport type requirements
-  - Added onclose handler to StreamableHTTPServerTransport before connecting
-  - Used type assertion to satisfy SDK's narrower Transport type constraints
-
-### Verified
-
-- **OAuth 2.1 Implementation** — Tested with Keycloak 26.4.7
-  - Token validation with JWKS endpoint verified
-  - Scope enforcement (`read`, `write`, `admin`) working correctly
-  - RFC 9728 Protected Resource Metadata endpoint operational
-  - Added OAuth Quick Start section to README with usage examples
-
-### Added
-
-- **SpatiaLite Geospatial Tools (Native-only)** — 7 new tools for GIS capabilities
-  - `sqlite_spatialite_load` — Load SpatiaLite extension
-  - `sqlite_spatialite_create_table` — Create tables with geometry columns
-  - `sqlite_spatialite_query` — Execute spatial SQL (ST_Distance, ST_Within, etc.)
-  - `sqlite_spatialite_analyze` — Spatial analysis (nearest neighbor, point-in-polygon)
-  - `sqlite_spatialite_index` — Create/manage spatial R-Tree indexes
-  - `sqlite_spatialite_transform` — Geometry operations (buffer, union, intersection)
-  - `sqlite_spatialite_import` — Import WKT/GeoJSON data
-  - Tools gracefully fail with helpful error if SpatiaLite extension not installed
-- **Geo Tool Group** — New dedicated group for geospatial tools
-  - Moved 4 Haversine-based geo tools from `admin` to `geo` group
-  - SpatiaLite tools also in `geo` group (7 Native-only tools)
-  - New `spatial` shortcut: Core + Geo + Vector (23 WASM / 30 Native tools)
-  - 7 tool groups now available (was 6)
-
-- **Admin/PRAGMA Tools** — Added 8 new database administration tools (100 total)
-  - `sqlite_restore`: Restore database from backup file
-  - `sqlite_verify_backup`: Verify backup file integrity without restoring
-  - `sqlite_index_stats`: Get detailed index statistics with column info
-  - `sqlite_pragma_compile_options`: List SQLite compile-time options
-  - `sqlite_pragma_database_list`: List all attached databases
-  - `sqlite_pragma_optimize`: Run PRAGMA optimize for performance tuning
-  - `sqlite_pragma_settings`: Get or set PRAGMA values
-  - `sqlite_pragma_table_info`: Get detailed table column metadata
-- **MCP Tool Annotations (2025-11-25 spec)** — Added behavioral hints to all 73 tools
-  - `readOnlyHint`: Indicates read-only tools (SELECT queries, schema inspection)
-  - `destructiveHint`: Warns about irreversible operations (DROP, DELETE, TRUNCATE)
-  - `idempotentHint`: Marks safe-to-retry operations (CREATE IF NOT EXISTS)
-  - Annotation presets in `src/utils/annotations.ts`: READ_ONLY, WRITE, DESTRUCTIVE, IDEMPOTENT, ADMIN
-  - Helper functions: `readOnly()`, `write()`, `destructive()`, `idempotent()`, `admin()`
-- **MCP Resource Annotations (2025-11-25 spec)** — Added metadata hints to all 7 resources
-  - `audience`: Intended consumer (`user`, `assistant`, or both)
-  - `priority`: Display ordering hint (0-1 range)
-  - `lastModified`: ISO 8601 timestamp for cache invalidation
-  - Annotation presets in `src/utils/resourceAnnotations.ts`: HIGH_PRIORITY, MEDIUM_PRIORITY, LOW_PRIORITY
-- **Whitelist-Style Tool Filtering** — Enhanced tool filtering to match postgres-mcp syntax
-  - **Whitelist mode**: Specify only the groups you want (e.g., `core,json,text`)
-  - **Shortcuts**: Predefined bundles (`starter`, `analytics`, `search`, `spatial`, `minimal`, `full`)
-  - **Mixed mode**: Combine whitelist with exclusions (e.g., `starter,-fts5`)
-  - **Backward compatible**: Legacy exclusion syntax (`-vector,-geo`) still works
-  - See README "Tool Filtering" section for documentation
-- **ServerInstructions for AI Agents** — Added automated instruction delivery to MCP clients
-  - New `src/constants/ServerInstructions.ts` with tiered instruction levels (essential/standard/full)
-  - Instructions automatically passed to MCP server during initialization
-  - Includes usage examples for JSON, Vector, FTS5, Stats, Geo, Window Functions, and Transactions
-  - Following patterns from memory-journal-mcp and postgres-mcp
-- **MCP Enhanced Logging** — Full MCP protocol-compliant structured logging
-  - RFC 5424 severity levels: debug, info, notice, warning, error, critical, alert, emergency
-  - Module-prefixed error codes (e.g., `DB_CONNECT_FAILED`, `AUTH_TOKEN_INVALID`)
-  - Structured log format: `[timestamp] [LEVEL] [MODULE] [CODE] message {context}`
-  - Module-scoped loggers via `logger.forModule()` and `logger.child()`
-  - Sensitive data redaction for OAuth 2.1 configuration fields
-  - Stack trace inclusion for error-level logs with sanitization
-  - Log injection prevention via control character sanitization
-- Initial repository setup
-- Project documentation (README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY)
-- GitHub workflows (CodeQL, Dependabot)
-- Issue and PR templates

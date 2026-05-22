@@ -2,6 +2,7 @@
 
 ### Fixed
 
+- Fixed outdated npm dependency patch versions in `SECURITY.md` to accurately reflect the `Dockerfile` and `package.json` overrides.
 - Fixed `sqlite_write_query` to explicitly allow `CREATE TRIGGER` and `DROP TRIGGER` statements, enabling trigger DDL operations within write queries while maintaining strict DML validations.
 - Fixed `sqlite_list_triggers` not showing triggers created on temporary tables by querying `sqlite_temp_master` alongside `sqlite_master`.
 - Fixed `sqlite_drop_trigger` incorrectly returning success when dropping a non-existent trigger (changed `DropTriggerSchema` `ifExists` default to `false`).
@@ -37,6 +38,7 @@
 
 ### Changed
 
+- Standardized and remediated the main `CHANGELOG.md` to adhere to Keep a Changelog standards, consolidating redundant headers across all past releases, grouping entries by standard categories, and eliminating duplicate entry lines.
 - `sqlite_create_table` now accepts `strict: true` parameter to create STRICT tables (SQLite 3.37+) that enforce column type checking, and natively supports `foreignKeys` and `checkConstraints` to allow full relational schema modeling without requiring raw DDL execution.
 - `sqlite_describe_table` now detects and reports generated columns (VIRTUAL/STORED) including their expression, via PRAGMA table_xinfo enrichment.
 - Refactored `mcp-server.ts` into smaller registration modules (`built-in-tools.ts`, `help-resources.ts`, `audit-tools.ts`) to adhere to the 500-line soft limit.
