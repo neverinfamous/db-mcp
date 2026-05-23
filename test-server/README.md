@@ -9,6 +9,7 @@
 | `test-tool-groups/`          | —     | **10 self-contained test prompts** — one per tool group. Each is a complete, standalone prompt (paste directly). See `test-tool-groups/README.md` for details. | **Primary testing method** — use instead of `test-tools.md` + `test-group-tools.md` |
 | `test-codemode/`             | —     | **10 self-contained Code Mode test prompts** — one per tool group. Tests via `sqlite_execute_code` only. See `test-codemode/README.md`.                        | **Primary Code Mode testing method**                                                |
 | `test-advanced/`             | —     | **10 self-contained advanced stress test prompts** — one per tool group. Second-pass edge cases via Code Mode. See `test-advanced/README.md`.                  | **Primary advanced testing method**                                                 |
+| `scripts/`                   | —     | **Integration test scripts and utilities**. Contains Node.js tests for MCP configuration parity and the `standardize-prompts.js` utility.                      | When testing config or updating prompt templates                                    |
 | `test-resources.md`          | ~6KB  | Resource testing plan (8 data + 7 help resources via `read_resource`)                                                                                          | When testing resources                                                              |
 | `test-preflight.md`          | ~2KB  | **Pre-flight check** — validates slim instructions, help resources, data resources, and tool-filter alignment in 5 steps                                       | Before any test pass                                                                |
 | `test-prompts.md`            | ~10KB | Prompt testing plan (10 prompts, tested manually since agents typically don't invoke prompts)                                                                  | When testing prompts                                                                |
@@ -84,10 +85,10 @@ cd C:\Users\chris\Desktop\db-mcp
 npm run build
 
 # Help resources
-node test-server/test-help-resources.mjs
+node test-server/scripts/test-help-resources.mjs
 
 # Tool annotations
-node test-server/test-tool-annotations.mjs
+node test-server/scripts/test-tool-annotations.mjs
 ```
 
 ### Success Criteria
