@@ -159,16 +159,16 @@ Rate each error response 1-5:
 
 ## Phase 5: Error Paths & Recovery (batched)
 
-**4.1 Apply Failures**
+**5.1 Apply Failures**
 
 🔴 29. `sqlite.migration.migrationApply({version: "stress_006_bad_sql", description: "Bad SQL", sql: "ALTER TABLE nonexistent_xyz ADD COLUMN foo TEXT"})` → records but execute fails
 🔴 30. `sqlite.migration.migrationStatus({})` → verify failed migration state is tracked
 
-**4.2 Nonexistent Migration Operations**
+**5.2 Nonexistent Migration Operations**
 
 🔴 31. `sqlite.migration.migrationRollback({version: "nonexistent_migration_xyz"})` → structured error (not raw MCP)
 
-**4.3 Zod Validation Errors**
+**5.3 Zod Validation Errors**
 
 🔴 32. `sqlite.migration.migrationRecord({})` → Zod error for missing required params — must be handler error
 🔴 33. `sqlite.migration.migrationApply({})` → Zod error for missing required params

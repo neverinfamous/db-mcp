@@ -132,7 +132,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 5: Multi-Step Workflow
 
-### 7.1 — Full database audit pipeline
+### 5.1 — Full database audit pipeline
 
 ```javascript
 const failures = [];
@@ -168,7 +168,7 @@ return {
 };
 ```
 
-### 7.2 — Query optimization analysis
+### 5.2 — Query optimization analysis
 
 ```javascript
 const queries = [

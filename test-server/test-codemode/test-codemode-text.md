@@ -98,7 +98,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.text.ftsHeadline`
 - `sqlite.text.replace`
 - *(cross-group helpers used in test procedures)*
-- `sqlite.admin.dropTable`
+- `sqlite.core.dropTable`
 
 ## Phase 1: Text Tools — Happy Paths (batched)
 
@@ -221,7 +221,7 @@ const after = await sqlite.text.ftsSearch({
 if (!after.results || after.results.length === 0)
   failures.push("FTS5 search returned 0 results after rebuild");
 // Cleanup
-await sqlite.admin.dropTable({table: "temp_cm_fts_rebuild"});
+await sqlite.core.dropTable({table: "temp_cm_fts_rebuild"});
 return {
   failures,
   success: failures.length === 0,

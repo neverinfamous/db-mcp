@@ -149,7 +149,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 26. `sqlite.stats.statsBasic({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
 🔴 27. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → report behavior
 🔴 28. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric
-🔴 29. `sqlite.stats.detectAnomalies({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
+🔴 29. `sqlite.stats.statsDetectAnomalies({table: "nonexistent_xyz", column: "x"})` → `{success: false}`
 🔴 30. `sqlite.stats.statsSample({table: "nonexistent_xyz", sampleSize: 5})` → `{success: false}`
 🔴 31. `sqlite.stats.windowRowNumber({table: "nonexistent_xyz", orderBy: "x"})` `[NATIVE ONLY]` → `{success: false}`
 

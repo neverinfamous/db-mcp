@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -106,7 +106,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.restore`
 - `sqlite.admin.verifyBackup`
 - `sqlite.admin.appendInsight`
-- `sqlite.admin.dump`
+- `sqlite.admin.dump` `[NATIVE ONLY]`
 - `sqlite.admin.attachDatabase`
 - `sqlite.admin.detachDatabase`
 - `sqlite.admin.vacuumInto`
@@ -182,7 +182,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 For WASM testing only:
 
-36. Verify that backup/restore/verify, CSV, R-Tree, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
+36. Verify that backup/restore/verify, CSV, R-Tree, dump, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
 
 
 ## Phase 9: REINDEX & WAL Edge Cases (batched)

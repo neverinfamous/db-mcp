@@ -234,7 +234,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 3: Multi-Step Workflow (4 tests)
 
-### 4.1 — ETL pipeline
+### 3.1 — ETL pipeline
 
 ```javascript
 await sqlite.core.createTable({
@@ -256,7 +256,7 @@ await sqlite.core.dropTable({ table: "temp_cm_etl", ifExists: true });
 return result;
 ```
 
-### 4.2 — Schema introspection + query
+### 3.2 — Schema introspection + query
 
 ```javascript
 const tables = await sqlite.core.listTables();
@@ -272,7 +272,7 @@ return {
 };
 ```
 
-### 4.3 — Loop with accumulator
+### 3.3 — Loop with accumulator
 
 ```javascript
 const tables = await sqlite.core.listTables();
@@ -284,7 +284,7 @@ for (const t of tables.tables.slice(0, 5)) {
 return counts;
 ```
 
-### 4.4 — Schema mutation + introspection verification
+### 3.4 — Schema mutation + introspection verification
 
 ```javascript
 const failures = [];

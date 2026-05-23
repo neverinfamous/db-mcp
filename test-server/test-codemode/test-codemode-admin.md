@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -99,7 +99,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.backup`
 - `sqlite.admin.verifyBackup`
 - `sqlite.admin.restore`
-- `sqlite.admin.dump`
+- `sqlite.admin.dump` `[NATIVE ONLY]`
 - `sqlite.admin.vacuum`
 - `sqlite.admin.optimize`
 - `sqlite.admin.pragmaOptimize`

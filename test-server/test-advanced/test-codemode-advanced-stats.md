@@ -166,7 +166,7 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 ## Phase 6: Stats Sample Edge Cases (batched)
 
-29. `sqlite.stats.statsSample({table: "stress_empty_table", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
+29. Create `stress_stats_empty (id INTEGER PRIMARY KEY)` (no rows). `sqlite.stats.statsSample({table: "stress_stats_empty", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
 30. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
 31. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
 32. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
@@ -183,7 +183,7 @@ For WASM testing only:
 
 ### Final Cleanup
 
-Drop `stress_stats_table`. Confirm `test_measurements` (200 rows) and `test_products` (16 rows) unchanged.
+Drop `stress_stats_table` and `stress_stats_empty`. Confirm `test_measurements` (200 rows) and `test_products` (16 rows) unchanged.
 
 ---
 

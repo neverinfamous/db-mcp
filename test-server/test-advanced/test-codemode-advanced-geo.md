@@ -146,7 +146,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 For WASM testing only:
 
-27. Confirm SpatiaLite tools (items 5-11) are NOT present in the tool list
+27. Confirm SpatiaLite tools (items 15-23) are NOT present in the tool list
 28. All 4 Haversine tools should produce identical results in WASM and Native
 
 

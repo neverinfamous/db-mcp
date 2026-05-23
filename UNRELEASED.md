@@ -105,3 +105,16 @@
 - Replaced hardcoded WASM Mode text in `prompt-template.md` with `{{WASM_MODE}}` placeholder; updated `standardize-prompts.js` to auto-detect `[NATIVE ONLY]` in test content and fill the correct variant. 16 codemode/advanced prompts updated from generic text to accurate conditional text.
 - Fixed `standardize-prompts.js` schema extraction bug: "No specific table schema required" text was silently replaced with `code-map.md` link on each run.
 - Fixed incorrect prompt counts in `code-map.md`: `test-tool-groups` 10 → 20, `test-codemode` 10 → 12.
+- Fixed deprecated alias `sqlite.stats.detectAnomalies` → canonical `sqlite.stats.statsDetectAnomalies` in `test-codemode-stats.md`.
+- Fixed workflow sub-heading numbering `7.1`/`7.2` → `5.1`/`5.2` in `test-codemode-introspection.md` to match parent Phase 5.
+- Fixed workflow sub-heading numbering `4.1`–`4.4` → `3.1`–`3.4` in `test-codemode-core.md` to match parent Phase 3.
+- Fixed non-existent `sqlite.admin.dropTable` → `sqlite.core.dropTable` in `test-codemode-text.md` (admin group has `dropView`/`dropVirtualTable`, not `dropTable`).
+- Fixed sub-heading numbering `4.1`–`4.3` → `5.1`–`5.3` in `test-codemode-advanced-migration.md` to match parent Phase 5.
+- Fixed WASM verification reference "items 5-11" → "items 15-23" in `test-codemode-advanced-geo.md` (SpatiaLite tests were renumbered).
+- Added missing `sqlite.transactions.savepoint` to method list in `test-codemode-advanced-transactions.md` (used in tests 5 and 7).
+- Fixed missing `[NATIVE ONLY]` annotation on `sqlite.admin.dump` in `test-codemode-admin.md` and `test-codemode-advanced-admin.md` — the handler returns `{success: false, wasmLimitation: true}` on WASM. Updated WASM mode text and Phase 8 verification list accordingly.
+- Fixed cross-test dependency in `test-codemode-advanced-stats.md`: replaced `stress_empty_table` (from advanced-core) with self-contained `stress_stats_empty` table.
+
+### Changed
+
+- Updated stale tool count comments in `src/filtering/tool-constants.ts`: core 16 → 21, admin 29/29 → 31/32, total 133/159 → 140/167 to match actual tool inventory.

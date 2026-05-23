@@ -80,6 +80,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 - `sqlite.transactions.begin`
 - `sqlite.transactions.execute`
+- `sqlite.transactions.savepoint`
 - `sqlite.transactions.rollbackTo`
 - `sqlite.transactions.commit`
 - `sqlite.transactions.status`
