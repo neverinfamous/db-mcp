@@ -245,6 +245,8 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Code Mode readonly Proxy traps (structured errors for stripped methods)
 - [x] Code Mode execution timeout (30s hard limit)
 - [x] Code Mode rate limiting (60 executions/min)
+- [x] Code Mode streaming egress boundary (abort serialization mid-flight on oversized results)
+- [x] Code Mode `maxYoungGenerationSizeMb` resource limit (caps V8 nursery allocation bursts)
 - [x] Code Mode audit logging
 - [x] HTTP body size limit (configurable, default 1 MB)
 - [x] CORS deny-all by default (explicit origin configuration required)

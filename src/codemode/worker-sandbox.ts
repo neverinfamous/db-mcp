@@ -108,6 +108,17 @@ export class WorkerSandbox {
 
         const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
 
+        // Resolve max result size from env (default 100KB, cap 50MB)
+        let maxResultSize = process.env["CODE_MODE_MAX_RESULT_SIZE"]
+          ? parseInt(process.env["CODE_MODE_MAX_RESULT_SIZE"], 10)
+          : 100 * 1024;
+
+        if (Number.isNaN(maxResultSize) || maxResultSize <= 0) {
+          maxResultSize = 100 * 1024;
+        } else if (maxResultSize > 50 * 1024 * 1024) {
+          maxResultSize = 50 * 1024 * 1024; // Cap at 50MB
+        }
+
         // Create worker
         worker = new Worker(WORKER_SCRIPT_PATH, {
           workerData: {
@@ -115,10 +126,15 @@ export class WorkerSandbox {
             apiBindings: serializedBindings,
             timeout: effectiveTimeout,
             rpcPort: workerPort,
+            maxResultSize,
           },
           transferList: [workerPort],
           resourceLimits: {
             maxOldGenerationSizeMb: this.options.memoryLimitMb,
+            maxYoungGenerationSizeMb: Math.max(
+              8,
+              Math.floor(this.options.memoryLimitMb / 8),
+            ),
           },
         });
 

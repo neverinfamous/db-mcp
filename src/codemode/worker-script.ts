@@ -17,6 +17,7 @@ interface WorkerData {
   apiBindings: Record<string, string[]>;
   timeout: number;
   rpcPort: MessagePort;
+  maxResultSize: number;
 }
 
 interface WorkerResult {
@@ -295,6 +296,59 @@ async function executeInWorker(): Promise<void> {
       success: true,
       result,
     };
+
+    // Streaming egress boundary enforcement: abort serialization mid-flight
+    // if the result exceeds maxResultSize. This prevents OOM from materializing
+    // a multi-hundred-MB string before checking its length.
+    const egressLimit = data.maxResultSize;
+    try {
+      let bytes = 0;
+      const seen = new Set();
+
+      JSON.stringify(
+        result,
+        (_key: string, value: unknown) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) return "[Circular]";
+            seen.add(value);
+          }
+          if (typeof value === "string") {
+            bytes += Buffer.byteLength(value, "utf8") + 2; // include quotes
+          } else if (
+            typeof value === "number" ||
+            typeof value === "boolean"
+          ) {
+            bytes += Buffer.byteLength(String(value), "utf8");
+          } else {
+            bytes += 5; // brackets/keys/null overhead
+          }
+
+          if (bytes > egressLimit) {
+            throw new Error(`EgressLimitExceeded:${String(bytes)}`);
+          }
+          return value;
+        },
+      );
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message.startsWith("EgressLimitExceeded:")
+      ) {
+        const actualBytesStr = err.message.split(":")[1];
+        const actualBytes =
+          actualBytesStr !== undefined
+            ? Number(actualBytesStr)
+            : egressLimit + 1;
+        const actualKb = (actualBytes / 1024).toFixed(1);
+        response.success = false;
+        response.result = undefined;
+        response.error = `Output limit exceeded: Result serialization exceeded the ${String(Math.round(egressLimit / 1024))}KB boundary (actual: >${actualKb}KB). Aggregate or filter results to reduce payload size.`;
+      } else {
+        response.success = false;
+        response.result = undefined;
+        response.error = `Result could not be serialized: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
 
     parentPort?.postMessage(response);
   } catch (error) {
