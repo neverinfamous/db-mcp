@@ -229,7 +229,8 @@ describe("createVectorGetTool", () => {
     )) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("'abc'"),
+      expect.stringContaining("= ?"),
+      ["abc"],
     );
   });
 
@@ -553,7 +554,8 @@ describe("createVectorDeleteTool", () => {
     )) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeWriteQuery).toHaveBeenCalledWith(
-      expect.stringContaining("'abc'"),
+      expect.stringContaining("IN (?, ?)"),
+      ["abc", "def"],
     );
   });
 

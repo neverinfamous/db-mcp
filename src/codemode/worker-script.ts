@@ -9,6 +9,7 @@
  */
 
 import { parentPort, workerData, type MessagePort } from "node:worker_threads";
+import { randomUUID } from "node:crypto";
 import vm from "node:vm";
 import { transformAutoReturn } from "./auto-return.js";
 
@@ -280,7 +281,7 @@ async function executeInWorker(): Promise<void> {
     const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
 
     const script = new vm.Script(wrappedCode, {
-      filename: "user-code.js",
+      filename: `user-code-${randomUUID()}.js`,
     });
 
     const result: unknown = await (script.runInContext(context, {

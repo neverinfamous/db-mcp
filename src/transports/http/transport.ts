@@ -79,6 +79,7 @@ export class HttpTransport {
       httpServer: null,
       transports: new Map(),
       sseTransports: new Map(),
+      sessionOwners: new Map(),
       statelessTransport: null,
       resourceServer: null,
       authServerDiscovery: null,
@@ -299,6 +300,7 @@ export class HttpTransport {
       }
     }
     this.state.transports.clear();
+    this.state.sessionOwners.clear();
 
     // Close all active SSE transports
     for (const [sessionId, transport] of this.state.sseTransports) {

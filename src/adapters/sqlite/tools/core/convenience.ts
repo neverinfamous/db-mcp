@@ -22,6 +22,7 @@ import {
   TruncateSchema,
 } from "../../schemas/core.js";
 import { validateTableExists } from "./convenience-schemas.js";
+import { validateWhereClause } from "../../../../utils/where-clause.js";
 
 import {
   WriteQueryOutputSchema,
@@ -262,6 +263,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
       let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM "${input.table}"`;
 
       if (input.where) {
+        validateWhereClause(input.where);
         sql += ` WHERE ${input.where}`;
       }
 
@@ -324,6 +326,7 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
       let sql = `SELECT 1 FROM "${input.table}"`;
 
       if (input.where) {
+        validateWhereClause(input.where);
         sql += ` WHERE ${input.where}`;
       }
 

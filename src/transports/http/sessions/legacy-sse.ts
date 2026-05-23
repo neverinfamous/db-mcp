@@ -31,6 +31,8 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
     void (async () => {
       try {
         state.sseTransports.set(sseTransport.sessionId, sseTransport);
+        // H-2: Bind SSE session to the authenticated identity
+        state.sessionOwners.set(sseTransport.sessionId, req.auth?.sub);
 
         sseTransport.onclose = () => {
           logger.info("Legacy SSE transport closed", {
@@ -38,20 +40,17 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
             sessionId: sseTransport.sessionId,
           });
           state.sseTransports.delete(sseTransport.sessionId);
+          state.sessionOwners.delete(sseTransport.sessionId);
         };
 
         const origSend = sseTransport.send.bind(sseTransport);
         sseTransport.send = async (message) => {
-          try {
-            logger.info("SSE SEND", {
-              sessionId: sseTransport.sessionId,
-              msg: JSON.stringify(message).substring(0, 1000),
-            });
-          } catch (e) {
-            logger.error("SSE SEND Stringify Error", {
-              error: e instanceof Error ? e : new Error(String(e)),
-            });
-          }
+          // H-1: Only log the session ID at debug level. Previously logged
+          // JSON.stringify(message).substring(0, 1000) which bypassed the
+          // logger's credential redaction and could leak query results.
+          logger.debug("SSE SEND", {
+            sessionId: sseTransport.sessionId,
+          });
           return origSend(message);
         };
 
@@ -117,6 +116,7 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
 
     req.on("close", () => {
       state.sseTransports.delete(sseTransport.sessionId);
+      state.sessionOwners.delete(sseTransport.sessionId);
     });
   });
 
@@ -145,6 +145,20 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
         error: {
           code: JSONRPC_SERVER_ERROR,
           message: "No transport found for sessionId",
+        },
+        id: null,
+      });
+      return;
+    }
+
+    // H-2: Verify session ownership for legacy SSE /messages
+    const owner = state.sessionOwners.get(sessionId);
+    if (owner !== undefined && req.auth?.sub !== undefined && owner !== req.auth.sub) {
+      res.status(403).json({
+        jsonrpc: "2.0",
+        error: {
+          code: JSONRPC_SERVER_ERROR,
+          message: "Forbidden: session belongs to a different client",
         },
         id: null,
       });

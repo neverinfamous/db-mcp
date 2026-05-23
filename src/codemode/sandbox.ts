@@ -9,6 +9,7 @@
  */
 
 import vm from "node:vm";
+import { randomUUID } from "node:crypto";
 import { format } from "node:util";
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
@@ -162,7 +163,7 @@ export class CodeModeSandbox {
       const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
 
       const script = new vm.Script(wrappedCode, {
-        filename: "user-code.js",
+        filename: `user-code-${randomUUID()}.js`,
       });
 
       const result: unknown = await (script.runInContext(this.context, {

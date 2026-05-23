@@ -145,8 +145,16 @@ export class CodeModeSecurityManager {
     };
 
     if (result.success) {
+      // L-6: Redact common credential patterns from code preview before logging
+      // to prevent leaking embedded secrets (e.g., `const key = "sk-live-..."`)
+      const safePreview = codePreview
+        .substring(0, 50)
+        .replace(
+          /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*)[^\s'",;)}\]]{4,}/gi,
+          "[REDACTED]",
+        );
       logger.info(
-        `Code execution completed: ${codePreview.substring(0, 50)}...`,
+        `Code execution completed: ${safePreview}...`,
         logContext,
       );
     } else {

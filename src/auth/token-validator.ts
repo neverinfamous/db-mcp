@@ -272,7 +272,8 @@ export class TokenValidator {
       };
     }
 
-    // Handle other errors
+    // Handle other errors — use generic message to avoid leaking internal
+    // details (e.g., JWKS fetch failure URLs). Full message logged server-side.
     const message = error instanceof Error ? error.message : String(error);
 
     logger.error(`Token validation failed: ${message}`, {
@@ -282,7 +283,7 @@ export class TokenValidator {
 
     return {
       valid: false,
-      error: `Token validation failed: ${message}`,
+      error: "Token validation failed",
       errorCode: ERROR_CODES.AUTH.TOKEN_INVALID.full,
     };
   }

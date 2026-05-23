@@ -199,11 +199,9 @@ export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
         // Keep vectorColumn raw for JS object access, but validate
         sanitizeIdentifier(input.vectorColumn);
 
-        const idValue =
-          typeof input.id === "string" ? `'${input.id}'` : input.id;
-        const sql = `SELECT * FROM ${table} WHERE ${idColumn} = ${idValue}`;
+        const sql = `SELECT * FROM ${table} WHERE ${idColumn} = ?`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, [input.id]);
 
         if (!result.rows || result.rows.length === 0) {
           return {

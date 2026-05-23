@@ -110,6 +110,38 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     reason:
       "contains LIKE with leading wildcard (potential DoS via full table scan)",
   },
+  // GLOB with leading wildcard — case-sensitive equivalent of LIKE '%...' (DoS vector CWE-400)
+  {
+    pattern: /\bGLOB\s+['"]\*/i,
+    reason:
+      "contains GLOB with leading wildcard (potential DoS via full table scan)",
+  },
+  // Conditional functions — blind injection oracles (bypass for CASE WHEN / IIF)
+  {
+    pattern: /\bCOALESCE\s*\(/i,
+    reason: "contains COALESCE() (potential blind injection oracle)",
+  },
+  {
+    pattern: /\bNULLIF\s*\(/i,
+    reason: "contains NULLIF() (potential blind injection oracle)",
+  },
+  {
+    pattern: /\bTYPEOF\s*\(/i,
+    reason: "contains TYPEOF() (potential blind injection oracle)",
+  },
+  {
+    pattern: /\bIFNULL\s*\(/i,
+    reason: "contains IFNULL() (potential blind injection oracle)",
+  },
+  // Memory allocation DoS — RANDOMBLOB(N) / ZEROBLOB(N) can allocate large blocks (CWE-400)
+  {
+    pattern: /\bRANDOMBLOB\s*\(/i,
+    reason: "contains RANDOMBLOB() (potential memory allocation DoS)",
+  },
+  {
+    pattern: /\bZEROBLOB\s*\(/i,
+    reason: "contains ZEROBLOB() (potential memory allocation DoS)",
+  },
 ];
 
 // =============================================================================

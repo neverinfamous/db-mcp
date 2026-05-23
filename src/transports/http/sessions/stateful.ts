@@ -14,6 +14,24 @@ const logger = createModuleLogger("HTTP");
 const connectionMutex = new Mutex();
 
 /**
+ * H-2: Verify that the requesting client owns the target session.
+ * When auth is disabled (owner is undefined), verification is skipped.
+ * Returns true if access is allowed, false if denied.
+ */
+function verifySessionOwner(
+  state: HttpTransportState,
+  sessionId: string,
+  reqAuthSub: string | undefined,
+): boolean {
+  const owner = state.sessionOwners.get(sessionId);
+  // If the session has an owner and the requester has an identity, they must match
+  if (owner !== undefined && reqAuthSub !== undefined && owner !== reqAuthSub) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Set up stateful mode endpoints with session management and SSE
  */
 export function setupStatefulEndpoints(state: HttpTransportState): void {
@@ -58,6 +76,18 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
         let httpTransport: StreamableHTTPServerTransport | undefined;
 
         if (sessionId && state.transports.has(sessionId)) {
+          // H-2: Verify the requesting client owns this session
+          if (!verifySessionOwner(state, sessionId, req.auth?.sub)) {
+            res.status(403).json({
+              jsonrpc: "2.0",
+              error: {
+                code: JSONRPC_SERVER_ERROR,
+                message: "Forbidden: session belongs to a different client",
+              },
+              id: null,
+            });
+            return;
+          }
           httpTransport = state.transports.get(sessionId);
         } else if (sessionId === undefined && isNewSessionRequest(req.body)) {
           const newTransport = new StreamableHTTPServerTransport({
@@ -68,6 +98,8 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
                 sessionId: sid,
               });
               state.transports.set(sid, newTransport);
+              // H-2: Bind session to the authenticated identity that created it
+              state.sessionOwners.set(sid, req.auth?.sub);
             },
           });
 
@@ -79,6 +111,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
                 sessionId: sid,
               });
               state.transports.delete(sid);
+              state.sessionOwners.delete(sid);
             }
           };
 
@@ -185,6 +218,12 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
       return;
     }
 
+    // H-2: Verify session ownership
+    if (!verifySessionOwner(state, sessionId, req.auth?.sub)) {
+      res.status(403).send("Forbidden: session belongs to a different client");
+      return;
+    }
+
     const lastEventId = req.headers["last-event-id"];
     if (lastEventId !== undefined) {
       logger.debug("Client reconnecting with Last-Event-ID", {
@@ -205,6 +244,12 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
 
     if (sessionId === undefined || !state.transports.has(sessionId)) {
       res.status(400).send("Invalid or missing session ID");
+      return;
+    }
+
+    // H-2: Verify session ownership
+    if (!verifySessionOwner(state, sessionId, req.auth?.sub)) {
+      res.status(403).send("Forbidden: session belongs to a different client");
       return;
     }
 

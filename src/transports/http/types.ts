@@ -156,6 +156,11 @@ export interface HttpTransportState {
   // Single transport for stateless mode
   statelessTransport: StreamableHTTPServerTransport | null;
 
+  // Session ownership — maps sessionId → authenticated subject (req.auth.sub).
+  // Used to verify that only the client that created a session can use it (H-2).
+  // When auth is disabled, owner is undefined and binding is not enforced.
+  sessionOwners: Map<string, string | undefined>;
+
   // OAuth components
   resourceServer: OAuthResourceServer | null;
   authServerDiscovery: AuthorizationServerDiscovery | null;

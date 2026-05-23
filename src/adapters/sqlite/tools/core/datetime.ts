@@ -4,6 +4,7 @@ import { readOnly } from "../../../../utils/annotations.js";
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { DateAddSchema, DateDiffSchema } from "../../schemas/core.js";
 import { DateMathOutputSchema } from "../../schemas/core.js";
+import { validateWhereClause } from "../../../../utils/where-clause.js";
 
 /**
  * Add time to a date column
@@ -35,6 +36,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       let query = `SELECT *, datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
       
       if (whereClause) {
+        validateWhereClause(whereClause);
         query += ` WHERE ${whereClause}`;
       }
       
@@ -117,6 +119,7 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       let query = `SELECT *, ${diffExpr} as date_diff_result FROM ${quotedTable}`;
       
       if (whereClause) {
+        validateWhereClause(whereClause);
         query += ` WHERE ${whereClause}`;
       }
 

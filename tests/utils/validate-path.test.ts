@@ -129,17 +129,13 @@ describe("validateSameDirPath — edge cases", () => {
     expect(result.valid).toBe(false);
   });
 
-  it("should allow path with directory name as prefix (startsWith behavior)", () => {
-    // validateSameDirPath uses startsWith which permits paths sharing the prefix.
-    // This is acceptable because the utility prevents traversal *above* the
-    // database directory — sibling prefixes like /data/databases-evil/ are still
-    // under the same resolved path prefix on this platform.
+  it("should reject path with directory name as prefix (H-3 boundary fix)", () => {
+    // H-3: validateSameDirPath now requires a path separator boundary.
+    // /data/databases-evil/ is a sibling directory, not a subdirectory of
+    // /data/databases/, so it must be rejected to prevent path boundary escape.
     const siblingPath = resolve("/data/databases-evil/file.db");
     const result = validateSameDirPath(siblingPath, DB_PATH);
-    // On Windows, resolve("/data/databases") = C:\data\databases and
-    // resolve("/data/databases-evil/file.db") = C:\data\databases-evil\file.db
-    // which starts with C:\data\databases, so startsWith returns true.
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
   });
 
   it("should handle deeply nested subdirectories", () => {
@@ -152,6 +148,9 @@ describe("validateSameDirPath — edge cases", () => {
     const rootDb = resolve("/db.sqlite");
     const target = resolve("/backup.sqlite");
     const result = validateSameDirPath(target, rootDb);
+    // Both files are in the root directory — this should be valid.
+    // The root dir already ends with a separator, so the boundary check
+    // needs to handle the trailing-sep case.
     expect(result.valid).toBe(true);
   });
 });

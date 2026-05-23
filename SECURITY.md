@@ -47,7 +47,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **Zod schemas** — all tool inputs validated at tool boundaries before database operations
 - ✅ **Parameterized queries** used throughout — never string interpolation
 - ✅ **Identifier sanitization** — table, column, schema, and index names validated against injection
-- ✅ **WHERE clause validation** — blocklist of dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, and hex string injection. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
+- ✅ **WHERE clause validation** — blocklist of dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
 - ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`).
@@ -68,8 +68,10 @@ Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isola
 - ✅ **Execution timeout** — 30s hard limit (configurable)
 - ✅ **Input limits** — 50KB code input, 10MB result output
 - ✅ **Rate limiting** — 60 executions per minute per client
-- ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars)
+- ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted)
+- ✅ **Forensic traceability** — each `vm.Script` execution uses a unique `randomUUID()` filename for distinguishable stack traces
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
+- ✅ **Production vm gate** — `CODEMODE_ISOLATION=vm` is rejected when `NODE_ENV=production`, falling back to worker mode with a warning. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use
 
 > **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `worker_threads` provides a true V8 isolate boundary (separate heap, separate V8 instance), the `vm.createContext()` layer within it is namespace isolation, not a security sandbox. Defense-in-depth measures include V8-enforced `codeGeneration` restrictions (disabling `eval`/`Function` at the engine level), frozen built-in prototypes, 18 static regex rules, RPC allowlist validation, and blocked globals. Together these provide robust protection within the trusted AI agent threat model.
 >
@@ -116,6 +118,12 @@ When running in HTTP mode (`--transport http`), the following security measures 
 
 > **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the leftmost `X-Forwarded-For` IP. **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that overwrites the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
 
+### **Session Management**
+
+- ✅ **UUID session IDs** — cryptographically random session identifiers via `crypto.randomUUID()`
+- ✅ **Session ownership binding** — each session is bound to the authenticated subject (`req.auth.sub`) at creation. Every subsequent POST, GET (SSE stream), and DELETE request verifies that the requester's identity matches the session owner, preventing cross-client session hijack (CWE-284, CWE-639)
+- ✅ **Graceful degradation** — when auth is disabled (stdio transport, local dev), session ownership is not enforced (owner is `undefined`)
+
 ### **Request Size Limits**
 
 - ✅ **Configurable body limit** via `maxBodySize` (default: 1 MB) — prevents memory exhaustion DoS
@@ -131,6 +139,8 @@ Full OAuth 2.1 for production multi-tenant deployments:
 - ✅ **Per-tool scope enforcement** via `AsyncLocalStorage` context threading
 - ✅ **Fail-closed scope default** — unknown or unmapped tools default to `admin` scope, preventing accidental privilege escalation when new tools are added
 - ✅ **Dynamic scope set derivation** — `ADMIN_TOOLS`, `READ_ONLY_TOOLS`, and `WRITE_TOOLS` are derived at module load from `TOOL_GROUPS × TOOL_GROUP_SCOPES`, preventing drift between tool registration and scope enforcement
+- ✅ **Generic error responses** — token validation errors return generic `"Token validation failed"` messages to clients, preventing leakage of internal auth infrastructure URLs (e.g., JWKS endpoint addresses). Detailed errors are logged server-side only
+- ✅ **WWW-Authenticate sanitization** — `error_description` attributes in `WWW-Authenticate` headers are sanitized (quotes stripped, truncated to 200 chars) to prevent header injection (CWE-113) and information disclosure (CWE-209)
 
 > **⚠️ HTTP without OAuth:** When OAuth is not configured, all scope checks are bypassed. If you expose the HTTP transport without enabling OAuth, any client has full unrestricted access. Always enable OAuth for production HTTP deployments.
 
@@ -197,6 +207,8 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 
 - ✅ **Sensitive fields automatically redacted** in logs: `password`, `secret`, `token`, `apikey`, `issuer`, `audience`, `jwksUri`, `credentials`, etc.
 - ✅ **Recursive sanitization** for nested objects
+- ✅ **SSE payload redaction** — legacy SSE transport logs only session ID at debug level, never serialized message content (prevents bypassing logger redaction via raw JSON payloads)
+- ✅ **Code preview redaction** — Code Mode audit log applies credential pattern matching (`sk-`, `Bearer`, `token=`, `password=`, `secret=`, `apikey=`, `api_key=`) to code previews before logging, preventing embedded secrets from leaking to server logs
 
 ### **Log Injection Prevention**
 
@@ -279,6 +291,13 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] CI/CD security pipeline (CodeQL, npm audit, secrets scanning on push+PR)
 - [x] Structured error responses (no internal details leaked)
 - [x] Constant-time bearer token comparison (`crypto.timingSafeEqual`)
+- [x] Session ownership binding (session ID → auth subject verification)
+- [x] SSE payload redaction (no raw message content in logs)
+- [x] Code preview credential redaction in audit logs
+- [x] WWW-Authenticate header sanitization (quote stripping, truncation)
+- [x] Generic token validation error responses (no internal URL leakage)
+- [x] Code Mode vm sandbox gated to non-production environments
+- [x] Per-execution UUID filenames in vm.Script for forensic traceability
 - [x] Comprehensive security documentation
 
 ## 🚨 **Reporting Security Issues**

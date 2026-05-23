@@ -109,7 +109,11 @@ export class OAuthResourceServer {
     }
 
     if (errorDescription) {
-      parts.push(`error_description="${errorDescription}"`);
+      // Sanitize: strip quotes to prevent attribute breakout (CWE-113),
+      // truncate to prevent excessive header length,
+      // use generic text to avoid leaking internal infrastructure details (CWE-209)
+      const safe = errorDescription.replace(/"/g, "'").substring(0, 200);
+      parts.push(`error_description="${safe}"`);
     }
 
     return parts.join(", ");
