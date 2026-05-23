@@ -11,8 +11,8 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const basePath = __dirname;
-const templatePath = path.join(basePath, 'prompt-template.md');
+const basePath = path.join(__dirname, '..');
+const templatePath = path.join(__dirname, 'prompt-template.md');
 
 if (!fs.existsSync(templatePath)) {
   console.error("Missing template file: " + templatePath);
