@@ -65,6 +65,10 @@ function parseArgs(): Partial<McpServerConfig> {
       const tokenValue = args[++i];
       if (tokenValue) {
         config.authToken = tokenValue;
+        console.error(
+          "⚠️  Warning: --auth-token passes the token via command line, making it visible " +
+            "in process listings. Use the MCP_AUTH_TOKEN environment variable for production deployments.",
+        );
       }
     } else if (arg === "--oauth-enabled" || arg === "-o") {
       if (!config.oauth) {

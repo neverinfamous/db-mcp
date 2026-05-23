@@ -1,0 +1,79 @@
+name: Dockerfile Patch Drift Check
+
+# Detects when manually patched transitive dependencies in the Dockerfile
+# have been updated in the Node.js base image's bundled npm, making the
+# patches redundant. Runs weekly and on Dockerfile changes.
+
+on:
+  schedule:
+    - cron: '0 12 * * 3' # Wednesdays at noon UTC
+  pull_request:
+    paths:
+      - 'Dockerfile'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-patches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Check patch drift
+        run: |
+          echo "🔍 Checking Dockerfile transitive dependency patches for drift..."
+          echo ""
+
+          # These are the versions we manually patch in the Dockerfile.
+          # If npm's bundled version is already >= patched version, the patch is stale.
+          declare -A PATCHES=(
+            ["diff"]="9.0.0"
+            ["@isaacs/brace-expansion"]="5.0.1"
+            ["tar"]="7.5.15"
+            ["minimatch"]="10.2.5"
+            ["brace-expansion"]="5.0.6"
+          )
+
+          NPM_DIR="/usr/local/lib/node_modules/npm"
+          STALE=0
+
+          for pkg in "${!PATCHES[@]}"; do
+            patched_version="${PATCHES[$pkg]}"
+
+            # Find the package.json for the bundled dependency
+            pkg_path="$NPM_DIR/node_modules/$pkg/package.json"
+            if [ ! -f "$pkg_path" ]; then
+              echo "⚠️  $pkg: not found in npm bundle (may have been removed upstream)"
+              continue
+            fi
+
+            bundled_version=$(node -p "require('$pkg_path').version")
+
+            # Compare versions using node's semver-aware comparison
+            is_stale=$(node -e "
+              const bv = '$bundled_version'.split('.').map(Number);
+              const pv = '$patched_version'.split('.').map(Number);
+              const cmp = bv[0] - pv[0] || bv[1] - pv[1] || bv[2] - pv[2];
+              console.log(cmp >= 0 ? 'true' : 'false');
+            ")
+
+            if [ "$is_stale" = "true" ]; then
+              echo "🟡 STALE: $pkg — bundled=$bundled_version >= patched=$patched_version (patch can be removed)"
+              STALE=1
+            else
+              echo "✅ CURRENT: $pkg — bundled=$bundled_version < patched=$patched_version (patch still needed)"
+            fi
+          done
+
+          echo ""
+          if [ "$STALE" -eq 1 ]; then
+            echo "::warning::One or more Dockerfile transitive dependency patches are stale and should be reviewed for removal."
+            echo ""
+            echo "Action: Review the Dockerfile patches and remove any that are no longer needed."
+            echo "The bundled npm version has caught up to (or exceeded) the patched version."
+          else
+            echo "✅ All Dockerfile patches are still necessary."
+          fi

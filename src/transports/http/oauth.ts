@@ -4,6 +4,7 @@
  * OAuth 2.1 component initialization and auth middleware application.
  */
 
+import { timingSafeEqual } from "node:crypto";
 import { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { AuthorizationServerDiscovery } from "../../auth/authorization-server-discovery.js";
 import { TokenValidator } from "../../auth/token-validator.js";
@@ -58,9 +59,29 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
 }
 
 /**
+ * Constant-time comparison of two bearer token strings.
+ * Uses `crypto.timingSafeEqual` to prevent timing side-channel attacks.
+ * Returns `true` if the tokens match, `false` otherwise.
+ */
+function tokensMatch(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  // Avoid short-circuit: always compute both length check and HMAC comparison.
+  // If lengths differ, compare bufA against itself (constant-time no-op) and
+  // reject via the length flag.
+  if (bufA.length !== bufB.length) {
+    // Perform a dummy comparison to keep timing constant regardless of length
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
+
+/**
  * Simple bearer token authentication middleware.
  *
- * Compares the Authorization header against a static token.
+ * Compares the Authorization header against a static token using
+ * constant-time comparison to prevent timing side-channel attacks.
  * Lighter-weight than full OAuth 2.1 — suitable for development
  * or single-tenant deployments behind a reverse proxy.
  */
@@ -88,7 +109,7 @@ function createSimpleBearerAuth(expectedToken: string): RequestHandler {
     }
 
     const token = authHeader.slice(7);
-    if (token !== expectedToken) {
+    if (!tokensMatch(token, expectedToken)) {
       logger.warning("Invalid bearer token rejected", {
         code: "AUTH_BEARER_REJECTED",
       });

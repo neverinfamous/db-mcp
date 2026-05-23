@@ -15,6 +15,7 @@
 - **Testing:** Added `sqlite.reportProgress()` coverage to `test-codemode-sandbox.md` Phase 2 (API Discoverability).
 - **Documentation:** Extracted testing prompt boilerplate into `test-server/prompt-template.md`.
 - **Documentation:** Added `outputSchema` registry section to `tool-reference.md`.
+- **CI:** Added `dockerfile-patch-drift.yml` workflow to detect when Dockerfile transitive dependency patches become stale after Node.js base image updates.
 
 ### Changed
 - **Core:** Updated `sqlite_create_table` to natively support `STRICT` tables, `foreignKeys`, and `checkConstraints`.
@@ -44,3 +45,5 @@
 - **Documentation:** Fixed outdated npm dependency patch versions in `SECURITY.md` to match `package.json` and `Dockerfile`.
 - **Documentation:** Corrected inaccurate Code Mode API mappings, parameter names, and descriptions in server instruction source files.
 - **Documentation:** Corrected multiple stale tool counts, prompt counts, directory references, and file paths across `code-map.md`, test READMEs, and script outputs.
+- **Security:** Replaced naive string equality with `crypto.timingSafeEqual` for simple bearer token comparison to prevent timing side-channel attacks.
+- **Security:** Added CLI warning when `--auth-token` is used, recommending `MCP_AUTH_TOKEN` environment variable for production deployments.

@@ -117,6 +117,13 @@ Full OAuth 2.1 for production multi-tenant deployments:
 
 > **⚠️ HTTP without OAuth:** When OAuth is not configured, all scope checks are bypassed. If you expose the HTTP transport without enabling OAuth, any client has full unrestricted access. Always enable OAuth for production HTTP deployments.
 
+### **Simple Bearer Token Security**
+
+- ✅ **Constant-time comparison** — bearer token validation uses `crypto.timingSafeEqual` to prevent timing side-channel attacks
+- ✅ **CLI warning** — using `--auth-token` emits a warning that the token is visible in process listings
+
+> **⚠️ Production guidance:** Prefer the `MCP_AUTH_TOKEN` environment variable over `--auth-token` for production deployments. Command-line arguments are visible via `ps`, `/proc/<pid>/cmdline`, and similar tools on the host.
+
 ## 🐳 **Docker Security**
 
 ### **Non-Root User**
@@ -233,6 +240,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Transitive dependency CVE patching in Dockerfile
 - [x] CI/CD security pipeline (CodeQL, npm audit, secrets scanning)
 - [x] Structured error responses (no internal details leaked)
+- [x] Constant-time bearer token comparison (`crypto.timingSafeEqual`)
 - [x] Comprehensive security documentation
 
 ## 🚨 **Reporting Security Issues**
