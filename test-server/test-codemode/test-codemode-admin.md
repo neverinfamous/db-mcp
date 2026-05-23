@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 > **CSV testing**: Use `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv` (columns: id, name, category, price, quantity, created_at). **Absolute paths only** — relative paths resolve from IDE CWD.
 
@@ -112,6 +112,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.detachDatabase`
 - `sqlite.admin.vacuumInto`
 - `sqlite.admin.dropVirtualTable`
+- *(cross-group helpers used in test procedures)*
 - `sqlite.core.describeTable`
 - `sqlite.core.dropTable`
 
@@ -143,7 +144,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 16. `sqlite.admin.createRtreeTable({tableName: "temp_cm_rtree", dimensions: 2})` → R-Tree created
 17. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series", start: 1, stop: 10})` → regular table with 10 rows
 18. `sqlite.admin.dropVirtualTable({tableName: "temp_cm_rtree"})` → success (virtual table dropped)
-19. Cleanup: drop `temp_cm_series` (regular)
+Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not virtual)
 
 
 ## Phase 4: Backup/Restore (batched)

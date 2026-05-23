@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -89,6 +89,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.vector.store`
 - `sqlite.vector.batchStore`
 - `sqlite.vector.delete`
+- *(cross-group helpers used in test procedures)*
 - `sqlite.core.dropTable`
 - `sqlite.core.readQuery`
 - `sqlite.core.writeQuery`

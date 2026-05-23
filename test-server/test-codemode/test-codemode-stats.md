@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -92,15 +92,16 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.stats.statsRegression`
 - `sqlite.stats.statsHypothesis`
 - `sqlite.stats.statsSample`
-- `sqlite.stats.detectAnomalies`
-- `sqlite.stats.detectBloat`
-- `sqlite.stats.detectSchemaRisks`
+- `sqlite.stats.statsDetectAnomalies`
+- `sqlite.stats.statsDetectBloat`
+- `sqlite.stats.statsDetectSchemaRisks`
 - `sqlite.stats.windowRowNumber`
 - `sqlite.stats.windowRank`
 - `sqlite.stats.windowRunningTotal`
 - `sqlite.stats.windowMovingAvg`
 - `sqlite.stats.windowLagLead`
 - `sqlite.stats.windowNtile`
+- *(cross-group helpers used in test procedures)*
 - `sqlite.core.createTable`
 - `sqlite.core.dropTable`
 
@@ -128,9 +129,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 2: Anomaly Detection Suite — Happy Paths (batched)
 
-17. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → `anomalies` array present, `riskLevel` low
-18. `sqlite.stats.detectBloat()` → bloat detection (may return empty if no bloat)
-19. `sqlite.stats.detectSchemaRisks()` → `tables` array present, `highRiskCount` 0
+17. `sqlite.stats.statsDetectAnomalies({table: "test_measurements", column: "temperature"})` → `anomalies` array present, `riskLevel` low
+18. `sqlite.stats.statsDetectBloat()` → bloat detection (may return empty if no bloat)
+19. `sqlite.stats.statsDetectSchemaRisks()` → `tables` array present, `highRiskCount` 0
 
 
 ## Phase 3: Window Functions `[NATIVE ONLY]` — Happy Paths (batched)
@@ -163,8 +164,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 34. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3})` → verify auto-exclusion of long-content columns (`body`, `description`, `notes`, etc.) from output when `selectColumns` is omitted (gotcha #13)
 35. `sqlite.stats.statsTopN({table: "test_articles", column: "title", n: 3, selectColumns: ["title", "body"]})` → explicit `selectColumns` overrides auto-exclusion — `body` should appear in results (gotcha #13)
-36. `sqlite.stats.detectBloat({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
-37. `sqlite.stats.detectSchemaRisks({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
+36. `sqlite.stats.statsDetectBloat({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
+37. `sqlite.stats.statsDetectSchemaRisks({includeZeroRisk: true})` → includes zero-risk tables in output (verify param is accepted and changes result set)
 
 
 ## Phase 7: Multi-Step Workflow
@@ -250,9 +251,9 @@ return { failures, success: failures.length === 0, basicResult: basic };
 🔴 48. `sqlite.stats.statsOutliers({})` → `{success: false}`
 🔴 49. `sqlite.stats.statsRegression({})` → `{success: false}`
 🔴 50. `sqlite.stats.statsHypothesis({})` → `{success: false}`
-🔴 51. `sqlite.stats.detectAnomalies({})` → `{success: false}`
-🔴 52. `sqlite.stats.detectBloat({})` → `{success: false}` or success (no required params)
-🔴 53. `sqlite.stats.detectSchemaRisks({})` → `{success: false}` or success (no required params)
+🔴 51. `sqlite.stats.statsDetectAnomalies({})` → `{success: false}`
+🔴 52. `sqlite.stats.statsDetectBloat({})` → `{success: false}` or success (no required params)
+🔴 53. `sqlite.stats.statsDetectSchemaRisks({})` → `{success: false}` or success (no required params)
 🔴 54. `sqlite.stats.statsSample({})` → `{success: false}` handler error
 🔴 55. `sqlite.stats.windowRowNumber({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 56. `sqlite.stats.windowRank({})` `[NATIVE ONLY]` → `{success: false}`

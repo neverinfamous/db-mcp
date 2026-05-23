@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -97,6 +97,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.text.ftsMatchInfo`
 - `sqlite.text.ftsHeadline`
 - `sqlite.text.replace`
+- *(cross-group helpers used in test procedures)*
 - `sqlite.admin.dropTable`
 
 ## Phase 1: Text Tools — Happy Paths (batched)
@@ -255,9 +256,9 @@ Expected: `beforeCount: > 0`, `afterCount: > 0` — validates that `ftsCreate` a
 🔴 50. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
 
 
-## Phase 6: Wrong-Type Numeric Coercion
+## Phase 8: Wrong-Type Numeric Coercion
 
-🔴 51. `sqlite.text.fuzzyMatch({table: "test_users", column: "username", searchTerm: "test", maxDistance: "abc"})` → handler error, NOT raw MCP `-32602`
+🔴 51. `sqlite.text.fuzzyMatch({table: "test_users", column: "username", search: "test", maxDistance: "abc"})` → handler error, NOT raw MCP `-32602`
 🔴 52. `sqlite.text.substring({table: "test_users", column: "username", start: "abc", length: 5})` → handler error, NOT raw MCP
 🔴 53. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error, NOT raw MCP
 

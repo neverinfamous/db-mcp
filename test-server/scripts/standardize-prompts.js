@@ -61,7 +61,7 @@ function processDirectory(dirName) {
     // Extract Schema Reference
     // We look for '### Test Schema Reference' until '## Reporting Format'
     const schemaMatch = content.match(/### Test Schema Reference([\s\S]*?)## Reporting Format/);
-    let schemaRef = "> *No specific table schema required for this test group.*";
+    let schemaRef = "> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).";
     if (schemaMatch) {
       const extractedSchema = schemaMatch[1].trim();
       // Only keep the extracted schema if it contains a table definition (not the error scenario list) or CSV hint

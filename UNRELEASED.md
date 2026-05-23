@@ -51,6 +51,14 @@
 - Added wrong-type numeric coercion phases to 7 codemode prompt files (`core`, `json`, `text`, `vector`, `admin`, `migration`, `introspection` was skipped — no numeric params).
 - Added explicit `dropVirtualTable` happy-path test in `test-codemode-admin.md` Phase 3.
 - Fixed phase↔subsection number mismatches in 5 codemode prompts (`admin`, `vector`, `migration`, `transactions`, `wasm-degradation`).
+- Updated `prompt-template.md` WASM Mode text from inaccurate "All tools are fully WASM-compatible" to a generic directive referencing `[NATIVE ONLY]` annotations per-tool.
+- Updated `standardize-prompts.js` default schema reference from a generic placeholder to a `code-map.md` link for test database schema.
+- Updated WASM Mode text and schema reference across all 12 codemode prompts to match the new template standards.
+- Replaced alias method names (`detectAnomalies`, `detectBloat`, `detectSchemaRisks`) with canonical names (`statsDetectAnomalies`, `statsDetectBloat`, `statsDetectSchemaRisks`) in `test-codemode-stats.md` for consistency with other prompts.
+- Added missing coercion phase omission notes to `test-codemode-transactions.md` and `test-codemode-introspection.md` explaining why the phase is absent (no optional numeric parameters).
+- Added meta-test suite disclaimers to `test-codemode-sandbox.md` and `test-codemode-wasm-degradation.md` clarifying they are infrastructure tests, not tool group tests.
+- Added cross-group helper method separators (`*(cross-group helpers used in test procedures)*`) to 6 codemode prompts (`text`, `stats`, `vector`, `json`, `admin`, `migration`) to visually distinguish group-own methods from helpers.
+- Reordered `test-codemode-migration.md` method list so all migration group methods are contiguous before the cross-group helper.
 
 ### Fixed
 
@@ -74,3 +82,8 @@
 - Updated the stress test in `test-codemode-advanced-core.md` to use `LIMIT 100` to intentionally bypass the 50-row default limit.
 - Filtered internal SpatiaLite-generated system triggers (e.g., `geometry_columns`) from `sqlite_list_triggers` to prevent payload bloat.
 - Fixed `sqlite_date_add` to return a clear error instead of silent `null` values when calculated dates fall outside SQLite's supported bounds (`0000-01-01` to `9999-12-31`).
+- Fixed wrong table name `test_json_data` → `test_jsonb_docs` in `test-codemode-json.md` Phase 7 coercion tests (lines 266-268).
+- Fixed wrong parameter name `searchTerm` → `search` in `test-codemode-text.md` Phase 8 `fuzzyMatch` coercion test (line 260).
+- Fixed duplicate `## Phase 6` heading in `test-codemode-text.md` (renamed to `## Phase 8: Wrong-Type Numeric Coercion`).
+- Fixed duplicate item number `19` in `test-codemode-admin.md` Phase 3 cleanup step (converted to unnumbered instruction).
+- Fixed workflow sub-heading `### 6.1` → `### 5.1` in `test-codemode-geo.md` to match parent `## Phase 5`.
