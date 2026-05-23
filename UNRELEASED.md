@@ -96,3 +96,9 @@
 - Fixed duplicate `## Phase 6` heading in `test-codemode-text.md` (renamed to `## Phase 8: Wrong-Type Numeric Coercion`).
 - Fixed duplicate item number `19` in `test-codemode-admin.md` Phase 3 cleanup step (converted to unnumbered instruction).
 - Fixed workflow sub-heading `### 6.1` → `### 5.1` in `test-codemode-geo.md` to match parent `## Phase 5`.
+- Fixed incorrect WASM Mode text in 5 direct-tool prompts (`test-transactions.md`, `test-admin-core.md`, `test-stats-advanced.md`, `test-text-advanced.md`, `test-geo-spatialite.md`) — these groups contain `[NATIVE ONLY]` tools but WASM section claimed all tools are WASM-compatible.
+- Added `[NATIVE ONLY]` annotations to all 8 transaction tools in `test-transactions.md` tool list and `sqlite_dump` in `test-admin-core.md` tool list.
+- Fixed quadruple-escaped backslashes in `test-admin-core.md` items 18 and 21 for `attachDatabase` and `vacuumInto` paths.
+- Fixed duplicate item numbers 36/37 in `test-stats-basic.md` Zod validation sweep (renumbered to 38/39).
+- Fixed phase numbering skip in `test-core-data.md` (Phase 3 → Phase 2 — no Phase 2 existed).
+- Added missing `sqlite_cascade_simulator` Zod validation test to `test-introspection-schema.md` (7 tools listed, only 6 tested).

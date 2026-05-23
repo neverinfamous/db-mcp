@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -99,7 +99,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_attach_database`
 - `sqlite_detach_database`
 - `sqlite_vacuum_into`
-- `sqlite_dump`
+- `sqlite_dump [NATIVE ONLY]`
 - `sqlite_reindex`
 - `sqlite_wal`
 - `sqlite_execute_code`
@@ -129,10 +129,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 3: Database Management (batched)
 
-18. `sqlite_attach_database({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-backup.db", alias: "temp_attached"})` → Expect structured success with `alias` and `filepath`. (Requires test-backup.db from step 13)
+18. `sqlite_attach_database({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Expect structured success with `alias` and `filepath`. (Requires test-backup.db from step 13)
 19. `sqlite_pragma_database_list()` → verify `temp_attached` appears in attached databases list
 20. `sqlite_detach_database({alias: "temp_attached"})` → success with `message`
-21. `sqlite_vacuum_into({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
+21. `sqlite_vacuum_into({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
 
 ## Phase 4: View Management (batched)
 
