@@ -12,6 +12,7 @@
 - **Testing:** Added Vitest tests for timeout enforcement accuracy (±200ms) and `WorkerSandboxPool` concurrency limits.
 - **Testing:** Added new `test-wasm-degradation.md` suite for WASM graceful degradation testing.
 - **Testing:** Expanded test coverage with new domain error tests, Zod validation sweeps, wrong-type numeric coercion phases, and pagination tests across all test suites.
+- **Testing:** Added `sqlite.reportProgress()` coverage to `test-codemode-sandbox.md` Phase 2 (API Discoverability).
 - **Documentation:** Extracted testing prompt boilerplate into `test-server/prompt-template.md`.
 - **Documentation:** Added `outputSchema` registry section to `tool-reference.md`.
 
@@ -23,6 +24,7 @@
 - **Architecture:** Refactored `mcp-server.ts` into registration sub-modules and `session.ts` into stateful/stateless modules to adhere to the 500-line modularity limit.
 - **Architecture:** Extracted `validateSameDirPath()` and `captureSchemaSnapshot()` to consolidate utility functions across tools.
 - **Testing:** Standardized 41 testing prompts across all test suites into a cohesive format and automated their formatting via a Node script.
+- **Testing:** Replaced hardcoded "We're currently testing Native mode" note with auto-detection instruction (`list_adapters`) in prompt template, eliminating manual mode switching.
 - **Testing:** Updated WASM Mode text dynamically across codemode prompts using the `[NATIVE ONLY]` annotation.
 - **Documentation:** Synchronized total tool counts (172 Native / 145 WASM) and file counts across all documentation, test suites, and source files.
 - **Documentation:** Consolidated testing documentation, added Tool Count Taxonomy to `tool-reference.md`, and standardized CHANGELOG format.
@@ -37,7 +39,7 @@
 - **Code Mode:** Allowed `CREATE TRIGGER` and `DROP TRIGGER` DDL statements in `sqlite_write_query` while maintaining strict DML validations.
 - **Code Mode:** Threaded `RequestContext` down through `sqlite_execute_code` so nested tools correctly emit progress notifications to the client.
 - **Testing:** Fixed quadruple-escaped backslashes in `attachDatabase` and `vacuumInto` paths across codemode test scripts.
-- **Testing:** Fixed duplicate, colliding, and missing test phase and item numbers across multiple test suites.
+- **Testing:** Fixed duplicate, colliding, and missing test phase and item numbers across multiple test suites (including `test-codemode-vector.md` Phase 5/6 renumbering).
 - **Testing:** Fixed the `standardize-prompts.js` script corrupting regex patterns containing `$` and incorrectly replacing schema references.
 - **Documentation:** Fixed outdated npm dependency patch versions in `SECURITY.md` to match `package.json` and `Dockerfile`.
 - **Documentation:** Corrected inaccurate Code Mode API mappings, parameter names, and descriptions in server instruction source files.

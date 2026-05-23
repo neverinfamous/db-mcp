@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
 > If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
-> We're currently testing Native mode.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
@@ -271,22 +271,22 @@ Expected: Three distinct numeric values. For orthogonal unit vectors: cosine ≈
 
 ## Phase 5: Zod Validation Sweep
 
-🔴 21. `sqlite.vector.createTable({})` → `{success: false}`
-🔴 22. `sqlite.vector.store({})` → `{success: false}`
-🔴 23. `sqlite.vector.batchStore({})` → `{success: false}`
-🔴 24. `sqlite.vector.search({})` → `{success: false}`
-🔴 25. `sqlite.vector.get({})` → `{success: false}`
-🔴 26. `sqlite.vector.delete({})` → `{success: false}`
-🔴 27. `sqlite.vector.count({})` → `{success: false}`
-🔴 28. `sqlite.vector.stats({})` → `{success: false}`
-🔴 29. `sqlite.vector.dimensions({})` → `{success: false}`
-🔴 30. `sqlite.vector.normalize({})` → `{success: false}`
-🔴 31. `sqlite.vector.distance({})` → `{success: false}`
+🔴 23. `sqlite.vector.createTable({})` → `{success: false}`
+🔴 24. `sqlite.vector.store({})` → `{success: false}`
+🔴 25. `sqlite.vector.batchStore({})` → `{success: false}`
+🔴 26. `sqlite.vector.search({})` → `{success: false}`
+🔴 27. `sqlite.vector.get({})` → `{success: false}`
+🔴 28. `sqlite.vector.delete({})` → `{success: false}`
+🔴 29. `sqlite.vector.count({})` → `{success: false}`
+🔴 30. `sqlite.vector.stats({})` → `{success: false}`
+🔴 31. `sqlite.vector.dimensions({})` → `{success: false}`
+🔴 32. `sqlite.vector.normalize({})` → `{success: false}`
+🔴 33. `sqlite.vector.distance({})` → `{success: false}`
 
 
 ## Phase 6: Wrong-Type Numeric Coercion
 
-🔴 32. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.1, 0.2, 0.3], metric: "cosine", limit: "abc"})` → handler error, NOT raw MCP `-32602`
+🔴 34. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.1, 0.2, 0.3], metric: "cosine", limit: "abc"})` → handler error, NOT raw MCP `-32602`
 
 ---
 

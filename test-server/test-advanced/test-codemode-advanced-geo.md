@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
 > If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
-> We're currently testing Native mode.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.

@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
 > If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
-> We're currently testing Native mode.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
@@ -166,7 +166,7 @@ return nested;
 Expected: `{success: true}` — sandbox must serialize deeply nested objects.
 
 
-## Phase 2: API Discoverability (7 tests)
+## Phase 2: API Discoverability (8 tests)
 
 ### 2.1 — Top-level help
 
@@ -248,6 +248,19 @@ return {
 ```
 
 Expected: All values are `"undefined"`. The 3 built-in tools (`server_info`, `server_health`, `list_adapters`) are always-on MCP tools available outside Code Mode but must NOT be accessible in the `sqlite.*` sandbox namespace — they are server-level tools not scoped to a specific database adapter.
+
+### 2.8 — reportProgress utility
+
+```javascript
+const type = typeof sqlite.reportProgress;
+if (type !== "function") return { success: false, error: "reportProgress not a function, got: " + type };
+sqlite.reportProgress(1, 3, "Testing progress reporting");
+sqlite.reportProgress(2, 3, "Still working");
+sqlite.reportProgress(3, 3, "Done");
+return { success: true, type };
+```
+
+Expected: `{success: true, type: "function"}`. The `sqlite.reportProgress(current, total, message)` utility must be accessible and callable without errors. Progress notifications are sent to the client but do not affect the return value.
 
 
 ## Phase 3: Security & Error Handling (7 tests)
