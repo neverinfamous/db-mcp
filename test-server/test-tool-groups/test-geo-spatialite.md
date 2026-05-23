@@ -76,7 +76,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (7)
+### Group Tools (7N/0W)
 
 - `sqlite_spatialite_load [NATIVE ONLY]`
 - `sqlite_spatialite_create_table [NATIVE ONLY]`

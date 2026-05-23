@@ -45,5 +45,6 @@
 - **Documentation:** Fixed outdated npm dependency patch versions in `SECURITY.md` to match `package.json` and `Dockerfile`.
 - **Documentation:** Corrected inaccurate Code Mode API mappings, parameter names, and descriptions in server instruction source files.
 - **Documentation:** Corrected multiple stale tool counts, prompt counts, directory references, and file paths across `code-map.md`, test READMEs, and script outputs.
+- **Documentation:** Labeled all tool count columns and inline headers with N/W splits where `[NATIVE ONLY]` tools exist, renamed ambiguous `Tools` columns to `Group Tools` per tool-reference taxonomy, and fixed incorrect counts (json 26→25, stats 24N/18W→23N/17W, admin-core "Identical Native/WASM" → 24N/23W).
 - **Security:** Replaced naive string equality with `crypto.timingSafeEqual` for simple bearer token comparison to prevent timing side-channel attacks.
 - **Security:** Added CLI warning when `--auth-token` is used, recommending `MCP_AUTH_TOKEN` environment variable for production deployments.

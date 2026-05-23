@@ -76,7 +76,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (9)
+### Group Tools (9N/4W)
 
 - `sqlite_fuzzy_match`
 - `sqlite_phonetic_match`

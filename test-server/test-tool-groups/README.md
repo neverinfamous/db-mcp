@@ -4,7 +4,7 @@
 
 ## File Inventory
 
-| File                                | Group                     | Tools          | Notes                            |
+| File                                | Group                     | Group Tools    | Notes                            |
 | ----------------------------------- | ------------------------- | -------------- | -------------------------------- |
 | `test-core-data.md`                 | core-data                 | 9              | Identical Native/WASM            |
 | `test-core-schema.md`               | core-schema               | 12 + Code Mode | Identical Native/WASM            |
@@ -16,7 +16,7 @@
 | `test-stats-advanced.md`            | stats-advanced            | 6N/0W          | Window functions `[NATIVE ONLY]` |
 | `test-vector-read.md`               | vector-read               | 7 + Code Mode  | Identical Native/WASM            |
 | `test-vector-write.md`              | vector-write              | 4              | Identical Native/WASM            |
-| `test-admin-core.md`                | admin-core                | 24 + Code Mode | Identical Native/WASM            |
+| `test-admin-core.md`                | admin-core                | 24N/23W + Code Mode | `dump` is `[NATIVE ONLY]`   |
 | `test-admin-extensions.md`          | admin-extensions          | 8              | CSV, series, rtree               |
 | `test-admin-audit.md`               | admin-audit               | 5              | Audit snapshot management        |
 | `test-transactions.md`              | transactions              | 8 + Code Mode  | `[NATIVE ONLY]`                  |

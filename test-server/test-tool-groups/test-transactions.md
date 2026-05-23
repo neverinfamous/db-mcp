@@ -82,7 +82,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `server_health`
 - `list_adapters`
 
-### Group Tools (8) + Code Mode
+### Group Tools (8N/0W) + Code Mode
 
 - `sqlite_transaction_begin [NATIVE ONLY]`
 - `sqlite_transaction_status [NATIVE ONLY]`

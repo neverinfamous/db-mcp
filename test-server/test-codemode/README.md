@@ -84,13 +84,13 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 
 ## File Inventory
 
-| File                                | Group         | Tools                                                                    |
+| File                                | Group         | Group Tools                                                              |
 | ----------------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `test-codemode-sandbox.md`          | sandbox       | Sandbox basics, API discoverability, security, readonly, state isolation |
 | `test-codemode-core.md`             | core          | 21                                                                       |
-| `test-codemode-json.md`             | json          | 26                                                                       |
+| `test-codemode-json.md`             | json          | 25                                                                       |
 | `test-codemode-text.md`             | text          | 19N/14W                                                                  |
-| `test-codemode-stats.md`            | stats         | 24N/18W                                                                  |
+| `test-codemode-stats.md`            | stats         | 23N/17W                                                                  |
 | `test-codemode-vector.md`           | vector        | 11                                                                       |
 | `test-codemode-admin.md`            | admin         | 32N/31W                                                                  |
 | `test-codemode-transactions.md`     | transactions  | 8 `[NATIVE ONLY]`                                                        |

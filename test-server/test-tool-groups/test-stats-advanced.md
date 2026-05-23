@@ -76,7 +76,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (6)
+### Group Tools (6N/0W)
 
 - `sqlite_window_row_number [NATIVE ONLY]`
 - `sqlite_window_rank [NATIVE ONLY]`
