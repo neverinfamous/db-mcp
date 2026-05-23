@@ -1,4 +1,4 @@
-# db-mcp Help — JSON Operations (24 tools)
+# db-mcp Help — JSON Operations (25 tools)
 
 ## Collection & CRUD
 

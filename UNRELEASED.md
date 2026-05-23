@@ -118,3 +118,11 @@
 ### Changed
 
 - Updated stale tool count comments in `src/filtering/tool-constants.ts`: core 16 → 21, admin 29/29 → 31/32, total 133/159 → 140/167 to match actual tool inventory.
+- Audited and corrected server instruction source files (`src/constants/server-instructions/*.md`):
+  - Fixed JSON tool count in `json.md` header: 24 → 25 (`json_diff` was added but count not updated).
+  - Fixed stats core tool count in `stats.md` header: 16 → 17 (`stats_sample` was added but count not updated).
+  - Added missing `core` group to `overview.md` help resource listing.
+  - Updated `gotchas.md` WASM table: Backup/Restore row from 4 → 5 tools (dump also returns graceful WASM error).
+  - Updated `gotchas.md` gotcha #1: `sqlite_write_query` now also accepts trigger DDL (CREATE/DROP TRIGGER), not strictly DML only.
+  - Added KEEP_PREFIX_GROUPS exception to `gotchas.md` Code Mode API Mapping: `stats`, `admin`, and `migration` groups retain their prefix in method names.
+  - Updated `core.md` `sqlite_write_query` description to include trigger DDL acceptance.

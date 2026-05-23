@@ -1,4 +1,4 @@
-# db-mcp Help — Statistical Analysis (16 core + 6 window)
+# db-mcp Help — Statistical Analysis (17 core + 6 window)
 
 ## Core Statistics (always available)
 

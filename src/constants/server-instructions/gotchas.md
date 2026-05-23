@@ -2,7 +2,7 @@
 
 ## ⚠️ Critical Gotchas
 
-1. **sqlite_write_query**: ⛔ Strictly DML only (INSERT/UPDATE/DELETE/REPLACE) — use `sqlite_read_query` for SELECT, and `sqlite_create_table` (which supports `foreignKeys` and `checkConstraints`) for schema creation.
+1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) plus trigger DDL (CREATE TRIGGER/DROP TRIGGER) — use `sqlite_read_query` for SELECT, and `sqlite_create_table` (which supports `foreignKeys` and `checkConstraints`) for schema creation.
 2. **Regex patterns**: Double-escape backslashes (`\\\\`) when passing through JSON/MCP
 3. **FTS5 virtual tables**: `*_fts` and shadow tables `*_fts_*` are hidden from `sqlite_list_tables` for cleaner output
 4. **FTS5 boolean logic**: Uses AND by default — `"machine learning"` = rows with BOTH words. Use OR explicitly: `"machine OR learning"`
@@ -29,7 +29,7 @@
 | Transactions (8 tools)                            | ✅                    | ❌          | None             |
 | Window functions (6 tools in stats group)         | ✅                    | ❌          | None             |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅                    | ❌          | None             |
-| Backup/Restore (4 tools)                          | ✅                    | ❌          | Graceful error   |
+| Backup/Restore/Dump (5 tools)                     | ✅                    | ❌          | Graceful error   |
 | R-Tree spatial indexing                           | ✅                    | ❌          | Graceful error   |
 | CSV virtual tables                                | ✅                    | ❌          | Graceful error   |
 | generate_series                                   | JS fallback           | JS fallback | —                |
@@ -51,6 +51,7 @@
 ## Code Mode API Mapping
 
 `sqlite_group_action` → `sqlite.group.action()` (group prefixes dropped: `sqlite_json_insert` → `sqlite.json.insert()`)
+**Exception**: `stats`, `admin`, and `migration` keep their prefix: `sqlite_stats_basic` → `sqlite.stats.statsBasic()`, `sqlite_migration_apply` → `sqlite.migration.migrationApply()`
 
 **Positional args work**: `sqlite.core.readQuery("SELECT...")`, `sqlite.json.insert("docs", "data", {...})`
 
