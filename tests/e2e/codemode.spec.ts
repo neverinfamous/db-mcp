@@ -290,7 +290,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not found in group");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -311,7 +311,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not found in group");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -332,7 +332,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not found in group");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -353,7 +353,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not found in group");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -374,7 +374,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not found in group");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -395,7 +395,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not found in group");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
