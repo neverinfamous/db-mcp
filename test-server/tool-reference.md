@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all **167 Native / 140 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all **172 Native / 145 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 > **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
 >
@@ -162,7 +162,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (32 Native / 31 WASM tools + Code Mode)
+## admin (37 Native / 36 WASM tools + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 
@@ -201,9 +201,9 @@ Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 | `sqlite_reindex` | `sqlite.admin.reindex` | Rebuild indexes targeting a specific index, table, or the entire database. |
 | `sqlite_wal` | `sqlite.admin.wal` | WAL mode management: check status, enable/disable WAL mode, or run checkpoints with configurable modes. |
 
-### Server Audit Tools `[Requires --audit-backup]`
+### Server Audit Tools
 
-> These tools are only available when the server is started with the `--audit-backup` flag. They are not exposed in Code Mode.
+> These tools manage pre-mutation DDL snapshots. They are not exposed in Code Mode.
 
 | MCP Tool Name | Code Mode Name | Description |
 | :--- | :--- | :--- |
@@ -283,3 +283,30 @@ Schema migration tracking — initialize, record, apply, rollback, and audit mig
 | `sqlite_migration_rollback` | `sqlite.migration.migrationRollback` | Roll back a migration by ID or version. Requires that rollback SQL was recorded with the migration. Supports dry-run mode to preview the rollback SQL without executing. |
 | `sqlite_migration_history` | `sqlite.migration.migrationHistory` | Query migration history with optional filters by status and source system. Supports pagination. |
 | `sqlite_migration_status` | `sqlite.migration.migrationStatus` | Get a summary of migration tracking state — latest version, counts by status, and unique source systems. |
+
+---
+
+## outputSchema Registry
+
+Every tool in db-mcp has a mandatory `outputSchema` defined via Zod. The Vitest invariant test (`tests/adapters/tool-output-schemas.test.ts`) enforces this — adding a tool without an outputSchema will fail CI.
+
+All schemas are centralized in `src/adapters/sqlite/schemas/` with named exports. **No inline `z.object()` definitions** exist in handler files.
+
+| Schema File | Groups | Key Schemas |
+| :--- | :--- | :--- |
+| `core.ts` | core | `ReadQueryOutputSchema`, `WriteQueryOutputSchema`, `CreateTableOutputSchema`, `ListTablesOutputSchema`, `DescribeTableOutputSchema`, `DropTableOutputSchema`, `GetIndexesOutputSchema`, `CreateIndexOutputSchema`, `DropIndexOutputSchema`, `ListTriggersOutputSchema`, `ListConstraintsOutputSchema`, `DateMathOutputSchema` |
+| `json.ts` | json | `JsonDiffOutputSchema` + schemas for all 25 JSON tools |
+| `text.ts` | text | `TextConcatOutputSchema`, `TextTrimOutputSchema`, `TextCaseOutputSchema`, `TextSubstringOutputSchema`, `AdvancedSearchOutputSchema` + schemas for all 14 text tools |
+| `fts.ts` | text (FTS5) | `FtsCreateOutputSchema`, `FtsSearchOutputSchema`, `FtsRebuildOutputSchema` |
+| `stats.ts` | stats | `StatsBasicOutputSchema`, `StatsCountOutputSchema`, `StatsGroupByOutputSchema`, `StatsHistogramOutputSchema`, `StatsPercentileOutputSchema`, `StatsCorrelationOutputSchema`, `StatsHypothesisOutputSchema`, `StatsDetectAnomaliesOutputSchema`, `StatsDetectBloatOutputSchema`, `StatsDetectSchemaRisksOutputSchema` |
+| `vector.ts` | vector | `VectorSearchOutputSchema`, `VectorStoreOutputSchema`, `VectorBatchStoreOutputSchema`, `VectorGetOutputSchema`, `VectorDeleteOutputSchema`, `VectorCountOutputSchema`, `VectorStatsOutputSchema`, `VectorDimensionsOutputSchema`, `VectorNormalizeOutputSchema`, `VectorDistanceOutputSchema` |
+| `geo.ts` | geo | Schemas for all 4 geo tools |
+| `admin.ts` | admin | `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`, `AnalyzeOutputSchema`, `OptimizeOutputSchema`, `IntegrityCheckOutputSchema`, `PragmaSettingsOutputSchema`, `AppendInsightOutputSchema`, `DbstatOutputSchema`, `AttachDatabaseOutputSchema`, `DetachDatabaseOutputSchema`, `VacuumIntoCopyOutputSchema` |
+| `virtual.ts` | admin (virtual) | `ListVirtualTablesOutputSchema`, `VirtualTableInfoOutputSchema`, `DropVirtualTableOutputSchema`, `CreateCsvTableOutputSchema`, `AnalyzeCsvSchemaOutputSchema`, `CreateRtreeTableOutputSchema`, `CreateSeriesTableOutputSchema` |
+| `introspection.ts` | introspection | `DependencyGraphOutputSchema`, `TopologicalSortOutputSchema`, `CascadeSimulatorOutputSchema`, `SchemaSnapshotOutputSchema`, `SchemaDiffOutputSchema`, `ConstraintAnalysisOutputSchema`, `MigrationRisksOutputSchema`, `StorageAnalysisOutputSchema`, `IndexAuditOutputSchema`, `QueryPlanOutputSchema` |
+| `migration.ts` | migration | `MigrationInitOutputSchema`, `MigrationRecordOutputSchema`, `MigrationApplyOutputSchema`, `MigrationRollbackOutputSchema`, `MigrationHistoryOutputSchema`, `MigrationStatusOutputSchema` |
+| `native.ts` | transactions, stats (window) | `TransactionBeginOutputSchema` … `TransactionExecuteOutputSchema` (8 schemas), `WindowRowNumberOutputSchema` … `WindowNtileOutputSchema` (6 schemas) |
+| `spatialite.ts` | geo (SpatiaLite) | `SpatialiteLoadOutputSchema` … `SpatialiteImportOutputSchema` (7 schemas) |
+| `codemode.ts` | codemode | `ExecuteCodeOutputSchema` |
+| `common.ts` | *(shared)* | `RowRecordSchema` — base row shape |
+| `error-mixin.ts` | *(shared)* | `ErrorFieldsMixin` — 6 optional error fields merged into all output schemas |

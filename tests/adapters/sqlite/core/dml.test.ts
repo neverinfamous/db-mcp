@@ -253,6 +253,198 @@ describe("Core Tools - DML", () => {
       expect(result.error).toContain("CREATE");
     });
 
+    // =========================================================================
+    // Comprehensive DDL Rejection (B3)
+    // =========================================================================
+
+    it("should reject CREATE VIEW", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "CREATE VIEW hack_view AS SELECT 1",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("CREATE");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject ALTER TABLE", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE alter_test (id INTEGER PRIMARY KEY)",
+      );
+
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "ALTER TABLE alter_test ADD COLUMN extra TEXT",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("ALTER");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject ATTACH DATABASE", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "ATTACH DATABASE ':memory:' AS hack_db",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("ATTACH");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject DETACH DATABASE", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "DETACH DATABASE hack_db",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("DETACH");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject VACUUM", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "VACUUM",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("VACUUM");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject REINDEX", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "REINDEX",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("REINDEX");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject ANALYZE", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "ANALYZE",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("ANALYZE");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject TRUNCATE", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "TRUNCATE TABLE counter",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("TRUNCATE");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject PRAGMA via write_query", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "PRAGMA journal_mode = WAL",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("PRAGMA");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject EXPLAIN via write_query", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "EXPLAIN SELECT 1",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      // EXPLAIN is not in rejectedPrefixes → falls to unrecognized
+      expect(result.error).toBeDefined();
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    // =========================================================================
+    // Trigger DDL Exception — CREATE/DROP TRIGGER intentionally allowed
+    // =========================================================================
+
+    it("should allow CREATE TRIGGER", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE trigger_test (id INTEGER PRIMARY KEY, name TEXT)",
+      );
+
+      const result = (await tools.get("sqlite_write_query")?.({
+        query:
+          "CREATE TRIGGER trigger_test_ins AFTER INSERT ON trigger_test BEGIN SELECT 1; END",
+      })) as { success: boolean; rowsAffected: number };
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should allow CREATE TEMP TRIGGER", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE temp_trigger_test (id INTEGER PRIMARY KEY)",
+      );
+
+      const result = (await tools.get("sqlite_write_query")?.({
+        query:
+          "CREATE TEMP TRIGGER temp_trigger_ins AFTER INSERT ON temp_trigger_test BEGIN SELECT 1; END",
+      })) as { success: boolean; rowsAffected: number };
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should allow CREATE TEMPORARY TRIGGER", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE tmp_trigger_test (id INTEGER PRIMARY KEY)",
+      );
+
+      const result = (await tools.get("sqlite_write_query")?.({
+        query:
+          "CREATE TEMPORARY TRIGGER tmp_trigger_ins AFTER INSERT ON tmp_trigger_test BEGIN SELECT 1; END",
+      })) as { success: boolean; rowsAffected: number };
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should allow DROP TRIGGER", async () => {
+      await adapter.executeWriteQuery(
+        "CREATE TABLE dt_test (id INTEGER PRIMARY KEY)",
+      );
+      await adapter.executeWriteQuery(
+        "CREATE TRIGGER dt_test_trg AFTER INSERT ON dt_test BEGIN SELECT 1; END",
+      );
+
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "DROP TRIGGER dt_test_trg",
+      })) as { success: boolean; rowsAffected: number };
+
+      expect(result.success).toBe(true);
+    });
+
+    // =========================================================================
+    // CTE-wrapped DDL rejection
+    // =========================================================================
+
+    it("should reject CTE-prefixed CREATE TABLE via write_query", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query:
+          "WITH dummy AS (SELECT 1) CREATE TABLE cte_ddl_hack (id INTEGER)",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("CREATE");
+      expect(result.rowsAffected).toBe(0);
+    });
+
+    it("should reject CTE-prefixed DROP TABLE via write_query", async () => {
+      const result = (await tools.get("sqlite_write_query")?.({
+        query: "WITH dummy AS (SELECT 1) DROP TABLE sqlite_master",
+      })) as { success: boolean; error?: string; rowsAffected: number };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("DROP");
+      expect(result.rowsAffected).toBe(0);
+    });
+
     it("should return structured error for invalid DML", async () => {
       const result = (await tools.get("sqlite_write_query")?.({
         query: "INSERT INTO nonexistent_xyz VALUES (1)",

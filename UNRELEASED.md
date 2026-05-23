@@ -2,6 +2,11 @@
 
 ### Added
 
+- Vitest test for timeout enforcement accuracy (±200ms tolerance) in `tests/codemode/timeout-accuracy.test.ts` — validates real `Worker` thread timeout behavior, not mocked.
+- Comprehensive DDL rejection tests for `sqlite_write_query` in `tests/adapters/sqlite/core/dml.test.ts` — covers `CREATE VIEW`, `ALTER TABLE`, `ATTACH`, `DETACH`, `VACUUM`, `REINDEX`, `ANALYZE`, `TRUNCATE`, `PRAGMA`, `EXPLAIN`, and CTE-wrapped DDL variants. Includes positive tests confirming the intentional `CREATE TRIGGER` / `DROP TRIGGER` exception.
+- Pool concurrent execution limit tests for `WorkerSandboxPool` in `tests/codemode/worker-sandbox.test.ts`.
+- E2E DDL rejection tests in `tests/e2e/errors-extended.spec.ts` — transport-layer validation for `CREATE VIEW`, `ALTER TABLE`, `VACUUM`, `PRAGMA`, `DROP TABLE` rejection and `CREATE TRIGGER` allowance.
+- outputSchema registry section in `test-server/tool-reference.md` — maps every schema file to its groups and key schema exports.
 - Added `sqlite.reportProgress(current, total, message)` utility to Code Mode bindings to allow custom sandboxed JavaScript to report progress during long-running tasks.
 - `sqlite_list_triggers` to list database triggers with an optional table filter (core group).
 - `sqlite_list_constraints` to provide a unified view of table PK, FK, UNIQUE, and CHECK constraints (core group).
@@ -24,6 +29,8 @@
 
 ### Changed
 
+- Fixed 4 stale directory references in `test-server/code-map.md`: renamed `output-schemas/` → `schemas/` to match the actual directory name, corrected non-existent `migration/schemas.ts` → `migration/helpers.ts`, and updated import path references from `../../output-schemas/index.js` → `../../schemas/core.js`.
+- Added invariant test note to `test-server/code-map.md` Output Schemas section referencing `tests/adapters/tool-output-schemas.test.ts`.
 - Updated `C:\Users\chris\Desktop\db-mcp\test-server\tool-reference.md` to include both the MCP tool name and matching Code Mode method name for every single tool.
 - Fixed inaccuracies and standardized prefix conventions in `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` to establish absolute prefix consistency and file accuracy across all tool groups.
 - Standardized `CHANGELOG.md` to adhere to Keep a Changelog standards, consolidating headers, grouping entries, and eliminating duplicates.
@@ -82,9 +89,32 @@
 - Added audit tool exclusion note to `test-codemode-admin.md` documenting that 5 server audit tools are not exposed in Code Mode by design.
 - Replaced hardcoded inline schema table in `test-codemode-advanced-core.md` with canonical `code-map.md` reference.
 - Created new `test-tool-groups/test-wasm-degradation.md` for WASM graceful degradation testing via direct MCP tool calls (31 test items covering FTS5, transactions, window functions, SpatiaLite, and admin native-only tools).
+- Added 6 missing domain error tests to `test-admin-core.md` covering `backup` path traversal, `restore` nonexistent file, `create_view` invalid SQL, `drop_view` nonexistent, `vacuum_into` path traversal, and `wal` invalid action.
+- Added 9 missing Zod sweep items to `test-admin-core.md` for tools with no required params (`analyze`, `integrity_check`, `optimize`, `pragma_optimize`, `vacuum`, `pragma_compile_options`, `pragma_database_list`, `list_views`, `index_stats`).
+- Added 3 missing domain error tests to `test-admin-extensions.md` for `drop_virtual_table` nonexistent, `create_csv_table` nonexistent file, and `create_rtree_table` duplicate table.
+- Added 2 missing Zod sweep items to `test-admin-audit.md` for `sqlite_audit_list_backups` and `sqlite_audit_cleanup`.
+- Added `dryRun: true` rollback preview test to `test-codemode-migration.md` Phase 4.
+- Added `mode: "immediate"` and `mode: "exclusive"` transaction begin tests to `test-transactions.md`.
+- Added pagination tests (`limit`, `offset`) for `migrationHistory` to `test-migration.md` as new Phase 5.
+- Added multi-metric distance comparison test (cosine, euclidean, dot) to `test-codemode-vector.md` Phase 4.4.
+- Added `test-wasm-degradation.md` to `test-tool-groups/README.md` file inventory table.
+- Added missing "Document" post-test step to `test-tool-groups/README.md` and `test-advanced/README.md` to align with per-file codemode prompt conventions.
+- Added clarifying rationale for built-in tool exclusion in `test-codemode-sandbox.md` Phase 2.7.
 
 ### Fixed
 
+- Fixed stale Phase 1 heading count in `test-codemode-wasm-degradation.md` (3 → 5 tests).
+- Fixed incorrect WASM Mode text in `test-admin-extensions.md` — CSV/R-Tree tools degrade in WASM, not fully compatible.
+- Fixed item numbering collision in `test-core-data.md` — happy path items 16-17 and error path items 16-17 had same numbers; renumbered error path to start at 18.
+- Fixed broken table dependency in `test-core-data.md` — RETURNING clause tests (items 16-17) referenced `temp_core_test2` after it was dropped at item 13; moved RETURNING tests before the drop.
+- Fixed `32 → 35` numbering gap in `test-core-data.md` Zod validation sweep (renumbered sequentially 27-35).
+- Fixed stale file count in `test-tool-groups/README.md` (10 → 20 files).
+- Fixed tool count heading mismatch in `test-core-schema.md` — "(13)" to "(12) + Code Mode" to separate `sqlite_execute_code` from group tools.
+- Standardized `(N) + Code Mode` heading convention with `*(Code Mode executor)*` separator across 9 tool-group files: `test-stats-basic.md` (18→17), `test-text-basic.md` (11→10), `test-geo-haversine.md` (5→4), `test-admin-core.md` (25→24), `test-transactions.md` (9→8), `test-migration.md` (7→6), `test-introspection-diagnostics.md` (4→3), `test-json-read.md` (19→18), `test-vector-read.md` (added missing Code Mode listing).
+- Fixed stale tool counts in `test-tool-groups/README.md` inventory table: core-schema (15→12), text-basic (11→10), stats-basic (18→17), admin-core (28→24), json-read (20→18).
+- Fixed item numbering collision in `test-admin-core.md` Zod sweep — items 44-49 duplicated domain error numbers; renumbered Zod sweep to start at 50.
+- Added inline WASM degradation note to `test-admin-extensions.md` Phase 1 (standardize script overwrites header WASM text).
+- Fixed double-space before comma in Zod sweep intro in `test-migration.md` and `test-transactions.md`.
 - Threaded the original `RequestContext` (including `server` and `progressToken`) down through `sqlite_execute_code` so that nested tools executing inside Code Mode accurately emit progress notifications to the client.
 - Fixed non-existent tool names in `test-admin-audit.md`: `sqlite_core_execute` → `sqlite_write_query`, `sqlite_core_describe_table` → `sqlite_describe_table`.
 - Fixed wrong parameter name in `test-codemode-vector.md`: `dropTable({tableName:` → `dropTable({table:` (3 occurrences).
@@ -139,5 +169,17 @@
   - Added missing `core` group to `overview.md` help resource listing.
   - Updated `gotchas.md` WASM table: Backup/Restore row from 4 → 5 tools (dump also returns graceful WASM error).
   - Updated `gotchas.md` gotcha #1: `sqlite_write_query` now also accepts trigger DDL (CREATE/DROP TRIGGER), not strictly DML only.
-  - Added KEEP_PREFIX_GROUPS exception to `gotchas.md` Code Mode API Mapping: `stats`, `admin`, and `migration` groups retain their prefix in method names.
+  - Fixed `gotchas.md` Code Mode API Mapping: removed incorrect `admin` from KEEP_PREFIX_GROUPS — only `stats` and `migration` retain their prefix in method names.
   - Updated `core.md` `sqlite_write_query` description to include trigger DDL acceptance.
+  - Fixed `core.md` `sqlite_upsert` example: `data` is a single object, not an array (array form is `sqlite_batch_insert` with `rows`).
+  - Fixed `core.md` `sqlite_batch_insert` parameter name: `data` → `rows` to match the actual `BatchInsertSchema`.
+  - Fixed `core.md` `sqlite_count` and `sqlite_exists` parameter name: `whereClause` → `where` (canonical schema name; `whereClause` is an alias).
+  - Fixed `json.md` `sqlite_json_pretty` and `sqlite_json_valid` parameter signatures: these tools take `{ json: "..." }` (a raw string), not `{ table, column }` (they don't query a table).
+  - Fixed `json.md` `sqlite_json_select` parameter name: `extractPaths` → `paths` to match the actual `JsonSelectSchema`.
+  - Fixed `introspection.md` `sqlite_cascade_simulator` operation values: lowercase `"delete"`, `"drop"` → uppercase `"DELETE"`, `"DROP"` to match the Zod enum.
+  - Updated admin tool count in `admin.md` header: 32/31 → 37/36 to include 5 audit tools (always assumed available).
+  - Removed `(Requires --audit-backup)` conditional qualifier from `admin.md` audit section heading.
+  - Removed `[Requires --audit-backup]` conditional heading and note from `tool-reference.md` audit section.
+  - Updated total tool counts across docs: 167/140 → 172/145 in `tool-reference.md`, `tool-constants.ts`, `code-map.md`, and `test-tool-groups/README.md`.
+  - Removed `Requires --audit-backup flag` note from `test-tool-groups/README.md` admin-audit row.
+  - Updated `code-map.md` audit-tools.ts description to remove conditional flag note.

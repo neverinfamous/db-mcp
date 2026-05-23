@@ -18,7 +18,7 @@ src/
 │   ├── mcp-server.ts               # McpServer setup, adapter registration, tool/resource/prompt wiring
 │   ├── built-in-tools.ts           # Registration logic for server_info, server_health, list_adapters
 │   ├── help-resources.ts           # Registration logic for sqlite://help resources
-│   └── audit-tools.ts              # Registration logic for audit tools (requires --audit-backup flag)
+│   └── audit-tools.ts              # Registration logic for audit backup tools (5 tools)
 │
 ├── types/                          # Core TypeScript types (barrel: types/index.ts)
 │   ├── adapter.ts                  # ToolDefinition, ResourceDefinition, PromptDefinition, AdapterCapabilities
@@ -127,7 +127,7 @@ src/
 │   │   ├── types.ts                # WASM-specific Zod schemas + TS types
 │   │   ├── resources.ts            # 10 data MCP resources (schema, tables, indexes, compile_options, etc.)
 │   │   ├── index.ts                # Barrel
-│   │   ├── output-schemas/         # Zod outputSchema definitions per group (see § below)
+│   │   ├── schemas/                # Zod outputSchema definitions per group (see § below)
 │   │   ├── prompts/                # 10 MCP prompts (see § below)
 │   │   └── tools/                  # Tool handler files (see § Handler Map below)
 │   │       ├── column-validation.ts  # validateColumnExists() + validateTableExists() — used by geo, stats, text, FTS, window
@@ -239,7 +239,7 @@ Files that provide shared logic but do **not** register tools:
 | `vector/schemas.ts`              | Zod schemas for vector tools                                                                                                                                               |
 | `vector/tools.ts`                | Vector tool registration barrel                                                                                                                                            |
 | `admin/helpers.ts`               | Admin tool shared utilities                                                                                                                                                |
-| `migration/schemas.ts`           | Zod input schemas for migration tools (re-exports output schemas from `output-schemas/migration.ts`)                                                                       |
+| `migration/helpers.ts`           | Migration helper utilities (SHA-256 dedup, version formatting). Migration tools import output schemas directly from `../../schemas/migration.js`.                           |
 | `virtual/helpers.ts`             | Virtual table helper utilities                                                                                                                                             |
 | `introspection/graph/helpers.ts` | FK graph traversal helpers                                                                                                                                                 |
 | `spatialite/schemas.ts` (native) | Zod schemas for SpatiaLite tools                                                                                                                                           |
@@ -247,9 +247,11 @@ Files that provide shared logic but do **not** register tools:
 
 ---
 
-## Output Schemas (`src/adapters/sqlite/output-schemas/`)
+## Output Schemas (`src/adapters/sqlite/schemas/`)
 
 Zod schemas that define the `outputSchema` for MCP tool responses. All output schemas are centralized here with named exports — **zero inline definitions** remain across all tool groups.
+
+> **Invariant Test:** `tests/adapters/tool-output-schemas.test.ts` enforces that every tool has an `outputSchema`, every schema is a valid Zod schema, every schema accepts error responses, every schema references a centralized export (no inline `z.object()`), and no orphan schemas exist. Adding a tool without an outputSchema will fail CI.
 
 | File               | Groups Covered                                                                                                                                                                                 |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -355,7 +357,7 @@ catch (error) {
 | **Schema Cache**        | `SchemaManager` caches table/column metadata with configurable TTL. Auto-invalidates on DDL ops.                                                                                                                                                                                           |
 | **Code Mode Bridge**    | `sqlite.*` API in worker thread communicates via MessagePort RPC to main thread tool handlers. All 9 groups exposed (`core`, `json`, `text`, `stats`, `vector`, `geo`, `admin`, `introspection`, `migration`).                                                                             |
 | **Tool Filtering**      | `ToolFilter` parses `--tool-filter` string → whitelist/blacklist of tool names. `codemode` auto-injected unless excluded. Help resources filtered to match enabled groups.                                                                                                                 |
-| **Output Schemas**      | All Zod output schemas live in `output-schemas/` with named exports — **never inline** in handler files. Handlers import from `../../output-schemas/index.js`. All schemas extend `ErrorFieldsMixin.shape`. Domain-specific fields are optional so error responses pass validation.        |
+| **Output Schemas**      | All Zod output schemas live in `schemas/` with named exports — **never inline** in handler files. Handlers import from `../../schemas/core.js` (or group-specific file). All schemas extend `ErrorFieldsMixin.shape`. Domain-specific fields are optional so error responses pass validation. Enforced by `tests/adapters/tool-output-schemas.test.ts`. |
 | **Input Coercion**      | All numeric params use `z.preprocess(coerceNumber, ...)` so wrong-type strings fall to defaults. Required enums use `z.string()` + handler validation. Optional enums use `coerceEnumValues()` factory. Array params coerce non-arrays to empty arrays for SDK `.partial()` compatibility. |
 | **Readonly Guard**      | Code mode `isWriteTool()` uses fail-closed logic (`readOnlyHint === true`) — tools without annotations are blocked in readonly mode.                                                                                                                                                       |
 | **Parameter Aliases**   | Core tools support backward-compatible aliases (`tableName`→`table`, `sql`→`query`, `name`→`indexName`) via `resolveAliases()` in handlers. Canonical names take precedence.                                                                                                               |
@@ -383,7 +385,7 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Complete 167/140 tool inventory with descriptions                                                                  |
+| `test-server/tool-reference.md`              | Complete 172/145 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
 | `test-server/test-tool-groups/`              | 20 self-contained test prompts — sub-group granularity (e.g., core-data, core-schema). Direct calls only.           |
 | `test-server/test-codemode/`                 | 12 self-contained test prompts — 10 tool groups + sandbox + wasm-degradation meta-tests. Code Mode execution only. |
