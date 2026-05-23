@@ -31,7 +31,7 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 ## Help Resources
 
 Read \`sqlite://help\` for gotchas and critical usage patterns.
-Read \`sqlite://help/{group}\` for group-specific tool reference (json, text, stats, vector, geo, admin, transactions, introspection, migration).
+Read \`sqlite://help/{group}\` for group-specific tool reference (core, json, text, stats, vector, geo, admin, transactions, introspection, migration).
 Only help resources for your enabled tool groups are registered.`;
 
 /**
@@ -159,13 +159,13 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 ## Basic Queries
 
 - \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10" })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements
-- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, or DDL statements
-
+- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
+  
 ## Tables & Schema
 
 - \`sqlite_list_tables({ excludeSystemTables?: boolean })\` — list all tables in the database (system tables excluded by default)
 - \`sqlite_describe_table({ table: "users" })\` — get detailed schema, columns, and foreign keys for a specific table. Detects generated columns (VIRTUAL/STORED) with expression.
-- \`sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }] })\` — create a new table. Use \`strict: true\` for STRICT mode (SQLite 3.37+) to enforce column type checking.
+- \`sqlite_create_table({ table: "users", columns: [{ name: "id", type: "INTEGER PRIMARY KEY" }, { name: "email", type: "TEXT UNIQUE" }], foreignKeys: [{ column: "role_id", targetTable: "roles" }], checkConstraints: ["price > 0"] })\` — create a new table with optional table-level constraints. Use \`strict: true\` for STRICT mode (SQLite 3.37+) to enforce column type checking.
 - \`sqlite_drop_table({ table: "users", ifExists?: true })\` — drop an existing table
 - \`sqlite_alter_table({ table: "users", operation: "add_column", column: "age", type: "INTEGER", nullable: true })\` — add, rename, or drop columns, or rename a table. Operations: \`add_column\`, \`rename_column\`, \`drop_column\`, \`rename_table\`.
 - \`sqlite_list_triggers({ table?: "users" })\` — list database triggers, optionally filtered by table
@@ -298,7 +298,7 @@ sqlite_spatialite_index({
 
 ## ⚠️ Critical Gotchas
 
-1. **sqlite_write_query**: ⛔ Only INSERT/UPDATE/DELETE — use \`sqlite_read_query\` for SELECT
+1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) plus trigger DDL (CREATE TRIGGER/DROP TRIGGER) — use \`sqlite_read_query\` for SELECT, and \`sqlite_create_table\` (which supports \`foreignKeys\` and \`checkConstraints\`) for schema creation.
 2. **Regex patterns**: Double-escape backslashes (\`\\\\\\\\\`) when passing through JSON/MCP
 3. **FTS5 virtual tables**: \`*_fts\` and shadow tables \`*_fts_*\` are hidden from \`sqlite_list_tables\` for cleaner output
 4. **FTS5 boolean logic**: Uses AND by default — \`"machine learning"\` = rows with BOTH words. Use OR explicitly: \`"machine OR learning"\`
@@ -325,7 +325,7 @@ sqlite_spatialite_index({
 | Transactions (8 tools)                            | ✅                    | ❌          | None             |
 | Window functions (6 tools in stats group)         | ✅                    | ❌          | None             |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅                    | ❌          | None             |
-| Backup/Restore (4 tools)                          | ✅                    | ❌          | Graceful error   |
+| Backup/Restore/Dump (5 tools)                     | ✅                    | ❌          | Graceful error   |
 | R-Tree spatial indexing                           | ✅                    | ❌          | Graceful error   |
 | CSV virtual tables                                | ✅                    | ❌          | Graceful error   |
 | generate_series                                   | JS fallback           | JS fallback | —                |
@@ -347,6 +347,7 @@ sqlite_spatialite_index({
 ## Code Mode API Mapping
 
 \`sqlite_group_action\` → \`sqlite.group.action()\` (group prefixes dropped: \`sqlite_json_insert\` → \`sqlite.json.insert()\`)
+**Exception**: \`stats\`, \`admin\`, and \`migration\` keep their prefix: \`sqlite_stats_basic\` → \`sqlite.stats.statsBasic()\`, \`sqlite_migration_apply\` → \`sqlite.migration.migrationApply()\`
 
 **Positional args work**: \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`
 
@@ -433,7 +434,7 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
 
 - \`excludeSystemTables\` defaults to \`true\` — SpatiaLite system tables are hidden for cleaner output. Pass \`false\` to include them
 - \`sqlite_migration_risks\` analyzes DDL text statically — it does NOT execute the statements`],
-  ["json", `# db-mcp Help — JSON Operations (24 tools)
+  ["json", `# db-mcp Help — JSON Operations (25 tools)
 
 ## Collection & CRUD
 
@@ -551,7 +552,7 @@ sqlite_migration_status();
 
 - Rollback requires \`rollbackSql\` to have been provided when the migration was recorded/applied
 - Migration group is **opt-in** — not included in any shortcut except \`dev-schema\` and \`full\``],
-  ["stats", `# db-mcp Help — Statistical Analysis (16 core + 6 window)
+  ["stats", `# db-mcp Help — Statistical Analysis (17 core + 6 window)
 
 ## Core Statistics (always available)
 
