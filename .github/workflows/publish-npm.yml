@@ -3,11 +3,18 @@ name: Publish to NPM
 # npm publish is gated behind Docker security checks:
 # - Triggered by docker-publish.yml after Docker Scout + image push succeeds
 # - No manual dispatch — all publishes must pass gatekeeper pipeline
+#
+# OIDC Trusted Publishing:
+# This workflow uses npm's OIDC-based trusted publishing (provenance).
+# The NPM_TOKEN is still accepted as a fallback for environments where
+# OIDC is not configured. To enable OIDC:
+#   1. Link this GitHub repo in npm package settings → "Configure Trusted Publishing"
+#   2. Remove the NPM_TOKEN secret once OIDC is verified working
 on:
   workflow_call:
     secrets:
       NPM_TOKEN:
-        required: true
+        required: false
 
 permissions:
   contents: read

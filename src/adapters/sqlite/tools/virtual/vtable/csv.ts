@@ -4,8 +4,8 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { idempotent } from "../../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../../utils/index.js";
+import { adminFs } from "../../../../../utils/annotations.js";
+import { sanitizeIdentifier, validateSameDirPath } from "../../../../../utils/index.js";
 import {
   formatHandlerError,
   ExtensionNotAvailableError,
@@ -22,8 +22,8 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: CreateCsvTableSchema,
     outputSchema: CreateCsvTableOutputSchema,
-    requiredScopes: ["write"],
-    annotations: idempotent("Create CSV Table"),
+    requiredScopes: ["admin"],
+    annotations: adminFs("Create CSV Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateCsvTableSchema.parse(params);
@@ -36,6 +36,23 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
             error: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
             code: "VALIDATION_ERROR",
             category: "validation",
+            message: "",
+            sql: "",
+            columns: [],
+          };
+        }
+
+        // Security: validate filePath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.filePath,
+          adapter.getConfiguredPath(),
+        );
+        if (!pathCheck.valid) {
+          return {
+            success: false,
+            error: pathCheck.error,
+            code: "SECURITY_ERROR",
+            category: "security",
             message: "",
             sql: "",
             columns: [],

@@ -5,11 +5,12 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { admin } from "../../../../../utils/annotations.js";
+import { adminFs } from "../../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
+import { validateSameDirPath } from "../../../../../utils/index.js";
 import {
   buildProgressContext,
   sendProgress,
@@ -29,7 +30,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: RestoreSchema,
     outputSchema: RestoreOutputSchema,
     requiredScopes: ["admin"],
-    annotations: admin("Restore Database"),
+    annotations: adminFs("Restore Database"),
     handler: async (params: unknown, context: RequestContext) => {
       let input;
       try {
@@ -62,6 +63,21 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const resolvedPath = nodePath.resolve(input.sourcePath);
+
+      // Security: validate sourcePath is within the same directory as the primary DB
+      const pathCheck = validateSameDirPath(
+        input.sourcePath,
+        adapter.getConfiguredPath(),
+      );
+      if (!pathCheck.valid) {
+        return {
+          ...formatHandlerError(
+            new ValidationError(pathCheck.error),
+          ),
+          sourcePath: input.sourcePath,
+        };
+      }
+
       if (!fs.existsSync(resolvedPath)) {
         return {
           ...formatHandlerError(

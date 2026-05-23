@@ -202,7 +202,6 @@ jobs:
       packages: write
       id-token: write
       attestations: write
-      deployments: write
 
     environment:
       name: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || '' }}

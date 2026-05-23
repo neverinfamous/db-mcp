@@ -4,7 +4,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { admin, adminFs } from "../../../../../utils/annotations.js";
+import { adminFs } from "../../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -29,7 +29,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: BackupSchema,
     outputSchema: BackupOutputSchema,
     requiredScopes: ["admin"],
-    annotations: admin("Database Backup"),
+    annotations: adminFs("Database Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
@@ -54,6 +54,20 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           ...formatHandlerError(new ValidationError("targetPath is required")),
           path: "",
+        };
+      }
+
+      // Security: validate targetPath is within the same directory as the primary DB
+      const pathCheck = validateSameDirPath(
+        input.targetPath,
+        adapter.getConfiguredPath(),
+      );
+      if (!pathCheck.valid) {
+        return {
+          success: false,
+          error: pathCheck.error,
+          code: "SECURITY_ERROR",
+          path: input.targetPath,
         };
       }
 

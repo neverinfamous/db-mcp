@@ -16,11 +16,12 @@ on:
 permissions:
   contents: read # C-20: trimmed from write — workflow only reads source
   security-events: write
-  issues: write
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
+    outputs:
+      scan-failed: ${{ steps.check-scan.outputs.failed }}
 
     steps:
       - name: Checkout repository
@@ -60,6 +61,7 @@ jobs:
 
       # Run table scan (blocking) after SARIF is uploaded
       - name: Run Trivy vulnerability scanner
+        id: trivy-scan
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           image-ref: security-test:latest
@@ -69,9 +71,27 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           trivyignores: '.trivyignore'
           skip-dirs: '/usr/local/lib/node_modules/npm'
+        continue-on-error: true
 
+      - name: Check scan result
+        id: check-scan
+        if: always()
+        run: |
+          if [ "${{ steps.trivy-scan.outcome }}" = "failure" ]; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+  # Separate job for issue creation — scoped with issues: write
+  create-issue:
+    needs: [security-scan]
+    if: ${{ always() && needs.security-scan.outputs.scan-failed == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
       - name: Create security issue if vulnerabilities found
-        if: failure()
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |

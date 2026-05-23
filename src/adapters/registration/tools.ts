@@ -1,5 +1,4 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../types/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
 import type { AuditInterceptor } from "../../audit/interceptor.js";
@@ -24,27 +23,7 @@ export function registerToolImpl(
   };
 
   if (tool.inputSchema !== undefined) {
-    const schema = tool.inputSchema;
-    if (
-      typeof schema === "object" &&
-      schema !== null &&
-      "partial" in schema &&
-      typeof (schema as Record<string, unknown>)["partial"] === "function"
-    ) {
-      try {
-        toolOptions["inputSchema"] = (
-          schema as { partial: () => { passthrough: () => z.ZodType } }
-        )
-          .partial()
-          .passthrough();
-      } catch (e) {
-        console.error(`Error applying .partial() to ${tool.name}:`, e);
-        // ZodEffects throws on .partial() in Zod 4
-        toolOptions["inputSchema"] = schema;
-      }
-    } else {
-      toolOptions["inputSchema"] = schema;
-    }
+    toolOptions["inputSchema"] = tool.inputSchema;
   }
 
   if (tool.outputSchema !== undefined) {

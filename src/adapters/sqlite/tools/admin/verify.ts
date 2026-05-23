@@ -11,8 +11,8 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { readOnly } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { adminFs, readOnly } from "../../../../utils/annotations.js";
+import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -31,8 +31,8 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: VerifyBackupSchema,
     outputSchema: VerifyBackupOutputSchema,
-    requiredScopes: ["read"],
-    annotations: readOnly("Verify Backup"),
+    requiredScopes: ["admin"],
+    annotations: adminFs("Verify Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = VerifyBackupSchema.parse(params);
@@ -60,8 +60,22 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
-        // Resolve to absolute path to avoid CWD-relative false positives
         const resolvedPath = nodePath.resolve(input.backupPath);
+
+        // Security: validate backupPath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.backupPath,
+          adapter.getConfiguredPath(),
+        );
+        if (!pathCheck.valid) {
+          return {
+            ...formatHandlerError(
+              new ValidationError(pathCheck.error),
+            ),
+            backupPath: input.backupPath,
+          };
+        }
+
         if (!fs.existsSync(resolvedPath)) {
           return {
             ...formatHandlerError(

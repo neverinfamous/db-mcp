@@ -58,6 +58,7 @@ export function setupSecurityHeaders(state: HttpTransportState): void {
       "camera=(), microphone=(), geolocation=()",
     );
     res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
 
     // HSTS — only set when explicitly enabled (requires HTTPS)
     if (state.config.enableHSTS) {

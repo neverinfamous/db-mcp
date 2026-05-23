@@ -173,6 +173,26 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bREPLACE\s*\(/i,
     reason: "contains REPLACE() (potential blind extraction oracle)",
   },
+  // ABS() — can be combined with subtraction to create numeric oracles (CWE-89)
+  {
+    pattern: /\bABS\s*\(/i,
+    reason: "contains ABS() (potential blind extraction oracle)",
+  },
+  // HEX() — encodes values for character-by-character extraction (CWE-89)
+  {
+    pattern: /\bHEX\s*\(/i,
+    reason: "contains HEX() (potential blind extraction oracle)",
+  },
+  // QUOTE() — returns SQL-literal representation, can leak type/value info (CWE-89)
+  {
+    pattern: /\bQUOTE\s*\(/i,
+    reason: "contains QUOTE() (potential blind extraction oracle)",
+  },
+  // PRINTF() — format-string based extraction of internal values (CWE-89)
+  {
+    pattern: /\bPRINTF\s*\(/i,
+    reason: "contains PRINTF() (potential blind extraction oracle)",
+  },
 ];
 
 // =============================================================================
