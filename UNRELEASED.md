@@ -102,3 +102,6 @@
 - Fixed duplicate item numbers 36/37 in `test-stats-basic.md` Zod validation sweep (renumbered to 38/39).
 - Fixed phase numbering skip in `test-core-data.md` (Phase 3 → Phase 2 — no Phase 2 existed).
 - Added missing `sqlite_cascade_simulator` Zod validation test to `test-introspection-schema.md` (7 tools listed, only 6 tested).
+- Replaced hardcoded WASM Mode text in `prompt-template.md` with `{{WASM_MODE}}` placeholder; updated `standardize-prompts.js` to auto-detect `[NATIVE ONLY]` in test content and fill the correct variant. 16 codemode/advanced prompts updated from generic text to accurate conditional text.
+- Fixed `standardize-prompts.js` schema extraction bug: "No specific table schema required" text was silently replaced with `code-map.md` link on each run.
+- Fixed incorrect prompt counts in `code-map.md`: `test-tool-groups` 10 → 20, `test-codemode` 10 → 12.
