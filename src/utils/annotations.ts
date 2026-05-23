@@ -129,7 +129,7 @@ export function writeFs(title: string): ToolAnnotations {
 /** Code Mode tools (can invoke any tool group internally) */
 export const CODEMODE: ToolAnnotations = {
   readOnlyHint: false,
-  destructiveHint: false,
+  destructiveHint: true,
   idempotentHint: false,
   openWorldHint: true,
 };

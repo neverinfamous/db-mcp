@@ -28,6 +28,31 @@ import { getAuthContext } from "../auth/auth-context.js";
 import { getRequiredScope } from "../auth/scope-map.js";
 
 /**
+ * Keys that are always redacted from audit log args, regardless of the
+ * global `redact` setting. Prevents credential echo (M-5 mitigation).
+ */
+const SENSITIVE_KEY_PATTERN =
+  /^(password|passwd|token|secret|authorization|api_?key|credential|private_?key|access_?token|refresh_?token)$/i;
+
+/**
+ * Shallow-redact sensitive keys from args before logging.
+ * Returns a new object with sensitive values replaced by '[REDACTED]'.
+ */
+function redactSensitiveKeys(
+  args: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    if (SENSITIVE_KEY_PATTERN.test(key)) {
+      result[key] = "[REDACTED]";
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+/**
  * Audit interceptor interface — used by the registration layer.
  */
 export interface AuditInterceptor {
@@ -202,7 +227,7 @@ export function createAuditInterceptor(
             error,
             args: auditLogger.config.redact
               ? undefined
-              : (args as Record<string, unknown>),
+              : redactSensitiveKeys(args as Record<string, unknown>),
             backup: backupRef,
             tokenEstimate,
           });

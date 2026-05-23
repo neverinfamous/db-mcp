@@ -39,3 +39,23 @@ jobs:
         uses: github/codeql-action/analyze@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
         with:
           upload: always
+          output: codeql-results
+
+      - name: Fail on high/critical CodeQL findings
+        if: matrix.language == 'javascript-typescript'
+        run: |
+          echo "Checking CodeQL SARIF results for high/critical findings..."
+          SARIF_FILE=$(find codeql-results -name '*.sarif' -type f | head -1)
+          if [ -z "$SARIF_FILE" ]; then
+            echo "No SARIF file found — skipping check"
+            exit 0
+          fi
+          # Count results with error-level severity (high/critical)
+          HIGH_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' "$SARIF_FILE" 2>/dev/null || echo "0")
+          echo "High/critical findings: $HIGH_COUNT"
+          if [ "$HIGH_COUNT" -gt 0 ]; then
+            echo "::error::CodeQL found $HIGH_COUNT high/critical finding(s). Review Security tab for details."
+            jq '.runs[].results[] | select(.level == "error") | {ruleId, message: .message.text}' "$SARIF_FILE"
+            exit 1
+          fi
+          echo "✅ No high/critical CodeQL findings"

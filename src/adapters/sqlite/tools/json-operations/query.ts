@@ -13,6 +13,8 @@ import { readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateWhereClause,
+  validateJsonPath,
+  validateAggregateFunction,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
@@ -52,14 +54,7 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         const path = input.path ?? "$";
-        if (!path.startsWith("$")) {
-          return {
-            success: false,
-            rowCount: 0,
-            keys: [],
-            error: "JSON path must start with $",
-          };
-        }
+        validateJsonPath(path);
 
         // Use subquery to avoid ambiguous column when table has a 'key' or 'id' column
         // json_each returns: key, value, type, atom, id, parent, fullkey, path
@@ -120,14 +115,7 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         const path = input.path ?? "$";
-        if (!path.startsWith("$")) {
-          return {
-            success: false,
-            rowCount: 0,
-            elements: [],
-            error: "JSON path must start with $",
-          };
-        }
+        validateJsonPath(path);
 
         // Use table alias and CROSS JOIN to avoid ambiguity with json_each() output columns
         // json_each() returns: key, value, type, atom, id, parent, fullkey, path
@@ -265,6 +253,9 @@ export function createJsonGroupObjectTool(
         // Handle aggregate function mode - uses subquery pattern
         // This enables COUNT(*), SUM(x), AVG(x), etc. as values
         if (input.aggregateFunction) {
+          // Validate aggregate function against whitelist (C-2 mitigation)
+          validateAggregateFunction(input.aggregateFunction);
+
           // Build the key column expression
           const keyCol = input.allowExpressions
             ? (input.keyColumn ?? "rowid")

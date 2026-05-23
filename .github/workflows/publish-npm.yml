@@ -2,18 +2,12 @@ name: Publish to NPM
 
 # npm publish is gated behind Docker security checks:
 # - Triggered by docker-publish.yml after Docker Scout + image push succeeds
-# - Manual dispatch available as fallback
+# - No manual dispatch — all publishes must pass gatekeeper pipeline
 on:
   workflow_call:
     secrets:
       NPM_TOKEN:
         required: true
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to publish (must match package.json)"
-        required: false
-        default: ""
 
 permissions:
   contents: read

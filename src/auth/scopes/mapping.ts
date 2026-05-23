@@ -89,6 +89,15 @@ for (const [group, scope] of Object.entries(TOOL_GROUP_SCOPES)) {
     adminToolNames.push(...tools);
   }
 }
+// Audit tools are registered outside TOOL_GROUPS but require admin scope.
+// Without this, write-scoped tokens could invoke destructive audit operations.
+adminToolNames.push(
+  "audit_list_backups",
+  "audit_get_backup",
+  "audit_cleanup",
+  "audit_diff_backup",
+  "audit_restore_backup",
+);
 export const ADMIN_TOOLS: ReadonlySet<string> = withSqlitePrefix(adminToolNames);
 
 /**

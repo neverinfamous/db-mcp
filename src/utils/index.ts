@@ -35,3 +35,8 @@ export {
 } from "./identifiers.js";
 
 export { validateSameDirPath } from "./validate-path.js";
+
+export {
+  validateJsonPath,
+  validateAggregateFunction,
+} from "./validate-json-path.js";

@@ -107,7 +107,19 @@ export class CodeModeSandbox {
 
     const context = vm.createContext(sandbox, {
       name: "codemode-sandbox",
+      codeGeneration: {
+        strings: false, // Disable eval() and new Function()
+        wasm: false, // Disable WebAssembly compilation
+      },
     });
+
+    // NOTE: Prototype freezing is intentionally NOT applied here.
+    // Unlike worker-script.ts (which gets its own V8 copies), this
+    // sandbox passes host builtins directly (Object, Array, Error, etc.).
+    // Freezing them would freeze the host process prototypes too.
+    // The codeGeneration:{strings:false,wasm:false} restriction above
+    // is the primary defense — it blocks Function()/eval() at the V8
+    // engine level, preventing constructor chain escapes.
 
     const instance = new CodeModeSandbox(context, opts);
     // Share logBuffer reference

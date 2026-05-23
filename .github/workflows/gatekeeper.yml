@@ -47,11 +47,8 @@ jobs:
       needs.trivy.result == 'success'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
-      contents: write
       packages: write
       security-events: write
-      issues: write
-      pull-requests: write
       id-token: write
       attestations: write
       deployments: write

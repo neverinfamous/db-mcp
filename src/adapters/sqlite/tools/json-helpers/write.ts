@@ -27,6 +27,7 @@ import { write } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateWhereClause,
+  validateJsonPath,
 } from "../../../../utils/index.js";
 import {
   formatHandlerError,
@@ -124,16 +125,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.column);
 
         // Validate JSON path format
-        if (!input.path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(input.path);
 
         if (input.value === undefined) {
           throw new ValidationError(
@@ -267,16 +259,7 @@ export function createJsonCollectionTool(
         // Validate all index paths upfront before creating anything
         if (input.indexes) {
           for (const idx of input.indexes) {
-            if (!idx.path.startsWith("$")) {
-              throw new ValidationError(
-                `JSON path must start with $: ${idx.path}`,
-                "VALIDATION_ERROR",
-                {
-                  suggestion:
-                    "Use a valid JSON path starting with $. For example: $.key or $[0]",
-                },
-              );
-            }
+            validateJsonPath(idx.path);
           }
         }
 

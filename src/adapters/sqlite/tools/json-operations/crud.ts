@@ -21,6 +21,7 @@ import { readOnly, write } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateWhereClause,
+  validateJsonPath,
 } from "../../../../utils/index.js";
 import {
   formatHandlerError,
@@ -101,16 +102,7 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
-        if (!input.path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(input.path);
 
         let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
         if (input.whereClause) {
@@ -157,16 +149,7 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
-        if (!input.path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(input.path);
 
         if (input.value === undefined) {
           throw new ValidationError(
@@ -225,16 +208,7 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
-        if (!input.path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(input.path);
 
         validateWhereClause(input.whereClause);
         const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}') WHERE ${input.whereClause}`;
@@ -285,16 +259,7 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         const path = input.path ?? "$";
-        if (!path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(path);
 
         let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
         if (input.whereClause) {
@@ -344,16 +309,7 @@ export function createJsonArrayLengthTool(
         const column = sanitizeIdentifier(input.column);
 
         const path = input.path ?? "$";
-        if (!path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(path);
 
         let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
         if (input.whereClause) {
@@ -401,16 +357,7 @@ export function createJsonArrayAppendTool(
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
-        if (!input.path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(input.path);
 
         if (input.value === undefined) {
           throw new ValidationError(

@@ -21,11 +21,9 @@ import { readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateWhereClause,
+  validateJsonPath,
 } from "../../../../utils/index.js";
-import {
-  formatHandlerError,
-  ValidationError,
-} from "../../../../utils/errors/index.js";
+import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   JsonQueryOutputSchema,
   JsonValidatePathOutputSchema,
@@ -63,9 +61,7 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
           // Extract specific paths with meaningful column names
           const columnNames = getUniqueColumnNames(input.paths);
           const extracts = input.paths.map((path, i) => {
-            if (!path.startsWith("$")) {
-              throw new ValidationError(`JSON path must start with $: ${path}`);
-            }
+            validateJsonPath(path);
             return `json_extract("${input.column}", '${path}') as "${columnNames[i]}"`;
           });
           selectClause = extracts.join(", ");
@@ -125,9 +121,7 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.selectPaths && input.selectPaths.length > 0) {
           const columnNames = getUniqueColumnNames(input.selectPaths);
           const extracts = input.selectPaths.map((path, i) => {
-            if (!path.startsWith("$")) {
-              throw new ValidationError(`JSON path must start with $: ${path}`);
-            }
+            validateJsonPath(path);
             return `json_extract("${input.column}", '${path}') as "${columnNames[i]}"`;
           });
           selectClause = extracts.join(", ");
@@ -146,9 +140,7 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
           for (const [path, value] of Object.entries(
             input.filterPaths as Record<string, unknown>,
           )) {
-            if (!path.startsWith("$")) {
-              throw new ValidationError(`JSON path must start with $: ${path}`);
-            }
+            validateJsonPath(path);
             const valueStr =
               typeof value === "string"
                 ? `'${value.replace(/'/g, "''")}'`

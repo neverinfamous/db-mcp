@@ -48,6 +48,8 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **Parameterized queries** used throughout — never string interpolation
 - ✅ **Identifier sanitization** — table, column, schema, and index names validated against injection
 - ✅ **WHERE clause validation** — blocklist of dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, and hex string injection. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
+- ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
+- ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
 - ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`).
 - ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
@@ -107,7 +109,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 - ✅ **Returns 429 Too Many Requests** with proper `Retry-After` headers when limits are exceeded
 - ✅ **Slowloris DoS Protection** — configurable read timeouts via `MCP_REQUEST_TIMEOUT` and `MCP_HEADERS_TIMEOUT`
 
-> **Reverse Proxy Note:** Rate limiting uses `req.socket.remoteAddress`. Behind a reverse proxy (e.g., nginx, Cloudflare Tunnel), all requests may share the same source IP. Ensure your proxy forwards distinct client IPs, or apply rate limiting at the proxy layer instead.
+> **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the leftmost `X-Forwarded-For` IP. **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that overwrites the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
 
 ### **Request Size Limits**
 
