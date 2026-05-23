@@ -92,7 +92,32 @@ function buildSqliteProxy(
       methods: methods.filter((m) => m !== "help"),
     });
 
-    sqlite[key] = groupApi;
+    // Wrap in a Proxy so that calling an undefined method (e.g. a mutation
+    // that was stripped in readonly mode) throws a rejected Promise instead
+    // of silently returning undefined — this halts control flow in the
+    // sandbox and surfaces a proper error to the caller.
+    const methodNames = methods.filter((m) => m !== "help");
+    const groupProxyWrapped = new Proxy(groupApi, {
+      get(target, prop) {
+        // Symbols (Symbol.toPrimitive, Symbol.iterator, etc.) — pass through
+        if (typeof prop === "symbol") return undefined;
+        const propKey = prop;
+        if (propKey in target) return target[propKey];
+        // `then` must return undefined so the Proxy is never treated as a
+        // thenable. Without this, `return sqlite.core` would trigger Promise
+        // resolution → `.then()` → immediate reject with a misleading error.
+        if (propKey === "then") return undefined;
+        // Unknown/stripped method — reject so the sandbox try/catch catches it
+        const available = methodNames.join(", ") || "none";
+        const reason =
+          methodNames.length === 0
+            ? `Operation '${propKey}' is not available — this group has no methods (read-only mode?). Available: ${available}.`
+            : `Operation '${propKey}' is not found in group '${key}'. Available: ${available}.`;
+        return (..._args: unknown[]) => Promise.reject(new Error(reason));
+      },
+    });
+
+    sqlite[key] = groupProxyWrapped;
   }
 
   // Handle top-level aliases (e.g., readQuery, help)
@@ -206,10 +231,15 @@ async function executeInWorker(): Promise<void> {
       __filename: undefined,
       globalThis: undefined,
       global: undefined,
+      Proxy: undefined,
     };
 
     const context = vm.createContext(sandbox, {
       name: "worker-sandbox",
+      codeGeneration: {
+        strings: false,
+        wasm: false,
+      },
     });
 
     // H-1 Remediation: Freeze built-in prototypes inside the sandbox

@@ -64,3 +64,7 @@
 - **[L-3]** Bearer auth: add startup warning when simple bearer auth is configured, documenting that per-tool scope enforcement is not active. Add SECURITY.md callout.
 - **[L-7]** CI/CD: add lockfile integrity verification step (SHA-256 + `git diff --exit-code`) before `npm ci` in `lint-and-test.yml`.
 - **[M-2]** Scope enforcement: align `getRequiredScopeForGroup()` and `getRequiredScopeForTool()` in `enforcement.ts` with fail-closed `admin` default.
+- **[M-3]** Code Mode sandbox: add `Proxy: undefined` to worker `vm` context globals, closing the `Proxy` constructor access vector alongside the existing `new Proxy` regex block.
+- **[M-1]** Code Mode sandbox: add `codeGeneration: { strings: false, wasm: false }` to `vm.createContext()`, disabling `eval()` and `Function()` construction from strings at the V8 engine level. This is the single most impactful hardening change — it closes the entire class of string-based code generation bypass attacks that regex patterns alone cannot fully prevent.
+- **[M-1]** Code Mode sandbox: add RPC method allowlist validation on the host side. The RPC handler now verifies every incoming method call against the serialized bindings allowlist before dispatching, preventing a compromised worker from invoking arbitrary host API methods.
+- **[M-1]** Code Mode sandbox: wrap group API objects in Proxy traps for readonly mode. Calling a stripped mutation method now throws a clear rejected Promise with available methods listed, instead of silently returning `undefined`.

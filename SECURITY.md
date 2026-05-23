@@ -53,22 +53,25 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 
 ## 🧪 **Code Mode Sandbox Security**
 
-Code Mode executes user-provided JavaScript in a Node.js `vm` context or a true V8 isolate via `worker_threads` (recommended). The standard `vm` module provides **script isolation, not security isolation** — it is not designed to resist a determined attacker with direct access. However, isolating workloads into worker threads with strict resource limits, combined with the following defense-in-depth mitigations, significantly reduces risk within the intended **trusted AI agent** threat model:
+Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isolate** with a secondary `vm.createContext()` boundary. Each worker thread runs in its own V8 instance with independent heap and resource limits (`maxOldGenerationSizeMb`), providing process-level isolation. The `vm` context layer provides namespace isolation with V8-enforced code generation restrictions:
 
 ### **Sandbox Restrictions**
 
+- ✅ **V8 code generation restrictions** — `codeGeneration: { strings: false, wasm: false }` disables `eval()` and `Function()` construction from strings **at the V8 engine level**, not just via regex patterns. This closes the entire class of string-based code generation bypass attacks
 - ✅ **Blocked globals** — `require`, `process`, `global`, `globalThis`, `module`, `exports`, `setTimeout`, `setInterval`, `setImmediate`, `Proxy` set to `undefined`
-- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, and filesystem/network/child_process references
+- ✅ **Blocked patterns** — 18 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, and filesystem/network/child_process references
 - ✅ **Frozen prototypes** — all built-in prototypes (`Object`, `Function`, `Error`, `Array`, `Promise`, typed arrays, etc.) are frozen inside the `vm` context to prevent dynamic constructor chain escapes via string concatenation (e.g., `'con'+'structor'`)
+- ✅ **RPC allowlist validation** — the host-side RPC handler validates every incoming method call against the serialized bindings allowlist before dispatching, preventing a compromised worker from invoking arbitrary host methods
+- ✅ **Readonly Proxy traps** — group API objects are wrapped in Proxy traps that throw structured errors when stripped (readonly) methods are called, halting execution instead of silently returning undefined
 - ✅ **Execution timeout** — 30s hard limit (configurable)
 - ✅ **Input limits** — 50KB code input, 10MB result output
 - ✅ **Rate limiting** — 60 executions per minute per client
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars)
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
 
-> **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. The `vm` module does not provide a true security boundary. Defense-in-depth measures include frozen built-in prototypes (preventing dynamic `constructor` chain traversal), 20 static regex rules (blocking literal and bracket-notation escape patterns), and blocked globals. Together these significantly raise the bar against sandbox escape.
+> **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `worker_threads` provides a true V8 isolate boundary (separate heap, separate V8 instance), the `vm.createContext()` layer within it is namespace isolation, not a security sandbox. Defense-in-depth measures include V8-enforced `codeGeneration` restrictions (disabling `eval`/`Function` at the engine level), frozen built-in prototypes, 18 static regex rules, RPC allowlist validation, and blocked globals. Together these provide robust protection within the trusted AI agent threat model.
 >
-> **For untrusted input deployments:** Use process-level sandboxing such as running the container with `--cap-drop=ALL`, or replace `vm` with `isolated-vm` for V8 isolate-level separation.
+> **For untrusted input deployments:** Use process-level sandboxing such as running the container with `--cap-drop=ALL`, or replace `vm` with `isolated-vm` for additional V8 isolate-level separation within the worker.
 
 ## 🌐 **HTTP Transport Security**
 

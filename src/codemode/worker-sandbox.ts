@@ -128,6 +128,18 @@ export class WorkerSandbox {
             try {
               const { id, group, method, args } = msg;
 
+              // RPC allowlist validation: verify the requested method was
+              // in the serialized bindings sent to the worker. This prevents
+              // a compromised worker from invoking arbitrary host methods.
+              const allowedMethods = serializedBindings[group];
+              if (!allowedMethods?.includes(method)) {
+                mainPort.postMessage({
+                  id,
+                  error: `Unauthorized method invocation: ${group}.${method}`,
+                });
+                return;
+              }
+
               // Resolve the actual method from apiBindings
               let target: unknown;
               if (group === "_topLevel") {
