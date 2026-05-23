@@ -26,11 +26,13 @@ jobs:
     permissions:
       contents: read
 
+  # L-5: PR security coverage is handled by independent workflow triggers
+  # (lint-and-test.yml, codeql.yml, secrets-scanning.yml). The gatekeeper
+  # orchestrates the publish gate on push/tag events only.
   trivy:
     uses: ./.github/workflows/security-update.yml
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read # C-20: trimmed from write — workflow only reads source
       issues: write
       security-events: write
 

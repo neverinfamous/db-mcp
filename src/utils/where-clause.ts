@@ -142,6 +142,37 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bZEROBLOB\s*\(/i,
     reason: "contains ZEROBLOB() (potential memory allocation DoS)",
   },
+  // Blind extraction oracle functions — can be composed for character-by-character
+  // data extraction without subqueries or CASE WHEN (CWE-89, H-1 audit finding).
+  // Example: INSTR('abc...', SUBSTR(sqlite_version(), 1, 1)) = N
+  {
+    pattern: /\bINSTR\s*\(/i,
+    reason: "contains INSTR() (potential blind extraction oracle)",
+  },
+  {
+    pattern: /\bSUBSTR\s*\(/i,
+    reason: "contains SUBSTR() (potential blind extraction oracle)",
+  },
+  {
+    pattern: /\bSUBSTRING\s*\(/i,
+    reason: "contains SUBSTRING() (potential blind extraction oracle)",
+  },
+  {
+    pattern: /\bLENGTH\s*\(/i,
+    reason: "contains LENGTH() (potential blind extraction oracle)",
+  },
+  {
+    pattern: /\bUNICODE\s*\(/i,
+    reason: "contains UNICODE() (potential blind extraction oracle)",
+  },
+  {
+    pattern: /\bCHAR\s*\(/i,
+    reason: "contains CHAR() (potential blind extraction oracle)",
+  },
+  {
+    pattern: /\bREPLACE\s*\(/i,
+    reason: "contains REPLACE() (potential blind extraction oracle)",
+  },
 ];
 
 // =============================================================================

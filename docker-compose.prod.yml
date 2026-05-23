@@ -1,0 +1,72 @@
+# docker-compose.prod.yml — Production-hardened Docker Compose example
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Security features:
+#   - cap_drop: ALL — drops all Linux capabilities
+#   - security_opt: no-new-privileges — prevents SUID/SGID escalation
+#   - read_only: true — read-only root filesystem
+#   - tmpfs for /tmp — writable temp space for SQLite WAL/SHM files
+#   - Resource limits — memory and CPU caps
+#   - Health check — HTTP endpoint monitoring
+#
+# ⚠️ Adjust DB_PATH, OAuth, and resource limits to your environment.
+
+services:
+  db-mcp:
+    image: writenotenow/db-mcp:latest
+    container_name: db-mcp-prod
+    restart: unless-stopped
+
+    # ── Security Hardening ──
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=256M,noexec,nosuid,nodev
+
+    # ── Environment ──
+    environment:
+      - NODE_ENV=production
+      - MCP_TRANSPORT=http
+      - MCP_PORT=3100
+      - DB_PATH=/data/database.db
+      # OAuth 2.1 (recommended for production)
+      # - MCP_OAUTH_ISSUER=https://auth.example.com
+      # - MCP_OAUTH_AUDIENCE=https://api.example.com
+      # - MCP_OAUTH_JWKS_URL=https://auth.example.com/.well-known/jwks.json
+      # Simple bearer auth (single-tenant fallback)
+      # - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
+
+    # ── Networking ──
+    ports:
+      - "127.0.0.1:3100:3100"  # Bind to localhost only; expose via reverse proxy
+
+    # ── Volumes ──
+    volumes:
+      - db-data:/data
+
+    # ── Resource Limits ──
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+
+    # ── Health Check ──
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3100/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  db-data:
+    driver: local

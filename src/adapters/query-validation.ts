@@ -12,14 +12,10 @@ import { ValidationError } from "../utils/errors/index.js";
  * Hoisted to module scope to avoid re-allocating RegExp objects per query.
  */
 const DANGEROUS_SQL_PATTERNS: RegExp[] = [
-  /;\s*DROP\s+/i,
-  /;\s*DELETE\s+/i,
-  /;\s*TRUNCATE\s+/i,
-  /;\s*ALTER\s+/i,
-  /;\s*UNION\s+ALL\s+SELECT/i,
-  /;\s*UNION\s+SELECT/i,
-  /;\s*ATTACH\s+/i,
-  /;\s*DETACH\s+/i,
+  // Comprehensive stacked-query keyword blocklist — mirrors where-clause.ts (M-4 audit finding).
+  // Catches all SQL statements that could follow a semicolon injection.
+  /;\s*(DROP|DELETE|TRUNCATE|INSERT|UPDATE|CREATE|ALTER|ATTACH|DETACH|SELECT|REPLACE|VACUUM|ANALYZE|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE|REINDEX|EXPLAIN)\b/i,
+  /;\s*UNION\s+(ALL\s+)?SELECT/i,
 ];
 
 /**

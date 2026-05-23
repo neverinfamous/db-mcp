@@ -140,3 +140,16 @@
 - **[M-23]** Code Mode sandbox: replace static `"user-code.js"` filename in `vm.Script` with per-execution `randomUUID()` filename for forensic traceability of sandbox stack traces (CWE-1059).
 - **[L-23]** WHERE clause validation: add `RANDOMBLOB()` and `ZEROBLOB()` to `DANGEROUS_PATTERNS` blocklist, preventing memory allocation DoS via compact payloads (CWE-400).
 - **[L-24]** Code Mode audit log: apply credential pattern redaction to code preview before logging, preventing embedded secrets (e.g., `const key = "sk-live-..."`) from leaking into server logs (CWE-532).
+- **[H-1]** WHERE clause validation: add `INSTR()`, `SUBSTR()`, `SUBSTRING()`, `LENGTH()`, `UNICODE()`, `CHAR()`, `REPLACE()` to `DANGEROUS_PATTERNS` blocklist, closing blind extraction oracle bypass vector where attackers can extract data character-by-character without subqueries or CASE WHEN (CWE-89).
+- **[M-4]** Query validation: consolidate `DANGEROUS_SQL_PATTERNS` into a single regex matching all dangerous SQL statement keywords after semicolons, mirroring the comprehensive keyword set in `where-clause.ts` (CWE-89).
+- **[H-2]** Code Mode RPC: `Object.freeze()` the serialized bindings map and all method arrays after construction, making the host-side RPC allowlist immutable against mutation from a compromised worker (CWE-471).
+- **[C-19]** CI/CD: remove `if: matrix.language == 'javascript-typescript'` condition from CodeQL failure enforcement step, extending hard-fail coverage to the `actions` matrix leg (CWE-693).
+- **[C-20]** CI/CD: trim unused `contents: write` and `pull-requests: write` permissions from `security-update.yml` and gatekeeper trivy job (CWE-250).
+- **[M-3]** CI/CD: change `docker-publish.yml` security-scan trigger from `if: always()` to `if: ${{ !cancelled() }}` to prevent execution after workflow cancellation (CWE-693).
+- **[C-18]** CI/CD: move `pull-requests: write` from `docker-publish.yml` top-level permissions to security-scan job only (CWE-250).
+- **[L-5]** CI/CD: add documentation comment in `gatekeeper.yml` explaining that PR security coverage is handled by independent workflow triggers.
+- **[L-2]** Code Mode audit log: extend credential redaction regex to cover AWS, GitHub PAT/OAuth (`ghp_`, `gho_`, `ghu_`, `ghs_`), Slack (`xoxb-`, `xoxp-`, `xoxs-`), and Azure prefixes (CWE-532).
+- **[M-5]** SECURITY.md: add file:line code reference for production vm gate enforcement (`codemode.ts:310-318`).
+- **[M-1]** SECURITY.md: document in-memory rate limiter limitation in multi-instance deployments with shared store recommendation.
+- **[L-3]** SECURITY.md: document in-memory session storage limitation for clustering deployments.
+- **[M-2]** Docker: create `docker-compose.prod.yml` with production-hardened defaults (`cap_drop: ALL`, `no-new-privileges`, `read_only`, `tmpfs`, resource limits, localhost port binding).

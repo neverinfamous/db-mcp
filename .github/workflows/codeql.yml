@@ -42,7 +42,7 @@ jobs:
           output: codeql-results
 
       - name: Fail on high/critical CodeQL findings
-        if: matrix.language == 'javascript-typescript'
+        # C-19: Enforce on ALL matrix legs (JS/TS + Actions), not just JS/TS
         run: |
           echo "Checking CodeQL SARIF results for high/critical findings..."
           SARIF_FILE=$(find codeql-results -name '*.sarif' -type f | head -1)

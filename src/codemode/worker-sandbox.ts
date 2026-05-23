@@ -108,6 +108,12 @@ export class WorkerSandbox {
 
         // Serialize API bindings for worker transfer
         const serializedBindings = this.serializeBindings(apiBindings);
+        // H-2: Freeze the RPC allowlist so a compromised worker cannot mutate
+        // it on the host side to authorize additional methods.
+        for (const methods of Object.values(serializedBindings)) {
+          Object.freeze(methods);
+        }
+        Object.freeze(serializedBindings);
 
         const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
 

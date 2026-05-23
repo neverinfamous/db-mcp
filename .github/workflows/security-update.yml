@@ -14,8 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read # C-20: trimmed from write — workflow only reads source
   security-events: write
   issues: write
 

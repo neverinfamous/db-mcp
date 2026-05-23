@@ -150,7 +150,8 @@ export class CodeModeSecurityManager {
       const safePreview = codePreview
         .substring(0, 50)
         .replace(
-          /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*)[^\s'",;)}\]]{4,}/gi,
+          // L-2: Extended credential pattern covering common cloud/SaaS prefixes
+          /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*)[^\s'",;)}\]]{4,}/gi,
           "[REDACTED]",
         );
       logger.info(

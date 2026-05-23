@@ -71,7 +71,7 @@ Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isola
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted)
 - ✅ **Forensic traceability** — each `vm.Script` execution uses a unique `randomUUID()` filename for distinguishable stack traces
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
-- ✅ **Production vm gate** — `CODEMODE_ISOLATION=vm` is rejected when `NODE_ENV=production`, falling back to worker mode with a warning. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use
+- ✅ **Production vm gate** — `CODEMODE_ISOLATION=vm` is rejected when `NODE_ENV=production`, falling back to worker mode with a warning. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use. Enforced in [`src/adapters/sqlite/tools/codemode.ts:310-318`](src/adapters/sqlite/tools/codemode.ts#L310-L318).
 
 > **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `worker_threads` provides a true V8 isolate boundary (separate heap, separate V8 instance), the `vm.createContext()` layer within it is namespace isolation, not a security sandbox. Defense-in-depth measures include V8-enforced `codeGeneration` restrictions (disabling `eval`/`Function` at the engine level), frozen built-in prototypes, 18 static regex rules, RPC allowlist validation, and blocked globals. Together these provide robust protection within the trusted AI agent threat model.
 >
@@ -118,11 +118,15 @@ When running in HTTP mode (`--transport http`), the following security measures 
 
 > **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the leftmost `X-Forwarded-For` IP. **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that overwrites the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
 
+> **⚠️ Multi-Instance Deployments:** The default `express-rate-limit` in-memory store is per-process. In multi-instance deployments behind a load balancer, each instance maintains independent counters, effectively multiplying the rate limit by the number of instances. For production clusters, configure a shared rate limit store (e.g., [`rate-limit-redis`](https://www.npmjs.com/package/rate-limit-redis)).
+
 ### **Session Management**
 
 - ✅ **UUID session IDs** — cryptographically random session identifiers via `crypto.randomUUID()`
 - ✅ **Session ownership binding** — each session is bound to the authenticated subject (`req.auth.sub`) at creation. Every subsequent POST, GET (SSE stream), and DELETE request verifies that the requester's identity matches the session owner, preventing cross-client session hijack (CWE-284, CWE-639)
 - ✅ **Graceful degradation** — when auth is disabled (stdio transport, local dev), session ownership is not enforced (owner is `undefined`)
+
+> **⚠️ In-Memory Sessions:** Session state (including ownership binding) is stored in-memory. Server restarts clear all sessions, forcing clients to re-establish. In multi-instance deployments, sessions are not shared across instances — use sticky sessions at the load balancer or implement a shared session store for production clusters.
 
 ### **Request Size Limits**
 

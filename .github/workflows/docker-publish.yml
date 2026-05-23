@@ -18,7 +18,7 @@ permissions:
   contents: read
   packages: write
   security-events: write
-  pull-requests: write
+  # C-18: pull-requests:write moved to security-scan job only
   id-token: write
   attestations: write
 
@@ -26,11 +26,12 @@ jobs:
   # Security scan BEFORE any images are pushed
   # This ensures no vulnerable images reach Docker Hub
   security-scan:
-    if: always()
+    if: ${{ !cancelled() }} # M-3: run on upstream failure but not cancellation
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
+      pull-requests: write # C-18: scoped to this job only (Docker Scout PR comments)
 
     steps:
       - name: Checkout repository
