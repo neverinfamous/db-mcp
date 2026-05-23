@@ -58,6 +58,8 @@
 - Added missing coercion phase omission notes to `test-codemode-transactions.md` and `test-codemode-introspection.md` explaining why the phase is absent (no optional numeric parameters).
 - Added meta-test suite disclaimers to `test-codemode-sandbox.md` and `test-codemode-wasm-degradation.md` clarifying they are infrastructure tests, not tool group tests.
 - Added cross-group helper method separators (`*(cross-group helpers used in test procedures)*`) to 6 codemode prompts (`text`, `stats`, `vector`, `json`, `admin`, `migration`) to visually distinguish group-own methods from helpers.
+- Added `[NATIVE ONLY]` annotations to all 8 transaction methods in `test-codemode-transactions.md` and `test-codemode-advanced-transactions.md` so the standardize script correctly detects native-only WASM mode (was incorrectly outputting "All tools are fully WASM-compatible").
+- Added missing cross-group helper separator to `test-codemode-transactions.md` for consistency with all other codemode prompts.
 - Reordered `test-codemode-migration.md` method list so all migration group methods are contiguous before the cross-group helper.
 - Fixed 21 incorrect method names in `test-codemode-advanced-json.md`: removed redundant `json` prefix from method list (e.g., `sqlite.json.jsonExtract` → `sqlite.json.extract`) — json group is NOT in `KEEP_PREFIX_GROUPS`.
 - Added missing `sqlite.json.diff` to the advanced JSON method list (used in Phase 6 but omitted from list).

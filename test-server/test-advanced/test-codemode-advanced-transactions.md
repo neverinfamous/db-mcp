@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -78,14 +78,14 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-- `sqlite.transactions.begin`
-- `sqlite.transactions.execute`
-- `sqlite.transactions.savepoint`
-- `sqlite.transactions.rollbackTo`
-- `sqlite.transactions.commit`
-- `sqlite.transactions.status`
-- `sqlite.transactions.rollback`
-- `sqlite.transactions.release`
+- `sqlite.transactions.begin` `[NATIVE ONLY]`
+- `sqlite.transactions.execute` `[NATIVE ONLY]`
+- `sqlite.transactions.savepoint` `[NATIVE ONLY]`
+- `sqlite.transactions.rollbackTo` `[NATIVE ONLY]`
+- `sqlite.transactions.commit` `[NATIVE ONLY]`
+- `sqlite.transactions.status` `[NATIVE ONLY]`
+- `sqlite.transactions.rollback` `[NATIVE ONLY]`
+- `sqlite.transactions.release` `[NATIVE ONLY]`
 - *(cross-group helpers used in test procedures)*
 - `sqlite.core.writeQuery`
 
