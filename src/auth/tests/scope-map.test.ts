@@ -27,8 +27,8 @@ describe("getRequiredScope", () => {
     }
   });
 
-  it("should return read as safe default for unknown tools", () => {
-    expect(getRequiredScope("nonexistent_tool_xyz")).toBe("read");
+  it("should return admin as fail-closed default for unknown tools", () => {
+    expect(getRequiredScope("nonexistent_tool_xyz")).toBe("admin");
   });
 });
 

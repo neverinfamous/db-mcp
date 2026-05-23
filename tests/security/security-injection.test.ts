@@ -56,10 +56,10 @@ describe("Security: WHERE Clause Validation", () => {
         ).not.toThrow();
       });
 
-      it("should allow subqueries for legitimate use", () => {
+      it("should reject subqueries (data exfiltration prevention)", () => {
         expect(() =>
           validateWhereClause("id IN (SELECT user_id FROM orders)"),
-        ).not.toThrow();
+        ).toThrow(UnsafeWhereClauseError);
       });
     });
 
