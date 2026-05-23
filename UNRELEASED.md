@@ -162,6 +162,5 @@
 - **[M-5]** CI/CD: split `security-update.yml` issue creation into a separate job with scoped `issues: write` permission, removing unnecessary write access from the security-scan job (CWE-250).
 - **[M-8]** Annotations: fix `sqlite_backup`, `sqlite_restore`, `sqlite_create_csv_table`, and `sqlite_verify_backup` annotation presets to use `adminFs()` with `openWorldHint: true`, accurately signaling filesystem interaction to MCP clients (MCP annotation compliance).
 - **[M-8]** Scope enforcement: escalate `sqlite_verify_backup` `requiredScopes` from `read` to `admin` — tool uses `ATTACH DATABASE` on filesystem paths and must require admin scope (CWE-862).
-- **[M-9]** Schema boundary: remove `.partial().passthrough()` transformation from tool registration, publishing strict input schemas that match actual handler validation (CWE-20).
 - **[L-4]** Security headers: add `X-Permitted-Cross-Domain-Policies: none` header to prevent Adobe Flash/Acrobat cross-domain requests.
 - **[L-6]** CI/CD: remove unnecessary `deployments: write` permission from `docker-publish.yml` merge-and-push job (CWE-250).
