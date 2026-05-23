@@ -236,16 +236,16 @@ describe("getScopeForToolGroup", () => {
 
 describe("scopeGrantsToolAccess", () => {
   it("should grant full access to all tools", () => {
-    expect(scopeGrantsToolAccess("full", "vacuum_database")).toBe(true);
+    expect(scopeGrantsToolAccess("full", "vacuum")).toBe(true);
     expect(scopeGrantsToolAccess("full", "read_query")).toBe(true);
   });
 
   it("should grant admin access to all tools", () => {
-    expect(scopeGrantsToolAccess("admin", "vacuum_database")).toBe(true);
+    expect(scopeGrantsToolAccess("admin", "vacuum")).toBe(true);
   });
 
   it("should deny admin tools for write scope", () => {
-    expect(scopeGrantsToolAccess("write", "vacuum_database")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "vacuum")).toBe(false);
   });
 
   it("should grant non-admin tools for write scope", () => {
