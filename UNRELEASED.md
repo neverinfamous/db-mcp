@@ -102,7 +102,7 @@
 - **[C-2]** Aggregate function SQL injection: add `validateAggregateFunction()` utility with whitelist validation (COUNT, SUM, AVG, MIN, MAX, GROUP_CONCAT, TOTAL) for `sqlite_json_group_object` `aggregateFunction` parameter. Prevents arbitrary SQL execution via scalar subqueries (CWE-89).
 - **[H-1]** Audit tool scope enforcement: add 5 audit tool names to `ADMIN_TOOLS` set in `mapping.ts` so `write`-scoped OAuth tokens cannot invoke destructive audit operations (`audit_cleanup`, `audit_restore_backup`) (CWE-862).
 - **[H-2]** NPM publish gate bypass: remove `workflow_dispatch` trigger from `publish-npm.yml` to prevent bypassing gatekeeper security pipeline (lint, CodeQL, Scout, Trivy) (CWE-693).
-- **[H-3]** Schema validation weakening: remove `.partial().passthrough()` from tool registration in `registration/tools.ts` that was making required Zod schema fields optional and allowing unknown keys at the SDK layer (CWE-20).
+- **[H-3]** Schema validation: `.partial().passthrough()` in tool registration accepted as intentional pattern — handlers always re-validate with strict schemas, and the SDK-layer weakening is required for alias support (e.g., `tableName`→`table`) and structured error responses (CWE-20, accepted risk).
 - **[M-1]** VM sandbox hardening: add `codeGeneration: { strings: false, wasm: false }` and frozen built-in prototypes to `sandbox.ts` VM fallback, matching `worker-script.ts` security posture (CWE-94).
 - **[M-3]** CodeQL blocking: add SARIF result check step to `codeql.yml` that fails on high/critical findings, preventing silent advisory-only analysis (CWE-693).
 - **[M-4]** Publish permissions: trim `contents:write`, `issues:write`, and `pull-requests:write` from gatekeeper.yml publish job (CWE-250).
