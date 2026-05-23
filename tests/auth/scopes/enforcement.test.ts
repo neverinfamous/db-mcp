@@ -3,6 +3,9 @@
  *
  * Tests all scope enforcement functions: tool access, database access,
  * table access, required scopes, and accessible tool/group lookups.
+ *
+ * Uses actual MCP tool names (both bare and sqlite_-prefixed) to match
+ * the runtime registration in tool-constants.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -25,43 +28,85 @@ import {
 
 describe("scopeGrantsToolAccess", () => {
   it("should grant full scope access to all tools", () => {
-    expect(scopeGrantsToolAccess("full", "vacuum_database")).toBe(true);
+    expect(scopeGrantsToolAccess("full", "vacuum")).toBe(true);
+    expect(scopeGrantsToolAccess("full", "sqlite_vacuum")).toBe(true);
     expect(scopeGrantsToolAccess("full", "read_query")).toBe(true);
     expect(scopeGrantsToolAccess("full", "write_query")).toBe(true);
+    expect(scopeGrantsToolAccess("full", "execute_code")).toBe(true);
   });
 
   it("should grant admin scope access to all tools", () => {
-    expect(scopeGrantsToolAccess("admin", "vacuum_database")).toBe(true);
+    expect(scopeGrantsToolAccess("admin", "vacuum")).toBe(true);
+    expect(scopeGrantsToolAccess("admin", "sqlite_vacuum")).toBe(true);
     expect(scopeGrantsToolAccess("admin", "read_query")).toBe(true);
+    expect(scopeGrantsToolAccess("admin", "execute_code")).toBe(true);
+    expect(scopeGrantsToolAccess("admin", "sqlite_execute_code")).toBe(true);
   });
 
   it("should grant write scope to non-admin tools", () => {
     expect(scopeGrantsToolAccess("write", "write_query")).toBe(true);
+    expect(scopeGrantsToolAccess("write", "sqlite_write_query")).toBe(true);
     expect(scopeGrantsToolAccess("write", "read_query")).toBe(true);
+    expect(scopeGrantsToolAccess("write", "sqlite_read_query")).toBe(true);
+    expect(scopeGrantsToolAccess("write", "create_table")).toBe(true);
   });
 
-  it("should deny write scope for admin tools", () => {
-    expect(scopeGrantsToolAccess("write", "vacuum_database")).toBe(false);
-    expect(scopeGrantsToolAccess("write", "pragma_set")).toBe(false);
+  it("should deny write scope for admin tools (bare names)", () => {
+    expect(scopeGrantsToolAccess("write", "vacuum")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "backup")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "restore")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "pragma_settings")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "execute_code")).toBe(false);
+  });
+
+  it("should deny write scope for admin tools (sqlite_-prefixed names)", () => {
+    expect(scopeGrantsToolAccess("write", "sqlite_vacuum")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "sqlite_backup")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "sqlite_restore")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "sqlite_pragma_settings")).toBe(
+      false,
+    );
+    expect(scopeGrantsToolAccess("write", "sqlite_execute_code")).toBe(false);
+  });
+
+  it("should deny write scope for all codemode tools", () => {
+    expect(scopeGrantsToolAccess("write", "execute_code")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "sqlite_execute_code")).toBe(false);
   });
 
   it("should grant read scope only to read-only tools", () => {
     expect(scopeGrantsToolAccess("read", "read_query")).toBe(true);
+    expect(scopeGrantsToolAccess("read", "sqlite_read_query")).toBe(true);
     expect(scopeGrantsToolAccess("read", "list_tables")).toBe(true);
+    expect(scopeGrantsToolAccess("read", "sqlite_list_tables")).toBe(true);
+    expect(scopeGrantsToolAccess("read", "describe_table")).toBe(true);
+    expect(scopeGrantsToolAccess("read", "query_plan")).toBe(true);
   });
 
   it("should deny read scope for write tools", () => {
     expect(scopeGrantsToolAccess("read", "write_query")).toBe(false);
+    expect(scopeGrantsToolAccess("read", "sqlite_write_query")).toBe(false);
     expect(scopeGrantsToolAccess("read", "create_table")).toBe(false);
+    expect(scopeGrantsToolAccess("read", "sqlite_create_table")).toBe(false);
   });
 
   it("should deny read scope for admin tools", () => {
-    expect(scopeGrantsToolAccess("read", "vacuum_database")).toBe(false);
+    expect(scopeGrantsToolAccess("read", "vacuum")).toBe(false);
+    expect(scopeGrantsToolAccess("read", "sqlite_vacuum")).toBe(false);
+    expect(scopeGrantsToolAccess("read", "execute_code")).toBe(false);
+    expect(scopeGrantsToolAccess("read", "sqlite_execute_code")).toBe(false);
   });
 
   it("should deny db/table scopes (they don't affect tool access)", () => {
     expect(scopeGrantsToolAccess("db:mydb", "read_query")).toBe(false);
     expect(scopeGrantsToolAccess("table:mydb:users", "read_query")).toBe(false);
+  });
+
+  it("should deny write scope for unknown tools (fail-closed via admin default)", () => {
+    // Unknown tools are not in any set, so getRequiredScopeForTool returns admin
+    // and scopeGrantsToolAccess denies them for write scope via ADMIN_TOOLS check
+    // Note: unknown tools fail-closed because they're not in READ_ONLY_TOOLS either
+    expect(scopeGrantsToolAccess("read", "unknown_tool")).toBe(false);
   });
 });
 
@@ -75,11 +120,21 @@ describe("scopesGrantToolAccess", () => {
   });
 
   it("should return false if no scope grants access", () => {
-    expect(scopesGrantToolAccess(["read"], "vacuum_database")).toBe(false);
+    expect(scopesGrantToolAccess(["read"], "vacuum")).toBe(false);
+    expect(scopesGrantToolAccess(["read"], "sqlite_vacuum")).toBe(false);
   });
 
   it("should return false for empty scopes", () => {
     expect(scopesGrantToolAccess([], "read_query")).toBe(false);
+  });
+
+  it("should check sqlite_-prefixed tool names", () => {
+    expect(
+      scopesGrantToolAccess(["write"], "sqlite_execute_code"),
+    ).toBe(false);
+    expect(
+      scopesGrantToolAccess(["admin"], "sqlite_execute_code"),
+    ).toBe(true);
   });
 });
 
@@ -204,6 +259,7 @@ describe("getRequiredScopeForGroup", () => {
 
   it("should return write for write groups", () => {
     expect(getRequiredScopeForGroup("migration")).toBe("write");
+    expect(getRequiredScopeForGroup("transactions")).toBe("write");
   });
 
   it("should return admin for admin groups", () => {
@@ -213,18 +269,31 @@ describe("getRequiredScopeForGroup", () => {
 });
 
 describe("getRequiredScopeForTool", () => {
-  it("should return admin for admin tools", () => {
-    expect(getRequiredScopeForTool("vacuum_database")).toBe("admin");
-    expect(getRequiredScopeForTool("pragma_set")).toBe("admin");
+  it("should return admin for admin tools (bare names)", () => {
+    expect(getRequiredScopeForTool("vacuum")).toBe("admin");
+    expect(getRequiredScopeForTool("backup")).toBe("admin");
+    expect(getRequiredScopeForTool("pragma_settings")).toBe("admin");
+    expect(getRequiredScopeForTool("execute_code")).toBe("admin");
+  });
+
+  it("should return admin for admin tools (sqlite_-prefixed names)", () => {
+    expect(getRequiredScopeForTool("sqlite_vacuum")).toBe("admin");
+    expect(getRequiredScopeForTool("sqlite_backup")).toBe("admin");
+    expect(getRequiredScopeForTool("sqlite_execute_code")).toBe("admin");
   });
 
   it("should return write for write tools", () => {
     expect(getRequiredScopeForTool("write_query")).toBe("write");
+    expect(getRequiredScopeForTool("sqlite_write_query")).toBe("write");
     expect(getRequiredScopeForTool("create_table")).toBe("write");
+    expect(getRequiredScopeForTool("sqlite_create_table")).toBe("write");
   });
 
   it("should return read for known read-only tools", () => {
     expect(getRequiredScopeForTool("read_query")).toBe("read");
+    expect(getRequiredScopeForTool("sqlite_read_query")).toBe("read");
+    expect(getRequiredScopeForTool("list_tables")).toBe("read");
+    expect(getRequiredScopeForTool("sqlite_list_tables")).toBe("read");
   });
 
   it("should return admin as fail-closed default for unknown tools", () => {
@@ -242,12 +311,14 @@ describe("getAccessibleToolGroups", () => {
     expect(groups).toContain("core");
     expect(groups).toContain("admin");
     expect(groups).toContain("migration");
+    expect(groups).toContain("codemode");
   });
 
   it("should return all groups for admin scope", () => {
     const groups = getAccessibleToolGroups(["admin"]);
     expect(groups).toContain("core");
     expect(groups).toContain("admin");
+    expect(groups).toContain("codemode");
   });
 
   it("should return read+write groups for write scope", () => {
@@ -255,6 +326,7 @@ describe("getAccessibleToolGroups", () => {
     expect(groups).toContain("core");
     expect(groups).toContain("migration");
     expect(groups).not.toContain("admin");
+    expect(groups).not.toContain("codemode");
   });
 
   it("should return only read groups for read scope", () => {
@@ -262,6 +334,7 @@ describe("getAccessibleToolGroups", () => {
     expect(groups).toContain("core");
     expect(groups).not.toContain("migration");
     expect(groups).not.toContain("admin");
+    expect(groups).not.toContain("codemode");
   });
 
   it("should return empty array for no scopes", () => {
@@ -281,11 +354,74 @@ describe("getAccessibleTools", () => {
 
   it("should return only read-only tools for read scope", () => {
     const tools = getAccessibleTools(["read"]);
-    // Should not contain write-only or admin-only tools
-    expect(tools).not.toContain("vacuum_database");
+    // Should not contain admin-only tools
+    expect(tools).not.toContain("vacuum");
+    expect(tools).not.toContain("execute_code");
+    expect(tools).not.toContain("backup");
   });
 
   it("should return empty array for no scopes", () => {
     expect(getAccessibleTools([])).toEqual([]);
+  });
+});
+
+// =============================================================================
+// Cross-cutting: ADMIN_TOOLS completeness
+// =============================================================================
+
+describe("ADMIN_TOOLS coverage", () => {
+  it("should block all admin group tools with write scope", () => {
+    // Every tool in the admin and codemode groups should be denied
+    // when the client only has write scope
+    const adminGroupTools = [
+      "backup",
+      "analyze",
+      "integrity_check",
+      "optimize",
+      "restore",
+      "verify_backup",
+      "index_stats",
+      "pragma_compile_options",
+      "pragma_database_list",
+      "pragma_optimize",
+      "pragma_settings",
+      "pragma_table_info",
+      "append_insight",
+      "generate_series",
+      "create_view",
+      "list_views",
+      "drop_view",
+      "dbstat",
+      "vacuum",
+      "list_virtual_tables",
+      "virtual_table_info",
+      "drop_virtual_table",
+      "create_csv_table",
+      "analyze_csv_schema",
+      "create_rtree_table",
+      "create_series_table",
+      "attach_database",
+      "detach_database",
+      "vacuum_into",
+      "dump",
+      "reindex",
+      "wal",
+    ];
+
+    for (const tool of adminGroupTools) {
+      expect(
+        scopeGrantsToolAccess("write", tool),
+        `write scope should deny bare name: ${tool}`,
+      ).toBe(false);
+      expect(
+        scopeGrantsToolAccess("write", `sqlite_${tool}`),
+        `write scope should deny prefixed name: sqlite_${tool}`,
+      ).toBe(false);
+    }
+  });
+
+  it("should block execute_code with write scope (codemode group)", () => {
+    expect(scopeGrantsToolAccess("write", "execute_code")).toBe(false);
+    expect(scopeGrantsToolAccess("write", "sqlite_execute_code")).toBe(false);
   });
 });

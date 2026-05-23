@@ -94,3 +94,6 @@
 - **[L-14]** Annotations: add `CODEMODE` annotation preset with `openWorldHint: true` for Code Mode tools.
 - **[L-15]** Docker: pin npm version in builder stage (`npm@11.4.2`) for reproducible builds.
 - **[L-16]** Docker: remove npm CLI from production image after transitive dependency patching to reduce attack surface.
+- **[M-13]** Scope enforcement: derive `ADMIN_TOOLS` set dynamically from `TOOL_GROUPS × TOOL_GROUP_SCOPES` and add `sqlite_`-prefixed variants to all scope sets (`READ_ONLY_TOOLS`, `WRITE_TOOLS`, `ADMIN_TOOLS`). Fixes privilege escalation where `write`-scoped OAuth tokens could invoke admin-only tools like `execute_code` because the hardcoded sets used stale generic names that didn't match MCP runtime tool registration (CWE-863).
+- **[L-17]** Tests: add `validate-path.test.ts` with edge case coverage for `validateSameDirPath()` path traversal prevention (symlinks, `..` chains, prefix collision, in-memory bypass).
+- **[L-18]** Tests: add tool description security audit to `tool-annotations.test.ts` scanning all 170+ tool descriptions for instruction-like language / prompt injection patterns.

@@ -345,3 +345,125 @@ describe("Tool Annotation Invariants (Audit Tools)", () => {
     expect(violations).toHaveLength(0);
   });
 });
+
+// =============================================================================
+// Tool Description Security Audit (L-6)
+// =============================================================================
+
+describe("Tool Description Security Audit", () => {
+  /**
+   * Instruction-like patterns that should NOT appear in tool descriptions.
+   * These could be used for tool poisoning / prompt injection where the
+   * description manipulates the LLM's behavior beyond the tool's scope.
+   *
+   * Each pattern is case-insensitive and anchored on word boundaries.
+   */
+  const SUSPICIOUS_PATTERNS: { pattern: RegExp; label: string }[] = [
+    {
+      pattern: /\byou must\b/i,
+      label: "directive language: 'you must'",
+    },
+    {
+      pattern: /\byou should always\b/i,
+      label: "directive language: 'you should always'",
+    },
+    {
+      pattern: /\balways use this tool\b/i,
+      label: "directive language: 'always use this tool'",
+    },
+    {
+      pattern: /\bbefore calling\b/i,
+      label: "instructional: 'before calling'",
+    },
+    {
+      pattern: /\bafter calling\b/i,
+      label: "instructional: 'after calling'",
+    },
+    {
+      pattern: /\bignore previous\b/i,
+      label: "prompt injection: 'ignore previous'",
+    },
+    {
+      pattern: /\bignore all\b/i,
+      label: "prompt injection: 'ignore all'",
+    },
+    {
+      pattern: /\bsystem prompt\b/i,
+      label: "prompt injection: 'system prompt'",
+    },
+    {
+      pattern: /\bdo not tell\b/i,
+      label: "manipulation: 'do not tell'",
+    },
+    {
+      pattern: /\bpretend\b/i,
+      label: "manipulation: 'pretend'",
+    },
+    {
+      pattern: /\brole[- ]?play\b/i,
+      label: "manipulation: 'roleplay'",
+    },
+    {
+      pattern: /\bjailbreak\b/i,
+      label: "prompt injection: 'jailbreak'",
+    },
+    {
+      pattern: /\boverride\b/i,
+      label: "manipulation: 'override'",
+    },
+  ];
+
+  it("Native adapter tool descriptions should not contain instruction-like language", async () => {
+    const adapter = new NativeSqliteAdapter();
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
+    const tools = adapter.getToolDefinitions();
+
+    const violations: string[] = [];
+
+    for (const tool of tools) {
+      const desc = tool.description ?? "";
+      for (const { pattern, label } of SUSPICIOUS_PATTERNS) {
+        if (pattern.test(desc)) {
+          violations.push(
+            `${tool.name}: description matches '${label}'` +
+              ` — "${desc.substring(0, 100)}..."`,
+          );
+        }
+      }
+    }
+
+    await adapter.disconnect();
+
+    expect(
+      violations,
+      `${violations.length} tool(s) with suspicious description language:\n  ${violations.join("\n  ")}`,
+    ).toHaveLength(0);
+  });
+
+  it("WASM adapter tool descriptions should not contain instruction-like language", async () => {
+    const adapter = new SqliteAdapter();
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
+    const tools = adapter.getToolDefinitions();
+
+    const violations: string[] = [];
+
+    for (const tool of tools) {
+      const desc = tool.description ?? "";
+      for (const { pattern, label } of SUSPICIOUS_PATTERNS) {
+        if (pattern.test(desc)) {
+          violations.push(
+            `${tool.name}: description matches '${label}'` +
+              ` — "${desc.substring(0, 100)}..."`,
+          );
+        }
+      }
+    }
+
+    await adapter.disconnect();
+
+    expect(
+      violations,
+      `${violations.length} WASM tool(s) with suspicious description language:\n  ${violations.join("\n  ")}`,
+    ).toHaveLength(0);
+  });
+});
