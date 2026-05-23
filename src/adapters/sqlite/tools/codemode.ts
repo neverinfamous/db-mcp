@@ -146,7 +146,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           typeof adapter.getAvailableToolDefinitions === "function"
             ? adapter.getAvailableToolDefinitions()
             : adapter.getToolDefinitions();
-        const api = createSqliteApi(allTools);
+        const api = createSqliteApi(allTools, _context);
         const bindings = api.createSandboxBindings();
 
         // If readonly, wrap write methods with guards that return

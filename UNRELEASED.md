@@ -2,6 +2,7 @@
 
 ### Added
 
+- Added `sqlite.reportProgress(current, total, message)` utility to Code Mode bindings to allow custom sandboxed JavaScript to report progress during long-running tasks.
 - `sqlite_list_triggers` to list database triggers with an optional table filter (core group).
 - `sqlite_list_constraints` to provide a unified view of table PK, FK, UNIQUE, and CHECK constraints (core group).
 - `sqlite_stats_sample` to perform random sampling for exploratory analysis with configurable size (stats group).
@@ -73,6 +74,7 @@
 
 ### Fixed
 
+- Threaded the original `RequestContext` (including `server` and `progressToken`) down through `sqlite_execute_code` so that nested tools executing inside Code Mode accurately emit progress notifications to the client.
 - Fixed non-existent tool names in `test-admin-audit.md`: `sqlite_core_execute` → `sqlite_write_query`, `sqlite_core_describe_table` → `sqlite_describe_table`.
 - Fixed wrong parameter name in `test-codemode-vector.md`: `dropTable({tableName:` → `dropTable({table:` (3 occurrences).
 - Fixed quadruple-escaped backslashes in `test-codemode-admin.md` items 37 and 40 for `attachDatabase` and `vacuumInto` paths.

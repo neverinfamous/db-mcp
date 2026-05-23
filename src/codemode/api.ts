@@ -12,7 +12,8 @@
  * - Exposes `help()` at top level and per-group for discoverability
  */
 
-import type { ToolDefinition, ToolGroup } from "../types/index.js";
+import type { ToolDefinition, ToolGroup, RequestContext } from "../types/index.js";
+import { buildProgressContext, sendProgress } from "../utils/progress-utils.js";
 import {
   METHOD_ALIASES,
   GROUP_EXAMPLES,
@@ -155,6 +156,7 @@ type GroupApiRecord = Record<string, (...args: unknown[]) => Promise<unknown>>;
 function createGroupApi(
   groupName: string,
   tools: ToolDefinition[],
+  baseContext?: RequestContext,
 ): GroupApiRecord {
   const api: GroupApiRecord = {};
 
@@ -163,9 +165,12 @@ function createGroupApi(
 
     api[methodName] = async (...args: unknown[]) => {
       const normalizedParams = normalizeParams(methodName, args) ?? {};
-      const context = {
+      const context: RequestContext = {
         timestamp: new Date(),
         requestId: crypto.randomUUID(),
+        ...(baseContext?.server !== undefined ? { server: baseContext.server } : {}),
+        ...(baseContext?.progressToken !== undefined ? { progressToken: baseContext.progressToken } : {}),
+        ...(baseContext?.auth !== undefined ? { auth: baseContext.auth } : {}),
       };
 
       const result = await tool.handler(normalizedParams, context);
@@ -225,8 +230,10 @@ export class SqliteApi {
   readonly migration: GroupApiRecord;
 
   private readonly toolsByGroup: Map<string, ToolDefinition[]>;
+  private readonly baseContext: RequestContext | undefined;
 
-  constructor(tools: ToolDefinition[]) {
+  constructor(tools: ToolDefinition[], baseContext?: RequestContext) {
+    this.baseContext = baseContext;
     // Group tools by their group property
     this.toolsByGroup = new Map();
     for (const tool of tools) {
@@ -239,27 +246,31 @@ export class SqliteApi {
     }
 
     // Create group-specific APIs for all 9 groups
-    this.core = createGroupApi("core", this.toolsByGroup.get("core") ?? []);
-    this.json = createGroupApi("json", this.toolsByGroup.get("json") ?? []);
-    this.text = createGroupApi("text", this.toolsByGroup.get("text") ?? []);
-    this.stats = createGroupApi("stats", this.toolsByGroup.get("stats") ?? []);
+    this.core = createGroupApi("core", this.toolsByGroup.get("core") ?? [], baseContext);
+    this.json = createGroupApi("json", this.toolsByGroup.get("json") ?? [], baseContext);
+    this.text = createGroupApi("text", this.toolsByGroup.get("text") ?? [], baseContext);
+    this.stats = createGroupApi("stats", this.toolsByGroup.get("stats") ?? [], baseContext);
     this.vector = createGroupApi(
       "vector",
       this.toolsByGroup.get("vector") ?? [],
+      baseContext,
     );
-    this.admin = createGroupApi("admin", this.toolsByGroup.get("admin") ?? []);
+    this.admin = createGroupApi("admin", this.toolsByGroup.get("admin") ?? [], baseContext);
     this.transactions = createGroupApi(
       "transactions",
       this.toolsByGroup.get("transactions") ?? [],
+      baseContext,
     );
-    this.geo = createGroupApi("geo", this.toolsByGroup.get("geo") ?? []);
+    this.geo = createGroupApi("geo", this.toolsByGroup.get("geo") ?? [], baseContext);
     this.introspection = createGroupApi(
       "introspection",
       this.toolsByGroup.get("introspection") ?? [],
+      baseContext,
     );
     this.migration = createGroupApi(
       "migration",
       this.toolsByGroup.get("migration") ?? [],
+      baseContext,
     );
   }
 
@@ -308,6 +319,20 @@ export class SqliteApi {
       bindings["describeTable"] = this.core["describeTable"];
     }
 
+    // Progress notification reporting
+    bindings["reportProgress"] = async (
+      progress: number,
+      total?: number,
+      message?: string,
+    ): Promise<void> => {
+      if (this.baseContext) {
+        const progressCtx = buildProgressContext(this.baseContext);
+        if (progressCtx) {
+          await sendProgress(progressCtx, progress, total, message);
+        }
+      }
+    };
+
     // Top-level help
     bindings["help"] = (): Promise<{
       groups: string[];
@@ -339,6 +364,6 @@ export class SqliteApi {
  * Create a SqliteApi instance from tool definitions.
  * Convenience factory for use in tool handler setup.
  */
-export function createSqliteApi(tools: ToolDefinition[]): SqliteApi {
-  return new SqliteApi(tools);
+export function createSqliteApi(tools: ToolDefinition[], baseContext?: RequestContext): SqliteApi {
+  return new SqliteApi(tools, baseContext);
 }
