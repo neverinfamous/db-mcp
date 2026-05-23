@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
 > We're currently testing Native mode.
 
 ## WASM Mode
@@ -107,50 +107,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 **Code mode testing:**
 
 12. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\\\.com
-
----
-
-## Post-Test Procedures
-
-### Reporting Rules
-- Use ✅ only in inline notes during testing; omit from Final Summary
-- Do not mention what already works well or issues already documented in help resources and runtime hints
-
-### After Testing
-1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
-2. **Scope of fixes** includes corrections to any of:
-   - Handler code
-   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
-   - Test database (`test-server/test.db`)
-   - This prompt
-
-### After Implementation
-3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
-4. **Commit**: Stage and commit all changes — do NOT push.
-5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
-6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
-7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.
-}); return result;"})` → at least 1 result
-
-**Error path testing:**
-
-🔴 13. `sqlite_regex_match({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
-
-## Phase 2: Zod Validation Sweep
-
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
-
-🔴 14. `sqlite_regex_extract({})` → handler error
-🔴 15. `sqlite_regex_match({})` → handler error
-🔴 16. `sqlite_text_split({})` → handler error
-🔴 17. `sqlite_text_concat({})` → handler error
-🔴 18. `sqlite_text_replace({})` → handler error
-🔴 19. `sqlite_text_trim({})` → handler error
-🔴 20. `sqlite_text_case({})` → handler error
-🔴 21. `sqlite_text_substring({})` → handler error
-🔴 22. `sqlite_text_normalize({})` → handler error
-🔴 23. `sqlite_text_validate({})` → handler error
-🔴 24. `sqlite_execute_code({})` → handler error
 
 ---
 
