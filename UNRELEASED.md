@@ -30,6 +30,7 @@
 - Synchronized inventory tool counts and file counts across all documentation, test suites, and source files.
 - Consolidated testing documentation, added Tool Count Taxonomy to `tool-reference.md`, and standardized CHANGELOG format.
 - Replaced deprecated alias method names with canonical names in testing prompts and documentation.
+- Synchronized sandbox security documentation across `README.md`, `DOCKER_README.md`, `SECURITY.md`, and `code-map.md` to reflect V8 `codeGeneration` restrictions, Proxy nullification, RPC allowlist validation, and readonly Proxy traps.
 
 ### Fixed
 - `sqlite_date_diff` processing of string and numeric literals.

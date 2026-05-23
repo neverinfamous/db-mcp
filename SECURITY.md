@@ -236,9 +236,13 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] WHERE clause validation with subquery detection
 - [x] Input validation via Zod schemas
 - [x] JWT claims sanitization (prototype pollution prevention)
-- [x] Code Mode sandbox isolation (vm or worker_threads V8 isolate)
+- [x] Code Mode sandbox isolation (worker_threads V8 isolate + vm.createContext)
+- [x] Code Mode V8 codeGeneration restrictions (eval/Function disabled at engine level)
 - [x] Code Mode frozen built-in prototypes (constructor chain escape prevention)
-- [x] Code Mode blocked patterns (20 static regex rules)
+- [x] Code Mode blocked patterns (18 static regex rules)
+- [x] Code Mode Proxy constructor nullified in sandbox context
+- [x] Code Mode RPC allowlist validation (host-side method authorization)
+- [x] Code Mode readonly Proxy traps (structured errors for stripped methods)
 - [x] Code Mode execution timeout (30s hard limit)
 - [x] Code Mode rate limiting (60 executions/min)
 - [x] Code Mode audit logging
