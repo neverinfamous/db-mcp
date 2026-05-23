@@ -33,7 +33,7 @@ function parseArgs(): Partial<McpServerConfig> {
 
   // Track audit flags
   let auditLogPath: string | undefined;
-  let auditRedact = false;
+  let auditRedact = true;
   let auditReads = false;
   let auditBackup = false;
   let auditBackupData = false;
@@ -156,8 +156,8 @@ function parseArgs(): Partial<McpServerConfig> {
       if (logPath) {
         auditLogPath = logPath;
       }
-    } else if (arg === "--audit-redact") {
-      auditRedact = true;
+    } else if (arg === "--audit-no-redact") {
+      auditRedact = false;
     } else if (arg === "--audit-reads") {
       auditReads = true;
     } else if (arg === "--audit-backup") {
@@ -234,7 +234,7 @@ Extension Options (Native only):
 
 Audit Options:
   --audit-log <path>        Enable audit logging (JSONL file path, or "stderr")
-  --audit-redact            Redact tool arguments from audit entries
+  --audit-no-redact          Include tool arguments in audit entries (default: redacted)
   --audit-reads             Also log read-scoped tool invocations
   --audit-backup            Enable pre-mutation DDL snapshots
   --audit-backup-data       Include sample data rows in snapshots
@@ -262,7 +262,7 @@ Environment Variables:
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
   SPATIALITE_PATH           Custom path to SpatiaLite extension binary
   AUDIT_LOG                 Audit log file path (or "stderr")
-  AUDIT_REDACT              Redact arguments (true/false)
+  AUDIT_REDACT              Redact arguments (default: true, set false to include args)
   AUDIT_READS               Log reads (true/false)
   AUDIT_BACKUP              Enable backups (true/false)
   AUDIT_BACKUP_DATA         Include data (true/false)
@@ -327,7 +327,7 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     config.audit = {
       enabled: true,
       logPath: auditLog,
-      redact: process.env["AUDIT_REDACT"] === "true",
+      redact: process.env["AUDIT_REDACT"] !== "false",
       auditReads: process.env["AUDIT_READS"] === "true",
       maxSizeBytes: DEFAULT_AUDIT_LOG_MAX_SIZE_BYTES,
       ...(process.env["AUDIT_BACKUP"] === "true" && {

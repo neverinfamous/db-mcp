@@ -161,18 +161,11 @@ export function applyScopeEnforcementMiddleware(
   state.app.use((req, res, next) => {
     interface JsonRpcBody {
       method?: string;
-      params?: { name?: string };
+      params?: { name?: string; uri?: string };
     }
 
-    // Only intercept JSON-RPC POST requests for tools/call
     const body = req.body as JsonRpcBody | null | undefined;
-    if (req.method !== "POST" || body?.method !== "tools/call") {
-      next();
-      return;
-    }
-
-    const toolName = body.params?.name;
-    if (!toolName) {
+    if (req.method !== "POST") {
       next();
       return;
     }
@@ -186,30 +179,101 @@ export function applyScopeEnforcementMiddleware(
       return;
     }
 
-    const hasAccess = scopesGrantToolAccess(req.auth.scopes, toolName);
+    const rpcMethod = body?.method;
 
-    if (!hasAccess) {
-      const error = new InsufficientScopeError(
-        `Tool access: ${toolName}`,
+    // M-2: Enforce scopes on tools/call (existing), resources/read, and prompts/get
+    if (rpcMethod === "tools/call") {
+      // Tool scope enforcement (existing behavior)
+      const toolName = body?.params?.name;
+      if (!toolName) {
+        next();
+        return;
+      }
+
+      const hasAccess = scopesGrantToolAccess(req.auth.scopes, toolName);
+
+      if (!hasAccess) {
+        const error = new InsufficientScopeError(
+          `Tool access: ${toolName}`,
+          req.auth.scopes,
+        );
+
+        logger.warning(`Insufficient scope for tool: ${toolName}`, {
+          code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+          toolName,
+          providedScopes: req.auth.scopes,
+        });
+
+        res.status(error.httpStatus);
+        if (error.wwwAuthenticate) {
+          res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+        }
+        res.json({
+          error: "insufficient_scope",
+          error_description: `Access to tool '${toolName}' denied`,
+          tool: toolName,
+        });
+        return;
+      }
+    } else if (rpcMethod === "resources/read") {
+      // M-2: Resource scope enforcement — audit resources require admin, others require read
+      const resourceUri = body?.params?.uri ?? "";
+      const requiredScope = resourceUri.includes("audit") ? "admin" : "read";
+      const hasAccess = scopesGrantToolAccess(
         req.auth.scopes,
+        requiredScope === "admin" ? "sqlite_audit_list_backups" : "sqlite_read_query",
       );
 
-      logger.warning(`Insufficient scope for tool: ${toolName}`, {
-        code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
-        toolName,
-        providedScopes: req.auth.scopes,
-      });
+      if (!hasAccess) {
+        const error = new InsufficientScopeError(
+          `Resource access: ${resourceUri}`,
+          req.auth.scopes,
+        );
 
-      res.status(error.httpStatus);
-      if (error.wwwAuthenticate) {
-        res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+        logger.warning(`Insufficient scope for resource: ${resourceUri}`, {
+          code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+          resourceUri,
+          requiredScope,
+          providedScopes: req.auth.scopes,
+        });
+
+        res.status(error.httpStatus);
+        if (error.wwwAuthenticate) {
+          res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+        }
+        res.json({
+          error: "insufficient_scope",
+          error_description: `Access to resource '${resourceUri}' requires '${requiredScope}' scope`,
+        });
+        return;
       }
-      res.json({
-        error: "insufficient_scope",
-        error_description: `Access to tool '${toolName}' denied`,
-        tool: toolName,
-      });
-      return;
+    } else if (rpcMethod === "prompts/get") {
+      // M-2: Prompt scope enforcement — prompts require read scope
+      const hasAccess = scopesGrantToolAccess(req.auth.scopes, "sqlite_read_query");
+
+      if (!hasAccess) {
+        const promptName = body?.params?.name ?? "unknown";
+        const error = new InsufficientScopeError(
+          `Prompt access: ${promptName}`,
+          req.auth.scopes,
+        );
+
+        logger.warning(`Insufficient scope for prompt: ${promptName}`, {
+          code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+          promptName,
+          providedScopes: req.auth.scopes,
+        });
+
+        res.status(error.httpStatus);
+        if (error.wwwAuthenticate) {
+          res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+        }
+        res.json({
+          error: "insufficient_scope",
+          error_description: `Access to prompt '${promptName}' requires 'read' scope`,
+        });
+        return;
+      }
     }
 
     next();

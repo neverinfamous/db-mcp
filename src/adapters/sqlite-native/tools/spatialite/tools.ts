@@ -126,9 +126,23 @@ export function createSpatialTableTool(
           };
         }
 
+        // Validate geometry column name (CWE-89 remediation — M-1a)
+        try {
+          validateIdentifier(input.geometryColumn);
+        } catch {
+          return {
+            success: false,
+            error: `Invalid geometry column name: '${input.geometryColumn}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
+        }
+
         // Check if table already exists
         const existsCheck = await adapter.executeReadQuery(
-          `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.tableName}'`,
+          `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
+          [input.tableName],
         );
         const alreadyExists =
           existsCheck.rows != null && existsCheck.rows.length > 0;
@@ -291,9 +305,23 @@ export function createSpatialIndexTool(
           };
         }
 
+        // Validate geometry column name (CWE-89 remediation — M-1a)
+        try {
+          validateIdentifier(input.geometryColumn);
+        } catch {
+          return {
+            success: false,
+            error: `Invalid geometry column name: '${input.geometryColumn}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
+        }
+
         // Validate table exists before attempting index operations
         const tableCheck = await adapter.executeReadQuery(
-          `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.tableName}'`,
+          `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
+          [input.tableName],
         );
         if (!tableCheck.rows || tableCheck.rows.length === 0) {
           return {

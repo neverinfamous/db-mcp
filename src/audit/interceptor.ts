@@ -35,21 +35,38 @@ const SENSITIVE_KEY_PATTERN =
   /^(password|passwd|token|secret|authorization|api_?key|credential|private_?key|access_?token|refresh_?token)$/i;
 
 /**
- * Shallow-redact sensitive keys from args before logging.
+ * Recursively redact sensitive keys from args before logging.
  * Returns a new object with sensitive values replaced by '[REDACTED]'.
+ * Handles nested objects and arrays up to a configurable depth limit.
  */
 function redactSensitiveKeys(
-  args: Record<string, unknown>,
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(args)) {
-    if (SENSITIVE_KEY_PATTERN.test(key)) {
-      result[key] = "[REDACTED]";
-    } else {
-      result[key] = value;
-    }
+  value: unknown,
+  depth = 0,
+): unknown {
+  const MAX_DEPTH = 5;
+  if (depth > MAX_DEPTH || value === null || value === undefined) {
+    return value;
   }
-  return result;
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitiveKeys(item, depth + 1));
+  }
+
+  if (typeof value === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      if (SENSITIVE_KEY_PATTERN.test(key)) {
+        result[key] = "[REDACTED]";
+      } else if (typeof val === "object" && val !== null) {
+        result[key] = redactSensitiveKeys(val, depth + 1);
+      } else {
+        result[key] = val;
+      }
+    }
+    return result;
+  }
+
+  return value;
 }
 
 /**
@@ -227,7 +244,7 @@ export function createAuditInterceptor(
             error,
             args: auditLogger.config.redact
               ? undefined
-              : redactSensitiveKeys(args as Record<string, unknown>),
+              : redactSensitiveKeys(args) as Record<string, unknown>,
             backup: backupRef,
             tokenEstimate,
           });

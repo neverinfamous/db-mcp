@@ -304,17 +304,27 @@ function wrapReadonlyGuards(
 function initializePool(): void {
   const modeEnv = process.env["CODEMODE_ISOLATION"]?.toLowerCase();
 
-  // M-5: vm mode lacks frozen prototypes and Proxy nullification — not safe
-  // for production. Gate behind NODE_ENV to prevent operator misconfiguration.
+  // M-3: vm mode lacks frozen prototypes and Proxy nullification — not safe
+  // for production or untrusted code. Require explicit opt-in via
+  // CODEMODE_ISOLATION_INSECURE=1 to prevent operator misconfiguration.
   let mode: SandboxMode = "worker";
   if (modeEnv === "vm") {
-    if (process.env["NODE_ENV"] === "production") {
+    const insecureAck =
+      process.env["CODEMODE_ISOLATION_INSECURE"]?.toLowerCase();
+    if (insecureAck === "1" || insecureAck === "true") {
+      mode = "vm";
       logger.warning(
-        "CODEMODE_ISOLATION=vm is not allowed in production (missing frozen prototypes). Falling back to worker.",
+        "CODEMODE_ISOLATION=vm with CODEMODE_ISOLATION_INSECURE=1: " +
+          "VM sandbox shares host prototypes without freezing. " +
+          "Use worker mode for production deployments.",
         { module: "CODEMODE" as const, operation: "initialize" },
       );
     } else {
-      mode = "vm";
+      logger.warning(
+        "CODEMODE_ISOLATION=vm requires CODEMODE_ISOLATION_INSECURE=1 to acknowledge " +
+          "unfrozen host prototypes. Falling back to worker mode.",
+        { module: "CODEMODE" as const, operation: "initialize" },
+      );
     }
   }
 

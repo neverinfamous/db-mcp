@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-84.11%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-84.07%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -280,7 +280,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `CSV_EXTENSION_PATH`    | —         | Path to CSV extension binary (native only)                    |
 | `SPATIALITE_PATH`       | —         | Path to SpatiaLite extension binary (native only)             |
 | `AUDIT_LOG`             | —         | Audit log file path, or `stderr` (`--audit-log`)              |
-| `AUDIT_REDACT`          | `false`   | Redact tool arguments from audit entries (`--audit-redact`)   |
+| `AUDIT_REDACT`          | `true`    | Redact tool arguments from audit entries (`--audit-no-redact` to disable) |
 | `AUDIT_READS`           | `false`   | Also log read-scoped tool invocations (`--audit-reads`)       |
 | `AUDIT_BACKUP`          | `false`   | Enable pre-mutation DDL snapshots (`--audit-backup`)          |
 | `AUDIT_BACKUP_DATA`     | `false`   | Include sample data rows in snapshots (`--audit-backup-data`) |

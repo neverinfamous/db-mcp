@@ -246,10 +246,12 @@ export function createGeometryTransformTool(
           };
         }
 
+        // M-1b: Use parameterized queries for WKT geometry strings (CWE-89 remediation)
         let query: string;
+        let queryParams: unknown[] = [];
         switch (input.operation) {
           case "buffer": {
-            const bufferGeom = `Buffer(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})`;
+            const bufferGeom = `Buffer(GeomFromText(?, ?), ?)`;
             // Auto-simplify buffer output with adaptive tolerance based on buffer distance
             // Tolerance scales with distance (1% of buffer distance) for effective vertex reduction
             // Use simplifyTolerance: 0 to disable, or specify custom tolerance
@@ -257,9 +259,10 @@ export function createGeometryTransformTool(
             const tolerance = input.simplifyTolerance ?? defaultTolerance;
             const finalGeom =
               tolerance > 0
-                ? `Simplify(${bufferGeom}, ${tolerance})`
+                ? `Simplify(${bufferGeom}, ${String(tolerance)})`
                 : bufferGeom;
             query = `SELECT AsText(${finalGeom}) as result`;
+            queryParams = [input.geometry1, input.srid, input.distance];
             break;
           }
 
@@ -274,9 +277,10 @@ export function createGeometryTransformTool(
               };
             }
             query = `SELECT AsText(Intersection(
-              GeomFromText('${input.geometry1}', ${input.srid}),
-              GeomFromText('${input.geometry2}', ${input.srid})
+              GeomFromText(?, ?),
+              GeomFromText(?, ?)
             )) as result`;
+            queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
             break;
 
           case "union":
@@ -290,9 +294,10 @@ export function createGeometryTransformTool(
               };
             }
             query = `SELECT AsText(GUnion(
-              GeomFromText('${input.geometry1}', ${input.srid}),
-              GeomFromText('${input.geometry2}', ${input.srid})
+              GeomFromText(?, ?),
+              GeomFromText(?, ?)
             )) as result`;
+            queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
             break;
 
           case "difference":
@@ -306,21 +311,25 @@ export function createGeometryTransformTool(
               };
             }
             query = `SELECT AsText(Difference(
-              GeomFromText('${input.geometry1}', ${input.srid}),
-              GeomFromText('${input.geometry2}', ${input.srid})
+              GeomFromText(?, ?),
+              GeomFromText(?, ?)
             )) as result`;
+            queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
             break;
 
           case "centroid":
-            query = `SELECT AsText(Centroid(GeomFromText('${input.geometry1}', ${input.srid}))) as result`;
+            query = `SELECT AsText(Centroid(GeomFromText(?, ?))) as result`;
+            queryParams = [input.geometry1, input.srid];
             break;
 
           case "envelope":
-            query = `SELECT AsText(Envelope(GeomFromText('${input.geometry1}', ${input.srid}))) as result`;
+            query = `SELECT AsText(Envelope(GeomFromText(?, ?))) as result`;
+            queryParams = [input.geometry1, input.srid];
             break;
 
           case "simplify":
-            query = `SELECT AsText(Simplify(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})) as result`;
+            query = `SELECT AsText(Simplify(GeomFromText(?, ?), ?)) as result`;
+            queryParams = [input.geometry1, input.srid, input.distance];
             break;
 
           default:
@@ -328,7 +337,7 @@ export function createGeometryTransformTool(
             query = "SELECT 1";
         }
 
-        const result = await adapter.executeReadQuery(query);
+        const result = await adapter.executeReadQuery(query, queryParams);
         const wktResult = result.rows?.[0]?.["result"] as string | undefined;
 
         // Check for null result indicating invalid geometry input
@@ -398,6 +407,7 @@ export function createSpatialImportTool(
           };
         }
 
+        // M-1b: Use parameterized queries for all user data (CWE-89 remediation)
         let wkt: string;
         if (input.format === "geojson") {
           // Parse GeoJSON and convert with SRID
@@ -407,7 +417,8 @@ export function createSpatialImportTool(
 
             // Validate GeoJSON by attempting to parse it in SQLite
             const geojsonCheck = await adapter.executeReadQuery(
-              `SELECT GeomFromGeoJSON('${input.data}') as geom`,
+              `SELECT GeomFromGeoJSON(?) as geom`,
+              [input.data],
             );
             const parsedGeom = geojsonCheck.rows?.[0]?.["geom"];
             if (parsedGeom === null || parsedGeom === undefined) {
@@ -420,12 +431,11 @@ export function createSpatialImportTool(
               };
             }
 
-            // Build INSERT with additional columns (matching WKT path)
+            // Build INSERT with parameterized values
             // Use SetSRID(GeomFromGeoJSON(...), srid) to ensure SRID is set correctly
             const columns = ["geom"];
-            const values = [
-              `SetSRID(GeomFromGeoJSON('${input.data}'), ${input.srid})`,
-            ];
+            const placeholders = [`SetSRID(GeomFromGeoJSON(?), ?)`];
+            const insertParams: unknown[] = [input.data, input.srid];
 
             if (input.additionalData) {
               for (const [key, value] of Object.entries(input.additionalData)) {
@@ -438,17 +448,17 @@ export function createSpatialImportTool(
                     recoverable: false,
                   };
                 }
-                columns.push(`"${key}"`);
-                values.push(
-                  typeof value === "string"
-                    ? `'${value.replace(/'/g, "''")}'`
-                    : String(value),
-                );
+                columns.push(sanitizeIdentifier(key));
+                placeholders.push("?");
+                insertParams.push(value);
               }
             }
 
-            const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${values.join(", ")})`;
-            const insertResult = await adapter.executeWriteQuery(sql);
+            const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${placeholders.join(", ")})`;
+            const insertResult = await adapter.executeWriteQuery(
+              sql,
+              insertParams,
+            );
             return {
               success: true,
               message: "GeoJSON geometry imported",
@@ -469,7 +479,8 @@ export function createSpatialImportTool(
 
         // Validate WKT by attempting to parse it
         const wktCheck = await adapter.executeReadQuery(
-          `SELECT GeomFromText('${wkt}', ${input.srid}) as geom`,
+          `SELECT GeomFromText(?, ?) as geom`,
+          [wkt, input.srid],
         );
         const parsedGeom = wktCheck.rows?.[0]?.["geom"];
         if (parsedGeom === null || parsedGeom === undefined) {
@@ -482,9 +493,10 @@ export function createSpatialImportTool(
           };
         }
 
-        // Build INSERT with additional columns
+        // Build INSERT with parameterized values
         const columns = ["geom"];
-        const values = [`GeomFromText('${wkt}', ${input.srid})`];
+        const placeholders = [`GeomFromText(?, ?)`];
+        const insertParams: unknown[] = [wkt, input.srid];
 
         if (input.additionalData) {
           for (const [key, value] of Object.entries(input.additionalData)) {
@@ -498,16 +510,16 @@ export function createSpatialImportTool(
               };
             }
             columns.push(sanitizeIdentifier(key));
-            values.push(
-              typeof value === "string"
-                ? `'${value.replace(/'/g, "''")}'`
-                : String(value),
-            );
+            placeholders.push("?");
+            insertParams.push(value);
           }
         }
 
-        const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${values.join(", ")})`;
-        const insertResult = await adapter.executeWriteQuery(sql);
+        const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${placeholders.join(", ")})`;
+        const insertResult = await adapter.executeWriteQuery(
+          sql,
+          insertParams,
+        );
 
         return {
           success: true,

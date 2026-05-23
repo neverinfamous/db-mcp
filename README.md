@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-84.11%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-84.07%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -136,7 +136,7 @@ Code executes in a **worker-thread sandbox** — a separate V8 isolate with its 
 - **RPC allowlist** — host-side validation prevents workers from invoking unauthorized API methods
 - **Full API access** — all 10 tool groups are available via `sqlite.*` (e.g., `sqlite.core.readQuery()`, `sqlite.json.extract()`)
 
-Set `CODEMODE_ISOLATION=vm` to fall back to the in-process `vm` module sandbox if needed.
+Set `CODEMODE_ISOLATION=vm` with `CODEMODE_ISOLATION_INSECURE=1` to fall back to the in-process `vm` module sandbox if needed.
 
 ### ⚡ Code Mode Only (Maximum Token Savings)
 
@@ -425,7 +425,7 @@ MCP prompts provide AI-assisted database workflows:
 | `CSV_EXTENSION_PATH`    | —         | Custom path to CSV extension binary (native only)              |
 | `SPATIALITE_PATH`       | —         | Custom path to SpatiaLite extension binary (native only)       |
 | `AUDIT_LOG`             | —         | Audit log file path, or `stderr` (CLI: `--audit-log`)          |
-| `AUDIT_REDACT`          | `false`   | Redact tool arguments from audit entries (CLI: `--audit-redact`)|
+| `AUDIT_REDACT`          | `true`    | Redact tool arguments from audit entries (CLI: `--audit-no-redact` to disable)|
 | `AUDIT_READS`           | `false`   | Also log read-scoped tool invocations (CLI: `--audit-reads`)   |
 | `AUDIT_BACKUP`          | `false`   | Enable pre-mutation DDL snapshots (CLI: `--audit-backup`)      |
 | `AUDIT_BACKUP_DATA`     | `false`   | Include sample data rows in snapshots (CLI: `--audit-backup-data`) |
@@ -441,7 +441,7 @@ Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --
 Auth:         --auth-token <token>  |  --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>
 Extensions:   --csv  --spatialite                         (native only)
-Audit:        --audit-log <path>  --audit-redact  --audit-reads  --audit-backup  --audit-backup-data
+Audit:        --audit-log <path>  --audit-no-redact  --audit-reads  --audit-backup  --audit-backup-data
 Server:       --name <name>  --version <ver>  --tool-filter <filter>
 ```
 
