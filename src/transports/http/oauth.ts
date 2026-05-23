@@ -264,10 +264,22 @@ export async function setupOAuth(
       throw error;
     }
 
+    const fallbackIssuer =
+      state.config.oauth.issuer ?? state.config.oauth.authorizationServerUrl;
+
+    // Warn when falling back to authorizationServerUrl as issuer — may not match
+    // the actual token issuer, risking silent auth failures or spoofed acceptance
+    if (!state.config.oauth.issuer) {
+      logger.warning(
+        `OAuth discovery failed. Falling back to authorizationServerUrl as issuer: '${fallbackIssuer}'. ` +
+          "Set oauth.issuer explicitly to avoid potential issuer mismatch.",
+        { code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full },
+      );
+    }
+
     state.tokenValidator = new TokenValidator({
       jwksUri: state.config.oauth.jwksUri,
-      issuer:
-        state.config.oauth.issuer ?? state.config.oauth.authorizationServerUrl,
+      issuer: fallbackIssuer,
       audience: state.config.oauth.audience,
       clockTolerance: state.config.oauth.clockTolerance,
     });

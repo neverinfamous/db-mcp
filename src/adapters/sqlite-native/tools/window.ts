@@ -7,7 +7,11 @@
 import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
-import { validateWhereClause } from "../../../utils/index.js";
+import {
+  validateWhereClause,
+  validateIdentifier,
+  sanitizeIdentifier,
+} from "../../../utils/index.js";
 import {
   formatHandlerError,
   ResourceNotFoundError,
@@ -184,16 +188,12 @@ async function validateTableExists(
   adapter: NativeSqliteAdapter,
   table: string,
 ): Promise<void> {
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
-    throw new DbMcpError(
-      "Invalid table name",
-      "NATIVE_WINDOW_INVALID_TABLE",
-      ErrorCategory.VALIDATION,
-    );
-  }
+  // Use canonical identifier validation (CWE-89 remediation)
+  validateIdentifier(table);
 
+  const quoted = sanitizeIdentifier(table);
   const result = await adapter.executeReadQuery(
-    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${table}'`,
+    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=${quoted}`,
   );
   if (!result.rows || result.rows.length === 0) {
     throw new ResourceNotFoundError(
@@ -217,16 +217,13 @@ async function validateColumnInTable(
   table: string,
   column: string,
 ): Promise<void> {
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(column)) {
-    throw new DbMcpError(
-      "Invalid column name",
-      "NATIVE_WINDOW_INVALID_COLUMN",
-      ErrorCategory.VALIDATION,
-    );
-  }
+  // Use canonical identifier validation (CWE-89 remediation)
+  validateIdentifier(column);
 
+  const quotedTable = sanitizeIdentifier(table);
+  const quotedColumn = sanitizeIdentifier(column);
   const tableInfo = await adapter.executeReadQuery(
-    `SELECT name FROM pragma_table_info('${table}') WHERE name='${column}'`,
+    `SELECT name FROM pragma_table_info(${quotedTable}) WHERE name=${quotedColumn}`,
   );
   if (!tableInfo.rows || tableInfo.rows.length === 0) {
     throw new ResourceNotFoundError(
@@ -258,8 +255,22 @@ async function validateOrderByColumns(
     const firstToken = tokens[0];
     if (!firstToken) continue;
     const colName = firstToken.replace(/^"|"$/g, "");
-    if (/[.()+*/]/.test(colName)) continue;
+    // Reject expression-like tokens instead of skipping them (CWE-89 remediation)
+    if (/[;()+*/]/.test(colName)) {
+      throw new DbMcpError(
+        `Invalid ORDER BY expression: '${colName}' contains disallowed characters. Only column names with optional ASC/DESC are permitted.`,
+        "NATIVE_WINDOW_INVALID_ORDERBY",
+        ErrorCategory.VALIDATION,
+      );
+    }
     if (/^(ASC|DESC)$/i.test(colName)) continue;
+    // Allow dotted references (table.column) by validating each segment
+    if (colName.includes(".")) {
+      for (const segment of colName.split(".")) {
+        validateIdentifier(segment);
+      }
+      continue;
+    }
     await validateColumnInTable(adapter, table, colName);
   }
 }
@@ -274,14 +285,15 @@ async function resolveSelectColumns(
   rankCol?: string,
 ): Promise<{ columnList: string; hint?: string }> {
   if (selectColumns && selectColumns.length > 0) {
+    // Use canonical sanitization instead of manual quoting (CWE-89 remediation)
     return {
-      columnList: selectColumns.map((c) => `"${c}"`).join(", "),
+      columnList: selectColumns.map((c) => sanitizeIdentifier(c)).join(", "),
     };
   }
 
   // Auto-limit: exclude TEXT/BLOB columns likely to hold long content
   const tableInfo = await adapter.executeReadQuery(
-    `PRAGMA table_info("${table}")`,
+    `PRAGMA table_info(${sanitizeIdentifier(table)})`,
   );
 
   const TEXT_TYPES = new Set([
@@ -340,13 +352,70 @@ async function resolveSelectColumns(
 
   if (excluded.length > 0 && included.length > 0) {
     return {
-      columnList: included.map((c) => `"${c}"`).join(", "),
+      columnList: included.map((c) => sanitizeIdentifier(c)).join(", "),
       hint: `Excluded ${excluded.length} long-content column(s) (${excluded.join(", ")}) to reduce payload. Use selectColumns to override.`,
     };
   }
 
   return { columnList: "*" };
 }
+
+/**
+ * Sanitize a PARTITION BY expression by validating each column reference.
+ * Only allows comma-separated column names (no expressions).
+ */
+function sanitizePartitionBy(partitionBy: string): string {
+  const columns = partitionBy.split(",").map((c) => c.trim()).filter(Boolean);
+  for (const col of columns) {
+    validateIdentifier(col);
+  }
+  return columns.map((c) => sanitizeIdentifier(c)).join(", ");
+}
+
+/**
+ * Sanitize an ORDER BY expression by validating each column reference.
+ * Preserves ASC/DESC direction keywords.
+ */
+function sanitizeOrderByExpr(orderBy: string): string {
+  const parts = orderBy.split(",");
+  const sanitized: string[] = [];
+  for (const part of parts) {
+    const tokens = part.trim().split(/\s+/);
+    const colToken = tokens[0];
+    if (!colToken) continue;
+    const colName = colToken.replace(/^"|"$/g, "");
+    validateIdentifier(colName);
+    const direction = tokens[1];
+    if (direction && /^(ASC|DESC)$/i.test(direction)) {
+      sanitized.push(`${sanitizeIdentifier(colName)} ${direction.toUpperCase()}`);
+    } else {
+      sanitized.push(sanitizeIdentifier(colName));
+    }
+  }
+  return sanitized.join(", ");
+}
+
+/**
+ * Validate that a default value is a safe SQL literal (numeric or quoted string).
+ * Rejects expressions, function calls, subqueries, and injection payloads.
+ */
+function validateDefaultValue(value: string): void {
+  // Allow numeric literals (integers and decimals, optionally negative)
+  if (/^-?\d+(\.\d+)?$/.test(value)) return;
+
+  // Allow simple single-quoted string literals (no nested quotes or special chars)
+  if (/^'[^']*'$/.test(value)) return;
+
+  // Allow NULL keyword
+  if (/^NULL$/i.test(value)) return;
+
+  throw new DbMcpError(
+    `Invalid default value: '${value}'. Only numeric literals, single-quoted strings, or NULL are permitted.`,
+    "NATIVE_WINDOW_INVALID_DEFAULT",
+    ErrorCategory.VALIDATION,
+  );
+}
+
 
 /**
  * Get all window function tools
@@ -388,13 +457,14 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
           input.selectColumns,
         );
         const partition = input.partitionBy
-          ? `PARTITION BY ${input.partitionBy}`
+          ? `PARTITION BY ${sanitizePartitionBy(input.partitionBy)}`
           : "";
+        const orderByExpr = sanitizeOrderByExpr(input.orderBy);
 
         let sql = `
                 SELECT ${columns},
-                    ROW_NUMBER() OVER (${partition} ORDER BY ${input.orderBy}) as row_number
-                FROM "${input.table}"
+                    ROW_NUMBER() OVER (${partition} ORDER BY ${orderByExpr}) as row_number
+                FROM ${sanitizeIdentifier(input.table)}
             `;
 
         if (input.whereClause) {
@@ -445,14 +515,15 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
           input.selectColumns,
         );
         const partition = input.partitionBy
-          ? `PARTITION BY ${input.partitionBy}`
+          ? `PARTITION BY ${sanitizePartitionBy(input.partitionBy)}`
           : "";
         const rankFunc = input.rankType.toUpperCase();
+        const orderByExpr = sanitizeOrderByExpr(input.orderBy);
 
         let sql = `
                 SELECT ${columns},
-                    ${rankFunc}() OVER (${partition} ORDER BY ${input.orderBy}) as ${input.rankType}
-                FROM "${input.table}"
+                    ${rankFunc}() OVER (${partition} ORDER BY ${orderByExpr}) as ${input.rankType}
+                FROM ${sanitizeIdentifier(input.table)}
             `;
 
         if (input.whereClause) {
@@ -524,16 +595,21 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
           input.column,
         );
         const partition = input.partitionBy
-          ? `PARTITION BY ${input.partitionBy}`
+          ? `PARTITION BY ${sanitizePartitionBy(input.partitionBy)}`
           : "";
         const func = normalizedDirection.toUpperCase();
-        const defaultVal =
-          input.defaultValue !== undefined ? `, ${input.defaultValue}` : "";
+        // Validate defaultValue to prevent SQL injection (CWE-89 remediation)
+        let defaultVal = "";
+        if (input.defaultValue !== undefined) {
+          validateDefaultValue(input.defaultValue);
+          defaultVal = `, ${input.defaultValue}`;
+        }
+        const orderByExpr = sanitizeOrderByExpr(input.orderBy);
 
         let sql = `
                 SELECT ${columns},
-                    ${func}("${input.column}", ${input.offset}${defaultVal}) OVER (${partition} ORDER BY ${input.orderBy}) as ${normalizedDirection}_value
-                FROM "${input.table}"
+                    ${func}(${sanitizeIdentifier(input.column)}, ${input.offset}${defaultVal}) OVER (${partition} ORDER BY ${orderByExpr}) as ${normalizedDirection}_value
+                FROM ${sanitizeIdentifier(input.table)}
             `;
 
         if (input.whereClause) {
@@ -590,13 +666,14 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
           input.column,
         );
         const partition = input.partitionBy
-          ? `PARTITION BY ${input.partitionBy}`
+          ? `PARTITION BY ${sanitizePartitionBy(input.partitionBy)}`
           : "";
+        const orderByExpr = sanitizeOrderByExpr(input.orderBy);
 
         let sql = `
                 SELECT ${columns},
-                    SUM("${input.column}") OVER (${partition} ORDER BY ${input.orderBy} ROWS UNBOUNDED PRECEDING) as running_total
-                FROM "${input.table}"
+                    SUM(${sanitizeIdentifier(input.column)}) OVER (${partition} ORDER BY ${orderByExpr} ROWS UNBOUNDED PRECEDING) as running_total
+                FROM ${sanitizeIdentifier(input.table)}
             `;
 
         if (input.whereClause) {
@@ -662,14 +739,15 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
           input.column,
         );
         const partition = input.partitionBy
-          ? `PARTITION BY ${input.partitionBy}`
+          ? `PARTITION BY ${sanitizePartitionBy(input.partitionBy)}`
           : "";
         const preceding = input.windowSize - 1;
+        const orderByExpr = sanitizeOrderByExpr(input.orderBy);
 
         let sql = `
                 SELECT ${columns},
-                    AVG("${input.column}") OVER (${partition} ORDER BY ${input.orderBy} ROWS BETWEEN ${preceding} PRECEDING AND CURRENT ROW) as moving_avg
-                FROM "${input.table}"
+                    AVG(${sanitizeIdentifier(input.column)}) OVER (${partition} ORDER BY ${orderByExpr} ROWS BETWEEN ${preceding} PRECEDING AND CURRENT ROW) as moving_avg
+                FROM ${sanitizeIdentifier(input.table)}
             `;
 
         if (input.whereClause) {
@@ -732,13 +810,14 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
           input.selectColumns,
         );
         const partition = input.partitionBy
-          ? `PARTITION BY ${input.partitionBy}`
+          ? `PARTITION BY ${sanitizePartitionBy(input.partitionBy)}`
           : "";
+        const orderByExpr = sanitizeOrderByExpr(input.orderBy);
 
         let sql = `
                 SELECT ${columns},
-                    NTILE(${input.buckets}) OVER (${partition} ORDER BY ${input.orderBy}) as ntile
-                FROM "${input.table}"
+                    NTILE(${input.buckets}) OVER (${partition} ORDER BY ${orderByExpr}) as ntile
+                FROM ${sanitizeIdentifier(input.table)}
             `;
 
         if (input.whereClause) {

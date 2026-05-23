@@ -9,7 +9,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { admin, readOnly } from "../../../../utils/annotations.js";
+import { admin, adminFs, readOnly } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { insightsManager } from "../../../../utils/insights-manager.js";
@@ -371,7 +371,7 @@ export function createAttachDatabaseTool(
     inputSchema: AttachDatabaseSchema,
     outputSchema: AttachDatabaseOutputSchema,
     requiredScopes: ["admin"],
-    annotations: admin("Attach Database"),
+    annotations: adminFs("Attach Database"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = AttachDatabaseSchema.parse(params);

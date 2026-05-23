@@ -13,7 +13,11 @@ import type {
 } from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import { readOnly, write } from "../../../../utils/annotations.js";
+import { readOnly, writeFs } from "../../../../utils/annotations.js";
+import {
+  validateIdentifier,
+  sanitizeIdentifier,
+} from "../../../../utils/index.js";
 import {
   SpatialAnalysisSchema,
   GeometryTransformSchema,
@@ -64,8 +68,10 @@ export function createSpatialAnalysisTool(
           };
         }
 
-        // Validate names
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.sourceTable)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.sourceTable);
+        } catch {
           return {
             success: false,
             error: `Invalid source table name: '${input.sourceTable}'`,
@@ -74,13 +80,26 @@ export function createSpatialAnalysisTool(
             recoverable: false,
           };
         }
-        if (
-          input.targetTable &&
-          !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.targetTable)
-        ) {
+        if (input.targetTable) {
+          try {
+            validateIdentifier(input.targetTable);
+          } catch {
+            return {
+              success: false,
+              error: `Invalid target table name: '${input.targetTable}'`,
+              code: "VALIDATION_ERROR",
+              category: "validation" as const,
+              recoverable: false,
+            };
+          }
+        }
+        // Validate geometry column name
+        try {
+          validateIdentifier(input.geometryColumn);
+        } catch {
           return {
             success: false,
-            error: `Invalid target table name: '${input.targetTable}'`,
+            error: `Invalid geometry column name: '${input.geometryColumn}'`,
             code: "VALIDATION_ERROR",
             category: "validation" as const,
             recoverable: false,
@@ -89,15 +108,18 @@ export function createSpatialAnalysisTool(
 
         let query: string;
         switch (input.analysisType) {
-          case "spatial_extent":
+          case "spatial_extent": {
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
             query = `SELECT
-              MbrMinX(Extent("${input.geometryColumn}")) as min_x,
-              MbrMinY(Extent("${input.geometryColumn}")) as min_y,
-              MbrMaxX(Extent("${input.geometryColumn}")) as max_x,
-              MbrMaxY(Extent("${input.geometryColumn}")) as max_y,
+              MbrMinX(Extent(${geomCol})) as min_x,
+              MbrMinY(Extent(${geomCol})) as min_y,
+              MbrMaxX(Extent(${geomCol})) as max_x,
+              MbrMaxY(Extent(${geomCol})) as max_y,
               COUNT(*) as feature_count
-            FROM "${input.sourceTable}"`;
+            FROM ${srcTable}`;
             break;
+          }
 
           case "nearest_neighbor": {
             if (!input.targetTable) {
@@ -110,18 +132,21 @@ export function createSpatialAnalysisTool(
                 recoverable: false,
               };
             }
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
+            const tgtTable = sanitizeIdentifier(input.targetTable);
             // Exclude self-matches when tables are the same and excludeSelf is true
             const sameTable = input.sourceTable === input.targetTable;
             const selfFilter =
               sameTable && input.excludeSelf ? "WHERE s.id != t.id" : "";
             // Conditionally include WKT geometry based on includeGeometry param
             const geomColumns = input.includeGeometry
-              ? `, AsText(s."${input.geometryColumn}") as source_geom, AsText(t."${input.geometryColumn}") as target_geom`
+              ? `, AsText(s.${geomCol}) as source_geom, AsText(t.${geomCol}) as target_geom`
               : "";
             query = `SELECT
               s.id as source_id, t.id as target_id,
-              ST_Distance(s."${input.geometryColumn}", t."${input.geometryColumn}") as distance${geomColumns}
-            FROM "${input.sourceTable}" s, "${input.targetTable}" t
+              ST_Distance(s.${geomCol}, t.${geomCol}) as distance${geomColumns}
+            FROM ${srcTable} s, ${tgtTable} t
             ${selfFilter}
             ORDER BY distance LIMIT ${input.limit}`;
             break;
@@ -138,14 +163,17 @@ export function createSpatialAnalysisTool(
                 recoverable: false,
               };
             }
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
+            const tgtTable = sanitizeIdentifier(input.targetTable);
             // Conditionally include WKT geometry based on includeGeometry param
             const geomCols = input.includeGeometry
-              ? `, AsText(s."${input.geometryColumn}") as source_geom, AsText(t."${input.geometryColumn}") as target_geom`
+              ? `, AsText(s.${geomCol}) as source_geom, AsText(t.${geomCol}) as target_geom`
               : "";
             query = `SELECT
               s.id as source_id, t.id as target_id${geomCols}
-            FROM "${input.sourceTable}" s, "${input.targetTable}" t
-            WHERE ST_Within(s."${input.geometryColumn}", t."${input.geometryColumn}")
+            FROM ${srcTable} s, ${tgtTable} t
+            WHERE ST_Within(s.${geomCol}, t.${geomCol})
             LIMIT ${input.limit}`;
             break;
           }
@@ -154,9 +182,12 @@ export function createSpatialAnalysisTool(
             const dmTarget = input.targetTable ?? input.sourceTable;
             const dmSameTable = dmTarget === input.sourceTable;
             const dmFilter = dmSameTable ? "WHERE a.id < b.id" : "";
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
+            const dmTgtTable = sanitizeIdentifier(dmTarget);
             query = `SELECT a.id as id1, b.id as id2,
-              ST_Distance(a."${input.geometryColumn}", b."${input.geometryColumn}") as distance
-            FROM "${input.sourceTable}" a, "${dmTarget}" b
+              ST_Distance(a.${geomCol}, b.${geomCol}) as distance
+            FROM ${srcTable} a, ${dmTgtTable} b
             ${dmFilter}
             ORDER BY distance LIMIT ${input.limit}`;
             break;
@@ -337,7 +368,7 @@ export function createSpatialImportTool(
     inputSchema: SpatialImportSchema,
     outputSchema: SpatialiteImportOutputSchema,
     requiredScopes: ["write"],
-    annotations: write("SpatiaLite Import"),
+    annotations: writeFs("SpatiaLite Import"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialImportSchema.parse(params);
@@ -354,8 +385,10 @@ export function createSpatialImportTool(
           };
         }
 
-        // Validate table name
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.tableName);
+        } catch {
           return {
             success: false,
             error: `Invalid table name: '${input.tableName}'`,
@@ -414,7 +447,7 @@ export function createSpatialImportTool(
               }
             }
 
-            const sql = `INSERT INTO "${input.tableName}" (${columns.join(", ")}) VALUES (${values.join(", ")})`;
+            const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${values.join(", ")})`;
             const insertResult = await adapter.executeWriteQuery(sql);
             return {
               success: true,
@@ -464,7 +497,7 @@ export function createSpatialImportTool(
                 recoverable: false,
               };
             }
-            columns.push(`"${key}"`);
+            columns.push(sanitizeIdentifier(key));
             values.push(
               typeof value === "string"
                 ? `'${value.replace(/'/g, "''")}'`
@@ -473,7 +506,7 @@ export function createSpatialImportTool(
           }
         }
 
-        const sql = `INSERT INTO "${input.tableName}" (${columns.join(", ")}) VALUES (${values.join(", ")})`;
+        const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${values.join(", ")})`;
         const insertResult = await adapter.executeWriteQuery(sql);
 
         return {

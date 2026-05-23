@@ -83,8 +83,14 @@ export function setupSecurityHeaders(state: HttpTransportState): void {
 export function matchesCorsOrigin(origin: string, pattern: string): boolean {
   if (pattern === "*") return true;
   if (pattern.startsWith("*.")) {
-    // Wildcard subdomain: "*.example.com" matches "app.example.com"
+    // Wildcard subdomain: "*.example.com" matches "https://app.example.com"
     const domain = pattern.slice(1); // ".example.com"
+    // Enforce HTTPS for wildcard subdomain patterns to prevent protocol downgrade,
+    // but exempt localhost/127.0.0.1 for development workflows (e.g., Playwright E2E)
+    const isLocalDev =
+      origin.startsWith("http://localhost") ||
+      origin.startsWith("http://127.0.0.1");
+    if (!isLocalDev && !origin.startsWith("https://")) return false;
     return origin.endsWith(domain) && origin.length > domain.length;
   }
   return origin === pattern;

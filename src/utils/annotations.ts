@@ -97,3 +97,31 @@ export function idempotent(title: string): ToolAnnotations {
 export function admin(title: string): ToolAnnotations {
   return { title, ...ADMIN };
 }
+
+/** Admin tools that interact with the filesystem (ATTACH, VACUUM INTO, DUMP) */
+export const ADMIN_FS: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: true,
+};
+
+/** Write tools that interact with the filesystem (SpatiaLite Import) */
+export const WRITE_FS: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: true,
+};
+
+/**
+ * Create admin-filesystem annotations with title
+ */
+export function adminFs(title: string): ToolAnnotations {
+  return { title, ...ADMIN_FS };
+}
+
+/**
+ * Create write-filesystem annotations with title
+ */
+export function writeFs(title: string): ToolAnnotations {
+  return { title, ...WRITE_FS };
+}

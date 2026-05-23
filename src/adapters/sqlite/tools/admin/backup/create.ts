@@ -4,7 +4,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { admin } from "../../../../../utils/annotations.js";
+import { admin, adminFs } from "../../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -99,7 +99,7 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: VacuumIntoCopySchema,
     outputSchema: VacuumIntoCopyOutputSchema,
     requiredScopes: ["admin"],
-    annotations: admin("VACUUM INTO"),
+    annotations: adminFs("VACUUM INTO"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {

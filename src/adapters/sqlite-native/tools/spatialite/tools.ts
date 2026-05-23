@@ -18,6 +18,10 @@ import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { readOnly, write, admin } from "../../../../utils/annotations.js";
 import {
+  validateIdentifier,
+  sanitizeIdentifier,
+} from "../../../../utils/index.js";
+import {
   LoadSpatialiteSchema,
   CreateSpatialTableSchema,
   SpatialQuerySchema,
@@ -109,8 +113,10 @@ export function createSpatialTableTool(
         const input = CreateSpatialTableSchema.parse(params);
         ensureSpatialite(adapter);
 
-        // Validate table name
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.tableName);
+        } catch {
           return {
             success: false,
             error: `Invalid table name: '${input.tableName}'`,
@@ -139,7 +145,9 @@ export function createSpatialTableTool(
         // Build column definitions
         const columns = ["id INTEGER PRIMARY KEY AUTOINCREMENT"];
         for (const col of input.additionalColumns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col.name)) {
+          try {
+            validateIdentifier(col.name);
+          } catch {
             return {
               success: false,
               error: `Invalid column name: '${col.name}'`,
@@ -148,12 +156,12 @@ export function createSpatialTableTool(
               recoverable: false,
             };
           }
-          columns.push(`"${col.name}" ${col.type}`);
+          columns.push(`${sanitizeIdentifier(col.name)} ${col.type}`);
         }
 
         // Create base table
         await adapter.executeWriteQuery(
-          `CREATE TABLE "${input.tableName}" (${columns.join(", ")})`,
+          `CREATE TABLE ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")})`,
         );
 
         // Add geometry column using SpatiaLite
@@ -257,7 +265,10 @@ export function createSpatialIndexTool(
         ensureSpatialite(adapter);
 
         // Validate names
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.tableName);
+        } catch {
           return {
             success: false,
             error: `Invalid table name: '${input.tableName}'`,

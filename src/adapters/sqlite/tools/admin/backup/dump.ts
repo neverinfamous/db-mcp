@@ -5,7 +5,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { admin } from "../../../../../utils/annotations.js";
+import { adminFs } from "../../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -32,7 +32,7 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: SqlDumpSchema,
     outputSchema: SqlDumpOutputSchema,
     requiredScopes: ["admin"],
-    annotations: admin("Dump Database to SQL Text"),
+    annotations: adminFs("Dump Database to SQL Text"),
     handler: async (params: unknown, context: RequestContext) => {
       let input;
       try {
