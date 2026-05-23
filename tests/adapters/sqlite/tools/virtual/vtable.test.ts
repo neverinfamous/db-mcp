@@ -29,6 +29,7 @@ function createMockAdapter() {
   return {
     executeReadQuery: vi.fn(),
     executeWriteQuery: vi.fn(),
+    getConfiguredPath: vi.fn().mockReturnValue("/absolute/test.db"),
   } as any;
 }
 
