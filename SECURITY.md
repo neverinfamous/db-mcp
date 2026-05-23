@@ -47,7 +47,9 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **Zod schemas** — all tool inputs validated at tool boundaries before database operations
 - ✅ **Parameterized queries** used throughout — never string interpolation
 - ✅ **Identifier sanitization** — table, column, schema, and index names validated against injection
+- ✅ **WHERE clause validation** — blocklist of dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, and hex string injection
 - ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`).
+- ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
 ## 🧪 **Code Mode Sandbox Security**
 
@@ -89,9 +91,11 @@ When running in HTTP mode (`--transport http`), the following security measures 
 
 ### **CORS Configuration**
 
+- ✅ **Deny-all by default** — `corsOrigins` defaults to `[]` (no origins allowed). Must be explicitly configured for cross-origin access.
 - ✅ **Origin whitelist** with `Vary: Origin` header for caching
-- ✅ **Optional credentials support** (`corsAllowCredentials`)
-- ✅ **MCP-specific headers** allowed (`X-Session-ID`, `mcp-session-id`)
+- ✅ **Wildcard subdomain matching** — supports patterns like `*.example.com`
+- ✅ **Optional credentials support** — set automatically for explicit (non-wildcard) origins
+- ✅ **MCP-specific headers** allowed (`mcp-session-id`, `mcp-protocol-version`)
 
 ### **Rate Limiting & Timeouts**
 
@@ -115,6 +119,7 @@ Full OAuth 2.1 for production multi-tenant deployments:
 - ✅ **JWT validation** with JWKS support (TTL: 1 hour, configurable)
 - ✅ **SQLite-specific scopes**: `read`, `write`, `admin`, `full`, `db:{name}`, `table:{name}`
 - ✅ **Per-tool scope enforcement** via `AsyncLocalStorage` context threading
+- ✅ **Fail-closed scope default** — unknown or unmapped tools default to `admin` scope, preventing accidental privilege escalation when new tools are added
 
 > **⚠️ HTTP without OAuth:** When OAuth is not configured, all scope checks are bypassed. If you expose the HTTP transport without enabling OAuth, any client has full unrestricted access. Always enable OAuth for production HTTP deployments.
 
@@ -153,6 +158,8 @@ The Dockerfile patches npm-bundled transitive dependencies for Docker Scout comp
 - ✅ `minimatch@10.2.5` — CVE-2026-26996
 - ✅ `brace-expansion@5.0.6` — CVE-2026-45149, CVE-2026-33750
 
+Additional `package.json` overrides mirror these patches for `npm audit` compliance. The `dockerfile-patch-drift.yml` CI workflow runs weekly to detect when patches become stale (bundled versions catch up), covering both Dockerfile patches and package.json overrides.
+
 ### **Volume Mounting Security**
 
 ```bash
@@ -190,7 +197,9 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - ✅ **CodeQL analysis** — automated static analysis on push/PR
 - ✅ **npm audit** — dependency vulnerability checking (audit-level: moderate)
 - ✅ **Dependabot** — automated dependency update PRs (weekly for npm and GitHub Actions)
-- ✅ **Secrets scanning** — dedicated workflow for leaked credential detection
+- ✅ **Secrets scanning** — dedicated workflow on push and PR (defense-in-depth for direct pushes to main)
+- ✅ **Lockfile integrity** — SHA-256 hash and `git diff --exit-code` verification before `npm ci` to detect post-checkout tampering
+- ✅ **Patch drift detection** — weekly CI workflow validates Dockerfile patches and package.json overrides against upstream versions
 - ✅ **E2E transport parity** — Playwright suite validates HTTP/SSE security behavior
 
 ## 🚨 **Security Best Practices**
@@ -221,13 +230,17 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 
 - [x] Parameterized SQL queries throughout
 - [x] Identifier sanitization (table, column, schema, index names)
+- [x] WHERE clause validation with subquery detection
 - [x] Input validation via Zod schemas
+- [x] JWT claims sanitization (prototype pollution prevention)
 - [x] Code Mode sandbox isolation (vm or worker_threads V8 isolate)
+- [x] Code Mode frozen built-in prototypes (constructor chain escape prevention)
+- [x] Code Mode blocked patterns (20 static regex rules)
 - [x] Code Mode execution timeout (30s hard limit)
 - [x] Code Mode rate limiting (60 executions/min)
 - [x] Code Mode audit logging
 - [x] HTTP body size limit (configurable, default 1 MB)
-- [x] Configurable CORS with origin whitelist
+- [x] CORS deny-all by default (explicit origin configuration required)
 - [x] Rate limiting (100 req/min per IP)
 - [x] Slowloris DoS timeouts (`MCP_REQUEST_TIMEOUT`, `MCP_HEADERS_TIMEOUT`)
 - [x] DNS rebinding protection via Host header validation
@@ -235,13 +248,17 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] HSTS (opt-in)
 - [x] OAuth 2.1 with JWT/JWKS validation (RFC 9728, RFC 8414)
 - [x] SQLite-specific scope enforcement (`read`, `write`, `admin`, `full`, `db:*`, `table:*`)
+- [x] Fail-closed scope default (`admin`) for unknown tools
 - [x] Per-tool scope enforcement via `AsyncLocalStorage`
+- [x] Bearer auth scope limitation warning (startup + documentation)
 - [x] Credential redaction in logs
 - [x] Log injection prevention
 - [x] Non-root Docker user
 - [x] Multi-stage Docker build with production pruning
-- [x] Transitive dependency CVE patching in Dockerfile
-- [x] CI/CD security pipeline (CodeQL, npm audit, secrets scanning)
+- [x] Transitive dependency CVE patching (Dockerfile + package.json overrides)
+- [x] Patch drift detection (weekly CI workflow)
+- [x] Lockfile integrity verification (SHA-256 + git diff in CI)
+- [x] CI/CD security pipeline (CodeQL, npm audit, secrets scanning on push+PR)
 - [x] Structured error responses (no internal details leaked)
 - [x] Constant-time bearer token comparison (`crypto.timingSafeEqual`)
 - [x] Comprehensive security documentation
