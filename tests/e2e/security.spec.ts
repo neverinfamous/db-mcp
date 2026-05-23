@@ -66,14 +66,19 @@ test.describe("HTTP Transport Security & Limits", () => {
     expect(response.status()).toBe(204);
   });
 
-  test("should expose oauth: false in /health when OAuth is not configured", async ({
+  test("should not expose detailed fields in /health to unauthenticated clients", async ({
     request,
   }) => {
     const response = await request.get("/health");
     expect(response.status()).toBe(200);
 
     const body = await response.json();
-    expect(body).toHaveProperty("oauth", false);
+    // Auth-gated fields should NOT be present without authentication
+    expect(body).toHaveProperty("status", "healthy");
+    expect(body).toHaveProperty("timestamp");
+    expect(body).not.toHaveProperty("oauth");
+    expect(body).not.toHaveProperty("mode");
+    expect(body).not.toHaveProperty("activeSessions");
   });
 
   test("should ignore X-Forwarded-For for rate limiting when trustProxy is not enabled", async ({
