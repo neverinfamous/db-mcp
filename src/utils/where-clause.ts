@@ -151,7 +151,7 @@ function normalizeForPatternMatching(input: string): string {
       if (code >= FULLWIDTH_START && code <= FULLWIDTH_END) {
         chars.push(String.fromCharCode(code - FULLWIDTH_ASCII_OFFSET));
       } else {
-        chars.push(normalized[i] as string);
+        chars.push(normalized.charAt(i));
       }
     }
     normalized = chars.join("");

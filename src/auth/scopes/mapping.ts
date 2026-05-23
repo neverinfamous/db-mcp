@@ -86,9 +86,7 @@ const adminToolNames: string[] = [];
 for (const [group, scope] of Object.entries(TOOL_GROUP_SCOPES)) {
   if (scope === SCOPES.ADMIN) {
     const tools = TOOL_GROUPS[group as ToolGroup];
-    if (tools) {
-      adminToolNames.push(...tools);
-    }
+    adminToolNames.push(...tools);
   }
 }
 export const ADMIN_TOOLS: ReadonlySet<string> = withSqlitePrefix(adminToolNames);
