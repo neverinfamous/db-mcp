@@ -140,11 +140,17 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 34. `sqlite_date_add({})` → handler error
 🔴 35. `sqlite_date_diff({})` → handler error
 
+**Built-in tools** — these take no required params, so `{}` should return a successful response (confirming graceful handling):
+
+🔴 36. `server_info({})` → should succeed (no required params)
+🔴 37. `server_health({})` → should succeed (no required params)
+🔴 38. `list_adapters({})` → should succeed (no required params)
+
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 36. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
+🔴 39. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
 
 ---
 

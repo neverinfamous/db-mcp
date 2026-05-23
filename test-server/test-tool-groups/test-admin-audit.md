@@ -100,8 +100,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **Code mode testing:**
 
-Note: The audit tools are server-level and may not be exposed in Code Mode. If they are not exposed, this is expected behavior. If they are, test them via code mode.
-12. `sqlite_execute_code({code: "return typeof sqlite.admin.auditListBackups"})` → If exposed, should be `"function"`. If not exposed, it will throw an error or be `"undefined"`. Document the result.
+Audit tools are server-level (MCP-only) and intentionally not exposed in Code Mode. Verify all 5 return `"undefined"`:
+
+12. `sqlite_execute_code({code: "return [typeof sqlite.admin.auditListBackups, typeof sqlite.admin.auditGetBackup, typeof sqlite.admin.auditDiffBackup, typeof sqlite.admin.auditRestoreBackup, typeof sqlite.admin.auditCleanup]"})` → All 5 must be `"undefined"`. If any returns `"function"`, report as ⚠️.
 
 **Error path testing:**
 

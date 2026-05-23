@@ -117,41 +117,42 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 12. `sqlite_migration_rollback({version: "1.0.1"})` → report behavior (rollback requires rollback SQL to have been recorded; if none was provided during apply, rollback should return an informative error)
 13. `sqlite_migration_apply({version: "1.0.3", description: "With rollback", sql: "CREATE TABLE temp_migration_rollback (id INTEGER PRIMARY KEY)", rollbackSql: "DROP TABLE IF EXISTS temp_migration_rollback"})` → applied with rollback SQL stored
-14. `sqlite_migration_rollback({version: "1.0.3"})` → should execute the rollback SQL
-15. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_rollback'"})` → table should NOT exist
-16. `sqlite_migration_rollback({version: "1.0.3", dryRun: true})` → report behavior (preview mode)
+14. `sqlite_migration_rollback({version: "1.0.3", dryRun: true})` → preview mode: returns `{success: true, dryRun: true, rollbackSql: "DROP TABLE IF EXISTS temp_migration_rollback"}` without executing
+15. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_rollback'"})` → table should STILL exist (dryRun must not execute the SQL)
+16. `sqlite_migration_rollback({version: "1.0.3"})` → should execute the rollback SQL
+17. Verify: `sqlite_read_query({query: "SELECT name FROM sqlite_master WHERE name = 'temp_migration_rollback'"})` → table should NOT exist
 
 ## Phase 5: Pagination (batched)
 
-17. `sqlite_migration_history({limit: 1})` → verify only 1 migration entry returned
-18. `sqlite_migration_history({limit: 1, offset: 1})` → verify returns the second entry (different from item 17)
+18. `sqlite_migration_history({limit: 1})` → verify only 1 migration entry returned
+19. `sqlite_migration_history({limit: 1, offset: 1})` → verify returns the second entry (different from item 18)
 
 **Code mode testing:**
 
-19. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationStatus(); return result;"})` → migration status summary
-20. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationHistory(); return result;"})` → migration history list
+20. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationStatus(); return result;"})` → migration status summary
+21. `sqlite_execute_code({code: "const result = await sqlite.migration.migrationHistory(); return result;"})` → migration history list
 
 **Error path testing:**
 
-🔴 21. `sqlite_migration_apply({version: "bad version!", description: "Invalid", sql: "SELECT 1"})` → report behavior (invalid version format)
-🔴 22. `sqlite_migration_rollback({version: "nonexistent_version"})` → structured error
+🔴 22. `sqlite_migration_apply({version: "bad version!", description: "Invalid", sql: "SELECT 1"})` → report behavior (invalid version format)
+🔴 23. `sqlite_migration_rollback({version: "nonexistent_version"})` → structured error
 
 ## Phase 6: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 23. `sqlite_migration_init({})` → handler error (or success if no required params)
-🔴 24. `sqlite_migration_record({})` → handler error
-🔴 25. `sqlite_migration_apply({})` → handler error
-🔴 26. `sqlite_migration_rollback({})` → handler error
-🔴 27. `sqlite_migration_history({})` → handler error (or success if no required params)
-🔴 28. `sqlite_migration_status({})` → handler error (or success if no required params)
+🔴 24. `sqlite_migration_init({})` → handler error (or success if no required params)
+🔴 25. `sqlite_migration_record({})` → handler error
+🔴 26. `sqlite_migration_apply({})` → handler error
+🔴 27. `sqlite_migration_rollback({})` → handler error
+🔴 28. `sqlite_migration_history({})` → handler error (or success if no required params)
+🔴 29. `sqlite_migration_status({})` → handler error (or success if no required params)
 
 ## Phase 7: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 29. `sqlite_migration_history({limit: "abc"})` → handler error
+🔴 30. `sqlite_migration_history({limit: "abc"})` → handler error
 
 ---
 
