@@ -150,6 +150,14 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 38. `sqlite_stats_sample({})` → handler error
 🔴 39. `sqlite_execute_code({})` → handler error
 
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 40. `sqlite_stats_histogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → handler error
+🔴 41. `sqlite_stats_top_n({table: "test_products", column: "price", n: "abc"})` → handler error
+🔴 42. `sqlite_stats_sample({table: "test_measurements", sampleSize: "abc"})` → handler error
+
 ---
 
 ## Post-Test Procedures

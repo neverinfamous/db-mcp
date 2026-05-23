@@ -86,12 +86,15 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.text.normalize`
 - `sqlite.text.case`
 - `sqlite.text.substring`
+- `sqlite.text.replace`
 - `sqlite.text.validate`
 - `sqlite.text.sentiment`
 - `sqlite.text.ftsSearch`
 - `sqlite.text.ftsRebuild`
 - `sqlite.text.ftsHeadline`
 - `sqlite.text.ftsMatchInfo`
+
+> **Note**: Tools not listed here (`split`, `concat`, `trim`, `ftsCreate`) are covered in the standard `test-codemode-text.md` prompt and do not require additional stress testing.
 
 ## Phase 1: Regex Edge Cases (batched)
 
@@ -133,30 +136,38 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. Create `stress_sentiment_test` with rows: `"I love this!"` (positive), `"This is terrible"` (negative), `""` (empty), `NULL` → report behavior for edge cases
 
 
+## Phase 5.5: Text Replace Edge Cases (batched)
+
+21. Create `stress_replace_test (id INTEGER PRIMARY KEY, content TEXT)` with rows: `(1, 'Hello World')`, `(2, '')`, `(3, NULL)`
+22. `sqlite.text.replace({table: "stress_replace_test", column: "content", search: "World", replacement: ""})` → row 1 becomes `"Hello "` (replace with empty string)
+23. `sqlite.text.replace({table: "stress_replace_test", column: "content", search: "missing", replacement: "found"})` → no changes (search pattern not found)
+24. `sqlite.text.replace({table: "stress_replace_test", column: "content", search: ".*", replacement: "regex"})` → verify literal replacement (should NOT interpret as regex)
+
+
 ## Phase 6: FTS5 State Integrity `[NATIVE ONLY]` (batched)
 
-21. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → results about databases
-22. `sqlite.text.ftsRebuild({table: "test_articles_fts"})` → success
-23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
-24. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
-25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
-26. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → results about databases
+26. `sqlite.text.ftsRebuild({table: "test_articles_fts"})` → success
+27. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
+28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
+29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
+30. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
 
 
 ## Phase 7: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-27. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
-28. All 14 non-FTS text tools should work identically in WASM and Native
+31. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
+32. All 14 non-FTS text tools should work identically in WASM and Native
 
 
 ## Phase 8: Error Message Quality (batched)
 
-29. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
-30. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
-31. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
-32. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+33. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
+34. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
+35. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
+36. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
 
 
 ### Final Cleanup

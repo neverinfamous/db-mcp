@@ -111,6 +111,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 13. `sqlite_drop_table({table: "temp_core_test2"})` → success
 14. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
 15. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
+16. `sqlite_write_query({query: "INSERT INTO temp_core_test2 (id, val) VALUES (99, 'returning_test') RETURNING *"})` → verify `rows` array contains the inserted row with `id: 99` (Note: First create `temp_core_test2` per item 7, then run this — the SQL RETURNING clause is passed through directly)
+17. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 100, val: "no_return"}], returning: false})` → verify `rowsAffected: 1` WITHOUT a `rows` array (negative test for returning parameter)
 
 **Error path testing:**
 
@@ -136,7 +138,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 30. `sqlite_exists({})` → handler error
 🔴 31. `sqlite_truncate({})` → handler error
 🔴 32. `sqlite_date_add({})` → handler error
-🔴 33. `sqlite_date_diff({})` → handler error
+🔴 35. `sqlite_date_diff({})` → handler error
+
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 36. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
 
 ---
 

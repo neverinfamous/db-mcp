@@ -158,6 +158,14 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 45. `sqlite_json_diff({})` → handler error
 🔴 46. `sqlite_execute_code({})` → handler error
 
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 47. `sqlite_json_each({table: "test_jsonb_docs", column: "tags", limit: "abc"})` → handler error
+🔴 48. `sqlite_json_select({table: "test_jsonb_docs", column: "doc", paths: ["$.author"], limit: "abc"})` → handler error
+🔴 49. `sqlite_json_query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article"}, limit: "abc"})` → handler error
+
 ---
 
 ## Post-Test Procedures

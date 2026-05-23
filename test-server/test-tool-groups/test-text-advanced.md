@@ -128,6 +128,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 25. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
 🔴 26. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
 
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 27. `sqlite_fuzzy_match({table: "test_products", column: "name", search: "test", maxDistance: "abc"})` → handler error
+🔴 28. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error
+
 ---
 
 ## Post-Test Procedures

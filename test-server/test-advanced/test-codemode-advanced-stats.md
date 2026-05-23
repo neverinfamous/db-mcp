@@ -93,8 +93,11 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.stats.windowRank`
 - `sqlite.stats.windowRunningTotal`
 - `sqlite.stats.windowMovingAvg`
+- `sqlite.stats.windowLagLead`
 - `sqlite.stats.windowNtile`
 - `sqlite.stats.statsSample`
+
+> **Note**: Tools not listed here (`statsGroupBy`, `statsTopN`, `statsDistinct`, `statsSummary`, `statsFrequency`) are covered in the standard `test-codemode-stats.md` prompt and do not require additional stress testing.
 
 ## Phase 1: Boundary Values & Empty States (batched)
 
@@ -152,7 +155,9 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 20. `sqlite.stats.windowRank({table: "test_orders", orderBy: "total_price DESC"})` → ranks with potential ties
 21. `sqlite.stats.windowRunningTotal({table: "test_orders", valueColumn: "total_price", orderBy: "order_date"})` → monotonically increasing cumulative total
 22. `sqlite.stats.windowMovingAvg({table: "test_measurements", valueColumn: "temperature", windowSize: 10, orderBy: "measured_at"})` → 10-row moving average
-23. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → 4 groups of ~4 products
+23. `sqlite.stats.windowLagLead({table: "test_measurements", valueColumn: "temperature", direction: "lag", offset: 2, orderBy: "measured_at"})` → LAG with offset=2 (skip 1 row)
+24. `sqlite.stats.windowLagLead({table: "test_measurements", valueColumn: "temperature", direction: "lead", offset: 1, orderBy: "measured_at", partitionBy: "sensor_id"})` → LEAD partitioned by sensor
+25. `sqlite.stats.windowNtile({table: "test_products", buckets: 4, orderBy: "price"})` → 4 groups of ~4 products
 
 
 ## Phase 5: Error Message Quality (batched)
@@ -166,11 +171,13 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 ## Phase 6: Stats Sample Edge Cases (batched)
 
-29. Create `stress_stats_empty (id INTEGER PRIMARY KEY)` (no rows). `sqlite.stats.statsSample({table: "stress_stats_empty", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
-30. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
-31. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
-32. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
-33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
+31. Create `stress_stats_empty (id INTEGER PRIMARY KEY)` (no rows). `sqlite.stats.statsSample({table: "stress_stats_empty", sampleSize: 10})` → verify behavior on empty table (0 rows or structured error)
+32. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1})` → exactly 1 row
+33. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 1000})` → capped at 200 (total rows), verify `sampleSize` vs actual returned
+34. Run `statsSample({table: "test_measurements", sampleSize: 10})` twice → verify rows differ (randomized sampling)
+35. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, whereClause: "sensor_id = 1"})` → filtered sample, verify all returned rows have `sensor_id: 1`
+36. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 0})` → structured error or empty result (boundary: zero sample)
+37. `sqlite.stats.statsSample({table: "test_measurements", sampleSize: 5, selectColumns: ["temperature", "humidity"], whereClause: "sensor_id = 1"})` → verify only selected columns returned and all rows match filter
 
 
 ## Phase 7: WASM Boundary Verification (batched)

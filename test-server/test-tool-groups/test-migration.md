@@ -141,6 +141,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 25. `sqlite_migration_history({})` → handler error (or success if no required params)
 🔴 26. `sqlite_migration_status({})` → handler error (or success if no required params)
 
+## Phase 6: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 27. `sqlite_migration_history({limit: "abc"})` → handler error
+
 ---
 
 ## Post-Test Procedures

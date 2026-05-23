@@ -1,4 +1,4 @@
-# db-mcp Tool Group Testing: [vector-read]
+# db-mcp Tool Group Testing: [wasm-degradation]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -72,59 +72,89 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ---
 
-## Group Focus: vector-read
+## Group Focus: wasm-degradation
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+>
+> **Note**: This is a **meta-test suite** — it validates WASM graceful degradation behavior for `[NATIVE ONLY]` tools called via direct MCP tool calls (not Code Mode). Each phase targets a specific tool group's native-only tools. All calls MUST return `{success: false}` structured errors — never raw MCP errors.
 
-### Group Tools (7)
+### WASM vs Native Reference
+> See `gotchas.md` WASM vs Native table for the complete feature matrix.
 
-- `sqlite_vector_search`
-- `sqlite_vector_get`
-- `sqlite_vector_count`
-- `sqlite_vector_stats`
-- `sqlite_vector_dimensions`
-- `sqlite_vector_distance`
-- `sqlite_vector_normalize`
+## Phase 1: FTS5 Tools — Graceful Degradation (batched)
 
-## Phase 1: Core Check (batched)
+> 5 tools: `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`, `sqlite_fts_headline`
 
-1. `sqlite_vector_count({table: "test_embeddings"})` → `{count: 20}`
-2. `sqlite_vector_dimensions({table: "test_embeddings", vectorColumn: "embedding"})` → `{dimensions: 8}`
-3. `sqlite_vector_get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 1})` → verify content="Machine learning fundamentals", category="tech", embedding has 8 dimensions
-4. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3})` → top result should be row 1 (exact match, \_similarity ≈ 1)
-5. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01], metric: "cosine", limit: 3, whereClause: "category = 'database'"})` → only database category results
-6. `sqlite_vector_distance({vector1: [1, 0, 0], vector2: [0, 1, 0], metric: "cosine"})` → distance ≈ 1.0 (orthogonal vectors)
-7. `sqlite_vector_distance({vector1: [3, 4], vector2: [0, 0], metric: "euclidean"})` → distance = 5.0
-8. `sqlite_vector_normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5}`
-9. `sqlite_vector_stats({table: "test_embeddings", vectorColumn: "embedding"})` → verify min/max/avg magnitude
+🔴 1. `sqlite_fts_create({sourceTable: "test_articles", columns: ["title", "body"], ftsTable: "temp_wasm_fts"})` → `{success: false}` — structured error about FTS5 not available in WASM
+🔴 2. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite"})` → `{success: false}`
+🔴 3. `sqlite_fts_rebuild({table: "test_articles_fts"})` → `{success: false}`
+🔴 4. `sqlite_fts_match_info({table: "test_articles_fts", query: "database"})` → `{success: false}`
+🔴 5. `sqlite_fts_headline({table: "test_articles_fts", query: "SQLite"})` → `{success: false}`
 
-**Code mode testing:**
 
-10. `sqlite_execute_code({code: "const result = await sqlite.vector.count({table: 'test_embeddings'}); return result;"})` → `{count: 20}`
-11. `sqlite_execute_code({code: "const result = await sqlite.vector.distance({vector1: [3, 4], vector2: [0, 0], metric: 'euclidean'}); return result;"})` → distance = 5.0
+## Phase 2: Transaction Tools — Graceful Degradation (batched)
 
-**Error path testing:**
+> 8 tools: `sqlite_transaction_begin`, `sqlite_transaction_status`, `sqlite_transaction_commit`, `sqlite_transaction_rollback`, `sqlite_transaction_savepoint`, `sqlite_transaction_release`, `sqlite_transaction_rollback_to`, `sqlite_transaction_execute`
 
-🔴 12. `sqlite_vector_search({table: "nonexistent_table_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → structured error
-🔴 13. `sqlite_vector_distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
+🔴 6. `sqlite_transaction_begin({mode: "deferred"})` → `{success: false}`
+🔴 7. `sqlite_transaction_status` → `{success: false}`
+🔴 8. `sqlite_transaction_commit` → `{success: false}`
+🔴 9. `sqlite_transaction_rollback` → `{success: false}`
+🔴 10. `sqlite_transaction_savepoint({name: "sp1"})` → `{success: false}`
+🔴 11. `sqlite_transaction_release({name: "sp1"})` → `{success: false}`
+🔴 12. `sqlite_transaction_rollback_to({name: "sp1"})` → `{success: false}`
+🔴 13. `sqlite_transaction_execute({statements: ["SELECT 1"]})` → `{success: false}`
 
-## Phase 2: Zod Validation Sweep
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+## Phase 3: Window Function Tools — Graceful Degradation (batched)
 
-🔴 14. `sqlite_vector_search({})` → handler error
-🔴 15. `sqlite_vector_get({})` → handler error
-🔴 16. `sqlite_vector_count({})` → handler error
-🔴 17. `sqlite_vector_stats({})` → handler error
-🔴 18. `sqlite_vector_dimensions({})` → handler error
-🔴 19. `sqlite_vector_normalize({})` → handler error
-🔴 20. `sqlite_vector_distance({})` → handler error
+> 6 tools: `sqlite_window_row_number`, `sqlite_window_rank`, `sqlite_window_lag_lead`, `sqlite_window_running_total`, `sqlite_window_moving_avg`, `sqlite_window_ntile`
 
-## Phase 3: Wrong-Type Numeric Coercion
+🔴 14. `sqlite_window_row_number({table: "test_products", orderBy: "price DESC"})` → `{success: false}`
+🔴 15. `sqlite_window_rank({table: "test_products", orderBy: "price DESC"})` → `{success: false}`
+🔴 16. `sqlite_window_lag_lead({table: "test_orders", column: "total_price", direction: "lag", orderBy: "order_date"})` → `{success: false}`
+🔴 17. `sqlite_window_running_total({table: "test_orders", column: "total_price", orderBy: "order_date"})` → `{success: false}`
+🔴 18. `sqlite_window_moving_avg({table: "test_measurements", column: "temperature", windowSize: 5, orderBy: "measured_at"})` → `{success: false}`
+🔴 19. `sqlite_window_ntile({table: "test_products", buckets: 4, orderBy: "price"})` → `{success: false}`
 
-> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 21. `sqlite_vector_search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], metric: "cosine", limit: "abc"})` → handler error
+## Phase 4: SpatiaLite Tools — Graceful Degradation (batched)
+
+> 7 tools: `sqlite_spatialite_load`, `sqlite_spatialite_create_table`, `sqlite_spatialite_query`, `sqlite_spatialite_analyze`, `sqlite_spatialite_index`, `sqlite_spatialite_transform`, `sqlite_spatialite_import`
+
+🔴 20. `sqlite_spatialite_load` → `{success: false}`
+🔴 21. `sqlite_spatialite_create_table({tableName: "temp_wasm_spatial", geometryColumn: "geom", geometryType: "POINT", srid: 4326})` → `{success: false}`
+🔴 22. `sqlite_spatialite_query({sql: "SELECT ST_Distance(MakePoint(0,0,4326), MakePoint(1,1,4326))"})` → `{success: false}`
+🔴 23. `sqlite_spatialite_analyze({table: "test_locations", geometryColumn: "geom", operation: "nearest_neighbor", targetLat: 40.758, targetLon: -73.9855})` → `{success: false}`
+🔴 24. `sqlite_spatialite_index({table: "test_locations", geometryColumn: "geom", action: "create"})` → `{success: false}`
+🔴 25. `sqlite_spatialite_transform({table: "test_locations", geometryColumn: "geom", operation: "centroid"})` → `{success: false}`
+🔴 26. `sqlite_spatialite_import({table: "test_locations", geometryColumn: "geom", format: "wkt", data: "POINT(0 0)"})` → `{success: false}`
+
+
+## Phase 5: Admin Native-Only Tools — Graceful Degradation (batched)
+
+> Tools that degrade gracefully or are unavailable in WASM.
+
+🔴 27. `sqlite_backup({outputPath: "test_backup.db"})` → `{success: false}` or graceful degradation
+🔴 28. `sqlite_restore({inputPath: "test_backup.db"})` → `{success: false}` or graceful degradation
+🔴 29. `sqlite_dump({outputPath: "test_dump.sql"})` → `{success: false}`
+
+
+## Phase 6: Tool Visibility Verification (batched)
+
+> Verify that NATIVE ONLY tools are properly excluded from the tool list in WASM mode.
+
+30. Call `server_info` or `list_adapters` → verify adapter type is `wasm` or `sql.js`
+31. Confirm the following tool groups are NOT present in the available tool list:
+    - Transaction tools (8 tools)
+    - Window function tools (6 tools)
+    - SpatiaLite tools (7 tools)
+    - FTS5 tools (5 tools)
+
+> **Note**: Some tools like `sqlite_backup` may still be listed but return graceful errors. The key is that they NEVER return raw MCP errors.
+
+
+> **Note**: No Wrong-Type Numeric Coercion phase is included for this meta-test suite — it validates WASM graceful degradation behavior, not a specific tool group with optional numeric parameters.
 
 ---
 

@@ -71,6 +71,17 @@
 - Updated WASM Mode text and schema reference across all 10 advanced codemode prompts to match template standards.
 - Added cross-group helper method separators to 3 advanced prompts (`geo`, `transactions`, `migration`).
 - Reordered `test-codemode-advanced-transactions.md` method list so all transaction group methods are contiguous before the cross-group helper.
+- Audited all 41 testing prompts for coverage gaps. Added Wrong-Type Numeric Coercion phases to 10 direct tool test files (`test-json-read.md`, `test-text-basic.md`, `test-text-advanced.md`, `test-stats-basic.md`, `test-stats-advanced.md`, `test-vector-read.md`, `test-geo-haversine.md`, `test-admin-extensions.md`, `test-migration.md`, `test-core-data.md`).
+- Added missing `windowLagLead` stress tests (lag offset=2, lead with partitionBy) and `statsSample` boundary tests (sampleSize: 0, combined selectColumns+whereClause) to `test-codemode-advanced-stats.md`.
+- Added missing `text.replace` edge case tests (empty-string replacement, NULL handling, literal vs regex patterns) to `test-codemode-advanced-text.md`.
+- Added missing empty/zero-dimension vector domain error tests (`normalize({vector: []})`, `distance({vector1: [], vector2: []})`) to `test-codemode-vector.md`.
+- Added multi-statement migration apply test (CREATE TABLE + CREATE INDEX in single migrationSql) to `test-codemode-migration.md`.
+- Added `write_query` RETURNING clause test and `batch_insert` `returning: false` negative test to `test-core-data.md`.
+- Added omitted-tools documentation notes to `test-codemode-advanced-stats.md` and `test-codemode-advanced-text.md`.
+- Added coercion phase omission disclaimers to `test-codemode-sandbox.md` and `test-codemode-wasm-degradation.md`.
+- Added audit tool exclusion note to `test-codemode-admin.md` documenting that 5 server audit tools are not exposed in Code Mode by design.
+- Replaced hardcoded inline schema table in `test-codemode-advanced-core.md` with canonical `code-map.md` reference.
+- Created new `test-tool-groups/test-wasm-degradation.md` for WASM graceful degradation testing via direct MCP tool calls (31 test items covering FTS5, transactions, window functions, SpatiaLite, and admin native-only tools).
 
 ### Fixed
 

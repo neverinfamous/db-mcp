@@ -120,6 +120,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 16. `sqlite_create_series_table({})` → handler error
 🔴 17. `sqlite_generate_series({})` → handler error
 
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 18. `sqlite_generate_series({start: "abc", stop: 5, step: 1})` → handler error
+🔴 19. `sqlite_create_series_table({tableName: "temp_coercion_test", start: 1, stop: "abc"})` → handler error
+
 ---
 
 ## Post-Test Procedures

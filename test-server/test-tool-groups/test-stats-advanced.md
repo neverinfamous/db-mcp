@@ -107,6 +107,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 11. `sqlite_window_moving_avg({})` `[NATIVE ONLY]` → handler error
 🔴 12. `sqlite_window_ntile({})` `[NATIVE ONLY]` → handler error
 
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 13. `sqlite_window_moving_avg({table: "test_measurements", column: "temperature", windowSize: "abc", orderBy: "measured_at"})` `[NATIVE ONLY]` → handler error
+🔴 14. `sqlite_window_ntile({table: "test_products", buckets: "abc", orderBy: "price"})` `[NATIVE ONLY]` → handler error
+
 ---
 
 ## Post-Test Procedures

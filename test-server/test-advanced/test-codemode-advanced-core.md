@@ -19,12 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-| Table             | Rows | Key Columns                                               |
-| ----------------- | ---- | --------------------------------------------------------- |
-| test_products     | 16   | id, name, description, price (REAL), category, created_at |
-| test_orders       | 20   | id, product_id (FK→test_products), total_price, status    |
-| test_measurements | 200  | id, sensor_id (1-5), temperature, humidity, pressure      |
-| test_events       | 100  | id, event_type, user_id, payload (JSON), event_date       |
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)

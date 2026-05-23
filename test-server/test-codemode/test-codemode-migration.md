@@ -176,6 +176,21 @@ return await sqlite.migration.migrationHistory();
 
 Expected: Both 1.0.0 and 1.0.1 listed.
 
+### 2.4 — Apply multi-statement migration (SQL executed atomically)
+
+```javascript
+return await sqlite.migration.migrationApply({
+  version: "1.0.1a",
+  description: "Multi-statement DDL",
+  migrationSql:
+    "CREATE TABLE temp_cm_mig_multi (id INTEGER PRIMARY KEY, name TEXT); CREATE INDEX temp_idx_mig_multi_name ON temp_cm_mig_multi (name);",
+  rollbackSql:
+    "DROP INDEX IF EXISTS temp_idx_mig_multi_name; DROP TABLE IF EXISTS temp_cm_mig_multi;",
+});
+```
+
+Expected: Both CREATE TABLE and CREATE INDEX executed. Verify with `sqlite.core.getIndexes({table: "temp_cm_mig_multi"})` → `temp_idx_mig_multi_name` present.
+
 
 ## Phase 3: SHA-256 Deduplication
 

@@ -136,6 +136,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 31. `sqlite_text_validate({})` → handler error
 🔴 32. `sqlite_text_normalize({})` → handler error
 
+## Phase 4: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 33. `sqlite_text_substring({table: "test_users", column: "username", start: "abc", length: 4})` → handler error
+🔴 34. `sqlite_text_substring({table: "test_users", column: "username", start: 1, length: "abc"})` → handler error
+
 ---
 
 ## Post-Test Procedures

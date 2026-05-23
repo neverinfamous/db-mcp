@@ -125,6 +125,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 18. `sqlite.vector.search({table: "nonexistent_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → `{success: false}`
 🔴 19. `sqlite.vector.distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
 🔴 20. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 9999})` → report behavior (nonexistent row)
+🔴 21. `sqlite.vector.normalize({vector: []})` → structured error (empty vector, potential division by zero)
+🔴 22. `sqlite.vector.distance({vector1: [], vector2: [], metric: "cosine"})` → structured error (zero-dimension vectors)
 
 
 ## Phase 4: Multi-Step Workflow

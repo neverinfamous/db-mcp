@@ -112,6 +112,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 13. `sqlite_geo_bounding_box({})` → handler error
 🔴 14. `sqlite_geo_cluster({})` → handler error
 
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 15. `sqlite_geo_nearby({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", centerLat: 40.758, centerLon: -73.9855, radius: "abc"})` → handler error
+🔴 16. `sqlite_geo_cluster({table: "test_locations", latColumn: "latitude", lonColumn: "longitude", gridSize: "abc"})` → handler error
+
 ---
 
 ## Post-Test Procedures

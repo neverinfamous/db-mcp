@@ -430,6 +430,10 @@ Expected: Call 2 reads the row inserted in Call 1 — database state persists ac
 
 ---
 
+> **Note**: No Wrong-Type Numeric Coercion phase is included for this meta-test suite — it validates the sandbox infrastructure, not a specific tool group with optional numeric parameters.
+
+---
+
 ## Post-Test Procedures
 
 ### Reporting Rules

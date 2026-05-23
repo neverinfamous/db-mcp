@@ -432,6 +432,10 @@ return { failures, success: failures.length === 0 };
 
 ---
 
+> **Note**: No Wrong-Type Numeric Coercion phase is included for this meta-test suite — it validates WASM graceful degradation behavior, not a specific tool group with optional numeric parameters.
+
+---
+
 ## Post-Test Procedures
 
 ### Reporting Rules
