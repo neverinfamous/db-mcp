@@ -59,6 +59,15 @@
 - Added meta-test suite disclaimers to `test-codemode-sandbox.md` and `test-codemode-wasm-degradation.md` clarifying they are infrastructure tests, not tool group tests.
 - Added cross-group helper method separators (`*(cross-group helpers used in test procedures)*`) to 6 codemode prompts (`text`, `stats`, `vector`, `json`, `admin`, `migration`) to visually distinguish group-own methods from helpers.
 - Reordered `test-codemode-migration.md` method list so all migration group methods are contiguous before the cross-group helper.
+- Fixed 21 incorrect method names in `test-codemode-advanced-json.md`: removed redundant `json` prefix from method list (e.g., `sqlite.json.jsonExtract` → `sqlite.json.extract`) — json group is NOT in `KEEP_PREFIX_GROUPS`.
+- Added missing `sqlite.json.diff` to the advanced JSON method list (used in Phase 6 but omitted from list).
+- Fixed 11 incorrect method names in `test-codemode-advanced-vector.md`: removed redundant `vector` prefix (e.g., `sqlite.vector.vectorStore` → `sqlite.vector.store`) — vector group is NOT in `KEEP_PREFIX_GROUPS`.
+- Replaced alias method names (`detectAnomalies`, `detectBloat`, `detectSchemaRisks`) with canonical names in `test-codemode-advanced-stats.md` method list and Phase 3 test items.
+- Fixed quadruple-escaped backslashes in `test-codemode-advanced-admin.md` Phase 6 items 25-26, 29-30 for `attachDatabase` and `vacuumInto` paths.
+- Fixed incorrect `sqlite.admin.dropTable` references in `test-codemode-advanced-migration.md` cleanup — the tool is `sqlite.core.dropTable` (admin group has no `dropTable`).
+- Updated WASM Mode text and schema reference across all 10 advanced codemode prompts to match template standards.
+- Added cross-group helper method separators to 3 advanced prompts (`geo`, `transactions`, `migration`).
+- Reordered `test-codemode-advanced-transactions.md` method list so all transaction group methods are contiguous before the cross-group helper.
 
 ### Fixed
 

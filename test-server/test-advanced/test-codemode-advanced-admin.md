@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> _No specific table schema required for this test group._
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 > **CSV testing**: Use absolute path `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv`.
 
@@ -161,12 +161,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 6: Database Management Edge Cases (batched)
 
-25. `sqlite.admin.attachDatabase({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-backup.db", alias: "stress_attached"})` → success (attaches backup from Category 3)
-26. `sqlite.admin.attachDatabase({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-backup.db", alias: "stress_attached"})` → error (alias in use)
+25. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db", alias: "stress_attached"})` → success (attaches backup from Category 3)
+26. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db", alias: "stress_attached"})` → error (alias in use)
 27. `sqlite.admin.detachDatabase({alias: "stress_attached"})` → success
 28. `sqlite.admin.detachDatabase({alias: "stress_attached"})` → error (already detached)
-29. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-vacuum.db"})` → success
-30. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\stress-vacuum.db"})` → error (file already exists)
+29. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-vacuum.db"})` → success
+30. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-vacuum.db"})` → error (file already exists)
 31. Note vacuum file for manual removal
 
 

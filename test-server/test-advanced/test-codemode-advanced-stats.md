@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -86,9 +86,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.stats.statsCorrelation`
 - `sqlite.stats.statsHypothesis`
 - `sqlite.stats.statsOutliers`
-- `sqlite.stats.detectAnomalies`
-- `sqlite.stats.detectBloat`
-- `sqlite.stats.detectSchemaRisks`
+- `sqlite.stats.statsDetectAnomalies`
+- `sqlite.stats.statsDetectBloat`
+- `sqlite.stats.statsDetectSchemaRisks`
 - `sqlite.stats.windowRowNumber`
 - `sqlite.stats.windowRank`
 - `sqlite.stats.windowRunningTotal`
@@ -139,10 +139,10 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 ## Phase 3: Anomaly Detection Stress (batched)
 
-15. `sqlite.stats.detectAnomalies({table: "test_measurements", column: "temperature"})` → anomaly detection result
-16. `sqlite.stats.detectAnomalies({table: "stress_stats_table", column: "value"})` → graceful handling on mixed NULL/extreme data
-17. `sqlite.stats.detectBloat()` → bloat detection
-18. `sqlite.stats.detectSchemaRisks()` → schema risk assessment
+15. `sqlite.stats.statsDetectAnomalies({table: "test_measurements", column: "temperature"})` → anomaly detection result
+16. `sqlite.stats.statsDetectAnomalies({table: "stress_stats_table", column: "value"})` → graceful handling on mixed NULL/extreme data
+17. `sqlite.stats.statsDetectBloat()` → bloat detection
+18. `sqlite.stats.statsDetectSchemaRisks()` → schema risk assessment
 
 
 ## Phase 4: Window Functions `[NATIVE ONLY]` (batched)

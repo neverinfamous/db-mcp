@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -84,6 +84,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.migration.migrationRollback`
 - `sqlite.migration.migrationHistory`
 - `sqlite.migration.migrationStatus`
+- *(cross-group helpers used in test procedures)*
+- `sqlite.core.getIndexes`
+- `sqlite.core.dropTable`
 
 ## Phase 1: Initialization & Idempotency (batched)
 
@@ -147,8 +150,8 @@ Rate each error response 1-5:
 
 ### Final Cleanup
 
-24. Drop `_mcp_migrations`: `sqlite.admin.dropTable({table: "_mcp_migrations"})`
-25. Drop `stress_migration_data`: `sqlite.admin.dropTable({table: "stress_migration_data"})`
+24. Drop `_mcp_migrations`: `sqlite.core.dropTable({table: "_mcp_migrations"})`
+25. Drop `stress_migration_data`: `sqlite.core.dropTable({table: "stress_migration_data"})`
 26. Drop `stress_idx_flag`: _Handled by database reset below_
 27. **Reset database** with `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to undo `stress_flag` column on `test_products`
 28. After reset, verify: `test_products` has 16 rows and original columns (no `stress_flag`)

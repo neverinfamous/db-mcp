@@ -6,7 +6,7 @@
 > We're currently testing Native mode.
 
 ## WASM Mode
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
 
@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> *No specific table schema required for this test group.*
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -78,30 +78,31 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ### Code Mode Methods
 
-- `sqlite.json.jsonValid`
-- `sqlite.json.jsonExtract`
-- `sqlite.json.jsonSet`
-- `sqlite.json.jsonRemove`
-- `sqlite.json.jsonType`
-- `sqlite.json.jsonArrayLength`
-- `sqlite.json.jsonArrayAppend`
-- `sqlite.json.jsonKeys`
-- `sqlite.json.jsonEach`
-- `sqlite.json.jsonGroupArray`
-- `sqlite.json.jsonGroupObject`
-- `sqlite.json.jsonPretty`
+- `sqlite.json.valid`
+- `sqlite.json.extract`
+- `sqlite.json.set`
+- `sqlite.json.remove`
+- `sqlite.json.type`
+- `sqlite.json.arrayLength`
+- `sqlite.json.arrayAppend`
+- `sqlite.json.keys`
+- `sqlite.json.each`
+- `sqlite.json.groupArray`
+- `sqlite.json.groupObject`
+- `sqlite.json.pretty`
 - `sqlite.json.jsonbConvert`
-- `sqlite.json.jsonStorageInfo`
-- `sqlite.json.jsonNormalizeColumn`
-- `sqlite.json.jsonInsert`
-- `sqlite.json.jsonUpdate`
-- `sqlite.json.jsonSelect`
-- `sqlite.json.jsonQuery`
-- `sqlite.json.jsonValidatePath`
-- `sqlite.json.jsonMerge`
-- `sqlite.json.jsonAnalyzeSchema`
+- `sqlite.json.storageInfo`
+- `sqlite.json.normalizeColumn`
+- `sqlite.json.insert`
+- `sqlite.json.update`
+- `sqlite.json.select`
+- `sqlite.json.query`
+- `sqlite.json.validatePath`
+- `sqlite.json.merge`
+- `sqlite.json.analyzeSchema`
 - `sqlite.json.createJsonCollection`
-- `sqlite.json.jsonSecurityScan`
+- `sqlite.json.securityScan`
+- `sqlite.json.diff`
 
 ## Phase 1: Deep JSON Operations (batched)
 
