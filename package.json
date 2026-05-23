@@ -85,6 +85,7 @@
   "optionalDependencies": {
     "better-sqlite3": "^12.8.0"
   },
+  "//overrides": "Transitive CVE patches. Review quarterly or when dockerfile-patch-drift.yml flags staleness.",
   "overrides": {
     "diff": "9.0.0",
     "@isaacs/brace-expansion": "5.0.1",

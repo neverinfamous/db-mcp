@@ -32,6 +32,14 @@ jobs:
           path: node_modules
           key: node-modules-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
 
+      - name: Verify lockfile integrity
+        run: |
+          echo "Lockfile SHA-256: $(sha256sum package-lock.json | cut -d' ' -f1)"
+          git diff --exit-code package-lock.json || {
+            echo "::error::package-lock.json has been modified outside of git"
+            exit 1
+          }
+
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci

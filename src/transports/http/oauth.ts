@@ -49,6 +49,12 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
     logger.info("Simple bearer token authentication enabled", {
       code: "AUTH_BEARER_ENABLED",
     });
+    logger.warning(
+      "Simple bearer auth does not enforce per-tool scopes. " +
+        "All tools are accessible to any authenticated client. " +
+        "Use OAuth 2.1 (--oauth-enabled) for granular scope enforcement.",
+      { code: "AUTH_BEARER_NO_SCOPES" },
+    );
   } else if (state.app) {
     logger.warning(
       "No authentication configured for HTTP transport. " +

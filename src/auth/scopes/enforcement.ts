@@ -149,7 +149,7 @@ export function scopesGrantTableAccess(
  * Get the required minimum scope for a tool group
  */
 export function getRequiredScopeForGroup(group: ToolGroup): string {
-  return TOOL_GROUP_SCOPES[group] ?? SCOPES.READ;
+  return TOOL_GROUP_SCOPES[group] ?? SCOPES.ADMIN;
 }
 
 /**
@@ -162,7 +162,11 @@ export function getRequiredScopeForTool(toolName: string): string {
   if (WRITE_TOOLS.has(toolName)) {
     return "write";
   }
-  return "read";
+  if (READ_ONLY_TOOLS.has(toolName)) {
+    return "read";
+  }
+  // Fail-closed: unknown tools require admin scope
+  return "admin";
 }
 
 /**

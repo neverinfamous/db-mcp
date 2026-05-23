@@ -125,6 +125,8 @@ Full OAuth 2.1 for production multi-tenant deployments:
 
 > **⚠️ Production guidance:** Prefer the `MCP_AUTH_TOKEN` environment variable over `--auth-token` for production deployments. Command-line arguments are visible via `ps`, `/proc/<pid>/cmdline`, and similar tools on the host.
 
+> **⚠️ Scope limitation:** Simple bearer token auth authenticates clients but does **not** enforce per-tool scopes. All tools are accessible to any client presenting the correct token. For granular scope enforcement (`read`, `write`, `admin`, `full`), use OAuth 2.1 via `--oauth-enabled`.
+
 ## 🐳 **Docker Security**
 
 ### **Non-Root User**

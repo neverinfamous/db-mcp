@@ -102,9 +102,9 @@ export interface HttpTransportConfig {
   };
 
   /**
-   * Allowed CORS origins. Defaults to ["*"] (all origins).
+   * Allowed CORS origins. Defaults to [] (deny-all).
    * Supports wildcard subdomains (e.g., "*.example.com" matches "app.example.com").
-   * Set to specific origins for production deployments.
+   * Must be explicitly configured for production deployments.
    */
   corsOrigins?: string[];
 

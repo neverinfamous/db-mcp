@@ -223,9 +223,12 @@ describe("getRequiredScopeForTool", () => {
     expect(getRequiredScopeForTool("create_table")).toBe("write");
   });
 
-  it("should return read for all other tools", () => {
+  it("should return read for known read-only tools", () => {
     expect(getRequiredScopeForTool("read_query")).toBe("read");
-    expect(getRequiredScopeForTool("unknown_tool")).toBe("read");
+  });
+
+  it("should return admin as fail-closed default for unknown tools", () => {
+    expect(getRequiredScopeForTool("unknown_tool")).toBe("admin");
   });
 });
 

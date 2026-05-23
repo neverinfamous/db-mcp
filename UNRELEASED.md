@@ -60,3 +60,7 @@
 - **[M-4]** OAuth token validator: filter prototype-polluting keys (`__proto__`, `constructor`, `prototype`) from JWT payload before spreading into `TokenClaims` object.
 - **[L-4]** Docker: remove `npm install -g npm@latest` from production stage to reduce attack surface (npm not needed at runtime).
 - **[L-5]** CI/CD: add `push: branches: [main]` trigger to `secrets-scanning.yml` for defense-in-depth on direct pushes.
+- **[L-1]** Dependency overrides: add `//overrides` documentation field to `package.json` and extend `dockerfile-patch-drift.yml` to validate overrides against npm registry.
+- **[L-3]** Bearer auth: add startup warning when simple bearer auth is configured, documenting that per-tool scope enforcement is not active. Add SECURITY.md callout.
+- **[L-7]** CI/CD: add lockfile integrity verification step (SHA-256 + `git diff --exit-code`) before `npm ci` in `lint-and-test.yml`.
+- **[M-2]** Scope enforcement: align `getRequiredScopeForGroup()` and `getRequiredScopeForTool()` in `enforcement.ts` with fail-closed `admin` default.
