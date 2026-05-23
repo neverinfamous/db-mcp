@@ -23,6 +23,8 @@ const proc = spawn(
     "./test-server/test.db",
     "--tool-filter",
     "+all",
+    "--audit-log",
+    "stderr",
     "--audit-backup",
   ],
   {
