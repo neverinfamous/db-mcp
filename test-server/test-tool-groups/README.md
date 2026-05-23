@@ -111,7 +111,7 @@ Begin with any requested group prompt from this folder (e.g., `test-admin.md`), 
 - Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
-1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
@@ -120,7 +120,7 @@ Begin with any requested group prompt from this folder (e.g., `test-admin.md`), 
 
 ### After Implementation
 3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
-4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-5. **Commit**: Stage and commit all changes — do NOT push
-6. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-7. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

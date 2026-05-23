@@ -110,16 +110,16 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 
 ## Tool Groups Available
 
-5. `core`
-6. `json`
-7. `text`
-8. `stats`
-9. `vector`
-10. `admin`
-11. `transactions`
-12. `geo`
-13. `introspection`
-14. `migration`
+1. `core`
+2. `json`
+3. `text`
+4. `stats`
+5. `vector`
+6. `admin`
+7. `transactions`
+8. `geo`
+9. `introspection`
+10. `migration`
 
 ---
 
@@ -130,7 +130,7 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 - Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
-1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
@@ -138,7 +138,8 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
    - This prompt
 
 ### After Implementation
-3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-4. **Commit**: Stage and commit all changes — do NOT push
-5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

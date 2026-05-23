@@ -27,16 +27,16 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 
 ## Agent Execution Protocol
 
-4. **Strict Code Mode Only:** All advanced stress tests must be executed entirely via `sqlite_execute_code`. Direct tool calls are forbidden unless specifically instructed for baseline comparison.
-5. **Sequential Grouping:** Execute only **one markdown file at a time**. Report findings, fix errors, apply updates to the changelog, and commit before advancing to the next file.
-6. **Payload Optimization (Token Monitoring):** Monitor `metrics.tokenEstimate` on every response. If extremely large unbounded responses are produced, flag as 📦 **Payload Issue**.
-7. **Structured Error Adherence:** When testing boundary failure parameters, assert that the handler outputs a proper structured error (`{success: false, error: "..."}`) rather than leaking raw SQLite errors.
-8. **No Persistent Pollution:** After finishing a file, verify all `stress_*` tables/views/indexes are dropped. No test state should bleed into the next run.
-9. **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
-10. **Documentation Parity & Test Prompt Integrity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is mathematically/logically correct and intended, but the documentation is inaccurate, outdated, or lacking specificity. You SHOULD directly edit the markdown test files in this directory to fix factual errors, broken code blocks, or incorrect test assertions.
-11. **Testing Limits**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
+1. **Strict Code Mode Only:** All advanced stress tests must be executed entirely via `sqlite_execute_code`. Direct tool calls are forbidden unless specifically instructed for baseline comparison.
+2. **Sequential Grouping:** Execute only **one markdown file at a time**. Report findings, fix errors, apply updates to the changelog, and commit before advancing to the next file.
+3. **Payload Optimization (Token Monitoring):** Monitor `metrics.tokenEstimate` on every response. If extremely large unbounded responses are produced, flag as 📦 **Payload Issue**.
+4. **Structured Error Adherence:** When testing boundary failure parameters, assert that the handler outputs a proper structured error (`{success: false, error: "..."}`) rather than leaking raw SQLite errors.
+5. **No Persistent Pollution:** After finishing a file, verify all `stress_*` tables/views/indexes are dropped. No test state should bleed into the next run.
+6. **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
+7. **Documentation Parity & Test Prompt Integrity**: Only update files in `src/constants/server-instructions` (or test prompts) if the code's behavior is mathematically/logically correct and intended, but the documentation is inaccurate, outdated, or lacking specificity. You SHOULD directly edit the markdown test files in this directory to fix factual errors, broken code blocks, or incorrect test assertions.
+8. **Testing Limits**: Do not run build or tests automatically (`npm run lint`, `npm run typecheck`, `npm run test:e2e`, `vitest`, or `playwright`). The user will execute them manually. When you reach the validate step, explicitly instruct the user to run the validations.
 
-### 9. WASM Mode Execution
+### WASM Mode Execution
 
 When testing against a **WASM backend** (`--sqlite` flag, sql.js adapter), follow these additional rules:
 
@@ -79,7 +79,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 - Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
-1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
@@ -88,7 +88,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 
 ### After Implementation
 3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
-4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-5. **Commit**: Stage and commit all changes — do NOT push
-6. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-7. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.
