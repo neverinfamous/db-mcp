@@ -9,8 +9,8 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++ && \
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl openssl musl nghttp2
 
-# Upgrade npm globally (no patches here — builder is discarded, only production stage is scanned)
-RUN npm install -g npm@latest --force && npm cache clean --force
+# Pin npm version for reproducible builds (builder is discarded, but pin ensures consistent devDep resolution)
+RUN npm install -g npm@11.4.2 --force && npm cache clean --force
 
 # Copy package files first for better layer caching
 COPY package*.json ./
@@ -88,6 +88,9 @@ RUN cd /usr/local/lib/node_modules/npm && \
     rm brace-expansion-5.0.6.tgz
 
 # Copy built artifacts and production dependencies
+# Remove npm CLI after patching — it is not needed at runtime and reduces attack surface (L-4)
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx && \
+    rm -rf /root/.npm
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./

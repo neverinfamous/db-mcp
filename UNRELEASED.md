@@ -89,3 +89,8 @@
 - **[M-9]** Code Mode sandbox: strip stack traces from worker error responses in production (`NODE_ENV=production`), preventing internal path and dependency leakage (CWE-209).
 - **[M-10]** OAuth: add explicit warning log when discovery fails and `authorizationServerUrl` is used as fallback issuer, highlighting potential issuer mismatch risk (CWE-287).
 - **[L-13]** Annotations: add `ADMIN_FS` and `WRITE_FS` annotation presets with `openWorldHint: true` for filesystem-interacting tools (`attach_database`, `vacuum_into`, `dump`, `spatialite_import`) (MCP annotation compliance).
+- **[M-11]** WHERE clause validation: add Unicode NFC normalization and full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before blocklist pattern matching, preventing homoglyph-based bypass attacks (CWE-20).
+- **[M-12]** Code Mode annotations: set `openWorldHint: true` on `sqlite_execute_code` tool to signal MCP clients that Code Mode can invoke any tool group internally (MCP annotation compliance).
+- **[L-14]** Annotations: add `CODEMODE` annotation preset with `openWorldHint: true` for Code Mode tools.
+- **[L-15]** Docker: pin npm version in builder stage (`npm@11.4.2`) for reproducible builds.
+- **[L-16]** Docker: remove npm CLI from production image after transitive dependency patching to reduce attack surface.

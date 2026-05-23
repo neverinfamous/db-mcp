@@ -125,3 +125,18 @@ export function adminFs(title: string): ToolAnnotations {
 export function writeFs(title: string): ToolAnnotations {
   return { title, ...WRITE_FS };
 }
+
+/** Code Mode tools (can invoke any tool group internally) */
+export const CODEMODE: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: true,
+};
+
+/**
+ * Create codemode annotations with title
+ */
+export function codemode(title: string): ToolAnnotations {
+  return { title, ...CODEMODE };
+}

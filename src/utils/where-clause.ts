@@ -5,6 +5,10 @@
  * Uses a blocklist approach to reject dangerous patterns while
  * allowing legitimate complex conditions.
  *
+ * Applies Unicode NFC normalization and full-width character
+ * mapping before pattern matching to prevent homoglyph-based
+ * blocklist bypasses (CWE-20).
+ *
  * Adapted from postgres-mcp reference implementation for SQLite.
  */
 
@@ -100,6 +104,62 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
   },
 ];
 
+// =============================================================================
+// Unicode Normalization
+// =============================================================================
+
+/**
+ * Full-width Latin character range (U+FF01 – U+FF5E).
+ * These are visually similar to ASCII but occupy different codepoints.
+ * Example: Ｕ (U+FF35) looks like U, Ｎ (U+FF2E) looks like N.
+ */
+const FULLWIDTH_START = 0xff01;
+const FULLWIDTH_END = 0xff5e;
+const FULLWIDTH_ASCII_OFFSET = 0xfee0; // fullwidth - offset = ASCII equivalent
+
+/**
+ * Normalize a WHERE clause string for pattern matching.
+ *
+ * Applies two transformations:
+ * 1. Unicode NFC normalization — collapses composed characters
+ * 2. Full-width Latin → ASCII mapping — converts U+FF01..FF5E to U+0021..007E
+ *
+ * The original input is NOT modified; this returns a copy for blocklist matching.
+ * This prevents attackers from using visually-similar Unicode characters
+ * (e.g., "ＵＮＩＯＮ ＳＥＬＥＣＴ") to bypass ASCII-only regex patterns.
+ */
+function normalizeForPatternMatching(input: string): string {
+  // Step 1: NFC normalization (built-in, zero-dependency)
+  let normalized = input.normalize("NFC");
+
+  // Step 2: Map full-width Latin characters to ASCII equivalents
+  // Only process if the string contains characters outside basic ASCII,
+  // avoiding unnecessary work for the common case.
+  let hasFullwidth = false;
+  for (let i = 0; i < normalized.length; i++) {
+    const code = normalized.charCodeAt(i);
+    if (code >= FULLWIDTH_START && code <= FULLWIDTH_END) {
+      hasFullwidth = true;
+      break;
+    }
+  }
+
+  if (hasFullwidth) {
+    const chars: string[] = [];
+    for (let i = 0; i < normalized.length; i++) {
+      const code = normalized.charCodeAt(i);
+      if (code >= FULLWIDTH_START && code <= FULLWIDTH_END) {
+        chars.push(String.fromCharCode(code - FULLWIDTH_ASCII_OFFSET));
+      } else {
+        chars.push(normalized[i] as string);
+      }
+    }
+    normalized = chars.join("");
+  }
+
+  return normalized;
+}
+
 /**
  * Validates a WHERE clause for dangerous SQL patterns.
  *
@@ -130,8 +190,14 @@ export function validateWhereClause(where: string): void {
     );
   }
 
+  // Unicode normalization: apply NFC + full-width→ASCII mapping to prevent
+  // homoglyph-based blocklist bypasses (CWE-20). Example: "ＵＮＩＯＮ" → "UNION".
+  // The original input is preserved (passed to SQLite unchanged); only the
+  // normalized copy is used for pattern matching.
+  const normalized = normalizeForPatternMatching(where);
+
   for (const { pattern, reason } of DANGEROUS_PATTERNS) {
-    if (pattern.test(where)) {
+    if (pattern.test(normalized)) {
       throw new UnsafeWhereClauseError(reason);
     }
   }

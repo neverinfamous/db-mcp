@@ -231,6 +231,55 @@ describe("Security: WHERE Clause Validation", () => {
         );
       });
     });
+
+    describe("Unicode homoglyph bypass prevention (M-1)", () => {
+      it("should reject full-width UNION SELECT", () => {
+        // U+FF35 U+FF2E U+FF29 U+FF2F U+FF2E = ＵＮＩＯＮ
+        expect(() =>
+          validateWhereClause(
+            "1=0 \uFF35\uFF2E\uFF29\uFF2F\uFF2E \uFF33\uFF25\uFF2C\uFF25\uFF23\uFF34 * FROM users",
+          ),
+        ).toThrow(UnsafeWhereClauseError);
+      });
+
+      it("should reject full-width DROP TABLE after semicolon", () => {
+        expect(() =>
+          validateWhereClause(
+            "1=1; \uFF24\uFF32\uFF2F\uFF30 TABLE users",
+          ),
+        ).toThrow(UnsafeWhereClauseError);
+      });
+
+      it("should reject mixed ASCII/full-width UNION", () => {
+        // Mix: U (ASCII) + Ｎ (full-width) + I (ASCII) + Ｏ (full-width) + N (ASCII)
+        expect(() =>
+          validateWhereClause(
+            "1=0 U\uFF2EI\uFF2FN SELECT * FROM users",
+          ),
+        ).toThrow(UnsafeWhereClauseError);
+      });
+
+      it("should reject full-width PRAGMA", () => {
+        expect(() =>
+          validateWhereClause(
+            "\uFF30\uFF32\uFF21\uFF27\uFF2D\uFF21 database_list",
+          ),
+        ).toThrow(UnsafeWhereClauseError);
+      });
+
+      it("should reject full-width load_extension", () => {
+        expect(() =>
+          validateWhereClause(
+            "\uFF4C\uFF4F\uFF41\uFF44\uFF3F\uFF45\uFF58\uFF54\uFF45\uFF4E\uFF53\uFF49\uFF4F\uFF4E ('/tmp/exploit.so')",
+          ),
+        ).toThrow(UnsafeWhereClauseError);
+      });
+
+      it("should still allow legitimate non-full-width WHERE clauses", () => {
+        expect(() => validateWhereClause("name = 'Ünïcödé'")).not.toThrow();
+        expect(() => validateWhereClause("status = '日本語'")).not.toThrow();
+      });
+    });
   });
 
   describe("sanitizeWhereClause", () => {
