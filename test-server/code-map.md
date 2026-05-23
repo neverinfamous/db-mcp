@@ -15,7 +15,10 @@ src/
 ├── version.ts                      # SSoT version constant (reads package.json)
 │
 ├── server/
-│   └── mcp-server.ts               # McpServer setup, adapter registration, tool/resource/prompt wiring
+│   ├── mcp-server.ts               # McpServer setup, adapter registration, tool/resource/prompt wiring
+│   ├── built-in-tools.ts           # Registration logic for server_info, server_health, list_adapters
+│   ├── help-resources.ts           # Registration logic for sqlite://help resources
+│   └── audit-tools.ts              # Registration logic for audit tools (requires --audit-backup flag)
 │
 ├── types/                          # Core TypeScript types (barrel: types/index.ts)
 │   ├── adapter.ts                  # ToolDefinition, ResourceDefinition, PromptDefinition, AdapterCapabilities

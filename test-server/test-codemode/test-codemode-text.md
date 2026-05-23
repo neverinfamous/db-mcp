@@ -254,6 +254,13 @@ Expected: `beforeCount: > 0`, `afterCount: > 0` — validates that `ftsCreate` a
 🔴 49. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 50. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
 
+
+## Phase 6: Wrong-Type Numeric Coercion
+
+🔴 51. `sqlite.text.fuzzyMatch({table: "test_users", column: "username", searchTerm: "test", maxDistance: "abc"})` → handler error, NOT raw MCP `-32602`
+🔴 52. `sqlite.text.substring({table: "test_users", column: "username", start: "abc", length: 5})` → handler error, NOT raw MCP
+🔴 53. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", limit: "abc"})` `[NATIVE ONLY]` → handler error, NOT raw MCP
+
 ---
 
 ## Post-Test Procedures

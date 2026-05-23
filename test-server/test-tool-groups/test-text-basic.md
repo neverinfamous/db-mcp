@@ -106,7 +106,35 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **Code mode testing:**
 
-12. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\\\.com
+12. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\\\.com$'}); return result;"})` → returns matching rows via Code Mode bridge
+
+## Phase 2: Domain Errors (batched)
+
+🔴 13. `sqlite_regex_match({table: "nonexistent_xyz", column: "name", pattern: "test"})` → `{success: false}` — structured error mentioning table name
+🔴 14. `sqlite_regex_extract({table: "nonexistent_xyz", column: "name", pattern: "(.*)", groupIndex: 0})` → `{success: false}`
+🔴 15. `sqlite_text_split({table: "nonexistent_xyz", column: "name", delimiter: ","})` → `{success: false}`
+🔴 16. `sqlite_text_concat({table: "nonexistent_xyz", columns: ["a", "b"]})` → `{success: false}`
+🔴 17. `sqlite_text_replace({table: "nonexistent_xyz", column: "name", searchPattern: "a", replaceWith: "b"})` → `{success: false}`
+🔴 18. `sqlite_text_trim({table: "nonexistent_xyz", column: "name"})` → `{success: false}`
+🔴 19. `sqlite_text_case({table: "nonexistent_xyz", column: "name", mode: "upper"})` → `{success: false}`
+🔴 20. `sqlite_text_substring({table: "nonexistent_xyz", column: "name", start: 1, length: 5})` → `{success: false}`
+🔴 21. `sqlite_text_validate({table: "nonexistent_xyz", column: "name", pattern: "email"})` → `{success: false}`
+🔴 22. `sqlite_text_normalize({table: "nonexistent_xyz", column: "name", mode: "strip_accents"})` → `{success: false}`
+
+## Phase 3: Zod Validation Sweep
+
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 23. `sqlite_regex_extract({})` → handler error
+🔴 24. `sqlite_regex_match({})` → handler error
+🔴 25. `sqlite_text_split({})` → handler error
+🔴 26. `sqlite_text_concat({})` → handler error
+🔴 27. `sqlite_text_replace({})` → handler error
+🔴 28. `sqlite_text_trim({})` → handler error
+🔴 29. `sqlite_text_case({})` → handler error
+🔴 30. `sqlite_text_substring({})` → handler error
+🔴 31. `sqlite_text_validate({})` → handler error
+🔴 32. `sqlite_text_normalize({})` → handler error
 
 ---
 

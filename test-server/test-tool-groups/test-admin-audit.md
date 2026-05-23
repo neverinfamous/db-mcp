@@ -86,16 +86,16 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: Core Check (batched)
 
-1. `sqlite_core_execute({query: "CREATE TABLE temp_audit_test (id INTEGER PRIMARY KEY)"})` → This will trigger an automatic schema backup if the server is run with `--audit-backup`. Wait for it to complete.
+1. `sqlite_write_query({query: "CREATE TABLE temp_audit_test (id INTEGER PRIMARY KEY)"})` → This will trigger an automatic schema backup if the server is run with `--audit-backup`. Wait for it to complete.
 2. `sqlite_audit_list_backups({})` → Verify the resulting list of backups contains at least one snapshot filename (e.g., `..._temp_audit_test.snapshot.json.gz`). Note the filename.
 3. `sqlite_audit_get_backup({filename: "<filename_from_step_2>"})` → Retrieve the backup. Verify it contains `schema` and `timestamp`.
 4. `sqlite_audit_diff_backup({filename: "<filename_from_step_2>"})` → Compare the backup to the current live schema. Should show no differences or minimal differences since we just made it.
-5. `sqlite_core_execute({query: "DROP TABLE temp_audit_test"})` → Drop the table to change the live schema.
+5. `sqlite_write_query({query: "DROP TABLE temp_audit_test"})` → Drop the table to change the live schema.
 6. `sqlite_audit_diff_backup({filename: "<filename_from_step_2>"})` → Compare again. Should now show `temp_audit_test` as deleted or missing.
 7. `sqlite_audit_restore_backup({filename: "<filename_from_step_2>", dryRun: true})` → Dry run a restore. Verify the preview shows `temp_audit_test` will be recreated.
 8. `sqlite_audit_restore_backup({filename: "<filename_from_step_2>", dryRun: false})` → Actually restore the backup.
-9. `sqlite_core_describe_table({table: "temp_audit_test"})` → Verify the table exists again.
-10. `sqlite_core_execute({query: "DROP TABLE temp_audit_test"})` → Cleanup.
+9. `sqlite_describe_table({table: "temp_audit_test"})` → Verify the table exists again.
+10. `sqlite_write_query({query: "DROP TABLE temp_audit_test"})` → Cleanup.
 11. `sqlite_audit_cleanup({})` → Enforce retention policy (should succeed and report removed count).
 
 **Code mode testing:**

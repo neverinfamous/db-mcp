@@ -242,7 +242,7 @@ Expected: Table does NOT exist.
 
 ## Phase 6: Multi-Step Workflow
 
-### 7.1 — Full migration lifecycle
+### 6.1 — Full migration lifecycle
 
 ```javascript
 const failures = [];
@@ -287,12 +287,17 @@ return {
 
 ## Phase 7: Zod Validation Sweep
 
-🔴 6.1. `sqlite.migration.migrationInit({})` → success (no required params)
-🔴 6.2. `sqlite.migration.migrationRecord({})` → `{success: false}` (missing required params)
-🔴 6.3. `sqlite.migration.migrationApply({})` → `{success: false}` (missing required params)
-🔴 6.4. `sqlite.migration.migrationRollback({})` → `{success: false}` (missing `version`)
-🔴 6.5. `sqlite.migration.migrationHistory({})` → success (no required params)
-🔴 6.6. `sqlite.migration.migrationStatus({})` → success (no required params)
+🔴 7.1. `sqlite.migration.migrationInit({})` → success (no required params)
+🔴 7.2. `sqlite.migration.migrationRecord({})` → `{success: false}` (missing required params)
+🔴 7.3. `sqlite.migration.migrationApply({})` → `{success: false}` (missing required params)
+🔴 7.4. `sqlite.migration.migrationRollback({})` → `{success: false}` (missing `version`)
+🔴 7.5. `sqlite.migration.migrationHistory({})` → success (no required params)
+🔴 7.6. `sqlite.migration.migrationStatus({})` → success (no required params)
+
+
+## Phase 8: Wrong-Type Numeric Coercion
+
+🔴 8.1. `sqlite.migration.migrationHistory({limit: "abc"})` → handler error, NOT raw MCP `-32602`
 
 ---
 

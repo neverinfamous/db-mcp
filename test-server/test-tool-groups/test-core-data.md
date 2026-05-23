@@ -115,20 +115,28 @@ All tools should return errors as structured objects instead of throwing. The ex
 **Error path testing:**
 
 🔴 16. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 17. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
+🔴 18. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
+🔴 19. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
+🔴 20. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 21. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 22. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 23. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
+🔴 24. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
 
-## Phase 2: Zod Validation Sweep
+## Phase 3: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 17. `sqlite_read_query({})` → handler error
-🔴 18. `sqlite_write_query({})` → handler error
-🔴 19. `sqlite_upsert({})` → handler error
-🔴 20. `sqlite_batch_insert({})` → handler error
-🔴 21. `sqlite_count({})` → handler error
-🔴 22. `sqlite_exists({})` → handler error
-🔴 23. `sqlite_truncate({})` → handler error
-🔴 24. `sqlite_date_add({})` → handler error
-🔴 25. `sqlite_date_diff({})` → handler error
+🔴 25. `sqlite_read_query({})` → handler error
+🔴 26. `sqlite_write_query({})` → handler error
+🔴 27. `sqlite_upsert({})` → handler error
+🔴 28. `sqlite_batch_insert({})` → handler error
+🔴 29. `sqlite_count({})` → handler error
+🔴 30. `sqlite_exists({})` → handler error
+🔴 31. `sqlite_truncate({})` → handler error
+🔴 32. `sqlite_date_add({})` → handler error
+🔴 33. `sqlite_date_diff({})` → handler error
 
 ---
 

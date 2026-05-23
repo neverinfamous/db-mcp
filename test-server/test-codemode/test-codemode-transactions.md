@@ -202,7 +202,7 @@ Expected: `{success: false}` — structured error.
 
 ## Phase 4: Multi-Step Workflow
 
-### 5.1 — Transactional write with verification
+### 4.1 — Transactional write with verification
 
 ```javascript
 const failures = [];
@@ -228,7 +228,7 @@ await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_txn");
 return { failures, success: failures.length === 0 };
 ```
 
-### 5.2 — Status + execute cross-check
+### 4.2 — Status + execute cross-check
 
 ```javascript
 const before = await sqlite.transactions.status();
@@ -244,14 +244,14 @@ Expected: `before.active === false`, `after.active === false` (execute is self-c
 
 ## Phase 5: Zod Validation Sweep
 
-🔴 4.1. `sqlite.transactions.begin({})` → success or handler error (no required params)
-🔴 4.2. `sqlite.transactions.status({})` → success or handler error (no required params)
-🔴 4.3. `sqlite.transactions.commit({})` → success or handler error (no required params)
-🔴 4.4. `sqlite.transactions.rollback({})` → success or handler error (no required params)
-🔴 4.5. `sqlite.transactions.execute({})` → `{success: false}` (missing `statements`)
-🔴 4.6. `sqlite.transactions.savepoint({})` → `{success: false}` (missing `name`)
-🔴 4.7. `sqlite.transactions.release({})` → `{success: false}` (missing `name`)
-🔴 4.8. `sqlite.transactions.rollbackTo({})` → `{success: false}` (missing `name`)
+🔴 5.1. `sqlite.transactions.begin({})` → success or handler error (no required params)
+🔴 5.2. `sqlite.transactions.status({})` → success or handler error (no required params)
+🔴 5.3. `sqlite.transactions.commit({})` → success or handler error (no required params)
+🔴 5.4. `sqlite.transactions.rollback({})` → success or handler error (no required params)
+🔴 5.5. `sqlite.transactions.execute({})` → `{success: false}` (missing `statements`)
+🔴 5.6. `sqlite.transactions.savepoint({})` → `{success: false}` (missing `name`)
+🔴 5.7. `sqlite.transactions.release({})` → `{success: false}` (missing `name`)
+🔴 5.8. `sqlite.transactions.rollbackTo({})` → `{success: false}` (missing `name`)
 
 ---
 

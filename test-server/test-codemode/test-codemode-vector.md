@@ -116,7 +116,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 14. `sqlite.vector.search({table: "temp_cm_vector", vectorColumn: "vector", queryVector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], metric: "cosine", limit: 2})` → row 1 first
 15. `sqlite.vector.delete({table: "temp_cm_vector", idColumn: "id", ids: [1]})` → success
 16. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 2}`
-17. Cleanup: `sqlite.core.dropTable({tableName: "temp_cm_vector"})`
+17. Cleanup: `sqlite.core.dropTable({table: "temp_cm_vector"})`
 
 
 ## Phase 3: Vector Domain Errors (batched)
@@ -128,7 +128,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 4: Multi-Step Workflow
 
-### 5.1 — Similarity search pipeline
+### 4.1 — Similarity search pipeline
 
 ```javascript
 const failures = [];
@@ -172,7 +172,7 @@ return {
 };
 ```
 
-### 5.2 — Create → populate → search → teardown
+### 4.2 — Create → populate → search → teardown
 
 ```javascript
 const failures = [];
@@ -198,12 +198,12 @@ const results = await sqlite.vector.search({
   limit: 3,
 });
 if (results.rows[0].id !== 1) failures.push("expected row 1 as closest match");
-await sqlite.core.dropTable({ tableName: "temp_cm_vec_pipe" });
+await sqlite.core.dropTable({ table: "temp_cm_vec_pipe" });
 return { failures, success: failures.length === 0 };
 ```
 
 
-### 5.3 — Vector + JSON cross-group
+### 4.3 — Vector + JSON cross-group
 
 ```javascript
 const failures = [];
@@ -242,7 +242,7 @@ const meta = await sqlite.json.extract({
 });
 if (!meta || meta.success === false)
   failures.push("JSON extract from vector table failed");
-await sqlite.core.dropTable({ tableName: "temp_cm_vec_json" });
+await sqlite.core.dropTable({ table: "temp_cm_vec_json" });
 return {
   failures,
   success: failures.length === 0,
@@ -265,6 +265,11 @@ return {
 🔴 29. `sqlite.vector.dimensions({})` → `{success: false}`
 🔴 30. `sqlite.vector.normalize({})` → `{success: false}`
 🔴 31. `sqlite.vector.distance({})` → `{success: false}`
+
+
+## Phase 6: Wrong-Type Numeric Coercion
+
+🔴 32. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.1, 0.2, 0.3], metric: "cosine", limit: "abc"})` → handler error, NOT raw MCP `-32602`
 
 ---
 

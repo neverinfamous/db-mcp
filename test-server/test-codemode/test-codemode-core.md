@@ -99,7 +99,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.core.listConstraints`
 - `sqlite.core.dropTrigger`
 - `sqlite.core.alterTable`
-- `sqlite.introspection.schemaSnapshot`
+
+> **Cross-group dependency**: Phase 3 workflow 4.4 uses `sqlite.introspection.schemaSnapshot` for schema verification.
 
 ## Phase 1: Core Group — Happy Paths (batched)
 
@@ -333,6 +334,13 @@ return { failures, success: failures.length === 0 };
 🔴 88. `sqlite.core.alterTable({})` → `{success: false}` handler error
 🔴 89. `sqlite.core.createTrigger({})` → `{success: false}` handler error
 🔴 90. `sqlite.core.dropTrigger({})` → `{success: false}` handler error
+
+## Phase 5: Wrong-Type Numeric Coercion
+
+🔴 91. `sqlite.core.count({table: "test_products", limit: "abc"})` → coerced or handler error, NOT raw MCP `-32602`
+🔴 92. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error, NOT raw MCP
+🔴 93. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", limit: "abc"})` → handler error, NOT raw MCP
+🔴 94. `sqlite.core.readQuery({query: "SELECT * FROM test_products", limit: "abc"})` → handler error, NOT raw MCP
 
 ---
 

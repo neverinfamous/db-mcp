@@ -201,6 +201,18 @@ Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 | `sqlite_reindex` | `sqlite.admin.reindex` | Rebuild indexes targeting a specific index, table, or the entire database. |
 | `sqlite_wal` | `sqlite.admin.wal` | WAL mode management: check status, enable/disable WAL mode, or run checkpoints with configurable modes. |
 
+### Server Audit Tools `[Requires --audit-backup]`
+
+> These tools are only available when the server is started with the `--audit-backup` flag. They are not exposed in Code Mode.
+
+| MCP Tool Name | Code Mode Name | Description |
+| :--- | :--- | :--- |
+| `sqlite_audit_list_backups` | — | List all available schema audit snapshots. |
+| `sqlite_audit_get_backup` | — | Retrieve the contents of a specific audit snapshot by filename. |
+| `sqlite_audit_diff_backup` | — | Compare an audit snapshot against the live database schema. |
+| `sqlite_audit_restore_backup` | — | Restore schema from an audit snapshot with dry-run support. |
+| `sqlite_audit_cleanup` | — | Enforce retention policy and remove expired audit snapshots. |
+
 ---
 
 ## transactions (8 Native tools + Code Mode)

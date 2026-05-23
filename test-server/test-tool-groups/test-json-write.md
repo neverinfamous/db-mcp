@@ -76,35 +76,48 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (15)
+### Group Tools (7)
 
 - `sqlite_create_json_collection`
+- `sqlite_json_insert`
 - `sqlite_json_set`
 - `sqlite_json_update`
-- `sqlite_json_insert`
 - `sqlite_json_remove`
 - `sqlite_json_array_append`
 - `sqlite_json_merge`
-- `sqlite_create_json_collection({tableName: "temp_json_test"}) → creates table with JSON columns (the default column name is 'data')`
-- `sqlite_json_insert({table: "temp_json_test", column: "data", data: {"key": "val"}}) → insert new row with JSON data`
-- `sqlite_json_set({table: "temp_json_test", column: "data", path: "$.key", value: "new_val", whereClause: "1=1"}) → modify a JSON value`
-- `sqlite_json_update({table: "temp_json_test", column: "data", path: "$.key", value: "updated_val", whereClause: "1=1"}) → update an existing key's value (distinct from json_set: update requires key to exist)`
-- `sqlite_json_merge({table: "temp_json_test", column: "data", mergeData: {"new_key": true}, whereClause: "1=1"}) → merge a JSON object`
-- `sqlite_json_array_append({table: "temp_json_test", column: "data", path: "$.arr", value: "item", whereClause: "1=1"}) → add to array (may need to set an empty array first if path $.arr doesn't exist)`
-- `sqlite_json_remove({table: "temp_json_test", column: "data", path: "$.key", whereClause: "1=1"}) → remove a key`
-- `Clean up: DROP TABLE temp_json_test`
 
-## Phase 1: Zod Validation Sweep
+## Phase 1: Core Check (sequential — lifecycle)
+
+1. `sqlite_create_json_collection({tableName: "temp_json_test"})` → creates table with JSON `data` column
+2. `sqlite_json_insert({table: "temp_json_test", column: "data", data: {"key": "val", "arr": [1, 2]}})` → success, row inserted
+3. `sqlite_json_set({table: "temp_json_test", column: "data", path: "$.key", value: "new_val", whereClause: "1=1"})` → `rowsAffected: 1`
+4. `sqlite_json_update({table: "temp_json_test", column: "data", path: "$.key", value: "updated_val", whereClause: "1=1"})` → `rowsAffected: 1` (update requires key to exist)
+5. `sqlite_json_merge({table: "temp_json_test", column: "data", mergeData: {"new_key": true}, whereClause: "1=1"})` → `rowsAffected: 1`
+6. `sqlite_json_array_append({table: "temp_json_test", column: "data", path: "$.arr", value: 3, whereClause: "1=1"})` → `rowsAffected: 1` (arr becomes [1,2,3])
+7. `sqlite_json_remove({table: "temp_json_test", column: "data", path: "$.new_key", whereClause: "1=1"})` → `rowsAffected: 1`
+8. `sqlite_drop_table({table: "temp_json_test"})` → cleanup
+
+## Phase 2: Domain Errors (batched)
+
+🔴 9. `sqlite_json_insert({table: "nonexistent_xyz", column: "data", data: {"k": "v"}})` → `{success: false}` — structured error
+🔴 10. `sqlite_json_set({table: "nonexistent_xyz", column: "data", path: "$.k", value: "v", whereClause: "1=1"})` → `{success: false}`
+🔴 11. `sqlite_json_update({table: "nonexistent_xyz", column: "data", path: "$.k", value: "v", whereClause: "1=1"})` → `{success: false}`
+🔴 12. `sqlite_json_remove({table: "nonexistent_xyz", column: "data", path: "$.k", whereClause: "1=1"})` → `{success: false}`
+🔴 13. `sqlite_json_merge({table: "nonexistent_xyz", column: "data", mergeData: {"k": true}, whereClause: "1=1"})` → `{success: false}`
+🔴 14. `sqlite_json_array_append({table: "nonexistent_xyz", column: "data", path: "$.arr", value: 1, whereClause: "1=1"})` → `{success: false}`
+🔴 15. `sqlite_create_json_collection({tableName: "test_products"})` → `{success: false}` — table already exists
+
+## Phase 3: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 1. `sqlite_create_json_collection({})` → handler error
-🔴 2. `sqlite_json_set({})` → handler error
-🔴 3. `sqlite_json_update({})` → handler error
-🔴 4. `sqlite_json_insert({})` → handler error
-🔴 5. `sqlite_json_remove({})` → handler error
-🔴 6. `sqlite_json_array_append({})` → handler error
-🔴 7. `sqlite_json_merge({})` → handler error
+🔴 16. `sqlite_create_json_collection({})` → handler error
+🔴 17. `sqlite_json_set({})` → handler error
+🔴 18. `sqlite_json_update({})` → handler error
+🔴 19. `sqlite_json_insert({})` → handler error
+🔴 20. `sqlite_json_remove({})` → handler error
+🔴 21. `sqlite_json_array_append({})` → handler error
+🔴 22. `sqlite_json_merge({})` → handler error
 
 ---
 

@@ -260,6 +260,13 @@ Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`)
 🔴 63. `sqlite.json.securityScan({})` → `{success: false}`
 🔴 64. `sqlite.json.diff({})` → `{success: false}` handler error
 
+
+## Phase 7: Wrong-Type Numeric Coercion
+
+🔴 65. `sqlite.json.each({table: "test_json_data", column: "data", limit: "abc"})` → handler error, NOT raw MCP `-32602`
+🔴 66. `sqlite.json.select({table: "test_json_data", column: "data", limit: "abc"})` → handler error, NOT raw MCP
+🔴 67. `sqlite.json.query({table: "test_json_data", column: "data", limit: "abc"})` → handler error, NOT raw MCP
+
 ---
 
 ## Post-Test Procedures

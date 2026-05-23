@@ -346,7 +346,7 @@ return {
 
 ## Phase 8: Multi-Step WASM Workflow
 
-### 9.1 — WASM capability audit pipeline
+### 8.1 — WASM capability audit pipeline
 
 ```javascript
 const failures = [];

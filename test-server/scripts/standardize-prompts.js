@@ -22,11 +22,14 @@ if (!fs.existsSync(templatePath)) {
 const templateStr = fs.readFileSync(templatePath, 'utf-8');
 
 const getTemplate = (titleType, groupName, schemaRef, testContent) => {
+  // Use replacer functions (not string literals) to prevent $-substitution.
+  // String.prototype.replace() interprets $&, $', $`, $n in string replacements.
+  // Test content may contain $ (e.g. regex patterns like `@gmail\\.com$`).
   return templateStr
-    .replace('{{TITLE_TYPE}}', titleType)
-    .replace('{{GROUP_NAME}}', groupName)
-    .replace('{{SCHEMA_REF}}', schemaRef.trim())
-    .replace('{{TEST_CONTENT}}', testContent.trim());
+    .replace('{{TITLE_TYPE}}', () => titleType)
+    .replace('{{GROUP_NAME}}', () => groupName)
+    .replace('{{SCHEMA_REF}}', () => schemaRef.trim())
+    .replace('{{TEST_CONTENT}}', () => testContent.trim());
 };
 
 function processDirectory(dirName) {
@@ -72,16 +75,48 @@ function processDirectory(dirName) {
       }
     }
 
-    // Extract the actual tests. It's bounded between '---' and '---' or '## Post-Test Procedures'
-    // Specifically, we look for '## Naming & Cleanup\n...\n---' and extract everything after until '---' and '## Post-Test Procedures'
-    const testContentRegex = /## Naming & Cleanup[\s\S]*?---\s*([\s\S]*?)(?:---\s*)?## Post-Test Procedures/;
-    const testMatch = content.match(testContentRegex);
-    
-    if (!testMatch) {
-      console.warn(`Could not extract test content for ${file}`);
+    // Extract the actual tests using line-based boundary detection.
+    // The test content lives between two `---` separators:
+    //   1. The `---` immediately after "## Naming & Cleanup" (start boundary)
+    //   2. The `---` immediately before "## Post-Test Procedures" (end boundary)
+    // We scan lines instead of using a single regex to avoid fragility with
+    // special characters in test content (backslashes, $, etc.).
+    const lines = content.split('\n');
+    const namingIdx = lines.findIndex(l => l.startsWith('## Naming & Cleanup'));
+    const postTestIdx = lines.findIndex(l => l.startsWith('## Post-Test Procedures'));
+
+    if (namingIdx === -1 || postTestIdx === -1) {
+      console.warn(`Could not find section boundaries in ${file}`);
       continue;
     }
-    const testContent = testMatch[1];
+
+    // Find the first `---` after "## Naming & Cleanup" (start boundary)
+    let startSepIdx = -1;
+    for (let i = namingIdx + 1; i < postTestIdx; i++) {
+      if (lines[i].trim() === '---') { startSepIdx = i; break; }
+    }
+
+    // Find the last `---` before "## Post-Test Procedures" (end boundary)
+    let endSepIdx = -1;
+    for (let i = postTestIdx - 1; i > namingIdx; i--) {
+      if (lines[i].trim() === '---') { endSepIdx = i; break; }
+    }
+
+    if (startSepIdx === -1) {
+      console.warn(`Could not find start separator after Naming & Cleanup in ${file}`);
+      continue;
+    }
+
+    // If start and end separators are the same line, there's no test content
+    if (startSepIdx === endSepIdx) {
+      console.warn(`No test content found between separators in ${file}`);
+      continue;
+    }
+
+    // Extract content between the two separators (exclusive of the --- lines)
+    // If endSepIdx is -1 (no end separator), take everything up to Post-Test
+    const contentEndIdx = endSepIdx !== -1 ? endSepIdx : postTestIdx;
+    const testContent = lines.slice(startSepIdx + 1, contentEndIdx).join('\n');
 
     const newContent = getTemplate(titleType, groupName, schemaRef, testContent);
     fs.writeFileSync(filePath, newContent, 'utf-8');

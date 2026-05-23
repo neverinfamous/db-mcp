@@ -142,7 +142,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 15. `sqlite.admin.generateSeries({start: 1, stop: 5, step: 1})` → 5 values
 16. `sqlite.admin.createRtreeTable({tableName: "temp_cm_rtree", dimensions: 2})` → R-Tree created
 17. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series", start: 1, stop: 10})` → regular table with 10 rows
-18. Cleanup: drop `temp_cm_rtree` (virtual) and `temp_cm_series` (regular)
+18. `sqlite.admin.dropVirtualTable({tableName: "temp_cm_rtree"})` → success (virtual table dropped)
+19. Cleanup: drop `temp_cm_series` (regular)
 
 
 ## Phase 4: Backup/Restore (batched)
@@ -191,10 +192,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > Use absolute paths where required
 
-37. `sqlite.admin.attachDatabase({filepath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`.
+37. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db", alias: "temp_attached"})` → Depends on backup file existing from Phase 4. If not present, note dependency. Expect structured success with `alias` and `filepath`.
 38. `sqlite.admin.pragmaDatabaseList()` → verify `temp_attached` appears in attached databases list
 39. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
-40. `sqlite.admin.vacuumInto({outputPath: "C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
+40. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
 
 
 ## Phase 10: Admin Domain Errors (batched)
@@ -223,7 +224,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 12: Multi-Step Workflow
 
-### 11.1 — Database health check pipeline
+### 12.1 — Database health check pipeline
 
 ```javascript
 const failures = [];
@@ -250,7 +251,7 @@ return {
 };
 ```
 
-### 10.2 — View lifecycle
+### 12.2 — View lifecycle
 
 ```javascript
 const failures = [];
@@ -290,6 +291,12 @@ return { failures, success: failures.length === 0 };
 🔴 76. `sqlite.admin.dump({})` → `{success: false}` handler error
 🔴 77. `sqlite.admin.reindex({})` → success (target is optional — reindexes entire database)
 🔴 78. `sqlite.admin.wal({})` → `{success: false}` handler error (action is required)
+
+
+## Phase 14: Wrong-Type Numeric Coercion
+
+🔴 79. `sqlite.admin.generateSeries({start: "abc", stop: 5, step: 1})` → handler error, NOT raw MCP `-32602`
+🔴 80. `sqlite.admin.createSeriesTable({tableName: "temp_cm_coerce", start: "abc", stop: 5})` → handler error, NOT raw MCP
 
 ---
 

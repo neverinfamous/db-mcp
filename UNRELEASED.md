@@ -44,9 +44,24 @@
 - Extracted the testing prompt boilerplate into a dedicated `test-server/prompt-template.md` file to simplify future rule changes without editing Javascript template strings.
 - Fixed the `test-server/standardize-prompts.js` script to correctly assign the "Code Mode Testing" title to files in the `test-codemode` directory and use dynamic pathing to run from any directory.
 - Updated the testing boilerplate to loosen upgrade restrictions, mandating proactive functionality, performance, and efficiency improvements while enforcing strict architectural consistency.
+- Added 5 server audit tools (`sqlite_audit_list_backups`, `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, `sqlite_audit_restore_backup`, `sqlite_audit_cleanup`) to `tool-reference.md` with `[Requires --audit-backup]` annotation.
+- Added `server/` sub-module entries (`built-in-tools.ts`, `help-resources.ts`, `audit-tools.ts`) to `code-map.md` directory tree.
+- Added domain error and Zod validation sweep phases to `test-text-basic.md` (was missing all error path tests), `test-json-write.md` (was missing happy-path and domain error phases), and `test-introspection-diagnostics.md` (was missing happy-path and domain error phases).
+- Expanded domain error coverage in `test-core-data.md` from 1 tool to all 9 group tools.
+- Added wrong-type numeric coercion phases to 7 codemode prompt files (`core`, `json`, `text`, `vector`, `admin`, `migration`, `introspection` was skipped — no numeric params).
+- Added explicit `dropVirtualTable` happy-path test in `test-codemode-admin.md` Phase 3.
+- Fixed phase↔subsection number mismatches in 5 codemode prompts (`admin`, `vector`, `migration`, `transactions`, `wasm-degradation`).
 
 ### Fixed
 
+- Fixed non-existent tool names in `test-admin-audit.md`: `sqlite_core_execute` → `sqlite_write_query`, `sqlite_core_describe_table` → `sqlite_describe_table`.
+- Fixed wrong parameter name in `test-codemode-vector.md`: `dropTable({tableName:` → `dropTable({table:` (3 occurrences).
+- Fixed quadruple-escaped backslashes in `test-codemode-admin.md` items 37 and 40 for `attachDatabase` and `vacuumInto` paths.
+- Fixed truncated Code Mode test item 12 in `test-text-basic.md`.
+- Fixed stale directory reference in `test-advanced/README.md`: `test-tool-groups-codemode` → `test-codemode`.
+- Fixed incorrect tool count in `test-json-write.md` (listed 15 tools, actual group has 7).
+- Moved cross-group `sqlite.introspection.schemaSnapshot` from core methods list to a dependency note in `test-codemode-core.md`.
+- Fixed `standardize-prompts.js` corrupting test files containing `$` characters (e.g. `@gmail\\.com$` regex patterns). Root cause: `String.prototype.replace()` interprets `$'` as a substitution pattern. Replaced string replacements with function replacements. Also replaced the fragile regex-based test content extractor with a deterministic line-based boundary scanner.
 - Corrected outdated npm dependency patch versions in `SECURITY.md` to align with `Dockerfile` and `package.json` overrides.
 - Allowed `CREATE TRIGGER` and `DROP TRIGGER` DDL statements in `sqlite_write_query` while maintaining strict DML validations.
 - Updated `sqlite_list_triggers` to query `sqlite_temp_master` in addition to `sqlite_master` so triggers on temporary tables are listed.
