@@ -247,7 +247,7 @@ return {
 };
 ```
 
-Expected: All values are `"undefined"`. The 3 built-in tools (`server_info`, `server_health`, `list_adapters`) are always-on MCP tools available outside Code Mode but must NOT be accessible in the `sqlite.*` sandbox namespace.
+Expected: All values are `"undefined"`. The 3 built-in tools (`server_info`, `server_health`, `list_adapters`) are always-on MCP tools available outside Code Mode but must NOT be accessible in the `sqlite.*` sandbox namespace — they are server-level tools not scoped to a specific database adapter.
 
 
 ## Phase 3: Security & Error Handling (7 tests)

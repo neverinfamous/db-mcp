@@ -108,36 +108,36 @@ All tools should return errors as structured objects instead of throwing. The ex
 10. `sqlite_count({table: "test_products"})` → `{count: 16}`
 11. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
 12. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
-13. `sqlite_drop_table({table: "temp_core_test2"})` → success
-14. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
-15. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
-16. `sqlite_write_query({query: "INSERT INTO temp_core_test2 (id, val) VALUES (99, 'returning_test') RETURNING *"})` → verify `rows` array contains the inserted row with `id: 99` (Note: First create `temp_core_test2` per item 7, then run this — the SQL RETURNING clause is passed through directly)
-17. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 100, val: "no_return"}], returning: false})` → verify `rowsAffected: 1` WITHOUT a `rows` array (negative test for returning parameter)
+13. `sqlite_write_query({query: "INSERT INTO temp_core_test2 (id, val) VALUES (99, 'returning_test') RETURNING *"})` → verify `rows` array contains the inserted row with `id: 99` (Note: SQL RETURNING clause passed through directly)
+14. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 100, val: "no_return"}], returning: false})` → verify `rowsAffected: 1` WITHOUT a `rows` array (negative test for returning parameter)
+15. `sqlite_drop_table({table: "temp_core_test2"})` → success
+16. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
+17. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
 
 **Error path testing:**
 
-🔴 16. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
-🔴 17. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
-🔴 18. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
-🔴 19. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
-🔴 20. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 21. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 22. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 23. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
-🔴 24. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
+🔴 18. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 19. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
+🔴 20. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
+🔴 21. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
+🔴 22. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 23. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 24. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 25. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
+🔴 26. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 25. `sqlite_read_query({})` → handler error
-🔴 26. `sqlite_write_query({})` → handler error
-🔴 27. `sqlite_upsert({})` → handler error
-🔴 28. `sqlite_batch_insert({})` → handler error
-🔴 29. `sqlite_count({})` → handler error
-🔴 30. `sqlite_exists({})` → handler error
-🔴 31. `sqlite_truncate({})` → handler error
-🔴 32. `sqlite_date_add({})` → handler error
+🔴 27. `sqlite_read_query({})` → handler error
+🔴 28. `sqlite_write_query({})` → handler error
+🔴 29. `sqlite_upsert({})` → handler error
+🔴 30. `sqlite_batch_insert({})` → handler error
+🔴 31. `sqlite_count({})` → handler error
+🔴 32. `sqlite_exists({})` → handler error
+🔴 33. `sqlite_truncate({})` → handler error
+🔴 34. `sqlite_date_add({})` → handler error
 🔴 35. `sqlite_date_diff({})` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion

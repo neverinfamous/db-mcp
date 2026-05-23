@@ -76,7 +76,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (13)
+### Group Tools (12) + Code Mode
 
 - `sqlite_list_tables`
 - `sqlite_describe_table`
@@ -90,6 +90,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_alter_table`
 - `sqlite_create_trigger`
 - `sqlite_drop_trigger`
+- *(Code Mode executor)*
 - `sqlite_execute_code`
 
 ## Phase 1: Read & Introspection (batched)

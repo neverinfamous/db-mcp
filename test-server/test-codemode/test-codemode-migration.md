@@ -231,6 +231,16 @@ return await sqlite.migration.migrationApply({
 
 Expected: Applied with rollback SQL stored.
 
+### 4.2b — Dry-run rollback (preview only)
+
+```javascript
+const preview = await sqlite.migration.migrationRollback({ version: "1.0.3", dryRun: true });
+const history = await sqlite.migration.migrationHistory();
+return { preview, historyStillContains103: history };
+```
+
+Expected: `preview` returns the rollback SQL that _would_ be executed without actually running it. Version 1.0.3 should still be present in migration history after the dry-run.
+
 ### 4.3 — Execute rollback
 
 ```javascript

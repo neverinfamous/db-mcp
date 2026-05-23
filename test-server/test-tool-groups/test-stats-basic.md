@@ -76,7 +76,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (18)
+### Group Tools (17) + Code Mode
 
 - `sqlite_stats_basic`
 - `sqlite_stats_count`
@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_stats_detect_bloat`
 - `sqlite_stats_detect_schema_risks`
 - `sqlite_stats_sample`
+- *(Code Mode executor)*
 - `sqlite_execute_code`
 
 ## Phase 1: Core Check (batched)

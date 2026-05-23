@@ -76,12 +76,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (5)
+### Group Tools (4) + Code Mode
 
 - `sqlite_geo_distance`
 - `sqlite_geo_nearby`
 - `sqlite_geo_bounding_box`
 - `sqlite_geo_cluster`
+- *(Code Mode executor)*
 - `sqlite_execute_code`
 
 ## Phase 1: Core Check (batched)

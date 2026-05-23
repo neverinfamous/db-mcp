@@ -96,7 +96,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.pragmaCompileOptions`
 - `sqlite.core.count`
 
-## Phase 1: API Surface Verification (3 tests)
+## Phase 1: API Surface Verification (5 tests)
 
 > Verify the Code Mode bridge correctly reflects the reduced WASM tool surface.
 

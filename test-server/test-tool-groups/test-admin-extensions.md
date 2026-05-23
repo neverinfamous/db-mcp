@@ -89,6 +89,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: Core Check (batched)
 
+> **WASM Note**: `sqlite_create_csv_table`, `sqlite_analyze_csv_schema`, and `sqlite_create_rtree_table` return structured `{success: false}` errors in WASM (CSV extension and R-Tree module unavailable). When testing WASM, treat these as negative validation — skip happy-path and test as domain errors instead.
+
 **Virtual Tables:**
 
 1. `sqlite_list_virtual_tables` → verify `test_articles_fts` present (Native)
@@ -107,25 +109,28 @@ All tools should return errors as structured objects instead of throwing. The ex
 **Error path testing:**
 
 🔴 10. `sqlite_virtual_table_info({tableName: "nonexistent_table_xyz"})` → structured error
+🔴 11. `sqlite_drop_virtual_table({tableName: "nonexistent_vtable_xyz"})` → `{success: false}`
+🔴 12. `sqlite_create_csv_table({tableName: "temp_csv_bad", filePath: "C:\\nonexistent\\path\\file.csv"})` → `{success: false}`
+🔴 13. `sqlite_create_rtree_table({tableName: "test_products", dimensions: 2})` → `{success: false}` (table already exists)
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 11. `sqlite_virtual_table_info({})` → handler error
-🔴 12. `sqlite_drop_virtual_table({})` → handler error
-🔴 13. `sqlite_create_csv_table({})` → handler error
-🔴 14. `sqlite_analyze_csv_schema({})` → handler error
-🔴 15. `sqlite_create_rtree_table({})` → handler error
-🔴 16. `sqlite_create_series_table({})` → handler error
-🔴 17. `sqlite_generate_series({})` → handler error
+🔴 14. `sqlite_virtual_table_info({})` → handler error
+🔴 15. `sqlite_drop_virtual_table({})` → handler error
+🔴 16. `sqlite_create_csv_table({})` → handler error
+🔴 17. `sqlite_analyze_csv_schema({})` → handler error
+🔴 18. `sqlite_create_rtree_table({})` → handler error
+🔴 19. `sqlite_create_series_table({})` → handler error
+🔴 20. `sqlite_generate_series({})` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 18. `sqlite_generate_series({start: "abc", stop: 5, step: 1})` → handler error
-🔴 19. `sqlite_create_series_table({tableName: "temp_coercion_test", start: 1, stop: "abc"})` → handler error
+🔴 21. `sqlite_generate_series({start: "abc", stop: 5, step: 1})` → handler error
+🔴 22. `sqlite_create_series_table({tableName: "temp_coercion_test", start: 1, stop: "abc"})` → handler error
 
 ---
 

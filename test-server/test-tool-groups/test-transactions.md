@@ -82,7 +82,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `server_health`
 - `list_adapters`
 
-### Group Tools (9)
+### Group Tools (8) + Code Mode
 
 - `sqlite_transaction_begin [NATIVE ONLY]`
 - `sqlite_transaction_status [NATIVE ONLY]`
@@ -92,6 +92,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_transaction_release [NATIVE ONLY]`
 - `sqlite_transaction_rollback_to [NATIVE ONLY]`
 - `sqlite_transaction_execute [NATIVE ONLY]`
+- *(Code Mode executor)*
 - `sqlite_execute_code`
 
 ## Phase 1: Full Lifecycle (batched)
@@ -107,29 +108,33 @@ All tools should return errors as structured objects instead of throwing. The ex
 9. `sqlite_transaction_release({name: "sp1"})` → success (released savepoints cannot be rolled back to)
 10. `sqlite_transaction_commit` → success
 11. `sqlite_transaction_execute({statements: ["SELECT 1 AS test", "SELECT 2 AS test2"]})` → success with 2 statements executed
+12. `sqlite_transaction_begin({mode: "immediate"})` → success (test IMMEDIATE mode)
+13. `sqlite_transaction_rollback` → rollback to clean up
+14. `sqlite_transaction_begin({mode: "exclusive"})` → success (test EXCLUSIVE mode)
+15. `sqlite_transaction_rollback` → rollback to clean up
 
 **Code mode testing:**
 
-12. `sqlite_execute_code({code: "const result = await sqlite.transactions.status(); return result;"})` → transaction status
-13. `sqlite_execute_code({code: "const result = await sqlite.transactions.execute({statements: ['SELECT 1 AS test']}); return result;"})` → success
+16. `sqlite_execute_code({code: "const result = await sqlite.transactions.status(); return result;"})` → transaction status
+17. `sqlite_execute_code({code: "const result = await sqlite.transactions.execute({statements: ['SELECT 1 AS test']}); return result;"})` → success
 
 **Error path testing:**
 
-🔴 14. `sqlite_transaction_execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → structured error with rollback info
-🔴 15. `sqlite_transaction_execute({statements: []})` → report behavior for empty array
+🔴 18. `sqlite_transaction_execute({statements: ["INSERT INTO nonexistent_table VALUES (1)"]})` → structured error with rollback info
+🔴 19. `sqlite_transaction_execute({statements: []})` → report behavior for empty array
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 16. `sqlite_transaction_begin({})` → handler error (or success if no required params)
-🔴 17. `sqlite_transaction_status({})` → handler error (or success if no required params)
-🔴 18. `sqlite_transaction_commit({})` → handler error (or success if no required params)
-🔴 19. `sqlite_transaction_rollback({})` → handler error (or success if no required params)
-🔴 20. `sqlite_transaction_execute({})` → handler error
-🔴 21. `sqlite_transaction_savepoint({})` → handler error
-🔴 22. `sqlite_transaction_release({})` → handler error
-🔴 23. `sqlite_transaction_rollback_to({})` → handler error
+🔴 20. `sqlite_transaction_begin({})` → handler error (or success if no required params)
+🔴 21. `sqlite_transaction_status({})` → handler error (or success if no required params)
+🔴 22. `sqlite_transaction_commit({})` → handler error (or success if no required params)
+🔴 23. `sqlite_transaction_rollback({})` → handler error (or success if no required params)
+🔴 24. `sqlite_transaction_execute({})` → handler error
+🔴 25. `sqlite_transaction_savepoint({})` → handler error
+🔴 26. `sqlite_transaction_release({})` → handler error
+🔴 27. `sqlite_transaction_rollback_to({})` → handler error
 
 ---
 

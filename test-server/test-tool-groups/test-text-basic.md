@@ -76,7 +76,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (11)
+### Group Tools (10) + Code Mode
 
 - `sqlite_regex_extract`
 - `sqlite_regex_match`
@@ -88,6 +88,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_text_substring`
 - `sqlite_text_validate`
 - `sqlite_text_normalize`
+- *(Code Mode executor)*
 - `sqlite_execute_code`
 
 ## Phase 1: Core Check (batched)

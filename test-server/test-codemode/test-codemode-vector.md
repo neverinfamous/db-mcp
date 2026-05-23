@@ -255,6 +255,20 @@ return {
 ```
 
 
+### 4.4 — Multi-metric distance comparison
+
+```javascript
+const v1 = [1, 0, 0];
+const v2 = [0, 1, 0];
+const cosine = await sqlite.vector.distance({ vector1: v1, vector2: v2, metric: "cosine" });
+const euclidean = await sqlite.vector.distance({ vector1: v1, vector2: v2, metric: "euclidean" });
+const dot = await sqlite.vector.distance({ vector1: v1, vector2: v2, metric: "dot" });
+return { cosine: cosine.distance, euclidean: euclidean.distance, dot: dot.distance };
+```
+
+Expected: Three distinct numeric values. For orthogonal unit vectors: cosine ≈ 1.0, euclidean ≈ 1.414, dot ≈ 0.0.
+
+
 ## Phase 5: Zod Validation Sweep
 
 🔴 21. `sqlite.vector.createTable({})` → `{success: false}`

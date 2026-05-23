@@ -76,7 +76,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (19)
+### Group Tools (18) + Code Mode
 
 - `sqlite_json_valid`
 - `sqlite_json_extract`
@@ -96,6 +96,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_json_analyze_schema`
 - `sqlite_json_security_scan`
 - `sqlite_json_diff`
+- *(Code Mode executor)*
 - `sqlite_execute_code`
 
 ## Phase 1: Core Check (batched)
