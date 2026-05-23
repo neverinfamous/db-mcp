@@ -41,6 +41,24 @@ export class AuthorizationServerDiscovery {
     this.cacheTtl = config.cacheTtl ?? 3600;
     this.timeout = config.timeout ?? 5000;
 
+    // F-5: Reject non-HTTPS discovery URLs in production to prevent MITM
+    if (
+      !this.authServerUrl.startsWith("https://") &&
+      process.env["NODE_ENV"] !== "development" &&
+      process.env["NODE_ENV"] !== "test"
+    ) {
+      const url = new URL(this.authServerUrl);
+      const isLocalDev =
+        url.hostname === "localhost" || url.hostname === "127.0.0.1";
+      if (!isLocalDev) {
+        throw new Error(
+          `Security: Authorization server URL must use HTTPS in production. ` +
+            `Got: ${this.authServerUrl}. ` +
+            `Set NODE_ENV=development to allow HTTP for local testing.`,
+        );
+      }
+    }
+
     logger.info(
       `Authorization Server Discovery initialized for: ${this.authServerUrl}`,
       { code: "AUTH_INIT" },
@@ -146,14 +164,17 @@ export class AuthorizationServerDiscovery {
     }
 
     // Validate issuer matches the expected URL
-    // Per RFC 8414, issuer MUST be identical to the authorization server URL
+    // Per RFC 8414 §3.3, issuer MUST be identical to the authorization server URL
+    // F-2: Fail closed on mismatch to prevent key set swapping via DNS spoofing
     const expectedIssuer = this.authServerUrl;
     if (metadata.issuer !== expectedIssuer) {
-      logger.warning(
-        `Issuer mismatch: expected ${expectedIssuer}, got ${metadata.issuer}`,
-        { code: "AUTH_ISSUER_MISMATCH" },
+      throw new DbMcpError(
+        `Issuer mismatch: expected '${expectedIssuer}', got '${metadata.issuer}'. ` +
+          `Per RFC 8414 §3.3, the issuer MUST be identical to the authorization server URL. ` +
+          `Set oauth.issuer explicitly if your auth server uses a different issuer identifier.`,
+        "AUTH_ISSUER_MISMATCH",
+        ErrorCategory.VALIDATION,
       );
-      // Note: This is a warning, not an error, as some auth servers may use different URLs
     }
   }
 

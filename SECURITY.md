@@ -9,7 +9,7 @@ The db-mcp SQLite MCP server implements comprehensive security measures to prote
 **Identifier Sanitization** (`src/utils/identifiers.ts`)
 
 - ✅ **Comprehensive coverage** — all table, column, and index names validated and quoted across every tool group (admin, core, json, stats, geo, introspection, migration, text, vector)
-- ✅ **SQLite identifier rules enforced** — start with letter/underscore, contain only alphanumerics, underscores, or $ signs
+- ✅ **SQLite identifier rules enforced** — start with letter/underscore, contain only alphanumerics and underscores
 - ✅ **Length limits** enforced for compatibility and safety
 - ✅ **Invalid identifiers** throw `InvalidIdentifierError`
 
@@ -73,7 +73,12 @@ Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isola
 
 > **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `worker_threads` provides a true V8 isolate boundary (separate heap, separate V8 instance), the `vm.createContext()` layer within it is namespace isolation, not a security sandbox. Defense-in-depth measures include V8-enforced `codeGeneration` restrictions (disabling `eval`/`Function` at the engine level), frozen built-in prototypes, 18 static regex rules, RPC allowlist validation, and blocked globals. Together these provide robust protection within the trusted AI agent threat model.
 >
-> **For untrusted input deployments:** Use process-level sandboxing such as running the container with `--cap-drop=ALL`, or replace `vm` with `isolated-vm` for additional V8 isolate-level separation within the worker.
+> **⚠️ Architectural Limitation:** If a `node:vm` context escape were to occur (e.g., via a zero-day V8 CVE), the attacker would land in the outer `worker_threads` realm which runs with the **same UID and process trust as the main server**. This means a successful sandbox escape results in full server compromise — access to the database, filesystem, and network. No known bypass exists given the current 4-layer defense (V8 `codeGeneration: false` + frozen prototypes + blocked patterns + RPC allowlist), but this is an inherent limitation of in-process isolation.
+>
+> **For untrusted input deployments:** Use process-level sandboxing:
+> 1. Run the container with `--cap-drop=ALL --security-opt=no-new-privileges` to limit post-compromise capabilities
+> 2. Consider replacing `vm` with `isolated-vm` for additional V8 isolate-level separation within the worker
+> 3. Apply Docker resource limits (`--memory`, `--cpus`) and read-only filesystem (`--read-only`) where possible
 
 ## 🌐 **HTTP Transport Security**
 

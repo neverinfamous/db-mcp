@@ -28,10 +28,12 @@ export class UnsafeWhereClauseError extends Error {
  */
 const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
   // Statement terminators and new statements
+  // Comprehensive keyword list including statements missed in earlier versions:
+  // REPLACE, VACUUM, ANALYZE, BEGIN, COMMIT, ROLLBACK, SAVEPOINT, RELEASE
   {
     pattern:
-      /;\s*(DROP|DELETE|TRUNCATE|INSERT|UPDATE|CREATE|ALTER|ATTACH|DETACH|SELECT)/i,
-    reason: "contains statement terminator followed by dangerous keyword",
+      /;\s*(DROP|DELETE|TRUNCATE|INSERT|UPDATE|CREATE|ALTER|ATTACH|DETACH|SELECT|REPLACE|VACUUM|ANALYZE|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE|REINDEX|EXPLAIN)\b/i,
+    reason: "contains statement terminator followed by SQL keyword",
   },
   // Trailing semicolons (potential statement injection)
   {
@@ -101,6 +103,12 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
   {
     pattern: /\bGROUP_CONCAT\s*\(/i,
     reason: "contains GROUP_CONCAT() (potential data exfiltration)",
+  },
+  // LIKE with leading wildcard — forces full table scans (DoS vector CWE-400)
+  {
+    pattern: /\bLIKE\s+['"]%/i,
+    reason:
+      "contains LIKE with leading wildcard (potential DoS via full table scan)",
   },
 ];
 

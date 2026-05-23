@@ -32,22 +32,55 @@ const logger = createModuleLogger("AUTH");
  * Validates OAuth 2.1 access tokens using JWKS for signature verification.
  */
 export class TokenValidator {
+  /** Default algorithms accepted when none are explicitly configured */
+  private static readonly DEFAULT_ALGORITHMS = [
+    "RS256",
+    "RS384",
+    "RS512",
+    "ES256",
+    "ES384",
+    "ES512",
+  ];
+
   /** Resolved configuration with all defaults applied */
   private readonly jwksUri: string;
   private readonly issuer: string;
   private readonly audience: string;
   private readonly clockTolerance: number;
   private readonly jwksCacheTtl: number;
+  private readonly algorithms: string[];
 
   private jwks: jose.JWTVerifyGetKey | null = null;
   private jwksExpiry = 0;
 
   constructor(config: TokenValidatorConfig) {
+    // F-5: Reject non-HTTPS JWKS URIs in production to prevent MITM
+    // Allow http:// only for development (localhost, NODE_ENV=development)
+    if (
+      config.jwksUri &&
+      !config.jwksUri.startsWith("https://") &&
+      process.env["NODE_ENV"] !== "development" &&
+      process.env["NODE_ENV"] !== "test"
+    ) {
+      const url = new URL(config.jwksUri);
+      const isLocalDev =
+        url.hostname === "localhost" || url.hostname === "127.0.0.1";
+      if (!isLocalDev) {
+        throw new Error(
+          `Security: JWKS URI must use HTTPS in production. ` +
+            `Got: ${config.jwksUri}. ` +
+            `Set NODE_ENV=development to allow HTTP for local testing.`,
+        );
+      }
+    }
+
     this.jwksUri = config.jwksUri;
     this.issuer = config.issuer;
     this.audience = config.audience;
     this.clockTolerance = config.clockTolerance ?? 60;
     this.jwksCacheTtl = config.jwksCacheTtl ?? 3600;
+    this.algorithms =
+      config.algorithms ?? TokenValidator.DEFAULT_ALGORITHMS;
 
     logger.info(`Token Validator initialized for issuer: ${this.issuer}`, {
       code: "AUTH_INIT",
@@ -66,10 +99,12 @@ export class TokenValidator {
       const jwks = this.getJwks();
 
       // Verify the token
+      // F-4: Pass configured algorithms to enforce operator-specified algorithm policy
       const { payload } = await jose.jwtVerify(token, jwks, {
         issuer: this.issuer,
         audience: this.audience,
         clockTolerance: this.clockTolerance,
+        algorithms: this.algorithms,
       });
 
       // Extract and normalize claims
@@ -196,6 +231,9 @@ export class TokenValidator {
     }
 
     if (error instanceof jose.errors.JWTClaimValidationFailed) {
+      // F-10: Use generic message to avoid echoing jose internals
+      // that could reveal expected issuer, audience, or clock tolerance.
+      // The original error.message is logged server-side for debugging.
       logger.warning(`Token claim validation failed: ${error.message}`, {
         code: ERROR_CODES.AUTH.TOKEN_INVALID.full,
         error,
@@ -203,7 +241,7 @@ export class TokenValidator {
 
       return {
         valid: false,
-        error: `Token claim validation failed: ${error.message}`,
+        error: "Token claim validation failed",
         errorCode: ERROR_CODES.AUTH.TOKEN_INVALID.full,
       };
     }

@@ -29,6 +29,19 @@ const logger = createModuleLogger("HTTP");
  * Warns if no auth is configured.
  */
 export function applyAuthMiddleware(state: HttpTransportState): void {
+  // F-6: Warn when CORS wildcard is combined with auth — risky browser posture
+  const corsOrigins = state.config.corsOrigins ?? [];
+  const hasAuth =
+    state.config.oauth.enabled || Boolean(state.config.authToken);
+  if (corsOrigins.includes("*") && hasAuth) {
+    logger.warning(
+      "CORS is configured with wildcard origin ('*') while authentication is enabled. " +
+        "This allows any website to send authenticated requests via browser fetch(). " +
+        "Configure explicit origins via --cors-origins for production deployments.",
+      { code: "AUTH_CORS_WILDCARD" },
+    );
+  }
+
   if (
     state.config.oauth.enabled &&
     state.tokenValidator &&
@@ -247,7 +260,8 @@ export async function setupOAuth(
 
     logger.info("OAuth 2.1 setup complete", { code: "HTTP_OAUTH_READY" });
   } catch (error) {
-    // If discovery fails, we can still start without OAuth validation
+    // F-2: If discovery fails, only proceed if explicit JWKS URI is provided.
+    // Never silently accept mismatched metadata — fail closed.
     logger.warning(
       "Authorization server discovery failed. OAuth validation disabled.",
       {
@@ -264,6 +278,10 @@ export async function setupOAuth(
       throw error;
     }
 
+    // F-14: Redact full URL from logs to avoid leaking internal infrastructure
+    const redactedUrl = new URL(state.config.oauth.authorizationServerUrl);
+    const redactedHost = `${redactedUrl.protocol}//${redactedUrl.hostname}***`;
+
     const fallbackIssuer =
       state.config.oauth.issuer ?? state.config.oauth.authorizationServerUrl;
 
@@ -271,7 +289,7 @@ export async function setupOAuth(
     // the actual token issuer, risking silent auth failures or spoofed acceptance
     if (!state.config.oauth.issuer) {
       logger.warning(
-        `OAuth discovery failed. Falling back to authorizationServerUrl as issuer: '${fallbackIssuer}'. ` +
+        `OAuth discovery failed. Falling back to authorizationServerUrl as issuer: '${redactedHost}'. ` +
           "Set oauth.issuer explicitly to avoid potential issuer mismatch.",
         { code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full },
       );
