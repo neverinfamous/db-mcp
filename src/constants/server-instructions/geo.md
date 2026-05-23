@@ -1,4 +1,4 @@
-# db-mcp Help — Geospatial Operations (4 basic + 7 SpatiaLite)
+# db-mcp Help — Geospatial Operations (11N/4W: 4 basic + 7 SpatiaLite [NATIVE ONLY])
 
 ## Basic Geo (always available — Haversine formula)
 

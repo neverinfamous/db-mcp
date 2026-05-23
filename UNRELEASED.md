@@ -27,7 +27,7 @@
 - **Testing:** Standardized 41 testing prompts across all test suites into a cohesive format and automated their formatting via a Node script.
 - **Testing:** Replaced hardcoded "We're currently testing Native mode" note with auto-detection instruction (`list_adapters`) in prompt template, eliminating manual mode switching.
 - **Testing:** Updated WASM Mode text dynamically across codemode prompts using the `[NATIVE ONLY]` annotation.
-- **Documentation:** Synchronized total tool counts (172 Native / 145 WASM) and file counts across all documentation, test suites, and source files.
+- **Documentation:** Synchronized inventory tool counts (172 Native / 145 WASM — group + audit) and file counts across all documentation, test suites, and source files.
 - **Documentation:** Consolidated testing documentation, added Tool Count Taxonomy to `tool-reference.md`, and standardized CHANGELOG format.
 - **Documentation:** Replaced deprecated alias method names with canonical names in testing prompts and documentation for consistency.
 
@@ -46,6 +46,7 @@
 - **Documentation:** Corrected inaccurate Code Mode API mappings, parameter names, and descriptions in server instruction source files.
 - **Documentation:** Corrected multiple stale tool counts, prompt counts, directory references, and file paths across `code-map.md`, test READMEs, and script outputs.
 - **Documentation:** Labeled all tool count columns and inline headers with N/W splits where `[NATIVE ONLY]` tools exist, renamed ambiguous `Tools` columns to `Group Tools` per tool-reference taxonomy, and fixed incorrect counts (json 26→25, stats 24N/18W→23N/17W, admin-core "Identical Native/WASM" → 24N/23W).
+- **Documentation:** Adopted `170+` for hero/marketing tool counts across `README.md`, `DOCKER_README.md`, and `server.json` to avoid stale counts when tools are added. Exact per-tier counts (167N/140W group, 172N/145W inventory, 175N/148W MCP total) remain in `tool-reference.md` taxonomy table and `code-map.md`. Added combined `N/W + breakdown` format to stats and geo help resource headers for consistency with admin. Fixed Code Mode references from "11 tool groups" to "10" (codemode doesn't expose itself in the `sqlite.*` bridge).
 - **Security:** Replaced naive string equality with `crypto.timingSafeEqual` for simple bearer token comparison to prevent timing side-channel attacks.
 - **Security:** Added CLI warning when `--auth-token` is used, recommending `MCP_AUTH_TOKEN` environment variable for production deployments.
 - **Documentation:** Synchronized Post-Test Procedures sections across all 3 test directory READMEs to match the canonical `prompt-template.md` version, fixing missing "Document" step, inconsistent step ordering, and stale language. Fixed misnumbered list items in `test-codemode/README.md` (Tool Groups 5–14 → 1–10) and `test-advanced/README.md` (Agent Execution Protocol 4–11 → 1–8, removed conflicting `### 9.` heading number).

@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.neverinfamous/db-mcp -->
 
-**SQLite MCP Server** with 167 specialized tools, 11 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 170+ specialized tools, 11 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 ![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)
@@ -25,10 +25,10 @@
 
 | Feature                          | Description                                                                                                                                                                                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **167 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
+| **170+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
 | **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 167 capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning              |
+| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 170+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning              |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `_meta.tokenEstimate` on every response so agents know their token cost. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access  |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for high-performance concurrent execution with full features including transactions, window functions, and SpatiaLite GIS                                                                                                                         |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                       |
@@ -96,7 +96,7 @@ Or with **WASM backend** (sql.js — cross-platform, no compilation required):
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (167 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (140 tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (167 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (140 tools, no native dependencies).
 
 ### Verify It Works
 
@@ -132,13 +132,13 @@ Code executes in a **worker-thread sandbox** — a separate V8 isolate with its 
 - **Process-level isolation** — user code runs in a separate V8 instance with enforced heap limits
 - **Readonly enforcement** — when `readonly: true`, write methods return structured errors instead of executing
 - **Hard timeouts** — worker termination if execution exceeds the configured limit
-- **Full API access** — all 11 tool groups are available via `sqlite.*` (e.g., `sqlite.core.readQuery()`, `sqlite.json.extract()`)
+- **Full API access** — all 10 tool groups are available via `sqlite.*` (e.g., `sqlite.core.readQuery()`, `sqlite.json.extract()`)
 
 Set `CODEMODE_ISOLATION=vm` to fall back to the in-process `vm` module sandbox if needed.
 
 ### ⚡ Code Mode Only (Maximum Token Savings)
 
-If you control your own setup, you can run with **only Code Mode enabled** — a single tool that provides access to all 167 tools' worth of capability through the `sqlite.*` API:
+If you control your own setup, you can run with **only Code Mode enabled** — a single tool that provides access to all 170+ tools' worth of capability through the `sqlite.*` API:
 
 ```json
 {
@@ -159,7 +159,7 @@ If you control your own setup, you can run with **only Code Mode enabled** — a
 }
 ```
 
-This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 11 tool groups, and returning exactly the data it needs — in one execution. This mirrors the [Code Mode pattern](https://blog.cloudflare.com/code-mode-mcp/) pioneered by Cloudflare for their entire API: fixed token cost regardless of how many capabilities exist.
+This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 10 tool groups, and returning exactly the data it needs — in one execution. This mirrors the [Code Mode pattern](https://blog.cloudflare.com/code-mode-mcp/) pioneered by Cloudflare for their entire API: fixed token cost regardless of how many capabilities exist.
 
 > [!TIP]
 > **Maximize Token Savings:** Instruct your AI agent to prefer Code Mode over individual tool calls:
@@ -171,7 +171,7 @@ This exposes just `sqlite_execute_code` plus built-in tools. The agent writes Ja
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 167 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 170+ tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Quick Start: Recommended Configurations
 

@@ -188,7 +188,7 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 - \`sqlite_truncate({ table: "users" })\` — quickly delete all rows from a table (executes \`DELETE FROM table\`)
 - \`sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })\` — add or subtract time intervals from a date column
 - \`sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })\` — calculate the difference between two date columns`],
-  ["geo", `# db-mcp Help — Geospatial Operations (4 basic + 7 SpatiaLite)
+  ["geo", `# db-mcp Help — Geospatial Operations (11N/4W: 4 basic + 7 SpatiaLite [NATIVE ONLY])
 
 ## Basic Geo (always available — Haversine formula)
 
@@ -553,7 +553,7 @@ sqlite_migration_status();
 
 - Rollback requires \`rollbackSql\` to have been provided when the migration was recorded/applied
 - Migration group is **opt-in** — not included in any shortcut except \`dev-schema\` and \`full\``],
-  ["stats", `# db-mcp Help — Statistical Analysis (17 core + 6 window)
+  ["stats", `# db-mcp Help — Statistical Analysis (23N/17W: 17 core + 6 window [NATIVE ONLY])
 
 ## Core Statistics (always available)
 

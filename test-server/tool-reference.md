@@ -10,7 +10,7 @@ Complete reference of all db-mcp tools organized by 10 tool groups + codemode. E
 | **Audit tools** | 5 server-level snapshot tools | 5 | 5 | MCP-only — not exposed in Code Mode |
 | **Inventory** | Group + Audit | **172** | **145** | All filterable/functional tools |
 | **Built-in** | `server_info`, `server_health`, `list_adapters` | 3 | 3 | Always available, not filterable |
-| **MCP total** | Inventory + Built-in (`tools/list`) | **175** | **148** | What a client sees via `tools/list` |
+| **MCP total** | Inventory + Built-in (`tools/list`) | **175** | **148** | **What a client sees via `tools/list`** |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 

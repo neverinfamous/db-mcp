@@ -1,6 +1,6 @@
 # db-mcp (SQLite MCP Server)
 
-Production-ready SQLite MCP server with 167 tools, audit logging, OAuth 2.1, and Code Mode.
+Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, and Code Mode.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 ![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)
@@ -23,10 +23,10 @@ Production-ready SQLite MCP server with 167 tools, audit logging, OAuth 2.1, and
 
 | Feature                          | Description                                                                                                                                                                                                                                                                                                                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **167 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                             |
+| **170+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                             |
 | **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                        |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                    |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 167 capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning |
+| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 170+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access. Every response includes `_meta.tokenEstimate` so agents know their token cost                                            |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                                         |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                                             |
@@ -39,7 +39,7 @@ Production-ready SQLite MCP server with 167 tools, audit logging, OAuth 2.1, and
 
 | Feature              | WASM (sql.js)                                                    | Native (better-sqlite3)         |
 | -------------------- | ---------------------------------------------------------------- | ------------------------------- |
-| **Tools Available**  | 140                                                              | **167**                         |
+| **Group Tools**  | 140                                                              | **167**                         |
 | **Transactions**     | ❌                                                               | ✅ 8 tools                      |
 | **Window Functions** | ❌                                                               | ✅ 6 tools                      |
 | **SpatiaLite GIS**   | ❌                                                               | ✅ 7 tools                      |
@@ -82,7 +82,7 @@ Add to your `~/.cursor/mcp.json` or Claude Desktop config:
 }
 ```
 
-> **⭐ Code Mode** (`--tool-filter codemode`) is the recommended configuration — it exposes `sqlite_execute_code`, a V8 isolate sandbox with process-level isolation providing access to all 167 tools' worth of capability with 70–90% token savings. See [Tool Filtering](#️-tool-filtering) for alternatives.
+> **⭐ Code Mode** (`--tool-filter codemode`) is the recommended configuration — it exposes `sqlite_execute_code`, a V8 isolate sandbox with process-level isolation providing access to all 170+ tools' worth of capability with 70–90% token savings. See [Tool Filtering](#️-tool-filtering) for alternatives.
 
 ### 3. Restart & Query!
 
@@ -96,7 +96,7 @@ Restart Cursor or your MCP client and start querying SQLite databases!
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 167 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 170+ tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Recommended Configurations
 
