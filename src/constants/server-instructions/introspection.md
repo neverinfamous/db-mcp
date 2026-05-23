@@ -14,8 +14,8 @@ sqlite_topological_sort({ direction: "create", excludeSystemTables: true });
 sqlite_topological_sort({ direction: "drop" }); // safe DROP order
 
 // Simulate DELETE/DROP/TRUNCATE impact — shows affected tables, cascade paths, severity scoring
-sqlite_cascade_simulator({ table: "users", operation: "delete" });
-sqlite_cascade_simulator({ table: "users", operation: "drop", compact: true }); // compact omits path arrays
+sqlite_cascade_simulator({ table: "users", operation: "DELETE" });
+sqlite_cascade_simulator({ table: "users", operation: "DROP", compact: true }); // compact omits path arrays
 ```
 
 ## Schema Analysis (4 tools)

@@ -25,10 +25,10 @@
 
 ## Convenience Tools (High-Level Data Operations)
 
-- `sqlite_upsert({ table: "users", data: [{ id: 1, name: "Alice" }], conflictColumns: ["id"], updateColumns: ["name"], returning: true })` — insert or update rows using `ON CONFLICT` (or `REPLACE` fallback). Supports `returning: true` or array of columns.
-- `sqlite_batch_insert({ table: "users", data: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })` — insert multiple rows in a single batch. Supports `returning: true` or array of columns.
-- `sqlite_count({ table: "users", whereClause?: "status = 'active'" })` — count rows in a table (faster than a full query)
-- `sqlite_exists({ table: "users", whereClause: "email = 'test@example.com'" })` — check if a row exists (stops at first match)
+- `sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })` — insert or update a row using `ON CONFLICT` (or `REPLACE` fallback). Supports `returning: true` or array of columns.
+- `sqlite_batch_insert({ table: "users", rows: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })` — insert multiple rows in a single batch. Supports `returning: true` or array of columns.
+- `sqlite_count({ table: "users", where?: "status = 'active'" })` — count rows in a table (faster than a full query)
+- `sqlite_exists({ table: "users", where: "email = 'test@example.com'" })` — check if a row exists (stops at first match)
 - `sqlite_truncate({ table: "users" })` — quickly delete all rows from a table (executes `DELETE FROM table`)
 - `sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })` — add or subtract time intervals from a date column
 - `sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })` — calculate the difference between two date columns

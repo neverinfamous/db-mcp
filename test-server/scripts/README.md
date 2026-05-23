@@ -25,7 +25,7 @@ node test-server/scripts/test-progress.mjs
 
 ## What they verify
 
-- **test-tool-annotations.mjs**: Spins up the server in Native Mode (`--sqlite-native`) and verifies that all 167 tools (164 Native + 3 built-in) are properly exposed, and that they all contain the required `openWorldHint: false` annotation for local database safety.
+- **test-tool-annotations.mjs**: Spins up the server in Native Mode (`--sqlite-native --audit-backup`) and verifies that all 175 MCP total tools (172 inventory + 3 built-in) are properly exposed, and that they all contain the required `openWorldHint: false` annotation for local database safety.
 - **test-help-resources.mjs**: Starts the server with multiple `--tool-filter` configurations to verify that the core instructions remain slim (within context limits) and that the correct `sqlite://help/{group}` resources are dynamically registered only when their respective tool groups are enabled.
 - **test-prompts.mjs**: Starts the server and verifies that all 10 MCP prompts are successfully registered via `prompts/list`, and performs functional execution checks on `prompts/get` handling required vs. optional arguments, payload structure correctness, and proper JSON-RPC error rendering.
 - **test-progress.mjs**: Starts the server, executes a custom JavaScript busy-wait loop inside `sqlite_execute_code` that invokes the internal `sqlite.reportProgress` binding, and verifies that the exact number of expected `notifications/progress` JSON-RPC events are successfully emitted.

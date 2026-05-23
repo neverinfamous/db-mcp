@@ -52,7 +52,7 @@
 ## Code Mode API Mapping
 
 `sqlite_group_action` → `sqlite.group.action()` (group prefixes dropped: `sqlite_json_insert` → `sqlite.json.insert()`)
-**Exception**: `stats`, `admin`, and `migration` keep their prefix: `sqlite_stats_basic` → `sqlite.stats.statsBasic()`, `sqlite_migration_apply` → `sqlite.migration.migrationApply()`
+**Exception**: `stats` and `migration` keep their prefix: `sqlite_stats_basic` → `sqlite.stats.statsBasic()`, `sqlite_migration_apply` → `sqlite.migration.migrationApply()`
 
 **Positional args work**: `sqlite.core.readQuery("SELECT...")`, `sqlite.json.insert("docs", "data", {...})`
 

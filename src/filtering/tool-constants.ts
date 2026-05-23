@@ -3,7 +3,7 @@
  *
  * Defines the tool groups and meta-groups used for filtering.
  *
- * Actual tool groups (from code audit):
+ * GROUP TOOLS (adapter-registered, accessible via Code Mode sqlite.help()):
  *   core: 21 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts, core/triggers.ts, core/constraints.ts, core/datetime.ts, core/alter-table.ts)
  *   json: 25 tools (json-operations/crud+query+transform+security+diff.ts, json-helpers/read+write.ts)
  *   text: 14 WASM / 19 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
@@ -15,10 +15,17 @@
  *   introspection: 10 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot+diff.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Total: 140 WASM / 167 Native tools
+ *   Subtotal: 140 WASM / 167 Native
  *
- * Note: 3 built-in server tools (server_info, server_health, list_adapters)
- * are always available regardless of filter settings.
+ * AUDIT TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
+ *   5 tools (server/registration/audit-tools.ts)
+ *
+ * TOOL COUNT TAXONOMY:
+ *   Group tools:  167 Native / 140 WASM  (Code Mode sqlite.help() total)
+ *   Audit tools:    5 Native /   5 WASM  (MCP-only)
+ *   Inventory:    172 Native / 145 WASM  (Group + Audit)
+ *   Built-in:       3 /   3              (server_info, server_health, list_adapters — always on)
+ *   MCP total:    175 Native / 148 WASM  (tools/list response)
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";
@@ -276,7 +283,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Bare minimum - Core + Codemode (22 tools)
   minimal: ["core", "codemode"],
 
-  // All tools enabled (140 WASM / 167 Native)
+  // All group tools enabled (167 Native / 140 WASM — see TOOL COUNT TAXONOMY above)
   full: [
     "core",
     "json",

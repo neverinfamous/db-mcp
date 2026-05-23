@@ -183,3 +183,4 @@
   - Updated total tool counts across docs: 167/140 → 172/145 in `tool-reference.md`, `tool-constants.ts`, `code-map.md`, and `test-tool-groups/README.md`.
   - Removed `Requires --audit-backup flag` note from `test-tool-groups/README.md` admin-audit row.
   - Updated `code-map.md` audit-tools.ts description to remove conditional flag note.
+  - Added **Tool Count Taxonomy** table to `tool-reference.md` defining five labeled scopes (Group tools, Audit tools, Inventory, Built-in, MCP total) with exact Native/WASM counts. All key documents (`tool-constants.ts`, `code-map.md`, `test-server/README.md`, `test-tool-groups/README.md`, `test-codemode/README.md`, `scripts/README.md`, `test-tool-annotations.mjs`) now reference the taxonomy labels instead of bare numbers.

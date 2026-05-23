@@ -1,4 +1,4 @@
-# db-mcp Help — Database Administration (32 Native / 31 WASM)
+# db-mcp Help — Database Administration (32N/31W group + 5 audit)
 
 ## Maintenance
 
@@ -23,7 +23,7 @@ sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity w
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
 ```
 
-## Audit Backups (Requires --audit-backup)
+## Audit Backups
 
 ```javascript
 sqlite_audit_list_backups(); // list pre-mutation DDL snapshots

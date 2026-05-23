@@ -40,7 +40,7 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (32 Native / 31 WASM)
+  ["admin", `# db-mcp Help — Database Administration (32N/31W group + 5 audit)
 
 ## Maintenance
 
@@ -65,7 +65,7 @@ sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity w
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
 \`\`\`
 
-## Audit Backups (Requires --audit-backup)
+## Audit Backups
 
 \`\`\`javascript
 sqlite_audit_list_backups(); // list pre-mutation DDL snapshots
@@ -181,10 +181,10 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 
 ## Convenience Tools (High-Level Data Operations)
 
-- \`sqlite_upsert({ table: "users", data: [{ id: 1, name: "Alice" }], conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update rows using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns.
-- \`sqlite_batch_insert({ table: "users", data: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })\` — insert multiple rows in a single batch. Supports \`returning: true\` or array of columns.
-- \`sqlite_count({ table: "users", whereClause?: "status = 'active'" })\` — count rows in a table (faster than a full query)
-- \`sqlite_exists({ table: "users", whereClause: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
+- \`sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update a row using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns.
+- \`sqlite_batch_insert({ table: "users", rows: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })\` — insert multiple rows in a single batch. Supports \`returning: true\` or array of columns.
+- \`sqlite_count({ table: "users", where?: "status = 'active'" })\` — count rows in a table (faster than a full query)
+- \`sqlite_exists({ table: "users", where: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
 - \`sqlite_truncate({ table: "users" })\` — quickly delete all rows from a table (executes \`DELETE FROM table\`)
 - \`sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })\` — add or subtract time intervals from a date column
 - \`sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })\` — calculate the difference between two date columns`],
@@ -348,7 +348,7 @@ sqlite_spatialite_index({
 ## Code Mode API Mapping
 
 \`sqlite_group_action\` → \`sqlite.group.action()\` (group prefixes dropped: \`sqlite_json_insert\` → \`sqlite.json.insert()\`)
-**Exception**: \`stats\`, \`admin\`, and \`migration\` keep their prefix: \`sqlite_stats_basic\` → \`sqlite.stats.statsBasic()\`, \`sqlite_migration_apply\` → \`sqlite.migration.migrationApply()\`
+**Exception**: \`stats\` and \`migration\` keep their prefix: \`sqlite_stats_basic\` → \`sqlite.stats.statsBasic()\`, \`sqlite_migration_apply\` → \`sqlite.migration.migrationApply()\`
 
 **Positional args work**: \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`
 
@@ -369,8 +369,8 @@ sqlite_topological_sort({ direction: "create", excludeSystemTables: true });
 sqlite_topological_sort({ direction: "drop" }); // safe DROP order
 
 // Simulate DELETE/DROP/TRUNCATE impact — shows affected tables, cascade paths, severity scoring
-sqlite_cascade_simulator({ table: "users", operation: "delete" });
-sqlite_cascade_simulator({ table: "users", operation: "drop", compact: true }); // compact omits path arrays
+sqlite_cascade_simulator({ table: "users", operation: "DELETE" });
+sqlite_cascade_simulator({ table: "users", operation: "DROP", compact: true }); // compact omits path arrays
 \`\`\`
 
 ## Schema Analysis (4 tools)
@@ -441,7 +441,7 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
 
 - \`sqlite_create_json_collection({ tableName, indexes: [{ path: "$.type" }, { path: "$.author" }] })\` — creates table with JSON indexes
 - \`sqlite_json_insert({ table, column, data: { type: "article", title: "Hello", tags: ["news"] } })\` — insert JSON document
-- \`sqlite_json_select({ table, column, extractPaths? })\` — select rows, optionally extract specific JSON paths
+- \`sqlite_json_select({ table, column, paths? })\` — select rows, optionally extract specific JSON paths
 - \`sqlite_json_update({ table, column, path, value, whereClause })\` — update value at JSON path
 - \`sqlite_json_query({ table, column, filterPaths: { "$.type": "article" }, selectPaths: ["$.title"] })\` — query with path-based filters and projections
 
@@ -496,8 +496,8 @@ sqlite_json_group_object({
 \`\`\`
 
 - \`sqlite_json_keys({ table, column, path? })\` — get distinct keys of JSON objects
-- \`sqlite_json_pretty({ table, column, whereClause? })\` — format JSON with indentation
-- \`sqlite_json_valid({ table, column })\` — check if values are valid JSON
+- \`sqlite_json_pretty({ json: "{\\"name\\": \\"Alice\\"}" })\` — format JSON string with indentation for readability
+- \`sqlite_json_valid({ json: "{\\"name\\": \\"Alice\\"}" })\` — check if a string is valid JSON
 - \`sqlite_json_analyze_schema({ table, column })\` — infer schema types
 - \`sqlite_json_diff({ table, column, path1, path2 })\` — compare two JSON paths within the same row
 

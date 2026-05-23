@@ -385,7 +385,7 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Complete 172/145 tool inventory with descriptions                                                                  |
+| `test-server/tool-reference.md`              | Tool inventory (172N/145W) with [Tool Count Taxonomy](test-server/tool-reference.md#tool-count-taxonomy) and descriptions |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
 | `test-server/test-tool-groups/`              | 20 self-contained test prompts — sub-group granularity (e.g., core-data, core-schema). Direct calls only.           |
 | `test-server/test-codemode/`                 | 12 self-contained test prompts — 10 tool groups + sandbox + wasm-degradation meta-tests. Code Mode execution only. |

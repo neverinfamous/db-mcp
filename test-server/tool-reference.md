@@ -1,10 +1,18 @@
 # Tool Reference
 
-Complete reference of all **172 Native / 145 WASM tools** organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
-> **3 built-in tools** (`server_info`, `server_health`, `list_adapters`) are always available regardless of filter settings.
->
-> Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every tool below through sandboxed JavaScript.
+## Tool Count Taxonomy
+
+| Scope | What it includes | Native | WASM | Notes |
+| --- | --- | ---: | ---: | --- |
+| **Group tools** | 10 adapter-registered groups + codemode | 167 | 140 | Accessible via Code Mode `sqlite.help()` |
+| **Audit tools** | 5 server-level snapshot tools | 5 | 5 | MCP-only — not exposed in Code Mode |
+| **Inventory** | Group + Audit | **172** | **145** | All filterable/functional tools |
+| **Built-in** | `server_info`, `server_health`, `list_adapters` | 3 | 3 | Always available, not filterable |
+| **MCP total** | Inventory + Built-in (`tools/list`) | **175** | **148** | What a client sees via `tools/list` |
+
+> Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 
 ---
 
@@ -162,7 +170,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (37 Native / 36 WASM tools + Code Mode)
+## admin (32N/31W group + 5 audit + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 

@@ -1,32 +1,33 @@
 # db-mcp Tool Group Testing: [README]
 
-**Directory Purpose**: This folder contains 10 self-contained, modular test prompts covering every tool group in `db-mcp`. Each file is a **complete, standalone prompt** — paste it directly into a conversation to test that tool group without needing any other files.
+**Directory Purpose**: This folder contains 20 self-contained, modular test prompts covering every tool group in `db-mcp`. Each file is a **complete, standalone prompt** — paste it directly into a conversation to test that tool group without needing any other files.
 
 ## File Inventory
 
 | File                                | Group                     | Tools          | Notes                            |
 | ----------------------------------- | ------------------------- | -------------- | -------------------------------- |
 | `test-core-data.md`                 | core-data                 | 9              | Identical Native/WASM            |
-| `test-core-schema.md`               | core-schema               | 15 + Code Mode | Identical Native/WASM            |
-| `test-json-read.md`                 | json-read                 | 20             | Identical Native/WASM            |
+| `test-core-schema.md`               | core-schema               | 12 + Code Mode | Identical Native/WASM            |
+| `test-json-read.md`                 | json-read                 | 18 + Code Mode | Identical Native/WASM            |
 | `test-json-write.md`                | json-write                | 7              | Identical Native/WASM            |
-| `test-text-basic.md`                | text-basic                | 11 + Code Mode | Identical Native/WASM            |
+| `test-text-basic.md`                | text-basic                | 10 + Code Mode | Identical Native/WASM            |
 | `test-text-advanced.md`             | text-advanced             | 9N/4W          | FTS5 tools `[NATIVE ONLY]`       |
-| `test-stats-basic.md`               | stats-basic               | 18 + Code Mode | Identical Native/WASM            |
+| `test-stats-basic.md`               | stats-basic               | 17 + Code Mode | Identical Native/WASM            |
 | `test-stats-advanced.md`            | stats-advanced            | 6N/0W          | Window functions `[NATIVE ONLY]` |
 | `test-vector-read.md`               | vector-read               | 7 + Code Mode  | Identical Native/WASM            |
 | `test-vector-write.md`              | vector-write              | 4              | Identical Native/WASM            |
-| `test-admin-core.md`                | admin-core                | 28 + Code Mode | Identical Native/WASM            |
+| `test-admin-core.md`                | admin-core                | 24 + Code Mode | Identical Native/WASM            |
 | `test-admin-extensions.md`          | admin-extensions          | 8              | CSV, series, rtree               |
-| `test-admin-audit.md`               | admin-audit               | 5              | Requires `--audit-backup` flag   |
+| `test-admin-audit.md`               | admin-audit               | 5              | Audit snapshot management        |
 | `test-transactions.md`              | transactions              | 8 + Code Mode  | `[NATIVE ONLY]`                  |
 | `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode  | Identical Native/WASM            |
 | `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W          | SpatiaLite `[NATIVE ONLY]`       |
 | `test-introspection-schema.md`      | introspection-schema      | 7              | Identical Native/WASM            |
 | `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode  | Identical Native/WASM            |
 | `test-migration.md`                 | migration                 | 6 + Code Mode  | Identical Native/WASM            |
+| `test-wasm-degradation.md`          | wasm-degradation          | 31             | WASM graceful degradation        |
 
-**Total**: 167 Native / 140 WASM tools across 11 groups + Code Mode.
+**Inventory total**: 172 Native / 145 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Agent Instructions
 
@@ -118,7 +119,8 @@ Begin with any requested group prompt from this folder (e.g., `test-admin.md`), 
    - This prompt
 
 ### After Implementation
-3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-4. **Commit**: Stage and commit all changes — do NOT push
-5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
+5. **Commit**: Stage and commit all changes — do NOT push
+6. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
+7. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

@@ -86,7 +86,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: Core Check (batched)
 
-1. `sqlite_write_query({query: "CREATE TABLE temp_audit_test (id INTEGER PRIMARY KEY)"})` → This will trigger an automatic schema backup if the server is run with `--audit-backup`. Wait for it to complete.
+1. `sqlite_write_query({query: "CREATE TABLE temp_audit_test (id INTEGER PRIMARY KEY)"})` → This will trigger an automatic schema backup. Wait for it to complete.
 2. `sqlite_audit_list_backups({})` → Verify the resulting list of backups contains at least one snapshot filename (e.g., `..._temp_audit_test.snapshot.json.gz`). Note the filename.
 3. `sqlite_audit_get_backup({filename: "<filename_from_step_2>"})` → Retrieve the backup. Verify it contains `schema` and `timestamp`.
 4. `sqlite_audit_diff_backup({filename: "<filename_from_step_2>"})` → Compare the backup to the current live schema. Should show no differences or minimal differences since we just made it.
@@ -117,6 +117,8 @@ Note: The audit tools are server-level and may not be exposed in Code Mode. If t
 🔴 17. `sqlite_audit_get_backup({})` → handler error
 🔴 18. `sqlite_audit_diff_backup({})` → handler error
 🔴 19. `sqlite_audit_restore_backup({})` → handler error
+🔴 20. `sqlite_audit_list_backups({})` → success (no required params)
+🔴 21. `sqlite_audit_cleanup({})` → success (no required params)
 
 ---
 
