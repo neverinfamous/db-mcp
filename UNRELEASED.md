@@ -32,6 +32,7 @@
 - Consolidated testing documentation, added Tool Count Taxonomy to `tool-reference.md`, and standardized CHANGELOG format.
 - Replaced deprecated alias method names with canonical names in testing prompts and documentation.
 - Synchronized sandbox security documentation across `README.md`, `DOCKER_README.md`, `SECURITY.md`, and `code-map.md` to reflect V8 `codeGeneration` restrictions, Proxy nullification, RPC allowlist validation, and readonly Proxy traps.
+- Added missing `full` OAuth scope to `README.md` and `DOCKER_README.md` scope tables and hero rows (present in source and `SECURITY.md` since v1.1.0). Added missing `CODE_MODE_MAX_RESULT_SIZE` env var to `DOCKER_README.md`. Expanded `code-map.md` auth directory tree to list all `scopes/` and `middleware/` sub-files. Added dynamic scope set derivation note to `SECURITY.md`.
 
 ### Fixed
 - `sqlite_date_diff` processing of string and numeric literals.

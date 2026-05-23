@@ -74,10 +74,20 @@ src/
 ├── auth/                           # OAuth 2.1 implementation
 │   ├── auth-context.ts             # Auth context utilities
 │   ├── middleware/                  # Express-style OAuth middleware (split from middleware.ts)
-│   │   └── index.ts
+│   │   ├── core.ts                 # Core middleware orchestration
+│   │   ├── express-auth.ts         # Express auth middleware
+│   │   ├── express-scopes.ts       # Express scope enforcement middleware
+│   │   ├── extraction.ts           # Token extraction helpers
+│   │   ├── types.d.ts              # Middleware type declarations
+│   │   └── index.ts                # Barrel
 │   ├── token-validator.ts          # JWT/JWKS token validation
 │   ├── scopes/                     # Scope parsing, enforcement (split from scopes.ts)
-│   │   └── index.ts
+│   │   ├── constants.ts            # Standard OAuth scope definitions (SCOPES, BASE_SCOPES)
+│   │   ├── display.ts              # Scope display name helpers
+│   │   ├── enforcement.ts          # Runtime enforcement (scopeGrantsToolAccess, etc.)
+│   │   ├── mapping.ts              # Dynamic set derivation (ADMIN_TOOLS, READ_ONLY_TOOLS, WRITE_TOOLS)
+│   │   ├── validation.ts           # Scope string validation
+│   │   └── index.ts                # Barrel
 │   ├── scope-map.ts                # Tool→scope mapping
 │   ├── oauth-resource-server.ts    # RFC 9728 /.well-known/oauth-protected-resource
 │   ├── authorization-server-discovery.ts  # RFC 8414 auth server metadata discovery
