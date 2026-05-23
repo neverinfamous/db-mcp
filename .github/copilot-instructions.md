@@ -38,6 +38,7 @@ If you find issues during code review, use `create_entry` with tag `copilot-find
 - **Never use `eslint-disable`** to evade standards
 - **Never use `any`** — use `unknown` and narrow with type guards
 - **Never use `as` type assertions** — use `satisfies` operator or strict type guards
+- **Never use `@ts-ignore` or `@ts-expect-error`** — fix the underlying type issue
 - **Zod schemas** for all tool input validation at system boundaries
 - **Union types over enums** — use `type Status = "active" | "inactive"` instead of `enum`
 
