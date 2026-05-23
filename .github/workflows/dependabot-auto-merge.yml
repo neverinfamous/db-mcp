@@ -31,6 +31,9 @@ jobs:
           deny-licenses: GPL-3.0, AGPL-3.0
 
       - name: Enable auto-merge for Dependabot PRs
+        # Note: This step only *enables* auto-merge. For security, the repository MUST
+        # have Branch Protection enabled requiring status checks (like lint and codeql)
+        # to pass before the merge is actually executed.
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
         run: gh pr merge --auto --squash "$PR_URL"
         env:

@@ -70,7 +70,7 @@ export class HttpTransport {
     this.state = {
       config: {
         ...config,
-        host: config.host ?? "0.0.0.0",
+        host: config.host ?? "127.0.0.1",
         stateless: config.stateless ?? false,
         enableHSTS:
           config.enableHSTS ?? process.env["MCP_ENABLE_HSTS"] === "true",
@@ -245,7 +245,7 @@ export class HttpTransport {
         this.state.httpServer =
           this.state.app?.listen(
             this.state.config.port,
-            this.state.config.host ?? "0.0.0.0",
+            this.state.config.host ?? "127.0.0.1",
             () => {
               // Set HTTP server timeouts to prevent slowloris-style DoS attacks
               if (this.state.httpServer) {
@@ -256,7 +256,7 @@ export class HttpTransport {
               }
 
               logger.info(
-                `HTTP server listening on ${this.state.config.host ?? "0.0.0.0"}:${String(this.state.config.port)}`,
+                `HTTP server listening on ${this.state.config.host ?? "127.0.0.1"}:${String(this.state.config.port)}`,
                 {
                   code: "HTTP_SERVER_STARTED",
                   mode: this.state.config.stateless ? "stateless" : "stateful",

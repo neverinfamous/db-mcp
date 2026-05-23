@@ -182,3 +182,12 @@
 - **[L-2]** Audit tools: add strict `z.object().parse(args)` validation to all 5 audit tools, closing input validation bypass (CWE-20).
 - **[L-3]** Annotations: update `codemode` annotation to `destructiveHint: true` to reflect capability accurately.
 - **[L-4]** Annotations: update audit backup tools to `openWorldHint: true` to reflect filesystem capability.
+- **[H-11]** Scope Enforcement: Refactor `enforcement.ts` to derive required tool scopes dynamically from tool metadata rather than hardcoded sets. Added wildcard matching for database capabilities (`db:*`).
+- **[H-12]** HTTP Transport: Bound HTTP server default host to `127.0.0.1` instead of `0.0.0.0` in `transport.ts` to prevent unintentional network exposure.
+- **[H-13]** Code Mode: Removed `codemode` group from the default `includeGroups` array in `tool-filter.ts` to prevent auto-injection of sensitive debugging capabilities.
+- **[H-14]** WASM Adapter: Applied `validateQuery()` check to `executeQuery` in the WASM `sqlite-adapter.ts` to block stacked query injection.
+- **[M-24]** Logging: Replaced insecure `console.error` calls with `logger.error` in `cli.ts` to prevent leakage of connection strings or tokens.
+- **[H-15]** Dockerfile: Added explicit `sha256sum` verification steps for all dynamically downloaded packages (e.g., `diff`, `tar`) within the `Dockerfile`.
+- **[M-25]** CI/CD: Set `persist-credentials: false` across all GitHub Actions workflows to prevent token leakage.
+- **[M-26]** CI/CD: Removed `continue-on-error: true` from Trivy action step in `security-update.yml` to ensure high/critical vulnerabilities block the pipeline.
+- **[L-25]** Dependabot: Added documented security warning to `.github/workflows/dependabot-auto-merge.yml`.

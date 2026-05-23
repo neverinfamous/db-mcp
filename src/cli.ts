@@ -7,6 +7,7 @@
 
 import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
 import { VERSION } from "./version.js";
+import { logger } from "./utils/logger/index.js";
 import type {
   McpServerConfig,
   DatabaseConfig,
@@ -411,7 +412,7 @@ async function main(): Promise<void> {
     }
 
     if (config.databases.length === 0) {
-      console.error(
+      logger.warning(
         "Warning: No databases configured. Use --sqlite or --sqlite-native, or set SQLITE_DATABASE",
       );
     }
@@ -419,10 +420,13 @@ async function main(): Promise<void> {
     // Start server
     await server.start();
   } catch (error) {
-    console.error("Fatal error:", error);
+    logger.error("Fatal error", { error: error instanceof Error ? error : new Error(String(error)) });
     process.exit(1);
   }
 }
 
 // Run
-main().catch(console.error);
+main().catch((error: unknown) => {
+  logger.error("Unhandled fatal error", { error: error instanceof Error ? error : new Error(String(error)) });
+  process.exit(1);
+});

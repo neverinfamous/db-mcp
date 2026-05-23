@@ -4,6 +4,7 @@ import {
   DescribeTableSchema,
   DropTableSchema,
 } from "../../schemas/core.js";
+import { logger } from "../../../../utils/logger/index.js";
 /**
  * Core Table Management Tools
  *
@@ -539,9 +540,9 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
           }
         } catch (err) {
           // Ignore cleanup errors to ensure the primary DROP TABLE operation proceeds
-          console.warn(
-            `Failed to clean up FTS triggers for ${input.table}:`,
-            err,
+          logger.warning(
+            `Failed to clean up FTS triggers for ${input.table}`,
+            { code: "FTS_CLEANUP_FAILED", error: err instanceof Error ? err : new Error(String(err)) }
           );
         }
 

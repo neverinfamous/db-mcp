@@ -12,6 +12,14 @@ import {
 } from "./mapping.js";
 import { hasReadScope, hasWriteScope, hasAdminScope } from "./validation.js";
 
+const toolScopeMap = new Map<string, string[]>();
+
+export function registerToolScopes(map: Map<string, string[]>): void {
+  for (const [key, val] of map.entries()) {
+    toolScopeMap.set(key, val);
+  }
+}
+
 /**
  * Check if a scope grants access to a specific tool
  */
@@ -20,27 +28,36 @@ export function scopeGrantsToolAccess(
   toolName: string,
 ): boolean {
   // Full scope grants access to all tools
-  if (scope === "full") {
+  if (scope === "full" || scope === "admin") {
     return true;
   }
 
-  // Admin scope grants access to all tools
-  if (scope === "admin") {
-    return true;
+  // Use dynamic scopes if available
+  if (toolScopeMap.size > 0) {
+    const required = toolScopeMap.get(toolName);
+    if (required) {
+      if (required.includes(scope)) {
+        return true;
+      }
+      // 'write' scope grants access to 'read' tools, but not 'admin'
+      if (scope === "write" && !required.includes("admin")) {
+        return true;
+      }
+      return false;
+    }
+    // Fail-closed: unknown tools require admin scope
+    return false;
   }
 
-  // Write scope grants access to write tools and below
+  // Fallback to legacy logic...
   if (scope === "write") {
     return getRequiredScopeForTool(toolName) !== "admin";
   }
 
-  // Read scope only grants read-only tools
   if (scope === "read") {
     return READ_ONLY_TOOLS.has(toolName);
   }
 
-  // Database/table scopes don't directly affect tool access
-  // They are used for filtering data, not tools
   return false;
 }
 
@@ -73,7 +90,7 @@ export function scopeGrantsDatabaseAccess(
 
   // Check database-specific scope
   const dbName = parseDatabaseScope(scope);
-  if (dbName && dbName === databaseName) {
+  if (dbName && (dbName === databaseName || dbName === "*")) {
     return true;
   }
 
@@ -116,7 +133,7 @@ export function scopeGrantsTableAccess(
 
   // Database scope grants access to all tables in that database
   const dbName = parseDatabaseScope(scope);
-  if (dbName && dbName === databaseName) {
+  if (dbName && (dbName === databaseName || dbName === "*")) {
     return true;
   }
 

@@ -181,6 +181,7 @@ export class SqliteAdapter extends DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
+    this.validateQuery(sql, false);
 
     const result = await executeGeneral(this.ensureDb(), sql, params);
 

@@ -36,6 +36,7 @@ import {
   registerAuditResource,
   registerAuditBackupTools,
 } from "./registration/index.js";
+import { registerToolScopes } from "../auth/scopes/enforcement.js";
 
 /**
  * Monkey-patch McpServer to return structured JSON errors for validation failures.
@@ -163,6 +164,17 @@ export class DbMcpServer {
     adapter.registerTools(this.server, this.toolFilter);
     adapter.registerResources(this.server);
     adapter.registerPrompts(this.server);
+
+    // Register tool scopes dynamically for auth enforcement
+    const toolDefs = adapter.getToolDefinitions();
+    const scopesMap = new Map<string, string[]>();
+    for (const tool of toolDefs) {
+      if (tool.requiredScopes) {
+        scopesMap.set(tool.name, tool.requiredScopes);
+        scopesMap.set(`sqlite_${tool.name}`, tool.requiredScopes);
+      }
+    }
+    registerToolScopes(scopesMap);
 
     logger.info(`Registered adapter: ${adapter.name} (${adapterId})`, {
       module: "SERVER",

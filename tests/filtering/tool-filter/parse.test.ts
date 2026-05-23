@@ -36,12 +36,11 @@ describe("parseToolFilter", () => {
   });
 
   describe("whitelist mode", () => {
-    it("should enable only specified group (plus codemode auto-inject)", () => {
+    it("should enable only specified group", () => {
       const config = parseToolFilter("core");
 
       expect(config.enabledGroups.has("core")).toBe(true);
-      expect(config.enabledGroups.has("codemode")).toBe(true);
-      expect(config.enabledGroups.size).toBe(2); // core + codemode
+      expect(config.enabledGroups.size).toBe(1); // core
     });
 
     it("should enable multiple groups", () => {
@@ -50,8 +49,7 @@ describe("parseToolFilter", () => {
       expect(config.enabledGroups.has("core")).toBe(true);
       expect(config.enabledGroups.has("json")).toBe(true);
       expect(config.enabledGroups.has("text")).toBe(true);
-      expect(config.enabledGroups.has("codemode")).toBe(true);
-      expect(config.enabledGroups.size).toBe(4); // core + json + text + codemode
+      expect(config.enabledGroups.size).toBe(3); // core + json + text
     });
 
     it("should expand meta-groups", () => {
