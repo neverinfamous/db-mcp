@@ -71,6 +71,19 @@ const VALID_OPERATIONS = [
   "simplify",
 ] as const;
 
+const VALID_COLUMN_TYPES = [
+  "TEXT",
+  "INTEGER",
+  "REAL",
+  "BLOB",
+  "NUMERIC",
+  "VARCHAR",
+  "BOOLEAN",
+  "DATE",
+  "DATETIME",
+  "TIMESTAMP",
+] as const;
+
 const coerceGeometryType = createEnumCoercer(VALID_GEOMETRY_TYPES);
 
 // Required enum constants exported for handler-level validation.
@@ -83,13 +96,10 @@ export {
   VALID_INDEX_ACTIONS,
   VALID_FORMATS,
   VALID_OPERATIONS,
+  VALID_COLUMN_TYPES,
 };
 
 export const LoadSpatialiteSchema = z.object({
-  extensionPath: z
-    .string()
-    .optional()
-    .describe("Custom path to mod_spatialite extension"),
   forceReload: z.preprocess(
     coerceBoolean,
     z
@@ -135,7 +145,7 @@ export const CreateSpatialTableSchema = z.object({
     .array(
       z.object({
         name: z.string(),
-        type: z.string(),
+        type: z.enum(VALID_COLUMN_TYPES).optional().default("TEXT"),
       }),
     )
     .optional()

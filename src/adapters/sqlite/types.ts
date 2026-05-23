@@ -126,7 +126,7 @@ export function resolveAliases(
   if (typeof params !== "object" || params === null) return params;
   const obj = params as Record<string, unknown>;
   for (const [alias, canonical] of Object.entries(aliasMap)) {
-    if (obj[canonical] === undefined && obj[alias] !== undefined) {
+    if ((obj[canonical] === undefined || obj[canonical] === "") && obj[alias] !== undefined) {
       obj[canonical] = obj[alias];
     }
   }

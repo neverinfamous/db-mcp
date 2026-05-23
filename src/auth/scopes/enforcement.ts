@@ -31,10 +31,7 @@ export function scopeGrantsToolAccess(
 
   // Write scope grants access to write tools and below
   if (scope === "write") {
-    if (ADMIN_TOOLS.has(toolName)) {
-      return false;
-    }
-    return true;
+    return getRequiredScopeForTool(toolName) !== "admin";
   }
 
   // Read scope only grants read-only tools

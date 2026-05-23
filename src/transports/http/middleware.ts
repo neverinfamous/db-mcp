@@ -159,10 +159,16 @@ export function setupRateLimiting(state: HttpTransportState): void {
   if (!state.app) return;
 
   const windowMs = DEFAULT_RATE_LIMIT_WINDOW_MS;
-  const maxRequests = process.env["MCP_RATE_LIMIT_MAX"]
+  const parsedMax = process.env["MCP_RATE_LIMIT_MAX"]
     ? parseInt(process.env["MCP_RATE_LIMIT_MAX"], 10)
     : DEFAULT_RATE_LIMIT_MAX;
+  // L-4: Clamp max requests to a safe range (1 to 10000)
+  const maxRequests = Math.max(1, Math.min(parsedMax, 10000));
   const trustProxy = state.config.trustProxy ?? false;
+
+  // M-4: Warning: The default express-rate-limit in-memory store is per-process.
+  // In multi-instance deployments behind a load balancer, each instance maintains 
+  // independent counters. For production clusters, use a shared store.
 
   const limiter = rateLimit({
     windowMs,

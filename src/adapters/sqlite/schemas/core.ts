@@ -177,7 +177,8 @@ export const DateMathOutputSchema = z
 // =============================================================================
 
 export const ReadQuerySchema = z.object({
-  query: z.string().describe("SELECT query to execute"),
+  query: z.string().default("").describe("SELECT query to execute"),
+  sql: z.string().optional().describe("Alias for query"),
   params: z
     .array(z.unknown())
     .optional()
@@ -185,7 +186,8 @@ export const ReadQuerySchema = z.object({
 });
 
 export const WriteQuerySchema = z.object({
-  query: z.string().describe("INSERT/UPDATE/DELETE query to execute"),
+  query: z.string().default("").describe("INSERT/UPDATE/DELETE query to execute"),
+  sql: z.string().optional().describe("Alias for query"),
   params: z
     .array(z.unknown())
     .optional()
@@ -193,7 +195,8 @@ export const WriteQuerySchema = z.object({
 });
 
 export const CreateTableSchema = z.object({
-  table: z.string().describe("Name of the table to create"),
+  table: z.string().default("").describe("Name of the table to create"),
+  tableName: z.string().optional().describe("Alias for table"),
   columns: z
     .array(
       z.object({
@@ -237,11 +240,13 @@ export const CreateTableSchema = z.object({
 });
 
 export const DescribeTableSchema = z.object({
-  table: z.string().describe("Name of the table to describe"),
+  table: z.string().default("").describe("Name of the table to describe"),
+  tableName: z.string().optional().describe("Alias for table"),
 });
 
 export const DropTableSchema = z.object({
-  table: z.string().describe("Name of the table to drop"),
+  table: z.string().default("").describe("Name of the table to drop"),
+  tableName: z.string().optional().describe("Alias for table"),
   ifExists: z
     .boolean()
     .optional()
@@ -250,8 +255,10 @@ export const DropTableSchema = z.object({
 });
 
 export const CreateIndexSchema = z.object({
-  indexName: z.string().describe("Name of the index"),
-  table: z.string().describe("Table to create index on"),
+  indexName: z.string().default("").describe("Name of the index"),
+  name: z.string().optional().describe("Alias for indexName"),
+  table: z.string().default("").describe("Table to create index on"),
+  tableName: z.string().optional().describe("Alias for table"),
   columns: z.array(z.string()).describe("Columns to index"),
   unique: z.boolean().optional().default(false).describe("Create unique index"),
   ifNotExists: z.boolean().optional().default(true),
@@ -270,7 +277,8 @@ export const GetIndexesSchema = z.object({
 });
 
 export const DropIndexSchema = z.object({
-  indexName: z.string().describe("Name of the index to drop"),
+  indexName: z.string().default("").describe("Name of the index to drop"),
+  name: z.string().optional().describe("Alias for indexName"),
   ifExists: z
     .boolean()
     .optional()
@@ -365,7 +373,7 @@ export type ListTriggersInput = z.infer<typeof ListTriggersSchema>;
 export type ListConstraintsInput = z.infer<typeof ListConstraintsSchema>;
 
 export const UpsertSchema = z.object({
-  table: z.string().describe("Table name"),
+  table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   data: z
     .record(z.string(), z.unknown())
@@ -401,7 +409,7 @@ export const UpsertSchema = z.object({
 // =============================================================================
 
 export const BatchInsertSchema = z.object({
-  table: z.string().describe("Table name"),
+  table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   rows: z
     .array(z.record(z.string(), z.unknown()))
@@ -417,7 +425,7 @@ export const BatchInsertSchema = z.object({
 // =============================================================================
 
 export const CountSchema = z.object({
-  table: z.string().describe("Table name"),
+  table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   where: z
     .string()
@@ -446,7 +454,7 @@ export const CountSchema = z.object({
 // =============================================================================
 
 export const ExistsSchema = z.object({
-  table: z.string().describe("Table name"),
+  table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   where: z
     .string()
@@ -466,7 +474,7 @@ export const ExistsSchema = z.object({
 // =============================================================================
 
 export const TruncateSchema = z.object({
-  table: z.string().describe("Table name"),
+  table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   restartIdentity: z
     .boolean()

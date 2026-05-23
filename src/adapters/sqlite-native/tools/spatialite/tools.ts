@@ -68,7 +68,7 @@ export function createLoadSpatialiteTool(
           });
         }
 
-        const result = tryLoadSpatialite(adapter, input.extensionPath);
+        const result = tryLoadSpatialite(adapter);
 
         if (result.success) {
           return Promise.resolve({

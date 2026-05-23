@@ -251,7 +251,7 @@ export function createGeometryTransformTool(
         let queryParams: unknown[] = [];
         switch (input.operation) {
           case "buffer": {
-            const bufferGeom = `Buffer(GeomFromText(?, ?), ?)`;
+            const bufferGeom = `Buffer(GeomFromText(?, CAST(? AS INTEGER)), ?)`;
             // Auto-simplify buffer output with adaptive tolerance based on buffer distance
             // Tolerance scales with distance (1% of buffer distance) for effective vertex reduction
             // Use simplifyTolerance: 0 to disable, or specify custom tolerance
@@ -266,71 +266,47 @@ export function createGeometryTransformTool(
             break;
           }
 
-          case "intersection":
-            if (!input.geometry2) {
-              return {
-                success: false,
-                error: "Second geometry required for intersection",
-                code: "VALIDATION_ERROR",
-                category: "validation" as const,
-                recoverable: false,
-              };
-            }
-            query = `SELECT AsText(Intersection(
-              GeomFromText(?, ?),
-              GeomFromText(?, ?)
-            )) as result`;
+          case "intersection": {
+            const intersectionGeom = `Intersection(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${intersectionGeom}) as result`;
             queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
             break;
+          }
 
-          case "union":
-            if (!input.geometry2) {
-              return {
-                success: false,
-                error: "Second geometry required for union",
-                code: "VALIDATION_ERROR",
-                category: "validation" as const,
-                recoverable: false,
-              };
-            }
-            query = `SELECT AsText(GUnion(
-              GeomFromText(?, ?),
-              GeomFromText(?, ?)
-            )) as result`;
+          case "union": {
+            const unionGeom = `GUnion(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${unionGeom}) as result`;
             queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
             break;
+          }
 
-          case "difference":
-            if (!input.geometry2) {
-              return {
-                success: false,
-                error: "Second geometry required for difference",
-                code: "VALIDATION_ERROR",
-                category: "validation" as const,
-                recoverable: false,
-              };
-            }
-            query = `SELECT AsText(Difference(
-              GeomFromText(?, ?),
-              GeomFromText(?, ?)
-            )) as result`;
+          case "difference": {
+            const differenceGeom = `Difference(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${differenceGeom}) as result`;
             queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
             break;
+          }
 
-          case "centroid":
-            query = `SELECT AsText(Centroid(GeomFromText(?, ?))) as result`;
+          case "centroid": {
+            const centroidGeom = `Centroid(GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${centroidGeom}) as result`;
             queryParams = [input.geometry1, input.srid];
             break;
+          }
 
-          case "envelope":
-            query = `SELECT AsText(Envelope(GeomFromText(?, ?))) as result`;
+          case "envelope": {
+            const envelopeGeom = `Envelope(GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${envelopeGeom}) as result`;
             queryParams = [input.geometry1, input.srid];
             break;
+          }
 
-          case "simplify":
-            query = `SELECT AsText(Simplify(GeomFromText(?, ?), ?)) as result`;
+          case "simplify": {
+            const simplifyGeom = `Simplify(GeomFromText(?, CAST(? AS INTEGER)), ?)`;
+            query = `SELECT AsText(${simplifyGeom}) as result`;
             queryParams = [input.geometry1, input.srid, input.distance];
             break;
+          }
 
           default:
             // Unreachable — handler-level validation above catches invalid values
@@ -417,11 +393,11 @@ export function createSpatialImportTool(
 
             // Validate GeoJSON by attempting to parse it in SQLite
             const geojsonCheck = await adapter.executeReadQuery(
-              `SELECT GeomFromGeoJSON(?) as geom`,
+              `SELECT ST_IsValid(GeomFromGeoJSON(?)) as valid`,
               [input.data],
             );
-            const parsedGeom = geojsonCheck.rows?.[0]?.["geom"];
-            if (parsedGeom === null || parsedGeom === undefined) {
+            const isValid = geojsonCheck.rows?.[0]?.["valid"];
+            if (isValid !== 1) {
               return {
                 success: false,
                 error: `Invalid GeoJSON geometry: could not be parsed by SpatiaLite (must be a valid Geometry object)`,
@@ -479,11 +455,11 @@ export function createSpatialImportTool(
 
         // Validate WKT by attempting to parse it
         const wktCheck = await adapter.executeReadQuery(
-          `SELECT GeomFromText(?, ?) as geom`,
+          `SELECT ST_IsValid(GeomFromText(?, CAST(? AS INTEGER))) as valid`,
           [wkt, input.srid],
         );
-        const parsedGeom = wktCheck.rows?.[0]?.["geom"];
-        if (parsedGeom === null || parsedGeom === undefined) {
+        const isValid = wktCheck.rows?.[0]?.["valid"];
+        if (isValid !== 1) {
           return {
             success: false,
             error: `Invalid WKT geometry: '${wkt}' could not be parsed`,
@@ -495,7 +471,7 @@ export function createSpatialImportTool(
 
         // Build INSERT with parameterized values
         const columns = ["geom"];
-        const placeholders = [`GeomFromText(?, ?)`];
+        const placeholders = [`GeomFromText(?, CAST(? AS INTEGER))`];
         const insertParams: unknown[] = [wkt, input.srid];
 
         if (input.additionalData) {

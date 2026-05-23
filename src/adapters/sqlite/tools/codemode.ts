@@ -78,7 +78,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: {
       title: "Execute Code (Sandbox)",
       readOnlyHint: false,
-      destructiveHint: false,
+      destructiveHint: true,
       idempotentHint: false,
       openWorldHint: true,
     },

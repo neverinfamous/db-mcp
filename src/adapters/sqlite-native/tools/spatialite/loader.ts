@@ -23,21 +23,18 @@ const loadedDatabases = new WeakSet();
  */
 export function tryLoadSpatialite(
   adapter: NativeSqliteAdapter,
-  customPath?: string,
 ): { success: boolean; path?: string; error?: string } {
   const db = adapter.getDatabase();
   if (db === null) {
     return { success: false, error: "Database not connected" };
   }
 
-  const paths = customPath
-    ? [customPath, ...SPATIALITE_PATHS]
-    : SPATIALITE_PATHS;
+  const paths = SPATIALITE_PATHS;
 
   // On Windows, SpatiaLite DLL has many dependencies (libgeos, libproj, etc.)
   // These must be in PATH for Windows to find them when loading the extension.
   // Prepend the extension directory to PATH before attempting to load.
-  const chosenPathForEnv = customPath ?? process.env["SPATIALITE_PATH"];
+  const chosenPathForEnv = process.env["SPATIALITE_PATH"];
   if (process.platform === "win32" && chosenPathForEnv) {
     // Only treat it as a filesystem path if it contains a path separator
     const looksLikeFsPath =

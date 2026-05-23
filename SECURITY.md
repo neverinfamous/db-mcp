@@ -50,7 +50,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **WHERE clause validation** — blocklist of dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
-- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`).
+- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). *Note: In-memory databases (`:memory:`) bypass path validation by design.*
 - ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
 ## 🧪 **Code Mode Sandbox Security**
@@ -140,6 +140,7 @@ Full OAuth 2.1 for production multi-tenant deployments:
 - ✅ **RFC 8414** Authorization Server Discovery with caching
 - ✅ **JWT validation** with JWKS support (TTL: 1 hour, configurable)
 - ✅ **SQLite-specific scopes**: `read`, `write`, `admin`, `full`, `db:{name}`, `table:{name}`
+- ℹ️ **Database/Table Scope Enforcement**: `db:*` and `table:*` scopes are parsed and documented, but currently unenforced at the query level. Tokens intended to be narrowly scoped should also be bound by database user permissions.
 - ✅ **Per-tool scope enforcement** via `AsyncLocalStorage` context threading
 - ✅ **Fail-closed scope default** — unknown or unmapped tools default to `admin` scope, preventing accidental privilege escalation when new tools are added
 - ✅ **Dynamic scope set derivation** — `ADMIN_TOOLS`, `READ_ONLY_TOOLS`, and `WRITE_TOOLS` are derived at module load from `TOOL_GROUPS × TOOL_GROUP_SCOPES`, preventing drift between tool registration and scope enforcement

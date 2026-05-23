@@ -171,3 +171,14 @@
 - **[M-3]** Code Mode sandbox: replace `NODE_ENV` gate for VM sandbox with explicit `CODEMODE_ISOLATION_INSECURE=1` opt-in requirement. VM mode now requires both `CODEMODE_ISOLATION=vm` and `CODEMODE_ISOLATION_INSECURE=1` to activate, falling back to worker mode with a warning if acknowledgment is missing (CWE-693).
 - **[M-4]** Audit log redaction: make `redactSensitiveKeys()` recursive (max depth 5) to catch nested secrets like `{ config: { password: "..." } }`. Previously only redacted top-level keys matching `SENSITIVE_KEY_PATTERN` (CWE-532).
 - **[M-4]** Audit log redaction: change default `redact` from `false` to `true` (security-by-default). CLI flag renamed from `--audit-redact` to `--audit-no-redact`. Env var `AUDIT_REDACT` now defaults to `true` unless explicitly set to `false` (CWE-532).
+- **[C-1]** SpatiaLite SQL injection: add column type allowlist validation to `sqlite_spatialite_create_table` handler, preventing arbitrary SQL execution via unvalidated DDL types (CWE-89).
+- **[C-2]** Extension loading: remove `extensionPath` parameter from `sqlite_spatialite_load` public schema; strictly require environment variable configuration to prevent arbitrary native code execution (CWE-94).
+- **[H-1]** Scope enforcement: unify `scopeGrantsToolAccess()` to delegate to `getRequiredScopeForTool()` to ensure fail-closed write scope evaluation for unmapped tools (CWE-863).
+- **[H-2]** Input validation: remove `.partial().passthrough()` from tool registration layer, restoring strict Zod schema validation (CWE-20).
+- **[M-1]** Authorization: replace substring `.includes("audit")` with strict `.startsWith("sqlite://audit")` prefix check for resource scope validation (CWE-863).
+- **[M-2]** CI/CD: remove `node_modules` caching in `lint-and-test.yml` to ensure reproducible pipeline integrity via `npm ci` (CWE-829).
+- **[M-3]** CI/CD: restrict automated issue creation in `security-update.yml` to trusted events (CWE-269).
+- **[L-1]** Rate limiting: add `Math.max(1, Math.min(..., 10000))` clamping to `MCP_RATE_LIMIT_MAX` to prevent unbounded memory allocation (CWE-400).
+- **[L-2]** Audit tools: add strict `z.object().parse(args)` validation to all 5 audit tools, closing input validation bypass (CWE-20).
+- **[L-3]** Annotations: update `codemode` annotation to `destructiveHint: true` to reflect capability accurately.
+- **[L-4]** Annotations: update audit backup tools to `openWorldHint: true` to reflect filesystem capability.

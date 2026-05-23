@@ -74,7 +74,7 @@ export function registerAuditBackupTools(
           readOnlyHint: true,
           destructiveHint: false,
           idempotentHint: true,
-          openWorldHint: false,
+          openWorldHint: true,
         },
       },
       async () => {
@@ -120,11 +120,11 @@ export function registerAuditBackupTools(
           readOnlyHint: true,
           destructiveHint: false,
           idempotentHint: true,
-          openWorldHint: false,
+          openWorldHint: true,
         },
       },
       async (args: unknown) => {
-        const { filename } = args as { filename: string };
+        const { filename } = z.object({ filename: z.string() }).parse(args);
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
           return {
@@ -166,7 +166,7 @@ export function registerAuditBackupTools(
           readOnlyHint: false,
           destructiveHint: true,
           idempotentHint: true,
-          openWorldHint: false,
+          openWorldHint: true,
         },
       },
       async () => {
@@ -211,11 +211,11 @@ export function registerAuditBackupTools(
           readOnlyHint: true,
           destructiveHint: false,
           idempotentHint: true,
-          openWorldHint: false,
+          openWorldHint: true,
         },
       },
       async (args: unknown) => {
-        const { filename } = args as { filename: string };
+        const { filename } = z.object({ filename: z.string() }).parse(args);
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
           return {
@@ -402,14 +402,11 @@ export function registerAuditBackupTools(
           readOnlyHint: false,
           destructiveHint: true,
           idempotentHint: false,
-          openWorldHint: false,
+          openWorldHint: true,
         },
       },
       async (args: unknown) => {
-        const { filename, dryRun } = args as {
-          filename: string;
-          dryRun: boolean;
-        };
+        const { filename, dryRun } = z.object({ filename: z.string(), dryRun: z.boolean().optional().default(false) }).parse(args);
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
           return {

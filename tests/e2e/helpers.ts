@@ -12,6 +12,7 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import type { TestInfo } from "@playwright/test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
+import * as fs from "node:fs";
 
 /**
  * Create an MCP SDK client connected via Legacy SSE transport.
@@ -32,7 +33,7 @@ export async function createClient(baseURL: string): Promise<Client> {
       console.log("Connected!");
       return client;
     } catch (error) {
-      require("fs").appendFileSync(
+      fs.appendFileSync(
         "test-connect-error.log",
         String(attempt) +
           " : " +

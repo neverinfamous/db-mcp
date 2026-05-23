@@ -173,6 +173,7 @@ test.describe("Errors: JSON", () => {
         column: "doc",
         path: "$.key",
         value: "test",
+        whereClause: "1=1",
       });
       expectHandlerError(p);
     } finally {

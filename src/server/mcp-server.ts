@@ -37,6 +37,34 @@ import {
   registerAuditBackupTools,
 } from "./registration/index.js";
 
+/**
+ * Monkey-patch McpServer to return structured JSON errors for validation failures.
+ * This ensures that SDK-level Zod validation errors match the handler error format
+ * expected by clients ({ success: false, error: "..." }).
+ */
+const proto = McpServer.prototype as unknown as Record<
+  string,
+  (errorMessage: string) => { content: { type: string; text: string }[]; isError: boolean }
+>;
+
+if (typeof proto['createToolError'] === "function") {
+  const originalCreateToolError = proto['createToolError'];
+  proto['createToolError'] = function (errorMessage: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = originalCreateToolError.call(this as any, errorMessage);
+    if (result.content?.[0]?.type === "text") {
+      const rawError = result.content[0].text;
+      const structured = {
+        success: false,
+        error: rawError,
+        code: "VALIDATION_ERROR",
+        category: ErrorCategory.VALIDATION,
+      };
+      result.content[0].text = JSON.stringify(structured, null, 2);
+    }
+    return result;
+  };
+}
 
 /**
  * Main db-mcp server class

@@ -209,8 +209,8 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
         arguments: {
           table: "test_products",
           column: "name",
-          searchTerm: "Laptop",
-          threshold: 50,
+          search: "Laptop",
+          maxDistance: 3,
         },
       });
 

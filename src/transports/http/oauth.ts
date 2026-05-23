@@ -218,7 +218,7 @@ export function applyScopeEnforcementMiddleware(
     } else if (rpcMethod === "resources/read") {
       // M-2: Resource scope enforcement — audit resources require admin, others require read
       const resourceUri = body?.params?.uri ?? "";
-      const requiredScope = resourceUri.includes("audit") ? "admin" : "read";
+      const requiredScope = resourceUri.startsWith("sqlite://audit") ? "admin" : "read";
       const hasAccess = scopesGrantToolAccess(
         req.auth.scopes,
         requiredScope === "admin" ? "sqlite_audit_list_backups" : "sqlite_read_query",
