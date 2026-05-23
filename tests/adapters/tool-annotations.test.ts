@@ -42,7 +42,7 @@ describe("Tool Annotation Invariants (Native)", () => {
 
   beforeEach(async () => {
     adapter = new NativeSqliteAdapter();
-    await adapter.connect({ type: "sqlite", filePath: ":memory:" });
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
     tools = adapter.getToolDefinitions();
   });
 
