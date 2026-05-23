@@ -31,8 +31,8 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                                         |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                                             |
 | **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                                               |
-| **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) + legacy SSE (`/sse`) with security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                                           |
-| **Production-Ready Security**    | SQL injection protection, parameterized queries, input validation, sandboxed code execution, HTTP body size enforcement, 7 security headers, server timeouts, rate limiting, `trustProxy`, opt-in HSTS, non-root Docker execution, and build provenance                                                                                        |
+| **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) + legacy SSE (`/sse`) with auth, security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                                           |
+| **Production-Ready Security**    | SQL injection protection (parameterized queries + WHERE clause validation), sandboxed code execution (frozen prototypes, 20 blocked patterns), CORS deny-all default, fail-closed scope enforcement, JWT claims sanitization, 7 security headers, body size limits, rate limiting, slowloris timeouts, opt-in HSTS, non-root Docker, and build provenance |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                                         |
 
 ### Backend Options
@@ -310,7 +310,7 @@ docker run --rm -p 3000:3000 \
 | `GET /health`    | Health check (always public)                     | Both     |
 | `GET /`          | Server info and available endpoints              | Both     |
 
-**Security:** 7 security headers, server timeouts (slowloris protection), rate limiting (100/min, 429 + Retry-After), CORS (`--cors-origins`), trust proxy (`trustProxy`), body size limit (`--max-body-bytes`, default 1MB), opt-in HSTS, cross-protocol session guard.
+**Security:** 7 security headers, server timeouts (slowloris protection), rate limiting (100/min, 429 + Retry-After), CORS deny-all default (explicit `--cors-origins` required), trust proxy (`trustProxy`), body size limit (`--max-body-bytes`, default 1MB), opt-in HSTS, cross-protocol session guard.
 
 ### 🔐 Authentication
 
