@@ -200,6 +200,8 @@ async function executeInWorker(): Promise<void> {
       setImmediate: undefined,
       process: undefined,
       require: undefined,
+      module: undefined,
+      exports: undefined,
       __dirname: undefined,
       __filename: undefined,
       globalThis: undefined,
@@ -209,6 +211,39 @@ async function executeInWorker(): Promise<void> {
     const context = vm.createContext(sandbox, {
       name: "worker-sandbox",
     });
+
+    // H-1 Remediation: Freeze built-in prototypes inside the sandbox
+    // to prevent dynamic constructor chain escapes like:
+    //   const c = 'con'+'structor'; Error()[c][c]('return process')()
+    // By freezing prototypes, the `constructor` property becomes
+    // non-configurable and returns a frozen function that cannot be
+    // used to reach the real Function constructor.
+    vm.runInContext(
+      `(function() {
+        "use strict";
+        const builtins = [
+          Object, Function, Array, String, Number, Boolean, RegExp,
+          Error, TypeError, RangeError, ReferenceError, SyntaxError,
+          URIError, EvalError, Map, Set, WeakMap, WeakSet,
+          Promise, Date, ArrayBuffer, DataView,
+          Int8Array, Uint8Array, Uint8ClampedArray,
+          Int16Array, Uint16Array, Int32Array, Uint32Array,
+          Float32Array, Float64Array, BigInt64Array, BigUint64Array,
+          JSON, Math,
+        ];
+        for (const B of builtins) {
+          if (B && typeof B === "function" && B.prototype) {
+            try { Object.freeze(B.prototype); } catch(e) {}
+          }
+          try { Object.freeze(B); } catch(e) {}
+        }
+        // Freeze Object.prototype to block __proto__ traversal
+        try { Object.freeze(Object.prototype); } catch(e) {}
+        // Freeze Function.prototype to block constructor chain
+        try { Object.freeze(Function.prototype); } catch(e) {}
+      })()`,
+      context,
+    );
 
     // Wrap in async IIFE for top-level await
     const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;

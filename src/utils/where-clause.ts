@@ -73,6 +73,11 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bfts3_tokenizer\s*\(/i,
     reason: "contains FTS tokenizer function",
   },
+  // Subquery injection (data exfiltration via boolean-based blind)
+  {
+    pattern: /\(\s*SELECT\b/i,
+    reason: "contains subquery (potential data exfiltration)",
+  },
   // Generic: Hexadecimal string injection
   {
     pattern: /\bX'[0-9A-Fa-f]+'/,

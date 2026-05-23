@@ -149,18 +149,31 @@ export class TokenValidator {
       );
     }
 
+    // Filter prototype-polluting keys from the payload before spreading.
+    // A compromised authorization server could issue JWTs with __proto__
+    // or constructor claims that would pollute the returned object's prototype.
+    const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ["__proto__"]: _proto,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ["constructor"]: _ctor,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ["prototype"]: _prototype,
+      ...safePayload
+    } = payload;
+
     return {
-      sub: payload.sub ?? "unknown",
+      sub: safePayload.sub ?? "unknown",
       scopes,
-      exp: payload.exp ?? 0,
-      iat: payload.iat ?? 0,
-      iss: payload.iss,
-      aud: payload.aud,
-      nbf: payload.nbf ?? undefined,
-      jti: payload.jti,
-      client_id: payload["client_id"] as string | undefined,
-      // Include all other claims
-      ...payload,
+      exp: safePayload.exp ?? 0,
+      iat: safePayload.iat ?? 0,
+      iss: safePayload.iss,
+      aud: safePayload.aud,
+      nbf: safePayload.nbf ?? undefined,
+      jti: safePayload.jti,
+      client_id: safePayload["client_id"] as string | undefined,
+      // Include all other claims (prototype-polluting keys filtered above)
+      ...safePayload,
     };
   }
 

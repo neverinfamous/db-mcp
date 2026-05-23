@@ -41,8 +41,7 @@ WORKDIR /app
 # Install runtime dependencies with security fixes
 RUN apk add --no-cache ca-certificates && \
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl openssl musl nghttp2 && \
-    apk upgrade --no-cache && \
-    npm install -g npm@latest --force && npm cache clean --force
+    apk upgrade --no-cache
 
 # Patch npm-bundled transitive dependencies for Docker Scout compliance.
 # These only matter in the production image (what gets scanned and deployed).

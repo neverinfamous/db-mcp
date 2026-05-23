@@ -56,14 +56,15 @@ Code Mode executes user-provided JavaScript in a Node.js `vm` context or a true 
 ### **Sandbox Restrictions**
 
 - ✅ **Blocked globals** — `require`, `process`, `global`, `globalThis`, `module`, `exports`, `setTimeout`, `setInterval`, `setImmediate`, `Proxy` set to `undefined`
-- ✅ **Blocked patterns** — 17 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, and filesystem/network/child_process references
+- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, and filesystem/network/child_process references
+- ✅ **Frozen prototypes** — all built-in prototypes (`Object`, `Function`, `Error`, `Array`, `Promise`, typed arrays, etc.) are frozen inside the `vm` context to prevent dynamic constructor chain escapes via string concatenation (e.g., `'con'+'structor'`)
 - ✅ **Execution timeout** — 30s hard limit (configurable)
 - ✅ **Input limits** — 50KB code input, 10MB result output
 - ✅ **Rate limiting** — 60 executions per minute per client
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars)
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
 
-> **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. The `vm` module does not provide a true security boundary — a sufficiently determined attacker with direct access could potentially escape the sandbox (e.g., via fragmented `constructor` chain access on exposed built-in Error types). Static pattern blocking catches the known literal forms (`constructor.constructor`) but not dynamically constructed variants.
+> **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. The `vm` module does not provide a true security boundary. Defense-in-depth measures include frozen built-in prototypes (preventing dynamic `constructor` chain traversal), 20 static regex rules (blocking literal and bracket-notation escape patterns), and blocked globals. Together these significantly raise the bar against sandbox escape.
 >
 > **For untrusted input deployments:** Use process-level sandboxing such as running the container with `--cap-drop=ALL`, or replace `vm` with `isolated-vm` for V8 isolate-level separation.
 

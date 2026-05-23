@@ -96,7 +96,7 @@ export function matchesCorsOrigin(origin: string, pattern: string): boolean {
 export function setupCors(state: HttpTransportState): void {
   if (!state.app) return;
 
-  const corsOrigins = state.config.corsOrigins ?? ["*"];
+  const corsOrigins = state.config.corsOrigins ?? [];
   const isWildcard = corsOrigins.includes("*");
 
   // CORS middleware

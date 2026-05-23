@@ -121,6 +121,9 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     /\bconstructor\.constructor/, // No constructor chaining
     /\[['"]constructor['"]\]/i, // No bracket-notation constructor access
     /\bReflect\s*\.\s*construct/i, // No Reflect.construct bypass
+    /\bReflect\s*\./i, // No Reflect API access (getPrototypeOf, ownKeys, etc.)
+    /\bSymbol\s*\./i, // No Symbol access (hasInstance, toPrimitive, etc.)
+    /\bnew\s+Proxy\b/i, // No Proxy construction
     /\bchild_process/, // No child processes
     /\bfs\./, // No filesystem
     /\bnet\./, // No networking

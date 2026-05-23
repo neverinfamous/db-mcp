@@ -33,10 +33,10 @@ for (const [group, tools] of Object.entries(TOOL_GROUPS)) {
  * Get the required scope for a tool by name.
  *
  * @param toolName - The MCP tool name (e.g., "sqlite_read_query")
- * @returns The required scope, or "read" as a safe default for unknown tools
+ * @returns The required scope, or "admin" as a fail-closed default for unknown tools
  */
 export function getRequiredScope(toolName: string): StandardScope {
-  return toolScopeMap.get(toolName) ?? SCOPES.READ;
+  return toolScopeMap.get(toolName) ?? SCOPES.ADMIN;
 }
 
 /**
