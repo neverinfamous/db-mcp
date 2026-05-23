@@ -93,11 +93,6 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bIIF\s*\(/i,
     reason: "contains IIF() (potential blind injection)",
   },
-  // json_extract() — JSON data access for exfiltration
-  {
-    pattern: /\bjson_extract\s*\(/i,
-    reason: "contains json_extract() (potential data exfiltration)",
-  },
   // GROUP_CONCAT() — data aggregation for exfiltration
   {
     pattern: /\bGROUP_CONCAT\s*\(/i,

@@ -191,9 +191,9 @@ async function validateTableExists(
   // Use canonical identifier validation (CWE-89 remediation)
   validateIdentifier(table);
 
-  const quoted = sanitizeIdentifier(table);
+  // validateIdentifier confirms name is [a-zA-Z_][a-zA-Z0-9_]* — safe for string literal
   const result = await adapter.executeReadQuery(
-    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=${quoted}`,
+    `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name='${table}'`,
   );
   if (!result.rows || result.rows.length === 0) {
     throw new ResourceNotFoundError(
@@ -220,10 +220,9 @@ async function validateColumnInTable(
   // Use canonical identifier validation (CWE-89 remediation)
   validateIdentifier(column);
 
-  const quotedTable = sanitizeIdentifier(table);
-  const quotedColumn = sanitizeIdentifier(column);
+  // validateIdentifier confirms names are [a-zA-Z_][a-zA-Z0-9_]* — safe for string literal
   const tableInfo = await adapter.executeReadQuery(
-    `SELECT name FROM pragma_table_info(${quotedTable}) WHERE name=${quotedColumn}`,
+    `SELECT name FROM pragma_table_info('${table}') WHERE name='${column}'`,
   );
   if (!tableInfo.rows || tableInfo.rows.length === 0) {
     throw new ResourceNotFoundError(
@@ -291,9 +290,10 @@ async function resolveSelectColumns(
     };
   }
 
-  // Auto-limit: exclude TEXT/BLOB columns likely to hold long content
+  // PRAGMA arguments need string values, not double-quoted identifiers
+  // validateIdentifier already confirmed table is safe
   const tableInfo = await adapter.executeReadQuery(
-    `PRAGMA table_info(${sanitizeIdentifier(table)})`,
+    `PRAGMA table_info('${table}')`,
   );
 
   const TEXT_TYPES = new Set([

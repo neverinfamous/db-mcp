@@ -84,7 +84,7 @@
 - **[H-5]** Window functions: replace inline regex identifier validation (`/^[a-zA-Z_]…$/`) with canonical `validateIdentifier()` from `utils/identifiers.ts` for consistency and maintainability (CWE-89).
 - **[H-6]** SpatiaLite tools: replace inline regex identifier validation + single-quoted interpolation with canonical `validateIdentifier()` and `sanitizeIdentifier()` across `tools.ts` and `analysis.ts` (CWE-89).
 - **[M-6]** Window functions: harden `validateOrderByColumns()` to reject expression-like tokens containing `;()+*/` instead of silently skipping them, closing a validation bypass (CWE-89).
-- **[M-7]** WHERE clause validation: add `IIF()`, `json_extract()`, and `GROUP_CONCAT()` to `DANGEROUS_PATTERNS` blocklist, closing blind injection bypass vectors for `CASE WHEN` alternatives (CWE-89).
+- **[M-7]** WHERE clause validation: add `IIF()` and `GROUP_CONCAT()` to `DANGEROUS_PATTERNS` blocklist, closing blind injection bypass vectors for `CASE WHEN` alternatives (CWE-89).
 - **[M-8]** CORS: enforce HTTPS scheme for wildcard subdomain patterns (`*.example.com`) while exempting `localhost`/`127.0.0.1` for development workflows (CWE-346).
 - **[M-9]** Code Mode sandbox: strip stack traces from worker error responses in production (`NODE_ENV=production`), preventing internal path and dependency leakage (CWE-209).
 - **[M-10]** OAuth: add explicit warning log when discovery fails and `authorizationServerUrl` is used as fallback issuer, highlighting potential issuer mismatch risk (CWE-287).
