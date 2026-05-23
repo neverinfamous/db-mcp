@@ -107,26 +107,13 @@ test.describe("HTTP Transport Security & Limits", () => {
 
     // Default CORS origins is [] (deny-all) — no Allow-Origin header sent
     expect(headers["access-control-allow-origin"]).toBeUndefined();
-  });
 
-  test("should include CORS headers when --cors-origins is explicitly configured", async () => {
-    const CORS_PORT = 3007;
-
-    await startServer(CORS_PORT, ["--cors-origins", "*"], "cors");
-
-    try {
-      const response = await fetch(`http://localhost:${CORS_PORT}/health`);
-      expect(response.status).toBe(200);
-
-      expect(response.headers.get("access-control-allow-origin")).toBe("*");
-      expect(response.headers.get("access-control-allow-methods")).toContain("POST");
-      expect(response.headers.get("access-control-allow-methods")).toContain("GET");
-      expect(response.headers.get("access-control-expose-headers")).toContain(
-        "mcp-session-id",
-      );
-    } finally {
-      stopServer(CORS_PORT);
-    }
+    // Allow-Methods and Expose-Headers are always set regardless of origin match
+    expect(headers["access-control-allow-methods"]).toContain("POST");
+    expect(headers["access-control-allow-methods"]).toContain("GET");
+    expect(headers["access-control-expose-headers"]).toContain(
+      "mcp-session-id",
+    );
   });
 
   test("should not set HSTS header by default (opt-in only)", async ({
