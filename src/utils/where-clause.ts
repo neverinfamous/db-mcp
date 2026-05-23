@@ -83,6 +83,11 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bX'[0-9A-Fa-f]+'/,
     reason: "contains hex string literal (potential binary injection)",
   },
+  // CASE WHEN (potential blind injection without subqueries)
+  {
+    pattern: /\bCASE\s+WHEN\b/i,
+    reason: "contains CASE WHEN (potential blind injection)",
+  },
 ];
 
 /**
@@ -104,6 +109,15 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
 export function validateWhereClause(where: string): void {
   if (!where || typeof where !== "string") {
     throw new UnsafeWhereClauseError("WHERE clause must be a non-empty string");
+  }
+
+  // Length guard: reject extreme-length strings to prevent regex evaluation
+  // overhead from adversarial inputs (CWE-1333: ReDoS prevention)
+  const MAX_WHERE_LENGTH = 10240; // 10KB
+  if (where.length > MAX_WHERE_LENGTH) {
+    throw new UnsafeWhereClauseError(
+      `WHERE clause exceeds maximum length of ${String(MAX_WHERE_LENGTH)} characters`,
+    );
   }
 
   for (const { pattern, reason } of DANGEROUS_PATTERNS) {

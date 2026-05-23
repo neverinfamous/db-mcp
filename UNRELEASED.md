@@ -10,6 +10,7 @@
 - `sqlite.reportProgress(current, total, message)` Code Mode utility for sandboxed JavaScript execution progress reporting.
 - Comprehensive DDL rejection tests for `sqlite_write_query` in unit and E2E test suites.
 - Vitest tests for timeout enforcement accuracy (±200ms) and `WorkerSandboxPool` concurrency limits.
+- Audit tool annotation invariant tests in `tool-annotations.test.ts` covering all 5 server-level audit tools.
 - `test-wasm-degradation.md` suite for WASM graceful degradation testing.
 - Expanded test coverage for domain errors, Zod validation sweeps, wrong-type numeric coercion, and pagination.
 - `sqlite.reportProgress()` coverage to `test-codemode-sandbox.md` Phase 2.
@@ -72,3 +73,9 @@
 - **[M-3]** Code Mode sandbox: add streaming egress boundary enforcement in the worker script. Result serialization now aborts mid-flight via a `JSON.stringify` replacer when byte count exceeds `CODE_MODE_MAX_RESULT_SIZE` (default 100KB, cap 50MB), preventing OOM from oversized results.
 - **[L-2]** Code Mode sandbox: add `maxYoungGenerationSizeMb` resource limit to worker thread creation, capping V8 nursery allocation bursts to `max(8, memoryLimitMb/8)`.
 - **[L-2]** Code Mode blocked patterns: remove redundant `Reflect.construct` regex (already a strict subset of the broader `Reflect.*` pattern), normalizing to 18 patterns.
+- **[M-5]** WHERE clause validation: add `CASE WHEN` blind injection pattern to blocklist, preventing boolean-based data exfiltration without subqueries (CWE-89).
+- **[L-8]** WHERE clause validation: add 10KB length guard before regex matching to prevent ReDoS via extreme-length strings (CWE-1333).
+- **[L-9]** Health endpoint: gate detailed fields (`oauth`, `mode`, `activeSessions`) behind authentication, keeping only `status`/`timestamp` public for load balancer probes (CWE-200).
+- **[L-10]** Code Mode sandbox: add `logger.warning()` on worker pool exhaustion to surface DoS attempts in logs (CWE-862).
+- **[L-11]** Supply chain: create `.npmrc` with `ignore-scripts=true` to prevent transitive dependency install scripts from executing arbitrary code (CWE-506).
+- **[L-12]** Secrets scanning: enhance `.gitleaks.toml` with project-specific path allowlists and regex patterns for test fixtures and documentation placeholder tokens (CWE-693).

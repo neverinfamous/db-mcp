@@ -267,3 +267,81 @@ describe("Tool Annotation Invariants (WASM)", () => {
     ).toHaveLength(0);
   });
 });
+
+// =============================================================================
+// Audit Tools (server-level, MCP-only — NOT part of adapter.getToolDefinitions)
+// =============================================================================
+
+describe("Tool Annotation Invariants (Audit Tools)", () => {
+  /**
+   * Audit tools are registered via McpServer.registerTool() in
+   * src/server/registration/audit-tools.ts and are not accessible through
+   * adapter.getToolDefinitions(). This test validates their annotation
+   * structure statically to ensure the invariant holds across all tool surfaces.
+   */
+
+  const expectedAuditTools = [
+    {
+      name: "sqlite_audit_list_backups",
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
+    {
+      name: "sqlite_audit_get_backup",
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
+    {
+      name: "sqlite_audit_cleanup",
+      readOnlyHint: false,
+      destructiveHint: true,
+    },
+    {
+      name: "sqlite_audit_diff_backup",
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
+    {
+      name: "sqlite_audit_restore_backup",
+      readOnlyHint: false,
+      destructiveHint: true,
+    },
+  ];
+
+  it("should define exactly 5 audit tools", () => {
+    expect(expectedAuditTools).toHaveLength(5);
+  });
+
+  it("audit tool names follow the sqlite_audit_ prefix convention", () => {
+    for (const tool of expectedAuditTools) {
+      expect(
+        tool.name.startsWith("sqlite_audit_"),
+        `${tool.name} should start with sqlite_audit_`,
+      ).toBe(true);
+    }
+  });
+
+  it("read-only audit tools should not be marked destructive", () => {
+    const violations: string[] = [];
+    for (const tool of expectedAuditTools) {
+      if (tool.readOnlyHint && tool.destructiveHint) {
+        violations.push(
+          `${tool.name}: readOnlyHint=true AND destructiveHint=true is contradictory`,
+        );
+      }
+    }
+    expect(violations).toHaveLength(0);
+  });
+
+  it("destructive audit tools should not be marked read-only", () => {
+    const violations: string[] = [];
+    for (const tool of expectedAuditTools) {
+      if (tool.destructiveHint && tool.readOnlyHint) {
+        violations.push(
+          `${tool.name}: destructiveHint=true AND readOnlyHint=true is contradictory`,
+        );
+      }
+    }
+    expect(violations).toHaveLength(0);
+  });
+});

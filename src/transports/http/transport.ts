@@ -135,15 +135,24 @@ export class HttpTransport {
       await setupOAuth(this.state, resourceUri);
     }
 
-    // Health check endpoint (always public)
-    this.state.app.get("/health", (_req, res) => {
-      res.json({
+    // Health check endpoint (always public, but detail is auth-gated)
+    this.state.app.get("/health", (req, res) => {
+      // Base response — always public for load balancer health probes
+      const response: Record<string, unknown> = {
         status: "healthy",
         timestamp: new Date().toISOString(),
-        oauth: this.state.config.oauth.enabled,
-        mode: this.state.config.stateless ? "stateless" : "stateful",
-        activeSessions: this.state.transports.size,
-      });
+      };
+
+      // Detailed fields only for authenticated clients
+      if (req.auth) {
+        response["oauth"] = this.state.config.oauth.enabled;
+        response["mode"] = this.state.config.stateless
+          ? "stateless"
+          : "stateful";
+        response["activeSessions"] = this.state.transports.size;
+      }
+
+      res.json(response);
     });
 
     // Root endpoint - helpful information for browser visitors

@@ -1,9 +1,28 @@
 # Gitleaks Configuration
 # https://github.com/gitleaks/gitleaks#configuration
+#
+# Referenced by: .github/workflows/secrets-scanning.yml (Gitleaks action)
+# Extends the default gitleaks ruleset with project-specific allowlists
+# to reduce false positives while maintaining comprehensive scanning.
 
 title = "db-mcp gitleaks config"
 
-# Allowlist for known false positives in test fixtures
+# Allowlist entries for known non-secret patterns in the codebase
 [allowlist]
-  description = "Test fixtures containing intentionally fake secrets"
-  paths = []
+  description = "Project-specific false positive suppressions"
+
+  # Test fixtures and example tokens in documentation
+  paths = [
+    '''test-server/.*\.sql$''',
+    '''test-server/.*\.md$''',
+    '''CHANGELOG\.md$''',
+    '''DOCKER_README\.md$''',
+  ]
+
+  # Known non-secret patterns (e.g., placeholder tokens in docs)
+  regexes = [
+    '''Bearer\s+your-token-here''',
+    '''Bearer\s+test-token''',
+    '''example\.com''',
+  ]
+

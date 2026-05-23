@@ -25,6 +25,9 @@ import {
   type ExecutionMetrics,
   type RpcRequest,
 } from "./types.js";
+import { createModuleLogger } from "../utils/logger/index.js";
+
+const logger = createModuleLogger("CODE_MODE");
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const WORKER_SCRIPT_PATH = join(__dirname, "worker-script.js");
@@ -407,6 +410,10 @@ export class WorkerSandboxPool {
     timeoutMs?: number,
   ): Promise<SandboxResult> {
     if (this.activeCount >= this.options.maxInstances) {
+      logger.warning(
+        `Worker sandbox pool exhausted (${String(this.activeCount)}/${String(this.options.maxInstances)} active)`,
+        { code: "CODE_MODE_POOL_EXHAUSTED" },
+      );
       return {
         success: false,
         error: "Worker sandbox pool exhausted",
