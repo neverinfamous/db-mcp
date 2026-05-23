@@ -15,6 +15,7 @@
 - Expanded test coverage for domain errors, Zod validation sweeps, wrong-type numeric coercion, and pagination.
 - `sqlite.reportProgress()` coverage to `test-codemode-sandbox.md` Phase 2.
 - Extracted testing prompt boilerplate in `test-server/prompt-template.md`.
+- Three new gotchas (#19–21) for `sqlite_batch_insert` key alignment, `sqlite_schema_diff` parameter format, and `sqlite_upsert` `conflictColumns` fallback behavior.
 - `outputSchema` registry section in `tool-reference.md`.
 - `dockerfile-patch-drift.yml` CI workflow to detect stale Dockerfile transitive dependency patches.
 
@@ -53,6 +54,11 @@
 - Timing side-channel attacks in bearer token comparison by using `crypto.timingSafeEqual`.
 - Missing CLI warning when `--auth-token` is used instead of the recommended `MCP_AUTH_TOKEN` environment variable.
 - Inconsistent Post-Test Procedures sections across test directory READMEs compared to the canonical `prompt-template.md`.
+- Misleading `sqlite_stats_top_n` gotcha describing auto-exclusion behavior instead of actionable guidance to always pass `selectColumns`.
+- Ambiguous "Backup/Restore/Dump" label in WASM vs Native table omitting `VacuumInto` and `Verify` from the 5-tool set.
+- Missing tool count in `text.md` title header, inconsistent with all other group instruction files.
+- Admin instruction title conflating 32 group tools with 5 server-level audit tools into a single count.
+- Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
 - **[H-1]** Code Mode sandbox: freeze built-in prototypes (`Object`, `Function`, `Error`, etc.) inside the `vm` context to prevent dynamic constructor chain escapes via string concatenation (e.g., `'con'+'structor'`).

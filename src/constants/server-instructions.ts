@@ -40,7 +40,39 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (32N/31W group + 5 audit)
+  ["README", `# Server Instructions Overview
+
+**🤖 AGENT OPTIMIZED README**
+
+This directory contains the Markdown files that serve as the foundation for the \`db-mcp\` dynamic help system. These files are presented directly to AI agents making context-gathering queries.
+
+## ⚠️ Critical Workflow
+
+**DO NOT** edit \`src/constants/server-instructions.ts\` directly. It is auto-generated.
+
+If you need to update a tool group's instructions or the general gotchas, follow these steps:
+
+1. Modify the relevant \`.md\` file in this directory (e.g., \`gotchas.md\`, \`core.md\`, etc.).
+2. Run the generator script to compile these markdown files into the TypeScript constant map:
+   \`\`\`bash
+   npm run generate:instructions
+   \`\`\`
+   _(or \`npx tsx scripts/generate-server-instructions.ts\`)_
+3. The generator script converts your markdown into escaped strings embedded in the \`server-instructions.ts\` generated code.
+4. **Never** attempt to add \`README.md\` into the generator logic. The generation script automatically ignores any file ending in \`.md\` and starting with \`readme\` (case-insensitive).
+
+## File Structure
+
+- \`overview.md\`: The minimal core instructions sent to all clients on initialization. Keep this extremely short (~150 tokens) to preserve context limits.
+- \`gotchas.md\`: The core help payload returned for \`sqlite://help\`. Contains critical usage patterns across the entire extension.
+- \`[group-name].md\`: Group-specific hints returned by \`sqlite://help/[group-name]\` (e.g., \`sqlite://help/json\`).
+
+## Guidelines
+
+- Write strictly for AI consumption (concise, rule-based, clear mappings).
+- Use code blocks for specific exact schemas/examples.
+- Watch payload sizes; do not put the entire documentation in here.`],
+  ["admin", `# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (5 tools)
 
 ## Maintenance
 
@@ -309,13 +341,16 @@ sqlite_spatialite_index({
 9. **Fuzzy matching tokenization**: Matches WORD TOKENS by default — \`"laptop"\` matches \`"Laptop Pro 15"\` (distance 0 on first token). Use \`tokenize: false\` for full-string matching
 10. **SpatiaLite distances**: \`nearest_neighbor\`/\`distance_matrix\` return CARTESIAN distance (degrees), not geodetic (km/miles)
 11. **SpatiaLite buffer**: Auto-simplifies output by default (tolerance=0.0001). Use \`simplifyTolerance: 0\` to disable
-12. **sqlite_stats_top_n**: Auto-excludes long-content columns (description, body, notes, etc.) when \`selectColumns\` is omitted. Use \`selectColumns\` to override
+12. **sqlite_stats_top_n**: Returns all columns by default which creates large payloads for wide tables — always pass \`selectColumns\` to control output size
 13. **CSV virtual tables**: Require ABSOLUTE file paths
 14. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use \`sqlite_drop_table\` to remove
 15. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
 16. **PRAGMA compile options**: WASM may show FTS3, not FTS5
 17. **Vector tool schemas**: Vector tools use distinct schemas for specific operations. E.g., \`sqlite.vector.dimensions\` requires \`vectorColumn\`. Additionally, \`sqlite.vector.get\` wraps metadata inside a \`metadata\` object (e.g., \`metadata.content\`), and \`sqlite.vector.stats\` returns \`sampleSize\` and \`magnitudeStats\` (not \`count\` and \`stats\`).
 18. **FTS5 trigger cleanup**: Dropping an FTS5 table with \`sqlite_drop_table\` automatically finds and removes the associated \`_ai\`, \`_ad\`, and \`_au\` sync triggers from the source table.
+19. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs
+20. **sqlite_schema_diff**: \`baseline\` and \`target\` accept either the string \`"current"\` (queries live DB) or an inline snapshot object from a prior \`sqlite_schema_snapshot\` call. At least one side must be \`"current"\` unless doing an offline comparison
+21. **sqlite_upsert**: Always specify \`conflictColumns\` — without it, falls back to \`REPLACE\` which deletes and re-inserts the row, potentially losing columns not included in \`data\`
 
 ## WASM vs Native
 
@@ -325,7 +360,7 @@ sqlite_spatialite_index({
 | Transactions (8 tools)                            | ✅                    | ❌          | None             |
 | Window functions (6 tools in stats group)         | ✅                    | ❌          | None             |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅                    | ❌          | None             |
-| Backup/Restore/Dump (5 tools)                     | ✅                    | ❌          | Graceful error   |
+| Backup/Restore/Dump/VacuumInto/Verify (5 tools)  | ✅                    | ❌          | Graceful error   |
 | R-Tree spatial indexing                           | ✅                    | ❌          | Graceful error   |
 | CSV virtual tables                                | ✅                    | ❌          | Graceful error   |
 | generate_series                                   | JS fallback           | JS fallback | —                |
@@ -552,7 +587,7 @@ sqlite_migration_status();
 ## ⚠️ Gotchas
 
 - Rollback requires \`rollbackSql\` to have been provided when the migration was recorded/applied
-- Migration group is **opt-in** — not included in any shortcut except \`dev-schema\` and \`full\``],
+- Migration group is **opt-in** — not included by default. Enable via \`--tool-filter\` flag: use \`dev-schema\` (core+introspection+migration+codemode) or \`full\` (all groups)`],
   ["stats", `# db-mcp Help — Statistical Analysis (23N/17W: 17 core + 6 window [NATIVE ONLY])
 
 ## Core Statistics (always available)
@@ -673,7 +708,7 @@ sqlite_window_moving_avg({
   selectColumns: ["date"],
 });
 \`\`\``],
-  ["text", `# db-mcp Help — Text Processing & FTS5
+  ["text", `# db-mcp Help — Text Processing & FTS5 (19N/14W: 14 text + 5 FTS5 [NATIVE ONLY])
 
 ## Full-Text Search / FTS5 (5 tools, Native only)
 

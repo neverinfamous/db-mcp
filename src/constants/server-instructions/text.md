@@ -1,4 +1,4 @@
-# db-mcp Help — Text Processing & FTS5
+# db-mcp Help — Text Processing & FTS5 (19N/14W: 14 text + 5 FTS5 [NATIVE ONLY])
 
 ## Full-Text Search / FTS5 (5 tools, Native only)
 
