@@ -21,7 +21,10 @@ if (!fs.existsSync(templatePath)) {
 
 const templateStr = fs.readFileSync(templatePath, 'utf-8');
 
-const getTemplate = (titleType, groupName, schemaRef, testContent) => {
+const WASM_ALL_COMPATIBLE = 'All tools are fully WASM-compatible.';
+const WASM_HAS_NATIVE = 'Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.';
+
+const getTemplate = (titleType, groupName, schemaRef, wasmMode, testContent) => {
   // Use replacer functions (not string literals) to prevent $-substitution.
   // String.prototype.replace() interprets $&, $', $`, $n in string replacements.
   // Test content may contain $ (e.g. regex patterns like `@gmail\\.com$`).
@@ -29,6 +32,7 @@ const getTemplate = (titleType, groupName, schemaRef, testContent) => {
     .replace('{{TITLE_TYPE}}', () => titleType)
     .replace('{{GROUP_NAME}}', () => groupName)
     .replace('{{SCHEMA_REF}}', () => schemaRef.trim())
+    .replace('{{WASM_MODE}}', () => wasmMode)
     .replace('{{TEST_CONTENT}}', () => testContent.trim());
 };
 
@@ -64,8 +68,13 @@ function processDirectory(dirName) {
     let schemaRef = "> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).";
     if (schemaMatch) {
       const extractedSchema = schemaMatch[1].trim();
-      // Only keep the extracted schema if it contains a table definition (not the error scenario list) or CSV hint
+      // Preserve existing schema references that are valid:
+      // 1. Table definitions (markdown tables with schema info)
+      // 2. CSV testing hints
+      // 3. Explicit "no schema required" markers
       if (extractedSchema.includes('| Table') || extractedSchema.includes('CSV testing')) {
+        schemaRef = extractedSchema;
+      } else if (extractedSchema.includes('No specific table schema required')) {
         schemaRef = extractedSchema;
       }
       
@@ -118,9 +127,15 @@ function processDirectory(dirName) {
     const contentEndIdx = endSepIdx !== -1 ? endSepIdx : postTestIdx;
     const testContent = lines.slice(startSepIdx + 1, contentEndIdx).join('\n');
 
-    const newContent = getTemplate(titleType, groupName, schemaRef, testContent);
+    // Detect WASM mode: if test content or tool list contains [NATIVE ONLY],
+    // use the variant that references annotations; otherwise use the simpler text.
+    const wasmMode = testContent.includes('[NATIVE ONLY]')
+      ? WASM_HAS_NATIVE
+      : WASM_ALL_COMPATIBLE;
+
+    const newContent = getTemplate(titleType, groupName, schemaRef, wasmMode, testContent);
     fs.writeFileSync(filePath, newContent, 'utf-8');
-    console.log(`Standardized ${file} (${titleType})`);
+    console.log(`Standardized ${file} (${titleType}, WASM: ${testContent.includes('[NATIVE ONLY]') ? 'has-native' : 'all-wasm'})`);
   }
 }
 

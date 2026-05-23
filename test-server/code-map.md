@@ -385,8 +385,8 @@ catch (error) {
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
 | `test-server/tool-reference.md`              | Complete 167/140 tool inventory with descriptions                                                                  |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
-| `test-server/test-tool-groups/`              | 10 self-contained test prompts — one per tool group. Direct calls only.                                            |
-| `test-server/test-codemode/`                 | 10 self-contained test prompts — one per tool group. Code Mode execution only.                                     |
+| `test-server/test-tool-groups/`              | 20 self-contained test prompts — sub-group granularity (e.g., core-data, core-schema). Direct calls only.           |
+| `test-server/test-codemode/`                 | 12 self-contained test prompts — 10 tool groups + sandbox + wasm-degradation meta-tests. Code Mode execution only. |
 | `test-server/test-advanced/`                 | 10 self-contained advanced stress test prompts — one per tool group.                                               |
 | `test-server/test-resources.md`              | MCP resource verification prompts                                                                                  |
 | `test-server/test-prompts.md`                | MCP prompt verification prompts                                                                                    |
