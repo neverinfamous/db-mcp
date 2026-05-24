@@ -10,7 +10,8 @@
  *   - sqlite_dump (dump.ts)
  */
 
-import { resolve, dirname, normalize, sep } from "node:path";
+import { resolve, dirname, normalize, sep, basename } from "node:path";
+import { realpathSync } from "node:fs";
 
 /**
  * Result of path validation — structured to match the
@@ -42,9 +43,29 @@ export function validateSameDirPath(
   }
 
   const dbDir = dirname(resolve(dbPath));
-  const resolvedTarget = resolve(targetPath);
+  
+  let resolvedTarget = resolve(targetPath);
+  try {
+    resolvedTarget = realpathSync(resolvedTarget);
+  } catch {
+    // If the file doesn't exist yet, try resolving its parent directory
+    try {
+      const parentDir = realpathSync(dirname(resolvedTarget));
+      resolvedTarget = resolve(parentDir, basename(resolvedTarget));
+    } catch {
+      // Fallback to lexical
+    }
+  }
+
+  let resolvedDbDir = dbDir;
+  try {
+    resolvedDbDir = realpathSync(dbDir);
+  } catch {
+    // Fallback to lexical
+  }
+
   const normalizedTarget = normalize(resolvedTarget);
-  const normalizedDir = normalize(dbDir);
+  const normalizedDir = normalize(resolvedDbDir);
 
   const dirWithSep = normalizedDir.endsWith(sep) ? normalizedDir : normalizedDir + sep;
 

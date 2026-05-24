@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolDefinition, RequestContext } from "../../types/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
 import type { AuditInterceptor } from "../../audit/interceptor.js";
+import { registerToolScope } from "../../auth/scope-map.js";
 
 // Interface for the adapter methods needed by tool registration
 export interface ToolRegistrationAdapter {
@@ -21,6 +22,9 @@ export function registerToolImpl(
   const toolOptions: Record<string, unknown> = {
     description: tool.description,
   };
+
+  const requiredScope = tool.requiredScopes?.[0] ?? "admin";
+  registerToolScope(tool.name, requiredScope);
 
   if (tool.inputSchema !== undefined) {
     const schema = tool.inputSchema;

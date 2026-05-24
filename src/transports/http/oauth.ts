@@ -144,6 +144,14 @@ function createSimpleBearerAuth(expectedToken: string): RequestHandler {
       return;
     }
 
+    // Explicitly assign admin scope instead of bypassing validation logic.
+    req.auth = { 
+      sub: "bearer", 
+      scopes: ["admin"],
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400
+    };
+
     next();
   };
 }

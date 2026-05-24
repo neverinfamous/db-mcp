@@ -12,6 +12,7 @@ import {
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { AnalyzeCsvSchemaSchema } from "../../../schemas/virtual.js";
 import { AnalyzeCsvSchemaOutputSchema } from "../../../schemas/virtual.js";
+import { validateSameDirPath } from "../../../../../utils/validate-path.js";
 
 export function createAnalyzeCsvSchemaTool(
   adapter: SqliteAdapter,
@@ -23,7 +24,7 @@ export function createAnalyzeCsvSchemaTool(
     group: "admin",
     inputSchema: AnalyzeCsvSchemaSchema,
     outputSchema: AnalyzeCsvSchemaOutputSchema,
-    requiredScopes: ["read"],
+    requiredScopes: ["admin"],
     annotations: readOnly("Analyze CSV Schema"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
@@ -43,6 +44,22 @@ export function createAnalyzeCsvSchemaTool(
           success: false,
           error: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
           code: "VALIDATION_ERROR",
+          category: "validation",
+          hasHeader: false,
+          rowCount: 0,
+          columns: [],
+        };
+      }
+
+      const validation = validateSameDirPath(
+        input.filePath,
+        adapter.getConfiguredPath(),
+      );
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: validation.error || "Path validation failed",
+          code: "SECURITY_ERROR",
           category: "validation",
           hasHeader: false,
           rowCount: 0,

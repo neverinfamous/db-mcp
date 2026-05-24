@@ -6,6 +6,14 @@ import { logger } from "../../utils/logger/index.js";
 import { z } from "zod";
 
 /**
+ * Force redaction of SQL string literals to prevent secret exposure
+ * in audit logs and backups, regardless of operator configuration.
+ */
+function redactSqlLiterals(text: string): string {
+  return text.replace(/'([^']*)'/g, "'***'");
+}
+
+/**
  * Register the sqlite://audit resource for agent access to audit log.
  */
 export function registerAuditResource(
@@ -38,12 +46,14 @@ export function registerAuditResource(
           },
         };
 
+        const payloadStr = JSON.stringify(payload, null, 2);
+
         return {
           contents: [
             {
               uri: "sqlite://audit",
               mimeType: "application/json",
-              text: JSON.stringify(payload, null, 2),
+              text: redactSqlLiterals(payloadStr),
             },
           ],
         };
@@ -144,11 +154,12 @@ export function registerAuditBackupTools(
             isError: true,
           };
         }
+        const snapshotStr = JSON.stringify(snapshot, null, 2);
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(snapshot, null, 2),
+              text: redactSqlLiterals(snapshotStr),
             },
           ],
         };

@@ -191,3 +191,15 @@
 - **[M-25]** CI/CD: Set `persist-credentials: false` across all GitHub Actions workflows to prevent token leakage.
 - **[M-26]** CI/CD: Removed `continue-on-error: true` from Trivy action step in `security-update.yml` to ensure high/critical vulnerabilities block the pipeline.
 - **[L-25]** Dependabot: Added documented security warning to `.github/workflows/dependabot-auto-merge.yml`.
+- **[H-16]** Path traversal: Updated `validateSameDirPath` to canonicalize paths via `realpathSync` preventing symlink escapes (CWE-22).
+- **[M-27]** Audit logs: Forced redaction of SQL literals across all audit tools via `redactSqlLiterals` wrapper (CWE-532).
+- **[M-28]** CI/CD: Hardened `ci-health-monitor.lock.yml` Docker socket mount to read-only (`ro`) (CWE-250).
+- **[M-29]** CI/CD: Removed excessive `pull-requests: write` from `docs-drift-detector.lock.yml` (CWE-250).
+
+### Fixed
+- Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.
+- Updated `scope-map.test.ts` and `audit-interceptor.test.ts` for dynamic scope registration compatibility.
+- Added missing `iat` and `exp` claims to mock token generator in `oauth.ts`.
+
+### Changed
+- Refactored `scope-map.ts` to use dynamic `registerToolScope()` string registration, deprecating static group evaluation.

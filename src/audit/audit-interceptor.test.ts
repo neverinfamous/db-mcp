@@ -12,6 +12,7 @@ import { rm, readFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { AuditConfig, AuditEntry } from "./types.js";
+import { registerToolScope } from "../auth/scope-map.js";
 
 /** Create a temporary directory for each test */
 function tempDir(): string {
@@ -42,6 +43,9 @@ describe("AuditInterceptor", () => {
   beforeEach(async () => {
     dir = tempDir();
     await mkdir(dir, { recursive: true });
+    registerToolScope("migration_apply", "write");
+    registerToolScope("read_query", "read");
+    registerToolScope("vacuum", "admin");
   });
 
   afterEach(async () => {
