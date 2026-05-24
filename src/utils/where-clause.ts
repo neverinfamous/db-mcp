@@ -193,6 +193,16 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bPRINTF\s*\(/i,
     reason: "contains PRINTF() (potential blind extraction oracle)",
   },
+  // CAST() — can be used to convert text to numeric oracles (CWE-89)
+  {
+    pattern: /\bCAST\s*\(/i,
+    reason: "contains CAST() (potential blind extraction oracle)",
+  },
+  // GLOB with trailing wildcard or arbitrary wildcard usage — case-sensitive oracle
+  {
+    pattern: /\bGLOB\s+['"][^*]*\*['"]/i,
+    reason: "contains GLOB with wildcard (potential oracle)",
+  },
 ];
 
 // =============================================================================

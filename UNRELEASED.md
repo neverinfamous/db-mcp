@@ -230,6 +230,16 @@
 - **[M-35]** Audit logging: Wrapped bare Zod parse calls in try/catch utilizing `formatHandlerError` for safe error serialization.
 - **[M-36]** Annotations: Applied `openWorldHint: false` to audit logging read tools to ensure MCP clients correctly prompt users.
 - **[H-25]** Admin tools: Added explicit DDL validation against unauthorized commands (`ATTACH`, `DETACH`, `PRAGMA`, `LOAD_EXTENSION`) prior to executing `CREATE` statements in `sqlite_restore` handlers (CWE-89).
+- **[H-26]** OAuth discovery: Removed insecure fallback mechanism during JWKS discovery failures; explicitly hard-fail on startup if missing `jwksUri` or `issuer` (CWE-287).
+- **[H-27]** DDL validation: Pre-processed SQL to strip comments (`/* ... */` and `-- ...`) before keyword blocklist evaluation in `validateDdl` to prevent comment-hiding bypasses (CWE-89).
+- **[H-28]** Code Mode sandbox: Added a production guard in `sandbox-factory.ts` that crashes the application if `CODEMODE_ISOLATION_INSECURE=1` is loaded in a `NODE_ENV=production` environment, preventing insecure fallback VM executions (CWE-693).
+- **[H-29]** Tool scopes: Explicitly mapped statically registered audit and built-in tools via `registerToolScopes` to ensure they do not fail closed (`admin` scope for audit, all scopes for built-in tools) (CWE-862).
+- **[M-37]** WHERE clause validation: Added `CAST(` and trailing `GLOB` wildcard patterns to `DANGEROUS_PATTERNS` blocklist to mitigate blind data extraction oracle vectors (CWE-89).
+- **[M-38]** Admin tools: Removed `configuredPath` from `sqlite_pragma_database_list` API responses to prevent local filesystem layout leaks (CWE-200).
+- **[M-39]** CI/CD: Supplied `persist-credentials: false` to all `actions/checkout` steps across workflows to harden against token exfiltration (CWE-522).
+- **[L-30]** Tool annotations: Changed `destructiveHint` to `true` for all tools using `ADMIN` or `ADMIN_FS` presets to signal clients for explicit user confirmation.
+- **[L-31]** Input validation: Enforced timeout bounds natively using Zod constraints (`.min(500).max(30000)`) in `codemode.ts` schemas.
+- **[L-32]** SECURITY.md: Documented the inherent remote code execution risks of resolving native extensions via `SPATIALITE_PATH` and similar environment variables (CWE-829).
 
 ### Fixed
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.

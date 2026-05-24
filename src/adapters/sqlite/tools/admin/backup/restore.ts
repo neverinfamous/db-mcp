@@ -23,7 +23,8 @@ import { RestoreSchema } from "../../../schemas/admin.js";
  * during restore operations.
  */
 function validateDdl(sql: string, type: string, name: string): void {
-  const upperSql = sql.toUpperCase();
+  const cleanSql = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "");
+  const upperSql = cleanSql.toUpperCase();
   // Reject potentially destructive or unauthorized statements
   if (
     upperSql.includes("ATTACH ") ||

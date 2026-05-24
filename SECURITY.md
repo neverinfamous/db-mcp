@@ -25,6 +25,11 @@ Key functions:
 - ✅ **All user-provided values** use parameterized queries via `better-sqlite3` / `sql.js` bindings
 - ✅ **Identifier sanitization** complements parameterized values — defense in depth
 
+### **Native Extension Loading**
+
+- ✅ **Extension paths**: The server relies on native extension loading for advanced capabilities (e.g., via `SPATIALITE_PATH`). Exercise caution when deploying, as these environment variables resolve to native library files on the host.
+- ✅ Ensure extension paths map only to trusted directories containing verified libraries to prevent arbitrary code execution via malicious `.so`/`.dll`/`.dylib` files.
+
 ### **Structured Error Handling**
 
 Every tool returns structured error responses — never raw exceptions or internal details:

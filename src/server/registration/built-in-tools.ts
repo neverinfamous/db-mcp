@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from "../../adapters/database-adapter.js";
 import type { McpServerConfig, ToolFilterConfig } from "../../types/index.js";
 import { SERVER_ICONS } from "../../utils/icons.js";
 import { READ_ONLY } from "../../utils/annotations.js";
+import { registerToolScopes } from "../../auth/scopes/enforcement.js";
 
 /**
  * Register built-in server tools (health, info, etc.)
@@ -123,4 +124,12 @@ export function registerBuiltInTools(
       };
     });
   
+    // Map scopes so these tools don't fail closed
+    registerToolScopes(
+      new Map([
+        ["server_info", ["read", "write", "admin", "full"]],
+        ["server_health", ["read", "write", "admin", "full"]],
+        ["list_adapters", ["read", "write", "admin", "full"]],
+      ]),
+    );
 }

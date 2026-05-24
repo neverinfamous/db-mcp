@@ -34,6 +34,8 @@ export const ExecuteCodeSchema = z.object({
     coerceNumber,
     z
       .number()
+      .min(500)
+      .max(30000)
       .optional()
       .default(30000)
       .describe(

@@ -110,9 +110,8 @@ export function createPragmaDatabaseListTool(
         return {
           success: true,
           databases,
-          configuredPath,
           note: internalPathDiffers
-            ? "Internal file paths shown above are WASM virtual filesystem paths. The configuredPath shows the original database location."
+            ? "Internal file paths shown above are WASM virtual filesystem paths. The actual database is located elsewhere."
             : undefined,
         };
       } catch (error) {

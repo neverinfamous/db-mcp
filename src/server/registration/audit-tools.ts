@@ -4,6 +4,7 @@ import type { BackupManager } from "../../audit/backup-manager.js";
 import type { AuditLogger } from "../../audit/logger.js";
 import { logger } from "../../utils/logger/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
+import { registerToolScopes } from "../../auth/scopes/enforcement.js";
 import { z } from "zod";
 
 /**
@@ -588,6 +589,16 @@ export function registerAuditBackupTools(
           };
         }
       },
+    );
+
+    registerToolScopes(
+      new Map([
+        ["sqlite_audit_list_backups", ["admin", "full"]],
+        ["sqlite_audit_get_backup", ["admin", "full"]],
+        ["sqlite_audit_cleanup", ["admin", "full"]],
+        ["sqlite_audit_diff_backup", ["admin", "full"]],
+        ["sqlite_audit_restore_backup", ["admin", "full"]],
+      ]),
     );
 
     logger.info(

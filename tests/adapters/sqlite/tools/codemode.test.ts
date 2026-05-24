@@ -146,8 +146,8 @@ describe("sqlite_execute_code handler - validation", () => {
     )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
-    expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
-    expect(String(result.error)).toContain("between 500 and 30000");
+    expect(result.code).toBe("VALIDATION_ERROR");
+    expect(String(result.error)).toContain("500");
   });
 
   it("should reject timeout out of range (too high)", async () => {
@@ -160,7 +160,7 @@ describe("sqlite_execute_code handler - validation", () => {
     )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
-    expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
+    expect(result.code).toBe("VALIDATION_ERROR");
   });
 
   it("should execute code successfully", async () => {
@@ -228,7 +228,7 @@ describe("sqlite_execute_code handler - readonly guards", () => {
     )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
-    expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
+    expect(result.code).toBe("VALIDATION_ERROR");
   });
 
   it("should coerce unparseable string timeout to default", async () => {

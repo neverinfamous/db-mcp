@@ -45,7 +45,7 @@ export const IDEMPOTENT: ToolAnnotations = {
 /** Admin/maintenance tools (VACUUM, ANALYZE, PRAGMA) */
 export const ADMIN: ToolAnnotations = {
   readOnlyHint: false,
-  destructiveHint: false,
+  destructiveHint: true,
   openWorldHint: false,
 };
 
@@ -101,7 +101,7 @@ export function admin(title: string): ToolAnnotations {
 /** Admin tools that interact with the filesystem (ATTACH, VACUUM INTO, DUMP) */
 export const ADMIN_FS: ToolAnnotations = {
   readOnlyHint: false,
-  destructiveHint: false,
+  destructiveHint: true,
   openWorldHint: true,
 };
 

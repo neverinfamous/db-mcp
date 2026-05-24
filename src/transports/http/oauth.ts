@@ -442,34 +442,17 @@ export async function setupOAuth(
       },
     );
 
-    if (!state.config.oauth.jwksUri) {
+    if (!state.config.oauth.jwksUri || !state.config.oauth.issuer) {
       logger.error(
-        "No JWKS URI available. Please provide oauth.jwksUri in config.",
+        "OAuth discovery failed and explicit jwksUri/issuer were not provided. Hard failing to prevent spoofed token acceptance.",
         { code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full },
       );
       throw error;
     }
 
-    // F-14: Redact full URL from logs to avoid leaking internal infrastructure
-    const redactedUrl = new URL(state.config.oauth.authorizationServerUrl);
-    const redactedHost = `${redactedUrl.protocol}//${redactedUrl.hostname}***`;
-
-    const fallbackIssuer =
-      state.config.oauth.issuer ?? state.config.oauth.authorizationServerUrl;
-
-    // Warn when falling back to authorizationServerUrl as issuer — may not match
-    // the actual token issuer, risking silent auth failures or spoofed acceptance
-    if (!state.config.oauth.issuer) {
-      logger.warning(
-        `OAuth discovery failed. Falling back to authorizationServerUrl as issuer: '${redactedHost}'. ` +
-          "Set oauth.issuer explicitly to avoid potential issuer mismatch.",
-        { code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full },
-      );
-    }
-
     state.tokenValidator = new TokenValidator({
       jwksUri: state.config.oauth.jwksUri,
-      issuer: fallbackIssuer,
+      issuer: state.config.oauth.issuer,
       audience: state.config.oauth.audience,
       clockTolerance: state.config.oauth.clockTolerance,
     });
