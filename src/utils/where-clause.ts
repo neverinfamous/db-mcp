@@ -160,6 +160,11 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bLENGTH\s*\(/i,
     reason: "contains LENGTH() (potential blind extraction oracle)",
   },
+  // TRIM functions — blind extraction oracle (bypass for LIKE / SUBSTR)
+  {
+    pattern: /\b(?:L|R)?TRIM\s*\(/i,
+    reason: "contains TRIM() (potential blind extraction oracle)",
+  },
   {
     pattern: /\bUNICODE\s*\(/i,
     reason: "contains UNICODE() (potential blind extraction oracle)",

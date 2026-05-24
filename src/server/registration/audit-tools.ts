@@ -16,6 +16,33 @@ function redactSqlLiterals(text: string): string {
 }
 
 /**
+ * Validate DDL to prevent execution of unauthorized or destructive statements
+ * during restore operations from tampered backups.
+ */
+function validateDdl(sql: string): void {
+  const cleanSql = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "");
+  const upperSql = cleanSql.toUpperCase();
+  // Reject potentially destructive or unauthorized statements
+  if (
+    upperSql.includes("ATTACH ") ||
+    upperSql.includes("DETACH ") ||
+    upperSql.includes("PRAGMA ") ||
+    upperSql.includes("LOAD_EXTENSION(")
+  ) {
+    throw new Error(
+      `DDL validation failed: unauthorized command or function call`,
+    );
+  }
+
+  // Ensure triggers do not attempt to target other databases explicitly
+  if (upperSql.includes(" ON MAIN.") || upperSql.includes(" ON TEMP.")) {
+    throw new Error(
+      `DDL validation failed: trigger attempts to target a specific database`,
+    );
+  }
+}
+
+/**
  * Register the sqlite://audit resource for agent access to audit log.
  */
 export function registerAuditResource(
@@ -548,6 +575,7 @@ export function registerAuditBackupTools(
 
           let changesApplied = 0;
           for (const stmt of statements) {
+            validateDdl(stmt);
             await adapter.executeQuery(`${stmt};`);
             changesApplied++;
           }
