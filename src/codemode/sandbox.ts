@@ -118,9 +118,10 @@ export class CodeModeSandbox {
     // Unlike worker-script.ts (which gets its own V8 copies), this
     // sandbox passes host builtins directly (Object, Array, Error, etc.).
     // Freezing them would freeze the host process prototypes too.
-    // The codeGeneration:{strings:false,wasm:false} restriction above
-    // is the primary defense — it blocks Function()/eval() at the V8
-    // engine level, preventing constructor chain escapes.
+    // WARNING: This means the vm sandbox is vulnerable to prototype
+    // pollution mutating the host process. Use worker mode for untrusted code.
+    // The codeGeneration:{strings:false,wasm:false} restriction blocks
+    // Function()/eval() at the V8 engine level.
 
     const instance = new CodeModeSandbox(context, opts);
     // Share logBuffer reference
@@ -316,16 +317,9 @@ export class SandboxPool {
    */
   private release(sandbox: CodeModeSandbox): void {
     this.inUse.delete(sandbox);
-
-    if (
-      sandbox.isHealthy() &&
-      this.available.length < this.options.maxInstances
-    ) {
-      sandbox.clearConsoleOutput();
-      this.available.push(sandbox);
-    } else {
-      sandbox.dispose();
-    }
+    // Security: Discard the vm-mode sandbox after single use to prevent
+    // context contamination between executions.
+    sandbox.dispose();
   }
 
   async execute(

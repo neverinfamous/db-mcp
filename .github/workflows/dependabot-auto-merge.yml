@@ -8,12 +8,14 @@ on:
 
 permissions:
   pull-requests: write
-  contents: write
 
 jobs:
   dependabot:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Dependabot metadata
         id: metadata
@@ -34,7 +36,7 @@ jobs:
         # Note: This step only *enables* auto-merge. For security, the repository MUST
         # have Branch Protection enabled requiring status checks (like lint and codeql)
         # to pass before the merge is actually executed.
-        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}

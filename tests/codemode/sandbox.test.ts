@@ -251,13 +251,13 @@ describe("SandboxPool", () => {
       expect(result.result).toBe(99);
     });
 
-    it("should return sandbox to pool after execution", async () => {
+    it("should dispose sandbox after execution to prevent context contamination", async () => {
       pool = new SandboxPool({ minInstances: 1, maxInstances: 3 });
       pool.initialize();
       await pool.execute("return 1;", {});
-      // Sandbox should be back in available
+      // Sandbox should be disposed, not returned to available
       expect(pool.getStats().inUse).toBe(0);
-      expect(pool.getStats().available).toBeGreaterThanOrEqual(1);
+      expect(pool.getStats().available).toBe(0);
     });
 
     it("should create new sandbox when pool is empty", async () => {

@@ -99,16 +99,12 @@ export function createJsonSecurityScanTool(
         const column = sanitizeIdentifier(input.column);
 
         // Build query — wrap column with json() to handle both text and JSONB
-        let sql = `SELECT json("${input.column}") as json_data FROM ${table}`;
+        let sql = `SELECT json("${column}") as json_data FROM ${table}`;
         if (input.whereClause) {
           validateWhereClause(input.whereClause);
           sql += ` WHERE ${input.whereClause}`;
         }
         sql += ` LIMIT ${input.sampleSize}`;
-
-        // Use sanitized column in the identifier check but raw in json()
-        // to ensure the identifier validation runs
-        void column;
 
         const result = await adapter.executeReadQuery(sql);
         const rows = result.rows ?? [];

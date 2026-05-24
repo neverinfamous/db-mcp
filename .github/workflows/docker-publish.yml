@@ -14,13 +14,7 @@ env:
   REGISTRY: docker.io
   IMAGE_NAME: writenotenow/db-mcp
 
-permissions:
-  contents: read
-  packages: write
-  security-events: write
-  # C-18: pull-requests:write moved to security-scan job only
-  id-token: write
-  attestations: write
+permissions: {}
 
 jobs:
   # Security scan BEFORE any images are pushed

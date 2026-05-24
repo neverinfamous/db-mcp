@@ -24,8 +24,8 @@ function verifySessionOwner(
   reqAuthSub: string | undefined,
 ): boolean {
   const owner = state.sessionOwners.get(sessionId);
-  // If the session has an owner and the requester has an identity, they must match
-  if (owner !== undefined && reqAuthSub !== undefined && owner !== reqAuthSub) {
+  // If the session has an owner, the requester must match the owner
+  if (owner !== undefined && owner !== reqAuthSub) {
     return false;
   }
   return true;

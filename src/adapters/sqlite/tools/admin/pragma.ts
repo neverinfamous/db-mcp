@@ -9,7 +9,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { admin, adminFs, readOnly } from "../../../../utils/annotations.js";
+import { admin, adminFs, readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { insightsManager } from "../../../../utils/insights-manager.js";
@@ -202,8 +202,11 @@ export function createPragmaSettingsTool(
           const oldValue = oldResult.rows?.[0]?.[input.pragma];
 
           // Set new value
+          const safeValue = typeof input.value === 'string' 
+            ? `'${input.value.replace(/'/g, "''")}'` 
+            : input.value;
           await adapter.executeWriteQuery(
-            `PRAGMA ${input.pragma} = ${input.value}`,
+            `PRAGMA ${input.pragma} = ${safeValue}`,
             undefined,
             true,
           );
@@ -324,7 +327,7 @@ export function createAppendInsightTool(): ToolDefinition {
     inputSchema: AppendInsightSchema,
     outputSchema: AppendInsightOutputSchema,
     requiredScopes: ["write"],
-    annotations: admin("Append Insight"),
+    annotations: write("Append Insight"),
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = AppendInsightSchema.parse(params);

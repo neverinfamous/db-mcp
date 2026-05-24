@@ -44,7 +44,7 @@ jobs:
 
       # Run SARIF scan first (non-blocking) to always generate the file
       - name: Run Trivy scanner for SARIF output
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (post-supply-chain-fix)
         with:
           image-ref: security-test:latest
           format: 'sarif'
@@ -64,7 +64,7 @@ jobs:
       # Run table scan (blocking) after SARIF is uploaded
       - name: Run Trivy vulnerability scanner
         id: trivy-scan
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (post-supply-chain-fix)
         with:
           image-ref: security-test:latest
           format: 'table'
@@ -94,6 +94,11 @@ jobs:
     steps:
       - name: Create security issue if vulnerabilities found
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SERVER_URL: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SCHEDULE: ${{ github.event.schedule || 'Manual trigger' }}
         with:
           script: |
             const title = '🚨 Security vulnerabilities detected in Docker images'
@@ -127,9 +132,9 @@ jobs:
               4. Deploy updated images
 
               **Scan Details:**
-              - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              - Workflow run: ${process.env.SERVER_URL}/${process.env.REPOSITORY}/actions/runs/${process.env.RUN_ID}
               - Triggered by: Weekly security scan
-              - Scan Date: ${{ github.event.schedule || 'Manual trigger' }}
+              - Scan Date: ${process.env.SCHEDULE}
 
               **Next Steps:**
               - [ ] Review vulnerability details

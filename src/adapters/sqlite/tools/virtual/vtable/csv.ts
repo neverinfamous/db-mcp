@@ -77,7 +77,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
           options.push("header=false");
         }
         if (input.delimiter !== ",") {
-          options.push(`delimiter='${input.delimiter}'`);
+          options.push(`delimiter='${input.delimiter.replace(/'/g, "''")}'`);
         }
         if (input.columns && input.columns.length > 0) {
           options.push(`columns=${String(input.columns.length)}`);

@@ -37,6 +37,14 @@ export function validateSameDirPath(
   targetPath: string,
   dbPath: string,
 ): PathValidationResult {
+  if (targetPath.includes("\x00")) {
+    return {
+      valid: false,
+      error: "Security: path must not contain null bytes.",
+      dbDir: dbPath === ":memory:" ? "" : dirname(resolve(dbPath)),
+    };
+  }
+
   // In-memory databases have no directory constraint
   if (dbPath === ":memory:") {
     return { valid: true };

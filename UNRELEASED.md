@@ -61,6 +61,20 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[H-1]** CI/CD: Fixed expression injection vulnerability in `security-update.yml` and enforced strict SHA pinning for Trivy actions.
+- **[H-2]** CI/CD: Mitigated shell injection in `dockerfile-patch-drift.yml` and disabled credential persistence to prevent token theft.
+- **[M-1]** CI/CD: Scoped permissions and restricted auto-merge capabilities in `dependabot-auto-merge.yml`.
+- **[M-2]** CI/CD: Applied strict least-privilege permissions (`permissions: {}`) to `docker-publish.yml`.
+- **[L-1]** CI/CD: Removed unnecessary `deployments: write` permission from `gatekeeper.yml`.
+- **[H-3]** Code Mode sandbox: Updated `sandbox.ts` to implement strict disposal of the `vm` context after single-use, preventing prototype pollution via context reuse.
+- **[H-4]** Session management: Hardened session ownership logic in `stateful.ts` to prevent unauthenticated requests from hijacking authenticated sessions.
+- **[H-5]** Virtual tables: Hardened the delimiter schema in `virtual.ts` to single printable ASCII characters (including tabs) and securely escaped the parameter in `csv.ts` to prevent SQL injection.
+- **[H-6]** JSON operations: Implemented proper identifier quoting in `security.ts` to mitigate SQL injection risks during JSON extractions.
+- **[M-3]** Path validation: Added explicit null-byte (`\x00`) rejection to `validate-path.ts` to prevent bypasses.
+- **[M-4]** Admin tools: Hardened PRAGMA execution in `pragma.ts` to safely escape string values and prevent SQL injection.
+- **[M-5]** Audit manager: Corrected the target key mapping for the `sqlite_backup` tool in `backup-manager.ts` from `path` to `targetPath`.
+- **[L-2]** Annotations: Assigned the `destructiveHint` property to the `sqlite_restore` tool in `restore.ts` and corrected `sqlite_append_insight` annotation to `write` scope.
+- **[L-3]** OAuth: Clarified authentication logging in `oauth.ts` to properly warn about `--auth-token` bypassing granular scoping.
 - **[H-1]** Vector tools: replace direct `input.id` and `vectorJson` string interpolation with parameterized queries (`?` placeholders) in `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_delete`, `sqlite_vector_get`, and `validateDimensions()`. Prevents SQL injection via crafted ID values (CWE-89).
 - **[H-2]** Convenience/datetime tools: add `validateWhereClause()` calls in `sqlite_count`, `sqlite_exists`, `sqlite_date_add`, and `sqlite_date_diff` handlers before WHERE clause concatenation. These tools previously bypassed the shared WHERE clause security layer entirely (CWE-89).
 - **[H-3]** Path validation: fix `validateSameDirPath()` boundary check to require trailing path separator in `startsWith` comparison. Prevents prefix collision bypass where `/app/data-evil/file.db` passes validation for database directory `/app/data` (CWE-22).

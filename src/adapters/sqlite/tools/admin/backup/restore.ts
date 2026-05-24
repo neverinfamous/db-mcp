@@ -30,7 +30,10 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: RestoreSchema,
     outputSchema: RestoreOutputSchema,
     requiredScopes: ["admin"],
-    annotations: adminFs("Restore Database"),
+    annotations: {
+      ...adminFs("Restore Database"),
+      destructiveHint: true,
+    },
     handler: async (params: unknown, context: RequestContext) => {
       let input;
       try {

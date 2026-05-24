@@ -242,7 +242,13 @@ export const CreateCsvTableSchema = z.object({
   tableName: z.string().describe("Name for the virtual table"),
   filePath: z.string().describe("Path to the CSV file"),
   header: z.boolean().optional().default(true).describe("First row is header"),
-  delimiter: z.string().optional().default(",").describe("Column delimiter"),
+  delimiter: z
+    .string()
+    .length(1, "Delimiter must be exactly one character")
+    .regex(/^[\t\x20-\x7E]$/, "Delimiter must be a printable ASCII character or tab")
+    .optional()
+    .default(",")
+    .describe("Column delimiter"),
   columns: z
     .array(z.string())
     .optional()
@@ -255,7 +261,13 @@ export const AnalyzeCsvSchemaSchema = z.object({
     coerceNumber,
     z.number().optional().default(100).describe("Rows to sample"),
   ),
-  delimiter: z.string().optional().default(",").describe("Column delimiter"),
+  delimiter: z
+    .string()
+    .length(1, "Delimiter must be exactly one character")
+    .regex(/^[\t\x20-\x7E]$/, "Delimiter must be a printable ASCII character or tab")
+    .optional()
+    .default(",")
+    .describe("Column delimiter"),
 });
 
 export const CreateRtreeTableSchema = z.object({

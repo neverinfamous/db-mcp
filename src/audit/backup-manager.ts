@@ -48,7 +48,7 @@ const SNAPSHOT_TOOL_ARGS: Record<string, { targetKey: string }> = {
   sqlite_drop_index: { targetKey: "index" },
   sqlite_drop_view: { targetKey: "view" },
   sqlite_import_csv: { targetKey: "table" },
-  sqlite_backup: { targetKey: "path" },
+  sqlite_backup: { targetKey: "targetPath" },
 };
 
 /** File extension for compressed snapshot files */

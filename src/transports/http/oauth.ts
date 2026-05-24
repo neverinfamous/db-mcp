@@ -63,9 +63,9 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
       code: "AUTH_BEARER_ENABLED",
     });
     logger.warning(
-      "Simple bearer auth does not enforce per-tool scopes. " +
-        "All tools are accessible to any authenticated client. " +
-        "Use OAuth 2.1 (--oauth-enabled) for granular scope enforcement.",
+      "Using --auth-token grants blanket 'admin' access to all tools. " +
+        "It bypasses granular scope enforcement and is intended for development. " +
+        "Use OAuth 2.1 (--oauth-enabled) for granular scope enforcement in production.",
       { code: "AUTH_BEARER_NO_SCOPES" },
     );
   } else if (state.app) {
@@ -178,10 +178,9 @@ export function applyScopeEnforcementMiddleware(
       return;
     }
 
-    // If req.auth is missing, it means either:
-    // 1. Auth is not configured (disabled)
-    // 2. Simple bearer auth is used (which doesn't set req.auth but validates)
-    // In both cases, scope enforcement does not apply.
+    // If req.auth is missing, it means auth is not configured (disabled).
+    // Simple bearer auth does set req.auth (with 'admin' scope) so it will bypass this.
+    // In the disabled case, scope enforcement does not apply.
     if (!req.auth) {
       next();
       return;
