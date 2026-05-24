@@ -76,7 +76,7 @@ Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isola
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted)
 - ✅ **Forensic traceability** — each `vm.Script` execution uses a unique `randomUUID()` filename for distinguishable stack traces
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
-- ✅ **Production vm gate** — `CODEMODE_ISOLATION=vm` is rejected when `NODE_ENV=production`, falling back to worker mode with a warning. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use. Enforced in [`src/adapters/sqlite/tools/codemode.ts:310-318`](src/adapters/sqlite/tools/codemode.ts#L310-L318).
+- ✅ **Production vm gate** — `CODEMODE_ISOLATION=vm` requires explicit `CODEMODE_ISOLATION_INSECURE=1` opt-in, and will crash the application if loaded in a `NODE_ENV=production` environment. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use.
 
 > **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `worker_threads` provides a true V8 isolate boundary (separate heap, separate V8 instance), the `vm.createContext()` layer within it is namespace isolation, not a security sandbox. Defense-in-depth measures include V8-enforced `codeGeneration` restrictions (disabling `eval`/`Function` at the engine level), frozen built-in prototypes, 18 static regex rules, RPC allowlist validation, and blocked globals. Together these provide robust protection within the trusted AI agent threat model.
 >
@@ -117,7 +117,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 ### **Rate Limiting & Timeouts**
 
 - ✅ **Built-in Rate Limiting** — 100 requests/minute per IP
-- ✅ **Health Endpoint Bypass** — `/health` bypasses limits to ensure reliable load balancer checks
+- ✅ **Health Endpoint Bypass** — `/health` bypasses limits to ensure reliable load balancer checks. Unauthenticated requests receive only minimal data (`{ status, timestamp }`) to prevent information disclosure.
 - ✅ **Returns 429 Too Many Requests** with proper `Retry-After` headers when limits are exceeded
 - ✅ **Slowloris DoS Protection** — configurable read timeouts via `MCP_REQUEST_TIMEOUT` and `MCP_HEADERS_TIMEOUT`
 
@@ -146,6 +146,7 @@ Full OAuth 2.1 for production multi-tenant deployments:
 - ✅ **JWT validation** with JWKS support (TTL: 1 hour, configurable)
 - ✅ **SQLite-specific scopes**: `read`, `write`, `admin`, `full`
 - ✅ **Per-tool scope enforcement** via `AsyncLocalStorage` context threading
+- ✅ **Resource and Prompt authorization** — Scope enforcement middleware covers `resources/read` and `prompts/get`, requiring `admin` scope for audit resources and `read` scope for others
 - ✅ **Fail-closed scope default** — unknown or unmapped tools default to `admin` scope, preventing accidental privilege escalation when new tools are added
 - ✅ **Dynamic scope set derivation** — `ADMIN_TOOLS`, `READ_ONLY_TOOLS`, and `WRITE_TOOLS` are derived at module load from `TOOL_GROUPS × TOOL_GROUP_SCOPES`, preventing drift between tool registration and scope enforcement
 - ✅ **Generic error responses** — token validation errors return generic `"Token validation failed"` messages to clients, preventing leakage of internal auth infrastructure URLs (e.g., JWKS endpoint addresses). Detailed errors are logged server-side only
