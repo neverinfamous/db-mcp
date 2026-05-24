@@ -62,6 +62,11 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[C-3]** Rate Limiting: Fixed rate limit bypass by importing `isIP` from `net` and properly parsing array values from `X-Forwarded-For` when `trustProxy` is enabled in `middleware.ts` (CWE-307).
+- **[C-4]** Input Validation: Removed trailing and middle wildcards from `LIKE` operator blocklist and universally blocked `GLOB` usage to prevent blind SQL extraction oracles (CWE-89).
+- **[H-35]** Scope Escalation: Added rigorous scope validation wrapper inside Code Mode `api.ts` proxy to intercept internal tool executions and prevent unauthorized invocations (CWE-862).
+- **[H-36]** Input Validation: Added `FORMAT()` to `DANGEROUS_PATTERNS` blocklist to mitigate newly discovered SQL extraction oracle on SQLite 3.38+ (CWE-89).
+- **[M-49]** DoS: Hardened `DEFAULT_SECURITY_CONFIG` by lowering `maxExecutionsPerMinute` from 60 to 10 for Code Mode sandbox to mitigate potential CPU starvation (CWE-400).
 - **[H-33]** Scope enforcement: Fixed fail-closed bug in tool registration by populating `registerToolScopes` alongside `registerToolScope` for dynamically mapped tools (CWE-862).
 - **[H-34]** Path traversal: Constrained `:memory:` database bypass in `validateSameDirPath` to the current working directory, preventing arbitrary traversal (CWE-22).
 - **[M-46]** OAuth stream proxy: Fixed brittle SSE chunk filtering in `oauth.ts` by buffering incomplete chunks, ensuring robust redaction across boundaries (CWE-200).

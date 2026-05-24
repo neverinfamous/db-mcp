@@ -21,6 +21,7 @@ import {
   GROUP_PREFIX_MAP,
   KEEP_PREFIX_GROUPS,
 } from "./api-constants.js";
+import { scopesGrantToolAccess } from "../auth/scopes/enforcement.js";
 
 /**
  * Convert tool name to camelCase method name.
@@ -164,6 +165,12 @@ function createGroupApi(
     const methodName = toolNameToMethodName(tool.name, groupName);
 
     api[methodName] = async (...args: unknown[]) => {
+      if (baseContext?.auth?.scopes) {
+        if (!scopesGrantToolAccess(baseContext.auth.scopes, tool.name)) {
+          throw new Error(`Forbidden: Required scope for tool '${tool.name}' not granted.`);
+        }
+      }
+
       const normalizedParams = normalizeParams(methodName, args) ?? {};
       const context: RequestContext = {
         timestamp: new Date(),

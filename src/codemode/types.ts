@@ -107,7 +107,7 @@ export interface SecurityConfig {
  */
 export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   maxCodeLength: 50 * 1024, // 50KB
-  maxExecutionsPerMinute: 60,
+  maxExecutionsPerMinute: 10,
   maxResultSize: 10 * 1024 * 1024, // 10MB
   blockedPatterns: [
     /\brequire\s*\(/, // No require()

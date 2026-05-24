@@ -5,6 +5,7 @@
  * These are standalone functions that operate on HttpTransportState.
  */
 
+import { isIP } from "net";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import type { Request, Response, RequestHandler } from "express";
@@ -28,9 +29,12 @@ import { logger } from "../../utils/logger/index.js";
 export function getClientIp(req: Request, trustProxy: boolean): string {
   if (trustProxy) {
     const forwarded = req.headers["x-forwarded-for"];
-    if (typeof forwarded === "string") {
-      const firstIp = forwarded.split(",")[0]?.trim();
-      if (firstIp) return firstIp;
+    // Handle both string (single header) and string[] (multiple XFF headers)
+    const xffStr = Array.isArray(forwarded) ? forwarded.join(",") : forwarded;
+    if (typeof xffStr === "string") {
+      const firstIp = xffStr.split(",")[0]?.trim() ?? "";
+      // Reject non-IP values to prevent rate-limit bypass via spoofed XFF
+      if (firstIp && isIP(firstIp) !== 0) return firstIp;
     }
   }
   return req.ip ?? req.socket.remoteAddress ?? "unknown";

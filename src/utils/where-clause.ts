@@ -104,16 +104,16 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bGROUP_CONCAT\s*\(/i,
     reason: "contains GROUP_CONCAT() (potential data exfiltration)",
   },
-  // LIKE with leading wildcard — forces full table scans (DoS vector CWE-400)
+  // LIKE with any wildcard — potential blind extraction oracle
   {
-    pattern: /\bLIKE\s+['"]?%/i,
+    pattern: /\bLIKE\s+['"][^'"]*[%_]/i,
     reason:
-      "contains LIKE with leading wildcard (potential DoS via full table scan)",
+      "contains LIKE with wildcard (potential blind extraction oracle)",
   },
-  // GLOB with trailing wildcard or arbitrary wildcard usage — case-sensitive oracle
+  // GLOB — case-sensitive wildcard operator usable for character extraction oracles
   {
-    pattern: /\bGLOB\s+['"][^'*"]*\*/i,
-    reason: "contains GLOB with wildcard (potential oracle)",
+    pattern: /\bGLOB\b/i,
+    reason: "contains GLOB (potential case-sensitive oracle)",
   },
   // Conditional functions — blind injection oracles (bypass for CASE WHEN / IIF)
   {
@@ -192,15 +192,15 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bPRINTF\s*\(/i,
     reason: "contains PRINTF() (potential blind extraction oracle)",
   },
+  // FORMAT() — SQLite 3.38.0+ alias for printf() (CWE-89)
+  {
+    pattern: /\bFORMAT\s*\(/i,
+    reason: "contains FORMAT() (potential blind extraction oracle)",
+  },
   // CAST() — can be used to convert text to numeric oracles (CWE-89)
   {
     pattern: /\bCAST\s*\(/i,
     reason: "contains CAST() (potential blind extraction oracle)",
-  },
-  // GLOB with trailing wildcard or arbitrary wildcard usage — case-sensitive oracle
-  {
-    pattern: /\bGLOB\s+['"][^*]*\*['"]/i,
-    reason: "contains GLOB with wildcard (potential oracle)",
   },
 ];
 
