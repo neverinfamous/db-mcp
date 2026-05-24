@@ -20,6 +20,7 @@
 - `dockerfile-patch-drift.yml` CI workflow to detect stale Dockerfile transitive dependency patches.
 
 ### Changed
+- Disabled Dependabot version updates and auto-merge workflow to prefer local dependency management and avoid CI/CD merge conflicts.
 - Updated `sqlite_create_table` to natively support `STRICT` tables, `foreignKeys`, and `checkConstraints`.
 - Updated `sqlite_describe_table` to detect and report virtual or stored generated columns via `PRAGMA table_xinfo`.
 - Updated DDL tools and schema introspection to query `sqlite_temp_master` for temporary tables, indexes, and constraints.
@@ -223,6 +224,12 @@
 - **[H-24]** OAuth scope filtering: Implemented stateless and SSE response stream filtering for `tools/list` to redact tools lacking required scopes (CWE-200).
 - **[L-27]** Tool annotations: Corrected `sqlite_truncate` annotation to `destructive` (MCP annotation compliance).
 - **[M-33]** CI/CD: Corrected CodeQL permissions, `persist-credentials: false` in Dependabot and secrets scanner workflows, and removed `packages: write` from Docker publishing.
+- **[L-28]** CI/CD: Removed `packages: write` from gatekeeper pipeline and applied least-privilege `permissions: {}` to docs-drift-detector activation job.
+- **[L-29]** CI/CD: Swapped unstable Node 25.x for 20.x in test matrix and added explicit `contents: read` permissions to `security-scan` job.
+- **[M-34]** Audit logging: Enhanced `redactSqlLiterals` regex to properly handle SQL's doubled-quote escaping and applied it to `dryRun=true` response payloads.
+- **[M-35]** Audit logging: Wrapped bare Zod parse calls in try/catch utilizing `formatHandlerError` for safe error serialization.
+- **[M-36]** Annotations: Applied `openWorldHint: false` to audit logging read tools to ensure MCP clients correctly prompt users.
+- **[H-25]** Admin tools: Added explicit DDL validation against unauthorized commands (`ATTACH`, `DETACH`, `PRAGMA`, `LOAD_EXTENSION`) prior to executing `CREATE` statements in `sqlite_restore` handlers (CWE-89).
 
 ### Fixed
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.

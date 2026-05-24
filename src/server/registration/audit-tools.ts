@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from "../../adapters/database-adapter.js";
 import type { BackupManager } from "../../audit/backup-manager.js";
 import type { AuditLogger } from "../../audit/logger.js";
 import { logger } from "../../utils/logger/index.js";
+import { formatHandlerError } from "../../utils/errors/index.js";
 import { z } from "zod";
 
 /**
@@ -10,7 +11,7 @@ import { z } from "zod";
  * in audit logs and backups, regardless of operator configuration.
  */
 function redactSqlLiterals(text: string): string {
-  return text.replace(/'([^']*)'/g, "'***'");
+  return text.replace(/'(?:''|[^'])*'/g, "'***'");
 }
 
 /**
@@ -84,7 +85,7 @@ export function registerAuditBackupTools(
           readOnlyHint: true,
           destructiveHint: false,
           idempotentHint: true,
-          openWorldHint: true,
+          openWorldHint: false, // Requires admin scope
         },
       },
       async () => {
@@ -130,11 +131,25 @@ export function registerAuditBackupTools(
           readOnlyHint: true,
           destructiveHint: false,
           idempotentHint: true,
-          openWorldHint: true,
+          openWorldHint: false, // Requires admin scope
         },
       },
       async (args: unknown) => {
-        const { filename } = z.object({ filename: z.string() }).parse(args);
+        let filename;
+        try {
+          const parsed = z.object({ filename: z.string() }).parse(args);
+          filename = parsed.filename;
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(formatHandlerError(error), null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
           return {
@@ -222,11 +237,25 @@ export function registerAuditBackupTools(
           readOnlyHint: true,
           destructiveHint: false,
           idempotentHint: true,
-          openWorldHint: true,
+          openWorldHint: false, // Requires admin scope
         },
       },
       async (args: unknown) => {
-        const { filename } = z.object({ filename: z.string() }).parse(args);
+        let filename;
+        try {
+          const parsed = z.object({ filename: z.string() }).parse(args);
+          filename = parsed.filename;
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(formatHandlerError(error), null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
           return {
@@ -417,7 +446,23 @@ export function registerAuditBackupTools(
         },
       },
       async (args: unknown) => {
-        const { filename, dryRun } = z.object({ filename: z.string(), dryRun: z.boolean().optional().default(false) }).parse(args);
+        let filename;
+        let dryRun;
+        try {
+          const parsed = z.object({ filename: z.string(), dryRun: z.boolean().optional().default(false) }).parse(args);
+          filename = parsed.filename;
+          dryRun = parsed.dryRun;
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(formatHandlerError(error), null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
           return {
@@ -464,7 +509,7 @@ export function registerAuditBackupTools(
                   {
                     success: true,
                     message: "Dry run — DDL not executed",
-                    ddl,
+                    ddl: redactSqlLiterals(ddl),
                     dryRun: true,
                     changesApplied: 0,
                   },

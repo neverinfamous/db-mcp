@@ -19,6 +19,34 @@ import { RestoreOutputSchema } from "../../../schemas/admin.js";
 import { RestoreSchema } from "../../../schemas/admin.js";
 
 /**
+ * Validate DDL to prevent execution of unauthorized or destructive statements
+ * during restore operations.
+ */
+function validateDdl(sql: string, type: string, name: string): void {
+  const upperSql = sql.toUpperCase();
+  // Reject potentially destructive or unauthorized statements
+  if (
+    upperSql.includes("ATTACH ") ||
+    upperSql.includes("DETACH ") ||
+    upperSql.includes("PRAGMA ") ||
+    upperSql.includes("LOAD_EXTENSION(")
+  ) {
+    throw new ValidationError(
+      `DDL validation failed: unauthorized command or function call in ${type} '${name}'`,
+    );
+  }
+
+  if (type === "trigger") {
+    // Ensure triggers do not attempt to target other databases explicitly
+    if (upperSql.includes(" ON MAIN.") || upperSql.includes(" ON TEMP.")) {
+      throw new ValidationError(
+        `DDL validation failed: trigger '${name}' attempts to target a specific database`,
+      );
+    }
+  }
+}
+
+/**
  * Restore database from backup
  */
 export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
@@ -174,6 +202,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             const quotedName = `"${tableName.replace(/"/g, '""')}"`;
 
             try {
+              validateDdl(createSql, "table", tableName);
               await adapter
                 .executeWriteQuery(
                   `DROP TABLE IF EXISTS main.${quotedName}`,
@@ -214,6 +243,13 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
           if (!createSql) continue;
 
+          try {
+            validateDdl(createSql, "table", tableName);
+          } catch (error) {
+            skippedTables.push(`${tableName} (DDL Validation: ${error instanceof Error ? error.message : String(error)})`);
+            continue;
+          }
+
           await adapter.executeWriteQuery(
             `DROP TABLE IF EXISTS main.${quotedName}`,
             undefined,
@@ -240,8 +276,10 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         for (const row of indexesResult.rows ?? []) {
           const createSql = row["sql"] as string;
+          const name = row["name"] as string;
           if (!createSql) continue;
           try {
+            validateDdl(createSql, "index", name);
             await adapter.executeWriteQuery(createSql, undefined, true);
           } catch {
             // Index may already exist or reference missing table — skip
@@ -262,6 +300,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           if (!createSql) continue;
           const quotedViewName = `"${viewName.replace(/"/g, '""')}"`;
           try {
+            validateDdl(createSql, "view", viewName);
             await adapter
               .executeWriteQuery(
                 `DROP VIEW IF EXISTS main.${quotedViewName}`,
@@ -287,8 +326,10 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         for (const row of triggersResult.rows ?? []) {
           const createSql = row["sql"] as string;
+          const name = row["name"] as string;
           if (!createSql) continue;
           try {
+            validateDdl(createSql, "trigger", name);
             await adapter.executeWriteQuery(createSql, undefined, true);
           } catch {
             // Trigger may reference missing tables — skip

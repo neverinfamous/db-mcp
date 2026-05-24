@@ -49,7 +49,7 @@ jobs:
     if: >
       needs.pre_activation.outputs.activated == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.id == github.repository_id)
     runs-on: ubuntu-latest
-    permissions:
+    permissions: {}
     outputs:
       body: ${{ steps.sanitized.outputs.body }}
       comment_id: ""
