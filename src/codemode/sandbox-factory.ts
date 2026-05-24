@@ -105,9 +105,9 @@ export function createSandbox(
         );
       }
       if (process.env["NODE_ENV"] === "production") {
-        throw new Error("VM sandbox mode (CODEMODE_ISOLATION_INSECURE=1) cannot be used in production environments. It lacks prototype freezing and is vulnerable to prototype pollution. Use worker mode for production.");
+        throw new Error("VM sandbox mode (CODEMODE_ISOLATION_INSECURE=1) cannot be used in production environments. It lacks prototype freezing and is vulnerable to string-concatenated pattern bypasses and prototype pollution. Use worker mode for production.");
       }
-      logger.warning("Using fallback in-process VM sandbox for Code Mode. This does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
+      logger.warning("Using fallback in-process VM sandbox for Code Mode. This is fundamentally insecure against string-concatenated payload bypasses and does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return CodeModeSandbox.create(options);
   }
 }
@@ -139,9 +139,9 @@ export function createSandboxPool(
         );
       }
       if (process.env["NODE_ENV"] === "production") {
-        throw new Error("VM sandbox mode (CODEMODE_ISOLATION_INSECURE=1) cannot be used in production environments. It lacks prototype freezing and is vulnerable to prototype pollution. Use worker mode for production.");
+        throw new Error("VM sandbox mode (CODEMODE_ISOLATION_INSECURE=1) cannot be used in production environments. It lacks prototype freezing and is vulnerable to string-concatenated pattern bypasses and prototype pollution. Use worker mode for production.");
       }
-      logger.warning("Using fallback in-process VM sandbox for Code Mode. This does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
+      logger.warning("Using fallback in-process VM sandbox for Code Mode. This is fundamentally insecure against string-concatenated payload bypasses and does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return new SandboxPool(poolOptions, sandboxOptions);
   }
 }

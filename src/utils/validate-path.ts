@@ -10,7 +10,7 @@
  *   - sqlite_dump (dump.ts)
  */
 
-import { resolve, dirname, normalize, sep, basename } from "node:path";
+import { resolve, dirname, normalize, basename } from "node:path";
 import { realpathSync } from "node:fs";
 
 /**
@@ -102,9 +102,9 @@ export function validateSameDirPath(
   const normalizedTarget = normalize(resolvedTarget);
   const normalizedDir = normalize(resolvedDbDir);
 
-  const dirWithSep = normalizedDir.endsWith(sep) ? normalizedDir : normalizedDir + sep;
+  const targetDir = normalize(dirname(resolvedTarget));
 
-  if (normalizedTarget !== normalizedDir && !normalizedTarget.startsWith(dirWithSep)) {
+  if (normalizedTarget !== normalizedDir && targetDir !== normalizedDir) {
     return {
       valid: false,
       error: `Security: path must be within the database directory (${dbDir}). Path traversal is not allowed.`,

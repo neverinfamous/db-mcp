@@ -165,7 +165,7 @@ describe("CodeModeSecurityManager", () => {
 
   describe("getRateLimitRemaining", () => {
     it("should return full limit for unknown client", () => {
-      expect(security.getRateLimitRemaining("new-client")).toBe(60);
+      expect(security.getRateLimitRemaining("new-client")).toBe(10);
     });
 
     it("should decrease after usage", () => {

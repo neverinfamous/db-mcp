@@ -32,9 +32,10 @@ export function getClientIp(req: Request, trustProxy: boolean): string {
     // Handle both string (single header) and string[] (multiple XFF headers)
     const xffStr = Array.isArray(forwarded) ? forwarded.join(",") : forwarded;
     if (typeof xffStr === "string") {
-      const firstIp = xffStr.split(",")[0]?.trim() ?? "";
+      const ips = xffStr.split(",");
+      const proxyAddedIp = ips[ips.length - 1]?.trim() ?? "";
       // Reject non-IP values to prevent rate-limit bypass via spoofed XFF
-      if (firstIp && isIP(firstIp) !== 0) return firstIp;
+      if (proxyAddedIp && isIP(proxyAddedIp) !== 0) return proxyAddedIp;
     }
   }
   return req.ip ?? req.socket.remoteAddress ?? "unknown";

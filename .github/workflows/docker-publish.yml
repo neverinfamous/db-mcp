@@ -136,7 +136,8 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           if [ -z "$VERSION" ] || [ "$VERSION" = "undefined" ]; then
-            VERSION="1.0.0"
+            echo "::error::Could not read version from package.json"
+            exit 1
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Detected version: $VERSION"
@@ -231,7 +232,8 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           if [ -z "$VERSION" ] || [ "$VERSION" = "undefined" ]; then
-            VERSION="1.0.0"
+            echo "::error::Could not read version from package.json"
+            exit 1
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 

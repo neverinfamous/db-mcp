@@ -27,10 +27,10 @@ function validateDdl(sql: string, type: string, name: string): void {
   const upperSql = cleanSql.toUpperCase();
   // Reject potentially destructive or unauthorized statements
   if (
-    upperSql.includes("ATTACH ") ||
-    upperSql.includes("DETACH ") ||
-    upperSql.includes("PRAGMA ") ||
-    upperSql.includes("LOAD_EXTENSION(")
+    /\bLOAD_EXTENSION\s*\(/i.test(cleanSql) ||
+    /\bATTACH\b/i.test(cleanSql) ||
+    /\bDETACH\b/i.test(cleanSql) ||
+    /\bPRAGMA\b/i.test(cleanSql)
   ) {
     throw new ValidationError(
       `DDL validation failed: unauthorized command or function call in ${type} '${name}'`,

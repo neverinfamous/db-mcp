@@ -22,7 +22,7 @@ import {
 test.describe.configure({ mode: "serial" });
 
 // Resolve absolute path to the CSV fixture
-const CSV_PATH = path.resolve("test-server/fixtures/sample.csv");
+const CSV_PATH = path.resolve("test-server/sample.csv");
 
 test.describe("Payload Contracts: CSV Tools", () => {
   let csvAvailable = true;
@@ -81,7 +81,7 @@ test.describe("Payload Contracts: CSV Tools", () => {
 
       expectSuccess(payload);
       const rows = payload.rows as Record<string, unknown>[];
-      expect(rows.length).toBe(5); // 5 data rows in fixture
+      expect(rows.length).toBe(10); // 10 data rows in fixture
     } finally {
       await client.close();
     }
@@ -143,7 +143,7 @@ test.describe("Payload Contracts: CSV Tools", () => {
         "sqlite_create_csv_table",
         {
           tableName: "_e2e_csv_relpath",
-          filePath: "test-server/fixtures/sample.csv",
+          filePath: "test-server/sample.csv",
         },
       );
 

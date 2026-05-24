@@ -75,6 +75,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
     group: "codemode",
     inputSchema: ExecuteCodeSchema,
     outputSchema: ExecuteCodeOutputSchema,
+    requiredScopes: ["admin"],
     annotations: {
       title: "Execute Code (Sandbox)",
       readOnlyHint: false,

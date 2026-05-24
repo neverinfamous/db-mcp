@@ -34,7 +34,7 @@ describe("validateSameDirPath — valid paths", () => {
       join(DB_DIR, "backups", "daily.db"),
       DB_PATH,
     );
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
   });
 
   it("should allow the database file itself", () => {
@@ -146,7 +146,7 @@ describe("validateSameDirPath — edge cases", () => {
   it("should handle deeply nested subdirectories", () => {
     const deepPath = join(DB_DIR, "a", "b", "c", "d", "backup.db");
     const result = validateSameDirPath(deepPath, DB_PATH);
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
   });
 
   it("should handle database path in root directory", () => {

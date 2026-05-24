@@ -81,7 +81,7 @@ describe("getClientIp", () => {
     const req = createMockReq({
       headers: { "x-forwarded-for": "203.0.113.50, 70.41.3.18" },
     });
-    expect(getClientIp(req, true)).toBe("203.0.113.50");
+    expect(getClientIp(req, true)).toBe("70.41.3.18");
   });
 
   it("should fall back to req.ip when X-Forwarded-For is missing", () => {

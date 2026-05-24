@@ -62,6 +62,15 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[H-38]** Input Validation: Replaced loose `.includes()` with boundary regex in DDL validation to prevent whitespace/tab bypasses (`LOAD_EXTENSION (`, `ATTACH `) (CWE-89).
+- **[H-39]** Path Traversal: Hardened `validateSameDirPath` by enforcing exact `dirname` matching, blocking access to legitimate subdirectories (CWE-22).
+- **[H-40]** Scope Escalation: Explicitly added `requiredScopes: ["admin"]` to `sqlite_execute_code` tool registration to prevent implicit scope fallback (CWE-862).
+- **[M-50]** HTTP Transport: Updated `getClientIp` to securely extract the rightmost `X-Forwarded-For` IP, preventing leftmost spoofing (CWE-346).
+- **[M-51]** Rate Limiting: Hardened `CodeModeSecurityManager` by clearing `rateLimitMap` when size exceeds 10,000 entries (CWE-400).
+- **[M-52]** Code Mode Sandbox: Updated `sandbox-factory.ts` production error to explicitly warn about string-concatenation bypasses (CWE-94).
+- **[M-53]** Input Validation: Fixed SQL validation bypass by applying Unicode `normalizeForPatternMatching` before `DANGEROUS_SQL_PATTERNS` regex matching (CWE-20).
+- **[M-54]** CI/CD: Narrowed third-party permissions in `secrets-scanning.yml` by removing raw `GITHUB_TOKEN` passing and scoping `pull-requests: write` appropriately (CWE-250).
+- **[L-37]** CI/CD: Replaced silent version fallback in `docker-publish.yml` with a hard `exit 1` pipeline failure (CWE-693).
 - **[C-5]** Input Validation: Added `TRIM`, `LTRIM`, and `RTRIM` to the `DANGEROUS_PATTERNS` blocklist to prevent character-by-character blind SQL extraction oracles (CWE-89).
 - **[H-37]** Audit Tools: Added `validateDdl` execution to `sqlite_audit_restore_backup` to prevent execution of unauthorized commands (`ATTACH`, `PRAGMA`) from tampered snapshot files (CWE-89).
 - **[C-3]** Rate Limiting: Fixed rate limit bypass by importing `isIP` from `net` and properly parsing array values from `X-Forwarded-For` when `trustProxy` is enabled in `middleware.ts` (CWE-307).

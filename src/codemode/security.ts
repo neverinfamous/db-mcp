@@ -13,7 +13,7 @@ import {
   type SandboxResult,
 } from "./types.js";
 
-const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA)[^\s'",;)}\]]{4,}|[A-Za-z0-9+/]{40,}=*/gi;
+const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA|sk-ant-api[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_]+|rk_live_[a-zA-Z0-9_]+|SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+|eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)[^\s'",;)}\]]{4,}/gi;
 
 /**
  * Security manager for Code Mode executions
@@ -73,6 +73,9 @@ export class CodeModeSecurityManager {
     const existing = this.rateLimitMap.get(clientId);
 
     if (!existing || now >= existing.resetTime) {
+      if (this.rateLimitMap.size > 10000) {
+        this.rateLimitMap.clear();
+      }
       // Start new window
       this.rateLimitMap.set(clientId, {
         count: 1,
@@ -113,15 +116,20 @@ export class CodeModeSecurityManager {
       if (serialized === undefined) {
         throw new Error("Not serializable");
       }
-      if (serialized.length > this.config.maxResultSize) {
+      let finalSerialized = serialized;
+      if (typeof finalSerialized === "string") {
+        finalSerialized = finalSerialized.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]");
+      }
+      
+      if (finalSerialized.length > this.config.maxResultSize) {
         return {
           _truncated: true,
-          _originalSize: serialized.length,
+          _originalSize: finalSerialized.length,
           _maxSize: this.config.maxResultSize,
-          preview: serialized.substring(0, 1000) + "...",
+          preview: finalSerialized.substring(0, 1000) + "...",
         };
       }
-      return result;
+      return JSON.parse(finalSerialized);
     } catch {
       return {
         _error: "Result could not be serialized",

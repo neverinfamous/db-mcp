@@ -233,7 +233,7 @@ const FULLWIDTH_ASCII_OFFSET = 0xfee0; // fullwidth - offset = ASCII equivalent
  * This prevents attackers from using visually-similar Unicode characters
  * (e.g., "ＵＮＩＯＮ ＳＥＬＥＣＴ") to bypass ASCII-only regex patterns.
  */
-function normalizeForPatternMatching(input: string): string {
+export function normalizeForPatternMatching(input: string): string {
   // Step 1: NFC normalization (built-in, zero-dependency)
   let normalized = input.normalize("NFC");
 

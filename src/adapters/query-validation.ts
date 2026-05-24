@@ -8,6 +8,7 @@
 import { ValidationError } from "../utils/errors/index.js";
 import { isDDL } from "./sqlite-helpers.js";
 import { getAuthContext } from "../auth/auth-context.js";
+import { normalizeForPatternMatching } from "../utils/where-clause.js";
 
 /**
  * Pre-compiled dangerous SQL patterns for injection detection.
@@ -85,8 +86,9 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
 
   // Block obvious SQL injection patterns
   // Note: This is a basic check; parameterized queries are the primary defense
+  const normalizedSql = normalizeForPatternMatching(sql);
   for (const pattern of DANGEROUS_SQL_PATTERNS) {
-    if (pattern.test(sql)) {
+    if (pattern.test(normalizedSql)) {
       throw new ValidationError(
         "Query contains potentially dangerous patterns.",
         "DB_DANGEROUS_PATTERN",

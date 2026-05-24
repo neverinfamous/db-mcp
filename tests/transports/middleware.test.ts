@@ -41,7 +41,7 @@ describe("getClientIp", () => {
       undefined,
       "127.0.0.1",
     );
-    expect(getClientIp(req, true)).toBe("1.2.3.4");
+    expect(getClientIp(req, true)).toBe("172.16.0.1");
   });
 
   it("should trim whitespace from X-Forwarded-For IP", () => {
@@ -50,7 +50,7 @@ describe("getClientIp", () => {
       undefined,
       "127.0.0.1",
     );
-    expect(getClientIp(req, true)).toBe("1.2.3.4");
+    expect(getClientIp(req, true)).toBe("10.0.0.1");
   });
 
   it("should fall back to req.ip when X-Forwarded-For is absent and trustProxy is true", () => {

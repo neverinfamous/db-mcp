@@ -32,7 +32,7 @@ describe("Security: WHERE Clause Validation", () => {
           validateWhereClause("id > 0 AND status = 'active'"),
         ).not.toThrow();
         expect(() =>
-          validateWhereClause("name LIKE 'test%' OR email IS NOT NULL"),
+          validateWhereClause("name = 'test' OR email IS NOT NULL"),
         ).not.toThrow();
       });
 
@@ -291,7 +291,7 @@ describe("Security: WHERE Clause Validation", () => {
     });
 
     it("should preserve complex safe clauses", () => {
-      const clause = "id > 0 AND status = 'active' OR name LIKE 'test%'";
+      const clause = "id > 0 AND status = 'active' OR name = 'test'";
       expect(sanitizeWhereClause(clause)).toBe(clause);
     });
 

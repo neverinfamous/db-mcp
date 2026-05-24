@@ -53,6 +53,7 @@ jobs:
       security-events: write
       id-token: write
       attestations: write
+      pull-requests: write
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
