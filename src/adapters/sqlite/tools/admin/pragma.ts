@@ -9,7 +9,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { admin, adminFs, readOnly, write } from "../../../../utils/annotations.js";
+import { admin, adminFs, idempotent, readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { insightsManager } from "../../../../utils/insights-manager.js";
@@ -90,11 +90,18 @@ export function createPragmaDatabaseListTool(
     handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const result = await adapter.executeReadQuery("PRAGMA database_list");
-        const databases = (result.rows ?? []).map((r) => ({
-          seq: r["seq"] as number,
-          name: r["name"] as string,
-          file: r["file"] as string,
-        }));
+        const databases = (result.rows ?? []).map((r) => {
+          let fileName = "";
+          if (typeof r["file"] === "string") {
+            // E-8: Return only basename to prevent server path disclosure
+            fileName = r["file"].split(/[\\/]/).pop() ?? "";
+          }
+          return {
+            seq: r["seq"] as number,
+            name: r["name"] as string,
+            file: fileName,
+          };
+        });
 
         // Get the user's configured path
         const configuredPath = adapter.getConfiguredPath();
@@ -129,13 +136,12 @@ export function createPragmaOptimizeTool(
 ): ToolDefinition {
   return {
     name: "sqlite_pragma_optimize",
-    description:
-      "Run PRAGMA optimize to improve query performance based on usage patterns.",
+    description: "Run PRAGMA optimize to update query planner statistics",
     group: "admin",
     inputSchema: PragmaOptimizeSchema,
     outputSchema: PragmaOptimizeOutputSchema,
     requiredScopes: ["admin"],
-    annotations: admin("PRAGMA Optimize"),
+    annotations: idempotent("PRAGMA Optimize"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = PragmaOptimizeSchema.parse(params);
@@ -332,7 +338,11 @@ export function createAppendInsightTool(): ToolDefinition {
         const input = AppendInsightSchema.parse(params);
 
         // Validate non-empty (can't use .min(1) on schema — SDK validates before handler)
-        if (!input.insight || input.insight.trim().length === 0) {
+        let sanitizedInsight = input.insight.replace(/[<>]/g, "");
+        if (sanitizedInsight.length > 500) {
+          sanitizedInsight = sanitizedInsight.substring(0, 500) + "...";
+        }
+        if (!sanitizedInsight || sanitizedInsight.trim().length === 0) {
           return Promise.resolve({
             success: false,
             error: "Insight must be a non-empty string",
@@ -341,7 +351,7 @@ export function createAppendInsightTool(): ToolDefinition {
           });
         }
 
-        insightsManager.append(input.insight);
+        insightsManager.append(sanitizedInsight);
 
         return Promise.resolve({
           success: true,

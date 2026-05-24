@@ -179,6 +179,15 @@ export function applyScopeEnforcementMiddleware(
       return;
     }
 
+    // F-3: Prevent scope enforcement bypass via JSON-RPC batching
+    if (Array.isArray(body)) {
+      res.status(400).json({
+        error: "invalid_request",
+        error_description: "Batch JSON-RPC requests are not supported",
+      });
+      return;
+    }
+
     // If req.auth is missing, it means auth is not configured (disabled).
     // Simple bearer auth does set req.auth (with 'admin' scope) so it will bypass this.
     // In the disabled case, scope enforcement does not apply.
@@ -400,6 +409,12 @@ export async function setupOAuth(
   resourceUri: string,
 ): Promise<void> {
   logger.info("Setting up OAuth 2.1...", { code: "HTTP_OAUTH_SETUP" });
+
+  if (state.config.oauth.enabled && !state.config.oauth.audience) {
+    throw new Error(
+      "Security: OAuth audience must be explicitly configured when OAuth is enabled.",
+    );
+  }
 
   // Create Resource Server
   state.resourceServer = new OAuthResourceServer({

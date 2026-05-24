@@ -170,10 +170,18 @@ export class CodeModeSandbox {
         filename: `user-code-${randomUUID()}.js`,
       });
 
-      const result: unknown = await (script.runInContext(this.context, {
-        timeout: effectiveTimeout,
-        displayErrors: true,
-      }) as Promise<unknown>);
+      const result: unknown = await Promise.race([
+        script.runInContext(this.context, {
+          timeout: effectiveTimeout,
+          displayErrors: true,
+        }) as Promise<unknown>,
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`Execution timed out after ${effectiveTimeout}ms`)),
+            effectiveTimeout,
+          ),
+        ),
+      ]);
 
       const endTime = performance.now();
       const endMemory = process.memoryUsage().heapUsed;

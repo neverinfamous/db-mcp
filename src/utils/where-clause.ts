@@ -106,15 +106,14 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
   },
   // LIKE with leading wildcard — forces full table scans (DoS vector CWE-400)
   {
-    pattern: /\bLIKE\s+['"]%/i,
+    pattern: /\bLIKE\s+['"]?%/i,
     reason:
       "contains LIKE with leading wildcard (potential DoS via full table scan)",
   },
-  // GLOB with leading wildcard — case-sensitive equivalent of LIKE '%...' (DoS vector CWE-400)
+  // GLOB with trailing wildcard or arbitrary wildcard usage — case-sensitive oracle
   {
-    pattern: /\bGLOB\s+['"]\*/i,
-    reason:
-      "contains GLOB with leading wildcard (potential DoS via full table scan)",
+    pattern: /\bGLOB\s+['"][^'*"]*\*/i,
+    reason: "contains GLOB with wildcard (potential oracle)",
   },
   // Conditional functions — blind injection oracles (bypass for CASE WHEN / IIF)
   {

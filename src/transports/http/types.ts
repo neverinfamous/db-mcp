@@ -132,6 +132,9 @@ export interface HttpTransportConfig {
 
   /** Resource URI (defaults to http://localhost:{port}) */
   resourceUri?: string;
+
+  /** Maximum number of concurrent stateful sessions (default: 1000) */
+  maxSessions?: number;
 }
 
 // =============================================================================

@@ -60,7 +60,8 @@ describe("validateSameDirPath — in-memory database", () => {
 
   it("should allow parent directory traversal when database is :memory:", () => {
     const result = validateSameDirPath("/../../../etc/passwd", ":memory:");
-    expect(result.valid).toBe(true);
+    // Fails due to extension validation, not directory traversal
+    expect(result.valid).toBe(false);
   });
 });
 

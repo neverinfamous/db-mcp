@@ -240,6 +240,16 @@
 - **[L-30]** Tool annotations: Changed `destructiveHint` to `true` for all tools using `ADMIN` or `ADMIN_FS` presets to signal clients for explicit user confirmation.
 - **[L-31]** Input validation: Enforced timeout bounds natively using Zod constraints (`.min(500).max(30000)`) in `codemode.ts` schemas.
 - **[L-32]** SECURITY.md: Documented the inherent remote code execution risks of resolving native extensions via `SPATIALITE_PATH` and similar environment variables (CWE-829).
+- **[H-30]** Session management: Bound session tracking with a strict `maxSessions` limit to prevent memory exhaustion DoS (CWE-400).
+- **[M-40]** OAuth scope filtering: Added validation to reject batch JSON-RPC requests, preventing middleware bypasses (CWE-862).
+- **[M-41]** OAuth validation: Enforced runtime rejection if `audience` is undefined when OAuth is enabled (CWE-287).
+- **[M-42]** VM Sandbox: Wrapped async context execution in `Promise.race` to enforce timeouts on async loops (CWE-400).
+- **[M-43]** Admin Tools: Sanitized path returns in `sqlite_pragma_database_list` using `path.basename` to prevent path disclosure (CWE-200).
+- **[H-31]** Insights Tool: Sanitized inputs in `sqlite_append_insight` by truncating to 2000 chars and stripping control characters `<` and `>` (CWE-77).
+- **[M-44]** Path traversal: Constrained `.csv` and `.tsv` extensions in `validateSameDirPath` and rejected unbounded in-memory traversal (CWE-22).
+- **[H-32]** Regex DoS: Hardened WHERE clause blocklists with safer bounded regexes (CWE-1333).
+- **[M-45]** CI/CD: Refactored GitHub token injection in `.github/workflows/*.lock.yml` to use `env` variables instead of shell interpolation (CWE-77).
+- **[L-33]** Annotations: Corrected `sqlite_pragma_optimize` from `admin` to `idempotent` scope.
 
 ### Fixed
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.

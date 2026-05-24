@@ -45,6 +45,37 @@ export function validateSameDirPath(
     };
   }
 
+  // Reject URI schemes and query parameters
+  if (targetPath.startsWith("file:") || targetPath.includes("?")) {
+    return {
+      valid: false,
+      error: "Security: SQLite URIs and query parameters are not allowed.",
+      dbDir: dbPath === ":memory:" ? "" : dirname(resolve(dbPath)),
+    };
+  }
+
+  const base = basename(targetPath);
+
+  // Reject hidden files and sensitive extensions
+  if (base.startsWith(".")) {
+    return {
+      valid: false,
+      error: "Security: Cannot access hidden files or dotfiles.",
+      dbDir: dbPath === ":memory:" ? "" : dirname(resolve(dbPath)),
+    };
+  }
+
+  // Validate extension
+  const validExtensions = [".db", ".sqlite", ".sqlite3", ".sql", ".csv", ".tsv"];
+  const hasValidExt = validExtensions.some(ext => base.toLowerCase().endsWith(ext));
+  if (!hasValidExt) {
+    return {
+      valid: false,
+      error: `Security: Invalid file extension. Allowed extensions are: ${validExtensions.join(", ")}`,
+      dbDir: dbPath === ":memory:" ? "" : dirname(resolve(dbPath)),
+    };
+  }
+
   // In-memory databases have no directory constraint
   if (dbPath === ":memory:") {
     return { valid: true };

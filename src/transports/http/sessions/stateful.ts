@@ -90,6 +90,19 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
           }
           httpTransport = state.transports.get(sessionId);
         } else if (sessionId === undefined && isNewSessionRequest(req.body)) {
+          const maxSessions = state.config.maxSessions ?? 1000;
+          if (state.transports.size >= maxSessions) {
+            res.status(429).json({
+              jsonrpc: "2.0",
+              error: {
+                code: JSONRPC_SERVER_ERROR,
+                message: "Too Many Requests: Maximum number of concurrent sessions reached",
+              },
+              id: null,
+            });
+            return;
+          }
+
           const newTransport = new StreamableHTTPServerTransport({
             sessionIdGenerator: () => randomUUID(),
             onsessioninitialized: (sid: string) => {
