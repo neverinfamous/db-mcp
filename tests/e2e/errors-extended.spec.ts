@@ -572,21 +572,16 @@ test.describe("Errors: DDL Rejection in write_query", () => {
     }
   });
 
-  test("CREATE TRIGGER intentionally allowed", async ({}, testInfo) => {
+  test("CREATE TRIGGER rejected via write_query", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      // Create trigger (should succeed — trigger DDL exception)
+      // Create trigger (should fail — DDL exception removed)
       const p = await callToolAndParse(client, "sqlite_write_query", {
         query:
           "CREATE TRIGGER IF NOT EXISTS _e2e_ddl_trg AFTER INSERT ON test_products BEGIN SELECT 1; END",
       });
-      expect(p.success).toBe(true);
-
-      // Cleanup: drop the trigger
-      const cleanup = await callToolAndParse(client, "sqlite_write_query", {
-        query: "DROP TRIGGER IF EXISTS _e2e_ddl_trg",
-      });
-      expect(cleanup.success).toBe(true);
+      expectHandlerError(p);
+      expect(p.error as string).toMatch(/CREATE/i);
     } finally {
       await client.close();
     }

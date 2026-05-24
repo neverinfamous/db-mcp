@@ -104,6 +104,9 @@ export class CodeModeSandbox {
       __filename: undefined,
       globalThis: undefined,
       global: undefined,
+      Proxy: undefined,
+      Reflect: undefined,
+      WeakRef: undefined,
     };
 
     const context = vm.createContext(sandbox, {

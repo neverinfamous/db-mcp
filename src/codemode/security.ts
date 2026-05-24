@@ -25,6 +25,7 @@ export class CodeModeSecurityManager {
 
   constructor(config?: Partial<SecurityConfig>) {
     this.config = { ...DEFAULT_SECURITY_CONFIG, ...config };
+    setInterval(() => this.cleanupRateLimits(), 5 * 60 * 1000).unref();
   }
 
   /**
@@ -183,7 +184,10 @@ export class CodeModeSecurityManager {
       id: crypto.randomUUID(),
       clientId,
       timestamp: new Date(),
-      codePreview: code.length > 200 ? code.substring(0, 200) + "..." : code,
+      codePreview: (code.length > 200 ? code.substring(0, 200) + "..." : code).replace(
+        /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*)[^\s'",;)}\]]{4,}/gi,
+        "[REDACTED]",
+      ),
       result,
       readonly,
     };

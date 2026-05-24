@@ -194,18 +194,15 @@ export class HttpTransport {
     // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint
     // setup (which dispatches tool handlers that invoke the audit interceptor).
     this.state.app.use((req, _res, next) => {
-      if (req.auth) {
-        const authCtx: AuthenticatedContext = {
-          authenticated: true,
-          claims: req.auth,
-          scopes: req.auth.scopes,
-        };
-        runWithAuthContext(authCtx, () => {
-          next();
-        });
-      } else {
+      const authCtx: AuthenticatedContext = {
+        authenticated: !!req.auth,
+        claims: req.auth,
+        scopes: req.auth?.scopes ?? [],
+        clientIp: req.ip,
+      };
+      runWithAuthContext(authCtx, () => {
         next();
-      }
+      });
     });
 
     // Set up MCP endpoints based on mode

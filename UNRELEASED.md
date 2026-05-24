@@ -219,6 +219,9 @@
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.
 - Updated `scope-map.test.ts` and `audit-interceptor.test.ts` for dynamic scope registration compatibility.
 - Added missing `iat` and `exp` claims to mock token generator in `oauth.ts`.
+- Fixed `exactOptionalPropertyTypes` TypeScript compilation errors in `auth.ts` and `core.ts` by explicitly typing optional properties with `| undefined`.
+- Fixed E2E test failures caused by `query-validation.ts` erroneously requiring `admin` scope for DDL operations on unauthenticated requests when OAuth is disabled.
+- Updated E2E test suite to correctly assert rejection of `CREATE TRIGGER` via `sqlite_write_query` following scope escalation fixes.
 
 ### Changed
 - Refactored `scope-map.ts` to use dynamic `registerToolScope()` string registration, deprecating static group evaluation.

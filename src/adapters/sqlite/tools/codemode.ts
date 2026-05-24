@@ -120,7 +120,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Check rate limit
-        const clientId = _context.auth?.sub ?? "anonymous";
+        const clientId = _context.auth?.sub ?? _context.clientIp ?? "anonymous";
         if (!security.checkRateLimit(clientId)) {
           return {
             success: false,

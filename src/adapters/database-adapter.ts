@@ -38,6 +38,7 @@ import {
   registerResourceImpl,
   registerPromptImpl,
 } from "./registration/index.js";
+import { getAuthContext } from "../auth/auth-context.js";
 
 /**
  * Abstract base class for database adapters
@@ -296,9 +297,12 @@ export abstract class DatabaseAdapter {
     server?: unknown,
     progressToken?: string | number,
   ): RequestContext {
+    const authContext = getAuthContext();
     const context: RequestContext = {
       timestamp: new Date(),
       requestId: requestId ?? crypto.randomUUID(),
+      auth: authContext?.claims,
+      clientIp: authContext?.clientIp,
     };
     if (server !== undefined) {
       context.server = server;

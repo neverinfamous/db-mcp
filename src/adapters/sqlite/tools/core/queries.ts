@@ -81,8 +81,10 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Block mutating PRAGMAs while allowing read-only introspection PRAGMAs
       if (trimmedUpper.startsWith("PRAGMA")) {
+        // Strip comments before checking to prevent bypass
+        const sqlWithoutComments = trimmedQuery.replace(/--.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
         // Assignment form (PRAGMA [schema.]name = ...) is always mutating
-        if (/^PRAGMA\s+(?:\w+\.)?\w+\s*=/i.test(trimmedQuery)) {
+        if (/^PRAGMA\s+(?:\w+\.)?\w+\s*=/i.test(sqlWithoutComments.trim())) {
           return {
             ...formatHandlerError(
               new ValidationError(
@@ -228,7 +230,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
             new ValidationError(message, "VALIDATION_ERROR", {
               suggestion:
                 "Check your query syntax. For DML or DDL operations, use sqlite_write_query or appropriate admin tools.",
-              details: { sql: input.query },
+              details: {},
             }),
           ),
           rowCount: 0,
@@ -336,9 +338,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         }
       }
 
-      const isAllowed = allowedPrefixes.includes(leadingKeyword) || 
-                        (leadingKeyword === "CREATE" && /^CREATE\s+(TEMP\s+|TEMPORARY\s+)?TRIGGER/i.test(trimmedUpper)) || 
-                        (leadingKeyword === "DROP" && /^DROP\s+TRIGGER/i.test(trimmedUpper));
+      const isAllowed = allowedPrefixes.includes(leadingKeyword);
       if (!isAllowed) {
         const rejectedPrefix = rejectedPrefixes.find(
           (p) => p === leadingKeyword,
@@ -351,7 +351,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
                 "VALIDATION_ERROR",
                 {
                   suggestion: "Use the appropriate tool for this operation.",
-                  details: { sql: input.query },
+                  details: {},
                 },
               ),
             ),
@@ -366,7 +366,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
               {
                 suggestion:
                   "Check your query syntax. For SELECT, use sqlite_read_query.",
-                details: { sql: input.query },
+                details: {},
               },
             ),
           ),

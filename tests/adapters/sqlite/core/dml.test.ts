@@ -363,10 +363,10 @@ describe("Core Tools - DML", () => {
     });
 
     // =========================================================================
-    // Trigger DDL Exception — CREATE/DROP TRIGGER intentionally allowed
+    // Trigger DDL Rejection (Admin Scope Required)
     // =========================================================================
 
-    it("should allow CREATE TRIGGER", async () => {
+    it("should reject CREATE TRIGGER via write_query", async () => {
       await adapter.executeWriteQuery(
         "CREATE TABLE trigger_test (id INTEGER PRIMARY KEY, name TEXT)",
       );
@@ -374,12 +374,13 @@ describe("Core Tools - DML", () => {
       const result = (await tools.get("sqlite_write_query")?.({
         query:
           "CREATE TRIGGER trigger_test_ins AFTER INSERT ON trigger_test BEGIN SELECT 1; END",
-      })) as { success: boolean; rowsAffected: number };
+      })) as { success: boolean; error?: string };
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("CREATE");
     });
 
-    it("should allow CREATE TEMP TRIGGER", async () => {
+    it("should reject CREATE TEMP TRIGGER via write_query", async () => {
       await adapter.executeWriteQuery(
         "CREATE TABLE temp_trigger_test (id INTEGER PRIMARY KEY)",
       );
@@ -387,12 +388,13 @@ describe("Core Tools - DML", () => {
       const result = (await tools.get("sqlite_write_query")?.({
         query:
           "CREATE TEMP TRIGGER temp_trigger_ins AFTER INSERT ON temp_trigger_test BEGIN SELECT 1; END",
-      })) as { success: boolean; rowsAffected: number };
+      })) as { success: boolean; error?: string };
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("CREATE");
     });
 
-    it("should allow CREATE TEMPORARY TRIGGER", async () => {
+    it("should reject CREATE TEMPORARY TRIGGER via write_query", async () => {
       await adapter.executeWriteQuery(
         "CREATE TABLE tmp_trigger_test (id INTEGER PRIMARY KEY)",
       );
@@ -400,12 +402,13 @@ describe("Core Tools - DML", () => {
       const result = (await tools.get("sqlite_write_query")?.({
         query:
           "CREATE TEMPORARY TRIGGER tmp_trigger_ins AFTER INSERT ON tmp_trigger_test BEGIN SELECT 1; END",
-      })) as { success: boolean; rowsAffected: number };
+      })) as { success: boolean; error?: string };
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("CREATE");
     });
 
-    it("should allow DROP TRIGGER", async () => {
+    it("should reject DROP TRIGGER via write_query", async () => {
       await adapter.executeWriteQuery(
         "CREATE TABLE dt_test (id INTEGER PRIMARY KEY)",
       );
@@ -415,9 +418,10 @@ describe("Core Tools - DML", () => {
 
       const result = (await tools.get("sqlite_write_query")?.({
         query: "DROP TRIGGER dt_test_trg",
-      })) as { success: boolean; rowsAffected: number };
+      })) as { success: boolean; error?: string };
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("DROP");
     });
 
     // =========================================================================
