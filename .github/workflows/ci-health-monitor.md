@@ -49,7 +49,6 @@ List all `.yml` files in `.github/workflows/`. For each workflow file:
 1. **Check action versions** — for each `uses:` line, note the action name and version/tag. Check if a newer major or minor version exists by reading the action's releases.
 2. **Check Node.js runtime** — look for `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` workarounds or actions known to use deprecated Node.js versions (16, 18, 20). Flag any that will break after the June 2026 deadline.
 3. **Check for deprecated features** — `set-output`, `save-state`, `::set-output::` commands, or other deprecated GitHub Actions features.
-4. **Check Dependabot config** — read `dependabot.yml` and verify it covers all ecosystems in use (npm, GitHub Actions, Docker).
 
 ## Step 2: Review Recent Workflow Runs
 
