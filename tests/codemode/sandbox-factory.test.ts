@@ -4,7 +4,7 @@
  * Tests factory functions, mode management, and mode info.
  */
 
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import {
   createSandbox,
   createSandboxPool,
@@ -16,7 +16,12 @@ import {
 
 describe("sandbox-factory", () => {
   // Reset default mode after each test to avoid cross-test pollution
+  beforeEach(() => {
+    vi.stubEnv("CODEMODE_ISOLATION_INSECURE", "true");
+  });
+
   afterEach(() => {
+    vi.unstubAllEnvs();
     setDefaultSandboxMode("worker");
   });
 

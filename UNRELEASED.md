@@ -217,6 +217,12 @@
 - **[H-20]** Scope enforcement: Completely removed the unenforced `db:` and `table:` granular scope logic and patterns from the codebase, preventing a false sense of security regarding tenant isolation capabilities.
 - **[M-31]** Rate limiting: Added explicit production startup warning in `middleware.ts` when using the default in-memory rate limiter without a shared store (like Redis) in clustered deployments.
 - **[M-32]** Code Mode sandbox: Added explicit warning in `sandbox-factory.ts` when falling back to the `vm` sandbox isolation mode, noting its inherent limits vs `worker_threads`.
+- **[H-21]** Code Mode sandbox: Hardened VM sandbox fallback to require `CODEMODE_ISOLATION_INSECURE=1` capability flag to prevent unintentional usage (CWE-693).
+- **[H-22]** JSON operations: Constrained `sampleSize` and `limit` to `10000` to prevent OOM DoS via oversized JSON structures (CWE-400).
+- **[H-23]** Prompt injection: Constrained `sqlite_append_insight` `insight` parameter to 2000 ASCII chars via strict regex (CWE-20).
+- **[H-24]** OAuth scope filtering: Implemented stateless and SSE response stream filtering for `tools/list` to redact tools lacking required scopes (CWE-200).
+- **[L-27]** Tool annotations: Corrected `sqlite_truncate` annotation to `destructive` (MCP annotation compliance).
+- **[M-33]** CI/CD: Corrected CodeQL permissions, `persist-credentials: false` in Dependabot and secrets scanner workflows, and removed `packages: write` from Docker publishing.
 
 ### Fixed
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.

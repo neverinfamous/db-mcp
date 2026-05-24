@@ -107,6 +107,8 @@ export const PragmaDatabaseListSchema = z.object({});
 export const AppendInsightSchema = z.object({
   insight: z
     .string()
+    .max(2000)
+    .regex(/^[\x20-\x7E\n\r]*$/, "Insight must contain only printable ASCII characters")
     .describe("Business insight discovered from data analysis"),
 });
 

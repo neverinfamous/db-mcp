@@ -238,6 +238,7 @@ async function executeInWorker(): Promise<void> {
       globalThis: undefined,
       global: undefined,
       Proxy: undefined,
+      Reflect: undefined,
     };
 
     const context = vm.createContext(sandbox, {

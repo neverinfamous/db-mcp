@@ -13,6 +13,8 @@ import {
   type SandboxResult,
 } from "./types.js";
 
+const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA)[^\s'",;)}\]]{4,}|[A-Za-z0-9+/]{40,}=*/gi;
+
 /**
  * Security manager for Code Mode executions
  */
@@ -150,22 +152,21 @@ export class CodeModeSecurityManager {
       // to prevent leaking embedded secrets (e.g., `const key = "sk-live-..."`)
       const safePreview = codePreview
         .substring(0, 50)
-        .replace(
-          // L-2: Extended credential pattern covering common cloud/SaaS prefixes
-          /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*)[^\s'",;)}\]]{4,}/gi,
-          "[REDACTED]",
-        );
+        .replace(SENSITIVE_KEY_PATTERN, "[REDACTED]");
       logger.info(
         `Code execution completed: ${safePreview}...`,
         logContext,
       );
     } else {
+      const safeError = result.error ? result.error.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]") : "unknown error";
+      const safeStack = result.stack ? result.stack.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]") : undefined;
+
       logger.warning(
-        `Code execution failed: ${result.error ?? "unknown error"}`,
+        `Code execution failed: ${safeError}`,
         {
           ...logContext,
-          ...(result.error !== undefined ? { errorMessage: result.error } : {}),
-          ...(result.stack !== undefined ? { stack: result.stack } : {}),
+          ...(safeError !== "unknown error" ? { errorMessage: safeError } : {}),
+          ...(safeStack !== undefined ? { stack: safeStack } : {}),
         },
       );
     }
@@ -185,7 +186,7 @@ export class CodeModeSecurityManager {
       clientId,
       timestamp: new Date(),
       codePreview: (code.length > 200 ? code.substring(0, 200) + "..." : code).replace(
-        /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*)[^\s'",;)}\]]{4,}/gi,
+        SENSITIVE_KEY_PATTERN,
         "[REDACTED]",
       ),
       result,

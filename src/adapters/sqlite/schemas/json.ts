@@ -394,7 +394,7 @@ export const JsonQuerySchema = z.object({
     .optional()
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  limit: z.preprocess(coerceNumber, z.number().max(10000).optional().default(100)),
 });
 
 export const JsonValidatePathSchema = z.object({
@@ -440,7 +440,7 @@ export const AnalyzeJsonSchemaSchema = z.object({
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Number of rows to sample"),
+    z.number().max(10000).optional().default(100).describe("Number of rows to sample"),
   ),
 });
 
@@ -476,7 +476,7 @@ export const JsonSecurityScanSchema = z.object({
   column: z.string().describe("JSON column to scan for security issues"),
   sampleSize: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Number of rows to sample"),
+    z.number().max(10000).optional().default(100).describe("Number of rows to sample"),
   ),
   whereClause: z.string().optional().describe("Optional WHERE clause"),
 });
@@ -502,6 +502,7 @@ export const JsonDiffSchema = z.object({
     coerceNumber,
     z
       .number()
+      .max(10000)
       .optional()
       .default(50)
       .describe("Maximum rows to compare (default: 50, max: 100)"),
@@ -572,7 +573,7 @@ export const JsonEachSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to expand (defaults to $)"),
   whereClause: z.string().optional(),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  limit: z.preprocess(coerceNumber, z.number().max(10000).optional().default(100)),
 });
 
 export const JsonGroupArraySchema = z.object({
@@ -649,7 +650,7 @@ export const JsonStorageInfoSchema = z.object({
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Number of rows to sample"),
+    z.number().max(10000).optional().default(100).describe("Number of rows to sample"),
   ),
 });
 

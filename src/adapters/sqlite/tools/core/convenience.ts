@@ -10,7 +10,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { readOnly, write } from "../../../../utils/annotations.js";
+import { readOnly, write, destructive } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { resolveAliases } from "../../types.js";
 
@@ -356,7 +356,7 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: TruncateSchema,
     outputSchema: WriteQueryOutputSchema,
     requiredScopes: ["write"],
-    annotations: write("Truncate Table"),
+    annotations: destructive("Truncate Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {

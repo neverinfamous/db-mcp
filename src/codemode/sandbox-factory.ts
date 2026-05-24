@@ -96,6 +96,14 @@ export function createSandbox(
       return WorkerSandbox.create(options);
     case "vm":
     default:
+      if (
+        process.env["CODEMODE_ISOLATION_INSECURE"] !== "1" &&
+        process.env["CODEMODE_ISOLATION_INSECURE"] !== "true"
+      ) {
+        throw new Error(
+          "VM sandbox mode requires CODEMODE_ISOLATION_INSECURE=1 due to unfrozen host prototypes. Use worker mode for production."
+        );
+      }
       logger.warning("Using fallback in-process VM sandbox for Code Mode. This does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return CodeModeSandbox.create(options);
   }
@@ -119,6 +127,14 @@ export function createSandboxPool(
       return new WorkerSandboxPool(poolOptions, sandboxOptions);
     case "vm":
     default:
+      if (
+        process.env["CODEMODE_ISOLATION_INSECURE"] !== "1" &&
+        process.env["CODEMODE_ISOLATION_INSECURE"] !== "true"
+      ) {
+        throw new Error(
+          "VM sandbox mode requires CODEMODE_ISOLATION_INSECURE=1 due to unfrozen host prototypes. Use worker mode for production."
+        );
+      }
       logger.warning("Using fallback in-process VM sandbox for Code Mode. This does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return new SandboxPool(poolOptions, sandboxOptions);
   }

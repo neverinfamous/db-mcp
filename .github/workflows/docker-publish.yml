@@ -107,7 +107,6 @@ jobs:
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
-      packages: write
       id-token: write
       attestations: write
 
@@ -193,7 +192,6 @@ jobs:
     if: always() && needs.build-platform.result == 'success' && github.event_name != 'pull_request'
     permissions:
       contents: read
-      packages: write
       id-token: write
       attestations: write
 
