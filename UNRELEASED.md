@@ -209,6 +209,11 @@
 - **[M-27]** Audit logs: Forced redaction of SQL literals across all audit tools via `redactSqlLiterals` wrapper (CWE-532).
 - **[M-28]** CI/CD: Hardened `ci-health-monitor.lock.yml` Docker socket mount to read-only (`ro`) (CWE-250).
 - **[M-29]** CI/CD: Removed excessive `pull-requests: write` from `docs-drift-detector.lock.yml` (CWE-250).
+- **[H-17]** Code Mode sandbox: Froze `Object`, `Function`, `Array`, `Promise`, `Reflect`, and `Proxy` prototypes inside the worker thread in `worker-script.ts` to prevent prototype pollution escapes (CWE-94).
+- **[H-18]** Native Adapter: Added `validateQuery()` checks to all native SQLite operations in `native-sqlite-adapter.ts` (e.g., FTS, Vector, JSON) to block stacked queries (CWE-89).
+- **[M-30]** Query Validation: Expanded `DANGEROUS_PATTERNS` to explicitly block DDL commands (`CREATE`, `DROP`, `ALTER`) in user queries unless executing from a trusted admin context (CWE-89).
+- **[H-19]** Admin Tools: Fixed TypeScript bypass in `backup/create.ts` where `pathCheck.error !== undefined` was incorrectly asserting failure states, using strict type narrowing (`!pathCheck.valid`) to enforce path traversal validation (CWE-22).
+- **[L-26]** FTS Tools: Skipped validation for internal `CREATE TRIGGER` queries when provisioning FTS5 tables to prevent false positive DANGEROUS_PATTERN rejections (CWE-89).
 
 ### Fixed
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.

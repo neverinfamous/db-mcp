@@ -133,6 +133,15 @@ export class HttpTransport {
 
     // Set up OAuth if enabled
     if (this.state.config.oauth.enabled) {
+      if (
+        resourceUri.startsWith("http://") &&
+        !resourceUri.includes("localhost") &&
+        !resourceUri.includes("127.0.0.1")
+      ) {
+        logger.warning(
+          "Security Warning (F09): OAuth is enabled but resource URI is not using HTTPS. A TLS-terminating reverse proxy is required in production.",
+        );
+      }
       await setupOAuth(this.state, resourceUri);
     }
 

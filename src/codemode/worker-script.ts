@@ -13,6 +13,10 @@ import { randomUUID } from "node:crypto";
 import vm from "node:vm";
 import { transformAutoReturn } from "./auto-return.js";
 
+// Security (F01): Freeze outer-context prototypes to prevent sandbox escape via prototype pollution
+try { Object.freeze(Object.prototype); } catch { /* ignore */ }
+try { Object.freeze(Function.prototype); } catch { /* ignore */ }
+
 interface WorkerData {
   code: string;
   apiBindings: Record<string, string[]>;

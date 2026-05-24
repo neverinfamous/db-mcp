@@ -97,11 +97,11 @@ export function createAuthMiddleware(
       res.status(401);
       res.setHeader(
         "WWW-Authenticate",
-        resourceServer.getWWWAuthenticateHeader("invalid_token", result.error),
+        resourceServer.getWWWAuthenticateHeader("invalid_token", "Token validation failed"),
       );
       res.json({
         error: "invalid_token",
-        error_description: result.error,
+        error_description: "Token validation failed",
       });
       return;
     }

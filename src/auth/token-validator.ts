@@ -77,7 +77,7 @@ export class TokenValidator {
     this.jwksUri = config.jwksUri;
     this.issuer = config.issuer;
     this.audience = config.audience;
-    this.clockTolerance = config.clockTolerance ?? 60;
+    this.clockTolerance = config.clockTolerance ?? 30; // F12: Default 30s
     this.jwksCacheTtl = config.jwksCacheTtl ?? 3600;
     this.algorithms =
       config.algorithms ?? TokenValidator.DEFAULT_ALGORITHMS;

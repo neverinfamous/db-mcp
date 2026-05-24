@@ -6,6 +6,8 @@
  */
 
 import { ValidationError } from "../utils/errors/index.js";
+import { isDDL } from "./sqlite-helpers.js";
+import { getAuthContext } from "../auth/auth-context.js";
 
 /**
  * Pre-compiled dangerous SQL patterns for injection detection.
@@ -66,6 +68,19 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
         );
       }
     }
+  } else {
+    // Write mode: block destructive DDL unless user has admin scope (F06)
+    if (isDDL(sql)) {
+      const authCtx = getAuthContext();
+      // If auth is enabled (authCtx is present) and missing admin scope, block it.
+      // If stdio transport is used, authCtx is undefined, so we allow it.
+      if (authCtx && !authCtx.scopes.includes("admin")) {
+        throw new ValidationError(
+          "DDL operations (CREATE, DROP, ALTER) require 'admin' scope",
+          "DB_ADMIN_REQUIRED",
+        );
+      }
+    }
   }
 
   // Block obvious SQL injection patterns
@@ -73,7 +88,7 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
   for (const pattern of DANGEROUS_SQL_PATTERNS) {
     if (pattern.test(sql)) {
       throw new ValidationError(
-        "Query contains potentially dangerous patterns",
+        `Query contains potentially dangerous patterns: ${sql}`,
         "DB_DANGEROUS_PATTERN",
       );
     }
@@ -85,7 +100,7 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
   for (const pattern of COMMENT_SQL_PATTERNS) {
     if (pattern.test(sqlWithoutStrings)) {
       throw new ValidationError(
-        "Query contains potentially dangerous patterns",
+        `Query contains potentially dangerous patterns: ${sql}`,
         "DB_DANGEROUS_PATTERN",
       );
     }

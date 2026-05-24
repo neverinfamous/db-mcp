@@ -267,6 +267,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
+    this.validateQuery(sql, true);
     return nativeExecuteRead(this.ensureDb(), sql, params, log);
   }
 
@@ -276,8 +277,12 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   override executeWriteQuery(
     sql: string,
     params?: unknown[],
+    skipValidation = false,
   ): Promise<QueryResult> {
     this.ensureConnected();
+    if (!skipValidation) {
+      this.validateQuery(sql, false);
+    }
     const result = nativeExecuteWrite(this.ensureDb(), sql, params, log);
 
     // Auto-invalidate schema cache on DDL operations
