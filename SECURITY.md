@@ -139,8 +139,7 @@ Full OAuth 2.1 for production multi-tenant deployments:
 - ✅ **RFC 9728** Protected Resource Metadata (`/.well-known/oauth-protected-resource`)
 - ✅ **RFC 8414** Authorization Server Discovery with caching
 - ✅ **JWT validation** with JWKS support (TTL: 1 hour, configurable)
-- ✅ **SQLite-specific scopes**: `read`, `write`, `admin`, `full`, `db:{name}`, `table:{name}`
-- ℹ️ **Database/Table Scope Enforcement**: `db:*` and `table:*` scopes are parsed and documented, but currently unenforced at the query level. Tokens intended to be narrowly scoped should also be bound by database user permissions.
+- ✅ **SQLite-specific scopes**: `read`, `write`, `admin`, `full`
 - ✅ **Per-tool scope enforcement** via `AsyncLocalStorage` context threading
 - ✅ **Fail-closed scope default** — unknown or unmapped tools default to `admin` scope, preventing accidental privilege escalation when new tools are added
 - ✅ **Dynamic scope set derivation** — `ADMIN_TOOLS`, `READ_ONLY_TOOLS`, and `WRITE_TOOLS` are derived at module load from `TOOL_GROUPS × TOOL_GROUP_SCOPES`, preventing drift between tool registration and scope enforcement

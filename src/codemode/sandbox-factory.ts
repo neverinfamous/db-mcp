@@ -96,6 +96,7 @@ export function createSandbox(
       return WorkerSandbox.create(options);
     case "vm":
     default:
+      logger.warning("Using fallback in-process VM sandbox for Code Mode. This does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return CodeModeSandbox.create(options);
   }
 }
@@ -118,6 +119,7 @@ export function createSandboxPool(
       return new WorkerSandboxPool(poolOptions, sandboxOptions);
     case "vm":
     default:
+      logger.warning("Using fallback in-process VM sandbox for Code Mode. This does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return new SandboxPool(poolOptions, sandboxOptions);
   }
 }

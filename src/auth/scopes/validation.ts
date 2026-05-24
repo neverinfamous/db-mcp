@@ -1,21 +1,8 @@
-import { BASE_SCOPES, SCOPES, SCOPE_PATTERNS } from "./constants.js";
+import { BASE_SCOPES, SCOPES } from "./constants.js";
 
-/**
- * Check if a scope is valid (matches known patterns)
- */
 export function isValidScope(scope: string): boolean {
   // Check base scopes
   if ((BASE_SCOPES as readonly string[]).includes(scope)) {
-    return true;
-  }
-
-  // Check database pattern
-  if (SCOPE_PATTERNS.DATABASE.test(scope)) {
-    return true;
-  }
-
-  // Check table pattern
-  if (SCOPE_PATTERNS.TABLE.test(scope)) {
     return true;
   }
 

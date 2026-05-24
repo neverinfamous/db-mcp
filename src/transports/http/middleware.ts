@@ -14,6 +14,7 @@ import {
   DEFAULT_HSTS_MAX_AGE,
   type HttpTransportState,
 } from "./types.js";
+import { logger } from "../../utils/logger/index.js";
 
 // =============================================================================
 // Client IP Extraction
@@ -169,6 +170,9 @@ export function setupRateLimiting(state: HttpTransportState): void {
   // M-4: Warning: The default express-rate-limit in-memory store is per-process.
   // In multi-instance deployments behind a load balancer, each instance maintains 
   // independent counters. For production clusters, use a shared store.
+  if (process.env["NODE_ENV"] === "production") {
+    logger.warning("Using default in-memory rate limit store. In multi-instance deployments, rate limits will not be synchronized across instances. Consider using a shared store like Redis.", { module: "HTTP" });
+  }
 
   const limiter = rateLimit({
     windowMs,

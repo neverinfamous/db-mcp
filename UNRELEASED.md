@@ -214,6 +214,9 @@
 - **[M-30]** Query Validation: Expanded `DANGEROUS_PATTERNS` to explicitly block DDL commands (`CREATE`, `DROP`, `ALTER`) in user queries unless executing from a trusted admin context (CWE-89).
 - **[H-19]** Admin Tools: Fixed TypeScript bypass in `backup/create.ts` where `pathCheck.error !== undefined` was incorrectly asserting failure states, using strict type narrowing (`!pathCheck.valid`) to enforce path traversal validation (CWE-22).
 - **[L-26]** FTS Tools: Skipped validation for internal `CREATE TRIGGER` queries when provisioning FTS5 tables to prevent false positive DANGEROUS_PATTERN rejections (CWE-89).
+- **[H-20]** Scope enforcement: Completely removed the unenforced `db:` and `table:` granular scope logic and patterns from the codebase, preventing a false sense of security regarding tenant isolation capabilities.
+- **[M-31]** Rate limiting: Added explicit production startup warning in `middleware.ts` when using the default in-memory rate limiter without a shared store (like Redis) in clustered deployments.
+- **[M-32]** Code Mode sandbox: Added explicit warning in `sandbox-factory.ts` when falling back to the `vm` sandbox isolation mode, noting its inherent limits vs `worker_threads`.
 
 ### Fixed
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.

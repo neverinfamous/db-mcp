@@ -1,6 +1,6 @@
 import type { ToolGroup } from "../../types/index.js";
 import { TOOL_GROUPS } from "../../filtering/tool-filter.js";
-import { parseDatabaseScope, parseTableScope, SCOPES } from "./constants.js";
+import { SCOPES } from "./constants.js";
 import {
   ADMIN_TOOLS,
   READ_ONLY_TOOLS,
@@ -71,93 +71,7 @@ export function scopesGrantToolAccess(
   return scopes.some((scope) => scopeGrantsToolAccess(scope, toolName));
 }
 
-/**
- * Check if a scope grants access to a specific database
- */
-export function scopeGrantsDatabaseAccess(
-  scope: string,
-  databaseName: string,
-): boolean {
-  // Full, admin, write, read scopes grant access to all databases
-  if (
-    scope === "full" ||
-    scope === "admin" ||
-    scope === "write" ||
-    scope === "read"
-  ) {
-    return true;
-  }
 
-  // Check database-specific scope
-  const dbName = parseDatabaseScope(scope);
-  if (dbName && (dbName === databaseName || dbName === "*")) {
-    return true;
-  }
-
-  // Check table scope (grants access to the database of the table)
-  const tableScope = parseTableScope(scope);
-  if (tableScope?.database === databaseName) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Check if any of the scopes grants access to a database
- */
-export function scopesGrantDatabaseAccess(
-  scopes: string[],
-  databaseName: string,
-): boolean {
-  return scopes.some((scope) => scopeGrantsDatabaseAccess(scope, databaseName));
-}
-
-/**
- * Check if a scope grants access to a specific table
- */
-export function scopeGrantsTableAccess(
-  scope: string,
-  databaseName: string,
-  tableName: string,
-): boolean {
-  // Full, admin, write, read scopes grant access to all tables
-  if (
-    scope === "full" ||
-    scope === "admin" ||
-    scope === "write" ||
-    scope === "read"
-  ) {
-    return true;
-  }
-
-  // Database scope grants access to all tables in that database
-  const dbName = parseDatabaseScope(scope);
-  if (dbName && (dbName === databaseName || dbName === "*")) {
-    return true;
-  }
-
-  // Check table-specific scope
-  const tableScope = parseTableScope(scope);
-  if (tableScope?.database === databaseName && tableScope.table === tableName) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Check if any of the scopes grants access to a table
- */
-export function scopesGrantTableAccess(
-  scopes: string[],
-  databaseName: string,
-  tableName: string,
-): boolean {
-  return scopes.some((scope) =>
-    scopeGrantsTableAccess(scope, databaseName, tableName),
-  );
-}
 
 /**
  * Get the required minimum scope for a tool group

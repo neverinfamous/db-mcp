@@ -19,8 +19,6 @@ import {
   getScopeDisplayName,
   scopeGrantsToolAccess,
   scopesGrantToolAccess,
-  scopeGrantsDatabaseAccess,
-  scopeGrantsTableAccess,
   getRequiredScopeForGroup,
   getAccessibleToolGroups,
   TOOL_GROUP_SCOPES,
@@ -186,17 +184,10 @@ describe("isValidScope", () => {
     expect(isValidScope("full")).toBe(true);
   });
 
-  it("should validate database patterns", () => {
-    expect(isValidScope("db:mydb")).toBe(true);
-  });
-
-  it("should validate table patterns", () => {
-    expect(isValidScope("table:mydb:users")).toBe(true);
-  });
-
   it("should reject invalid scopes", () => {
     expect(isValidScope("unknown")).toBe(false);
-    expect(isValidScope("database:mydb")).toBe(false);
+    expect(isValidScope("db:mydb")).toBe(false);
+    expect(isValidScope("table:mydb:users")).toBe(false);
   });
 });
 
@@ -265,59 +256,6 @@ describe("scopesGrantToolAccess", () => {
   });
 });
 
-// =============================================================================
-// Database / Table scope access
-// =============================================================================
-
-describe("scopeGrantsDatabaseAccess", () => {
-  it("should grant access for full scope", () => {
-    expect(scopeGrantsDatabaseAccess("full", "mydb")).toBe(true);
-  });
-
-  it("should grant access for admin/write/read", () => {
-    expect(scopeGrantsDatabaseAccess("admin", "mydb")).toBe(true);
-    expect(scopeGrantsDatabaseAccess("write", "mydb")).toBe(true);
-    expect(scopeGrantsDatabaseAccess("read", "mydb")).toBe(true);
-  });
-
-  it("should grant access for matching db: pattern", () => {
-    expect(scopeGrantsDatabaseAccess("db:mydb", "mydb")).toBe(true);
-  });
-
-  it("should deny access for non-matching db: pattern", () => {
-    expect(scopeGrantsDatabaseAccess("db:other", "mydb")).toBe(false);
-  });
-});
-
-describe("scopeGrantsTableAccess", () => {
-  it("should grant access for full scope", () => {
-    expect(scopeGrantsTableAccess("full", "mydb", "users")).toBe(true);
-  });
-
-  it("should grant access via db: pattern", () => {
-    expect(scopeGrantsTableAccess("db:mydb", "mydb", "users")).toBe(true);
-  });
-
-  it("should grant access via table: pattern", () => {
-    expect(scopeGrantsTableAccess("table:mydb:users", "mydb", "users")).toBe(
-      true,
-    );
-  });
-
-  it("should deny access for non-matching table: pattern", () => {
-    expect(scopeGrantsTableAccess("table:mydb:products", "mydb", "users")).toBe(
-      false,
-    );
-  });
-});
-
-// =============================================================================
-// hasDatabaseScope / hasTableScope (not in db-mcp originally — test if exported)
-// =============================================================================
-
-// Note: hasDatabaseScope/hasTableScope are from postgres-mcp pattern.
-// If they were added, they would be tested here. For now these are
-// covered by scopeGrantsDatabaseAccess/scopeGrantsTableAccess.
 
 // =============================================================================
 // getRequiredScopeForGroup / getAccessibleToolGroups
@@ -383,15 +321,8 @@ describe("getScopeDisplayName", () => {
     expect(getScopeDisplayName("full")).toBe("Full Access");
   });
 
-  it("should format db: scopes", () => {
-    expect(getScopeDisplayName("db:mydb")).toBe("Database: mydb");
-  });
-
-  it("should format table: scopes", () => {
-    expect(getScopeDisplayName("table:mydb:users")).toBe("Table: mydb:users");
-  });
-
   it("should return unknown scopes as-is", () => {
     expect(getScopeDisplayName("custom_scope")).toBe("custom_scope");
+    expect(getScopeDisplayName("db:mydb")).toBe("db:mydb");
   });
 });

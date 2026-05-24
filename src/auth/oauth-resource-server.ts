@@ -14,7 +14,6 @@ import type {
 } from "./types.js";
 import {
   SUPPORTED_SCOPES,
-  SCOPE_PATTERNS,
   BASE_SCOPES,
 } from "./scopes/index.js";
 import { createModuleLogger } from "../utils/logger/index.js";
@@ -152,14 +151,6 @@ export class OAuthResourceServer {
 
     // Check configured scopes
     if (this.config.scopesSupported.includes(scope)) {
-      return true;
-    }
-
-    // Check dynamic patterns
-    if (SCOPE_PATTERNS.DATABASE.test(scope)) {
-      return true;
-    }
-    if (SCOPE_PATTERNS.TABLE.test(scope)) {
       return true;
     }
 
