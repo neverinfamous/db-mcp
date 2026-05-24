@@ -62,6 +62,14 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[H-33]** Scope enforcement: Fixed fail-closed bug in tool registration by populating `registerToolScopes` alongside `registerToolScope` for dynamically mapped tools (CWE-862).
+- **[H-34]** Path traversal: Constrained `:memory:` database bypass in `validateSameDirPath` to the current working directory, preventing arbitrary traversal (CWE-22).
+- **[M-46]** OAuth stream proxy: Fixed brittle SSE chunk filtering in `oauth.ts` by buffering incomplete chunks, ensuring robust redaction across boundaries (CWE-200).
+- **[M-47]** Code Mode sandbox: Upgraded Symbol regex filter to `/\bSymbol\b/i` to completely block isolated constructor references (CWE-94).
+- **[L-34]** Input validation: Added integer constraints to admin `z.number()` schemas to block `NaN`/`Infinity` SQL interpolation payloads (CWE-20).
+- **[L-35]** Code Mode logging: Plumbed discarded `console.*` worker output into a `logs` array on `WorkerResult` for visibility (CWE-532).
+- **[L-36]** Annotations: Updated `sqlite_write_query` to use `destructive` annotation since it executes `DELETE` statements.
+- **[M-48]** CI/CD: Removed legacy Copilot CLI scripts and pruned over-permissive `issues: write` from GitHub Actions workflows (CWE-250).
 - **[H-1]** CI/CD: Fixed expression injection vulnerability in `security-update.yml` and enforced strict SHA pinning for Trivy actions.
 - **[H-2]** CI/CD: Mitigated shell injection in `dockerfile-patch-drift.yml` and disabled credential persistence to prevent token theft.
 - **[M-1]** CI/CD: Scoped permissions and restricted auto-merge capabilities in `dependabot-auto-merge.yml`.

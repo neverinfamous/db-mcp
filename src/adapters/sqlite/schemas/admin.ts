@@ -37,7 +37,7 @@ export const AnalyzeSchema = z.object({
 export const IntegrityCheckSchema = z.object({
   maxErrors: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum errors to report"),
+    z.number().int().optional().default(100).describe("Maximum errors to report"),
   ),
 });
 
@@ -74,6 +74,7 @@ export const PragmaOptimizeSchema = z.object({
     coerceNumber,
     z
       .number()
+      .int()
       .optional()
       .describe("Optional optimization mask (default: 0xfffe)"),
   ),

@@ -30,6 +30,7 @@ interface WorkerResult {
   result?: unknown;
   error?: string | undefined;
   stack?: string | undefined;
+  logs?: string[];
 }
 
 interface RpcResponse {
@@ -198,6 +199,7 @@ function buildSqliteProxy(
 async function executeInWorker(): Promise<void> {
   const data = workerData as WorkerData;
   const { code, apiBindings, timeout, rpcPort } = data;
+  const logs: string[] = [];
 
   try {
     // Start receiving RPC responses
@@ -210,20 +212,20 @@ async function executeInWorker(): Promise<void> {
     const sandbox: Record<string, unknown> = {
       sqlite,
       console: {
-        log: (): void => {
-          /* intentionally empty */
+        log: (...args: unknown[]): void => {
+          logs.push(args.map(String).join(" "));
         },
-        error: (): void => {
-          /* intentionally empty */
+        error: (...args: unknown[]): void => {
+          logs.push("[ERROR] " + args.map(String).join(" "));
         },
-        warn: (): void => {
-          /* intentionally empty */
+        warn: (...args: unknown[]): void => {
+          logs.push("[WARN] " + args.map(String).join(" "));
         },
-        info: (): void => {
-          /* intentionally empty */
+        info: (...args: unknown[]): void => {
+          logs.push("[INFO] " + args.map(String).join(" "));
         },
-        debug: (): void => {
-          /* intentionally empty */
+        debug: (...args: unknown[]): void => {
+          logs.push("[DEBUG] " + args.map(String).join(" "));
         },
       },
       setTimeout: undefined,
@@ -301,6 +303,7 @@ async function executeInWorker(): Promise<void> {
     const response: WorkerResult = {
       success: true,
       result,
+      logs,
     };
 
     // Streaming egress boundary enforcement: abort serialization mid-flight
@@ -367,6 +370,9 @@ async function executeInWorker(): Promise<void> {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     };
+    if (typeof logs !== "undefined") {
+      response.logs = logs;
+    }
 
     parentPort?.postMessage(response);
   }

@@ -76,12 +76,8 @@ export function validateSameDirPath(
     };
   }
 
-  // In-memory databases have no directory constraint
-  if (dbPath === ":memory:") {
-    return { valid: true };
-  }
-
-  const dbDir = dirname(resolve(dbPath));
+  // In-memory databases fall back to the current working directory
+  const dbDir = dbPath === ":memory:" ? process.cwd() : dirname(resolve(dbPath));
   
   let resolvedTarget = resolve(targetPath);
   try {

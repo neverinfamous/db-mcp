@@ -3,6 +3,7 @@ import type { ToolDefinition, RequestContext } from "../../types/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
 import type { AuditInterceptor } from "../../audit/interceptor.js";
 import { registerToolScope } from "../../auth/scope-map.js";
+import { registerToolScopes } from "../../auth/scopes/enforcement.js";
 
 // Interface for the adapter methods needed by tool registration
 export interface ToolRegistrationAdapter {
@@ -25,6 +26,7 @@ export function registerToolImpl(
 
   const requiredScope = tool.requiredScopes?.[0] ?? "admin";
   registerToolScope(tool.name, requiredScope);
+  registerToolScopes(new Map([[tool.name, tool.requiredScopes ?? ["admin"]]]));
 
   if (tool.inputSchema !== undefined) {
     const schema = tool.inputSchema;

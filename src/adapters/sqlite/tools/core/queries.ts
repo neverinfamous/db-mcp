@@ -10,7 +10,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { readOnly, write } from "../../../../utils/annotations.js";
+import { readOnly, destructive } from "../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -284,7 +284,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: WriteQuerySchema,
     outputSchema: WriteQueryOutputSchema,
     requiredScopes: ["write"],
-    annotations: write("Write Query"),
+    annotations: destructive("Write Query"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input: { query: string; params?: unknown[] | undefined };
       try {

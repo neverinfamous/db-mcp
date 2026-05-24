@@ -33,7 +33,7 @@ jobs:
     uses: ./.github/workflows/security-update.yml
     permissions:
       contents: read # C-20: trimmed from write — workflow only reads source
-      issues: write
+
       security-events: write
 
   publish:

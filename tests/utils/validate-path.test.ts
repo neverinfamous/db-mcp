@@ -53,14 +53,18 @@ describe("validateSameDirPath — valid paths", () => {
 // =============================================================================
 
 describe("validateSameDirPath — in-memory database", () => {
-  it("should allow any path when database is :memory:", () => {
+  it("should reject arbitrary paths outside cwd when database is :memory:", () => {
     const result = validateSameDirPath("/arbitrary/path/file.db", ":memory:");
+    expect(result.valid).toBe(false);
+  });
+
+  it("should allow paths within cwd when database is :memory:", () => {
+    const result = validateSameDirPath(join(process.cwd(), "file.db"), ":memory:");
     expect(result.valid).toBe(true);
   });
 
-  it("should allow parent directory traversal when database is :memory:", () => {
+  it("should reject parent directory traversal outside cwd when database is :memory:", () => {
     const result = validateSameDirPath("/../../../etc/passwd", ":memory:");
-    // Fails due to extension validation, not directory traversal
     expect(result.valid).toBe(false);
   });
 });

@@ -343,52 +343,55 @@ export function applyScopeEnforcementMiddleware(
         chunk: unknown,
         ...args: unknown[]
       ) => boolean;
+      
+      let sseBuffer = "";
       res.write = function (
         chunk: unknown,
         ...args: unknown[]
       ): boolean {
-        if (typeof chunk === "string" && chunk.includes('"tools":')) {
-          try {
-            const parts = chunk.split("\n");
-            let modified = false;
-            for (let i = 0; i < parts.length; i++) {
-              if (parts[i]?.startsWith("data: ")) {
-                const dataStr = parts[i]?.slice(6) ?? "";
-                const data = JSON.parse(dataStr) as unknown;
-                parts[i] = "data: " + JSON.stringify(filterTools(data));
-                modified = true;
-              }
-            }
-            if (modified) {
-              const newChunk = parts.join("\n");
-              return originalWrite(newChunk, ...args);
-            }
-          } catch {
-            // ignore parse errors
-          }
+        let chunkStr: string | null = null;
+        if (typeof chunk === "string") {
+          chunkStr = chunk;
         } else if (Buffer.isBuffer(chunk)) {
-          const str = chunk.toString("utf8");
-          if (str.includes('"tools":')) {
+          chunkStr = chunk.toString("utf8");
+        }
+
+        if (chunkStr !== null) {
+          if (chunkStr.includes('"tools":') || sseBuffer.length > 0) {
+            sseBuffer += chunkStr;
+            
+            // Wait until we have a complete chunk ending in newline
+            if (!sseBuffer.endsWith("\n")) {
+              return true; 
+            }
+            
             try {
-              const parts = str.split("\n");
+              const parts = sseBuffer.split("\n");
               let modified = false;
               for (let i = 0; i < parts.length; i++) {
                 if (parts[i]?.startsWith("data: ")) {
                   const dataStr = parts[i]?.slice(6) ?? "";
-                  const data = JSON.parse(dataStr) as unknown;
-                  parts[i] = "data: " + JSON.stringify(filterTools(data));
-                  modified = true;
+                  if (dataStr.includes('"tools":')) {
+                    const data = JSON.parse(dataStr) as unknown;
+                    parts[i] = "data: " + JSON.stringify(filterTools(data));
+                    modified = true;
+                  }
                 }
               }
-              if (modified) {
-                const newChunk = Buffer.from(parts.join("\n"), "utf8");
-                return originalWrite(newChunk, ...args);
-              }
+              
+              const outputStr = modified ? parts.join("\n") : sseBuffer;
+              const outputChunk = typeof chunk === "string" ? outputStr : Buffer.from(outputStr, "utf8");
+              sseBuffer = "";
+              return originalWrite(outputChunk, ...args);
             } catch {
-              // ignore parse errors
+              // On parse error, flush buffer unmodified
+              const outputChunk = typeof chunk === "string" ? sseBuffer : Buffer.from(sseBuffer, "utf8");
+              sseBuffer = "";
+              return originalWrite(outputChunk, ...args);
             }
           }
         }
+        
         return originalWrite(chunk, ...args);
       };
     }
