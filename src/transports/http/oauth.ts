@@ -11,11 +11,10 @@ import { TokenValidator } from "../../auth/token-validator.js";
 import { createAuthMiddleware } from "../../auth/middleware/index.js";
 import { SUPPORTED_SCOPES } from "../../auth/scopes/index.js";
 import { scopesGrantToolAccess } from "../../auth/scopes/index.js";
-import { getAccessibleTools } from "../../auth/scopes/enforcement.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
-import type { RequestHandler, Response } from "express";
+import type { RequestHandler } from "express";
 
 const logger = createModuleLogger("HTTP");
 
@@ -291,109 +290,6 @@ export function applyScopeEnforcementMiddleware(
         });
         return;
       }
-    } else if (rpcMethod === "tools/list") {
-      const filterTools = (responseBody: unknown): unknown => {
-        if (
-          typeof responseBody === "object" &&
-          responseBody !== null &&
-          "result" in responseBody
-        ) {
-          const bodyObj = responseBody as Record<string, unknown>;
-          if (
-            typeof bodyObj["result"] === "object" &&
-            bodyObj["result"] !== null &&
-            "tools" in bodyObj["result"]
-          ) {
-            const resultObj = bodyObj["result"] as Record<string, unknown>;
-            if (Array.isArray(resultObj["tools"])) {
-              const authScopes = req.auth?.scopes ?? [];
-              const accessibleTools = new Set(getAccessibleTools(authScopes));
-              const toolsArray = resultObj["tools"] as { name?: string }[];
-
-              resultObj["tools"] = toolsArray.filter(
-                (t) => typeof t.name === "string" && accessibleTools.has(t.name)
-              );
-            }
-          }
-        }
-        return responseBody;
-      };
-
-      const originalJson = res.json.bind(res);
-      res.json = function (body?: unknown): Response {
-        return originalJson(filterTools(body));
-      };
-
-      const originalSend = res.send.bind(res);
-      res.send = function (body?: unknown): Response {
-        let modifiedBody = body;
-        if (typeof body === "string" && body.includes('"tools":')) {
-          try {
-            modifiedBody = JSON.stringify(filterTools(JSON.parse(body)));
-          } catch {
-            // ignore parse errors
-          }
-        } else if (typeof body === "object" && body !== null) {
-          modifiedBody = filterTools(body);
-        }
-        return originalSend(modifiedBody);
-      };
-
-      const originalWrite = res.write.bind(res) as (
-        chunk: unknown,
-        ...args: unknown[]
-      ) => boolean;
-      
-      let sseBuffer = "";
-      res.write = function (
-        chunk: unknown,
-        ...args: unknown[]
-      ): boolean {
-        let chunkStr: string | null = null;
-        if (typeof chunk === "string") {
-          chunkStr = chunk;
-        } else if (Buffer.isBuffer(chunk)) {
-          chunkStr = chunk.toString("utf8");
-        }
-
-        if (chunkStr !== null) {
-          if (chunkStr.includes('"tools":') || sseBuffer.length > 0) {
-            sseBuffer += chunkStr;
-            
-            // Wait until we have a complete chunk ending in newline
-            if (!sseBuffer.endsWith("\n")) {
-              return true; 
-            }
-            
-            try {
-              const parts = sseBuffer.split("\n");
-              let modified = false;
-              for (let i = 0; i < parts.length; i++) {
-                if (parts[i]?.startsWith("data: ")) {
-                  const dataStr = parts[i]?.slice(6) ?? "";
-                  if (dataStr.includes('"tools":')) {
-                    const data = JSON.parse(dataStr) as unknown;
-                    parts[i] = "data: " + JSON.stringify(filterTools(data));
-                    modified = true;
-                  }
-                }
-              }
-              
-              const outputStr = modified ? parts.join("\n") : sseBuffer;
-              const outputChunk = typeof chunk === "string" ? outputStr : Buffer.from(outputStr, "utf8");
-              sseBuffer = "";
-              return originalWrite(outputChunk, ...args);
-            } catch {
-              // On parse error, flush buffer unmodified
-              const outputChunk = typeof chunk === "string" ? sseBuffer : Buffer.from(sseBuffer, "utf8");
-              sseBuffer = "";
-              return originalWrite(outputChunk, ...args);
-            }
-          }
-        }
-        
-        return originalWrite(chunk, ...args);
-      };
     }
 
     next();

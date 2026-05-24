@@ -4,7 +4,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { readOnly } from "../../../../../utils/annotations.js";
+import { adminFs } from "../../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ExtensionNotAvailableError,
@@ -13,6 +13,7 @@ import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { AnalyzeCsvSchemaSchema } from "../../../schemas/virtual.js";
 import { AnalyzeCsvSchemaOutputSchema } from "../../../schemas/virtual.js";
 import { validateSameDirPath } from "../../../../../utils/validate-path.js";
+import { getAuthContext } from "../../../../../auth/auth-context.js";
 
 export function createAnalyzeCsvSchemaTool(
   adapter: SqliteAdapter,
@@ -25,8 +26,25 @@ export function createAnalyzeCsvSchemaTool(
     inputSchema: AnalyzeCsvSchemaSchema,
     outputSchema: AnalyzeCsvSchemaOutputSchema,
     requiredScopes: ["admin"],
-    annotations: readOnly("Analyze CSV Schema"),
+    annotations: adminFs("Analyze CSV Schema"),
     handler: async (params: unknown, _context: RequestContext) => {
+      // Enforce admin scope at handler level for defense-in-depth against Code Mode bypass
+      const authCtx = getAuthContext();
+      if (authCtx?.authenticated) {
+        const scopes = authCtx.scopes;
+        if (Array.isArray(scopes) && !scopes.includes("admin") && !scopes.includes("full")) {
+          return {
+            success: false,
+            error: "Admin scope is required for CSV analysis (modifies schema and reads filesystem)",
+            code: "AUTHORIZATION_ERROR",
+            category: "authorization",
+            hasHeader: false,
+            rowCount: 0,
+            columns: [],
+          };
+        }
+      }
+
       let input;
       try {
         input = AnalyzeCsvSchemaSchema.parse(params);

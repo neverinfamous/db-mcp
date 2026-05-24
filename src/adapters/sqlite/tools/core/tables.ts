@@ -120,7 +120,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_create_table",
     description:
-      "Create a new table in the database with specified columns and constraints.",
+      "Create a new table in the database with specified columns and constraints. Idempotent if ifNotExists is set to true.",
     group: "core",
     inputSchema: CreateTableSchema,
     outputSchema: CreateTableOutputSchema,

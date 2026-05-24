@@ -124,9 +124,9 @@ export class SqliteAdapter extends DatabaseAdapter {
         version,
         details: {
           filePath:
-            this.config?.filePath ??
-            this.config?.connectionString ??
-            ":memory:",
+            (this.config?.filePath ?? this.config?.connectionString)
+              ? "<redacted>"
+              : ":memory:",
           walMode: this.config?.options?.walMode ?? false,
         },
       });

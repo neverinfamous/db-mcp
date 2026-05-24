@@ -225,10 +225,10 @@ describe("formatOAuthError", () => {
     expect(result.body).toHaveProperty("error", "server_error");
   });
 
-  it("should include scope in InsufficientScopeError body", () => {
+  it("should not include scope in InsufficientScopeError body to prevent leakage", () => {
     const result = formatOAuthError(
       new InsufficientScopeError(["read", "write"]),
     );
-    expect(result.body).toHaveProperty("scope", "read write");
+    expect(result.body).not.toHaveProperty("scope");
   });
 });

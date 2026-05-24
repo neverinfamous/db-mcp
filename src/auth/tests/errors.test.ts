@@ -90,25 +90,19 @@ describe("InsufficientScopeError", () => {
     expect(error.httpStatus).toBe(403);
   });
 
-  it("should accept string scope", () => {
+  it("should have generic message regardless of scope", () => {
     const error = new InsufficientScopeError("write");
-    expect(error.message).toContain("write");
+    expect(error.message).toBe("Insufficient scope.");
   });
 
-  it("should accept array of scopes", () => {
-    const error = new InsufficientScopeError(["read", "write"]);
-    expect(error.message).toContain("read write");
-  });
-
-  it("should include WWW-Authenticate with scope", () => {
+  it("should not include scopes in WWW-Authenticate", () => {
     const error = new InsufficientScopeError("admin");
-    expect(error.wwwAuthenticate).toContain('scope="admin"');
+    expect(error.wwwAuthenticate).toBe('Bearer error="insufficient_scope"');
   });
 
-  it("should store required scope in details", () => {
+  it("should not store required scope in details to prevent scope leakage", () => {
     const error = new InsufficientScopeError(["admin"], ["read"]);
-    expect(error.details?.requiredScope).toEqual(["admin"]);
-    expect(error.details?.providedScopes).toEqual(["read"]);
+    expect(error.details).toBeUndefined();
   });
 });
 

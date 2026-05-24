@@ -115,18 +115,13 @@ export class InvalidSignatureError extends OAuthError {
  * Token does not have required scope
  */
 export class InsufficientScopeError extends OAuthError {
-  constructor(requiredScope: string | string[], providedScopes?: string[]) {
-    const required = Array.isArray(requiredScope)
-      ? requiredScope
-      : [requiredScope];
-    const scopeValue = required.join(" ");
-
+  constructor(_requiredScope: string | string[], _providedScopes?: string[]) {
     super(
-      `Insufficient scope. Required: ${scopeValue}`,
+      `Insufficient scope.`,
       ERROR_CODES.AUTH.SCOPE_DENIED.full,
       403,
-      { requiredScope: required, providedScopes },
-      `Bearer error="insufficient_scope", scope="${scopeValue}"`,
+      undefined,
+      `Bearer error="insufficient_scope"`,
     );
     this.name = "InsufficientScopeError";
   }

@@ -294,7 +294,17 @@ function createMetaResource(adapter: SqliteAdapter): ResourceDefinition {
       for (const pragma of pragmas) {
         try {
           const result = await adapter.executeReadQuery(`PRAGMA ${pragma}`);
-          meta[pragma] = result.rows?.[0] ?? null;
+          if (pragma === "database_list") {
+            meta[pragma] = (result.rows ?? []).map((r) => ({
+              ...r,
+              file:
+                typeof r["file"] === "string" && r["file"].length > 0
+                  ? "<redacted>"
+                  : "",
+            }));
+          } else {
+            meta[pragma] = result.rows?.[0] ?? null;
+          }
         } catch {
           meta[pragma] = null;
         }

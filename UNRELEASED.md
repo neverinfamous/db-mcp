@@ -62,6 +62,10 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[M-7]** Idempotence & Description: Updated `sqlite_pragma_settings` and `sqlite_create_table` descriptions (CWE-200).
+- **[M-5]** Credential Echo: Added `sanitizeErrorMessage` to `formatHandlerError` and `interceptor.ts` to redact physical paths and credentials from driver errors (CWE-200, CWE-209).
+- **[M-8]** Scope Leak: Removed scope reflection from `InsufficientScopeError` in `auth/errors.ts` and refactored `tools/list` JSON-RPC filtering from the HTTP layer to the `mcp-server.ts` protocol layer (CWE-200, CWE-209).
+- **[M-9]** CI/CD Pinning: Confirmed all GitHub Actions workflows are pinned by commit SHA and ran `npm update` to explicitly lock dependencies.
 - **[H-38]** Input Validation: Replaced loose `.includes()` with boundary regex in DDL validation to prevent whitespace/tab bypasses (`LOAD_EXTENSION (`, `ATTACH `) (CWE-89).
 - **[H-39]** Path Traversal: Hardened `validateSameDirPath` by enforcing exact `dirname` matching, blocking access to legitimate subdirectories (CWE-22).
 - **[H-40]** Scope Escalation: Explicitly added `requiredScopes: ["admin"]` to `sqlite_execute_code` tool registration to prevent implicit scope fallback (CWE-862).

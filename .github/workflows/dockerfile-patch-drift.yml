@@ -6,7 +6,7 @@ name: Dockerfile Patch Drift Check
 
 on:
   schedule:
-    - cron: '0 12 * * 3' # Wednesdays at noon UTC
+    - cron: '0 12 * * *' # Daily at noon UTC
   pull_request:
     paths:
       - 'Dockerfile'

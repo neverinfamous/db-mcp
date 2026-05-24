@@ -26,6 +26,7 @@ import type { BackupManager, SnapshotQueryAdapter } from "./backup-manager.js";
 import type { AuditCategory } from "./types.js";
 import { getAuthContext } from "../auth/auth-context.js";
 import { getRequiredScope } from "../auth/scope-map.js";
+import { sanitizeErrorMessage } from "../utils/errors/format.js";
 
 /**
  * Keys that are always redacted from audit log args, regardless of the
@@ -197,7 +198,7 @@ export function createAuditInterceptor(
         return result;
       } catch (err) {
         success = false;
-        error = err instanceof Error ? err.message : String(err);
+        error = sanitizeErrorMessage(err instanceof Error ? err.message : String(err));
 
         // Match registration layer raw exception fallback token calculation
         const errorResult = {

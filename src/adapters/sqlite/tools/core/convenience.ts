@@ -23,6 +23,7 @@ import {
 } from "../../schemas/core.js";
 import { validateTableExists } from "./convenience-schemas.js";
 import { validateWhereClause } from "../../../../utils/where-clause.js";
+import { sanitizeIdentifier } from "../../../../utils/identifiers.js";
 
 import {
   WriteQueryOutputSchema,
@@ -75,12 +76,15 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
       const values = Object.values(input.data);
       const placeholders = columns.map(() => "?").join(", ");
 
-      let sql = `INSERT INTO "${input.table}" ("${columns.join('", "')}") VALUES (${placeholders})`;
+      const safeTable = sanitizeIdentifier(input.table);
+      const safeColumns = columns.map(sanitizeIdentifier);
+
+      let sql = `INSERT INTO ${safeTable} (${safeColumns.join(", ")}) VALUES (${placeholders})`;
       const queryParams: unknown[] = [...values];
 
       if (input.conflictColumns.length > 0) {
         const conflictCols = input.conflictColumns
-          .map((c: string) => `"${c}"`)
+          .map(sanitizeIdentifier)
           .join(", ");
 
         // Determine which columns to update
@@ -91,7 +95,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
 
         if (colsToUpdate.length > 0) {
           const updateSets = colsToUpdate
-            .map((c: string) => `"${c}" = EXCLUDED."${c}"`)
+            .map((c: string) => `${sanitizeIdentifier(c)} = EXCLUDED.${sanitizeIdentifier(c)}`)
             .join(", ");
           sql += ` ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSets}`;
         } else {
@@ -99,7 +103,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
         }
       } else {
         // Fallback to INSERT OR REPLACE if no conflict columns are provided
-        sql = `INSERT OR REPLACE INTO "${input.table}" ("${columns.join('", "')}") VALUES (${placeholders})`;
+        sql = `INSERT OR REPLACE INTO ${safeTable} (${safeColumns.join(", ")}) VALUES (${placeholders})`;
       }
 
       if (input.returning !== undefined && input.returning !== false) {
@@ -109,7 +113,8 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
           Array.isArray(input.returning) &&
           input.returning.length > 0
         ) {
-          sql += ` RETURNING "${input.returning.join('", "')}"`;
+          const safeReturning = input.returning.map(sanitizeIdentifier);
+          sql += ` RETURNING ${safeReturning.join(", ")}`;
         }
       }
 
@@ -171,6 +176,9 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
       }
       const columns = Array.from(columnSet);
 
+      const safeTable = sanitizeIdentifier(input.table);
+      const safeColumns = columns.map(sanitizeIdentifier);
+
       const queryParams: unknown[] = [];
       const valueGroups: string[] = [];
 
@@ -183,7 +191,7 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
         valueGroups.push(`(${placeholders.join(", ")})`);
       }
 
-      let sql = `INSERT INTO "${input.table}" ("${columns.join('", "')}") VALUES ${valueGroups.join(", ")}`;
+      let sql = `INSERT INTO ${safeTable} (${safeColumns.join(", ")}) VALUES ${valueGroups.join(", ")}`;
 
       if (input.returning !== undefined && input.returning !== false) {
         if (input.returning === true) {
@@ -192,7 +200,8 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
           Array.isArray(input.returning) &&
           input.returning.length > 0
         ) {
-          sql += ` RETURNING "${input.returning.join('", "')}"`;
+          const safeReturning = input.returning.map(sanitizeIdentifier);
+          sql += ` RETURNING ${safeReturning.join(", ")}`;
         }
       }
 
@@ -257,10 +266,11 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return validationError;
 
+      const safeTable = sanitizeIdentifier(input.table);
       const column =
-        input.column && input.column !== "*" ? `"${input.column}"` : "*";
+        input.column && input.column !== "*" ? sanitizeIdentifier(input.column) : "*";
       const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
-      let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM "${input.table}"`;
+      let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM ${safeTable}`;
 
       if (input.where) {
         validateWhereClause(input.where);
@@ -323,7 +333,8 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return validationError;
 
-      let sql = `SELECT 1 FROM "${input.table}"`;
+      const safeTable = sanitizeIdentifier(input.table);
+      let sql = `SELECT 1 FROM ${safeTable}`;
 
       if (input.where) {
         validateWhereClause(input.where);
@@ -369,9 +380,11 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return { ...validationError, rowsAffected: 0 };
 
+      const safeTable = sanitizeIdentifier(input.table);
+
       try {
         // SQLite does not have TRUNCATE TABLE. We use DELETE FROM.
-        const sql = `DELETE FROM "${input.table}"`;
+        const sql = `DELETE FROM ${safeTable}`;
         const result = await adapter.executeWriteQuery(sql);
 
         if (input.restartIdentity) {

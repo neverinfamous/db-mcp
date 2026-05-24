@@ -237,21 +237,21 @@ export const TextSentimentOutputSchema = z
 export const RegexExtractSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to extract from"),
-  pattern: z.string().describe("Regular expression pattern"),
+  pattern: z.string().max(200).describe("Regular expression pattern"),
   groupIndex: z.preprocess(
     coerceNumber,
     z.number().optional().default(0).describe("Capture group index"),
   ),
   whereClause: z.string().optional(),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  limit: z.preprocess(coerceNumber, z.number().max(1000).optional().default(100)),
 });
 
 export const RegexMatchSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to match"),
-  pattern: z.string().describe("Regular expression pattern"),
+  pattern: z.string().max(200).describe("Regular expression pattern"),
   whereClause: z.string().optional(),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  limit: z.preprocess(coerceNumber, z.number().max(1000).optional().default(100)),
 });
 
 export const TextSplitSchema = z.object({
@@ -374,6 +374,7 @@ export const TextValidateSchema = z.object({
     ),
   customPattern: z
     .string()
+    .max(200)
     .optional()
     .describe("Custom regex (required if pattern=custom)"),
   whereClause: z.string().optional(),

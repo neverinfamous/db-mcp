@@ -109,13 +109,11 @@ export function formatOAuthError(error: unknown): {
   }
 
   if (error instanceof InsufficientScopeError) {
-    const required = error.details?.["requiredScope"] as string[] | undefined;
     return {
       status: 403,
       body: {
         error: "insufficient_scope",
         error_description: error.message,
-        scope: required ? required.join(" ") : undefined,
       },
     };
   }

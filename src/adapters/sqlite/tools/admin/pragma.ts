@@ -175,7 +175,7 @@ export function createPragmaSettingsTool(
 ): ToolDefinition {
   return {
     name: "sqlite_pragma_settings",
-    description: "Get or set a PRAGMA value.",
+    description: "Get or set a PRAGMA value. WARNING: Do not use modifying PRAGMAs (like writable_schema or foreign_keys) without explicit user consent.",
     group: "admin",
     inputSchema: PragmaSettingsSchema,
     outputSchema: PragmaSettingsOutputSchema,

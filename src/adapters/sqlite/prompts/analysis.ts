@@ -5,6 +5,12 @@
  */
 
 import type { PromptDefinition } from "../../../types/index.js";
+import { sanitizeIdentifier } from "../../../utils/identifiers.js";
+
+function sanitizePromptArg(arg: string): string {
+  // Prevent prompt injection by removing backticks and limiting length
+  return arg.replace(/`/g, "'").slice(0, 100).trim();
+}
 
 /**
  * Data analysis prompt
@@ -27,8 +33,8 @@ export function createDataAnalysisPrompt(): PromptDefinition {
       },
     ],
     handler: (args: Record<string, string | undefined>) => {
-      const table = args["table"] ?? "";
-      const focus = args["focus"] ?? "general";
+      const table = sanitizeIdentifier(args["table"] ?? "unknown");
+      const focus = sanitizePromptArg(args["focus"] ?? "general");
 
       return Promise.resolve({
         messages: [
@@ -36,7 +42,7 @@ export function createDataAnalysisPrompt(): PromptDefinition {
             role: "user",
             content: {
               type: "text",
-              text: `Analyze the data in the "${table}" table with focus on: ${focus}
+              text: `Analyze the data in the ${table} table with focus on: ${focus}
 
 Please provide:
 1. Summary statistics for key columns
@@ -75,8 +81,9 @@ export function createSummarizeTablePrompt(): PromptDefinition {
       },
     ],
     handler: (args: Record<string, string | undefined>) => {
-      const tableName = args["table_name"] ?? "unknown";
-      const depth = args["analysis_depth"] ?? "basic";
+      const rawTableName = args["table_name"] ?? "unknown";
+      const tableName = sanitizeIdentifier(rawTableName);
+      const depth = sanitizePromptArg(args["analysis_depth"] ?? "basic");
 
       const depthGuide =
         depth === "comprehensive"
@@ -101,7 +108,7 @@ export function createSummarizeTablePrompt(): PromptDefinition {
               type: "text",
               text: `# Table Analysis: ${tableName}
 
-Perform a ${depth} analysis of the '${tableName}' table.
+Perform a ${depth} analysis of the ${tableName} table.
 
 ## Analysis Workflow
 
@@ -129,7 +136,7 @@ Generate a summary with:
 - Data quality score
 - Recommendations
 
-Start by examining the schema of '${tableName}'.`,
+Start by examining the schema of ${tableName}.`,
             },
           },
         ],
@@ -154,7 +161,7 @@ export function createHybridSearchWorkflowPrompt(): PromptDefinition {
       },
     ],
     handler: (args: Record<string, string>) => {
-      const useCase = args["use_case"] ?? "content";
+      const useCase = (args["use_case"] ?? "content").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 50);
 
       return Promise.resolve({
         messages: [
@@ -260,7 +267,7 @@ export function createDemoPrompt(): PromptDefinition {
       },
     ],
     handler: (args: Record<string, string>) => {
-      const topic = args["topic"] ?? "business analytics";
+      const topic = sanitizePromptArg(args["topic"] ?? "business analytics");
 
       return Promise.resolve({
         messages: [

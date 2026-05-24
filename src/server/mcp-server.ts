@@ -36,7 +36,8 @@ import {
   registerAuditResource,
   registerAuditBackupTools,
 } from "./registration/index.js";
-import { registerToolScopes } from "../auth/scopes/enforcement.js";
+import { registerToolScopes, getAccessibleTools } from "../auth/scopes/enforcement.js";
+import { getAuthContext } from "../auth/auth-context.js";
 
 /**
  * Monkey-patch McpServer to return structured JSON errors for validation failures.
@@ -103,6 +104,26 @@ export class DbMcpServer {
         instructions: INSTRUCTIONS,
       },
     );
+
+    // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
+    type RequestHandler = (request: unknown, extra: unknown) => Promise<{ tools: { name: string }[] }>;
+    const internalMcp = this.server as unknown as { server: { _requestHandlers?: Map<string, RequestHandler> } };
+    const handlers = internalMcp.server._requestHandlers;
+    
+    if (handlers?.has("tools/list")) {
+      const originalListToolsHandler = handlers.get("tools/list");
+      if (originalListToolsHandler) {
+        handlers.set("tools/list", async (request: unknown, extra: unknown) => {
+          const result = await originalListToolsHandler(request, extra);
+          const authCtx = getAuthContext();
+          if (authCtx && Array.isArray(result.tools)) {
+            const accessibleTools = new Set(getAccessibleTools(authCtx.scopes));
+            result.tools = result.tools.filter((t) => accessibleTools.has(t.name));
+          }
+          return result;
+        });
+      }
+    }
 
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });
