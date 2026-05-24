@@ -24,11 +24,13 @@ export function createListVirtualTablesTool(
         const input = ListVirtualTablesSchema.parse(params);
 
         let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'`;
+        const queryParams: unknown[] = [];
         if (input.pattern) {
-          sql += ` AND name LIKE '${input.pattern.replace(/'/g, "''")}'`;
+          sql += ` AND name LIKE ?`;
+          queryParams.push(input.pattern);
         }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const virtualTables = (result.rows ?? []).map((row) => {
           const sqlStr = typeof row["sql"] === "string" ? row["sql"] : "";

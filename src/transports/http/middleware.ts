@@ -26,14 +26,15 @@ import { logger } from "../../utils/logger/index.js";
  * When trustProxy is enabled, uses the leftmost IP from X-Forwarded-For.
  * Falls back to Express's req.ip then req.socket.remoteAddress.
  */
-export function getClientIp(req: Request, trustProxy: boolean): string {
+export function getClientIp(req: Request, trustProxy: boolean, trustedProxyCount = 1): string {
   if (trustProxy) {
     const forwarded = req.headers["x-forwarded-for"];
     // Handle both string (single header) and string[] (multiple XFF headers)
     const xffStr = Array.isArray(forwarded) ? forwarded.join(",") : forwarded;
     if (typeof xffStr === "string") {
       const ips = xffStr.split(",");
-      const proxyAddedIp = ips[ips.length - 1]?.trim() ?? "";
+      const index = Math.max(0, ips.length - trustedProxyCount);
+      const proxyAddedIp = ips[index]?.trim() ?? "";
       // Reject non-IP values to prevent rate-limit bypass via spoofed XFF
       if (proxyAddedIp && isIP(proxyAddedIp) !== 0) return proxyAddedIp;
     }
@@ -95,8 +96,10 @@ export function matchesCorsOrigin(origin: string, pattern: string): boolean {
     // Enforce HTTPS for wildcard subdomain patterns to prevent protocol downgrade,
     // but exempt localhost/127.0.0.1 for development workflows (e.g., Playwright E2E)
     const isLocalDev =
-      origin.startsWith("http://localhost") ||
-      origin.startsWith("http://127.0.0.1");
+      origin === "http://localhost" ||
+      origin.startsWith("http://localhost:") ||
+      origin === "http://127.0.0.1" ||
+      origin.startsWith("http://127.0.0.1:");
     if (!isLocalDev && !origin.startsWith("https://")) return false;
     return origin.endsWith(domain) && origin.length > domain.length;
   }
@@ -168,9 +171,11 @@ export function setupRateLimiting(state: HttpTransportState): void {
   const parsedMax = process.env["MCP_RATE_LIMIT_MAX"]
     ? parseInt(process.env["MCP_RATE_LIMIT_MAX"], 10)
     : DEFAULT_RATE_LIMIT_MAX;
+  const safeParsedMax = Number.isNaN(parsedMax) ? DEFAULT_RATE_LIMIT_MAX : parsedMax;
   // L-4: Clamp max requests to a safe range (1 to 10000)
-  const maxRequests = Math.max(1, Math.min(parsedMax, 10000));
+  const maxRequests = Math.max(1, Math.min(safeParsedMax, 10000));
   const trustProxy = state.config.trustProxy ?? false;
+  const trustedProxyCount = state.config.trustedProxyCount ?? 1;
 
   // M-4: Warning: The default express-rate-limit in-memory store is per-process.
   // In multi-instance deployments behind a load balancer, each instance maintains 
@@ -184,7 +189,7 @@ export function setupRateLimiting(state: HttpTransportState): void {
     max: maxRequests,
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => getClientIp(req, trustProxy),
+    keyGenerator: (req) => getClientIp(req, trustProxy, trustedProxyCount),
     skip: (req) => req.path === "/health",
     handler: (_req, res, _next, options) => {
       res.status(options.statusCode).json({

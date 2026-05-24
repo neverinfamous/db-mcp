@@ -211,7 +211,7 @@ export class CodeModeSandbox {
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
+        stack: process.env["NODE_ENV"] === "development" && error instanceof Error ? error.stack : undefined,
         metrics: this.calculateMetrics(
           startTime,
           endTime,

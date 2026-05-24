@@ -177,8 +177,8 @@ export const DateMathOutputSchema = z
 // =============================================================================
 
 export const ReadQuerySchema = z.object({
-  query: z.string().default("").describe("SELECT query to execute"),
-  sql: z.string().optional().describe("Alias for query"),
+  query: z.string().max(100000).default("").describe("SELECT query to execute"),
+  sql: z.string().max(100000).optional().describe("Alias for query"),
   params: z
     .array(z.unknown())
     .optional()
@@ -186,8 +186,8 @@ export const ReadQuerySchema = z.object({
 });
 
 export const WriteQuerySchema = z.object({
-  query: z.string().default("").describe("INSERT/UPDATE/DELETE query to execute"),
-  sql: z.string().optional().describe("Alias for query"),
+  query: z.string().max(100000).default("").describe("INSERT/UPDATE/DELETE query to execute"),
+  sql: z.string().max(100000).optional().describe("Alias for query"),
   params: z
     .array(z.unknown())
     .optional()

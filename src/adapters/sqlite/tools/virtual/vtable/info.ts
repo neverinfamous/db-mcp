@@ -27,7 +27,8 @@ export function createVirtualTableInfoTool(
         sanitizeIdentifier(input.tableName);
 
         const sqlResult = await adapter.executeReadQuery(
-          `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '${input.tableName.replace(/'/g, "''")}' AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
+          `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ? AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
+          [input.tableName]
         );
 
         if (!sqlResult.rows || sqlResult.rows.length === 0) {

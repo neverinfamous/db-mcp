@@ -62,6 +62,19 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[H-50]** Virtual Tables: Parameterized queries in `info.ts`, `list.ts`, and `drop.ts` for virtual table schemas to prevent SQL injection.
+- **[H-51]** Admin Tools: Restricted `drop_virtual_table` to `admin` scope instead of `write`.
+- **[M-55]** Admin Tools: Added strict blocklist for destructive PRAGMAs (`writable_schema`, `trusted_schema`, `defensive`, `cell_size_check`, `temp_store_directory`) and coerced `PRAGMA optimize` mask input to an integer to prevent injection.
+- **[M-56]** OAuth Transport: Replaced manual buffer comparison with HMAC-SHA256 and `crypto.timingSafeEqual` in `oauth.ts` to prevent side-channel timing attacks.
+- **[M-57]** HTTP Transport: Added `trustedProxyCount` configuration to `getClientIp` in `middleware.ts` to prevent rate-limit bypass via spoofed `X-Forwarded-For` IPs.
+- **[M-58]** HTTP Transport: Hardened `matchesCorsOrigin` to exactly match `http://localhost` instead of using `.startsWith()`, preventing `http://localhost.attacker.com` bypasses.
+- **[M-59]** Code Mode Sandbox: Added `fetch` and `WebSocket` to the `blockedPatterns` regex list in `types.ts`.
+- **[M-60]** Code Mode Sandbox: Modified `worker-sandbox.ts` and `sandbox.ts` to strictly strip stack traces from output unless `process.env.NODE_ENV === "development"`.
+- **[L-40]** Admin Tools: Obscured path output in `create.ts` (backup tool) by using `nodePath.basename()`, preventing host path disclosure in the UI progress messages.
+- **[L-41]** Query Schemas: Added maximum limits `.max(100000)` to query/sql fields in `core.ts` to prevent payload stuffing.
+- **[L-42]** CI/CD: Migrated `$GITHUB_OUTPUT` usage in `publish-npm.yml` to securely use environment variables rather than direct script interpolation.
+- **[L-43]** CI/CD: Removed `--only-verified` from TruffleHog arguments in `secrets-scanning.yml` to broaden secret detection to offline resources.
+- **[L-44]** CI/CD: Uniquely named `playwright-report-${{ github.run_id }}` in `e2e.yml` to avoid race conditions.
 - **[M-7]** Idempotence & Description: Updated `sqlite_pragma_settings` and `sqlite_create_table` descriptions (CWE-200).
 - **[M-5]** Credential Echo: Added `sanitizeErrorMessage` to `formatHandlerError` and `interceptor.ts` to redact physical paths and credentials from driver errors (CWE-200, CWE-209).
 - **[M-8]** Scope Leak: Removed scope reflection from `InsufficientScopeError` in `auth/errors.ts` and refactored `tools/list` JSON-RPC filtering from the HTTP layer to the `mcp-server.ts` protocol layer (CWE-200, CWE-209).

@@ -83,7 +83,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
           progress,
           1,
           2,
-          `Creating backup at ${resolvedPath}...`,
+          `Creating backup at ${nodePath.basename(resolvedPath)}...`,
         );
         await adapter.executeQuery(sql);
         await sendProgress(progress, 2, 2, "Backup complete");

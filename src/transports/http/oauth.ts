@@ -4,7 +4,7 @@
  * OAuth 2.1 component initialization and auth middleware application.
  */
 
-import { timingSafeEqual } from "node:crypto";
+import { timingSafeEqual, createHmac, randomBytes } from "node:crypto";
 import { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { AuthorizationServerDiscovery } from "../../auth/authorization-server-discovery.js";
 import { TokenValidator } from "../../auth/token-validator.js";
@@ -17,6 +17,8 @@ import type { HttpTransportState } from "./types.js";
 import type { RequestHandler, Response } from "express";
 
 const logger = createModuleLogger("HTTP");
+
+const HMAC_KEY = randomBytes(32);
 
 // =============================================================================
 // Auth Middleware
@@ -83,17 +85,9 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
  * Returns `true` if the tokens match, `false` otherwise.
  */
 function tokensMatch(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  // Avoid short-circuit: always compute both length check and HMAC comparison.
-  // If lengths differ, compare bufA against itself (constant-time no-op) and
-  // reject via the length flag.
-  if (bufA.length !== bufB.length) {
-    // Perform a dummy comparison to keep timing constant regardless of length
-    timingSafeEqual(bufA, bufA);
-    return false;
-  }
-  return timingSafeEqual(bufA, bufB);
+  const ha = createHmac("sha256", HMAC_KEY).update(a).digest();
+  const hb = createHmac("sha256", HMAC_KEY).update(b).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 /**

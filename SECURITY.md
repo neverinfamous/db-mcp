@@ -66,7 +66,7 @@ Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isola
 
 - ✅ **V8 code generation restrictions** — `codeGeneration: { strings: false, wasm: false }` disables `eval()` and `Function()` construction from strings **at the V8 engine level**, not just via regex patterns. This closes the entire class of string-based code generation bypass attacks
 - ✅ **Blocked globals** — `require`, `process`, `global`, `globalThis`, `module`, `exports`, `setTimeout`, `setInterval`, `setImmediate`, `Proxy` set to `undefined`
-- ✅ **Blocked patterns** — 18 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, and filesystem/network/child_process references
+- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, `fetch()`, `WebSocket`, and filesystem/network/child_process references
 - ✅ **Frozen prototypes** — all built-in prototypes (`Object`, `Function`, `Error`, `Array`, `Promise`, typed arrays, etc.) are frozen inside the `vm` context to prevent dynamic constructor chain escapes via string concatenation (e.g., `'con'+'structor'`)
 - ✅ **RPC allowlist validation** — the host-side RPC handler validates every incoming method call against the serialized bindings allowlist before dispatching, preventing a compromised worker from invoking arbitrary host methods
 - ✅ **Readonly Proxy traps** — group API objects are wrapped in Proxy traps that throw structured errors when stripped (readonly) methods are called, halting execution instead of silently returning undefined
@@ -74,7 +74,7 @@ Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isola
 - ✅ **Input limits** — 50KB code input, 10MB result output
 - ✅ **Rate limiting** — 60 executions per minute per client (internal map capped at 10,000 active clients to prevent memory exhaustion DoS)
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted)
-- ✅ **Forensic traceability** — each `vm.Script` execution uses a unique `randomUUID()` filename for distinguishable stack traces
+- ✅ **Forensic traceability** — each `vm.Script` execution uses a unique `randomUUID()` filename for distinguishable stack traces. Stack traces are strictly stripped from worker error responses in production (`NODE_ENV=production`) to prevent internal path and dependency leakage
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
 - ✅ **Production vm gate** — `CODEMODE_ISOLATION=vm` requires explicit `CODEMODE_ISOLATION_INSECURE=1` opt-in, and will crash the application if loaded in a `NODE_ENV=production` environment. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use.
 
@@ -121,7 +121,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 - ✅ **Returns 429 Too Many Requests** with proper `Retry-After` headers when limits are exceeded
 - ✅ **Slowloris DoS Protection** — configurable read timeouts via `MCP_REQUEST_TIMEOUT` and `MCP_HEADERS_TIMEOUT`
 
-> **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the rightmost `X-Forwarded-For` IP. **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that securely appends to the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
+> **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the rightmost `X-Forwarded-For` IPs (up to `trustedProxyCount`, default 1). **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that securely appends to the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
 
 > **⚠️ Multi-Instance Deployments:** The default `express-rate-limit` in-memory store is per-process. In multi-instance deployments behind a load balancer, each instance maintains independent counters, effectively multiplying the rate limit by the number of instances. For production clusters, configure a shared rate limit store (e.g., [`rate-limit-redis`](https://www.npmjs.com/package/rate-limit-redis)).
 

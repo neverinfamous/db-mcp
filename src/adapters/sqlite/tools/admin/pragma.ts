@@ -149,7 +149,7 @@ export function createPragmaOptimizeTool(
 
         const sql =
           input.mask !== undefined
-            ? `PRAGMA optimize(${input.mask})`
+            ? `PRAGMA optimize(${Math.trunc(input.mask)})`
             : "PRAGMA optimize";
         await adapter.executeQuery(sql);
 
@@ -195,6 +195,22 @@ export function createPragmaSettingsTool(
           success: false,
           error: "Invalid PRAGMA name",
           code: "VALIDATION_ERROR",
+        };
+      }
+
+      const BLOCKED_PRAGMAS = new Set([
+        "writable_schema",
+        "trusted_schema",
+        "defensive",
+        "cell_size_check",
+        "temp_store_directory",
+      ]);
+
+      if (BLOCKED_PRAGMAS.has(input.pragma.toLowerCase())) {
+        return {
+          success: false,
+          error: `PRAGMA '${input.pragma}' is blocked for security`,
+          code: "SECURITY_ERROR"
         };
       }
 

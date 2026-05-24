@@ -233,9 +233,9 @@ export class WorkerSandbox {
               error: msg.error,
               // Strip stack traces in production to prevent information leakage
               stack:
-                process.env["NODE_ENV"] === "production"
-                  ? undefined
-                  : msg.stack,
+                process.env["NODE_ENV"] === "development"
+                  ? msg.stack
+                  : undefined,
               metrics: this.calculateMetrics(
                 startTime,
                 endTime,
@@ -257,9 +257,9 @@ export class WorkerSandbox {
             error: error.message,
             // Strip stack traces in production to prevent information leakage
             stack:
-              process.env["NODE_ENV"] === "production"
-                ? undefined
-                : error.stack,
+              process.env["NODE_ENV"] === "development"
+                ? error.stack
+                : undefined,
             metrics: this.calculateMetrics(
               startTime,
               endTime,
@@ -313,7 +313,10 @@ export class WorkerSandbox {
         respond({
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
+          stack:
+            process.env["NODE_ENV"] === "development" && error instanceof Error
+              ? error.stack
+              : undefined,
           metrics: this.calculateMetrics(
             startTime,
             endTime,

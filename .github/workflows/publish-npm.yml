@@ -61,8 +61,9 @@ jobs:
 
       - name: Check if version already published
         id: check
+        env:
+          PKG_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          PKG_VERSION="${{ steps.version.outputs.version }}"
           PUBLISHED=$(npm view db-mcp version 2>/dev/null || echo "none")
           echo "published=$PUBLISHED" >> $GITHUB_OUTPUT
           if [ "$PUBLISHED" = "$PKG_VERSION" ]; then

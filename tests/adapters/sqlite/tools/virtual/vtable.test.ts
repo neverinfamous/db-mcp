@@ -80,7 +80,8 @@ describe("createListVirtualTablesTool", () => {
     const result = (await tool.handler({ pattern: "fts_%" }, ctx)) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("fts_%"),
+      expect.stringContaining("AND name LIKE ?"),
+      ["fts_%"],
     );
   });
 

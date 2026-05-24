@@ -128,6 +128,8 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     /\bnet\./, // No networking
     /\bhttp\./, // No HTTP
     /\bhttps\./, // No HTTPS
+    /\bfetch\s*\(/, // No fetch()
+    /\bWebSocket\b/, // No WebSocket
   ],
 };
 
