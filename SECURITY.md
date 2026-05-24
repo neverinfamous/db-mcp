@@ -55,7 +55,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **WHERE clause validation** — blocklist of dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
-- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). *Note: In-memory databases (`:memory:`) bypass path validation by design.*
+- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). This validation strictly enforces exact directory matching, blocking access even to legitimate subdirectories. *Note: In-memory databases (`:memory:`) bypass path validation by design.*
 - ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
 ## 🧪 **Code Mode Sandbox Security**
@@ -72,7 +72,7 @@ Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isola
 - ✅ **Readonly Proxy traps** — group API objects are wrapped in Proxy traps that throw structured errors when stripped (readonly) methods are called, halting execution instead of silently returning undefined
 - ✅ **Execution timeout** — 30s hard limit (configurable)
 - ✅ **Input limits** — 50KB code input, 10MB result output
-- ✅ **Rate limiting** — 60 executions per minute per client
+- ✅ **Rate limiting** — 60 executions per minute per client (internal map capped at 10,000 active clients to prevent memory exhaustion DoS)
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted)
 - ✅ **Forensic traceability** — each `vm.Script` execution uses a unique `randomUUID()` filename for distinguishable stack traces
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
@@ -121,7 +121,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 - ✅ **Returns 429 Too Many Requests** with proper `Retry-After` headers when limits are exceeded
 - ✅ **Slowloris DoS Protection** — configurable read timeouts via `MCP_REQUEST_TIMEOUT` and `MCP_HEADERS_TIMEOUT`
 
-> **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the leftmost `X-Forwarded-For` IP. **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that overwrites the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
+> **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the rightmost `X-Forwarded-For` IP. **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that securely appends to the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
 
 > **⚠️ Multi-Instance Deployments:** The default `express-rate-limit` in-memory store is per-process. In multi-instance deployments behind a load balancer, each instance maintains independent counters, effectively multiplying the rate limit by the number of instances. For production clusters, configure a shared rate limit store (e.g., [`rate-limit-redis`](https://www.npmjs.com/package/rate-limit-redis)).
 
@@ -264,6 +264,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] WHERE clause validation with subquery detection
 - [x] WHERE clause Unicode NFC normalization + full-width→ASCII mapping (homoglyph bypass prevention)
 - [x] Input validation via Zod schemas
+- [x] Strict DDL validation with boundary regexes
 - [x] JWT claims sanitization (prototype pollution prevention)
 - [x] Code Mode sandbox isolation (worker_threads V8 isolate + vm.createContext)
 - [x] Code Mode V8 codeGeneration restrictions (eval/Function disabled at engine level)
