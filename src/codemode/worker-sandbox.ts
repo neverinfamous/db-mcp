@@ -181,6 +181,10 @@ export class WorkerSandbox {
               }
 
               if (typeof target === "function") {
+                if (!Array.isArray(args)) {
+                  mainPort.postMessage({ id, error: "Invalid RPC arguments: must be an array" });
+                  return;
+                }
                 const result = await (
                   target as (...a: unknown[]) => Promise<unknown>
                 )(...args);

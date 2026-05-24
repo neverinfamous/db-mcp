@@ -107,7 +107,7 @@ export function validateSameDirPath(
   if (normalizedTarget !== normalizedDir && targetDir !== normalizedDir) {
     return {
       valid: false,
-      error: `Security: path must be within the database directory (${dbDir}). Path traversal is not allowed.`,
+      error: `Security: path must be within the database directory. Path traversal is not allowed.`,
       dbDir,
     };
   }

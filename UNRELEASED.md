@@ -286,6 +286,8 @@
 - Fixed `exactOptionalPropertyTypes` TypeScript compilation errors in `auth.ts` and `core.ts` by explicitly typing optional properties with `| undefined`.
 - Fixed E2E test failures caused by `query-validation.ts` erroneously requiring `admin` scope for DDL operations on unauthenticated requests when OAuth is disabled.
 - Updated E2E test suite to correctly assert rejection of `CREATE TRIGGER` via `sqlite_write_query` following scope escalation fixes.
+- Fixed TypeScript ESLint errors (`no-explicit-any`, `no-unsafe-member-access`) in `oauth.ts` JSON-RPC response filtering by replacing `any` casts with robust type guards.
+- Fixed VM sandbox unit test suite execution failures by explicitly injecting the required `CODEMODE_ISOLATION_INSECURE=1` environment variable flag during test setup.
 
 ### Changed
 - Refactored `scope-map.ts` to use dynamic `registerToolScope()` string registration, deprecating static group evaluation.

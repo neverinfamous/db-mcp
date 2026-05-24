@@ -14,7 +14,7 @@ import { scopesGrantToolAccess } from "../../auth/scopes/index.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
-import type { RequestHandler } from "express";
+import type { RequestHandler, Response } from "express";
 
 const logger = createModuleLogger("HTTP");
 
@@ -178,6 +178,14 @@ export function applyScopeEnforcementMiddleware(
       return;
     }
 
+    if (!req.headers["content-type"]?.includes("application/json")) {
+      res.status(400).json({
+        error: "invalid_request",
+        error_description: "Content-Type must be application/json",
+      });
+      return;
+    }
+
     // F-3: Prevent scope enforcement bypass via JSON-RPC batching
     if (Array.isArray(body)) {
       res.status(400).json({
@@ -196,6 +204,34 @@ export function applyScopeEnforcementMiddleware(
     }
 
     const rpcMethod = body?.method;
+
+    if (rpcMethod === "tools/list") {
+      const originalJson = res.json;
+      const scopes = req.auth.scopes;
+
+      const isRecord = (val: unknown): val is Record<string, unknown> =>
+        typeof val === "object" && val !== null && !Array.isArray(val);
+
+      res.json = function (this: Response, data: unknown): Response {
+        if (
+          isRecord(data) &&
+          isRecord(data["result"]) &&
+          Array.isArray(data["result"]["tools"])
+        ) {
+          data["result"]["tools"] = data["result"]["tools"].filter(
+            (tool: unknown) => {
+              if (isRecord(tool) && typeof tool["name"] === "string") {
+                return scopesGrantToolAccess(scopes, tool["name"]);
+              }
+              return false;
+            },
+          );
+        }
+        return originalJson.call(this, data);
+      };
+      next();
+      return;
+    }
 
     // M-2: Enforce scopes on tools/call (existing), resources/read, and prompts/get
     if (rpcMethod === "tools/call") {

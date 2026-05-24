@@ -7,6 +7,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { CodeModeSandbox, SandboxPool } from "../../src/codemode/sandbox.js";
 
+// Set environment variable required for VM sandbox mode to function
+process.env["CODEMODE_ISOLATION_INSECURE"] = "1";
+
 // =============================================================================
 // CodeModeSandbox
 // =============================================================================

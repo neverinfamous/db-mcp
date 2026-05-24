@@ -41,6 +41,14 @@ export class CodeModeSandbox {
    * Create a new sandbox instance
    */
   static create(options?: SandboxOptions): CodeModeSandbox {
+    if (
+      process.env["CODEMODE_ISOLATION_INSECURE"] !== "1" &&
+      process.env["CODEMODE_ISOLATION_INSECURE"] !== "true"
+    ) {
+      throw new Error(
+        "VM sandbox mode requires CODEMODE_ISOLATION_INSECURE=1 due to unfrozen host prototypes. Use worker mode for production."
+      );
+    }
     const opts: Required<SandboxOptions> = {
       ...DEFAULT_SANDBOX_OPTIONS,
       ...options,

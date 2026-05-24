@@ -49,6 +49,15 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\/\*/,
     reason: "contains SQL block comment",
   },
+  // REGEXP and MATCH injection (blind extraction oracles)
+  {
+    pattern: /\bREGEXP\s+/i,
+    reason: "contains REGEXP (potential blind extraction oracle)",
+  },
+  {
+    pattern: /\bMATCH\s+/i,
+    reason: "contains MATCH (potential blind extraction oracle)",
+  },
   // UNION injection (data exfiltration)
   {
     pattern: /\bUNION\s+(ALL\s+)?SELECT\b/i,

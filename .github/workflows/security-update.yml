@@ -15,11 +15,13 @@ on:
 
 permissions:
   contents: read # C-20: trimmed from write — workflow only reads source
-  security-events: write
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     outputs:
       scan-failed: ${{ steps.check-scan.outputs.failed }}
 
