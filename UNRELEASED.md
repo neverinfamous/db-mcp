@@ -76,7 +76,7 @@
 - Fixed STDIO and stateless HTTP transport logic to accurately assume local `admin` scope when OAuth is not configured, preventing false-positive authorization rejections on the CLI and unprotected HTTP endpoints.
 - Fixed `validateSameDirPath` tests to correctly expect `:memory:` paths to fail path validation following recent security tightening.
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
-
+- Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
 ### Security
 - **[Critical]** Code Mode Sandbox: Removed deprecated `CODEMODE_ISOLATION_NATIVE_ADDON_ACK` escape hatch and changed default isolation to `isolate` (`isolated-vm`), ensuring true V8 separation by default.
 - **[Critical]** Authorization: Replaced implicit `admin` fallback in `registerToolImpl` with explicit scope enforcement to prevent tools from bypassing capability checks when scopes are undefined.

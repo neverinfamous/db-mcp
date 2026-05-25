@@ -43,7 +43,6 @@ export default defineConfig({
         baseURL: "http://localhost:3001",
       },
       testIgnore: [/wasm\./, /auth\./],
-      dependencies: ["wasm"],
     },
     {
       name: "auth",
@@ -52,7 +51,6 @@ export default defineConfig({
         baseURL: "http://localhost:3003",
       },
       testMatch: /auth\./,
-      dependencies: ["native"],
     },
   ],
   webServer: [
@@ -68,7 +66,6 @@ export default defineConfig({
         ...process.env,
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
-        CODEMODE_ISOLATION: "worker",
       },
     },
     {
@@ -83,7 +80,6 @@ export default defineConfig({
         ...process.env,
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
-        CODEMODE_ISOLATION: "worker",
         SPATIALITE_PATH:
           "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite.dll",
         CSV_EXTENSION_PATH: "./extensions/xsv0.dll",
@@ -91,13 +87,13 @@ export default defineConfig({
     },
     {
       command:
-        "node dist/cli.js --transport http --port 3003 --auth-token test-secret --sqlite ./test-server/test.db --tool-filter +all",
+        "node dist/cli.js --transport http --port 3003 --auth-token test-secret-that-is-at-least-32-chars-long --sqlite ./test-server/test.db --tool-filter +all",
       url: "http://localhost:3003/health",
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
       stdout: "pipe",
       stderr: "pipe",
-      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000", CODEMODE_ISOLATION: "worker" },
+      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000" },
     },
   ],
 });

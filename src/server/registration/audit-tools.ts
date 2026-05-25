@@ -470,7 +470,7 @@ export function registerAuditBackupTools(
           readOnlyHint: false,
           destructiveHint: true,
           idempotentHint: false,
-          openWorldHint: true,
+          openWorldHint: false,
         },
       },
       async (args: unknown) => {

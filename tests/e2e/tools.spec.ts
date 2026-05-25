@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { hasIsolatedVm } from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
@@ -113,6 +114,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
   });
 
   test("should execute code mode (sqlite_execute_code)", async ({}, testInfo) => {
+    test.skip(!hasIsolatedVm(), "isolated-vm is not installed on this system, skipping Code Mode tests");
     const baseURL = testInfo.project.use.baseURL as string;
     const client = await createClient(baseURL);
     try {

@@ -4,26 +4,25 @@ on:
   schedule:
     # Run weekly on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
-  workflow_call:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
   pull_request:
     branches: [main]
     paths:
       - 'Dockerfile'
       - 'package.json'
       - 'package-lock.json'
+  workflow_call:
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read # C-20: trimmed from write — workflow only reads source
 
 jobs:
   security-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write
@@ -40,7 +39,7 @@ jobs:
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v3
 
       - name: Build image for scanning
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v6
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v3
         with:
           context: .
           file: Dockerfile
@@ -51,7 +50,7 @@ jobs:
 
       # Run SARIF scan first (non-blocking) to always generate the file
       - name: Run Trivy scanner for SARIF output
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.30.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.28.1
         with:
           image-ref: security-test:latest
           format: 'sarif'
@@ -71,7 +70,7 @@ jobs:
       # Run table scan (blocking) after SARIF is uploaded
       - name: Run Trivy vulnerability scanner
         id: trivy-scan
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.30.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.28.1
         with:
           image-ref: security-test:latest
           format: 'table'
@@ -94,7 +93,7 @@ jobs:
   create-issue:
     needs: [security-scan]
     if: ${{ always() && needs.security-scan.outputs.scan-failed == 'true' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       issues: write

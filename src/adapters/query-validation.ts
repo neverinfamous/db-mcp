@@ -275,7 +275,7 @@ function fallbackValidation(sql: string, isReadOnly: boolean): void {
   }
 
   const unsafePattern = new RegExp(`\\b(${Array.from(UNSAFE_FUNCTIONS).join("|")})\\b`, "i");
-  const match = unsafePattern.exec(rootStmt);
+  const match = unsafePattern.exec(stripped);
   if (match) {
     throw new ValidationError(`Unsafe function call detected: ${match[0].toUpperCase()}`, "DB_DANGEROUS_PATTERN");
   }

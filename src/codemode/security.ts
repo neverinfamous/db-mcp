@@ -52,6 +52,7 @@ export class CodeModeSecurityManager {
 
     // Check for blocked patterns
     const strippedCode = code
+      .normalize("NFKC")
       .replace(/\/\*[\s\S]*?\*\//g, " ")   // block comments
       .replace(/\/\/[^\n]*/g, " ");        // line comments
       
@@ -95,6 +96,9 @@ export class CodeModeSecurityManager {
     }
 
     if (existing.count >= this.config.maxExecutionsPerMinute) {
+      // Move to end of map to maintain LRU order even when rate limited
+      this.rateLimitMap.delete(clientId);
+      this.rateLimitMap.set(clientId, existing);
       return false;
     }
 

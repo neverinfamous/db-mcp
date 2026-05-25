@@ -62,7 +62,7 @@ export class CodeModeSandbox {
     } catch {
       return {
         success: false,
-        error: "isolated-vm is not installed or failed to load. Please install it, or set CODEMODE_ISOLATION=worker to use the fallback.",
+        error: "isolated-vm is not installed or failed to load. Please install it.",
         metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
       };
     }

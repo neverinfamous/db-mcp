@@ -51,7 +51,7 @@ export function scopeGrantsToolAccess(
 
   // Fallback to legacy logic...
   if (scope === "write") {
-    return getRequiredScopeForTool(toolName) !== "admin";
+    return WRITE_TOOLS.has(toolName) || READ_ONLY_TOOLS.has(toolName);
   }
 
   if (scope === "read") {

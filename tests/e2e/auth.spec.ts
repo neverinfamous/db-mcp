@@ -1,13 +1,13 @@
 /**
  * E2E Tests: Bearer Token Authentication
  *
- * Tests the --auth-token middleware. Runs against the `auth` Playwright
- * project (port 3002 with --auth-token test-secret).
+ * Tests the --auth-token middleware. * Note: This tests the server spun up by Playwright's webServer config for the "auth"
+ * project (port 3002 with --auth-token test-secret-that-is-at-least-32-chars-long).
  */
 
 import { test, expect } from "@playwright/test";
 
-const AUTH_TOKEN = "test-secret";
+const AUTH_TOKEN = "test-secret-that-is-at-least-32-chars-long";
 
 test.describe("Bearer Token Authentication", () => {
   test("should allow /health without token (exempt)", async ({ baseURL }) => {

@@ -127,9 +127,9 @@ export function registerBuiltInTools(
     // Map scopes so these tools don't fail closed
     registerToolScopes(
       new Map([
-        ["server_info", ["read", "write", "admin", "full"]],
-        ["server_health", ["read", "write", "admin", "full"]],
-        ["list_adapters", ["read", "write", "admin", "full"]],
+        ["server_info", ["read"]],
+        ["server_health", ["read"]],
+        ["list_adapters", ["read"]],
       ]),
     );
 }

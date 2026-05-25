@@ -59,6 +59,9 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
 
     state.app.use(authMiddleware);
   } else if (state.config.authToken && state.app) {
+    if (state.config.authToken.length < 32) {
+      throw new Error("Security: MCP_AUTH_TOKEN must be at least 32 characters long to ensure sufficient entropy.");
+    }
     // Simple bearer token middleware
     state.app.use(createSimpleBearerAuth(state.config.authToken));
     logger.info("Simple bearer token authentication enabled", {

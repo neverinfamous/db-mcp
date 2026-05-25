@@ -60,7 +60,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 
 ## 🧪 **Code Mode Sandbox Security**
 
-Code Mode executes user-provided JavaScript inside a **process-level `isolated-vm` V8 isolate**, providing strict memory separation and secure C++ execution boundaries. The previous insecure `node:vm` architecture has been entirely replaced to mitigate prototype pollution and execution escapes.
+Code Mode executes user-provided JavaScript inside a **process-level `isolated-vm` V8 isolate**, providing strict memory separation and secure C++ execution boundaries. The previous insecure `node:vm` and `worker_threads` architectures have been entirely replaced to mitigate prototype pollution and execution escapes.
 
 ### **Sandbox Restrictions**
 
@@ -76,7 +76,6 @@ Code Mode executes user-provided JavaScript inside a **process-level `isolated-v
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted).
 - ✅ **Forensic traceability** — each isolate script execution uses a unique `randomUUID()` filename for distinguishable stack traces. Stack traces are strictly stripped from worker error responses in production (`NODE_ENV=production`) to prevent internal path and dependency leakage.
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled.
-- ✅ **Worker Sandbox Fallback** — When `isolated-vm` is unavailable (e.g., missing native build tools on Windows), Code Mode gracefully degrades to a `worker_threads` sandbox with strict V8 code generation restrictions, blocked globals, and frozen prototypes to maintain a defensive posture.
 
 > **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `isolated-vm` provides robust security against context escapes, this server still runs the isolation within the main Node.js process space.
 >

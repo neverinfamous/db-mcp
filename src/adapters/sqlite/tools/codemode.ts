@@ -304,23 +304,13 @@ function wrapReadonlyGuards(
  * Reads CODEMODE_ISOLATION env var to select sandbox mode.
  */
 function initializePool(): void {
-  const modeEnv = process.env["CODEMODE_ISOLATION"]?.toLowerCase();
-
   // isolate mode provides true C++ V8 isolate separation where host prototypes
   // are inaccessible by design. It is vastly superior to worker mode for untrusted code.
-  // We prefer it by default unless explicitly disabled or native addon is missing.
-  let mode: SandboxMode = "isolate";
+  const mode: SandboxMode = "isolate";
   
-  if (modeEnv === "worker") {
-    mode = "worker";
-    logger.info("CODEMODE_ISOLATION=worker enabled: using weaker vm sandbox.",
-      { module: "CODEMODE" as const, operation: "initialize" }
-    );
-  } else {
-    logger.info("Code Mode isolation defaulting to 'isolate' (true V8 separation).",
-      { module: "CODEMODE" as const, operation: "initialize" }
-    );
-  }
+  logger.info("Code Mode isolation using 'isolate' (true V8 separation).",
+    { module: "CODEMODE" as const, operation: "initialize" }
+  );
 
   setDefaultSandboxMode(mode);
   pool = createSandboxPool(mode, undefined, { timeoutMs: 30000 });

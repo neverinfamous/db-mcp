@@ -13,6 +13,21 @@ import type { TestInfo } from "@playwright/test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+/**
+ * Check if isolated-vm is available on this system.
+ */
+export function hasIsolatedVm(): boolean {
+  try {
+    require("isolated-vm");
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Create an MCP SDK client connected via Legacy SSE transport.

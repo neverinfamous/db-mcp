@@ -23,10 +23,11 @@ jobs:
   # This ensures no vulnerable images reach Docker Hub
   security-scan:
     if: ${{ !cancelled() }} # M-3: run on upstream failure but not cancellation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pull-requests: write # C-18: scoped to this job only (Docker Scout PR comments)
+      security-events: write
 
     steps:
       - name: Checkout repository
@@ -106,7 +107,7 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
 
@@ -199,7 +200,7 @@ jobs:
 
   # Merge platform images into multi-arch manifest
   merge-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build-platform]
     if: always() && needs.build-platform.result == 'success' && github.event_name != 'pull_request'
     permissions:

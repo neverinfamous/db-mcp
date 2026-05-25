@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
-process.env.CODEMODE_ISOLATION = "worker";
+
 
 import {
   getCodeModeTools,
@@ -15,31 +15,28 @@ import {
 } from "../../../../src/adapters/sqlite/tools/codemode.js";
 import type { ToolDefinition } from "../../../../src/types/index.js";
 
-vi.mock("node:worker_threads", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:worker_threads")>();
-  const { EventEmitter } = await import("node:events");
+vi.mock("../../../../src/codemode/sandbox.js", () => {
   return {
-    ...actual,
-    Worker: class MockWorker extends EventEmitter {
-      constructor(script: string, options: any) {
-        super();
-        setTimeout(() => {
-          const code = options.workerData.code;
-          if (code.includes("42")) {
-            this.emit("message", { success: true, result: 42 });
-          } else if (code.includes("Worker Error")) {
-            this.emit("message", { success: false, error: "Worker Error" });
-          } else if (code.includes("timeout")) {
-            // simulate timeout by doing nothing
-          } else {
-            this.emit("message", { success: true });
-          }
-        }, 5);
-      }
-      terminate() {
-        return Promise.resolve();
-      }
+    CodeModeSandbox: {
+      create: vi.fn(),
     },
+    SandboxPool: class MockSandboxPool {
+      initialize() {}
+      execute(code: string, bindings: any, timeoutMs: number) {
+        if (code.includes("42")) {
+          return Promise.resolve({ success: true, result: 42, metrics: {} });
+        } else if (code.includes("Worker Error")) {
+          return Promise.resolve({ success: false, error: "Worker Error", metrics: {} });
+        } else if (code.includes("timeout")) {
+          // simulate timeout by returning error
+          return Promise.resolve({ success: false, error: "Timeout", metrics: {} });
+        } else {
+          return Promise.resolve({ success: true, result: undefined, metrics: {} });
+        }
+      }
+      getStats() { return { available: 1, inUse: 0, max: 1 }; }
+      dispose() {}
+    }
   };
 });
 

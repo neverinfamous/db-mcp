@@ -231,6 +231,10 @@ export function createPragmaSettingsTool(
           const safeValue = typeof input.value === 'string' 
             ? `'${input.value.replace(/'/g, "''")}'` 
             : input.value;
+          // skipValidation=true is passed here to bypass the strict regex checks in query-validation.ts
+          // which normally block PRAGMA statements. This is safe because we've already enforced
+          // an explicit ALLOWED_WRITE_PRAGMAS allowlist above, protecting against dangerous 
+          // pragmas like writable_schema or foreign_keys.
           await adapter.executeWriteQuery(
             `PRAGMA ${input.pragma} = ${safeValue}`,
             undefined,
