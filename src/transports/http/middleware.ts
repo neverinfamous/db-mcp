@@ -163,7 +163,6 @@ export function setupRateLimiting(state: HttpTransportState): void {
     max: maxRequests,
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => req.ip ?? req.socket.remoteAddress ?? "unknown",
     skip: (req) => req.path === "/health",
     handler: (_req, res, _next, options) => {
       res.status(options.statusCode).json({

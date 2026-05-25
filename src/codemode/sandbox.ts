@@ -5,7 +5,7 @@
  * Provides true V8 isolate separation for maximum security.
  */
 
-import ivm from "isolated-vm";
+import type ivm from "isolated-vm";
 import { randomUUID } from "node:crypto";
 import {
   DEFAULT_SANDBOX_OPTIONS,
@@ -22,6 +22,7 @@ import { transformAutoReturn } from "./auto-return.js";
 export class CodeModeSandbox {
   private readonly options: Required<SandboxOptions>;
   private disposed = false;
+  private accumulatedLogs: string[] = [];
 
   private constructor(options: Required<SandboxOptions>) {
     this.options = options;
@@ -55,13 +56,24 @@ export class CodeModeSandbox {
     }
 
     const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
-    const isolate = new ivm.Isolate({ memoryLimit: 128 });
+    let ivmLib: typeof ivm;
+    try {
+      ivmLib = (await import("isolated-vm")).default;
+    } catch {
+      return {
+        success: false,
+        error: "isolated-vm is not installed or failed to load. Set CODEMODE_ISOLATION=worker.",
+        metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+      };
+    }
+
+    const isolate = new ivmLib.Isolate({ memoryLimit: 128 });
     const context = isolate.createContextSync();
     const jail = context.global;
     jail.setSync("global", jail.derefInto());
 
     const logs: string[] = [];
-    const logRef = new ivm.Reference((level: string, ...args: unknown[]) => {
+    const logRef = new ivmLib.Reference((level: string, ...args: unknown[]) => {
       const msg = args.map(a => typeof a === "object" && a !== null ? JSON.stringify(a) : String(a)).join(" ");
       logs.push(level === "LOG" ? msg : `[${level}] ${msg}`);
     });
@@ -86,7 +98,7 @@ export class CodeModeSandbox {
         context.evalSync(`globalThis.sqlite['${groupName}'] = {};`);
         for (const [methodName, methodFn] of Object.entries(groupValue)) {
           if (typeof methodFn === "function") {
-            const fnRef = new ivm.Reference(async (...args: unknown[]) => {
+            const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
               try {
                 return await (methodFn as (...args: unknown[]) => Promise<unknown>)(...args);
               } catch (e) {
@@ -104,7 +116,7 @@ export class CodeModeSandbox {
           }
         }
       } else if (typeof groupValue === "function") {
-        const fnRef = new ivm.Reference(async (...args: unknown[]) => {
+        const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
           try {
             return await (groupValue as (...args: unknown[]) => Promise<unknown>)(...args);
           } catch (e) {
@@ -146,6 +158,8 @@ export class CodeModeSandbox {
 
     const endTime = performance.now();
 
+    this.accumulatedLogs.push(...logs);
+
     return {
       success,
       ...(success ? { result } : { error: errorMsg }),
@@ -158,12 +172,21 @@ export class CodeModeSandbox {
     };
   }
 
+  getConsoleOutput(): string[] {
+    return [...this.accumulatedLogs];
+  }
+
+  clearConsoleOutput(): void {
+    this.accumulatedLogs = [];
+  }
+
   isHealthy(): boolean {
     return !this.disposed;
   }
 
   dispose(): void {
     this.disposed = true;
+    this.accumulatedLogs = [];
   }
 }
 
@@ -173,6 +196,7 @@ export class CodeModeSandbox {
 export class SandboxPool {
   private readonly options: Required<PoolOptions>;
   private readonly sandboxOptions: Required<SandboxOptions>;
+  private inUseCount = 0;
 
   constructor(poolOptions?: PoolOptions, sandboxOptions?: SandboxOptions) {
     this.options = { ...DEFAULT_POOL_OPTIONS, ...poolOptions };
@@ -188,11 +212,17 @@ export class SandboxPool {
     apiBindings: Record<string, unknown>,
     timeoutMs?: number,
   ): Promise<SandboxResult> {
+    if (this.inUseCount >= this.options.maxInstances) {
+      throw new Error(`Sandbox pool exhausted (max ${this.options.maxInstances})`);
+    }
+
+    this.inUseCount++;
     const sandbox = CodeModeSandbox.create(this.sandboxOptions);
     try {
       return await sandbox.execute(code, apiBindings, timeoutMs);
     } finally {
       sandbox.dispose();
+      this.inUseCount--;
     }
   }
 
@@ -201,7 +231,12 @@ export class SandboxPool {
   }
 
   getStats(): { available: number; inUse: number; max: number } {
-    return { available: 0, inUse: 0, max: this.options.maxInstances };
+    // "Available" in the context of an isolate pool is how many more we can spawn
+    return { 
+      available: Math.max(0, this.options.maxInstances - this.inUseCount), 
+      inUse: this.inUseCount, 
+      max: this.options.maxInstances 
+    };
   }
 
   dispose(): void {

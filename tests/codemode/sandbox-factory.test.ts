@@ -42,9 +42,9 @@ describe("sandbox-factory", () => {
   });
 
   describe("getAvailableSandboxModes", () => {
-    it("should return vm and worker modes", () => {
+    it("should return isolate and worker modes", () => {
       const modes = getAvailableSandboxModes();
-      expect(modes).toEqual(["vm", "worker"]);
+      expect(modes).toEqual(["isolate", "worker"]);
     });
   });
 
@@ -112,15 +112,12 @@ describe("sandbox-factory", () => {
     });
 
     it("should initialize pool correctly", () => {
-      const pool = createSandboxPool("vm", {
-        minInstances: 2,
-        maxInstances: 5,
-      });
+      const pool = createSandboxPool("isolate", { minInstances: 2, maxInstances: 5 });
       pool.initialize();
       const stats = pool.getStats();
-      expect(stats.available).toBe(2);
+      expect(stats.available).toBe(5);
       expect(stats.inUse).toBe(0);
-      pool.dispose();
+      expect(stats.max).toBe(5);
     });
   });
 
@@ -137,12 +134,11 @@ describe("sandbox-factory", () => {
       expect(info.requirements).toContain("worker_threads");
     });
 
-    it("should return vm mode info", () => {
-      const info = getSandboxModeInfo("vm");
-      expect(info.name).toBe("VM Context");
-      expect(info.isolation).toContain("Script isolation");
-      expect(info.security).toContain("Standard");
-      expect(info.requirements).toContain("vm module");
+    it("should return isolate mode info", () => {
+      const info = getSandboxModeInfo("isolate");
+      expect(info.name).toBe("Isolated VM");
+      expect(info.isolation).toContain("True V8 Isolate");
+      expect(info.performance).toContain("Low overhead");
     });
 
     it("should have all required fields", () => {

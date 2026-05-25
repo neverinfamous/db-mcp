@@ -62,7 +62,7 @@
         "MCP_HOST": "0.0.0.0",
         "LOG_LEVEL": "info",
         "METADATA_CACHE_TTL_MS": "5000",
-        "CODEMODE_ISOLATION": "worker",
+        "CODEMODE_ISOLATION": "isolate",
         "CODE_MODE_MAX_RESULT_SIZE": "",
         "MCP_RATE_LIMIT_MAX": "100",
         "SQLITE_DATABASE": "",

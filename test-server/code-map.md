@@ -117,7 +117,7 @@ src/
 │   ├── sandbox-factory.ts          # Sandbox creation factory
 │   ├── auto-return.ts              # Last-expression auto-return transform (IIFE helper)
 │   ├── worker-sandbox.ts           # Worker thread sandbox (MessagePort RPC bridge)
-│   ├── worker-script.ts            # Worker thread entry point (vm + V8 codeGeneration restrictions)
+│   ├── worker-script.ts            # Worker thread entry point (isolated-vm restrictions)
 │   ├── api.ts                      # sqlite.* API bridge (exposes tools to sandbox)
 │   ├── api-constants.ts            # API bridge constants and JSON-RPC codes
 │   ├── security.ts                 # Code validation (blocked patterns, injection prevention)

@@ -7,7 +7,6 @@
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
-  getClientIp,
   matchesCorsOrigin,
   setupSecurityHeaders,
   setupCors,
@@ -67,44 +66,6 @@ function createMockRes() {
   };
 }
 
-// =============================================================================
-// getClientIp
-// =============================================================================
-
-describe("getClientIp", () => {
-  it("should return req.ip when trustProxy is false", () => {
-    const req = createMockReq({ ip: "10.0.0.1" });
-    expect(getClientIp(req, false)).toBe("10.0.0.1");
-  });
-
-  it("should return X-Forwarded-For first IP when trustProxy is true", () => {
-    const req = createMockReq({
-      headers: { "x-forwarded-for": "203.0.113.50, 70.41.3.18" },
-    });
-    expect(getClientIp(req, true)).toBe("70.41.3.18");
-  });
-
-  it("should fall back to req.ip when X-Forwarded-For is missing", () => {
-    const req = createMockReq({ ip: "10.0.0.2" });
-    expect(getClientIp(req, true)).toBe("10.0.0.2");
-  });
-
-  it("should fall back to remoteAddress when ip is null", () => {
-    const req = createMockReq({
-      ip: undefined,
-      socket: { remoteAddress: "192.168.1.1" },
-    });
-    expect(getClientIp(req, false)).toBe("192.168.1.1");
-  });
-
-  it("should return 'unknown' when no IP is available", () => {
-    const req = createMockReq({
-      ip: undefined,
-      socket: { remoteAddress: undefined },
-    });
-    expect(getClientIp(req, false)).toBe("unknown");
-  });
-});
 
 // =============================================================================
 // matchesCorsOrigin

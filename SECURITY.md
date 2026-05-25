@@ -60,32 +60,28 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 
 ## 🧪 **Code Mode Sandbox Security**
 
-Code Mode executes user-provided JavaScript inside a **`worker_threads` V8 isolate** with a secondary `vm.createContext()` boundary. Each worker thread runs in its own V8 instance with independent heap and resource limits (`maxOldGenerationSizeMb`), providing process-level isolation. The `vm` context layer provides namespace isolation with V8-enforced code generation restrictions:
+Code Mode executes user-provided JavaScript inside a **process-level `isolated-vm` V8 isolate**, providing strict memory separation and secure C++ execution boundaries. The previous insecure `node:vm` architecture has been entirely replaced to mitigate prototype pollution and execution escapes.
 
 ### **Sandbox Restrictions**
 
-- ✅ **V8 code generation restrictions** — `codeGeneration: { strings: false, wasm: false }` disables `eval()` and `Function()` construction from strings **at the V8 engine level**, not just via regex patterns. This closes the entire class of string-based code generation bypass attacks
-- ✅ **Blocked globals** — `require`, `process`, `global`, `globalThis`, `module`, `exports`, `setTimeout`, `setInterval`, `setImmediate`, `Proxy` set to `undefined`
-- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, `fetch()`, `WebSocket`, and filesystem/network/child_process references
-- ✅ **Frozen prototypes** — all built-in prototypes (`Object`, `Function`, `Error`, `Array`, `Promise`, typed arrays, etc.) are frozen inside the `vm` context to prevent dynamic constructor chain escapes via string concatenation (e.g., `'con'+'structor'`)
-- ✅ **RPC allowlist validation** — the host-side RPC handler validates every incoming method call against the serialized bindings allowlist before dispatching, preventing a compromised worker from invoking arbitrary host methods
-- ✅ **Readonly Proxy traps** — group API objects are wrapped in Proxy traps that throw structured errors when stripped (readonly) methods are called, halting execution instead of silently returning undefined
-- ✅ **Execution timeout** — 30s hard limit (configurable)
-- ✅ **Input limits** — 50KB code input, 10MB result output
-- ✅ **Rate limiting** — 60 executions per minute per client (internal map capped at 10,000 active clients to prevent memory exhaustion DoS)
-- ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted)
-- ✅ **Forensic traceability** — each `vm.Script` execution uses a unique `randomUUID()` filename for distinguishable stack traces. Stack traces are strictly stripped from worker error responses in production (`NODE_ENV=production`) to prevent internal path and dependency leakage
-- ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled
-- ✅ **Production vm gate** — `CODEMODE_ISOLATION=vm` requires explicit `CODEMODE_ISOLATION_INSECURE=1` opt-in, and will crash the application if loaded in a `NODE_ENV=production` environment. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use.
+- ✅ **Strict Memory Separation** — `isolated-vm` enforces true, native V8 isolates. The executing code has absolutely no memory access to the host Node.js environment, `worker_threads`, or shared `vm` namespaces.
+- ✅ **Blocked globals** — `require`, `process`, `global`, `globalThis`, `module`, `exports`, `setTimeout`, `setInterval`, `setImmediate`, `Proxy` are strictly undefined.
+- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, `fetch()`, `WebSocket`, and filesystem/network/child_process references.
+- ✅ **RPC boundary enforcement** — Host-side API capabilities (e.g. `sqlite.*` tools) are explicitly bridged into the isolate via explicit C++ `Reference` instances. The isolate cannot bridge out to host functions arbitrarily.
+- ✅ **Readonly Proxy traps** — group API objects are wrapped in Proxy traps that throw structured errors when stripped (readonly) methods are called, halting execution instead of silently returning undefined.
+- ✅ **Execution timeout** — 30s hard limit (configurable), enforced strictly by the isolate engine.
+- ✅ **Input limits** — 50KB code input, 10MB result output.
+- ✅ **Rate limiting** — 10 executions per minute per client for Code Mode (internal map capped at 10,000 active clients to prevent memory exhaustion DoS).
+- ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted).
+- ✅ **Forensic traceability** — each isolate script execution uses a unique `randomUUID()` filename for distinguishable stack traces. Stack traces are strictly stripped from worker error responses in production (`NODE_ENV=production`) to prevent internal path and dependency leakage.
+- ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled.
+- ✅ **Worker Sandbox Fallback** — When `isolated-vm` is unavailable (e.g., missing native build tools on Windows), Code Mode gracefully degrades to a `worker_threads` sandbox with strict V8 code generation restrictions, blocked globals, and frozen prototypes to maintain a defensive posture.
 
-> **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `worker_threads` provides a true V8 isolate boundary (separate heap, separate V8 instance), the `vm.createContext()` layer within it is namespace isolation, not a security sandbox. Defense-in-depth measures include V8-enforced `codeGeneration` restrictions (disabling `eval`/`Function` at the engine level), frozen built-in prototypes, 18 static regex rules, RPC allowlist validation, and blocked globals. Together these provide robust protection within the trusted AI agent threat model.
+> **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `isolated-vm` provides robust security against context escapes, this server still runs the isolation within the main Node.js process space.
 >
-> **⚠️ Architectural Limitation:** If a `node:vm` context escape were to occur (e.g., via a zero-day V8 CVE), the attacker would land in the outer `worker_threads` realm which runs with the **same UID and process trust as the main server**. This means a successful sandbox escape results in full server compromise — access to the database, filesystem, and network. No known bypass exists given the current 4-layer defense (V8 `codeGeneration: false` + frozen prototypes + blocked patterns + RPC allowlist), but this is an inherent limitation of in-process isolation.
->
-> **For untrusted input deployments:** Use process-level sandboxing:
-> 1. Run the container with `--cap-drop=ALL --security-opt=no-new-privileges` to limit post-compromise capabilities
-> 2. Consider replacing `vm` with `isolated-vm` for additional V8 isolate-level separation within the worker
-> 3. Apply Docker resource limits (`--memory`, `--cpus`) and read-only filesystem (`--read-only`) where possible
+> **For untrusted input deployments:** Use infrastructure-level sandboxing:
+> 1. Run the container with `--cap-drop=ALL --security-opt=no-new-privileges` to limit post-compromise capabilities.
+> 2. Apply Docker resource limits (`--memory`, `--cpus`) and read-only filesystem (`--read-only`) where possible.
 
 ## 🌐 **HTTP Transport Security**
 

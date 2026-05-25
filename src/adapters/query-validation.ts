@@ -47,14 +47,18 @@ import type { SQLiteStatementList, SQLiteNode } from "sqlite-parser";
  * @throws ValidationError if query violates safety rules
  */
 export function validateQuery(sql: string, isReadOnly: boolean): void {
+  if (!sql || sql.trim() === "") {
+    return; // Empty queries are validated elsewhere
+  }
+
   let ast: SQLiteStatementList;
   try {
     ast = parser(sql);
-  } catch (error) {
-    throw new ValidationError(
-      `Failed to parse SQL: ${error instanceof Error ? error.message : String(error)}`,
-      "DB_PARSE_ERROR",
-    );
+  } catch {
+    // sqlite-parser lacks support for modern SQLite features like WINDOW clauses and some CTEs.
+    // When AST parsing fails, fallback to strict structural validation.
+    fallbackValidation(sql, isReadOnly);
+    return;
   }
 
   if (ast?.type !== "statement" || ast?.variant !== "list" || !Array.isArray(ast?.statement)) {
@@ -86,8 +90,13 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
         "DB_READ_ONLY_VIOLATION",
       );
     }
-    // Only SELECT and EXPLAIN should generally be allowed in read-only mode
-    if (rootStmt.variant !== "select" && rootStmt.variant !== "explain") {
+    // Only SELECT, EXPLAIN, PRAGMA, and COMPOUND (UNION, INTERSECT) should generally be allowed in read-only mode
+    if (
+      rootStmt.variant !== "select" &&
+      rootStmt.variant !== "explain" &&
+      rootStmt.variant !== "pragma" &&
+      rootStmt.variant !== "compound"
+    ) {
       throw new ValidationError(
         `Read-only mode: ${rootStmt.variant.toUpperCase()} statements are not allowed`,
         "DB_READ_ONLY_VIOLATION",
@@ -138,5 +147,101 @@ function walkAst(node: unknown, visitor: (node: SQLiteNode) => void): void {
     } else if (typeof value === "object") {
       walkAst(value, visitor);
     }
+  }
+}
+
+/**
+ * Strict structural fallback validation for when sqlite-parser fails.
+ * Strips comments and strings to reliably detect stacked queries and disallowed keywords.
+ */
+function fallbackValidation(sql: string, isReadOnly: boolean): void {
+  let stripped = "";
+  let inString = false;
+  let stringChar = "";
+  let inBlockComment = false;
+  let inLineComment = false;
+
+  for (let i = 0; i < sql.length; i++) {
+    const c = sql[i];
+    const next = sql[i + 1] || "";
+
+    if (inBlockComment) {
+      if (c === "*" && next === "/") {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+    if (inLineComment) {
+      if (c === "\n") {
+        inLineComment = false;
+      }
+      continue;
+    }
+    if (inString) {
+      if (c === stringChar) {
+        if (next === stringChar) {
+          i++; // escape
+        } else {
+          inString = false;
+        }
+      }
+      continue;
+    }
+
+    if (c === "'" || c === '"' || c === "`" || c === "[") {
+      inString = true;
+      stringChar = c === "[" ? "]" : c;
+      continue;
+    }
+
+    if (c === "-" && next === "-") {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+
+    stripped += c;
+  }
+
+  const statements = stripped.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
+  if (statements.length > 1) {
+    throw new ValidationError("Multiple stacked statements are not allowed.", "DB_DANGEROUS_PATTERN");
+  }
+
+  const rootStmt = statements[0] || "";
+
+  if (isReadOnly) {
+    const isSafeRead = /^\s*(?:WITH\s+[\s\S]+?)?(?:SELECT|EXPLAIN|PRAGMA)\b/i.test(rootStmt);
+    const hasWrite = /\b(INSERT|UPDATE|DELETE|REPLACE|DROP|CREATE|ALTER|VACUUM|ANALYZE|TRUNCATE)\b/i.test(rootStmt);
+    
+    if (!isSafeRead || hasWrite) {
+      throw new ValidationError(
+        `Read-only mode violation: statement contains disallowed keywords`,
+        "DB_READ_ONLY_VIOLATION",
+      );
+    }
+  } else {
+    const ddlPattern = /^\s*(?:WITH\s+[\s\S]+?)?(CREATE|DROP|ALTER|VACUUM|ANALYZE)\b/i;
+    if (ddlPattern.test(rootStmt)) {
+      const authCtx = getAuthContext();
+      if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin")) {
+        throw new ValidationError(
+          "DDL operations (CREATE, DROP, ALTER) require 'admin' scope",
+          "DB_ADMIN_REQUIRED",
+        );
+      }
+    }
+  }
+
+  const unsafePattern = /\b(LOAD_EXTENSION|WRITEFILE|READFILE)\b/i;
+  const match = unsafePattern.exec(rootStmt);
+  if (match) {
+    throw new ValidationError(`Unsafe function call detected: ${match[0].toUpperCase()}`, "DB_DANGEROUS_PATTERN");
   }
 }

@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-83.67%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-83.51%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -274,7 +274,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `OAUTH_CLOCK_TOLERANCE` | `60`      | Clock tolerance in seconds (`--oauth-clock-tolerance`)        |
 | `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`            |
 | `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL)              |
-| `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced) or `vm`                |
+| `CODEMODE_ISOLATION`    | `isolate` | Code Mode sandbox: `isolate` (isolated-vm native) or `worker` |
 | `CODE_MODE_MAX_RESULT_SIZE` | `102400` | Max Code Mode result payload in bytes (default 100KB, cap 50MB) |
 | `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                   |
 | `CSV_EXTENSION_PATH`    | —         | Path to CSV extension binary (native only)                    |
