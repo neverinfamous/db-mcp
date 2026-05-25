@@ -204,16 +204,21 @@ export function createPragmaSettingsTool(
         "defensive",
         "cell_size_check",
         "temp_store_directory",
+        "journal_mode",
+        "synchronous",
+        "page_size",
+        "temp_store",
+        "wal_autocheckpoint",
       ]);
 
-      if (BLOCKED_PRAGMAS.has(input.pragma.toLowerCase())) {
+      if (input.value !== undefined && BLOCKED_PRAGMAS.has(input.pragma.toLowerCase())) {
         return {
           success: false,
-          error: `PRAGMA '${input.pragma}' is blocked for security`,
+          error: `Mutating PRAGMA '${input.pragma}' is blocked for security`,
           code: "SECURITY_ERROR"
         };
       }
-
+      
       try {
         if (input.value !== undefined) {
           // Get old value first

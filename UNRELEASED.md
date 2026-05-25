@@ -62,6 +62,14 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[Critical]** Authorization: Fixed PRAGMA bypass vulnerability in `sqlite_read_query` by extending global AST pre-parsing to explicitly reject state-mutating PRAGMAs.
+- **[High]** Input Validation: Escaped identifiers and validated check constraints within `sqlite_create_table` to prevent SQL injection in foreign keys and checks.
+- **[High]** DoS: Replaced global rate-limit eviction with partial oldest-10% eviction to prevent spoofing-based rate limit starvation.
+- **[High]** Scope Enforcement: Re-mapped `sqlite_drop_table` to the `ADMIN_TOOLS` array dynamically to prevent execution by `write`-scoped tokens.
+- **[High]** Credential Echo: Expanded `SENSITIVE_KEY_PATTERN` in Code Mode and added comprehensive inline `SENSITIVE_VALUE_PATTERN` string redaction to the audit log interceptor to protect modern API keys.
+- **[High]** DoS: Mitigated ReDoS in `sqlite_regex_match` and `sqlite_regex_extract` by implementing a strict 10,000-character truncation threshold before regex execution.
+- **[High]** DoS: Implemented a hard 100-call quota for Code Mode RPC bridges per execution to prevent infinite loop host starvation.
+- **[Medium]** CI/CD: Broadened secrets scanning pull-request write permissions to support automated leak annotations.
 - **[H-52]** Code Mode Sandbox: Removed insecure `node:vm` fallback logic and migrated to `isolated-vm` for true V8 isolate memory and execution separation, preventing prototype pollution escapes.
 - **[M-61]** HTTP Transport: Replaced `trustProxy` boolean with `trustedProxyIps` configuration to mitigate IP spoofing attacks.
 - **[M-62]** Query Validation: Implemented true AST-based SQL validation using `sqlite-parser` to replace weak regex-based DDL validation, preventing comment-hiding and whitespace bypasses.

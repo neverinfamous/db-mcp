@@ -34,6 +34,7 @@ import {
   DescribeTableOutputSchema,
   DropTableOutputSchema,
 } from "../../schemas/core.js";
+import { validateQuery } from "../../../query-validation.js";
 
 // =============================================================================
 // SpatiaLite System Filters
@@ -214,8 +215,13 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       
       if (input.foreignKeys && input.foreignKeys.length > 0) {
         for (const fk of input.foreignKeys) {
-          let fkStr = `FOREIGN KEY ("${fk.column}") REFERENCES "${fk.targetTable}"`;
-          if (fk.targetColumn) fkStr += `("${fk.targetColumn}")`;
+          const safeColumn = fk.column.replace(/"/g, '""');
+          const safeTargetTable = fk.targetTable.replace(/"/g, '""');
+          let fkStr = `FOREIGN KEY ("${safeColumn}") REFERENCES "${safeTargetTable}"`;
+          if (fk.targetColumn) {
+            const safeTargetColumn = fk.targetColumn.replace(/"/g, '""');
+            fkStr += `("${safeTargetColumn}")`;
+          }
           if (fk.onDelete) fkStr += ` ON DELETE ${fk.onDelete}`;
           if (fk.onUpdate) fkStr += ` ON UPDATE ${fk.onUpdate}`;
           tableConstraints.push(fkStr);
@@ -224,6 +230,14 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (input.checkConstraints && input.checkConstraints.length > 0) {
         for (const chk of input.checkConstraints) {
+          try {
+            validateQuery(`SELECT 1 WHERE ${chk}`, true);
+          } catch (error) {
+             return {
+              ...formatHandlerError(new ValidationError(`Invalid CHECK constraint '${chk}': ${error instanceof Error ? error.message : String(error)}`)),
+              sql: "",
+            };
+          }
           tableConstraints.push(`CHECK (${chk})`);
         }
       }

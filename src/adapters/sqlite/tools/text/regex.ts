@@ -64,8 +64,8 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
             const rawValue = row["value"];
             const value =
               typeof rawValue === "string"
-                ? rawValue
-                : JSON.stringify(rawValue ?? "");
+                ? rawValue.substring(0, 10000)
+                : JSON.stringify(rawValue ?? "").substring(0, 10000);
             const match = regex.exec(value);
             // Safely coerce rowid to number, defaulting to row index or 0
             const rawRowid = row["id"];
@@ -131,8 +131,8 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
             const rawValue = row["value"];
             const value =
               typeof rawValue === "string"
-                ? rawValue
-                : JSON.stringify(rawValue ?? "");
+                ? rawValue.substring(0, 10000)
+                : JSON.stringify(rawValue ?? "").substring(0, 10000);
             return regex.test(value);
           })
           .map((row) => {

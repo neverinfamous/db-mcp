@@ -22,6 +22,22 @@ const UNSAFE_FUNCTIONS = new Set([
 ]);
 
 /**
+ * Security-sensitive PRAGMAs that must be blocked globally.
+ */
+const BLOCKED_PRAGMAS = new Set([
+  "writable_schema",
+  "trusted_schema",
+  "defensive",
+  "cell_size_check",
+  "temp_store_directory",
+  "journal_mode",
+  "synchronous",
+  "page_size",
+  "temp_store",
+  "wal_autocheckpoint",
+]);
+
+/**
  * DDL operations that require admin scope
  */
 const DDL_VARIANTS = new Set(["create", "drop", "alter", "vacuum", "analyze"]);
@@ -49,6 +65,14 @@ import type { SQLiteStatementList, SQLiteNode } from "sqlite-parser";
 export function validateQuery(sql: string, isReadOnly: boolean): void {
   if (!sql || sql.trim() === "") {
     return; // Empty queries are validated elsewhere
+  }
+
+  // Pre-parse security check for blocked pragmas that mutate state
+  const pragmaMatches = sql.matchAll(/\bPRAGMA\s+(?:[a-zA-Z_]+\.)?([a-zA-Z_]+)\s*(?:=|\()/gi);
+  for (const match of pragmaMatches) {
+    if (match[1] && BLOCKED_PRAGMAS.has(match[1].toLowerCase())) {
+      throw new ValidationError(`Mutating PRAGMA '${match[1]}' is blocked for security`, "DB_DANGEROUS_PATTERN");
+    }
   }
 
   let ast: SQLiteStatementList;

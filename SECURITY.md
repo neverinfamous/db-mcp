@@ -262,6 +262,8 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] WHERE clause Unicode NFC normalization + full-width→ASCII mapping (homoglyph bypass prevention)
 - [x] Input validation via Zod schemas
 - [x] Strict DDL validation with boundary regexes
+- [x] Global AST pre-parsing rejection for mutating PRAGMAs
+- [x] Strict escaping for DDL identifiers (foreign keys, check constraints)
 - [x] JWT claims sanitization (prototype pollution prevention)
 - [x] Code Mode sandbox isolation (worker_threads V8 isolate + vm.createContext)
 - [x] Code Mode V8 codeGeneration restrictions (eval/Function disabled at engine level)
@@ -271,7 +273,10 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Code Mode RPC allowlist validation (host-side method authorization)
 - [x] Code Mode readonly Proxy traps (structured errors for stripped methods)
 - [x] Code Mode execution timeout (30s hard limit)
+- [x] Code Mode RPC bridge quota enforcement (100 calls/execution)
+- [x] Code Mode Regex input truncation (10,000 chars) for ReDoS mitigation
 - [x] Code Mode rate limiting (60 executions/min)
+- [x] Partial eviction algorithm for rate-limit map to prevent starvation DoS
 - [x] Code Mode streaming egress boundary (abort serialization mid-flight on oversized results)
 - [x] Code Mode `maxYoungGenerationSizeMb` resource limit (caps V8 nursery allocation bursts)
 - [x] Code Mode audit logging
@@ -300,6 +305,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Session ownership binding (session ID → auth subject verification)
 - [x] SSE payload redaction (no raw message content in logs)
 - [x] Code preview credential redaction in audit logs
+- [x] Inline string value credential redaction in audit logs
 - [x] WWW-Authenticate header sanitization (quote stripping, truncation)
 - [x] Generic token validation error responses (no internal URL leakage)
 - [x] Code Mode vm sandbox gated to non-production environments

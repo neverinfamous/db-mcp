@@ -36,6 +36,12 @@ const SENSITIVE_KEY_PATTERN =
   /^(password|passwd|token|secret|authorization|api_?key|credential|private_?key|access_?token|refresh_?token)$/i;
 
 /**
+ * Values that match this pattern are redacted from strings (like SQL queries).
+ */
+const SENSITIVE_VALUE_PATTERN =
+  /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA|sk-ant-api[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_]+|rk_live_[a-zA-Z0-9_]+|SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+|npm_[a-zA-Z0-9]{30,}|dpl_[a-zA-Z0-9]{30,}|hvs\.[a-zA-Z0-9_-]+)[^\s'",;)}\]]{4,}/gi;
+
+/**
  * Recursively redact sensitive keys from args before logging.
  * Returns a new object with sensitive values replaced by '[REDACTED]'.
  * Handles nested objects and arrays up to a configurable depth limit.
@@ -53,6 +59,10 @@ function redactSensitiveKeys(
     return value.map((item) => redactSensitiveKeys(item, depth + 1));
   }
 
+  if (typeof value === "string") {
+    return value.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
+  }
+
   if (typeof value === "object") {
     const result: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
@@ -60,6 +70,8 @@ function redactSensitiveKeys(
         result[key] = "[REDACTED]";
       } else if (typeof val === "object" && val !== null) {
         result[key] = redactSensitiveKeys(val, depth + 1);
+      } else if (typeof val === "string") {
+        result[key] = val.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
       } else {
         result[key] = val;
       }

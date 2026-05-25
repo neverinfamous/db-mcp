@@ -91,6 +91,9 @@ export class CodeModeSandbox {
     `;
     context.evalSync(setupScript);
 
+    let rpcCount = 0;
+    const MAX_RPC_CALLS = 100;
+
     // Inject apiBindings
     const refCleanup: ivm.Reference<unknown>[] = [];
     for (const [groupName, groupValue] of Object.entries(apiBindings)) {
@@ -99,6 +102,9 @@ export class CodeModeSandbox {
         for (const [methodName, methodFn] of Object.entries(groupValue)) {
           if (typeof methodFn === "function") {
             const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
+              if (++rpcCount > MAX_RPC_CALLS) {
+                throw new Error("QuotaExceededError: Maximum number of host tool calls (100) exceeded within a single execution.");
+              }
               try {
                 return await (methodFn as (...args: unknown[]) => Promise<unknown>)(...args);
               } catch (e) {
@@ -117,6 +123,9 @@ export class CodeModeSandbox {
         }
       } else if (typeof groupValue === "function") {
         const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
+          if (++rpcCount > MAX_RPC_CALLS) {
+            throw new Error("QuotaExceededError: Maximum number of host tool calls (100) exceeded within a single execution.");
+          }
           try {
             return await (groupValue as (...args: unknown[]) => Promise<unknown>)(...args);
           } catch (e) {
