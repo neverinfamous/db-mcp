@@ -78,7 +78,7 @@ describe("Stats Tools", () => {
       const result = (await tools.get("sqlite_stats_basic")?.({
         table: "sales",
         column: "amount",
-        whereClause: "category = 'Electronics'",
+        conditions: [{ column: "category", operator: "=", value: "Electronics" }],
       })) as { stats: { count: number; sum: number } };
 
       expect(result.stats.count).toBe(3);
@@ -108,7 +108,7 @@ describe("Stats Tools", () => {
     it("should apply where clause", async () => {
       const result = (await tools.get("sqlite_stats_count")?.({
         table: "sales",
-        whereClause: "category = 'Electronics'",
+        conditions: [{ column: "category", operator: "=", value: "Electronics" }],
       })) as { count: number };
 
       expect(result.count).toBe(3);

@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   VALID_TEXT_CASE_MODES,
   VALID_TRIM_MODES,
@@ -17,7 +18,6 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
 import {
-  validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
 import {
@@ -49,8 +49,10 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Text Concat"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = TextConcatSchema.parse(params);
+      
         // Validate and quote identifiers, then verify columns exist
         const table = sanitizeIdentifier(input.table);
         const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
@@ -64,20 +66,23 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
           .join(` || '${sep}' || `);
 
         let sql = `SELECT ${concatExpr} as concatenated FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           values: result.rows?.map((r) => r["concatenated"]),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -99,6 +104,7 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextReplaceSchema.parse(params);
+      const queryParams: unknown[] = [];
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -107,16 +113,21 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
         const search = input.searchPattern.replace(/'/g, "''");
         const replace = input.replaceWith.replace(/'/g, "''");
 
-        validateWhereClause(input.whereClause);
-        const sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}') WHERE ${input.whereClause}`;
+        // validateWhereClause() removed
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        let sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}')`;
+        if (whereSql) {
+          sql += ` WHERE ${whereSql}`;
+        }
+        queryParams.push(...whereParams);
 
-        const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         return {
           success: true,
           rowsAffected: result.rowsAffected,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -138,6 +149,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextTrimSchema.parse(params);
+      const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -169,13 +181,16 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT rowid as __rowid, ${trimFunc}(${column}) as trimmed FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const results = (result.rows ?? []).map((row) => {
           const rawRowid = row["__rowid"];
@@ -193,7 +208,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: results.length,
           results,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -215,6 +230,7 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextCaseSchema.parse(params);
+      const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -236,13 +252,16 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
         const caseFunc = input.mode === "upper" ? "upper" : "lower";
 
         let sql = `SELECT rowid as __rowid, ${caseFunc}(${column}) as transformed FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const results = (result.rows ?? []).map((row) => {
           const rawRowid = row["__rowid"];
@@ -260,7 +279,7 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: results.length,
           results,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -284,6 +303,7 @@ export function createTextSubstringTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextSubstringSchema.parse(params);
+      const queryParams: unknown[] = [];
 
         // Handler-side validation: start is required (schema uses .optional() to prevent raw MCP errors)
         if (input.start === undefined || input.start === null) {
@@ -303,13 +323,16 @@ export function createTextSubstringTool(
             : `substr(${column}, ${input.start})`;
 
         let sql = `SELECT rowid as __rowid, ${substrExpr} as substring FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const results = (result.rows ?? []).map((row) => {
           const rawRowid = row["__rowid"];
@@ -327,7 +350,7 @@ export function createTextSubstringTool(
           rowCount: results.length,
           results,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

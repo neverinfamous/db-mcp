@@ -6,7 +6,9 @@ on:
       DOCKER_USERNAME:
         required: true
       DOCKER_PASSWORD:
-        required: true
+          required: true
+        DOCKERHUB_DESC_TOKEN:
+          required: true
       NPM_TOKEN:
         required: true
 
@@ -34,7 +36,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
       - name: Verify Dockerfile integrity
         run: git diff --exit-code Dockerfile || (echo "Uncommitted changes to Dockerfile detected" && exit 1)
@@ -69,7 +71,7 @@ jobs:
           exit-code: true
 
       - name: Trivy security scan
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (post-supply-chain-fix)
+        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
         with:
           image-ref: local-scan:latest
           format: table
@@ -80,7 +82,7 @@ jobs:
 
       - name: Trivy SARIF upload
         if: always()
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (post-supply-chain-fix)
+        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
         with:
           image-ref: local-scan:latest
           format: sarif
@@ -91,7 +93,7 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
         with:
           sarif_file: trivy-results.sarif
           category: trivy-docker-scan
@@ -125,7 +127,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
       - name: Verify Dockerfile integrity
         run: git diff --exit-code Dockerfile || (echo "Uncommitted changes to Dockerfile detected" && exit 1)
@@ -150,7 +152,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
@@ -224,7 +226,7 @@ jobs:
           merge-multiple: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
       - name: Log in to Docker Hub
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
@@ -245,7 +247,7 @@ jobs:
 
       - name: Extract metadata for manifest
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
@@ -272,7 +274,7 @@ jobs:
         timeout-minutes: 5
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_DESC_TOKEN }}
           repository: ${{ env.IMAGE_NAME }}
           readme-filepath: ./DOCKER_README.md
           short-description: "SQLite MCP — 167 Tools in 1 Code Mode, HTTP/SSE, OAuth 2.1, Tool Filtering & Audit/Token Logging."

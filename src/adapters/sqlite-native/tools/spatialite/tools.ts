@@ -59,7 +59,7 @@ export function createLoadSpatialiteTool(
     handler: (_params: unknown, _context: RequestContext) => {
       try {
         const input = LoadSpatialiteSchema.parse(_params);
-
+      
         if (!input.forceReload && isSpatialiteLoaded(adapter)) {
           return Promise.resolve({
             success: true,
@@ -86,7 +86,7 @@ export function createLoadSpatialiteTool(
           recoverable: false,
           searchedPaths: SPATIALITE_PATHS,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -111,6 +111,7 @@ export function createSpatialTableTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateSpatialTableSchema.parse(params);
+//       let queryParams: unknown[] = [];
         ensureSpatialite(adapter);
 
         // Use canonical identifier validation (CWE-89 remediation)
@@ -206,7 +207,7 @@ export function createSpatialTableTool(
           geometryType: input.geometryType,
           srid: input.srid,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -231,6 +232,7 @@ export function createSpatialQueryTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialQuerySchema.parse(params);
+
         ensureSpatialite(adapter);
 
         const result = await adapter.executeReadQuery(input.query);
@@ -240,7 +242,7 @@ export function createSpatialQueryTool(
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes("does not return data")) {
           return {
@@ -276,6 +278,7 @@ export function createSpatialIndexTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialIndexSchema.parse(params);
+
         ensureSpatialite(adapter);
 
         // Validate names
@@ -460,7 +463,7 @@ export function createSpatialIndexTool(
               recoverable: false,
             };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

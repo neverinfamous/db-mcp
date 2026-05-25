@@ -90,7 +90,7 @@ describe("JSON Query Tools", () => {
         table: "documents",
         column: "data",
         paths: ["$.user.name"],
-        whereClause: "json_extract(data, '$.active') = true",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowCount: number;
@@ -146,7 +146,7 @@ describe("JSON Query Tools", () => {
         table: "documents",
         column: "data",
         paths: ["$.items[0].n", "$[0]"],
-        whereClause: "id = 3",
+        conditions: [{ column: "id", operator: "=", value: 3 }],
       })) as {
         success: boolean;
         rowCount: number;

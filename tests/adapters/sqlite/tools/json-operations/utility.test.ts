@@ -58,7 +58,7 @@ describe("JSON Operations Tools - Utility", () => {
         table: "json_docs",
         column: "data",
         path: "$.tags",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         lengths: number[];
@@ -73,7 +73,7 @@ describe("JSON Operations Tools - Utility", () => {
         table: "json_docs",
         column: "data",
         path: "$.tags",
-        whereClause: "id = 3",
+        conditions: [{ column: "id", operator: "=", value: 3 }],
       })) as {
         success: boolean;
         lengths: number[];
@@ -89,7 +89,7 @@ describe("JSON Operations Tools - Utility", () => {
       const result = (await tools.get("sqlite_json_keys")?.({
         table: "json_docs",
         column: "data",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         keys: string[];
@@ -121,7 +121,7 @@ describe("JSON Operations Tools - Utility", () => {
         table: "json_docs",
         column: "data",
         path: "$.tags",
-        whereClause: "id = 2",
+        conditions: [{ column: "id", operator: "=", value: 2 }],
       })) as {
         success: boolean;
         rowCount: number;
@@ -138,7 +138,7 @@ describe("JSON Operations Tools - Utility", () => {
         table: "json_docs",
         column: "data",
         path: "$.tags",
-        whereClause: "id = 2",
+        conditions: [{ column: "id", operator: "=", value: 2 }],
         limit: 2,
       })) as {
         success: boolean;
@@ -194,7 +194,7 @@ describe("JSON Operations Tools - Utility", () => {
       const result = (await tools.get("sqlite_jsonb_convert")?.({
         table: "json_docs",
         column: "data",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
       };

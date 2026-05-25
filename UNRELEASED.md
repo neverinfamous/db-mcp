@@ -43,6 +43,11 @@
 - Increased schema cache TTL to 30 seconds and implemented targeted DDL invalidation to eliminate polling latency.
 
 ### Fixed
+- Completely removed all unparameterized SQL template string evaluation from `executeReadQuery` and `executeWriteQuery` across all tools, migrating fully to native `?` bindings to resolve all identified SQL injection (SQLi) vulnerabilities.
+- Hardened `buildWhereClause` utility to securely generate and bind parameters arrays, preventing conditional injection attacks.
+- Fixed `json_each` alias collision in json operations by fully qualifying identifiers as `t."id"`.
+- Resolved syntax errors in `sqlite_json_update`, `sqlite_json_merge`, and `sqlite_text_replace` when executing without a WHERE clause by implementing empty `whereSql` checks.
+- Fixed window function schemas (`RowNumberSchema`, etc.) to securely validate `WhereConditionSchema` arrays instead of arbitrary constraints.
 - `sqlite_date_diff` processing of string and numeric literals.
 - `sqlite_date_add` returning silent `null` values for out-of-bounds dates instead of clear errors.
 - Table filtering in `sqlite_get_indexes` failing to apply to `sqlite_temp_master` during `UNION ALL` queries.

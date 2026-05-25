@@ -212,7 +212,7 @@ describe("createIndexStatsTool", () => {
     const result = (await tool.handler({ table: "users" }, ctx)) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("tbl_name = ?"),
+      expect.stringContaining('"tbl_name" = ?'),
       ["users"],
     );
   });

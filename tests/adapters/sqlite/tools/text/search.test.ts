@@ -130,7 +130,7 @@ describe("Text Search Tools", () => {
         table: "texts",
         column: "description",
         mode: "nfc",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowCount: number;
@@ -152,7 +152,7 @@ describe("Text Search Tools", () => {
         table: "texts",
         column: "name",
         mode: "strip_accents",
-        whereClause: "id = 6",
+        conditions: [{ column: "id", operator: "=", value: 6 }],
       })) as {
         success: boolean;
         rows: { normalized: string }[];

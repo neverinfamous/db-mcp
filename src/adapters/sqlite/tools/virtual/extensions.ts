@@ -36,9 +36,10 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("Create R-Tree Table"),
     handler: async (params: unknown, _context: RequestContext) => {
+
       try {
         const input = CreateRtreeTableSchema.parse(params);
-
+      
         // Validate table name
         sanitizeIdentifier(input.tableName);
 
@@ -82,7 +83,7 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
           sql,
           columns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",
@@ -110,6 +111,7 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateSeriesTableSchema.parse(params);
+//       const queryParams: unknown[] = [];
 
         // Validate required fields (schema uses .optional() for SDK compatibility)
         if (input.start === undefined || input.stop === undefined) {
@@ -165,7 +167,7 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
           message: `Created series table '${input.tableName}' with ${rowCount} rows`,
           rowCount,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

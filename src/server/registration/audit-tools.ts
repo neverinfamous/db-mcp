@@ -167,7 +167,7 @@ export function registerAuditBackupTools(
         try {
           const parsed = z.object({ filename: z.string() }).parse(args);
           filename = parsed.filename;
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             content: [
               {
@@ -273,7 +273,7 @@ export function registerAuditBackupTools(
         try {
           const parsed = z.object({ filename: z.string() }).parse(args);
           filename = parsed.filename;
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             content: [
               {
@@ -425,7 +425,7 @@ export function registerAuditBackupTools(
               },
             ],
           };
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             content: [
               {
@@ -480,7 +480,7 @@ export function registerAuditBackupTools(
           const parsed = z.object({ filename: z.string(), dryRun: z.boolean().optional().default(false) }).parse(args);
           filename = parsed.filename;
           dryRun = parsed.dryRun;
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             content: [
               {
@@ -597,7 +597,7 @@ export function registerAuditBackupTools(
               },
             ],
           };
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             content: [
               {

@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   cosineSimilarity,
   euclideanDistance,
@@ -17,7 +18,6 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
-  validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
@@ -41,9 +41,10 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Vector Search"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = VectorSearchSchema.parse(params);
-
+      
         if (input.queryVector.length === 0) {
           return {
             success: false,
@@ -72,12 +73,15 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Always fetch vector column for similarity calculation, but may remove from results
         let sql = `SELECT ${selectCols}, ${vectorColumn} FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         // Calculate similarities in JavaScript
         const queryVector = input.queryVector;
@@ -170,7 +174,7 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -192,6 +196,7 @@ export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorGetSchema.parse(params);
+//       const queryParams: unknown[] = [];
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
@@ -241,7 +246,7 @@ export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
           vector: vectorData,
           metadata,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

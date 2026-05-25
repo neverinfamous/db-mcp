@@ -116,7 +116,7 @@ function formatZodError(error: Error): string | null {
  * Use as the single catch block for all tool handlers:
  *
  * ```typescript
- * handler: async (params) => {
+ * handler: async (params: unknown, _context: RequestContext) => {
  *   try {
  *     const parsed = Schema.parse(params);
  *     // ... domain logic ...

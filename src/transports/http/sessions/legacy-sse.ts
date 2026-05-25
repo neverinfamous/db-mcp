@@ -103,7 +103,7 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
             release();
           }
         });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error starting SSE transport", {
           code: ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
           error: error instanceof Error ? error : undefined,

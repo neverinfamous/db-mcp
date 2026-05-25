@@ -165,8 +165,8 @@ function createGroupApi(
     const methodName = toolNameToMethodName(tool.name, groupName);
 
     api[methodName] = async (...args: unknown[]) => {
-      if (baseContext?.auth?.scopes) {
-        if (!scopesGrantToolAccess(baseContext.auth.scopes, tool.name)) {
+      if (baseContext?.auth !== undefined) {
+        if (!scopesGrantToolAccess(baseContext.auth.scopes ?? [], tool.name)) {
           throw new Error(`Forbidden: Required scope for tool '${tool.name}' not granted.`);
         }
       }

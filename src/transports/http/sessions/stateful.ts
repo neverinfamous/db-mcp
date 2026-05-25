@@ -204,7 +204,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
             req.body as unknown,
           );
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error handling MCP request", {
           code: ERROR_CODES.SERVER.TRANSPORT_ERROR.full,
           error: error instanceof Error ? error : undefined,

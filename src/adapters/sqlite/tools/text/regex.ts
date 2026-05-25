@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { validateColumnExists } from "./helpers.js";
 /**
  * Regex and Split Tools
@@ -12,7 +13,6 @@ import type {
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import {
-  validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
@@ -41,21 +41,26 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Regex Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = RegexExtractSchema.parse(params);
+      
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         // Apply regex in JavaScript
         const regex = new RegExp(input.pattern);
@@ -87,7 +92,7 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: extracts.length,
           matches: extracts,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -110,19 +115,23 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = RegexMatchSchema.parse(params);
+      const queryParams: unknown[] = [];
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         // Apply regex in JavaScript
         const regex = new RegExp(input.pattern);
@@ -152,7 +161,7 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: matches.length,
           matches,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -174,19 +183,23 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextSplitSchema.parse(params);
+      const queryParams: unknown[] = [];
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         // Split in JavaScript - return per-row results for traceability
         const rows = (result.rows ?? []).map((row) => {
@@ -216,7 +229,7 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: rows.length,
           rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

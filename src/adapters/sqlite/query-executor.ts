@@ -152,7 +152,7 @@ export function executeRead(
       columns,
       executionTimeMs: Date.now() - start,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Query execution");
   }
 }
@@ -212,7 +212,7 @@ export function executeWrite(
       result.lastInsertId = lastInsertId;
     }
     return Promise.resolve(result);
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Write query");
   }
 }
@@ -256,7 +256,7 @@ export function executeGeneral(
       rows,
       executionTimeMs: Date.now() - start,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Query");
   }
 }

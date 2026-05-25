@@ -80,7 +80,7 @@ export function createVectorCreateTableTool(
           message: `Vector table '${input.tableName}' created with ${input.dimensions} dimensions`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -226,7 +226,7 @@ export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
           id: input.id,
           dimensions: input.vector.length,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -320,7 +320,7 @@ export function createVectorBatchStoreTool(
           stored,
           dimensions: input.items[0]?.vector.length,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -363,7 +363,7 @@ export function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           deleted: result.rowsAffected,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   JsonSecurityScanOutputSchema,
   JsonSecurityScanSchema,
@@ -19,7 +20,6 @@ import type {
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
-  validateWhereClause,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 
@@ -88,9 +88,10 @@ export function createJsonSecurityScanTool(
     annotations: readOnly("JSON Security Scan"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
+      
       try {
         input = JsonSecurityScanSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -99,14 +100,18 @@ export function createJsonSecurityScanTool(
         const column = sanitizeIdentifier(input.column);
 
         // Build query — wrap column with json() to handle both text and JSONB
-        let sql = `SELECT json("${column}") as json_data FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        const queryParams: unknown[] = [];
+      let sql = `SELECT json("${column}") as json_data FROM ${table}`;
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.sampleSize}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
         const rows = result.rows ?? [];
 
         // Accumulate issues per (type, key) pair
@@ -228,7 +233,7 @@ export function createJsonSecurityScanTool(
         if (issues.length > 0) response.issues = issues;
 
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

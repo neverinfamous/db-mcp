@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { getUniqueColumnNames } from "./helpers.js";
 import {
   JsonSelectOutputSchema,
@@ -20,7 +21,6 @@ import type {
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
-  validateWhereClause,
   validateJsonPath,
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
@@ -44,10 +44,12 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Select"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
+      
       try {
         input = JsonSelectSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -72,19 +74,22 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${selectClause} FROM "${input.table}"`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -104,10 +109,11 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Query"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonQuerySchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -157,14 +163,14 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
         }
         sql += ` LIMIT ${input.limit ?? 100}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -187,7 +193,7 @@ export function createJsonValidatePathTool(): ToolDefinition {
       let input;
       try {
         input = JsonValidatePathSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
 
@@ -231,10 +237,11 @@ export function createAnalyzeJsonSchemaTool(
     requiredScopes: ["read"],
     annotations: readOnly("Analyze JSON Schema"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = AnalyzeJsonSchemaSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -245,7 +252,7 @@ export function createAnalyzeJsonSchemaTool(
 
         // Sample rows - wrap column with json() to handle both text JSON and JSONB binary data
         const sql = `SELECT json("${input.column}") as json_data FROM "${input.table}" LIMIT ${input.sampleSize}`;
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         // Infer schema
         const properties: Record<
@@ -336,7 +343,7 @@ export function createAnalyzeJsonSchemaTool(
             errorCount,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

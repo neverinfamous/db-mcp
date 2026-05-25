@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import { validateColumnExists } from "./helpers.js";
 /**
  * Text Sentiment Analysis Tool
@@ -17,7 +18,6 @@ import {
 } from "../../../../utils/errors/index.js";
 import {
   sanitizeIdentifier,
-  validateWhereClause,
 } from "../../../../utils/index.js";
 import { TextSentimentOutputSchema } from "../../schemas/text.js";
 import { TextSentimentSchema } from "../../schemas/text.js";
@@ -183,14 +183,18 @@ export function createTextSentimentTool(
         const column = sanitizeIdentifier(parsed.column);
         await validateColumnExists(adapter, parsed.table, parsed.column);
 
-        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (parsed.whereClause) {
-          validateWhereClause(parsed.whereClause);
-          sql += ` WHERE ${parsed.whereClause}`;
+        const queryParams: unknown[] = [];
+      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
+        if (parsed.conditions) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(parsed.conditions);
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += ` LIMIT ${parsed.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const rows = (result.rows ?? []).map((row) => {
           const rawOriginal = row["value"];
@@ -227,7 +231,7 @@ export function createTextSentimentTool(
           rowCount: rows.length,
           results: rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

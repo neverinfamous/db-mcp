@@ -76,7 +76,7 @@ export function registerBuiltInTools(
         try {
           const adapterHealth = await adapter.getHealth();
           (health["adapters"] as Record<string, unknown>)[id] = adapterHealth;
-        } catch (error) {
+        } catch (error: unknown) {
           (health["adapters"] as Record<string, unknown>)[id] = {
             connected: false,
             error: error instanceof Error ? error.message : "Unknown error",

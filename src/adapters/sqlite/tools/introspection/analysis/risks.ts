@@ -273,7 +273,7 @@ export function createMigrationRisksTool(
             highestRisk,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

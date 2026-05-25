@@ -121,7 +121,7 @@ export class TokenValidator {
         valid: true,
         claims,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return this.handleValidationError(error);
     }
   }
@@ -153,7 +153,7 @@ export class TokenValidator {
       });
 
       return this.jwks;
-    } catch (error) {
+    } catch (error: unknown) {
       const cause = error instanceof Error ? error : new Error(String(error));
 
       logger.error(`Failed to fetch JWKS: ${this.jwksUri}`, {

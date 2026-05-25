@@ -98,7 +98,7 @@ export class CodeModeSandbox {
     const refCleanup: ivm.Reference<unknown>[] = [];
     for (const [groupName, groupValue] of Object.entries(apiBindings)) {
       if (typeof groupValue === "object" && groupValue !== null) {
-        context.evalSync(`globalThis.sqlite['${groupName}'] = {};`);
+        context.evalSync(`globalThis.sqlite[${JSON.stringify(groupName)}] = {};`);
         for (const [methodName, methodFn] of Object.entries(groupValue)) {
           if (typeof methodFn === "function") {
             const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
@@ -115,8 +115,8 @@ export class CodeModeSandbox {
             const refName = `fnRef_${groupName}_${methodName}`;
             context.global.setSync(refName, fnRef);
             context.evalSync(`
-              globalThis.sqlite['${groupName}']['${methodName}'] = async (...args) => {
-                return await globalThis['${refName}'].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
+              globalThis.sqlite[${JSON.stringify(groupName)}][${JSON.stringify(methodName)}] = async (...args) => {
+                return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
               };
             `);
           }
@@ -136,8 +136,8 @@ export class CodeModeSandbox {
         const refName = `fnRef_${groupName}`;
         context.global.setSync(refName, fnRef);
         context.evalSync(`
-          globalThis.sqlite['${groupName}'] = async (...args) => {
-            return await globalThis['${refName}'].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
+          globalThis.sqlite[${JSON.stringify(groupName)}] = async (...args) => {
+            return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
           };
         `);
       }

@@ -1,3 +1,4 @@
+import { WhereConditionSchema } from "./where.js";
 /**
  * Vector/Semantic Search Tool Output Schemas (11 tools + Legacy)
  */
@@ -204,7 +205,7 @@ export const VectorSearchSchema = z.object({
     coerceNumber,
     z.number().optional().default(10).describe("Max results"),
   ),
-  whereClause: z.string().optional().describe("Optional WHERE filter"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   returnColumns: z
     .array(z.string())
     .optional()

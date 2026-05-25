@@ -213,7 +213,7 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
           suggestions:
             suggestions.length > 0 ? [...new Set(suggestions)] : undefined,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

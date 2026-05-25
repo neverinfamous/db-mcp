@@ -111,7 +111,7 @@ describe("Window Function Tools - Aggregate", () => {
           table: "sales",
           column: "amount",
           orderBy: "id",
-          whereClause: "region = 'South'",
+          conditions: [{ column: "region", operator: "=", value: "South" }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };
@@ -191,7 +191,7 @@ describe("Window Function Tools - Aggregate", () => {
           column: "amount",
           orderBy: "id",
           windowSize: 2,
-          whereClause: "amount > 100",
+          conditions: [{ column: "amount", operator: ">", value: 100 }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };

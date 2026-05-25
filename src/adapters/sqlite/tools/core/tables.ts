@@ -133,7 +133,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
         input = CreateTableSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
 
@@ -232,7 +232,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
         for (const chk of input.checkConstraints) {
           try {
             validateQuery(`SELECT 1 WHERE ${chk}`, true);
-          } catch (error) {
+          } catch (error: unknown) {
              return {
               ...formatHandlerError(new ValidationError(`Invalid CHECK constraint '${chk}': ${error instanceof Error ? error.message : String(error)}`)),
               sql: "",
@@ -257,7 +257,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
             : `Table '${input.table}' created successfully`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql };
       }
     },
@@ -281,7 +281,7 @@ export function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
       let input;
       try {
         input = ListTablesSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           count: 0,
@@ -334,7 +334,7 @@ export function createDescribeTableTool(
         input = DescribeTableSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           table: "",
@@ -454,7 +454,7 @@ export function createDescribeTableTool(
           rowCount: tableInfo.rowCount,
           columns: enrichedColumns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           table: input.table,
@@ -484,7 +484,7 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
         input = DropTableSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -567,7 +567,7 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           message: `Table '${input.table}' dropped successfully`,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

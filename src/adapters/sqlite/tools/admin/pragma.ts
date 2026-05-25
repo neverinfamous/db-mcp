@@ -46,9 +46,10 @@ export function createPragmaCompileOptionsTool(
     outputSchema: PragmaCompileOptionsOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Compile Options"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (_params: unknown, _context: RequestContext) => {
       try {
-        const input = PragmaCompileOptionsSchema.parse(params);
+        const input = PragmaCompileOptionsSchema.parse(_params);
+      
         const result = await adapter.executeReadQuery("PRAGMA compile_options");
         let options = (result.rows ?? []).map(
           (r) => r["compile_options"] as string,
@@ -66,7 +67,7 @@ export function createPragmaCompileOptionsTool(
           success: true,
           options,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -121,7 +122,7 @@ export function createPragmaDatabaseListTool(
             ? "Internal file paths shown above are WASM virtual filesystem paths. The actual database is located elsewhere."
             : undefined,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -142,9 +143,10 @@ export function createPragmaOptimizeTool(
     outputSchema: PragmaOptimizeOutputSchema,
     requiredScopes: ["admin"],
     annotations: idempotent("PRAGMA Optimize"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (_params: unknown, _context: RequestContext) => {
       try {
-        const input = PragmaOptimizeSchema.parse(params);
+        const input = PragmaOptimizeSchema.parse(_params);
+//       const queryParams: unknown[] = [];
         const start = Date.now();
 
         const sql =
@@ -160,7 +162,7 @@ export function createPragmaOptimizeTool(
           message: "Database optimized",
           durationMs: duration,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -181,11 +183,11 @@ export function createPragmaSettingsTool(
     outputSchema: PragmaSettingsOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("PRAGMA Settings"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (_params: unknown, _context: RequestContext) => {
       let input;
       try {
-        input = PragmaSettingsSchema.parse(params);
-      } catch (error) {
+        input = PragmaSettingsSchema.parse(_params);
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -263,7 +265,7 @@ export function createPragmaSettingsTool(
             value,
           };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);
         // Unknown PRAGMAs: better-sqlite3 treats them as statements (no cursor),
         // so executeReadQuery throws "does not return data"
@@ -294,9 +296,10 @@ export function createPragmaTableInfoTool(
     outputSchema: PragmaTableInfoOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Table Info"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (_params: unknown, _context: RequestContext) => {
       try {
-        const input = PragmaTableInfoSchema.parse(params);
+        const input = PragmaTableInfoSchema.parse(_params);
+//       const queryParams: unknown[] = [];
 
         // Validate and quote table name
         const table = sanitizeIdentifier(input.table);
@@ -330,7 +333,7 @@ export function createPragmaTableInfoTool(
           table: input.table,
           columns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           table: "",
@@ -354,9 +357,10 @@ export function createAppendInsightTool(): ToolDefinition {
     outputSchema: AppendInsightOutputSchema,
     requiredScopes: ["write"],
     annotations: write("Append Insight"),
-    handler: (params: unknown, _context: RequestContext) => {
+    handler: (_params: unknown, _context: RequestContext) => {
       try {
-        const input = AppendInsightSchema.parse(params);
+        const input = AppendInsightSchema.parse(_params);
+//       const queryParams: unknown[] = [];
 
         // Validate non-empty (can't use .min(1) on schema — SDK validates before handler)
         let sanitizedInsight = input.insight.replace(/[<>]/g, "");
@@ -379,7 +383,7 @@ export function createAppendInsightTool(): ToolDefinition {
           message: "Insight added to memo",
           insightCount: insightsManager.count(),
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve({
           ...formatHandlerError(error),
           message: "",
@@ -405,9 +409,10 @@ export function createAttachDatabaseTool(
     outputSchema: AttachDatabaseOutputSchema,
     requiredScopes: ["admin"],
     annotations: adminFs("Attach Database"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (_params: unknown, _context: RequestContext) => {
       try {
-        const input = AttachDatabaseSchema.parse(params);
+        const input = AttachDatabaseSchema.parse(_params);
+//       const queryParams: unknown[] = [];
 
         // Prevent attaching as 'main' or 'temp'
         const aliasLower = input.alias.toLowerCase();
@@ -432,7 +437,7 @@ export function createAttachDatabaseTool(
           };
         }
 
-        const escapedPath = input.filepath.replace(/'/g, "''");
+        const escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
         await adapter.executeQuery(
           `ATTACH DATABASE '${escapedPath}' AS "${input.alias.replace(/"/g, '""')}"`,
         );
@@ -441,9 +446,9 @@ export function createAttachDatabaseTool(
           success: true,
           message: `Database attached as '${input.alias}'`,
           alias: input.alias,
-          filepath: input.filepath,
+          filepath: pathCheck.resolvedPath,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -465,9 +470,10 @@ export function createDetachDatabaseTool(
     outputSchema: DetachDatabaseOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("Detach Database"),
-    handler: async (params: unknown, _context: RequestContext) => {
+    handler: async (_params: unknown, _context: RequestContext) => {
       try {
-        const input = DetachDatabaseSchema.parse(params);
+        const input = DetachDatabaseSchema.parse(_params);
+//       const queryParams: unknown[] = [];
 
         const aliasLower = input.alias.toLowerCase();
         if (aliasLower === "main" || aliasLower === "temp") {
@@ -487,7 +493,7 @@ export function createDetachDatabaseTool(
           message: `Database '${input.alias}' detached`,
           alias: input.alias,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

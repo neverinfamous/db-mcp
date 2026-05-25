@@ -289,7 +289,7 @@ export class HttpTransport {
           });
           reject(error);
         });
-      } catch (error) {
+      } catch (error: unknown) {
         reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
@@ -307,7 +307,7 @@ export class HttpTransport {
           sessionId,
         });
         await transport.close();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error closing transport", {
           code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full,
           sessionId,
@@ -326,7 +326,7 @@ export class HttpTransport {
           sessionId,
         });
         await transport.close();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error closing SSE transport", {
           code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full,
           sessionId,
@@ -340,7 +340,7 @@ export class HttpTransport {
     if (this.state.statelessTransport) {
       try {
         await this.state.statelessTransport.close();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error closing stateless transport", {
           code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full,
           error: error instanceof Error ? error : undefined,

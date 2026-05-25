@@ -98,7 +98,7 @@ function createBeginTransactionTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = BeginTransactionSchema.parse(params);
-
+      
         const mode = input.mode.toUpperCase();
         await adapter.executeWriteQuery(`BEGIN ${mode} TRANSACTION`);
 
@@ -107,7 +107,7 @@ function createBeginTransactionTool(
           message: `Transaction started (${input.mode} mode)`,
           mode: input.mode,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -143,7 +143,7 @@ function createTransactionStatusTool(
             ? "A transaction is currently active."
             : "No transaction is active.",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -173,7 +173,7 @@ function createCommitTransactionTool(
           success: true,
           message: "Transaction committed",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -202,7 +202,7 @@ function createRollbackTransactionTool(
           success: true,
           message: "Transaction rolled back",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -225,6 +225,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
+//       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -243,7 +244,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
           message: `Savepoint '${input.name}' created`,
           savepoint: input.name,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -268,6 +269,7 @@ function createReleaseSavepointTool(
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
+//       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -286,7 +288,7 @@ function createReleaseSavepointTool(
           message: `Savepoint '${input.name}' released`,
           savepoint: input.name,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -311,6 +313,7 @@ function createRollbackToSavepointTool(
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
+//       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -329,7 +332,7 @@ function createRollbackToSavepointTool(
           message: `Rolled back to savepoint '${input.name}'`,
           savepoint: input.name,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -352,13 +355,14 @@ function createExecuteInTransactionTool(
     annotations: write("Execute in Transaction"),
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = ExecuteInTransactionSchema.parse(params);
         if (input.statements.length === 0) {
           throw new ValidationError("Must provide at least one SQL statement");
         }
-      } catch (error) {
+      } catch (error: unknown) {
         const errObj = formatHandlerError(error);
         return {
           ...errObj,
@@ -396,7 +400,7 @@ function createExecuteInTransactionTool(
               .startsWith("SELECT");
 
             if (isSelect) {
-              const result = await adapter.executeReadQuery(statement);
+              const result = await adapter.executeReadQuery(statement, queryParams);
               const rowCount = result.rows?.length ?? 0;
               const statementResult: {
                 statement: string;
@@ -413,7 +417,7 @@ function createExecuteInTransactionTool(
               }
               results.push(statementResult);
             } else {
-              const result = await adapter.executeWriteQuery(statement);
+              const result = await adapter.executeWriteQuery(statement, queryParams);
               results.push({
                 statement:
                   statement.substring(0, 100) +
@@ -421,7 +425,7 @@ function createExecuteInTransactionTool(
                 rowsAffected: result.rowsAffected ?? 0,
               });
             }
-          } catch (error) {
+          } catch (error: unknown) {
             const message =
               error instanceof Error ? error.message : String(error);
             results.push({
@@ -451,7 +455,7 @@ function createExecuteInTransactionTool(
           statementsExecuted: input.statements.length,
           results,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         let rollbackFailure: string | undefined;
         if (transactionStarted) {
           try {

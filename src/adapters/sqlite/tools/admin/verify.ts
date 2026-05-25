@@ -35,7 +35,8 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: adminFs("Verify Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = VerifyBackupSchema.parse(params);
+        // removed unused
+      const input = VerifyBackupSchema.parse(params);
         // WASM mode: backup/restore/verify are not available since file system
         // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
         if (!adapter.isNativeBackend()) {
@@ -95,7 +96,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           await adapter.executeQuery(
             `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
           );
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             ...formatHandlerError(
               new ValidationError(
@@ -121,7 +122,6 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           const pageSize =
             (pageSizeResult.rows?.[0]?.["page_size"] as number) ?? 0;
 
-          // Run integrity check on backup
           const integrityResult = await adapter.executeReadQuery(
             "PRAGMA backup_verify.integrity_check(10)",
           );
@@ -147,7 +147,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
             // Intentionally ignore detach errors
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -168,7 +168,8 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Index Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = IndexStatsSchema.parse(params);
+        const queryParams: unknown[] = [];
+      const input = IndexStatsSchema.parse(params);
 
         // Query for indexes
         let sql = `
@@ -176,11 +177,11 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
           FROM sqlite_master
           WHERE type = 'index' AND sql IS NOT NULL
         `;
-        const queryParams: unknown[] = [];
+        
         if (input.table) {
           // Validate table name using centralized utility
           sanitizeIdentifier(input.table);
-          sql += ` AND tbl_name = ?`;
+          sql += ` AND "tbl_name" = ?`;
           queryParams.push(input.table);
         }
         sql += " ORDER BY tbl_name, name";
@@ -233,7 +234,7 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           indexes,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

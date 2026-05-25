@@ -67,7 +67,7 @@ export function createVirtualTableInfoTool(
             columns,
             sql: sqlStr,
           };
-        } catch (error) {
+        } catch (error: unknown) {
           const errMsg = error instanceof Error ? error.message : String(error);
           const isModuleError =
             errMsg.includes("no such module") ||
@@ -85,7 +85,7 @@ export function createVirtualTableInfoTool(
           }
           throw error;
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           name: "",

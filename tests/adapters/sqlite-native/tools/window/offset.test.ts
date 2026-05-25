@@ -138,7 +138,7 @@ describe("Window Function Tools - Offset", () => {
           column: "amount",
           orderBy: "sale_date",
           direction: "lag",
-          whereClause: "region = 'North'",
+          conditions: [{ column: "region", operator: "=", value: 'North' }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };

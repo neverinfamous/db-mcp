@@ -39,6 +39,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = IndexAuditSchema.parse(params);
+      
         const excludeSystem = input.excludeSystemTables !== false;
         // Get all user-created indexes
         let indexQuery = `SELECT name, tbl_name, sql FROM sqlite_master
@@ -225,7 +226,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
             total: findings.length,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

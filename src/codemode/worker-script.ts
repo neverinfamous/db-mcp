@@ -360,7 +360,7 @@ async function executeInWorker(): Promise<void> {
     }
 
     parentPort?.postMessage(response);
-  } catch (error) {
+  } catch (error: unknown) {
     // Close the RPC port before sending error
     rpcPort.unref();
     rpcPort.close();

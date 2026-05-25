@@ -126,7 +126,7 @@ export class AuthorizationServerDiscovery {
       );
 
       return metadata;
-    } catch (error) {
+    } catch (error: unknown) {
       const cause = error instanceof Error ? error : new Error(String(error));
 
       logger.error(

@@ -23,7 +23,7 @@ export function createDropVirtualTableTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DropVirtualTableSchema.parse(params);
-
+      
         const tableName = sanitizeIdentifier(input.tableName);
 
         const existsResult = await adapter.executeReadQuery(
@@ -69,7 +69,7 @@ export function createDropVirtualTableTool(
             message: `Dropped virtual table '${input.tableName}'`,
           };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

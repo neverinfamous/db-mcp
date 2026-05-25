@@ -18,7 +18,7 @@ import { realpathSync } from "node:fs";
  * `{ success: false, error, code }` pattern used by tool handlers.
  */
 export type PathValidationResult =
-  | { valid: true }
+  | { valid: true; resolvedPath: string }
   | { valid: false; error: string; dbDir: string };
 
 /**
@@ -112,5 +112,5 @@ export function validateSameDirPath(
     };
   }
 
-  return { valid: true };
+  return { valid: true, resolvedPath: normalizedTarget };
 }

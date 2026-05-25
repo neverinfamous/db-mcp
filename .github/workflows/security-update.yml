@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
       - name: Build image for scanning
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
@@ -46,7 +46,7 @@ jobs:
 
       # Run SARIF scan first (non-blocking) to always generate the file
       - name: Run Trivy scanner for SARIF output
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (post-supply-chain-fix)
+        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
         with:
           image-ref: security-test:latest
           format: 'sarif'
@@ -58,7 +58,7 @@ jobs:
           skip-dirs: '/usr/local/lib/node_modules/npm'
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
@@ -66,7 +66,7 @@ jobs:
       # Run table scan (blocking) after SARIF is uploaded
       - name: Run Trivy vulnerability scanner
         id: trivy-scan
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (post-supply-chain-fix)
+        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
         with:
           image-ref: security-test:latest
           format: 'table'
@@ -95,7 +95,7 @@ jobs:
       issues: write
     steps:
       - name: Create security issue if vulnerabilities found
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}

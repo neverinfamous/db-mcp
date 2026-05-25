@@ -58,7 +58,7 @@ export function createAlterTableTool(adapter: SqliteAdapter): ToolDefinition {
         input = AlterTableSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
 
@@ -366,7 +366,7 @@ export function createAlterTableTool(adapter: SqliteAdapter): ToolDefinition {
           message: messages[input.operation],
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
     },

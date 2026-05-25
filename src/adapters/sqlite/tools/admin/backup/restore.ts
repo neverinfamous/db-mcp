@@ -30,7 +30,9 @@ function validateDdl(sql: string, type: string, name: string): void {
     /\bLOAD_EXTENSION\s*\(/i.test(cleanSql) ||
     /\bATTACH\b/i.test(cleanSql) ||
     /\bDETACH\b/i.test(cleanSql) ||
-    /\bPRAGMA\b/i.test(cleanSql)
+    /\bPRAGMA\b/i.test(cleanSql) ||
+    /\bRAISE\s*\(/i.test(cleanSql) ||
+    /\b(?:BEGIN|COMMIT|ROLLBACK)(?:\s+TRANSACTION)?\b/i.test(cleanSql)
   ) {
     throw new ValidationError(
       `DDL validation failed: unauthorized command or function call in ${type} '${name}'`,
@@ -65,9 +67,10 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     },
     handler: async (params: unknown, context: RequestContext) => {
       let input;
+      
       try {
         input = RestoreSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sourcePath: "" };
       }
       const progress = buildProgressContext(context);
@@ -119,7 +122,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      const escapedPath = resolvedPath.replace(/'/g, "''");
+      const escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
 
       await adapter.executeReadQuery("PRAGMA integrity_check(1)");
 
@@ -131,7 +134,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           undefined,
           true,
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sourcePath: input.sourcePath };
       }
 
@@ -215,7 +218,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
                 });
 
               await adapter.executeWriteQuery(createSql, undefined, true);
-            } catch (error) {
+            } catch (error: unknown) {
               const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
               const moduleName = moduleMatch?.[1] ?? "unknown";
               const errMsg =
@@ -246,7 +249,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
           try {
             validateDdl(createSql, "table", tableName);
-          } catch (error) {
+          } catch (error: unknown) {
             skippedTables.push(`${tableName} (DDL Validation: ${error instanceof Error ? error.message : String(error)})`);
             continue;
           }

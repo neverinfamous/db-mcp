@@ -1,10 +1,10 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition } from "../../../../types/index.js";
+import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { DateAddSchema, DateDiffSchema } from "../../schemas/core.js";
 import { DateMathOutputSchema } from "../../schemas/core.js";
-import { validateWhereClause } from "../../../../utils/where-clause.js";
 
 /**
  * Add time to a date column
@@ -18,26 +18,29 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
     outputSchema: DateMathOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Date/Time Add"),
-    handler: async (params: unknown) => {
+    handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
         input = DateAddSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
-      const { table, column, amount, unit, whereClause, limit } = input;
+      const { table, column, amount, unit, conditions, limit } = input;
       const quotedTable = `"${table.replace(/"/g, '""')}"`;
       const quotedColumn = `"${column.replace(/"/g, '""')}"`;
 
       // Map unit to SQLite modifier
       const modifier = `${amount > 0 ? "+" : ""}${amount} ${unit}`;
       
+      const queryParams: unknown[] = [];
       let query = `SELECT *, datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
       
-      if (whereClause) {
-        validateWhereClause(whereClause);
-        query += ` WHERE ${whereClause}`;
+      
+      const { sql: whereSql, params: whereParams } = buildWhereClause(conditions);
+      if (whereSql !== "") {
+        query += ` WHERE ${whereSql}`;
+        queryParams.push(...whereParams);
       }
       
       if (limit !== undefined && limit !== null) {
@@ -45,7 +48,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       try {
-        const result = await adapter.executeReadQuery(query);
+        const result = await adapter.executeReadQuery(query, queryParams);
 
         // SQLite's datetime() silently returns NULL if the resulting date is outside 
         // the supported bounds of 0000-01-01 to 9999-12-31. Detect this by checking 
@@ -70,7 +73,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
           rows: result.rows,
           count: result.rows?.length ?? 0,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -89,15 +92,15 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
     outputSchema: DateMathOutputSchema,
     requiredScopes: ["read"],
     annotations: readOnly("Date/Time Diff"),
-    handler: async (params: unknown) => {
+    handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
         input = DateDiffSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
-      const { table, column1, column2, unit, whereClause, limit } = input;
+      const { table, column1, column2, unit, conditions, limit } = input;
       const formatOperand = (val: string): string => {
         if (val.startsWith("'") && val.endsWith("'")) return val;
         if (!isNaN(Number(val))) return val;
@@ -116,11 +119,13 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
 
       const diffExpr = `(julianday(${quotedCol1}) - julianday(${quotedCol2})) * ${multiplier}`;
 
+      const queryParams: unknown[] = [];
       let query = `SELECT *, ${diffExpr} as date_diff_result FROM ${quotedTable}`;
       
-      if (whereClause) {
-        validateWhereClause(whereClause);
-        query += ` WHERE ${whereClause}`;
+      const { sql: whereSql, params: whereParams } = buildWhereClause(conditions);
+      if (whereSql !== "") {
+        query += ` WHERE ${whereSql}`;
+        queryParams.push(...whereParams);
       }
 
       if (limit !== undefined && limit !== null) {
@@ -128,13 +133,13 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       try {
-        const result = await adapter.executeReadQuery(query);
+        const result = await adapter.executeReadQuery(query, queryParams);
         return {
           success: true,
           rows: result.rows,
           count: result.rows?.length ?? 0,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

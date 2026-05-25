@@ -235,7 +235,7 @@ export function createSchemaSnapshotTool(
           stats,
           generatedAt: new Date().toISOString(),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

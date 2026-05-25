@@ -83,7 +83,7 @@ export function createOptimizeTool(adapter: SqliteAdapter): ToolDefinition {
           operations,
           durationMs: duration,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           operations: [],

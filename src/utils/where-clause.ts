@@ -328,3 +328,40 @@ export function sanitizeWhereClause(where: string): string {
   validateWhereClause(where);
   return where;
 }
+
+
+export interface WhereCondition {
+  column: string;
+  operator: string;
+  value: unknown;
+}
+
+export function buildWhereClause(conditions?: string | WhereCondition[]): { sql: string; params: unknown[] } {
+  if (conditions === undefined || conditions === null || conditions === "" || (Array.isArray(conditions) && conditions.length === 0)) return { sql: "", params: [] };
+  
+  if (typeof conditions === "string") {
+    return { sql: sanitizeWhereClause(conditions), params: [] };
+  }
+  
+  const params: unknown[] = [];
+  const clauses: string[] = [];
+  
+  const allowedOperators = new Set(["=", "!=", ">", ">=", "<", "<=", "LIKE", "IN", "IS", "IS NOT", "NOT LIKE"]);
+  
+  for (const cond of conditions) {
+    if (!allowedOperators.has(cond.operator.toUpperCase())) {
+      throw new Error(`Invalid operator: ${cond.operator}`);
+    }
+    const col = `"${cond.column.replace(/"/g, '""')}"`;
+    if (cond.operator.toUpperCase() === "IN" && Array.isArray(cond.value)) {
+      const placeholders = cond.value.map(() => "?").join(", ");
+      clauses.push(`${col} IN (${placeholders})`);
+      params.push(...(cond.value as unknown[]));
+    } else {
+      clauses.push(`${col} ${cond.operator} ?`);
+      params.push(cond.value);
+    }
+  }
+  
+  return { sql: clauses.join(" AND "), params };
+}

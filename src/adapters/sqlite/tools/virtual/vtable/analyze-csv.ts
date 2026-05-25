@@ -46,9 +46,10 @@ export function createAnalyzeCsvSchemaTool(
       }
 
       let input;
+      
       try {
         input = AnalyzeCsvSchemaSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           hasHeader: false,
@@ -101,7 +102,7 @@ export function createAnalyzeCsvSchemaTool(
 
         const options = [`filename='${input.filePath.replace(/'/g, "''")}'`];
         if (input.delimiter !== ",") {
-          options.push(`delimiter='${input.delimiter}'`);
+          options.push(`delimiter='${input.delimiter.replace(/'/g, "''")}'`);
         }
 
         await adapter.executeWriteQuery(
@@ -167,7 +168,7 @@ export function createAnalyzeCsvSchemaTool(
           rowCount,
           columns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           hasHeader: false,

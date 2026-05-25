@@ -1,3 +1,4 @@
+import { WhereConditionSchema } from "./where.js";
 /**
  * Geospatial Tool Output Schemas (7 tools)
  */
@@ -163,6 +164,6 @@ export const GeoClusterSchema = z.object({
     coerceNumber,
     z.number().optional().default(0.1).describe("Grid size in degrees"),
   ),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 export type GeoClusterInput = z.infer<typeof GeoClusterSchema>;

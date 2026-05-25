@@ -97,7 +97,7 @@ export function createDependencyGraphTool(
             leafTables,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -196,7 +196,7 @@ export function createTopologicalSortTool(
               }
             : {}),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -362,7 +362,7 @@ export function createCascadeSimulatorTool(
             maxDepth,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

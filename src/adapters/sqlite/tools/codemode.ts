@@ -194,14 +194,14 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: result.success,
           result: sanitizedResult,
-          error: result.error,
-          consoleOutput: result.logs,
+          error: result.error ? security.sanitizeResult(result.error) as string : undefined,
+          consoleOutput: result.logs ? security.sanitizeResult(result.logs) as string[] : undefined,
           metrics: {
             ...result.metrics,
             tokenEstimate,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         logger.error(`Code execution error: ${errorMsg}`, {
           module: "CODEMODE" as const,

@@ -375,7 +375,7 @@ export async function setupOAuth(
     });
 
     logger.info("OAuth 2.1 setup complete", { code: "HTTP_OAUTH_READY" });
-  } catch (error) {
+  } catch (error: unknown) {
     // F-2: If discovery fails, only proceed if explicit JWKS URI is provided.
     // Never silently accept mismatched metadata — fail closed.
     logger.warning(

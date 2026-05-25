@@ -66,7 +66,7 @@ export function createMigrationInitTool(
           tableName: MIGRATIONS_TABLE,
           existingRecords: count,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

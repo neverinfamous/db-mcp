@@ -59,7 +59,7 @@ export function createReindexTool(adapter: SqliteAdapter): ToolDefinition {
           sql,
           durationMs,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
     },

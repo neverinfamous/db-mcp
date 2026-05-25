@@ -52,7 +52,7 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         input = GetIndexesSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           count: 0,
@@ -87,7 +87,7 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         // Check table existence when a specific table is requested
         try {
           await validateTableExists(adapter, input.table);
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             ...formatHandlerError(error),
             count: 0,
@@ -144,7 +144,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
         input = CreateIndexSchema.parse(
           resolveAliases(params, { tableName: "table", name: "indexName" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
       // Validate required: at least 1 column
@@ -181,7 +181,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate table existence
       try {
         await validateTableExists(adapter, input.table);
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
 
@@ -211,7 +211,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
             : `Index '${input.indexName}' created on ${input.table}(${input.columns.join(", ")})`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql };
       }
     },
@@ -236,7 +236,7 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
         input = DropIndexSchema.parse(
           resolveAliases(params, { name: "indexName" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -278,7 +278,7 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           message: `Index '${input.indexName}' dropped successfully`,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

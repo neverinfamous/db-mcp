@@ -49,8 +49,10 @@ export function createSpatialAnalysisTool(
     requiredScopes: ["read"],
     annotations: readOnly("SpatiaLite Analyze"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = SpatialAnalysisSchema.parse(params);
+      
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
@@ -198,7 +200,7 @@ export function createSpatialAnalysisTool(
             query = "SELECT 1";
         }
 
-        const result = await adapter.executeReadQuery(query);
+        const result = await adapter.executeReadQuery(query, queryParams);
 
         return {
           success: true,
@@ -206,7 +208,7 @@ export function createSpatialAnalysisTool(
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -229,8 +231,10 @@ export function createGeometryTransformTool(
     requiredScopes: ["read"],
     annotations: readOnly("SpatiaLite Transform"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = GeometryTransformSchema.parse(params);
+      
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
@@ -248,7 +252,7 @@ export function createGeometryTransformTool(
 
         // M-1b: Use parameterized queries for WKT geometry strings (CWE-89 remediation)
         let query: string;
-        let queryParams: unknown[] = [];
+        
         switch (input.operation) {
           case "buffer": {
             const bufferGeom = `Buffer(GeomFromText(?, CAST(? AS INTEGER)), ?)`;
@@ -262,49 +266,49 @@ export function createGeometryTransformTool(
                 ? `Simplify(${bufferGeom}, ${String(tolerance)})`
                 : bufferGeom;
             query = `SELECT AsText(${finalGeom}) as result`;
-            queryParams = [input.geometry1, input.srid, input.distance];
+            queryParams.push(input.geometry1, input.srid, input.distance);
             break;
           }
 
           case "intersection": {
             const intersectionGeom = `Intersection(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
             query = `SELECT AsText(${intersectionGeom}) as result`;
-            queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
+            queryParams.push(input.geometry1, input.srid, input.geometry2, input.srid);
             break;
           }
 
           case "union": {
             const unionGeom = `GUnion(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
             query = `SELECT AsText(${unionGeom}) as result`;
-            queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
+            queryParams.push(input.geometry1, input.srid, input.geometry2, input.srid);
             break;
           }
 
           case "difference": {
             const differenceGeom = `Difference(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
             query = `SELECT AsText(${differenceGeom}) as result`;
-            queryParams = [input.geometry1, input.srid, input.geometry2, input.srid];
+            queryParams.push(input.geometry1, input.srid, input.geometry2, input.srid);
             break;
           }
 
           case "centroid": {
             const centroidGeom = `Centroid(GeomFromText(?, CAST(? AS INTEGER)))`;
             query = `SELECT AsText(${centroidGeom}) as result`;
-            queryParams = [input.geometry1, input.srid];
+            queryParams.push(input.geometry1, input.srid);
             break;
           }
 
           case "envelope": {
             const envelopeGeom = `Envelope(GeomFromText(?, CAST(? AS INTEGER)))`;
             query = `SELECT AsText(${envelopeGeom}) as result`;
-            queryParams = [input.geometry1, input.srid];
+            queryParams.push(input.geometry1, input.srid);
             break;
           }
 
           case "simplify": {
             const simplifyGeom = `Simplify(GeomFromText(?, CAST(? AS INTEGER)), ?)`;
             query = `SELECT AsText(${simplifyGeom}) as result`;
-            queryParams = [input.geometry1, input.srid, input.distance];
+            queryParams.push(input.geometry1, input.srid, input.distance);
             break;
           }
 
@@ -332,7 +336,7 @@ export function createGeometryTransformTool(
           operation: input.operation,
           result: wktResult,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -357,6 +361,7 @@ export function createSpatialImportTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialImportSchema.parse(params);
+      
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
@@ -502,7 +507,7 @@ export function createSpatialImportTool(
           message: "WKT geometry imported",
           rowsAffected: insertResult.rowsAffected ?? 1,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

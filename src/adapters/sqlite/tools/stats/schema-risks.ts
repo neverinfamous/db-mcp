@@ -258,7 +258,7 @@ export function createDetectSchemaRisksTool(
           totalAnalyzed: tables.length,
           summary,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

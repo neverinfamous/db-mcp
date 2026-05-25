@@ -128,7 +128,7 @@ export function createListConstraintsTool(
           uniqueIndexes,
           checkConstraints,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

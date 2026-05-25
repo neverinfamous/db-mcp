@@ -306,7 +306,7 @@ export class WorkerSandbox {
             ),
           });
         }, effectiveTimeout + TIMEOUT_GRACE_MS); // Extra grace period for cleanup
-      } catch (error) {
+      } catch (error: unknown) {
         const endTime = performance.now();
         const endMemory = process.memoryUsage().heapUsed;
 

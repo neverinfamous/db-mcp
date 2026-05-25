@@ -254,12 +254,10 @@ describe("createJsonSecurityScanTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonSecurityScanTool(adapter);
     await tool.handler(
-      { table: "users", column: "data", whereClause: "active = 1" },
+      { table: "users", column: "data", conditions: [{ column: "active", operator: "=", value: 1 }] },
       ctx,
     );
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("active = 1"),
-    );
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('"active" = ?'), expect.anything());
   });
 
   it("should respect sampleSize parameter", async () => {
@@ -267,9 +265,7 @@ describe("createJsonSecurityScanTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonSecurityScanTool(adapter);
     await tool.handler({ table: "users", column: "data", sampleSize: 50 }, ctx);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("LIMIT 50"),
-    );
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining("LIMIT 50"), expect.anything());
   });
 
   it("should return success: false on query error", async () => {

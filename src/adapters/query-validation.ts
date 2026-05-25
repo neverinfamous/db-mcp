@@ -81,6 +81,11 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
   } catch {
     // sqlite-parser lacks support for modern SQLite features like WINDOW clauses and some CTEs.
     // When AST parsing fails, fallback to strict structural validation.
+    import("../utils/logger/index.js")
+      .then(({ logger }) => {
+        logger.warn("AST parsing failed. Using fallback regex validation.", { module: "ADAPTER" });
+      })
+      .catch(() => { /* ignore */ });
     fallbackValidation(sql, isReadOnly);
     return;
   }
@@ -131,9 +136,9 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     if (DDL_VARIANTS.has(rootStmt.variant)) {
       const authCtx = getAuthContext();
       // If auth is enabled (authCtx is present and authenticated) and missing admin scope, block it.
-      if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin")) {
+      if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin") && !authCtx.scopes.includes("full")) {
         throw new ValidationError(
-          "DDL operations (CREATE, DROP, ALTER) require 'admin' scope",
+          "DDL operations (CREATE, DROP, ALTER) require 'admin' or 'full' scope",
           "DB_ADMIN_REQUIRED",
         );
       }
@@ -254,16 +259,16 @@ function fallbackValidation(sql: string, isReadOnly: boolean): void {
     const ddlPattern = /^\s*(?:WITH\s+[\s\S]+?)?(CREATE|DROP|ALTER|VACUUM|ANALYZE)\b/i;
     if (ddlPattern.test(rootStmt)) {
       const authCtx = getAuthContext();
-      if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin")) {
+      if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin") && !authCtx.scopes.includes("full")) {
         throw new ValidationError(
-          "DDL operations (CREATE, DROP, ALTER) require 'admin' scope",
+          "DDL operations (CREATE, DROP, ALTER) require 'admin' or 'full' scope",
           "DB_ADMIN_REQUIRED",
         );
       }
     }
   }
 
-  const unsafePattern = /\b(LOAD_EXTENSION|WRITEFILE|READFILE)\b/i;
+  const unsafePattern = new RegExp(`\\b(${Array.from(UNSAFE_FUNCTIONS).join("|")})\\b`, "i");
   const match = unsafePattern.exec(rootStmt);
   if (match) {
     throw new ValidationError(`Unsafe function call detected: ${match[0].toUpperCase()}`, "DB_DANGEROUS_PATTERN");

@@ -25,7 +25,7 @@ export function createIntegrityCheckTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = IntegrityCheckSchema.parse(params);
-
+      
         const sql = `PRAGMA integrity_check(${input.maxErrors})`;
         const result = await adapter.executeReadQuery(sql);
 
@@ -40,7 +40,7 @@ export function createIntegrityCheckTool(
           errorCount: isOk ? 0 : messages.length,
           messages: isOk ? undefined : messages,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -59,7 +59,7 @@ describe("JSON Operations Tools - Mutations", () => {
         column: "data",
         path: "$.status",
         value: "active",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowsAffected: number;
@@ -81,7 +81,7 @@ describe("JSON Operations Tools - Mutations", () => {
         column: "data",
         path: "$.age",
         value: 31,
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowsAffected: number;
@@ -102,7 +102,7 @@ describe("JSON Operations Tools - Mutations", () => {
         table: "json_docs",
         column: "data",
         path: "$.age",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowsAffected: number;
@@ -126,7 +126,7 @@ describe("JSON Operations Tools - Mutations", () => {
         column: "data",
         path: "$.tags",
         value: "new",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowsAffected: number;

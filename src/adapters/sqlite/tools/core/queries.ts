@@ -38,7 +38,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
       let input: { query: string; params?: unknown[] | undefined };
       try {
         input = ReadQuerySchema.parse(resolveAliases(params, { sql: "query" }));
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           rowCount: 0,
@@ -261,7 +261,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           rowCount: 0,
@@ -291,7 +291,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         input = WriteQuerySchema.parse(
           resolveAliases(params, { sql: "query" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           rowsAffected: 0,
@@ -385,7 +385,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
           rowsAffected: result.rowsAffected,
           executionTimeMs: result.executionTimeMs,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           rowsAffected: 0,

@@ -114,7 +114,7 @@ export async function connectSqliteDatabase(
     const schemaManager = new SchemaManager(adapter);
 
     return { db, sqlJsInstance, schemaManager };
-  } catch (error) {
+  } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     log.error(`Failed to connect to SQLite: ${message}`, {
       code: ERROR_CODES.DB.CONNECT_FAILED.full,

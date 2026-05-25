@@ -146,7 +146,7 @@ export function registerToolImpl(
           );
         }
         return await execFn();
-      } catch (error) {
+      } catch (error: unknown) {
         const structured = formatHandlerError(error);
 
         // Token estimate for error responses

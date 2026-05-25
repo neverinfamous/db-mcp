@@ -149,7 +149,7 @@ export function createWalTool(adapter: SqliteAdapter): ToolDefinition {
             };
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

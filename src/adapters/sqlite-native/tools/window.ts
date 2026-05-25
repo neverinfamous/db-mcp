@@ -1,3 +1,5 @@
+import { buildWhereClause } from "../../../utils/where-clause.js";
+import { WhereConditionSchema } from "../../sqlite/schemas/where.js";
 /**
  * Window Function Tools for Native SQLite Adapter
  *
@@ -8,7 +10,6 @@ import { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import type { NativeSqliteAdapter } from "../native-sqlite-adapter.js";
 import {
-  validateWhereClause,
   validateIdentifier,
   sanitizeIdentifier,
 } from "../../../utils/index.js";
@@ -65,7 +66,7 @@ const RowNumberSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE clause conditions"),
   limit: z.preprocess(
     coerceNumber,
     z.number().optional().default(20).describe("Maximum rows to return"),
@@ -88,7 +89,7 @@ const RankSchema = z.object({
       .default("rank")
       .describe("Rank function type"),
   ),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE clause conditions"),
   limit: z.preprocess(
     coerceNumber,
     z.number().optional().default(20).describe("Maximum rows to return"),
@@ -117,7 +118,7 @@ const LagLeadSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE clause conditions"),
   limit: z.preprocess(
     coerceNumber,
     z.number().optional().default(20).describe("Maximum rows to return"),
@@ -136,7 +137,7 @@ const RunningTotalSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE clause conditions"),
   limit: z.preprocess(
     coerceNumber,
     z.number().optional().default(20).describe("Maximum rows to return"),
@@ -156,7 +157,7 @@ const MovingAverageSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE clause conditions"),
   limit: z.preprocess(
     coerceNumber,
     z.number().optional().default(20).describe("Maximum rows to return"),
@@ -175,7 +176,7 @@ const NtileSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Columns to include in result"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE clause conditions"),
   limit: z.preprocess(
     coerceNumber,
     z.number().optional().default(20).describe("Maximum rows to return"),
@@ -223,7 +224,7 @@ async function validateColumnInTable(
 
   // validateIdentifier confirms names are [a-zA-Z_][a-zA-Z0-9_]* — safe for string literal
   const tableInfo = await adapter.executeReadQuery(
-    `SELECT name FROM pragma_table_info('${table}') WHERE name='${column}'`,
+    `SELECT name FROM pragma_table_info('${table}') WHERE name='${column}'`
   );
   if (!tableInfo.rows || tableInfo.rows.length === 0) {
     throw new ResourceNotFoundError(
@@ -294,7 +295,7 @@ async function resolveSelectColumns(
   // PRAGMA arguments need string values, not double-quoted identifiers
   // validateIdentifier already confirmed table is safe
   const tableInfo = await adapter.executeReadQuery(
-    `PRAGMA table_info('${table}')`,
+    `PRAGMA table_info('${table}')`
   );
 
   const TEXT_TYPES = new Set([
@@ -453,9 +454,10 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
     annotations: readOnly("Window Row Number"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = RowNumberSchema.parse(params);
-
+      
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
 
@@ -475,13 +477,16 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
                 FROM ${sanitizeIdentifier(input.table)}
             `;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -490,7 +495,7 @@ function createRowNumberTool(adapter: NativeSqliteAdapter): ToolDefinition {
         };
         if (hint) response["hint"] = hint;
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -513,6 +518,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = RankSchema.parse(params);
+      const queryParams: unknown[] = [];
 
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
@@ -534,13 +540,16 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
                 FROM ${sanitizeIdentifier(input.table)}
             `;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -550,7 +559,7 @@ function createRankTool(adapter: NativeSqliteAdapter): ToolDefinition {
         };
         if (hint) response["hint"] = hint;
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -573,6 +582,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = LagLeadSchema.parse(params);
+      const queryParams: unknown[] = [];
 
         // Normalize direction to lowercase (schema describes as LAG/LEAD uppercase)
         const normalizedDirection = input.direction.toLowerCase();
@@ -620,13 +630,16 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
                 FROM ${sanitizeIdentifier(input.table)}
             `;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -637,7 +650,7 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
         };
         if (hint) response["hint"] = hint;
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -658,6 +671,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
     annotations: readOnly("Window Running Total"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = RunningTotalSchema.parse(
           resolveAliases(params, { valueColumn: "column" }),
@@ -684,13 +698,16 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
                 FROM ${sanitizeIdentifier(input.table)}
             `;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -700,7 +717,7 @@ function createRunningTotalTool(adapter: NativeSqliteAdapter): ToolDefinition {
         };
         if (hint) response["hint"] = hint;
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -721,6 +738,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
     annotations: readOnly("Window Moving Average"),
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = MovingAverageSchema.parse(
           resolveAliases(params, { valueColumn: "column" }),
@@ -758,13 +776,16 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
                 FROM ${sanitizeIdentifier(input.table)}
             `;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -775,7 +796,7 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
         };
         if (hint) response["hint"] = hint;
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -798,6 +819,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = NtileSchema.parse(params);
+      const queryParams: unknown[] = [];
 
         if (input.buckets === undefined) {
           return {
@@ -828,13 +850,16 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
                 FROM ${sanitizeIdentifier(input.table)}
             `;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -844,7 +869,7 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
         };
         if (hint) response["hint"] = hint;
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

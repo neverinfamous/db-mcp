@@ -131,7 +131,7 @@ export class SqliteAdapter extends DatabaseAdapter {
           walMode: this.config?.options?.walMode ?? false,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return Promise.resolve({
         connected: false,
         error: error instanceof Error ? error.message : String(error),

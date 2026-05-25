@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   JsonSetOutputSchema,
   JsonRemoveOutputSchema,
@@ -20,7 +21,6 @@ import type {
 import { readOnly, write } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
-  validateWhereClause,
   validateJsonPath,
 } from "../../../../utils/index.js";
 import {
@@ -53,9 +53,10 @@ export function createValidateJsonTool(): ToolDefinition {
     annotations: readOnly("Validate JSON"),
     handler: (params: unknown, _context: RequestContext) => {
       let input;
+      
       try {
         input = ValidateJsonSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
 
@@ -66,7 +67,7 @@ export function createValidateJsonTool(): ToolDefinition {
           valid: true,
           message: "Valid JSON",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve({
           success: true,
           valid: false,
@@ -91,10 +92,11 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Extract"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonExtractSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -105,19 +107,22 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
         validateJsonPath(input.path);
 
         let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           values: result.rows?.map((r) => r["value"]),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -138,10 +143,11 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Set"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonSetSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -162,10 +168,12 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const valueJson = JSON.stringify(input.value);
-        validateWhereClause(input.whereClause);
-        const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+        // validateWhereClause() removed
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+          const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}'))${whereSql ? ' WHERE ' + whereSql : ''}`;
+          queryParams.push(...whereParams);
 
-        const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         return {
           success: true,
@@ -177,7 +185,7 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
               }
             : {}),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -197,10 +205,11 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Remove"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonRemoveSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -210,10 +219,12 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
         validateJsonPath(input.path);
 
-        validateWhereClause(input.whereClause);
-        const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}') WHERE ${input.whereClause}`;
+        // validateWhereClause() removed
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+          const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}')${whereSql ? ' WHERE ' + whereSql : ''}`;
+          queryParams.push(...whereParams);
 
-        const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         return {
           success: true,
@@ -225,7 +236,7 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
               }
             : {}),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -246,10 +257,11 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Type"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonTypeSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -262,19 +274,22 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
         validateJsonPath(path);
 
         let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           types: result.rows?.map((r) => r["type"]),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -296,10 +311,11 @@ export function createJsonArrayLengthTool(
     requiredScopes: ["read"],
     annotations: readOnly("Array Length"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonArrayLengthSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -312,19 +328,22 @@ export function createJsonArrayLengthTool(
         validateJsonPath(path);
 
         let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           lengths: result.rows?.map((r) => r["length"]),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -346,10 +365,11 @@ export function createJsonArrayAppendTool(
     requiredScopes: ["write"],
     annotations: write("Array Append"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonArrayAppendSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -370,21 +390,23 @@ export function createJsonArrayAppendTool(
         }
 
         const valueJson = JSON.stringify(input.value);
-        validateWhereClause(input.whereClause);
+        // validateWhereClause() removed
         // Append by using [#] which means "end of array"
         const appendPath = input.path.endsWith("]")
           ? input.path.replace(/\]$/, "#]")
           : `${input.path}[#]`;
 
-        const sql = `UPDATE ${table} SET ${column} = json_insert(${column}, '${appendPath}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+          const sql = `UPDATE ${table} SET ${column} = json_insert(${column}, '${appendPath}', json('${valueJson.replace(/'/g, "''")}'))${whereSql ? ' WHERE ' + whereSql : ''}`;
+          queryParams.push(...whereParams);
 
-        const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         return {
           success: true,
           rowsAffected: result.rowsAffected,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

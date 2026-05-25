@@ -399,7 +399,7 @@ export function createSchemaDiffTool(
           },
           comparedAt: new Date().toISOString(),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -1,3 +1,4 @@
+import { WhereConditionSchema } from "./where.js";
 /**
  * JSON Helper, JSON Operation, and JSONB Tool Output Schemas
  */
@@ -367,14 +368,14 @@ export const JsonUpdateSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path (e.g., $.key.subkey)"),
   value: z.unknown().describe("New value"),
-  whereClause: z.string().describe("WHERE clause to identify rows"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonSelectSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   paths: z.array(z.string()).optional().describe("JSON paths to extract"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonQuerySchema = z.object({
@@ -405,7 +406,7 @@ export const JsonMergeSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   mergeData: z.unknown().describe("JSON object to merge"),
-  whereClause: z.string().describe("WHERE clause to identify rows"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   deep: z.boolean().optional().default(false).describe("Deep merge"),
 });
 
@@ -417,7 +418,7 @@ export const JsonExtractSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path to extract"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonSetSchema = z.object({
@@ -425,14 +426,14 @@ export const JsonSetSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path"),
   value: z.unknown().describe("Value to set"),
-  whereClause: z.string().describe("WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonRemoveSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path to remove"),
-  whereClause: z.string().describe("WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const AnalyzeJsonSchemaSchema = z.object({
@@ -478,7 +479,7 @@ export const JsonSecurityScanSchema = z.object({
     coerceNumber,
     z.number().max(10000).optional().default(100).describe("Number of rows to sample"),
   ),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 // =============================================================================
@@ -497,7 +498,7 @@ export const JsonDiffSchema = z.object({
   column: z.string().describe("JSON column name"),
   path1: z.string().describe("First JSON path to compare (e.g., $.before)"),
   path2: z.string().describe("Second JSON path to compare (e.g., $.after)"),
-  whereClause: z.string().optional().describe("Optional WHERE clause filter"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(
     coerceNumber,
     z
@@ -543,14 +544,14 @@ export const JsonTypeSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("JSON path (defaults to $)"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonArrayLengthSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to array (defaults to $)"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonArrayAppendSchema = z.object({
@@ -558,21 +559,21 @@ export const JsonArrayAppendSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().describe("Path to array"),
   value: z.unknown().describe("Value to append"),
-  whereClause: z.string().describe("WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonKeysSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to object (defaults to $)"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const JsonEachSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to expand (defaults to $)"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().max(10000).optional().default(100)),
 });
 
@@ -589,7 +590,7 @@ export const JsonGroupArraySchema = z.object({
     .describe(
       "Column to group by. For JSON collection tables, use allowExpressions with json_extract(data, '$.field') instead.",
     ),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   allowExpressions: z
     .boolean()
     .optional()
@@ -618,7 +619,7 @@ export const JsonGroupObjectSchema = z.object({
     .describe(
       "Column to group by. For JSON collection tables, use allowExpressions with json_extract(data, '$.field') instead.",
     ),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   allowExpressions: z
     .boolean()
     .optional()
@@ -641,7 +642,7 @@ export const JsonPrettySchema = z.object({
 export const JsonbConvertSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to convert"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 // Schema for storage info tool
@@ -658,7 +659,7 @@ export const JsonStorageInfoSchema = z.object({
 export const JsonNormalizeColumnSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to normalize"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   outputFormat: z
     .string()
     .optional()

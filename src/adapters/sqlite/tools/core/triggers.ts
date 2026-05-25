@@ -62,12 +62,12 @@ export function createListTriggersTool(
     annotations: readOnly("List Triggers"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = ListTriggersSchema.parse(params);
+        const queryParams: unknown[] = [];
+      const input = ListTriggersSchema.parse(params);
 
         let sql =
           "SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'trigger'";
-        const queryParams: unknown[] = [];
-
+        
         if (input.table) {
           sql += " AND tbl_name = ?";
           queryParams.push(input.table);
@@ -102,7 +102,7 @@ export function createListTriggersTool(
           count: triggers.length,
           triggers,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -128,7 +128,7 @@ export function createCreateTriggerTool(
       let input;
       try {
         input = CreateTriggerSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
 
@@ -264,7 +264,7 @@ export function createCreateTriggerTool(
           message: `Trigger '${input.name}' created on table '${input.table}'`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
     },
@@ -290,7 +290,7 @@ export function createDropTriggerTool(
       let input;
       try {
         input = DropTriggerSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -339,7 +339,7 @@ export function createDropTriggerTool(
           success: true,
           message: `Trigger '${input.name}' dropped successfully`,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -419,7 +419,7 @@ async function main(): Promise<void> {
 
     // Start server
     await server.start();
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Fatal error", { error: error instanceof Error ? error : new Error(String(error)) });
     process.exit(1);
   }

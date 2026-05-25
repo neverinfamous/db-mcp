@@ -46,9 +46,10 @@ export function createGenerateSeriesTool(
     annotations: readOnly("Generate Series"),
     handler: (params: unknown, _context: RequestContext) => {
       let input;
+      
       try {
         input = GenerateSeriesSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve({
           ...formatHandlerError(error),
           count: 0,
@@ -103,6 +104,7 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateViewSchema.parse(params);
+//       const queryParams: unknown[] = [];
 
         // Validate and quote view name
         const viewName = sanitizeIdentifier(input.viewName);
@@ -130,7 +132,7 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
           message: `View '${input.viewName}' created`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",
@@ -156,6 +158,7 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = ListViewsSchema.parse(params);
+      const queryParams: unknown[] = [];
 
         let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'view'`;
         if (input.pattern) {
@@ -164,7 +167,7 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
         }
         sql += ` ORDER BY name`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         let views = (result.rows ?? []).map((row) => ({
           name: typeof row["name"] === "string" ? row["name"] : "",
@@ -181,7 +184,7 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
           count: views.length,
           views,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           count: 0,
@@ -207,6 +210,7 @@ export function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DropViewSchema.parse(params);
+//       const queryParams: unknown[] = [];
 
         // Validate and quote view name
         const viewName = sanitizeIdentifier(input.viewName);
@@ -240,7 +244,7 @@ export function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           message: `View '${input.viewName}' dropped`,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

@@ -27,7 +27,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateCsvTableSchema.parse(params);
-
+      
         sanitizeIdentifier(input.tableName);
 
         if (!path.isAbsolute(input.filePath)) {
@@ -99,7 +99,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
           sql,
           columns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

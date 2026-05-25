@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import nodePath from "node:path";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -37,7 +36,7 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
       let input;
       try {
         input = SqlDumpSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -75,7 +74,7 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
 
       const progress = buildProgressContext(context);
       const start = Date.now();
-      const resolvedPath = nodePath.resolve(input.outputPath);
+      const resolvedPath = pathCheck.resolvedPath;
 
       await sendProgress(progress, 1, 4, "Preparing dump file...");
 

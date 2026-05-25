@@ -1,3 +1,4 @@
+import { WhereConditionSchema } from "./where.js";
 /**
  * Text Processing Tool Output Schemas (14 tools)
  */
@@ -242,7 +243,7 @@ export const RegexExtractSchema = z.object({
     coerceNumber,
     z.number().optional().default(0).describe("Capture group index"),
   ),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().max(1000).optional().default(100)),
 });
 
@@ -250,7 +251,7 @@ export const RegexMatchSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to match"),
   pattern: z.string().max(200).describe("Regular expression pattern"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().max(1000).optional().default(100)),
 });
 
@@ -258,7 +259,7 @@ export const TextSplitSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to split"),
   delimiter: z.string().describe("Delimiter string"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -270,7 +271,7 @@ export const TextConcatSchema = z.object({
     .optional()
     .default("")
     .describe("Separator between values"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -279,7 +280,7 @@ export const TextReplaceSchema = z.object({
   column: z.string().describe("Column to update"),
   searchPattern: z.string().describe("Text to search for"),
   replaceWith: z.string().describe("Replacement text"),
-  whereClause: z.string().describe("WHERE clause"),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 
 export const TextTrimSchema = z.object({
@@ -290,7 +291,7 @@ export const TextTrimSchema = z.object({
     .optional()
     .default("both")
     .describe("Trim mode: 'both', 'left', or 'right'"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -298,7 +299,7 @@ export const TextCaseSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to transform"),
   mode: z.string().describe("Case transformation: 'upper' or 'lower'"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -313,7 +314,7 @@ export const TextSubstringSchema = z.object({
     coerceNumber,
     z.number().optional().describe("Number of characters"),
   ),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -360,7 +361,7 @@ export const TextNormalizeSchema = z.object({
     .describe(
       "Normalization mode: 'nfc', 'nfd', 'nfkc', 'nfkd', or 'strip_accents'",
     ),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -377,7 +378,7 @@ export const TextValidateSchema = z.object({
     .max(200)
     .optional()
     .describe("Custom regex (required if pattern=custom)"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   maxInvalid: z.preprocess(
     coerceNumber,
@@ -410,7 +411,7 @@ export const AdvancedSearchSchema = z.object({
         "Fuzzy match similarity threshold (0-1). Lower values are more lenient: 0.3-0.4 for loose matching (e.g., 'laptob' matches 'laptop'), 0.6-0.8 for strict matching.",
       ),
   ),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -423,7 +424,7 @@ export const TextSentimentSchema = z.object({
     .optional()
     .default(false)
     .describe("Return matched positive/negative words"),
-  whereClause: z.string().optional(),
+  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 

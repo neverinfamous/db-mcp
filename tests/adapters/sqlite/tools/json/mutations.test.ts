@@ -94,7 +94,7 @@ describe("JSON Mutation Tools", () => {
         column: "data",
         path: "$.title",
         value: "New Title",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         message: string;
@@ -116,7 +116,7 @@ describe("JSON Mutation Tools", () => {
         column: "data",
         path: "$.count",
         value: 42,
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowsAffected: number;
@@ -136,7 +136,7 @@ describe("JSON Mutation Tools", () => {
         column: "data",
         path: "title",
         value: "Bad",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         error: string;
@@ -159,7 +159,7 @@ describe("JSON Mutation Tools", () => {
         table: "documents",
         column: "data",
         mergeData: { price: 75, inStock: true },
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         message: string;

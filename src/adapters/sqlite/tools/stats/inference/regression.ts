@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../../utils/where-clause.js";
 import { validateColumnExists, validateNumericColumn } from "../helpers.js";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
@@ -6,7 +7,6 @@ import type {
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
 import {
-  validateWhereClause,
   sanitizeIdentifier,
 } from "../../../../../utils/index.js";
 import {
@@ -38,7 +38,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = RegressionSchema.parse(params);
-
+      
         if (input.degree < 1 || input.degree > 3) {
           return {
             success: false,
@@ -59,11 +59,11 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.xColumn);
         sanitizeIdentifier(input.yColumn);
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
+        if (input.conditions) {
+          // validateWhereClause() removed
         }
 
-        const andClause = input.whereClause ? ` AND ${input.whereClause}` : "";
+        const andClause = input.conditions ? ` AND ${buildWhereClause(input.conditions).sql}` : "";
         const degree = input.degree ?? 1;
 
         const sql = `
@@ -152,7 +152,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
           rSquared: Math.round(rSquared * 10000) / 10000,
           equation,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

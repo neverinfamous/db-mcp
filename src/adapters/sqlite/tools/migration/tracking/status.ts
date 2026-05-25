@@ -86,7 +86,7 @@ export function createMigrationStatusTool(
           counts,
           sourceSystems,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

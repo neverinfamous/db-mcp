@@ -161,7 +161,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       this.schemaManager = new SchemaManager(this);
 
       this.connected = true;
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Failed to connect to native SQLite: ${message}`, {
         code: ERROR_CODES.DB.CONNECT_FAILED.full,

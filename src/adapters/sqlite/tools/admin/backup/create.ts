@@ -34,7 +34,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
       let input;
       try {
         input = BackupSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), path: "" };
       }
 
@@ -72,7 +72,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      const resolvedPath = nodePath.resolve(input.targetPath);
+      const resolvedPath = pathCheck.resolvedPath;
       const escapedPath = resolvedPath.replace(/'/g, "''");
       const sql = `VACUUM INTO '${escapedPath}'`;
 
@@ -95,7 +95,7 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
           path: input.targetPath,
           durationMs: duration,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), path: input.targetPath };
       }
     },
@@ -119,7 +119,7 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
       let input;
       try {
         input = VacuumIntoCopySchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -158,7 +158,7 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      const resolvedPath = nodePath.resolve(input.outputPath);
+      const resolvedPath = pathCheck.resolvedPath;
       const escapedPath = resolvedPath.replace(/'/g, "''");
       const sql = `VACUUM INTO '${escapedPath}'`;
 
@@ -184,7 +184,7 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
           sizeBytes,
           durationMs: duration,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

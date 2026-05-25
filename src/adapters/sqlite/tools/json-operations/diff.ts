@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 /**
  * JSON Diff Tool
  *
@@ -17,7 +18,7 @@ import {
   ValidationError,
 } from "../../../../utils/errors/index.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
-import { validateWhereClause } from "../../../../utils/index.js";
+
 import { JsonDiffSchema, JsonDiffOutputSchema } from "../../schemas/json.js";
 
 /** Hard cap to prevent OOM on large tables */
@@ -63,10 +64,13 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
           input.path2,
         ];
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
-        }
+        if (input.conditions) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
+          }
 
         sql += ` LIMIT ${effectiveLimit}`;
 
@@ -85,7 +89,7 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: diffs.length,
           diffs,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

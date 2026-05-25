@@ -314,7 +314,7 @@ export class DbMcpServer {
       try {
         await adapter.disconnect();
         logger.info(`Disconnected adapter: ${id}`, { module: "SERVER" });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error(`Error disconnecting adapter ${id}`, {
           module: "SERVER",
           error: error instanceof Error ? error : undefined,

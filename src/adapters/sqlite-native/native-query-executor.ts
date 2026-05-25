@@ -34,7 +34,7 @@ export function nativeExecuteRead(
         .map((c) => ({ name: c.name, type: c.type ?? "unknown" })),
       executionTimeMs: Date.now() - start,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Query execution", log);
   }
 }
@@ -79,7 +79,7 @@ export function nativeExecuteWrite(
       result.lastInsertId = Number(info.lastInsertRowid);
     }
     return Promise.resolve(result);
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Write query", log);
   }
 }
