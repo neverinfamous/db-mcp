@@ -28,6 +28,7 @@ async function startStatelessServer(): Promise<void> {
       "--stateless",
       "--tool-filter",
       "starter",
+      "--no-auth-enforcement",
     ],
     {
       cwd: process.cwd(),

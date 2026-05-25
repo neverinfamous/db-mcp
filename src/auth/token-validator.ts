@@ -135,7 +135,7 @@ export class TokenValidator {
       return this.jwks;
     }
 
-    logger.info(`Fetching JWKS from: ${this.jwksUri}`, {
+    logger.debug(`Fetching JWKS from: ${this.jwksUri}`, {
       code: "AUTH_JWKS_FETCH",
     });
 
@@ -189,7 +189,14 @@ export class TokenValidator {
     // or constructor claims that would pollute the returned object's prototype.
     const safePayload: jose.JWTPayload = {};
     for (const key of Object.keys(payload)) {
-      if (key !== "__proto__" && key !== "constructor" && key !== "prototype") {
+      if (
+        key !== "__proto__" &&
+        key !== "constructor" &&
+        key !== "prototype" &&
+        key !== "valueOf" &&
+        key !== "toString" &&
+        key !== "hasOwnProperty"
+      ) {
         safePayload[key] = payload[key];
       }
     }

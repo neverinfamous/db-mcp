@@ -352,6 +352,11 @@
 - Updated E2E test suite to correctly assert rejection of `CREATE TRIGGER` via `sqlite_write_query` following scope escalation fixes.
 - Fixed TypeScript ESLint errors (`no-explicit-any`, `no-unsafe-member-access`) in `oauth.ts` JSON-RPC response filtering by replacing `any` casts with robust type guards.
 - Fixed VM sandbox unit test suite execution failures by explicitly injecting the required `CODEMODE_ISOLATION_INSECURE=1` environment variable flag during test setup.
+- Fixed Playwright E2E test server initialization failures by explicitly passing `--no-auth-enforcement` to unauthenticated test webservers.
+- Fixed TypeScript compiler errors in `mcp-server.ts` regarding exactOptionalPropertyTypes for `noAuthEnforcement`.
+- Fixed `sqlite_append_insight` tool registration to use the `"admin"` group instead of the invalid `"write"` group.
+- Fixed `sqlite_create_csv_table` test assertions to correctly handle SQLite `DB_QUERY_FAILED` responses when the CSV extension is missing.
+- Fixed ESLint unused variable and inferrable type annotation errors across `alter-table.ts` and `restore.ts`.
 
 ### Changed
 - Refactored `scope-map.ts` to use dynamic `registerToolScope()` string registration, deprecating static group evaluation.

@@ -77,9 +77,13 @@ export function registerBuiltInTools(
           const adapterHealth = await adapter.getHealth();
           (health["adapters"] as Record<string, unknown>)[id] = adapterHealth;
         } catch (error: unknown) {
+          let errorMsg = error instanceof Error ? error.message : "Unknown error";
+          // Redact potential passwords in connection strings (e.g., protocol://user:password@host)
+          errorMsg = errorMsg.replace(/(:[^:@/]+@)/g, ":***@");
+          
           (health["adapters"] as Record<string, unknown>)[id] = {
             connected: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMsg,
           };
         }
       }

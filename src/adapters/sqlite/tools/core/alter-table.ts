@@ -11,7 +11,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { write } from "../../../../utils/annotations.js";
+import { destructive } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
@@ -51,7 +51,7 @@ export function createAlterTableTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: AlterTableSchema,
     outputSchema: AlterTableOutputSchema,
     requiredScopes: ["admin"],
-    annotations: write("Alter Table"),
+    annotations: destructive("Alter Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {

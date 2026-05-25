@@ -166,6 +166,7 @@ export async function startServer(
       `./test-e2e-${suffix}.db`,
       "--tool-filter",
       "starter",
+      ...(args.includes("--auth-token") || args.includes("--oauth-enabled") || args.includes("--no-auth-enforcement") ? [] : ["--no-auth-enforcement"]),
       ...args,
     ],
     {

@@ -138,8 +138,9 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       // Validate table name
+      let safeTable: string;
       try {
-        sanitizeIdentifier(input.table);
+        safeTable = sanitizeIdentifier(input.table);
       } catch {
         return {
           ...formatHandlerError(
@@ -245,7 +246,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       const allDefs = [...columnDefs, ...tableConstraints];
       const ifNotExists = input.ifNotExists ? "IF NOT EXISTS " : "";
       const strictSuffix = input.strict ? " STRICT" : "";
-      const sql = `CREATE TABLE ${ifNotExists}"${input.table}" (${allDefs.join(", ")})${strictSuffix}`;
+      const sql = `CREATE TABLE ${ifNotExists}${safeTable} (${allDefs.join(", ")})${strictSuffix}`;
 
       try {
         await adapter.executeQuery(sql);
@@ -489,8 +490,9 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       // Validate table name
+      let safeTable: string;
       try {
-        sanitizeIdentifier(input.table);
+        safeTable = sanitizeIdentifier(input.table);
       } catch {
         return formatHandlerError(
           new ValidationError(
@@ -560,7 +562,7 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
           );
         }
 
-        const sql = `DROP TABLE "${input.table}"`;
+        const sql = `DROP TABLE ${safeTable}`;
         await adapter.executeQuery(sql);
 
         return {

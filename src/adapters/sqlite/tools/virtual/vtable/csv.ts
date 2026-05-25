@@ -28,7 +28,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const input = CreateCsvTableSchema.parse(params);
       
-        sanitizeIdentifier(input.tableName);
+        const safeTableName = sanitizeIdentifier(input.tableName);
 
         if (!path.isAbsolute(input.filePath)) {
           return {
@@ -83,11 +83,11 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
           options.push(`columns=${String(input.columns.length)}`);
         }
 
-        const sql = `CREATE VIRTUAL TABLE "${input.tableName}" USING csv(${options.join(", ")})`;
+        const sql = `CREATE VIRTUAL TABLE "${safeTableName}" USING csv(${options.join(", ")})`;
         await adapter.executeWriteQuery(sql);
 
         const colResult = await adapter.executeReadQuery(
-          `PRAGMA table_info("${input.tableName}")`,
+          `PRAGMA table_info("${safeTableName}")`,
         );
         const columns = (colResult.rows ?? []).map((row) =>
           typeof row["name"] === "string" ? row["name"] : "",
@@ -95,7 +95,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          message: `Created CSV virtual table '${input.tableName}'`,
+          message: `Created CSV virtual table '${safeTableName}'`,
           sql,
           columns,
         };

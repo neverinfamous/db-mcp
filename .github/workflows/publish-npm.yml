@@ -28,6 +28,12 @@ jobs:
       url: https://www.npmjs.com/package/db-mcp
 
     steps:
+      - name: Verify NPM Authentication
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "::warning::NPM_TOKEN is missing. This workflow relies on OIDC Trusted Publishing. If OIDC is not configured in npm, the publish step will fail."
+          fi
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:

@@ -59,4 +59,7 @@ export interface McpServerConfig {
 
   /** Audit logging configuration */
   audit?: AuditConfig;
+
+  /** Explicitly bypass auth requirement for HTTP transport */
+  noAuthEnforcement?: boolean;
 }

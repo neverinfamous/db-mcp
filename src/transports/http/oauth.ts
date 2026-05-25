@@ -67,12 +67,14 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
     logger.info("Simple bearer token authentication enabled", {
       code: "AUTH_BEARER_ENABLED",
     });
-    logger.warning(
-      "Using --auth-token grants blanket 'admin' access to all tools. " +
-        "It bypasses granular scope enforcement and is intended for development. " +
-        "Use OAuth 2.1 (--oauth-enabled) for granular scope enforcement in production.",
-      { code: "AUTH_BEARER_NO_SCOPES" },
-    );
+    
+    if (!process.env["MCP_AUTH_SCOPES"]) {
+      logger.warning(
+        "Using --auth-token without MCP_AUTH_SCOPES grants blanket 'admin' access to all tools. " +
+          "It bypasses granular scope enforcement. Define MCP_AUTH_SCOPES (e.g. 'read,write') to restrict access.",
+        { code: "AUTH_BEARER_NO_SCOPES" },
+      );
+    }
   } else if (state.app) {
     logger.warning(
       "No authentication configured for HTTP transport. " +
@@ -141,10 +143,14 @@ function createSimpleBearerAuth(expectedToken: string): RequestHandler {
       return;
     }
 
-    // Explicitly assign admin scope instead of bypassing validation logic.
+    // Explicitly assign configured scopes (or fallback to 'admin').
+    const configuredScopes = process.env["MCP_AUTH_SCOPES"]
+      ? process.env["MCP_AUTH_SCOPES"].split(",").map((s) => s.trim())
+      : ["admin"];
+
     req.auth = { 
       sub: "bearer", 
-      scopes: ["admin"],
+      scopes: configuredScopes,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 86400
     };

@@ -22,7 +22,7 @@ import { RestoreSchema } from "../../../schemas/admin.js";
  * Validate DDL to prevent execution of unauthorized or destructive statements
  * during restore operations.
  */
-function validateDdl(sql: string, type: string, name: string): void {
+function validateDdl(sql: string, type: string, name: string, allowTriggers = false): void {
   const cleanSql = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "");
   const upperSql = cleanSql.toUpperCase();
   // Reject potentially destructive or unauthorized statements
@@ -40,6 +40,11 @@ function validateDdl(sql: string, type: string, name: string): void {
   }
 
   if (type === "trigger") {
+    if (!allowTriggers) {
+      throw new ValidationError(
+        `DDL validation failed: trigger restoration is disabled for security reasons. Pass allowTriggers=true if you trust the backup file.`,
+      );
+    }
     // Ensure triggers do not attempt to target other databases explicitly
     if (upperSql.includes(" ON MAIN.") || upperSql.includes(" ON TEMP.")) {
       throw new ValidationError(
@@ -333,7 +338,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           const name = row["name"] as string;
           if (!createSql) continue;
           try {
-            validateDdl(createSql, "trigger", name);
+            validateDdl(createSql, "trigger", name, input.allowTriggers);
             await adapter.executeWriteQuery(createSql, undefined, true);
           } catch {
             // Trigger may reference missing tables — skip

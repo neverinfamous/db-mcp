@@ -177,12 +177,12 @@ export function createPragmaSettingsTool(
 ): ToolDefinition {
   return {
     name: "sqlite_pragma_settings",
-    description: "Get or set a PRAGMA value. WARNING: Do not use modifying PRAGMAs (like writable_schema or foreign_keys) without explicit user consent.",
+    description: "Get or set a PRAGMA value.",
     group: "admin",
     inputSchema: PragmaSettingsSchema,
     outputSchema: PragmaSettingsOutputSchema,
     requiredScopes: ["admin"],
-    annotations: { ...admin("PRAGMA Settings"), openWorldHint: true },
+    annotations: { ...admin("PRAGMA Settings"), openWorldHint: false },
     handler: async (_params: unknown, _context: RequestContext) => {
       let input;
       try {
@@ -247,12 +247,13 @@ export function createPragmaSettingsTool(
           );
           const newValue = newResult.rows?.[0]?.[input.pragma];
 
+          const isSensitive = ['key', 'cipher_key', 'hexkey', 'rekey'].includes(input.pragma.toLowerCase());
           return {
             success: true,
             pragma: input.pragma,
-            value: newValue,
-            oldValue,
-            newValue,
+            value: isSensitive ? "[REDACTED]" : newValue,
+            oldValue: isSensitive ? "[REDACTED]" : oldValue,
+            newValue: isSensitive ? "[REDACTED]" : newValue,
           };
         } else {
           // Just read value
@@ -448,7 +449,7 @@ export function createAttachDatabaseTool(
           success: true,
           message: `Database attached as '${input.alias}'`,
           alias: input.alias,
-          filepath: pathCheck.resolvedPath,
+          filepath: pathCheck.resolvedPath.split(/[\\/]/).pop() ?? "",
         };
       } catch (error: unknown) {
         return formatHandlerError(error);

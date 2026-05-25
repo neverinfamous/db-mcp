@@ -141,6 +141,15 @@ export class HttpTransport {
       this.state.config.resourceUri ??
       `http://localhost:${String(this.state.config.port)}`;
 
+    // Enforce authentication if HTTP is enabled and auth is not explicitly bypassed
+    if (!this.state.config.oauth.enabled && !this.state.config.authToken && !this.state.config.noAuthEnforcement) {
+      throw new DbMcpError(
+        "HTTP transport is enabled without authentication. You must configure OAuth (--oauth-enabled) or a Simple Auth Token (--auth-token), or explicitly bypass this check with --no-auth-enforcement.",
+        "AUTH_REQUIRED",
+        ErrorCategory.CONFIGURATION
+      );
+    }
+
     // Set up OAuth if enabled
     if (this.state.config.oauth.enabled) {
       if (

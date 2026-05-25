@@ -99,7 +99,7 @@ jobs:
       issues: write
     steps:
       - name: Create security issue if vulnerabilities found
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}

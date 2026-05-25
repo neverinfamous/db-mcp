@@ -92,7 +92,7 @@ describe("getCodeModeTools", () => {
     const tool = tools[0]!;
 
     expect(tool.group).toBe("codemode");
-    expect(tool.description).toContain("Execute JavaScript");
+    expect(tool.description).toContain("Execute JS");
     expect(tool.inputSchema).toBeDefined();
     expect(tool.outputSchema).toBeDefined();
     expect(tool.annotations).toBeDefined();

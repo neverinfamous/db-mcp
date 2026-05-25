@@ -322,6 +322,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Scope enforcement without implicit admin fallback
 - [x] Strict JWT clockTolerance defaults (30 seconds)
 - [x] CI/CD concurrent execution block safeguards
+- [x] Unauthenticated HTTP transport implicitly fails closed without `--no-auth-enforcement` flag
 - [x] Comprehensive security documentation
 
 ## 🚨 **Reporting Security Issues**

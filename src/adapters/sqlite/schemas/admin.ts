@@ -49,6 +49,7 @@ export const OptimizeSchema = z.object({
 
 export const RestoreSchema = z.object({
   sourcePath: z.string().describe("Path to backup file to restore from"),
+  allowTriggers: z.boolean().optional().default(false).describe("If true, allows triggers in the backup file to be restored. This is a security risk if the backup file is untrusted."),
 });
 
 export const VerifyBackupSchema = z.object({

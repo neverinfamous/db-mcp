@@ -59,6 +59,9 @@ export interface HttpTransportConfig {
   /** Simple bearer token for HTTP authentication (non-OAuth) */
   authToken?: string;
 
+  /** Explicitly bypass auth requirement */
+  noAuthEnforcement?: boolean;
+
   /** OAuth 2.1 configuration */
   oauth: {
     /** Enable OAuth authentication */

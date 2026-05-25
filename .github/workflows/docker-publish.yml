@@ -22,7 +22,7 @@ jobs:
   # Security scan BEFORE any images are pushed
   # This ensures no vulnerable images reach Docker Hub
   security-scan:
-    if: ${{ !cancelled() }} # M-3: run on upstream failure but not cancellation
+    if: ${{ success() }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read

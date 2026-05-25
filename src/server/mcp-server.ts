@@ -244,6 +244,15 @@ export class DbMcpServer {
     logger.info(`db-mcp server started (stdio transport)`, {
       module: "SERVER",
     });
+    
+    // Warn about STDIO granting universal admin scope
+    logger.warning(
+      "SECURITY WARNING: Running in STDIO mode grants blanket 'admin' access to all tools. " +
+      "This implies full trust in the local client/agent. If this server is exposed over SSH " +
+      "or used by an untrusted client, consider using HTTP transport with OAuth (--oauth-enabled) " +
+      "for granular scope enforcement.",
+      { module: "SERVER", code: "STDIO_ADMIN_RISK" }
+    );
   }
 
   /**
@@ -285,6 +294,7 @@ export class DbMcpServer {
       }),
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
+      noAuthEnforcement: this.config.noAuthEnforcement ?? false,
     });
 
     // Initialize transport with the MCP server reference

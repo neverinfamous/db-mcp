@@ -25,6 +25,7 @@ jobs:
     uses: ./.github/workflows/secrets-scanning.yml
     permissions:
       contents: read
+      pull-requests: write
 
   # L-5: PR security coverage is handled by independent workflow triggers
   # (lint-and-test.yml, codeql.yml, secrets-scanning.yml). The gatekeeper

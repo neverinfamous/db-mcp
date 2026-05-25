@@ -65,13 +65,8 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_execute_code",
     description:
-      "Execute JavaScript in a sandboxed environment with access to all SQLite tools " +
-      "via the sqlite.* API. Enables complex multi-step operations in a single call. " +
-      "Groups: sqlite.core, sqlite.json, sqlite.text, sqlite.stats, sqlite.vector, " +
-      "sqlite.admin, sqlite.geo, sqlite.introspection, sqlite.migration. " +
-      "Use sqlite.help() for all groups, sqlite.<group>.help() for methods. " +
-      "Example: const tables = await sqlite.core.listTables(); " +
-      "const schema = await sqlite.core.describeTable(tables[0].name); return schema;",
+      "Execute JS in a sandbox using the sqlite.* API (e.g. sqlite.core.listTables()). " +
+      "Use sqlite.help() for docs. WARNING: Code can modify the DB unless readonly: true is passed.",
     group: "codemode",
     inputSchema: ExecuteCodeSchema,
     outputSchema: ExecuteCodeOutputSchema,
