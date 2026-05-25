@@ -317,6 +317,12 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] CI/CD pipeline Trivy SHA-pinning
 - [x] SQL string literal credential redaction in audit logs
 - [x] DSN/URI regex credential scrubbing in error formatters
+- [x] Code Mode worker sandbox Function constructor nullification
+- [x] Strict PRAGMA blocklist extended for DoS prevention (`locking_mode`, `mmap_size`)
+- [x] Strict path boundary blocking for in-memory virtual paths (`:memory:`)
+- [x] Scope enforcement without implicit admin fallback
+- [x] Strict JWT clockTolerance defaults (30 seconds)
+- [x] CI/CD concurrent execution block safeguards
 - [x] Comprehensive security documentation
 
 ## 🚨 **Reporting Security Issues**

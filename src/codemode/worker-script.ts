@@ -242,6 +242,7 @@ async function executeInWorker(): Promise<void> {
       Proxy: undefined,
       Reflect: undefined,
       Buffer: undefined,
+      Function: undefined,
     };
 
     const context = vm.createContext(sandbox, {
@@ -289,7 +290,8 @@ async function executeInWorker(): Promise<void> {
         // Freeze Object.prototype to block __proto__ traversal
         secureFreeze(Object.prototype);
         // Freeze Function.prototype to block constructor chain
-        secureFreeze(Function.prototype);
+        secureFreeze((function(){}).constructor.prototype);
+        secureFreeze((function(){}).constructor);
         // Freeze Object.getPrototypeOf to block prototype chain escapes
         secureFreeze(Object.getPrototypeOf);
       }).call(this);

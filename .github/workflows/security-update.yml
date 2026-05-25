@@ -5,6 +5,11 @@ on:
     # Run weekly on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
   workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
   pull_request:
     branches: [main]
     paths:
@@ -27,15 +32,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v3
 
       - name: Build image for scanning
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v6
         with:
           context: .
           file: Dockerfile
@@ -58,7 +63,7 @@ jobs:
           skip-dirs: '/usr/local/lib/node_modules/npm'
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v3
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
@@ -95,7 +100,7 @@ jobs:
       issues: write
     steps:
       - name: Create security issue if vulnerabilities found
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v7
         env:
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}

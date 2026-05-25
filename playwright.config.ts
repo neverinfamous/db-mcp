@@ -68,6 +68,7 @@ export default defineConfig({
         ...process.env,
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
+        CODEMODE_ISOLATION: "worker",
       },
     },
     {
@@ -82,6 +83,7 @@ export default defineConfig({
         ...process.env,
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
+        CODEMODE_ISOLATION: "worker",
         SPATIALITE_PATH:
           "./extensions/mod_spatialite-5.1.0-win-amd64/mod_spatialite.dll",
         CSV_EXTENSION_PATH: "./extensions/xsv0.dll",
@@ -95,7 +97,7 @@ export default defineConfig({
       timeout: 30000,
       stdout: "pipe",
       stderr: "pipe",
-      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000" },
+      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000", CODEMODE_ISOLATION: "worker" },
     },
   ],
 });

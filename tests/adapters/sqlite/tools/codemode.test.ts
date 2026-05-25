@@ -7,6 +7,8 @@
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
+process.env.CODEMODE_ISOLATION = "worker";
+
 import {
   getCodeModeTools,
   cleanupCodeMode,

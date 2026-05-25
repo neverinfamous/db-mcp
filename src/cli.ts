@@ -212,7 +212,7 @@ Transport Options:
   --transport, -t <type>    Transport type: stdio (default), http, sse
   --port, -p <port>         HTTP port (default: 3000)
   --server-host <host>      Host/IP to bind to (default: 127.0.0.1)
-                            Use 0.0.0.0 to allow external connections
+                            Use 127.0.0.1 for local, 0.0.0.0 to allow external connections
   --stateless               Use stateless HTTP mode (no session management, no SSE)
                             Ideal for serverless deployments (Lambda, Workers)
   --enable-hsts             Enable HSTS header (use when behind HTTPS)
@@ -223,7 +223,7 @@ Authentication Options:
   --oauth-issuer <url>      Authorization server URL (issuer)
   --oauth-audience <aud>    Expected token audience
   --oauth-jwks-uri <url>    JWKS URI (auto-discovered from issuer if not set)
-  --oauth-clock-tolerance <seconds>  Clock tolerance in seconds (default: 60)
+  --oauth-clock-tolerance <seconds>  Clock tolerance in seconds (default: 30)
 
 Database Options:
   --sqlite <path>           Add SQLite database (WASM/sql.js)

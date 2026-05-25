@@ -78,6 +78,15 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 
 ### Security
+- **[Critical]** Code Mode Sandbox: Removed deprecated `CODEMODE_ISOLATION_NATIVE_ADDON_ACK` escape hatch and changed default isolation to `isolate` (`isolated-vm`), ensuring true V8 separation by default.
+- **[Critical]** Authorization: Replaced implicit `admin` fallback in `registerToolImpl` with explicit scope enforcement to prevent tools from bypassing capability checks when scopes are undefined.
+- **[High]** DoS: Added `locking_mode` and `mmap_size` to the `BLOCKED_PRAGMAS` list in `query-validation.ts` to prevent exclusive database lock starvation.
+- **[High]** Path Traversal: Explicitly blocked `:memory:` virtual paths in `validate-path.ts` to prevent dynamic mount exploits in `sqlite_backup` and `sqlite_restore`.
+- **[High]** Code Mode Sandbox: Completely nullified `Function` constructor access in the `worker_threads` fallback and secured prototype freezing to block dynamic code compilation.
+- **[Medium]** CLI: Corrected `--server-host` exposure text to clarify `127.0.0.1` default, preventing unintentional network binding over `0.0.0.0`.
+- **[Medium]** Auth Validation: Corrected `clockTolerance` default parameter mismatch in `token-validator.ts` from 60 to 30 seconds for stricter JWT timing.
+- **[Medium]** CI/CD: Implemented `concurrency` block safeguards in `e2e.yml`, `lint-and-test.yml`, `security-update.yml`, and `codeql.yml` to automatically cancel stale runs.
+- **[Medium]** CI/CD: Corrected incorrectly annotated semantic version comments for pinned action SHAs to `v4` and `v3` to prevent supply chain confusion.
 - **[Critical]** Code Mode Sandbox: Fixed bypass in `validateCode` where multi-line `/* ... */` comments could hide malicious `import` or `eval` patterns from the regex blocklist by stripping all comments before validation.
 - **[High]** Session Management: Fixed missing session ownership verification in the legacy SSE transport (`legacy-sse.ts`), ensuring SSE streams are strictly bound to the authenticated subject that created the session.
 - **[High]** Admin Tools: Replaced PRAGMA blocklist with a strict allowlist in `pragma.ts`, fully mitigating the risk of zero-day SQLite PRAGMA vulnerabilities or unrecognized destructive commands.

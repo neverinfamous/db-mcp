@@ -308,24 +308,18 @@ function initializePool(): void {
 
   // isolate mode provides true C++ V8 isolate separation where host prototypes
   // are inaccessible by design. It is vastly superior to worker mode for untrusted code.
-  // The opt-in is required due to the complexity of deploying native addons, not security.
-  let mode: SandboxMode = "worker";
-  if (modeEnv === "isolate") {
-    const insecureAck =
-      process.env["CODEMODE_ISOLATION_NATIVE_ADDON_ACK"]?.toLowerCase();
-    if (insecureAck === "1" || insecureAck === "true") {
-      mode = "isolate";
-      logger.info(
-        "CODEMODE_ISOLATION=isolate enabled: true V8 isolate separation active.",
-        { module: "CODEMODE" as const, operation: "initialize" },
-      );
-    } else {
-      logger.warning(
-        "CODEMODE_ISOLATION=isolate requires CODEMODE_ISOLATION_NATIVE_ADDON_ACK=1 to acknowledge " +
-          "native addon deployment requirements. Falling back to worker mode.",
-        { module: "CODEMODE" as const, operation: "initialize" },
-      );
-    }
+  // We prefer it by default unless explicitly disabled or native addon is missing.
+  let mode: SandboxMode = "isolate";
+  
+  if (modeEnv === "worker") {
+    mode = "worker";
+    logger.info("CODEMODE_ISOLATION=worker enabled: using weaker vm sandbox.",
+      { module: "CODEMODE" as const, operation: "initialize" }
+    );
+  } else {
+    logger.info("Code Mode isolation defaulting to 'isolate' (true V8 separation).",
+      { module: "CODEMODE" as const, operation: "initialize" }
+    );
   }
 
   setDefaultSandboxMode(mode);

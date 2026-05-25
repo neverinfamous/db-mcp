@@ -84,17 +84,13 @@ export function registerToolImpl(
         );
 
         const execFn = async (): Promise<ToolResponse> => {
-          let authCtx = getAuthContext();
+          const authCtx = getAuthContext();
           const requiredScopes = tool.requiredScopes ?? ["admin"];
 
-          authCtx ??= {
-            authenticated: true,
-            scopes: ["admin"],
-            clientIp: "127.0.0.1",
-          };
+          const userScopes = authCtx?.scopes ?? [];
 
-          if (!scopesGrantToolAccess(authCtx.scopes, tool.name)) {
-            throw new InsufficientScopeError(requiredScopes, authCtx.scopes);
+          if (!scopesGrantToolAccess(userScopes, tool.name)) {
+            throw new InsufficientScopeError(requiredScopes, userScopes);
           }
 
           const result = await tool.handler(args, context);
