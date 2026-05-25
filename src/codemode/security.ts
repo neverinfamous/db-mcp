@@ -93,6 +93,11 @@ export class CodeModeSecurityManager {
     }
 
     existing.count++;
+    
+    // Move to end of map to maintain LRU order for eviction
+    this.rateLimitMap.delete(clientId);
+    this.rateLimitMap.set(clientId, existing);
+    
     return true;
   }
 
@@ -116,30 +121,60 @@ export class CodeModeSecurityManager {
     }
 
     try {
-      const serialized = JSON.stringify(result);
+      const redactedResult = this.redactObject(result);
+      const serialized = JSON.stringify(redactedResult);
+      
       if (serialized === undefined) {
         throw new Error("Not serializable");
       }
-      let finalSerialized = serialized;
-      if (typeof finalSerialized === "string") {
-        finalSerialized = finalSerialized.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]");
-      }
       
-      if (finalSerialized.length > this.config.maxResultSize) {
+      if (serialized.length > this.config.maxResultSize) {
         return {
           _truncated: true,
-          _originalSize: finalSerialized.length,
+          _originalSize: serialized.length,
           _maxSize: this.config.maxResultSize,
-          preview: finalSerialized.substring(0, 1000) + "...",
+          preview: serialized.substring(0, 1000) + "...",
         };
       }
-      return JSON.parse(finalSerialized);
+      return JSON.parse(serialized);
     } catch {
       return {
         _error: "Result could not be serialized",
         _type: typeof result,
       };
     }
+  }
+
+  /**
+   * Deep clone object to redact sensitive keys and string values
+   */
+  private redactObject(obj: unknown, depth = 0): unknown {
+    if (depth > 5 || obj === null || obj === undefined) {
+      return obj;
+    }
+    
+    if (typeof obj === "string") {
+      const globalRegex = new RegExp(SENSITIVE_KEY_PATTERN.source, "gi");
+      return obj.replace(globalRegex, "[REDACTED]");
+    }
+    
+    if (typeof obj !== "object") {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.redactObject(item, depth + 1));
+    }
+
+    const redacted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (SENSITIVE_KEY_PATTERN.test(key)) {
+        redacted[key] = "[REDACTED]";
+      } else {
+        redacted[key] = this.redactObject(value, depth + 1);
+      }
+    }
+    return redacted;
   }
 
   /**

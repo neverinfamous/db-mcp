@@ -64,8 +64,9 @@
 ### Security
 - **[Critical]** Authorization: Fixed PRAGMA bypass vulnerability in `sqlite_read_query` by extending global AST pre-parsing to explicitly reject state-mutating PRAGMAs.
 - **[High]** Input Validation: Escaped identifiers and validated check constraints within `sqlite_create_table` to prevent SQL injection in foreign keys and checks.
-- **[High]** DoS: Replaced global rate-limit eviction with partial oldest-10% eviction to prevent spoofing-based rate limit starvation.
+- **[High]** DoS: Upgraded Code Mode rate limiter to a strict LRU (Least Recently Used) eviction algorithm to prevent spoofing-based rate limit starvation.
 - **[High]** Scope Enforcement: Re-mapped `sqlite_drop_table` to the `ADMIN_TOOLS` array dynamically to prevent execution by `write`-scoped tokens.
+- **[High]** Credential Leakage: Replaced regex string-replacement with recursive structural JSON redaction in Code Mode to ensure absolute payload integrity and prevent bypasses.
 - **[High]** Credential Echo: Expanded `SENSITIVE_KEY_PATTERN` in Code Mode and added comprehensive inline `SENSITIVE_VALUE_PATTERN` string redaction to the audit log interceptor to protect modern API keys.
 - **[High]** DoS: Mitigated ReDoS in `sqlite_regex_match` and `sqlite_regex_extract` by implementing a strict 10,000-character truncation threshold before regex execution.
 - **[High]** DoS: Implemented a hard 100-call quota for Code Mode RPC bridges per execution to prevent infinite loop host starvation.
