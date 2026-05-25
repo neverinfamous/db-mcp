@@ -57,9 +57,11 @@
     "cors": "2.8.5",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",
+    "isolated-vm": "^6.1.2",
     "jose": "6.2.1",
     "sql.js": "1.14.1",
-    "zod": "3.25.0",
+    "sqlite-parser": "^1.0.1",
+    "zod": "^3.25.0 || ^4.0.0",
     "zod-to-json-schema": "3.25.2"
   },
   "devDependencies": {

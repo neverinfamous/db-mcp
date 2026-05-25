@@ -6,75 +6,98 @@
  */
 
 import { ValidationError } from "../utils/errors/index.js";
-import { isDDL } from "./sqlite-helpers.js";
 import { getAuthContext } from "../auth/auth-context.js";
-import { normalizeForPatternMatching } from "../utils/where-clause.js";
+import parser from "sqlite-parser";
 
 /**
- * Pre-compiled dangerous SQL patterns for injection detection.
- * Hoisted to module scope to avoid re-allocating RegExp objects per query.
+ * Functions that are generally dangerous in untrusted queries
+ * (e.g., loading extensions, writing files, or data exfiltration oracles).
  */
-const DANGEROUS_SQL_PATTERNS: RegExp[] = [
-  // Comprehensive stacked-query keyword blocklist — mirrors where-clause.ts (M-4 audit finding).
-  // Catches all SQL statements that could follow a semicolon injection.
-  /;\s*(DROP|DELETE|TRUNCATE|INSERT|UPDATE|CREATE|ALTER|ATTACH|DETACH|SELECT|REPLACE|VACUUM|ANALYZE|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE|REINDEX|EXPLAIN)\b/i,
-  /;\s*UNION\s+(ALL\s+)?SELECT/i,
-];
+const UNSAFE_FUNCTIONS = new Set([
+  "LOAD_EXTENSION",
+  "WRITEFILE",
+  "READFILE",
+  // Hex, substr, case when are often used in blind injection, but can be legit.
+  // We'll block the most dangerous system-level ones here.
+]);
 
 /**
- * Comment-style SQL patterns.
- * Checked against string-literal-stripped SQL to avoid false positives
- * on comment markers inside quoted strings (e.g., SELECT 'a--b').
+ * DDL operations that require admin scope
  */
-const COMMENT_SQL_PATTERNS: RegExp[] = [/--.*$/m, /\/\*[\s\S]*?\*\//];
+const DDL_VARIANTS = new Set(["create", "drop", "alter", "vacuum", "analyze"]);
 
 /**
- * Strip SQL string literals so comment detection doesn't match
- * markers inside quoted values. Handles escaped quotes ('').
+ * Statements that mutate data (blocked in read-only mode)
  */
-function stripSqlStringLiterals(sql: string): string {
-  return sql.replace(/'(?:''|[^'])*'/g, "''");
-}
+const WRITE_VARIANTS = new Set([
+  "insert",
+  "update",
+  "delete",
+  "replace",
+  ...DDL_VARIANTS,
+]);
+
+import type { SQLiteStatementList, SQLiteNode } from "sqlite-parser";
 
 /**
- * Write-statement prefixes blocked in read-only mode
- */
-const WRITE_PREFIXES = [
-  "INSERT",
-  "UPDATE",
-  "DELETE",
-  "DROP",
-  "CREATE",
-  "ALTER",
-  "TRUNCATE",
-] as const;
-
-/**
- * Validate query for safety (SQL injection prevention).
+ * Validate query for safety (SQL injection prevention) using AST parsing.
  *
  * @param sql - SQL query to validate
  * @param isReadOnly - Whether to enforce read-only restrictions
  * @throws ValidationError if query violates safety rules
  */
 export function validateQuery(sql: string, isReadOnly: boolean): void {
-  const trimmedSql = sql.trim().toUpperCase();
+  let ast: SQLiteStatementList;
+  try {
+    ast = parser(sql);
+  } catch (error) {
+    throw new ValidationError(
+      `Failed to parse SQL: ${error instanceof Error ? error.message : String(error)}`,
+      "DB_PARSE_ERROR",
+    );
+  }
 
+  if (ast?.type !== "statement" || ast?.variant !== "list" || !Array.isArray(ast?.statement)) {
+    throw new ValidationError("Invalid SQL statement structure", "DB_INVALID_SQL");
+  }
+
+  // 1. Stacked Query Prevention (Array of multiple statements)
+  if (ast.statement.length > 1) {
+    throw new ValidationError(
+      "Multiple stacked statements are not allowed.",
+      "DB_DANGEROUS_PATTERN",
+    );
+  }
+
+  if (ast.statement.length === 0) {
+    return; // Empty query is harmless
+  }
+
+  const rootStmt = ast.statement[0];
+  if (!rootStmt?.variant) {
+    throw new ValidationError("Invalid statement structure", "DB_INVALID_SQL");
+  }
+
+  // 2. Read-Only Enforcement
   if (isReadOnly) {
-    // For read-only queries, block mutating statements
-    for (const prefix of WRITE_PREFIXES) {
-      if (trimmedSql.startsWith(prefix)) {
-        throw new ValidationError(
-          `Read-only mode: ${prefix} statements are not allowed`,
-          "DB_READ_ONLY_VIOLATION",
-        );
-      }
+    if (WRITE_VARIANTS.has(rootStmt.variant)) {
+      throw new ValidationError(
+        `Read-only mode: ${rootStmt.variant.toUpperCase()} statements are not allowed`,
+        "DB_READ_ONLY_VIOLATION",
+      );
+    }
+    // Only SELECT and EXPLAIN should generally be allowed in read-only mode
+    if (rootStmt.variant !== "select" && rootStmt.variant !== "explain") {
+      throw new ValidationError(
+        `Read-only mode: ${rootStmt.variant.toUpperCase()} statements are not allowed`,
+        "DB_READ_ONLY_VIOLATION",
+      );
     }
   } else {
     // Write mode: block destructive DDL unless user has admin scope (F06)
-    if (isDDL(sql)) {
+    if (DDL_VARIANTS.has(rootStmt.variant)) {
       const authCtx = getAuthContext();
       // If auth is enabled (authCtx is present and authenticated) and missing admin scope, block it.
-      // If stdio transport is used (authCtx undefined) or OAuth is disabled (authenticated is false), allow it.
       if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin")) {
         throw new ValidationError(
           "DDL operations (CREATE, DROP, ALTER) require 'admin' scope",
@@ -84,27 +107,36 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     }
   }
 
-  // Block obvious SQL injection patterns
-  // Note: This is a basic check; parameterized queries are the primary defense
-  const normalizedSql = normalizeForPatternMatching(sql);
-  for (const pattern of DANGEROUS_SQL_PATTERNS) {
-    if (pattern.test(normalizedSql)) {
-      throw new ValidationError(
-        "Query contains potentially dangerous patterns.",
-        "DB_DANGEROUS_PATTERN",
-      );
+  // 3. Walk the AST to detect unsafe function calls or dangerous nodes
+  walkAst(ast, (node) => {
+    if (node.type === "function" && typeof node.name === "object" && node.name !== null && typeof node.name.name === "string") {
+      const funcName = node.name.name.toUpperCase();
+      if (UNSAFE_FUNCTIONS.has(funcName)) {
+        throw new ValidationError(
+          `Unsafe function call detected: ${funcName}`,
+          "DB_DANGEROUS_PATTERN",
+        );
+      }
     }
-  }
+  });
+}
 
-  // Check comment patterns against string-literal-stripped SQL
-  // to avoid false positives on markers inside quoted strings
-  const sqlWithoutStrings = stripSqlStringLiterals(sql);
-  for (const pattern of COMMENT_SQL_PATTERNS) {
-    if (pattern.test(sqlWithoutStrings)) {
-      throw new ValidationError(
-        "Query contains potentially dangerous patterns.",
-        "DB_DANGEROUS_PATTERN",
-      );
+/**
+ * Helper to traverse the SQLite AST
+ */
+function walkAst(node: unknown, visitor: (node: SQLiteNode) => void): void {
+  if (node === undefined || node === null || typeof node !== "object") return;
+
+  visitor(node as SQLiteNode);
+
+  for (const key of Object.keys(node)) {
+    const value = (node as Record<string, unknown>)[key];
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        walkAst(item, visitor);
+      }
+    } else if (typeof value === "object") {
+      walkAst(value, visitor);
     }
   }
 }

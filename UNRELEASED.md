@@ -62,6 +62,9 @@
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 
 ### Security
+- **[H-52]** Code Mode Sandbox: Removed insecure `node:vm` fallback logic and migrated to `isolated-vm` for true V8 isolate memory and execution separation, preventing prototype pollution escapes.
+- **[M-61]** HTTP Transport: Replaced `trustProxy` boolean with `trustedProxyIps` configuration to mitigate IP spoofing attacks.
+- **[M-62]** Query Validation: Implemented true AST-based SQL validation using `sqlite-parser` to replace weak regex-based DDL validation, preventing comment-hiding and whitespace bypasses.
 - **[H-50]** Virtual Tables: Parameterized queries in `info.ts`, `list.ts`, and `drop.ts` for virtual table schemas to prevent SQL injection.
 - **[H-51]** Admin Tools: Restricted `drop_virtual_table` to `admin` scope instead of `write`.
 - **[M-55]** Admin Tools: Added strict blocklist for destructive PRAGMAs (`writable_schema`, `trusted_schema`, `defensive`, `cell_size_check`, `temp_store_directory`) and coerced `PRAGMA optimize` mask input to an integer to prevent injection.

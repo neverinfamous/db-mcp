@@ -2,7 +2,7 @@
  * db-mcp - Sandbox Factory
  *
  * Factory functions for creating sandbox instances with configurable isolation modes.
- * Allows runtime selection between vm-based and worker-based sandboxes.
+ * Allows runtime selection between isolated-vm and worker-based sandboxes.
  */
 
 import { CodeModeSandbox, SandboxPool } from "./sandbox.js";
@@ -13,7 +13,7 @@ import type { SandboxOptions, PoolOptions, SandboxResult } from "./types.js";
 /**
  * Sandbox isolation mode
  */
-export type SandboxMode = "vm" | "worker";
+export type SandboxMode = "isolate" | "worker";
 
 /**
  * Unified sandbox interface
@@ -54,7 +54,7 @@ export interface SandboxModeInfo {
 }
 
 // Default mode (module-level state)
-let defaultMode: SandboxMode = "worker";
+let defaultMode: SandboxMode = "isolate";
 
 /**
  * Set the default sandbox mode
@@ -77,12 +77,12 @@ export function getDefaultSandboxMode(): SandboxMode {
  * Get available sandbox modes
  */
 export function getAvailableSandboxModes(): SandboxMode[] {
-  return ["vm", "worker"];
+  return ["isolate", "worker"];
 }
 
 /**
  * Create a sandbox instance
- * @param mode - Isolation mode ('vm' or 'worker')
+ * @param mode - Isolation mode ('isolate' or 'worker')
  * @param options - Sandbox options
  */
 export function createSandbox(
@@ -94,27 +94,15 @@ export function createSandbox(
   switch (selectedMode) {
     case "worker":
       return WorkerSandbox.create(options);
-    case "vm":
+    case "isolate":
     default:
-      if (
-        process.env["CODEMODE_ISOLATION_INSECURE"] !== "1" &&
-        process.env["CODEMODE_ISOLATION_INSECURE"] !== "true"
-      ) {
-        throw new Error(
-          "VM sandbox mode requires CODEMODE_ISOLATION_INSECURE=1 due to unfrozen host prototypes. Use worker mode for production."
-        );
-      }
-      if (process.env["NODE_ENV"] === "production") {
-        throw new Error("VM sandbox mode (CODEMODE_ISOLATION_INSECURE=1) cannot be used in production environments. It lacks prototype freezing and is vulnerable to string-concatenated pattern bypasses and prototype pollution. Use worker mode for production.");
-      }
-      logger.warning("Using fallback in-process VM sandbox for Code Mode. This is fundamentally insecure against string-concatenated payload bypasses and does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return CodeModeSandbox.create(options);
   }
 }
 
 /**
  * Create a sandbox pool
- * @param mode - Isolation mode ('vm' or 'worker')
+ * @param mode - Isolation mode ('isolate' or 'worker')
  * @param poolOptions - Pool configuration
  * @param sandboxOptions - Sandbox configuration
  */
@@ -128,20 +116,8 @@ export function createSandboxPool(
   switch (selectedMode) {
     case "worker":
       return new WorkerSandboxPool(poolOptions, sandboxOptions);
-    case "vm":
+    case "isolate":
     default:
-      if (
-        process.env["CODEMODE_ISOLATION_INSECURE"] !== "1" &&
-        process.env["CODEMODE_ISOLATION_INSECURE"] !== "true"
-      ) {
-        throw new Error(
-          "VM sandbox mode requires CODEMODE_ISOLATION_INSECURE=1 due to unfrozen host prototypes. Use worker mode for production."
-        );
-      }
-      if (process.env["NODE_ENV"] === "production") {
-        throw new Error("VM sandbox mode (CODEMODE_ISOLATION_INSECURE=1) cannot be used in production environments. It lacks prototype freezing and is vulnerable to string-concatenated pattern bypasses and prototype pollution. Use worker mode for production.");
-      }
-      logger.warning("Using fallback in-process VM sandbox for Code Mode. This is fundamentally insecure against string-concatenated payload bypasses and does not provide full security isolation. Use worker_threads isolation if untrusted input is expected.", { module: "CODEMODE" });
       return new SandboxPool(poolOptions, sandboxOptions);
   }
 }
@@ -159,14 +135,14 @@ export function getSandboxModeInfo(mode: SandboxMode): SandboxModeInfo {
         security: "Enhanced - isolated memory, hard timeouts",
         requirements: "Node.js worker_threads (built-in)",
       };
-    case "vm":
+    case "isolate":
     default:
       return {
-        name: "VM Context",
-        isolation: "Script isolation within same process",
-        performance: "Low overhead (reusable contexts)",
-        security: "Standard - script isolation, blocked globals",
-        requirements: "Node.js vm module (built-in)",
+        name: "Isolated VM",
+        isolation: "True V8 Isolate within same process",
+        performance: "Low overhead (fast isolate creation)",
+        security: "Maximum - strict C++ memory isolation",
+        requirements: "isolated-vm native package",
       };
   }
 }

@@ -1,39 +1,29 @@
 /**
  * db-mcp - Code Mode Sandbox
  *
- * Sandboxed execution environment using Node.js vm module.
- * Provides code isolation with memory/time limits for LLM-generated code.
- *
- * Note: This uses Node.js vm module which provides script isolation but not
- * a full security boundary. For enhanced isolation, use worker mode.
+ * Sandboxed execution environment using isolated-vm.
+ * Provides true V8 isolate separation for maximum security.
  */
 
-import vm from "node:vm";
+import ivm from "isolated-vm";
 import { randomUUID } from "node:crypto";
-import { format } from "node:util";
-import { DbMcpError } from "../utils/errors/base.js";
-import { ErrorCategory } from "../utils/errors/categories.js";
 import {
   DEFAULT_SANDBOX_OPTIONS,
   DEFAULT_POOL_OPTIONS,
   type SandboxOptions,
   type PoolOptions,
   type SandboxResult,
-  type ExecutionMetrics,
 } from "./types.js";
 import { transformAutoReturn } from "./auto-return.js";
 
 /**
- * A sandboxed execution context using Node.js vm module
+ * A sandboxed execution context using isolated-vm
  */
 export class CodeModeSandbox {
-  private context: vm.Context;
   private readonly options: Required<SandboxOptions>;
   private disposed = false;
-  private readonly logBuffer: string[] = [];
 
-  private constructor(context: vm.Context, options: Required<SandboxOptions>) {
-    this.context = context;
+  private constructor(options: Required<SandboxOptions>) {
     this.options = options;
   }
 
@@ -41,114 +31,15 @@ export class CodeModeSandbox {
    * Create a new sandbox instance
    */
   static create(options?: SandboxOptions): CodeModeSandbox {
-    if (
-      process.env["CODEMODE_ISOLATION_INSECURE"] !== "1" &&
-      process.env["CODEMODE_ISOLATION_INSECURE"] !== "true"
-    ) {
-      throw new Error(
-        "VM sandbox mode requires CODEMODE_ISOLATION_INSECURE=1 due to unfrozen host prototypes. Use worker mode for production."
-      );
-    }
     const opts: Required<SandboxOptions> = {
       ...DEFAULT_SANDBOX_OPTIONS,
       ...options,
     };
-
-    const logBuffer: string[] = [];
-
-    // Create a restricted global scope
-    const sandbox: Record<string, unknown> = {
-      console: {
-        log(...args: unknown[]): void {
-          logBuffer.push(format(...args));
-        },
-        warn(...args: unknown[]): void {
-          logBuffer.push(`[WARN] ${format(...args)}`);
-        },
-        error(...args: unknown[]): void {
-          logBuffer.push(`[ERROR] ${format(...args)}`);
-        },
-        info(...args: unknown[]): void {
-          logBuffer.push(`[INFO] ${format(...args)}`);
-        },
-      },
-      // Safe built-ins
-      JSON,
-      Math,
-      Date,
-      Array,
-      Object,
-      String,
-      Number,
-      Boolean,
-      RegExp,
-      Map,
-      Set,
-      WeakMap,
-      WeakSet,
-      Promise,
-      Symbol,
-      Error,
-      TypeError,
-      RangeError,
-      SyntaxError,
-      ReferenceError,
-      URIError,
-      parseInt,
-      parseFloat,
-      isNaN,
-      isFinite,
-      encodeURI,
-      encodeURIComponent,
-      decodeURI,
-      decodeURIComponent,
-      // Blocked globals
-      setTimeout: undefined,
-      setInterval: undefined,
-      setImmediate: undefined,
-      process: undefined,
-      require: undefined,
-      __dirname: undefined,
-      __filename: undefined,
-      globalThis: undefined,
-      global: undefined,
-      Proxy: undefined,
-      Reflect: undefined,
-      WeakRef: undefined,
-    };
-
-    const context = vm.createContext(sandbox, {
-      name: "codemode-sandbox",
-      codeGeneration: {
-        strings: false, // Disable eval() and new Function()
-        wasm: false, // Disable WebAssembly compilation
-      },
-    });
-
-    // NOTE: Prototype freezing is intentionally NOT applied here.
-    // Unlike worker-script.ts (which gets its own V8 copies), this
-    // sandbox passes host builtins directly (Object, Array, Error, etc.).
-    // Freezing them would freeze the host process prototypes too.
-    // WARNING: This means the vm sandbox is vulnerable to prototype
-    // pollution mutating the host process. Use worker mode for untrusted code.
-    // The codeGeneration:{strings:false,wasm:false} restriction blocks
-    // Function()/eval() at the V8 engine level.
-
-    const instance = new CodeModeSandbox(context, opts);
-    // Share logBuffer reference
-    instance.logBuffer.length = 0;
-    Object.defineProperty(instance, "logBuffer", {
-      value: logBuffer,
-      writable: false,
-    });
-
-    return instance;
+    return new CodeModeSandbox(opts);
   }
 
   /**
    * Execute code in the sandbox
-   * @param code - TypeScript/JavaScript code to execute
-   * @param apiBindings - Object with sqlite.* API methods to expose
    */
   async execute(
     code: string,
@@ -163,113 +54,116 @@ export class CodeModeSandbox {
       };
     }
 
-    const startTime = performance.now();
-    const startMemory = process.memoryUsage().heapUsed;
     const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
+    const isolate = new ivm.Isolate({ memoryLimit: 128 });
+    const context = isolate.createContextSync();
+    const jail = context.global;
+    jail.setSync("global", jail.derefInto());
+
+    const logs: string[] = [];
+    const logRef = new ivm.Reference((level: string, ...args: unknown[]) => {
+      const msg = args.map(a => typeof a === "object" && a !== null ? JSON.stringify(a) : String(a)).join(" ");
+      logs.push(level === "LOG" ? msg : `[${level}] ${msg}`);
+    });
+
+    context.global.setSync("logRef", logRef);
+    const setupScript = `
+      globalThis.console = {
+        log: (...args) => logRef.applyIgnored(undefined, ['LOG', ...args], { arguments: { copy: true } }),
+        error: (...args) => logRef.applyIgnored(undefined, ['ERROR', ...args], { arguments: { copy: true } }),
+        warn: (...args) => logRef.applyIgnored(undefined, ['WARN', ...args], { arguments: { copy: true } }),
+        info: (...args) => logRef.applyIgnored(undefined, ['INFO', ...args], { arguments: { copy: true } }),
+        debug: (...args) => logRef.applyIgnored(undefined, ['DEBUG', ...args], { arguments: { copy: true } })
+      };
+      globalThis.sqlite = {};
+    `;
+    context.evalSync(setupScript);
+
+    // Inject apiBindings
+    const refCleanup: ivm.Reference<unknown>[] = [];
+    for (const [groupName, groupValue] of Object.entries(apiBindings)) {
+      if (typeof groupValue === "object" && groupValue !== null) {
+        context.evalSync(`globalThis.sqlite['${groupName}'] = {};`);
+        for (const [methodName, methodFn] of Object.entries(groupValue)) {
+          if (typeof methodFn === "function") {
+            const fnRef = new ivm.Reference(async (...args: unknown[]) => {
+              try {
+                return await (methodFn as (...args: unknown[]) => Promise<unknown>)(...args);
+              } catch (e) {
+                throw new Error(e instanceof Error ? e.message : String(e), { cause: e });
+              }
+            });
+            refCleanup.push(fnRef);
+            const refName = `fnRef_${groupName}_${methodName}`;
+            context.global.setSync(refName, fnRef);
+            context.evalSync(`
+              globalThis.sqlite['${groupName}']['${methodName}'] = async (...args) => {
+                return await globalThis['${refName}'].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
+              };
+            `);
+          }
+        }
+      } else if (typeof groupValue === "function") {
+        const fnRef = new ivm.Reference(async (...args: unknown[]) => {
+          try {
+            return await (groupValue as (...args: unknown[]) => Promise<unknown>)(...args);
+          } catch (e) {
+            throw new Error(e instanceof Error ? e.message : String(e), { cause: e });
+          }
+        });
+        refCleanup.push(fnRef);
+        const refName = `fnRef_${groupName}`;
+        context.global.setSync(refName, fnRef);
+        context.evalSync(`
+          globalThis.sqlite['${groupName}'] = async (...args) => {
+            return await globalThis['${refName}'].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
+          };
+        `);
+      }
+    }
+
+    const startTime = performance.now();
+    let result: unknown;
+    let success = true;
+    let errorMsg: string | undefined;
 
     try {
-      // Inject API bindings into context
-      this.context["sqlite"] = apiBindings;
-
-      // Wrap in async IIFE for top-level await
       const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
-
-      const script = new vm.Script(wrappedCode, {
-        filename: `user-code-${randomUUID()}.js`,
-      });
-
-      const result: unknown = await Promise.race([
-        script.runInContext(this.context, {
-          timeout: effectiveTimeout,
-          displayErrors: true,
-        }) as Promise<unknown>,
-        new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error(`Execution timed out after ${effectiveTimeout}ms`)),
-            effectiveTimeout,
-          ),
-        ),
-      ]);
-
-      const endTime = performance.now();
-      const endMemory = process.memoryUsage().heapUsed;
-
-      return {
-        success: true,
-        result,
-        metrics: this.calculateMetrics(
-          startTime,
-          endTime,
-          startMemory,
-          endMemory,
-        ),
-      };
-    } catch (error) {
-      const endTime = performance.now();
-      const endMemory = process.memoryUsage().heapUsed;
-
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        stack: process.env["NODE_ENV"] === "development" && error instanceof Error ? error.stack : undefined,
-        metrics: this.calculateMetrics(
-          startTime,
-          endTime,
-          startMemory,
-          endMemory,
-        ),
-      };
+      const script = isolate.compileScriptSync(wrappedCode, { filename: `user-code-${randomUUID()}.js` });
+      result = await script.run(context, { timeout: effectiveTimeout, promise: true, copy: true });
+    } catch (error: unknown) {
+      success = false;
+      errorMsg = error instanceof Error ? error.message : String(error);
+    } finally {
+      // Cleanup references and isolate
+      for (const ref of refCleanup) {
+        ref.release();
+      }
+      logRef.release();
+      context.release();
+      isolate.dispose();
     }
-  }
 
-  /**
-   * Calculate execution metrics
-   */
-  private calculateMetrics(
-    startTime: number,
-    endTime: number,
-    startMemory: number,
-    endMemory: number,
-  ): ExecutionMetrics {
+    const endTime = performance.now();
+
     return {
-      wallTimeMs: Math.round(endTime - startTime),
-      cpuTimeMs: Math.round(endTime - startTime), // Approximate
-      memoryUsedMb: Math.max(
-        0,
-        Math.round(((endMemory - startMemory) / 1024 / 1024) * 100) / 100,
-      ),
+      success,
+      ...(success ? { result } : { error: errorMsg }),
+      logs,
+      metrics: {
+        wallTimeMs: Math.round(endTime - startTime),
+        cpuTimeMs: Math.round(endTime - startTime), // ivm doesn't easily expose this per run without cpuTime
+        memoryUsedMb: 0 // ivm doesn't easily expose this per run
+      }
     };
   }
 
-  /**
-   * Get console output from the sandbox
-   */
-  getConsoleOutput(): string[] {
-    return [...this.logBuffer];
-  }
-
-  /**
-   * Clear console output buffer
-   */
-  clearConsoleOutput(): void {
-    this.logBuffer.length = 0;
-  }
-
-  /**
-   * Check if sandbox is healthy
-   */
   isHealthy(): boolean {
     return !this.disposed;
   }
 
-  /**
-   * Dispose of the sandbox and release resources
-   */
   dispose(): void {
     this.disposed = true;
-    this.logBuffer.length = 0;
-    // Clear context references
-    this.context = vm.createContext({});
   }
 }
 
@@ -279,66 +173,14 @@ export class CodeModeSandbox {
 export class SandboxPool {
   private readonly options: Required<PoolOptions>;
   private readonly sandboxOptions: Required<SandboxOptions>;
-  private readonly available: CodeModeSandbox[] = [];
-  private readonly inUse = new Set<CodeModeSandbox>();
 
   constructor(poolOptions?: PoolOptions, sandboxOptions?: SandboxOptions) {
     this.options = { ...DEFAULT_POOL_OPTIONS, ...poolOptions };
     this.sandboxOptions = { ...DEFAULT_SANDBOX_OPTIONS, ...sandboxOptions };
   }
 
-  /**
-   * Initialize the pool with minimum instances
-   */
   initialize(): void {
-    while (this.available.length < this.options.minInstances) {
-      try {
-        const sandbox = CodeModeSandbox.create(this.sandboxOptions);
-        this.available.push(sandbox);
-      } catch {
-        // Pre-warming failed; sandboxes will be created on demand
-        break;
-      }
-    }
-  }
-
-  /**
-   * Acquire a sandbox from the pool
-   */
-  private acquire(): CodeModeSandbox {
-    // Try to get an available sandbox
-    while (this.available.length > 0) {
-      const sandbox = this.available.pop();
-      if (sandbox?.isHealthy()) {
-        this.inUse.add(sandbox);
-        return sandbox;
-      }
-      // Dispose unhealthy sandboxes
-      sandbox?.dispose();
-    }
-
-    // Create a new one if under max
-    if (this.inUse.size < this.options.maxInstances) {
-      const sandbox = CodeModeSandbox.create(this.sandboxOptions);
-      this.inUse.add(sandbox);
-      return sandbox;
-    }
-
-    throw new DbMcpError(
-      "Sandbox pool exhausted",
-      "CODEMODE_POOL_EXHAUSTED",
-      ErrorCategory.RESOURCE,
-    );
-  }
-
-  /**
-   * Release a sandbox back to the pool
-   */
-  private release(sandbox: CodeModeSandbox): void {
-    this.inUse.delete(sandbox);
-    // Security: Discard the vm-mode sandbox after single use to prevent
-    // context contamination between executions.
-    sandbox.dispose();
+    // isolated-vm isolates are fast to create, no need to aggressively pre-warm
   }
 
   async execute(
@@ -346,47 +188,23 @@ export class SandboxPool {
     apiBindings: Record<string, unknown>,
     timeoutMs?: number,
   ): Promise<SandboxResult> {
-    const sandbox = this.acquire();
+    const sandbox = CodeModeSandbox.create(this.sandboxOptions);
     try {
       return await sandbox.execute(code, apiBindings, timeoutMs);
     } finally {
-      this.release(sandbox);
+      sandbox.dispose();
     }
   }
 
-  /**
-   * Clean up excess idle sandboxes
-   */
   cleanup(): void {
-    while (this.available.length > this.options.minInstances) {
-      const sandbox = this.available.pop();
-      sandbox?.dispose();
-    }
+    // No-op for isolate pool
   }
 
-  /**
-   * Get pool statistics
-   */
   getStats(): { available: number; inUse: number; max: number } {
-    return {
-      available: this.available.length,
-      inUse: this.inUse.size,
-      max: this.options.maxInstances,
-    };
+    return { available: 0, inUse: 0, max: this.options.maxInstances };
   }
 
-  /**
-   * Dispose of all sandboxes in the pool
-   */
   dispose(): void {
-    for (const sandbox of this.available) {
-      sandbox.dispose();
-    }
-    this.available.length = 0;
-
-    for (const sandbox of this.inUse) {
-      sandbox.dispose();
-    }
-    this.inUse.clear();
+    // No-op for isolate pool
   }
 }

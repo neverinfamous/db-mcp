@@ -112,17 +112,12 @@ export interface HttpTransportConfig {
   maxBodyBytes?: number;
 
   /**
-   * Trust proxy headers for client IP extraction (default: false).
-   * When enabled, uses the IP added by the trusted proxy chain for rate limiting.
-   * Only enable when running behind a trusted reverse proxy.
+   * Trust proxy headers for client IP extraction.
+   * Provide a list of trusted reverse proxy IPs or CIDR blocks.
+   * If running behind a proxy, this MUST be explicitly configured to prevent
+   * IP spoofing via X-Forwarded-For headers.
    */
-  trustProxy?: boolean;
-
-  /**
-   * Number of trusted reverse proxies in front of the server (default: 1).
-   * Used to extract the correct client IP from X-Forwarded-For when trustProxy is true.
-   */
-  trustedProxyCount?: number;
+  trustedProxyIps?: string | string[];
 
   /**
    * Enable HTTP Strict Transport Security header (default: false).

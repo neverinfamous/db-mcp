@@ -5,7 +5,6 @@
  * These are standalone functions that operate on HttpTransportState.
  */
 
-import { isIP } from "net";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import type { Request, Response, RequestHandler } from "express";
@@ -17,30 +16,8 @@ import {
 } from "./types.js";
 import { logger } from "../../utils/logger/index.js";
 
-// =============================================================================
-// Client IP Extraction
-// =============================================================================
-
-/**
- * Extract client IP address from the request.
- * When trustProxy is enabled, uses the leftmost IP from X-Forwarded-For.
- * Falls back to Express's req.ip then req.socket.remoteAddress.
- */
-export function getClientIp(req: Request, trustProxy: boolean, trustedProxyCount = 1): string {
-  if (trustProxy) {
-    const forwarded = req.headers["x-forwarded-for"];
-    // Handle both string (single header) and string[] (multiple XFF headers)
-    const xffStr = Array.isArray(forwarded) ? forwarded.join(",") : forwarded;
-    if (typeof xffStr === "string") {
-      const ips = xffStr.split(",");
-      const index = Math.max(0, ips.length - trustedProxyCount);
-      const proxyAddedIp = ips[index]?.trim() ?? "";
-      // Reject non-IP values to prevent rate-limit bypass via spoofed XFF
-      if (proxyAddedIp && isIP(proxyAddedIp) !== 0) return proxyAddedIp;
-    }
-  }
-  return req.ip ?? req.socket.remoteAddress ?? "unknown";
-}
+// Removed manual getClientIp parsing. We rely natively on Express's req.ip
+// which respects the explicit 'trust proxy' configuration in transport.ts.
 
 // =============================================================================
 // Security Headers
@@ -174,9 +151,6 @@ export function setupRateLimiting(state: HttpTransportState): void {
   const safeParsedMax = Number.isNaN(parsedMax) ? DEFAULT_RATE_LIMIT_MAX : parsedMax;
   // L-4: Clamp max requests to a safe range (1 to 10000)
   const maxRequests = Math.max(1, Math.min(safeParsedMax, 10000));
-  const trustProxy = state.config.trustProxy ?? false;
-  const trustedProxyCount = state.config.trustedProxyCount ?? 1;
-
   // M-4: Warning: The default express-rate-limit in-memory store is per-process.
   // In multi-instance deployments behind a load balancer, each instance maintains 
   // independent counters. For production clusters, use a shared store.
@@ -189,7 +163,7 @@ export function setupRateLimiting(state: HttpTransportState): void {
     max: maxRequests,
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => getClientIp(req, trustProxy, trustedProxyCount),
+    keyGenerator: (req) => req.ip ?? req.socket.remoteAddress ?? "unknown",
     skip: (req) => req.path === "/health",
     handler: (_req, res, _next, options) => {
       res.status(options.statusCode).json({

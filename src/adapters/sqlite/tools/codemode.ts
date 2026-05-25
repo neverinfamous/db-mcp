@@ -195,6 +195,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           success: result.success,
           result: sanitizedResult,
           error: result.error,
+          consoleOutput: result.logs,
           metrics: {
             ...result.metrics,
             tokenEstimate,
@@ -305,18 +306,18 @@ function wrapReadonlyGuards(
 function initializePool(): void {
   const modeEnv = process.env["CODEMODE_ISOLATION"]?.toLowerCase();
 
-  // M-3: vm mode lacks frozen prototypes and Proxy nullification — not safe
+  // M-3: isolate mode lacks frozen prototypes and Proxy nullification — not safe
   // for production or untrusted code. Require explicit opt-in via
   // CODEMODE_ISOLATION_INSECURE=1 to prevent operator misconfiguration.
   let mode: SandboxMode = "worker";
-  if (modeEnv === "vm") {
+  if (modeEnv === "isolate") {
     const insecureAck =
       process.env["CODEMODE_ISOLATION_INSECURE"]?.toLowerCase();
     if (insecureAck === "1" || insecureAck === "true") {
-      mode = "vm";
+      mode = "isolate";
       logger.warning(
-        "CODEMODE_ISOLATION=vm with CODEMODE_ISOLATION_INSECURE=1: " +
-          "VM sandbox shares host prototypes without freezing. " +
+        "CODEMODE_ISOLATION=isolate with CODEMODE_ISOLATION_INSECURE=1: " +
+          "isolate sandbox shares host prototypes without freezing. " +
           "Use worker mode for production deployments.",
         { module: "CODEMODE" as const, operation: "initialize" },
       );

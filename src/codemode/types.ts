@@ -80,6 +80,8 @@ export interface SandboxResult {
   error?: string | undefined;
   /** Stack trace (if failed) */
   stack?: string | undefined;
+  /** Execution logs */
+  logs?: string[];
   /** Execution metrics */
   metrics: ExecutionMetrics;
 }
@@ -195,6 +197,8 @@ export interface ExecuteCodeResult {
   result?: unknown;
   /** Error message (if failed) */
   error?: string;
+  /** Execution logs */
+  logs?: string[];
   /** Execution metrics */
   metrics: ExecutionMetrics;
 }

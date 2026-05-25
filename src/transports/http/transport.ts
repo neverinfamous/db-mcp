@@ -110,6 +110,16 @@ export class HttpTransport {
     // DNS rebinding protection — reject requests with unrecognized Host headers
     this.state.app.use(localhostHostValidation());
 
+    // Configure trust proxy (requires explicitly defined downstream IPs)
+    if (this.state.config.trustedProxyIps !== undefined) {
+      if (Array.isArray(this.state.config.trustedProxyIps) && this.state.config.trustedProxyIps.length === 0) {
+        throw new DbMcpError("trustedProxyIps cannot be an empty array if specified", "CONFIG_ERROR", ErrorCategory.CONFIGURATION);
+      }
+      this.state.app.set("trust proxy", this.state.config.trustedProxyIps);
+    } else {
+      this.state.app.set("trust proxy", false);
+    }
+
     // Security headers on all responses
     setupSecurityHeaders(this.state);
 
