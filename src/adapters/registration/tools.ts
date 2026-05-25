@@ -29,6 +29,7 @@ export function registerToolImpl(
 
   const toolOptions: Record<string, unknown> = {
     description: safeDescription,
+    ...(tool.annotations?.title ? { title: tool.annotations.title.substring(0, 256) } : {}),
   };
 
   const requiredScope = tool.requiredScopes?.[0] ?? "admin";

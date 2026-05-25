@@ -14,6 +14,7 @@ import {
   MIGRATIONS_TABLE,
   isMigrationTableInitialized,
   toMigrationRecord,
+  validateMigrationSql,
 } from "../helpers.js";
 
 export function createMigrationRollbackTool(
@@ -136,6 +137,7 @@ export function createMigrationRollbackTool(
           };
         }
 
+        validateMigrationSql(rollbackSql);
         await adapter.executeQuery(rollbackSql);
 
         await adapter.executeQuery(

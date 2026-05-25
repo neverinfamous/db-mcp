@@ -132,6 +132,9 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     /\bhttps\./, // No HTTPS
     /\bfetch\s*\(/, // No fetch()
     /\bWebSocket\b/, // No WebSocket
+    /\bObject\.getPrototypeOf/, // No getPrototypeOf
+    /\bObject\.setPrototypeOf/, // No setPrototypeOf
+    /\b__defineGetter__/, // No __defineGetter__
   ],
 };
 

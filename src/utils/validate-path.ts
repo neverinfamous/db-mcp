@@ -110,7 +110,7 @@ export function validateSameDirPath(
 
   const targetDir = normalize(dirname(resolvedTarget));
 
-  if (normalizedTarget !== normalizedDir && targetDir !== normalizedDir) {
+  if (targetDir !== normalizedDir) {
     return {
       valid: false,
       error: `Security: path must be within the database directory. Path traversal is not allowed.`,

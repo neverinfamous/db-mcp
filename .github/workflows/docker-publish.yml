@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v3.25.1
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
         with:
           sarif_file: trivy-results.sarif
           category: trivy-docker-scan
@@ -176,13 +176,15 @@ jobs:
           sbom: true
 
       - name: Push manifest to Docker Hub
+        env:
+          DEST_CREDS: ${{ secrets.DOCKER_USERNAME }}:${{ secrets.DOCKER_PASSWORD }}
         run: |
           # Use skopeo to copy the multi-arch image from the local registry to Docker Hub
-          skopeo copy --all --dest-creds=${{ secrets.DOCKER_USERNAME }}:${{ secrets.DOCKER_PASSWORD }} docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          skopeo copy --all --dest-creds="${DEST_CREDS}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
           
           # Also tag and push 'latest' if applicable
           if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
-            skopeo copy --all --dest-creds=${{ secrets.DOCKER_USERNAME }}:${{ secrets.DOCKER_PASSWORD }} docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            skopeo copy --all --dest-creds="${DEST_CREDS}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           fi
 
       - name: Update Docker Hub Description

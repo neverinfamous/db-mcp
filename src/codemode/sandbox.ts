@@ -67,7 +67,7 @@ export class CodeModeSandbox {
       };
     }
 
-    const isolate = new ivmLib.Isolate({ memoryLimit: 128 });
+    const isolate = new ivmLib.Isolate({ memoryLimit: this.options.memoryLimitMb });
     const context = isolate.createContextSync();
     const jail = context.global;
     jail.setSync("global", jail.derefInto());

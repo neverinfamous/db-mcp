@@ -15,6 +15,7 @@ import {
   hashMigration,
   isMigrationTableInitialized,
   toMigrationRecord,
+  validateMigrationSql,
 } from "../helpers.js";
 import {
   sendProgress,
@@ -47,6 +48,7 @@ export function createMigrationApplyTool(
         }
 
         const actualSql = input.migrationSql ?? input.sql ?? "";
+        validateMigrationSql(actualSql);
         const hash = hashMigration(actualSql);
 
         const dupCheck = await adapter.executeReadQuery(

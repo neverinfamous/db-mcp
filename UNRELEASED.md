@@ -78,6 +78,19 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 - Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
 ### Security
+- **[Critical]** Migrations: Added `validateMigrationSql` logic to strictly prevent unauthorized DDL commands such as `ATTACH`, `DETACH`, `PRAGMA`, and `LOAD_EXTENSION` from executing inside `sqlite_migration_apply` and `sqlite_migration_rollback`.
+- **[High]** Authorization: Enforced explicit scope validation directly in the tool handlers using `scopesGrantToolAccess()` inside `built-in-tools.ts` and `audit-tools.ts` to prevent unauthorized execution in unauthenticated modes.
+- **[High]** CI/CD: Prevented potential secret leakage during the publish step by moving Skopeo registry credentials to an environmental `DEST_CREDS` variable rather than using command line arguments in `docker-publish.yml`.
+- **[Medium]** Authorization: Implemented a clear runtime warning in `transport.ts` when OAuth is disabled and the server falls back to an implicit `"admin"` scope (expected for local dev, dangerous in production).
+- **[Medium]** Code Mode Sandbox: Configured the V8 Isolate initialization in `sandbox.ts` to respect the user-defined `memoryLimitMb` from configuration rather than a hardcoded `128MB`.
+- **[Medium]** Code Mode Sandbox: Expanded the `blockedPatterns` array in `types.ts` to explicitly block prototype mutation APIs like `Object.getPrototypeOf`, `Object.setPrototypeOf`, and `__defineGetter__`.
+- **[Medium]** Tool Registration: Defended against tool annotation poisoning by sanitizing and limiting `tool.annotations?.title` lengths in `tools.ts`.
+- **[Medium]** CI/CD: Obfuscated NPM token credentials from intermediate shell evaluation contexts within `publish-npm.yml`.
+- **[Medium]** CI/CD: Synchronized all `codeql-action` pinned versions to `v4.35.5` across all action definitions to resolve mismatched execution logic.
+- **[Medium]** CI/CD: Established a core `.github/dependabot.yml` policy to proactively monitor and update GitHub Action versions.
+- **[Low]** Input Validation: Upgraded the `PRAGMA` schema value constraint to `z.number().finite().safe()` to mitigate unhandled floating-point extremes like `NaN` and `Infinity` in `admin.ts`.
+- **[Low]** Input Validation: Fixed a redundant normalization validation loop in `validate-path.ts`.
+- **[Low]** Scope Enforcement: Harmonized audit tool mapping strings in `mapping.ts` utilizing full `sqlite_audit_*` canonical names.
 - **[Critical]** Code Mode Sandbox: Removed deprecated `CODEMODE_ISOLATION_NATIVE_ADDON_ACK` escape hatch and changed default isolation to `isolate` (`isolated-vm`), ensuring true V8 separation by default.
 - **[Critical]** Authorization: Replaced implicit `admin` fallback in `registerToolImpl` with explicit scope enforcement to prevent tools from bypassing capability checks when scopes are undefined.
 - **[High]** DoS: Added `locking_mode` and `mmap_size` to the `BLOCKED_PRAGMAS` list in `query-validation.ts` to prevent exclusive database lock starvation.

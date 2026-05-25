@@ -4,7 +4,9 @@ import type { BackupManager } from "../../audit/backup-manager.js";
 import type { AuditLogger } from "../../audit/logger.js";
 import { logger } from "../../utils/logger/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
-import { registerToolScopes } from "../../auth/scopes/enforcement.js";
+import { registerToolScopes, scopesGrantToolAccess } from "../../auth/scopes/enforcement.js";
+import { getAuthContext } from "../../auth/auth-context.js";
+import { InsufficientScopeError } from "../../auth/errors.js";
 import { z } from "zod";
 
 /**
@@ -117,6 +119,10 @@ export function registerAuditBackupTools(
         },
       },
       async () => {
+        const authCtx = getAuthContext();
+        if (authCtx && !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_list_backups")) {
+          throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
+        }
         const snapshots = await backupManager.listSnapshots();
         return {
           content: [
@@ -163,6 +169,10 @@ export function registerAuditBackupTools(
         },
       },
       async (args: unknown) => {
+        const authCtx = getAuthContext();
+        if (authCtx && !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_get_backup")) {
+          throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
+        }
         let filename;
         try {
           const parsed = z.object({ filename: z.string() }).parse(args);
@@ -224,6 +234,10 @@ export function registerAuditBackupTools(
         },
       },
       async () => {
+        const authCtx = getAuthContext();
+        if (authCtx && !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_cleanup")) {
+          throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
+        }
         const deleted = await backupManager.cleanup();
         return {
           content: [
@@ -269,6 +283,10 @@ export function registerAuditBackupTools(
         },
       },
       async (args: unknown) => {
+        const authCtx = getAuthContext();
+        if (authCtx && !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_diff_backup")) {
+          throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
+        }
         let filename;
         try {
           const parsed = z.object({ filename: z.string() }).parse(args);
@@ -474,6 +492,10 @@ export function registerAuditBackupTools(
         },
       },
       async (args: unknown) => {
+        const authCtx = getAuthContext();
+        if (authCtx && !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_restore_backup")) {
+          throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
+        }
         let filename;
         let dryRun;
         try {

@@ -56,6 +56,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
 - ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). This validation strictly enforces exact directory matching, blocking access even to legitimate subdirectories. *Note: In-memory databases (`:memory:`) bypass path validation by design.*
+- ✅ **DDL Validation** — Migration tools (`sqlite_migration_apply`, `sqlite_migration_rollback`) use `validateMigrationSql` to strictly prevent unauthorized DDL commands such as `ATTACH`, `DETACH`, `PRAGMA`, and `LOAD_EXTENSION`.
 - ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
 ## 🧪 **Code Mode Sandbox Security**
@@ -228,6 +229,8 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - ✅ **Secrets scanning** — dedicated workflow on push and PR (defense-in-depth for direct pushes to main)
 - ✅ **Lockfile integrity** — SHA-256 hash and `git diff --exit-code` verification before `npm ci` to detect post-checkout tampering
 - ✅ **Patch drift detection** — weekly CI workflow validates Dockerfile patches and package.json overrides against upstream versions
+- ✅ **Dependabot Action Updates** — proactive weekly `.github/dependabot.yml` policy monitors and updates GitHub Action versions.
+- ✅ **Credential Isolation** — CI workflows strictly pass credentials (`DEST_CREDS`, `NPM_TOKEN`) via environment variables rather than command-line arguments to prevent leakage into intermediate shell evaluations or process listings.
 - ✅ **E2E transport parity** — Playwright suite validates HTTP/SSE security behavior
 
 ## 🚨 **Security Best Practices**
