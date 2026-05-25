@@ -45,4 +45,4 @@ jobs:
           name: playwright-report-${{ github.run_id }}
           path: playwright-report/
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 1

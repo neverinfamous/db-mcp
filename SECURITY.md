@@ -311,6 +311,12 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Generic token validation error responses (no internal URL leakage)
 - [x] Code Mode vm sandbox gated to non-production environments
 - [x] Per-execution UUID filenames in vm.Script for forensic traceability
+- [x] Implicit prototype traversal prevention (Object.getPrototypeOf) in worker sandbox
+- [x] Code Mode buffer uninitialized memory read prevention
+- [x] Strict HTTPS JWKS enforcement in production (via ALLOW_HTTP_JWKS)
+- [x] CI/CD pipeline Trivy SHA-pinning
+- [x] SQL string literal credential redaction in audit logs
+- [x] DSN/URI regex credential scrubbing in error formatters
 - [x] Comprehensive security documentation
 
 ## 🚨 **Reporting Security Issues**

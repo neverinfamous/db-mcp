@@ -60,7 +60,9 @@ function redactSensitiveKeys(
   }
 
   if (typeof value === "string") {
-    return value.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
+    const isSql = /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(value);
+    const scrubbed = isSql ? value.replace(/'(?:''|[^'])*'/g, "'***'") : value;
+    return scrubbed.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
   }
 
   if (typeof value === "object") {
@@ -71,7 +73,9 @@ function redactSensitiveKeys(
       } else if (typeof val === "object" && val !== null) {
         result[key] = redactSensitiveKeys(val, depth + 1);
       } else if (typeof val === "string") {
-        result[key] = val.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
+        const isSql = key.toLowerCase() === "sql" || key.toLowerCase() === "query" || /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(val);
+        const scrubbed = isSql ? val.replace(/'(?:''|[^'])*'/g, "'***'") : val;
+        result[key] = scrubbed.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
       } else {
         result[key] = val;
       }

@@ -20,8 +20,13 @@ export function registerToolImpl(
   server: McpServer,
   tool: ToolDefinition,
 ): void {
+  // Truncate description to prevent tool poisoning or excessive token usage
+  const safeDescription = tool.description && tool.description.length > 2000 
+    ? tool.description.substring(0, 2000) + "... (truncated)"
+    : tool.description;
+
   const toolOptions: Record<string, unknown> = {
-    description: tool.description,
+    description: safeDescription,
   };
 
   const requiredScope = tool.requiredScopes?.[0] ?? "admin";

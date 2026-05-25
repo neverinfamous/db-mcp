@@ -55,11 +55,12 @@ export class TokenValidator {
 
   constructor(config: TokenValidatorConfig) {
     // F-5: Reject non-HTTPS JWKS URIs in production to prevent MITM
-    // Allow http:// only for development (localhost, NODE_ENV=development)
+    // Allow http:// only with explicit ALLOW_HTTP_JWKS=true flag to prevent
+    // accidental bypasses if NODE_ENV=development leaks into production.
     if (
       config.jwksUri &&
       !config.jwksUri.startsWith("https://") &&
-      process.env["NODE_ENV"] !== "development" &&
+      process.env["ALLOW_HTTP_JWKS"] !== "true" &&
       process.env["NODE_ENV"] !== "test"
     ) {
       const url = new URL(config.jwksUri);
@@ -69,7 +70,7 @@ export class TokenValidator {
         throw new Error(
           `Security: JWKS URI must use HTTPS in production. ` +
             `Got: ${config.jwksUri}. ` +
-            `Set NODE_ENV=development to allow HTTP for local testing.`,
+            `Set ALLOW_HTTP_JWKS=true to allow HTTP for local testing.`,
         );
       }
     }

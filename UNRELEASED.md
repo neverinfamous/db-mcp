@@ -316,6 +316,15 @@
 - **[H-32]** Regex DoS: Hardened WHERE clause blocklists with safer bounded regexes (CWE-1333).
 - **[M-45]** CI/CD: Refactored GitHub token injection in `.github/workflows/*.lock.yml` to use `env` variables instead of shell interpolation (CWE-77).
 - **[L-33]** Annotations: Corrected `sqlite_pragma_optimize` from `admin` to `idempotent` scope.
+- **[C-21]** Credential Exposure: Enhanced `sanitizeErrorMessage` to redact DSNs/URIs and applied `redactSqlLiterals` to audit log interceptors to prevent credential exposure in logs.
+- **[H-33]** Code Mode Sandbox: Explicitly nulled `Buffer` and enforced `Object.freeze(Object.getPrototypeOf)` in the VM context to prevent prototype traversal escapes.
+- **[H-34]** CI/CD Supply Chain: Re-pinned Trivy action to the secure SHA hash for `v0.30.0` and upgraded `actions/github-script` to `v8` to eliminate version drift.
+- **[H-35]** CI/CD Config: Fixed YAML indentation for `DOCKERHUB_DESC_TOKEN` in `docker-publish.yml` and forwarded it in `gatekeeper.yml`.
+- **[M-46]** Input Validation: Wrapped `sqlite_audit_restore_backup` in an explicit transaction to ensure atomic application of snapshots.
+- **[M-47]** Input Validation: Sanitized adapter tool descriptions to prevent tool poisoning via upstream payload manipulation.
+- **[M-48]** Authorization: Required explicit `ALLOW_HTTP_JWKS=true` flag for local development instead of `NODE_ENV=development` to prevent silent HTTPS JWKS bypasses in production.
+- **[L-34]** CI/CD: Changed Playwright artifact `retention-days` to 1 in `e2e.yml` to reduce exposure of sensitive traces.
+- **[L-35]** Annotations: Changed `openWorldHint` for `sqlite_audit_cleanup` to `false`.
 
 ### Fixed
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.

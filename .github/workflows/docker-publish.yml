@@ -6,9 +6,9 @@ on:
       DOCKER_USERNAME:
         required: true
       DOCKER_PASSWORD:
-          required: true
-        DOCKERHUB_DESC_TOKEN:
-          required: true
+        required: true
+      DOCKERHUB_DESC_TOKEN:
+        required: true
       NPM_TOKEN:
         required: true
 
@@ -71,7 +71,7 @@ jobs:
           exit-code: true
 
       - name: Trivy security scan
-        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.30.0
         with:
           image-ref: local-scan:latest
           format: table
@@ -82,7 +82,7 @@ jobs:
 
       - name: Trivy SARIF upload
         if: always()
-        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.30.0
         with:
           image-ref: local-scan:latest
           format: sarif

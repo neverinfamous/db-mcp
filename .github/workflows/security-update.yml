@@ -46,7 +46,7 @@ jobs:
 
       # Run SARIF scan first (non-blocking) to always generate the file
       - name: Run Trivy scanner for SARIF output
-        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.30.0
         with:
           image-ref: security-test:latest
           format: 'sarif'
@@ -66,7 +66,7 @@ jobs:
       # Run table scan (blocking) after SARIF is uploaded
       - name: Run Trivy vulnerability scanner
         id: trivy-scan
-        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # master
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.30.0
         with:
           image-ref: security-test:latest
           format: 'table'
@@ -95,7 +95,7 @@ jobs:
       issues: write
     steps:
       - name: Create security issue if vulnerabilities found
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}

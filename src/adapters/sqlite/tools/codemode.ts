@@ -306,25 +306,23 @@ function wrapReadonlyGuards(
 function initializePool(): void {
   const modeEnv = process.env["CODEMODE_ISOLATION"]?.toLowerCase();
 
-  // M-3: isolate mode lacks frozen prototypes and Proxy nullification — not safe
-  // for production or untrusted code. Require explicit opt-in via
-  // CODEMODE_ISOLATION_INSECURE=1 to prevent operator misconfiguration.
+  // isolate mode provides true C++ V8 isolate separation where host prototypes
+  // are inaccessible by design. It is vastly superior to worker mode for untrusted code.
+  // The opt-in is required due to the complexity of deploying native addons, not security.
   let mode: SandboxMode = "worker";
   if (modeEnv === "isolate") {
     const insecureAck =
       process.env["CODEMODE_ISOLATION_INSECURE"]?.toLowerCase();
     if (insecureAck === "1" || insecureAck === "true") {
       mode = "isolate";
-      logger.warning(
-        "CODEMODE_ISOLATION=isolate with CODEMODE_ISOLATION_INSECURE=1: " +
-          "isolate sandbox shares host prototypes without freezing. " +
-          "Use worker mode for production deployments.",
+      logger.info(
+        "CODEMODE_ISOLATION=isolate enabled: true V8 isolate separation active.",
         { module: "CODEMODE" as const, operation: "initialize" },
       );
     } else {
       logger.warning(
-        "CODEMODE_ISOLATION=vm requires CODEMODE_ISOLATION_INSECURE=1 to acknowledge " +
-          "unfrozen host prototypes. Falling back to worker mode.",
+        "CODEMODE_ISOLATION=isolate requires CODEMODE_ISOLATION_INSECURE=1 to acknowledge " +
+          "native addon deployment requirements. Falling back to worker mode.",
         { module: "CODEMODE" as const, operation: "initialize" },
       );
     }

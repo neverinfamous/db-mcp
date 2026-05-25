@@ -220,7 +220,7 @@ export function registerAuditBackupTools(
           readOnlyHint: false,
           destructiveHint: true,
           idempotentHint: true,
-          openWorldHint: true,
+          openWorldHint: false,
         },
       },
       async () => {
@@ -574,10 +574,17 @@ export function registerAuditBackupTools(
             .filter(Boolean);
 
           let changesApplied = 0;
-          for (const stmt of statements) {
-            validateDdl(stmt);
-            await adapter.executeQuery(`${stmt};`);
-            changesApplied++;
+          await adapter.executeQuery("BEGIN TRANSACTION;");
+          try {
+            for (const stmt of statements) {
+              validateDdl(stmt);
+              await adapter.executeQuery(`${stmt};`);
+              changesApplied++;
+            }
+            await adapter.executeQuery("COMMIT;");
+          } catch (e) {
+            await adapter.executeQuery("ROLLBACK;");
+            throw e;
           }
 
           return {

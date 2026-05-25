@@ -241,6 +241,7 @@ async function executeInWorker(): Promise<void> {
       global: undefined,
       Proxy: undefined,
       Reflect: undefined,
+      Buffer: undefined,
     };
 
     const context = vm.createContext(sandbox, {
@@ -270,16 +271,27 @@ async function executeInWorker(): Promise<void> {
           Float32Array, Float64Array, BigInt64Array, BigUint64Array,
           JSON, Math,
         ];
+        const secureFreeze = (obj) => {
+          try {
+            Object.freeze(obj);
+            if (!Object.isFrozen(obj)) throw new Error("Freeze failed silently");
+          } catch(e) {
+            throw new Error("Failed to secure sandbox: could not freeze " + (obj?.name || typeof obj));
+          }
+        };
+
         for (const B of builtins) {
           if (B && typeof B === "function" && B.prototype) {
-            try { Object.freeze(B.prototype); } catch(e) {}
+            secureFreeze(B.prototype);
           }
-          try { Object.freeze(B); } catch(e) {}
+          secureFreeze(B);
         }
         // Freeze Object.prototype to block __proto__ traversal
-        try { Object.freeze(Object.prototype); } catch(e) {}
+        secureFreeze(Object.prototype);
         // Freeze Function.prototype to block constructor chain
-        try { Object.freeze(Function.prototype); } catch(e) {}
+        secureFreeze(Function.prototype);
+        // Freeze Object.getPrototypeOf to block prototype chain escapes
+        secureFreeze(Object.getPrototypeOf);
       })()`,
       context,
     );
