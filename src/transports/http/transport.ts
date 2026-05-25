@@ -162,6 +162,16 @@ export class HttpTransport {
         );
       }
       await setupOAuth(this.state, resourceUri);
+    } else if (this.state.config.authToken) {
+      if (
+        resourceUri.startsWith("http://") &&
+        !resourceUri.includes("localhost") &&
+        !resourceUri.includes("127.0.0.1")
+      ) {
+        logger.warning(
+          "Security Warning (F09): Auth token is enabled but resource URI is not using HTTPS. A TLS-terminating reverse proxy is required in production to prevent token interception.",
+        );
+      }
     }
 
     // Health check endpoint (always public, but detail is auth-gated)

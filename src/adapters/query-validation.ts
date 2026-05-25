@@ -138,8 +138,8 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
       );
     }
   } else {
-    const ddlPattern = /^\s*(?:WITH\s+[\s\S]+?)?(CREATE|DROP|ALTER|VACUUM|ANALYZE)\b/i;
-    if (ddlPattern.test(rootStmt)) {
+    const ddlPattern = /^\s*(?:BEGIN\s+)?(?:WITH\s+[\s\S]+?)?(CREATE|DROP|ALTER|VACUUM|ANALYZE)\b/i;
+    if (ddlPattern.test(stripped)) {
       const authCtx = getAuthContext();
       if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin") && !authCtx.scopes.includes("full")) {
         throw new ValidationError(

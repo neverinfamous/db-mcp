@@ -9,7 +9,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { admin, adminFs, idempotent, readOnly, write } from "../../../../utils/annotations.js";
+import { admin, adminFs, readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { insightsManager } from "../../../../utils/insights-manager.js";
@@ -142,7 +142,7 @@ export function createPragmaOptimizeTool(
     inputSchema: PragmaOptimizeSchema,
     outputSchema: PragmaOptimizeOutputSchema,
     requiredScopes: ["admin"],
-    annotations: idempotent("PRAGMA Optimize"),
+    annotations: admin("PRAGMA Optimize"),
     handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const input = PragmaOptimizeSchema.parse(_params);

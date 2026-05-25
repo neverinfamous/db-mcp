@@ -32,7 +32,9 @@ function validateDdl(sql: string, type: string, name: string, allowTriggers = fa
     /\bDETACH\b/i.test(cleanSql) ||
     /\bPRAGMA\b/i.test(cleanSql) ||
     /\bRAISE\s*\(/i.test(cleanSql) ||
-    /\b(?:BEGIN|COMMIT|ROLLBACK)(?:\s+TRANSACTION)?\b/i.test(cleanSql)
+    /\b(?:BEGIN|COMMIT|ROLLBACK)(?:\s+TRANSACTION)?\b/i.test(cleanSql) ||
+    /\b(?:writefile|readfile)\s*\(/i.test(cleanSql) ||
+    /\bsqlite_exec\s*\(/i.test(cleanSql)
   ) {
     throw new ValidationError(
       `DDL validation failed: unauthorized command or function call in ${type} '${name}'`,

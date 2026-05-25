@@ -78,6 +78,20 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 - Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
 ### Security
+- **[High]** Transports: Implemented strict UUIDv4 format and length validation for `mcp-session-id` headers in `stateful.ts` to prevent hash-collision DoS (CWE-400).
+- **[High]** MCP Core: Fixed an authorization bypass in `registerToolImpl` where STDIO scopes were incorrectly bypassed when `authContext` was undefined (CWE-862).
+- **[High]** MCP Core: Added `WRITEFILE`, `READFILE`, and `sqlite_exec` to the `validateDdl` blocklist in `restore.ts` to prevent arbitrary file writes during database restoration (CWE-22, CWE-73).
+- **[High]** MCP Core: Moved DDL validation logic before `BEGIN...END` block stripping in `query-validation.ts` to prevent bypasses where malicious DDL could be hidden inside transaction blocks (CWE-89).
+- **[High]** Sandbox: Added `WebAssembly`, `SharedArrayBuffer`, and comprehensive bracket-notation construction patterns to the blocked regex list in `types.ts` to prevent advanced sandbox escapes (CWE-94).
+- **[Medium]** Transports: Added a TLS warning in `transport.ts` when bearer tokens are used over non-localhost HTTP connections (CWE-319).
+- **[Medium]** MCP Core: Escalated `sqlite_pragma_optimize` tool from `idempotent` to `admin` since it executes DML-like operations that modify internal SQLite statistics (MCP annotation compliance).
+- **[Medium]** CI/CD: Pinned Trivy action SHAs to the v0.28.0 release in `docker-publish.yml` and `security-update.yml` to prevent upstream compromise (CWE-1357).
+- **[Medium]** CI/CD: Secured Skopeo authentication in `docker-publish.yml` by using `--dest-username` and `--dest-password-stdin` instead of command-line arguments to prevent credential leakage in process lists (CWE-214).
+- **[Medium]** CI/CD: Pinned TruffleHog action SHA to the v3.81.0 release in `secrets-scanning.yml` to prevent immutability bypasses (CWE-1357).
+- **[Medium]** CI/CD: Migrated Playwright installation to the official `microsoft/playwright-github-action` in `e2e.yml` to prevent arbitrary code execution from malicious `npx` packages (CWE-1357).
+- **[Low]** CI/CD: Documented Poutine suppression rationales for `untrusted_checkout_exec` in the lock files for transparent risk acceptance.
+- **[Low]** CI/CD: Added `e2e` dependency and `pull-requests: write` permissions to the publish job in `gatekeeper.yml` to ensure tests pass before deployment.
+- **[Low]** CI/CD: Fixed incorrect `actions/checkout` SHA comments across all workflows to accurately reflect `v4.1.1`.
 - **[Critical]** Migrations: Added `validateMigrationSql` logic to strictly prevent unauthorized DDL commands such as `ATTACH`, `DETACH`, `PRAGMA`, and `LOAD_EXTENSION` from executing inside `sqlite_migration_apply` and `sqlite_migration_rollback`.
 - **[High]** Authorization: Enforced explicit scope validation directly in the tool handlers using `scopesGrantToolAccess()` inside `built-in-tools.ts` and `audit-tools.ts` to prevent unauthorized execution in unauthenticated modes.
 - **[High]** CI/CD: Prevented potential secret leakage during the publish step by moving Skopeo registry credentials to an environmental `DEST_CREDS` variable rather than using command line arguments in `docker-publish.yml`.

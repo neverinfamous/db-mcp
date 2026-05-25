@@ -32,6 +32,16 @@ export function verifySessionOwner(
 }
 
 /**
+ * H-3: Validate session ID format to prevent hash-collision or memory DoS
+ */
+function isValidSessionId(id: string | undefined): id is string {
+  if (!id) return false;
+  // UUIDv4 format: 36 chars, hex and hyphens
+  if (id.length !== 36) return false;
+  return /^[0-9a-fA-F-]{36}$/.test(id);
+}
+
+/**
  * Set up stateful mode endpoints with session management and SSE
  */
 export function setupStatefulEndpoints(state: HttpTransportState): void {
@@ -47,6 +57,18 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
 
   state.app.post("/mcp", (req: Request, res: Response): void => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
+
+    if (sessionId !== undefined && !isValidSessionId(sessionId)) {
+      res.status(400).json({
+        jsonrpc: "2.0",
+        error: {
+          code: JSONRPC_SERVER_ERROR,
+          message: "Bad Request: Invalid session ID format",
+        },
+        id: null,
+      });
+      return;
+    }
 
     if (sessionId && state.sseTransports.has(sessionId)) {
       res.status(400).json({
@@ -226,7 +248,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
   state.app.get("/mcp", (req: Request, res: Response): void => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-    if (sessionId === undefined || !state.transports.has(sessionId)) {
+    if (sessionId === undefined || !isValidSessionId(sessionId) || !state.transports.has(sessionId)) {
       res.status(400).send("Invalid or missing session ID");
       return;
     }
@@ -255,7 +277,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
   state.app.delete("/mcp", (req: Request, res: Response): void => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-    if (sessionId === undefined || !state.transports.has(sessionId)) {
+    if (sessionId === undefined || !isValidSessionId(sessionId) || !state.transports.has(sessionId)) {
       res.status(400).send("Invalid or missing session ID");
       return;
     }

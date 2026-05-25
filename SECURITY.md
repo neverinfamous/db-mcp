@@ -326,6 +326,10 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Strict JWT clockTolerance defaults (30 seconds)
 - [x] CI/CD concurrent execution block safeguards
 - [x] Unauthenticated HTTP transport implicitly fails closed without `--no-auth-enforcement` flag
+- [x] Session ID format and length validation (UUIDv4) for stateful transport
+- [x] TLS enforcement warning for HTTP bearer tokens
+- [x] WebAssembly and SharedArrayBuffer blocked in Code Mode sandbox
+- [x] File I/O functions (`WRITEFILE`, `READFILE`) blocked in restore tool
 - [x] Comprehensive security documentation
 
 ## 🚨 **Reporting Security Issues**

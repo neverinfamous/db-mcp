@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false
 
@@ -50,7 +50,7 @@ jobs:
 
       # Run SARIF scan first (non-blocking) to always generate the file
       - name: Run Trivy scanner for SARIF output
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.28.1
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
         with:
           image-ref: security-test:latest
           format: 'sarif'
@@ -70,7 +70,7 @@ jobs:
       # Run table scan (blocking) after SARIF is uploaded
       - name: Run Trivy vulnerability scanner
         id: trivy-scan
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.28.1
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
         with:
           image-ref: security-test:latest
           format: 'table'

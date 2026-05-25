@@ -90,7 +90,7 @@ export function registerToolImpl(
 
           const userScopes = authCtx?.scopes ?? [];
 
-          if (!scopesGrantToolAccess(userScopes, tool.name)) {
+          if (authCtx && !scopesGrantToolAccess(userScopes, tool.name)) {
             throw new InsufficientScopeError(requiredScopes, userScopes);
           }
 

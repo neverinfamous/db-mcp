@@ -122,6 +122,9 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     /\b__proto__\b/, // No prototype pollution
     /\bconstructor\.constructor/, // No constructor chaining
     /\[['"]constructor['"]\]/i, // No bracket-notation constructor access
+    /\[.*(?:constructor|proto).*\]/i, // No bracket-notation dynamic property access
+    /\bWebAssembly\b/, // No WebAssembly access
+    /\bSharedArrayBuffer\b/, // No SharedArrayBuffer access
     /\bReflect\s*\./i, // No Reflect API access (getPrototypeOf, ownKeys, construct, etc.)
     /\bSymbol\b/i, // No Symbol access (hasInstance, toPrimitive, etc.)
     /\bnew\s+Proxy\s*\(/i, // No Proxy construction

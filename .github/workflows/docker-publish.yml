@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false
 
@@ -71,7 +71,7 @@ jobs:
           exit-code: true
 
       - name: Trivy security scan
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.28.1
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
         with:
           image-ref: local-scan:latest
           format: table
@@ -82,7 +82,7 @@ jobs:
 
       - name: Trivy SARIF upload
         if: always()
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c7d8aeef2c4a27e6e7d1fd3e # v0.28.1
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
         with:
           image-ref: local-scan:latest
           format: sarif
@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false
 
@@ -177,14 +177,15 @@ jobs:
 
       - name: Push manifest to Docker Hub
         env:
-          DEST_CREDS: ${{ secrets.DOCKER_USERNAME }}:${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           # Use skopeo to copy the multi-arch image from the local registry to Docker Hub
-          skopeo copy --all --dest-creds="${DEST_CREDS}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          echo "${DOCKER_PASSWORD}" | skopeo copy --all --dest-username="${DOCKER_USERNAME}" --dest-password-stdin docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
           
           # Also tag and push 'latest' if applicable
           if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
-            skopeo copy --all --dest-creds="${DEST_CREDS}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            echo "${DOCKER_PASSWORD}" | skopeo copy --all --dest-username="${DOCKER_USERNAME}" --dest-password-stdin docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           fi
 
       - name: Update Docker Hub Description
