@@ -51,14 +51,6 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     return; // Empty queries are validated elsewhere
   }
 
-  // Pre-parse security check for blocked pragmas that mutate state
-  const pragmaMatches = sql.matchAll(/\bPRAGMA\s+(?:[a-zA-Z_]+\.)?([a-zA-Z_]+)\s*(?:=|\()/gi);
-  for (const match of pragmaMatches) {
-    if (match[1] && BLOCKED_PRAGMAS.has(match[1].toLowerCase())) {
-      throw new ValidationError(`Mutating PRAGMA '${match[1]}' is blocked for security`, "DB_DANGEROUS_PATTERN");
-    }
-  }
-
   let stripped = "";
   let inString = false;
   let stringChar = "";
@@ -111,6 +103,14 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     }
 
     stripped += c;
+  }
+
+  // Security check for blocked pragmas that mutate state (after comment stripping)
+  const pragmaMatches = stripped.matchAll(/\bPRAGMA\s+(?:[a-zA-Z_]+\.)?([a-zA-Z_]+)\s*(?:=|\()/gi);
+  for (const match of pragmaMatches) {
+    if (match[1] && BLOCKED_PRAGMAS.has(match[1].toLowerCase())) {
+      throw new ValidationError(`Mutating PRAGMA '${match[1]}' is blocked for security`, "DB_DANGEROUS_PATTERN");
+    }
   }
 
   // Replace BEGIN ... END blocks with a placeholder so semicolons inside them don't trigger stacked query detection,

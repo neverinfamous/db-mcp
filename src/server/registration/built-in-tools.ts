@@ -125,9 +125,9 @@ export function registerBuiltInTools(
       }
 
       const adapters = [];
-      for (const [id, adapter] of adaptersMap) {
+      for (const [, adapter] of adaptersMap) {
         adapters.push({
-          id,
+          id: `${adapter.type}:default`,
           type: adapter.type,
           name: adapter.name,
           version: adapter.version,

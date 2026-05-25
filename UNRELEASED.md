@@ -49,6 +49,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **server**: Fixed lint errors in `mcp-server.ts` by using optional chaining and correcting `ErrorCategory` reference.
 - Completely removed all unparameterized SQL template string evaluation from `executeReadQuery` and `executeWriteQuery` across all tools, migrating fully to native `?` bindings to resolve all identified SQL injection (SQLi) vulnerabilities.
 - Hardened `buildWhereClause` utility to securely generate and bind parameters arrays, preventing conditional injection attacks.
 - Fixed `json_each` alias collision in json operations by fully qualifying identifiers as `t."id"`.

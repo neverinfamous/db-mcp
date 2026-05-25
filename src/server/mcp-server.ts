@@ -109,9 +109,16 @@ export class DbMcpServer {
     const internalMcp = this.server as unknown as { server: { _requestHandlers?: Map<string, RequestHandler> } };
     const handlers = internalMcp.server._requestHandlers;
     
-    if (handlers?.has("tools/list")) {
-      const originalListToolsHandler = handlers.get("tools/list");
-      if (originalListToolsHandler) {
+    if (!handlers?.has("tools/list")) {
+      throw new DbMcpError(
+        "Security: SDK _requestHandlers monkey-patch failed. Scope filtering is disabled.",
+        "SERVER_START_FAILED",
+        ErrorCategory.INTERNAL
+      );
+    }
+    
+    const originalListToolsHandler = handlers.get("tools/list");
+    if (originalListToolsHandler) {
         handlers.set("tools/list", async (request: unknown, extra: unknown) => {
           const result = await originalListToolsHandler(request, extra);
           const authCtx = getAuthContext();
@@ -122,7 +129,6 @@ export class DbMcpServer {
           return result;
         });
       }
-    }
 
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });

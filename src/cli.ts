@@ -287,6 +287,9 @@ function loadEnvConfig(): Partial<McpServerConfig> {
   // Simple bearer token from environment
   const authToken = process.env["MCP_AUTH_TOKEN"];
   if (authToken) {
+    if (authToken.length < 32) {
+      logger.warning("MCP_AUTH_TOKEN is too short (< 32 chars). Use a cryptographically random token.");
+    }
     config.authToken = authToken;
   }
   

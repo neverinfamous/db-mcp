@@ -31,6 +31,8 @@ import { logger } from "../../utils/logger/index.js";
 export function setupSecurityHeaders(state: HttpTransportState): void {
   if (!state.app) return;
 
+  state.app.disable("x-powered-by");
+
   state.app.use((_req: Request, res: Response, next: () => void) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
