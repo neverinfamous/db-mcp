@@ -182,11 +182,11 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           # Use skopeo to copy the multi-arch image from the local registry to Docker Hub
-          echo "${DOCKER_PASSWORD}" | skopeo copy --all --dest-username="${DOCKER_USERNAME}" --dest-password-stdin docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          skopeo copy --all --dest-creds="${DOCKER_USERNAME}:${DOCKER_PASSWORD}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
           
           # Also tag and push 'latest' if applicable
           if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
-            echo "${DOCKER_PASSWORD}" | skopeo copy --all --dest-username="${DOCKER_USERNAME}" --dest-password-stdin docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            skopeo copy --all --dest-creds="${DOCKER_USERNAME}:${DOCKER_PASSWORD}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           fi
 
       - name: Update Docker Hub Description

@@ -109,8 +109,9 @@
 - **[Medium]** Transports: Added a TLS warning in `transport.ts` when bearer tokens are used over non-localhost HTTP connections (CWE-319).
 - **[Medium]** MCP Core: Escalated `sqlite_pragma_optimize` tool from `idempotent` to `admin` since it executes DML-like operations that modify internal SQLite statistics (MCP annotation compliance).
 - **[Medium]** CI/CD: Pinned Trivy action SHAs to the v0.28.0 release in `docker-publish.yml` and `security-update.yml` to prevent upstream compromise (CWE-1357).
-- **[Medium]** CI/CD: Secured Skopeo authentication in `docker-publish.yml` by using `--dest-username` and `--dest-password-stdin` instead of command-line arguments to prevent credential leakage in process lists (CWE-214).
+- **[Medium]** CI/CD: Secured Skopeo authentication in `docker-publish.yml` by using `--dest-creds` with environment variables instead of `echo` shell pipes, preventing credential leakage in process lists or logs (CWE-214).
 - **[Medium]** CI/CD: Pinned TruffleHog action SHA to the v3.81.0 release in `secrets-scanning.yml` to prevent immutability bypasses (CWE-1357).
+- **[Medium]** CI/CD: Fixed `retention-days: 0` in agentic workflow lock files to properly purge artifacts after 1 day instead of falling back to 90 days.
 - **[Medium]** CI/CD: Migrated Playwright installation to the official `microsoft/playwright-github-action` in `e2e.yml` to prevent arbitrary code execution from malicious `npx` packages (CWE-1357).
 - **[Low]** CI/CD: Documented Poutine suppression rationales for `untrusted_checkout_exec` in the lock files for transparent risk acceptance.
 - **[Low]** CI/CD: Added `e2e` dependency and `pull-requests: write` permissions to the publish job in `gatekeeper.yml` to ensure tests pass before deployment.

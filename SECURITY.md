@@ -225,6 +225,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - ✅ **Dependabot Action Updates** — proactive weekly `.github/dependabot.yml` policy monitors and updates GitHub Action versions.
 - ✅ **Credential Isolation** — CI workflows strictly pass credentials (`DEST_CREDS`, `NPM_TOKEN`) via environment variables rather than command-line arguments to prevent leakage into intermediate shell evaluations or process listings.
 - ✅ **E2E transport parity** — Playwright suite validates HTTP/SSE security behavior
+- ✅ **Artifact Exposure Limits** — sensitive workflow artifacts are explicitly purged after 24 hours
 
 ## 🚨 **Security Best Practices**
 
@@ -296,6 +297,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Patch drift detection (weekly CI workflow)
 - [x] Lockfile integrity verification (SHA-256 + git diff in CI)
 - [x] CI/CD security pipeline (CodeQL, npm audit, secrets scanning on push+PR)
+- [x] Artifact retention limited to 1 day for sensitive workflow outputs
 - [x] Structured error responses (no internal details leaked)
 
 - [x] Session ownership binding (session ID → auth subject verification)
