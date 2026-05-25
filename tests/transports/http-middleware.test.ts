@@ -29,6 +29,7 @@ function createMockState(
         const fn = args[args.length - 1];
         if (typeof fn === "function") middlewares.push(fn as Function);
       }),
+      disable: vi.fn(),
       _middlewares: middlewares,
     } as unknown as HttpTransportState["app"],
     config: {

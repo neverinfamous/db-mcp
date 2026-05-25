@@ -91,6 +91,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 ### **Security Headers & Protections**
 
 - ✅ **DNS Rebinding Protection** — `validateHostHeader()` strictly validates `Host` headers
+- ✅ **X-Powered-By** header suppression — prevents framework version fingerprinting
 - ✅ **X-Content-Type-Options: nosniff** — prevents MIME sniffing
 - ✅ **X-Frame-Options: DENY** — prevents clickjacking
 - ✅ **Content-Security-Policy: default-src 'none'; frame-ancestors 'none'** — prevents XSS and framing
@@ -257,7 +258,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] WHERE clause Unicode NFC normalization + full-width→ASCII mapping (homoglyph bypass prevention)
 - [x] Input validation via Zod schemas
 - [x] Strict DDL validation with boundary regexes
-- [x] Global AST pre-parsing rejection for mutating PRAGMAs
+- [x] Global AST pre-parsing rejection for mutating PRAGMAs (with multi-line comment stripping evasion protection)
 - [x] Strict escaping for DDL identifiers (foreign keys, check constraints)
 - [x] JWT claims sanitization (prototype pollution prevention)
 - [x] Code Mode sandbox isolation (worker_threads V8 isolate + vm.createContext)
@@ -285,7 +286,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] OAuth 2.1 with JWT/JWKS validation (RFC 9728, RFC 8414)
 - [x] SQLite-specific scope enforcement (`read`, `write`, `admin`, `full`, `db:*`, `table:*`)
 - [x] Fail-closed scope default (`admin`) for unknown tools
-- [x] Per-tool scope enforcement via `AsyncLocalStorage`
+- [x] Per-tool scope enforcement via `AsyncLocalStorage` and protocol-layer `tools/list` filtering
 
 - [x] Credential redaction in logs
 - [x] Log injection prevention
@@ -322,6 +323,8 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] TLS enforcement warning for HTTP bearer tokens
 - [x] WebAssembly and SharedArrayBuffer blocked in Code Mode sandbox
 - [x] File I/O functions (`WRITEFILE`, `READFILE`) blocked in restore tool
+- [x] Obfuscated adapter ID mapping in built-in tools
+- [x] Low entropy startup warning for single-tenant tokens
 - [x] Comprehensive security documentation
 
 ## 🚨 **Reporting Security Issues**

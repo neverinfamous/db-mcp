@@ -36,7 +36,7 @@ import {
   registerAuditResource,
   registerAuditBackupTools,
 } from "./registration/index.js";
-import { registerToolScopes, getAccessibleTools } from "../auth/scopes/enforcement.js";
+import { registerToolScopes, scopesGrantToolAccess } from "../auth/scopes/enforcement.js";
 import { getAuthContext } from "../auth/auth-context.js";
 
 /**
@@ -104,31 +104,7 @@ export class DbMcpServer {
       },
     );
 
-    // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
-    type RequestHandler = (request: unknown, extra: unknown) => Promise<{ tools: { name: string }[] }>;
-    const internalMcp = this.server as unknown as { server: { _requestHandlers?: Map<string, RequestHandler> } };
-    const handlers = internalMcp.server._requestHandlers;
-    
-    if (!handlers?.has("tools/list")) {
-      throw new DbMcpError(
-        "Security: SDK _requestHandlers monkey-patch failed. Scope filtering is disabled.",
-        "SERVER_START_FAILED",
-        ErrorCategory.INTERNAL
-      );
-    }
-    
-    const originalListToolsHandler = handlers.get("tools/list");
-    if (originalListToolsHandler) {
-        handlers.set("tools/list", async (request: unknown, extra: unknown) => {
-          const result = await originalListToolsHandler(request, extra);
-          const authCtx = getAuthContext();
-          if (authCtx && Array.isArray(result.tools)) {
-            const accessibleTools = new Set(getAccessibleTools(authCtx.scopes));
-            result.tools = result.tools.filter((t) => accessibleTools.has(t.name));
-          }
-          return result;
-        });
-      }
+
 
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });
@@ -145,6 +121,32 @@ export class DbMcpServer {
     // Register built-in tools and help resources
     registerBuiltInTools(this.server, this.adapters, this.config, this.toolFilter);
     registerHelpResources(this.server, this.toolFilter);
+
+    // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
+    // We must do this AFTER tools are registered, because the SDK lazily registers the 'tools/list' handler
+    type RequestHandler = (request: unknown, extra: unknown) => Promise<{ tools: { name: string }[] }>;
+    const internalMcp = this.server as unknown as { server: { _requestHandlers?: Map<string, RequestHandler> } };
+    const handlers = internalMcp.server._requestHandlers;
+    
+    if (!handlers?.has("tools/list")) {
+      throw new DbMcpError(
+        "Security: SDK _requestHandlers monkey-patch failed. Scope filtering is disabled.",
+        "SERVER_START_FAILED",
+        ErrorCategory.INTERNAL
+      );
+    }
+    
+    const originalListToolsHandler = handlers.get("tools/list");
+    if (originalListToolsHandler) {
+      handlers.set("tools/list", async (request: unknown, extra: unknown) => {
+        const result = await originalListToolsHandler(request, extra);
+        const authCtx = getAuthContext();
+        if (authCtx && Array.isArray(result.tools)) {
+          result.tools = result.tools.filter((t) => scopesGrantToolAccess(authCtx.scopes, t.name));
+        }
+        return result;
+      });
+    }
 
     // Initialize audit subsystem if configured
     if (config.audit?.enabled) {

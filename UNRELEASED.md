@@ -85,6 +85,12 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 - Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
 ### Security
+- **[High]** Authorization: Fixed a vulnerability in `tools/list` filtering where the MCP SDK handler could fall back to an unfiltered state, ensuring OAuth per-tool scopes are strictly enforced during protocol discovery (CWE-862).
+- **[High]** Input Validation: Fixed a PRAGMA injection vulnerability in `query-validation.ts` where dangerous SQLite commands could be hidden behind multi-line `/* ... */` or inline `--` comments by moving comment stripping before AST evaluation (CWE-89).
+- **[Medium]** Information Disclosure: Removed the `X-Powered-By` header in HTTP transport middleware to prevent framework version fingerprinting (CWE-200).
+- **[Medium]** Information Disclosure: Obfuscated the adapter ID mapping in `list_adapters` to prevent potential exposure of inline credentials or paths in connection strings (CWE-200).
+- **[Medium]** CI/CD: Removed `secrets: inherit` from the `gatekeeper.yml` workflow, enforcing least-privilege credential access for reusable security pipelines (CWE-250).
+- **[Low]** Authentication: Added a startup warning in `cli.ts` to detect and alert operators when `MCP_AUTH_TOKEN` is configured with low entropy (e.g., short or predictable strings) (CWE-330).
 - **[High]** Code Mode sandbox: Explicitly blocked `\u` and `\x` unicode/hex escapes in identifiers before pattern matching to prevent blocklist evasion (CWE-116).
 - **[High]** Query Validation: Fixed stacked query bypass by replacing blocks with a dummy token `_BLOCK_` before semicolon counting rather than after (CWE-89).
 - **[High]** Input Validation: Removed unescaped single-quoted operand return path in `sqlite_date_diff` to prevent SQL injection (CWE-89).
