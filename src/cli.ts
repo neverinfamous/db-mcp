@@ -64,15 +64,6 @@ function parseArgs(): Partial<McpServerConfig> {
       config.enableHSTS = true;
     } else if (arg === "--no-auth-enforcement") {
       config.noAuthEnforcement = true;
-    } else if (arg === "--auth-token") {
-      const tokenValue = args[++i];
-      if (tokenValue) {
-        config.authToken = tokenValue;
-        console.error(
-          "⚠️  DEPRECATION WARNING: --auth-token passes the token via command line, making it visible " +
-            "in process listings. It will be removed in a future release. Use the MCP_AUTH_TOKEN environment variable instead.",
-        );
-      }
     } else if (arg === "--oauth-enabled" || arg === "-o") {
       if (!config.oauth) {
         config.oauth = { enabled: true };
@@ -220,7 +211,6 @@ Transport Options:
   --enable-hsts             Enable HSTS header (use when behind HTTPS)
 
 Authentication Options:
-  --auth-token <token>      Simple bearer token for HTTP authentication
   --no-auth-enforcement     Explicitly bypass auth enforcement for HTTP
   --oauth-enabled, -o       Enable OAuth 2.1 authentication
   --oauth-issuer <url>      Authorization server URL (issuer)
@@ -254,7 +244,7 @@ Server Options:
 
 Environment Variables:
   MCP_HOST                  Host/IP to bind to (default: 127.0.0.1)
-  MCP_AUTH_TOKEN             Simple bearer token (same as --auth-token)
+  MCP_AUTH_TOKEN             Simple bearer token
   OAUTH_ENABLED              Enable OAuth 2.1 (same as --oauth-enabled)
   OAUTH_ISSUER               Authorization server URL
   OAUTH_AUDIENCE             Expected token audience
@@ -301,6 +291,7 @@ function loadEnvConfig(): Partial<McpServerConfig> {
   }
   
   if (process.env["NO_AUTH_ENFORCEMENT"] === "true") {
+    logger.warning("Auth enforcement explicitly disabled via NO_AUTH_ENFORCEMENT. Ensure this is not running in production.");
     config.noAuthEnforcement = true;
   }
 

@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolFilterConfig, ToolGroup } from "../../types/index.js";
 import { HELP_CONTENT } from "../../constants/server-instructions.js";
 import { logger } from "../../utils/logger/index.js";
+import { ASSISTANT_FOCUSED } from "../../utils/resource-annotations.js";
 
 /**
  * Register sqlite://help resources for on-demand reference documentation.
@@ -21,6 +22,7 @@ export function registerHelpResources(
           description:
             "Critical gotchas, WASM vs Native comparison, and Code Mode API reference",
           mimeType: "text/markdown",
+          annotations: ASSISTANT_FOCUSED,
         },
         () => ({
           contents: [
@@ -66,6 +68,7 @@ export function registerHelpResources(
         {
           description: `Tool reference for the ${group} tool group`,
           mimeType: "text/markdown",
+          annotations: ASSISTANT_FOCUSED,
         },
         () => ({
           contents: [

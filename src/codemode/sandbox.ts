@@ -92,6 +92,8 @@ export class CodeModeSandbox {
     context.evalSync(setupScript);
 
     let rpcCount = 0;
+    // Security (CWE-400): Limit host tool calls per execution to prevent
+    // malicious code from flooding the host via rapid RPC requests.
     const MAX_RPC_CALLS = 100;
 
     // Inject apiBindings

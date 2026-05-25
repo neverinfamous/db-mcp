@@ -59,7 +59,7 @@ jobs:
             exit 1
           fi
           # Count results with error-level severity (high/critical)
-          HIGH_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' "$SARIF_FILE" 2>/dev/null || echo "0")
+          HIGH_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' "$SARIF_FILE") || { echo "::error::jq failed parsing SARIF"; exit 1; }
           echo "High/critical findings: $HIGH_COUNT"
           if [ "$HIGH_COUNT" -gt 0 ]; then
             echo "::error::CodeQL found $HIGH_COUNT high/critical finding(s). Review Security tab for details."

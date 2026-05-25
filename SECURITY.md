@@ -151,14 +151,6 @@ Full OAuth 2.1 for production multi-tenant deployments:
 
 > **⚠️ HTTP without OAuth:** When OAuth is not configured, all scope checks are bypassed. If you expose the HTTP transport without enabling OAuth, any client has full unrestricted access. Always enable OAuth for production HTTP deployments.
 
-### **Simple Bearer Token Security**
-
-- ✅ **Constant-time comparison** — bearer token validation uses `crypto.timingSafeEqual` to prevent timing side-channel attacks
-- ✅ **CLI warning** — using `--auth-token` emits a warning that the token is visible in process listings
-
-> **⚠️ Production guidance:** Prefer the `MCP_AUTH_TOKEN` environment variable over `--auth-token` for production deployments. Command-line arguments are visible via `ps`, `/proc/<pid>/cmdline`, and similar tools on the host.
-
-> **⚠️ Scope limitation:** Simple bearer token auth authenticates clients but does **not** enforce per-tool scopes. All tools are accessible to any client presenting the correct token. For granular scope enforcement (`read`, `write`, `admin`, `full`), use OAuth 2.1 via `--oauth-enabled`.
 
 ## 🐳 **Docker Security**
 
@@ -294,7 +286,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] SQLite-specific scope enforcement (`read`, `write`, `admin`, `full`, `db:*`, `table:*`)
 - [x] Fail-closed scope default (`admin`) for unknown tools
 - [x] Per-tool scope enforcement via `AsyncLocalStorage`
-- [x] Bearer auth scope limitation warning (startup + documentation)
+
 - [x] Credential redaction in logs
 - [x] Log injection prevention
 - [x] Non-root Docker user
@@ -304,7 +296,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Lockfile integrity verification (SHA-256 + git diff in CI)
 - [x] CI/CD security pipeline (CodeQL, npm audit, secrets scanning on push+PR)
 - [x] Structured error responses (no internal details leaked)
-- [x] Constant-time bearer token comparison (`crypto.timingSafeEqual`)
+
 - [x] Session ownership binding (session ID → auth subject verification)
 - [x] SSE payload redaction (no raw message content in logs)
 - [x] Code preview credential redaction in audit logs

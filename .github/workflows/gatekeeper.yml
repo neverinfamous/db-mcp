@@ -23,6 +23,7 @@ jobs:
 
   secrets:
     uses: ./.github/workflows/secrets-scanning.yml
+    secrets: inherit
     permissions:
       contents: read
 

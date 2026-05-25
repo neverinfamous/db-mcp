@@ -142,9 +142,9 @@ export class HttpTransport {
       `http://localhost:${String(this.state.config.port)}`;
 
     // Enforce authentication if HTTP is enabled and auth is not explicitly bypassed
-    if (!this.state.config.oauth.enabled && !this.state.config.authToken && !this.state.config.noAuthEnforcement) {
+    if (!this.state.config.oauth.enabled && !this.state.config.noAuthEnforcement) {
       throw new DbMcpError(
-        "HTTP transport is enabled without authentication. You must configure OAuth (--oauth-enabled) or a Simple Auth Token (--auth-token), or explicitly bypass this check with --no-auth-enforcement.",
+        "HTTP transport is enabled without authentication. You must configure OAuth (--oauth-enabled) or explicitly bypass this check with --no-auth-enforcement.",
         "AUTH_REQUIRED",
         ErrorCategory.CONFIGURATION
       );
@@ -162,16 +162,6 @@ export class HttpTransport {
         );
       }
       await setupOAuth(this.state, resourceUri);
-    } else if (this.state.config.authToken) {
-      if (
-        resourceUri.startsWith("http://") &&
-        !resourceUri.includes("localhost") &&
-        !resourceUri.includes("127.0.0.1")
-      ) {
-        logger.warning(
-          "Security Warning (F09): Auth token is enabled but resource URI is not using HTTPS. A TLS-terminating reverse proxy is required in production to prevent token interception.",
-        );
-      }
     }
 
     // Health check endpoint (always public, but detail is auth-gated)

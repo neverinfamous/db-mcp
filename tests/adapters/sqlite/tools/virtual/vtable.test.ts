@@ -13,6 +13,11 @@ vi.mock("../../../../../src/adapters/sqlite/tools/virtual/analysis.js", () => ({
   isCsvModuleAvailable: vi.fn(),
 }));
 
+// Mock fs to prevent realpathSync from failing on fake test paths
+vi.mock("node:fs", () => ({
+  realpathSync: vi.fn((p) => p),
+}));
+
 import { createListVirtualTablesTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/list.js";
 import { createVirtualTableInfoTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/info.js";
 import { createDropVirtualTableTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/drop.js";

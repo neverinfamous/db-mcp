@@ -56,8 +56,7 @@ export interface HttpTransportConfig {
    */
   stateless?: boolean;
 
-  /** Simple bearer token for HTTP authentication (non-OAuth) */
-  authToken?: string;
+
 
   /** Explicitly bypass auth requirement */
   noAuthEnforcement?: boolean;

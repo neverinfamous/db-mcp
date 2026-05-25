@@ -7,7 +7,6 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  validateWhereClause,
   sanitizeWhereClause,
   UnsafeWhereClauseError,
   validateIdentifier,
@@ -22,89 +21,89 @@ describe("Security: WHERE Clause Validation", () => {
   describe("validateWhereClause", () => {
     describe("valid clauses", () => {
       it("should allow simple conditions", () => {
-        expect(() => validateWhereClause("id = 1")).not.toThrow();
-        expect(() => validateWhereClause("name = 'Alice'")).not.toThrow();
-        expect(() => validateWhereClause("status = 'active'")).not.toThrow();
+        expect(() => sanitizeWhereClause("id = 1")).not.toThrow();
+        expect(() => sanitizeWhereClause("name = 'Alice'")).not.toThrow();
+        expect(() => sanitizeWhereClause("status = 'active'")).not.toThrow();
       });
 
       it("should allow compound conditions", () => {
         expect(() =>
-          validateWhereClause("id > 0 AND status = 'active'"),
+          sanitizeWhereClause("id > 0 AND status = 'active'"),
         ).not.toThrow();
         expect(() =>
-          validateWhereClause("name = 'test' OR email IS NOT NULL"),
+          sanitizeWhereClause("name = 'test' OR email IS NOT NULL"),
         ).not.toThrow();
       });
 
       it("should allow BETWEEN clauses", () => {
         expect(() =>
-          validateWhereClause(
+          sanitizeWhereClause(
             "created_at BETWEEN '2024-01-01' AND '2024-12-31'",
           ),
         ).not.toThrow();
       });
 
       it("should allow IN clauses", () => {
-        expect(() => validateWhereClause("status IN ('active', 'pending')")).not
+        expect(() => sanitizeWhereClause("status IN ('active', 'pending')")).not
           .toThrow;
       });
 
       it("should allow NULL checks", () => {
-        expect(() => validateWhereClause("deleted_at IS NULL")).not.toThrow();
+        expect(() => sanitizeWhereClause("deleted_at IS NULL")).not.toThrow();
         expect(() =>
-          validateWhereClause("deleted_at IS NOT NULL"),
+          sanitizeWhereClause("deleted_at IS NOT NULL"),
         ).not.toThrow();
       });
 
       it("should reject subqueries (data exfiltration prevention)", () => {
         expect(() =>
-          validateWhereClause("id IN (SELECT user_id FROM orders)"),
+          sanitizeWhereClause("id IN (SELECT user_id FROM orders)"),
         ).toThrow(UnsafeWhereClauseError);
       });
     });
 
     describe("SQL injection prevention - Command Injection", () => {
       it("should reject DROP statements", () => {
-        expect(() => validateWhereClause("1=1; DROP TABLE users;")).toThrow(
+        expect(() => sanitizeWhereClause("1=1; DROP TABLE users;")).toThrow(
           UnsafeWhereClauseError,
         );
-        expect(() => validateWhereClause("id = 1; DROP DATABASE")).toThrow(
+        expect(() => sanitizeWhereClause("id = 1; DROP DATABASE")).toThrow(
           UnsafeWhereClauseError,
         );
       });
 
       it("should reject DELETE statements", () => {
-        expect(() => validateWhereClause("1=1; DELETE FROM users;")).toThrow(
+        expect(() => sanitizeWhereClause("1=1; DELETE FROM users;")).toThrow(
           UnsafeWhereClauseError,
         );
       });
 
       it("should reject INSERT statements", () => {
         expect(() =>
-          validateWhereClause("1=1; INSERT INTO users VALUES (1);"),
+          sanitizeWhereClause("1=1; INSERT INTO users VALUES (1);"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject UPDATE statements", () => {
         expect(() =>
-          validateWhereClause("1=1; UPDATE users SET admin = 1;"),
+          sanitizeWhereClause("1=1; UPDATE users SET admin = 1;"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject CREATE statements", () => {
         expect(() =>
-          validateWhereClause("1=1; CREATE TABLE exploit (data TEXT);"),
+          sanitizeWhereClause("1=1; CREATE TABLE exploit (data TEXT);"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject ALTER statements", () => {
         expect(() =>
-          validateWhereClause("1=1; ALTER TABLE users ADD COLUMN pwned TEXT;"),
+          sanitizeWhereClause("1=1; ALTER TABLE users ADD COLUMN pwned TEXT;"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject TRUNCATE statements", () => {
-        expect(() => validateWhereClause("1=1; TRUNCATE TABLE users;")).toThrow(
+        expect(() => sanitizeWhereClause("1=1; TRUNCATE TABLE users;")).toThrow(
           UnsafeWhereClauseError,
         );
       });
@@ -113,7 +112,7 @@ describe("Security: WHERE Clause Validation", () => {
         // Note: EXEC is not in SQLite blocklist since it's database-specific
         // The semicolon-based stacked query detection handles this
         expect(() =>
-          validateWhereClause("1=1; EXEC xp_cmdshell; DROP TABLE"),
+          sanitizeWhereClause("1=1; EXEC xp_cmdshell; DROP TABLE"),
         ).toThrow(UnsafeWhereClauseError);
       });
     });
@@ -121,36 +120,36 @@ describe("Security: WHERE Clause Validation", () => {
     describe("SQL injection prevention - SQLite-Specific Attacks", () => {
       it("should reject ATTACH DATABASE attacks", () => {
         expect(() =>
-          validateWhereClause("1=1; ATTACH DATABASE '/tmp/pwned.db' AS pwned"),
+          sanitizeWhereClause("1=1; ATTACH DATABASE '/tmp/pwned.db' AS pwned"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject load_extension attacks", () => {
         expect(() =>
-          validateWhereClause("id = load_extension('/tmp/exploit.so')"),
+          sanitizeWhereClause("id = load_extension('/tmp/exploit.so')"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject PRAGMA injections", () => {
-        expect(() => validateWhereClause("1=1; PRAGMA database_list")).toThrow(
+        expect(() => sanitizeWhereClause("1=1; PRAGMA database_list")).toThrow(
           UnsafeWhereClauseError,
         );
         expect(() =>
-          validateWhereClause("1=1; PRAGMA writable_schema = ON"),
+          sanitizeWhereClause("1=1; PRAGMA writable_schema = ON"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject fileio function attacks", () => {
         expect(() =>
-          validateWhereClause("id = readfile('/etc/passwd')"),
+          sanitizeWhereClause("id = readfile('/etc/passwd')"),
         ).toThrow(UnsafeWhereClauseError);
         expect(() =>
-          validateWhereClause("id = writefile('/tmp/exploit', 'data')"),
+          sanitizeWhereClause("id = writefile('/tmp/exploit', 'data')"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject hex string binary injections", () => {
-        expect(() => validateWhereClause("data = X'DEADBEEF'")).toThrow(
+        expect(() => sanitizeWhereClause("data = X'DEADBEEF'")).toThrow(
           UnsafeWhereClauseError,
         );
       });
@@ -158,13 +157,13 @@ describe("Security: WHERE Clause Validation", () => {
 
     describe("SQL injection prevention - Comment Injection", () => {
       it("should reject SQL comments (double dash)", () => {
-        expect(() => validateWhereClause("id = 1 -- comment")).toThrow(
+        expect(() => sanitizeWhereClause("id = 1 -- comment")).toThrow(
           UnsafeWhereClauseError,
         );
       });
 
       it("should reject SQL comments (block)", () => {
-        expect(() => validateWhereClause("id = 1 /* comment */")).toThrow(
+        expect(() => sanitizeWhereClause("id = 1 /* comment */")).toThrow(
           UnsafeWhereClauseError,
         );
       });
@@ -172,29 +171,29 @@ describe("Security: WHERE Clause Validation", () => {
 
     describe("SQL injection prevention - Stacked Queries", () => {
       it("should reject stacked queries with DROP", () => {
-        expect(() => validateWhereClause("id = 1; DROP TABLE users")).toThrow(
+        expect(() => sanitizeWhereClause("id = 1; DROP TABLE users")).toThrow(
           UnsafeWhereClauseError,
         );
       });
 
       it("should reject stacked queries with INSERT", () => {
         expect(() =>
-          validateWhereClause("id = 1; INSERT INTO users VALUES (1)"),
+          sanitizeWhereClause("id = 1; INSERT INTO users VALUES (1)"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject stacked queries with DELETE", () => {
-        expect(() => validateWhereClause("id = 1; DELETE FROM users")).toThrow(
+        expect(() => sanitizeWhereClause("id = 1; DELETE FROM users")).toThrow(
           UnsafeWhereClauseError,
         );
       });
 
       it("should reject stacked queries with SELECT (data exfiltration)", () => {
         expect(() =>
-          validateWhereClause("1=1; SELECT * FROM sqlite_master"),
+          sanitizeWhereClause("1=1; SELECT * FROM sqlite_master"),
         ).toThrow(UnsafeWhereClauseError);
         expect(() =>
-          validateWhereClause("id = 1; SELECT password FROM users"),
+          sanitizeWhereClause("id = 1; SELECT password FROM users"),
         ).toThrow(UnsafeWhereClauseError);
       });
     });
@@ -202,31 +201,31 @@ describe("Security: WHERE Clause Validation", () => {
     describe("SQL injection prevention - UNION-based Attacks", () => {
       it("should reject UNION SELECT attacks", () => {
         expect(() =>
-          validateWhereClause("1=0 UNION SELECT username, password FROM users"),
+          sanitizeWhereClause("1=0 UNION SELECT username, password FROM users"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject UNION ALL attacks", () => {
         expect(() =>
-          validateWhereClause("1=0 UNION ALL SELECT * FROM secrets"),
+          sanitizeWhereClause("1=0 UNION ALL SELECT * FROM secrets"),
         ).toThrow(UnsafeWhereClauseError);
       });
     });
 
     describe("edge cases", () => {
       it("should throw for empty strings (security measure)", () => {
-        expect(() => validateWhereClause("")).toThrow(UnsafeWhereClauseError);
+        expect(() => sanitizeWhereClause("")).toThrow(UnsafeWhereClauseError);
       });
 
       it("should allow whitespace-only strings (filtered elsewhere)", () => {
         // Whitespace-only is allowed - validation focuses on dangerous patterns
-        expect(() => validateWhereClause("   ")).not.toThrow();
+        expect(() => sanitizeWhereClause("   ")).not.toThrow();
       });
       it("should be case-insensitive for dangerous patterns", () => {
-        expect(() => validateWhereClause("1=1; drop TABLE users;")).toThrow(
+        expect(() => sanitizeWhereClause("1=1; drop TABLE users;")).toThrow(
           UnsafeWhereClauseError,
         );
-        expect(() => validateWhereClause("1=1; DROP table Users;")).toThrow(
+        expect(() => sanitizeWhereClause("1=1; DROP table Users;")).toThrow(
           UnsafeWhereClauseError,
         );
       });
@@ -236,7 +235,7 @@ describe("Security: WHERE Clause Validation", () => {
       it("should reject full-width UNION SELECT", () => {
         // U+FF35 U+FF2E U+FF29 U+FF2F U+FF2E = ＵＮＩＯＮ
         expect(() =>
-          validateWhereClause(
+          sanitizeWhereClause(
             "1=0 \uFF35\uFF2E\uFF29\uFF2F\uFF2E \uFF33\uFF25\uFF2C\uFF25\uFF23\uFF34 * FROM users",
           ),
         ).toThrow(UnsafeWhereClauseError);
@@ -244,7 +243,7 @@ describe("Security: WHERE Clause Validation", () => {
 
       it("should reject full-width DROP TABLE after semicolon", () => {
         expect(() =>
-          validateWhereClause(
+          sanitizeWhereClause(
             "1=1; \uFF24\uFF32\uFF2F\uFF30 TABLE users",
           ),
         ).toThrow(UnsafeWhereClauseError);
@@ -253,7 +252,7 @@ describe("Security: WHERE Clause Validation", () => {
       it("should reject mixed ASCII/full-width UNION", () => {
         // Mix: U (ASCII) + Ｎ (full-width) + I (ASCII) + Ｏ (full-width) + N (ASCII)
         expect(() =>
-          validateWhereClause(
+          sanitizeWhereClause(
             "1=0 U\uFF2EI\uFF2FN SELECT * FROM users",
           ),
         ).toThrow(UnsafeWhereClauseError);
@@ -261,7 +260,7 @@ describe("Security: WHERE Clause Validation", () => {
 
       it("should reject full-width PRAGMA", () => {
         expect(() =>
-          validateWhereClause(
+          sanitizeWhereClause(
             "\uFF30\uFF32\uFF21\uFF27\uFF2D\uFF21 database_list",
           ),
         ).toThrow(UnsafeWhereClauseError);
@@ -269,15 +268,15 @@ describe("Security: WHERE Clause Validation", () => {
 
       it("should reject full-width load_extension", () => {
         expect(() =>
-          validateWhereClause(
+          sanitizeWhereClause(
             "\uFF4C\uFF4F\uFF41\uFF44\uFF3F\uFF45\uFF58\uFF54\uFF45\uFF4E\uFF53\uFF49\uFF4F\uFF4E ('/tmp/exploit.so')",
           ),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should still allow legitimate non-full-width WHERE clauses", () => {
-        expect(() => validateWhereClause("name = 'Ünïcödé'")).not.toThrow();
-        expect(() => validateWhereClause("status = '日本語'")).not.toThrow();
+        expect(() => sanitizeWhereClause("name = 'Ünïcödé'")).not.toThrow();
+        expect(() => sanitizeWhereClause("status = '日本語'")).not.toThrow();
       });
     });
   });

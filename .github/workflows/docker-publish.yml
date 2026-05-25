@@ -67,7 +67,7 @@ jobs:
           command: cves
           image: local-scan:latest
           only-fixed: true
-          only-severities: critical,high
+          only-severities: critical,high,medium,low
           exit-code: true
 
       - name: Trivy security scan
@@ -103,6 +103,7 @@ jobs:
     needs: [security-scan]
     if: always() && needs.security-scan.result == 'success' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write

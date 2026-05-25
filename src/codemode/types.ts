@@ -138,6 +138,8 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     /\bObject\.getPrototypeOf/, // No getPrototypeOf
     /\bObject\.setPrototypeOf/, // No setPrototypeOf
     /\b__defineGetter__/, // No __defineGetter__
+    /\bObject\.defineProperty/, // No Object.defineProperty
+    /\bObject\.defineProperties/, // No Object.defineProperties
   ],
 };
 

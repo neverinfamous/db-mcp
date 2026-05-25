@@ -16,6 +16,7 @@ permissions:
 jobs:
   lint-and-test:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [20.x, 22.x, 24.x]
@@ -27,13 +28,13 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v.0.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.1.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
 
       - name: Cache npm
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v.0.0
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4.0.0
         with:
           path: ~/.npm
           key: npm-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
@@ -74,7 +75,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v.0.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.1.0
         with:
           node-version: "24.x"
           cache: "npm"

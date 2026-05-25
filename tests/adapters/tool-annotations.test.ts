@@ -29,6 +29,9 @@ function validateToolAnnotations(tool: ToolDefinition): string | null {
   if (tool.annotations.readOnlyHint === undefined) {
     return `Tool '${tool.name}' (group: ${tool.group}) has annotations but readOnlyHint is undefined`;
   }
+  if (tool.annotations.sensitiveHint === undefined) {
+    return `Tool '${tool.name}' (group: ${tool.group}) has annotations but sensitiveHint is undefined`;
+  }
   return null;
 }
 
@@ -285,26 +288,31 @@ describe("Tool Annotation Invariants (Audit Tools)", () => {
       name: "sqlite_audit_list_backups",
       readOnlyHint: true,
       destructiveHint: false,
+      sensitiveHint: true,
     },
     {
       name: "sqlite_audit_get_backup",
       readOnlyHint: true,
       destructiveHint: false,
+      sensitiveHint: true,
     },
     {
       name: "sqlite_audit_cleanup",
       readOnlyHint: false,
       destructiveHint: true,
+      sensitiveHint: true,
     },
     {
       name: "sqlite_audit_diff_backup",
       readOnlyHint: true,
       destructiveHint: false,
+      sensitiveHint: true,
     },
     {
       name: "sqlite_audit_restore_backup",
       readOnlyHint: false,
       destructiveHint: true,
+      sensitiveHint: true,
     },
   ];
 

@@ -5,7 +5,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { adminFs } from "../../../../../utils/annotations.js";
+
 import {
   formatHandlerError,
   ValidationError,
@@ -69,8 +69,11 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     outputSchema: RestoreOutputSchema,
     requiredScopes: ["admin"],
     annotations: {
-      ...adminFs("Restore Database"),
+      title: "Restore Backup",
+      readOnlyHint: false,
       destructiveHint: true,
+      openWorldHint: true,
+      sensitiveHint: true,
     },
     handler: async (params: unknown, context: RequestContext) => {
       let input;

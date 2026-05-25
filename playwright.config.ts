@@ -44,14 +44,7 @@ export default defineConfig({
       },
       testIgnore: [/wasm\./, /auth\./],
     },
-    {
-      name: "auth",
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://localhost:3003",
-      },
-      testMatch: /auth\./,
-    },
+
   ],
   webServer: [
     {
@@ -85,15 +78,6 @@ export default defineConfig({
         CSV_EXTENSION_PATH: "./extensions/xsv0.dll",
       },
     },
-    {
-      command:
-        "node dist/cli.js --transport http --port 3003 --auth-token test-secret-that-is-at-least-32-chars-long --sqlite ./test-server/test.db --tool-filter +all",
-      url: "http://localhost:3003/health",
-      reuseExistingServer: !process.env.CI,
-      timeout: 30000,
-      stdout: "pipe",
-      stderr: "pipe",
-      env: { ...process.env, MCP_RATE_LIMIT_MAX: "10000" },
-    },
+
   ],
 });

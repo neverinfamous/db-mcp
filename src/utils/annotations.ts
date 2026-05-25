@@ -18,6 +18,7 @@ export const READ_ONLY: ToolAnnotations = {
   readOnlyHint: true,
   destructiveHint: false,
   openWorldHint: false,
+  sensitiveHint: false,
 };
 
 /** Standard write tools (INSERT, UPDATE, CREATE) */
@@ -25,6 +26,7 @@ export const WRITE: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: false,
   openWorldHint: false,
+  sensitiveHint: false,
 };
 
 /** Destructive tools (DELETE, DROP, TRUNCATE) */
@@ -32,6 +34,7 @@ export const DESTRUCTIVE: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: true,
   openWorldHint: false,
+  sensitiveHint: false,
 };
 
 /** Idempotent tools (CREATE IF NOT EXISTS, upserts) */
@@ -40,6 +43,7 @@ export const IDEMPOTENT: ToolAnnotations = {
   destructiveHint: false,
   idempotentHint: true,
   openWorldHint: false,
+  sensitiveHint: false,
 };
 
 /** Admin/maintenance tools (VACUUM, ANALYZE, PRAGMA) */
@@ -47,6 +51,7 @@ export const ADMIN: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: true,
   openWorldHint: false,
+  sensitiveHint: true, // System maintenance may expose internal db structures
 };
 
 // =============================================================================
@@ -103,6 +108,7 @@ export const ADMIN_FS: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: true,
   openWorldHint: true,
+  sensitiveHint: true,
 };
 
 /** Write tools that interact with the filesystem (SpatiaLite Import) */
@@ -110,6 +116,7 @@ export const WRITE_FS: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: false,
   openWorldHint: true,
+  sensitiveHint: true,
 };
 
 /**
@@ -132,6 +139,7 @@ export const CODEMODE: ToolAnnotations = {
   destructiveHint: true,
   idempotentHint: false,
   openWorldHint: true,
+  sensitiveHint: true,
 };
 
 /**

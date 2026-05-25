@@ -83,8 +83,10 @@ jobs:
       - name: Check scan result
         id: check-scan
         if: always()
+        env:
+          TRIVY_OUTCOME: ${{ steps.trivy-scan.outcome }}
         run: |
-          if [ "${{ steps.trivy-scan.outcome }}" = "failure" ]; then
+          if [ "$TRIVY_OUTCOME" = "failure" ]; then
             echo "failed=true" >> "$GITHUB_OUTPUT"
             exit 1
           fi
@@ -99,7 +101,7 @@ jobs:
       issues: write
     steps:
       - name: Create security issue if vulnerabilities found
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v.0.0
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v6.4.1
         env:
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}

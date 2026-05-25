@@ -2,7 +2,7 @@ name: Dockerfile Patch Drift Check
 
 # Detects when manually patched transitive dependencies in the Dockerfile
 # have been updated in the Node.js base image's bundled npm, making the
-# patches redundant. Runs weekly and on Dockerfile changes.
+# patches redundant. Runs daily and on Dockerfile changes.
 
 on:
   schedule:
@@ -20,6 +20,7 @@ permissions:
 jobs:
   check-patches:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -84,6 +85,7 @@ jobs:
 
   check-overrides:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -91,7 +93,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v.0.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.1.0
         with:
           node-version: "24.x"
 

@@ -274,23 +274,7 @@ export function normalizeForPatternMatching(input: string): string {
   return normalized;
 }
 
-/**
- * Validates a WHERE clause for dangerous SQL patterns.
- *
- * This function uses a blocklist approach to detect and reject
- * common SQL injection patterns. It allows legitimate complex
- * conditions while blocking obvious attack vectors.
- *
- * @param where - The WHERE clause to validate
- * @throws UnsafeWhereClauseError if a dangerous pattern is detected
- *
- * @example
- * validateWhereClause("price > 10");                    // OK
- * validateWhereClause("status = 'active' AND id < 100"); // OK
- * validateWhereClause("1=1; DROP TABLE users;--");      // Throws
- * validateWhereClause("1=1 UNION SELECT * FROM sqlite_master"); // Throws
- */
-export function validateWhereClause(where: string): void {
+export function sanitizeWhereClause(where: string): string {
   if (!where || typeof where !== "string") {
     throw new UnsafeWhereClauseError("WHERE clause must be a non-empty string");
   }
@@ -315,17 +299,7 @@ export function validateWhereClause(where: string): void {
       throw new UnsafeWhereClauseError(reason);
     }
   }
-}
 
-/**
- * Validates and returns a safe WHERE clause.
- *
- * @param where - The WHERE clause to sanitize
- * @returns The validated WHERE clause (unchanged if safe)
- * @throws UnsafeWhereClauseError if a dangerous pattern is detected
- */
-export function sanitizeWhereClause(where: string): string {
-  validateWhereClause(where);
   return where;
 }
 

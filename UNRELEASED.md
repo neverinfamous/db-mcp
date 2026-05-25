@@ -20,6 +20,9 @@
 - `dockerfile-patch-drift.yml` CI workflow to detect stale Dockerfile transitive dependency patches.
 
 ### Changed
+- **[MCP 2025 Spec]** Implemented `sensitiveHint` tool annotation across all tool groups.
+- **[MCP 2025 Spec]** Implemented `ASSISTANT_FOCUSED` resource annotations for dynamically generated help resources.
+- Updated `tool-annotations.test.ts` invariant tests to strictly enforce `sensitiveHint` definitions on all tools.
 - Disabled Dependabot version updates and auto-merge workflow to prefer local dependency management and avoid CI/CD merge conflicts.
 - Updated `sqlite_create_table` to natively support `STRICT` tables, `foreignKeys`, and `checkConstraints`.
 - Updated `sqlite_describe_table` to detect and report virtual or stored generated columns via `PRAGMA table_xinfo`.
@@ -41,6 +44,9 @@
 - Implemented global WASM `initSqlJs` promise caching to prevent redundant engine initializations.
 - Added context-window protection to `window.ts` and `advanced.ts` by explicitly validating wide column counts.
 - Increased schema cache TTL to 30 seconds and implemented targeted DDL invalidation to eliminate polling latency.
+
+### Removed
+- Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
 - Completely removed all unparameterized SQL template string evaluation from `executeReadQuery` and `executeWriteQuery` across all tools, migrating fully to native `?` bindings to resolve all identified SQL injection (SQLi) vulnerabilities.

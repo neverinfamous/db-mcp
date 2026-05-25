@@ -80,6 +80,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
       destructiveHint: true,
       idempotentHint: false,
       openWorldHint: true,
+      sensitiveHint: true,
     },
     handler: async (
       params: unknown,

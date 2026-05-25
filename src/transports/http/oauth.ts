@@ -4,7 +4,7 @@
  * OAuth 2.1 component initialization and auth middleware application.
  */
 
-import { timingSafeEqual, createHmac, randomBytes } from "node:crypto";
+
 import { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { AuthorizationServerDiscovery } from "../../auth/authorization-server-discovery.js";
 import { TokenValidator } from "../../auth/token-validator.js";
@@ -14,11 +14,10 @@ import { scopesGrantToolAccess, hasAdminScope, hasReadScope } from "../../auth/s
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
-import type { RequestHandler, Response } from "express";
+import type { Response } from "express";
 
 const logger = createModuleLogger("HTTP");
 
-const HMAC_KEY = randomBytes(32);
 
 // =============================================================================
 // Auth Middleware
@@ -33,8 +32,7 @@ const HMAC_KEY = randomBytes(32);
 export function applyAuthMiddleware(state: HttpTransportState): void {
   // F-6: Warn when CORS wildcard is combined with auth — risky browser posture
   const corsOrigins = state.config.corsOrigins ?? [];
-  const hasAuth =
-    state.config.oauth.enabled || Boolean(state.config.authToken);
+  const hasAuth = state.config.oauth.enabled;
   if (corsOrigins.includes("*") && hasAuth) {
     if (process.env["ALLOW_CORS_WILDCARD_WITH_AUTH"] !== "true") {
       throw new Error(
@@ -64,111 +62,16 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
     });
 
     state.app.use(authMiddleware);
-  } else if (state.config.authToken && state.app) {
-    if (state.config.authToken.length < 32) {
-      throw new Error("Security: MCP_AUTH_TOKEN must be at least 32 characters long to ensure sufficient entropy.");
-    }
-    // Simple bearer token middleware
-    state.app.use(createSimpleBearerAuth(state.config.authToken));
-    logger.info("Simple bearer token authentication enabled", {
-      code: "AUTH_BEARER_ENABLED",
-    });
-    
-    if (!process.env["MCP_AUTH_SCOPES"]) {
-      logger.warning(
-        "Using --auth-token without MCP_AUTH_SCOPES grants blanket 'admin' access to all tools. " +
-          "It bypasses granular scope enforcement. Define MCP_AUTH_SCOPES (e.g. 'read,write') to restrict access.",
-        { code: "AUTH_BEARER_NO_SCOPES" },
-      );
-    }
   } else if (state.app) {
     logger.warning(
       "No authentication configured for HTTP transport. " +
-        "Set --auth-token or --oauth-enabled for production deployments.",
+        "Set --oauth-enabled for production deployments.",
       { code: "AUTH_NONE" },
     );
   }
 }
 
-/**
- * Constant-time comparison of two bearer token strings.
- * Uses `crypto.timingSafeEqual` to prevent timing side-channel attacks.
- * Returns `true` if the tokens match, `false` otherwise.
- */
-function tokensMatch(a: string, b: string): boolean {
-  const ha = createHmac("sha256", HMAC_KEY).update(a).digest();
-  const hb = createHmac("sha256", HMAC_KEY).update(b).digest();
-  return timingSafeEqual(ha, hb);
-}
 
-/**
- * Simple bearer token authentication middleware.
- *
- * Compares the Authorization header against a static token using
- * constant-time comparison to prevent timing side-channel attacks.
- * Lighter-weight than full OAuth 2.1 — suitable for development
- * or single-tenant deployments behind a reverse proxy.
- */
-function createSimpleBearerAuth(expectedToken: string): RequestHandler {
-  const publicPaths = ["/health", "/", "/.well-known"];
-
-  return (req, res, next) => {
-    // Skip public paths
-    if (
-      publicPaths.some((p) => req.path === p || req.path.startsWith(`${p}/`))
-    ) {
-      next();
-      return;
-    }
-
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      res.status(401);
-      res.setHeader("WWW-Authenticate", 'Bearer realm="db-mcp"');
-      res.json({
-        error: "unauthorized",
-        error_description: "Bearer token required",
-      });
-      return;
-    }
-
-    const token = authHeader.slice(7);
-    if (!tokensMatch(token, expectedToken)) {
-      logger.warning("Invalid bearer token rejected", {
-        code: "AUTH_BEARER_REJECTED",
-      });
-      res.status(401);
-      res.setHeader(
-        "WWW-Authenticate",
-        'Bearer realm="db-mcp", error="invalid_token"',
-      );
-      res.json({
-        error: "unauthorized",
-        error_description: "Invalid bearer token",
-      });
-      return;
-    }
-
-    // Explicitly assign configured scopes (or fallback to 'admin').
-    const configuredScopes = process.env["MCP_AUTH_SCOPES"]
-      ? process.env["MCP_AUTH_SCOPES"].split(",").map((s) => s.trim())
-      : ["admin"];
-
-    const invalidScopes = configuredScopes.filter(s => !(SUPPORTED_SCOPES as readonly string[]).includes(s));
-    if (invalidScopes.length > 0) {
-      throw new Error(`Security: Unsupported scopes provided in MCP_AUTH_SCOPES: ${invalidScopes.join(", ")}`);
-    }
-
-    req.auth = { 
-      sub: "bearer", 
-      scopes: configuredScopes,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 86400
-    };
-
-    next();
-  };
-}
 
 /**
  * Apply per-tool scope enforcement middleware for tools/call requests.

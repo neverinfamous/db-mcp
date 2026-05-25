@@ -94,15 +94,23 @@ export function validateSameDirPath(
       const parentDir = realpathSync(dirname(resolvedTarget));
       resolvedTarget = resolve(parentDir, basename(resolvedTarget));
     } catch {
-      // Fallback to lexical
+      return {
+        valid: false,
+        error: "Security: Target parent directory must exist.",
+        dbDir,
+      };
     }
   }
 
-  let resolvedDbDir = dbDir;
+  let resolvedDbDir: string;
   try {
     resolvedDbDir = realpathSync(dbDir);
   } catch {
-    // Fallback to lexical
+    return {
+      valid: false,
+      error: "Security: Database directory must exist.",
+      dbDir,
+    };
   }
 
   const normalizedTarget = normalize(resolvedTarget);

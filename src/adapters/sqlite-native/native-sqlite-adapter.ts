@@ -110,6 +110,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     this.config = sqliteConfig;
 
     try {
+      // SECURITY: operator-controlled only, never from user input
       const filePath =
         sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
 

@@ -17,7 +17,6 @@ export {
 
 export {
   UnsafeWhereClauseError,
-  validateWhereClause,
   sanitizeWhereClause,
 } from "./where-clause.js";
 

@@ -45,6 +45,7 @@ export async function connectSqliteDatabase(
 
   try {
     const sqlJsInstance = await getSqlJs();
+    // SECURITY: operator-controlled only, never from user input
     const filePath =
       sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
     let db: Database;

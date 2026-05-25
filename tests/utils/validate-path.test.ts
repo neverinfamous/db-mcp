@@ -12,9 +12,17 @@
  * - Edge cases: trailing separators, dot segments, subdirectories
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { resolve, join, sep } from "node:path";
 import { validateSameDirPath } from "../../src/utils/validate-path.js";
+
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs")>();
+  return {
+    ...actual,
+    realpathSync: vi.fn((p) => p),
+  };
+});
 
 const DB_DIR = resolve("/data/databases");
 const DB_PATH = join(DB_DIR, "main.db");
