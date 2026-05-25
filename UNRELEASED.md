@@ -248,7 +248,7 @@
 - **[L-5]** CI/CD: add documentation comment in `gatekeeper.yml` explaining that PR security coverage is handled by independent workflow triggers.
 - **[L-2]** Code Mode audit log: extend credential redaction regex to cover AWS, GitHub PAT/OAuth (`ghp_`, `gho_`, `ghu_`, `ghs_`), Slack (`xoxb-`, `xoxp-`, `xoxs-`), and Azure prefixes (CWE-532).
 - **[M-5]** SECURITY.md: add file:line code reference for production vm gate enforcement (`codemode.ts:310-318`).
-- **[M-1]** SECURITY.md: document in-memory rate limiter limitation in multi-instance deployments with shared store recommendation.
+- **[M-1]** Rate Limiting: Upgraded rate limiters in HTTP transport and Code Mode to optionally support a Redis shared store for multi-instance deployments.
 - **[L-3]** SECURITY.md: document in-memory session storage limitation for clustering deployments.
 - **[M-2]** Docker: create `docker-compose.prod.yml` with production-hardened defaults (`cap_drop: ALL`, `no-new-privileges`, `read_only`, `tmpfs`, resource limits, localhost port binding).
 - **[H-1]** Path traversal: add `validateSameDirPath()` check to `sqlite_backup` handler, preventing arbitrary file write via `VACUUM INTO` to paths outside the configured database directory (CWE-22).

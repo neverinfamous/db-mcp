@@ -10,7 +10,7 @@ import { AuthorizationServerDiscovery } from "../../auth/authorization-server-di
 import { TokenValidator } from "../../auth/token-validator.js";
 import { createAuthMiddleware } from "../../auth/middleware/index.js";
 import { SUPPORTED_SCOPES } from "../../auth/scopes/index.js";
-import { scopesGrantToolAccess } from "../../auth/scopes/index.js";
+import { scopesGrantToolAccess, hasAdminScope, hasReadScope } from "../../auth/scopes/index.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
@@ -36,6 +36,12 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
   const hasAuth =
     state.config.oauth.enabled || Boolean(state.config.authToken);
   if (corsOrigins.includes("*") && hasAuth) {
+    if (process.env["ALLOW_CORS_WILDCARD_WITH_AUTH"] !== "true") {
+      throw new Error(
+        "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled. " +
+        "Configure explicit origins via --cors-origins, or set ALLOW_CORS_WILDCARD_WITH_AUTH=true to bypass."
+      );
+    }
     logger.warning(
       "CORS is configured with wildcard origin ('*') while authentication is enabled. " +
         "This allows any website to send authenticated requests via browser fetch(). " +
@@ -147,6 +153,11 @@ function createSimpleBearerAuth(expectedToken: string): RequestHandler {
     const configuredScopes = process.env["MCP_AUTH_SCOPES"]
       ? process.env["MCP_AUTH_SCOPES"].split(",").map((s) => s.trim())
       : ["admin"];
+
+    const invalidScopes = configuredScopes.filter(s => !(SUPPORTED_SCOPES as readonly string[]).includes(s));
+    if (invalidScopes.length > 0) {
+      throw new Error(`Security: Unsupported scopes provided in MCP_AUTH_SCOPES: ${invalidScopes.join(", ")}`);
+    }
 
     req.auth = { 
       sub: "bearer", 
@@ -274,10 +285,9 @@ export function applyScopeEnforcementMiddleware(
       // M-2: Resource scope enforcement — audit resources require admin, others require read
       const resourceUri = body?.params?.uri ?? "";
       const requiredScope = resourceUri.startsWith("sqlite://audit") ? "admin" : "read";
-      const hasAccess = scopesGrantToolAccess(
-        req.auth.scopes,
-        requiredScope === "admin" ? "sqlite_audit_list_backups" : "sqlite_read_query",
-      );
+      const hasAccess = requiredScope === "admin" 
+        ? hasAdminScope(req.auth.scopes)
+        : hasReadScope(req.auth.scopes);
 
       if (!hasAccess) {
         const error = new InsufficientScopeError(
@@ -304,7 +314,7 @@ export function applyScopeEnforcementMiddleware(
       }
     } else if (rpcMethod === "prompts/get") {
       // M-2: Prompt scope enforcement — prompts require read scope
-      const hasAccess = scopesGrantToolAccess(req.auth.scopes, "sqlite_read_query");
+      const hasAccess = hasReadScope(req.auth.scopes);
 
       if (!hasAccess) {
         const promptName = body?.params?.name ?? "unknown";

@@ -36,7 +36,7 @@ const GeoDistanceResultSchema = z
   .object({
     distance: z.number().optional(),
   })
-  .loose();
+  .passthrough();
 
 /**
  * sqlite_geo_within_radius output

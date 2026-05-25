@@ -12,6 +12,7 @@ import {
   type ExecutionRecord,
   type SandboxResult,
 } from "./types.js";
+import { createClient, type RedisClientType } from "redis";
 
 const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA|sk-ant-api[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_]+|rk_live_[a-zA-Z0-9_]+|SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+|npm_[a-zA-Z0-9]{30,}|dpl_[a-zA-Z0-9]{30,}|hvs\.[a-zA-Z0-9_-]+)[^\s'",;)}\]]{4,}/i;
 const SENSITIVE_VALUE_REGEX = new RegExp(SENSITIVE_KEY_PATTERN.source, "gi");
@@ -25,10 +26,17 @@ export class CodeModeSecurityManager {
     string,
     { count: number; resetTime: number }
   >();
+  private redisClient?: RedisClientType;
 
   constructor(config?: Partial<SecurityConfig>) {
     this.config = { ...DEFAULT_SECURITY_CONFIG, ...config };
     setInterval(() => this.cleanupRateLimits(), 5 * 60 * 1000).unref();
+    if (process.env["REDIS_URL"]) {
+      this.redisClient = createClient({ url: process.env["REDIS_URL"] });
+      this.redisClient.connect().catch((err: unknown) => {
+        logger.error("Redis connection failed in CodeModeSecurityManager", { error: err instanceof Error ? err : new Error(String(err)) });
+      });
+    }
   }
 
   /**
@@ -73,7 +81,21 @@ export class CodeModeSecurityManager {
    * Check rate limit for a client
    * @returns true if within limits, false if rate limited
    */
-  checkRateLimit(clientId: string): boolean {
+  async checkRateLimit(clientId: string): Promise<boolean> {
+    if (this.redisClient?.isOpen) {
+      try {
+        const windowMs = 60000;
+        const key = `codemode:rl:${clientId}`;
+        const current = await this.redisClient.incr(key);
+        if (current === 1) {
+          await this.redisClient.pExpire(key, windowMs);
+        }
+        return current <= this.config.maxExecutionsPerMinute;
+      } catch (err) {
+        logger.error("Redis rate limit error, falling back to memory", { error: err instanceof Error ? err : new Error(String(err)) });
+      }
+    }
+
     const now = Date.now();
     const windowMs = 60000; // 1 minute window
 
@@ -114,7 +136,18 @@ export class CodeModeSecurityManager {
   /**
    * Get remaining rate limit for a client
    */
-  getRateLimitRemaining(clientId: string): number {
+  async getRateLimitRemaining(clientId: string): Promise<number> {
+    if (this.redisClient?.isOpen) {
+      try {
+        const key = `codemode:rl:${clientId}`;
+        const current = await this.redisClient.get(key);
+        const count = current ? parseInt(current, 10) : 0;
+        return Math.max(0, this.config.maxExecutionsPerMinute - count);
+      } catch {
+        // Fall back to memory
+      }
+    }
+
     const existing = this.rateLimitMap.get(clientId);
     if (!existing || Date.now() >= existing.resetTime) {
       return this.config.maxExecutionsPerMinute;
@@ -159,7 +192,7 @@ export class CodeModeSecurityManager {
    * Deep clone object to redact sensitive keys and string values
    */
   private redactObject(obj: unknown, depth = 0): unknown {
-    if (depth > 5 || obj === null || obj === undefined) {
+    if (depth > 15 || obj === null || obj === undefined) {
       return obj;
     }
     

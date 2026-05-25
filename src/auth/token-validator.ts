@@ -202,6 +202,9 @@ export class TokenValidator {
     }
 
     return {
+      // Include all other claims (prototype-polluting keys filtered above)
+      ...safePayload,
+      // Explicitly set authoritative fields last to prevent override via safePayload
       sub: safePayload.sub ?? "unknown",
       scopes,
       exp: safePayload.exp ?? 0,
@@ -211,8 +214,6 @@ export class TokenValidator {
       nbf: safePayload.nbf ?? undefined,
       jti: safePayload.jti,
       client_id: safePayload["client_id"] as string | undefined,
-      // Include all other claims (prototype-polluting keys filtered above)
-      ...safePayload,
     };
   }
 

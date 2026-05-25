@@ -14,7 +14,7 @@ on:
   workflow_call:
     secrets:
       NPM_TOKEN:
-        required: false
+        required: true
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: npm
       url: https://www.npmjs.com/package/db-mcp
@@ -35,7 +35,7 @@ jobs:
           fi
 
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.1.1
         with:
           persist-credentials: false
 

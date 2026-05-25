@@ -31,18 +31,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.1.1
         with:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v3.0.0
 
       - name: Verify Dockerfile integrity
         run: git diff --exit-code Dockerfile || (echo "Uncommitted changes to Dockerfile detected" && exit 1)
 
       - name: Build image for scanning (local only)
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v3
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v5.0.0
         with:
           context: .
           file: Dockerfile
@@ -54,14 +54,14 @@ jobs:
           cache-to: type=gha,scope=linux/amd64,mode=max
 
       - name: Log in to Docker Hub (for Scout)
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3.0.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker Scout security scan
-        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1
+        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1.15.1
         timeout-minutes: 10
         with:
           command: cves
@@ -93,47 +93,45 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v3
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v3.25.1
         with:
           sarif_file: trivy-results.sarif
           category: trivy-docker-scan
 
-  # Build each platform on native architecture (only runs if security scan passes)
-  build-platform:
+  # Build platforms to local registry, then merge and push to Docker Hub
+  build-and-push:
     needs: [security-scan]
     if: always() && needs.security-scan.result == 'success' && github.event_name != 'pull_request'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-24.04
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
-
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
       attestations: write
-
-    outputs:
-      version: ${{ steps.version.outputs.version }}
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
+    environment:
+      name: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || '' }}
+      url: https://hub.docker.com/r/writenotenow/db-mcp
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.1.1
         with:
           persist-credentials: false
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
 
-      - name: Verify Dockerfile integrity
-        run: git diff --exit-code Dockerfile || (echo "Uncommitted changes to Dockerfile detected" && exit 1)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v3.0.0
+        with:
+          driver-opts: network=host
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3.0.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -152,102 +150,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: |
-            latest=false
-            suffix=-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
-          tags: |
-            type=sha,prefix=sha-,format=short
-
-      - name: Build and push platform image
-        id: build
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v3
-        with:
-          context: .
-          file: Dockerfile
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,scope=${{ matrix.platform }},mode=max
-          provenance: mode=max
-          sbom: true
-
-      - name: Attest Build Provenance
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v3
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
-
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
-
-      - name: Upload digest
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
-        with:
-          name: digests-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
-  # Merge platform images into multi-arch manifest
-  merge-and-push:
-    runs-on: ubuntu-24.04
-    needs: [build-platform]
-    if: always() && needs.build-platform.result == 'success' && github.event_name != 'pull_request'
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-
-    environment:
-      name: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || '' }}
-      url: https://hub.docker.com/r/writenotenow/db-mcp
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
-        with:
-          persist-credentials: false
-
-      - name: Download digests
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v4
-        with:
-          path: /tmp/digests
-          pattern: digests-*
-          merge-multiple: true
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Read version
-        id: version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          if [ -z "$VERSION" ] || [ "$VERSION" = "undefined" ]; then
-            echo "::error::Could not read version from package.json"
-            exit 1
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Extract metadata for manifest
-        id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v4
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
@@ -257,20 +160,34 @@ jobs:
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=sha,prefix=sha-,format=short
 
-      - name: Create and push manifest
-        working-directory: /tmp/digests
-        run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+      - name: Build and push to local registry
+        id: build
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v5.0.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
 
-      - name: Inspect manifest
+      - name: Push manifest to Docker Hub
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          # Use skopeo to copy the multi-arch image from the local registry to Docker Hub
+          skopeo copy --all --dest-creds=${{ secrets.DOCKER_USERNAME }}:${{ secrets.DOCKER_PASSWORD }} docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          
+          # Also tag and push 'latest' if applicable
+          if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
+            skopeo copy --all --dest-creds=${{ secrets.DOCKER_USERNAME }}:${{ secrets.DOCKER_PASSWORD }} docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          fi
 
-      # Update Docker Hub description
       - name: Update Docker Hub Description
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v4
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v4.0.0
         timeout-minutes: 5
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -284,17 +201,13 @@ jobs:
         run: |
           echo "✅ Successfully published Docker images to production"
           echo "🐳 Registry: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-          echo "🏷️ Tags: ${{ steps.meta.outputs.tags }}"
           echo "📝 Commit: ${{ github.sha }}"
           echo "👤 Published by: ${{ github.actor }}"
 
   # Publish to npm AFTER Docker images are successfully pushed
-  # This ensures npm and Docker releases are always in sync:
-  # - If Docker Scout blocks → npm doesn't publish → no burned version
-  # - If Lint/Test fails → nothing publishes
   npm-publish:
-    needs: [merge-and-push]
-    if: always() && needs.merge-and-push.result == 'success' && startsWith(github.ref, 'refs/tags/v')
+    needs: [build-and-push]
+    if: always() && needs.build-and-push.result == 'success' && startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/publish-npm.yml
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

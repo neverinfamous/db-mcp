@@ -117,7 +117,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Check rate limit
         const clientId = _context.auth?.sub ?? _context.clientIp ?? "anonymous";
-        if (!security.checkRateLimit(clientId)) {
+        if (!(await security.checkRateLimit(clientId))) {
           return {
             success: false,
             error: `Rate limit exceeded. Maximum ${String(codemodeRateLimit)} executions per minute.`,

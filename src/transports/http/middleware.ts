@@ -7,6 +7,8 @@
 
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
+import { createClient } from "redis";
 import type { Request, Response, RequestHandler } from "express";
 import {
   DEFAULT_RATE_LIMIT_WINDOW_MS,
@@ -152,10 +154,18 @@ export function setupRateLimiting(state: HttpTransportState): void {
   // L-4: Clamp max requests to a safe range (1 to 10000)
   const maxRequests = Math.max(1, Math.min(safeParsedMax, 10000));
   // M-4: Warning: The default express-rate-limit in-memory store is per-process.
-  // In multi-instance deployments behind a load balancer, each instance maintains 
-  // independent counters. For production clusters, use a shared store.
-  if (process.env["NODE_ENV"] === "production") {
-    logger.warning("Using default in-memory rate limit store. In multi-instance deployments, rate limits will not be synchronized across instances. Consider using a shared store like Redis.", { module: "HTTP" });
+  let store;
+  if (process.env["REDIS_URL"]) {
+    const redisClient = createClient({ url: process.env["REDIS_URL"] });
+    redisClient.connect().catch((err: unknown) => {
+      logger.error("Redis connection failed", { error: err instanceof Error ? err : new Error(String(err)) });
+    });
+    store = new RedisStore({
+      sendCommand: (...args: string[]) => redisClient.sendCommand(args),
+    });
+    logger.info("Configured RedisStore for rate limiting", { module: "HTTP" });
+  } else if (process.env["NODE_ENV"] === "production") {
+    logger.warning("Using default in-memory rate limit store. In multi-instance deployments, rate limits will not be synchronized across instances. Configure REDIS_URL for production clusters.", { module: "HTTP" });
   }
 
   const limiter = rateLimit({
@@ -163,6 +173,7 @@ export function setupRateLimiting(state: HttpTransportState): void {
     max: maxRequests,
     standardHeaders: true,
     legacyHeaders: false,
+    ...(store ? { store } : {}),
     skip: (req) => req.path === "/health",
     handler: (_req, res, _next, options) => {
       res.status(options.statusCode).json({

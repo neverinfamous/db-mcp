@@ -119,7 +119,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 
 > **⚠️ Reverse Proxy Note:** When `trustProxy` is enabled, rate limiting uses the rightmost `X-Forwarded-For` IPs (up to `trustedProxyCount`, default 1). **Only enable `trustProxy` when deploying behind a trusted reverse proxy** (e.g., nginx, Cloudflare Tunnel) that securely appends to the `X-Forwarded-For` header. Without a trusted proxy, clients can spoof this header to bypass rate limits. When `trustProxy` is disabled (the default), `req.socket.remoteAddress` is used directly and behind a proxy all requests share the same source IP — apply rate limiting at the proxy layer instead.
 
-> **⚠️ Multi-Instance Deployments:** The default `express-rate-limit` in-memory store is per-process. In multi-instance deployments behind a load balancer, each instance maintains independent counters, effectively multiplying the rate limit by the number of instances. For production clusters, configure a shared rate limit store (e.g., [`rate-limit-redis`](https://www.npmjs.com/package/rate-limit-redis)).
+> **⚠️ Multi-Instance Deployments:** The default `express-rate-limit` in-memory store is per-process. In multi-instance deployments behind a load balancer, each instance maintains independent counters, effectively multiplying the rate limit by the number of instances. For production clusters, configure a shared rate limit store by providing a Redis store instance (e.g., `rate-limit-redis`).
 
 ### **Session Management**
 

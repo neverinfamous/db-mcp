@@ -87,11 +87,8 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
       if (Array.isArray(paramMapping) && paramMapping[0] !== undefined) {
         return { [paramMapping[0]]: arg };
       }
-      // Fallback: try common names (only for strings)
-      if (typeof arg === "string") {
-        return { sql: arg, query: arg, table: arg, name: arg };
-      }
-      return arg;
+      
+      throw new Error(`Positional arguments are not supported for method: ${methodName}. Please use an options object.`);
     }
 
     return arg;
@@ -100,7 +97,7 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
   // Multi-arg: use positional parameter mapping
   const paramMapping = POSITIONAL_PARAM_MAP[methodName];
   if (paramMapping === undefined) {
-    return args[0];
+    throw new Error(`Positional arguments are not supported for method: ${methodName}. Please use an options object.`);
   }
 
   if (typeof paramMapping === "string") {

@@ -333,7 +333,7 @@ export function sanitizeWhereClause(where: string): string {
 export interface WhereCondition {
   column: string;
   operator: string;
-  value: unknown;
+  value?: unknown;
 }
 
 export function buildWhereClause(conditions?: WhereCondition[]): { sql: string; params: unknown[] } {
