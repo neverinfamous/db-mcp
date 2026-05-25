@@ -193,9 +193,11 @@ export function executeWrite(
 
     let lastInsertId: number | undefined;
     try {
-      const rowidResult = db.exec("SELECT last_insert_rowid()");
-      if (rowidResult[0]?.values[0]) {
-        lastInsertId = Number(rowidResult[0].values[0][0]);
+      if (/^\s*INSERT\s/i.test(sql) && !/\bRETURNING\b/i.test(sql)) {
+        const rowidResult = db.exec("SELECT last_insert_rowid()");
+        if (rowidResult[0]?.values[0]) {
+          lastInsertId = Number(rowidResult[0].values[0][0]);
+        }
       }
     } catch {
       // Ignore if not supported

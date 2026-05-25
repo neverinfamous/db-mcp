@@ -15,6 +15,7 @@ import {
 import {
   formatHandlerError,
   ResourceNotFoundError,
+  ValidationError,
 } from "../../../utils/errors/index.js";
 import { readOnly } from "../../../utils/annotations.js";
 import { resolveAliases } from "../../sqlite/types.js";
@@ -348,6 +349,13 @@ async function resolveSelectColumns(
     } else {
       included.push(colName);
     }
+  }
+
+  if (included.length > 10) {
+    throw new ValidationError(
+      `Table '${table}' has too many columns (${included.length} remaining after text filtering). You must explicitly provide 'selectColumns' to prevent context window bloat.`,
+      "INVALID_INPUT",
+    );
   }
 
   if (excluded.length > 0 && included.length > 0) {

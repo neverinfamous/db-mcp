@@ -10,7 +10,9 @@
     "db-mcp": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "tsup",
+    "build:types": "tsc --project tsconfig.build.json --emitDeclarationOnly",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "start:stdio": "node dist/cli.js --transport=stdio",

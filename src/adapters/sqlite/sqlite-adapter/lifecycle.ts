@@ -25,6 +25,11 @@ export interface ConnectionResult {
   schemaManager: SchemaManager;
 }
 
+let _sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
+function getSqlJs(): ReturnType<typeof initSqlJs> {
+  return (_sqlJsPromise ??= initSqlJs());
+}
+
 export async function connectSqliteDatabase(
   adapter: SqliteAdapter,
   config: DatabaseConfig,
@@ -39,7 +44,7 @@ export async function connectSqliteDatabase(
   const sqliteConfig = config as SqliteConfig;
 
   try {
-    const sqlJsInstance = await initSqlJs();
+    const sqlJsInstance = await getSqlJs();
     const filePath =
       sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
     let db: Database;

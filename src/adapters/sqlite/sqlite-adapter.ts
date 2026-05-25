@@ -79,6 +79,7 @@ export class SqliteAdapter extends DatabaseAdapter {
 
   protected override config: SqliteConfig | null = null;
   private schemaManager: SchemaManager | null = null;
+  private cachedToolDefinitions: ToolDefinition[] | null = null;
 
   /**
    * Connect to a SQLite database
@@ -167,7 +168,12 @@ export class SqliteAdapter extends DatabaseAdapter {
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      this.clearSchemaCache();
+      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      if (match?.[1] && this.schemaManager) {
+        this.schemaManager.clearTableCache(match[1]);
+      } else {
+        this.clearSchemaCache();
+      }
     }
 
     return result;
@@ -187,7 +193,12 @@ export class SqliteAdapter extends DatabaseAdapter {
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      this.clearSchemaCache();
+      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      if (match?.[1] && this.schemaManager) {
+        this.schemaManager.clearTableCache(match[1]);
+      } else {
+        this.clearSchemaCache();
+      }
     }
 
     return result;
@@ -301,7 +312,8 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Get all tool definitions
    */
   override getToolDefinitions(): ToolDefinition[] {
-    return getAllToolDefinitions(this);
+    this.cachedToolDefinitions ??= getAllToolDefinitions(this);
+    return this.cachedToolDefinitions;
   }
 
   /**

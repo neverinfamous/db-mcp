@@ -333,8 +333,8 @@ describe("SchemaManager", () => {
       await schemaManager.listTables();
       expect(mockExecuteReadQuery).not.toHaveBeenCalled();
 
-      // Advance time past TTL (default is 5000ms)
-      currentTime += 10000;
+      // Advance time past TTL (default is 30000ms)
+      currentTime += 31000;
 
       // Third call after TTL - re-fetches
       mockExecuteReadQuery

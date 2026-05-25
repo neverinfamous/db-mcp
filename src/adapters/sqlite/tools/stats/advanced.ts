@@ -230,6 +230,13 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
             }
           }
 
+          if (included.length > 10) {
+            throw new ValidationError(
+              `Table '${input.table}' has too many columns (${included.length} remaining after text filtering). You must explicitly provide 'selectColumns' to prevent context window bloat.`,
+              "INVALID_INPUT",
+            );
+          }
+
           if (excluded.length > 0 && included.length > 0) {
             columnList = included
               .map((col) => sanitizeIdentifier(col))

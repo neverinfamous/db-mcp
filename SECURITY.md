@@ -72,6 +72,7 @@ Code Mode executes user-provided JavaScript inside a **process-level `isolated-v
 - ✅ **Execution timeout** — 30s hard limit (configurable), enforced strictly by the isolate engine.
 - ✅ **Input limits** — 50KB code input, 10MB result output.
 - ✅ **Rate limiting** — 10 executions per minute per client for Code Mode (internal map capped at 10,000 active clients to prevent memory exhaustion DoS).
+- ✅ **Sandbox pooling** — Isolate instances are managed via a strict LRU pool (`maxInstances: 5`) to prevent memory exhaustion and host starvation during concurrency bursts.
 - ✅ **Audit logging** — every execution logged with UUID, client ID, metrics, and code preview (truncated to 200 chars, credential patterns redacted).
 - ✅ **Forensic traceability** — each isolate script execution uses a unique `randomUUID()` filename for distinguishable stack traces. Stack traces are strictly stripped from worker error responses in production (`NODE_ENV=production`) to prevent internal path and dependency leakage.
 - ✅ **Admin scope** — Code Mode requires `admin` scope when OAuth is enabled.

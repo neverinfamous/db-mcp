@@ -6,7 +6,6 @@
  */
 
 import type ivm from "isolated-vm";
-import { randomUUID } from "node:crypto";
 import {
   DEFAULT_SANDBOX_OPTIONS,
   DEFAULT_POOL_OPTIONS,
@@ -58,7 +57,8 @@ export class CodeModeSandbox {
     const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
     let ivmLib: typeof ivm;
     try {
-      ivmLib = (await import("isolated-vm")).default;
+      await SandboxPool.initialize();
+      ivmLib = SandboxPool.getIvmLib();
     } catch {
       return {
         success: false,
@@ -150,7 +150,7 @@ export class CodeModeSandbox {
 
     try {
       const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
-      const script = isolate.compileScriptSync(wrappedCode, { filename: `user-code-${randomUUID()}.js` });
+      const script = isolate.compileScriptSync(wrappedCode, { filename: `code-mode.js` });
       result = await script.run(context, { timeout: effectiveTimeout, promise: true, copy: true });
     } catch (error: unknown) {
       success = false;
@@ -206,14 +206,32 @@ export class SandboxPool {
   private readonly options: Required<PoolOptions>;
   private readonly sandboxOptions: Required<SandboxOptions>;
   private inUseCount = 0;
+  private readonly idlePool: CodeModeSandbox[] = [];
+  private static ivmPromise: Promise<typeof ivm> | null = null;
+  private static cachedIvmLib: typeof ivm | null = null;
 
   constructor(poolOptions?: PoolOptions, sandboxOptions?: SandboxOptions) {
     this.options = { ...DEFAULT_POOL_OPTIONS, ...poolOptions };
     this.sandboxOptions = { ...DEFAULT_SANDBOX_OPTIONS, ...sandboxOptions };
   }
 
-  initialize(): void {
-    // isolated-vm isolates are fast to create, no need to aggressively pre-warm
+  static getIvmLib(): typeof ivm {
+    if (!SandboxPool.cachedIvmLib) {
+      throw new Error("ivmLib not initialized");
+    }
+    return SandboxPool.cachedIvmLib;
+  }
+
+  static async initialize(): Promise<void> {
+    SandboxPool.ivmPromise ??= import("isolated-vm").then((m) => m.default).catch(() => null as unknown as typeof ivm);
+    const lib = await SandboxPool.ivmPromise;
+    if (lib !== null) {
+      SandboxPool.cachedIvmLib = lib;
+    }
+  }
+
+  async initialize(): Promise<void> {
+    await SandboxPool.initialize();
   }
 
   async execute(
@@ -221,34 +239,52 @@ export class SandboxPool {
     apiBindings: Record<string, unknown>,
     timeoutMs?: number,
   ): Promise<SandboxResult> {
+    if (!SandboxPool.cachedIvmLib) {
+      await SandboxPool.initialize();
+    }
+
     if (this.inUseCount >= this.options.maxInstances) {
       throw new Error(`Sandbox pool exhausted (max ${this.options.maxInstances})`);
     }
 
     this.inUseCount++;
-    const sandbox = CodeModeSandbox.create(this.sandboxOptions);
+    let sandbox = this.idlePool.pop();
+    
+    if (sandbox === undefined) {
+      sandbox = CodeModeSandbox.create(this.sandboxOptions);
+    } else {
+      sandbox.clearConsoleOutput();
+    }
+
     try {
       return await sandbox.execute(code, apiBindings, timeoutMs);
     } finally {
-      sandbox.dispose();
       this.inUseCount--;
+      if (this.idlePool.length < 4 && sandbox.isHealthy()) {
+        this.idlePool.push(sandbox);
+      } else {
+        sandbox.dispose();
+      }
     }
   }
 
   cleanup(): void {
-    // No-op for isolate pool
+    for (const sandbox of this.idlePool) {
+      sandbox.dispose();
+    }
+    this.idlePool.length = 0;
   }
 
-  getStats(): { available: number; inUse: number; max: number } {
-    // "Available" in the context of an isolate pool is how many more we can spawn
+  getStats(): { available: number; inUse: number; max: number; idle: number } {
     return { 
       available: Math.max(0, this.options.maxInstances - this.inUseCount), 
       inUse: this.inUseCount, 
-      max: this.options.maxInstances 
+      max: this.options.maxInstances,
+      idle: this.idlePool.length
     };
   }
 
   dispose(): void {
-    // No-op for isolate pool
+    this.cleanup();
   }
 }

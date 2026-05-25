@@ -102,12 +102,12 @@ describe("CodeModeSecurityManager", () => {
       expect(result.valid).toBe(false);
     });
 
-    it("should collect multiple violations", () => {
+    it("should short-circuit and return the first violation", () => {
       const result = security.validateCode(
         'require("fs"); process.exit(); eval("x");',
       );
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(1);
+      expect(result.errors.length).toBe(1);
     });
 
     it("should allow safe code patterns", () => {

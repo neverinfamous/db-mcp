@@ -36,7 +36,7 @@ const overviewEscaped = escapeForTemplateLiteral(overviewMd);
 
 // Read all help files (everything except overview.md)
 const helpFiles = readdirSync(helpDir)
-  .filter((f) => f.endsWith(".md") && f !== "overview.md")
+  .filter((f) => f.endsWith(".md") && f !== "overview.md" && f !== "README.md")
   .sort();
 
 const helpEntries: { key: string; content: string }[] = [];

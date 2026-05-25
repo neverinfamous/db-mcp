@@ -35,6 +35,12 @@
 - Replaced deprecated alias method names with canonical names in testing prompts and documentation.
 - Synchronized sandbox security documentation across `README.md`, `DOCKER_README.md`, `SECURITY.md`, and `code-map.md` to reflect V8 `codeGeneration` restrictions, Proxy nullification, RPC allowlist validation, and readonly Proxy traps.
 - Added missing `full` OAuth scope to `README.md` and `DOCKER_README.md` scope tables and hero rows (present in source and `SECURITY.md` since v1.1.0). Added missing `CODE_MODE_MAX_RESULT_SIZE` env var to `DOCKER_README.md`. Expanded `code-map.md` auth directory tree to list all `scopes/` and `middleware/` sub-files. Added dynamic scope set derivation note to `SECURITY.md`.
+- Separated TypeScript declaration generation (`tsc`) from Javascript bundling (`tsup`) to improve build times.
+- Optimized `SandboxPool` to use an LRU eviction strategy for `isolated-vm` contexts to cap memory usage.
+- Refactored `CodeModeSecurityManager` validation to short-circuit upon the first violation for O(1) best-case rejection.
+- Implemented global WASM `initSqlJs` promise caching to prevent redundant engine initializations.
+- Added context-window protection to `window.ts` and `advanced.ts` by explicitly validating wide column counts.
+- Increased schema cache TTL to 30 seconds and implemented targeted DDL invalidation to eliminate polling latency.
 
 ### Fixed
 - `sqlite_date_diff` processing of string and numeric literals.
@@ -60,6 +66,8 @@
 - Missing tool count in `text.md` title header, inconsistent with all other group instruction files.
 - Admin instruction title conflating 32 group tools with 5 server-level audit tools into a single count.
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
+- Fixed Vitest 4 deprecation warning by moving `poolOptions` to top-level `maxWorkers` in `vitest.config.ts`.
+- Repository test pollution where `lifecycle.test.ts` wrote a stray `test.db` file to the root directory due to `vi.mock` hoisting side effects.
 
 ### Security
 - **[Critical]** Authorization: Fixed PRAGMA bypass vulnerability in `sqlite_read_query` by extending global AST pre-parsing to explicitly reject state-mutating PRAGMAs.

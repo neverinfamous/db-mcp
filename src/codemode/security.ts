@@ -14,6 +14,7 @@ import {
 } from "./types.js";
 
 const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA|sk-ant-api[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_]+|rk_live_[a-zA-Z0-9_]+|SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+|npm_[a-zA-Z0-9]{30,}|dpl_[a-zA-Z0-9]{30,}|hvs\.[a-zA-Z0-9_-]+)[^\s'",;)}\]]{4,}/i;
+const SENSITIVE_VALUE_REGEX = new RegExp(SENSITIVE_KEY_PATTERN.source, "gi");
 
 /**
  * Security manager for Code Mode executions
@@ -53,6 +54,7 @@ export class CodeModeSecurityManager {
     for (const pattern of this.config.blockedPatterns) {
       if (pattern.test(code)) {
         errors.push(`Blocked pattern detected: ${pattern.source}`);
+        break;
       }
     }
 
@@ -136,7 +138,7 @@ export class CodeModeSecurityManager {
           preview: serialized.substring(0, 1000) + "...",
         };
       }
-      return JSON.parse(serialized);
+      return redactedResult;
     } catch {
       return {
         _error: "Result could not be serialized",
@@ -154,8 +156,7 @@ export class CodeModeSecurityManager {
     }
     
     if (typeof obj === "string") {
-      const globalRegex = new RegExp(SENSITIVE_KEY_PATTERN.source, "gi");
-      return obj.replace(globalRegex, "[REDACTED]");
+      return obj.replace(SENSITIVE_VALUE_REGEX, "[REDACTED]");
     }
     
     if (typeof obj !== "object") {
