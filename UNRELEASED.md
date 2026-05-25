@@ -250,12 +250,18 @@
 - **[M-5]** SECURITY.md: add file:line code reference for production vm gate enforcement (`codemode.ts:310-318`).
 - **[M-1]** Rate Limiting: Upgraded rate limiters in HTTP transport and Code Mode to optionally support a Redis shared store for multi-instance deployments.
 - **[L-3]** SECURITY.md: document in-memory session storage limitation for clustering deployments.
+
+### Changed
+- Replaced unmaintained `sqlite-parser` with enhanced internal regex structural validation
+- Updated HTTP transport and Code Mode to explicitly support `rate-limit-redis` for multi-instance deployments (Security Audit L-3).
+
+### Fixed
+- Replaced brittle `process.env.PATH` mutation for loading SpatiaLite on Windows with a secure native `AddDllDirectory` C++ addon (Security Audit Finding 23).
 - **[M-2]** Docker: create `docker-compose.prod.yml` with production-hardened defaults (`cap_drop: ALL`, `no-new-privileges`, `read_only`, `tmpfs`, resource limits, localhost port binding).
 - **[H-1]** Path traversal: add `validateSameDirPath()` check to `sqlite_backup` handler, preventing arbitrary file write via `VACUUM INTO` to paths outside the configured database directory (CWE-22).
 - **[H-2]** Path traversal: add `validateSameDirPath()` check to `sqlite_restore` handler, preventing arbitrary file read/attach via `ATTACH DATABASE` from paths outside the configured database directory (CWE-22).
 - **[M-1]** Path traversal + scope escalation: add `validateSameDirPath()` check to `sqlite_create_csv_table` and escalate `requiredScopes` from `write` to `admin` — filesystem-touching tools must require admin scope (CWE-22, CWE-862).
 - **[M-2]** WHERE clause validation: add `ABS()`, `HEX()`, `QUOTE()`, `PRINTF()` to `DANGEROUS_PATTERNS` blocklist, closing additional blind extraction oracle vectors (CWE-89).
-- **[M-3]** npm publish: make `NPM_TOKEN` optional (was `required: true`) to enable migration to OIDC trusted publishing. Add inline documentation for OIDC setup steps.
 - **[M-4]** Dependabot: add `actions/dependency-review-action` gate before auto-merge, checking for new package risk, license changes (`GPL-3.0`, `AGPL-3.0`), and high-severity advisories (CWE-829).
 - **[M-5]** CI/CD: split `security-update.yml` issue creation into a separate job with scoped `issues: write` permission, removing unnecessary write access from the security-scan job (CWE-250).
 - **[M-8]** Annotations: fix `sqlite_backup`, `sqlite_restore`, `sqlite_create_csv_table`, and `sqlite_verify_backup` annotation presets to use `adminFs()` with `openWorldHint: true`, accurately signaling filesystem interaction to MCP clients (MCP annotation compliance).

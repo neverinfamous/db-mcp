@@ -1,5 +1,12 @@
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { ExtensionNotAvailableError } from "../../../../utils/errors/index.js";
+import { createRequire } from "module";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // SpatiaLite extension paths to try (platform-aware)
 const SPATIALITE_PATHS = [
@@ -18,6 +25,11 @@ export { SPATIALITE_PATHS };
 // Track loaded state per database
 const loadedDatabases = new WeakSet();
 
+interface Win32DllAddon {
+  addDllDirectory(path: string): unknown;
+  removeDllDirectory(cookie: unknown): void;
+}
+
 /**
  * Try to load SpatiaLite extension
  */
@@ -32,18 +44,26 @@ export function tryLoadSpatialite(
   const paths = SPATIALITE_PATHS;
 
   // On Windows, SpatiaLite DLL has many dependencies (libgeos, libproj, etc.)
-  // These must be in PATH for Windows to find them when loading the extension.
-  // Prepend the extension directory to PATH before attempting to load.
+  // We use our native addon to securely add the directory to the DLL search path
+  // without mutating the global process.env.PATH.
   const chosenPathForEnv = process.env["SPATIALITE_PATH"];
+  let dllCookie: unknown = null;
+  let win32Dll: Win32DllAddon | null = null;
+
   if (process.platform === "win32" && chosenPathForEnv) {
-    // Only treat it as a filesystem path if it contains a path separator
-    const looksLikeFsPath =
-      chosenPathForEnv.includes("/") || chosenPathForEnv.includes("\\");
+    const looksLikeFsPath = chosenPathForEnv.includes("/") || chosenPathForEnv.includes("\\");
     if (looksLikeFsPath) {
       const extensionDir = chosenPathForEnv.replace(/[/\\][^/\\]+$/, ""); // Get directory from DLL path
-      const currentPath = process.env["PATH"] ?? "";
-      if (!currentPath.includes(extensionDir)) {
-        process.env["PATH"] = extensionDir + ";" + currentPath;
+      try {
+        // Require the built native addon
+        // Use a relative path from the built dist/ or src/ location.
+        // It might be running from dist/adapters/sqlite-native/tools/spatialite/loader.js
+        // so we navigate up to the root build/Release/win32_dll.node.
+        const addonPath = path.resolve(__dirname, "../../../../../build/Release/win32_dll.node");
+        win32Dll = require(addonPath) as Win32DllAddon;
+        dllCookie = win32Dll.addDllDirectory(extensionDir);
+      } catch {
+        // Ignore native addon load errors and attempt to proceed without it
       }
     }
   }
@@ -54,10 +74,17 @@ export function tryLoadSpatialite(
       // Initialize spatial metadata
       db.exec("SELECT InitSpatialMetaData(1)");
       loadedDatabases.add(db);
+      if (win32Dll !== null && dllCookie !== null) {
+        win32Dll.removeDllDirectory(dllCookie);
+      }
       return { success: true, path: candidatePath };
     } catch {
       // Try next path
     }
+  }
+
+  if (win32Dll !== null && dllCookie !== null) {
+    win32Dll.removeDllDirectory(dllCookie);
   }
 
   return {
