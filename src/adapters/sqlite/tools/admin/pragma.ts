@@ -12,6 +12,7 @@ import type {
 import { admin, adminFs, readOnly, write } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
+
 import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
   AppendInsightOutputSchema,
@@ -182,7 +183,7 @@ export function createPragmaSettingsTool(
     inputSchema: PragmaSettingsSchema,
     outputSchema: PragmaSettingsOutputSchema,
     requiredScopes: ["admin"],
-    annotations: { ...admin("PRAGMA Settings"), openWorldHint: false },
+    annotations: { ...admin("PRAGMA Settings"), openWorldHint: true },
     handler: async (_params: unknown, _context: RequestContext) => {
       let input;
       try {
@@ -219,6 +220,8 @@ export function createPragmaSettingsTool(
         };
       }
       
+      const isSensitive = ['key', 'cipher_key', 'hexkey', 'rekey'].includes(input.pragma.toLowerCase());
+      
       try {
         if (input.value !== undefined) {
           // Get old value first
@@ -247,7 +250,6 @@ export function createPragmaSettingsTool(
           );
           const newValue = newResult.rows?.[0]?.[input.pragma];
 
-          const isSensitive = ['key', 'cipher_key', 'hexkey', 'rekey'].includes(input.pragma.toLowerCase());
           return {
             success: true,
             pragma: input.pragma,
@@ -265,7 +267,7 @@ export function createPragmaSettingsTool(
           return {
             success: true,
             pragma: input.pragma,
-            value,
+            value: isSensitive ? "[REDACTED]" : value,
           };
         }
       } catch (error: unknown) {

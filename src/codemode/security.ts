@@ -14,7 +14,7 @@ import {
 } from "./types.js";
 import { createClient, type RedisClientType } from "redis";
 
-const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA|sk-ant-api[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_]+|rk_live_[a-zA-Z0-9_]+|SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+|npm_[a-zA-Z0-9]{30,}|dpl_[a-zA-Z0-9]{30,}|hvs\.[a-zA-Z0-9_-]+)[^\s'",;)}\]]{4,}/i;
+const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA|sk-ant-api[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_]+|rk_live_[a-zA-Z0-9_]+|SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+|npm_[a-zA-Z0-9]{30,}|dpl_[a-zA-Z0-9]{30,}|hvs\.[a-zA-Z0-9_-]+)[^\s'",;)}\]]{2,}/i;
 const SENSITIVE_VALUE_REGEX = new RegExp(SENSITIVE_KEY_PATTERN.source, "gi");
 
 /**
@@ -55,6 +55,13 @@ export class CodeModeSecurityManager {
       errors.push(
         `Code exceeds maximum length of ${String(this.config.maxCodeLength)} bytes`,
       );
+      return { valid: false, errors };
+    }
+
+    // Check for Unicode escape sequences which could bypass pattern matching
+    const hasUnicodeEscapes = /\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}|\\x[0-9a-fA-F]{2}/i.test(code);
+    if (hasUnicodeEscapes) {
+      errors.push("Unicode escape sequences in identifiers are not allowed");
       return { valid: false, errors };
     }
 

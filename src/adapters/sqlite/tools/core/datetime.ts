@@ -102,7 +102,6 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
 
       const { table, column1, column2, unit, conditions, limit } = input;
       const formatOperand = (val: string): string => {
-        if (val.startsWith("'") && val.endsWith("'")) return val;
         if (!isNaN(Number(val))) return val;
         return `"${val.replace(/"/g, '""')}"`;
       };

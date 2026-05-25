@@ -46,6 +46,9 @@ const security = new CodeModeSecurityManager({
   maxExecutionsPerMinute: codemodeRateLimit,
 });
 
+/** Stable process-level identifier for STDIO mode where each agent has its own process */
+const processId = crypto.randomUUID();
+
 // =============================================================================
 // Tool Definition
 // =============================================================================
@@ -116,7 +119,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Check rate limit
-        const clientId = _context.auth?.sub ?? _context.clientIp ?? "anonymous";
+        const clientId = _context.auth?.sub ?? _context.clientIp ?? processId;
         if (!(await security.checkRateLimit(clientId))) {
           return {
             success: false,

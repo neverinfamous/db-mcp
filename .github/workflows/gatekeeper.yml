@@ -56,7 +56,6 @@ jobs:
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
-      pull-requests: write
       security-events: write
       id-token: write
       attestations: write

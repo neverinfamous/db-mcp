@@ -78,6 +78,16 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 - Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
 ### Security
+- **[High]** Code Mode sandbox: Explicitly blocked `\u` and `\x` unicode/hex escapes in identifiers before pattern matching to prevent blocklist evasion (CWE-116).
+- **[High]** Query Validation: Fixed stacked query bypass by replacing blocks with a dummy token `_BLOCK_` before semicolon counting rather than after (CWE-89).
+- **[High]** Input Validation: Removed unescaped single-quoted operand return path in `sqlite_date_diff` to prevent SQL injection (CWE-89).
+- **[High]** Information Disclosure: Redacted encryption keys (`key`, `hexkey`) from PRAGMA read paths (CWE-200).
+- **[High]** Scope Escalation: Explicitly rejected `admin` scope tool invocations originating from the sandbox when running in no-auth mode (CWE-862).
+- **[High]** DoS: Upgraded Code Mode rate limit `clientId` from anonymous IP to process-level UUID in STDIO mode, preventing bucket collision (CWE-400).
+- **[Medium]** Logging: Throttled implicit admin warning logs in HTTP transport to prevent flooding.
+- **[Medium]** CI/CD: Replaced deprecated Playwright GitHub Action in E2E workflows and fixed imprecise GitHub Action version pinnings to exact semantic versions.
+- **[Medium]** CI/CD: Failed CodeQL workflow closed on missing SARIF file and replaced placeholder SHA digests in agentic workflow lock files.
+- **[Low]** Security Configuration: Commented out live assignments in `.env.example` and synced PRAGMA allowlists to prevent drift.
 - **[High]** Transports: Implemented strict UUIDv4 format and length validation for `mcp-session-id` headers in `stateful.ts` to prevent hash-collision DoS (CWE-400).
 - **[High]** MCP Core: Fixed an authorization bypass in `registerToolImpl` where STDIO scopes were incorrectly bypassed when `authContext` was undefined (CWE-862).
 - **[High]** MCP Core: Added `WRITEFILE`, `READFILE`, and `sqlite_exec` to the `validateDdl` blocklist in `restore.ts` to prevent arbitrary file writes during database restoration (CWE-22, CWE-73).

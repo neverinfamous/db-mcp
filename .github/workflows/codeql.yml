@@ -55,8 +55,8 @@ jobs:
           echo "Checking CodeQL SARIF results for high/critical findings..."
           SARIF_FILE=$(find codeql-results -name '*.sarif' -type f | head -1)
           if [ -z "$SARIF_FILE" ]; then
-            echo "No SARIF file found — skipping check"
-            exit 0
+            echo "::error::No SARIF file found — CodeQL analysis failed or did not output results"
+            exit 1
           fi
           # Count results with error-level severity (high/critical)
           HIGH_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' "$SARIF_FILE" 2>/dev/null || echo "0")

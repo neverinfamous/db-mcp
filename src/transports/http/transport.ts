@@ -221,12 +221,16 @@ export class HttpTransport {
 
     // Bind authenticated context to AsyncLocalStorage for audit identity capture.
     // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint
-    // setup (which dispatches tool handlers that invoke the audit interceptor).
     const oauthEnabled = this.state.config.oauth?.enabled ?? false;
+    let lastNoAuthWarning = 0;
     this.state.app.use((req, _res, next) => {
       const implicitAdmin = !req.auth && !oauthEnabled;
       if (implicitAdmin) {
-        logger.warning("No-auth mode is granting implicit 'admin' scope. This is expected for local dev but dangerous in production.", { module: "HTTP", ip: req.ip });
+        const now = Date.now();
+        if (now - lastNoAuthWarning > 60000) {
+          logger.warning("No-auth mode is granting implicit 'admin' scope. This is expected for local dev but dangerous in production.", { module: "HTTP", ip: req.ip });
+          lastNoAuthWarning = now;
+        }
       }
       const authCtx: AuthenticatedContext = {
         authenticated: !!req.auth || !oauthEnabled,

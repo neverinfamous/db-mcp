@@ -166,6 +166,10 @@ function createGroupApi(
         if (!scopesGrantToolAccess(baseContext.auth.scopes ?? [], tool.name)) {
           throw new Error(`Forbidden: Required scope for tool '${tool.name}' not granted.`);
         }
+      } else {
+        if (tool.requiredScopes?.includes("admin")) {
+          throw new Error(`Forbidden: Tool '${tool.name}' requires 'admin' scope and cannot be called from the sandbox in no-auth mode.`);
+        }
       }
 
       const normalizedParams = normalizeParams(methodName, args) ?? {};

@@ -21,7 +21,7 @@ const UNSAFE_FUNCTIONS = new Set([
 /**
  * Security-sensitive PRAGMAs that must be blocked globally.
  */
-const BLOCKED_PRAGMAS = new Set([
+export const BLOCKED_PRAGMAS = new Set([
   "writable_schema",
   "trusted_schema",
   "defensive",
@@ -34,6 +34,8 @@ const BLOCKED_PRAGMAS = new Set([
   "wal_autocheckpoint",
   "locking_mode",
   "mmap_size",
+  "busy_timeout",
+  "cache_size",
 ]);
 
 /**
@@ -111,8 +113,9 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     stripped += c;
   }
 
-  // Remove BEGIN ... END blocks so semicolons inside them don't trigger stacked query detection
-  const withoutBlocks = stripped.replace(/\bBEGIN\b[\s\S]*?\bEND\b/gi, "");
+  // Replace BEGIN ... END blocks with a placeholder so semicolons inside them don't trigger stacked query detection,
+  // but the block itself is preserved to prevent bypasses where trailing statements are injected.
+  const withoutBlocks = stripped.replace(/\bBEGIN\b[\s\S]*?\bEND\b/gi, "_BLOCK_");
 
   const statements = withoutBlocks.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
   if (statements.length > 1) {

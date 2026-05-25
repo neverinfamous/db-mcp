@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.0
         with:
           node-version: "24.x"
           cache: "npm"
@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        uses: microsoft/playwright-github-action@91d778e7ba32fe5946d69a20848327c9718cdbc2 # v1
+        run: npx playwright install --with-deps
 
       - name: Build
         run: npm run build
@@ -43,7 +43,7 @@ jobs:
       - name: Run E2E tests
         run: npm run test:e2e
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.0.0
         if: ${{ failure() }}
         with:
           name: playwright-report-${{ github.run_id }}
