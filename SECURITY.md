@@ -52,7 +52,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **Zod schemas** — all tool inputs validated at tool boundaries before database operations
 - ✅ **Parameterized queries** used throughout — never string interpolation
 - ✅ **Identifier sanitization** — table, column, schema, and index names validated against injection
-- ✅ **WHERE clause validation** — blocklist of dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
+- ✅ **WHERE clause validation** — Core and stats tools enforce strict structured arrays (`WhereCondition[]`), completely eliminating SQL injection vectors present in legacy string-based WHERE properties. For raw query tools, a blocklist rejects dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
 - ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). This validation strictly enforces exact directory matching, blocking access even to legitimate subdirectories. *Note: In-memory databases (`:memory:`) bypass path validation by design.*
@@ -66,7 +66,7 @@ Code Mode executes user-provided JavaScript inside a **process-level `isolated-v
 
 - ✅ **Strict Memory Separation** — `isolated-vm` enforces true, native V8 isolates. The executing code has absolutely no memory access to the host Node.js environment, `worker_threads`, or shared `vm` namespaces.
 - ✅ **Blocked globals** — `require`, `process`, `global`, `globalThis`, `module`, `exports`, `setTimeout`, `setInterval`, `setImmediate`, `Proxy` are strictly undefined.
-- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, `fetch()`, `WebSocket`, and filesystem/network/child_process references.
+- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, `fetch()`, `WebSocket`, and filesystem/network/child_process references. Code comments (`/* ... */` and `//`) are stripped prior to validation to prevent pattern evasion.
 - ✅ **RPC boundary enforcement** — Host-side API capabilities (e.g. `sqlite.*` tools) are explicitly bridged into the isolate via explicit C++ `Reference` instances. The isolate cannot bridge out to host functions arbitrarily.
 - ✅ **Readonly Proxy traps** — group API objects are wrapped in Proxy traps that throw structured errors when stripped (readonly) methods are called, halting execution instead of silently returning undefined.
 - ✅ **Execution timeout** — 30s hard limit (configurable), enforced strictly by the isolate engine.
@@ -125,7 +125,7 @@ When running in HTTP mode (`--transport http`), the following security measures 
 ### **Session Management**
 
 - ✅ **UUID session IDs** — cryptographically random session identifiers via `crypto.randomUUID()`
-- ✅ **Session ownership binding** — each session is bound to the authenticated subject (`req.auth.sub`) at creation. Every subsequent POST, GET (SSE stream), and DELETE request verifies that the requester's identity matches the session owner, preventing cross-client session hijack (CWE-284, CWE-639)
+- ✅ **Session ownership binding** — each session is bound to the authenticated subject (`req.auth.sub`) at creation. Every subsequent POST, GET (SSE stream, including legacy SSE connections), and DELETE request verifies that the requester's identity matches the session owner, preventing cross-client session hijack (CWE-284, CWE-639)
 - ✅ **Graceful degradation** — when auth is disabled (stdio transport, local dev), session ownership is not enforced (owner is `undefined`)
 
 > **⚠️ In-Memory Sessions:** Session state (including ownership binding) is stored in-memory. Server restarts clear all sessions, forcing clients to re-establish. In multi-instance deployments, sessions are not shared across instances — use sticky sessions at the load balancer or implement a shared session store for production clusters.
@@ -140,7 +140,7 @@ Full OAuth 2.1 for production multi-tenant deployments:
 
 - ✅ **RFC 9728** Protected Resource Metadata (`/.well-known/oauth-protected-resource`)
 - ✅ **RFC 8414** Authorization Server Discovery with caching
-- ✅ **JWT validation** with JWKS support (TTL: 1 hour, configurable)
+- ✅ **JWT validation** with JWKS support (TTL: 1 hour, configurable), enforcing strict HTTPS for all JWKS and discovery URLs in production.
 - ✅ **SQLite-specific scopes**: `read`, `write`, `admin`, `full`
 - ✅ **Per-tool scope enforcement** via `AsyncLocalStorage` context threading
 - ✅ **Resource and Prompt authorization** — Scope enforcement middleware covers `resources/read` and `prompts/get`, requiring `admin` scope for audit resources and `read` scope for others

@@ -60,8 +60,7 @@ export class TokenValidator {
     if (
       config.jwksUri &&
       !config.jwksUri.startsWith("https://") &&
-      process.env["ALLOW_HTTP_JWKS"] !== "true" &&
-      process.env["NODE_ENV"] !== "test"
+      process.env["ALLOW_HTTP_JWKS"] !== "true"
     ) {
       const url = new URL(config.jwksUri);
       const isLocalDev =

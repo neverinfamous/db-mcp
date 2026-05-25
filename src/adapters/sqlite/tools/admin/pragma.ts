@@ -200,23 +200,21 @@ export function createPragmaSettingsTool(
         };
       }
 
-      const BLOCKED_PRAGMAS = new Set([
-        "writable_schema",
-        "trusted_schema",
-        "defensive",
-        "cell_size_check",
-        "temp_store_directory",
+      const ALLOWED_WRITE_PRAGMAS = new Set([
         "journal_mode",
         "synchronous",
-        "page_size",
         "temp_store",
-        "wal_autocheckpoint",
+        "mmap_size",
+        "page_size",
+        "busy_timeout",
+        "cache_size",
+        "wal_autocheckpoint"
       ]);
 
-      if (input.value !== undefined && BLOCKED_PRAGMAS.has(input.pragma.toLowerCase())) {
+      if (input.value !== undefined && !ALLOWED_WRITE_PRAGMAS.has(input.pragma.toLowerCase())) {
         return {
           success: false,
-          error: `Mutating PRAGMA '${input.pragma}' is blocked for security`,
+          error: `Mutating PRAGMA '${input.pragma}' is not permitted for security reasons`,
           code: "SECURITY_ERROR"
         };
       }

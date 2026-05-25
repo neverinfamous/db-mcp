@@ -6,6 +6,7 @@ import type { HttpTransportState } from "../types.js";
 import { JSONRPC_SERVER_ERROR } from "../types.js";
 import { asIncoming, asServerResponse } from "../type-adapters.js";
 import { Mutex } from "./mutex.js";
+import { verifySessionOwner } from "./stateful.js";
 
 const logger = createModuleLogger("HTTP");
 const connectionMutex = new Mutex();
@@ -152,8 +153,7 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
     }
 
     // H-2: Verify session ownership for legacy SSE /messages
-    const owner = state.sessionOwners.get(sessionId);
-    if (owner !== undefined && req.auth?.sub !== undefined && owner !== req.auth.sub) {
+    if (!verifySessionOwner(state, sessionId, req.auth?.sub)) {
       res.status(403).json({
         jsonrpc: "2.0",
         error: {

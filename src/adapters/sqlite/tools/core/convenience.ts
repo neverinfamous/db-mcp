@@ -255,16 +255,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
         const parsed = CountSchema.parse(aliasedParams);
         input = {
           ...parsed,
-          where:
-            parsed.where ??
-            parsed.condition ??
-            parsed.filter ??
-            parsed.conditions,
-          params: Array.isArray(parsed.params)
-            ? parsed.params
-            : parsed.params !== undefined && parsed.params !== null
-              ? [parsed.params]
-              : [],
+          conditions: parsed.conditions,
         };
       } catch (error: unknown) {
         return { ...formatHandlerError(error) };
@@ -279,18 +270,13 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
       const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
       let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM ${safeTable}`;
 
-      if (input.where !== undefined && input.where !== null) {
-          const { sql: whereSql, params: whereParams } = buildWhereClause(input.where);
+      if (input.conditions !== undefined && input.conditions.length > 0) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
           if (whereSql !== "") {
             sql += ` WHERE ${whereSql}`;
             queryParams.push(...whereParams);
           }
         }
-
-      if (input.params !== undefined && input.params !== null) {
-        if (Array.isArray(input.params)) queryParams.push(...(input.params as unknown[]));
-        else queryParams.push(input.params);
-      }
 
       try {
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -332,16 +318,7 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
         const parsed = ExistsSchema.parse(aliasedParams);
         input = {
           ...parsed,
-          where:
-            parsed.where ??
-            parsed.condition ??
-            parsed.filter ??
-            parsed.conditions,
-          params: Array.isArray(parsed.params)
-            ? parsed.params
-            : parsed.params !== undefined && parsed.params !== null
-              ? [parsed.params]
-              : [],
+          conditions: parsed.conditions,
         };
       } catch (error: unknown) {
         return { ...formatHandlerError(error) };
@@ -353,8 +330,8 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
       const safeTable = sanitizeIdentifier(input.table);
       let sql = `SELECT 1 FROM ${safeTable}`;
 
-      if (input.where !== undefined && input.where !== null) {
-          const { sql: whereSql, params: whereParams } = buildWhereClause(input.where);
+      if (input.conditions !== undefined && input.conditions.length > 0) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
           if (whereSql !== "") {
             sql += ` WHERE ${whereSql}`;
             queryParams.push(...whereParams);
@@ -362,11 +339,6 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
       sql += " LIMIT 1";
-
-      if (input.params !== undefined && input.params !== null) {
-        if (Array.isArray(input.params)) queryParams.push(...(input.params as unknown[]));
-        else queryParams.push(input.params);
-      }
 
       try {
         const result = await adapter.executeReadQuery(sql, queryParams);

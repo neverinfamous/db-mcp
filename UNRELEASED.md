@@ -78,6 +78,11 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 
 ### Security
+- **[Critical]** Code Mode Sandbox: Fixed bypass in `validateCode` where multi-line `/* ... */` comments could hide malicious `import` or `eval` patterns from the regex blocklist by stripping all comments before validation.
+- **[High]** Session Management: Fixed missing session ownership verification in the legacy SSE transport (`legacy-sse.ts`), ensuring SSE streams are strictly bound to the authenticated subject that created the session.
+- **[High]** Admin Tools: Replaced PRAGMA blocklist with a strict allowlist in `pragma.ts`, fully mitigating the risk of zero-day SQLite PRAGMA vulnerabilities or unrecognized destructive commands.
+- **[Medium]** Auth Validation: Removed the insecure `NODE_ENV === "test"` bypass in `token-validator.ts` for JWKS HTTPS enforcement, protecting production deployments that might inadvertently run in a test-like environment context.
+- **[High]** Input Validation: Hardened `buildWhereClause` and all core/stats tool schemas to strictly require structured `WhereCondition[]` arrays, completely removing the legacy string-based `where` parameter that was vulnerable to injection edge cases.
 - **[Critical]** Authorization: Fixed PRAGMA bypass vulnerability in `sqlite_read_query` by extending global AST pre-parsing to explicitly reject state-mutating PRAGMAs.
 - **[High]** Input Validation: Escaped identifiers and validated check constraints within `sqlite_create_table` to prevent SQL injection in foreign keys and checks.
 - **[High]** DoS: Upgraded Code Mode rate limiter to a strict LRU (Least Recently Used) eviction algorithm to prevent spoofing-based rate limit starvation.

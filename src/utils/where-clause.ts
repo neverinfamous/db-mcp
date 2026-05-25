@@ -336,12 +336,8 @@ export interface WhereCondition {
   value: unknown;
 }
 
-export function buildWhereClause(conditions?: string | WhereCondition[]): { sql: string; params: unknown[] } {
-  if (conditions === undefined || conditions === null || conditions === "" || (Array.isArray(conditions) && conditions.length === 0)) return { sql: "", params: [] };
-  
-  if (typeof conditions === "string") {
-    return { sql: sanitizeWhereClause(conditions), params: [] };
-  }
+export function buildWhereClause(conditions?: WhereCondition[]): { sql: string; params: unknown[] } {
+  if (conditions === undefined || conditions === null || conditions.length === 0) return { sql: "", params: [] };
   
   const params: unknown[] = [];
   const clauses: string[] = [];

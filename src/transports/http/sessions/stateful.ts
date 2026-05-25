@@ -18,7 +18,7 @@ const connectionMutex = new Mutex();
  * When auth is disabled (owner is undefined), verification is skipped.
  * Returns true if access is allowed, false if denied.
  */
-function verifySessionOwner(
+export function verifySessionOwner(
   state: HttpTransportState,
   sessionId: string,
   reqAuthSub: string | undefined,

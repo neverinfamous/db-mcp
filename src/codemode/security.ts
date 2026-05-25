@@ -51,8 +51,12 @@ export class CodeModeSecurityManager {
     }
 
     // Check for blocked patterns
+    const strippedCode = code
+      .replace(/\/\*[\s\S]*?\*\//g, " ")   // block comments
+      .replace(/\/\/[^\n]*/g, " ");        // line comments
+      
     for (const pattern of this.config.blockedPatterns) {
-      if (pattern.test(code)) {
+      if (pattern.test(strippedCode)) {
         errors.push(`Blocked pattern detected: ${pattern.source}`);
         break;
       }

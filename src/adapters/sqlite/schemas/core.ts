@@ -428,16 +428,6 @@ export const BatchInsertSchema = z.object({
 export const CountSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  where: z
-    .string()
-    .optional()
-    .describe("WHERE clause (supports ? placeholders)"),
-  params: z
-    .unknown()
-    .optional()
-    .describe("Parameters for WHERE clause placeholders"),
-  condition: z.string().optional().describe("Alias for where"),
-  filter: z.string().optional().describe("Alias for where"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   column: z
     .string()
@@ -457,16 +447,6 @@ export const CountSchema = z.object({
 export const ExistsSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  where: z
-    .string()
-    .optional()
-    .describe("WHERE clause (supports ? placeholders)"),
-  params: z
-    .unknown()
-    .optional()
-    .describe("Parameters for WHERE clause placeholders"),
-  condition: z.string().optional().describe("Alias for where"),
-  filter: z.string().optional().describe("Alias for where"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
 });
 

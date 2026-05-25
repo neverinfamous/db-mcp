@@ -130,8 +130,7 @@ describe("Core Tools - Convenience", () => {
 
       const result = (await tools.get("sqlite_count")?.({
         table: "count_cond",
-        where: "val = ?",
-        params: [10],
+        conditions: [{ column: "val", operator: "=", value: 10 }],
       })) as { success: boolean; count: number };
 
       expect(result.success).toBe(true);
