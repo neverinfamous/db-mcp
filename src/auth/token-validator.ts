@@ -78,7 +78,7 @@ export class TokenValidator {
     this.jwksUri = config.jwksUri;
     this.issuer = config.issuer;
     this.audience = config.audience;
-    this.clockTolerance = config.clockTolerance ?? 30; // F12: Default 30s
+    this.clockTolerance = config.clockTolerance ?? 60; // F12: Default 60s
     this.jwksCacheTtl = config.jwksCacheTtl ?? 3600;
     this.algorithms =
       config.algorithms ?? TokenValidator.DEFAULT_ALGORITHMS;
@@ -188,15 +188,12 @@ export class TokenValidator {
     // Filter prototype-polluting keys from the payload before spreading.
     // A compromised authorization server could issue JWTs with __proto__
     // or constructor claims that would pollute the returned object's prototype.
-    const {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ["__proto__"]: _proto,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ["constructor"]: _ctor,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ["prototype"]: _prototype,
-      ...safePayload
-    } = payload;
+    const safePayload: jose.JWTPayload = {};
+    for (const key of Object.keys(payload)) {
+      if (key !== "__proto__" && key !== "constructor" && key !== "prototype") {
+        safePayload[key] = payload[key];
+      }
+    }
 
     return {
       sub: safePayload.sub ?? "unknown",

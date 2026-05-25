@@ -203,11 +203,12 @@ export class HttpTransport {
     // Bind authenticated context to AsyncLocalStorage for audit identity capture.
     // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint
     // setup (which dispatches tool handlers that invoke the audit interceptor).
+    const oauthEnabled = this.state.config.oauth?.enabled ?? false;
     this.state.app.use((req, _res, next) => {
       const authCtx: AuthenticatedContext = {
-        authenticated: !!req.auth,
+        authenticated: !!req.auth || !oauthEnabled,
         claims: req.auth,
-        scopes: req.auth?.scopes ?? [],
+        scopes: req.auth?.scopes ?? (oauthEnabled ? [] : ["admin"]),
         clientIp: req.ip,
       };
       runWithAuthContext(authCtx, () => {

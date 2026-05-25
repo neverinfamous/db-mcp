@@ -76,8 +76,14 @@ export function validateSameDirPath(
     };
   }
 
-  // In-memory databases fall back to the current working directory
-  const dbDir = dbPath === ":memory:" ? process.cwd() : dirname(resolve(dbPath));
+  if (dbPath === ":memory:") {
+    return {
+      valid: false,
+      error: "Security: Filesystem operations are not permitted for :memory: databases.",
+      dbDir: "",
+    };
+  }
+  const dbDir = dirname(resolve(dbPath));
   
   let resolvedTarget = resolve(targetPath);
   try {

@@ -211,8 +211,8 @@ Usage: db-mcp [options]
 Transport Options:
   --transport, -t <type>    Transport type: stdio (default), http, sse
   --port, -p <port>         HTTP port (default: 3000)
-  --server-host <host>      Host/IP to bind to (default: 0.0.0.0)
-                            Use 127.0.0.1 to restrict to local connections
+  --server-host <host>      Host/IP to bind to (default: 127.0.0.1)
+                            Use 0.0.0.0 to allow external connections
   --stateless               Use stateless HTTP mode (no session management, no SSE)
                             Ideal for serverless deployments (Lambda, Workers)
   --enable-hsts             Enable HSTS header (use when behind HTTPS)
@@ -250,7 +250,7 @@ Server Options:
                               Legacy: -vector,-geo (exclusion from all)
 
 Environment Variables:
-  MCP_HOST                  Host/IP to bind to (default: 0.0.0.0)
+  MCP_HOST                  Host/IP to bind to (default: 127.0.0.1)
   MCP_AUTH_TOKEN             Simple bearer token (same as --auth-token)
   OAUTH_ENABLED              Enable OAuth 2.1 (same as --oauth-enabled)
   OAUTH_ISSUER               Authorization server URL

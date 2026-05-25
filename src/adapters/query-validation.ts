@@ -35,6 +35,8 @@ const BLOCKED_PRAGMAS = new Set([
   "page_size",
   "temp_store",
   "wal_autocheckpoint",
+  "locking_mode",
+  "mmap_size",
 ]);
 
 /**
@@ -81,6 +83,10 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
   } catch {
     // sqlite-parser lacks support for modern SQLite features like WINDOW clauses and some CTEs.
     // When AST parsing fails, fallback to strict structural validation.
+    // SECURITY NOTE: The fallback validation uses regex instead of a full AST walk.
+    // While it effectively blocks stacked queries and unsafe DML/DDL keywords, 
+    // it may not catch embedded unsafe functions (like WRITEFILE) if they are obfuscated
+    // within complex modern syntax (e.g., inside a WINDOW clause) that bypasses the regex check.
     import("../utils/logger/index.js")
       .then(({ logger }) => {
         logger.warn("AST parsing failed. Using fallback regex validation.", { module: "ADAPTER" });

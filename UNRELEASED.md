@@ -72,7 +72,10 @@
 - Admin instruction title conflating 32 group tools with 5 server-level audit tools into a single count.
 - Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
 - Fixed Vitest 4 deprecation warning by moving `poolOptions` to top-level `maxWorkers` in `vitest.config.ts`.
-- Repository test pollution where `lifecycle.test.ts` wrote a stray `test.db` file to the root directory due to `vi.mock` hoisting side effects.
+- Fixed `worker-script.ts` prototype freezing order, neutralizing `Function` without breaking the isolation context during initialization.
+- Fixed STDIO and stateless HTTP transport logic to accurately assume local `admin` scope when OAuth is not configured, preventing false-positive authorization rejections on the CLI and unprotected HTTP endpoints.
+- Fixed `validateSameDirPath` tests to correctly expect `:memory:` paths to fail path validation following recent security tightening.
+- Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 
 ### Security
 - **[Critical]** Authorization: Fixed PRAGMA bypass vulnerability in `sqlite_read_query` by extending global AST pre-parsing to explicitly reject state-mutating PRAGMAs.

@@ -33,7 +33,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: ReadQuerySchema,
     outputSchema: ReadQueryOutputSchema,
     requiredScopes: ["read"],
-    annotations: readOnly("Read Query"),
+    annotations: { ...readOnly("Read Query"), idempotentHint: true },
     handler: async (params: unknown, _context: RequestContext) => {
       let input: { query: string; params?: unknown[] | undefined };
       try {

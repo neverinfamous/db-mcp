@@ -101,8 +101,10 @@ export function rowsFromSqlJsResult(result: {
     const rowValues = result.values[i];
     if (rowValues) {
       for (let j = 0; j < numColumns; j++) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        rowObj[cols[j]!] = rowValues[j];
+        const colName = cols[j];
+        if (colName !== undefined) {
+          rowObj[colName] = rowValues[j];
+        }
       }
     }
     rows[i] = rowObj;

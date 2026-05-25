@@ -3,7 +3,9 @@ import type { ToolDefinition, RequestContext } from "../../types/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
 import type { AuditInterceptor } from "../../audit/interceptor.js";
 import { registerToolScope } from "../../auth/scope-map.js";
-import { registerToolScopes } from "../../auth/scopes/enforcement.js";
+import { registerToolScopes, scopesGrantToolAccess } from "../../auth/scopes/enforcement.js";
+import { getAuthContext } from "../../auth/auth-context.js";
+import { InsufficientScopeError } from "../../auth/errors.js";
 
 // Interface for the adapter methods needed by tool registration
 export interface ToolRegistrationAdapter {
@@ -82,6 +84,19 @@ export function registerToolImpl(
         );
 
         const execFn = async (): Promise<ToolResponse> => {
+          let authCtx = getAuthContext();
+          const requiredScopes = tool.requiredScopes ?? ["admin"];
+
+          authCtx ??= {
+            authenticated: true,
+            scopes: ["admin"],
+            clientIp: "127.0.0.1",
+          };
+
+          if (!scopesGrantToolAccess(authCtx.scopes, tool.name)) {
+            throw new InsufficientScopeError(requiredScopes, authCtx.scopes);
+          }
+
           const result = await tool.handler(args, context);
 
           // Inject _meta.tokenEstimate into object responses

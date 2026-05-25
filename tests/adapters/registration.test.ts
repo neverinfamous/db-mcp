@@ -25,6 +25,15 @@ import type {
   PromptDefinition,
 } from "../../src/types/index.js";
 
+vi.mock("../../src/auth/auth-context.js", () => ({
+  getAuthContext: vi.fn().mockReturnValue({
+    authenticated: true,
+    scopes: ["admin"],
+    claims: { sub: "test" },
+    clientIp: "127.0.0.1",
+  }),
+}));
+
 // =============================================================================
 // Helpers
 // =============================================================================

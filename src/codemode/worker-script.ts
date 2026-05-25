@@ -292,7 +292,11 @@ async function executeInWorker(): Promise<void> {
         secureFreeze(Function.prototype);
         // Freeze Object.getPrototypeOf to block prototype chain escapes
         secureFreeze(Object.getPrototypeOf);
-      })()`,
+      }).call(this);
+      
+      // Remove Function from global scope AFTER freezing it
+      this.Function = undefined;
+      `,
       context,
     );
 

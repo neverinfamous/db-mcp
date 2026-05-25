@@ -312,7 +312,7 @@ function initializePool(): void {
   let mode: SandboxMode = "worker";
   if (modeEnv === "isolate") {
     const insecureAck =
-      process.env["CODEMODE_ISOLATION_INSECURE"]?.toLowerCase();
+      process.env["CODEMODE_ISOLATION_NATIVE_ADDON_ACK"]?.toLowerCase();
     if (insecureAck === "1" || insecureAck === "true") {
       mode = "isolate";
       logger.info(
@@ -321,7 +321,7 @@ function initializePool(): void {
       );
     } else {
       logger.warning(
-        "CODEMODE_ISOLATION=isolate requires CODEMODE_ISOLATION_INSECURE=1 to acknowledge " +
+        "CODEMODE_ISOLATION=isolate requires CODEMODE_ISOLATION_NATIVE_ADDON_ACK=1 to acknowledge " +
           "native addon deployment requirements. Falling back to worker mode.",
         { module: "CODEMODE" as const, operation: "initialize" },
       );

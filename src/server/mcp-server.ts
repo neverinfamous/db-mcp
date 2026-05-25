@@ -52,8 +52,7 @@ const proto = McpServer.prototype as unknown as Record<
 if (typeof proto['createToolError'] === "function") {
   const originalCreateToolError = proto['createToolError'];
   proto['createToolError'] = function (errorMessage: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = originalCreateToolError.call(this as any, errorMessage);
+    const result = originalCreateToolError.call(this as unknown as McpServer, errorMessage);
     if (result.content?.[0]?.type === "text") {
       const rawError = result.content[0].text;
       const structured = {
@@ -295,7 +294,7 @@ export class DbMcpServer {
     await transport.start();
 
     const mode = this.config.statelessHttp ? "stateless" : "stateful";
-    const host = this.config.host ?? "0.0.0.0";
+    const host = this.config.host ?? "127.0.0.1";
     const port = String(this.config.port ?? 3000);
     logger.info(
       `db-mcp server started (HTTP transport on ${host}:${port}, ${mode} mode)`,
