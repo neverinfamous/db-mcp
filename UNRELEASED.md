@@ -50,6 +50,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **core**: Hardened `sqlite_batch_insert` by moving empty-rows validation from the handler logic to a strict Zod `.min(1)` array constraint in `BatchInsertSchema`.
 - **admin**: Fixed sandbox bypass for `ATTACH`/`DETACH` in `sqlite_backup`, `sqlite_verify_backup`, and `sqlite_attach_database` by switching to `adapter.rawQuery()` for trusted internal execution.
 - **admin**: Patched path traversal vulnerability in `sqlite_dump` by explicitly checking for and rejecting `..` traversal sequences (CWE-22).
 - **virtual**: Fixed SQL syntax error in `sqlite_create_csv_table` caused by redundant double quotes around the table name.

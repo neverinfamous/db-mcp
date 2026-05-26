@@ -159,10 +159,6 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
           ...parsed,
           rows: parsed.rows ?? [],
         };
-        if (input.rows.length === 0)
-          throw new Error(
-            "rows must not be empty. Provide at least one row to insert.",
-          );
       } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }

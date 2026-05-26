@@ -421,6 +421,7 @@ export const BatchInsertSchema = z.object({
   tableName: z.string().optional().describe("Alias for table"),
   rows: z
     .array(z.record(z.string(), z.unknown()))
+    .min(1, "rows must not be empty. Provide at least one row to insert.")
     .describe("Array of row objects to insert"),
   returning: z
     .union([z.boolean(), z.array(z.string())])
