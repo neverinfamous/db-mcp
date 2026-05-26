@@ -157,12 +157,9 @@ export class SqliteAdapter extends DatabaseAdapter {
   override async executeWriteQuery(
     sql: string,
     params?: unknown[],
-    skipValidation = false,
   ): Promise<QueryResult> {
     this.ensureConnected();
-    if (!skipValidation) {
-      this.validateQuery(sql, false);
-    }
+    this.validateQuery(sql, false);
 
     const result = await executeWrite(this.ensureDb(), sql, params);
 
@@ -408,7 +405,7 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Execute raw SQL and return results (for tools)
    */
   rawQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
-    return this.executeQuery(sql, params);
+    return executeGeneral(this.ensureDb(), sql, params);
   }
 }
 

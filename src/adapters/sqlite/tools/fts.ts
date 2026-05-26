@@ -198,7 +198,7 @@ async function createSyncTriggers(
       INSERT INTO "${ftsTable}"(rowid, ${colList}) VALUES (NEW.rowid, ${newColList});
     END;
   `;
-  await adapter.executeWriteQuery(insertTrigger, undefined, true);
+  await adapter.rawQuery(insertTrigger, undefined);
   triggersCreated.push(insertTriggerName);
 
   // DELETE trigger - remove row from FTS index
@@ -208,7 +208,7 @@ async function createSyncTriggers(
       INSERT INTO "${ftsTable}"("${ftsTable}", rowid, ${colList}) VALUES('delete', OLD.rowid, ${oldColList});
     END;
   `;
-  await adapter.executeWriteQuery(deleteTrigger, undefined, true);
+  await adapter.rawQuery(deleteTrigger, undefined);
   triggersCreated.push(deleteTriggerName);
 
   // UPDATE trigger - delete old entry and insert new one
@@ -219,7 +219,7 @@ async function createSyncTriggers(
       INSERT INTO "${ftsTable}"(rowid, ${colList}) VALUES (NEW.rowid, ${newColList});
     END;
   `;
-  await adapter.executeWriteQuery(updateTrigger, undefined, true);
+  await adapter.rawQuery(updateTrigger, undefined);
   triggersCreated.push(updateTriggerName);
 
   return triggersCreated;

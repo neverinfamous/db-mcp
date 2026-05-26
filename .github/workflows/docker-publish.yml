@@ -5,7 +5,7 @@ on:
     secrets:
       DOCKER_USERNAME:
         required: true
-      DOCKER_PASSWORD:
+      DOCKER_TOKEN:
         required: true
       DOCKERHUB_DESC_TOKEN:
         required: true
@@ -57,7 +57,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Docker Scout security scan
         uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1.15.1
@@ -135,7 +135,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Read version from package.json
         id: version

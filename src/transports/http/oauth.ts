@@ -32,10 +32,10 @@ const logger = createModuleLogger("HTTP");
 export function applyAuthMiddleware(state: HttpTransportState): void {
   // F-6: Warn when CORS wildcard is combined with auth — risky browser posture
   const corsOrigins = state.config.corsOrigins ?? [];
-  const hasAuth = state.config.oauth.enabled;
-  if (corsOrigins.includes("*") && hasAuth) {
+  const isPubliclyExposed = state.config.oauth.enabled || state.config.noAuthEnforcement;
+  if (corsOrigins.includes("*") && isPubliclyExposed) {
     throw new Error(
-      "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled. " +
+      "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled or enforcement is explicitly disabled. " +
       "Configure explicit origins via --cors-origins for production deployments."
     );
   }

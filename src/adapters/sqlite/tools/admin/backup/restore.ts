@@ -139,10 +139,9 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       await sendProgress(progress, 2, 5, "Attaching backup database...");
 
       try {
-        await adapter.executeWriteQuery(
+        await adapter.rawQuery(
           `ATTACH DATABASE '${escapedPath}' AS backup_source`,
           undefined,
-          true,
         );
       } catch (error: unknown) {
         return { ...formatHandlerError(error), sourcePath: input.sourcePath };
@@ -163,10 +162,9 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             const tableName = row["name"] as string;
             const quotedName = `"${tableName.replace(/"/g, '""')}"`;
             await adapter
-              .executeWriteQuery(
+              .rawQuery(
                 `DROP TABLE IF EXISTS main.${quotedName}`,
                 undefined,
-                true,
               )
               .catch(() => {
                 // Ignore errors
@@ -178,10 +176,9 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         await sendProgress(progress, 4, 5, "Restoring tables from backup...");
 
-        await adapter.executeWriteQuery(
+        await adapter.rawQuery(
           "PRAGMA foreign_keys = OFF",
           undefined,
-          true,
         );
 
         const tablesResult = await adapter.executeReadQuery(
@@ -218,16 +215,15 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             try {
               validateDdl(createSql, "table", tableName);
               await adapter
-                .executeWriteQuery(
+                .rawQuery(
                   `DROP TABLE IF EXISTS main.${quotedName}`,
                   undefined,
-                  true,
                 )
                 .catch(() => {
                   /* ignore */
                 });
 
-              await adapter.executeWriteQuery(createSql, undefined, true);
+              await adapter.rawQuery(createSql, undefined);
             } catch (error: unknown) {
               const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
               const moduleName = moduleMatch?.[1] ?? "unknown";
@@ -264,18 +260,16 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             continue;
           }
 
-          await adapter.executeWriteQuery(
+          await adapter.rawQuery(
             `DROP TABLE IF EXISTS main.${quotedName}`,
             undefined,
-            true,
           );
 
-          await adapter.executeWriteQuery(createSql, undefined, true);
+          await adapter.rawQuery(createSql, undefined);
 
-          await adapter.executeWriteQuery(
+          await adapter.rawQuery(
             `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
             undefined,
-            true,
           );
         }
 
@@ -294,7 +288,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           if (!createSql) continue;
           try {
             validateDdl(createSql, "index", name);
-            await adapter.executeWriteQuery(createSql, undefined, true);
+            await adapter.rawQuery(createSql, undefined);
           } catch {
             // Index may already exist or reference missing table — skip
           }
@@ -316,15 +310,14 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           try {
             validateDdl(createSql, "view", viewName);
             await adapter
-              .executeWriteQuery(
+              .rawQuery(
                 `DROP VIEW IF EXISTS main.${quotedViewName}`,
                 undefined,
-                true,
               )
               .catch(() => {
                 /* ignore */
               });
-            await adapter.executeWriteQuery(createSql, undefined, true);
+            await adapter.rawQuery(createSql, undefined);
           } catch {
             // View may reference missing tables — skip
           }
@@ -344,16 +337,15 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           if (!createSql) continue;
           try {
             validateDdl(createSql, "trigger", name, input.allowTriggers);
-            await adapter.executeWriteQuery(createSql, undefined, true);
+            await adapter.rawQuery(createSql, undefined);
           } catch {
             // Trigger may reference missing tables — skip
           }
         }
 
-        await adapter.executeWriteQuery(
+        await adapter.rawQuery(
           "PRAGMA foreign_keys = ON",
           undefined,
-          true,
         );
 
         const duration = Date.now() - start;
@@ -376,12 +368,12 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } finally {
         await adapter
-          .executeWriteQuery("PRAGMA foreign_keys = ON", undefined, true)
+          .rawQuery("PRAGMA foreign_keys = ON", undefined)
           .catch(() => {
             /* ignore */
           });
         await adapter
-          .executeWriteQuery("DETACH DATABASE backup_source", undefined, true)
+          .rawQuery("DETACH DATABASE backup_source", undefined)
           .catch(() => {
             /* ignore */
           });

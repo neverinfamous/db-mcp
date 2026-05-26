@@ -17,6 +17,8 @@ const UNSAFE_FUNCTIONS = new Set([
   "LOAD_EXTENSION",
   "WRITEFILE",
   "READFILE",
+  "ATTACH",
+  "DETACH",
 ]);
 
 /**

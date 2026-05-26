@@ -210,11 +210,13 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           break;
         }
 
-        const mainStmt = foundMain
-          ? trimmedUpper.slice(i).trim()
-          : trimmedUpper.slice(i).trim();
-        if (!mainStmt.startsWith("SELECT") && !mainStmt.startsWith("EXPLAIN")) {
+        if (!foundMain) {
           isAllowed = false;
+        } else {
+          const mainStmt = trimmedUpper.slice(i).trim();
+          if (!mainStmt.startsWith("SELECT") && !mainStmt.startsWith("EXPLAIN")) {
+            isAllowed = false;
+          }
         }
       }
 
@@ -322,12 +324,13 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
       // so inner SELECT/etc. in CTE bodies don't cause false matches.
       let leadingKeyword = /^([A-Z]+)/.exec(trimmedUpper)?.[1] ?? "";
       if (leadingKeyword === "WITH") {
-        // Strip balanced parenthesized groups so only top-level keywords remain
-        let stripped = trimmedUpper.slice(4);
-        let prev = "";
-        while (prev !== stripped) {
-          prev = stripped;
-          stripped = stripped.replace(/\([^()]*\)/g, "");
+        // Fast O(N) parenthetical stripping to find the main DML keyword
+        let stripped = "";
+        let depth = 0;
+        for (let i = 4; i < trimmedUpper.length; i++) {
+          if (trimmedUpper[i] === "(") depth++;
+          else if (trimmedUpper[i] === ")") depth--;
+          else if (depth === 0) stripped += trimmedUpper[i];
         }
         const mainMatch =
           /\b(INSERT|UPDATE|DELETE|REPLACE|SELECT|PRAGMA|EXPLAIN|CREATE|ALTER|DROP|TRUNCATE|ATTACH|DETACH|VACUUM|REINDEX|ANALYZE)\b/.exec(

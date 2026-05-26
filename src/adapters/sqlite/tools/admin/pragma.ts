@@ -238,10 +238,9 @@ export function createPragmaSettingsTool(
           // which normally block PRAGMA statements. This is safe because we've already enforced
           // an explicit ALLOWED_WRITE_PRAGMAS allowlist above, protecting against dangerous 
           // pragmas like writable_schema or foreign_keys.
-          await adapter.executeWriteQuery(
+          await adapter.rawQuery(
             `PRAGMA ${input.pragma} = ${safeValue}`,
             undefined,
-            true,
           );
 
           // Verify new value

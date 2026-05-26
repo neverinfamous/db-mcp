@@ -49,6 +49,8 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **codemode**: Resolved strict TypeScript typing mismatch and ESLint dynamic-delete errors during dynamic object assignment in `api.ts`.
+- **tests**: Fixed mocked test adapter missing `rawQuery` method causing false-positive test failures in `restore.test.ts`.
 - **server**: Fixed lint errors in `mcp-server.ts` by using optional chaining and correcting `ErrorCategory` reference.
 - Completely removed all unparameterized SQL template string evaluation from `executeReadQuery` and `executeWriteQuery` across all tools, migrating fully to native `?` bindings to resolve all identified SQL injection (SQLi) vulnerabilities.
 - Hardened `buildWhereClause` utility to securely generate and bind parameters arrays, preventing conditional injection attacks.
@@ -85,6 +87,9 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 - Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
 ### Security
+- **[Critical]** Query Validation: Added `ATTACH`, `DETACH`, and `LOAD_EXTENSION` to the global query validation blocklist (`DANGEROUS_PATTERNS` / `BLOCKED_DDL_PATTERNS`) to prevent Code Mode sandbox escapes and unauthorized file modification (CWE-89, CWE-22).
+- **[Critical]** Adapter API: Decoupled `rawQuery` from `executeWriteQuery` across all SQLite adapters to serve as a secure, internal-only bypass for query validation, allowing internal tools (`restore`, `pragma`, `fts`) to safely execute trusted administrative commands without weakening the public query validation layer.
+- **[High]** Credential Redaction: Expanded `SENSITIVE_KEY_PATTERN` in `redaction.ts` to include `.npmrc` keys, API tokens, and AWS secrets, and implemented recursive structural array redaction to fully sanitize deeply nested objects in Code Mode audit logs (CWE-200).
 - **[High]** Authorization: Fixed a vulnerability in `tools/list` filtering where the MCP SDK handler could fall back to an unfiltered state, ensuring OAuth per-tool scopes are strictly enforced during protocol discovery (CWE-862).
 - **[High]** Input Validation: Fixed a PRAGMA injection vulnerability in `query-validation.ts` where dangerous SQLite commands could be hidden behind multi-line `/* ... */` or inline `--` comments by moving comment stripping before AST evaluation (CWE-89).
 - **[Medium]** Information Disclosure: Removed the `X-Powered-By` header in HTTP transport middleware to prevent framework version fingerprinting (CWE-200).

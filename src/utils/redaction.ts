@@ -2,6 +2,8 @@ export const SENSITIVE_KEY_PATTERN = /(?:sk-|Bearer |token\s*[:=]\s*|password\s*
 
 const SENSITIVE_VALUE_REGEX = new RegExp(SENSITIVE_KEY_PATTERN.source, "gi");
 
+export const SENSITIVE_KEY_REGEX = /^(password|passwd|token|secret|authorization|api_?key|credential|private_?key|access_?token|refresh_?token|database_url)$/i;
+
 export function redactObject(obj: unknown, depth = 0, maxDepth = 15): unknown {
   if (depth > maxDepth || obj === null || obj === undefined) {
     return obj;
@@ -21,7 +23,7 @@ export function redactObject(obj: unknown, depth = 0, maxDepth = 15): unknown {
 
   const redacted: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    if (SENSITIVE_KEY_PATTERN.test(key)) {
+    if (SENSITIVE_KEY_REGEX.test(key)) {
       redacted[key] = "[REDACTED]";
     } else {
       redacted[key] = redactObject(value, depth + 1, maxDepth);

@@ -72,6 +72,9 @@ export class CodeModeSandbox {
       const validateAst = (node: unknown): void => {
         if (node === null || node === undefined || typeof node !== "object") return;
         const n = node as Record<string, unknown>;
+        if (n["type"] === "WithStatement") {
+          throw new Error("'with' statements are forbidden in sandbox code.");
+        }
         if (n["type"] === "MemberExpression" && n["object"] !== null && n["object"] !== undefined && typeof n["object"] === "object" && (n["object"] as Record<string, unknown>)["type"] === "Identifier") {
           const objName = (n["object"] as Record<string, unknown>)["name"] as string;
           if (["process", "require", "global", "globalThis"].includes(objName)) {

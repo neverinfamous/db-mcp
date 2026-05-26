@@ -328,6 +328,8 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Obfuscated adapter ID mapping in built-in tools
 - [x] Low entropy startup warning for single-tenant tokens
 - [x] Comprehensive security documentation
+- [x] DDL Validation blocklist for `ATTACH` / `DETACH` / `LOAD_EXTENSION` (CWE-89, CWE-22)
+- [x] Code Mode recursive credential redaction for deeply nested array objects (CWE-200)
 
 ## 🚨 **Reporting Security Issues**
 

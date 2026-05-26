@@ -28,6 +28,7 @@ function createMockAdapter(isNative = true) {
   return {
     executeReadQuery: vi.fn().mockResolvedValue({ rows: [] }),
     executeWriteQuery: vi.fn().mockResolvedValue({ rows: [] }),
+    rawQuery: vi.fn().mockResolvedValue({ rows: [] }),
     executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
     isNativeBackend: vi.fn().mockReturnValue(isNative),
     getConfiguredPath: vi.fn().mockReturnValue("/tmp/test.db"),
@@ -85,7 +86,7 @@ describe("createRestoreTool", () => {
     adapter.executeReadQuery.mockResolvedValue({
       rows: [{ integrity_check: "ok" }],
     });
-    adapter.executeWriteQuery.mockRejectedValueOnce(new Error("ATTACH failed"));
+    adapter.rawQuery.mockRejectedValueOnce(new Error("ATTACH failed"));
 
     const tool = createRestoreTool(adapter);
     const result = (await tool.handler(
@@ -179,7 +180,7 @@ describe("restore - successful flow", () => {
       return Promise.resolve({ rows: [] });
     });
 
-    adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
+    adapter.rawQuery.mockResolvedValue({ rows: [] });
 
     const tool = createRestoreTool(adapter);
     const result = (await tool.handler(
@@ -241,7 +242,7 @@ describe("restore - successful flow", () => {
 
     // Make the virtual table creation fail (module not available)
     let writeCallCount = 0;
-    adapter.executeWriteQuery.mockImplementation((sql: string) => {
+    adapter.rawQuery.mockImplementation((sql: string) => {
       writeCallCount++;
       if (sql.includes("CREATE VIRTUAL TABLE fts_index")) {
         return Promise.reject(new Error("no such module: fts5"));
@@ -290,7 +291,7 @@ describe("restore - successful flow", () => {
       }
       return Promise.resolve({ rows: [] });
     });
-    adapter.executeWriteQuery.mockResolvedValue({ rows: [] });
+    adapter.rawQuery.mockResolvedValue({ rows: [] });
 
     const tool = createRestoreTool(adapter);
     const result = (await tool.handler(
@@ -325,7 +326,7 @@ describe("restore - successful flow", () => {
     });
 
     // View creation will fail (missing table) — should be gracefully handled
-    adapter.executeWriteQuery.mockImplementation((sql: string) => {
+    adapter.rawQuery.mockImplementation((sql: string) => {
       if (sql === "CREATE VIEW my_view AS SELECT * FROM missing_table") {
         return Promise.reject(new Error("no such table: missing_table"));
       }
@@ -365,7 +366,7 @@ describe("restore - successful flow", () => {
       return Promise.resolve({ rows: [] });
     });
 
-    adapter.executeWriteQuery.mockImplementation((sql: string) => {
+    adapter.rawQuery.mockImplementation((sql: string) => {
       if (sql.includes("CREATE TRIGGER")) {
         return Promise.reject(new Error("no such table"));
       }
@@ -405,7 +406,7 @@ describe("restore - successful flow", () => {
       return Promise.resolve({ rows: [] });
     });
 
-    adapter.executeWriteQuery.mockImplementation((sql: string) => {
+    adapter.rawQuery.mockImplementation((sql: string) => {
       if (sql.includes("CREATE INDEX")) {
         return Promise.reject(new Error("no such table"));
       }

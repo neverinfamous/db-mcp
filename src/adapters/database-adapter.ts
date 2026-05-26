@@ -109,7 +109,6 @@ export abstract class DatabaseAdapter {
   abstract executeWriteQuery(
     sql: string,
     params?: unknown[],
-    skipValidation?: boolean,
   ): Promise<QueryResult>;
 
   /**

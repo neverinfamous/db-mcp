@@ -16,7 +16,8 @@ network:
   allowed:
     - defaults
 
-permissions: read-all
+permissions:
+  contents: read
 
 safe-outputs:
   report-failure-as-issue: false

@@ -109,7 +109,14 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
         lastArg !== null &&
         !Array.isArray(lastArg)
       ) {
-        Object.assign(result, lastArg);
+        const options = lastArg as Record<string, unknown>;
+        const restOptions: Record<string, unknown> = {};
+        for (const key of Object.keys(options)) {
+          if (key !== paramMapping) {
+            restOptions[key] = options[key];
+          }
+        }
+        Object.assign(result, restOptions);
       }
     }
     return result;
@@ -133,7 +140,14 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
       lastArg !== null &&
       !Array.isArray(lastArg)
     ) {
-      Object.assign(result, lastArg);
+      const options = lastArg as Record<string, unknown>;
+      const restOptions: Record<string, unknown> = {};
+      for (const key of Object.keys(options)) {
+        if (!paramMapping.includes(key)) {
+          restOptions[key] = options[key];
+        }
+      }
+      Object.assign(result, restOptions);
     }
   }
 
