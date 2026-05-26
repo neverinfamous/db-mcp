@@ -21,6 +21,7 @@
 - `dockerfile-patch-drift.yml` CI workflow to detect stale Dockerfile transitive dependency patches.
 
 ### Changed
+- **virtual**: Added `limit` parameter to `sqlite_generate_series` schema (default 100, max 1000) to prevent oversized JSON array payloads during large range generation, conserving LLM context window.
 - **core**: Added `selectColumns` parameter to `sqlite_date_add` and `sqlite_date_diff` schemas to allow precise column selection and mitigate oversized payloads when querying wide tables.
 - **[MCP 2025 Spec]** Implemented `sensitiveHint` tool annotation across all tool groups.
 - **[MCP 2025 Spec]** Implemented `ASSISTANT_FOCUSED` resource annotations for dynamically generated help resources.
@@ -51,6 +52,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **admin**: Fixed path validation logic in `sqlite_dump` that evaluated a manually-constructed safe path instead of the user-provided absolute `outputPath`, which failed to reject paths outside the workspace directory while falsely reporting success (CWE-22).
 - **text**: Fixed wrong-type numeric coercion for Zod schema validation in 	ext and ts tools by updating coerceNumber to reject invalid numeric strings instead of silently falling back to undefined/defaults.
 - **core**: Removed LIKE wildcard blocklist rule from where-clause.ts to allow valid LIKE operator usage in string replacements and filtering tools.
 - **codemode**: Fixed `sqlite_execute_code` throwing raw MCP `-32602` validation errors when called with empty parameters by adding `.catch("")` to the `code` parameter in `ExecuteCodeSchema`, gracefully returning a structured `CODEMODE_VALIDATION_FAILED` error instead.

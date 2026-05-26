@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import nodePath from "node:path";
+
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -60,29 +60,19 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      // Force flat filename to prevent traversal tricks
-      const safeFilename = nodePath.basename(input.outputPath);
-      const targetDir = nodePath.dirname(adapter.getConfiguredPath());
-      const safeOutputPath = nodePath.join(targetDir, safeFilename);
-
-      if (input.outputPath.includes("..")) {
-        return {
-          success: false,
-          error: "Path traversal detected",
-          code: "SECURITY_ERROR",
-        };
-      }
-
       // Security: validate outputPath is within the same directory as the primary DB
       const pathCheck = validateSameDirPath(
-        safeOutputPath,
+        input.outputPath,
         adapter.getConfiguredPath(),
       );
-      if (!pathCheck.valid) {
+
+      // Hard reject any path traversal attempts (F04 defense in depth)
+      if (input.outputPath.includes("..") || !pathCheck.valid) {
         return {
           success: false,
-          error: pathCheck.error,
+          error: !pathCheck.valid ? pathCheck.error : "Invalid path: must not contain '..'",
           code: "SECURITY_ERROR",
+          path: input.outputPath,
         };
       }
 

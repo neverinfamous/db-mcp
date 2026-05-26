@@ -59,13 +59,14 @@ export function createGenerateSeriesTool(
 
       // Generate in JS - better-sqlite3 doesn't include SQLITE_ENABLE_SERIES
       const values: number[] = [];
+      const limit = Math.min(input.limit ?? 100, 1000);
       for (
         let i = input.start;
         input.step > 0 ? i <= input.stop : i >= input.stop;
         i += input.step
       ) {
         values.push(i);
-        if (values.length > 10000) break; // Safety limit
+        if (values.length >= limit) break; // Safety limit
       }
 
       return Promise.resolve({

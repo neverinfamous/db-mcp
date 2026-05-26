@@ -162,6 +162,10 @@ export const GenerateSeriesSchema = z.object({
     coerceNumber,
     z.number().optional().default(1).describe("Step value"),
   ),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(100).describe("Maximum number of values to return (default: 100, max: 1000)"),
+  ),
 });
 
 export const CreateViewSchema = z.object({
