@@ -26,7 +26,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
         return formatHandlerError(error);
       }
 
-      const { table, column, amount, unit, limit } = input;
+      const { table, column, amount, unit, limit, selectColumns } = input;
       const quotedTable = `"${table.replace(/"/g, '""')}"`;
       const quotedColumn = `"${column.replace(/"/g, '""')}"`;
 
@@ -34,7 +34,10 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       const modifier = `${amount > 0 ? "+" : ""}${amount} ${unit}`;
       
       const queryParams: unknown[] = [];
-      let query = `SELECT *, datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
+      const selectCols = selectColumns && selectColumns.length > 0
+        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ")
+        : "*";
+      let query = `SELECT ${selectCols}, datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
       
       const clauses: string[] = [];
       if (input.whereClause) {
@@ -108,7 +111,7 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
         return formatHandlerError(error);
       }
 
-      const { table, column1, column2, unit, limit } = input;
+      const { table, column1, column2, unit, limit, selectColumns } = input;
       const formatOperand = (val: string): string => {
         if (!isNaN(Number(val))) return val;
         if (val.startsWith("'") && val.endsWith("'")) return val;
@@ -128,7 +131,10 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       const diffExpr = `(julianday(${quotedCol1}) - julianday(${quotedCol2})) * ${multiplier}`;
 
       const queryParams: unknown[] = [];
-      let query = `SELECT *, ${diffExpr} as date_diff_result FROM ${quotedTable}`;
+      const selectCols = selectColumns && selectColumns.length > 0
+        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ")
+        : "*";
+      let query = `SELECT ${selectCols}, ${diffExpr} as date_diff_result FROM ${quotedTable}`;
       const clauses: string[] = [];
       if (input.whereClause) {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);

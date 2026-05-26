@@ -485,6 +485,7 @@ export const DateAddSchema = z.object({
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
+  selectColumns: z.array(z.string()).optional().describe("Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables."),
 });
 
 export const DateDiffSchema = z.object({
@@ -495,6 +496,7 @@ export const DateDiffSchema = z.object({
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
+  selectColumns: z.array(z.string()).optional().describe("Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables."),
 });
 
 // =============================================================================

@@ -21,6 +21,7 @@
 - `dockerfile-patch-drift.yml` CI workflow to detect stale Dockerfile transitive dependency patches.
 
 ### Changed
+- **core**: Added `selectColumns` parameter to `sqlite_date_add` and `sqlite_date_diff` schemas to allow precise column selection and mitigate oversized payloads when querying wide tables.
 - **[MCP 2025 Spec]** Implemented `sensitiveHint` tool annotation across all tool groups.
 - **[MCP 2025 Spec]** Implemented `ASSISTANT_FOCUSED` resource annotations for dynamically generated help resources.
 - Updated `tool-annotations.test.ts` invariant tests to strictly enforce `sensitiveHint` definitions on all tools.
