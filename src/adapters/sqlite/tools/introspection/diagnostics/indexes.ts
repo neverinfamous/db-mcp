@@ -47,6 +47,21 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.table) {
           const escaped = input.table.replace(/'/g, "''");
           indexQuery += ` AND tbl_name = '${escaped}'`;
+
+          // Verify table exists before proceeding
+          const tableCheck = await adapter.executeReadQuery(
+            `SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name = '${escaped}'`
+          );
+          if ((tableCheck.rows?.length ?? 0) === 0) {
+            return {
+              success: false,
+              error: `Table '${input.table}' does not exist`,
+              code: "TABLE_NOT_FOUND",
+              category: "resource",
+              suggestion: "Table not found. Run sqlite_list_tables to see available tables.",
+              recoverable: false,
+            };
+          }
         }
 
         const indexResult = await adapter.executeReadQuery(indexQuery);

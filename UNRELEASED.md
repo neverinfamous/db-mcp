@@ -57,6 +57,7 @@
 - **virtual**: Fixed SQL syntax error in `sqlite_create_csv_table` caused by redundant double quotes around the table name.
 - **virtual**: Fixed `sqlite_generate_series` returning a misleading "missing parameters" error instead of a Zod type error by removing the `.optional()` workaround.
 - **codemode**: Resolved strict TypeScript typing mismatch and ESLint dynamic-delete errors during dynamic object assignment in `api.ts`.
+- **introspection**: Fixed `sqlite_index_audit` returning success with empty findings when provided with a non-existent table, instead of returning a structured `TABLE_NOT_FOUND` error.
 - **tests**: Fixed mocked test adapter missing `rawQuery` method causing false-positive test failures in `restore.test.ts`.
 - **server**: Fixed lint errors in `mcp-server.ts` by using optional chaining and correcting `ErrorCategory` reference.
 - Completely removed all unparameterized SQL template string evaluation from `executeReadQuery` and `executeWriteQuery` across all tools, migrating fully to native `?` bindings to resolve all identified SQL injection (SQLi) vulnerabilities.
