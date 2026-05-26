@@ -79,8 +79,8 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
                   MAX(${column}) - MIN(${column}) as range
               FROM ${table}`;
 
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -170,8 +170,8 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${countExpr} as count FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -239,8 +239,8 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
         let sql = `SELECT ${groupByColumn}, ${statFunc}(${valueColumn}) as stat_value
                   FROM ${table}`;
 
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -302,8 +302,8 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         let minMaxSql = `SELECT MIN(${column}) as min_val, MAX(${column}) as max_val, COUNT(${column}) as cnt FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               minMaxSql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -353,8 +353,8 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${bucketCases.join(", ")} FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -429,8 +429,8 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         let sql = `SELECT ${column} as value FROM ${table} WHERE ${column} IS NOT NULL`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` AND ${whereSql}`;
               queryParams.push(...whereParams);
@@ -514,8 +514,8 @@ export function createSampleTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Get total row count for context
         let countSql = `SELECT COUNT(*) as total FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               countSql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -526,8 +526,8 @@ export function createSampleTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Get random sample
         let sql = `SELECT ${columns} FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -550,3 +550,5 @@ export function createSampleTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+

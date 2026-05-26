@@ -267,7 +267,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions !== undefined && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -330,7 +330,7 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions !== undefined && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -410,3 +410,4 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+

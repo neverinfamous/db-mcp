@@ -96,8 +96,8 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
         let sql = `SELECT ${col1} as x, ${col2} as y
                   FROM ${table}
                   WHERE ${col1} IS NOT NULL AND ${col2} IS NOT NULL`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` AND ${whereSql}`;
               queryParams.push(...whereParams);
@@ -253,8 +253,8 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${columnList} FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -308,8 +308,8 @@ export function createDistinctValuesTool(
         const column = sanitizeIdentifier(input.column);
 
         let sql = `SELECT DISTINCT ${column} as value FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -442,8 +442,8 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
                       MAX(${quotedCol}) as max
                   FROM ${table}`;
 
-          if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+          if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -522,8 +522,8 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT ${column} as value, COUNT(*) as frequency
                   FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -545,3 +545,5 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+

@@ -74,8 +74,8 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${selectClause} FROM "${input.table}"`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -349,3 +349,5 @@ export function createAnalyzeJsonSchemaTool(
     },
   };
 }
+
+

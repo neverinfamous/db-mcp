@@ -358,7 +358,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
         const lonColumn = sanitizeIdentifier(input.lonColumn);
 
         // Security: Validate WHERE clause if provided
-        if (input.conditions) {
+        if (input.conditions || input.whereClause) {
           // validateWhereClause() removed
         }
 
@@ -372,7 +372,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
                   AVG(${lonColumn}) as center_lon
               FROM ${table}
               ${(() => {
-                  const { sql: wSql, params: wParams } = buildWhereClause(input.conditions);
+                  const { sql: wSql, params: wParams } = buildWhereClause(input.conditions, input.whereClause);
                   if (wSql) {
                     queryParams.push(...wParams);
                     return `WHERE ${wSql}`;
@@ -404,3 +404,5 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+

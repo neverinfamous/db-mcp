@@ -214,6 +214,7 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `introspection/analysis/diff.ts`          | 1     | `sqlite_schema_diff`                                                                                                          |
 |                   | `introspection/diagnostics/storage.ts`    | 1     | `sqlite_storage_analysis`                                                                                                     |
 |                   | `introspection/diagnostics/indexes.ts`    | 1     | `sqlite_index_audit`                                                                                                          |
+|                   | `introspection/diagnostics/indexes.ts`    | 1     | `sqlite_index_audit`                                                                                                           |
 |                   | `introspection/diagnostics/query-plan.ts` | 1     | `sqlite_query_plan`                                                                                                           |
 | **migration**     | `migration/tracking/init.ts`              | 1     | `sqlite_migration_init`                                                                                                       |
 |                   | `migration/tracking/record.ts`            | 1     | `sqlite_migration_record`                                                                                                     |

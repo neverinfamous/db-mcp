@@ -59,11 +59,11 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.xColumn);
         sanitizeIdentifier(input.yColumn);
 
-        if (input.conditions) {
+        if (input.conditions || input.whereClause) {
           // validateWhereClause() removed
         }
 
-        const andClause = input.conditions ? ` AND ${buildWhereClause(input.conditions).sql}` : "";
+        const andClause = input.conditions ? ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}` : "";
         const degree = input.degree ?? 1;
 
         const sql = `
@@ -158,3 +158,5 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+

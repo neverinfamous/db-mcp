@@ -315,6 +315,16 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Execute a SQL script containing multiple statements
+   */
+  override executeScript(sql: string): Promise<void> {
+    this.ensureConnected();
+    this.ensureDb().exec(sql);
+    this.clearSchemaCache();
+    return Promise.resolve();
+  }
+
+  /**
    * Get schema information (cached via SchemaManager)
    */
   override async getSchema(): Promise<SchemaInfo> {

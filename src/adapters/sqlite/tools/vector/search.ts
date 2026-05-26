@@ -73,8 +73,8 @@ export function createVectorSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Always fetch vector column for similarity calculation, but may remove from results
         let sql = `SELECT ${selectCols}, ${vectorColumn} FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -252,3 +252,5 @@ export function createVectorGetTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+

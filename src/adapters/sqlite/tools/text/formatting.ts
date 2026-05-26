@@ -66,8 +66,8 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
           .join(` || '${sep}' || `);
 
         let sql = `SELECT ${concatExpr} as concatenated FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -114,7 +114,7 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
         const replace = input.replaceWith.replace(/'/g, "''");
 
         // validateWhereClause() removed
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         let sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}')`;
         if (whereSql) {
           sql += ` WHERE ${whereSql}`;
@@ -181,8 +181,8 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT rowid as __rowid, ${trimFunc}(${column}) as trimmed FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -252,8 +252,8 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
         const caseFunc = input.mode === "upper" ? "upper" : "lower";
 
         let sql = `SELECT rowid as __rowid, ${caseFunc}(${column}) as transformed FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -323,8 +323,8 @@ export function createTextSubstringTool(
             : `substr(${column}, ${input.start})`;
 
         let sql = `SELECT rowid as __rowid, ${substrExpr} as substring FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -532,3 +532,5 @@ export const VALIDATION_PATTERNS: Record<string, RegExp> = {
 /**
  * Fuzzy match using Levenshtein distance
  */
+
+

@@ -61,8 +61,8 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
         // Use subquery to avoid ambiguous column when table has a 'key' or 'id' column
         // json_each returns: key, value, type, atom, id, parent, fullkey, path
         let sql: string;
-        if (input.conditions) {
-          const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
           if (whereSql !== "") {
             sql = `SELECT DISTINCT json_each.key
                         FROM json_each(
@@ -127,8 +127,8 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
         // json_each() returns: key, value, type, atom, id, parent, fullkey, path
         // If the source table has any of these columns (e.g., 'id'), they must be qualified
         let sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
-        if (input.conditions) {
-          const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
           if (whereSql !== "") {
             // Qualify unqualified 'id' column references with table alias 't.'
             // This handles: t."id" = X, t."id" IN (...), t."id" BETWEEN, t."id" IS NULL, etc.
@@ -213,8 +213,8 @@ export function createJsonGroupArrayTool(
         }
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -279,8 +279,8 @@ export function createJsonGroupObjectTool(
 
           // Build subquery that computes the aggregate grouped by key
           let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
-          if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+          if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               subquery += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -365,8 +365,8 @@ export function createJsonGroupObjectTool(
         }
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -392,3 +392,5 @@ export function createJsonGroupObjectTool(
 /**
  * Pretty print and compact JSON
  */
+
+

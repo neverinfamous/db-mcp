@@ -101,9 +101,9 @@ export function createJsonSecurityScanTool(
 
         // Build query — wrap column with json() to handle both text and JSONB
         const queryParams: unknown[] = [];
-      let sql = `SELECT json("${column}") as json_data FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        let sql = `SELECT json(${column}) as json_data FROM ${table}`;
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -239,3 +239,5 @@ export function createJsonSecurityScanTool(
     },
   };
 }
+
+

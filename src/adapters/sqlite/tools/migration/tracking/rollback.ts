@@ -138,7 +138,7 @@ export function createMigrationRollbackTool(
         }
 
         validateMigrationSql(rollbackSql);
-        await adapter.executeQuery(rollbackSql);
+        await adapter.executeScript(rollbackSql);
 
         await adapter.executeQuery(
           `UPDATE "${MIGRATIONS_TABLE}" SET status = 'rolled_back', rolled_back_at = datetime('now') WHERE id = ?`,

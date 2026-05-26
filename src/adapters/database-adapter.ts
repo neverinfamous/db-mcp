@@ -111,12 +111,14 @@ export abstract class DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult>;
 
-  /**
-   * Execute any query (for admin operations)
-   * @param sql - SQL query string
-   * @param params - Query parameters for prepared statements
-   */
   abstract executeQuery(sql: string, params?: unknown[]): Promise<QueryResult>;
+
+  /**
+   * Execute a SQL script containing multiple statements (for migrations).
+   * Bypasses standard query validation as scripts are validated separately.
+   * @param sql - SQL script string
+   */
+  abstract executeScript(sql: string): Promise<void>;
 
   // ===========================================================================
   // Schema Introspection

@@ -437,7 +437,7 @@ export const CountSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   column: z
     .string()
     .optional()
@@ -457,7 +457,7 @@ export const ExistsSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 // =============================================================================
@@ -483,7 +483,7 @@ export const DateAddSchema = z.object({
   amount: z.preprocess(coerceNumber, z.number().describe("Amount of time to add (use negative to subtract)")),
   unit: z.enum(["days", "months", "years", "hours", "minutes", "seconds"]).describe("Time unit"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
   selectColumns: z.array(z.string()).optional().describe("Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables."),
 });
@@ -494,7 +494,7 @@ export const DateDiffSchema = z.object({
   column2: z.string().describe("Second date/time column (column1 - column2)"),
   unit: z.enum(["days", "hours", "minutes", "seconds"]).describe("Unit for the difference result"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
   selectColumns: z.array(z.string()).optional().describe("Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables."),
 });
@@ -618,3 +618,5 @@ export const DropTriggerOutputSchema = z
 
 export type CreateTriggerInput = z.infer<typeof CreateTriggerSchema>;
 export type DropTriggerInput = z.infer<typeof DropTriggerSchema>;
+
+

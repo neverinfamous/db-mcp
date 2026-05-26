@@ -142,7 +142,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
 
         const valueJson = JSON.stringify(input.value);
         // validateWhereClause() removed
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         let sql = `UPDATE "${input.table}" SET "${input.column}" = json_replace("${input.column}", '${input.path}', json('${valueJson.replace(/'/g, "''")}'))`;
         if (whereSql) {
           sql += ` WHERE ${whereSql}`;
@@ -211,7 +211,7 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
 
         // validateWhereClause() removed
         // Use json_patch for merging (shallow merge)
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         let sql = `UPDATE "${input.table}" SET "${input.column}" = json_patch("${input.column}", '${mergeJson.replace(/'/g, "''")}')`;
         if (whereSql) {
           sql += ` WHERE ${whereSql}`;
@@ -322,3 +322,4 @@ export function createJsonCollectionTool(
     },
   };
 }
+

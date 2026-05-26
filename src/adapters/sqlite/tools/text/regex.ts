@@ -51,8 +51,8 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -122,8 +122,8 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -190,8 +190,8 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
         await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -235,3 +235,5 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+

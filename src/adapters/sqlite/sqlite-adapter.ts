@@ -202,6 +202,16 @@ export class SqliteAdapter extends DatabaseAdapter {
   }
 
   /**
+   * Execute a SQL script containing multiple statements
+   */
+  override executeScript(sql: string): Promise<void> {
+    this.ensureConnected();
+    this.ensureDb().run(sql);
+    this.clearSchemaCache();
+    return Promise.resolve();
+  }
+
+  /**
    * Get full database schema (cached via SchemaManager)
    */
   override async getSchema(): Promise<SchemaInfo> {

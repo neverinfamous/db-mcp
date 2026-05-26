@@ -297,9 +297,9 @@ export function createAdvancedSearchTool(
 
         // Fetch candidate rows
         let conditions = "";
-        if (input.conditions) {
+        if (input.conditions || input.whereClause) {
           // validateWhereClause() removed
-          conditions = ` AND ${buildWhereClause(input.conditions).sql}`;
+          conditions = ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}`;
         }
         const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${conditions} LIMIT 100`;
         const result = await adapter.executeReadQuery(query, queryParams);
@@ -403,3 +403,5 @@ export function createAdvancedSearchTool(
     },
   };
 }
+
+

@@ -107,8 +107,8 @@ export function createJsonExtractTool(adapter: SqliteAdapter): ToolDefinition {
         validateJsonPath(input.path);
 
         let sql = `SELECT json_extract(${column}, '${input.path}') as value FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -169,7 +169,7 @@ export function createJsonSetTool(adapter: SqliteAdapter): ToolDefinition {
 
         const valueJson = JSON.stringify(input.value);
         // validateWhereClause() removed
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
           const sql = `UPDATE ${table} SET ${column} = json_set(${column}, '${input.path}', json('${valueJson.replace(/'/g, "''")}'))${whereSql ? ' WHERE ' + whereSql : ''}`;
           queryParams.push(...whereParams);
 
@@ -220,7 +220,7 @@ export function createJsonRemoveTool(adapter: SqliteAdapter): ToolDefinition {
         validateJsonPath(input.path);
 
         // validateWhereClause() removed
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
           const sql = `UPDATE ${table} SET ${column} = json_remove(${column}, '${input.path}')${whereSql ? ' WHERE ' + whereSql : ''}`;
           queryParams.push(...whereParams);
 
@@ -274,8 +274,8 @@ export function createJsonTypeTool(adapter: SqliteAdapter): ToolDefinition {
         validateJsonPath(path);
 
         let sql = `SELECT json_type(${column}, '${path}') as type FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -328,8 +328,8 @@ export function createJsonArrayLengthTool(
         validateJsonPath(path);
 
         let sql = `SELECT json_array_length(${column}, '${path}') as length FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -396,7 +396,7 @@ export function createJsonArrayAppendTool(
           ? input.path.replace(/\]$/, "#]")
           : `${input.path}[#]`;
 
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
           const sql = `UPDATE ${table} SET ${column} = json_insert(${column}, '${appendPath}', json('${valueJson.replace(/'/g, "''")}'))${whereSql ? ' WHERE ' + whereSql : ''}`;
           queryParams.push(...whereParams);
 
@@ -416,3 +416,5 @@ export function createJsonArrayAppendTool(
 /**
  * Get JSON object keys
  */
+
+

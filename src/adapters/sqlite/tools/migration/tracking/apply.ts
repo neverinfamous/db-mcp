@@ -91,7 +91,7 @@ export function createMigrationApplyTool(
             2,
             `Applying migration ${input.version}...`,
           );
-          await adapter.executeQuery(actualSql);
+          await adapter.executeScript(actualSql);
           await sendProgress(progress, 2, 2, `Migration applied successfully`);
         } catch (execError) {
           if (existingId !== undefined) {

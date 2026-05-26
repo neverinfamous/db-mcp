@@ -386,6 +386,7 @@ export const BasicStatsSchema = z.object({
   column: z.string().describe("Numeric column for statistics"),
   columnName: z.string().optional().describe("Alias for column name"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const StatsCountSchema = z.object({
@@ -395,6 +396,7 @@ export const StatsCountSchema = z.object({
   columnName: z.string().optional().describe("Alias for column name"),
   distinct: z.boolean().optional().default(false),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const GroupByStatsSchema = z.object({
@@ -405,6 +407,7 @@ export const GroupByStatsSchema = z.object({
     .string()
     .describe("Statistic type: 'sum', 'avg', 'min', 'max', or 'count'"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   orderBy: z.preprocess(
     coerceEnumValues(["value", "group"]),
     z.enum(["value", "group"]).optional().default("group"),
@@ -420,6 +423,7 @@ export const HistogramSchema = z.object({
     z.number().optional().default(10).describe("Number of buckets"),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const PercentileSchema = z.object({
@@ -427,6 +431,7 @@ export const PercentileSchema = z.object({
   column: z.string().describe("Numeric column"),
   percentiles: z.array(z.number()).describe("Percentiles to compute"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const CorrelationSchema = z.object({
@@ -434,6 +439,7 @@ export const CorrelationSchema = z.object({
   column1: z.string().describe("First numeric column"),
   column2: z.string().describe("Second numeric column"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const TopNSchema = z.object({
@@ -448,6 +454,7 @@ export const TopNSchema = z.object({
     z.enum(["asc", "desc"]).optional().default("desc"),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   selectColumns: z
     .array(z.string())
     .optional()
@@ -459,6 +466,7 @@ export const DistinctValuesSchema = z.object({
   column: z.string().describe("Column to get distinct values"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const SummaryStatsSchema = z.object({
@@ -468,6 +476,7 @@ export const SummaryStatsSchema = z.object({
     .optional()
     .describe("Columns to summarize (default: all numeric)"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const FrequencySchema = z.object({
@@ -475,6 +484,7 @@ export const FrequencySchema = z.object({
   column: z.string().describe("Column to count frequency"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(20)),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const OutlierSchema = z.object({
@@ -494,6 +504,7 @@ export const OutlierSchema = z.object({
       ),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   maxOutliers: z.preprocess(
     coerceNumber,
@@ -516,6 +527,7 @@ export const RegressionSchema = z.object({
     z.number().optional().default(1).describe("Polynomial degree (1=linear)"),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const HypothesisSchema = z.object({
@@ -534,6 +546,7 @@ export const HypothesisSchema = z.object({
     z.number().optional().describe("Expected mean for one-sample t-test"),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 // =============================================================================
@@ -553,6 +566,7 @@ export const StatsSampleSchema = z.object({
       ),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   selectColumns: z
     .array(z.string())
     .optional()
@@ -645,6 +659,7 @@ export const DetectAnomaliesSchema = z.object({
       .describe("Maximum anomalies to return per column (default: 50)"),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 export type DetectAnomaliesInput = z.infer<typeof DetectAnomaliesSchema>;
 
@@ -670,3 +685,4 @@ export const DetectBloatSchema = z
   })
   .default(() => ({ limit: 25, includeZeroRisk: false }));
 export type DetectBloatInput = z.infer<typeof DetectBloatSchema>;
+

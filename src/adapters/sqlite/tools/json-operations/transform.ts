@@ -111,8 +111,8 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `UPDATE ${table} SET ${column} = jsonb(${column})`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -265,8 +265,8 @@ export function createJsonNormalizeColumnTool(
         // 1. Detect if original storage is JSONB (binary blob)
         // 2. Get text JSON for normalization processing
         let selectSql = `SELECT _rowid_ AS _rid_, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               selectSql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -353,3 +353,5 @@ export function createJsonNormalizeColumnTool(
     },
   };
 }
+
+

@@ -62,12 +62,12 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           await validateNumericColumn(adapter, input.table, input.column);
         }
 
-        if (input.conditions) {
+        if (input.conditions || input.whereClause) {
           // validateWhereClause() removed
         }
 
         const conditions = input.conditions
-          ? ` AND ${buildWhereClause(input.conditions).sql}`
+          ? ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}`
           : "";
 
         if (input.testType === "ttest_one") {
@@ -271,3 +271,5 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+

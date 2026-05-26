@@ -44,7 +44,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -140,7 +140,7 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -167,3 +167,4 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+

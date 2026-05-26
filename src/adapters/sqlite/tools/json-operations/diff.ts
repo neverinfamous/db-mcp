@@ -64,8 +64,8 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
           input.path2,
         ];
 
-        if (input.conditions) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -95,3 +95,5 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
+
+
