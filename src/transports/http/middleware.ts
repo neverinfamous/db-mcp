@@ -50,7 +50,7 @@ export function setupSecurityHeaders(state: HttpTransportState): void {
 
     // HSTS — only set when explicitly enabled (requires HTTPS)
     if (state.config.enableHSTS) {
-      const maxAge = state.config.hstsMaxAge ?? DEFAULT_HSTS_MAX_AGE;
+      const maxAge = Math.max(state.config.hstsMaxAge ?? DEFAULT_HSTS_MAX_AGE, 31536000);
       res.setHeader(
         "Strict-Transport-Security",
         `max-age=${String(maxAge)}; includeSubDomains`,
@@ -80,7 +80,9 @@ export function matchesCorsOrigin(origin: string, pattern: string): boolean {
       origin === "http://localhost" ||
       origin.startsWith("http://localhost:") ||
       origin === "http://127.0.0.1" ||
-      origin.startsWith("http://127.0.0.1:");
+      origin.startsWith("http://127.0.0.1:") ||
+      origin === "http://[::1]" ||
+      origin.startsWith("http://[::1]:");
     if (!isLocalDev && !origin.startsWith("https://")) return false;
     return origin.endsWith(domain) && origin.length > domain.length;
   }

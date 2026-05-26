@@ -6,6 +6,7 @@
  */
 
 import type ivm from "isolated-vm";
+import * as acorn from "acorn";
 import {
   DEFAULT_SANDBOX_OPTIONS,
   DEFAULT_POOL_OPTIONS,
@@ -50,6 +51,44 @@ export class CodeModeSandbox {
       return {
         success: false,
         error: "Sandbox has been disposed",
+        metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+      };
+    }
+
+    const groupNameRegex = /^[a-zA-Z0-9_]+$/;
+    for (const groupName of Object.keys(apiBindings)) {
+      if (!groupNameRegex.test(groupName) || groupName === "__proto__" || groupName === "constructor" || groupName === "prototype") {
+        return {
+          success: false,
+          error: `Security Error: Invalid tool group name '${groupName}'`,
+          metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+        };
+      }
+    }
+
+    try {
+      const wrappedCode = `async function __wrapper() { ${code} }`;
+      const ast = acorn.parse(wrappedCode, { ecmaVersion: "latest", sourceType: "script" });
+      const validateAst = (node: unknown): void => {
+        if (node === null || node === undefined || typeof node !== "object") return;
+        const n = node as Record<string, unknown>;
+        if (n["type"] === "MemberExpression" && n["object"] !== null && n["object"] !== undefined && typeof n["object"] === "object" && (n["object"] as Record<string, unknown>)["type"] === "Identifier") {
+          const objName = (n["object"] as Record<string, unknown>)["name"] as string;
+          if (["process", "require", "global", "globalThis"].includes(objName)) {
+            throw new Error(`Access to '${objName}' is forbidden.`);
+          }
+        }
+        for (const key in n) {
+          if (key !== "loc" && key !== "start" && key !== "end") {
+            validateAst(n[key]);
+          }
+        }
+      };
+      validateAst(ast);
+    } catch (e: unknown) {
+      return {
+        success: false,
+        error: "Code validation failed: " + (e instanceof Error ? e.message : String(e)),
         metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
       };
     }
@@ -105,7 +144,7 @@ export class CodeModeSandbox {
           if (typeof methodFn === "function") {
             const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
               if (++rpcCount > MAX_RPC_CALLS) {
-                throw new Error("QuotaExceededError: Maximum number of host tool calls (100) exceeded within a single execution.");
+                throw new Error(`QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`);
               }
               try {
                 return await (methodFn as (...args: unknown[]) => Promise<unknown>)(...args);
@@ -126,7 +165,7 @@ export class CodeModeSandbox {
       } else if (typeof groupValue === "function") {
         const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
           if (++rpcCount > MAX_RPC_CALLS) {
-            throw new Error("QuotaExceededError: Maximum number of host tool calls (100) exceeded within a single execution.");
+            throw new Error(`QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`);
           }
           try {
             return await (groupValue as (...args: unknown[]) => Promise<unknown>)(...args);

@@ -39,8 +39,8 @@ export function scopeGrantsToolAccess(
       if (required.includes(scope)) {
         return true;
       }
-      // 'write' scope grants access to 'read' tools, but not 'admin'
-      if (scope === "write" && !required.includes("admin")) {
+      // 'write' scope grants access to 'read' tools
+      if (scope === "write" && required.includes("read")) {
         return true;
       }
       return false;

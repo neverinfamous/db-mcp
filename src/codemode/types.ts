@@ -39,7 +39,7 @@ export interface PoolOptions {
  */
 export const DEFAULT_SANDBOX_OPTIONS: Required<SandboxOptions> = {
   memoryLimitMb: 128,
-  timeoutMs: 30000,
+  timeoutMs: 5000,
   cpuLimitMs: 10000,
 };
 

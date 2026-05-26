@@ -49,7 +49,7 @@ export class AuthorizationServerDiscovery {
     ) {
       const url = new URL(this.authServerUrl);
       const isLocalDev =
-        url.hostname === "localhost" || url.hostname === "127.0.0.1";
+        url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
       if (!isLocalDev) {
         throw new Error(
           `Security: Authorization server URL must use HTTPS in production. ` +
@@ -163,15 +163,24 @@ export class AuthorizationServerDiscovery {
       );
     }
 
+    try {
+      new URL(metadata.issuer);
+      new URL(metadata.token_endpoint);
+    } catch {
+      throw new DbMcpError(
+        "Invalid URL format in metadata fields",
+        "AUTH_DISCOVERY_INVALID",
+        ErrorCategory.VALIDATION,
+      );
+    }
+
     // Validate issuer matches the expected URL
     // Per RFC 8414 §3.3, issuer MUST be identical to the authorization server URL
     // F-2: Fail closed on mismatch to prevent key set swapping via DNS spoofing
     const expectedIssuer = this.authServerUrl;
     if (metadata.issuer !== expectedIssuer) {
       throw new DbMcpError(
-        `Issuer mismatch: expected '${expectedIssuer}', got '${metadata.issuer}'. ` +
-          `Per RFC 8414 §3.3, the issuer MUST be identical to the authorization server URL. ` +
-          `Set oauth.issuer explicitly if your auth server uses a different issuer identifier.`,
+        `Issuer validation failed. Per RFC 8414 §3.3, the issuer MUST be identical to the authorization server URL.`,
         "AUTH_ISSUER_MISMATCH",
         ErrorCategory.VALIDATION,
       );

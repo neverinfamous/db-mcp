@@ -51,6 +51,7 @@ export function createAuthMiddleware(
   ): Promise<void> => {
     const requestId = crypto.randomUUID();
     req.requestId = requestId;
+    res.setHeader("X-Request-ID", requestId);
 
     if (isPublicPath(req.path, publicPaths)) {
       logger.info(`Public path accessed: ${req.path}`, {

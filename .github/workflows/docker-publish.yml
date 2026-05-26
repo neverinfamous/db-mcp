@@ -26,7 +26,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      pull-requests: write # C-18: scoped to this job only (Docker Scout PR comments)
       security-events: write
 
     steps:
@@ -36,13 +35,13 @@ jobs:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v3.0.0
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
 
       - name: Verify Dockerfile integrity
         run: git diff --exit-code Dockerfile || (echo "Uncommitted changes to Dockerfile detected" && exit 1)
 
       - name: Build image for scanning (local only)
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v5.0.0
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           context: .
           file: Dockerfile
@@ -93,7 +92,7 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
+        uses: github/codeql-action/upload-sarif@f25eda876ebb741d872b63b9f2c6dfdd77f14b83 # v4.35.5
         with:
           sarif_file: trivy-results.sarif
           category: trivy-docker-scan
@@ -127,7 +126,7 @@ jobs:
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v3.0.0
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
         with:
           driver-opts: network=host
 
@@ -163,7 +162,7 @@ jobs:
 
       - name: Build and push to local registry
         id: build
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v5.0.0
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           context: .
           file: Dockerfile
@@ -177,16 +176,13 @@ jobs:
           sbom: true
 
       - name: Push manifest to Docker Hub
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           # Use skopeo to copy the multi-arch image from the local registry to Docker Hub
-          skopeo copy --all --dest-creds="${DOCKER_USERNAME}:${DOCKER_PASSWORD}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          skopeo copy --all docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
           
           # Also tag and push 'latest' if applicable
           if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
-            skopeo copy --all --dest-creds="${DOCKER_USERNAME}:${DOCKER_PASSWORD}" docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            skopeo copy --all docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           fi
 
       - name: Update Docker Hub Description

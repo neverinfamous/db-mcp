@@ -34,17 +34,9 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
   const corsOrigins = state.config.corsOrigins ?? [];
   const hasAuth = state.config.oauth.enabled;
   if (corsOrigins.includes("*") && hasAuth) {
-    if (process.env["ALLOW_CORS_WILDCARD_WITH_AUTH"] !== "true") {
-      throw new Error(
-        "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled. " +
-        "Configure explicit origins via --cors-origins, or set ALLOW_CORS_WILDCARD_WITH_AUTH=true to bypass."
-      );
-    }
-    logger.warning(
-      "CORS is configured with wildcard origin ('*') while authentication is enabled. " +
-        "This allows any website to send authenticated requests via browser fetch(). " +
-        "Configure explicit origins via --cors-origins for production deployments.",
-      { code: "AUTH_CORS_WILDCARD" },
+    throw new Error(
+      "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled. " +
+      "Configure explicit origins via --cors-origins for production deployments."
     );
   }
 
@@ -95,10 +87,11 @@ export function applyScopeEnforcementMiddleware(
       return;
     }
 
-    if (!req.headers["content-type"]?.includes("application/json")) {
+    const contentType = req.headers["content-type"]?.split(";")[0]?.trim();
+    if (contentType !== "application/json") {
       res.status(400).json({
         error: "invalid_request",
-        error_description: "Content-Type must be application/json",
+        error_description: "Content-Type must be exactly application/json",
       });
       return;
     }

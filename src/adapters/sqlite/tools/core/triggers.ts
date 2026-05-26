@@ -10,7 +10,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { readOnly, idempotent, destructive } from "../../../../utils/annotations.js";
+import { readOnly, write, destructive } from "../../../../utils/annotations.js";
 import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { isSpatialiteSystemTable } from "./tables.js";
 import {
@@ -123,7 +123,7 @@ export function createCreateTriggerTool(
     inputSchema: CreateTriggerSchema,
     outputSchema: CreateTriggerOutputSchema,
     requiredScopes: ["admin"],
-    annotations: idempotent("Create Trigger"),
+    annotations: write("Create Trigger"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
       try {
@@ -214,6 +214,15 @@ export function createCreateTriggerTool(
         return {
           ...formatHandlerError(
             new ValidationError("Trigger body cannot be empty"),
+          ),
+          sql: "",
+        };
+      }
+
+      if (input.whenClause?.includes(';')) {
+        return {
+          ...formatHandlerError(
+            new ValidationError("whenClause cannot contain semicolons"),
           ),
           sql: "",
         };

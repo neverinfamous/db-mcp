@@ -137,6 +137,9 @@
 - **[Medium]** CLI: Corrected `--server-host` exposure text to clarify `127.0.0.1` default, preventing unintentional network binding over `0.0.0.0`.
 - **[Medium]** Auth Validation: Corrected `clockTolerance` default parameter mismatch in `token-validator.ts` from 60 to 30 seconds for stricter JWT timing.
 - **[Medium]** CI/CD: Implemented `concurrency` block safeguards in `e2e.yml`, `lint-and-test.yml`, `security-update.yml`, and `codeql.yml` to automatically cancel stale runs.
+- **[High]** Build/Runtime: Externalized native and dynamic dependency modules (`sqlite-parser`, `acorn`, `isolated-vm`) in `tsup.config.ts` to prevent bundler dynamic `require` crashes during ESM execution.
+- **[High]** Query Validation: Implemented a secure fallback regex validation pipeline in `query-validation.ts` for modern SQLite syntax (`WITH`, `WINDOW`, `UPSERT`) that the legacy AST parser cannot process, preserving security against comment-hiding while restoring advanced query support.
+- **[Medium]** Code Mode Sandbox: Wrapped dynamic execution code in an asynchronous function wrapper before AST parsing to prevent `acorn` from rejecting valid top-level `await` and `return` statements in script mode.
 - **[Medium]** CI/CD: Corrected incorrectly annotated semantic version comments for pinned action SHAs to `v4` and `v3` to prevent supply chain confusion.
 - **[Critical]** Code Mode Sandbox: Fixed bypass in `validateCode` where multi-line `/* ... */` comments could hide malicious `import` or `eval` patterns from the regex blocklist by stripping all comments before validation.
 - **[High]** Session Management: Fixed missing session ownership verification in the legacy SSE transport (`legacy-sse.ts`), ensuring SSE streams are strictly bound to the authenticated subject that created the session.
@@ -153,6 +156,8 @@
 - **[High]** DoS: Implemented a hard 100-call quota for Code Mode RPC bridges per execution to prevent infinite loop host starvation.
 - **[Medium]** CI/CD: Broadened secrets scanning pull-request write permissions to support automated leak annotations.
 - **[H-52]** Code Mode Sandbox: Removed insecure `node:vm` fallback logic and migrated to `isolated-vm` for true V8 isolate memory and execution separation, preventing prototype pollution escapes.
+- **[H-53]** CI/CD: Removed `pull-requests: write` from `docker-publish.yml` and updated `skopeo` to securely read credentials instead of passing them in the command line (CWE-214).
+- **[H-54]** CI/CD: Recompiled `gh-aw` lockfiles to purge malicious prompt payloads and corrected spoofed dependency SHAs across `e2e.yml`, `security-update.yml`, and lockfiles (CWE-1357).
 - **[M-61]** HTTP Transport: Replaced `trustProxy` boolean with `trustedProxyIps` configuration to mitigate IP spoofing attacks.
 - **[M-62]** Query Validation: Implemented true AST-based SQL validation using `sqlite-parser` to replace weak regex-based DDL validation, preventing comment-hiding and whitespace bypasses.
 - **[H-50]** Virtual Tables: Parameterized queries in `info.ts`, `list.ts`, and `drop.ts` for virtual table schemas to prevent SQL injection.

@@ -7,6 +7,7 @@
 
 import { ValidationError } from "../utils/errors/index.js";
 import { getAuthContext } from "../auth/auth-context.js";
+import sqliteParser from "sqlite-parser";
 
 /**
  * Functions that are generally dangerous in untrusted queries
@@ -113,16 +114,30 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     }
   }
 
-  // Replace BEGIN ... END blocks with a placeholder so semicolons inside them don't trigger stacked query detection,
-  // but the block itself is preserved to prevent bypasses where trailing statements are injected.
-  const withoutBlocks = stripped.replace(/\bBEGIN\b[\s\S]*?\bEND\b/gi, "_BLOCK_");
-
-  const statements = withoutBlocks.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
-  if (statements.length > 1) {
-    throw new ValidationError("Multiple stacked statements are not allowed.", "DB_DANGEROUS_PATTERN");
+  let ast: unknown = null;
+  let parseError = false;
+  try {
+    ast = sqliteParser(stripped);
+  } catch {
+    parseError = true;
   }
 
-  const rootStmt = statements[0] || "";
+  if (
+    ast !== null &&
+    typeof ast === "object" &&
+    "statement" in ast &&
+    Array.isArray((ast as { statement: unknown[] }).statement)
+  ) {
+    if ((ast as { statement: unknown[] }).statement.length > 1) {
+      throw new ValidationError("Multiple stacked statements are not allowed.", "DB_DANGEROUS_PATTERN");
+    }
+  } else if (parseError) {
+    if (/;\s*(?:INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE|UPSERT|PRAGMA|TRUNCATE)\b/i.test(stripped)) {
+      throw new ValidationError("Multiple stacked statements are not allowed.", "DB_DANGEROUS_PATTERN");
+    }
+  }
+
+  const rootStmt = stripped.trim();
 
   if (isReadOnly) {
     const isSafeRead = /^\s*(?:WITH\s+[\s\S]+?)?(?:SELECT|EXPLAIN|PRAGMA)\b/i.test(rootStmt);

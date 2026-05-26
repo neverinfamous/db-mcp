@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import nodePath from "node:path";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
   ToolDefinition,
@@ -59,9 +60,14 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
+      // Force flat filename to prevent traversal tricks
+      const safeFilename = nodePath.basename(input.outputPath);
+      const targetDir = nodePath.dirname(adapter.getConfiguredPath());
+      const safeOutputPath = nodePath.join(targetDir, safeFilename);
+
       // Security: validate outputPath is within the same directory as the primary DB
       const pathCheck = validateSameDirPath(
-        input.outputPath,
+        safeOutputPath,
         adapter.getConfiguredPath(),
       );
       if (!pathCheck.valid) {
