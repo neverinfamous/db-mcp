@@ -111,12 +111,13 @@ export const FtsSearchSchema = z.object({
     .optional()
     .describe("Specific columns to search"),
   limit: z.preprocess(
-    (val) =>
-      typeof val === "string"
-        ? isNaN(Number(val))
-          ? undefined
-          : Number(val)
-        : val,
+    (val) => {
+      if (typeof val === "string") {
+        const parsed = Number(val);
+        return isNaN(parsed) ? val : parsed;
+      }
+      return val;
+    },
     z.number().optional().default(100),
   ),
   highlight: z

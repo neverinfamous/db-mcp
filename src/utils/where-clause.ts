@@ -113,12 +113,7 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /\bGROUP_CONCAT\s*\(/i,
     reason: "contains GROUP_CONCAT() (potential data exfiltration)",
   },
-  // LIKE with any wildcard — potential blind extraction oracle
-  {
-    pattern: /\bLIKE\s+['"][^'"]*[%_]/i,
-    reason:
-      "contains LIKE with wildcard (potential blind extraction oracle)",
-  },
+
   // GLOB — case-sensitive wildcard operator usable for character extraction oracles
   {
     pattern: /\bGLOB\b/i,
@@ -310,28 +305,39 @@ export interface WhereCondition {
   value?: unknown;
 }
 
-export function buildWhereClause(conditions?: WhereCondition[]): { sql: string; params: unknown[] } {
-  if (conditions === undefined || conditions === null || conditions.length === 0) return { sql: "", params: [] };
-  
+export function buildWhereClause(conditions?: WhereCondition[], whereClause?: string): { sql: string; params: unknown[] } {
+  let finalSql = "";
   const params: unknown[] = [];
   const clauses: string[] = [];
   
-  const allowedOperators = new Set(["=", "!=", ">", ">=", "<", "<=", "LIKE", "IN", "IS", "IS NOT", "NOT LIKE"]);
-  
-  for (const cond of conditions) {
-    if (!allowedOperators.has(cond.operator.toUpperCase())) {
-      throw new Error(`Invalid operator: ${cond.operator}`);
+  if (conditions !== undefined && conditions !== null && conditions.length > 0) {
+    const allowedOperators = new Set(["=", "!=", ">", ">=", "<", "<=", "LIKE", "IN", "IS", "IS NOT", "NOT LIKE"]);
+    
+    for (const cond of conditions) {
+      if (!allowedOperators.has(cond.operator.toUpperCase())) {
+        throw new Error(`Invalid operator: ${cond.operator}`);
+      }
+      const col = `"${cond.column.replace(/"/g, '""')}"`;
+      if (cond.operator.toUpperCase() === "IN" && Array.isArray(cond.value)) {
+        const placeholders = cond.value.map(() => "?").join(", ");
+        clauses.push(`${col} IN (${placeholders})`);
+        params.push(...(cond.value as unknown[]));
+      } else {
+        clauses.push(`${col} ${cond.operator} ?`);
+        params.push(cond.value);
+      }
     }
-    const col = `"${cond.column.replace(/"/g, '""')}"`;
-    if (cond.operator.toUpperCase() === "IN" && Array.isArray(cond.value)) {
-      const placeholders = cond.value.map(() => "?").join(", ");
-      clauses.push(`${col} IN (${placeholders})`);
-      params.push(...(cond.value as unknown[]));
+    finalSql = clauses.join(" AND ");
+  }
+  
+  if (whereClause) {
+    const safeWhere = sanitizeWhereClause(whereClause);
+    if (finalSql) {
+      finalSql = `${finalSql} AND ${safeWhere}`;
     } else {
-      clauses.push(`${col} ${cond.operator} ?`);
-      params.push(cond.value);
+      finalSql = safeWhere;
     }
   }
   
-  return { sql: clauses.join(" AND "), params };
+  return { sql: finalSql, params };
 }

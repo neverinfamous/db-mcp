@@ -51,6 +51,8 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **text**: Fixed wrong-type numeric coercion for Zod schema validation in 	ext and ts tools by updating coerceNumber to reject invalid numeric strings instead of silently falling back to undefined/defaults.
+- **core**: Removed LIKE wildcard blocklist rule from where-clause.ts to allow valid LIKE operator usage in string replacements and filtering tools.
 - **codemode**: Fixed `sqlite_execute_code` throwing raw MCP `-32602` validation errors when called with empty parameters by adding `.catch("")` to the `code` parameter in `ExecuteCodeSchema`, gracefully returning a structured `CODEMODE_VALIDATION_FAILED` error instead.
 - **migration**: Fixed `sqlite_migration_apply` and `sqlite_migration_rollback` failing to execute multi-statement migration scripts (e.g. `CREATE TABLE ...; CREATE INDEX ...;`) by bypassing global query validation and using `.exec()`/`.run()` natively via a new `executeScript` method on the `DatabaseAdapter` interface. Migration scripts remain protected against unsafe DDL (e.g. `ATTACH`, `LOAD_EXTENSION`) via `validateMigrationSql()`.
 - **core**: Hardened `sqlite_batch_insert` by moving empty-rows validation from the handler logic to a strict Zod `.min(1)` array constraint in `BatchInsertSchema`.

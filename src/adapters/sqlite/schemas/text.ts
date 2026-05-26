@@ -5,12 +5,13 @@ import { WhereConditionSchema } from "./where.js";
 
 import { z } from "zod";
 
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    const parsed = Number(val);
+    return isNaN(parsed) ? val : parsed;
+  }
+  return val;
+};
 import { RowRecordSchema } from "./common.js";
 import { ErrorFieldsMixin } from "./error-mixin.js";
 
@@ -244,6 +245,7 @@ export const RegexExtractSchema = z.object({
     z.number().optional().default(0).describe("Capture group index"),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().max(1000).optional().default(100)),
 });
 
@@ -252,6 +254,7 @@ export const RegexMatchSchema = z.object({
   column: z.string().describe("Column to match"),
   pattern: z.string().max(200).describe("Regular expression pattern"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().max(1000).optional().default(100)),
 });
 
@@ -260,6 +263,7 @@ export const TextSplitSchema = z.object({
   column: z.string().describe("Column to split"),
   delimiter: z.string().describe("Delimiter string"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -272,6 +276,7 @@ export const TextConcatSchema = z.object({
     .default("")
     .describe("Separator between values"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -281,6 +286,7 @@ export const TextReplaceSchema = z.object({
   searchPattern: z.string().describe("Text to search for"),
   replaceWith: z.string().describe("Replacement text"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });
 
 export const TextTrimSchema = z.object({
@@ -292,6 +298,7 @@ export const TextTrimSchema = z.object({
     .default("both")
     .describe("Trim mode: 'both', 'left', or 'right'"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -300,6 +307,7 @@ export const TextCaseSchema = z.object({
   column: z.string().describe("Column to transform"),
   mode: z.string().describe("Case transformation: 'upper' or 'lower'"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -315,6 +323,7 @@ export const TextSubstringSchema = z.object({
     z.number().optional().describe("Number of characters"),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -362,6 +371,7 @@ export const TextNormalizeSchema = z.object({
       "Normalization mode: 'nfc', 'nfd', 'nfkc', 'nfkd', or 'strip_accents'",
     ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -379,6 +389,7 @@ export const TextValidateSchema = z.object({
     .optional()
     .describe("Custom regex (required if pattern=custom)"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   maxInvalid: z.preprocess(
     coerceNumber,
@@ -412,6 +423,7 @@ export const AdvancedSearchSchema = z.object({
       ),
   ),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -425,6 +437,7 @@ export const TextSentimentSchema = z.object({
     .default(false)
     .describe("Return matched positive/negative words"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
 });
 
@@ -475,3 +488,4 @@ export type TextValidateInput = z.infer<typeof TextValidateSchema>;
 export type AdvancedSearchInput = z.infer<typeof AdvancedSearchSchema>;
 export type TextSentimentInput = z.infer<typeof TextSentimentSchema>;
 export type FtsHeadlineInput = z.infer<typeof FtsHeadlineSchema>;
+
