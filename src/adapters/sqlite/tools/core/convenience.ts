@@ -1,4 +1,4 @@
-import { buildWhereClause } from "../../../../utils/where-clause.js";
+import { buildWhereClause, sanitizeWhereClause } from "../../../../utils/where-clause.js";
 /**
  * SQLite Core Tools - Convenience Operations
  *
@@ -248,15 +248,11 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
           columnName: "column",
         });
         aliasedParams = resolveAliases(aliasedParams, {
-          condition: "where",
-          filter: "where",
-          conditions: "where",
+          condition: "conditions",
+          filter: "conditions",
+          where: "whereClause",
         });
-        const parsed = CountSchema.parse(aliasedParams);
-        input = {
-          ...parsed,
-          conditions: parsed.conditions,
-        };
+        input = CountSchema.parse(aliasedParams);
       } catch (error: unknown) {
         return { ...formatHandlerError(error) };
       }
@@ -270,13 +266,20 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
       const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
       let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM ${safeTable}`;
 
+      const clauses: string[] = [];
+      if (input.whereClause) {
+        clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
+      }
       if (input.conditions !== undefined && input.conditions.length > 0) {
-          const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
-          if (whereSql !== "") {
-            sql += ` WHERE ${whereSql}`;
-            queryParams.push(...whereParams);
-          }
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (whereSql !== "") {
+          clauses.push(`(${whereSql})`);
+          queryParams.push(...whereParams);
         }
+      }
+      if (clauses.length > 0) {
+        sql += ` WHERE ` + clauses.join(" AND ");
+      }
 
       try {
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -311,15 +314,11 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         let aliasedParams = resolveAliases(params, { tableName: "table" });
         aliasedParams = resolveAliases(aliasedParams, {
-          condition: "where",
-          filter: "where",
-          conditions: "where",
+          condition: "conditions",
+          filter: "conditions",
+          where: "whereClause",
         });
-        const parsed = ExistsSchema.parse(aliasedParams);
-        input = {
-          ...parsed,
-          conditions: parsed.conditions,
-        };
+        input = ExistsSchema.parse(aliasedParams);
       } catch (error: unknown) {
         return { ...formatHandlerError(error) };
       }
@@ -330,13 +329,20 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
       const safeTable = sanitizeIdentifier(input.table);
       let sql = `SELECT 1 FROM ${safeTable}`;
 
+      const clauses: string[] = [];
+      if (input.whereClause) {
+        clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
+      }
       if (input.conditions !== undefined && input.conditions.length > 0) {
-          const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
-          if (whereSql !== "") {
-            sql += ` WHERE ${whereSql}`;
-            queryParams.push(...whereParams);
-          }
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (whereSql !== "") {
+          clauses.push(`(${whereSql})`);
+          queryParams.push(...whereParams);
         }
+      }
+      if (clauses.length > 0) {
+        sql += ` WHERE ` + clauses.join(" AND ");
+      }
 
       sql += " LIMIT 1";
 

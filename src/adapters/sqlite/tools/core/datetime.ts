@@ -1,4 +1,4 @@
-import { buildWhereClause } from "../../../../utils/where-clause.js";
+import { buildWhereClause, sanitizeWhereClause } from "../../../../utils/where-clause.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
@@ -36,11 +36,19 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       const queryParams: unknown[] = [];
       let query = `SELECT *, datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
       
-      
-      const { sql: whereSql, params: whereParams } = buildWhereClause(conditions);
-      if (whereSql !== "") {
-        query += ` WHERE ${whereSql}`;
-        queryParams.push(...whereParams);
+      const clauses: string[] = [];
+      if (input.whereClause) {
+        clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
+      }
+      if (input.conditions && input.conditions.length > 0) {
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (whereSql !== "") {
+          clauses.push(`(${whereSql})`);
+          queryParams.push(...whereParams);
+        }
+      }
+      if (clauses.length > 0) {
+        query += ` WHERE ` + clauses.join(" AND ");
       }
       
       if (limit !== undefined && limit !== null) {
@@ -103,6 +111,7 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       const { table, column1, column2, unit, conditions, limit } = input;
       const formatOperand = (val: string): string => {
         if (!isNaN(Number(val))) return val;
+        if (val.startsWith("'") && val.endsWith("'")) return val;
         return `"${val.replace(/"/g, '""')}"`;
       };
 
@@ -120,11 +129,19 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
 
       const queryParams: unknown[] = [];
       let query = `SELECT *, ${diffExpr} as date_diff_result FROM ${quotedTable}`;
-      
-      const { sql: whereSql, params: whereParams } = buildWhereClause(conditions);
-      if (whereSql !== "") {
-        query += ` WHERE ${whereSql}`;
-        queryParams.push(...whereParams);
+      const clauses: string[] = [];
+      if (input.whereClause) {
+        clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
+      }
+      if (input.conditions && input.conditions.length > 0) {
+        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions);
+        if (whereSql !== "") {
+          clauses.push(`(${whereSql})`);
+          queryParams.push(...whereParams);
+        }
+      }
+      if (clauses.length > 0) {
+        query += ` WHERE ` + clauses.join(" AND ");
       }
 
       if (limit !== undefined && limit !== null) {

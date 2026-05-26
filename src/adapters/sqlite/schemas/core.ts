@@ -7,6 +7,13 @@ import { z } from "zod";
 import { RowRecordSchema } from "./common.js";
 import { ErrorFieldsMixin } from "./error-mixin.js";
 
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? Number.isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 /**
  * sqlite_read_query output
  */
@@ -429,6 +436,7 @@ export const CountSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
   column: z
     .string()
     .optional()
@@ -448,6 +456,7 @@ export const ExistsSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
+  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
 });
 
 // =============================================================================
@@ -470,10 +479,11 @@ export const TruncateSchema = z.object({
 export const DateAddSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column containing date/time values"),
-  amount: z.number().describe("Amount of time to add (use negative to subtract)"),
+  amount: z.preprocess(coerceNumber, z.number().describe("Amount of time to add (use negative to subtract)")),
   unit: z.enum(["days", "months", "years", "hours", "minutes", "seconds"]).describe("Time unit"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  limit: z.number().optional().default(50).describe("Maximum number of rows to return (default: 50)"),
+  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
 });
 
 export const DateDiffSchema = z.object({
@@ -482,7 +492,8 @@ export const DateDiffSchema = z.object({
   column2: z.string().describe("Second date/time column (column1 - column2)"),
   unit: z.enum(["days", "hours", "minutes", "seconds"]).describe("Unit for the difference result"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  limit: z.number().optional().default(50).describe("Maximum number of rows to return (default: 50)"),
+  whereClause: z.string().optional().describe("Raw SQL WHERE clause string (must pass security validation)"),
+  limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
 });
 
 // =============================================================================

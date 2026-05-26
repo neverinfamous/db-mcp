@@ -68,6 +68,7 @@
 - `sqlite_drop_trigger` silent failures by requiring `ifExists: true` when dropping non-existent triggers.
 - Missing limit parameters in `sqlite_date_add` and `sqlite_date_diff` bypassing row truncation safeguards.
 - `sqlite_write_query` rejecting `CREATE TRIGGER` and `DROP TRIGGER` DDL statements.
+- **core**: Fixed missing `whereClause` parameter support and Zod validation bugs in `sqlite_count`, `sqlite_exists`, `sqlite_date_add`, and `sqlite_date_diff` by explicitly adding `whereClause` to their schemas and handling aliasing correctly without stripping the field.
 - Nested tools failing to emit progress notifications to the client due to missing `RequestContext` in `sqlite_execute_code`.
 - Quadruple-escaped backslashes in `attachDatabase` and `vacuumInto` paths across codemode test scripts.
 - Duplicate, colliding, and missing test phase and item numbers across multiple test suites.
