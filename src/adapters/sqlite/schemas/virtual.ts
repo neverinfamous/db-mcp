@@ -156,14 +156,8 @@ export const CreateSeriesTableOutputSchema = z
 // =============================================================================
 
 export const GenerateSeriesSchema = z.object({
-  start: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Start value"),
-  ),
-  stop: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Stop value"),
-  ),
+  start: z.number().describe("Start value"),
+  stop: z.number().describe("Stop value"),
   step: z.preprocess(
     coerceNumber,
     z.number().optional().default(1).describe("Step value"),
@@ -281,14 +275,8 @@ export const CreateRtreeTableSchema = z.object({
 
 export const CreateSeriesTableSchema = z.object({
   tableName: z.string().describe("Name for the series table"),
-  start: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Start value"),
-  ),
-  stop: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Stop value"),
-  ),
+  start: z.number().describe("Start value"),
+  stop: z.number().describe("Stop value"),
   step: z.preprocess(
     coerceNumber,
     z.number().optional().default(1).describe("Step value"),

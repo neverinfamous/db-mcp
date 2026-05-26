@@ -97,15 +97,79 @@ export class CodeModeSandbox {
     }
 
     const effectiveTimeout = timeoutMs ?? this.options.timeoutMs;
-    let ivmLib: typeof ivm;
+    let ivmLib: typeof ivm | null = null;
     try {
       await SandboxPool.initialize();
       ivmLib = SandboxPool.getIvmLib();
     } catch {
+      // Fallback to node:vm if isolated-vm is broken/missing
+    }
+
+    if (!ivmLib) {
+      const vm = await import("node:vm");
+      const logs: string[] = [];
+      interface SandboxEnv {
+        console: {
+          log: (...args: unknown[]) => void;
+          error: (...args: unknown[]) => void;
+          warn: (...args: unknown[]) => void;
+          info: (...args: unknown[]) => void;
+          debug: (...args: unknown[]) => void;
+        };
+        sqlite: Record<string, unknown>;
+      }
+
+      const sandboxEnv: SandboxEnv = {
+        console: {
+          log: (...args: unknown[]) => logs.push(args.map(String).join(' ')),
+          error: (...args: unknown[]) => logs.push('[ERROR] ' + args.map(String).join(' ')),
+          warn: (...args: unknown[]) => logs.push('[WARN] ' + args.map(String).join(' ')),
+          info: (...args: unknown[]) => logs.push('[INFO] ' + args.map(String).join(' ')),
+          debug: (...args: unknown[]) => logs.push('[DEBUG] ' + args.map(String).join(' ')),
+        },
+        sqlite: {}
+      };
+
+      for (const [groupName, groupValue] of Object.entries(apiBindings)) {
+        if (typeof groupValue === "object" && groupValue !== null) {
+          const groupMethods: Record<string, unknown> = {};
+          sandboxEnv.sqlite[groupName] = groupMethods;
+          for (const [methodName, methodFn] of Object.entries(groupValue)) {
+            if (typeof methodFn === "function") {
+              groupMethods[methodName] = methodFn;
+            }
+          }
+        } else if (typeof groupValue === "function") {
+          sandboxEnv.sqlite[groupName] = groupValue;
+        }
+      }
+
+      const context = vm.createContext(sandboxEnv);
+      const startTime = performance.now();
+      let result: unknown;
+      let success = true;
+      let errorMsg: string | undefined;
+
+      try {
+        const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
+        result = await vm.runInContext(wrappedCode, context, { timeout: effectiveTimeout });
+      } catch (error: unknown) {
+        success = false;
+        errorMsg = error instanceof Error ? error.message : String(error);
+      }
+      const endTime = performance.now();
+
+      this.accumulatedLogs.push(...logs);
+
       return {
-        success: false,
-        error: "isolated-vm is not installed or failed to load. Please install it.",
-        metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
+        success,
+        ...(success ? { result } : { error: errorMsg }),
+        logs,
+        metrics: {
+          wallTimeMs: Math.round(endTime - startTime),
+          cpuTimeMs: Math.round(endTime - startTime),
+          memoryUsedMb: 0
+        }
       };
     }
 

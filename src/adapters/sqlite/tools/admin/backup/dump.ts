@@ -65,6 +65,14 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
       const targetDir = nodePath.dirname(adapter.getConfiguredPath());
       const safeOutputPath = nodePath.join(targetDir, safeFilename);
 
+      if (input.outputPath.includes("..")) {
+        return {
+          success: false,
+          error: "Path traversal detected",
+          code: "SECURITY_ERROR",
+        };
+      }
+
       // Security: validate outputPath is within the same directory as the primary DB
       const pathCheck = validateSameDirPath(
         safeOutputPath,

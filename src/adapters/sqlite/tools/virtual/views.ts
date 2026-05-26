@@ -57,18 +57,6 @@ export function createGenerateSeriesTool(
         });
       }
 
-      // Validate required fields (schema uses .optional() for SDK compatibility)
-      if (input.start === undefined || input.stop === undefined) {
-        return Promise.resolve({
-          success: false,
-          count: 0,
-          values: [],
-          error: "start and stop are required parameters",
-          code: "VALIDATION_ERROR",
-          category: "validation",
-        });
-      }
-
       // Generate in JS - better-sqlite3 doesn't include SQLITE_ENABLE_SERIES
       const values: number[] = [];
       for (

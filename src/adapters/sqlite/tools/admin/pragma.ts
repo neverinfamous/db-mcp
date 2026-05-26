@@ -442,7 +442,7 @@ export function createAttachDatabaseTool(
         }
 
         const escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
-        await adapter.executeQuery(
+        await adapter.rawQuery(
           `ATTACH DATABASE '${escapedPath}' AS "${input.alias.replace(/"/g, '""')}"`,
         );
 
@@ -488,7 +488,7 @@ export function createDetachDatabaseTool(
           };
         }
 
-        await adapter.executeQuery(
+        await adapter.rawQuery(
           `DETACH DATABASE "${input.alias.replace(/"/g, '""')}"`,
         );
 

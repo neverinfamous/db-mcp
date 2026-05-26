@@ -32,6 +32,7 @@ function createMockAdapter(isNative = true) {
     executeReadQuery: vi.fn(),
     executeWriteQuery: vi.fn(),
     executeQuery: vi.fn(),
+    rawQuery: vi.fn(),
     isNativeBackend: vi.fn().mockReturnValue(isNative),
     getConfiguredPath: vi.fn().mockReturnValue("/tmp/test.db"),
   } as any;
@@ -86,7 +87,7 @@ describe("createVerifyBackupTool", () => {
   it("should verify valid backup", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const adapter = createMockAdapter();
-    adapter.executeQuery.mockResolvedValue({ rows: [] }); // ATTACH/DETACH
+    adapter.rawQuery.mockResolvedValue({ rows: [] }); // ATTACH/DETACH
     adapter.executeReadQuery.mockImplementation((sql: string) => {
       if (sql.includes("page_count"))
         return Promise.resolve({ rows: [{ page_count: 100 }] });
@@ -111,7 +112,7 @@ describe("createVerifyBackupTool", () => {
   it("should detect invalid backup", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const adapter = createMockAdapter();
-    adapter.executeQuery.mockResolvedValue({ rows: [] });
+    adapter.rawQuery.mockResolvedValue({ rows: [] });
     adapter.executeReadQuery.mockImplementation((sql: string) => {
       if (sql.includes("page_count"))
         return Promise.resolve({ rows: [{ page_count: 50 }] });
@@ -142,7 +143,7 @@ describe("createVerifyBackupTool", () => {
   it("should handle ATTACH failure", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const adapter = createMockAdapter();
-    adapter.executeQuery.mockRejectedValueOnce(
+    adapter.rawQuery.mockRejectedValueOnce(
       new Error("ATTACH failed: locked"),
     );
 

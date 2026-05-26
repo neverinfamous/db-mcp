@@ -111,19 +111,6 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateSeriesTableSchema.parse(params);
-//       const queryParams: unknown[] = [];
-
-        // Validate required fields (schema uses .optional() for SDK compatibility)
-        if (input.start === undefined || input.stop === undefined) {
-          return {
-            success: false,
-            error: "start and stop are required parameters",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            message: "",
-            rowCount: 0,
-          };
-        }
 
         // Validate and quote identifiers
         const tableName = sanitizeIdentifier(input.tableName);

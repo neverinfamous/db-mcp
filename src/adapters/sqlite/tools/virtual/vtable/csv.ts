@@ -83,7 +83,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
           options.push(`columns=${String(input.columns.length)}`);
         }
 
-        const sql = `CREATE VIRTUAL TABLE "${safeTableName}" USING csv(${options.join(", ")})`;
+        const sql = `CREATE VIRTUAL TABLE ${safeTableName} USING csv(${options.join(", ")})`;
         await adapter.executeWriteQuery(sql);
 
         const colResult = await adapter.executeReadQuery(

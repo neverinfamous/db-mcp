@@ -93,7 +93,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Attach backup database temporarily
         try {
-          await adapter.executeQuery(
+          await adapter.rawQuery(
             `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
           );
         } catch (error: unknown) {
@@ -142,7 +142,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         } finally {
           // Always detach; swallow errors to avoid overriding verification result
           try {
-            await adapter.executeQuery("DETACH DATABASE backup_verify");
+            await adapter.rawQuery("DETACH DATABASE backup_verify");
           } catch {
             // Intentionally ignore detach errors
           }

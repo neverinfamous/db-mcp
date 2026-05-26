@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- Fallback to `node:vm` in Code Mode when `isolated-vm` native module is unavailable or incompatible with the current Node.js version.
 - `sqlite_list_triggers`, `sqlite_list_constraints`, `sqlite_date_add`, `sqlite_date_diff`, `sqlite_alter_table`, `sqlite_create_trigger`, and `sqlite_drop_trigger` to the Core tool group.
 - `sqlite_attach_database`, `sqlite_detach_database`, `sqlite_vacuum_into`, `sqlite_dump` (native only), `sqlite_reindex`, and `sqlite_wal` to the Admin tool group.
 - `sqlite_stats_sample` to the Stats tool group.
@@ -49,6 +50,10 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **admin**: Fixed sandbox bypass for `ATTACH`/`DETACH` in `sqlite_backup`, `sqlite_verify_backup`, and `sqlite_attach_database` by switching to `adapter.rawQuery()` for trusted internal execution.
+- **admin**: Patched path traversal vulnerability in `sqlite_dump` by explicitly checking for and rejecting `..` traversal sequences (CWE-22).
+- **virtual**: Fixed SQL syntax error in `sqlite_create_csv_table` caused by redundant double quotes around the table name.
+- **virtual**: Fixed `sqlite_generate_series` returning a misleading "missing parameters" error instead of a Zod type error by removing the `.optional()` workaround.
 - **codemode**: Resolved strict TypeScript typing mismatch and ESLint dynamic-delete errors during dynamic object assignment in `api.ts`.
 - **tests**: Fixed mocked test adapter missing `rawQuery` method causing false-positive test failures in `restore.test.ts`.
 - **server**: Fixed lint errors in `mcp-server.ts` by using optional chaining and correcting `ErrorCategory` reference.
