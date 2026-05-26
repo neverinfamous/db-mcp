@@ -87,7 +87,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
         await adapter.executeWriteQuery(sql);
 
         const colResult = await adapter.executeReadQuery(
-          `PRAGMA table_info("${safeTableName}")`,
+          `PRAGMA table_info(${safeTableName})`,
         );
         const columns = (colResult.rows ?? []).map((row) =>
           typeof row["name"] === "string" ? row["name"] : "",
