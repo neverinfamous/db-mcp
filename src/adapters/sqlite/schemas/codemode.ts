@@ -25,6 +25,7 @@ const coerceNumber = (val: unknown): unknown =>
 export const ExecuteCodeSchema = z.object({
   code: z
     .string()
+    .catch("")
     .describe(
       "JavaScript code to execute. Access all SQLite tools via sqlite.* API. " +
         "Use sqlite.help() to discover groups, sqlite.<group>.help() for methods. " +

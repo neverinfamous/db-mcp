@@ -51,10 +51,14 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **codemode**: Fixed `sqlite_execute_code` throwing raw MCP `-32602` validation errors when called with empty parameters by adding `.catch("")` to the `code` parameter in `ExecuteCodeSchema`, gracefully returning a structured `CODEMODE_VALIDATION_FAILED` error instead.
+- **migration**: Fixed `sqlite_migration_apply` and `sqlite_migration_rollback` failing to execute multi-statement migration scripts (e.g. `CREATE TABLE ...; CREATE INDEX ...;`) by bypassing global query validation and using `.exec()`/`.run()` natively via a new `executeScript` method on the `DatabaseAdapter` interface. Migration scripts remain protected against unsafe DDL (e.g. `ATTACH`, `LOAD_EXTENSION`) via `validateMigrationSql()`.
 - **core**: Hardened `sqlite_batch_insert` by moving empty-rows validation from the handler logic to a strict Zod `.min(1)` array constraint in `BatchInsertSchema`.
 - **admin**: Fixed sandbox bypass for `ATTACH`/`DETACH` in `sqlite_backup`, `sqlite_verify_backup`, and `sqlite_attach_database` by switching to `adapter.rawQuery()` for trusted internal execution.
 - **admin**: Patched path traversal vulnerability in `sqlite_dump` by explicitly checking for and rejecting `..` traversal sequences (CWE-22).
 - **virtual**: Fixed SQL syntax error in `sqlite_create_csv_table` caused by redundant double quotes around the table name.
+- **json**: Fixed SQL syntax error in `sqlite_json_security_scan` caused by double-quoting already sanitized identifiers.
+- **core**: Fixed missing `whereClause` parameter support across all tools using `WhereConditionSchema` (e.g., json, stats, inference, text, vector) by gracefully restoring backward compatibility and properly passing the string to `buildWhereClause()` instead of silently dropping it and executing on all rows.
 - **virtual**: Fixed `sqlite_generate_series` returning a misleading "missing parameters" error instead of a Zod type error by removing the `.optional()` workaround.
 - **codemode**: Resolved strict TypeScript typing mismatch and ESLint dynamic-delete errors during dynamic object assignment in `api.ts`.
 - **introspection**: Fixed `sqlite_index_audit` returning success with empty findings when provided with a non-existent table, instead of returning a structured `TABLE_NOT_FOUND` error.
