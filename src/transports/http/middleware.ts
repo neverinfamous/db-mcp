@@ -169,7 +169,7 @@ export function setupRateLimiting(state: HttpTransportState): void {
     });
     logger.info("Configured RedisStore for rate limiting", { module: "HTTP" });
   } else if (process.env["NODE_ENV"] === "production") {
-    logger.warning("Using default in-memory rate limit store. In multi-instance deployments, rate limits will not be synchronized across instances. Configure REDIS_URL for production clusters.", { module: "HTTP" });
+    logger.error("CRITICAL SECURITY WARNING: Using default in-memory rate limit store in production. In multi-instance deployments, rate limits will not be synchronized across instances (leading to amplification attacks). Configure REDIS_URL for production clusters or ensure your proxy handles rate limiting.", { module: "HTTP" });
   }
 
   const limiter = rateLimit({

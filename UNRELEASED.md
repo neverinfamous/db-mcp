@@ -87,6 +87,7 @@
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
 - Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
 ### Security
+- **[Critical]** Transport Security: Added a startup initialization check to explicitly prevent unauthenticated HTTP transport in production and upgraded the rate limiting warning to a critical security error to prevent rate limit amplification attacks.
 - **[Critical]** Query Validation: Added `ATTACH`, `DETACH`, and `LOAD_EXTENSION` to the global query validation blocklist (`DANGEROUS_PATTERNS` / `BLOCKED_DDL_PATTERNS`) to prevent Code Mode sandbox escapes and unauthorized file modification (CWE-89, CWE-22).
 - **[Critical]** Adapter API: Decoupled `rawQuery` from `executeWriteQuery` across all SQLite adapters to serve as a secure, internal-only bypass for query validation, allowing internal tools (`restore`, `pragma`, `fts`) to safely execute trusted administrative commands without weakening the public query validation layer.
 - **[High]** Credential Redaction: Expanded `SENSITIVE_KEY_PATTERN` in `redaction.ts` to include `.npmrc` keys, API tokens, and AWS secrets, and implemented recursive structural array redaction to fully sanitize deeply nested objects in Code Mode audit logs (CWE-200).

@@ -377,6 +377,18 @@ async function main(): Promise<void> {
       ],
     } as McpServerConfig;
 
+    // Security Check: Prevent unauthenticated production access
+    if (
+      process.env["NODE_ENV"] === "production" &&
+      config.transport === "http" &&
+      !config.oauth?.enabled &&
+      !config.authToken &&
+      !config.noAuthEnforcement
+    ) {
+      logger.error("FATAL SECURITY ERROR: HTTP transport in production requires authentication (--oauth-enabled or --auth-token). If you intend to run without authentication, you must explicitly pass --no-auth-enforcement.", { module: "SERVER" });
+      process.exit(1);
+    }
+
     // Create server
     const server = createServer(config);
 
