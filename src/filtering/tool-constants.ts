@@ -15,16 +15,16 @@
  *   introspection: 10 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot+diff.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Subtotal: 140 WASM / 167 Native
+ *   Subtotal: 139 WASM / 166 Native (excluding Code Mode)
  *
  * AUDIT TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
  *   5 tools (server/registration/audit-tools.ts)
  *
  * TOOL COUNT TAXONOMY:
- *   Group tools:  167 Native / 140 WASM  (Code Mode sqlite.help() total)
+ *   Group tools:  166 Native / 139 WASM  (Code Mode sqlite.help() base total)
  *   Audit tools:    5 Native /   5 WASM  (MCP-only)
- *   Inventory:    172 Native / 145 WASM  (Group + Audit)
- *   Built-in:       3 /   3              (server_info, server_health, list_adapters — always on)
+ *   Inventory:    171 Native / 144 WASM  (Group + Audit)
+ *   Built-in:       4 /   4              (server_info, health, adapters, + Code Mode injected)
  *   MCP total:    175 Native / 148 WASM  (tools/list response)
  */
 
@@ -265,25 +265,25 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text + Codemode (61 WASM / 66 Native)
+  // General development - Core + JSON + Text (60 WASM / 65 Native)
   starter: ["core", "json", "text", "codemode"],
 
-  // Data analysis - Core + JSON + Stats + Codemode (64 WASM / 70 Native)
+  // Data analysis - Core + JSON + Stats (63 WASM / 69 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector + Codemode (47 WASM / 52 Native)
+  // Search workloads - Core + Text + Vector (46 WASM / 51 Native)
   search: ["core", "text", "vector", "codemode"],
 
-  // Geospatial workloads - Core + Geo + Vector + Codemode (37 WASM / 44 Native)
+  // Geospatial workloads - Core + Geo + Vector (36 WASM / 43 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
-  // Schema development - Core + Introspection + Migration + Codemode (38 tools)
+  // Schema development - Core + Introspection + Migration (37 tools)
   "dev-schema": ["core", "introspection", "migration", "codemode"],
 
-  // Bare minimum - Core + Codemode (22 tools)
+  // Bare minimum - Core (21 tools)
   minimal: ["core", "codemode"],
 
-  // All group tools enabled (167 Native / 140 WASM — see TOOL COUNT TAXONOMY above)
+  // All group tools enabled (166 Native / 139 WASM — see TOOL COUNT TAXONOMY above)
   full: [
     "core",
     "json",

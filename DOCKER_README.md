@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-82.55%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-82.52%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -39,7 +39,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 
 | Feature              | WASM (sql.js)                                                    | Native (better-sqlite3)         |
 | -------------------- | ---------------------------------------------------------------- | ------------------------------- |
-| **Group Tools**  | 140                                                              | **167**                         |
+| **Group Tools**  | 139                                                              | **166**                         |
 | **Transactions**     | ❌                                                               | ✅ 8 tools                      |
 | **Window Functions** | ❌                                                               | ✅ 6 tools                      |
 | **SpatiaLite GIS**   | ❌                                                               | ✅ 7 tools                      |
@@ -126,31 +126,31 @@ Specify exactly the groups you need:
 
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
-| `starter`    | **61** | **66** | +3         | Core, JSON, Text               |
-| `analytics`  | 64     | 70     | +3         | Core, JSON, Stats              |
-| `search`     | 47     | 52     | +3         | Core, Text, Vector             |
-| `spatial`    | 37     | 44     | +3         | Core, Geo, Vector              |
-| `dev-schema` | 38     | 38     | +3         | Core, Introspection, Migration |
-| `minimal`    | 22     | 22     | +3         | Core only                      |
-| `full`       | 140    | 167    | +3         | Everything enabled             |
+| `starter`    | **60** | **65** | +4         | Core, JSON, Text               |
+| `analytics`  | 63     | 69     | +4         | Core, JSON, Stats              |
+| `search`     | 46     | 51     | +4         | Core, Text, Vector             |
+| `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
+| `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
+| `minimal`    | 21     | 21     | +4         | Core only                      |
+| `full`       | 139    | 166    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
-> +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
+> +4 built-in tools (server_info, server_health, list_adapters, sqlite_execute_code) are injected into every group.
 
-| Group           | WASM | Native | Description                                  |
-| --------------- | ---- | ------ | -------------------------------------------- |
-| `codemode`      | 1    | 1      | Code Mode (sandboxed code execution) 🌟      |
-| `core`          | 21   | 21     | Basic CRUD, schema, tables                   |
-| `json`          | 25   | 25     | JSON/JSONB operations, analysis              |
-| `text`          | 14   | 19     | Text processing + FTS5 + advanced search     |
-| `stats`         | 17   | 23     | Statistical analysis (+ window funcs)        |
-| `vector`        | 11   | 11     | Embeddings, similarity search                |
-| `admin`         | 31   | 32     | Backup, restore, virtual tables, pragma      |
-| `transactions`  | 0    | 8      | Transaction control and atomic execution     |
-| `geo`           | 4    | 11     | Geospatial + SpatiaLite (Native only)        |
-| `introspection` | 10   | 10     | FK graph, cascade sim, storage/index audit   |
-| `migration`     | 6    | 6      | Migration tracking, apply, rollback (opt-in) |
+| Group           | WASM | Native | + Built-in | Description                                  |
+| --------------- | ---- | ------ | ---------- | -------------------------------------------- |
+| `codemode`      | 1    | 1      | +4         | Code Mode (sandboxed code execution) 🧠      |
+| `core`          | 21   | 21     | +4         | Basic CRUD, schema, tables                   |
+| `json`          | 25   | 25     | +4         | JSON/JSONB operations, analysis              |
+| `text`          | 14   | 19     | +4         | Text processing + FTS5 + advanced search     |
+| `stats`         | 17   | 23     | +4         | Descriptive, inference, window functions     |
+| `vector`        | 11   | 11     | +4         | Vector storage, similarity search            |
+| `admin`         | 31   | 32     | +4         | DB maintenance, backup, virtual tables       |
+| `transactions`  | 0    | 8      | +4         | Commit, rollback, savepoints (Native only)   |
+| `geo`           | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)        |
+| `introspection` | 10   | 10     | +4         | Schema mapping, FK graph, analysis           |
+| `migration`     | 6    | 6      | +4         | Schema migration tracking (opt-in)           |
 
 ### Syntax Reference
 
@@ -212,7 +212,7 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Introspection        | 10      | FK graph, cascade sim, audit               |
 | Migration            | 6       | Tracking, apply, rollback                  |
 | Code Mode            | 1       | Sandboxed JavaScript execution             |
-| **Total**            | **167** |                                            |
+| **Total**            | **166** |                                            |
 
 ### 📁 Resources (11 Data + 9 Help)
 
@@ -349,8 +349,8 @@ docker run --rm -p 3000:3000 \
 
 | Platform                  | Features                            |
 | ------------------------- | ----------------------------------- |
-| **AMD64** (x86_64)        | Full: 167 tools, native, SpatiaLite |
-| **ARM64** (Apple Silicon) | Full: 167 tools, native             |
+| **AMD64** (x86_64)        | Full: 166 tools, native, SpatiaLite |
+| **ARM64** (Apple Silicon) | Full: 166 tools, native             |
 
 Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sqlite3 native
 

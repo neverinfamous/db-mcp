@@ -11,7 +11,7 @@
 
 ## Built-in Tools
 
-`server_info`, `server_health`, `list_adapters` — always available.
+`server_info`, `server_health`, `list_adapters`, `sqlite_execute_code` — injected into all configurations.
 
 ## Help Resources
 

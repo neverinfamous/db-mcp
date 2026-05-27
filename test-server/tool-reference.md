@@ -6,10 +6,10 @@ Complete reference of all db-mcp tools organized by 10 tool groups + codemode. E
 
 | Scope | What it includes | Native | WASM | Notes |
 | --- | --- | ---: | ---: | --- |
-| **Group tools** | 10 adapter-registered groups + codemode | 167 | 140 | Accessible via Code Mode `sqlite.help()` |
+| **Group tools** | 10 adapter-registered groups | 166 | 139 | Accessible via Code Mode `sqlite.help()` |
 | **Audit tools** | 5 server-level snapshot tools | 5 | 5 | MCP-only — not exposed in Code Mode |
-| **Inventory** | Group + Audit | **172** | **145** | All filterable/functional tools |
-| **Built-in** | `server_info`, `server_health`, `list_adapters` | 3 | 3 | Always available, not filterable |
+| **Inventory** | Group + Audit | **171** | **144** | All filterable/functional tools |
+| **Built-in** | `server_info`, `health`, `adapters`, `execute_code` | 4 | 4 | Always on (Code Mode can be excluded via rules) |
 | **MCP total** | Inventory + Built-in (`tools/list`) | **175** | **148** | **What a client sees via `tools/list`** |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.

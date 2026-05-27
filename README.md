@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-82.55%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-82.52%25-yellowgreen.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -96,7 +96,7 @@ Or with **WASM backend** (sql.js — cross-platform, no compilation required):
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (167 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (140 tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (166 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (139 tools, no native dependencies).
 
 ### Verify It Works
 
@@ -203,31 +203,31 @@ Specify exactly the groups you need:
 
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
-| `starter`    | **61** | **66** | +3         | Core, JSON, Text               |
-| `analytics`  | 64     | 70     | +3         | Core, JSON, Stats              |
-| `search`     | 47     | 52     | +3         | Core, Text, Vector             |
-| `spatial`    | 37     | 44     | +3         | Core, Geo, Vector              |
-| `dev-schema` | 38     | 38     | +3         | Core, Introspection, Migration |
-| `minimal`    | 22     | 22     | +3         | Core only                      |
-| `full`       | 140    | 167    | +3         | Everything enabled             |
+| `starter`    | **60** | **65** | +4         | Core, JSON, Text               |
+| `analytics`  | 63     | 69     | +4         | Core, JSON, Stats              |
+| `search`     | 46     | 51     | +4         | Core, Text, Vector             |
+| `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
+| `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
+| `minimal`    | 21     | 21     | +4         | Core only                      |
+| `full`       | 139    | 166    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
-> **Note:** +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
+> **Note:** +4 built-in tools (server_info, server_health, list_adapters, sqlite_execute_code) are injected into every group.
 
 | Group           | WASM | Native | + Built-in | Description                                  |
 | --------------- | ---- | ------ | ---------- | -------------------------------------------- |
-| `codemode`      | 1    | 1      | +3         | Code Mode (sandboxed code execution) 🌟      |
-| `core`          | 21   | 21     | +3         | Basic CRUD, schema, tables                   |
-| `json`          | 25   | 25     | +3         | JSON/JSONB operations, analysis              |
-| `text`          | 14   | 19     | +3         | Text processing + FTS5 + advanced search     |
-| `stats`         | 17   | 23     | +3         | Statistical analysis (+ window funcs)        |
-| `vector`        | 11   | 11     | +3         | Embeddings, similarity search                |
-| `admin`         | 31   | 32     | +3         | Backup, restore, virtual tables, pragma      |
-| `transactions`  | 0    | 8      | +3         | Transaction control and atomic execution     |
-| `geo`           | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)        |
-| `introspection` | 10   | 10     | +3         | FK graph, cascade sim, storage/index audit   |
-| `migration`     | 6    | 6      | +3         | Migration tracking, apply, rollback (opt-in) |
+| `codemode`      | 1    | 1      | +4         | Code Mode (sandboxed code execution) 🧠      |
+| `core`          | 21   | 21     | +4         | Basic CRUD, schema, tables                   |
+| `json`          | 25   | 25     | +4         | JSON/JSONB operations, analysis              |
+| `text`          | 14   | 19     | +4         | Text processing + FTS5 + advanced search     |
+| `stats`         | 17   | 23     | +4         | Descriptive, inference, window functions     |
+| `vector`        | 11   | 11     | +4         | Vector storage, similarity search            |
+| `admin`         | 31   | 32     | +4         | DB maintenance, backup, virtual tables       |
+| `transactions`  | 0    | 8      | +4         | Commit, rollback, savepoints (Native only)   |
+| `geo`           | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)        |
+| `introspection` | 10   | 10     | +4         | Schema mapping, FK graph, analysis           |
+| `migration`     | 6    | 6      | +4         | Schema migration tracking (opt-in)           |
 
 ### Syntax Reference
 
