@@ -7,12 +7,14 @@ import { z } from "zod";
 import { RowRecordSchema } from "./common.js";
 import { ErrorFieldsMixin } from "./error-mixin.js";
 
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? Number.isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 /**
  * sqlite_read_query output

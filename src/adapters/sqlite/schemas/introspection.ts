@@ -351,12 +351,14 @@ export const QueryPlanOutputSchema = z
 // Input Schemas
 // =============================================================================
 
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? Number.isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 const VALID_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
 

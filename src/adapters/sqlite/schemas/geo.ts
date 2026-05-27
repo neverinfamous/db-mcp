@@ -78,12 +78,14 @@ export const GeoClusterOutputSchema = z
 /**
  * Coerce string-typed numbers to actual numbers.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 const VALID_UNITS = ["km", "miles", "meters"] as const;
 

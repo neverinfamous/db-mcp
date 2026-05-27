@@ -6,10 +6,12 @@ import { WhereConditionSchema } from "./where.js";
 import { z } from "zod";
 
 const coerceNumber = (val: unknown): unknown => {
-  if (typeof val === "number") return val;
-  if (typeof val === "string" && val.trim() !== "" && !isNaN(Number(val)))
-    return Number(val);
-  return undefined;
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
 };
 
 import { RowRecordSchema } from "./common.js";

@@ -230,21 +230,18 @@ describe("sqlite_execute_code handler - readonly guards", () => {
     expect(result.code).toBe("VALIDATION_ERROR");
   });
 
-  it("should coerce unparseable string timeout to default", async () => {
+  it("should reject unparseable string timeout with validation error", async () => {
     const adapter = createMockAdapter();
     const tool = getCodeModeTools(adapter as any)[0]!;
 
-    // "abc" is not parseable, should become NaN → undefined → default 30000
-    // Then valid code hits worker-script missing error
+    // "abc" is not parseable, should fail strict validation instead of defaulting
     const result = (await tool.handler(
       { code: "return 1;", timeout: "abc" },
       { timestamp: new Date(), requestId: "test" },
     )) as Record<string, unknown>;
 
-    // Should not be a validation error from timeout — defaults to 30000
-    expect(result.success).toBe(true);
-    // Since worker executes with a mock, there's no CODEMODE_VALIDATION_FAILED
-    expect(result.code).toBeUndefined();
+    expect(result.success).toBe(false);
+    expect(result.code).toBe("VALIDATION_ERROR");
   });
 });
 

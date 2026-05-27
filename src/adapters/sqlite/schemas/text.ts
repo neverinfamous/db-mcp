@@ -7,8 +7,9 @@ import { z } from "zod";
 
 const coerceNumber = (val: unknown): unknown => {
   if (typeof val === "string") {
-    const parsed = Number(val);
-    return isNaN(parsed) ? val : parsed;
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
   }
   return val;
 };

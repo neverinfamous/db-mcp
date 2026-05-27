@@ -12,12 +12,14 @@ import { ErrorResponseFields } from "../../../utils/errors/error-response-fields
  * Coerce string values to numbers for MCP parameter safety.
  * Returns undefined for unparseable values so `.default()` kicks in.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? Number.isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 // =============================================================================
 // Input Schemas
