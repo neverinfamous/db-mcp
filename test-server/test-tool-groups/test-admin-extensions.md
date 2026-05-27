@@ -123,7 +123,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 **Error path testing:**
 
 🔴 10. `sqlite_virtual_table_info({tableName: "nonexistent_table_xyz"})` → structured error
-🔴 11. `sqlite_drop_virtual_table({tableName: "nonexistent_vtable_xyz"})` → `{success: false}`
+🔴 11. `sqlite_drop_virtual_table({tableName: "nonexistent_vtable_xyz", ifExists: false})` → `{success: false}`
 🔴 12. `sqlite_create_csv_table({tableName: "temp_csv_bad", filePath: "C:\\nonexistent\\path\\file.csv"})` → `{success: false}`
 🔴 13. `sqlite_create_rtree_table({tableName: "test_products", dimensions: 2})` → `{success: false}` (table already exists)
 
