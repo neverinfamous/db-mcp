@@ -364,10 +364,19 @@ describe("Tool Output Schema Invariants (Native)", () => {
       const toolSchemaRefs = collectToolSchemaRefs(tools);
       const exportedNames = getExportedSchemaNames();
 
+      // These schemas are used by server-level tools (McpServer) rather than adapter tools
+      const serverLevelSchemas = new Set([
+        "AuditListBackupsOutputSchema",
+        "AuditGetBackupOutputSchema",
+        "AuditCleanupOutputSchema",
+        "AuditDiffBackupOutputSchema",
+        "AuditRestoreBackupOutputSchema",
+      ]);
+
       const orphans: string[] = [];
       for (const name of exportedNames) {
         const schema = OutputSchemas[name as keyof typeof OutputSchemas];
-        if (!toolSchemaRefs.has(schema)) {
+        if (!toolSchemaRefs.has(schema) && !serverLevelSchemas.has(name)) {
           orphans.push(name);
         }
       }
