@@ -186,6 +186,10 @@ export class DbMcpServer {
           setAuditInterceptor: (i: AuditInterceptor) => void;
         }
       ).setAuditInterceptor(this.auditInterceptor);
+      
+      this.auditInterceptor.setQueryAdapter({
+        executeQuery: (sql, params) => adapter.executeReadQuery(sql, params),
+      });
     }
     if (this.backupManager && "setBackupManager" in adapter) {
       (
@@ -384,8 +388,7 @@ export class DbMcpServer {
     // Create interceptor (backup + query adapter wired after first adapter registers)
     this.auditInterceptor = createAuditInterceptor(
       this.auditLogger,
-      this.backupManager ?? undefined,
-      undefined, // queryAdapter wired later when adapter connects
+      this.backupManager ?? undefined
     );
 
     // Register sqlite://audit resource

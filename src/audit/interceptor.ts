@@ -107,6 +107,11 @@ export interface AuditInterceptor {
     fn: () => Promise<T>,
     options?: { logAs?: string },
   ): Promise<T>;
+
+  /**
+   * Dynamically wire the query adapter used for DDL snapshot capture.
+   */
+  setQueryAdapter(adapter: SnapshotQueryAdapter): void;
 }
 
 /**
@@ -134,11 +139,15 @@ function scopeToCategory(scope: string): AuditCategory {
 export function createAuditInterceptor(
   auditLogger: AuditLogger,
   backupManager?: BackupManager,
-  queryAdapter?: SnapshotQueryAdapter,
 ): AuditInterceptor {
   const auditReads = auditLogger.config.auditReads;
+  let currentQueryAdapter: SnapshotQueryAdapter | undefined;
 
   return {
+    setQueryAdapter(adapter: SnapshotQueryAdapter) {
+      currentQueryAdapter = adapter;
+    },
+
     async around<T>(
       toolName: string,
       args: unknown,
@@ -164,7 +173,7 @@ export function createAuditInterceptor(
       // Pre-mutation snapshot (before tool executes)
       if (
         backupManager !== undefined &&
-        queryAdapter !== undefined &&
+        currentQueryAdapter !== undefined &&
         (
           backupManager as { shouldSnapshot(t: string): boolean }
         ).shouldSnapshot(toolName)
@@ -184,7 +193,7 @@ export function createAuditInterceptor(
             toolName,
             args ?? {},
             requestId,
-            queryAdapter,
+            currentQueryAdapter,
             options?.logAs,
           );
         } catch {

@@ -54,6 +54,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **admin**: Fixed a critical architectural bug in `auditInterceptor` where `queryAdapter` was permanently `undefined` because it was never wired after the database adapter connected. Added `setQueryAdapter` to the `AuditInterceptor` interface and updated `mcp-server.ts` to properly wire it, restoring the ability to capture pre-mutation DDL snapshots.
 - **admin**: Fixed `sqlite_drop_view` backup target mapping in `backup-manager.ts` incorrectly using `targetKey: "view"` instead of `viewName`, which caused generated snapshot files to use `unknown` as the target name.
 - **tests**: Fixed incorrect assertions in `test-admin-audit.md` that falsely claimed `sqlite_write_query` triggers automatic schema backups. Corrected the prompt to properly use `sqlite_drop_table` to trigger the audit pre-mutation snapshots.
 - **admin**: Fixed raw MCP error frames (`-32602`) thrown during empty parameter Zod validation sweeps by adding `.default("")` to `inputSchema` filename arguments for `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, and `sqlite_audit_restore_backup`, routing validation properly to the internal handler.
