@@ -18,7 +18,7 @@ import { readOnly, write } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   normalizeJson,
   isJsonbSupported,
@@ -61,10 +61,7 @@ export function createJsonPrettyTool(): ToolDefinition {
           formatted: pretty,
         });
       } catch (error: unknown) {
-        return Promise.resolve({
-          success: false,
-          error: error instanceof Error ? error.message : "Invalid JSON",
-        });
+        return Promise.resolve(formatHandlerError(error));
       }
     },
   };
@@ -103,11 +100,11 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Check JSONB support
         if (!isJsonbSupported()) {
-          return {
-            success: false,
-            error: "JSONB not supported (requires SQLite 3.45+)",
-            hint: "Current SQLite version does not support JSONB. Data remains as text JSON.",
-          };
+          throw new ValidationError(
+            "JSONB not supported (requires SQLite 3.45+)",
+            "FEATURE_UNAVAILABLE",
+            { suggestion: "Current SQLite version does not support JSONB. Data remains as text JSON." }
+          );
         }
 
         let sql = `UPDATE ${table} SET ${column} = jsonb(${column})`;
@@ -250,10 +247,10 @@ export function createJsonNormalizeColumnTool(
             input.outputFormat as (typeof VALID_OUTPUT_FORMATS)[number],
           )
         ) {
-          return {
-            success: false,
-            error: `Invalid outputFormat '${input.outputFormat}'. Must be one of: ${VALID_OUTPUT_FORMATS.join(", ")}`,
-          };
+          throw new ValidationError(
+            `Invalid outputFormat '${input.outputFormat}'. Must be one of: ${VALID_OUTPUT_FORMATS.join(", ")}`,
+            "VALIDATION_ERROR"
+          );
         }
 
         // Validate and quote identifiers

@@ -52,6 +52,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **json**: Refactored manual `{ success: false }` error returns in `sqlite_json_group_object`, `sqlite_jsonb_convert`, and `sqlite_json_normalize_column` handlers to throw `ValidationError` instances, ensuring architectural consistency by funneling all errors through `formatHandlerError()`.
 - **json**: Fixed `sqlite_json_each` failing with `ambiguous column name` errors by wrapping base table filtering in a subquery before `CROSS JOIN json_each` to completely isolate the `WHERE` clause from virtual column collisions, removing a brittle regex replacement workaround.
 - **json**: Fixed `sqlite_json_keys` applying `LIMIT 1` to `WHERE` clause extractions, failing to return distinct keys across all matching rows as documented.
 - **json**: Fixed `sqlite_json_diff` returning `identical: false` when both compared JSON paths evaluated to `NULL` (missing) by using the SQLite `IS` operator instead of `=` to properly handle `NULL` equality.

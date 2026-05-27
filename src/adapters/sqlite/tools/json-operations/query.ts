@@ -16,7 +16,7 @@ import {
   validateJsonPath,
   validateAggregateFunction,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import {
   JsonKeysOutputSchema,
   JsonEachOutputSchema,
@@ -290,13 +290,10 @@ export function createJsonGroupObjectTool(
           if (input.groupByColumn) {
             // For nested grouping, we need a more complex approach with window functions or correlated subqueries
             // For now, outer grouping with aggregates is not supported - return error with guidance
-            return {
-              success: false,
-              error:
-                "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
-              rowCount: 0,
-              rows: [],
-            };
+            throw new ValidationError(
+              "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
+              "VALIDATION_ERROR"
+            );
           }
 
           const sql = `SELECT ${outerSelect} FROM (${subquery})${outerGroupBy}`;
@@ -311,13 +308,10 @@ export function createJsonGroupObjectTool(
 
         // Standard mode: valueColumn is required when not using aggregateFunction
         if (!input.valueColumn) {
-          return {
-            success: false,
-            error:
-              "valueColumn is required unless using aggregateFunction parameter",
-            rowCount: 0,
-            rows: [],
-          };
+          throw new ValidationError(
+            "valueColumn is required unless using aggregateFunction parameter",
+            "VALIDATION_ERROR"
+          );
         }
 
         // Warn when allowExpressions is used without groupByColumn - can produce duplicate keys
