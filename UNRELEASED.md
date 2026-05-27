@@ -54,6 +54,10 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **admin**: Restored `isError: true` and `structuredContent` assignments in `audit-tools.ts` error handlers, resolving `-32602 Output validation error` frames when throwing validation or domain errors for tools with defined output schemas.
+- **admin**: Fixed `AuditListBackupsOutputSchema` and `AuditGetBackupOutputSchema` to extend `ErrorResponseFields.shape` and require `success: z.boolean()` for architectural consistency across audit tools.
+- **admin**: Fixed `sqlite_audit_diff_backup` returning empty strings for `snapshotTimestamp` and `snapshotTarget` by correctly mapping them from the nested `metadata` property.
+- **admin**: Enforced architectural consistency by implementing and registering `outputSchema` definitions for all 5 server-level audit tools in `admin.ts` and `audit-tools.ts`.
 - **admin**: Fixed a critical architectural bug in `auditInterceptor` where `queryAdapter` was permanently `undefined` because it was never wired after the database adapter connected. Added `setQueryAdapter` to the `AuditInterceptor` interface and updated `mcp-server.ts` to properly wire it, restoring the ability to capture pre-mutation DDL snapshots.
 - **admin**: Fixed `sqlite_drop_view` backup target mapping in `backup-manager.ts` incorrectly using `targetKey: "view"` instead of `viewName`, which caused generated snapshot files to use `unknown` as the target name.
 - **tests**: Fixed incorrect assertions in `test-admin-audit.md` that falsely claimed `sqlite_write_query` triggers automatic schema backups. Corrected the prompt to properly use `sqlite_drop_table` to trigger the audit pre-mutation snapshots.

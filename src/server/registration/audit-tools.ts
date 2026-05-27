@@ -8,6 +8,13 @@ import { registerToolScopes, scopesGrantToolAccess } from "../../auth/scopes/enf
 import { getAuthContext } from "../../auth/auth-context.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { z } from "zod";
+import {
+  AuditListBackupsOutputSchema,
+  AuditGetBackupOutputSchema,
+  AuditCleanupOutputSchema,
+  AuditDiffBackupOutputSchema,
+  AuditRestoreBackupOutputSchema,
+} from "../../adapters/sqlite/schemas/admin.js";
 
 /**
  * Force redaction of SQL string literals to prevent secret exposure
@@ -111,6 +118,7 @@ export function registerAuditBackupTools(
         title: "List Audit Backups",
         description:
           "List pre-mutation DDL snapshots captured before destructive operations. Returns metadata for each snapshot including timestamp, tool, target, and size.",
+        outputSchema: AuditListBackupsOutputSchema,
         annotations: {
           readOnlyHint: true,
           destructiveHint: false,
@@ -124,25 +132,22 @@ export function registerAuditBackupTools(
           throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
         }
         const snapshots = await backupManager.listSnapshots();
+        const result = {
+          success: true,
+          snapshots,
+          count: snapshots.length,
+        };
+        const tokenEstimate = Math.ceil(
+          Buffer.byteLength(JSON.stringify(result), "utf8") / 4,
+        );
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(
-                {
-                  snapshots,
-                  count: snapshots.length,
-                  _meta: {
-                    tokenEstimate: Math.ceil(
-                      Buffer.byteLength(JSON.stringify(snapshots), "utf8") / 4,
-                    ),
-                  },
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({ ...result, _meta: { tokenEstimate } }, null, 2),
             },
           ],
+          structuredContent: result,
         };
       },
     );
@@ -162,6 +167,7 @@ export function registerAuditBackupTools(
               "Snapshot filename from sqlite_audit_list_backups results",
             ),
         }),
+        outputSchema: AuditGetBackupOutputSchema,
         annotations: {
           readOnlyHint: true,
           destructiveHint: false,
@@ -179,34 +185,37 @@ export function registerAuditBackupTools(
           const parsed = z.object({ filename: z.string().min(1, "filename is required") }).parse(args);
           filename = parsed.filename;
         } catch (error: unknown) {
+          const structured = formatHandlerError(error);
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(formatHandlerError(error), null, 2),
+                text: JSON.stringify(structured, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: structured as unknown as Record<string, unknown>,
           };
         }
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
+          const errRes = {
+            success: false,
+            error: `Snapshot not found: ${filename}`,
+          };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: false,
-                    error: `Snapshot not found: ${filename}`,
-                  },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(errRes, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
           };
         }
-        const snapshotStr = JSON.stringify(snapshot, null, 2);
+        const result = { success: true, ...snapshot };
+        const snapshotStr = JSON.stringify(result, null, 2);
         return {
           content: [
             {
@@ -214,6 +223,7 @@ export function registerAuditBackupTools(
               text: redactSqlLiterals(snapshotStr),
             },
           ],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       },
     );
@@ -225,6 +235,7 @@ export function registerAuditBackupTools(
         title: "Cleanup Audit Backups",
         description:
           "Apply retention policy to audit backup snapshots. Deletes snapshots exceeding age or count limits.",
+        outputSchema: AuditCleanupOutputSchema,
         annotations: {
           readOnlyHint: false,
           destructiveHint: true,
@@ -238,24 +249,22 @@ export function registerAuditBackupTools(
           throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
         }
         const deleted = await backupManager.cleanup();
+        const result = {
+          success: true,
+          deletedCount: deleted,
+          message:
+            deleted > 0
+              ? `Cleaned up ${String(deleted)} snapshot(s)`
+              : "No snapshots to clean up",
+        };
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(
-                {
-                  success: true,
-                  deletedCount: deleted,
-                  message:
-                    deleted > 0
-                      ? `Cleaned up ${String(deleted)} snapshot(s)`
-                      : "No snapshots to clean up",
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify(result, null, 2),
             },
           ],
+          structuredContent: result,
         };
       },
     );
@@ -275,6 +284,7 @@ export function registerAuditBackupTools(
               "Snapshot filename to compare against the live database schema",
             ),
         }),
+        outputSchema: AuditDiffBackupOutputSchema,
         annotations: {
           readOnlyHint: true,
           destructiveHint: false,
@@ -292,45 +302,45 @@ export function registerAuditBackupTools(
           const parsed = z.object({ filename: z.string().min(1, "filename is required") }).parse(args);
           filename = parsed.filename;
         } catch (error: unknown) {
+          const structured = formatHandlerError(error);
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(formatHandlerError(error), null, 2),
+                text: JSON.stringify(structured, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: structured as unknown as Record<string, unknown>,
           };
         }
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
+          const errRes = { success: false, error: `Snapshot not found: ${filename}` };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  { success: false, error: `Snapshot not found: ${filename}` },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(errRes, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
           };
         }
 
-        // Get the first connected adapter to query live schema
         const adapter = [...adaptersMap.values()][0];
         if (!adapter) {
+          const errRes = { success: false, error: "No connected adapter available" };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  { success: false, error: "No connected adapter available" },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(errRes, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
           };
         }
 
@@ -426,41 +436,38 @@ export function registerAuditBackupTools(
             }
           }
 
+          const result = {
+            success: true,
+            diffs,
+            snapshotTimestamp:
+              (snapshot as { metadata?: { timestamp?: string } }).metadata?.timestamp ?? "",
+            snapshotTarget:
+              (snapshot as { metadata?: { target?: string } }).metadata?.target ?? "",
+          };
+
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: true,
-                    diffs,
-                    snapshotTimestamp:
-                      (snapshot as { timestamp?: string }).timestamp ?? "",
-                    snapshotTarget:
-                      (snapshot as { target?: string }).target ?? "",
-                  },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(result, null, 2),
               },
             ],
+            structuredContent: result as unknown as Record<string, unknown>,
           };
         } catch (error: unknown) {
+          const errRes = {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: false,
-                    error:
-                      error instanceof Error ? error.message : String(error),
-                  },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(errRes, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
           };
         }
       },
@@ -485,6 +492,7 @@ export function registerAuditBackupTools(
               "If true, returns the DDL without executing it (boolean)",
             ),
         }),
+        outputSchema: AuditRestoreBackupOutputSchema,
         annotations: {
           readOnlyHint: false,
           destructiveHint: true,
@@ -504,85 +512,84 @@ export function registerAuditBackupTools(
           filename = parsed.filename;
           dryRun = parsed.dryRun;
         } catch (error: unknown) {
+          const structured = formatHandlerError(error);
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(formatHandlerError(error), null, 2),
+                text: JSON.stringify(structured, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: structured as unknown as Record<string, unknown>,
           };
         }
         const snapshot = await backupManager.getSnapshot(filename);
         if (!snapshot) {
+          const errRes = { success: false, error: `Snapshot not found: ${filename}` };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  { success: false, error: `Snapshot not found: ${filename}` },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(errRes, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
           };
         }
 
         const ddl = (snapshot as { ddl?: string }).ddl ?? "";
         if (!ddl.trim()) {
+          const errRes = {
+            success: false,
+            error: "Snapshot contains no DDL statements",
+          };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: false,
-                    error: "Snapshot contains no DDL statements",
-                  },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(errRes, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
+          };
+        }
+
+        const adapter = [...adaptersMap.values()][0];
+        if (!adapter) {
+          const errRes = {
+            success: false,
+            error: "No connected adapter available",
+          };
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(errRes, null, 2),
+              },
+            ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
           };
         }
 
         if (dryRun) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: true,
-                    message: "Dry run — DDL not executed",
-                    ddl: redactSqlLiterals(ddl),
-                    dryRun: true,
-                    changesApplied: 0,
-                  },
-                  null,
-                  2,
-                ),
-              },
-            ],
+          const result = {
+            success: true,
+            message: "Dry run: no changes applied",
+            dryRun: true,
+            ddl: redactSqlLiterals(ddl),
           };
-        }
-
-        // Get the first connected adapter to execute DDL
-        const adapter = [...adaptersMap.values()][0];
-        if (!adapter) {
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  { success: false, error: "No connected adapter available" },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(result, null, 2),
               },
             ],
+            structuredContent: result,
           };
         }
 
@@ -592,13 +599,11 @@ export function registerAuditBackupTools(
             .map((s: string) => s.trim())
             .filter(Boolean);
 
-          let changesApplied = 0;
           await adapter.executeQuery("BEGIN TRANSACTION;");
           try {
             for (const stmt of statements) {
               validateDdl(stmt);
               await adapter.executeQuery(`${stmt};`);
-              changesApplied++;
             }
             await adapter.executeQuery("COMMIT;");
           } catch (e) {
@@ -606,39 +611,34 @@ export function registerAuditBackupTools(
             throw e;
           }
 
+          const result = {
+            success: true,
+            message: `Successfully executed ${statements.length} statement(s) from snapshot`,
+            changesApplied: statements.length,
+          };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: true,
-                    message: `Restored ${String(changesApplied)} DDL statement(s) from snapshot`,
-                    changesApplied,
-                    dryRun: false,
-                  },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(result, null, 2),
               },
             ],
+            structuredContent: result,
           };
         } catch (error: unknown) {
+          const errRes = {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: false,
-                    error:
-                      error instanceof Error ? error.message : String(error),
-                  },
-                  null,
-                  2,
-                ),
+                text: JSON.stringify(errRes, null, 2),
               },
             ],
+            isError: true,
+            structuredContent: errRes as unknown as Record<string, unknown>,
           };
         }
       },

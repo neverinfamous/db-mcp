@@ -180,6 +180,51 @@ export const SqlDumpSchema = z.object({
 // Output Schemas
 // =============================================================================
 
+export const AuditListBackupsOutputSchema = z
+  .object({
+    success: z.boolean(),
+    snapshots: z.array(z.any()).optional(),
+    count: z.number().optional(),
+    _meta: z.object({ tokenEstimate: z.number() }).optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const AuditGetBackupOutputSchema = z
+  .object({
+    success: z.boolean(),
+    metadata: z.any().optional(),
+    ddl: z.string().optional(),
+    data: z.string().optional(),
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const AuditCleanupOutputSchema = z
+  .object({
+    success: z.boolean(),
+    deletedCount: z.number().optional(),
+    message: z.string().optional()
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const AuditDiffBackupOutputSchema = z
+  .object({
+    success: z.boolean(),
+    diffs: z.array(z.any()).optional(),
+    snapshotTimestamp: z.string().optional(),
+    snapshotTarget: z.string().optional()
+  })
+  .extend(ErrorResponseFields.shape);
+
+export const AuditRestoreBackupOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    ddl: z.string().optional(),
+    dryRun: z.boolean().optional(),
+    changesApplied: z.number().optional()
+  })
+  .extend(ErrorResponseFields.shape);
+
 export const VacuumOutputSchema = z
   .object({
     success: z.boolean(),
