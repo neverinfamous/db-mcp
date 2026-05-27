@@ -452,7 +452,6 @@ export function registerAuditBackupTools(
                 text: JSON.stringify(result, null, 2),
               },
             ],
-            isError: true,
             structuredContent: result as unknown as Record<string, unknown>,
           };
         } catch (error: unknown) {
@@ -590,7 +589,6 @@ export function registerAuditBackupTools(
                 text: JSON.stringify(result, null, 2),
               },
             ],
-            isError: true,
             structuredContent: result,
           };
         }
@@ -625,7 +623,6 @@ export function registerAuditBackupTools(
                 text: JSON.stringify(result, null, 2),
               },
             ],
-            isError: true,
             structuredContent: result,
           };
         } catch (error: unknown) {

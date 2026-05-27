@@ -55,7 +55,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
-- **admin**: Restored `isError: true` and `structuredContent` assignments in `audit-tools.ts` error handlers, resolving `-32602 Output validation error` frames when throwing validation or domain errors for tools with defined output schemas.
+- **admin**: Fixed `isError` flag consistency in `audit-tools.ts`: removed `isError: true` from **success** paths (which caused the SDK to frame valid responses as cascade errors) while keeping it on **error** paths (required to bypass `outputSchema` validation for non-conforming error shapes, preventing raw `-32602` frames).
 - **admin**: Fixed `AuditListBackupsOutputSchema` and `AuditGetBackupOutputSchema` to extend `ErrorResponseFields.shape` and require `success: z.boolean()` for architectural consistency across audit tools.
 - **admin**: Fixed `sqlite_audit_diff_backup` returning empty strings for `snapshotTimestamp` and `snapshotTarget` by correctly mapping them from the nested `metadata` property.
 - **admin**: Enforced architectural consistency by implementing and registering `outputSchema` definitions for all 5 server-level audit tools in `admin.ts` and `audit-tools.ts`.
