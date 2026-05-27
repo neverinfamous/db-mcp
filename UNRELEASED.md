@@ -56,6 +56,8 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **core**: Fixed `sqlite_write_query` silently dropping returned rows by appending `rows: result.rows` to the handler's success return object, restoring full support for `RETURNING *` clauses.
+- **core**: Modified global `mcp-server.ts` Zod SDK input validation monkey-patch to output the exact string `"Validation error: "` instead of `"MCP error -32602: Input validation error: "` to strictly match expected handler validation error formatting, improving client error parsing reliability.
 - **admin-extensions**: Hardened `sqlite_create_series_table` fallback implementation by restricting the maximum series length to 100,000 rows to prevent unbounded memory consumption and host starvation during manual insertion loops.
 - **core**: Fixed global `isError` flag bug in `src/adapters/registration/tools.ts` by ensuring `isError: true` is properly appended to the MCP response frame whenever a tool handler returns `success: false`. This provides global architectural consistency and eliminates raw `-32602` error frames across all 65 standard tools during Zod validation sweeps.
 - **admin**: Fixed bug in `sqlite_pragma_database_list` where Native adapter instances erroneously appended the WASM virtual filesystem warning note by comparing the internal basename against the full absolute configured path.

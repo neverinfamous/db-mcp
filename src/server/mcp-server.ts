@@ -58,9 +58,11 @@ if (typeof proto['createToolError'] === "function") {
       // We must ignore "Tool not found" and other raw SDK errors so they propagate properly
       // (isError: true) for WASM graceful degradation and test suite setup logic.
       if (rawError.includes("Input validation error")) {
+        // Strip out the MCP error prefix to match handler validation error formatting
+        const cleanError = rawError.replace(/^MCP error -32602: Input validation error: /, "Validation error: ");
         const structured = {
           success: false,
-          error: rawError,
+          error: cleanError,
           code: "VALIDATION_ERROR",
           category: ErrorCategory.VALIDATION,
         };

@@ -386,6 +386,7 @@ export function createWriteQueryTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: true,
           rowsAffected: result.rowsAffected,
+          rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
       } catch (error: unknown) {
