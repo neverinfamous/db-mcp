@@ -54,6 +54,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **transactions**: Fixed `sqlite_transaction_begin` schema silently falling back to `"deferred"` on invalid mode inputs instead of failing validation by removing the `z.preprocess()` silencer.
 - **text**: Fixed parameter naming inconsistency in `sqlite_text_replace` by renaming `searchPattern` to `search` and `replaceWith` to `replacement` to match documented behavior and align with other text search tools (`fuzzyMatch`, `phoneticMatch`, `advancedSearch`).
 - **stats**: Fixed `sqlite_window_lag_lead` missing alias resolution for `valueColumn` -> `column`, bringing it into consistency with other window tools.
 - **json**: Refactored manual `{ success: false }` error returns in `sqlite_json_group_object`, `sqlite_jsonb_convert`, and `sqlite_json_normalize_column` handlers to throw `ValidationError` instances, ensuring architectural consistency by funneling all errors through `formatHandlerError()`.

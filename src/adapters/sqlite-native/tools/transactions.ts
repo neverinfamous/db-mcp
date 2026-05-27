@@ -23,28 +23,17 @@ import {
   TransactionStatusOutputSchema,
 } from "../../sqlite/schemas/index.js";
 
-// Valid enum values for transaction mode
-const VALID_MODES = ["deferred", "immediate", "exclusive"] as const;
-type TransactionMode = (typeof VALID_MODES)[number];
+
 
 // Schemas
 const BeginTransactionSchema = z.object({
-  mode: z.preprocess(
-    (val) => {
-      if (typeof val !== "string") return undefined;
-      const normalized = val.toLowerCase();
-      return VALID_MODES.includes(normalized as TransactionMode)
-        ? normalized
-        : undefined;
-    },
-    z
-      .enum(["deferred", "immediate", "exclusive"])
-      .optional()
-      .default("deferred")
-      .describe(
-        "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
-      ),
-  ),
+  mode: z
+    .enum(["deferred", "immediate", "exclusive"])
+    .optional()
+    .default("deferred")
+    .describe(
+      "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
+    ),
 });
 
 const SavepointSchema = z.object({
