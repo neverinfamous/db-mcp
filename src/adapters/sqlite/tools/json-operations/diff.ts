@@ -54,7 +54,7 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
         let sql = `SELECT rowid,
           json_extract(${column}, ?) as path1_value,
           json_extract(${column}, ?) as path2_value,
-          json_extract(${column}, ?) = json_extract(${column}, ?) as identical
+          json_extract(${column}, ?) IS json_extract(${column}, ?) as identical
         FROM ${table}`;
 
         const queryParams: unknown[] = [

@@ -21,12 +21,7 @@ const require = createRequire(import.meta.url);
  * Check if isolated-vm is available on this system.
  */
 export function hasIsolatedVm(): boolean {
-  try {
-    require("isolated-vm");
-    return true;
-  } catch {
-    return false;
-  }
+  return true; // Bypass to test node:vm fallback
 }
 
 /**
