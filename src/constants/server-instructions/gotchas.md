@@ -39,7 +39,7 @@
 | dbstat                                            | ✅ native (per-table) | ❌          | JS (counts only) |
 | soundex()                                         | ✅ native             | ❌          | JS               |
 
-## Code Mode (1 tool)
+## Code Mode (Built-in)
 
 | Tool                  | Description                                                       |
 | --------------------- | ----------------------------------------------------------------- |

@@ -26,7 +26,7 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 
 ## Built-in Tools
 
-\`server_info\`, \`server_health\`, \`list_adapters\` — always available.
+\`server_info\`, \`server_health\`, \`list_adapters\`, \`sqlite_execute_code\` — injected into all configurations.
 
 ## Help Resources
 
@@ -335,7 +335,7 @@ sqlite_spatialite_index({
 | dbstat                                            | ✅ native (per-table) | ❌          | JS (counts only) |
 | soundex()                                         | ✅ native             | ❌          | JS               |
 
-## Code Mode (1 tool)
+## Code Mode (Built-in)
 
 | Tool                  | Description                                                       |
 | --------------------- | ----------------------------------------------------------------- |
