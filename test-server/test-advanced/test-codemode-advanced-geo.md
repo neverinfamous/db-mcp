@@ -19,7 +19,7 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
-> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
+> See `code-map.md` in the `test-server/` directory for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
@@ -44,7 +44,7 @@
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 > 
-> ⚠️ **AGENT TRAP — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **Both are bugs.** The rule:
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
 >
 > | Response | `isError: true` | SDK behavior | Verdict |
 > |---|---|---|---|
@@ -53,7 +53,7 @@
 > | `success: false` | **Present** | Skips validation (error shape won't match success schema) | ✅ Correct |
 > | `success: false` | **Absent** | Validates error against success schema → fails | ❌ Bug — raw `-32602` |
 >
-> **TL;DR**: `isError: true` on errors, absent on successes. Do NOT blanket-add or blanket-remove it.
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
 1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
 2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:

@@ -50,11 +50,14 @@
 - Implemented global WASM `initSqlJs` promise caching to prevent redundant engine initializations.
 - Added context-window protection to `window.ts` and `advanced.ts` by explicitly validating wide column counts.
 - Increased schema cache TTL to 30 seconds and implemented targeted DDL invalidation to eliminate polling latency.
+- Updated `prompt-template.md` to note that `isError: true` on `success: false` is now automated by the framework (`tools.ts`) and generalized the hardcoded absolute path in `standardize-prompts.js` into a portable relative instruction.
 
 ### Removed
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **core**: Fixed global `isError` flag bug in `src/adapters/registration/tools.ts` by ensuring `isError: true` is properly appended to the MCP response frame whenever a tool handler returns `success: false`. This provides global architectural consistency and eliminates raw `-32602` error frames across all 65 standard tools during Zod validation sweeps.
+- **admin**: Fixed bug in `sqlite_pragma_database_list` where Native adapter instances erroneously appended the WASM virtual filesystem warning note by comparing the internal basename against the full absolute configured path.
 - **admin**: Fixed `isError` flag consistency in `audit-tools.ts`: removed `isError: true` from **success** paths (which caused the SDK to frame valid responses as cascade errors) while keeping it on **error** paths (required to bypass `outputSchema` validation for non-conforming error shapes, preventing raw `-32602` frames).
 - **admin**: Fixed `AuditListBackupsOutputSchema` and `AuditGetBackupOutputSchema` to extend `ErrorResponseFields.shape` and require `success: z.boolean()` for architectural consistency across audit tools.
 - **admin**: Fixed `sqlite_audit_diff_backup` returning empty strings for `snapshotTimestamp` and `snapshotTarget` by correctly mapping them from the nested `metadata` property.
@@ -63,6 +66,8 @@
 - **admin**: Fixed `sqlite_drop_view` backup target mapping in `backup-manager.ts` incorrectly using `targetKey: "view"` instead of `viewName`, which caused generated snapshot files to use `unknown` as the target name.
 - **tests**: Fixed incorrect assertions in `test-admin-audit.md` that falsely claimed `sqlite_write_query` triggers automatic schema backups. Corrected the prompt to properly use `sqlite_drop_table` to trigger the audit pre-mutation snapshots.
 - **admin**: Fixed raw MCP error frames (`-32602`) thrown during empty parameter Zod validation sweeps by adding `.default("")` to `inputSchema` filename arguments for `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, and `sqlite_audit_restore_backup`, routing validation properly to the internal handler.
+- **tests**: Fixed Playwright E2E tests (`errors.spec.ts`, `wasm.spec.ts`) failing due to the global `isError: true` fix by properly asserting `expect(response.isError).toBe(true)` on expected validation and SDK errors.
+- **tests**: Fixed Playwright E2E write tool execution tests (`tools.spec.ts`, `streamable-http.spec.ts`) incorrectly triggering DDL rejection blocks by migrating their `CREATE TABLE` payloads to harmless `UPDATE` queries.
 
 - **core**: Modified the global `createToolError` monkey-patch in `mcp-server.ts` to strictly target `"Input validation error"`. This restores proper SDK error propagation (`isError: true`) for missing tools (fixing WASM graceful degradation and test setup) while still safely converting Zod validation failures into structured JSON.
 - **transactions**: Added payload truncation to `sqlite_transaction_execute` to strictly limit `SELECT` statement results to 50 rows, preventing excessive context window consumption and JSON payload stuffing from large queries.

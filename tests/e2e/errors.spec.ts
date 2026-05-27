@@ -31,7 +31,7 @@ test.describe("Structured Error Responses", () => {
         arguments: { query: "SELECT * FROM nonexistent_table_xyz" },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
@@ -51,7 +51,7 @@ test.describe("Structured Error Responses", () => {
         arguments: { table: "test_products", column: "nonexistent_col_xyz" },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
@@ -70,7 +70,7 @@ test.describe("Structured Error Responses", () => {
         arguments: { query: "SELECT * FROM test_products" },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
@@ -91,7 +91,7 @@ test.describe("Structured Error Responses", () => {
         },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
@@ -110,7 +110,7 @@ test.describe("Structured Error Responses", () => {
         arguments: { lat1: 91, lon1: 0, lat2: 0, lon2: 0 },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
@@ -129,7 +129,7 @@ test.describe("Structured Error Responses", () => {
         arguments: { table: "test_products", column: "name" },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);

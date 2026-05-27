@@ -80,7 +80,7 @@ test.describe("Streamable HTTP Transport (MCP 2025-03-26)", () => {
         name: "sqlite_write_query",
         arguments: {
           query:
-            "CREATE TABLE IF NOT EXISTS e2e_streamable_test (id INTEGER PRIMARY KEY)",
+            "UPDATE test_products SET price = price + 1 WHERE id = -1",
         },
       });
 

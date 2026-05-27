@@ -65,7 +65,7 @@ function processDirectory(dirName) {
     // Extract Schema Reference
     // We look for '### Test Schema Reference' until '## Reporting Format'
     const schemaMatch = content.match(/### Test Schema Reference([\s\S]*?)## Reporting Format/);
-    let schemaRef = "> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).";
+    let schemaRef = "> See `code-map.md` in the `test-server/` directory for the complete test database schema (`test_*` tables).";
     if (schemaMatch) {
       const extractedSchema = schemaMatch[1].trim();
       // Preserve existing schema references that are valid:

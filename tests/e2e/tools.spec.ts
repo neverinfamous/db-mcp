@@ -91,23 +91,17 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
     const baseURL = testInfo.project.use.baseURL as string;
     const client = await createClient(baseURL);
     try {
-      // Create a temporary table
+      // Execute a harmless write query (UPDATE on 0 rows)
       const createResponse = await client.callTool({
         name: "sqlite_write_query",
         arguments: {
           query:
-            "CREATE TABLE IF NOT EXISTS _e2e_test_write (id INTEGER PRIMARY KEY, name TEXT)",
+            "UPDATE test_products SET price = price + 1 WHERE id = -1",
         },
       });
 
       expect(createResponse.isError).toBeUndefined();
       expect(Array.isArray(createResponse.content)).toBe(true);
-
-      // Clean up
-      await client.callTool({
-        name: "sqlite_write_query",
-        arguments: { query: "DROP TABLE IF EXISTS _e2e_test_write" },
-      });
     } finally {
       await client.close();
     }

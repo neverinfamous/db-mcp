@@ -109,7 +109,7 @@ export function registerToolImpl(
               '"tokenEstimate":0',
               `"tokenEstimate":${String(tokenEstimate)}`,
             );
-            return {
+            const response: ToolResponse = {
               content: [
                 {
                   type: "text" as const,
@@ -118,6 +118,10 @@ export function registerToolImpl(
               ],
               structuredContent: result as Record<string, unknown>,
             };
+            if ((result as Record<string, unknown>)["success"] === false) {
+              response.isError = true;
+            }
+            return response;
           }
 
           if (typeof result === "object" && result !== null) {
@@ -133,9 +137,13 @@ export function registerToolImpl(
               '"tokenEstimate": 0',
               `"tokenEstimate": ${String(tokenEstimate)}`,
             );
-            return {
+            const response: ToolResponse = {
               content: [{ type: "text" as const, text: finalText }],
             };
+            if ((result as Record<string, unknown>)["success"] === false) {
+              response.isError = true;
+            }
+            return response;
           }
 
           return {
