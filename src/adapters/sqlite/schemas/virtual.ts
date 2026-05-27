@@ -233,7 +233,7 @@ export const VirtualTableInfoSchema = z.object({
 
 export const DropVirtualTableSchema = z.object({
   tableName: z.string().describe("Name of the virtual table to drop"),
-  ifExists: z.boolean().optional().default(true),
+  ifExists: z.boolean().optional().default(false),
 });
 
 export const CreateCsvTableSchema = z.object({

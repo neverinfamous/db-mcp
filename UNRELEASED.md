@@ -56,6 +56,8 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **admin-extensions**: Fixed `sqlite_drop_virtual_table` returning a success message when attempting to drop a non-existent table by changing the `ifExists` default parameter in `DropVirtualTableSchema` to `false` for stricter SQL compliance.
+- **admin-extensions**: Hardened `sqlite_create_series_table` fallback implementation by restricting the maximum series length to 100,000 rows to prevent unbounded memory consumption and host starvation during manual insertion loops.
 - **core**: Fixed global `isError` flag bug in `src/adapters/registration/tools.ts` by ensuring `isError: true` is properly appended to the MCP response frame whenever a tool handler returns `success: false`. This provides global architectural consistency and eliminates raw `-32602` error frames across all 65 standard tools during Zod validation sweeps.
 - **admin**: Fixed bug in `sqlite_pragma_database_list` where Native adapter instances erroneously appended the WASM virtual filesystem warning note by comparing the internal basename against the full absolute configured path.
 - **admin**: Fixed `isError` flag consistency in `audit-tools.ts`: removed `isError: true` from **success** paths (which caused the SDK to frame valid responses as cascade errors) while keeping it on **error** paths (required to bypass `outputSchema` validation for non-conforming error shapes, preventing raw `-32602` frames).

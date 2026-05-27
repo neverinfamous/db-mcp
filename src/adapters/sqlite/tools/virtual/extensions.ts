@@ -116,6 +116,19 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
         const tableName = sanitizeIdentifier(input.tableName);
         const columnName = sanitizeIdentifier(input.columnName);
 
+        const MAX_SERIES_LENGTH = 100000;
+        const estimatedLength = Math.abs((input.stop - input.start) / input.step) + 1;
+        if (estimatedLength > MAX_SERIES_LENGTH) {
+          return {
+            success: false,
+            error: `Series length ${estimatedLength} exceeds maximum allowed of ${MAX_SERIES_LENGTH}`,
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            message: "",
+            rowCount: 0,
+          };
+        }
+
         // Create table
         await adapter.executeWriteQuery(
           `CREATE TABLE IF NOT EXISTS ${tableName} (${columnName} INTEGER PRIMARY KEY)`,
