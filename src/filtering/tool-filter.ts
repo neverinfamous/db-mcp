@@ -278,6 +278,18 @@ export function isToolEnabled(
     return true;
   }
 
+  // Implicitly enable codemode tools across all group filters,
+  // as it serves as a generic scripting engine.
+  // It is only disabled if explicitly excluded via rule (e.g. -codemode).
+  if (tool.group === "codemode") {
+    const explicitlyExcludedGroup = config.rules.some(
+      (r) => r.type === "exclude" && r.target === "codemode"
+    );
+    if (!explicitlyExcludedGroup) {
+      return true;
+    }
+  }
+
   // Check if tool's group is enabled
   return config.enabledGroups.has(tool.group);
 }
