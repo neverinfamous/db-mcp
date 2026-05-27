@@ -581,7 +581,9 @@ function createLagLeadTool(adapter: NativeSqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     handler: async (params: unknown, _context: RequestContext) => {
       try {
-        const input = LagLeadSchema.parse(params);
+        const input = LagLeadSchema.parse(
+          resolveAliases(params, { valueColumn: "column" }),
+        );
       const queryParams: unknown[] = [];
 
         // Normalize direction to lowercase (schema describes as LAG/LEAD uppercase)
