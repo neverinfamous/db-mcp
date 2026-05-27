@@ -74,7 +74,7 @@
 - **server**: Fixed lint errors in `mcp-server.ts` by using optional chaining and correcting `ErrorCategory` reference.
 - Completely removed all unparameterized SQL template string evaluation from `executeReadQuery` and `executeWriteQuery` across all tools, migrating fully to native `?` bindings to resolve all identified SQL injection (SQLi) vulnerabilities.
 - Hardened `buildWhereClause` utility to securely generate and bind parameters arrays, preventing conditional injection attacks.
-- Fixed `json_each` alias collision in json operations by fully qualifying identifiers as `t."id"`.
+- Fixed `json_each` alias collision regex in json operations to correctly match and qualify unquoted `id` column references in WHERE clauses.
 - Resolved syntax errors in `sqlite_json_update`, `sqlite_json_merge`, and `sqlite_text_replace` when executing without a WHERE clause by implementing empty `whereSql` checks.
 - Fixed window function schemas (`RowNumberSchema`, etc.) to securely validate `WhereConditionSchema` arrays instead of arbitrary constraints.
 - `sqlite_date_diff` processing of string and numeric literals.

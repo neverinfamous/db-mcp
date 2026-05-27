@@ -134,8 +134,8 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
             // This handles: t."id" = X, t."id" IN (...), t."id" BETWEEN, t."id" IS NULL, etc.
             // Won't match already-qualified refs like 't.id' or 'je.id'
             const qualifiedWhere = whereSql.replace(
-              /"id"/gi,
-              't."id"',
+              /(^|[^a-zA-Z0-9_."])"?id"?(?![a-zA-Z0-9_."])/gi,
+              '$1t."id"',
             );
             sql += ` WHERE ${qualifiedWhere}`;
             queryParams.push(...whereParams);
