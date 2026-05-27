@@ -351,6 +351,13 @@ export const QueryPlanOutputSchema = z
 // Input Schemas
 // =============================================================================
 
+const coerceNumber = (val: unknown): unknown =>
+  typeof val === "string"
+    ? Number.isNaN(Number(val))
+      ? undefined
+      : Number(val)
+    : val;
+
 const VALID_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
 
 /** Filter array to only valid section values; pass non-arrays through for Zod to reject */
@@ -411,8 +418,7 @@ export const StorageAnalysisSchema = z
         "Exclude SpatiaLite system tables from per-table breakdown (default: true)",
       ),
     limit: z
-      .number()
-      .optional()
+      .preprocess(coerceNumber, z.number().optional())
       .describe("Maximum number of tables to include (default: 50)"),
   })
   .default({});

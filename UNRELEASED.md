@@ -52,6 +52,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **introspection**: Fixed wrong-type numeric coercion for `limit` parameter in `sqlite_storage_analysis` by utilizing `z.preprocess(coerceNumber)` to ensure string inputs fall back to default correctly instead of throwing raw Zod validation errors.
 - **core**: Fixed missing `TABLE_NOT_FOUND` error reporting in `sqlite_list_triggers` when querying a non-existent table.
 - **core**: Fixed regex parser in `query-executor.ts` and `suggestions.ts` improperly capturing schema names instead of table/column names when formatting `no such table: schema.table` SQLite errors, preventing false-positive `TABLE_NOT_FOUND` alerts on the `main` schema.
 - **admin**: Fixed path validation logic in `sqlite_dump` that evaluated a manually-constructed safe path instead of the user-provided absolute `outputPath`, which failed to reject paths outside the workspace directory while falsely reporting success (CWE-22).
