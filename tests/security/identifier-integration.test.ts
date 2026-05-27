@@ -175,8 +175,8 @@ describe("Security: Identifier Integration", () => {
       const result = (await getTool("sqlite_text_replace")({
         table: "users; ATTACH DATABASE--",
         column: "name",
-        searchPattern: "a",
-        replaceWith: "b",
+        search: "a",
+        replacement: "b",
         whereClause: "1=1",
       })) as { success: boolean; error?: string };
       expect(result.success).toBe(false);

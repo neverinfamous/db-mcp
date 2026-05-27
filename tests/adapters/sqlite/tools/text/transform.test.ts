@@ -101,8 +101,8 @@ describe("Text Transform Tools", () => {
       const result = (await tools.get("sqlite_text_replace")?.({
         table: "texts",
         column: "description",
-        searchPattern: "World",
-        replaceWith: "Universe",
+        search: "World",
+        replacement: "Universe",
         conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
@@ -229,8 +229,8 @@ describe("Text Transform Tools", () => {
       const result = (await tools.get("sqlite_text_replace")?.({
         table: "nonexistent_xyz",
         column: "x",
-        searchPattern: "a",
-        replaceWith: "b",
+        search: "a",
+        replacement: "b",
         conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as { success: boolean; error?: string };
 
