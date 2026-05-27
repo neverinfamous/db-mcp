@@ -38,7 +38,6 @@ import {
 } from "./registration/index.js";
 import { registerToolScopes, scopesGrantToolAccess } from "../auth/scopes/enforcement.js";
 import { getAuthContext } from "../auth/auth-context.js";
-
 /**
  * Monkey-patch McpServer to return structured JSON errors for validation failures.
  * This ensures that SDK-level Zod validation errors match the handler error format
@@ -55,13 +54,19 @@ if (typeof proto['createToolError'] === "function") {
     const result = originalCreateToolError.call(this as unknown as McpServer, errorMessage);
     if (result.content?.[0]?.type === "text") {
       const rawError = result.content[0].text;
-      const structured = {
-        success: false,
-        error: rawError,
-        code: "VALIDATION_ERROR",
-        category: ErrorCategory.VALIDATION,
-      };
-      result.content[0].text = JSON.stringify(structured, null, 2);
+      // Only intercept Zod validation failures from the SDK.
+      // We must ignore "Tool not found" and other raw SDK errors so they propagate properly
+      // (isError: true) for WASM graceful degradation and test suite setup logic.
+      if (rawError.includes("Input validation error")) {
+        const structured = {
+          success: false,
+          error: rawError,
+          code: "VALIDATION_ERROR",
+          category: ErrorCategory.VALIDATION,
+        };
+        result.content[0].text = JSON.stringify(structured, null, 2);
+        result.isError = false;
+      }
     }
     return result;
   };

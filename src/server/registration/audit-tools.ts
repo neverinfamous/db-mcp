@@ -157,6 +157,7 @@ export function registerAuditBackupTools(
         inputSchema: z.object({
           filename: z
             .string()
+            .default("")
             .describe(
               "Snapshot filename from sqlite_audit_list_backups results",
             ),
@@ -175,7 +176,7 @@ export function registerAuditBackupTools(
         }
         let filename;
         try {
-          const parsed = z.object({ filename: z.string() }).parse(args);
+          const parsed = z.object({ filename: z.string().min(1, "filename is required") }).parse(args);
           filename = parsed.filename;
         } catch (error: unknown) {
           return {
@@ -185,7 +186,6 @@ export function registerAuditBackupTools(
                 text: JSON.stringify(formatHandlerError(error), null, 2),
               },
             ],
-            isError: true,
           };
         }
         const snapshot = await backupManager.getSnapshot(filename);
@@ -204,7 +204,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
         const snapshotStr = JSON.stringify(snapshot, null, 2);
@@ -271,6 +270,7 @@ export function registerAuditBackupTools(
         inputSchema: z.object({
           filename: z
             .string()
+            .default("")
             .describe(
               "Snapshot filename to compare against the live database schema",
             ),
@@ -289,7 +289,7 @@ export function registerAuditBackupTools(
         }
         let filename;
         try {
-          const parsed = z.object({ filename: z.string() }).parse(args);
+          const parsed = z.object({ filename: z.string().min(1, "filename is required") }).parse(args);
           filename = parsed.filename;
         } catch (error: unknown) {
           return {
@@ -299,7 +299,6 @@ export function registerAuditBackupTools(
                 text: JSON.stringify(formatHandlerError(error), null, 2),
               },
             ],
-            isError: true,
           };
         }
         const snapshot = await backupManager.getSnapshot(filename);
@@ -315,7 +314,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
 
@@ -333,7 +331,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
 
@@ -459,7 +456,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
       },
@@ -475,6 +471,7 @@ export function registerAuditBackupTools(
         inputSchema: z.object({
           filename: z
             .string()
+            .default("")
             .describe("Snapshot filename to restore from"),
           dryRun: z
             .boolean()
@@ -499,7 +496,7 @@ export function registerAuditBackupTools(
         let filename;
         let dryRun;
         try {
-          const parsed = z.object({ filename: z.string(), dryRun: z.boolean().optional().default(false) }).parse(args);
+          const parsed = z.object({ filename: z.string().min(1, "filename is required"), dryRun: z.boolean().optional().default(false) }).parse(args);
           filename = parsed.filename;
           dryRun = parsed.dryRun;
         } catch (error: unknown) {
@@ -510,7 +507,6 @@ export function registerAuditBackupTools(
                 text: JSON.stringify(formatHandlerError(error), null, 2),
               },
             ],
-            isError: true,
           };
         }
         const snapshot = await backupManager.getSnapshot(filename);
@@ -526,7 +522,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
 
@@ -546,7 +541,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
 
@@ -585,7 +579,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
 
@@ -642,7 +635,6 @@ export function registerAuditBackupTools(
                 ),
               },
             ],
-            isError: true,
           };
         }
       },

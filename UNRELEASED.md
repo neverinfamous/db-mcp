@@ -54,6 +54,9 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **admin**: Fixed raw MCP error frames (`-32602`) thrown during empty parameter Zod validation sweeps by adding `.default("")` to `inputSchema` filename arguments for `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, and `sqlite_audit_restore_backup`, routing validation properly to the internal handler.
+- **admin**: Fixed raw MCP error frames leaking from `audit-tools.ts` handlers by removing `isError: true` assignments, enforcing strict structural compliance (`{ success: false, error: ... }`) for all domain errors and SDK boundary validation failures.
+- **core**: Modified the global `createToolError` monkey-patch in `mcp-server.ts` to strictly target `"Input validation error"`. This restores proper SDK error propagation (`isError: true`) for missing tools (fixing WASM graceful degradation and test setup) while still safely converting Zod validation failures into structured JSON.
 - **transactions**: Added payload truncation to `sqlite_transaction_execute` to strictly limit `SELECT` statement results to 50 rows, preventing excessive context window consumption and JSON payload stuffing from large queries.
 - **transactions**: Fixed `sqlite_transaction_begin` schema silently falling back to `"deferred"` on invalid mode inputs instead of failing validation by removing the `z.preprocess()` silencer.
 - **text**: Fixed parameter naming inconsistency in `sqlite_text_replace` by renaming `searchPattern` to `search` and `replaceWith` to `replacement` to match documented behavior and align with other text search tools (`fuzzyMatch`, `phoneticMatch`, `advancedSearch`).
