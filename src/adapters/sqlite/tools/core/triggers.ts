@@ -65,6 +65,24 @@ export function createListTriggersTool(
         const queryParams: unknown[] = [];
       const input = ListTriggersSchema.parse(params);
 
+        if (input.table) {
+          const tableCheck = await adapter.executeReadQuery(
+            `SELECT 1 FROM sqlite_master WHERE name=? AND type IN ('table', 'view') UNION ALL SELECT 1 FROM sqlite_temp_master WHERE name=? AND type IN ('table', 'view')`,
+            [input.table, input.table]
+          );
+          if ((tableCheck.rows?.length ?? 0) === 0) {
+            return formatHandlerError(
+              new ValidationError(
+                `Table '${input.table}' does not exist`,
+                "TABLE_NOT_FOUND",
+                {
+                  suggestion: "Table not found. Run sqlite_list_tables to see available tables.",
+                }
+              )
+            );
+          }
+        }
+
         let sql =
           "SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'trigger'";
         

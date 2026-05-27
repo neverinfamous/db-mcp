@@ -185,8 +185,8 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 **5.1 — Trigger lifecycle stress**
 
 31. `sqlite.core.createTable({table: "stress_trigger_table", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "INTEGER"}]})` → success
-32. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_b_ins BEFORE INSERT ON stress_trigger_table BEGIN SELECT 1; END;")` → success
-33. `sqlite.core.writeQuery("CREATE TRIGGER stress_trg_a_del AFTER DELETE ON stress_trigger_table BEGIN SELECT 1; END;")` → success
+32. `sqlite.core.createTrigger({name: "stress_trg_b_ins", table: "stress_trigger_table", event: "INSERT", timing: "BEFORE", body: "SELECT 1;"})` → success
+33. `sqlite.core.createTrigger({name: "stress_trg_a_del", table: "stress_trigger_table", event: "DELETE", timing: "AFTER", body: "SELECT 1;"})` → success
 34. `sqlite.core.listTriggers()` → verify both triggers appear
 35. `sqlite.core.listTriggers({table: "stress_trigger_table"})` → verify both appear and are filtered to 2
 36. `sqlite.core.dropTable({table: "stress_trigger_table"})` → success (drops table and triggers)

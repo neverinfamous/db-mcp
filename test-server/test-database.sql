@@ -395,6 +395,7 @@ DROP TABLE IF EXISTS stress_geo_spatial;
 DROP TABLE IF EXISTS stress_rtree_test;
 DROP TABLE IF EXISTS stress_csv;
 DROP VIEW IF EXISTS stress_view_orders;
+DROP VIEW IF EXISTS stress_err;
 DROP INDEX IF EXISTS stress_idx_cycle;
 DROP INDEX IF EXISTS stress_idx_flag;
 

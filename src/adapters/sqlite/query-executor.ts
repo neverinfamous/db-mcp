@@ -35,7 +35,7 @@ export function translateSqliteError(
   const details: Record<string, unknown> = { sql };
 
   if (match?.code === "TABLE_NOT_FOUND") {
-    const tableMatch = /no such table[:\s]*(['"]?)(\w+)\1/i.exec(message);
+    const tableMatch = /no such table[:\s]*(['"]?)([\w.]+)\1/i.exec(message);
     const tableName = tableMatch ? tableMatch[2] : "unknown";
     throw new ResourceNotFoundError(
       `Table '${tableName}' not found`,
@@ -52,8 +52,8 @@ export function translateSqliteError(
 
   if (match?.code === "COLUMN_NOT_FOUND") {
     const colMatch =
-      /no such column[:\s]*(['"]?)(\w+)\1/i.exec(message) ??
-      /has no column named[:\s]*(['"]?)(\w+)\1/i.exec(message);
+      /no such column[:\s]*(['"]?)([\w.]+)\1/i.exec(message) ??
+      /has no column named[:\s]*(['"]?)([\w.]+)\1/i.exec(message);
     const colName = colMatch ? colMatch[2] : "unknown";
     throw new ResourceNotFoundError(
       `Column '${colName}' not found`,

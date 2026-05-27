@@ -52,6 +52,8 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **core**: Fixed missing `TABLE_NOT_FOUND` error reporting in `sqlite_list_triggers` when querying a non-existent table.
+- **core**: Fixed regex parser in `query-executor.ts` and `suggestions.ts` improperly capturing schema names instead of table/column names when formatting `no such table: schema.table` SQLite errors, preventing false-positive `TABLE_NOT_FOUND` alerts on the `main` schema.
 - **admin**: Fixed path validation logic in `sqlite_dump` that evaluated a manually-constructed safe path instead of the user-provided absolute `outputPath`, which failed to reject paths outside the workspace directory while falsely reporting success (CWE-22).
 - **text**: Fixed wrong-type numeric coercion for Zod schema validation in 	ext and ts tools by updating coerceNumber to reject invalid numeric strings instead of silently falling back to undefined/defaults.
 - **core**: Removed LIKE wildcard blocklist rule from where-clause.ts to allow valid LIKE operator usage in string replacements and filtering tools.
@@ -78,7 +80,7 @@
 - Table filtering in `sqlite_get_indexes` failing to apply to `sqlite_temp_master` during `UNION ALL` queries.
 - `sqlite_drop_trigger` silent failures by requiring `ifExists: true` when dropping non-existent triggers.
 - Missing limit parameters in `sqlite_date_add` and `sqlite_date_diff` bypassing row truncation safeguards.
-- `sqlite_write_query` rejecting `CREATE TRIGGER` and `DROP TRIGGER` DDL statements.
+- **tests**: Fixed testing loop regression where out-of-date instructions in `gotchas.md` and `test-codemode-advanced-core.md` were incorrectly prompting agents to modify `sqlite_write_query` to handle trigger DDL instead of utilizing the dedicated admin tools `sqlite_create_trigger` and `sqlite_drop_trigger`.
 - **core**: Fixed missing `whereClause` parameter support and Zod validation bugs in `sqlite_count`, `sqlite_exists`, `sqlite_date_add`, and `sqlite_date_diff` by explicitly adding `whereClause` to their schemas and handling aliasing correctly without stripping the field.
 - Nested tools failing to emit progress notifications to the client due to missing `RequestContext` in `sqlite_execute_code`.
 - Quadruple-escaped backslashes in `attachDatabase` and `vacuumInto` paths across codemode test scripts.
