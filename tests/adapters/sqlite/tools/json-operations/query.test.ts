@@ -149,8 +149,8 @@ describe("createJsonEachTool", () => {
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    // Should qualify 'id' to 't.id' to avoid ambiguity with json_each.id
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('t."id"'), expect.anything());
+    // Should use a base table subquery to isolate the WHERE clause and avoid ambiguity with json_each output columns
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('FROM (SELECT rowid, * FROM "users" WHERE "id" = ?) AS t'), expect.anything());
   });
 
   it("should handle query error", async () => {

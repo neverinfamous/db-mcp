@@ -64,18 +64,14 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.conditions || input.whereClause) {
             const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
           if (whereSql !== "") {
-            sql = `SELECT DISTINCT json_each.key
-                        FROM json_each(
-                            (SELECT ${column} FROM ${table} WHERE ${whereSql} LIMIT 1),
-                            '${path}'
-                        )`;
+            sql = `SELECT DISTINCT json_each.key FROM (SELECT * FROM ${table} WHERE ${whereSql}) AS t CROSS JOIN json_each(t.${column}, '${path}')`;
             queryParams.push(...whereParams);
           } else {
-            sql = `SELECT DISTINCT json_each.key FROM ${table} AS t, json_each(t.${column}, '${path}')`;
+            sql = `SELECT DISTINCT json_each.key FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}')`;
           }
         } else {
-          // Without WHERE, simpler subquery avoids 'key' column ambiguity
-          sql = `SELECT DISTINCT json_each.key FROM ${table} AS t, json_each(t.${column}, '${path}')`;
+          // Without WHERE, simpler query avoids 'key' column ambiguity
+          sql = `SELECT DISTINCT json_each.key FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}')`;
         }
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -126,20 +122,19 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
         // Use table alias and CROSS JOIN to avoid ambiguity with json_each() output columns
         // json_each() returns: key, value, type, atom, id, parent, fullkey, path
         // If the source table has any of these columns (e.g., 'id'), they must be qualified
-        let sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
+        let sql: string;
         if (input.conditions || input.whereClause) {
             const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
           if (whereSql !== "") {
-            // Qualify unqualified 'id' column references with table alias 't.'
-            // This handles: t."id" = X, t."id" IN (...), t."id" BETWEEN, t."id" IS NULL, etc.
-            // Won't match already-qualified refs like 't.id' or 'je.id'
-            const qualifiedWhere = whereSql.replace(
-              /(^|[^a-zA-Z0-9_."])"?id"?(?![a-zA-Z0-9_."])/gi,
-              '$1t."id"',
-            );
-            sql += ` WHERE ${qualifiedWhere}`;
+            // Apply the WHERE clause in a subquery on the base table to completely avoid
+            // column ambiguity when joining against json_each
+            sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM (SELECT rowid, * FROM ${table} WHERE ${whereSql}) AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
             queryParams.push(...whereParams);
+          } else {
+            sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
           }
+        } else {
+          sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
         }
         sql += ` LIMIT ${input.limit}`;
 
