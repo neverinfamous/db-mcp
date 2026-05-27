@@ -283,8 +283,8 @@ export const TextConcatSchema = z.object({
 export const TextReplaceSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to update"),
-  searchPattern: z.string().describe("Text to search for"),
-  replaceWith: z.string().describe("Replacement text"),
+  search: z.string().describe("Text to search for"),
+  replacement: z.string().describe("Replacement text"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });

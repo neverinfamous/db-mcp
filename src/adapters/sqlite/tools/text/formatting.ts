@@ -110,8 +110,8 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
-        const search = input.searchPattern.replace(/'/g, "''");
-        const replace = input.replaceWith.replace(/'/g, "''");
+        const search = input.search.replace(/'/g, "''");
+        const replace = input.replacement.replace(/'/g, "''");
 
         // validateWhereClause() removed
         const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
