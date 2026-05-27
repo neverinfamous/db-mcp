@@ -395,6 +395,7 @@ function createExecuteInTransactionTool(
                 statement: string;
                 rowCount: number;
                 rows?: Record<string, unknown>[];
+                error?: string;
               } = {
                 statement:
                   statement.substring(0, 100) +
@@ -402,7 +403,12 @@ function createExecuteInTransactionTool(
                 rowCount,
               };
               if (result.rows) {
-                statementResult.rows = result.rows;
+                if (result.rows.length > 50) {
+                  statementResult.rows = result.rows.slice(0, 50);
+                  statementResult.error = "Result truncated to 50 rows. Use sqlite_read_query with LIMIT for larger datasets.";
+                } else {
+                  statementResult.rows = result.rows;
+                }
               }
               results.push(statementResult);
             } else {
