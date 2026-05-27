@@ -123,12 +123,20 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
 
       try {
         const result = await adapter.executeWriteQuery(sql, queryParams);
-        return {
+        const response: {
+          success: boolean;
+          rowsAffected?: number | undefined;
+          rows?: Record<string, unknown>[] | undefined;
+          executionTimeMs?: number | undefined;
+        } = {
           success: true,
           rowsAffected: result.rowsAffected,
-          rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
+        if (input.returning !== undefined && input.returning !== false) {
+          response.rows = result.rows ?? [];
+        }
+        return response;
       } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
@@ -208,12 +216,20 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
 
       try {
         const result = await adapter.executeWriteQuery(sql, queryParams);
-        return {
+        const response: {
+          success: boolean;
+          rowsAffected?: number | undefined;
+          rows?: Record<string, unknown>[] | undefined;
+          executionTimeMs?: number | undefined;
+        } = {
           success: true,
           rowsAffected: result.rowsAffected,
-          rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
+        if (input.returning !== undefined && input.returning !== false) {
+          response.rows = result.rows ?? [];
+        }
+        return response;
       } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }

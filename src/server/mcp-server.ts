@@ -67,7 +67,7 @@ if (typeof proto['createToolError'] === "function") {
           category: ErrorCategory.VALIDATION,
         };
         result.content[0].text = JSON.stringify(structured, null, 2);
-        result.isError = false;
+        result.isError = true;
       }
     }
     return result;
