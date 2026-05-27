@@ -42,7 +42,9 @@
 > **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a *different* group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+> 
+> ⚠️ **AGENT TRAP WARNING**: If a tool returns a valid, parseable JSON object with `{ success: false, error: "..." }`, but Antigravity UI displays it wrapped in an `error executing cascade step: CORTEX_STEP_TYPE_MCP_TOOL:` frame, **DO NOT REMOVE `isError: true` from the source code!** The presence of `isError: true` alongside the structured JSON is *required* to safely bypass the MCP SDK's `outputSchema` validator. Removing it will trigger raw `-32602 Output validation error` bugs.
 
 1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
 2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
