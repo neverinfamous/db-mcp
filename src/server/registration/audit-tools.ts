@@ -383,15 +383,20 @@ export function registerAuditBackupTools(
             snapshotDefinition?: string;
           }[] = [];
 
+          const snapshotTarget = (snapshot as { metadata?: { target?: string } }).metadata?.target;
+
           // Objects in live but not in snapshot → added
+          // We only consider the targeted object(s) since pre-mutation snapshots are object-scoped
           for (const [name, live] of liveObjects) {
-            if (!snapshotObjects.has(name)) {
-              diffs.push({
-                object: name,
-                type: live.type,
-                status: "added",
-                liveDefinition: live.sql,
-              });
+            if (name === snapshotTarget || snapshotObjects.has(name)) {
+              if (!snapshotObjects.has(name)) {
+                diffs.push({
+                  object: name,
+                  type: live.type,
+                  status: "added",
+                  liveDefinition: live.sql,
+                });
+              }
             }
           }
 
@@ -474,11 +479,10 @@ export function registerAuditBackupTools(
             .default("")
             .describe("Snapshot filename to restore from"),
           dryRun: z
-            .boolean()
+            .unknown()
             .optional()
-            .default(false)
             .describe(
-              "If true, returns the DDL without executing it",
+              "If true, returns the DDL without executing it (boolean)",
             ),
         }),
         annotations: {
