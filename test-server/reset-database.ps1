@@ -386,7 +386,7 @@ db.close();
                     $color = if ($unexpectedTables -contains $ut) { "Yellow" } else { "Cyan" }
                     Write-Host $prefix -ForegroundColor $color -NoNewline
                     Write-Host $ut -ForegroundColor Gray
-                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} try { db.exec('DROP VIEW IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
             }
             # Second pass: drop any remaining tables (shadow tables left behind)
@@ -396,7 +396,7 @@ db.close();
                     $color = if ($unexpectedTables -contains $ut) { "DarkYellow" } else { "DarkCyan" }
                     Write-Host $prefix -ForegroundColor $color -NoNewline
                     Write-Host $ut -ForegroundColor Gray
-                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} try { db.exec('DROP VIEW IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
             }
             $dropScript += "db.pragma('foreign_keys = ON'); db.close();"

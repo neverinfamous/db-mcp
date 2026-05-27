@@ -56,6 +56,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **tests**: Fixed artifact cleanup bug in `reset-database.ps1` where temporary test views (like `temp_audit_test_view`) were never dropped because the script only executed `DROP TABLE` statements.
 - **core**: Fixed global Zod SDK validation monkey-patch in `mcp-server.ts` by ensuring `isError: true` is properly assigned to Zod validation failures, preventing raw `-32602` error frames and enforcing consistent structured error payloads.
 - **core**: Fixed `sqlite_batch_insert` and `sqlite_upsert` tools incorrectly returning empty `rows` arrays when `returning: false` is specified, reducing payload size and token usage.
 - **core**: Fixed `sqlite_write_query` silently dropping returned rows by appending `rows: result.rows` to the handler's success return object, restoring full support for `RETURNING *` clauses.
