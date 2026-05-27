@@ -58,8 +58,9 @@
 1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
 2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
    - (a) A domain error (e.g., non-existent table).
-   - (b) A **Zod validation error** (call the tool with `{}` empty params).
+   - (b) An **empty parameters test** (call the tool with `{}`).
    Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+   > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
 3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
 4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
 5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
@@ -171,7 +172,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 39. `sqlite_list_constraints({table: "nonexistent_xyz"})` → structured error
 🔴 40. `sqlite_alter_table({table: "nonexistent_xyz", operation: "add_column", column: "x", type: "TEXT", nullable: true})` → `{success: false}` (TABLE_NOT_FOUND)
 🔴 41. `sqlite_alter_table({table: "test_products", operation: "add_column", column: "name", type: "TEXT", nullable: true})` → `{success: false}` (COLUMN_EXISTS)
-🔴 42. `sqlite_alter_table({table: "test_products", operation: "add_column", column: "x", type: "TEXT"})` → `{success: false}` (NOT NULL without default — `nullable` defaults to false)
+🔴 42. `sqlite_alter_table({table: "test_products", operation: "add_column", column: "x", type: "TEXT", nullable: false})` → `{success: false}` (NOT NULL without default)
 🔴 43. `sqlite_alter_table({table: "test_products", operation: "rename_column", column: "nonexistent_col", newName: "x"})` → `{success: false}` (COLUMN_NOT_FOUND)
 🔴 44. `sqlite_alter_table({table: "test_products", operation: "rename_table", newName: "test_orders"})` → `{success: false}` (TABLE_EXISTS)
 🔴 45. `sqlite_create_trigger({name: "bad_trg", table: "nonexistent_xyz", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → `{success: false}` (TABLE_NOT_FOUND)
