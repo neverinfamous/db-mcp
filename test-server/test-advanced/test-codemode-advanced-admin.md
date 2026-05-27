@@ -46,7 +46,16 @@
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
 > 
-> ⚠️ **AGENT TRAP WARNING**: If a tool returns a valid, parseable JSON object with `{ success: false, error: "..." }`, but Antigravity UI displays it wrapped in an `error executing cascade step: CORTEX_STEP_TYPE_MCP_TOOL:` frame, **DO NOT REMOVE `isError: true` from the source code!** The presence of `isError: true` alongside the structured JSON is *required* to safely bypass the MCP SDK's `outputSchema` validator. Removing it will trigger raw `-32602 Output validation error` bugs.
+> ⚠️ **AGENT TRAP — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **Both are bugs.** The rule:
+>
+> | Response | `isError: true` | SDK behavior | Verdict |
+> |---|---|---|---|
+> | `success: true` | **Absent** | Validates `structuredContent` → passes | ✅ Correct |
+> | `success: true` | **Present** | Skips validation, wraps in error frame | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present** | Skips validation (error shape won't match success schema) | ✅ Correct |
+> | `success: false` | **Absent** | Validates error against success schema → fails | ❌ Bug — raw `-32602` |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. Do NOT blanket-add or blanket-remove it.
 
 1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
 2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
