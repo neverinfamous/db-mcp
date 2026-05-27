@@ -46,7 +46,7 @@ import type {
 const SNAPSHOT_TOOL_ARGS: Record<string, { targetKey: string }> = {
   sqlite_drop_table: { targetKey: "table" },
   sqlite_drop_index: { targetKey: "index" },
-  sqlite_drop_view: { targetKey: "view" },
+  sqlite_drop_view: { targetKey: "viewName" },
   sqlite_import_csv: { targetKey: "table" },
   sqlite_backup: { targetKey: "targetPath" },
 };
