@@ -298,7 +298,7 @@ sqlite_spatialite_index({
 
 ## ⚠️ Critical Gotchas
 
-1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) plus trigger DDL (CREATE TRIGGER/DROP TRIGGER) — use \`sqlite_read_query\` for SELECT, and \`sqlite_create_table\` (which supports \`foreignKeys\` and \`checkConstraints\`) for schema creation.
+1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) — use \`sqlite_read_query\` for SELECT, and dedicated DDL tools like \`sqlite_create_table\`, \`sqlite_create_trigger\`, and \`sqlite_drop_trigger\` for schema modifications.
 2. **Regex patterns**: Double-escape backslashes (\`\\\\\\\\\`) when passing through JSON/MCP
 3. **FTS5 virtual tables**: \`*_fts\` and shadow tables \`*_fts_*\` are hidden from \`sqlite_list_tables\` for cleaner output
 4. **FTS5 boolean logic**: Uses AND by default — \`"machine learning"\` = rows with BOTH words. Use OR explicitly: \`"machine OR learning"\`
@@ -803,9 +803,11 @@ sqlite_advanced_search({
   fuzzyThreshold: 0.4,
 });
 
-// Sentiment analysis — pure text analysis, no database query needed
+// Sentiment analysis — text analysis (can analyze raw text or database columns)
 sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });
 // → { sentiment: "very_positive", score: 2, confidence: "medium" }
+
+sqlite_text_sentiment({ table: "articles", column: "body" }); // analyzes all rows in a column
 
 sqlite_text_sentiment({
   text: "Great service but slow delivery",

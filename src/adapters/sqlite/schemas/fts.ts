@@ -125,6 +125,11 @@ export const FtsSearchSchema = z.object({
     .optional()
     .default(false)
     .describe("Include highlighted snippets"),
+  includeRowData: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Include full row data in results"),
 });
 export type FtsSearchInput = z.infer<typeof FtsSearchSchema>;
 
@@ -140,5 +145,10 @@ export const FtsMatchInfoSchema = z.object({
     coerceEnumValues(["bm25", "rank"]),
     z.enum(["bm25", "rank"]).optional().default("bm25"),
   ),
+  includeRowData: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Include full row data in results"),
 });
 export type FtsMatchInfoInput = z.infer<typeof FtsMatchInfoSchema>;

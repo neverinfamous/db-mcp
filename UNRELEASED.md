@@ -21,6 +21,8 @@
 - `dockerfile-patch-drift.yml` CI workflow to detect stale Dockerfile transitive dependency patches.
 
 ### Changed
+- **text**: Added `includeRowData` parameter to `sqlite_fts_search` and `sqlite_fts_match_info` schemas (default true) to allow omitting full row payloads and returning only `rowid` and `rank`/`score`, conserving LLM context window tokens for large FTS documents.
+- **text**: Updated `text.md` server instructions to properly document `table` and `column` parameter support for `sqlite_text_sentiment` database execution.
 - **virtual**: Added `limit` parameter to `sqlite_generate_series` schema (default 100, max 1000) to prevent oversized JSON array payloads during large range generation, conserving LLM context window.
 - **core**: Added `selectColumns` parameter to `sqlite_date_add` and `sqlite_date_diff` schemas to allow precise column selection and mitigate oversized payloads when querying wide tables.
 - **[MCP 2025 Spec]** Implemented `sensitiveHint` tool annotation across all tool groups.

@@ -251,9 +251,9 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.table);
         await validateTableExists(adapter, input.table);
 
-        let selectClause = "*";
+        let selectClause = input.includeRowData ? "*" : "rowid";
         if (input.highlight) {
-          selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
+          selectClause += `, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
         }
 
         // Handle wildcard/list-all query - skip MATCH and return all rows
@@ -384,7 +384,8 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
           rankExpr = "rank";
         }
 
-        const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
+        const selectCols = input.includeRowData ? "*" : "rowid";
+        const sql = `SELECT ${selectCols}, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
         const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
