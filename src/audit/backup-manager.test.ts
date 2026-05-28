@@ -200,8 +200,9 @@ describe("BackupManager", () => {
       const config = makeConfig();
       const manager = new BackupManager(config, auditLogPath);
 
-      const snapshots = await manager.listSnapshots();
+      const { snapshots, total } = await manager.listSnapshots();
       expect(snapshots).toEqual([]);
+      expect(total).toBe(0);
     });
 
     it("lists snapshots sorted newest first", async () => {
@@ -226,8 +227,9 @@ describe("BackupManager", () => {
 
       await manager.flush();
 
-      const snapshots = await manager.listSnapshots();
+      const { snapshots, total } = await manager.listSnapshots();
       expect(snapshots.length).toBeGreaterThanOrEqual(2);
+      expect(total).toBeGreaterThanOrEqual(2);
       // Newest first
       expect(snapshots[0]!.timestamp >= snapshots[1]!.timestamp).toBe(true);
     });

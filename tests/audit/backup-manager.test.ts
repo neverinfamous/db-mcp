@@ -49,8 +49,8 @@ describe("BackupManager", () => {
 
     // Mock readdir to return some valid and corrupt files
     vi.mocked(fs.readdir).mockResolvedValue([
-      "valid1.snapshot.json.gz",
-      "valid2.snapshot.json",
+      "audit_snapshot_2.snapshot.json.gz",
+      "audit_snapshot_1.snapshot.json",
       "corrupt.snapshot.json.gz",
       "ignored.txt",
     ] as any);
@@ -59,13 +59,13 @@ describe("BackupManager", () => {
     vi.mocked(fs.readFile).mockImplementation(
       async (path: string | Buffer | URL) => {
         const p = path.toString();
-        if (p.includes("valid1"))
+        if (p.includes("audit_snapshot_2"))
           return Buffer.from(
             JSON.stringify({
               metadata: { timestamp: "2024-01-02", target: "t1" },
             }),
           );
-        if (p.includes("valid2"))
+        if (p.includes("audit_snapshot_1"))
           return Buffer.from(
             JSON.stringify({
               metadata: { timestamp: "2024-01-01", target: "t2" },
@@ -76,8 +76,9 @@ describe("BackupManager", () => {
       },
     );
 
-    const snapshots = await manager.listSnapshots();
+    const { snapshots, total } = await manager.listSnapshots();
     expect(snapshots.length).toBe(2);
+    expect(total).toBe(3);
     // Should sort newest first
     expect(snapshots[0].target).toBe("t1");
   });

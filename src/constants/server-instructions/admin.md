@@ -26,7 +26,7 @@ sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replace
 ## Audit Backups
 
 ```javascript
-sqlite_audit_list_backups(); // list pre-mutation DDL snapshots
+sqlite_audit_list_backups({ limit: 10, offset: 0 }); // list pre-mutation DDL snapshots
 sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific snapshot
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
 sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot

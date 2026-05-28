@@ -9,6 +9,7 @@ import { getAuthContext } from "../../auth/auth-context.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { z } from "zod";
 import {
+  AuditListBackupsSchema,
   AuditListBackupsOutputSchema,
   AuditGetBackupOutputSchema,
   AuditCleanupOutputSchema,
@@ -118,6 +119,7 @@ export function registerAuditBackupTools(
         title: "List Audit Backups",
         description:
           "List pre-mutation DDL snapshots captured before destructive operations. Returns metadata for each snapshot including timestamp, tool, target, and size.",
+        inputSchema: AuditListBackupsSchema,
         outputSchema: AuditListBackupsOutputSchema,
         annotations: {
           readOnlyHint: true,
@@ -126,16 +128,36 @@ export function registerAuditBackupTools(
           openWorldHint: false, // Requires admin scope
         },
       },
-      async () => {
+      async (args: unknown) => {
         const authCtx = getAuthContext();
         if (authCtx && !scopesGrantToolAccess(authCtx.scopes, "sqlite_audit_list_backups")) {
           throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
         }
-        const snapshots = await backupManager.listSnapshots();
+        let parsed;
+        try {
+          parsed = AuditListBackupsSchema.parse(args ?? {});
+        } catch (error: unknown) {
+          const structured = formatHandlerError(error);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(structured, null, 2),
+              },
+            ],
+            isError: true,
+            structuredContent: structured as unknown as Record<string, unknown>,
+          };
+        }
+        
+        const limit = parsed.limit ?? 10;
+        const offset = parsed.offset ?? 0;
+        const { snapshots, total } = await backupManager.listSnapshots(limit, offset);
         const result = {
           success: true,
           snapshots,
           count: snapshots.length,
+          totalCount: total,
         };
         const tokenEstimate = Math.ceil(
           Buffer.byteLength(JSON.stringify(result), "utf8") / 4,

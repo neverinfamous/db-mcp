@@ -149,6 +149,17 @@ export const VacuumIntoCopySchema = z.object({
     ),
 });
 
+export const AuditListBackupsSchema = z.object({
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().int().min(1).max(100).optional().default(10).describe("Maximum number of snapshots to return (default 10, max 100)")
+  ),
+  offset: z.preprocess(
+    coerceNumber,
+    z.number().int().min(0).optional().default(0).describe("Pagination offset")
+  ),
+});
+
 export const AuditRestoreBackupSchema = z.object({
   filename: z
     .string()
@@ -187,6 +198,7 @@ export const AuditListBackupsOutputSchema = z
     success: z.boolean(),
     snapshots: z.array(z.any()).optional(),
     count: z.number().optional(),
+    totalCount: z.number().optional(),
     _meta: z.object({ tokenEstimate: z.number() }).optional(),
   })
   .extend(ErrorResponseFields.shape);
@@ -506,6 +518,7 @@ export type VacuumInput = z.infer<typeof VacuumSchema>;
 export type AttachDatabaseInput = z.infer<typeof AttachDatabaseSchema>;
 export type DetachDatabaseInput = z.infer<typeof DetachDatabaseSchema>;
 export type VacuumIntoCopyInput = z.infer<typeof VacuumIntoCopySchema>;
+export type AuditListBackupsInput = z.infer<typeof AuditListBackupsSchema>;
 export type AuditRestoreBackupInput = z.infer<typeof AuditRestoreBackupSchema>;
 export type AuditDiffBackupInput = z.infer<typeof AuditDiffBackupSchema>;
 export type ReindexInput = z.infer<typeof ReindexSchema>;
