@@ -84,6 +84,9 @@ Add to your `~/.cursor/mcp.json` or Claude Desktop config:
 
 > **⭐ Code Mode** (`--tool-filter codemode`) is the recommended configuration — it exposes `sqlite_execute_code`, a V8 isolate sandbox with process-level isolation providing access to all 170+ tools' worth of capability with 70–90% token savings. See [Tool Filtering](#️-tool-filtering) for alternatives.
 
+> [!TIP]
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 166 tools). To use the **WASM** backend (sql.js, 139 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options](#backend-options) table for feature differences.
+
 ### 3. Restart & Query!
 
 Restart Cursor or your MCP client and start querying SQLite databases!

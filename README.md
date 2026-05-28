@@ -470,6 +470,9 @@ Add to your `~/.cursor/mcp.json`, Claude Desktop config, or equivalent:
 }
 ```
 
+> [!TIP]
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 166 tools). To use the **WASM** backend (sql.js, 139 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
+
 **Variants** (modify the `args` array above):
 
 | Variant                | Change                                                                                                                               |

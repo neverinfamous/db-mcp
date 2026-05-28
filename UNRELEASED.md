@@ -19,6 +19,7 @@
 - Filtered internal shadow tables (SpatiaLite, db-mcp) from introspection resources to reduce noise.
 - Migrated HTTP transport and Code Mode to support multi-instance Redis rate limiting.
 - Standardized canonical names and synchronized tool inventory metrics across all documentation.
+- Added prominent backend-switching callouts to README and DOCKER_README, making the `--sqlite` vs `--sqlite-native` flag swap immediately discoverable from the primary config examples.
 
 ### Removed
 
