@@ -282,10 +282,14 @@ export const TextConcatSchema = z.object({
 });
 
 export const TextReplaceSchema = z.object({
-  table: z.string().describe("Table name"),
-  column: z.string().describe("Column to update"),
-  search: z.string().describe("Text to search for"),
-  replacement: z.string().describe("Replacement text"),
+  table: z.string().optional().default("").describe("Table name"),
+  column: z.string().optional().default("").describe("Column to update"),
+  tableName: z.string().optional().describe("Legacy alias for table"),
+  columnName: z.string().optional().describe("Legacy alias for column"),
+  search: z.string().optional().default("").describe("Text to search for"),
+  replacement: z.string().optional().default("").describe("Replacement text"),
+  searchPattern: z.string().optional().describe("Legacy alias for search"),
+  replaceWith: z.string().optional().describe("Legacy alias for replacement"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
 });

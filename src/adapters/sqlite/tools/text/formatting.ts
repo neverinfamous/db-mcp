@@ -104,14 +104,28 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextReplaceSchema.parse(params);
-      const queryParams: unknown[] = [];
-        // Validate and quote identifiers, then verify column exists
-        const table = sanitizeIdentifier(input.table);
-        const column = sanitizeIdentifier(input.column);
-        await validateColumnExists(adapter, input.table, input.column);
+        const p = params as Record<string, unknown>;
+        const queryParams: unknown[] = [];
+        
+        const tableStr = input.table || (p["tableName"] as string) || "";
+        const columnStr = input.column || (p["columnName"] as string) || "";
+        const searchStr = input.search || (p["searchPattern"] as string) || "";
+        const replaceStr = input.replacement || (p["replaceWith"] as string) || "";
 
-        const search = input.search.replace(/'/g, "''");
-        const replace = input.replacement.replace(/'/g, "''");
+        if (!tableStr || !columnStr) {
+          throw new ValidationError("Table and column are required");
+        }
+        if (!searchStr) {
+          throw new ValidationError("Search string is required");
+        }
+
+        // Validate and quote identifiers, then verify column exists
+        const table = sanitizeIdentifier(tableStr);
+        const column = sanitizeIdentifier(columnStr);
+        await validateColumnExists(adapter, tableStr, columnStr);
+
+        const search = searchStr.replace(/'/g, "''");
+        const replace = replaceStr.replace(/'/g, "''");
 
         // validateWhereClause() removed
         const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
