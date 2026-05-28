@@ -143,12 +143,13 @@
 - Fixed STDIO and stateless HTTP transport logic to accurately assume local `admin` scope when OAuth is not configured, preventing false-positive authorization rejections on the CLI and unprotected HTTP endpoints.
 - Fixed `validateSameDirPath` tests to correctly expect `:memory:` paths to fail path validation following recent security tightening.
 - Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
-- Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
+- **tests**: Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
+- **transactions**: Fixed missing "transactions" tool group from `getSupportedToolGroups()` in `native-sqlite-adapter.ts`, which caused transaction tools to be silently dropped by the tool filter during server initialization in Native mode.
 ### Security
 - **[Critical]** Transport Security: Added a startup initialization check to explicitly prevent unauthenticated HTTP transport in production and upgraded the rate limiting warning to a critical security error to prevent rate limit amplification attacks.
 - **[Critical]** Query Validation: Added `ATTACH`, `DETACH`, and `LOAD_EXTENSION` to the global query validation blocklist (`DANGEROUS_PATTERNS` / `BLOCKED_DDL_PATTERNS`) to prevent Code Mode sandbox escapes and unauthorized file modification (CWE-89, CWE-22).
 - **[Critical]** Adapter API: Decoupled `rawQuery` from `executeWriteQuery` across all SQLite adapters to serve as a secure, internal-only bypass for query validation, allowing internal tools (`restore`, `pragma`, `fts`) to safely execute trusted administrative commands without weakening the public query validation layer.
-- **[High]** Credential Redaction: Expanded `SENSITIVE_KEY_PATTERN` in `redaction.ts` to include `.npmrc` keys, API tokens, and AWS secrets, and implemented recursive structural array redaction to fully sanitize deeply nested objects in Code Mode audit logs (CWE-200).
+- **[High]** Credential Redaction: Expanded `SENSITIVE_KEY_PATTERN` in `redaction.ts` to include `.npmrc` keys, API tokens, and AWS secrets, and implemented recursive structural array redaction to fully sanitize deeply nested objects in Code Mode audit logs (CWE-200). 
 - **[High]** Authorization: Fixed a vulnerability in `tools/list` filtering where the MCP SDK handler could fall back to an unfiltered state, ensuring OAuth per-tool scopes are strictly enforced during protocol discovery (CWE-862).
 - **[High]** Input Validation: Fixed a PRAGMA injection vulnerability in `query-validation.ts` where dangerous SQLite commands could be hidden behind multi-line `/* ... */` or inline `--` comments by moving comment stripping before AST evaluation (CWE-89).
 - **[Medium]** Information Disclosure: Removed the `X-Powered-By` header in HTTP transport middleware to prevent framework version fingerprinting (CWE-200).

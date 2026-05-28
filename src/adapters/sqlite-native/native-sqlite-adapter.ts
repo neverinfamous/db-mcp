@@ -499,6 +499,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       "geo",
       "introspection",
       "migration",
+      "transactions",
     ];
   }
 
