@@ -105,7 +105,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 > **Note**: Do not use `sqlite_write_query` or `sqlite_drop_table` to set up data, as `core` tools are not exposed when testing this group. Use the existing backups provided by the seed database.
 
 1. `sqlite_audit_list_backups({})` → Verify the resulting list of backups contains at least one snapshot filename (e.g., `..._temp_audit_test_view.snapshot.json.gz`). Note the filename.
-2. `sqlite_audit_get_backup({filename: "<filename_from_step_1>"})` → Retrieve the backup. Verify it contains `schema` and `timestamp`.
+2. `sqlite_audit_get_backup({filename: "<filename_from_step_1>"})` → Retrieve the backup. Verify it contains `ddl` and `metadata.timestamp`.
 3. `sqlite_audit_diff_backup({filename: "<filename_from_step_1>"})` → Compare the backup to the current live schema.
 4. `sqlite_audit_restore_backup({filename: "<filename_from_step_1>", dryRun: true})` → Dry run a restore. Verify the preview output.
 5. `sqlite_audit_restore_backup({filename: "<filename_from_step_1>", dryRun: false})` → Actually restore the backup.
