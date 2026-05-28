@@ -115,7 +115,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 1. `sqlite.vector.createTable({tableName: "stress_vec_empty", dimensions: 4})` → success
 2. `sqlite.vector.count({table: "stress_vec_empty"})` → `{count: 0}`
 3. `sqlite.vector.search({table: "stress_vec_empty", vectorColumn: "vector", queryVector: [1, 2, 3, 4], metric: "cosine", limit: 5})` → empty results (not error)
-4. `sqlite.vector.stats({table: "stress_vec_empty", vectorColumn: "vector"})` → graceful: `{count: 0, message: "No valid vectors found"}`
+4. `sqlite.vector.stats({table: "stress_vec_empty", vectorColumn: "vector"})` → graceful: `{sampleSize: 0, message: "No valid vectors found"}`
 5. `sqlite.vector.dimensions({table: "stress_vec_empty", vectorColumn: "vector"})` → `{dimensions: null, message: "No vectors found"}` (inferred from data)
 
 **1.2 Single-Vector Table**
