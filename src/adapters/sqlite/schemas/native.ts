@@ -119,7 +119,7 @@ const RowNumberResultSchema = z
   .object({
     row_number: z.number(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_window_row_number output
@@ -142,7 +142,7 @@ const RankResultSchema = z
     dense_rank: z.number().optional(),
     percent_rank: z.number().optional(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_window_rank output
@@ -165,7 +165,7 @@ const LagLeadResultSchema = z
     lag_value: z.unknown().optional(),
     lead_value: z.unknown().optional(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_window_lag_lead output
@@ -188,7 +188,7 @@ const RunningTotalResultSchema = z
   .object({
     running_total: z.number(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_window_running_total output
@@ -210,7 +210,7 @@ const MovingAvgResultSchema = z
   .object({
     moving_avg: z.number(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_window_moving_avg output
@@ -233,7 +233,7 @@ const NtileResultSchema = z
   .object({
     ntile: z.number(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_window_ntile output

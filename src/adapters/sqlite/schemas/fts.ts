@@ -25,7 +25,7 @@ const FtsResultSchema = z
     rank: z.number().nullable().optional(),
     bm25: z.number().nullable().optional(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_fts_search output
@@ -64,7 +64,7 @@ export const FtsHeadlineOutputSchema = z
             snippet: z.string().optional(),
             rank: z.number().nullable().optional(),
           })
-          .passthrough(),
+          .loose(),
       )
       .optional(),
   })

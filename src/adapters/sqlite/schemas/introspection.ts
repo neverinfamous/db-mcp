@@ -435,7 +435,7 @@ export const QueryPlanSchema = z
       .describe("SQL query to analyze (SELECT only)"),
     query: z.string().optional().describe("Legacy alias for sql"),
   })
-  .default({});
+  .default({ sql: "" });
 export type QueryPlanInput = z.infer<typeof QueryPlanSchema>;
 
 export const IndexAuditSchema = z
@@ -492,7 +492,7 @@ export const MigrationRisksSchema = z
       .default([])
       .describe("Array of DDL statements to analyze for risks"),
   })
-  .default({});
+  .default({ statements: [] });
 export type MigrationRisksInput = z.infer<typeof MigrationRisksSchema>;
 
 export const ConstraintAnalysisSchema = z
@@ -585,7 +585,7 @@ export const CascadeSimulatorSchema = z
         "Omit path arrays from affected entries to reduce payload (default: false)",
       ),
   })
-  .default({});
+  .default({ table: "" });
 export type CascadeSimulatorInput = z.infer<typeof CascadeSimulatorSchema>;
 
 // =============================================================================

@@ -87,7 +87,7 @@ const VectorSearchResultSchema = z
   .object({
     _similarity: z.number(),
   })
-  .passthrough();
+  .loose();
 
 /**
  * sqlite_vector_search output

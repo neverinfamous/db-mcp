@@ -56,17 +56,17 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.27.1",
-    "cors": "2.8.5",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "cors": "2.8.6",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",
     "isolated-vm": "6.1.2",
-    "jose": "6.2.1",
+    "jose": "6.2.3",
     "rate-limit-redis": "^5.0.0",
-    "redis": "^5.12.1",
+    "redis": "^6.0.0",
     "sql.js": "1.14.1",
     "sqlite-parser": "^1.0.1",
-    "zod": "^3.25.76",
+    "zod": "^4.4.3",
     "zod-to-json-schema": "3.25.2"
   },
   "devDependencies": {
@@ -85,7 +85,7 @@
     "tsup": "^8.5.1",
     "tsx": "^4.22.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.57.1",
+    "typescript-eslint": "^8.60.0",
     "vitest": "^4.0.17"
   },
   "optionalDependencies": {

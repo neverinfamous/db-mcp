@@ -88,7 +88,7 @@ export const PragmaSettingsSchema = z.object({
     .string()
     .describe("PRAGMA name (e.g., 'cache_size', 'journal_mode')"),
   value: z
-    .union([z.string(), z.number().finite().safe()])
+    .union([z.string(), z.number().int()])
     .optional()
     .describe("Value to set (omit to only read)"),
 });

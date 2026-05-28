@@ -10,6 +10,7 @@
 
 ### Changed
 
+- **Dependency Updates**: Bumped npm dependencies (including `@modelcontextprotocol/sdk` to 1.29.0, `zod` to 4.4.3, `redis` to 6.0.0, `typescript-eslint` to 8.60.0) and updated GitHub Actions versions (`trufflehog`, `github-script`, `setup-buildx-action`, `metadata-action`, `trivy-action`).
 - Optimized context-window usage by enforcing `limit` parameters on generation tools, defaulting date tools to computed columns only, and explicitly validating wide column counts.
 - Implemented MCP 2025 Specification annotations globally (`sensitiveHint` for tools, `ASSISTANT_FOCUSED` for resources).
 - Enhanced DDL tools (`sqlite_create_table`, `sqlite_describe_table`) with full support for `STRICT` tables, generated columns, and `sqlite_temp_master` introspection.
