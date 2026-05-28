@@ -5,6 +5,7 @@ import { readOnly } from "../../../../utils/annotations.js";
 import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
 import { DateAddSchema, DateDiffSchema } from "../../schemas/core.js";
 import { DateMathOutputSchema } from "../../schemas/core.js";
+import { validateColumnExists } from "../column-validation.js";
 
 /**
  * Add time to a date column
@@ -27,6 +28,13 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const { table, column, amount, unit, limit, selectColumns } = input;
+      
+      try {
+        await validateColumnExists(adapter, table, column);
+      } catch (error: unknown) {
+        return formatHandlerError(error);
+      }
+
       const quotedTable = `"${table.replace(/"/g, '""')}"`;
       const quotedColumn = `"${column.replace(/"/g, '""')}"`;
 
@@ -112,9 +120,26 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const { table, column1, column2, unit, limit, selectColumns } = input;
+
+      const isLiteral = (val: string): boolean => {
+        if (!isNaN(Number(val))) return true;
+        if (val.startsWith("'") && val.endsWith("'")) return true;
+        return false;
+      };
+
+      try {
+        if (!isLiteral(column1)) {
+          await validateColumnExists(adapter, table, column1);
+        }
+        if (!isLiteral(column2)) {
+          await validateColumnExists(adapter, table, column2);
+        }
+      } catch (error: unknown) {
+        return formatHandlerError(error);
+      }
+
       const formatOperand = (val: string): string => {
-        if (!isNaN(Number(val))) return val;
-        if (val.startsWith("'") && val.endsWith("'")) return val;
+        if (isLiteral(val)) return val;
         return `"${val.replace(/"/g, '""')}"`;
       };
 

@@ -60,7 +60,7 @@
 ### Fixed
 - **Error Handling**: Eliminated raw MCP `-32602` error frames by enforcing structured Zod validation and domain-specific errors across all tool groups (migration, json, introspection, core, codemode).
 - **Payload Optimization**: Added `limit` and `offset` pagination, and truncated large `SELECT` results to prevent oversized JSON payloads in `admin-audit`, `json`, `transactions`, and `core` tool groups.
-- **Data Validation**: Fixed logic errors in JSON equality checks (`sqlite_json_diff`), syntax validation in offline DDL tools (`sqlite_migration_risks`), and path validation in administrative backup tools.
+- **Data Validation**: Fixed logic errors in JSON equality checks (`sqlite_json_diff`), syntax validation in offline DDL tools (`sqlite_migration_risks`), and path validation in administrative backup tools. Added strict column existence validation to `sqlite_count`, `sqlite_date_add`, and `sqlite_date_diff` to prevent silent success with string literal fallbacks.
 - **Test Suites**: Fixed test runner artifact cleanup logic, Playwright E2E execution bugs during DDL blocks, and mocked adapter missing methods.
 - **Adapter Parity**: Ensured `transactions` tool group is registered in `native-sqlite-adapter.ts`, improved WASM graceful degradation handling, and fixed WAL flush synchronization issues during tests.
 - **SQL Execution**: Restored `RETURNING *` support in batch insert tools, fixed syntax errors when `whereClause` is missing in text and JSON tools, and resolved aliasing bugs in date functions.

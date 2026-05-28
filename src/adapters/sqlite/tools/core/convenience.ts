@@ -23,6 +23,7 @@ import {
   TruncateSchema,
 } from "../../schemas/core.js";
 import { validateTableExists } from "./convenience-schemas.js";
+import { validateColumnExists } from "../column-validation.js";
 
 import { sanitizeIdentifier } from "../../../../utils/identifiers.js";
 
@@ -271,6 +272,14 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
 
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return validationError;
+
+      if (input.column && input.column !== "*") {
+        try {
+          await validateColumnExists(adapter, input.table, input.column);
+        } catch (error: unknown) {
+          return formatHandlerError(error);
+        }
+      }
 
       const safeTable = sanitizeIdentifier(input.table);
       const column =
