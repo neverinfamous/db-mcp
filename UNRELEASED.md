@@ -25,7 +25,7 @@
 - Added `includeRowData` parameter to `sqlite_fts_search` and `sqlite_fts_match_info` schemas (default true) to conserve LLM context.
 - Updated `text.md` server instructions to properly document parameter support for `sqlite_text_sentiment`.
 - Added `limit` parameter to `sqlite_generate_series` schema to prevent oversized JSON arrays.
-- Added `selectColumns` parameter to `sqlite_date_add` and `sqlite_date_diff` schemas to mitigate oversized payloads.
+- Changed default select behavior in `sqlite_date_add` and `sqlite_date_diff` to only return the computed column to mitigate oversized payloads.
 - Implemented `sensitiveHint` tool annotation across all tool groups [MCP 2025 Spec].
 - Implemented `ASSISTANT_FOCUSED` resource annotations for dynamically generated help resources [MCP 2025 Spec].
 - Updated invariant tests to strictly enforce `sensitiveHint` definitions on all tools.

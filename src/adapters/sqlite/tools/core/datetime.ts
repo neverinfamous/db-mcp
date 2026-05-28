@@ -43,9 +43,9 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       
       const queryParams: unknown[] = [];
       const selectCols = selectColumns && selectColumns.length > 0
-        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ")
-        : "*";
-      let query = `SELECT ${selectCols}, datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
+        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ") + ", "
+        : "";
+      let query = `SELECT ${selectCols}datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
       
       const clauses: string[] = [];
       if (input.whereClause) {
@@ -157,9 +157,9 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
 
       const queryParams: unknown[] = [];
       const selectCols = selectColumns && selectColumns.length > 0
-        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ")
-        : "*";
-      let query = `SELECT ${selectCols}, ${diffExpr} as date_diff_result FROM ${quotedTable}`;
+        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ") + ", "
+        : "";
+      let query = `SELECT ${selectCols}${diffExpr} as date_diff_result FROM ${quotedTable}`;
       const clauses: string[] = [];
       if (input.whereClause) {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);

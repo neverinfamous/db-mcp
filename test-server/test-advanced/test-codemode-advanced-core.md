@@ -222,7 +222,7 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 
 44. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: -9999, unit: "years"})` → should handle extreme negative dates
 45. `sqlite.core.dateDiff({table: "test_events", column1: "event_date", column2: "invalid_date_col", unit: "days"})` → should return a structured error about invalid column
-46. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: 0, unit: "days"})` → valid delta 0
+46. `sqlite.core.dateAdd({table: "test_events", column: "event_date", amount: 0, unit: "days"})` → valid delta 0, returns only the computed column to save payload size
 
 
 ## Phase 7: ALTER TABLE Edge Cases (batched)
