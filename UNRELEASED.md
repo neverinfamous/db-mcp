@@ -61,6 +61,7 @@
 - **introspection**: Added proactive SQL syntax validation to `sqlite_migration_risks` to correctly flag non-SQL strings (e.g., `"INVALID SQL"`) as high-risk syntax errors instead of returning zero risks, improving offline DDL analysis accuracy.
 - **introspection**: Fixed Zod validation failure in `sqlite_query_plan` when called with the legacy `query` alias by updating the schema and handler to properly resolve the alias and return structured validation errors.
 - **tests**: Fixed artifact cleanup bug in `reset-database.ps1` where temporary test views (like `temp_audit_test_view`) were never dropped because the script only executed `DROP TABLE` statements.
+- **tests**: Fixed WASM E2E test suite failures (`Table not found`, missing tables in schema) caused by the `sql.js` adapter loading a stale in-memory database file. Added a `wal_checkpoint(TRUNCATE)` step to `reset-database.ps1` to ensure all seeded tables (e.g. `test_embeddings`) are flushed from the WAL to the main file before tests begin.
 - **core**: Fixed global Zod SDK validation monkey-patch in `mcp-server.ts` by ensuring `isError: true` is properly assigned to Zod validation failures, preventing raw `-32602` error frames and enforcing consistent structured error payloads.
 - **core**: Fixed `sqlite_batch_insert` and `sqlite_upsert` tools incorrectly returning empty `rows` arrays when `returning: false` is specified, reducing payload size and token usage.
 - **core**: Fixed `sqlite_write_query` silently dropping returned rows by appending `rows: result.rows` to the handler's success return object, restoring full support for `RETURNING *` clauses.
@@ -468,6 +469,7 @@
 - **[L-35]** Annotations: Changed `openWorldHint` for `sqlite_audit_cleanup` to `false`.
 
 ### Fixed
+- **stats**: Fixed architectural inconsistency in `sqlite_window_moving_avg` and `sqlite_window_ntile` tools where `windowSize` and `buckets` were incorrectly marked as `.optional()` in the Zod schema but required in the handler. Removed the redundant handler checks and enforced the requirements at the schema boundary for accurate LLM validation.
 - Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.
 - Updated `scope-map.test.ts` and `audit-interceptor.test.ts` for dynamic scope registration compatibility.
 - Added missing `iat` and `exp` claims to mock token generator in `oauth.ts`.

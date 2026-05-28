@@ -419,6 +419,20 @@ db.close();
         Pop-Location
         Remove-Item $tempVerify -Force -ErrorAction SilentlyContinue
     }
+
+    # Ensure WAL is checkpointed so WASM in-memory loads get all the data
+    Write-Host "`n  Checkpointing WAL file..." -ForegroundColor Yellow
+    $checkpointScript = @"
+import Database from 'better-sqlite3';
+const db = new Database(process.argv[2]);
+db.pragma('wal_checkpoint(TRUNCATE)');
+db.close();
+"@
+    $tempCheckpoint = Join-Path $dbMcpRoot ".checkpoint.js"
+    $checkpointScript | Out-File -FilePath $tempCheckpoint -Encoding utf8 -NoNewline
+    node $tempCheckpoint $DatabasePath | Out-Null
+    Remove-Item $tempCheckpoint -Force -ErrorAction SilentlyContinue
+    Write-Success "WAL checkpointed to main database file"
 }
 
 Write-Host "`n========================================================" -ForegroundColor Green

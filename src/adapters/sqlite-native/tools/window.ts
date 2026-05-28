@@ -150,7 +150,7 @@ const MovingAverageSchema = z.object({
   orderBy: z.string().describe("Column(s) to order by"),
   windowSize: z.preprocess(
     coerceNumber,
-    z.number().optional().describe("Number of rows in the moving window"),
+    z.number().describe("Number of rows in the moving window"),
   ),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
@@ -169,7 +169,7 @@ const NtileSchema = z.object({
   orderBy: z.string().describe("Column(s) to order by"),
   buckets: z.preprocess(
     coerceNumber,
-    z.number().optional().describe("Number of buckets (e.g., 4 for quartiles)"),
+    z.number().describe("Number of buckets (e.g., 4 for quartiles)"),
   ),
   partitionBy: z.string().optional().describe("Column(s) to partition by"),
   selectColumns: z
@@ -746,16 +746,6 @@ function createMovingAverageTool(adapter: NativeSqliteAdapter): ToolDefinition {
           resolveAliases(params, { valueColumn: "column" }),
         );
 
-        if (input.windowSize === undefined) {
-          return {
-            success: false,
-            error: "'windowSize' is required",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            recoverable: false,
-          };
-        }
-
         await validateTableExists(adapter, input.table);
         await validateColumnInTable(adapter, input.table, input.column);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
@@ -822,16 +812,6 @@ function createNtileTool(adapter: NativeSqliteAdapter): ToolDefinition {
       try {
         const input = NtileSchema.parse(params);
       const queryParams: unknown[] = [];
-
-        if (input.buckets === undefined) {
-          return {
-            success: false,
-            error: "'buckets' is required",
-            code: "VALIDATION_ERROR",
-            category: "validation",
-            recoverable: false,
-          };
-        }
 
         await validateTableExists(adapter, input.table);
         await validateOrderByColumns(adapter, input.table, input.orderBy);
