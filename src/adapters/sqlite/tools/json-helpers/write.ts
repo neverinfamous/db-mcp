@@ -32,6 +32,7 @@ import {
 import {
   formatHandlerError,
   ValidationError,
+  QueryError,
 } from "../../../../utils/errors/index.js";
 
 /**
@@ -270,6 +271,21 @@ export function createJsonCollectionTool(
         const idCol = input.idColumn ?? "id";
         const dataCol = input.dataColumn ?? "data";
         const sqls: string[] = [];
+
+        // Check if table already exists
+        const checkSql = "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name=?";
+        const checkResult = await adapter.executeReadQuery(checkSql, [input.tableName]);
+        const tableCount = checkResult.rows?.[0] ? Number(checkResult.rows[0]["count"]) : 0;
+        if (tableCount > 0) {
+          throw new QueryError(
+            `Table '${input.tableName}' already exists`,
+            "TABLE_EXISTS",
+            {
+              suggestion: "Use a different table name or drop the existing table first.",
+              details: { resourceType: "table", resourceName: input.tableName }
+            }
+          );
+        }
 
         // Validate all index paths upfront before creating anything
         if (input.indexes) {

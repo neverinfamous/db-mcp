@@ -56,6 +56,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **json**: Fixed `sqlite_create_json_collection` incorrectly returning success instead of a `TABLE_EXISTS` domain error when attempting to create a table that already exists.
 - **introspection**: Added proactive SQL syntax validation to `sqlite_migration_risks` to correctly flag non-SQL strings (e.g., `"INVALID SQL"`) as high-risk syntax errors instead of returning zero risks, improving offline DDL analysis accuracy.
 - **introspection**: Fixed Zod validation failure in `sqlite_query_plan` when called with the legacy `query` alias by updating the schema and handler to properly resolve the alias and return structured validation errors.
 - **tests**: Fixed artifact cleanup bug in `reset-database.ps1` where temporary test views (like `temp_audit_test_view`) were never dropped because the script only executed `DROP TABLE` statements.
