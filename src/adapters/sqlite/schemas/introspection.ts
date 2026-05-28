@@ -427,7 +427,8 @@ export const StorageAnalysisSchema = z
 export type StorageAnalysisInput = z.infer<typeof StorageAnalysisSchema>;
 
 export const QueryPlanSchema = z.object({
-  sql: z.string().describe("SQL query to analyze (SELECT only)"),
+  sql: z.string().optional().default("").describe("SQL query to analyze (SELECT only)"),
+  query: z.string().optional().describe("Legacy alias for sql"),
 });
 export type QueryPlanInput = z.infer<typeof QueryPlanSchema>;
 
