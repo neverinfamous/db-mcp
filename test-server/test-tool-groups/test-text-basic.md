@@ -122,7 +122,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **Code mode testing:**
 
-12. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\\\.com$'}); return result;"})` → returns matching rows via Code Mode bridge
+12. `sqlite_execute_code({code: "const result = await sqlite.text.regexMatch({table: 'test_users', column: 'email', pattern: '@gmail\\.com$'}); return result;"})` → returns matching rows via Code Mode bridge
 
 ## Phase 2: Domain Errors (batched)
 
