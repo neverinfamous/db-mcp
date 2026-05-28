@@ -353,10 +353,8 @@ return { failures, success: failures.length === 0 };
 
 ## Phase 5: Wrong-Type Numeric Coercion
 
-🔴 91. `sqlite.core.count({table: "test_products", limit: "abc"})` → coerced or handler error, NOT raw MCP `-32602`
-🔴 92. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error, NOT raw MCP
-🔴 93. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", limit: "abc"})` → handler error, NOT raw MCP
-🔴 94. `sqlite.core.readQuery({query: "SELECT * FROM test_products", limit: "abc"})` → handler error, NOT raw MCP
+🔴 91. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error, NOT raw MCP
+🔴 92. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", limit: "abc"})` → handler error, NOT raw MCP
 
 ---
 

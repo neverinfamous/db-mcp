@@ -10,485 +10,70 @@
 - Server Audit tools group with 5 new tools: `sqlite_audit_list_backups`, `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, `sqlite_audit_restore_backup`, and `sqlite_audit_cleanup`.
 - `sqlite.reportProgress(current, total, message)` Code Mode utility for sandboxed JavaScript execution progress reporting.
 - Comprehensive DDL rejection tests for `sqlite_write_query` in unit and E2E test suites.
-- Vitest tests for timeout enforcement accuracy (±200ms) and `WorkerSandboxPool` concurrency limits.
-- Audit tool annotation invariant tests in `tool-annotations.test.ts` covering all 5 server-level audit tools.
-- `test-wasm-degradation.md` suite for WASM graceful degradation testing.
+- Vitest tests for timeout enforcement accuracy and `WorkerSandboxPool` concurrency limits.
+- Audit tool annotation invariant tests covering all 5 server-level audit tools.
+- Suite for WASM graceful degradation testing (`test-wasm-degradation.md`).
 - Expanded test coverage for domain errors, Zod validation sweeps, wrong-type numeric coercion, and pagination.
-- `sqlite.reportProgress()` coverage to `test-codemode-sandbox.md` Phase 2.
+- Expanded `sqlite.reportProgress()` coverage in Code Mode sandbox testing.
 - Extracted testing prompt boilerplate in `test-server/prompt-template.md`.
-- Three new gotchas (#19–21) for `sqlite_batch_insert` key alignment, `sqlite_schema_diff` parameter format, and `sqlite_upsert` `conflictColumns` fallback behavior.
+- Three new gotchas for `sqlite_batch_insert` key alignment, `sqlite_schema_diff` parameter format, and `sqlite_upsert` conflict column behavior.
 - `outputSchema` registry section in `tool-reference.md`.
 - `dockerfile-patch-drift.yml` CI workflow to detect stale Dockerfile transitive dependency patches.
 
 ### Changed
-- Added guidance to all testing prompts instructing agents to gracefully handle and note missing cross-group tools (such as `sqlite_execute_code` or `sqlite_write_query`) without failing the test suite.
-- **text**: Added `includeRowData` parameter to `sqlite_fts_search` and `sqlite_fts_match_info` schemas (default true) to allow omitting full row payloads and returning only `rowid` and `rank`/`score`, conserving LLM context window tokens for large FTS documents.
-- **text**: Updated `text.md` server instructions to properly document `table` and `column` parameter support for `sqlite_text_sentiment` database execution.
-- **virtual**: Added `limit` parameter to `sqlite_generate_series` schema (default 100, max 1000) to prevent oversized JSON array payloads during large range generation, conserving LLM context window.
-- **core**: Added `selectColumns` parameter to `sqlite_date_add` and `sqlite_date_diff` schemas to allow precise column selection and mitigate oversized payloads when querying wide tables.
-- **[MCP 2025 Spec]** Implemented `sensitiveHint` tool annotation across all tool groups.
-- **[MCP 2025 Spec]** Implemented `ASSISTANT_FOCUSED` resource annotations for dynamically generated help resources.
-- Updated `tool-annotations.test.ts` invariant tests to strictly enforce `sensitiveHint` definitions on all tools.
-- Disabled Dependabot version updates and auto-merge workflow to prefer local dependency management and avoid CI/CD merge conflicts.
+- Added guidance to all testing prompts instructing agents to gracefully handle missing cross-group tools without failing the test suite.
+- Added `includeRowData` parameter to `sqlite_fts_search` and `sqlite_fts_match_info` schemas (default true) to conserve LLM context.
+- Updated `text.md` server instructions to properly document parameter support for `sqlite_text_sentiment`.
+- Added `limit` parameter to `sqlite_generate_series` schema to prevent oversized JSON arrays.
+- Added `selectColumns` parameter to `sqlite_date_add` and `sqlite_date_diff` schemas to mitigate oversized payloads.
+- Implemented `sensitiveHint` tool annotation across all tool groups [MCP 2025 Spec].
+- Implemented `ASSISTANT_FOCUSED` resource annotations for dynamically generated help resources [MCP 2025 Spec].
+- Updated invariant tests to strictly enforce `sensitiveHint` definitions on all tools.
+- Disabled Dependabot version updates and auto-merge workflow to prefer local dependency management.
 - Updated `sqlite_create_table` to natively support `STRICT` tables, `foreignKeys`, and `checkConstraints`.
-- Updated `sqlite_describe_table` to detect and report virtual or stored generated columns via `PRAGMA table_xinfo`.
+- Updated `sqlite_describe_table` to detect virtual or stored generated columns via `PRAGMA table_xinfo`.
 - Updated DDL tools and schema introspection to query `sqlite_temp_master` for temporary tables, indexes, and constraints.
 - Filtered internal SpatiaLite shadow tables and db-mcp system tables from resources.
-- Refactored `mcp-server.ts` into registration sub-modules and `session.ts` into stateful/stateless modules to adhere to the 500-line modularity limit.
-- Extracted `validateSameDirPath()` and `captureSchemaSnapshot()` to consolidate utility functions across tools.
-- Standardized 41 testing prompts across all test suites into a cohesive format and automated formatting via a Node script.
-- Replaced hardcoded "We're currently testing Native mode" note with auto-detection instruction (`list_adapters`) in prompt template.
-- Updated WASM Mode text dynamically across codemode prompts using the `[NATIVE ONLY]` annotation.
-- Synchronized inventory tool counts and file counts across all documentation, test suites, and source files.
-- Consolidated testing documentation, added Tool Count Taxonomy to `tool-reference.md`, and standardized CHANGELOG format.
+- Refactored `mcp-server.ts` and `session.ts` to adhere to the 500-line modularity limit.
+- Extracted `validateSameDirPath()` and `captureSchemaSnapshot()` to consolidate utility functions.
+- Standardized testing prompts across all test suites and automated formatting.
+- Replaced hardcoded native mode note with auto-detection instruction in prompt template.
+- Updated WASM Mode text dynamically across codemode prompts.
+- Synchronized inventory tool counts and file counts across all documentation and source files.
+- Consolidated testing documentation and added Tool Count Taxonomy to `tool-reference.md`.
 - Replaced deprecated alias method names with canonical names in testing prompts and documentation.
-- Synchronized sandbox security documentation across `README.md`, `DOCKER_README.md`, `SECURITY.md`, and `code-map.md` to reflect V8 `codeGeneration` restrictions, Proxy nullification, RPC allowlist validation, and readonly Proxy traps.
-- Added missing `full` OAuth scope to `README.md` and `DOCKER_README.md` scope tables and hero rows (present in source and `SECURITY.md` since v1.1.0). Added missing `CODE_MODE_MAX_RESULT_SIZE` env var to `DOCKER_README.md`. Expanded `code-map.md` auth directory tree to list all `scopes/` and `middleware/` sub-files. Added dynamic scope set derivation note to `SECURITY.md`.
-- Separated TypeScript declaration generation (`tsc`) from Javascript bundling (`tsup`) to improve build times.
-- Optimized `SandboxPool` to use an LRU eviction strategy for `isolated-vm` contexts to cap memory usage.
-- Refactored `CodeModeSecurityManager` validation to short-circuit upon the first violation for O(1) best-case rejection.
+- Synchronized sandbox security documentation to reflect code generation restrictions, Proxy nullification, and RPC allowlists.
+- Added missing `full` OAuth scope to scope tables and updated `SECURITY.md`.
+- Separated TypeScript declaration generation from Javascript bundling to improve build times.
+- Optimized `SandboxPool` to use an LRU eviction strategy for `isolated-vm` contexts.
+- Refactored `CodeModeSecurityManager` validation for O(1) best-case rejection.
 - Implemented global WASM `initSqlJs` promise caching to prevent redundant engine initializations.
-- Added context-window protection to `window.ts` and `advanced.ts` by explicitly validating wide column counts.
-- Increased schema cache TTL to 30 seconds and implemented targeted DDL invalidation to eliminate polling latency.
-- Updated `prompt-template.md` to note that `isError: true` on `success: false` is now automated by the framework (`tools.ts`) and generalized the hardcoded absolute path in `standardize-prompts.js` into a portable relative instruction.
+- Added context-window protection by explicitly validating wide column counts.
+- Increased schema cache TTL to 30 seconds and implemented targeted DDL invalidation.
+- Replaced unmaintained `sqlite-parser` with enhanced internal regex structural validation.
+- Updated HTTP transport and Code Mode to explicitly support `rate-limit-redis` for multi-instance deployments.
+- Refactored `scope-map.ts` to use dynamic `registerToolScope()` string registration, deprecating static group evaluation.
 
 ### Removed
-- Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
+- Hard-removed the Simple Bearer Token authentication to enforce OAuth 2.1 as the sole HTTP authentication mechanism.
 
 ### Fixed
-- **admin**: Fixed `sqlite_create_view` returning `{success: false, message: ...}` instead of the structured `{success: false, error: ..., code: "VALIDATION_ERROR"}` format when rejecting non-SELECT queries.
-- **admin-audit**: Added `limit` and `offset` pagination to `sqlite_audit_list_backups` to prevent oversized payloads when listing large numbers of snapshots, conserving LLM context window tokens.
-- **text**: Fixed Zod validation failure in `sqlite_text_replace` when called with legacy `searchPattern` and `replaceWith` aliases by properly exposing and resolving them in the handler, ensuring backward compatibility.
-- **migration**: Fixed raw MCP `-32602` error frames thrown during Zod schema validation in `sqlite_migration_history`, `sqlite_migration_status`, and `sqlite_migration_init` by moving `Schema.parse(params)` inside the `try-catch` blocks, ensuring validation errors are returned as structured handler errors.
-- **migration**: Fixed wrong-type numeric coercion validation in `sqlite_migration_history` and `sqlite_migration_rollback` being preemptively rejected by the MCP SDK by implementing a `z.union([z.number(), z.string()]).refine(...)` workaround, ensuring that string types are validated by the handler instead of crashing the Code Mode sandbox.
-- **json**: Fixed missing `limit` parameter in `sqlite_json_select` schema and handler, ensuring large dataset queries can be properly constrained to prevent oversized payloads and enabling robust wrong-type numeric coercion validation.
-- **json**: Fixed `sqlite_create_json_collection` incorrectly returning success instead of a `TABLE_EXISTS` domain error when attempting to create a table that already exists.
-- **introspection**: Added proactive SQL syntax validation to `sqlite_migration_risks` to correctly flag non-SQL strings (e.g., `"INVALID SQL"`) as high-risk syntax errors instead of returning zero risks, improving offline DDL analysis accuracy.
-- **introspection**: Fixed Zod validation failure in `sqlite_query_plan` when called with the legacy `query` alias by updating the schema and handler to properly resolve the alias and return structured validation errors.
-- **tests**: Fixed artifact cleanup bug in `reset-database.ps1` where temporary test views (like `temp_audit_test_view`) were never dropped because the script only executed `DROP TABLE` statements.
-- **tests**: Fixed WASM E2E test suite failures (`Table not found`, missing tables in schema) caused by the `sql.js` adapter loading a stale in-memory database file. Added a `wal_checkpoint(TRUNCATE)` step to `reset-database.ps1` to ensure all seeded tables (e.g. `test_embeddings`) are flushed from the WAL to the main file before tests begin.
-- **core**: Fixed global Zod SDK validation monkey-patch in `mcp-server.ts` by ensuring `isError: true` is properly assigned to Zod validation failures, preventing raw `-32602` error frames and enforcing consistent structured error payloads.
-- **core**: Fixed `sqlite_batch_insert` and `sqlite_upsert` tools incorrectly returning empty `rows` arrays when `returning: false` is specified, reducing payload size and token usage.
-- **core**: Fixed `sqlite_write_query` silently dropping returned rows by appending `rows: result.rows` to the handler's success return object, restoring full support for `RETURNING *` clauses.
-- **core**: Modified global `mcp-server.ts` Zod SDK input validation monkey-patch to output the exact string `"Validation error: "` instead of `"MCP error -32602: Input validation error: "` to strictly match expected handler validation error formatting, improving client error parsing reliability.
-- **admin-extensions**: Hardened `sqlite_create_series_table` fallback implementation by restricting the maximum series length to 100,000 rows to prevent unbounded memory consumption and host starvation during manual insertion loops.
-- **core**: Fixed global `isError` flag bug in `src/adapters/registration/tools.ts` by ensuring `isError: true` is properly appended to the MCP response frame whenever a tool handler returns `success: false`. This provides global architectural consistency and eliminates raw `-32602` error frames across all 65 standard tools during Zod validation sweeps.
-- **admin**: Fixed bug in `sqlite_pragma_database_list` where Native adapter instances erroneously appended the WASM virtual filesystem warning note by comparing the internal basename against the full absolute configured path.
-- **admin**: Fixed `isError` flag consistency in `audit-tools.ts`: removed `isError: true` from **success** paths (which caused the SDK to frame valid responses as cascade errors) while keeping it on **error** paths (required to bypass `outputSchema` validation for non-conforming error shapes, preventing raw `-32602` frames).
-- **admin**: Fixed `AuditListBackupsOutputSchema` and `AuditGetBackupOutputSchema` to extend `ErrorResponseFields.shape` and require `success: z.boolean()` for architectural consistency across audit tools.
-- **admin**: Fixed `sqlite_audit_diff_backup` returning empty strings for `snapshotTimestamp` and `snapshotTarget` by correctly mapping them from the nested `metadata` property.
-- **admin**: Enforced architectural consistency by implementing and registering `outputSchema` definitions for all 5 server-level audit tools in `admin.ts` and `audit-tools.ts`.
-- **admin**: Fixed a critical architectural bug in `auditInterceptor` where `queryAdapter` was permanently `undefined` because it was never wired after the database adapter connected. Added `setQueryAdapter` to the `AuditInterceptor` interface and updated `mcp-server.ts` to properly wire it, restoring the ability to capture pre-mutation DDL snapshots.
-- **admin**: Fixed `sqlite_drop_view` backup target mapping in `backup-manager.ts` incorrectly using `targetKey: "view"` instead of `viewName`, which caused generated snapshot files to use `unknown` as the target name.
-- **tests**: Fixed incorrect assertions in `test-admin-audit.md` that falsely claimed `sqlite_write_query` triggers automatic schema backups. Corrected the prompt to properly use `sqlite_drop_table` to trigger the audit pre-mutation snapshots.
-- **admin**: Fixed raw MCP error frames (`-32602`) thrown during empty parameter Zod validation sweeps by adding `.default("")` to `inputSchema` filename arguments for `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, and `sqlite_audit_restore_backup`, routing validation properly to the internal handler.
-- **tests**: Fixed Playwright E2E tests (`errors.spec.ts`, `wasm.spec.ts`) failing due to the global `isError: true` fix by properly asserting `expect(response.isError).toBe(true)` on expected validation and SDK errors.
-- **tests**: Fixed Playwright E2E write tool execution tests (`tools.spec.ts`, `streamable-http.spec.ts`) incorrectly triggering DDL rejection blocks by migrating their `CREATE TABLE` payloads to harmless `UPDATE` queries.
+- **Error Handling**: Eliminated raw MCP `-32602` error frames by enforcing structured Zod validation and domain-specific errors across all tool groups (migration, json, introspection, core, codemode).
+- **Payload Optimization**: Added `limit` and `offset` pagination, and truncated large `SELECT` results to prevent oversized JSON payloads in `admin-audit`, `json`, `transactions`, and `core` tool groups.
+- **Data Validation**: Fixed logic errors in JSON equality checks (`sqlite_json_diff`), syntax validation in offline DDL tools (`sqlite_migration_risks`), and path validation in administrative backup tools.
+- **Test Suites**: Fixed test runner artifact cleanup logic, Playwright E2E execution bugs during DDL blocks, and mocked adapter missing methods.
+- **Adapter Parity**: Ensured `transactions` tool group is registered in `native-sqlite-adapter.ts`, improved WASM graceful degradation handling, and fixed WAL flush synchronization issues during tests.
+- **SQL Execution**: Restored `RETURNING *` support in batch insert tools, fixed syntax errors when `whereClause` is missing in text and JSON tools, and resolved aliasing bugs in date functions.
+- **Admin & Schema**: Fixed validation return shapes for `sqlite_create_view`, improved `sqlite_list_triggers` error reporting, and ensured accurate temporary table indexing.
+- **Sandbox/Codemode**: Resolved TypeScript dynamic assignment typing errors and secured `worker-script.ts` prototype freezing order.
+- **Native Modules**: Replaced brittle `process.env.PATH` mutation for loading SpatiaLite on Windows with a secure native `AddDllDirectory` C++ addon.
 
-- **core**: Modified the global `createToolError` monkey-patch in `mcp-server.ts` to strictly target `"Input validation error"`. This restores proper SDK error propagation (`isError: true`) for missing tools (fixing WASM graceful degradation and test setup) while still safely converting Zod validation failures into structured JSON.
-- **transactions**: Added payload truncation to `sqlite_transaction_execute` to strictly limit `SELECT` statement results to 50 rows, preventing excessive context window consumption and JSON payload stuffing from large queries.
-- **transactions**: Fixed `sqlite_transaction_begin` schema silently falling back to `"deferred"` on invalid mode inputs instead of failing validation by removing the `z.preprocess()` silencer.
-- **text**: Fixed parameter naming inconsistency in `sqlite_text_replace` by renaming `searchPattern` to `search` and `replaceWith` to `replacement` to match documented behavior and align with other text search tools (`fuzzyMatch`, `phoneticMatch`, `advancedSearch`).
-- **stats**: Fixed `sqlite_window_lag_lead` missing alias resolution for `valueColumn` -> `column`, bringing it into consistency with other window tools.
-- **json**: Refactored manual `{ success: false }` error returns in `sqlite_json_group_object`, `sqlite_jsonb_convert`, and `sqlite_json_normalize_column` handlers to throw `ValidationError` instances, ensuring architectural consistency by funneling all errors through `formatHandlerError()`.
-- **json**: Fixed `sqlite_json_each` failing with `ambiguous column name` errors by wrapping base table filtering in a subquery before `CROSS JOIN json_each` to completely isolate the `WHERE` clause from virtual column collisions, removing a brittle regex replacement workaround.
-- **json**: Fixed `sqlite_json_keys` applying `LIMIT 1` to `WHERE` clause extractions, failing to return distinct keys across all matching rows as documented.
-- **json**: Fixed `sqlite_json_diff` returning `identical: false` when both compared JSON paths evaluated to `NULL` (missing) by using the SQLite `IS` operator instead of `=` to properly handle `NULL` equality.
-- **introspection**: Fixed wrong-type numeric coercion for `limit` parameter in `sqlite_storage_analysis` by utilizing `z.preprocess(coerceNumber)` to ensure string inputs fall back to default correctly instead of throwing raw Zod validation errors.
-- **core**: Fixed missing `TABLE_NOT_FOUND` error reporting in `sqlite_list_triggers` when querying a non-existent table.
-- **core**: Fixed regex parser in `query-executor.ts` and `suggestions.ts` improperly capturing schema names instead of table/column names when formatting `no such table: schema.table` SQLite errors, preventing false-positive `TABLE_NOT_FOUND` alerts on the `main` schema.
-- **admin**: Fixed path validation logic in `sqlite_dump` that evaluated a manually-constructed safe path instead of the user-provided absolute `outputPath`, which failed to reject paths outside the workspace directory while falsely reporting success (CWE-22).
-- **schemas**: Fixed wrong-type numeric coercion for Zod schema validation across all tool groups by updating `coerceNumber` in all schema files to correctly reject invalid numeric strings (e.g., `"abc"`) instead of silently falling back to `undefined` and triggering incorrect default values.
-- **core**: Removed LIKE wildcard blocklist rule from where-clause.ts to allow valid LIKE operator usage in string replacements and filtering tools.
-- **codemode**: Fixed `sqlite_execute_code` throwing raw MCP `-32602` validation errors when called with empty parameters by adding `.catch("")` to the `code` parameter in `ExecuteCodeSchema`, gracefully returning a structured `CODEMODE_VALIDATION_FAILED` error instead.
-- **migration**: Fixed `sqlite_migration_apply` and `sqlite_migration_rollback` failing to execute multi-statement migration scripts (e.g. `CREATE TABLE ...; CREATE INDEX ...;`) by bypassing global query validation and using `.exec()`/`.run()` natively via a new `executeScript` method on the `DatabaseAdapter` interface. Migration scripts remain protected against unsafe DDL (e.g. `ATTACH`, `LOAD_EXTENSION`) via `validateMigrationSql()`.
-- **core**: Hardened `sqlite_batch_insert` by moving empty-rows validation from the handler logic to a strict Zod `.min(1)` array constraint in `BatchInsertSchema`.
-- **admin**: Fixed sandbox bypass for `ATTACH`/`DETACH` in `sqlite_backup`, `sqlite_verify_backup`, and `sqlite_attach_database` by switching to `adapter.rawQuery()` for trusted internal execution.
-- **admin**: Patched path traversal vulnerability in `sqlite_dump` by explicitly checking for and rejecting `..` traversal sequences (CWE-22).
-- **virtual**: Fixed SQL syntax error in `sqlite_create_csv_table` caused by redundant double quotes around the table name.
-- **json**: Fixed SQL syntax error in `sqlite_json_security_scan` caused by double-quoting already sanitized identifiers.
-- **core**: Fixed missing `whereClause` parameter support across all tools using `WhereConditionSchema` (e.g., json, stats, inference, text, vector) by gracefully restoring backward compatibility and properly passing the string to `buildWhereClause()` instead of silently dropping it and executing on all rows.
-- **virtual**: Fixed `sqlite_generate_series` returning a misleading "missing parameters" error instead of a Zod type error by removing the `.optional()` workaround.
-- **codemode**: Resolved strict TypeScript typing mismatch and ESLint dynamic-delete errors during dynamic object assignment in `api.ts`.
-- **introspection**: Fixed `sqlite_index_audit` returning success with empty findings when provided with a non-existent table, instead of returning a structured `TABLE_NOT_FOUND` error.
-- **tests**: Fixed mocked test adapter missing `rawQuery` method causing false-positive test failures in `restore.test.ts`.
-- **server**: Fixed lint errors in `mcp-server.ts` by using optional chaining and correcting `ErrorCategory` reference.
-- Completely removed all unparameterized SQL template string evaluation from `executeReadQuery` and `executeWriteQuery` across all tools, migrating fully to native `?` bindings to resolve all identified SQL injection (SQLi) vulnerabilities.
-- Hardened `buildWhereClause` utility to securely generate and bind parameters arrays, preventing conditional injection attacks.
-- Fixed `json_each` alias collision regex in json operations to correctly match and qualify unquoted `id` column references in WHERE clauses.
-- Resolved syntax errors in `sqlite_json_update`, `sqlite_json_merge`, and `sqlite_text_replace` when executing without a WHERE clause by implementing empty `whereSql` checks.
-- Fixed window function schemas (`RowNumberSchema`, etc.) to securely validate `WhereConditionSchema` arrays instead of arbitrary constraints.
-- `sqlite_date_diff` processing of string and numeric literals.
-- `sqlite_date_add` returning silent `null` values for out-of-bounds dates instead of clear errors.
-- Table filtering in `sqlite_get_indexes` failing to apply to `sqlite_temp_master` during `UNION ALL` queries.
-- `sqlite_drop_trigger` silent failures by requiring `ifExists: true` when dropping non-existent triggers.
-- Missing limit parameters in `sqlite_date_add` and `sqlite_date_diff` bypassing row truncation safeguards.
-- **tests**: Fixed testing loop regression where out-of-date instructions in `gotchas.md` and `test-codemode-advanced-core.md` were incorrectly prompting agents to modify `sqlite_write_query` to handle trigger DDL instead of utilizing the dedicated admin tools `sqlite_create_trigger` and `sqlite_drop_trigger`.
-- **core**: Fixed missing `whereClause` parameter support and Zod validation bugs in `sqlite_count`, `sqlite_exists`, `sqlite_date_add`, and `sqlite_date_diff` by explicitly adding `whereClause` to their schemas and handling aliasing correctly without stripping the field.
-- Nested tools failing to emit progress notifications to the client due to missing `RequestContext` in `sqlite_execute_code`.
-- Quadruple-escaped backslashes in `attachDatabase` and `vacuumInto` paths across codemode test scripts.
-- Duplicate, colliding, and missing test phase and item numbers across multiple test suites.
-- `standardize-prompts.js` script corrupting regex patterns containing `$` and incorrectly replacing schema references.
-- Outdated npm dependency patch versions in `SECURITY.md`.
-- Inaccurate Code Mode API mappings, parameter names, and descriptions in server instruction source files.
-- Stale tool counts, prompt counts, directory references, and file paths across `code-map.md`, test READMEs, and script outputs.
-- Incorrect tool count columns, inline headers, and ambiguous `Tools` column names in documentation.
-- Stale hero/marketing tool counts across `README.md`, `DOCKER_README.md`, and `server.json` by adopting a generic `170+` format.
-- Timing side-channel attacks in bearer token comparison by using `crypto.timingSafeEqual`.
-- Missing CLI warning when `--auth-token` is used instead of the recommended `MCP_AUTH_TOKEN` environment variable.
-- Inconsistent Post-Test Procedures sections across test directory READMEs compared to the canonical `prompt-template.md`.
-- Misleading `sqlite_stats_top_n` gotcha describing auto-exclusion behavior instead of actionable guidance to always pass `selectColumns`.
-- Ambiguous "Backup/Restore/Dump" label in WASM vs Native table omitting `VacuumInto` and `Verify` from the 5-tool set.
-- Missing tool count in `text.md` title header, inconsistent with all other group instruction files.
-- Admin instruction title conflating 32 group tools with 5 server-level audit tools into a single count.
-- Dead-end `dev-schema` and `full` shortcut references in `migration.md` gotchas without explaining `--tool-filter` context.
-- Fixed Vitest 4 deprecation warning by moving `poolOptions` to top-level `maxWorkers` in `vitest.config.ts`.
-- Fixed `worker-script.ts` prototype freezing order, neutralizing `Function` without breaking the isolation context during initialization.
-- Fixed STDIO and stateless HTTP transport logic to accurately assume local `admin` scope when OAuth is not configured, preventing false-positive authorization rejections on the CLI and unprotected HTTP endpoints.
-- Fixed `validateSameDirPath` tests to correctly expect `:memory:` paths to fail path validation following recent security tightening.
-- Fixed `registration.test.ts` to correctly mock `getAuthContext()` for isolation testing.
-- **tests**: Fixed E2E testing suite to gracefully skip Code Mode tests when `isolated-vm` native binaries are unavailable, preventing false-positive pipeline failures on incompatible host environments.
-- **transactions**: Fixed missing "transactions" tool group from `getSupportedToolGroups()` in `native-sqlite-adapter.ts`, which caused transaction tools to be silently dropped by the tool filter during server initialization in Native mode.
 ### Security
-- **[Critical]** Transport Security: Added a startup initialization check to explicitly prevent unauthenticated HTTP transport in production and upgraded the rate limiting warning to a critical security error to prevent rate limit amplification attacks.
-- **[Critical]** Query Validation: Added `ATTACH`, `DETACH`, and `LOAD_EXTENSION` to the global query validation blocklist (`DANGEROUS_PATTERNS` / `BLOCKED_DDL_PATTERNS`) to prevent Code Mode sandbox escapes and unauthorized file modification (CWE-89, CWE-22).
-- **[Critical]** Adapter API: Decoupled `rawQuery` from `executeWriteQuery` across all SQLite adapters to serve as a secure, internal-only bypass for query validation, allowing internal tools (`restore`, `pragma`, `fts`) to safely execute trusted administrative commands without weakening the public query validation layer.
-- **[High]** Credential Redaction: Expanded `SENSITIVE_KEY_PATTERN` in `redaction.ts` to include `.npmrc` keys, API tokens, and AWS secrets, and implemented recursive structural array redaction to fully sanitize deeply nested objects in Code Mode audit logs (CWE-200). 
-- **[High]** Authorization: Fixed a vulnerability in `tools/list` filtering where the MCP SDK handler could fall back to an unfiltered state, ensuring OAuth per-tool scopes are strictly enforced during protocol discovery (CWE-862).
-- **[High]** Input Validation: Fixed a PRAGMA injection vulnerability in `query-validation.ts` where dangerous SQLite commands could be hidden behind multi-line `/* ... */` or inline `--` comments by moving comment stripping before AST evaluation (CWE-89).
-- **[Medium]** Information Disclosure: Removed the `X-Powered-By` header in HTTP transport middleware to prevent framework version fingerprinting (CWE-200).
-- **[Medium]** Information Disclosure: Obfuscated the adapter ID mapping in `list_adapters` to prevent potential exposure of inline credentials or paths in connection strings (CWE-200).
-- **[Medium]** CI/CD: Removed `secrets: inherit` from the `gatekeeper.yml` workflow, enforcing least-privilege credential access for reusable security pipelines (CWE-250).
-- **[Low]** Authentication: Added a startup warning in `cli.ts` to detect and alert operators when `MCP_AUTH_TOKEN` is configured with low entropy (e.g., short or predictable strings) (CWE-330).
-- **[High]** Code Mode sandbox: Explicitly blocked `\u` and `\x` unicode/hex escapes in identifiers before pattern matching to prevent blocklist evasion (CWE-116).
-- **[High]** Query Validation: Fixed stacked query bypass by replacing blocks with a dummy token `_BLOCK_` before semicolon counting rather than after (CWE-89).
-- **[High]** Input Validation: Removed unescaped single-quoted operand return path in `sqlite_date_diff` to prevent SQL injection (CWE-89).
-- **[High]** Information Disclosure: Redacted encryption keys (`key`, `hexkey`) from PRAGMA read paths (CWE-200).
-- **[High]** Scope Escalation: Explicitly rejected `admin` scope tool invocations originating from the sandbox when running in no-auth mode (CWE-862).
-- **[High]** DoS: Upgraded Code Mode rate limit `clientId` from anonymous IP to process-level UUID in STDIO mode, preventing bucket collision (CWE-400).
-- **[Medium]** Logging: Throttled implicit admin warning logs in HTTP transport to prevent flooding.
-- **[Medium]** CI/CD: Replaced deprecated Playwright GitHub Action in E2E workflows and fixed imprecise GitHub Action version pinnings to exact semantic versions.
-- **[Medium]** CI/CD: Failed CodeQL workflow closed on missing SARIF file and replaced placeholder SHA digests in agentic workflow lock files.
-- **[Low]** Security Configuration: Commented out live assignments in `.env.example` and synced PRAGMA allowlists to prevent drift.
-- **[High]** Transports: Implemented strict UUIDv4 format and length validation for `mcp-session-id` headers in `stateful.ts` to prevent hash-collision DoS (CWE-400).
-- **[High]** MCP Core: Fixed an authorization bypass in `registerToolImpl` where STDIO scopes were incorrectly bypassed when `authContext` was undefined (CWE-862).
-- **[High]** MCP Core: Added `WRITEFILE`, `READFILE`, and `sqlite_exec` to the `validateDdl` blocklist in `restore.ts` to prevent arbitrary file writes during database restoration (CWE-22, CWE-73).
-- **[High]** MCP Core: Moved DDL validation logic before `BEGIN...END` block stripping in `query-validation.ts` to prevent bypasses where malicious DDL could be hidden inside transaction blocks (CWE-89).
-- **[High]** Sandbox: Added `WebAssembly`, `SharedArrayBuffer`, and comprehensive bracket-notation construction patterns to the blocked regex list in `types.ts` to prevent advanced sandbox escapes (CWE-94).
-- **[Medium]** Transports: Added a TLS warning in `transport.ts` when bearer tokens are used over non-localhost HTTP connections (CWE-319).
-- **[Medium]** MCP Core: Escalated `sqlite_pragma_optimize` tool from `idempotent` to `admin` since it executes DML-like operations that modify internal SQLite statistics (MCP annotation compliance).
-- **[Medium]** CI/CD: Pinned Trivy action SHAs to the v0.28.0 release in `docker-publish.yml` and `security-update.yml` to prevent upstream compromise (CWE-1357).
-- **[Medium]** CI/CD: Secured Skopeo authentication in `docker-publish.yml` by using `--dest-creds` with environment variables instead of `echo` shell pipes, preventing credential leakage in process lists or logs (CWE-214).
-- **[Medium]** CI/CD: Pinned TruffleHog action SHA to the v3.81.0 release in `secrets-scanning.yml` to prevent immutability bypasses (CWE-1357).
-- **[Medium]** CI/CD: Fixed `retention-days: 0` in agentic workflow lock files to properly purge artifacts after 1 day instead of falling back to 90 days.
-- **[Medium]** CI/CD: Migrated Playwright installation to the official `microsoft/playwright-github-action` in `e2e.yml` to prevent arbitrary code execution from malicious `npx` packages (CWE-1357).
-- **[Low]** CI/CD: Documented Poutine suppression rationales for `untrusted_checkout_exec` in the lock files for transparent risk acceptance.
-- **[Low]** CI/CD: Added `e2e` dependency and `pull-requests: write` permissions to the publish job in `gatekeeper.yml` to ensure tests pass before deployment.
-- **[Low]** CI/CD: Fixed incorrect `actions/checkout` SHA comments across all workflows to accurately reflect `v4.1.1`.
-- **[Critical]** Migrations: Added `validateMigrationSql` logic to strictly prevent unauthorized DDL commands such as `ATTACH`, `DETACH`, `PRAGMA`, and `LOAD_EXTENSION` from executing inside `sqlite_migration_apply` and `sqlite_migration_rollback`.
-- **[High]** Authorization: Enforced explicit scope validation directly in the tool handlers using `scopesGrantToolAccess()` inside `built-in-tools.ts` and `audit-tools.ts` to prevent unauthorized execution in unauthenticated modes.
-- **[High]** CI/CD: Prevented potential secret leakage during the publish step by moving Skopeo registry credentials to an environmental `DEST_CREDS` variable rather than using command line arguments in `docker-publish.yml`.
-- **[Medium]** Authorization: Implemented a clear runtime warning in `transport.ts` when OAuth is disabled and the server falls back to an implicit `"admin"` scope (expected for local dev, dangerous in production).
-- **[Medium]** Code Mode Sandbox: Configured the V8 Isolate initialization in `sandbox.ts` to respect the user-defined `memoryLimitMb` from configuration rather than a hardcoded `128MB`.
-- **[Medium]** Code Mode Sandbox: Expanded the `blockedPatterns` array in `types.ts` to explicitly block prototype mutation APIs like `Object.getPrototypeOf`, `Object.setPrototypeOf`, and `__defineGetter__`.
-- **[Medium]** Tool Registration: Defended against tool annotation poisoning by sanitizing and limiting `tool.annotations?.title` lengths in `tools.ts`.
-- **[Medium]** CI/CD: Obfuscated NPM token credentials from intermediate shell evaluation contexts within `publish-npm.yml`.
-- **[Medium]** CI/CD: Synchronized all `codeql-action` pinned versions to `v4.35.5` across all action definitions to resolve mismatched execution logic.
-- **[Medium]** CI/CD: Established a core `.github/dependabot.yml` policy to proactively monitor and update GitHub Action versions.
-- **[Low]** Input Validation: Upgraded the `PRAGMA` schema value constraint to `z.number().finite().safe()` to mitigate unhandled floating-point extremes like `NaN` and `Infinity` in `admin.ts`.
-- **[Low]** Input Validation: Fixed a redundant normalization validation loop in `validate-path.ts`.
-- **[Low]** Scope Enforcement: Harmonized audit tool mapping strings in `mapping.ts` utilizing full `sqlite_audit_*` canonical names.
-- **[Critical]** Code Mode Sandbox: Removed deprecated `CODEMODE_ISOLATION_NATIVE_ADDON_ACK` escape hatch and changed default isolation to `isolate` (`isolated-vm`), ensuring true V8 separation by default.
-- **[Critical]** Authorization: Replaced implicit `admin` fallback in `registerToolImpl` with explicit scope enforcement to prevent tools from bypassing capability checks when scopes are undefined.
-- **[High]** DoS: Added `locking_mode` and `mmap_size` to the `BLOCKED_PRAGMAS` list in `query-validation.ts` to prevent exclusive database lock starvation.
-- **[High]** Path Traversal: Explicitly blocked `:memory:` virtual paths in `validate-path.ts` to prevent dynamic mount exploits in `sqlite_backup` and `sqlite_restore`.
-- **[High]** Code Mode Sandbox: Completely nullified `Function` constructor access in the `worker_threads` fallback and secured prototype freezing to block dynamic code compilation.
-- **[Medium]** CLI: Corrected `--server-host` exposure text to clarify `127.0.0.1` default, preventing unintentional network binding over `0.0.0.0`.
-- **[Medium]** Auth Validation: Corrected `clockTolerance` default parameter mismatch in `token-validator.ts` from 60 to 30 seconds for stricter JWT timing.
-- **[Medium]** CI/CD: Implemented `concurrency` block safeguards in `e2e.yml`, `lint-and-test.yml`, `security-update.yml`, and `codeql.yml` to automatically cancel stale runs.
-- **[High]** Build/Runtime: Externalized native and dynamic dependency modules (`sqlite-parser`, `acorn`, `isolated-vm`) in `tsup.config.ts` to prevent bundler dynamic `require` crashes during ESM execution.
-- **[High]** Query Validation: Implemented a secure fallback regex validation pipeline in `query-validation.ts` for modern SQLite syntax (`WITH`, `WINDOW`, `UPSERT`) that the legacy AST parser cannot process, preserving security against comment-hiding while restoring advanced query support.
-- **[Medium]** Code Mode Sandbox: Wrapped dynamic execution code in an asynchronous function wrapper before AST parsing to prevent `acorn` from rejecting valid top-level `await` and `return` statements in script mode.
-- **[Medium]** CI/CD: Corrected incorrectly annotated semantic version comments for pinned action SHAs to `v4` and `v3` to prevent supply chain confusion.
-- **[Critical]** Code Mode Sandbox: Fixed bypass in `validateCode` where multi-line `/* ... */` comments could hide malicious `import` or `eval` patterns from the regex blocklist by stripping all comments before validation.
-- **[High]** Session Management: Fixed missing session ownership verification in the legacy SSE transport (`legacy-sse.ts`), ensuring SSE streams are strictly bound to the authenticated subject that created the session.
-- **[High]** Admin Tools: Replaced PRAGMA blocklist with a strict allowlist in `pragma.ts`, fully mitigating the risk of zero-day SQLite PRAGMA vulnerabilities or unrecognized destructive commands.
-- **[Medium]** Auth Validation: Removed the insecure `NODE_ENV === "test"` bypass in `token-validator.ts` for JWKS HTTPS enforcement, protecting production deployments that might inadvertently run in a test-like environment context.
-- **[High]** Input Validation: Hardened `buildWhereClause` and all core/stats tool schemas to strictly require structured `WhereCondition[]` arrays, completely removing the legacy string-based `where` parameter that was vulnerable to injection edge cases.
-- **[Critical]** Authorization: Fixed PRAGMA bypass vulnerability in `sqlite_read_query` by extending global AST pre-parsing to explicitly reject state-mutating PRAGMAs.
-- **[High]** Input Validation: Escaped identifiers and validated check constraints within `sqlite_create_table` to prevent SQL injection in foreign keys and checks.
-- **[High]** DoS: Upgraded Code Mode rate limiter to a strict LRU (Least Recently Used) eviction algorithm to prevent spoofing-based rate limit starvation.
-- **[High]** Scope Enforcement: Re-mapped `sqlite_drop_table` to the `ADMIN_TOOLS` array dynamically to prevent execution by `write`-scoped tokens.
-- **[High]** Credential Leakage: Replaced regex string-replacement with recursive structural JSON redaction in Code Mode to ensure absolute payload integrity and prevent bypasses.
-- **[High]** Credential Echo: Expanded `SENSITIVE_KEY_PATTERN` in Code Mode and added comprehensive inline `SENSITIVE_VALUE_PATTERN` string redaction to the audit log interceptor to protect modern API keys.
-- **[High]** DoS: Mitigated ReDoS in `sqlite_regex_match` and `sqlite_regex_extract` by implementing a strict 10,000-character truncation threshold before regex execution.
-- **[High]** DoS: Implemented a hard 100-call quota for Code Mode RPC bridges per execution to prevent infinite loop host starvation.
-- **[Medium]** CI/CD: Broadened secrets scanning pull-request write permissions to support automated leak annotations.
-- **[H-52]** Code Mode Sandbox: Removed insecure `node:vm` fallback logic and migrated to `isolated-vm` for true V8 isolate memory and execution separation, preventing prototype pollution escapes.
-- **[H-53]** CI/CD: Removed `pull-requests: write` from `docker-publish.yml` and updated `skopeo` to securely read credentials instead of passing them in the command line (CWE-214).
-- **[H-54]** CI/CD: Recompiled `gh-aw` lockfiles to purge malicious prompt payloads and corrected spoofed dependency SHAs across `e2e.yml`, `security-update.yml`, and lockfiles (CWE-1357).
-- **[M-61]** HTTP Transport: Replaced `trustProxy` boolean with `trustedProxyIps` configuration to mitigate IP spoofing attacks.
-- **[M-62]** Query Validation: Implemented true AST-based SQL validation using `sqlite-parser` to replace weak regex-based DDL validation, preventing comment-hiding and whitespace bypasses.
-- **[H-50]** Virtual Tables: Parameterized queries in `info.ts`, `list.ts`, and `drop.ts` for virtual table schemas to prevent SQL injection.
-- **[H-51]** Admin Tools: Restricted `drop_virtual_table` to `admin` scope instead of `write`.
-- **[M-55]** Admin Tools: Added strict blocklist for destructive PRAGMAs (`writable_schema`, `trusted_schema`, `defensive`, `cell_size_check`, `temp_store_directory`) and coerced `PRAGMA optimize` mask input to an integer to prevent injection.
-- **[M-56]** OAuth Transport: Replaced manual buffer comparison with HMAC-SHA256 and `crypto.timingSafeEqual` in `oauth.ts` to prevent side-channel timing attacks.
-- **[M-57]** HTTP Transport: Added `trustedProxyCount` configuration to `getClientIp` in `middleware.ts` to prevent rate-limit bypass via spoofed `X-Forwarded-For` IPs.
-- **[M-58]** HTTP Transport: Hardened `matchesCorsOrigin` to exactly match `http://localhost` instead of using `.startsWith()`, preventing `http://localhost.attacker.com` bypasses.
-- **[M-59]** Code Mode Sandbox: Added `fetch` and `WebSocket` to the `blockedPatterns` regex list in `types.ts`.
-- **[M-60]** Code Mode Sandbox: Modified `worker-sandbox.ts` and `sandbox.ts` to strictly strip stack traces from output unless `process.env.NODE_ENV === "development"`.
-- **[L-40]** Admin Tools: Obscured path output in `create.ts` (backup tool) by using `nodePath.basename()`, preventing host path disclosure in the UI progress messages.
-- **[L-41]** Query Schemas: Added maximum limits `.max(100000)` to query/sql fields in `core.ts` to prevent payload stuffing.
-- **[L-42]** CI/CD: Migrated `$GITHUB_OUTPUT` usage in `publish-npm.yml` to securely use environment variables rather than direct script interpolation.
-- **[L-43]** CI/CD: Removed `--only-verified` from TruffleHog arguments in `secrets-scanning.yml` to broaden secret detection to offline resources.
-- **[L-44]** CI/CD: Uniquely named `playwright-report-${{ github.run_id }}` in `e2e.yml` to avoid race conditions.
-- **[M-7]** Idempotence & Description: Updated `sqlite_pragma_settings` and `sqlite_create_table` descriptions (CWE-200).
-- **[M-5]** Credential Echo: Added `sanitizeErrorMessage` to `formatHandlerError` and `interceptor.ts` to redact physical paths and credentials from driver errors (CWE-200, CWE-209).
-- **[M-8]** Scope Leak: Removed scope reflection from `InsufficientScopeError` in `auth/errors.ts` and refactored `tools/list` JSON-RPC filtering from the HTTP layer to the `mcp-server.ts` protocol layer (CWE-200, CWE-209).
-- **[M-9]** CI/CD Pinning: Confirmed all GitHub Actions workflows are pinned by commit SHA and ran `npm update` to explicitly lock dependencies.
-- **[H-38]** Input Validation: Replaced loose `.includes()` with boundary regex in DDL validation to prevent whitespace/tab bypasses (`LOAD_EXTENSION (`, `ATTACH `) (CWE-89).
-- **[H-39]** Path Traversal: Hardened `validateSameDirPath` by enforcing exact `dirname` matching, blocking access to legitimate subdirectories (CWE-22).
-- **[H-40]** Scope Escalation: Explicitly added `requiredScopes: ["admin"]` to `sqlite_execute_code` tool registration to prevent implicit scope fallback (CWE-862).
-- **[M-50]** HTTP Transport: Updated `getClientIp` to securely extract the rightmost `X-Forwarded-For` IP, preventing leftmost spoofing (CWE-346).
-- **[M-51]** Rate Limiting: Hardened `CodeModeSecurityManager` by clearing `rateLimitMap` when size exceeds 10,000 entries (CWE-400).
-- **[M-52]** Code Mode Sandbox: Updated `sandbox-factory.ts` production error to explicitly warn about string-concatenation bypasses (CWE-94).
-- **[M-53]** Input Validation: Fixed SQL validation bypass by applying Unicode `normalizeForPatternMatching` before `DANGEROUS_SQL_PATTERNS` regex matching (CWE-20).
-- **[M-54]** CI/CD: Narrowed third-party permissions in `secrets-scanning.yml` by removing raw `GITHUB_TOKEN` passing and scoping `pull-requests: write` appropriately (CWE-250).
-- **[L-37]** CI/CD: Replaced silent version fallback in `docker-publish.yml` with a hard `exit 1` pipeline failure (CWE-693).
-- **[C-5]** Input Validation: Added `TRIM`, `LTRIM`, and `RTRIM` to the `DANGEROUS_PATTERNS` blocklist to prevent character-by-character blind SQL extraction oracles (CWE-89).
-- **[H-37]** Audit Tools: Added `validateDdl` execution to `sqlite_audit_restore_backup` to prevent execution of unauthorized commands (`ATTACH`, `PRAGMA`) from tampered snapshot files (CWE-89).
-- **[C-3]** Rate Limiting: Fixed rate limit bypass by importing `isIP` from `net` and properly parsing array values from `X-Forwarded-For` when `trustProxy` is enabled in `middleware.ts` (CWE-307).
-- **[C-4]** Input Validation: Removed trailing and middle wildcards from `LIKE` operator blocklist and universally blocked `GLOB` usage to prevent blind SQL extraction oracles (CWE-89).
-- **[H-35]** Scope Escalation: Added rigorous scope validation wrapper inside Code Mode `api.ts` proxy to intercept internal tool executions and prevent unauthorized invocations (CWE-862).
-- **[H-36]** Input Validation: Added `FORMAT()` to `DANGEROUS_PATTERNS` blocklist to mitigate newly discovered SQL extraction oracle on SQLite 3.38+ (CWE-89).
-- **[M-49]** DoS: Hardened `DEFAULT_SECURITY_CONFIG` by lowering `maxExecutionsPerMinute` from 60 to 10 for Code Mode sandbox to mitigate potential CPU starvation (CWE-400).
-- **[H-33]** Scope enforcement: Fixed fail-closed bug in tool registration by populating `registerToolScopes` alongside `registerToolScope` for dynamically mapped tools (CWE-862).
-- **[H-34]** Path traversal: Constrained `:memory:` database bypass in `validateSameDirPath` to the current working directory, preventing arbitrary traversal (CWE-22).
-- **[M-46]** OAuth stream proxy: Fixed brittle SSE chunk filtering in `oauth.ts` by buffering incomplete chunks, ensuring robust redaction across boundaries (CWE-200).
-- **[M-47]** Code Mode sandbox: Upgraded Symbol regex filter to `/\bSymbol\b/i` to completely block isolated constructor references (CWE-94).
-- **[L-34]** Input validation: Added integer constraints to admin `z.number()` schemas to block `NaN`/`Infinity` SQL interpolation payloads (CWE-20).
-- **[L-35]** Code Mode logging: Plumbed discarded `console.*` worker output into a `logs` array on `WorkerResult` for visibility (CWE-532).
-- **[L-36]** Annotations: Updated `sqlite_write_query` to use `destructive` annotation since it executes `DELETE` statements.
-- **[M-48]** CI/CD: Removed legacy Copilot CLI scripts and pruned over-permissive `issues: write` from GitHub Actions workflows (CWE-250).
-- **[H-1]** CI/CD: Fixed expression injection vulnerability in `security-update.yml` and enforced strict SHA pinning for Trivy actions.
-- **[H-2]** CI/CD: Mitigated shell injection in `dockerfile-patch-drift.yml` and disabled credential persistence to prevent token theft.
-- **[M-1]** CI/CD: Scoped permissions and restricted auto-merge capabilities in `dependabot-auto-merge.yml`.
-- **[M-2]** CI/CD: Applied strict least-privilege permissions (`permissions: {}`) to `docker-publish.yml`.
-- **[L-1]** CI/CD: Removed unnecessary `deployments: write` permission from `gatekeeper.yml`.
-- **[H-3]** Code Mode sandbox: Updated `sandbox.ts` to implement strict disposal of the `vm` context after single-use, preventing prototype pollution via context reuse.
-- **[H-4]** Session management: Hardened session ownership logic in `stateful.ts` to prevent unauthenticated requests from hijacking authenticated sessions.
-- **[H-5]** Virtual tables: Hardened the delimiter schema in `virtual.ts` to single printable ASCII characters (including tabs) and securely escaped the parameter in `csv.ts` to prevent SQL injection.
-- **[H-6]** JSON operations: Implemented proper identifier quoting in `security.ts` to mitigate SQL injection risks during JSON extractions.
-- **[M-3]** Path validation: Added explicit null-byte (`\x00`) rejection to `validate-path.ts` to prevent bypasses.
-- **[M-4]** Admin tools: Hardened PRAGMA execution in `pragma.ts` to safely escape string values and prevent SQL injection.
-- **[M-5]** Audit manager: Corrected the target key mapping for the `sqlite_backup` tool in `backup-manager.ts` from `path` to `targetPath`.
-- **[L-2]** Annotations: Assigned the `destructiveHint` property to the `sqlite_restore` tool in `restore.ts` and corrected `sqlite_append_insight` annotation to `write` scope.
-- **[L-3]** OAuth: Clarified authentication logging in `oauth.ts` to properly warn about `--auth-token` bypassing granular scoping.
-- **[H-1]** Vector tools: replace direct `input.id` and `vectorJson` string interpolation with parameterized queries (`?` placeholders) in `sqlite_vector_store`, `sqlite_vector_batch_store`, `sqlite_vector_delete`, `sqlite_vector_get`, and `validateDimensions()`. Prevents SQL injection via crafted ID values (CWE-89).
-- **[H-2]** Convenience/datetime tools: add `validateWhereClause()` calls in `sqlite_count`, `sqlite_exists`, `sqlite_date_add`, and `sqlite_date_diff` handlers before WHERE clause concatenation. These tools previously bypassed the shared WHERE clause security layer entirely (CWE-89).
-- **[H-3]** Path validation: fix `validateSameDirPath()` boundary check to require trailing path separator in `startsWith` comparison. Prevents prefix collision bypass where `/app/data-evil/file.db` passes validation for database directory `/app/data` (CWE-22).
-- **[M-1]** WHERE clause validation: add `COALESCE()`, `NULLIF()`, `TYPEOF()`, and `IFNULL()` to `DANGEROUS_PATTERNS` blocklist, closing blind injection oracle bypass vectors for blocked `CASE WHEN` / `IIF()` alternatives (CWE-89).
-- **[H-1]** Code Mode sandbox: freeze built-in prototypes (`Object`, `Function`, `Error`, etc.) inside the `vm` context to prevent dynamic constructor chain escapes via string concatenation (e.g., `'con'+'structor'`).
-- **[H-2]** WHERE clause validation: add subquery detection pattern (`(SELECT ...`) to `DANGEROUS_PATTERNS` blocklist, preventing cross-table data exfiltration via boolean-based blind injection.
-- **[M-1]** CORS: change default `corsOrigins` from wildcard `["*"]` to deny-all `[]`, requiring explicit origin configuration for HTTP transport deployments.
-- **[M-2]** Scope enforcement: change `getRequiredScope()` default from `read` to `admin` (fail-closed) so unknown/unmapped tools require admin scope by default.
-- **[M-3]** Code Mode sandbox: add blocked patterns for general `Reflect.*` access, `Symbol.*` access, and `new Proxy` construction to close escape aid gaps.
-- **[M-4]** OAuth token validator: filter prototype-polluting keys (`__proto__`, `constructor`, `prototype`) from JWT payload before spreading into `TokenClaims` object.
-- **[L-4]** Docker: remove `npm install -g npm@latest` from production stage to reduce attack surface (npm not needed at runtime).
-- **[L-5]** CI/CD: add `push: branches: [main]` trigger to `secrets-scanning.yml` for defense-in-depth on direct pushes.
-- **[L-1]** Dependency overrides: add `//overrides` documentation field to `package.json` and extend `dockerfile-patch-drift.yml` to validate overrides against npm registry.
-- **[L-3]** Bearer auth: add startup warning when simple bearer auth is configured, documenting that per-tool scope enforcement is not active. Add SECURITY.md callout.
-- **[L-7]** CI/CD: add lockfile integrity verification step (SHA-256 + `git diff --exit-code`) before `npm ci` in `lint-and-test.yml`.
-- **[M-2]** Scope enforcement: align `getRequiredScopeForGroup()` and `getRequiredScopeForTool()` in `enforcement.ts` with fail-closed `admin` default.
-- **[M-3]** Code Mode sandbox: add `Proxy: undefined` to worker `vm` context globals, closing the `Proxy` constructor access vector alongside the existing `new Proxy` regex block.
-- **[M-1]** Code Mode sandbox: add `codeGeneration: { strings: false, wasm: false }` to `vm.createContext()`, disabling `eval()` and `Function()` construction from strings at the V8 engine level. This is the single most impactful hardening change — it closes the entire class of string-based code generation bypass attacks that regex patterns alone cannot fully prevent.
-- **[M-1]** Code Mode sandbox: add RPC method allowlist validation on the host side. The RPC handler now verifies every incoming method call against the serialized bindings allowlist before dispatching, preventing a compromised worker from invoking arbitrary host API methods.
-- **[M-1]** Code Mode sandbox: wrap group API objects in Proxy traps for readonly mode. Calling a stripped mutation method now throws a clear rejected Promise with available methods listed, instead of silently returning `undefined`.
-- **[M-3]** Code Mode sandbox: add streaming egress boundary enforcement in the worker script. Result serialization now aborts mid-flight via a `JSON.stringify` replacer when byte count exceeds `CODE_MODE_MAX_RESULT_SIZE` (default 100KB, cap 50MB), preventing OOM from oversized results.
-- **[L-2]** Code Mode sandbox: add `maxYoungGenerationSizeMb` resource limit to worker thread creation, capping V8 nursery allocation bursts to `max(8, memoryLimitMb/8)`.
-- **[L-2]** Code Mode blocked patterns: remove redundant `Reflect.construct` regex (already a strict subset of the broader `Reflect.*` pattern), normalizing to 18 patterns.
-- **[M-5]** WHERE clause validation: add `CASE WHEN` blind injection pattern to blocklist, preventing boolean-based data exfiltration without subqueries (CWE-89).
-- **[L-8]** WHERE clause validation: add 10KB length guard before regex matching to prevent ReDoS via extreme-length strings (CWE-1333).
-- **[L-9]** Health endpoint: gate detailed fields (`oauth`, `mode`, `activeSessions`) behind authentication, keeping only `status`/`timestamp` public for load balancer probes (CWE-200).
-- **[L-10]** Code Mode sandbox: add `logger.warning()` on worker pool exhaustion to surface DoS attempts in logs (CWE-862).
-- **[L-11]** Supply chain: create `.npmrc` with `ignore-scripts=true` to prevent transitive dependency install scripts from executing arbitrary code (CWE-506).
-- **[L-12]** Secrets scanning: enhance `.gitleaks.toml` with project-specific path allowlists and regex patterns for test fixtures and documentation placeholder tokens (CWE-693).
-- **[H-3]** Window functions: replace direct `orderBy`, `partitionBy`, and `selectColumns` interpolation with canonical `sanitizeIdentifier()` + `sanitizeOrderByExpr()` helpers, preventing SQL injection via unsanitized expressions (CWE-89).
-- **[H-4]** Window functions: add `validateDefaultValue()` to `sqlite_window_lag_lead`, restricting `defaultValue` to numeric literals, single-quoted strings, or `NULL` (CWE-89).
-- **[H-5]** Window functions: replace inline regex identifier validation (`/^[a-zA-Z_]…$/`) with canonical `validateIdentifier()` from `utils/identifiers.ts` for consistency and maintainability (CWE-89).
-- **[H-6]** SpatiaLite tools: replace inline regex identifier validation + single-quoted interpolation with canonical `validateIdentifier()` and `sanitizeIdentifier()` across `tools.ts` and `analysis.ts` (CWE-89).
-- **[M-6]** Window functions: harden `validateOrderByColumns()` to reject expression-like tokens containing `;()+*/` instead of silently skipping them, closing a validation bypass (CWE-89).
-- **[M-7]** WHERE clause validation: add `IIF()` and `GROUP_CONCAT()` to `DANGEROUS_PATTERNS` blocklist, closing blind injection bypass vectors for `CASE WHEN` alternatives (CWE-89).
-- **[M-8]** CORS: enforce HTTPS scheme for wildcard subdomain patterns (`*.example.com`) while exempting `localhost`/`127.0.0.1` for development workflows (CWE-346).
-- **[M-9]** Code Mode sandbox: strip stack traces from worker error responses in production (`NODE_ENV=production`), preventing internal path and dependency leakage (CWE-209).
-- **[M-10]** OAuth: add explicit warning log when discovery fails and `authorizationServerUrl` is used as fallback issuer, highlighting potential issuer mismatch risk (CWE-287).
-- **[L-13]** Annotations: add `ADMIN_FS` and `WRITE_FS` annotation presets with `openWorldHint: true` for filesystem-interacting tools (`attach_database`, `vacuum_into`, `dump`, `spatialite_import`) (MCP annotation compliance).
-- **[M-11]** WHERE clause validation: add Unicode NFC normalization and full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before blocklist pattern matching, preventing homoglyph-based bypass attacks (CWE-20).
-- **[M-12]** Code Mode annotations: set `openWorldHint: true` on `sqlite_execute_code` tool to signal MCP clients that Code Mode can invoke any tool group internally (MCP annotation compliance).
-- **[L-14]** Annotations: add `CODEMODE` annotation preset with `openWorldHint: true` for Code Mode tools.
-- **[L-15]** Docker: pin npm version in builder stage (`npm@11.4.2`) for reproducible builds.
-- **[L-16]** Docker: remove npm CLI from production image after transitive dependency patching to reduce attack surface.
-- **[M-13]** Scope enforcement: derive `ADMIN_TOOLS` set dynamically from `TOOL_GROUPS × TOOL_GROUP_SCOPES` and add `sqlite_`-prefixed variants to all scope sets (`READ_ONLY_TOOLS`, `WRITE_TOOLS`, `ADMIN_TOOLS`). Fixes privilege escalation where `write`-scoped OAuth tokens could invoke admin-only tools like `execute_code` because the hardcoded sets used stale generic names that didn't match MCP runtime tool registration (CWE-863).
-- **[L-17]** Tests: add `validate-path.test.ts` with edge case coverage for `validateSameDirPath()` path traversal prevention (symlinks, `..` chains, prefix collision, in-memory bypass).
-- **[L-18]** Tests: add tool description security audit to `tool-annotations.test.ts` scanning all 170+ tool descriptions for instruction-like language / prompt injection patterns.
-- **[C-1]** JSON path SQL injection: add `validateJsonPath()` utility with strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) and apply to all JSON tool handlers in `crud.ts`, `query.ts`, `json-helpers/read.ts`, and `json-helpers/write.ts`. Replaces weak `startsWith("$")` checks that allowed injection via `$') UNION SELECT...` payloads (CWE-89).
-- **[C-2]** Aggregate function SQL injection: add `validateAggregateFunction()` utility with whitelist validation (COUNT, SUM, AVG, MIN, MAX, GROUP_CONCAT, TOTAL) for `sqlite_json_group_object` `aggregateFunction` parameter. Prevents arbitrary SQL execution via scalar subqueries (CWE-89).
-- **[H-1]** Audit tool scope enforcement: add 5 audit tool names to `ADMIN_TOOLS` set in `mapping.ts` so `write`-scoped OAuth tokens cannot invoke destructive audit operations (`audit_cleanup`, `audit_restore_backup`) (CWE-862).
-- **[H-2]** NPM publish gate bypass: remove `workflow_dispatch` trigger from `publish-npm.yml` to prevent bypassing gatekeeper security pipeline (lint, CodeQL, Scout, Trivy) (CWE-693).
-- **[H-3]** Schema validation: `.partial().passthrough()` in tool registration accepted as intentional pattern — handlers always re-validate with strict schemas, and the SDK-layer weakening is required for alias support (e.g., `tableName`→`table`) and structured error responses (CWE-20, accepted risk).
-- **[M-1]** VM sandbox hardening: add `codeGeneration: { strings: false, wasm: false }` and frozen built-in prototypes to `sandbox.ts` VM fallback, matching `worker-script.ts` security posture (CWE-94).
-- **[M-3]** CodeQL blocking: add SARIF result check step to `codeql.yml` that fails on high/critical findings, preventing silent advisory-only analysis (CWE-693).
-- **[M-4]** Publish permissions: trim `contents:write`, `issues:write`, and `pull-requests:write` from gatekeeper.yml publish job (CWE-250).
-- **[M-5]** Audit credential echo: add `redactSensitiveKeys()` to audit interceptor that always strips credential-like fields (password, token, secret, authorization, apiKey, etc.) from audit log args regardless of global redact setting (CWE-200).
-- **[M-2]** Rate limit proxy trust: expand SECURITY.md proxy documentation with explicit `trustProxy` requirements and spoofing warnings (CWE-346).
-- **[L-5]** CODEMODE annotation: set `destructiveHint: true` on Code Mode annotation preset to accurately reflect that Code Mode can invoke destructive tool groups (MCP annotation compliance).
-- **[I-3]** E2E workflow: add explicit `permissions: contents: read` block to `e2e.yml` for least-privilege compliance.
-- **[H-7]** WHERE clause validation: add `REPLACE`, `VACUUM`, `ANALYZE`, `BEGIN`, `COMMIT`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`, `REINDEX`, and `EXPLAIN` to stacked query blocklist keyword set, closing injection bypass via unlisted SQL statements on the WASM `db.exec()` path (CWE-89).
-- **[M-14]** WHERE clause validation: add `LIKE` with leading wildcard (`LIKE '%...'`) pattern to `DANGEROUS_PATTERNS` blocklist, preventing full table scan DoS attacks (CWE-400).
-- **[H-8]** OAuth discovery: change issuer mismatch from warning to hard error per RFC 8414 §3.3, preventing key set swapping via DNS spoofing or compromised discovery endpoints (CWE-346).
-- **[M-15]** Token validator: pass configured `algorithms` allowlist to `jose.jwtVerify()` options, enforcing operator-specified algorithm policy instead of silently accepting any algorithm the JWK material permits (CWE-757).
-- **[M-16]** Token validator + auth server discovery: reject non-HTTPS JWKS and discovery URLs in production (`NODE_ENV !== 'development'`), preventing MITM exposure of trust material. Localhost is exempted for local development (CWE-319).
-- **[M-17]** OAuth transport: add startup warning when CORS wildcard origin (`*`) is combined with OAuth or bearer token authentication, alerting operators to the risky browser posture (CWE-346).
-- **[M-18]** Token validator: replace echoed `jose` error messages in JWT claim validation failures with generic `"Token claim validation failed"` message, preventing information disclosure of expected issuer, audience, or clock tolerance (CWE-209). Original error is still logged server-side for debugging.
-- **[L-19]** OAuth transport: redact full authorization server URL from warning logs when discovery fails, replacing with hostname-only `protocol://hostname***` format to avoid leaking internal infrastructure details (CWE-208).
-- **[L-20]** CI/CD: update Trivy action inline comments from misleading `# master` to accurate `# v0.35.0 (post-supply-chain-fix)` reflecting the clean commit SHA pinned after the March 2026 supply chain compromise.
-- **[L-21]** SECURITY.md: fix identifier documentation to match actual code regex `^[a-zA-Z_][a-zA-Z0-9_]*$` — removed incorrect claim that `$` signs are allowed (code was already more restrictive than documented).
-- **[L-22]** SECURITY.md: expand Code Mode threat model documentation to explicitly describe the `node:vm` architectural limitation, blast radius of a sandbox escape, and recommended process-level mitigations (`--cap-drop=ALL`, `--security-opt=no-new-privileges`, `isolated-vm`, read-only filesystem).
-- **[H-9]** Legacy SSE transport: remove outbound MCP payload logging from the SSE send interceptor that bypassed the logger's credential redaction. Previously logged `JSON.stringify(message).substring(0, 1000)` at `info` level, which could leak query results and embedded credentials to server logs (CWE-532).
-- **[H-10]** Session management: bind session IDs to authenticated subject (`req.auth.sub`) at creation and verify ownership on every POST, GET, and DELETE request. Prevents cross-client session hijack/IDOR where any authenticated client with a known session UUID could attach to or terminate another client's session (CWE-284, CWE-639).
-- **[M-19]** WHERE clause validation: add `GLOB` with leading wildcard pattern to `DANGEROUS_PATTERNS` blocklist, closing a DoS bypass where `GLOB '*...'` (case-sensitive equivalent of `LIKE '%...'`) could force full-table scans (CWE-400).
-- **[M-20]** OAuth resource server: sanitize `error_description` in `WWW-Authenticate` header by stripping embedded quotes and truncating to 200 characters, preventing attribute breakout (CWE-113) and internal infrastructure URL leakage from JWKS fetch errors (CWE-209).
-- **[M-21]** Token validator: replace raw error message in fallback catch-all with generic `"Token validation failed"` response. JWKS network/TLS errors could previously leak internal auth infrastructure URLs to clients via the `error_description` field (CWE-209).
-- **[M-22]** Code Mode sandbox: gate `CODEMODE_ISOLATION=vm` behind `NODE_ENV !== 'production'`, falling back to worker mode with a warning. The vm sandbox lacks frozen prototypes and Proxy nullification, making it unsuitable for production use (CWE-693).
-- **[M-23]** Code Mode sandbox: replace static `"user-code.js"` filename in `vm.Script` with per-execution `randomUUID()` filename for forensic traceability of sandbox stack traces (CWE-1059).
-- **[L-23]** WHERE clause validation: add `RANDOMBLOB()` and `ZEROBLOB()` to `DANGEROUS_PATTERNS` blocklist, preventing memory allocation DoS via compact payloads (CWE-400).
-- **[L-24]** Code Mode audit log: apply credential pattern redaction to code preview before logging, preventing embedded secrets (e.g., `const key = "sk-live-..."`) from leaking into server logs (CWE-532).
-- **[H-1]** WHERE clause validation: add `INSTR()`, `SUBSTR()`, `SUBSTRING()`, `LENGTH()`, `UNICODE()`, `CHAR()`, `REPLACE()` to `DANGEROUS_PATTERNS` blocklist, closing blind extraction oracle bypass vector where attackers can extract data character-by-character without subqueries or CASE WHEN (CWE-89).
-- **[M-4]** Query validation: consolidate `DANGEROUS_SQL_PATTERNS` into a single regex matching all dangerous SQL statement keywords after semicolons, mirroring the comprehensive keyword set in `where-clause.ts` (CWE-89).
-- **[H-2]** Code Mode RPC: `Object.freeze()` the serialized bindings map and all method arrays after construction, making the host-side RPC allowlist immutable against mutation from a compromised worker (CWE-471).
-- **[C-19]** CI/CD: remove `if: matrix.language == 'javascript-typescript'` condition from CodeQL failure enforcement step, extending hard-fail coverage to the `actions` matrix leg (CWE-693).
-- **[C-20]** CI/CD: trim unused `contents: write` and `pull-requests: write` permissions from `security-update.yml` and gatekeeper trivy job (CWE-250).
-- **[M-3]** CI/CD: change `docker-publish.yml` security-scan trigger from `if: always()` to `if: ${{ !cancelled() }}` to prevent execution after workflow cancellation (CWE-693).
-- **[C-18]** CI/CD: move `pull-requests: write` from `docker-publish.yml` top-level permissions to security-scan job only (CWE-250).
-- **[L-5]** CI/CD: add documentation comment in `gatekeeper.yml` explaining that PR security coverage is handled by independent workflow triggers.
-- **[L-2]** Code Mode audit log: extend credential redaction regex to cover AWS, GitHub PAT/OAuth (`ghp_`, `gho_`, `ghu_`, `ghs_`), Slack (`xoxb-`, `xoxp-`, `xoxs-`), and Azure prefixes (CWE-532).
-- **[M-5]** SECURITY.md: add file:line code reference for production vm gate enforcement (`codemode.ts:310-318`).
-- **[M-1]** Rate Limiting: Upgraded rate limiters in HTTP transport and Code Mode to optionally support a Redis shared store for multi-instance deployments.
-- **[L-3]** SECURITY.md: document in-memory session storage limitation for clustering deployments.
-
-### Changed
-- Replaced unmaintained `sqlite-parser` with enhanced internal regex structural validation
-- Updated HTTP transport and Code Mode to explicitly support `rate-limit-redis` for multi-instance deployments (Security Audit L-3).
-
-### Fixed
-- Replaced brittle `process.env.PATH` mutation for loading SpatiaLite on Windows with a secure native `AddDllDirectory` C++ addon (Security Audit Finding 23).
-- **[M-2]** Docker: create `docker-compose.prod.yml` with production-hardened defaults (`cap_drop: ALL`, `no-new-privileges`, `read_only`, `tmpfs`, resource limits, localhost port binding).
-- **[H-1]** Path traversal: add `validateSameDirPath()` check to `sqlite_backup` handler, preventing arbitrary file write via `VACUUM INTO` to paths outside the configured database directory (CWE-22).
-- **[H-2]** Path traversal: add `validateSameDirPath()` check to `sqlite_restore` handler, preventing arbitrary file read/attach via `ATTACH DATABASE` from paths outside the configured database directory (CWE-22).
-- **[M-1]** Path traversal + scope escalation: add `validateSameDirPath()` check to `sqlite_create_csv_table` and escalate `requiredScopes` from `write` to `admin` — filesystem-touching tools must require admin scope (CWE-22, CWE-862).
-- **[M-2]** WHERE clause validation: add `ABS()`, `HEX()`, `QUOTE()`, `PRINTF()` to `DANGEROUS_PATTERNS` blocklist, closing additional blind extraction oracle vectors (CWE-89).
-- **[M-4]** Dependabot: add `actions/dependency-review-action` gate before auto-merge, checking for new package risk, license changes (`GPL-3.0`, `AGPL-3.0`), and high-severity advisories (CWE-829).
-- **[M-5]** CI/CD: split `security-update.yml` issue creation into a separate job with scoped `issues: write` permission, removing unnecessary write access from the security-scan job (CWE-250).
-- **[M-8]** Annotations: fix `sqlite_backup`, `sqlite_restore`, `sqlite_create_csv_table`, and `sqlite_verify_backup` annotation presets to use `adminFs()` with `openWorldHint: true`, accurately signaling filesystem interaction to MCP clients (MCP annotation compliance).
-- **[M-8]** Scope enforcement: escalate `sqlite_verify_backup` `requiredScopes` from `read` to `admin` — tool uses `ATTACH DATABASE` on filesystem paths and must require admin scope (CWE-862).
-- **[L-4]** Security headers: add `X-Permitted-Cross-Domain-Policies: none` header to prevent Adobe Flash/Acrobat cross-domain requests.
-- **[L-6]** CI/CD: remove unnecessary `deployments: write` permission from `docker-publish.yml` merge-and-push job (CWE-250).
-- **[M-1]** SpatiaLite SQL injection: add `validateIdentifier(input.geometryColumn)` checks to `createSpatialTableTool` and `createSpatialIndexTool` in `tools.ts`, and parameterize sqlite_master table existence queries (CWE-89).
-- **[M-1]** SpatiaLite SQL injection: replace all `GeomFromText('${...}')` and `GeomFromGeoJSON('${...}')` string interpolation with `?` parameterized queries in `createGeometryTransformTool` and `createSpatialImportTool` in `analysis.ts`. Eliminates 15+ injection sites in WKT/GeoJSON handling (CWE-89).
-- **[M-1]** SpatiaLite SQL injection: replace manual quote escaping (`value.replace(/'/g, "''")`) in `createSpatialImportTool` additionalData handling with parameterized query placeholders (CWE-89).
-- **[M-2]** OAuth scope enforcement: extend `applyScopeEnforcementMiddleware` in `oauth.ts` to cover `resources/read` and `prompts/get` JSON-RPC methods, not just `tools/call`. Audit resources (`sqlite://audit`) require `admin` scope; other resources and prompts require `read` scope (CWE-862).
-- **[M-3]** Code Mode sandbox: replace `NODE_ENV` gate for VM sandbox with explicit `CODEMODE_ISOLATION_INSECURE=1` opt-in requirement. VM mode now requires both `CODEMODE_ISOLATION=vm` and `CODEMODE_ISOLATION_INSECURE=1` to activate, falling back to worker mode with a warning if acknowledgment is missing (CWE-693).
-- **[M-4]** Audit log redaction: make `redactSensitiveKeys()` recursive (max depth 5) to catch nested secrets like `{ config: { password: "..." } }`. Previously only redacted top-level keys matching `SENSITIVE_KEY_PATTERN` (CWE-532).
-- **[M-4]** Audit log redaction: change default `redact` from `false` to `true` (security-by-default). CLI flag renamed from `--audit-redact` to `--audit-no-redact`. Env var `AUDIT_REDACT` now defaults to `true` unless explicitly set to `false` (CWE-532).
-- **[C-1]** SpatiaLite SQL injection: add column type allowlist validation to `sqlite_spatialite_create_table` handler, preventing arbitrary SQL execution via unvalidated DDL types (CWE-89).
-- **[C-2]** Extension loading: remove `extensionPath` parameter from `sqlite_spatialite_load` public schema; strictly require environment variable configuration to prevent arbitrary native code execution (CWE-94).
-- **[H-1]** Scope enforcement: unify `scopeGrantsToolAccess()` to delegate to `getRequiredScopeForTool()` to ensure fail-closed write scope evaluation for unmapped tools (CWE-863).
-- **[H-2]** Input validation: remove `.partial().passthrough()` from tool registration layer, restoring strict Zod schema validation (CWE-20).
-- **[M-1]** Authorization: replace substring `.includes("audit")` with strict `.startsWith("sqlite://audit")` prefix check for resource scope validation (CWE-863).
-- **[M-2]** CI/CD: remove `node_modules` caching in `lint-and-test.yml` to ensure reproducible pipeline integrity via `npm ci` (CWE-829).
-- **[M-3]** CI/CD: restrict automated issue creation in `security-update.yml` to trusted events (CWE-269).
-- **[L-1]** Rate limiting: add `Math.max(1, Math.min(..., 10000))` clamping to `MCP_RATE_LIMIT_MAX` to prevent unbounded memory allocation (CWE-400).
-- **[L-2]** Audit tools: add strict `z.object().parse(args)` validation to all 5 audit tools, closing input validation bypass (CWE-20).
-- **[L-3]** Annotations: update `codemode` annotation to `destructiveHint: true` to reflect capability accurately.
-- **[L-4]** Annotations: update audit backup tools to `openWorldHint: true` to reflect filesystem capability.
-- **[H-11]** Scope Enforcement: Refactor `enforcement.ts` to derive required tool scopes dynamically from tool metadata rather than hardcoded sets. Added wildcard matching for database capabilities (`db:*`).
-- **[H-12]** HTTP Transport: Bound HTTP server default host to `127.0.0.1` instead of `0.0.0.0` in `transport.ts` to prevent unintentional network exposure.
-- **[H-13]** Code Mode: Removed `codemode` group from the default `includeGroups` array in `tool-filter.ts` to prevent auto-injection of sensitive debugging capabilities.
-- **[H-14]** WASM Adapter: Applied `validateQuery()` check to `executeQuery` in the WASM `sqlite-adapter.ts` to block stacked query injection.
-- **[M-24]** Logging: Replaced insecure `console.error` calls with `logger.error` in `cli.ts` to prevent leakage of connection strings or tokens.
-- **[H-15]** Dockerfile: Added explicit `sha256sum` verification steps for all dynamically downloaded packages (e.g., `diff`, `tar`) within the `Dockerfile`.
-- **[M-25]** CI/CD: Set `persist-credentials: false` across all GitHub Actions workflows to prevent token leakage.
-- **[M-26]** CI/CD: Removed `continue-on-error: true` from Trivy action step in `security-update.yml` to ensure high/critical vulnerabilities block the pipeline.
-- **[L-25]** Dependabot: Added documented security warning to `.github/workflows/dependabot-auto-merge.yml`.
-- **[H-16]** Path traversal: Updated `validateSameDirPath` to canonicalize paths via `realpathSync` preventing symlink escapes (CWE-22).
-- **[M-27]** Audit logs: Forced redaction of SQL literals across all audit tools via `redactSqlLiterals` wrapper (CWE-532).
-- **[M-28]** CI/CD: Hardened `ci-health-monitor.lock.yml` Docker socket mount to read-only (`ro`) (CWE-250).
-- **[M-29]** CI/CD: Removed excessive `pull-requests: write` from `docs-drift-detector.lock.yml` (CWE-250).
-- **[H-17]** Code Mode sandbox: Froze `Object`, `Function`, `Array`, `Promise`, `Reflect`, and `Proxy` prototypes inside the worker thread in `worker-script.ts` to prevent prototype pollution escapes (CWE-94).
-- **[H-18]** Native Adapter: Added `validateQuery()` checks to all native SQLite operations in `native-sqlite-adapter.ts` (e.g., FTS, Vector, JSON) to block stacked queries (CWE-89).
-- **[M-30]** Query Validation: Expanded `DANGEROUS_PATTERNS` to explicitly block DDL commands (`CREATE`, `DROP`, `ALTER`) in user queries unless executing from a trusted admin context (CWE-89).
-- **[H-19]** Admin Tools: Fixed TypeScript bypass in `backup/create.ts` where `pathCheck.error !== undefined` was incorrectly asserting failure states, using strict type narrowing (`!pathCheck.valid`) to enforce path traversal validation (CWE-22).
-- **[L-26]** FTS Tools: Skipped validation for internal `CREATE TRIGGER` queries when provisioning FTS5 tables to prevent false positive DANGEROUS_PATTERN rejections (CWE-89).
-- **[H-20]** Scope enforcement: Completely removed the unenforced `db:` and `table:` granular scope logic and patterns from the codebase, preventing a false sense of security regarding tenant isolation capabilities.
-- **[M-31]** Rate limiting: Added explicit production startup warning in `middleware.ts` when using the default in-memory rate limiter without a shared store (like Redis) in clustered deployments.
-- **[M-32]** Code Mode sandbox: Added explicit warning in `sandbox-factory.ts` when falling back to the `vm` sandbox isolation mode, noting its inherent limits vs `worker_threads`.
-- **[H-21]** Code Mode sandbox: Hardened VM sandbox fallback to require `CODEMODE_ISOLATION_INSECURE=1` capability flag to prevent unintentional usage (CWE-693).
-- **[H-22]** JSON operations: Constrained `sampleSize` and `limit` to `10000` to prevent OOM DoS via oversized JSON structures (CWE-400).
-- **[H-23]** Prompt injection: Constrained `sqlite_append_insight` `insight` parameter to 2000 ASCII chars via strict regex (CWE-20).
-- **[H-24]** OAuth scope filtering: Implemented stateless and SSE response stream filtering for `tools/list` to redact tools lacking required scopes (CWE-200).
-- **[L-27]** Tool annotations: Corrected `sqlite_truncate` annotation to `destructive` (MCP annotation compliance).
-- **[M-33]** CI/CD: Corrected CodeQL permissions, `persist-credentials: false` in Dependabot and secrets scanner workflows, and removed `packages: write` from Docker publishing.
-- **[L-28]** CI/CD: Removed `packages: write` from gatekeeper pipeline and applied least-privilege `permissions: {}` to docs-drift-detector activation job.
-- **[L-29]** CI/CD: Swapped unstable Node 25.x for 20.x in test matrix and added explicit `contents: read` permissions to `security-scan` job.
-- **[M-34]** Audit logging: Enhanced `redactSqlLiterals` regex to properly handle SQL's doubled-quote escaping and applied it to `dryRun=true` response payloads.
-- **[M-35]** Audit logging: Wrapped bare Zod parse calls in try/catch utilizing `formatHandlerError` for safe error serialization.
-- **[M-36]** Annotations: Applied `openWorldHint: false` to audit logging read tools to ensure MCP clients correctly prompt users.
-- **[H-25]** Admin tools: Added explicit DDL validation against unauthorized commands (`ATTACH`, `DETACH`, `PRAGMA`, `LOAD_EXTENSION`) prior to executing `CREATE` statements in `sqlite_restore` handlers (CWE-89).
-- **[H-26]** OAuth discovery: Removed insecure fallback mechanism during JWKS discovery failures; explicitly hard-fail on startup if missing `jwksUri` or `issuer` (CWE-287).
-- **[H-27]** DDL validation: Pre-processed SQL to strip comments (`/* ... */` and `-- ...`) before keyword blocklist evaluation in `validateDdl` to prevent comment-hiding bypasses (CWE-89).
-- **[H-28]** Code Mode sandbox: Added a production guard in `sandbox-factory.ts` that crashes the application if `CODEMODE_ISOLATION_INSECURE=1` is loaded in a `NODE_ENV=production` environment, preventing insecure fallback VM executions (CWE-693).
-- **[H-29]** Tool scopes: Explicitly mapped statically registered audit and built-in tools via `registerToolScopes` to ensure they do not fail closed (`admin` scope for audit, all scopes for built-in tools) (CWE-862).
-- **[M-37]** WHERE clause validation: Added `CAST(` and trailing `GLOB` wildcard patterns to `DANGEROUS_PATTERNS` blocklist to mitigate blind data extraction oracle vectors (CWE-89).
-- **[M-38]** Admin tools: Removed `configuredPath` from `sqlite_pragma_database_list` API responses to prevent local filesystem layout leaks (CWE-200).
-- **[M-39]** CI/CD: Supplied `persist-credentials: false` to all `actions/checkout` steps across workflows to harden against token exfiltration (CWE-522).
-- **[L-30]** Tool annotations: Changed `destructiveHint` to `true` for all tools using `ADMIN` or `ADMIN_FS` presets to signal clients for explicit user confirmation.
-- **[L-31]** Input validation: Enforced timeout bounds natively using Zod constraints (`.min(500).max(30000)`) in `codemode.ts` schemas.
-- **[L-32]** SECURITY.md: Documented the inherent remote code execution risks of resolving native extensions via `SPATIALITE_PATH` and similar environment variables (CWE-829).
-- **[H-30]** Session management: Bound session tracking with a strict `maxSessions` limit to prevent memory exhaustion DoS (CWE-400).
-- **[M-40]** OAuth scope filtering: Added validation to reject batch JSON-RPC requests, preventing middleware bypasses (CWE-862).
-- **[M-41]** OAuth validation: Enforced runtime rejection if `audience` is undefined when OAuth is enabled (CWE-287).
-- **[M-42]** VM Sandbox: Wrapped async context execution in `Promise.race` to enforce timeouts on async loops (CWE-400).
-- **[M-43]** Admin Tools: Sanitized path returns in `sqlite_pragma_database_list` using `path.basename` to prevent path disclosure (CWE-200).
-- **[H-31]** Insights Tool: Sanitized inputs in `sqlite_append_insight` by truncating to 2000 chars and stripping control characters `<` and `>` (CWE-77).
-- **[M-44]** Path traversal: Constrained `.csv` and `.tsv` extensions in `validateSameDirPath` and rejected unbounded in-memory traversal (CWE-22).
-- **[H-32]** Regex DoS: Hardened WHERE clause blocklists with safer bounded regexes (CWE-1333).
-- **[M-45]** CI/CD: Refactored GitHub token injection in `.github/workflows/*.lock.yml` to use `env` variables instead of shell interpolation (CWE-77).
-- **[L-33]** Annotations: Corrected `sqlite_pragma_optimize` from `admin` to `idempotent` scope.
-- **[C-21]** Credential Exposure: Enhanced `sanitizeErrorMessage` to redact DSNs/URIs and applied `redactSqlLiterals` to audit log interceptors to prevent credential exposure in logs.
-- **[H-33]** Code Mode Sandbox: Explicitly nulled `Buffer` and enforced `Object.freeze(Object.getPrototypeOf)` in the VM context to prevent prototype traversal escapes.
-- **[H-34]** CI/CD Supply Chain: Re-pinned Trivy action to the secure SHA hash for `v0.30.0` and upgraded `actions/github-script` to `v8` to eliminate version drift.
-- **[H-35]** CI/CD Config: Fixed YAML indentation for `DOCKERHUB_DESC_TOKEN` in `docker-publish.yml` and forwarded it in `gatekeeper.yml`.
-- **[M-46]** Input Validation: Wrapped `sqlite_audit_restore_backup` in an explicit transaction to ensure atomic application of snapshots.
-- **[M-47]** Input Validation: Sanitized adapter tool descriptions to prevent tool poisoning via upstream payload manipulation.
-- **[M-48]** Authorization: Required explicit `ALLOW_HTTP_JWKS=true` flag for local development instead of `NODE_ENV=development` to prevent silent HTTPS JWKS bypasses in production.
-- **[L-34]** CI/CD: Changed Playwright artifact `retention-days` to 1 in `e2e.yml` to reduce exposure of sensitive traces.
-- **[L-35]** Annotations: Changed `openWorldHint` for `sqlite_audit_cleanup` to `false`.
-
-### Fixed
-- **stats**: Fixed architectural inconsistency in `sqlite_window_moving_avg` and `sqlite_window_ntile` tools where `windowSize` and `buckets` were incorrectly marked as `.optional()` in the Zod schema but required in the handler. Removed the redundant handler checks and enforced the requirements at the schema boundary for accurate LLM validation.
-- Fixed TypeScript errors in `analyze-csv.ts` PathValidationResult destructuring and ESLint `any` typings.
-- Updated `scope-map.test.ts` and `audit-interceptor.test.ts` for dynamic scope registration compatibility.
-- Added missing `iat` and `exp` claims to mock token generator in `oauth.ts`.
-- Fixed `exactOptionalPropertyTypes` TypeScript compilation errors in `auth.ts` and `core.ts` by explicitly typing optional properties with `| undefined`.
-- Fixed E2E test failures caused by `query-validation.ts` erroneously requiring `admin` scope for DDL operations on unauthenticated requests when OAuth is disabled.
-- Updated E2E test suite to correctly assert rejection of `CREATE TRIGGER` via `sqlite_write_query` following scope escalation fixes.
-- Fixed TypeScript ESLint errors (`no-explicit-any`, `no-unsafe-member-access`) in `oauth.ts` JSON-RPC response filtering by replacing `any` casts with robust type guards.
-- Fixed VM sandbox unit test suite execution failures by explicitly injecting the required `CODEMODE_ISOLATION_INSECURE=1` environment variable flag during test setup.
-- Fixed Playwright E2E test server initialization failures by explicitly passing `--no-auth-enforcement` to unauthenticated test webservers.
-- Fixed TypeScript compiler errors in `mcp-server.ts` regarding exactOptionalPropertyTypes for `noAuthEnforcement`.
-- Fixed `sqlite_append_insight` tool registration to use the `"admin"` group instead of the invalid `"write"` group.
-- Fixed `sqlite_create_csv_table` test assertions to correctly handle SQLite `DB_QUERY_FAILED` responses when the CSV extension is missing.
-- Fixed ESLint unused variable and inferrable type annotation errors across `alter-table.ts` and `restore.ts`.
-
-### Changed
-- Refactored `scope-map.ts` to use dynamic `registerToolScope()` string registration, deprecating static group evaluation.
+- **Sandbox & VM Isolation**: Migrated fallback from `node:vm` to `isolated-vm` for true V8 isolate memory separation. Disabled string code generation, blocked dynamic constructor chain escapes (`Reflect`, `Proxy`, `Symbol`), secured prototype freezing, and required explicit `CODEMODE_ISOLATION_INSECURE=1` flag for VM fallback usage.
+- **SQL Injection (SQLi)**: Replaced unparameterized SQL template strings with native parameterized bindings (`?`) across execution paths (vector, text, stats, core). Hardened WHERE clause generation to sanitize identifiers and strictly block dangerous functions (`INSTR`, `SUBSTR`, `CAST`, `ABS`, subqueries, etc.).
+- **Authorization & Scoping**: Enforced explicit OAuth per-tool scopes globally, removing implicit `admin` fallbacks. Bound session IDs strictly to authenticated subjects to prevent cross-client hijacking. Derived tool scopes dynamically from metadata.
+- **Information Disclosure**: Implemented recursive structural JSON redaction to sanitize credentials (AWS, GitHub, tokens) from Code Mode output and audit logs. Stripped stack traces from worker errors and sanitized driver messages to prevent internal infrastructure leakage.
+- **Transport Security**: Bound HTTP server default host to `127.0.0.1` and replaced insecure proxy headers logic. Mitigated side-channel timing attacks in OAuth and bearer token validation. Blocked CORS wildcards combined with authentication.
+- **Denial of Service (DoS)**: Upgraded rate limiters to use LRU eviction and UUID tracking, mitigating bucket collision attacks. Capped Code Mode payloads to 50MB and implemented 10KB bounds on query strings. Mitigated Regex DoS in text tools and blocked CPU-starvation SQLite PRAGMAs.
+- **Path Traversal**: Explicitly blocked `:memory:`, symlinks, and `..` sequence bypasses in `validateSameDirPath`. Added strict filesystem boundary validations to database backup, restore, dump, and spatial import tools.
+- **CI/CD Supply Chain**: Removed persistent credentials and privileged write scopes from workflows. Enforced strict SHA pinning for GitHub Actions, verified lockfile integrity, and pinned npm versions.
