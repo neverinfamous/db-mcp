@@ -8,14 +8,15 @@ import { z } from "zod";
 
 /**
  * Coerce string-typed numbers to actual numbers.
- * Returns undefined for non-numeric strings so the schema default kicks in.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 /**
  * Coerce string-typed booleans to actual booleans.
