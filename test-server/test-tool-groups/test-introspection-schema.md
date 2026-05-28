@@ -112,7 +112,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 4. `sqlite_schema_diff({})` → handler error (both `baseline` and `target` required)
 🔴 5. `sqlite_constraint_analysis({})` → handler error (or success if no required params)
 🔴 6. `sqlite_migration_risks({})` → handler error
-🔴 7. `sqlite_cascade_simulator({})` → handler error (requires `table` and `operation`)
+🔴 7. `sqlite_cascade_simulator({})` → handler error (requires `table`)
 
 ---
 
