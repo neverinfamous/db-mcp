@@ -143,11 +143,11 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **3.2 Duplicate Detection**
 
-17. `sqlite.migration.migrationRecord({version: "stress_001_add_col", description: "Duplicate", sql: "SELECT 1"})` → report behavior: should error (duplicate version) or allow?
+17. `sqlite.migration.migrationRecord({version: "stress_001_add_col", description: "Duplicate", sql: "SELECT 1"})` → errors with DUPLICATE_VERSION
 
 **3.3 SHA-256 Duplicate SQL Detection**
 
-18. `sqlite.migration.migrationRecord({version: "stress_004_dup_sql", description: "Dup SQL", sql: "ALTER TABLE test_products ADD COLUMN stress_flag INTEGER DEFAULT 0"})` → report behavior: same SQL hash as stress_001
+18. `sqlite.migration.migrationRecord({version: "stress_004_dup_sql", description: "Dup SQL", sql: "ALTER TABLE test_products ADD COLUMN stress_flag INTEGER DEFAULT 0"})` → errors with DUPLICATE_MIGRATION
 
 **3.4 Multi-Statement Apply Verification**
 
@@ -159,9 +159,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 Rate each error response 1-5:
 
-21. `sqlite.migration.migrationRollback({version: "nonexistent_migration_xyz"})` → does it mention the version?
-22. `sqlite.migration.migrationRecord({})` → does it list missing required fields?
-23. `sqlite.migration.migrationRollback({version: "stress_001_add_col"})` → rate error clarity (no rollbackSql stored)
+21. `sqlite.migration.migrationRollback({version: "nonexistent_migration_xyz"})` → errors with MIGRATION_NOT_FOUND (mentions version)
+22. `sqlite.migration.migrationRecord({})` → errors with VALIDATION_ERROR (lists missing required fields)
+23. `sqlite.migration.migrationRollback({version: "stress_001_add_col"})` → errors with ROLLBACK_SQL_MISSING (rated 5/5 for clarity)
 
 
 ### Final Cleanup
