@@ -5,6 +5,15 @@
 import { z } from "zod";
 import { ErrorFieldsMixin } from "./error-mixin.js";
 
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
+
 /**
  * Migration record entry (shared sub-schema)
  */
@@ -158,7 +167,7 @@ export const MigrationApplyValidationSchema = MigrationRecordValidationSchema;
 
 export const MigrationRollbackSchema = z.object({
   id: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
+    coerceNumber,
     z.number().optional().describe("Migration ID to roll back"),
   ),
   version: z
@@ -200,11 +209,11 @@ export const MigrationHistorySchema = z
       .describe("Filter by status"),
     sourceSystem: z.string().optional().describe("Filter by source system"),
     limit: z.preprocess(
-      (val) => (typeof val === "number" ? val : undefined),
+      coerceNumber,
       z.number().optional().describe("Maximum records to return (default: 50)"),
     ),
     offset: z.preprocess(
-      (val) => (typeof val === "number" ? val : undefined),
+      coerceNumber,
       z.number().optional().describe("Offset for pagination (default: 0)"),
     ),
     compact: z
