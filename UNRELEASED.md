@@ -58,6 +58,7 @@
 ### Fixed
 - **text**: Fixed Zod validation failure in `sqlite_text_replace` when called with legacy `searchPattern` and `replaceWith` aliases by properly exposing and resolving them in the handler, ensuring backward compatibility.
 - **migration**: Fixed wrong-type numeric coercion for Zod schema validation in `sqlite_migration_history` and `sqlite_migration_rollback` by replacing the silent `typeof` fallback with the standard `coerceNumber` utility, correctly triggering structured validation errors instead of executing with default parameters.
+- **json**: Fixed missing `limit` parameter in `sqlite_json_select` schema and handler, ensuring large dataset queries can be properly constrained to prevent oversized payloads and enabling robust wrong-type numeric coercion validation.
 - **json**: Fixed `sqlite_create_json_collection` incorrectly returning success instead of a `TABLE_EXISTS` domain error when attempting to create a table that already exists.
 - **introspection**: Added proactive SQL syntax validation to `sqlite_migration_risks` to correctly flag non-SQL strings (e.g., `"INVALID SQL"`) as high-risk syntax errors instead of returning zero risks, improving offline DDL analysis accuracy.
 - **introspection**: Fixed Zod validation failure in `sqlite_query_plan` when called with the legacy `query` alias by updating the schema and handler to properly resolve the alias and return structured validation errors.

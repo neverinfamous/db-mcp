@@ -81,6 +81,7 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
               queryParams.push(...whereParams);
             }
           }
+        sql += ` LIMIT ${input.limit ?? 100}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 

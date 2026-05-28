@@ -380,6 +380,7 @@ export const JsonSelectSchema = z.object({
   paths: z.array(z.string()).optional().describe("JSON paths to extract"),
   conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
   whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
+  limit: z.preprocess(coerceNumber, z.number().max(10000).optional().default(100)),
 });
 
 export const JsonQuerySchema = z.object({
