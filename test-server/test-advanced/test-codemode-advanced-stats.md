@@ -178,11 +178,11 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 ## Phase 5: Error Message Quality (batched)
 
-24. `sqlite.stats.statsBasic({table: "nonexistent_table_xyz", column: "x"})` → structured error mentioning table name
-25. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → structured error mentioning column
-26. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
-27. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: 0})` → error (must be > 0)
-28. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: -1})` → error
+26. `sqlite.stats.statsBasic({table: "nonexistent_table_xyz", column: "x"})` → structured error mentioning table name
+27. `sqlite.stats.statsBasic({table: "test_products", column: "nonexistent_col"})` → structured error mentioning column
+28. `sqlite.stats.statsCorrelation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
+29. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: 0})` → error (must be > 0)
+30. `sqlite.stats.statsHistogram({table: "test_products", column: "price", buckets: -1})` → error
 
 
 ## Phase 6: Stats Sample Edge Cases (batched)
@@ -200,8 +200,8 @@ Insert: `(99999999.99)`, `(-99999999.99)`, `(0.0)`, `(0.01)`:
 
 For WASM testing only:
 
-34. Confirm window function tools are NOT present in the tool list
-35. All 17 non-window stats tools should produce identical results in WASM and Native
+38. Confirm window function tools are NOT present in the tool list
+39. All 17 non-window stats tools should produce identical results in WASM and Native
 
 
 ### Final Cleanup
