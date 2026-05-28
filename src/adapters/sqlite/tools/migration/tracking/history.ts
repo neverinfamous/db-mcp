@@ -28,10 +28,9 @@ export function createMigrationHistoryTool(
     requiredScopes: ["read"],
     annotations: readOnly("Migration History"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const queryParams: unknown[] = [];
-      const input = MigrationHistorySchema.parse(params);
-
       try {
+        const queryParams: unknown[] = [];
+        const input = MigrationHistorySchema.parse(params);
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,

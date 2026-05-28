@@ -24,9 +24,8 @@ export function createMigrationStatusTool(
     requiredScopes: ["read"],
     annotations: readOnly("Migration Status"),
     handler: async (params: unknown, _context: RequestContext) => {
-      MigrationStatusSchema.parse(params);
-
       try {
+        MigrationStatusSchema.parse(params);
         const initialized = await isMigrationTableInitialized(adapter);
 
         if (!initialized) {

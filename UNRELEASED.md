@@ -57,7 +57,8 @@
 
 ### Fixed
 - **text**: Fixed Zod validation failure in `sqlite_text_replace` when called with legacy `searchPattern` and `replaceWith` aliases by properly exposing and resolving them in the handler, ensuring backward compatibility.
-- **migration**: Fixed wrong-type numeric coercion for Zod schema validation in `sqlite_migration_history` and `sqlite_migration_rollback` by replacing the silent `typeof` fallback with the standard `coerceNumber` utility, correctly triggering structured validation errors instead of executing with default parameters.
+- **migration**: Fixed raw MCP `-32602` error frames thrown during Zod schema validation in `sqlite_migration_history`, `sqlite_migration_status`, and `sqlite_migration_init` by moving `Schema.parse(params)` inside the `try-catch` blocks, ensuring validation errors are returned as structured handler errors.
+- **migration**: Fixed wrong-type numeric coercion validation in `sqlite_migration_history` and `sqlite_migration_rollback` being preemptively rejected by the MCP SDK by implementing a `z.union([z.number(), z.string()]).refine(...)` workaround, ensuring that string types are validated by the handler instead of crashing the Code Mode sandbox.
 - **json**: Fixed missing `limit` parameter in `sqlite_json_select` schema and handler, ensuring large dataset queries can be properly constrained to prevent oversized payloads and enabling robust wrong-type numeric coercion validation.
 - **json**: Fixed `sqlite_create_json_collection` incorrectly returning success instead of a `TABLE_EXISTS` domain error when attempting to create a table that already exists.
 - **introspection**: Added proactive SQL syntax validation to `sqlite_migration_risks` to correctly flag non-SQL strings (e.g., `"INVALID SQL"`) as high-risk syntax errors instead of returning zero risks, improving offline DDL analysis accuracy.
