@@ -153,7 +153,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 11. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db"})` → success
 12. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db"})` → integrity verified
-13. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → structured error
+13. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_file.db"})` → structured error
 14. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-dump.sql"})` → success
 15. `sqlite.admin.dump({outputPath: "C:\\Windows\\System32\\stress-dump.sql"})` → structured security error
 16. Note backup and dump files for manual removal
@@ -189,8 +189,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 ## Phase 7: Error Message Quality (batched)
 
 32. `sqlite.admin.dropView({viewName: "nonexistent_view_xyz"})` → structured error
-33. `sqlite.admin.verifyBackup({backupPath: "nonexistent_backup.db"})` → structured error
-34. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
+33. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_backup.db"})` → structured error
+34. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_file.csv"})` → structured error
 35. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → structured error (path traversal)
 
 
