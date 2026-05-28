@@ -218,6 +218,15 @@ export function createCascadeSimulatorTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CascadeSimulatorSchema.parse(params);
+        if (!input.table) {
+          return {
+            success: false,
+            error: "Validation error: 'table' is required",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
         const operation = input.operation ?? "DELETE";
         // Verify table exists
         const tableCheck = await adapter.executeReadQuery(

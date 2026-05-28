@@ -426,10 +426,16 @@ export const StorageAnalysisSchema = z
   .default({});
 export type StorageAnalysisInput = z.infer<typeof StorageAnalysisSchema>;
 
-export const QueryPlanSchema = z.object({
-  sql: z.string().optional().default("").describe("SQL query to analyze (SELECT only)"),
-  query: z.string().optional().describe("Legacy alias for sql"),
-});
+export const QueryPlanSchema = z
+  .object({
+    sql: z
+      .string()
+      .optional()
+      .default("")
+      .describe("SQL query to analyze (SELECT only)"),
+    query: z.string().optional().describe("Legacy alias for sql"),
+  })
+  .default({});
 export type QueryPlanInput = z.infer<typeof QueryPlanSchema>;
 
 export const IndexAuditSchema = z
@@ -478,11 +484,15 @@ export const SchemaSnapshotSchema = z
   .default({});
 export type SchemaSnapshotInput = z.infer<typeof SchemaSnapshotSchema>;
 
-export const MigrationRisksSchema = z.object({
-  statements: z
-    .array(z.string())
-    .describe("Array of DDL statements to analyze for risks"),
-});
+export const MigrationRisksSchema = z
+  .object({
+    statements: z
+      .array(z.string())
+      .optional()
+      .default([])
+      .describe("Array of DDL statements to analyze for risks"),
+  })
+  .default({});
 export type MigrationRisksInput = z.infer<typeof MigrationRisksSchema>;
 
 export const ConstraintAnalysisSchema = z
@@ -555,21 +565,27 @@ export const TopologicalSortSchema = z
   .default({});
 export type TopologicalSortInput = z.infer<typeof TopologicalSortSchema>;
 
-export const CascadeSimulatorSchema = z.object({
-  table: z.string().describe("Table name to simulate deletion from"),
-  operation: z
-    .preprocess(
-      coerceOperation,
-      z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
-    )
-    .describe("Operation to simulate (default: DELETE)"),
-  compact: z
-    .boolean()
-    .optional()
-    .describe(
-      "Omit path arrays from affected entries to reduce payload (default: false)",
-    ),
-});
+export const CascadeSimulatorSchema = z
+  .object({
+    table: z
+      .string()
+      .optional()
+      .default("")
+      .describe("Table name to simulate deletion from"),
+    operation: z
+      .preprocess(
+        coerceOperation,
+        z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
+      )
+      .describe("Operation to simulate (default: DELETE)"),
+    compact: z
+      .boolean()
+      .optional()
+      .describe(
+        "Omit path arrays from affected entries to reduce payload (default: false)",
+      ),
+  })
+  .default({});
 export type CascadeSimulatorInput = z.infer<typeof CascadeSimulatorSchema>;
 
 // =============================================================================
@@ -682,11 +698,13 @@ export const SchemaDiffSchema = z
   .object({
     baseline: z
       .union([z.literal("current"), SchemaSnapshotShape])
+      .optional()
       .describe(
         "Baseline schema — 'current' to snapshot live DB, or an inline snapshot object from a previous sqlite_schema_snapshot call",
       ),
     target: z
       .union([z.literal("current"), SchemaSnapshotShape])
+      .optional()
       .describe(
         "Target schema to compare against baseline — 'current' to snapshot live DB, or an inline snapshot object",
       ),
@@ -704,5 +722,6 @@ export const SchemaDiffSchema = z
       .describe(
         "Exclude SpatiaLite system tables when capturing live schema (default: true)",
       ),
-  });
+  })
+  .default({});
 export type SchemaDiffInput = z.infer<typeof SchemaDiffSchema>;

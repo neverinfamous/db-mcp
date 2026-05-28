@@ -28,6 +28,7 @@
 
 ### Fixed
 
+- Fixed missing parameter validation schemas in `sqlite_cascade_simulator`, `sqlite_schema_diff`, `sqlite_migration_risks`, and `sqlite_query_plan` to properly catch empty `{}` invocations, preventing raw `-32602` MCP errors from escaping the SDK boundary.
 - Enforced structured Zod validation to entirely eliminate raw `-32602` MCP error frames globally.
 - Restored `RETURNING *` support in batch insert tools and fixed aliasing bugs in date functions.
 - Fixed logical data validation errors across `sqlite_json_diff`, numeric tool coercion, and backup path verification.

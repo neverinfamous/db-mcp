@@ -198,6 +198,15 @@ export function createSchemaDiffTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SchemaDiffSchema.parse(params);
+        if (input.baseline === undefined || input.target === undefined) {
+          return {
+            success: false,
+            error: "Validation error: 'baseline' and 'target' are required",
+            code: "VALIDATION_ERROR",
+            category: "validation",
+            recoverable: false,
+          };
+        }
         const sections: DiffSection[] = input.sections ?? [
           "tables",
           "views",
