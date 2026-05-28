@@ -1,6 +1,6 @@
 # db-mcp Tool Group Testing: [README]
 
-**Directory Purpose**: This folder contains 20 self-contained, modular test prompts covering every tool group in `db-mcp`. Each file is a **complete, standalone prompt** — paste it directly into a conversation to test that tool group without needing any other files.
+**Directory Purpose**: This folder contains 19 self-contained, modular test prompts covering every tool group in `db-mcp`. Each file is a **complete, standalone prompt** — paste it directly into a conversation to test that tool group without needing any other files.
 
 ## File Inventory
 
@@ -25,7 +25,6 @@
 | `test-introspection-schema.md`      | introspection-schema      | 7              | Identical Native/WASM            |
 | `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode  | Identical Native/WASM            |
 | `test-migration.md`                 | migration                 | 6 + Code Mode  | Identical Native/WASM            |
-| `test-wasm-degradation.md`          | wasm-degradation          | 31             | WASM graceful degradation        |
 
 **Inventory total**: 172 Native / 145 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 

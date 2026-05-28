@@ -24,6 +24,7 @@
 ### Removed
 
 - Simple Bearer Token authentication in favor of strict OAuth 2.1 enforcement.
+- Redundant `test-wasm-degradation.md` prompt from the test suite, as WASM graceful degradation behavior is already thoroughly validated during the admin tool group tests.
 
 ### Fixed
 
