@@ -56,6 +56,7 @@
 - Hard-removed the Simple Bearer Token authentication (`--auth-token` and `MCP_AUTH_TOKEN`) completely to enforce OAuth 2.1 as the sole HTTP authentication mechanism and prevent un-scoped bypasses (CWE-287).
 
 ### Fixed
+- **admin**: Fixed `sqlite_create_view` returning `{success: false, message: ...}` instead of the structured `{success: false, error: ..., code: "VALIDATION_ERROR"}` format when rejecting non-SELECT queries.
 - **admin-audit**: Added `limit` and `offset` pagination to `sqlite_audit_list_backups` to prevent oversized payloads when listing large numbers of snapshots, conserving LLM context window tokens.
 - **text**: Fixed Zod validation failure in `sqlite_text_replace` when called with legacy `searchPattern` and `replaceWith` aliases by properly exposing and resolving them in the handler, ensuring backward compatibility.
 - **migration**: Fixed raw MCP `-32602` error frames thrown during Zod schema validation in `sqlite_migration_history`, `sqlite_migration_status`, and `sqlite_migration_init` by moving `Schema.parse(params)` inside the `try-catch` blocks, ensuring validation errors are returned as structured handler errors.

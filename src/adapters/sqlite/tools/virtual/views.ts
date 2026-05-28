@@ -102,7 +102,8 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
         if (!input.selectQuery.trim().toUpperCase().startsWith("SELECT")) {
           return {
             success: false,
-            message: "View definition must be a SELECT query",
+            error: "View definition must be a SELECT query",
+            code: "VALIDATION_ERROR",
             sql: "",
           };
         }
