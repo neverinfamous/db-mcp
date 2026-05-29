@@ -206,9 +206,9 @@ Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not
 31. `sqlite.admin.reindex({target: "test_products"})` → reindex all indexes on specific table, success
 32. `sqlite.admin.reindex({target: "idx_orders_status"})` → reindex specific index, success
 33. `sqlite.admin.wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-34. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
-35. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`
-36. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success with checkpoint stats
+34. `sqlite.admin.wal({action: "disable"})` → `{success: true}` (switches to DELETE), then `sqlite.admin.wal({action: "enable"})` → `{success: true}` (verifies transition back to WAL)
+35. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
+36. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages`, then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
 
 ## Phase 9: Database Management (batched)

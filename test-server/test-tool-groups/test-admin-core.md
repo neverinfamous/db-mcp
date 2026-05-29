@@ -174,9 +174,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 ## Phase 7: WAL Management (batched)
 
 29. `sqlite_wal({action: "status"})` → `{success: true, journalMode: "wal"}` (test.db uses WAL mode)
-30. `sqlite_wal({action: "enable"})` → `{success: true, message: "WAL mode is already enabled"}` (already in WAL)
-31. `sqlite_wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`
-32. `sqlite_wal({action: "checkpoint", checkpointMode: "FULL"})` → success with checkpoint stats
+30. `sqlite_wal({action: "disable"})` → `{success: true}` (switches to DELETE), then `sqlite_wal({action: "enable"})` → `{success: true}` (verifies transition back to WAL)
+31. `sqlite_wal({action: "enable"})` → `{success: true, message: "WAL mode is already enabled"}` (already in WAL)
+32. `sqlite_wal({action: "checkpoint"})` → success with `walPages` and `checkpointedPages`, then `sqlite_wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
 **Code mode testing:**
 
