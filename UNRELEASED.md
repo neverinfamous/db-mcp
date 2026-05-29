@@ -42,6 +42,7 @@
 - Corrected schema introspection to accurately map temporary table indexes and improved `sqlite_list_triggers` error reporting.
 - Secured Code Mode `worker-script.ts` prototype freezing execution order to prevent sandbox escapes.
 - Fixed `sqlite_audit_restore_backup` to gracefully handle comment-only snapshots (e.g., from dropping non-existent objects) by filtering out empty statements before execution instead of crashing with a "no statements" error.
+- Fixed case-sensitivity bug in path traversal validation on Windows where differing drive letter cases would incorrectly flag identical directory paths as security violations.
 
 ### Security
 
