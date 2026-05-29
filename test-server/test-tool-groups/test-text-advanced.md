@@ -116,6 +116,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 4. `sqlite_phonetic_match({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test metaphone algorithm
 5. `sqlite_advanced_search({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → should find `Mechanical Keyboard`
 6. `sqlite_advanced_search({table: "test_products", column: "name", searchTerm: "Labtop", techniques: ["phonetic"]})` → test with single technique
+7. `sqlite_text_sentiment({text: "I absolutely love this amazing product!"})` → should return positive sentiment with score 2
 
 **FTS5 tools `[NATIVE ONLY]`:**
 
