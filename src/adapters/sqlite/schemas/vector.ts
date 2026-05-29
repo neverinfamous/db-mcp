@@ -1,3 +1,4 @@
+import { WhereConditionSchema } from "./where.js";
 /**
  * Vector/Semantic Search Tool Output Schemas (11 tools + Legacy)
  */
@@ -29,12 +30,14 @@ const coerceArray = (val: unknown): unknown => {
   return val;
 };
 
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 import { ErrorFieldsMixin } from "./error-mixin.js";
 
 // =============================================================================
@@ -204,7 +207,14 @@ export const VectorSearchSchema = z.object({
     coerceNumber,
     z.number().optional().default(10).describe("Max results"),
   ),
-  whereClause: z.string().optional().describe("Optional WHERE filter"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   returnColumns: z
     .array(z.string())
     .optional()

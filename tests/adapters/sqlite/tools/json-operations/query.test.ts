@@ -75,12 +75,17 @@ describe("createJsonKeysTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [{ key: "k" }] });
     const tool = createJsonKeysTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", whereClause: "id = 1" },
+      {
+        table: "users",
+        column: "data",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("id = 1"),
+      expect.stringContaining('"id" = ?'),
+      expect.anything(),
     );
   });
 
@@ -147,13 +152,21 @@ describe("createJsonEachTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonEachTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", whereClause: "id = 1", limit: 10 },
+      {
+        table: "users",
+        column: "data",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+        limit: 10,
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    // Should qualify 'id' to 't.id' to avoid ambiguity with json_each.id
+    // Should use a base table subquery to isolate the WHERE clause and avoid ambiguity with json_each output columns
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("t.id"),
+      expect.stringContaining(
+        'FROM (SELECT rowid, * FROM "users" WHERE "id" = ?) AS t',
+      ),
+      expect.anything(),
     );
   });
 
@@ -230,12 +243,17 @@ describe("createJsonGroupArrayTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonGroupArrayTool(adapter);
     const result = (await tool.handler(
-      { table: "users", valueColumn: "name", whereClause: "active = 1" },
+      {
+        table: "users",
+        valueColumn: "name",
+        conditions: [{ column: "active", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("active = 1"),
+      expect.stringContaining('"active" = ?'),
+      expect.anything(),
     );
   });
 
@@ -363,13 +381,14 @@ describe("createJsonGroupObjectTool", () => {
         table: "orders",
         keyColumn: "category",
         aggregateFunction: "SUM(amount)",
-        whereClause: "status = 'active'",
+        conditions: [{ column: "status", operator: "=", value: "active" }],
       },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("status = 'active'"),
+      expect.stringContaining('"status" = ?'),
+      expect.anything(),
     );
   });
 
@@ -383,7 +402,7 @@ describe("createJsonGroupObjectTool", () => {
         keyColumn: "key",
         valueColumn: "value",
         groupByColumn: "region",
-        whereClause: "active = 1",
+        conditions: [{ column: "active", operator: "=", value: 1 }],
       },
       ctx,
     )) as any;

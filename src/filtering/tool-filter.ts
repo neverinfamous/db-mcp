@@ -238,19 +238,6 @@ export function parseToolFilter(
     }
   }
 
-  // Auto-inject codemode group in whitelist mode.
-  // In blacklist mode (starts with -), codemode is already in the initial set.
-  // In whitelist mode, raw group filters (e.g., "core") would otherwise miss
-  // codemode — every meta-group already includes it.
-  if (!startsWithExclude && enabledGroups.size > 0) {
-    const codemodeExplicitlyExcluded = parts.some(
-      (p) => p === "-codemode" || p === "-sqlite_execute_code",
-    );
-    if (!codemodeExplicitlyExcluded) {
-      enabledGroups.add("codemode");
-    }
-  }
-
   return {
     raw: filterString,
     rules,
@@ -287,6 +274,18 @@ export function isToolEnabled(
     config.includedTools.has(baseName)
   ) {
     return true;
+  }
+
+  // Implicitly enable codemode tools across all group filters,
+  // as it serves as a generic scripting engine.
+  // It is only disabled if explicitly excluded via rule (e.g. -codemode).
+  if (tool.group === "codemode") {
+    const explicitlyExcludedGroup = config.rules.some(
+      (r) => r.type === "exclude" && r.target === "codemode",
+    );
+    if (!explicitlyExcludedGroup) {
+      return true;
+    }
   }
 
   // Check if tool's group is enabled

@@ -80,7 +80,7 @@ export function createVectorCreateTableTool(
           message: `Vector table '${input.tableName}' created with ${input.dimensions} dimensions`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -102,7 +102,8 @@ async function validateDimensions(
 
   // Try DDL-based check first (works even on empty tables)
   const ddlResult = await adapter.executeReadQuery(
-    `SELECT sql FROM sqlite_master WHERE type='table' AND name='${tableName}'`,
+    `SELECT sql FROM sqlite_master WHERE type='table' AND name=?`,
+    [tableName],
   );
   const ddlSql = ddlResult.rows?.[0]?.["sql"] as string | undefined;
   if (ddlSql) {
@@ -204,19 +205,23 @@ export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const vectorJson = JSON.stringify(input.vector);
-        const idValue =
-          typeof input.id === "string" ? `'${input.id}'` : input.id;
 
-        // Try update first, then insert
-        const updateSql = `UPDATE ${table} SET ${vectorColumn} = '${vectorJson}' WHERE ${idColumn} = ${idValue}`;
-        const updateResult = await adapter.executeWriteQuery(updateSql);
+        // Try update first, then insert (parameterized to prevent SQL injection)
+        const updateSql = `UPDATE ${table} SET ${vectorColumn} = ? WHERE ${idColumn} = ?`;
+        const updateResult = await adapter.executeWriteQuery(updateSql, [
+          vectorJson,
+          input.id,
+        ]);
 
         if (updateResult.rowsAffected === 0) {
           // Only include dimensions column if the table has it
           const insertSql = hasDimsColumn
-            ? `INSERT INTO ${table} (${idColumn}, ${vectorColumn}, dimensions) VALUES (${idValue}, '${vectorJson}', ${input.vector.length})`
-            : `INSERT INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
-          await adapter.executeWriteQuery(insertSql);
+            ? `INSERT INTO ${table} (${idColumn}, ${vectorColumn}, dimensions) VALUES (?, ?, ?)`
+            : `INSERT INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (?, ?)`;
+          const insertParams = hasDimsColumn
+            ? [input.id, vectorJson, input.vector.length]
+            : [input.id, vectorJson];
+          await adapter.executeWriteQuery(insertSql, insertParams);
         }
 
         return {
@@ -224,7 +229,7 @@ export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
           id: input.id,
           dimensions: input.vector.length,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -253,8 +258,10 @@ export function createVectorBatchStoreTool(
         const table = sanitizeIdentifier(input.table);
         if (input.items.length === 0) {
           // Verify the table exists even with no items to avoid silent success on nonexistent tables
-          const checkSql = `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.table}'`;
-          const checkResult = await adapter.executeReadQuery(checkSql);
+          const checkSql = `SELECT name FROM sqlite_master WHERE type='table' AND name=?`;
+          const checkResult = await adapter.executeReadQuery(checkSql, [
+            input.table,
+          ]);
           if (!checkResult.rows || checkResult.rows.length === 0) {
             return {
               success: false,
@@ -301,14 +308,15 @@ export function createVectorBatchStoreTool(
         let stored = 0;
         for (const item of input.items) {
           const vectorJson = JSON.stringify(item.vector);
-          const idValue =
-            typeof item.id === "string" ? `'${item.id}'` : item.id;
 
-          // Only include dimensions column if the table has it
+          // Parameterized to prevent SQL injection
           const sql = hasDimsColumn
-            ? `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}, dimensions) VALUES (${idValue}, '${vectorJson}', ${item.vector.length})`
-            : `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (${idValue}, '${vectorJson}')`;
-          await adapter.executeWriteQuery(sql);
+            ? `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}, dimensions) VALUES (?, ?, ?)`
+            : `INSERT OR REPLACE INTO ${table} (${idColumn}, ${vectorColumn}) VALUES (?, ?)`;
+          const sqlParams = hasDimsColumn
+            ? [item.id, vectorJson, item.vector.length]
+            : [item.id, vectorJson];
+          await adapter.executeWriteQuery(sql, sqlParams);
           stored++;
         }
 
@@ -317,7 +325,7 @@ export function createVectorBatchStoreTool(
           stored,
           dimensions: input.items[0]?.vector.length,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -351,18 +359,16 @@ export function createVectorDeleteTool(adapter: SqliteAdapter): ToolDefinition {
         const table = sanitizeIdentifier(input.table);
         const idColumn = sanitizeIdentifier(input.idColumn);
 
-        const idValues = input.ids
-          .map((id) => (typeof id === "string" ? `'${id}'` : String(id)))
-          .join(", ");
-
-        const sql = `DELETE FROM ${table} WHERE ${idColumn} IN (${idValues})`;
-        const result = await adapter.executeWriteQuery(sql);
+        // Parameterized to prevent SQL injection
+        const placeholders = input.ids.map(() => "?").join(", ");
+        const sql = `DELETE FROM ${table} WHERE ${idColumn} IN (${placeholders})`;
+        const result = await adapter.executeWriteQuery(sql, input.ids);
 
         return {
           success: true,
           deleted: result.rowsAffected,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

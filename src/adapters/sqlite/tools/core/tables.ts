@@ -4,6 +4,7 @@ import {
   DescribeTableSchema,
   DropTableSchema,
 } from "../../schemas/core.js";
+import { logger } from "../../../../utils/logger/index.js";
 /**
  * Core Table Management Tools
  *
@@ -33,6 +34,7 @@ import {
   DescribeTableOutputSchema,
   DropTableOutputSchema,
 } from "../../schemas/core.js";
+import { validateQuery } from "../../../query-validation.js";
 
 // =============================================================================
 // SpatiaLite System Filters
@@ -55,6 +57,7 @@ const SPATIALITE_SYSTEM_PREFIXES = [
   "SpatialIndex",
   "KNN",
   "KNN2",
+  "idx",
 ];
 
 /**
@@ -118,7 +121,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_create_table",
     description:
-      "Create a new table in the database with specified columns and constraints.",
+      "Create a new table in the database with specified columns and constraints. Idempotent if ifNotExists is set to true.",
     group: "core",
     inputSchema: CreateTableSchema,
     outputSchema: CreateTableOutputSchema,
@@ -130,13 +133,14 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
         input = CreateTableSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
 
       // Validate table name
+      let safeTable: string;
       try {
-        sanitizeIdentifier(input.table);
+        safeTable = sanitizeIdentifier(input.table);
       } catch {
         return {
           ...formatHandlerError(
@@ -162,8 +166,8 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
       let tableExisted = false;
       if (input.ifNotExists) {
         const checkResult = await adapter.executeReadQuery(
-          `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
-          [input.table],
+          `SELECT 1 FROM sqlite_master WHERE type='table' AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type='table' AND name=?`,
+          [input.table, input.table],
         );
         tableExisted = (checkResult.rows?.length ?? 0) > 0;
       }
@@ -207,8 +211,46 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
         return parts.join(" ");
       });
 
+      // Build table-level constraints
+      const tableConstraints: string[] = [];
+
+      if (input.foreignKeys && input.foreignKeys.length > 0) {
+        for (const fk of input.foreignKeys) {
+          const safeColumn = fk.column.replace(/"/g, '""');
+          const safeTargetTable = fk.targetTable.replace(/"/g, '""');
+          let fkStr = `FOREIGN KEY ("${safeColumn}") REFERENCES "${safeTargetTable}"`;
+          if (fk.targetColumn) {
+            const safeTargetColumn = fk.targetColumn.replace(/"/g, '""');
+            fkStr += `("${safeTargetColumn}")`;
+          }
+          if (fk.onDelete) fkStr += ` ON DELETE ${fk.onDelete}`;
+          if (fk.onUpdate) fkStr += ` ON UPDATE ${fk.onUpdate}`;
+          tableConstraints.push(fkStr);
+        }
+      }
+
+      if (input.checkConstraints && input.checkConstraints.length > 0) {
+        for (const chk of input.checkConstraints) {
+          try {
+            validateQuery(`SELECT 1 WHERE ${chk}`, true);
+          } catch (error: unknown) {
+            return {
+              ...formatHandlerError(
+                new ValidationError(
+                  `Invalid CHECK constraint '${chk}': ${error instanceof Error ? error.message : String(error)}`,
+                ),
+              ),
+              sql: "",
+            };
+          }
+          tableConstraints.push(`CHECK (${chk})`);
+        }
+      }
+
+      const allDefs = [...columnDefs, ...tableConstraints];
       const ifNotExists = input.ifNotExists ? "IF NOT EXISTS " : "";
-      const sql = `CREATE TABLE ${ifNotExists}"${input.table}" (${columnDefs.join(", ")})`;
+      const strictSuffix = input.strict ? " STRICT" : "";
+      const sql = `CREATE TABLE ${ifNotExists}${safeTable} (${allDefs.join(", ")})${strictSuffix}`;
 
       try {
         await adapter.executeQuery(sql);
@@ -220,7 +262,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
             : `Table '${input.table}' created successfully`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql };
       }
     },
@@ -244,7 +286,7 @@ export function createListTablesTool(adapter: SqliteAdapter): ToolDefinition {
       let input;
       try {
         input = ListTablesSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           count: 0,
@@ -297,7 +339,7 @@ export function createDescribeTableTool(
         input = DescribeTableSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           table: "",
@@ -307,8 +349,8 @@ export function createDescribeTableTool(
 
       // Check table existence first for a specific error code
       const checkResult = await adapter.executeReadQuery(
-        `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=?`,
-        [input.table],
+        `SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type IN ('table', 'view') AND name=?`,
+        [input.table, input.table],
       );
       if ((checkResult.rows?.length ?? 0) === 0) {
         return {
@@ -329,14 +371,96 @@ export function createDescribeTableTool(
 
       try {
         const tableInfo = await adapter.describeTable(input.table);
+        const rawColumns = tableInfo.columns ?? [];
+
+        // Build enriched column list with optional generated column info
+        // Using a typed enriched structure to avoid unsafe Record casts
+        interface EnrichedColumn {
+          name: string;
+          type: string;
+          nullable?: boolean | undefined;
+          primaryKey?: boolean | undefined;
+          defaultValue?: unknown;
+          isGenerated?: boolean | undefined;
+          generatedExpression?: string | undefined;
+          generatedType?: "VIRTUAL" | "STORED" | undefined;
+        }
+
+        let enrichedColumns: EnrichedColumn[] = rawColumns.map((c) => ({
+          name: c.name,
+          type: c.type,
+          nullable: c.nullable,
+          primaryKey: c.primaryKey,
+          defaultValue: c.defaultValue,
+        }));
+
+        // Enrich with generated column info from PRAGMA table_xinfo
+        // table_xinfo returns 'hidden' field: 0=normal, 2=virtual generated, 3=stored generated
+        try {
+          const quotedTable = sanitizeIdentifier(input.table);
+          const xinfoResult = await adapter.executeReadQuery(
+            `PRAGMA table_xinfo(${quotedTable})`,
+          );
+
+          if (xinfoResult.rows && xinfoResult.rows.length > 0) {
+            const xinfoMap = new Map<string, number>();
+            for (const row of xinfoResult.rows) {
+              xinfoMap.set(row["name"] as string, row["hidden"] as number);
+            }
+
+            // Check if there are any generated columns
+            const hasGenerated = [...xinfoMap.values()].some(
+              (v) => v === 2 || v === 3,
+            );
+
+            if (hasGenerated) {
+              // Parse DDL to extract generated column expressions
+              const ddlResult = await adapter.executeReadQuery(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+                [input.table],
+              );
+              const ddl = (ddlResult.rows?.[0]?.["sql"] as string) ?? "";
+
+              enrichedColumns = enrichedColumns.map((col) => {
+                const hidden = xinfoMap.get(col.name);
+                if (hidden !== 2 && hidden !== 3) return col;
+
+                const enriched: EnrichedColumn = {
+                  ...col,
+                  isGenerated: true,
+                  generatedType: hidden === 3 ? "STORED" : "VIRTUAL",
+                };
+
+                // Extract expression from DDL using column name
+                const escapedName = col.name.replace(
+                  /[.*+?^${}()|[\]\\]/g,
+                  "\\$&",
+                );
+                const exprPattern = new RegExp(
+                  `"?${escapedName}"?\\s+\\w+[^,]*GENERATED\\s+ALWAYS\\s+AS\\s*\\(([^)]+)\\)`,
+                  "i",
+                );
+                const match = exprPattern.exec(ddl);
+                if (match?.[1]) {
+                  enriched.generatedExpression = match[1].trim();
+                }
+
+                return enriched;
+              });
+            }
+          }
+        } catch {
+          // table_xinfo may not be available in older SQLite — silently skip enrichment
+        }
 
         return {
           success: true,
           table: tableInfo.name,
+          strict: tableInfo.strict,
           rowCount: tableInfo.rowCount,
-          columns: tableInfo.columns,
+          columns: enrichedColumns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           table: input.table,
@@ -366,13 +490,14 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
         input = DropTableSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
       // Validate table name
+      let safeTable: string;
       try {
-        sanitizeIdentifier(input.table);
+        safeTable = sanitizeIdentifier(input.table);
       } catch {
         return formatHandlerError(
           new ValidationError(
@@ -383,8 +508,8 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Check if table exists before dropping
       const checkResult = await adapter.executeReadQuery(
-        `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`,
-        [input.table],
+        `SELECT 1 FROM sqlite_master WHERE type='table' AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type='table' AND name=?`,
+        [input.table, input.table],
       );
       const tableExists = (checkResult.rows?.length ?? 0) > 0;
 
@@ -436,20 +561,20 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
           }
         } catch (err) {
           // Ignore cleanup errors to ensure the primary DROP TABLE operation proceeds
-          console.warn(
-            `Failed to clean up FTS triggers for ${input.table}:`,
-            err,
-          );
+          logger.warning(`Failed to clean up FTS triggers for ${input.table}`, {
+            code: "FTS_CLEANUP_FAILED",
+            error: err instanceof Error ? err : new Error(String(err)),
+          });
         }
 
-        const sql = `DROP TABLE "${input.table}"`;
+        const sql = `DROP TABLE ${safeTable}`;
         await adapter.executeQuery(sql);
 
         return {
           success: true,
           message: `Table '${input.table}' dropped successfully`,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

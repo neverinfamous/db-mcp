@@ -23,28 +23,15 @@ import {
   TransactionStatusOutputSchema,
 } from "../../sqlite/schemas/index.js";
 
-// Valid enum values for transaction mode
-const VALID_MODES = ["deferred", "immediate", "exclusive"] as const;
-type TransactionMode = (typeof VALID_MODES)[number];
-
 // Schemas
 const BeginTransactionSchema = z.object({
-  mode: z.preprocess(
-    (val) => {
-      if (typeof val !== "string") return undefined;
-      const normalized = val.toLowerCase();
-      return VALID_MODES.includes(normalized as TransactionMode)
-        ? normalized
-        : undefined;
-    },
-    z
-      .enum(["deferred", "immediate", "exclusive"])
-      .optional()
-      .default("deferred")
-      .describe(
-        "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
-      ),
-  ),
+  mode: z
+    .enum(["deferred", "immediate", "exclusive"])
+    .optional()
+    .default("deferred")
+    .describe(
+      "Transaction mode: deferred waits for first write, immediate acquires lock immediately, exclusive blocks all access",
+    ),
 });
 
 const SavepointSchema = z.object({
@@ -107,7 +94,7 @@ function createBeginTransactionTool(
           message: `Transaction started (${input.mode} mode)`,
           mode: input.mode,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -143,7 +130,7 @@ function createTransactionStatusTool(
             ? "A transaction is currently active."
             : "No transaction is active.",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -173,7 +160,7 @@ function createCommitTransactionTool(
           success: true,
           message: "Transaction committed",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -202,7 +189,7 @@ function createRollbackTransactionTool(
           success: true,
           message: "Transaction rolled back",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -225,6 +212,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -243,7 +231,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
           message: `Savepoint '${input.name}' created`,
           savepoint: input.name,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -268,6 +256,7 @@ function createReleaseSavepointTool(
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -286,7 +275,7 @@ function createReleaseSavepointTool(
           message: `Savepoint '${input.name}' released`,
           savepoint: input.name,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -311,6 +300,7 @@ function createRollbackToSavepointTool(
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -329,7 +319,7 @@ function createRollbackToSavepointTool(
           message: `Rolled back to savepoint '${input.name}'`,
           savepoint: input.name,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -352,13 +342,14 @@ function createExecuteInTransactionTool(
     annotations: write("Execute in Transaction"),
     requiredScopes: ["write"],
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = ExecuteInTransactionSchema.parse(params);
         if (input.statements.length === 0) {
           throw new ValidationError("Must provide at least one SQL statement");
         }
-      } catch (error) {
+      } catch (error: unknown) {
         const errObj = formatHandlerError(error);
         return {
           ...errObj,
@@ -396,12 +387,16 @@ function createExecuteInTransactionTool(
               .startsWith("SELECT");
 
             if (isSelect) {
-              const result = await adapter.executeReadQuery(statement);
+              const result = await adapter.executeReadQuery(
+                statement,
+                queryParams,
+              );
               const rowCount = result.rows?.length ?? 0;
               const statementResult: {
                 statement: string;
                 rowCount: number;
                 rows?: Record<string, unknown>[];
+                error?: string;
               } = {
                 statement:
                   statement.substring(0, 100) +
@@ -409,11 +404,20 @@ function createExecuteInTransactionTool(
                 rowCount,
               };
               if (result.rows) {
-                statementResult.rows = result.rows;
+                if (result.rows.length > 50) {
+                  statementResult.rows = result.rows.slice(0, 50);
+                  statementResult.error =
+                    "Result truncated to 50 rows. Use sqlite_read_query with LIMIT for larger datasets.";
+                } else {
+                  statementResult.rows = result.rows;
+                }
               }
               results.push(statementResult);
             } else {
-              const result = await adapter.executeWriteQuery(statement);
+              const result = await adapter.executeWriteQuery(
+                statement,
+                queryParams,
+              );
               results.push({
                 statement:
                   statement.substring(0, 100) +
@@ -421,7 +425,7 @@ function createExecuteInTransactionTool(
                 rowsAffected: result.rowsAffected ?? 0,
               });
             }
-          } catch (error) {
+          } catch (error: unknown) {
             const message =
               error instanceof Error ? error.message : String(error);
             results.push({
@@ -451,7 +455,7 @@ function createExecuteInTransactionTool(
           statementsExecuted: input.statements.length,
           results,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         let rollbackFailure: string | undefined;
         if (transactionStarted) {
           try {

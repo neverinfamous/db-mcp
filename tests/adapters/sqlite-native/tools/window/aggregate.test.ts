@@ -19,7 +19,7 @@ describe("Window Function Tools - Aggregate", () => {
 
   beforeEach(async () => {
     adapter = new NativeSqliteAdapter();
-    await adapter.connect({ type: "sqlite", database: ":memory:" });
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
 
     // Create test table with numeric data
     await adapter.executeWriteQuery(`
@@ -111,7 +111,7 @@ describe("Window Function Tools - Aggregate", () => {
           table: "sales",
           column: "amount",
           orderBy: "id",
-          whereClause: "region = 'South'",
+          conditions: [{ column: "region", operator: "=", value: "South" }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };
@@ -128,7 +128,7 @@ describe("Window Function Tools - Aggregate", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid table name");
+      expect(result.error).toContain("Invalid identifier");
     });
 
     it("should reject invalid column name", async () => {
@@ -139,7 +139,7 @@ describe("Window Function Tools - Aggregate", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid column name");
+      expect(result.error).toContain("Invalid identifier");
     });
   });
 
@@ -191,7 +191,7 @@ describe("Window Function Tools - Aggregate", () => {
           column: "amount",
           orderBy: "id",
           windowSize: 2,
-          whereClause: "amount > 100",
+          conditions: [{ column: "amount", operator: ">", value: 100 }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };
@@ -213,7 +213,7 @@ describe("Window Function Tools - Aggregate", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid table name");
+      expect(result.error).toContain("Invalid identifier");
     });
 
     it("should reject invalid column name", async () => {
@@ -229,7 +229,7 @@ describe("Window Function Tools - Aggregate", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid column name");
+      expect(result.error).toContain("Invalid identifier");
     });
   });
 });

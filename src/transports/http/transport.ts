@@ -70,7 +70,7 @@ export class HttpTransport {
     this.state = {
       config: {
         ...config,
-        host: config.host ?? "0.0.0.0",
+        host: config.host ?? "127.0.0.1",
         stateless: config.stateless ?? false,
         enableHSTS:
           config.enableHSTS ?? process.env["MCP_ENABLE_HSTS"] === "true",
@@ -79,6 +79,7 @@ export class HttpTransport {
       httpServer: null,
       transports: new Map(),
       sseTransports: new Map(),
+      sessionOwners: new Map(),
       statelessTransport: null,
       resourceServer: null,
       authServerDiscovery: null,
@@ -109,6 +110,23 @@ export class HttpTransport {
     // DNS rebinding protection — reject requests with unrecognized Host headers
     this.state.app.use(localhostHostValidation());
 
+    // Configure trust proxy (requires explicitly defined downstream IPs)
+    if (this.state.config.trustedProxyIps !== undefined) {
+      if (
+        Array.isArray(this.state.config.trustedProxyIps) &&
+        this.state.config.trustedProxyIps.length === 0
+      ) {
+        throw new DbMcpError(
+          "trustedProxyIps cannot be an empty array if specified",
+          "CONFIG_ERROR",
+          ErrorCategory.CONFIGURATION,
+        );
+      }
+      this.state.app.set("trust proxy", this.state.config.trustedProxyIps);
+    } else {
+      this.state.app.set("trust proxy", false);
+    }
+
     // Security headers on all responses
     setupSecurityHeaders(this.state);
 
@@ -130,20 +148,50 @@ export class HttpTransport {
       this.state.config.resourceUri ??
       `http://localhost:${String(this.state.config.port)}`;
 
+    // Enforce authentication if HTTP is enabled and auth is not explicitly bypassed
+    if (
+      !this.state.config.oauth.enabled &&
+      !this.state.config.noAuthEnforcement
+    ) {
+      throw new DbMcpError(
+        "HTTP transport is enabled without authentication. You must configure OAuth (--oauth-enabled) or explicitly bypass this check with --no-auth-enforcement.",
+        "AUTH_REQUIRED",
+        ErrorCategory.CONFIGURATION,
+      );
+    }
+
     // Set up OAuth if enabled
     if (this.state.config.oauth.enabled) {
+      if (
+        resourceUri.startsWith("http://") &&
+        !resourceUri.includes("localhost") &&
+        !resourceUri.includes("127.0.0.1")
+      ) {
+        logger.warning(
+          "Security Warning (F09): OAuth is enabled but resource URI is not using HTTPS. A TLS-terminating reverse proxy is required in production.",
+        );
+      }
       await setupOAuth(this.state, resourceUri);
     }
 
-    // Health check endpoint (always public)
-    this.state.app.get("/health", (_req, res) => {
-      res.json({
+    // Health check endpoint (always public, but detail is auth-gated)
+    this.state.app.get("/health", (req, res) => {
+      // Base response — always public for load balancer health probes
+      const response: Record<string, unknown> = {
         status: "healthy",
         timestamp: new Date().toISOString(),
-        oauth: this.state.config.oauth.enabled,
-        mode: this.state.config.stateless ? "stateless" : "stateful",
-        activeSessions: this.state.transports.size,
-      });
+      };
+
+      // Detailed fields only for authenticated clients
+      if (req.auth) {
+        response["oauth"] = this.state.config.oauth.enabled;
+        response["mode"] = this.state.config.stateless
+          ? "stateless"
+          : "stateful";
+        response["activeSessions"] = this.state.transports.size;
+      }
+
+      res.json(response);
     });
 
     // Root endpoint - helpful information for browser visitors
@@ -173,20 +221,30 @@ export class HttpTransport {
 
     // Bind authenticated context to AsyncLocalStorage for audit identity capture.
     // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint
-    // setup (which dispatches tool handlers that invoke the audit interceptor).
+    const oauthEnabled = this.state.config.oauth?.enabled ?? false;
+    let lastNoAuthWarning = 0;
+    // lgtm[js/missing-rate-limiting]
     this.state.app.use((req, _res, next) => {
-      if (req.auth) {
-        const authCtx: AuthenticatedContext = {
-          authenticated: true,
-          claims: req.auth,
-          scopes: req.auth.scopes,
-        };
-        runWithAuthContext(authCtx, () => {
-          next();
-        });
-      } else {
-        next();
+      const implicitAdmin = !req.auth && !oauthEnabled;
+      if (implicitAdmin) {
+        const now = Date.now();
+        if (now - lastNoAuthWarning > 60000) {
+          logger.warning(
+            "No-auth mode is granting implicit 'admin' scope. This is expected for local dev but dangerous in production.",
+            { module: "HTTP", ip: req.ip },
+          );
+          lastNoAuthWarning = now;
+        }
       }
+      const authCtx: AuthenticatedContext = {
+        authenticated: !!req.auth || !oauthEnabled,
+        claims: req.auth,
+        scopes: req.auth?.scopes ?? (implicitAdmin ? ["admin"] : []),
+        clientIp: req.ip,
+      };
+      runWithAuthContext(authCtx, () => {
+        next();
+      });
     });
 
     // Set up MCP endpoints based on mode
@@ -235,7 +293,7 @@ export class HttpTransport {
         this.state.httpServer =
           this.state.app?.listen(
             this.state.config.port,
-            this.state.config.host ?? "0.0.0.0",
+            this.state.config.host ?? "127.0.0.1",
             () => {
               // Set HTTP server timeouts to prevent slowloris-style DoS attacks
               if (this.state.httpServer) {
@@ -246,7 +304,7 @@ export class HttpTransport {
               }
 
               logger.info(
-                `HTTP server listening on ${this.state.config.host ?? "0.0.0.0"}:${String(this.state.config.port)}`,
+                `HTTP server listening on ${this.state.config.host ?? "127.0.0.1"}:${String(this.state.config.port)}`,
                 {
                   code: "HTTP_SERVER_STARTED",
                   mode: this.state.config.stateless ? "stateless" : "stateful",
@@ -263,7 +321,7 @@ export class HttpTransport {
           });
           reject(error);
         });
-      } catch (error) {
+      } catch (error: unknown) {
         reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
@@ -281,7 +339,7 @@ export class HttpTransport {
           sessionId,
         });
         await transport.close();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error closing transport", {
           code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full,
           sessionId,
@@ -290,6 +348,7 @@ export class HttpTransport {
       }
     }
     this.state.transports.clear();
+    this.state.sessionOwners.clear();
 
     // Close all active SSE transports
     for (const [sessionId, transport] of this.state.sseTransports) {
@@ -299,7 +358,7 @@ export class HttpTransport {
           sessionId,
         });
         await transport.close();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error closing SSE transport", {
           code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full,
           sessionId,
@@ -313,7 +372,7 @@ export class HttpTransport {
     if (this.state.statelessTransport) {
       try {
         await this.state.statelessTransport.close();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Error closing stateless transport", {
           code: ERROR_CODES.SERVER.SHUTDOWN_FAILED.full,
           error: error instanceof Error ? error : undefined,

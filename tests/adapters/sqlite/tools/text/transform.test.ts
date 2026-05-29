@@ -62,7 +62,7 @@ describe("Text Transform Tools", () => {
         table: "texts",
         column: "email",
         delimiter: "@",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowCount: number;
@@ -82,7 +82,7 @@ describe("Text Transform Tools", () => {
         table: "texts",
         columns: ["name", "email"],
         separator: " - ",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowCount: number;
@@ -101,9 +101,9 @@ describe("Text Transform Tools", () => {
       const result = (await tools.get("sqlite_text_replace")?.({
         table: "texts",
         column: "description",
-        searchPattern: "World",
-        replaceWith: "Universe",
-        whereClause: "id = 1",
+        search: "World",
+        replacement: "Universe",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         rowsAffected: number;
@@ -126,7 +126,7 @@ describe("Text Transform Tools", () => {
         table: "texts",
         column: "description",
         mode: "both",
-        whereClause: "id = 5",
+        conditions: [{ column: "id", operator: "=", value: 5 }],
       })) as {
         success: boolean;
         rowCount: number;
@@ -142,7 +142,7 @@ describe("Text Transform Tools", () => {
         table: "texts",
         column: "description",
         mode: "left",
-        whereClause: "id = 5",
+        conditions: [{ column: "id", operator: "=", value: 5 }],
       })) as {
         success: boolean;
         results: { trimmed: string }[];
@@ -159,7 +159,7 @@ describe("Text Transform Tools", () => {
         table: "texts",
         column: "name",
         mode: "upper",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         results: { transformed: string }[];
@@ -174,7 +174,7 @@ describe("Text Transform Tools", () => {
         table: "texts",
         column: "name",
         mode: "lower",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         results: { transformed: string }[];
@@ -192,7 +192,7 @@ describe("Text Transform Tools", () => {
         column: "email",
         start: 1,
         length: 5,
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         results: { substring: string }[];
@@ -229,9 +229,9 @@ describe("Text Transform Tools", () => {
       const result = (await tools.get("sqlite_text_replace")?.({
         table: "nonexistent_xyz",
         column: "x",
-        searchPattern: "a",
-        replaceWith: "b",
-        whereClause: "id = 1",
+        search: "a",
+        replacement: "b",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as { success: boolean; error?: string };
 
       expect(result.success).toBe(false);

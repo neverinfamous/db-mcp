@@ -116,7 +116,7 @@ describe("JSON Operations Tools - Core", () => {
         table: "json_docs",
         column: "data",
         path: "$.age",
-        whereClause: "id = 2",
+        conditions: [{ column: "id", operator: "=", value: 2 }],
       })) as {
         success: boolean;
         rowCount: number;
@@ -133,7 +133,7 @@ describe("JSON Operations Tools - Core", () => {
         table: "json_docs",
         column: "data",
         path: "$.nested.key",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         values: unknown[];
@@ -149,7 +149,7 @@ describe("JSON Operations Tools - Core", () => {
       const result = (await tools.get("sqlite_json_type")?.({
         table: "json_docs",
         column: "data",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         types: string[];
@@ -164,7 +164,7 @@ describe("JSON Operations Tools - Core", () => {
         table: "json_docs",
         column: "data",
         path: "$.tags",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         types: string[];
@@ -179,7 +179,7 @@ describe("JSON Operations Tools - Core", () => {
         table: "json_docs",
         column: "data",
         path: "$.name",
-        whereClause: "id = 1",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
       })) as {
         success: boolean;
         types: string[];

@@ -46,12 +46,15 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = QueryPlanSchema.parse(params);
-        const sql = (input.sql ?? "").trim();
+        const sql = (input.sql || input.query || "").trim();
 
         if (!sql) {
           return {
             success: false,
-            error: "Parameter 'sql' is required and must be a non-empty string",
+            error:
+              "Validation error: Parameter 'sql' (or 'query') is required and must be a non-empty string",
+            code: "VALIDATION_ERROR",
+            category: "validation",
           };
         }
 
@@ -213,7 +216,7 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
           suggestions:
             suggestions.length > 0 ? [...new Set(suggestions)] : undefined,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -8,14 +8,15 @@ import { z } from "zod";
 
 /**
  * Coerce string-typed numbers to actual numbers.
- * Returns undefined for non-numeric strings so the schema default kicks in.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 /**
  * Coerce string-typed booleans to actual booleans.
@@ -71,6 +72,19 @@ const VALID_OPERATIONS = [
   "simplify",
 ] as const;
 
+const VALID_COLUMN_TYPES = [
+  "TEXT",
+  "INTEGER",
+  "REAL",
+  "BLOB",
+  "NUMERIC",
+  "VARCHAR",
+  "BOOLEAN",
+  "DATE",
+  "DATETIME",
+  "TIMESTAMP",
+] as const;
+
 const coerceGeometryType = createEnumCoercer(VALID_GEOMETRY_TYPES);
 
 // Required enum constants exported for handler-level validation.
@@ -83,13 +97,10 @@ export {
   VALID_INDEX_ACTIONS,
   VALID_FORMATS,
   VALID_OPERATIONS,
+  VALID_COLUMN_TYPES,
 };
 
 export const LoadSpatialiteSchema = z.object({
-  extensionPath: z
-    .string()
-    .optional()
-    .describe("Custom path to mod_spatialite extension"),
   forceReload: z.preprocess(
     coerceBoolean,
     z
@@ -135,7 +146,7 @@ export const CreateSpatialTableSchema = z.object({
     .array(
       z.object({
         name: z.string(),
-        type: z.string(),
+        type: z.enum(VALID_COLUMN_TYPES).optional().default("TEXT"),
       }),
     )
     .optional()

@@ -1,3 +1,7 @@
+import {
+  buildWhereClause,
+  sanitizeWhereClause,
+} from "../../../../utils/where-clause.js";
 /**
  * SQLite Core Tools - Convenience Operations
  *
@@ -10,7 +14,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { readOnly, write } from "../../../../utils/annotations.js";
+import { readOnly, write, destructive } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { resolveAliases } from "../../types.js";
 
@@ -22,6 +26,9 @@ import {
   TruncateSchema,
 } from "../../schemas/core.js";
 import { validateTableExists } from "./convenience-schemas.js";
+import { validateColumnExists } from "../column-validation.js";
+
+import { sanitizeIdentifier } from "../../../../utils/identifiers.js";
 
 import {
   WriteQueryOutputSchema,
@@ -43,6 +50,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Upsert Data"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         const aliasedParams = resolveAliases(params, {
@@ -63,7 +71,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
         };
         if (Object.keys(input.data).length === 0)
           throw new Error("data (or values alias) is required");
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
 
@@ -74,12 +82,15 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
       const values = Object.values(input.data);
       const placeholders = columns.map(() => "?").join(", ");
 
-      let sql = `INSERT INTO "${input.table}" ("${columns.join('", "')}") VALUES (${placeholders})`;
-      const queryParams: unknown[] = [...values];
+      const safeTable = sanitizeIdentifier(input.table);
+      const safeColumns = columns.map(sanitizeIdentifier);
+
+      let sql = `INSERT INTO ${safeTable} (${safeColumns.join(", ")}) VALUES (${placeholders})`;
+      queryParams.push(...values);
 
       if (input.conflictColumns.length > 0) {
         const conflictCols = input.conflictColumns
-          .map((c: string) => `"${c}"`)
+          .map(sanitizeIdentifier)
           .join(", ");
 
         // Determine which columns to update
@@ -90,7 +101,10 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
 
         if (colsToUpdate.length > 0) {
           const updateSets = colsToUpdate
-            .map((c: string) => `"${c}" = EXCLUDED."${c}"`)
+            .map(
+              (c: string) =>
+                `${sanitizeIdentifier(c)} = EXCLUDED.${sanitizeIdentifier(c)}`,
+            )
             .join(", ");
           sql += ` ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSets}`;
         } else {
@@ -98,7 +112,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
         }
       } else {
         // Fallback to INSERT OR REPLACE if no conflict columns are provided
-        sql = `INSERT OR REPLACE INTO "${input.table}" ("${columns.join('", "')}") VALUES (${placeholders})`;
+        sql = `INSERT OR REPLACE INTO ${safeTable} (${safeColumns.join(", ")}) VALUES (${placeholders})`;
       }
 
       if (input.returning !== undefined && input.returning !== false) {
@@ -108,19 +122,28 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
           Array.isArray(input.returning) &&
           input.returning.length > 0
         ) {
-          sql += ` RETURNING "${input.returning.join('", "')}"`;
+          const safeReturning = input.returning.map(sanitizeIdentifier);
+          sql += ` RETURNING ${safeReturning.join(", ")}`;
         }
       }
 
       try {
         const result = await adapter.executeWriteQuery(sql, queryParams);
-        return {
+        const response: {
+          success: boolean;
+          rowsAffected?: number | undefined;
+          rows?: Record<string, unknown>[] | undefined;
+          executionTimeMs?: number | undefined;
+        } = {
           success: true,
           rowsAffected: result.rowsAffected,
-          rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
-      } catch (error) {
+        if (input.returning !== undefined && input.returning !== false) {
+          response.rows = result.rows ?? [];
+        }
+        return response;
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
     },
@@ -140,6 +163,7 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Batch Insert Data"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         const aliasedParams = resolveAliases(params, { tableName: "table" });
@@ -148,11 +172,7 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
           ...parsed,
           rows: parsed.rows ?? [],
         };
-        if (input.rows.length === 0)
-          throw new Error(
-            "rows must not be empty. Provide at least one row to insert.",
-          );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
 
@@ -170,7 +190,9 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
       }
       const columns = Array.from(columnSet);
 
-      const queryParams: unknown[] = [];
+      const safeTable = sanitizeIdentifier(input.table);
+      const safeColumns = columns.map(sanitizeIdentifier);
+
       const valueGroups: string[] = [];
 
       for (const row of input.rows) {
@@ -182,7 +204,7 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
         valueGroups.push(`(${placeholders.join(", ")})`);
       }
 
-      let sql = `INSERT INTO "${input.table}" ("${columns.join('", "')}") VALUES ${valueGroups.join(", ")}`;
+      let sql = `INSERT INTO ${safeTable} (${safeColumns.join(", ")}) VALUES ${valueGroups.join(", ")}`;
 
       if (input.returning !== undefined && input.returning !== false) {
         if (input.returning === true) {
@@ -191,19 +213,28 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
           Array.isArray(input.returning) &&
           input.returning.length > 0
         ) {
-          sql += ` RETURNING "${input.returning.join('", "')}"`;
+          const safeReturning = input.returning.map(sanitizeIdentifier);
+          sql += ` RETURNING ${safeReturning.join(", ")}`;
         }
       }
 
       try {
         const result = await adapter.executeWriteQuery(sql, queryParams);
-        return {
+        const response: {
+          success: boolean;
+          rowsAffected?: number | undefined;
+          rows?: Record<string, unknown>[] | undefined;
+          executionTimeMs?: number | undefined;
+        } = {
           success: true,
           rowsAffected: result.rowsAffected,
-          rows: result.rows,
           executionTimeMs: result.executionTimeMs,
         };
-      } catch (error) {
+        if (input.returning !== undefined && input.returning !== false) {
+          response.rows = result.rows ?? [];
+        }
+        return response;
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
     },
@@ -224,6 +255,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         let aliasedParams = resolveAliases(params, {
@@ -231,47 +263,59 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
           columnName: "column",
         });
         aliasedParams = resolveAliases(aliasedParams, {
-          condition: "where",
-          filter: "where",
-          whereClause: "where",
+          condition: "conditions",
+          filter: "conditions",
+          where: "whereClause",
         });
-        const parsed = CountSchema.parse(aliasedParams);
-        input = {
-          ...parsed,
-          where:
-            parsed.where ??
-            parsed.condition ??
-            parsed.filter ??
-            parsed.whereClause,
-          params: Array.isArray(parsed.params)
-            ? parsed.params
-            : parsed.params !== undefined && parsed.params !== null
-              ? [parsed.params]
-              : [],
-        };
-      } catch (error) {
+        input = CountSchema.parse(aliasedParams);
+      } catch (error: unknown) {
         return { ...formatHandlerError(error) };
       }
 
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return validationError;
 
-      const column =
-        input.column && input.column !== "*" ? `"${input.column}"` : "*";
-      const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
-      let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM "${input.table}"`;
+      if (input.column && input.column !== "*") {
+        try {
+          await validateColumnExists(adapter, input.table, input.column);
+        } catch (error: unknown) {
+          return formatHandlerError(error);
+        }
+      }
 
-      if (input.where) {
-        sql += ` WHERE ${input.where}`;
+      const safeTable = sanitizeIdentifier(input.table);
+      const column =
+        input.column && input.column !== "*"
+          ? sanitizeIdentifier(input.column)
+          : "*";
+      const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
+      let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM ${safeTable}`;
+
+      const clauses: string[] = [];
+      if (input.whereClause) {
+        clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
+      }
+      if (input.conditions !== undefined && input.conditions.length > 0) {
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
+        if (whereSql !== "") {
+          clauses.push(`(${whereSql})`);
+          queryParams.push(...whereParams);
+        }
+      }
+      if (clauses.length > 0) {
+        sql += ` WHERE ` + clauses.join(" AND ");
       }
 
       try {
-        const result = await adapter.executeReadQuery(sql, input.params);
+        const result = await adapter.executeReadQuery(sql, queryParams);
         return {
           success: true,
           count: Number(result.rows?.[0]?.["count"] ?? 0),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -292,50 +336,53 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Check Existence"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         let aliasedParams = resolveAliases(params, { tableName: "table" });
         aliasedParams = resolveAliases(aliasedParams, {
-          condition: "where",
-          filter: "where",
-          whereClause: "where",
+          condition: "conditions",
+          filter: "conditions",
+          where: "whereClause",
         });
-        const parsed = ExistsSchema.parse(aliasedParams);
-        input = {
-          ...parsed,
-          where:
-            parsed.where ??
-            parsed.condition ??
-            parsed.filter ??
-            parsed.whereClause,
-          params: Array.isArray(parsed.params)
-            ? parsed.params
-            : parsed.params !== undefined && parsed.params !== null
-              ? [parsed.params]
-              : [],
-        };
-      } catch (error) {
+        input = ExistsSchema.parse(aliasedParams);
+      } catch (error: unknown) {
         return { ...formatHandlerError(error) };
       }
 
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return validationError;
 
-      let sql = `SELECT 1 FROM "${input.table}"`;
+      const safeTable = sanitizeIdentifier(input.table);
+      let sql = `SELECT 1 FROM ${safeTable}`;
 
-      if (input.where) {
-        sql += ` WHERE ${input.where}`;
+      const clauses: string[] = [];
+      if (input.whereClause) {
+        clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
+      }
+      if (input.conditions !== undefined && input.conditions.length > 0) {
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
+        if (whereSql !== "") {
+          clauses.push(`(${whereSql})`);
+          queryParams.push(...whereParams);
+        }
+      }
+      if (clauses.length > 0) {
+        sql += ` WHERE ` + clauses.join(" AND ");
       }
 
       sql += " LIMIT 1";
 
       try {
-        const result = await adapter.executeReadQuery(sql, input.params);
+        const result = await adapter.executeReadQuery(sql, queryParams);
         return {
           success: true,
           exists: (result.rows?.length ?? 0) > 0,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -353,23 +400,26 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: TruncateSchema,
     outputSchema: WriteQueryOutputSchema,
     requiredScopes: ["write"],
-    annotations: write("Truncate Table"),
+    annotations: destructive("Truncate Table"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         const aliasedParams = resolveAliases(params, { tableName: "table" });
         input = TruncateSchema.parse(aliasedParams);
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
 
       const validationError = await validateTableExists(adapter, input.table);
       if (validationError) return { ...validationError, rowsAffected: 0 };
 
+      const safeTable = sanitizeIdentifier(input.table);
+
       try {
         // SQLite does not have TRUNCATE TABLE. We use DELETE FROM.
-        const sql = `DELETE FROM "${input.table}"`;
-        const result = await adapter.executeWriteQuery(sql);
+        const sql = `DELETE FROM ${safeTable}`;
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         if (input.restartIdentity) {
           try {
@@ -387,7 +437,7 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
           rowsAffected: result.rowsAffected,
           executionTimeMs: result.executionTimeMs,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }
     },

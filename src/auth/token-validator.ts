@@ -32,22 +32,54 @@ const logger = createModuleLogger("AUTH");
  * Validates OAuth 2.1 access tokens using JWKS for signature verification.
  */
 export class TokenValidator {
+  /** Default algorithms accepted when none are explicitly configured */
+  private static readonly DEFAULT_ALGORITHMS = [
+    "RS256",
+    "RS384",
+    "RS512",
+    "ES256",
+    "ES384",
+    "ES512",
+  ];
+
   /** Resolved configuration with all defaults applied */
   private readonly jwksUri: string;
   private readonly issuer: string;
   private readonly audience: string;
   private readonly clockTolerance: number;
   private readonly jwksCacheTtl: number;
+  private readonly algorithms: string[];
 
   private jwks: jose.JWTVerifyGetKey | null = null;
   private jwksExpiry = 0;
 
   constructor(config: TokenValidatorConfig) {
+    // F-5: Reject non-HTTPS JWKS URIs in production to prevent MITM
+    // Allow http:// only with explicit ALLOW_HTTP_JWKS=true flag to prevent
+    // accidental bypasses if NODE_ENV=development leaks into production.
+    if (
+      config.jwksUri &&
+      !config.jwksUri.startsWith("https://") &&
+      process.env["ALLOW_HTTP_JWKS"] !== "true"
+    ) {
+      const url = new URL(config.jwksUri);
+      const isLocalDev =
+        url.hostname === "localhost" || url.hostname === "127.0.0.1";
+      if (!isLocalDev) {
+        throw new Error(
+          `Security: JWKS URI must use HTTPS in production. ` +
+            `Got: ${config.jwksUri}. ` +
+            `Set ALLOW_HTTP_JWKS=true to allow HTTP for local testing.`,
+        );
+      }
+    }
+
     this.jwksUri = config.jwksUri;
     this.issuer = config.issuer;
     this.audience = config.audience;
-    this.clockTolerance = config.clockTolerance ?? 60;
+    this.clockTolerance = config.clockTolerance ?? 30; // F12: Default 30s
     this.jwksCacheTtl = config.jwksCacheTtl ?? 3600;
+    this.algorithms = config.algorithms ?? TokenValidator.DEFAULT_ALGORITHMS;
 
     logger.info(`Token Validator initialized for issuer: ${this.issuer}`, {
       code: "AUTH_INIT",
@@ -66,10 +98,12 @@ export class TokenValidator {
       const jwks = this.getJwks();
 
       // Verify the token
+      // F-4: Pass configured algorithms to enforce operator-specified algorithm policy
       const { payload } = await jose.jwtVerify(token, jwks, {
         issuer: this.issuer,
         audience: this.audience,
         clockTolerance: this.clockTolerance,
+        algorithms: this.algorithms,
       });
 
       // Extract and normalize claims
@@ -86,7 +120,7 @@ export class TokenValidator {
         valid: true,
         claims,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return this.handleValidationError(error);
     }
   }
@@ -100,7 +134,7 @@ export class TokenValidator {
       return this.jwks;
     }
 
-    logger.info(`Fetching JWKS from: ${this.jwksUri}`, {
+    logger.debug(`Fetching JWKS from: ${this.jwksUri}`, {
       code: "AUTH_JWKS_FETCH",
     });
 
@@ -118,7 +152,7 @@ export class TokenValidator {
       });
 
       return this.jwks;
-    } catch (error) {
+    } catch (error: unknown) {
       const cause = error instanceof Error ? error : new Error(String(error));
 
       logger.error(`Failed to fetch JWKS: ${this.jwksUri}`, {
@@ -149,18 +183,36 @@ export class TokenValidator {
       );
     }
 
+    // Filter prototype-polluting keys from the payload before spreading.
+    // A compromised authorization server could issue JWTs with __proto__
+    // or constructor claims that would pollute the returned object's prototype.
+    const safePayload: jose.JWTPayload = {};
+    for (const key of Object.keys(payload)) {
+      if (
+        key !== "__proto__" &&
+        key !== "constructor" &&
+        key !== "prototype" &&
+        key !== "valueOf" &&
+        key !== "toString" &&
+        key !== "hasOwnProperty"
+      ) {
+        safePayload[key] = payload[key];
+      }
+    }
+
     return {
-      sub: payload.sub ?? "unknown",
+      // Include all other claims (prototype-polluting keys filtered above)
+      ...safePayload,
+      // Explicitly set authoritative fields last to prevent override via safePayload
+      sub: safePayload.sub ?? "unknown",
       scopes,
-      exp: payload.exp ?? 0,
-      iat: payload.iat ?? 0,
-      iss: payload.iss,
-      aud: payload.aud,
-      nbf: payload.nbf ?? undefined,
-      jti: payload.jti,
-      client_id: payload["client_id"] as string | undefined,
-      // Include all other claims
-      ...payload,
+      exp: safePayload.exp ?? 0,
+      iat: safePayload.iat ?? 0,
+      iss: safePayload.iss,
+      aud: safePayload.aud,
+      nbf: safePayload.nbf ?? undefined,
+      jti: safePayload.jti,
+      client_id: safePayload["client_id"] as string | undefined,
     };
   }
 
@@ -183,6 +235,9 @@ export class TokenValidator {
     }
 
     if (error instanceof jose.errors.JWTClaimValidationFailed) {
+      // F-10: Use generic message to avoid echoing jose internals
+      // that could reveal expected issuer, audience, or clock tolerance.
+      // The original error.message is logged server-side for debugging.
       logger.warning(`Token claim validation failed: ${error.message}`, {
         code: ERROR_CODES.AUTH.TOKEN_INVALID.full,
         error,
@@ -190,7 +245,7 @@ export class TokenValidator {
 
       return {
         valid: false,
-        error: `Token claim validation failed: ${error.message}`,
+        error: "Token claim validation failed",
         errorCode: ERROR_CODES.AUTH.TOKEN_INVALID.full,
       };
     }
@@ -221,7 +276,8 @@ export class TokenValidator {
       };
     }
 
-    // Handle other errors
+    // Handle other errors — use generic message to avoid leaking internal
+    // details (e.g., JWKS fetch failure URLs). Full message logged server-side.
     const message = error instanceof Error ? error.message : String(error);
 
     logger.error(`Token validation failed: ${message}`, {
@@ -231,7 +287,7 @@ export class TokenValidator {
 
     return {
       valid: false,
-      error: `Token validation failed: ${message}`,
+      error: "Token validation failed",
       errorCode: ERROR_CODES.AUTH.TOKEN_INVALID.full,
     };
   }

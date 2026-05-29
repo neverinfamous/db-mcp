@@ -4,8 +4,11 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { idempotent } from "../../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../../utils/index.js";
+import { adminFs } from "../../../../../utils/annotations.js";
+import {
+  sanitizeIdentifier,
+  validateSameDirPath,
+} from "../../../../../utils/index.js";
 import {
   formatHandlerError,
   ExtensionNotAvailableError,
@@ -22,13 +25,13 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: CreateCsvTableSchema,
     outputSchema: CreateCsvTableOutputSchema,
-    requiredScopes: ["write"],
-    annotations: idempotent("Create CSV Table"),
+    requiredScopes: ["admin"],
+    annotations: adminFs("Create CSV Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateCsvTableSchema.parse(params);
 
-        sanitizeIdentifier(input.tableName);
+        const safeTableName = sanitizeIdentifier(input.tableName);
 
         if (!path.isAbsolute(input.filePath)) {
           return {
@@ -36,6 +39,23 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
             error: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
             code: "VALIDATION_ERROR",
             category: "validation",
+            message: "",
+            sql: "",
+            columns: [],
+          };
+        }
+
+        // Security: validate filePath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.filePath,
+          adapter.getConfiguredPath(),
+        );
+        if (!pathCheck.valid) {
+          return {
+            success: false,
+            error: pathCheck.error,
+            code: "SECURITY_ERROR",
+            category: "security",
             message: "",
             sql: "",
             columns: [],
@@ -60,17 +80,17 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
           options.push("header=false");
         }
         if (input.delimiter !== ",") {
-          options.push(`delimiter='${input.delimiter}'`);
+          options.push(`delimiter='${input.delimiter.replace(/'/g, "''")}'`);
         }
         if (input.columns && input.columns.length > 0) {
           options.push(`columns=${String(input.columns.length)}`);
         }
 
-        const sql = `CREATE VIRTUAL TABLE "${input.tableName}" USING csv(${options.join(", ")})`;
+        const sql = `CREATE VIRTUAL TABLE ${safeTableName} USING csv(${options.join(", ")})`;
         await adapter.executeWriteQuery(sql);
 
         const colResult = await adapter.executeReadQuery(
-          `PRAGMA table_info("${input.tableName}")`,
+          `PRAGMA table_info(${safeTableName})`,
         );
         const columns = (colResult.rows ?? []).map((row) =>
           typeof row["name"] === "string" ? row["name"] : "",
@@ -78,11 +98,11 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
 
         return {
           success: true,
-          message: `Created CSV virtual table '${input.tableName}'`,
+          message: `Created CSV virtual table '${safeTableName}'`,
           sql,
           columns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   JsonInsertOutputSchema,
   JsonUpdateOutputSchema,
@@ -26,11 +27,12 @@ import type {
 import { write } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
-  validateWhereClause,
+  validateJsonPath,
 } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
+  QueryError,
 } from "../../../../utils/errors/index.js";
 
 /**
@@ -47,10 +49,12 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Insert"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input: JsonInsertInput;
+
       try {
         input = JsonInsertSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -72,7 +76,7 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
         const valueJson = JSON.stringify(input.data);
         const sql = `INSERT INTO "${input.table}" ("${input.column}") VALUES (json('${valueJson.replace(/'/g, "''")}'))`;
 
-        const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -90,7 +94,7 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -111,10 +115,11 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Update"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input: JsonUpdateInput;
       try {
         input = JsonUpdateSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -124,16 +129,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.column);
 
         // Validate JSON path format
-        if (!input.path.startsWith("$")) {
-          throw new ValidationError(
-            "JSON path must start with $",
-            "VALIDATION_ERROR",
-            {
-              suggestion:
-                "Use a valid JSON path starting with $. For example: $.key or $[0]",
-            },
-          );
-        }
+        validateJsonPath(input.path);
 
         if (input.value === undefined) {
           throw new ValidationError(
@@ -146,10 +142,18 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const valueJson = JSON.stringify(input.value);
-        validateWhereClause(input.whereClause);
-        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_replace("${input.column}", '${input.path}', json('${valueJson.replace(/'/g, "''")}')) WHERE ${input.whereClause}`;
+        // validateWhereClause() removed
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
+        let sql = `UPDATE "${input.table}" SET "${input.column}" = json_replace("${input.column}", '${input.path}', json('${valueJson.replace(/'/g, "''")}'))`;
+        if (whereSql) {
+          sql += ` WHERE ${whereSql}`;
+        }
+        queryParams.push(...whereParams);
 
-        const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -163,7 +167,7 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -184,10 +188,11 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("JSON Merge"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input: JsonMergeInput;
       try {
         input = JsonMergeSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -208,11 +213,19 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
 
         const mergeJson = JSON.stringify(input.mergeData);
 
-        validateWhereClause(input.whereClause);
+        // validateWhereClause() removed
         // Use json_patch for merging (shallow merge)
-        const sql = `UPDATE "${input.table}" SET "${input.column}" = json_patch("${input.column}", '${mergeJson.replace(/'/g, "''")}') WHERE ${input.whereClause}`;
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
+        let sql = `UPDATE "${input.table}" SET "${input.column}" = json_patch("${input.column}", '${mergeJson.replace(/'/g, "''")}')`;
+        if (whereSql) {
+          sql += ` WHERE ${whereSql}`;
+        }
+        queryParams.push(...whereParams);
 
-        const result = await adapter.executeWriteQuery(sql);
+        const result = await adapter.executeWriteQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -226,7 +239,7 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -249,10 +262,11 @@ export function createJsonCollectionTool(
     requiredScopes: ["write"],
     annotations: write("Create JSON Collection"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input: CreateJsonCollectionInput;
       try {
         input = CreateJsonCollectionSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -264,19 +278,31 @@ export function createJsonCollectionTool(
         const dataCol = input.dataColumn ?? "data";
         const sqls: string[] = [];
 
+        // Check if table already exists
+        const checkSql =
+          "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name=?";
+        const checkResult = await adapter.executeReadQuery(checkSql, [
+          input.tableName,
+        ]);
+        const tableCount = checkResult.rows?.[0]
+          ? Number(checkResult.rows[0]["count"])
+          : 0;
+        if (tableCount > 0) {
+          throw new QueryError(
+            `Table '${input.tableName}' already exists`,
+            "TABLE_EXISTS",
+            {
+              suggestion:
+                "Use a different table name or drop the existing table first.",
+              details: { resourceType: "table", resourceName: input.tableName },
+            },
+          );
+        }
+
         // Validate all index paths upfront before creating anything
         if (input.indexes) {
           for (const idx of input.indexes) {
-            if (!idx.path.startsWith("$")) {
-              throw new ValidationError(
-                `JSON path must start with $: ${idx.path}`,
-                "VALIDATION_ERROR",
-                {
-                  suggestion:
-                    "Use a valid JSON path starting with $. For example: $.key or $[0]",
-                },
-              );
-            }
+            validateJsonPath(idx.path);
           }
         }
 
@@ -296,7 +322,7 @@ export function createJsonCollectionTool(
         sqls.push(createSql);
 
         // Execute CREATE TABLE
-        await adapter.executeWriteQuery(createSql);
+        await adapter.executeWriteQuery(createSql, queryParams);
 
         // Create indexes (all paths already validated above)
         let indexCount = 0;
@@ -307,7 +333,7 @@ export function createJsonCollectionTool(
               `idx_${input.tableName}_${idx.path.replace(/[$.[\\]]/g, "_")}`;
             const indexSql = `CREATE INDEX IF NOT EXISTS "${indexName}" ON "${input.tableName}"(json_extract("${dataCol}", '${idx.path}'))`;
             sqls.push(indexSql);
-            await adapter.executeWriteQuery(indexSql);
+            await adapter.executeWriteQuery(indexSql, queryParams);
             indexCount++;
           }
         }
@@ -318,7 +344,7 @@ export function createJsonCollectionTool(
           sql: sqls,
           indexCount,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

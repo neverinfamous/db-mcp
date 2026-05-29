@@ -14,9 +14,17 @@ import {
   getBaseURL,
   callToolAndParse,
   expectSuccess,
+  hasIsolatedVm,
 } from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
+
+test.beforeEach(() => {
+  test.skip(
+    !hasIsolatedVm(),
+    "isolated-vm is not installed on this system, skipping Code Mode tests",
+  );
+});
 
 // =============================================================================
 // Core Group via Code Mode
@@ -39,6 +47,7 @@ test.describe("Code Mode Groups: Core", () => {
   });
 
   test("positional args work", async ({}, testInfo) => {
+    if (!hasIsolatedVm()) test.skip();
     const client = await createClient(getBaseURL(testInfo));
     try {
       const p = await callToolAndParse(client, "sqlite_execute_code", {

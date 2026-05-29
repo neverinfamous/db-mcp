@@ -2,18 +2,18 @@
  * db-mcp - Sandbox Factory
  *
  * Factory functions for creating sandbox instances with configurable isolation modes.
- * Allows runtime selection between vm-based and worker-based sandboxes.
+ * Allows runtime selection between isolated-vm and worker-based sandboxes.
  */
 
 import { CodeModeSandbox, SandboxPool } from "./sandbox.js";
-import { WorkerSandbox, WorkerSandboxPool } from "./worker-sandbox.js";
+
 import { logger } from "../utils/logger/index.js";
 import type { SandboxOptions, PoolOptions, SandboxResult } from "./types.js";
 
 /**
  * Sandbox isolation mode
  */
-export type SandboxMode = "vm" | "worker";
+export type SandboxMode = "isolate"; // Worker mode explicitly disabled for security (H-1)
 
 /**
  * Unified sandbox interface
@@ -54,7 +54,7 @@ export interface SandboxModeInfo {
 }
 
 // Default mode (module-level state)
-let defaultMode: SandboxMode = "worker";
+let defaultMode: SandboxMode = "isolate";
 
 /**
  * Set the default sandbox mode
@@ -77,12 +77,12 @@ export function getDefaultSandboxMode(): SandboxMode {
  * Get available sandbox modes
  */
 export function getAvailableSandboxModes(): SandboxMode[] {
-  return ["vm", "worker"];
+  return ["isolate"];
 }
 
 /**
  * Create a sandbox instance
- * @param mode - Isolation mode ('vm' or 'worker')
+ * @param mode - Isolation mode ('isolate' or 'worker')
  * @param options - Sandbox options
  */
 export function createSandbox(
@@ -91,18 +91,17 @@ export function createSandbox(
 ): ISandbox {
   const selectedMode = mode ?? defaultMode;
 
-  switch (selectedMode) {
-    case "worker":
-      return WorkerSandbox.create(options);
-    case "vm":
-    default:
-      return CodeModeSandbox.create(options);
+  if (selectedMode === "isolate") {
+    return CodeModeSandbox.create(options);
   }
+  throw new Error(
+    "Only 'isolate' mode is supported. Worker mode was disabled for security.",
+  );
 }
 
 /**
  * Create a sandbox pool
- * @param mode - Isolation mode ('vm' or 'worker')
+ * @param mode - Isolation mode ('isolate' or 'worker')
  * @param poolOptions - Pool configuration
  * @param sandboxOptions - Sandbox configuration
  */
@@ -113,36 +112,23 @@ export function createSandboxPool(
 ): ISandboxPool {
   const selectedMode = mode ?? defaultMode;
 
-  switch (selectedMode) {
-    case "worker":
-      return new WorkerSandboxPool(poolOptions, sandboxOptions);
-    case "vm":
-    default:
-      return new SandboxPool(poolOptions, sandboxOptions);
+  if (selectedMode === "isolate") {
+    return new SandboxPool(poolOptions, sandboxOptions);
   }
+  throw new Error(
+    "Only 'isolate' mode is supported. Worker mode was disabled for security.",
+  );
 }
 
 /**
  * Get mode characteristics for documentation/selection
  */
-export function getSandboxModeInfo(mode: SandboxMode): SandboxModeInfo {
-  switch (mode) {
-    case "worker":
-      return {
-        name: "Worker Thread",
-        isolation: "Separate V8 instance per worker",
-        performance: "Higher overhead (thread spawn per execution)",
-        security: "Enhanced - isolated memory, hard timeouts",
-        requirements: "Node.js worker_threads (built-in)",
-      };
-    case "vm":
-    default:
-      return {
-        name: "VM Context",
-        isolation: "Script isolation within same process",
-        performance: "Low overhead (reusable contexts)",
-        security: "Standard - script isolation, blocked globals",
-        requirements: "Node.js vm module (built-in)",
-      };
-  }
+export function getSandboxModeInfo(_mode: SandboxMode): SandboxModeInfo {
+  return {
+    name: "Isolated VM",
+    isolation: "True V8 Isolate within same process",
+    performance: "Low overhead (fast isolate creation)",
+    security: "Maximum - strict C++ memory isolation",
+    requirements: "isolated-vm native package",
+  };
 }

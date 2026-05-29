@@ -5,17 +5,61 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { admin } from "../../../../../utils/annotations.js";
+
 import {
   formatHandlerError,
   ValidationError,
 } from "../../../../../utils/errors/index.js";
+import { validateSameDirPath } from "../../../../../utils/index.js";
 import {
   buildProgressContext,
   sendProgress,
 } from "../../../../../utils/progress-utils.js";
 import { RestoreOutputSchema } from "../../../schemas/admin.js";
 import { RestoreSchema } from "../../../schemas/admin.js";
+
+/**
+ * Validate DDL to prevent execution of unauthorized or destructive statements
+ * during restore operations.
+ */
+function validateDdl(
+  sql: string,
+  type: string,
+  name: string,
+  allowTriggers = false,
+): void {
+  const cleanSql = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "");
+  const upperSql = cleanSql.toUpperCase();
+  // Reject potentially destructive or unauthorized statements
+  if (
+    /\bLOAD_EXTENSION\s*\(/i.test(cleanSql) ||
+    /\bATTACH\b/i.test(cleanSql) ||
+    /\bDETACH\b/i.test(cleanSql) ||
+    /\bPRAGMA\b/i.test(cleanSql) ||
+    /\bRAISE\s*\(/i.test(cleanSql) ||
+    /\b(?:BEGIN|COMMIT|ROLLBACK)(?:\s+TRANSACTION)?\b/i.test(cleanSql) ||
+    /\b(?:writefile|readfile)\s*\(/i.test(cleanSql) ||
+    /\bsqlite_exec\s*\(/i.test(cleanSql)
+  ) {
+    throw new ValidationError(
+      `DDL validation failed: unauthorized command or function call in ${type} '${name}'`,
+    );
+  }
+
+  if (type === "trigger") {
+    if (!allowTriggers) {
+      throw new ValidationError(
+        `DDL validation failed: trigger restoration is disabled for security reasons. Pass allowTriggers=true if you trust the backup file.`,
+      );
+    }
+    // Ensure triggers do not attempt to target other databases explicitly
+    if (upperSql.includes(" ON MAIN.") || upperSql.includes(" ON TEMP.")) {
+      throw new ValidationError(
+        `DDL validation failed: trigger '${name}' attempts to target a specific database`,
+      );
+    }
+  }
+}
 
 /**
  * Restore database from backup
@@ -29,12 +73,19 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     inputSchema: RestoreSchema,
     outputSchema: RestoreOutputSchema,
     requiredScopes: ["admin"],
-    annotations: admin("Restore Database"),
+    annotations: {
+      title: "Restore Backup",
+      readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: true,
+      sensitiveHint: true,
+    },
     handler: async (params: unknown, context: RequestContext) => {
       let input;
+
       try {
         input = RestoreSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sourcePath: "" };
       }
       const progress = buildProgressContext(context);
@@ -62,6 +113,19 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const resolvedPath = nodePath.resolve(input.sourcePath);
+
+      // Security: validate sourcePath is within the same directory as the primary DB
+      const pathCheck = validateSameDirPath(
+        input.sourcePath,
+        adapter.getConfiguredPath(),
+      );
+      if (!pathCheck.valid) {
+        return {
+          ...formatHandlerError(new ValidationError(pathCheck.error)),
+          sourcePath: input.sourcePath,
+        };
+      }
+
       if (!fs.existsSync(resolvedPath)) {
         return {
           ...formatHandlerError(
@@ -71,19 +135,18 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      const escapedPath = resolvedPath.replace(/'/g, "''");
+      const escapedPath = pathCheck.resolvedPath.replace(/'/g, "''");
 
       await adapter.executeReadQuery("PRAGMA integrity_check(1)");
 
       await sendProgress(progress, 2, 5, "Attaching backup database...");
 
       try {
-        await adapter.executeWriteQuery(
+        await adapter.rawQuery(
           `ATTACH DATABASE '${escapedPath}' AS backup_source`,
           undefined,
-          true,
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sourcePath: input.sourcePath };
       }
 
@@ -102,11 +165,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             const tableName = row["name"] as string;
             const quotedName = `"${tableName.replace(/"/g, '""')}"`;
             await adapter
-              .executeWriteQuery(
-                `DROP TABLE IF EXISTS main.${quotedName}`,
-                undefined,
-                true,
-              )
+              .rawQuery(`DROP TABLE IF EXISTS main.${quotedName}`, undefined)
               .catch(() => {
                 // Ignore errors
               });
@@ -117,11 +176,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         await sendProgress(progress, 4, 5, "Restoring tables from backup...");
 
-        await adapter.executeWriteQuery(
-          "PRAGMA foreign_keys = OFF",
-          undefined,
-          true,
-        );
+        await adapter.rawQuery("PRAGMA foreign_keys = OFF", undefined);
 
         const tablesResult = await adapter.executeReadQuery(
           `SELECT name, sql FROM backup_source.sqlite_master
@@ -155,18 +210,15 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             const quotedName = `"${tableName.replace(/"/g, '""')}"`;
 
             try {
+              validateDdl(createSql, "table", tableName);
               await adapter
-                .executeWriteQuery(
-                  `DROP TABLE IF EXISTS main.${quotedName}`,
-                  undefined,
-                  true,
-                )
+                .rawQuery(`DROP TABLE IF EXISTS main.${quotedName}`, undefined)
                 .catch(() => {
                   /* ignore */
                 });
 
-              await adapter.executeWriteQuery(createSql, undefined, true);
-            } catch (error) {
+              await adapter.rawQuery(createSql, undefined);
+            } catch (error: unknown) {
               const moduleMatch = /USING\s+(\w+)/i.exec(createSql);
               const moduleName = moduleMatch?.[1] ?? "unknown";
               const errMsg =
@@ -195,18 +247,25 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
           if (!createSql) continue;
 
-          await adapter.executeWriteQuery(
+          try {
+            validateDdl(createSql, "table", tableName);
+          } catch (error: unknown) {
+            skippedTables.push(
+              `${tableName} (DDL Validation: ${error instanceof Error ? error.message : String(error)})`,
+            );
+            continue;
+          }
+
+          await adapter.rawQuery(
             `DROP TABLE IF EXISTS main.${quotedName}`,
             undefined,
-            true,
           );
 
-          await adapter.executeWriteQuery(createSql, undefined, true);
+          await adapter.rawQuery(createSql, undefined);
 
-          await adapter.executeWriteQuery(
+          await adapter.rawQuery(
             `INSERT INTO main.${quotedName} SELECT * FROM backup_source.${quotedName}`,
             undefined,
-            true,
           );
         }
 
@@ -221,9 +280,11 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         for (const row of indexesResult.rows ?? []) {
           const createSql = row["sql"] as string;
+          const name = row["name"] as string;
           if (!createSql) continue;
           try {
-            await adapter.executeWriteQuery(createSql, undefined, true);
+            validateDdl(createSql, "index", name);
+            await adapter.rawQuery(createSql, undefined);
           } catch {
             // Index may already exist or reference missing table — skip
           }
@@ -243,16 +304,13 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           if (!createSql) continue;
           const quotedViewName = `"${viewName.replace(/"/g, '""')}"`;
           try {
+            validateDdl(createSql, "view", viewName);
             await adapter
-              .executeWriteQuery(
-                `DROP VIEW IF EXISTS main.${quotedViewName}`,
-                undefined,
-                true,
-              )
+              .rawQuery(`DROP VIEW IF EXISTS main.${quotedViewName}`, undefined)
               .catch(() => {
                 /* ignore */
               });
-            await adapter.executeWriteQuery(createSql, undefined, true);
+            await adapter.rawQuery(createSql, undefined);
           } catch {
             // View may reference missing tables — skip
           }
@@ -268,19 +326,17 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         for (const row of triggersResult.rows ?? []) {
           const createSql = row["sql"] as string;
+          const name = row["name"] as string;
           if (!createSql) continue;
           try {
-            await adapter.executeWriteQuery(createSql, undefined, true);
+            validateDdl(createSql, "trigger", name, input.allowTriggers);
+            await adapter.rawQuery(createSql, undefined);
           } catch {
             // Trigger may reference missing tables — skip
           }
         }
 
-        await adapter.executeWriteQuery(
-          "PRAGMA foreign_keys = ON",
-          undefined,
-          true,
-        );
+        await adapter.rawQuery("PRAGMA foreign_keys = ON", undefined);
 
         const duration = Date.now() - start;
 
@@ -302,12 +358,12 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
         };
       } finally {
         await adapter
-          .executeWriteQuery("PRAGMA foreign_keys = ON", undefined, true)
+          .rawQuery("PRAGMA foreign_keys = ON", undefined)
           .catch(() => {
             /* ignore */
           });
         await adapter
-          .executeWriteQuery("DETACH DATABASE backup_source", undefined, true)
+          .rawQuery("DETACH DATABASE backup_source", undefined)
           .catch(() => {
             /* ignore */
           });

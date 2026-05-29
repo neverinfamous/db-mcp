@@ -46,9 +46,10 @@ export function createGenerateSeriesTool(
     annotations: readOnly("Generate Series"),
     handler: (params: unknown, _context: RequestContext) => {
       let input;
+
       try {
         input = GenerateSeriesSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve({
           ...formatHandlerError(error),
           count: 0,
@@ -56,27 +57,16 @@ export function createGenerateSeriesTool(
         });
       }
 
-      // Validate required fields (schema uses .optional() for SDK compatibility)
-      if (input.start === undefined || input.stop === undefined) {
-        return Promise.resolve({
-          success: false,
-          count: 0,
-          values: [],
-          error: "start and stop are required parameters",
-          code: "VALIDATION_ERROR",
-          category: "validation",
-        });
-      }
-
       // Generate in JS - better-sqlite3 doesn't include SQLITE_ENABLE_SERIES
       const values: number[] = [];
+      const limit = Math.min(input.limit ?? 100, 1000);
       for (
         let i = input.start;
         input.step > 0 ? i <= input.stop : i >= input.stop;
         i += input.step
       ) {
         values.push(i);
-        if (values.length > 10000) break; // Safety limit
+        if (values.length >= limit) break; // Safety limit
       }
 
       return Promise.resolve({
@@ -103,6 +93,7 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateViewSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         // Validate and quote view name
         const viewName = sanitizeIdentifier(input.viewName);
@@ -111,7 +102,8 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
         if (!input.selectQuery.trim().toUpperCase().startsWith("SELECT")) {
           return {
             success: false,
-            message: "View definition must be a SELECT query",
+            error: "View definition must be a SELECT query",
+            code: "VALIDATION_ERROR",
             sql: "",
           };
         }
@@ -130,7 +122,7 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
           message: `View '${input.viewName}' created`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",
@@ -156,6 +148,7 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = ListViewsSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'view'`;
         if (input.pattern) {
@@ -164,7 +157,7 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
         }
         sql += ` ORDER BY name`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         let views = (result.rows ?? []).map((row) => ({
           name: typeof row["name"] === "string" ? row["name"] : "",
@@ -181,7 +174,7 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
           count: views.length,
           views,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           count: 0,
@@ -207,6 +200,7 @@ export function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DropViewSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         // Validate and quote view name
         const viewName = sanitizeIdentifier(input.viewName);
@@ -240,7 +234,7 @@ export function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           message: `View '${input.viewName}' dropped`,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

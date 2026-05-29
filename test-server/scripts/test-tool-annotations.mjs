@@ -23,6 +23,9 @@ const proc = spawn(
     "./test-server/test.db",
     "--tool-filter",
     "+all",
+    "--audit-log",
+    "stderr",
+    "--audit-backup",
   ],
   {
     cwd: projectDir,
@@ -90,7 +93,7 @@ proc.stdout.on("data", (chunk) => {
         }
 
         // Verification
-        const expectedCount = 154; // 151 Native tools + 3 built-in tools
+        const expectedCount = 175; // MCP total: 172 inventory (167 group + 5 audit) + 3 built-in
         const hasExpectedCount = tools.length === expectedCount;
         const allHaveAnnotations = missing === 0;
         const allAreFalse =

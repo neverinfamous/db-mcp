@@ -2,60 +2,118 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
-> We're currently testing Native mode.
-
-**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
-
-**Step 2:** Conduct an exhaustive test of the **Code Mode sandbox** using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
-
-**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
 
-- **Phase 2.1** (top-level help): Expect fewer than 10 groups — `transactions` is not listed (0 tools registered in WASM). `totalMethods` will be ~125 instead of ~151.
-- **Phase 2.3** (all groups exist): The `transactions` group property exists on the `sqlite` object but returns 0 methods. Adjust the assertion to allow 0 methods for `transactions`.
-- **Phase 4.5** (stats read-only): Stats tools are fully WASM-compatible — no adjustment needed.
+## Setup & Pre-requisites
+
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
+
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the checklist below using live MCP server tool calls directly — not scripts/terminal.
+
+**Step 3:** The agent should update `C:\Users\chris\Desktop\db-mcp\UNRELEASED.md`, update `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` if appropriate, and create a `memory-journal-mcp` entry summarizing the changes/fixes.
+
+> [!WARNING]
+> **Stale Build Issues:** The MCP server runs from the compiled `dist/` directory, NOT `src/`. If you encounter inexplicable behavior (e.g., tools executing old logic or throwing validation errors for things already fixed in the source code), the server might be running a stale build. Check if the compiled code in `dist/` matches the source code in `src/`. If out of sync, stop and instruct the user to run `npm run build` and restart the server before continuing testing.
+
+> **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
+
+### Test Schema Reference
+
+> See `code-map.md` in the `test-server/` directory for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 
-- ❌ Fail: Tool errors or produces incorrect results (include error message)
-- ⚠️ Issue: Unexpected behavior or improvement opportunity
-- 📦 Payload: Unnecessarily large response — **blocking, equally important as ❌ bugs**. You **MUST** monitor `metrics.tokenEstimate` for every operation. Report the response size in tokens/KB and suggest optimization.
+- ❌ **Fail**: Tool errors or produces incorrect results (include error message)
+- ⚠️ **Issue**: Unexpected behavior or improvement opportunity
+- 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
-## Test Database Schema
+### Error Message Quality Rating
 
-| Table         | Rows | Key Columns                                                                                 |
-| ------------- | ---- | ------------------------------------------------------------------------------------------- |
-| test_products | 16   | id, name, description, price (REAL), category (TEXT lowercase), created_at                  |
-| test_orders   | 20   | id, product_id (FK→test_products), customer_name, quantity, total_price, order_date, status |
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
-> **Note:** This prompt tests the sandbox execution environment, not specific tool groups. It uses `test_products` and `test_orders` as representative tables for validation.
+## Testing Requirements & Error Standards
 
-## Testing Requirements
+> [!NOTE]
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** Any response that is a raw MCP error (no `success` field) is a bug — report as ❌.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+>
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
+>
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
-1. **Error path testing**: Validate structured error responses for invalid inputs.
-2. **Token tracking**: Monitor `metrics.tokenEstimate` on every response. Report the most expensive block.
-3. **Deterministic checklist first**: Complete ALL numbered items before freeform exploration.
-4. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
+2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
+   - (a) A domain error (e.g., non-existent table).
+   - (b) An **empty parameters test** (call the tool with `{}`).
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
+   > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
+5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
+   > **CRITICAL**: Architectural consistency is paramount. Do not introduce undocumented architectural deviations. If you implement a structural or architectural improvement in one tool, you must apply it symmetrically to other applicable tools in the group or project.
+6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+7. **Token Tracking**: Monitor `metrics.tokenEstimate` to detect payload issues.
+8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
-## Structured Error Response Pattern
+### Structured Error Response Pattern
+
+All tools should return errors as structured objects instead of throwing. The expected pattern:
 
 ```json
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | What you see                                  | Verdict |
-| -------------------- | --------------------------------------------- | ------- |
-| **Handler error** ✅ | JSON object with `success` and `error` fields | Correct |
-| **MCP error** ❌     | Raw text, `isError: true`, no `success` field | Bug     |
+| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+
+## Naming & Cleanup
+
+- **Temporary tables**: `temp_*` (or `stress_*`) prefix
+- **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
+- Drop at the end of the script. If DROP fails due to lock, note and move on.
 
 ---
+
+## Group Focus: sandbox
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+>
+> **Note**: This is a **meta-test suite** — it validates the Code Mode sandbox infrastructure itself, not a specific tool group. The coverage matrix requirement does not apply; instead, each phase targets a specific sandbox capability.
+
+### Code Mode Methods
+
+- `sqlite.core.help`
+- `sqlite.core.query`
+- `sqlite.core.readQuery`
+- `sqlite.nonexistent.help`
+- `sqlite.core.writeQuery`
+- `sqlite.stats.statsBasic`
+- `sqlite.core.createTable`
+- `sqlite.core.dropTable`
 
 ## Phase 1: Sandbox Basics (9 tests)
 
@@ -133,9 +191,7 @@ return nested;
 
 Expected: `{success: true}` — sandbox must serialize deeply nested objects.
 
----
-
-## Phase 2: API Discoverability (7 tests)
+## Phase 2: API Discoverability (8 tests)
 
 ### 2.1 — Top-level help
 
@@ -143,7 +199,7 @@ Expected: `{success: true}` — sandbox must serialize deeply nested objects.
 return await sqlite.help();
 ```
 
-Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 125.
+Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 140.
 
 ### 2.2 — Group help (core)
 
@@ -216,9 +272,24 @@ return {
 };
 ```
 
-Expected: All values are `"undefined"`. The 3 built-in tools (`server_info`, `server_health`, `list_adapters`) are always-on MCP tools available outside Code Mode but must NOT be accessible in the `sqlite.*` sandbox namespace.
+Expected: All values are `"undefined"`. The 3 built-in tools (`server_info`, `server_health`, `list_adapters`) are always-on MCP tools available outside Code Mode but must NOT be accessible in the `sqlite.*` sandbox namespace — they are server-level tools not scoped to a specific database adapter.
 
----
+### 2.8 — reportProgress utility
+
+```javascript
+const type = typeof sqlite.reportProgress;
+if (type !== "function")
+  return {
+    success: false,
+    error: "reportProgress not a function, got: " + type,
+  };
+sqlite.reportProgress(1, 3, "Testing progress reporting");
+sqlite.reportProgress(2, 3, "Still working");
+sqlite.reportProgress(3, 3, "Done");
+return { success: true, type };
+```
+
+Expected: `{success: true, type: "function"}`. The `sqlite.reportProgress(current, total, message)` utility must be accessible and callable without errors. Progress notifications are sent to the client but do not affect the return value.
 
 ## Phase 3: Security & Error Handling (7 tests)
 
@@ -281,8 +352,6 @@ return await sqlite.nonexistent.help();
 
 Expected: runtime error, not crash.
 
----
-
 ## Phase 4: Readonly Mode (5 tests)
 
 All tests use `readonly: true` on the `sqlite_execute_code` call.
@@ -343,8 +412,6 @@ return await sqlite.stats.statsBasic({
 
 Expected: succeeds — stats tools are read-only.
 
----
-
 ## Phase 5: State Isolation (2 tests)
 
 ### 5.1 — Variables don't persist between calls
@@ -402,12 +469,30 @@ Expected: Call 2 reads the row inserted in Call 1 — database state persists ac
 
 ---
 
+> **Note**: No Wrong-Type Numeric Coercion phase is included for this meta-test suite — it validates the sandbox infrastructure, not a specific tool group with optional numeric parameters.
+
+---
+
 ## Post-Test Procedures
 
-1. **Cleanup**: Confirm all `temp_*` tables are removed
-2. **Triage findings**: Create implementation plan if issues found
-3. **Scope of fixes**: Handler code, server-instructions, this prompt
-4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-5. **Commit**: Stage and commit — do NOT push
-6. **Token audit**: Report `metrics.tokenEstimate` for the most expensive block
-7. **Final summary**: After testing/re-testing
+### Reporting Rules
+
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

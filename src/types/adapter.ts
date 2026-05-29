@@ -55,6 +55,9 @@ export interface ToolAnnotations {
 
   /** If true, the tool interacts with external/"open world" systems (network, filesystem, etc.) */
   openWorldHint?: boolean;
+
+  /** If true, the tool handles or returns sensitive data */
+  sensitiveHint?: boolean;
 }
 
 // =============================================================================

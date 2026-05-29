@@ -51,6 +51,7 @@ export function createAuthMiddleware(
   ): Promise<void> => {
     const requestId = crypto.randomUUID();
     req.requestId = requestId;
+    res.setHeader("X-Request-ID", requestId);
 
     if (isPublicPath(req.path, publicPaths)) {
       logger.info(`Public path accessed: ${req.path}`, {
@@ -97,11 +98,14 @@ export function createAuthMiddleware(
       res.status(401);
       res.setHeader(
         "WWW-Authenticate",
-        resourceServer.getWWWAuthenticateHeader("invalid_token", result.error),
+        resourceServer.getWWWAuthenticateHeader(
+          "invalid_token",
+          "Token validation failed",
+        ),
       );
       res.json({
         error: "invalid_token",
-        error_description: result.error,
+        error_description: "Token validation failed",
       });
       return;
     }

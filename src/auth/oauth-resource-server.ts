@@ -12,11 +12,7 @@ import type {
   ProtectedResourceMetadata,
   ResourceServerConfig,
 } from "./types.js";
-import {
-  SUPPORTED_SCOPES,
-  SCOPE_PATTERNS,
-  BASE_SCOPES,
-} from "./scopes/index.js";
+import { SUPPORTED_SCOPES, BASE_SCOPES } from "./scopes/index.js";
 import { createModuleLogger } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");
@@ -109,7 +105,11 @@ export class OAuthResourceServer {
     }
 
     if (errorDescription) {
-      parts.push(`error_description="${errorDescription}"`);
+      // Sanitize: strip quotes to prevent attribute breakout (CWE-113),
+      // truncate to prevent excessive header length,
+      // use generic text to avoid leaking internal infrastructure details (CWE-209)
+      const safe = errorDescription.replace(/"/g, "'").substring(0, 200);
+      parts.push(`error_description="${safe}"`);
     }
 
     return parts.join(", ");
@@ -148,14 +148,6 @@ export class OAuthResourceServer {
 
     // Check configured scopes
     if (this.config.scopesSupported.includes(scope)) {
-      return true;
-    }
-
-    // Check dynamic patterns
-    if (SCOPE_PATTERNS.DATABASE.test(scope)) {
-      return true;
-    }
-    if (SCOPE_PATTERNS.TABLE.test(scope)) {
       return true;
     }
 

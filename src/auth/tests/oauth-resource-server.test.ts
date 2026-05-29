@@ -117,20 +117,6 @@ describe("OAuthResourceServer", () => {
       expect(server.isScopeSupported("delete")).toBe(false);
       expect(server.isScopeSupported("unknown")).toBe(false);
     });
-
-    it("should accept db: prefixed scopes", () => {
-      expect(server.isScopeSupported("db:mydb")).toBe(true);
-      expect(server.isScopeSupported("db:test-db")).toBe(true);
-    });
-
-    it("should accept table: prefixed scopes", () => {
-      expect(server.isScopeSupported("table:mydb:users")).toBe(true);
-    });
-
-    it("should reject invalid scope patterns", () => {
-      expect(server.isScopeSupported("database:mydb")).toBe(false);
-      expect(server.isScopeSupported("TB:users")).toBe(false);
-    });
   });
 
   describe("getResourceUri()", () => {

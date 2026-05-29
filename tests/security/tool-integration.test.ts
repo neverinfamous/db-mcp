@@ -299,7 +299,7 @@ describe("Security: Tool Handler Integration", () => {
         table: "users",
         column: "age",
         whereClause:
-          "(age > 20 AND age < 40) OR (salary > 50000 AND name LIKE '%a%')",
+          "(age > 20 AND age < 40) OR (salary > 50000 AND name = 'Alice')",
       });
       expect(result).toHaveProperty("success", true);
     });

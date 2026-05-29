@@ -164,7 +164,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
           tableName: targetTableName,
           triggersCreated: triggersCreated.length ? triggersCreated : undefined,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         if (isFts5UnavailableError(error)) {
           return buildFts5UnavailableError(
             (params as { tableName?: string } | null)?.tableName ||
@@ -198,7 +198,7 @@ async function createSyncTriggers(
       INSERT INTO "${ftsTable}"(rowid, ${colList}) VALUES (NEW.rowid, ${newColList});
     END;
   `;
-  await adapter.executeQuery(insertTrigger);
+  await adapter.rawQuery(insertTrigger, undefined);
   triggersCreated.push(insertTriggerName);
 
   // DELETE trigger - remove row from FTS index
@@ -208,7 +208,7 @@ async function createSyncTriggers(
       INSERT INTO "${ftsTable}"("${ftsTable}", rowid, ${colList}) VALUES('delete', OLD.rowid, ${oldColList});
     END;
   `;
-  await adapter.executeQuery(deleteTrigger);
+  await adapter.rawQuery(deleteTrigger, undefined);
   triggersCreated.push(deleteTriggerName);
 
   // UPDATE trigger - delete old entry and insert new one
@@ -219,7 +219,7 @@ async function createSyncTriggers(
       INSERT INTO "${ftsTable}"(rowid, ${colList}) VALUES (NEW.rowid, ${newColList});
     END;
   `;
-  await adapter.executeQuery(updateTrigger);
+  await adapter.rawQuery(updateTrigger, undefined);
   triggersCreated.push(updateTriggerName);
 
   return triggersCreated;
@@ -240,6 +240,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsSearchSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -250,15 +251,15 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.table);
         await validateTableExists(adapter, input.table);
 
-        let selectClause = "*";
+        let selectClause = input.includeRowData ? "*" : "rowid";
         if (input.highlight) {
-          selectClause = `*, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
+          selectClause += `, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
         }
 
         // Handle wildcard/list-all query - skip MATCH and return all rows
         if (input.query === "*" || input.query.trim() === "") {
           const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit}`;
-          const result = await adapter.executeReadQuery(sql);
+          const result = await adapter.executeReadQuery(sql, queryParams);
           return {
             success: true,
             rowCount: result.rows?.length ?? 0,
@@ -283,14 +284,14 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         const sql = `SELECT ${selectClause}, rank FROM "${input.table}" WHERE ${matchExpr} ORDER BY rank LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
@@ -315,6 +316,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsRebuildSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -334,7 +336,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
           message: `FTS5 index '${input.table}' rebuilt`,
           tableName: input.table,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         if (isFts5UnavailableError(error)) {
           return buildFts5UnavailableError(
             (params as { table?: string } | null)?.table,
@@ -361,6 +363,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsMatchInfoSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -381,15 +384,16 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
           rankExpr = "rank";
         }
 
-        const sql = `SELECT *, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
-        const result = await adapter.executeReadQuery(sql);
+        const selectCols = input.includeRowData ? "*" : "rowid";
+        const sql = `SELECT ${selectCols}, ${rankExpr} as score FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY score`;
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }
@@ -415,6 +419,7 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsHeadlineSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -434,6 +439,7 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
           // Look up column index from FTS table structure
           const colResult = await adapter.executeReadQuery(
             `PRAGMA table_info("${input.table}")`,
+            queryParams,
           );
           const colRows = colResult.rows ?? [];
           const found = colRows.findIndex(
@@ -455,7 +461,7 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
         // Handle wildcard query — return all rows without MATCH
         if (input.query === "*" || input.query.trim() === "") {
           const sql = `SELECT *, NULL as headline, NULL as snippet, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${String(input.limit)}`;
-          const result = await adapter.executeReadQuery(sql);
+          const result = await adapter.executeReadQuery(sql, queryParams);
           return {
             success: true,
             rowCount: result.rows?.length ?? 0,
@@ -465,14 +471,14 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
 
         const sql = `SELECT ${highlightExpr} as headline, ${snippetExpr} as snippet, rank FROM "${input.table}" WHERE "${input.table}" MATCH '${queryEscaped}' ORDER BY rank LIMIT ${String(input.limit)}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         if (isFts5UnavailableError(error)) {
           return buildFts5SearchUnavailableError();
         }

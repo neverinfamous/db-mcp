@@ -30,8 +30,9 @@ import {
   DetectAnomaliesSchema,
   DetectBloatSchema,
 } from "../../schemas/stats.js";
-import {} from "../../schemas/stats.js";
+import type { WhereCondition } from "../../schemas/where.js";
 import { isSpatialiteSystemTable } from "../core/tables.js";
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 
 // =============================================================================
 // Shared Helpers (exported for schema-risks.ts)
@@ -105,6 +106,7 @@ export function createDetectAnomaliesTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DetectAnomaliesSchema.parse(params);
+
         const threshold = Math.max(0.5, Math.min(100, input.threshold));
         const limit = Math.max(1, Math.min(500, input.limit));
 
@@ -158,9 +160,9 @@ export function createDetectAnomaliesTool(
           columnsToAnalyze,
           threshold,
           limit,
-          input.whereClause,
+          input.conditions,
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -174,7 +176,7 @@ async function analyzeColumns(
   columns: string[],
   threshold: number,
   limit: number,
-  whereClause?: string,
+  conditions?: WhereCondition[],
 ): Promise<Record<string, unknown>> {
   interface ColumnAnomaly {
     column: string;
@@ -190,14 +192,24 @@ async function analyzeColumns(
   let maxAnomalyPct = 0;
   const qt = `"${table.replace(/"/g, '""')}"`;
 
+  let extraWhere = "";
+  let whereParams: unknown[] = [];
+  if (conditions) {
+    const { sql, params } = buildWhereClause(conditions);
+    if (sql !== "") {
+      extraWhere = ` AND ${sql}`;
+      whereParams = params;
+    }
+  }
+
   for (const col of columns) {
     const qc = `"${col.replace(/"/g, '""')}"`;
     const whereBase = `${qc} IS NOT NULL AND typeof(${qc}) IN ('integer', 'real')`;
-    const extraWhere = whereClause ? ` AND ${whereClause}` : "";
 
     // Compute mean
     const statsResult = await adapter.executeReadQuery(
       `SELECT COUNT(${qc}) as cnt, AVG(CAST(${qc} AS REAL)) as mean_val FROM ${qt} WHERE ${whereBase}${extraWhere}`,
+      whereParams,
     );
     const count = toNum(statsResult.rows?.[0]?.["cnt"]);
     const mean = toNum(statsResult.rows?.[0]?.["mean_val"]);
@@ -206,6 +218,7 @@ async function analyzeColumns(
     // Compute stddev (SQLite has no built-in STDDEV)
     const varResult = await adapter.executeReadQuery(
       `SELECT AVG((CAST(${qc} AS REAL) - ${String(mean)}) * (CAST(${qc} AS REAL) - ${String(mean)})) as variance FROM ${qt} WHERE ${whereBase}${extraWhere}`,
+      whereParams,
     );
     const stddev = Math.sqrt(toNum(varResult.rows?.[0]?.["variance"]));
     if (stddev === 0) continue;
@@ -217,6 +230,7 @@ async function analyzeColumns(
     // Count anomalies
     const cntResult = await adapter.executeReadQuery(
       `SELECT COUNT(*) as ac FROM ${qt} WHERE ${whereBase} AND ${boundFilter}${extraWhere}`,
+      whereParams,
     );
     const anomalyCount = toNum(cntResult.rows?.[0]?.["ac"]);
     if (anomalyCount === 0) continue;
@@ -224,6 +238,7 @@ async function analyzeColumns(
     // Top deviations
     const deviations = await adapter.executeReadQuery(
       `SELECT rowid, ${qc} as value, ABS((CAST(${qc} AS REAL) - ${String(mean)}) / ${String(stddev)}) as z_score FROM ${qt} WHERE ${whereBase} AND ${boundFilter}${extraWhere} ORDER BY z_score DESC LIMIT ${String(limit)}`,
+      whereParams,
     );
 
     totalAnomalies += anomalyCount;
@@ -291,6 +306,7 @@ export function createDetectBloatTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DetectBloatSchema.parse(params);
+        //       const queryParams: unknown[] = [];
         const limit = Math.max(1, Math.min(500, input.limit));
         const excludeSystem = input.excludeSystemTables !== false;
 
@@ -348,7 +364,7 @@ export function createDetectBloatTool(adapter: SqliteAdapter): ToolDefinition {
           totalAnalyzed: tables.length,
           summary,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

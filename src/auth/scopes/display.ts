@@ -14,12 +14,6 @@ export function getScopeDisplayName(scope: string): string {
     case SCOPES.FULL:
       return "Full Access";
     default:
-      if (scope.startsWith("db:")) {
-        return `Database: ${scope.slice(3)}`;
-      }
-      if (scope.startsWith("table:")) {
-        return `Table: ${scope.slice(6)}`;
-      }
       return scope;
   }
 }

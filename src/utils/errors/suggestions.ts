@@ -57,14 +57,14 @@ const ERROR_SUGGESTIONS: {
 
   // Resource errors — specific codes for table/column not found
   {
-    pattern: /no such table[:\s]*(['"]?)(\w+)\1/i,
+    pattern: /no such table[:\s]*(['"]?)([\w.]+)\1/i,
     suggestion:
       "Table not found. Run sqlite_list_tables to see available tables.",
     category: ErrorCategory.RESOURCE,
     code: "TABLE_NOT_FOUND",
   },
   {
-    pattern: /no such column[:\s]*(['"]?)(\w+)\1/i,
+    pattern: /no such column[:\s]*(['"]?)([\w.]+)\1/i,
     suggestion:
       "Column not found. Use sqlite_describe_table to see available columns.",
     category: ErrorCategory.RESOURCE,
@@ -78,7 +78,7 @@ const ERROR_SUGGESTIONS: {
     code: "COLUMN_NOT_FOUND",
   },
   {
-    pattern: /no such view[:\s]*(['"]?)(\w+)\1/i,
+    pattern: /no such view[:\s]*(['"]?)([\w.]+)\1/i,
     suggestion: "View not found. Run sqlite_list_views to see available views.",
     category: ErrorCategory.RESOURCE,
     code: "VIEW_NOT_FOUND",
@@ -249,6 +249,23 @@ const ERROR_SUGGESTIONS: {
       "Extension is not available. Check CLI flags, environment variables, or platform compatibility.",
     category: ErrorCategory.CONFIGURATION,
     code: "EXTENSION_MISSING",
+  },
+
+  // Custom JS errors mapped from tools
+  {
+    pattern: /invalid identifier/i,
+    suggestion:
+      "Identifiers must start with a letter or underscore and contain only alphanumeric characters or underscores. Ensure the name follows SQLite identifier rules.",
+    category: ErrorCategory.VALIDATION,
+    code: "INVALID_IDENTIFIER",
+  },
+  {
+    pattern:
+      /(expected property name|unexpected token|in JSON at position|Expected double-quoted property name)/i,
+    suggestion:
+      "The JSON data provided is malformed. Ensure the input string is valid JSON.",
+    category: ErrorCategory.VALIDATION,
+    code: "MALFORMED_JSON",
   },
 ];
 

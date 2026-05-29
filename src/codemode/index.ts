@@ -27,9 +27,6 @@ export {
 // Sandbox (VM-based)
 export { CodeModeSandbox, SandboxPool } from "./sandbox.js";
 
-// Worker Sandbox (worker_threads-based)
-export { WorkerSandbox, WorkerSandboxPool } from "./worker-sandbox.js";
-
 // Sandbox Factory (mode selection)
 export {
   setDefaultSandboxMode,

@@ -11,10 +11,10 @@
 
 ## Built-in Tools
 
-`server_info`, `server_health`, `list_adapters` — always available.
+`server_info`, `server_health`, `list_adapters`, `sqlite_execute_code` — injected into all configurations.
 
 ## Help Resources
 
 Read `sqlite://help` for gotchas and critical usage patterns.
-Read `sqlite://help/{group}` for group-specific tool reference (json, text, stats, vector, geo, admin, transactions, introspection, migration).
+Read `sqlite://help/{group}` for group-specific tool reference (core, json, text, stats, vector, geo, admin, transactions, introspection, migration).
 Only help resources for your enabled tool groups are registered.

@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 /**
  * JSON Query and Aggregation Tools
  *
@@ -12,9 +13,13 @@ import type {
 import { readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
-  validateWhereClause,
+  validateJsonPath,
+  validateAggregateFunction,
 } from "../../../../utils/index.js";
-import { formatHandlerError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   JsonKeysOutputSchema,
   JsonEachOutputSchema,
@@ -39,10 +44,12 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Keys"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
+
       try {
         input = JsonKeysSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -52,33 +59,28 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         const path = input.path ?? "$";
-        if (!path.startsWith("$")) {
-          return {
-            success: false,
-            rowCount: 0,
-            keys: [],
-            error: "JSON path must start with $",
-          };
-        }
+        validateJsonPath(path);
 
         // Use subquery to avoid ambiguous column when table has a 'key' or 'id' column
         // json_each returns: key, value, type, atom, id, parent, fullkey, path
         let sql: string;
-        if (input.whereClause) {
-          // With WHERE clause, use subquery to isolate table columns from json_each columns
-          // This avoids ambiguity between e.g. table.id and json_each.id
-          validateWhereClause(input.whereClause);
-          sql = `SELECT DISTINCT json_each.key
-                      FROM json_each(
-                          (SELECT ${column} FROM ${table} WHERE ${input.whereClause} LIMIT 1),
-                          '${path}'
-                      )`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql = `SELECT DISTINCT json_each.key FROM (SELECT * FROM ${table} WHERE ${whereSql}) AS t CROSS JOIN json_each(t.${column}, '${path}')`;
+            queryParams.push(...whereParams);
+          } else {
+            sql = `SELECT DISTINCT json_each.key FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}')`;
+          }
         } else {
-          // Without WHERE, simpler subquery avoids 'key' column ambiguity
-          sql = `SELECT DISTINCT json_each.key FROM ${table} AS t, json_each(t.${column}, '${path}')`;
+          // Without WHERE, simpler query avoids 'key' column ambiguity
+          sql = `SELECT DISTINCT json_each.key FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}')`;
         }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const keys = result.rows?.map((r) => r["key"]) ?? [];
 
@@ -87,7 +89,7 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: keys.length,
           keys: keys,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -107,10 +109,11 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("JSON Each"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonEachSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -120,40 +123,38 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         const path = input.path ?? "$";
-        if (!path.startsWith("$")) {
-          return {
-            success: false,
-            rowCount: 0,
-            elements: [],
-            error: "JSON path must start with $",
-          };
-        }
+        validateJsonPath(path);
 
         // Use table alias and CROSS JOIN to avoid ambiguity with json_each() output columns
         // json_each() returns: key, value, type, atom, id, parent, fullkey, path
         // If the source table has any of these columns (e.g., 'id'), they must be qualified
-        let sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
-        if (input.whereClause) {
-          // Qualify unqualified 'id' column references with table alias 't.'
-          // This handles: id = X, id IN (...), id BETWEEN, id IS NULL, etc.
-          // Won't match already-qualified refs like 't.id' or 'je.id'
-          validateWhereClause(input.whereClause);
-          const qualifiedWhere = input.whereClause.replace(
-            /(?<![.\w])id(?=\s*[=<>!]|\s+(?:IN|BETWEEN|IS|LIKE)\b)/gi,
-            "t.id",
+        let sql: string;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
           );
-          sql += ` WHERE ${qualifiedWhere}`;
+          if (whereSql !== "") {
+            // Apply the WHERE clause in a subquery on the base table to completely avoid
+            // column ambiguity when joining against json_each
+            sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM (SELECT rowid, * FROM ${table} WHERE ${whereSql}) AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
+            queryParams.push(...whereParams);
+          } else {
+            sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
+          }
+        } else {
+          sql = `SELECT t.rowid as row_id, je.key, je.value, je.type FROM ${table} AS t CROSS JOIN json_each(t.${column}, '${path}') AS je`;
         }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           elements: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -176,10 +177,11 @@ export function createJsonGroupArrayTool(
     requiredScopes: ["read"],
     annotations: readOnly("Group Array"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonGroupArraySchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -215,20 +217,26 @@ export function createJsonGroupArrayTool(
         }
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += groupByClause;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           rows: result.rows ?? [],
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -251,10 +259,11 @@ export function createJsonGroupObjectTool(
     requiredScopes: ["read"],
     annotations: readOnly("Group Object"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       let input;
       try {
         input = JsonGroupObjectSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -265,6 +274,9 @@ export function createJsonGroupObjectTool(
         // Handle aggregate function mode - uses subquery pattern
         // This enables COUNT(*), SUM(x), AVG(x), etc. as values
         if (input.aggregateFunction) {
+          // Validate aggregate function against whitelist (C-2 mitigation)
+          validateAggregateFunction(input.aggregateFunction);
+
           // Build the key column expression
           const keyCol = input.allowExpressions
             ? (input.keyColumn ?? "rowid")
@@ -274,9 +286,15 @@ export function createJsonGroupObjectTool(
 
           // Build subquery that computes the aggregate grouped by key
           let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
-          if (input.whereClause) {
-            validateWhereClause(input.whereClause);
-            subquery += ` WHERE ${input.whereClause}`;
+          if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(
+              input.conditions,
+              input.whereClause,
+            );
+            if (whereSql !== "") {
+              subquery += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
           }
           subquery += ` GROUP BY ${keyCol}`;
 
@@ -287,17 +305,14 @@ export function createJsonGroupObjectTool(
           if (input.groupByColumn) {
             // For nested grouping, we need a more complex approach with window functions or correlated subqueries
             // For now, outer grouping with aggregates is not supported - return error with guidance
-            return {
-              success: false,
-              error:
-                "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
-              rowCount: 0,
-              rows: [],
-            };
+            throw new ValidationError(
+              "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
+              "VALIDATION_ERROR",
+            );
           }
 
           const sql = `SELECT ${outerSelect} FROM (${subquery})${outerGroupBy}`;
-          const result = await adapter.executeReadQuery(sql);
+          const result = await adapter.executeReadQuery(sql, queryParams);
 
           return {
             success: true,
@@ -308,13 +323,10 @@ export function createJsonGroupObjectTool(
 
         // Standard mode: valueColumn is required when not using aggregateFunction
         if (!input.valueColumn) {
-          return {
-            success: false,
-            error:
-              "valueColumn is required unless using aggregateFunction parameter",
-            rowCount: 0,
-            rows: [],
-          };
+          throw new ValidationError(
+            "valueColumn is required unless using aggregateFunction parameter",
+            "VALIDATION_ERROR",
+          );
         }
 
         // Warn when allowExpressions is used without groupByColumn - can produce duplicate keys
@@ -357,13 +369,19 @@ export function createJsonGroupObjectTool(
         }
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += groupByClause;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
@@ -371,7 +389,7 @@ export function createJsonGroupObjectTool(
           rows: result.rows ?? [],
           ...(duplicateKeyWarning && { hint: duplicateKeyWarning }),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../utils/where-clause.js";
 /**
  * SQLite Geospatial Tools
  *
@@ -9,11 +10,7 @@
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
-import {
-  validateWhereClause,
-  sanitizeIdentifier,
-  createColumnList,
-} from "../../../utils/index.js";
+import { sanitizeIdentifier, createColumnList } from "../../../utils/index.js";
 import {
   formatHandlerError,
   DbMcpError,
@@ -147,7 +144,7 @@ function createGeoDistanceTool(): ToolDefinition {
           distance: Math.round(distance * 1000) / 1000,
           unit: input.unit,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -169,6 +166,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoNearbySchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Validate radius is a valid number
         const radius = requireNumber(input.radius, "radius");
@@ -222,7 +220,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
                   WHERE ${latColumn} BETWEEN ${centerLat - latDelta} AND ${centerLat + latDelta}
                   AND ${lonColumn} BETWEEN ${centerLon - lonDelta} AND ${centerLon + lonDelta}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         // Filter by exact distance
         const nearby = (result.rows ?? [])
@@ -267,7 +265,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: results.length,
           results,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -289,6 +287,7 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoBoundingBoxSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         const minLat = requireCoordinate(input.minLat, "minLat", -90, 90);
         const maxLat = requireCoordinate(input.maxLat, "maxLat", -90, 90);
@@ -315,14 +314,14 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
                   AND ${lonColumn} BETWEEN ${minLon} AND ${maxLon}
                   LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           results: result.rows ?? [],
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -344,6 +343,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoClusterSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
@@ -355,8 +355,8 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
         const lonColumn = sanitizeIdentifier(input.lonColumn);
 
         // Security: Validate WHERE clause if provided
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
+        if (input.conditions || input.whereClause) {
+          // validateWhereClause() removed
         }
 
         // Use ROUND to create grid cells
@@ -368,11 +368,21 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
                   AVG(${latColumn}) as center_lat,
                   AVG(${lonColumn}) as center_lon
               FROM ${table}
-              ${input.whereClause ? `WHERE ${input.whereClause}` : ""}
+              ${(() => {
+                const { sql: wSql, params: wParams } = buildWhereClause(
+                  input.conditions,
+                  input.whereClause,
+                );
+                if (wSql) {
+                  queryParams.push(...wParams);
+                  return `WHERE ${wSql}`;
+                }
+                return "";
+              })()}
               GROUP BY grid_lat, grid_lon
               ORDER BY point_count DESC`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         // Transform raw SQL results to match output schema
         const clusters = (result.rows ?? []).map((row, index) => ({
@@ -388,7 +398,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           clusters,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

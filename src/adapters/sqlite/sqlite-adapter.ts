@@ -79,6 +79,7 @@ export class SqliteAdapter extends DatabaseAdapter {
 
   protected override config: SqliteConfig | null = null;
   private schemaManager: SchemaManager | null = null;
+  private cachedToolDefinitions: ToolDefinition[] | null = null;
 
   /**
    * Connect to a SQLite database
@@ -124,13 +125,13 @@ export class SqliteAdapter extends DatabaseAdapter {
         version,
         details: {
           filePath:
-            this.config?.filePath ??
-            this.config?.connectionString ??
-            ":memory:",
+            (this.config?.filePath ?? this.config?.connectionString)
+              ? "<redacted>"
+              : ":memory:",
           walMode: this.config?.options?.walMode ?? false,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return Promise.resolve({
         connected: false,
         error: error instanceof Error ? error.message : String(error),
@@ -156,18 +157,20 @@ export class SqliteAdapter extends DatabaseAdapter {
   override async executeWriteQuery(
     sql: string,
     params?: unknown[],
-    skipValidation = false,
   ): Promise<QueryResult> {
     this.ensureConnected();
-    if (!skipValidation) {
-      this.validateQuery(sql, false);
-    }
+    this.validateQuery(sql, false);
 
     const result = await executeWrite(this.ensureDb(), sql, params);
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      this.clearSchemaCache();
+      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      if (match?.[1] && this.schemaManager) {
+        this.schemaManager.clearTableCache(match[1]);
+      } else {
+        this.clearSchemaCache();
+      }
     }
 
     return result;
@@ -181,15 +184,31 @@ export class SqliteAdapter extends DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
+    this.validateQuery(sql, false);
 
     const result = await executeGeneral(this.ensureDb(), sql, params);
 
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
-      this.clearSchemaCache();
+      const match = /(?:table|view|index)\s+([a-zA-Z0-9_]+)/i.exec(sql);
+      if (match?.[1] && this.schemaManager) {
+        this.schemaManager.clearTableCache(match[1]);
+      } else {
+        this.clearSchemaCache();
+      }
     }
 
     return result;
+  }
+
+  /**
+   * Execute a SQL script containing multiple statements
+   */
+  override executeScript(sql: string): Promise<void> {
+    this.ensureConnected();
+    this.ensureDb().run(sql);
+    this.clearSchemaCache();
+    return Promise.resolve();
   }
 
   /**
@@ -300,7 +319,8 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Get all tool definitions
    */
   override getToolDefinitions(): ToolDefinition[] {
-    return getAllToolDefinitions(this);
+    this.cachedToolDefinitions ??= getAllToolDefinitions(this);
+    return this.cachedToolDefinitions;
   }
 
   /**
@@ -395,7 +415,7 @@ export class SqliteAdapter extends DatabaseAdapter {
    * Execute raw SQL and return results (for tools)
    */
   rawQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
-    return this.executeQuery(sql, params);
+    return executeGeneral(this.ensureDb(), sql, params);
   }
 }
 

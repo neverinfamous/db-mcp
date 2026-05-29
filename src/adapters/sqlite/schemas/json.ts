@@ -1,3 +1,4 @@
+import { WhereConditionSchema } from "./where.js";
 /**
  * JSON Helper, JSON Operation, and JSONB Tool Output Schemas
  */
@@ -5,10 +6,12 @@
 import { z } from "zod";
 
 const coerceNumber = (val: unknown): unknown => {
-  if (typeof val === "number") return val;
-  if (typeof val === "string" && val.trim() !== "" && !isNaN(Number(val)))
-    return Number(val);
-  return undefined;
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
 };
 
 import { RowRecordSchema } from "./common.js";
@@ -367,14 +370,32 @@ export const JsonUpdateSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path (e.g., $.key.subkey)"),
   value: z.unknown().describe("New value"),
-  whereClause: z.string().describe("WHERE clause to identify rows"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const JsonSelectSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   paths: z.array(z.string()).optional().describe("JSON paths to extract"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().max(10000).optional().default(100),
+  ),
 });
 
 export const JsonQuerySchema = z.object({
@@ -394,7 +415,10 @@ export const JsonQuerySchema = z.object({
     .optional()
     .describe("Path-value filters"),
   selectPaths: z.array(z.string()).optional().describe("Paths to select"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().max(10000).optional().default(100),
+  ),
 });
 
 export const JsonValidatePathSchema = z.object({
@@ -405,7 +429,14 @@ export const JsonMergeSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   mergeData: z.unknown().describe("JSON object to merge"),
-  whereClause: z.string().describe("WHERE clause to identify rows"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   deep: z.boolean().optional().default(false).describe("Deep merge"),
 });
 
@@ -417,7 +448,14 @@ export const JsonExtractSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path to extract"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const JsonSetSchema = z.object({
@@ -425,14 +463,28 @@ export const JsonSetSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path"),
   value: z.unknown().describe("Value to set"),
-  whereClause: z.string().describe("WHERE clause"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const JsonRemoveSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().describe("JSON path to remove"),
-  whereClause: z.string().describe("WHERE clause"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const AnalyzeJsonSchemaSchema = z.object({
@@ -440,7 +492,12 @@ export const AnalyzeJsonSchemaSchema = z.object({
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Number of rows to sample"),
+    z
+      .number()
+      .max(10000)
+      .optional()
+      .default(100)
+      .describe("Number of rows to sample"),
   ),
 });
 
@@ -476,10 +533,70 @@ export const JsonSecurityScanSchema = z.object({
   column: z.string().describe("JSON column to scan for security issues"),
   sampleSize: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Number of rows to sample"),
+    z
+      .number()
+      .max(10000)
+      .optional()
+      .default(100)
+      .describe("Number of rows to sample"),
   ),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
+
+// =============================================================================
+// JSON Diff Schema
+// =============================================================================
+
+const JsonDiffEntrySchema = z.object({
+  rowid: z.number().optional(),
+  path1Value: z.unknown(),
+  path2Value: z.unknown(),
+  identical: z.boolean(),
+});
+
+export const JsonDiffSchema = z.object({
+  table: z.string().describe("Table name"),
+  column: z.string().describe("JSON column name"),
+  path1: z.string().describe("First JSON path to compare (e.g., $.before)"),
+  path2: z.string().describe("Second JSON path to compare (e.g., $.after)"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
+  limit: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .max(10000)
+      .optional()
+      .default(50)
+      .describe("Maximum rows to compare (default: 50, max: 100)"),
+  ),
+  onlyDifferences: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Only return rows where the values differ"),
+});
+
+export const JsonDiffOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowCount: z.number().optional(),
+    diffs: z.array(JsonDiffEntrySchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 // =============================================================================
 // Types
@@ -500,20 +617,35 @@ export type CreateJsonCollectionInput = z.infer<
   typeof CreateJsonCollectionSchema
 >;
 export type JsonSecurityScanInput = z.infer<typeof JsonSecurityScanSchema>;
+export type JsonDiffInput = z.infer<typeof JsonDiffSchema>;
 
 // Additional schemas for JSON operations
 export const JsonTypeSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("JSON path (defaults to $)"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const JsonArrayLengthSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to array (defaults to $)"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const JsonArrayAppendSchema = z.object({
@@ -521,22 +653,46 @@ export const JsonArrayAppendSchema = z.object({
   column: z.string().describe("JSON column name"),
   path: z.string().describe("Path to array"),
   value: z.unknown().describe("Value to append"),
-  whereClause: z.string().describe("WHERE clause"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const JsonKeysSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to object (defaults to $)"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const JsonEachSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column name"),
   path: z.string().optional().describe("Path to expand (defaults to $)"),
-  whereClause: z.string().optional(),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
+  limit: z.preprocess(
+    coerceNumber,
+    z.number().max(10000).optional().default(100),
+  ),
 });
 
 export const JsonGroupArraySchema = z.object({
@@ -552,7 +708,14 @@ export const JsonGroupArraySchema = z.object({
     .describe(
       "Column to group by. For JSON collection tables, use allowExpressions with json_extract(data, '$.field') instead.",
     ),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   allowExpressions: z
     .boolean()
     .optional()
@@ -581,7 +744,14 @@ export const JsonGroupObjectSchema = z.object({
     .describe(
       "Column to group by. For JSON collection tables, use allowExpressions with json_extract(data, '$.field') instead.",
     ),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   allowExpressions: z
     .boolean()
     .optional()
@@ -604,7 +774,14 @@ export const JsonPrettySchema = z.object({
 export const JsonbConvertSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to convert"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 // Schema for storage info tool
@@ -613,7 +790,12 @@ export const JsonStorageInfoSchema = z.object({
   column: z.string().describe("JSON column to analyze"),
   sampleSize: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Number of rows to sample"),
+    z
+      .number()
+      .max(10000)
+      .optional()
+      .default(100)
+      .describe("Number of rows to sample"),
   ),
 });
 
@@ -621,7 +803,14 @@ export const JsonStorageInfoSchema = z.object({
 export const JsonNormalizeColumnSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("JSON column to normalize"),
-  whereClause: z.string().optional().describe("Optional WHERE clause"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   outputFormat: z
     .string()
     .optional()

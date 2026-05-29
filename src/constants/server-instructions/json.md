@@ -1,10 +1,10 @@
-# db-mcp Help — JSON Operations (24 tools)
+# db-mcp Help — JSON Operations (25 tools)
 
 ## Collection & CRUD
 
 - `sqlite_create_json_collection({ tableName, indexes: [{ path: "$.type" }, { path: "$.author" }] })` — creates table with JSON indexes
 - `sqlite_json_insert({ table, column, data: { type: "article", title: "Hello", tags: ["news"] } })` — insert JSON document
-- `sqlite_json_select({ table, column, extractPaths? })` — select rows, optionally extract specific JSON paths
+- `sqlite_json_select({ table, column, paths? })` — select rows, optionally extract specific JSON paths
 - `sqlite_json_update({ table, column, path, value, whereClause })` — update value at JSON path
 - `sqlite_json_query({ table, column, filterPaths: { "$.type": "article" }, selectPaths: ["$.title"] })` — query with path-based filters and projections
 
@@ -59,9 +59,10 @@ sqlite_json_group_object({
 ```
 
 - `sqlite_json_keys({ table, column, path? })` — get distinct keys of JSON objects
-- `sqlite_json_pretty({ table, column, whereClause? })` — format JSON with indentation
-- `sqlite_json_valid({ table, column })` — check if values are valid JSON
+- `sqlite_json_pretty({ json: "{\"name\": \"Alice\"}" })` — format JSON string with indentation for readability
+- `sqlite_json_valid({ json: "{\"name\": \"Alice\"}" })` — check if a string is valid JSON
 - `sqlite_json_analyze_schema({ table, column })` — infer schema types
+- `sqlite_json_diff({ table, column, path1, path2 })` — compare two JSON paths within the same row
 
 ## Security
 

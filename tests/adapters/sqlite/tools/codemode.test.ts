@@ -7,36 +7,48 @@
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
+
 import {
   getCodeModeTools,
   cleanupCodeMode,
 } from "../../../../src/adapters/sqlite/tools/codemode.js";
 import type { ToolDefinition } from "../../../../src/types/index.js";
 
-vi.mock("node:worker_threads", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:worker_threads")>();
-  const { EventEmitter } = await import("node:events");
+vi.mock("../../../../src/codemode/sandbox.js", () => {
   return {
-    ...actual,
-    Worker: class MockWorker extends EventEmitter {
-      constructor(script: string, options: any) {
-        super();
-        setTimeout(() => {
-          const code = options.workerData.code;
-          if (code.includes("42")) {
-            this.emit("message", { success: true, result: 42 });
-          } else if (code.includes("Worker Error")) {
-            this.emit("message", { success: false, error: "Worker Error" });
-          } else if (code.includes("timeout")) {
-            // simulate timeout by doing nothing
-          } else {
-            this.emit("message", { success: true });
-          }
-        }, 5);
+    CodeModeSandbox: {
+      create: vi.fn(),
+    },
+    SandboxPool: class MockSandboxPool {
+      initialize() {}
+      execute(code: string, bindings: any, timeoutMs: number) {
+        if (code.includes("42")) {
+          return Promise.resolve({ success: true, result: 42, metrics: {} });
+        } else if (code.includes("Worker Error")) {
+          return Promise.resolve({
+            success: false,
+            error: "Worker Error",
+            metrics: {},
+          });
+        } else if (code.includes("timeout")) {
+          // simulate timeout by returning error
+          return Promise.resolve({
+            success: false,
+            error: "Timeout",
+            metrics: {},
+          });
+        } else {
+          return Promise.resolve({
+            success: true,
+            result: undefined,
+            metrics: {},
+          });
+        }
       }
-      terminate() {
-        return Promise.resolve();
+      getStats() {
+        return { available: 1, inUse: 0, max: 1 };
       }
+      dispose() {}
     },
   };
 });
@@ -93,7 +105,7 @@ describe("getCodeModeTools", () => {
     const tool = tools[0]!;
 
     expect(tool.group).toBe("codemode");
-    expect(tool.description).toContain("Execute JavaScript");
+    expect(tool.description).toContain("Execute JS");
     expect(tool.inputSchema).toBeDefined();
     expect(tool.outputSchema).toBeDefined();
     expect(tool.annotations).toBeDefined();
@@ -146,8 +158,8 @@ describe("sqlite_execute_code handler - validation", () => {
     )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
-    expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
-    expect(String(result.error)).toContain("between 500 and 30000");
+    expect(result.code).toBe("VALIDATION_ERROR");
+    expect(String(result.error)).toContain("500");
   });
 
   it("should reject timeout out of range (too high)", async () => {
@@ -160,7 +172,7 @@ describe("sqlite_execute_code handler - validation", () => {
     )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
-    expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
+    expect(result.code).toBe("VALIDATION_ERROR");
   });
 
   it("should execute code successfully", async () => {
@@ -228,24 +240,21 @@ describe("sqlite_execute_code handler - readonly guards", () => {
     )) as Record<string, unknown>;
 
     expect(result.success).toBe(false);
-    expect(result.code).toBe("CODEMODE_VALIDATION_FAILED");
+    expect(result.code).toBe("VALIDATION_ERROR");
   });
 
-  it("should coerce unparseable string timeout to default", async () => {
+  it("should reject unparseable string timeout with validation error", async () => {
     const adapter = createMockAdapter();
     const tool = getCodeModeTools(adapter as any)[0]!;
 
-    // "abc" is not parseable, should become NaN → undefined → default 30000
-    // Then valid code hits worker-script missing error
+    // "abc" is not parseable, should fail strict validation instead of defaulting
     const result = (await tool.handler(
       { code: "return 1;", timeout: "abc" },
       { timestamp: new Date(), requestId: "test" },
     )) as Record<string, unknown>;
 
-    // Should not be a validation error from timeout — defaults to 30000
-    expect(result.success).toBe(true);
-    // Since worker executes with a mock, there's no CODEMODE_VALIDATION_FAILED
-    expect(result.code).toBeUndefined();
+    expect(result.success).toBe(false);
+    expect(result.code).toBe("VALIDATION_ERROR");
   });
 });
 

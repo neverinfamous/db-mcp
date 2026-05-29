@@ -30,6 +30,7 @@ test.describe("Rate Limiting", () => {
         "./test-e2e-rate-limit.db",
         "--tool-filter",
         "starter",
+        "--no-auth-enforcement",
       ],
       {
         cwd: process.cwd(),
@@ -117,6 +118,7 @@ test.describe("Rate Limiting", () => {
         "./test-e2e-rate-retry.db",
         "--tool-filter",
         "starter",
+        "--no-auth-enforcement",
       ],
       {
         cwd: process.cwd(),
@@ -204,6 +206,7 @@ test.describe("Rate Limiting", () => {
         "./test-e2e-rate-health.db",
         "--tool-filter",
         "starter",
+        "--no-auth-enforcement",
       ],
       {
         cwd: process.cwd(),

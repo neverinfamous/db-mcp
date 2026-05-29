@@ -102,12 +102,12 @@ describe("CodeModeSecurityManager", () => {
       expect(result.valid).toBe(false);
     });
 
-    it("should collect multiple violations", () => {
+    it("should short-circuit and return the first violation", () => {
       const result = security.validateCode(
         'require("fs"); process.exit(); eval("x");',
       );
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(1);
+      expect(result.errors.length).toBe(1);
     });
 
     it("should allow safe code patterns", () => {
@@ -130,60 +130,60 @@ describe("CodeModeSecurityManager", () => {
   // ===========================================================================
 
   describe("checkRateLimit", () => {
-    it("should allow first request", () => {
-      expect(security.checkRateLimit("client-1")).toBe(true);
+    it("should allow first request", async () => {
+      expect(await security.checkRateLimit("client-1")).toBe(true);
     });
 
-    it("should allow requests within limit", () => {
+    it("should allow requests within limit", async () => {
       const customSecurity = new CodeModeSecurityManager({
         maxExecutionsPerMinute: 5,
       });
       for (let i = 0; i < 5; i++) {
-        expect(customSecurity.checkRateLimit("client-1")).toBe(true);
+        expect(await customSecurity.checkRateLimit("client-1")).toBe(true);
       }
     });
 
-    it("should reject when rate limit exceeded", () => {
+    it("should reject when rate limit exceeded", async () => {
       const customSecurity = new CodeModeSecurityManager({
         maxExecutionsPerMinute: 2,
       });
-      expect(customSecurity.checkRateLimit("client-1")).toBe(true);
-      expect(customSecurity.checkRateLimit("client-1")).toBe(true);
-      expect(customSecurity.checkRateLimit("client-1")).toBe(false);
+      expect(await customSecurity.checkRateLimit("client-1")).toBe(true);
+      expect(await customSecurity.checkRateLimit("client-1")).toBe(true);
+      expect(await customSecurity.checkRateLimit("client-1")).toBe(false);
     });
 
-    it("should track rate limits per client", () => {
+    it("should track rate limits per client", async () => {
       const customSecurity = new CodeModeSecurityManager({
         maxExecutionsPerMinute: 1,
       });
-      expect(customSecurity.checkRateLimit("client-a")).toBe(true);
-      expect(customSecurity.checkRateLimit("client-b")).toBe(true);
-      expect(customSecurity.checkRateLimit("client-a")).toBe(false);
-      expect(customSecurity.checkRateLimit("client-b")).toBe(false);
+      expect(await customSecurity.checkRateLimit("client-a")).toBe(true);
+      expect(await customSecurity.checkRateLimit("client-b")).toBe(true);
+      expect(await customSecurity.checkRateLimit("client-a")).toBe(false);
+      expect(await customSecurity.checkRateLimit("client-b")).toBe(false);
     });
   });
 
   describe("getRateLimitRemaining", () => {
-    it("should return full limit for unknown client", () => {
-      expect(security.getRateLimitRemaining("new-client")).toBe(60);
+    it("should return full limit for unknown client", async () => {
+      expect(await security.getRateLimitRemaining("new-client")).toBe(10);
     });
 
-    it("should decrease after usage", () => {
+    it("should decrease after usage", async () => {
       const customSecurity = new CodeModeSecurityManager({
         maxExecutionsPerMinute: 5,
       });
-      customSecurity.checkRateLimit("client");
-      customSecurity.checkRateLimit("client");
-      expect(customSecurity.getRateLimitRemaining("client")).toBe(3);
+      await customSecurity.checkRateLimit("client");
+      await customSecurity.checkRateLimit("client");
+      expect(await customSecurity.getRateLimitRemaining("client")).toBe(3);
     });
 
-    it("should not go below zero", () => {
+    it("should not go below zero", async () => {
       const customSecurity = new CodeModeSecurityManager({
         maxExecutionsPerMinute: 1,
       });
-      customSecurity.checkRateLimit("client");
-      customSecurity.checkRateLimit("client");
-      expect(customSecurity.getRateLimitRemaining("client")).toBe(0);
+      await customSecurity.checkRateLimit("client");
+      await customSecurity.checkRateLimit("client");
+      expect(await customSecurity.getRateLimitRemaining("client")).toBe(0);
     });
   });
 
@@ -352,16 +352,16 @@ describe("CodeModeSecurityManager", () => {
   // ===========================================================================
 
   describe("cleanupRateLimits", () => {
-    it("should clean up expired entries", () => {
+    it("should clean up expired entries", async () => {
       const customSecurity = new CodeModeSecurityManager({
         maxExecutionsPerMinute: 10,
       });
       // Force an entry
-      customSecurity.checkRateLimit("old-client");
+      await customSecurity.checkRateLimit("old-client");
       // After cleanup immediately, the entry should still be active
       customSecurity.cleanupRateLimits();
       // Remaining should be 9 (1 used, not expired yet)
-      expect(customSecurity.getRateLimitRemaining("old-client")).toBe(9);
+      expect(await customSecurity.getRateLimitRemaining("old-client")).toBe(9);
     });
 
     it("should not throw when no entries exist", () => {

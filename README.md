@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.neverinfamous/db-mcp -->
 
-**SQLite MCP Server** with 151 specialized tools, 11 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 170+ specialized tools, 11 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 ![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)
@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-90.4%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-87.53%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -23,21 +23,21 @@
 
 ## 🎯 What Sets Us Apart
 
-| Feature                          | Description                                                                                                                                                                                                                                                                                                              |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **151 Specialized Tools**        | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                       |
-| **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                            |
-| **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                              |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 151 capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning              |
-| **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `_meta.tokenEstimate` on every response so agents know their token cost. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access  |
-| **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for high-performance concurrent execution with full features including transactions, window functions, and SpatiaLite GIS                                                                                                                         |
-| **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                       |
-| **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                         |
-| **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) for modern clients + legacy SSE (`/sse`) for backward compatibility — both protocols supported simultaneously with security headers, rate limiting, health check, and stateless mode for serverless                                                                                             |
-| **Production-Ready Security**    | SQL injection protection, parameterized queries, input validation, sandboxed code execution, HTTP body size enforcement, 7 security headers, server timeouts (slowloris protection), Retry-After rate limiting, `trustProxy` for reverse proxy deployments, opt-in HSTS, non-root Docker execution, and build provenance |
-| **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types, 1911 unit tests + 1136 E2E tests and 90% coverage                                                                                                                                                                                                              |
-| **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions, no silent failures. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                               |
-| **MCP 2025-03-26 Compliant**     | Full protocol support with tool safety hints, resource priorities, and progress notifications                                                                                                                                                                                                                            |
+| Feature                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **170+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                                                            |
+| **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                                                       |
+| **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                                                                                                                                                   |
+| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 170+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                                               |
+| **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `_meta.tokenEstimate` on every response so agents know their token cost. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access                                                                                                                                                  |
+| **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for high-performance concurrent execution with full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                                                                                                                             |
+| **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`full`, `read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                                                                                                                                                                    |
+| **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                                                                                                                                                                              |
+| **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) for modern clients + legacy SSE (`/sse`) for backward compatibility — both protocols supported simultaneously with security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                                                                                  |
+| **Production-Ready Security**    | SQL injection protection (parameterized queries + Unicode-normalized WHERE clause validation), sandboxed code execution (V8 `codeGeneration` restrictions, frozen prototypes, 18 blocked patterns, Proxy nullified, RPC allowlist), CORS deny-all default, fail-closed scope enforcement, JWT claims sanitization, 7 security headers, body size limits, rate limiting with Retry-After, slowloris timeouts, `trustProxy`, opt-in HSTS, non-root Docker, and build provenance |
+| **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types, 1911 unit tests + 1136 E2E tests and 90% coverage                                                                                                                                                                                                                                                                                                                                                                   |
+| **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions, no silent failures. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                                                                                                                                                    |
+| **MCP 2025-03-26 Compliant**     | Full protocol support with tool safety hints (`sensitiveHint`, `readOnlyHint`), resource priorities, and progress notifications                                                                                                                                                                                                                                                                                                                                               |
 
 ## 🚀 Quick Start
 
@@ -96,7 +96,7 @@ Or with **WASM backend** (sql.js — cross-platform, no compilation required):
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (151 tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (125 tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (166 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (139 tools, no native dependencies).
 
 ### Verify It Works
 
@@ -130,15 +130,17 @@ Code Mode (`sqlite_execute_code`) dramatically reduces token usage (70–90%) an
 Code executes in a **worker-thread sandbox** — a separate V8 isolate with its own memory space. All `sqlite.*` API calls are forwarded to the main thread via a `MessagePort`-based RPC bridge, where the actual database operations execute. This provides:
 
 - **Process-level isolation** — user code runs in a separate V8 instance with enforced heap limits
-- **Readonly enforcement** — when `readonly: true`, write methods return structured errors instead of executing
+- **Readonly enforcement** — when `readonly: true`, stripped methods throw clear error messages listing available methods via Proxy traps
 - **Hard timeouts** — worker termination if execution exceeds the configured limit
-- **Full API access** — all 11 tool groups are available via `sqlite.*` (e.g., `sqlite.core.readQuery()`, `sqlite.json.extract()`)
+- **V8 code generation restrictions** — `eval()` and `Function()` construction from strings disabled at the V8 engine level via `codeGeneration: { strings: false, wasm: false }`
+- **RPC allowlist** — host-side validation prevents workers from invoking unauthorized API methods
+- **Full API access** — all 10 tool groups are available via `sqlite.*` (e.g., `sqlite.core.readQuery()`, `sqlite.json.extract()`)
 
-Set `CODEMODE_ISOLATION=vm` to fall back to the in-process `vm` module sandbox if needed.
+Set `CODEMODE_ISOLATION=vm` with `CODEMODE_ISOLATION_INSECURE=1` to fall back to the in-process `vm` module sandbox if needed.
 
 ### ⚡ Code Mode Only (Maximum Token Savings)
 
-If you control your own setup, you can run with **only Code Mode enabled** — a single tool that provides access to all 151 tools' worth of capability through the `sqlite.*` API:
+If you control your own setup, you can run with **only Code Mode enabled** — a single tool that provides access to all 170+ tools' worth of capability through the `sqlite.*` API:
 
 ```json
 {
@@ -159,7 +161,7 @@ If you control your own setup, you can run with **only Code Mode enabled** — a
 }
 ```
 
-This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 11 tool groups, and returning exactly the data it needs — in one execution. This mirrors the [Code Mode pattern](https://blog.cloudflare.com/code-mode-mcp/) pioneered by Cloudflare for their entire API: fixed token cost regardless of how many capabilities exist.
+This exposes just `sqlite_execute_code` plus built-in tools. The agent writes JavaScript against the typed `sqlite.*` SDK — composing queries, chaining operations across all 10 tool groups, and returning exactly the data it needs — in one execution. This mirrors the [Code Mode pattern](https://blog.cloudflare.com/code-mode-mcp/) pioneered by Cloudflare for their entire API: fixed token cost regardless of how many capabilities exist.
 
 > [!TIP]
 > **Maximize Token Savings:** Instruct your AI agent to prefer Code Mode over individual tool calls:
@@ -171,11 +173,11 @@ This exposes just `sqlite_execute_code` plus built-in tools. The agent writes Ja
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 151 tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 170+ tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Quick Start: Recommended Configurations
 
-#### Starter (50 tools)
+#### Starter (core + json + text)
 
 If you prefer individual tool calls, `starter` provides Core + JSON + Text:
 
@@ -201,31 +203,31 @@ Specify exactly the groups you need:
 
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
-| `starter`    | **53** | **58** | +3         | Core, JSON, Text               |
-| `analytics`  | 55     | 61     | +3         | Core, JSON, Stats              |
-| `search`     | 40     | 45     | +3         | Core, Text, Vector             |
-| `spatial`    | 30     | 37     | +3         | Core, Geo, Vector              |
-| `dev-schema` | 30     | 30     | +3         | Core, Introspection, Migration |
-| `minimal`    | 15     | 15     | +3         | Core only                      |
-| `full`       | 125    | 151    | +3         | Everything enabled             |
+| `starter`    | **60** | **65** | +4         | Core, JSON, Text               |
+| `analytics`  | 63     | 69     | +4         | Core, JSON, Stats              |
+| `search`     | 46     | 51     | +4         | Core, Text, Vector             |
+| `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
+| `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
+| `minimal`    | 21     | 21     | +4         | Core only                      |
+| `full`       | 139    | 166    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
-> **Note:** +3 built-in tools (server_info, server_health, list_adapters) and +1 code mode are always included.
+> **Note:** +4 built-in tools (server_info, server_health, list_adapters, sqlite_execute_code) are injected into every group.
 
-| Group           | WASM | Native | + Built-in | Description                                  |
-| --------------- | ---- | ------ | ---------- | -------------------------------------------- |
-| `codemode`      | 1    | 1      | +3         | Code Mode (sandboxed code execution) 🌟      |
-| `core`          | 14   | 14     | +3         | Basic CRUD, schema, tables                   |
-| `json`          | 24   | 24     | +3         | JSON/JSONB operations, analysis              |
-| `text`          | 14   | 19     | +3         | Text processing + FTS5 + advanced search     |
-| `stats`         | 16   | 22     | +3         | Statistical analysis (+ window funcs)        |
-| `vector`        | 11   | 11     | +3         | Embeddings, similarity search                |
-| `admin`         | 26   | 26     | +3         | Backup, restore, virtual tables, pragma      |
-| `transactions`  | 0    | 8      | +3         | Transaction control and atomic execution     |
-| `geo`           | 4    | 11     | +3         | Geospatial + SpatiaLite (Native only)        |
-| `introspection` | 9    | 9      | +3         | FK graph, cascade sim, storage/index audit   |
-| `migration`     | 6    | 6      | +3         | Migration tracking, apply, rollback (opt-in) |
+| Group           | WASM | Native | + Built-in | Description                                |
+| --------------- | ---- | ------ | ---------- | ------------------------------------------ |
+| `codemode`      | 1    | 1      | +4         | Code Mode (sandboxed code execution) 🧠    |
+| `core`          | 21   | 21     | +4         | Basic CRUD, schema, tables                 |
+| `json`          | 25   | 25     | +4         | JSON/JSONB operations, analysis            |
+| `text`          | 14   | 19     | +4         | Text processing + FTS5 + advanced search   |
+| `stats`         | 17   | 23     | +4         | Descriptive, inference, window functions   |
+| `vector`        | 11   | 11     | +4         | Vector storage, similarity search          |
+| `admin`         | 31   | 32     | +4         | DB maintenance, backup, virtual tables     |
+| `transactions`  | 0    | 8      | +4         | Commit, rollback, savepoints (Native only) |
+| `geo`           | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)      |
+| `introspection` | 10   | 10     | +4         | Schema mapping, FK graph, analysis         |
+| `migration`     | 6    | 6      | +4         | Schema migration tracking (opt-in)         |
 
 ### Syntax Reference
 
@@ -350,19 +352,19 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 MCP resources provide read-only access to database metadata:
 
-| Resource              | URI                                 | Description                       | Min Config    |
-| --------------------- | ----------------------------------- | --------------------------------- | ------------- |
-| `sqlite_schema`       | `sqlite://schema`                   | Full database schema              | `minimal`     |
-| `sqlite_tables`       | `sqlite://tables`                   | List all tables                   | `minimal`     |
-| `sqlite_table_schema` | `sqlite://table/{tableName}/schema` | Schema for a specific table       | `minimal`     |
-| `sqlite_indexes`      | `sqlite://indexes`                  | All indexes in the database       | `minimal`     |
-| `sqlite_views`        | `sqlite://views`                    | All views in the database         | `core,admin`  |
-| `sqlite_health`       | `sqlite://health`                   | Database health and status        | _(read-only)_ |
-| `sqlite_meta`         | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
-| `sqlite_compile_options`| `sqlite://compile_options`          | SQLite compile-time build options | _(read-only)_ |
-| `sqlite_pragma`       | `sqlite://pragma`                   | Runtime PRAGMA config snapshot    | _(read-only)_ |
-| `sqlite_insights`     | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
-| `sqlite_audit`        | `sqlite://audit`                    | Recent audit log + backup stats   | `--audit-log` |
+| Resource                 | URI                                 | Description                       | Min Config    |
+| ------------------------ | ----------------------------------- | --------------------------------- | ------------- |
+| `sqlite_schema`          | `sqlite://schema`                   | Full database schema              | `minimal`     |
+| `sqlite_tables`          | `sqlite://tables`                   | List all tables                   | `minimal`     |
+| `sqlite_table_schema`    | `sqlite://table/{tableName}/schema` | Schema for a specific table       | `minimal`     |
+| `sqlite_indexes`         | `sqlite://indexes`                  | All indexes in the database       | `minimal`     |
+| `sqlite_views`           | `sqlite://views`                    | All views in the database         | `core,admin`  |
+| `sqlite_health`          | `sqlite://health`                   | Database health and status        | _(read-only)_ |
+| `sqlite_meta`            | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
+| `sqlite_compile_options` | `sqlite://compile_options`          | SQLite compile-time build options | _(read-only)_ |
+| `sqlite_pragma`          | `sqlite://pragma`                   | Runtime PRAGMA config snapshot    | _(read-only)_ |
+| `sqlite_insights`        | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
+| `sqlite_audit`           | `sqlite://audit`                    | Recent audit log + backup stats   | `--audit-log` |
 
 ### Help Resources (1 + up to 8)
 
@@ -404,28 +406,29 @@ MCP prompts provide AI-assisted database workflows:
 
 ### Environment Variables
 
-| Variable                | Default   | Description                                                    |
-| ----------------------- | --------- | -------------------------------------------------------------- |
-| `MCP_HOST`              | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                      |
-| `SQLITE_DATABASE`       | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)     |
-| `DB_MCP_TOOL_FILTER`    | —         | Tool filter string (CLI: `--tool-filter`)                      |
-| `MCP_AUTH_TOKEN`        | —         | Simple bearer token for HTTP auth (CLI: `--auth-token`)        |
-| `OAUTH_ENABLED`         | `false`   | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                      |
-| `OAUTH_ISSUER`          | —         | Authorization server URL (CLI: `--oauth-issuer`)               |
-| `OAUTH_AUDIENCE`        | —         | Expected token audience (CLI: `--oauth-audience`)              |
-| `OAUTH_JWKS_URI`        | —         | JWKS URI, auto-discovered if omitted (CLI: `--oauth-jwks-uri`) |
-| `OAUTH_CLOCK_TOLERANCE` | `60`      | Clock tolerance in seconds (CLI: `--oauth-clock-tolerance`)    |
-| `LOG_LEVEL`             | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`             |
-| `METADATA_CACHE_TTL_MS` | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations)    |
-| `CODEMODE_ISOLATION`    | `worker`  | Code Mode sandbox: `worker` (enhanced isolation) or `vm`       |
-| `MCP_RATE_LIMIT_MAX`    | `100`     | Max requests/minute per IP (HTTP transport)                    |
-| `CSV_EXTENSION_PATH`    | —         | Custom path to CSV extension binary (native only)              |
-| `SPATIALITE_PATH`       | —         | Custom path to SpatiaLite extension binary (native only)       |
-| `AUDIT_LOG`             | —         | Audit log file path, or `stderr` (CLI: `--audit-log`)          |
-| `AUDIT_REDACT`          | `false`   | Redact tool arguments from audit entries (CLI: `--audit-redact`)|
-| `AUDIT_READS`           | `false`   | Also log read-scoped tool invocations (CLI: `--audit-reads`)   |
-| `AUDIT_BACKUP`          | `false`   | Enable pre-mutation DDL snapshots (CLI: `--audit-backup`)      |
-| `AUDIT_BACKUP_DATA`     | `false`   | Include sample data rows in snapshots (CLI: `--audit-backup-data`) |
+| Variable                    | Default   | Description                                                                    |
+| --------------------------- | --------- | ------------------------------------------------------------------------------ |
+| `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                                      |
+| `SQLITE_DATABASE`           | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)                     |
+| `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (CLI: `--tool-filter`)                                      |
+| `MCP_AUTH_TOKEN`            | —         | Simple bearer token for HTTP auth (CLI: `--auth-token`)                        |
+| `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                                      |
+| `OAUTH_ISSUER`              | —         | Authorization server URL (CLI: `--oauth-issuer`)                               |
+| `OAUTH_AUDIENCE`            | —         | Expected token audience (CLI: `--oauth-audience`)                              |
+| `OAUTH_JWKS_URI`            | —         | JWKS URI, auto-discovered if omitted (CLI: `--oauth-jwks-uri`)                 |
+| `OAUTH_CLOCK_TOLERANCE`     | `60`      | Clock tolerance in seconds (CLI: `--oauth-clock-tolerance`)                    |
+| `LOG_LEVEL`                 | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`                             |
+| `METADATA_CACHE_TTL_MS`     | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations)                    |
+| `CODEMODE_ISOLATION`        | `isolate` | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`                  |
+| `CODE_MODE_MAX_RESULT_SIZE` | `102400`  | Maximum Code Mode result payload in bytes (default 100KB, cap 50MB)            |
+| `MCP_RATE_LIMIT_MAX`        | `100`     | Max requests/minute per IP (HTTP transport)                                    |
+| `CSV_EXTENSION_PATH`        | —         | Custom path to CSV extension binary (native only)                              |
+| `SPATIALITE_PATH`           | —         | Custom path to SpatiaLite extension binary (native only)                       |
+| `AUDIT_LOG`                 | —         | Audit log file path, or `stderr` (CLI: `--audit-log`)                          |
+| `AUDIT_REDACT`              | `true`    | Redact tool arguments from audit entries (CLI: `--audit-no-redact` to disable) |
+| `AUDIT_READS`               | `false`   | Also log read-scoped tool invocations (CLI: `--audit-reads`)                   |
+| `AUDIT_BACKUP`              | `false`   | Enable pre-mutation DDL snapshots (CLI: `--audit-backup`)                      |
+| `AUDIT_BACKUP_DATA`         | `false`   | Include sample data rows in snapshots (CLI: `--audit-backup-data`)             |
 
 > **Tip:** Lower `METADATA_CACHE_TTL_MS` for development (e.g., `1000`), or increase it for production with stable schemas (e.g., `60000` = 1 min). Schema cache is automatically invalidated on DDL operations (CREATE/ALTER/DROP).
 
@@ -438,7 +441,7 @@ Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --
 Auth:         --auth-token <token>  |  --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>
 Extensions:   --csv  --spatialite                         (native only)
-Audit:        --audit-log <path>  --audit-redact  --audit-reads  --audit-backup  --audit-backup-data
+Audit:        --audit-log <path>  --audit-no-redact  --audit-reads  --audit-backup  --audit-backup-data
 Server:       --name <name>  --version <ver>  --tool-filter <filter>
 ```
 
@@ -466,6 +469,9 @@ Add to your `~/.cursor/mcp.json`, Claude Desktop config, or equivalent:
   }
 }
 ```
+
+> [!TIP]
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 166 tools). To use the **WASM** backend (sql.js, 139 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
 
 **Variants** (modify the `args` array above):
 
@@ -579,13 +585,12 @@ node dist/cli.js \
 
 Access control is managed through OAuth scopes:
 
-| Scope                | Description                            |
-| -------------------- | -------------------------------------- |
-| `read`               | Read-only access to all databases      |
-| `write`              | Read and write access to all databases |
-| `admin`              | Full administrative access             |
-| `db:{name}`          | Access to specific database only       |
-| `table:{db}:{table}` | Access to specific table only          |
+| Scope   | Description                            |
+| ------- | -------------------------------------- |
+| `full`  | Unrestricted access to all operations  |
+| `read`  | Read-only access to all databases      |
+| `write` | Read and write access to all databases |
+| `admin` | Full administrative access             |
 
 ### RFC Compliance
 
@@ -600,7 +605,7 @@ The server exposes metadata at `/.well-known/oauth-protected-resource`.
 > **Note for Keycloak users:** Add an **Audience mapper** to your client (Client → Client scopes → dedicated scope → Add mapper → Audience) to include the correct `aud` claim in tokens.
 
 > [!NOTE]
-> **Per-tool scope enforcement:** Scopes are enforced at the tool level — each tool group maps to a required scope (`read`, `write`, or `admin`). When OAuth is enabled, every tool invocation checks the calling token's scopes before execution. When OAuth is not configured, scope checks are skipped entirely.
+> **Per-tool scope enforcement:** Scopes are enforced at the tool level — each tool group maps to a required scope (`read`, `write`, or `admin`). Unknown or unmapped tools default to `admin` (fail-closed). When OAuth is enabled, every tool invocation checks the calling token's scopes before execution. When OAuth is not configured, scope checks are skipped entirely.
 
 > [!TIP]
 > **Audit identity integration:** When OAuth is enabled alongside audit logging (`--audit-log`), audit entries for write/admin tools automatically capture the authenticated user (`claims.sub`) and granted scopes. This provides a complete forensic trail linking every mutation to a specific identity. Without OAuth, these fields are `null`/`[]`.

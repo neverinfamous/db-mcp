@@ -53,7 +53,7 @@ describe("Tool Annotations", () => {
 
     it("should define ADMIN with correct hints", () => {
       expect(ADMIN.readOnlyHint).toBe(false);
-      expect(ADMIN.destructiveHint).toBe(false);
+      expect(ADMIN.destructiveHint).toBe(true);
     });
   });
 
@@ -112,7 +112,7 @@ describe("Tool Annotations", () => {
       const result = admin("Vacuum Tool");
       expect(result.title).toBe("Vacuum Tool");
       expect(result.readOnlyHint).toBe(false);
-      expect(result.destructiveHint).toBe(false);
+      expect(result.destructiveHint).toBe(true);
     });
   });
 });

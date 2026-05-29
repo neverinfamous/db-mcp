@@ -15,6 +15,11 @@ import {
 } from "../../utils/resource-annotations.js";
 import { insightsManager } from "../../utils/insights-manager.js";
 import { DbMcpError, ErrorCategory } from "../../utils/errors/index.js";
+import {
+  isSpatialiteSystemTable,
+  isSpatialiteSystemView,
+  isSpatialiteSystemIndex,
+} from "./tools/core/tables.js";
 
 /**
  * Get all resource definitions for the SQLite adapter
@@ -48,7 +53,23 @@ function createSchemaResource(adapter: SqliteAdapter): ResourceDefinition {
     mimeType: "application/json",
     annotations: HIGH_PRIORITY,
     handler: async () => {
-      const schema = await adapter.getSchema();
+      const rawSchema = await adapter.getSchema();
+      const schema = {
+        ...rawSchema,
+        tables: (rawSchema.tables ?? []).filter(
+          (t) =>
+            !isSpatialiteSystemTable(t.name) &&
+            !isSpatialiteSystemView(t.name) &&
+            !t.name.startsWith("_mcp_"),
+        ),
+        indexes: (rawSchema.indexes ?? []).filter(
+          (idx) =>
+            !isSpatialiteSystemIndex(idx.name) &&
+            !isSpatialiteSystemTable(idx.tableName) &&
+            !idx.tableName.startsWith("_mcp_"),
+        ),
+      };
+
       return {
         contents: [
           {
@@ -73,7 +94,13 @@ function createTablesResource(adapter: SqliteAdapter): ResourceDefinition {
     mimeType: "application/json",
     annotations: MEDIUM_PRIORITY,
     handler: async () => {
-      const tables = await adapter.listTables();
+      const tables = (await adapter.listTables()).filter(
+        (t) =>
+          !isSpatialiteSystemTable(t.name) &&
+          !isSpatialiteSystemView(t.name) &&
+          !t.name.startsWith("_mcp_"),
+      );
+
       return {
         contents: [
           {
@@ -148,7 +175,14 @@ function createIndexesResource(adapter: SqliteAdapter): ResourceDefinition {
     annotations: MEDIUM_PRIORITY,
     handler: async () => {
       // Use single cached query via SchemaManager (eliminates N+1)
-      const indexes = await adapter.getAllIndexes();
+      const allRawIndexes = await adapter.getAllIndexes();
+
+      const indexes = allRawIndexes.filter(
+        (idx) =>
+          !isSpatialiteSystemIndex(idx.name) &&
+          !isSpatialiteSystemTable(idx.tableName) &&
+          !idx.tableName.startsWith("_mcp_"),
+      );
 
       // Group by table name for output format
       const allIndexes: Record<string, unknown[]> = {};
@@ -185,12 +219,20 @@ function createViewsResource(adapter: SqliteAdapter): ResourceDefinition {
       const result = await adapter.executeReadQuery(
         "SELECT name, sql FROM sqlite_master WHERE type = 'view' ORDER BY name",
       );
+
+      const views = (result.rows ?? []).filter(
+        (row) =>
+          !isSpatialiteSystemTable(row["name"] as string) &&
+          !isSpatialiteSystemView(row["name"] as string) &&
+          !(row["name"] as string).startsWith("_mcp_"),
+      );
+
       return {
         contents: [
           {
             uri: "sqlite://views",
             mimeType: "application/json",
-            text: JSON.stringify(result.rows ?? [], null, 2),
+            text: JSON.stringify(views, null, 2),
           },
         ],
       };
@@ -252,7 +294,17 @@ function createMetaResource(adapter: SqliteAdapter): ResourceDefinition {
       for (const pragma of pragmas) {
         try {
           const result = await adapter.executeReadQuery(`PRAGMA ${pragma}`);
-          meta[pragma] = result.rows?.[0] ?? null;
+          if (pragma === "database_list") {
+            meta[pragma] = (result.rows ?? []).map((r) => ({
+              ...r,
+              file:
+                typeof r["file"] === "string" && r["file"].length > 0
+                  ? "<redacted>"
+                  : "",
+            }));
+          } else {
+            meta[pragma] = result.rows?.[0] ?? null;
+          }
         } catch {
           meta[pragma] = null;
         }

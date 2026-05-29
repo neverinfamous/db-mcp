@@ -42,6 +42,7 @@ export function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Count Vectors"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = VectorCountSchema.parse(params);
 
@@ -52,13 +53,13 @@ export function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.dimensions !== undefined) {
           sql += ` WHERE dimensions = ${input.dimensions}`;
         }
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           count: result.rows?.[0]?.["count"] ?? 0,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -80,6 +81,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorStatsSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
@@ -87,7 +89,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Get sample of vectors
         const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT ${input.sampleSize}`;
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const vectors: number[][] = [];
         const rows = result.rows ?? [];
@@ -139,7 +141,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
             avg: magnitudes.reduce((s, m) => s + m, 0) / magnitudes.length,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -163,13 +165,14 @@ export function createVectorDimensionsTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorDimensionsSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);
 
         const sql = `SELECT ${vectorColumn} FROM ${table} LIMIT 1`;
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         if (!result.rows || result.rows.length === 0) {
           return {
@@ -193,7 +196,7 @@ export function createVectorDimensionsTool(
           success: true,
           dimensions: vector.length,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -215,6 +218,7 @@ export function createVectorNormalizeTool(): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorNormalizeSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         if (input.vector.length === 0) {
           return Promise.resolve({
@@ -237,7 +241,7 @@ export function createVectorNormalizeTool(): ToolDefinition {
             input.vector.reduce((s, x) => s + x * x, 0),
           ),
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -259,6 +263,7 @@ export function createVectorDistanceTool(): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorDistanceSchema.parse(params);
+        //       const queryParams: unknown[] = [];
 
         if (input.vector1.length === 0 || input.vector2.length === 0) {
           return Promise.resolve({
@@ -305,7 +310,7 @@ export function createVectorDistanceTool(): ToolDefinition {
           metric: input.metric,
           distance: Math.round(result * 10000) / 10000,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },

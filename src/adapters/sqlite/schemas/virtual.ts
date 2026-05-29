@@ -4,12 +4,14 @@
 
 import { z } from "zod";
 
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? Number.isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 import { ErrorFieldsMixin } from "./error-mixin.js";
 
 /**
@@ -156,17 +158,19 @@ export const CreateSeriesTableOutputSchema = z
 // =============================================================================
 
 export const GenerateSeriesSchema = z.object({
-  start: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Start value"),
-  ),
-  stop: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Stop value"),
-  ),
+  start: z.number().describe("Start value"),
+  stop: z.number().describe("Stop value"),
   step: z.preprocess(
     coerceNumber,
     z.number().optional().default(1).describe("Step value"),
+  ),
+  limit: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(100)
+      .describe("Maximum number of values to return (default: 100, max: 1000)"),
   ),
 });
 
@@ -242,7 +246,16 @@ export const CreateCsvTableSchema = z.object({
   tableName: z.string().describe("Name for the virtual table"),
   filePath: z.string().describe("Path to the CSV file"),
   header: z.boolean().optional().default(true).describe("First row is header"),
-  delimiter: z.string().optional().default(",").describe("Column delimiter"),
+  delimiter: z
+    .string()
+    .length(1, "Delimiter must be exactly one character")
+    .regex(
+      /^[\t\x20-\x7E]$/,
+      "Delimiter must be a printable ASCII character or tab",
+    )
+    .optional()
+    .default(",")
+    .describe("Column delimiter"),
   columns: z
     .array(z.string())
     .optional()
@@ -255,7 +268,16 @@ export const AnalyzeCsvSchemaSchema = z.object({
     coerceNumber,
     z.number().optional().default(100).describe("Rows to sample"),
   ),
-  delimiter: z.string().optional().default(",").describe("Column delimiter"),
+  delimiter: z
+    .string()
+    .length(1, "Delimiter must be exactly one character")
+    .regex(
+      /^[\t\x20-\x7E]$/,
+      "Delimiter must be a printable ASCII character or tab",
+    )
+    .optional()
+    .default(",")
+    .describe("Column delimiter"),
 });
 
 export const CreateRtreeTableSchema = z.object({
@@ -269,14 +291,8 @@ export const CreateRtreeTableSchema = z.object({
 
 export const CreateSeriesTableSchema = z.object({
   tableName: z.string().describe("Name for the series table"),
-  start: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Start value"),
-  ),
-  stop: z.preprocess(
-    coerceNumber,
-    z.number().optional().describe("Stop value"),
-  ),
+  start: z.number().describe("Start value"),
+  stop: z.number().describe("Stop value"),
   step: z.preprocess(
     coerceNumber,
     z.number().optional().default(1).describe("Step value"),

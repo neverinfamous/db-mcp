@@ -18,7 +18,7 @@ export function createDropVirtualTableTool(
     group: "admin",
     inputSchema: DropVirtualTableSchema,
     outputSchema: DropVirtualTableOutputSchema,
-    requiredScopes: ["write"],
+    requiredScopes: ["admin"],
     annotations: destructive("Drop Virtual Table"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
@@ -26,9 +26,9 @@ export function createDropVirtualTableTool(
 
         const tableName = sanitizeIdentifier(input.tableName);
 
-        const escapedName = input.tableName.replace(/'/g, "''");
         const existsResult = await adapter.executeReadQuery(
-          `SELECT name, sql FROM sqlite_master WHERE type='table' AND name='${escapedName}'`,
+          `SELECT name, sql FROM sqlite_master WHERE type='table' AND name=?`,
+          [input.tableName],
         );
         const tableExists =
           existsResult.rows !== undefined && existsResult.rows.length > 0;
@@ -69,7 +69,7 @@ export function createDropVirtualTableTool(
             message: `Dropped virtual table '${input.tableName}'`,
           };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

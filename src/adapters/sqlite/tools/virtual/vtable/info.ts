@@ -27,7 +27,8 @@ export function createVirtualTableInfoTool(
         sanitizeIdentifier(input.tableName);
 
         const sqlResult = await adapter.executeReadQuery(
-          `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '${input.tableName.replace(/'/g, "''")}' AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
+          `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ? AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
+          [input.tableName],
         );
 
         if (!sqlResult.rows || sqlResult.rows.length === 0) {
@@ -66,7 +67,7 @@ export function createVirtualTableInfoTool(
             columns,
             sql: sqlStr,
           };
-        } catch (error) {
+        } catch (error: unknown) {
           const errMsg = error instanceof Error ? error.message : String(error);
           const isModuleError =
             errMsg.includes("no such module") ||
@@ -84,7 +85,7 @@ export function createVirtualTableInfoTool(
           }
           throw error;
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           name: "",

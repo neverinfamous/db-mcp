@@ -2,57 +2,124 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
-> We're currently testing Native mode.
-
-**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
-
-**Step 2:** Conduct an exhaustive test of the **vector** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
-
-**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js): All 11 vector tools are fully WASM-compatible. No phases to skip or adjust.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+
+## Setup & Pre-requisites
+
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
+
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the checklist below using live MCP server tool calls directly — not scripts/terminal.
+
+**Step 3:** The agent should update `C:\Users\chris\Desktop\db-mcp\UNRELEASED.md`, update `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` if appropriate, and create a `memory-journal-mcp` entry summarizing the changes/fixes.
+
+> [!WARNING]
+> **Stale Build Issues:** The MCP server runs from the compiled `dist/` directory, NOT `src/`. If you encounter inexplicable behavior (e.g., tools executing old logic or throwing validation errors for things already fixed in the source code), the server might be running a stale build. Check if the compiled code in `dist/` matches the source code in `src/`. If out of sync, stop and instruct the user to run `npm run build` and restart the server before continuing testing.
+
+> **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
+
+### Test Schema Reference
+
+> See `code-map.md` in the `test-server/` directory for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 
-- ❌ Fail: Tool errors or produces incorrect results
-- ⚠️ Issue: Unexpected behavior or improvement opportunity
-- 📦 Payload: Unnecessarily large response — monitor `metrics.tokenEstimate`.
+- ❌ **Fail**: Tool errors or produces incorrect results (include error message)
+- ⚠️ **Issue**: Unexpected behavior or improvement opportunity
+- 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
-## Test Database Schema
+### Error Message Quality Rating
 
-| Table           | Rows | Key Columns                                               |
-| --------------- | ---- | --------------------------------------------------------- |
-| test_embeddings | 20   | id, content, category, embedding (8-dim JSON float array) |
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
-**Categories**: database, fitness, food, tech, travel (each ~4 rows)
-**Row 1**: content="Machine learning fundamentals", category="tech", embedding=[0.12, 0.45, -0.23, 0.78, 0.34, -0.56, 0.89, 0.01]
+## Testing Requirements & Error Standards
 
-> Vector tools use pure JS computations (cosine, euclidean, dot product) with JSON-stored vectors — no native extension required. All 11 tools work identically in both WASM and Native modes.
-
-## Testing Requirements
+> [!NOTE]
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** Report as ❌.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+>
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
+>
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
-1. **Batched scripting**: Bundle checks with `failures` array.
-2. **Error path testing**: Every tool with `{}` (Zod) and domain error.
-3. **Token tracking**: Monitor `metrics.tokenEstimate`.
-4. **Coverage Matrix**: `| Tool | Happy Path | Domain Error | Zod Error |`
-5. **Deterministic checklist first**.
+1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
+2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
+   - (a) A domain error (e.g., non-existent table).
+   - (b) An **empty parameters test** (call the tool with `{}`).
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
+   > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
+5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
+   > **CRITICAL**: Architectural consistency is paramount. Do not introduce undocumented architectural deviations. If you implement a structural or architectural improvement in one tool, you must apply it symmetrically to other applicable tools in the group or project.
 6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+7. **Token Tracking**: Monitor `metrics.tokenEstimate` to detect payload issues.
+8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
-## Structured Error Response Pattern
+### Structured Error Response Pattern
 
-Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `isError: true`.
+All tools should return errors as structured objects instead of throwing. The expected pattern:
 
-## Cleanup
+```json
+{ "success": false, "error": "Human-readable error message" }
+```
 
-- Temporary tables: `temp_*` prefix. Drop at end of script.
+| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+
+## Naming & Cleanup
+
+- **Temporary tables**: `temp_*` (or `stress_*`) prefix
+- **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
+- Drop at the end of the script. If DROP fails due to lock, note and move on.
 
 ---
+
+## Group Focus: vector
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+- `sqlite.vector.count`
+- `sqlite.vector.dimensions`
+- `sqlite.vector.get`
+- `sqlite.vector.search`
+- `sqlite.vector.distance`
+- `sqlite.vector.normalize`
+- `sqlite.vector.stats`
+- `sqlite.vector.createTable`
+- `sqlite.vector.store`
+- `sqlite.vector.batchStore`
+- `sqlite.vector.delete`
+- _(cross-group helpers used in test procedures)_
+- `sqlite.core.dropTable`
+- `sqlite.core.readQuery`
+- `sqlite.core.writeQuery`
+- `sqlite.json.extract`
 
 ## Phase 1: Vector Read Tools — Happy Paths (batched)
 
@@ -66,8 +133,6 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 8. `sqlite.vector.normalize({vector: [3, 4]})` → `{normalized: [0.6, 0.8], originalMagnitude: 5}`
 9. `sqlite.vector.stats({table: "test_embeddings", vectorColumn: "embedding"})` → min/max/avg magnitude
 
----
-
 ## Phase 2: Vector Write Tools — Happy Paths (temp table)
 
 10. `sqlite.vector.createTable({tableName: "temp_cm_vector", dimensions: 8, additionalColumns: [{name: "content", type: "TEXT"}, {name: "category", type: "TEXT"}]})` → success
@@ -77,37 +142,19 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 14. `sqlite.vector.search({table: "temp_cm_vector", vectorColumn: "vector", queryVector: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], metric: "cosine", limit: 2})` → row 1 first
 15. `sqlite.vector.delete({table: "temp_cm_vector", idColumn: "id", ids: [1]})` → success
 16. `sqlite.vector.count({table: "temp_cm_vector"})` → `{count: 2}`
-17. Cleanup: `sqlite.core.dropTable({tableName: "temp_cm_vector"})`
-
----
+17. Cleanup: `sqlite.core.dropTable({table: "temp_cm_vector"})`
 
 ## Phase 3: Vector Domain Errors (batched)
 
 🔴 18. `sqlite.vector.search({table: "nonexistent_xyz", vectorColumn: "embedding", queryVector: [1,2,3], metric: "cosine"})` → `{success: false}`
 🔴 19. `sqlite.vector.distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → error about dimension mismatch
 🔴 20. `sqlite.vector.get({table: "test_embeddings", idColumn: "id", vectorColumn: "embedding", id: 9999})` → report behavior (nonexistent row)
+🔴 21. `sqlite.vector.normalize({vector: []})` → structured error (empty vector, potential division by zero)
+🔴 22. `sqlite.vector.distance({vector1: [], vector2: [], metric: "cosine"})` → structured error (zero-dimension vectors)
 
----
+## Phase 4: Multi-Step Workflow
 
-## Phase 4: Vector Zod Validation (batched)
-
-🔴 21. `sqlite.vector.createTable({})` → `{success: false}`
-🔴 22. `sqlite.vector.store({})` → `{success: false}`
-🔴 23. `sqlite.vector.batchStore({})` → `{success: false}`
-🔴 24. `sqlite.vector.search({})` → `{success: false}`
-🔴 25. `sqlite.vector.get({})` → `{success: false}`
-🔴 26. `sqlite.vector.delete({})` → `{success: false}`
-🔴 27. `sqlite.vector.count({})` → `{success: false}`
-🔴 28. `sqlite.vector.stats({})` → `{success: false}`
-🔴 29. `sqlite.vector.dimensions({})` → `{success: false}`
-🔴 30. `sqlite.vector.normalize({})` → `{success: false}`
-🔴 31. `sqlite.vector.distance({})` → `{success: false}`
-
----
-
-## Phase 5: Multi-Step Workflow
-
-### 5.1 — Similarity search pipeline
+### 4.1 — Similarity search pipeline
 
 ```javascript
 const failures = [];
@@ -151,7 +198,7 @@ return {
 };
 ```
 
-### 5.2 — Create → populate → search → teardown
+### 4.2 — Create → populate → search → teardown
 
 ```javascript
 const failures = [];
@@ -177,13 +224,11 @@ const results = await sqlite.vector.search({
   limit: 3,
 });
 if (results.rows[0].id !== 1) failures.push("expected row 1 as closest match");
-await sqlite.core.dropTable({ tableName: "temp_cm_vec_pipe" });
+await sqlite.core.dropTable({ table: "temp_cm_vec_pipe" });
 return { failures, success: failures.length === 0 };
 ```
 
----
-
-### 5.3 — Vector + JSON cross-group
+### 4.3 — Vector + JSON cross-group
 
 ```javascript
 const failures = [];
@@ -222,7 +267,7 @@ const meta = await sqlite.json.extract({
 });
 if (!meta || meta.success === false)
   failures.push("JSON extract from vector table failed");
-await sqlite.core.dropTable({ tableName: "temp_cm_vec_json" });
+await sqlite.core.dropTable({ table: "temp_cm_vec_json" });
 return {
   failures,
   success: failures.length === 0,
@@ -231,14 +276,75 @@ return {
 };
 ```
 
+### 4.4 — Multi-metric distance comparison
+
+```javascript
+const v1 = [1, 0, 0];
+const v2 = [0, 1, 0];
+const cosine = await sqlite.vector.distance({
+  vector1: v1,
+  vector2: v2,
+  metric: "cosine",
+});
+const euclidean = await sqlite.vector.distance({
+  vector1: v1,
+  vector2: v2,
+  metric: "euclidean",
+});
+const dot = await sqlite.vector.distance({
+  vector1: v1,
+  vector2: v2,
+  metric: "dot",
+});
+return {
+  cosine: cosine.distance,
+  euclidean: euclidean.distance,
+  dot: dot.distance,
+};
+```
+
+Expected: Three distinct numeric values. For orthogonal unit vectors: cosine ≈ 1.0, euclidean ≈ 1.414, dot ≈ 0.0.
+
+## Phase 5: Zod Validation Sweep
+
+🔴 23. `sqlite.vector.createTable({})` → `{success: false}`
+🔴 24. `sqlite.vector.store({})` → `{success: false}`
+🔴 25. `sqlite.vector.batchStore({})` → `{success: false}`
+🔴 26. `sqlite.vector.search({})` → `{success: false}`
+🔴 27. `sqlite.vector.get({})` → `{success: false}`
+🔴 28. `sqlite.vector.delete({})` → `{success: false}`
+🔴 29. `sqlite.vector.count({})` → `{success: false}`
+🔴 30. `sqlite.vector.stats({})` → `{success: false}`
+🔴 31. `sqlite.vector.dimensions({})` → `{success: false}`
+🔴 32. `sqlite.vector.normalize({})` → `{success: false}`
+🔴 33. `sqlite.vector.distance({})` → `{success: false}`
+
+## Phase 6: Wrong-Type Numeric Coercion
+
+🔴 34. `sqlite.vector.search({table: "test_embeddings", vectorColumn: "embedding", queryVector: [0.1, 0.2, 0.3], metric: "cosine", limit: "abc"})` → handler error, NOT raw MCP `-32602`
+
 ---
 
 ## Post-Test Procedures
 
-1. **Cleanup**: Drop `temp_*` tables
-2. **Triage findings**: Create implementation plan if issues found
-3. **Scope of fixes**: Handler code, server-instructions, this prompt
-4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-5. **Commit**: Stage and commit — do NOT push
-6. **Token audit**: Report most expensive block
-7. **Final summary**: After testing/re-testing
+### Reporting Rules
+
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

@@ -1,6 +1,6 @@
 import type { ToolGroup } from "../../types/index.js";
 import { TOOL_GROUPS } from "../../filtering/tool-filter.js";
-import { parseDatabaseScope, parseTableScope, SCOPES } from "./constants.js";
+import { SCOPES } from "./constants.js";
 import {
   ADMIN_TOOLS,
   READ_ONLY_TOOLS,
@@ -12,6 +12,14 @@ import {
 } from "./mapping.js";
 import { hasReadScope, hasWriteScope, hasAdminScope } from "./validation.js";
 
+const toolScopeMap = new Map<string, string[]>();
+
+export function registerToolScopes(map: Map<string, string[]>): void {
+  for (const [key, val] of map.entries()) {
+    toolScopeMap.set(key, val);
+  }
+}
+
 /**
  * Check if a scope grants access to a specific tool
  */
@@ -20,30 +28,36 @@ export function scopeGrantsToolAccess(
   toolName: string,
 ): boolean {
   // Full scope grants access to all tools
-  if (scope === "full") {
+  if (scope === "full" || scope === "admin") {
     return true;
   }
 
-  // Admin scope grants access to all tools
-  if (scope === "admin") {
-    return true;
-  }
-
-  // Write scope grants access to write tools and below
-  if (scope === "write") {
-    if (ADMIN_TOOLS.has(toolName)) {
+  // Use dynamic scopes if available
+  if (toolScopeMap.size > 0) {
+    const required = toolScopeMap.get(toolName);
+    if (required) {
+      if (required.includes(scope)) {
+        return true;
+      }
+      // 'write' scope grants access to 'read' tools
+      if (scope === "write" && required.includes("read")) {
+        return true;
+      }
       return false;
     }
-    return true;
+    // Fail-closed: unknown tools require admin scope
+    return false;
   }
 
-  // Read scope only grants read-only tools
+  // Fallback to legacy logic...
+  if (scope === "write") {
+    return WRITE_TOOLS.has(toolName) || READ_ONLY_TOOLS.has(toolName);
+  }
+
   if (scope === "read") {
     return READ_ONLY_TOOLS.has(toolName);
   }
 
-  // Database/table scopes don't directly affect tool access
-  // They are used for filtering data, not tools
   return false;
 }
 
@@ -58,98 +72,10 @@ export function scopesGrantToolAccess(
 }
 
 /**
- * Check if a scope grants access to a specific database
- */
-export function scopeGrantsDatabaseAccess(
-  scope: string,
-  databaseName: string,
-): boolean {
-  // Full, admin, write, read scopes grant access to all databases
-  if (
-    scope === "full" ||
-    scope === "admin" ||
-    scope === "write" ||
-    scope === "read"
-  ) {
-    return true;
-  }
-
-  // Check database-specific scope
-  const dbName = parseDatabaseScope(scope);
-  if (dbName && dbName === databaseName) {
-    return true;
-  }
-
-  // Check table scope (grants access to the database of the table)
-  const tableScope = parseTableScope(scope);
-  if (tableScope?.database === databaseName) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Check if any of the scopes grants access to a database
- */
-export function scopesGrantDatabaseAccess(
-  scopes: string[],
-  databaseName: string,
-): boolean {
-  return scopes.some((scope) => scopeGrantsDatabaseAccess(scope, databaseName));
-}
-
-/**
- * Check if a scope grants access to a specific table
- */
-export function scopeGrantsTableAccess(
-  scope: string,
-  databaseName: string,
-  tableName: string,
-): boolean {
-  // Full, admin, write, read scopes grant access to all tables
-  if (
-    scope === "full" ||
-    scope === "admin" ||
-    scope === "write" ||
-    scope === "read"
-  ) {
-    return true;
-  }
-
-  // Database scope grants access to all tables in that database
-  const dbName = parseDatabaseScope(scope);
-  if (dbName && dbName === databaseName) {
-    return true;
-  }
-
-  // Check table-specific scope
-  const tableScope = parseTableScope(scope);
-  if (tableScope?.database === databaseName && tableScope.table === tableName) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Check if any of the scopes grants access to a table
- */
-export function scopesGrantTableAccess(
-  scopes: string[],
-  databaseName: string,
-  tableName: string,
-): boolean {
-  return scopes.some((scope) =>
-    scopeGrantsTableAccess(scope, databaseName, tableName),
-  );
-}
-
-/**
  * Get the required minimum scope for a tool group
  */
 export function getRequiredScopeForGroup(group: ToolGroup): string {
-  return TOOL_GROUP_SCOPES[group] ?? SCOPES.READ;
+  return TOOL_GROUP_SCOPES[group] ?? SCOPES.ADMIN;
 }
 
 /**
@@ -162,7 +88,11 @@ export function getRequiredScopeForTool(toolName: string): string {
   if (WRITE_TOOLS.has(toolName)) {
     return "write";
   }
-  return "read";
+  if (READ_ONLY_TOOLS.has(toolName)) {
+    return "read";
+  }
+  // Fail-closed: unknown tools require admin scope
+  return "admin";
 }
 
 /**

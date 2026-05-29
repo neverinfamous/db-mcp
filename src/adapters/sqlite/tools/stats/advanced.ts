@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   validateColumnExists,
   isNumericType,
@@ -15,10 +16,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  validateWhereClause,
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ResourceNotFoundError,
@@ -53,6 +51,7 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Correlation"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = CorrelationSchema.parse(params);
 
@@ -95,12 +94,18 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
         let sql = `SELECT ${col1} as x, ${col2} as y
                   FROM ${table}
                   WHERE ${col1} IS NOT NULL AND ${col2} IS NOT NULL`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` AND ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` AND ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
         const pairs = (result.rows ?? []).map((r) => ({
           x: r["x"] as number,
           y: r["y"] as number,
@@ -138,7 +143,7 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
           n: pairs.length,
           correlation: roundedCorrelation,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -160,6 +165,7 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TopNSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         await validateColumnExists(adapter, input.table, input.column);
 
@@ -230,6 +236,13 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
             }
           }
 
+          if (included.length > 10) {
+            throw new ValidationError(
+              `Table '${input.table}' has too many columns (${included.length} remaining after text filtering). You must explicitly provide 'selectColumns' to prevent context window bloat.`,
+              "INVALID_INPUT",
+            );
+          }
+
           if (excluded.length > 0 && included.length > 0) {
             columnList = included
               .map((col) => sanitizeIdentifier(col))
@@ -241,13 +254,19 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${columnList} FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += ` ORDER BY ${column} ${order} LIMIT ${input.n}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const response: Record<string, unknown> = {
           success: true,
@@ -261,7 +280,7 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         return response;
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -285,6 +304,7 @@ export function createDistinctValuesTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DistinctValuesSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         await validateColumnExists(adapter, input.table, input.column);
 
@@ -292,13 +312,19 @@ export function createDistinctValuesTool(
         const column = sanitizeIdentifier(input.column);
 
         let sql = `SELECT DISTINCT ${column} as value FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
@@ -306,7 +332,7 @@ export function createDistinctValuesTool(
           distinctCount: result.rows?.length ?? 0,
           values: result.rows?.map((r) => r["value"]),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -330,6 +356,7 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SummaryStatsSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         const table = sanitizeIdentifier(input.table);
 
@@ -422,13 +449,19 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
                       MAX(${quotedCol}) as max
                   FROM ${table}`;
 
-          if (input.whereClause) {
-            validateWhereClause(input.whereClause);
-            sql += ` WHERE ${input.whereClause}`;
+          if (input.conditions || input.whereClause) {
+            const { sql: whereSql, params: whereParams } = buildWhereClause(
+              input.conditions,
+              input.whereClause,
+            );
+            if (whereSql !== "") {
+              sql += ` WHERE ${whereSql}`;
+              queryParams.push(...whereParams);
+            }
           }
 
           try {
-            const result = await adapter.executeReadQuery(sql);
+            const result = await adapter.executeReadQuery(sql, queryParams);
             const row = result.rows?.[0];
 
             const count = Number(row?.["count"] ?? 0);
@@ -468,7 +501,7 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
           table: input.table,
           summaries,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -490,6 +523,7 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FrequencySchema.parse(params);
+        const queryParams: unknown[] = [];
 
         await validateColumnExists(adapter, input.table, input.column);
 
@@ -498,13 +532,19 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT ${column} as value, COUNT(*) as frequency
                   FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += ` GROUP BY ${column} ORDER BY frequency DESC LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
@@ -512,7 +552,7 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
           distinctValues: result.rows?.length ?? 0,
           distribution: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

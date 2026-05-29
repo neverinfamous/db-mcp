@@ -5,6 +5,15 @@
 import { z } from "zod";
 import { ErrorFieldsMixin } from "./error-mixin.js";
 
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
+
 /**
  * Migration record entry (shared sub-schema)
  */
@@ -158,8 +167,14 @@ export const MigrationApplyValidationSchema = MigrationRecordValidationSchema;
 
 export const MigrationRollbackSchema = z.object({
   id: z.preprocess(
-    (val) => (typeof val === "number" ? val : undefined),
-    z.number().optional().describe("Migration ID to roll back"),
+    coerceNumber,
+    z
+      .union([z.number(), z.string()])
+      .refine((v) => v === undefined || typeof v === "number", {
+        message: "Expected number, received string",
+      })
+      .optional()
+      .describe("Migration ID to roll back"),
   ),
   version: z
     .string()
@@ -200,12 +215,24 @@ export const MigrationHistorySchema = z
       .describe("Filter by status"),
     sourceSystem: z.string().optional().describe("Filter by source system"),
     limit: z.preprocess(
-      (val) => (typeof val === "number" ? val : undefined),
-      z.number().optional().describe("Maximum records to return (default: 50)"),
+      coerceNumber,
+      z
+        .union([z.number(), z.string()])
+        .refine((v) => v === undefined || typeof v === "number", {
+          message: "Expected number, received string",
+        })
+        .optional()
+        .describe("Maximum records to return (default: 50)"),
     ),
     offset: z.preprocess(
-      (val) => (typeof val === "number" ? val : undefined),
-      z.number().optional().describe("Offset for pagination (default: 0)"),
+      coerceNumber,
+      z
+        .union([z.number(), z.string()])
+        .refine((v) => v === undefined || typeof v === "number", {
+          message: "Expected number, received string",
+        })
+        .optional()
+        .describe("Offset for pagination (default: 0)"),
     ),
     compact: z
       .boolean()

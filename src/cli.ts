@@ -7,6 +7,7 @@
 
 import { createServer, DEFAULT_CONFIG } from "./server/mcp-server.js";
 import { VERSION } from "./version.js";
+import { logger } from "./utils/logger/index.js";
 import type {
   McpServerConfig,
   DatabaseConfig,
@@ -33,7 +34,7 @@ function parseArgs(): Partial<McpServerConfig> {
 
   // Track audit flags
   let auditLogPath: string | undefined;
-  let auditRedact = false;
+  let auditRedact = true;
   let auditReads = false;
   let auditBackup = false;
   let auditBackupData = false;
@@ -61,11 +62,8 @@ function parseArgs(): Partial<McpServerConfig> {
       config.statelessHttp = true;
     } else if (arg === "--enable-hsts") {
       config.enableHSTS = true;
-    } else if (arg === "--auth-token") {
-      const tokenValue = args[++i];
-      if (tokenValue) {
-        config.authToken = tokenValue;
-      }
+    } else if (arg === "--no-auth-enforcement") {
+      config.noAuthEnforcement = true;
     } else if (arg === "--oauth-enabled" || arg === "-o") {
       if (!config.oauth) {
         config.oauth = { enabled: true };
@@ -152,8 +150,8 @@ function parseArgs(): Partial<McpServerConfig> {
       if (logPath) {
         auditLogPath = logPath;
       }
-    } else if (arg === "--audit-redact") {
-      auditRedact = true;
+    } else if (arg === "--audit-no-redact") {
+      auditRedact = false;
     } else if (arg === "--audit-reads") {
       auditReads = true;
     } else if (arg === "--audit-backup") {
@@ -206,19 +204,19 @@ Usage: db-mcp [options]
 Transport Options:
   --transport, -t <type>    Transport type: stdio (default), http, sse
   --port, -p <port>         HTTP port (default: 3000)
-  --server-host <host>      Host/IP to bind to (default: 0.0.0.0)
-                            Use 127.0.0.1 to restrict to local connections
+  --server-host <host>      Host/IP to bind to (default: 127.0.0.1)
+                            Use 127.0.0.1 for local, 0.0.0.0 to allow external connections
   --stateless               Use stateless HTTP mode (no session management, no SSE)
                             Ideal for serverless deployments (Lambda, Workers)
   --enable-hsts             Enable HSTS header (use when behind HTTPS)
 
 Authentication Options:
-  --auth-token <token>      Simple bearer token for HTTP authentication
+  --no-auth-enforcement     Explicitly bypass auth enforcement for HTTP
   --oauth-enabled, -o       Enable OAuth 2.1 authentication
   --oauth-issuer <url>      Authorization server URL (issuer)
   --oauth-audience <aud>    Expected token audience
   --oauth-jwks-uri <url>    JWKS URI (auto-discovered from issuer if not set)
-  --oauth-clock-tolerance <seconds>  Clock tolerance in seconds (default: 60)
+  --oauth-clock-tolerance <seconds>  Clock tolerance in seconds (default: 30)
 
 Database Options:
   --sqlite <path>           Add SQLite database (WASM/sql.js)
@@ -230,7 +228,7 @@ Extension Options (Native only):
 
 Audit Options:
   --audit-log <path>        Enable audit logging (JSONL file path, or "stderr")
-  --audit-redact            Redact tool arguments from audit entries
+  --audit-no-redact          Include tool arguments in audit entries (default: redacted)
   --audit-reads             Also log read-scoped tool invocations
   --audit-backup            Enable pre-mutation DDL snapshots
   --audit-backup-data       Include sample data rows in snapshots
@@ -245,8 +243,8 @@ Server Options:
                               Legacy: -vector,-geo (exclusion from all)
 
 Environment Variables:
-  MCP_HOST                  Host/IP to bind to (default: 0.0.0.0)
-  MCP_AUTH_TOKEN             Simple bearer token (same as --auth-token)
+  MCP_HOST                  Host/IP to bind to (default: 127.0.0.1)
+  MCP_AUTH_TOKEN             Simple bearer token
   OAUTH_ENABLED              Enable OAuth 2.1 (same as --oauth-enabled)
   OAUTH_ISSUER               Authorization server URL
   OAUTH_AUDIENCE             Expected token audience
@@ -258,7 +256,7 @@ Environment Variables:
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
   SPATIALITE_PATH           Custom path to SpatiaLite extension binary
   AUDIT_LOG                 Audit log file path (or "stderr")
-  AUDIT_REDACT              Redact arguments (true/false)
+  AUDIT_REDACT              Redact arguments (default: true, set false to include args)
   AUDIT_READS               Log reads (true/false)
   AUDIT_BACKUP              Enable backups (true/false)
   AUDIT_BACKUP_DATA         Include data (true/false)
@@ -289,7 +287,19 @@ function loadEnvConfig(): Partial<McpServerConfig> {
   // Simple bearer token from environment
   const authToken = process.env["MCP_AUTH_TOKEN"];
   if (authToken) {
+    if (authToken.length < 32) {
+      logger.warning(
+        "MCP_AUTH_TOKEN is too short (< 32 chars). Use a cryptographically random token.",
+      );
+    }
     config.authToken = authToken;
+  }
+
+  if (process.env["NO_AUTH_ENFORCEMENT"] === "true") {
+    logger.warning(
+      "Auth enforcement explicitly disabled via NO_AUTH_ENFORCEMENT. Ensure this is not running in production.",
+    );
+    config.noAuthEnforcement = true;
   }
 
   // OAuth from environment
@@ -323,7 +333,7 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     config.audit = {
       enabled: true,
       logPath: auditLog,
-      redact: process.env["AUDIT_REDACT"] === "true",
+      redact: process.env["AUDIT_REDACT"] !== "false",
       auditReads: process.env["AUDIT_READS"] === "true",
       maxSizeBytes: DEFAULT_AUDIT_LOG_MAX_SIZE_BYTES,
       ...(process.env["AUDIT_BACKUP"] === "true" && {
@@ -371,6 +381,21 @@ async function main(): Promise<void> {
       ],
     } as McpServerConfig;
 
+    // Security Check: Prevent unauthenticated production access
+    if (
+      process.env["NODE_ENV"] === "production" &&
+      config.transport === "http" &&
+      !config.oauth?.enabled &&
+      !config.authToken &&
+      !config.noAuthEnforcement
+    ) {
+      logger.error(
+        "FATAL SECURITY ERROR: HTTP transport in production requires authentication (--oauth-enabled or --auth-token). If you intend to run without authentication, you must explicitly pass --no-auth-enforcement.",
+        { module: "SERVER" },
+      );
+      process.exit(1);
+    }
+
     // Create server
     const server = createServer(config);
 
@@ -407,18 +432,25 @@ async function main(): Promise<void> {
     }
 
     if (config.databases.length === 0) {
-      console.error(
+      logger.warning(
         "Warning: No databases configured. Use --sqlite or --sqlite-native, or set SQLITE_DATABASE",
       );
     }
 
     // Start server
     await server.start();
-  } catch (error) {
-    console.error("Fatal error:", error);
+  } catch (error: unknown) {
+    logger.error("Fatal error", {
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
     process.exit(1);
   }
 }
 
 // Run
-main().catch(console.error);
+main().catch((error: unknown) => {
+  logger.error("Unhandled fatal error", {
+    error: error instanceof Error ? error : new Error(String(error)),
+  });
+  process.exit(1);
+});

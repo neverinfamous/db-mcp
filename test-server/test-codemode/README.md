@@ -1,4 +1,4 @@
-# db-mcp Code Mode Testing Suite
+# db-mcp Code Mode Testing: [README]
 
 **Directory Purpose**: This folder contains 12 self-contained, modular test prompts covering every tool group in `db-mcp`. These prompts are strictly designed for **Code Mode (`sqlite_execute_code`) validation only**.
 
@@ -62,6 +62,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.backup(...)`           | `{success: false, error: "...WASM mode"}`      |
 | `sqlite.admin.restore(...)`          | `{success: false, error: "...WASM mode"}`      |
 | `sqlite.admin.verifyBackup(...)`     | `{success: false, error: "...WASM mode"}`      |
+| `sqlite.admin.vacuumInto(...)`       | `{success: false, error: "...WASM mode"}`      |
 | `sqlite.admin.createCsvTable(...)`   | `{success: false}` — CSV extension unavailable |
 | `sqlite.admin.analyzeCsvSchema(...)` | `{success: false}` — CSV extension unavailable |
 | `sqlite.admin.createRtreeTable(...)` | `{success: false}` — R-Tree module unavailable |
@@ -74,7 +75,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.pragmaCompileOptions()`                           | Includes `ENABLE_FTS5`                    | Shows `ENABLE_FTS3` instead                                           |
 | `sqlite.admin.pragmaCompileOptions({filter: "FTS"})`            | Matches FTS5                              | Matches FTS3                                                          |
 | `sqlite.core.listTables()` / `sqlite.admin.listVirtualTables()` | `test_articles_fts` present and queryable | `test_articles_fts` may appear in sqlite_master but FTS5 queries fail |
-| `sqlite.help()`                                                 | `totalMethods` reflects 151 tools         | `totalMethods` reflects 125 tools                                     |
+| `sqlite.help()`                                                 | `totalMethods` reflects 167 tools         | `totalMethods` reflects 140 tools                                     |
 | Phase 2.1 (sandbox prompt) top-level help                       | 10 groups listed                          | `transactions` group shows 0 methods                                  |
 
 #### WASM-Specific Degradation Prompt
@@ -83,22 +84,22 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 
 ## File Inventory
 
-| File                                | Group         | Tools                                                                    |
+| File                                | Group         | Group Tools                                                              |
 | ----------------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `test-codemode-sandbox.md`          | sandbox       | Sandbox basics, API discoverability, security, readonly, state isolation |
-| `test-codemode-core.md`             | core          | 14                                                                       |
-| `test-codemode-json.md`             | json          | 24                                                                       |
+| `test-codemode-core.md`             | core          | 21                                                                       |
+| `test-codemode-json.md`             | json          | 25                                                                       |
 | `test-codemode-text.md`             | text          | 19N/14W                                                                  |
-| `test-codemode-stats.md`            | stats         | 22N/16W                                                                  |
+| `test-codemode-stats.md`            | stats         | 23N/17W                                                                  |
 | `test-codemode-vector.md`           | vector        | 11                                                                       |
-| `test-codemode-admin.md`            | admin         | 26                                                                       |
+| `test-codemode-admin.md`            | admin         | 32N/31W                                                                  |
 | `test-codemode-transactions.md`     | transactions  | 8 `[NATIVE ONLY]`                                                        |
 | `test-codemode-geo.md`              | geo           | 11N/4W                                                                   |
-| `test-codemode-introspection.md`    | introspection | 9                                                                        |
+| `test-codemode-introspection.md`    | introspection | 10                                                                       |
 | `test-codemode-migration.md`        | migration     | 6                                                                        |
 | `test-codemode-wasm-degradation.md` | cross-group   | WASM-only graceful degradation                                           |
 
-**Total**: 151 Native / 125 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt.
+**Group tools total**: 167 Native / 140 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt. Audit tools (5) are MCP-only and not covered here. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Recommended Execution Order
 
@@ -119,3 +120,29 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 8. `geo`
 9. `introspection`
 10. `migration`
+
+---
+
+## Post-Test Procedures
+
+### Reporting Rules
+
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

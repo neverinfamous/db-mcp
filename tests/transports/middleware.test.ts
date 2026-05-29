@@ -5,74 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  getClientIp,
-  matchesCorsOrigin,
-} from "../../src/transports/http/middleware.js";
-
-// =============================================================================
-// getClientIp
-// =============================================================================
-
-describe("getClientIp", () => {
-  const makeReq = (
-    headers: Record<string, string | undefined> = {},
-    ip?: string,
-    remoteAddress?: string,
-  ) =>
-    ({
-      headers,
-      ip,
-      socket: { remoteAddress },
-    }) as unknown;
-
-  it("should return socket remoteAddress when trustProxy is false", () => {
-    const req = makeReq(
-      { "x-forwarded-for": "1.2.3.4" },
-      undefined,
-      "127.0.0.1",
-    );
-    expect(getClientIp(req, false)).toBe("127.0.0.1");
-  });
-
-  it("should use X-Forwarded-For leftmost IP when trustProxy is true", () => {
-    const req = makeReq(
-      { "x-forwarded-for": "1.2.3.4, 10.0.0.1, 172.16.0.1" },
-      undefined,
-      "127.0.0.1",
-    );
-    expect(getClientIp(req, true)).toBe("1.2.3.4");
-  });
-
-  it("should trim whitespace from X-Forwarded-For IP", () => {
-    const req = makeReq(
-      { "x-forwarded-for": "  1.2.3.4  , 10.0.0.1" },
-      undefined,
-      "127.0.0.1",
-    );
-    expect(getClientIp(req, true)).toBe("1.2.3.4");
-  });
-
-  it("should fall back to req.ip when X-Forwarded-For is absent and trustProxy is true", () => {
-    const req = makeReq({}, "192.168.1.1", "127.0.0.1");
-    expect(getClientIp(req, true)).toBe("192.168.1.1");
-  });
-
-  it("should fall back to req.ip when trustProxy is false", () => {
-    const req = makeReq({}, "192.168.1.1", "127.0.0.1");
-    expect(getClientIp(req, false)).toBe("192.168.1.1");
-  });
-
-  it("should fall back to remoteAddress when req.ip is undefined", () => {
-    const req = makeReq({}, undefined, "10.0.0.5");
-    expect(getClientIp(req, false)).toBe("10.0.0.5");
-  });
-
-  it("should return 'unknown' when all sources are undefined", () => {
-    const req = makeReq({}, undefined, undefined);
-    expect(getClientIp(req, false)).toBe("unknown");
-  });
-});
+import { matchesCorsOrigin } from "../../src/transports/http/middleware.js";
 
 // =============================================================================
 // matchesCorsOrigin

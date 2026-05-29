@@ -19,9 +19,17 @@ import {
   getBaseURL,
   callToolAndParse,
   expectSuccess,
+  hasIsolatedVm,
 } from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
+
+test.beforeEach(() => {
+  test.skip(
+    !hasIsolatedVm(),
+    "isolated-vm is not installed on this system, skipping Code Mode tests",
+  );
+});
 
 // =============================================================================
 // Workflow 1: Core → JSON → Stats (Data Pipeline)

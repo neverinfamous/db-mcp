@@ -10,6 +10,8 @@ import {
   createIntegrityCheckTool,
   createOptimizeTool,
   createRestoreTool,
+  createVacuumIntoTool,
+  createDumpTool,
 } from "./backup/index.js";
 import { createVerifyBackupTool, createIndexStatsTool } from "./verify.js";
 import {
@@ -19,7 +21,11 @@ import {
   createPragmaSettingsTool,
   createPragmaTableInfoTool,
   createAppendInsightTool,
+  createAttachDatabaseTool,
+  createDetachDatabaseTool,
 } from "./pragma.js";
+import { createReindexTool } from "./reindex.js";
+import { createWalTool } from "./wal.js";
 
 /**
  * Get all admin tools
@@ -39,5 +45,11 @@ export function getAdminTools(adapter: SqliteAdapter): ToolDefinition[] {
     createPragmaSettingsTool(adapter),
     createPragmaTableInfoTool(adapter),
     createAppendInsightTool(),
+    createAttachDatabaseTool(adapter),
+    createDetachDatabaseTool(adapter),
+    createVacuumIntoTool(adapter),
+    createDumpTool(adapter),
+    createReindexTool(adapter),
+    createWalTool(adapter),
   ];
 }

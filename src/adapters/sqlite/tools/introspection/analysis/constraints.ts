@@ -40,6 +40,7 @@ export function createConstraintAnalysisTool(
     annotations: readOnly("Constraint Analysis"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
+        const queryParams: unknown[] = [];
         const input = ConstraintAnalysisSchema.parse(params);
         const checksToRun = input.checks ?? [
           "missing_pk",
@@ -49,7 +50,7 @@ export function createConstraintAnalysisTool(
         ];
         // Get tables to analyze
         let tableQuery = `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%'`;
-        const queryParams: unknown[] = [];
+
         if (input.table) {
           tableQuery += ` AND name = ?`;
           queryParams.push(input.table);
@@ -229,7 +230,7 @@ export function createConstraintAnalysisTool(
             bySeverity,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

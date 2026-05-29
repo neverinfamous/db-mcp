@@ -40,4 +40,4 @@ sqlite_migration_status();
 ## ⚠️ Gotchas
 
 - Rollback requires `rollbackSql` to have been provided when the migration was recorded/applied
-- Migration group is **opt-in** — not included in any shortcut except `dev-schema` and `full`
+- Migration group is **opt-in** — not included by default. Enable via `--tool-filter` flag: use `dev-schema` (core+introspection+migration+codemode) or `full` (all groups)

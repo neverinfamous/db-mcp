@@ -24,9 +24,8 @@ export function createMigrationInitTool(
     requiredScopes: ["write"],
     annotations: idempotent("Migration Init"),
     handler: async (params: unknown, _context: RequestContext) => {
-      MigrationInitSchema.parse(params);
-
       try {
+        MigrationInitSchema.parse(params);
         const exists = await isMigrationTableInitialized(adapter);
 
         if (!exists) {
@@ -66,7 +65,7 @@ export function createMigrationInitTool(
           tableName: MIGRATIONS_TABLE,
           existingRecords: count,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

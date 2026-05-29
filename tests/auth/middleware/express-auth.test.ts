@@ -143,11 +143,11 @@ describe("createAuthMiddleware", () => {
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.setHeader).toHaveBeenCalledWith(
       "WWW-Authenticate",
-      'Bearer error="invalid_token", error_description="Token expired"',
+      'Bearer error="invalid_token", error_description="Token validation failed"',
     );
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: "invalid_token",
-      error_description: "Token expired",
+      error_description: "Token validation failed",
     });
     expect(mockNext).not.toHaveBeenCalled();
   });

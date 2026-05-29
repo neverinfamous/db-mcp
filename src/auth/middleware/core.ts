@@ -13,10 +13,13 @@ export interface AuthenticatedContext {
   authenticated: boolean;
 
   /** Token claims (if authenticated) */
-  claims?: TokenClaims;
+  claims?: TokenClaims | undefined;
 
   /** Token scopes (convenience) */
   scopes: string[];
+
+  /** Client IP address for rate limiting fallback */
+  clientIp?: string | undefined;
 }
 
 export async function createAuthenticatedContext(
@@ -106,13 +109,11 @@ export function formatOAuthError(error: unknown): {
   }
 
   if (error instanceof InsufficientScopeError) {
-    const required = error.details?.["requiredScope"] as string[] | undefined;
     return {
       status: 403,
       body: {
         error: "insufficient_scope",
         error_description: error.message,
-        scope: required ? required.join(" ") : undefined,
       },
     };
   }

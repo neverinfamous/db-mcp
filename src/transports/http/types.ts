@@ -18,7 +18,6 @@ import type { Express } from "express";
 // Rate Limiting
 // =============================================================================
 
-
 export const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
 export const DEFAULT_RATE_LIMIT_MAX = 100;
 export const DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MB
@@ -56,8 +55,8 @@ export interface HttpTransportConfig {
    */
   stateless?: boolean;
 
-  /** Simple bearer token for HTTP authentication (non-OAuth) */
-  authToken?: string;
+  /** Explicitly bypass auth requirement */
+  noAuthEnforcement?: boolean;
 
   /** OAuth 2.1 configuration */
   oauth: {
@@ -102,9 +101,9 @@ export interface HttpTransportConfig {
   };
 
   /**
-   * Allowed CORS origins. Defaults to ["*"] (all origins).
+   * Allowed CORS origins. Defaults to [] (deny-all).
    * Supports wildcard subdomains (e.g., "*.example.com" matches "app.example.com").
-   * Set to specific origins for production deployments.
+   * Must be explicitly configured for production deployments.
    */
   corsOrigins?: string[];
 
@@ -112,11 +111,12 @@ export interface HttpTransportConfig {
   maxBodyBytes?: number;
 
   /**
-   * Trust proxy headers for client IP extraction (default: false).
-   * When enabled, uses the leftmost IP from X-Forwarded-For for rate limiting.
-   * Only enable when running behind a trusted reverse proxy.
+   * Trust proxy headers for client IP extraction.
+   * Provide a list of trusted reverse proxy IPs or CIDR blocks.
+   * If running behind a proxy, this MUST be explicitly configured to prevent
+   * IP spoofing via X-Forwarded-For headers.
    */
-  trustProxy?: boolean;
+  trustedProxyIps?: string | string[];
 
   /**
    * Enable HTTP Strict Transport Security header (default: false).
@@ -132,6 +132,9 @@ export interface HttpTransportConfig {
 
   /** Resource URI (defaults to http://localhost:{port}) */
   resourceUri?: string;
+
+  /** Maximum number of concurrent stateful sessions (default: 1000) */
+  maxSessions?: number;
 }
 
 // =============================================================================
@@ -156,6 +159,11 @@ export interface HttpTransportState {
   // Single transport for stateless mode
   statelessTransport: StreamableHTTPServerTransport | null;
 
+  // Session ownership — maps sessionId → authenticated subject (req.auth.sub).
+  // Used to verify that only the client that created a session can use it (H-2).
+  // When auth is disabled, owner is undefined and binding is not enforced.
+  sessionOwners: Map<string, string | undefined>;
+
   // OAuth components
   resourceServer: OAuthResourceServer | null;
   authServerDiscovery: AuthorizationServerDiscovery | null;
@@ -163,5 +171,4 @@ export interface HttpTransportState {
 
   // Reference to the MCP server for stateful connections
   mcpServer: McpServer | null;
-
 }

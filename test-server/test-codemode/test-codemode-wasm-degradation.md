@@ -2,57 +2,127 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
-> We're currently testing WASM mode.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
-> [!CAUTION]
-> **WASM ONLY** — This prompt must be run against a WASM backend (`--sqlite` flag). Running it against Native will produce false results since the tools being tested are expected to _fail_ in WASM but _succeed_ in Native.
+## WASM Mode
 
-**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
 
-**Step 2:** Validate that WASM-unavailable features degrade gracefully with structured errors, not crashes or raw MCP exceptions.
+## Setup & Pre-requisites
 
-**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-## Purpose
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the checklist below using live MCP server tool calls directly — not scripts/terminal.
 
-This prompt validates the **graceful degradation contract**: tools that are registered in WASM mode but rely on unavailable Native extensions must return structured `{success: false, error: "..."}` responses. It also validates that the Code Mode API bridge correctly reflects the reduced WASM tool surface.
+**Step 3:** The agent should update `C:\Users\chris\Desktop\db-mcp\UNRELEASED.md`, update `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` if appropriate, and create a `memory-journal-mcp` entry summarizing the changes/fixes.
+
+> [!WARNING]
+> **Stale Build Issues:** The MCP server runs from the compiled `dist/` directory, NOT `src/`. If you encounter inexplicable behavior (e.g., tools executing old logic or throwing validation errors for things already fixed in the source code), the server might be running a stale build. Check if the compiled code in `dist/` matches the source code in `src/`. If out of sync, stop and instruct the user to run `npm run build` and restart the server before continuing testing.
+
+> **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
+
+### Test Schema Reference
+
+> See `code-map.md` in the `test-server/` directory for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 
-- ❌ Fail: Tool crashes, returns raw MCP error, or doesn't return `{success: false}`
-- ⚠️ Issue: Error message is unclear or missing `wasmLimitation` hint
-- ✅ Pass: Returns `{success: false, error: "..."}` with helpful message
+- ❌ **Fail**: Tool errors or produces incorrect results (include error message)
+- ⚠️ **Issue**: Unexpected behavior or improvement opportunity
+- 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
-## Test Database Schema
+### Error Message Quality Rating
 
-Same seed database as all other prompts. Key difference: `test_articles_fts` (FTS5 virtual table) exists in `sqlite_master` because the seed was created with native SQLite, but FTS5 queries will fail in WASM.
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
-## Testing Requirements
+## Testing Requirements & Error Standards
+
+> [!NOTE]
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** Every tool in this prompt is expected to return a structured error — not crash.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+>
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
+>
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
-1. **Batched scripting**: Bundle checks into `sqlite_execute_code` calls with `failures` array.
-2. **Structured error validation**: Every response must have `success: false` and a human-readable `error` string.
-3. **Token tracking**: Monitor `metrics.tokenEstimate`.
-4. **Coverage Matrix**: `| Category | Test | Result | Error Message Quality |`
-5. **Code Over Docs**: Fix the handler code if a tool returns a raw MCP error instead of a structured error.
+1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
+2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
+   - (a) A domain error (e.g., non-existent table).
+   - (b) An **empty parameters test** (call the tool with `{}`).
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
+   > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
+5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
+   > **CRITICAL**: Architectural consistency is paramount. Do not introduce undocumented architectural deviations. If you implement a structural or architectural improvement in one tool, you must apply it symmetrically to other applicable tools in the group or project.
+6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+7. **Token Tracking**: Monitor `metrics.tokenEstimate` to detect payload issues.
+8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
-## Structured Error Response Pattern
+### Structured Error Response Pattern
+
+All tools should return errors as structured objects instead of throwing. The expected pattern:
 
 ```json
 { "success": false, "error": "Human-readable error message" }
 ```
 
-| Type                 | What you see                                  | Verdict |
-| -------------------- | --------------------------------------------- | ------- |
-| **Handler error** ✅ | JSON object with `success` and `error` fields | Correct |
-| **MCP error** ❌     | Raw text, `isError: true`, no `success` field | Bug     |
+| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+
+## Naming & Cleanup
+
+- **Temporary tables**: `temp_*` (or `stress_*`) prefix
+- **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
+- Drop at the end of the script. If DROP fails due to lock, note and move on.
 
 ---
 
-## Phase 1: API Surface Verification (3 tests)
+## Group Focus: wasm-degradation
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+>
+> **Note**: This is a **meta-test suite** — it validates WASM graceful degradation behavior across multiple tool groups, not a specific tool group. The coverage matrix requirement does not apply; instead, each phase targets a specific WASM degradation scenario.
+
+### Code Mode Methods
+
+- `sqlite.transactions.help`
+- `sqlite.stats.help`
+- `sqlite.geo.help`
+- `sqlite.text.help`
+- `sqlite.admin.backup`
+- `sqlite.admin.restore`
+- `sqlite.admin.verifyBackup`
+- `sqlite.admin.dump`
+- `sqlite.admin.createCsvTable`
+- `sqlite.admin.analyzeCsvSchema`
+- `sqlite.admin.createRtreeTable`
+- `sqlite.core.readQuery`
+- `sqlite.admin.dbstat`
+- `sqlite.admin.pragmaCompileOptions`
+- `sqlite.core.count`
+
+## Phase 1: API Surface Verification (5 tests)
 
 > Verify the Code Mode bridge correctly reflects the reduced WASM tool surface.
 
@@ -63,20 +133,18 @@ const help = await sqlite.help();
 return { groups: help.groups, totalMethods: help.totalMethods };
 ```
 
-Expected: `totalMethods` should be significantly less than 151 (the Native count). The exact WASM count depends on adapter registration but should be approximately 125.
+Expected: `totalMethods` should be significantly less than 167 (the Native count). The exact WASM count depends on adapter registration but should be approximately 140.
 
-### 1.2 — Transactions group is empty
+### 1.2 — Transactions group is completely omitted
 
 ```javascript
-const txHelp = await sqlite.transactions.help();
+const txExists = sqlite.transactions !== undefined;
 return {
-  group: txHelp.group,
-  methodCount: txHelp.methods.length,
-  methods: txHelp.methods,
+  transactionsExists: txExists,
 };
 ```
 
-Expected: `methodCount: 0` (or only `help` itself). No transaction methods should be available.
+Expected: `transactionsExists: false`. The entire `transactions` group should be omitted from the `sqlite` object in Code Mode under WASM.
 
 ### 1.3 — Window functions absent from stats
 
@@ -114,11 +182,9 @@ return { totalTextMethods: textHelp.methods.length, ftsMethods };
 
 Expected: `ftsMethods` is empty. The 5 FTS5 tools should not appear.
 
----
+## Phase 2: Backup/Restore/Verify/Dump — Graceful Errors (batched)
 
-## Phase 2: Backup/Restore/Verify — Graceful Errors (batched)
-
-> These 3 tools are registered in WASM but return structured errors because file system access is unavailable.
+> These 4 tools are registered in WASM but return structured errors because file system access is unavailable.
 
 ```javascript
 const failures = [];
@@ -160,10 +226,18 @@ if (!verify.error || !verify.error.toLowerCase().includes("wasm")) {
   );
 }
 
+// 2.4 — Dump
+const dump = await sqlite.admin.dump({
+  outputPath:
+    "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-wasm-dump.sql",
+});
+if (dump.success !== false) failures.push("dump: expected {success: false}");
+if (!dump.error || !dump.error.toLowerCase().includes("wasm")) {
+  failures.push("dump: error message should mention WASM — got: " + dump.error);
+}
+
 return { failures, success: failures.length === 0 };
 ```
-
----
 
 ## Phase 3: CSV Tools — Graceful Errors (batched)
 
@@ -190,8 +264,6 @@ if (csvAnalyze.success !== false)
 return { failures, success: failures.length === 0 };
 ```
 
----
-
 ## Phase 4: R-Tree — Graceful Error
 
 > R-Tree spatial indexing requires a module not available in WASM's sql.js.
@@ -208,8 +280,6 @@ if (rtree.success !== false)
 
 return { failures, success: failures.length === 0 };
 ```
-
----
 
 ## Phase 5: FTS5 — Phantom Table Behavior (batched)
 
@@ -245,8 +315,6 @@ if (ftsQuery.success === false) {
 return { failures, success: failures.length === 0 };
 ```
 
----
-
 ## Phase 6: dbstat WASM Fallback
 
 > In WASM, `dbstat` returns counts-only (JS fallback) rather than per-table storage breakdown.
@@ -266,8 +334,6 @@ return {
   dbstatResult: dbstat,
 };
 ```
-
----
 
 ## Phase 7: PRAGMA Compile Options — FTS3 vs FTS5
 
@@ -295,39 +361,9 @@ return {
 };
 ```
 
----
+## Phase 8: Multi-Step WASM Workflow
 
-## Phase 8: Zod Validation — WASM-Degraded Tools (batched)
-
-> Even though these tools degrade gracefully for domain reasons, their Zod validation must also work. Passing `{}` should return a structured error, not a raw MCP exception.
-
-```javascript
-const failures = [];
-
-const zodTests = [
-  { name: "backup", fn: () => sqlite.admin.backup({}) },
-  { name: "restore", fn: () => sqlite.admin.restore({}) },
-  { name: "verifyBackup", fn: () => sqlite.admin.verifyBackup({}) },
-  { name: "createCsvTable", fn: () => sqlite.admin.createCsvTable({}) },
-  { name: "analyzeCsvSchema", fn: () => sqlite.admin.analyzeCsvSchema({}) },
-  { name: "createRtreeTable", fn: () => sqlite.admin.createRtreeTable({}) },
-];
-
-for (const test of zodTests) {
-  const result = await test.fn();
-  if (result.success !== false) {
-    failures.push(`${test.name}({}): expected {success: false}`);
-  }
-}
-
-return { failures, success: failures.length === 0 };
-```
-
----
-
-## Phase 9: Multi-Step WASM Workflow
-
-### 9.1 — WASM capability audit pipeline
+### 8.1 — WASM capability audit pipeline
 
 ```javascript
 const failures = [];
@@ -344,10 +380,10 @@ for (const g of groups) {
   groupSizes[g] = gHelp.methods.length;
 }
 
-// Step 3: Verify transactions is empty
-if (groupSizes.transactions > 0) {
+// Step 3: Verify transactions is completely omitted
+if (groupSizes.transactions !== undefined) {
   failures.push(
-    `transactions should have 0 methods, got ${groupSizes.transactions}`,
+    `transactions should be completely omitted, got ${groupSizes.transactions} methods`,
   );
 }
 
@@ -381,14 +417,59 @@ return {
 };
 ```
 
+## Phase 9: Zod Validation Sweep
+
+> Even though these tools degrade gracefully for domain reasons, their Zod validation must also work. Passing `{}` should return a structured error, not a raw MCP exception.
+
+```javascript
+const failures = [];
+
+const zodTests = [
+  { name: "backup", fn: () => sqlite.admin.backup({}) },
+  { name: "restore", fn: () => sqlite.admin.restore({}) },
+  { name: "verifyBackup", fn: () => sqlite.admin.verifyBackup({}) },
+  { name: "dump", fn: () => sqlite.admin.dump({}) },
+  { name: "createCsvTable", fn: () => sqlite.admin.createCsvTable({}) },
+  { name: "analyzeCsvSchema", fn: () => sqlite.admin.analyzeCsvSchema({}) },
+  { name: "createRtreeTable", fn: () => sqlite.admin.createRtreeTable({}) },
+];
+
+for (const test of zodTests) {
+  const result = await test.fn();
+  if (result.success !== false) {
+    failures.push(`${test.name}({}): expected {success: false}`);
+  }
+}
+
+return { failures, success: failures.length === 0 };
+```
+
+---
+
+> **Note**: No Wrong-Type Numeric Coercion phase is included for this meta-test suite — it validates WASM graceful degradation behavior, not a specific tool group with optional numeric parameters.
+
 ---
 
 ## Post-Test Procedures
 
-1. **No cleanup needed**: This prompt does not create any tables (all write operations are expected to fail)
-2. **Triage findings**: Create implementation plan if any tool returns raw MCP error instead of structured error
-3. **Scope of fixes**: Handler code only — fix WASM error handling paths
-4. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-5. **Commit**: Stage and commit — do NOT push
-6. **Token audit**: Report most expensive block
-7. **Final summary**: After testing/re-testing
+### Reporting Rules
+
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

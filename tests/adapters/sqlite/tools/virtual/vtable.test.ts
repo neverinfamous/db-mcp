@@ -13,6 +13,11 @@ vi.mock("../../../../../src/adapters/sqlite/tools/virtual/analysis.js", () => ({
   isCsvModuleAvailable: vi.fn(),
 }));
 
+// Mock fs to prevent realpathSync from failing on fake test paths
+vi.mock("node:fs", () => ({
+  realpathSync: vi.fn((p) => p),
+}));
+
 import { createListVirtualTablesTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/list.js";
 import { createVirtualTableInfoTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/info.js";
 import { createDropVirtualTableTool } from "../../../../../src/adapters/sqlite/tools/virtual/vtable/drop.js";
@@ -29,6 +34,7 @@ function createMockAdapter() {
   return {
     executeReadQuery: vi.fn(),
     executeWriteQuery: vi.fn(),
+    getConfiguredPath: vi.fn().mockReturnValue("/absolute/test.db"),
   } as any;
 }
 
@@ -79,7 +85,8 @@ describe("createListVirtualTablesTool", () => {
     const result = (await tool.handler({ pattern: "fts_%" }, ctx)) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("fts_%"),
+      expect.stringContaining("AND name LIKE ?"),
+      ["fts_%"],
     );
   });
 

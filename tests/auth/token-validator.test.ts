@@ -149,13 +149,14 @@ describe("TokenValidator", () => {
       expect(result.errorCode).toBe(ERROR_CODES.AUTH.TOKEN_INVALID.full);
     });
 
-    it("should handle generic errors", async () => {
+    it("should handle generic errors with generic message (no internal leak)", async () => {
       mockJwtVerify.mockRejectedValueOnce(new Error("unexpected error"));
 
       const result = await validator.validate("bad.jwt.token");
 
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("unexpected error");
+      // M-4/L-5: generic message returned to prevent leaking internal details
+      expect(result.error).toBe("Token validation failed");
       expect(result.errorCode).toBe(ERROR_CODES.AUTH.TOKEN_INVALID.full);
     });
 

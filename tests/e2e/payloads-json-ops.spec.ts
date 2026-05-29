@@ -433,8 +433,8 @@ test.describe("Payload Contracts: Text Replace", () => {
       const payload = await callToolAndParse(client, "sqlite_text_replace", {
         table: "test_products",
         column: "category",
-        searchPattern: "zzz_nonexistent",
-        replaceWith: "zzz_replaced",
+        search: "zzz_nonexistent",
+        replacement: "zzz_replaced",
         whereClause: "1=1",
       });
 

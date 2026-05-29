@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   VALID_PHONETIC_ALGORITHMS,
   VALID_SEARCH_TECHNIQUES,
@@ -15,10 +16,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  validateWhereClause,
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -47,15 +45,17 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Fuzzy Match"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = FuzzyMatchSchema.parse(params);
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
         await validateColumnExists(adapter, input.table, input.column);
 
         const sql = `SELECT ${column} FROM ${table} WHERE ${column} IS NOT NULL LIMIT 100`;
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const matches: {
           value: string;
@@ -112,7 +112,7 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
           tokenized: input.tokenize,
           matches: limited,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -137,6 +137,7 @@ export function createPhoneticMatchTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = PhoneticMatchSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -166,7 +167,7 @@ export function createPhoneticMatchTool(
         // support per-word matching.
         const sql = `SELECT * FROM ${table} WHERE ${column} IS NOT NULL LIMIT 100`;
         if (input.algorithm === "soundex") {
-          const result = await adapter.executeReadQuery(sql);
+          const result = await adapter.executeReadQuery(sql, queryParams);
 
           const matches: {
             value: string;
@@ -207,7 +208,7 @@ export function createPhoneticMatchTool(
           };
         } else {
           // Metaphone in JS — split by words like soundex path
-          const result = await adapter.executeReadQuery(sql);
+          const result = await adapter.executeReadQuery(sql, queryParams);
 
           const matches: {
             value: string;
@@ -247,7 +248,7 @@ export function createPhoneticMatchTool(
             matches: matches.slice(0, input.limit),
           };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -272,6 +273,7 @@ export function createAdvancedSearchTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = AdvancedSearchSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         for (const technique of input.techniques) {
@@ -292,13 +294,13 @@ export function createAdvancedSearchTool(
         await validateColumnExists(adapter, input.table, input.column);
 
         // Fetch candidate rows
-        let whereClause = "";
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          whereClause = ` AND ${input.whereClause}`;
+        let conditions = "";
+        if (input.conditions || input.whereClause) {
+          // validateWhereClause() removed
+          conditions = ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}`;
         }
-        const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${whereClause} LIMIT 100`;
-        const result = await adapter.executeReadQuery(query);
+        const query = `SELECT rowid as id, ${column} AS value FROM ${table} WHERE ${column} IS NOT NULL${conditions} LIMIT 100`;
+        const result = await adapter.executeReadQuery(query, queryParams);
 
         if (!result.rows || result.rows.length === 0) {
           return {
@@ -393,7 +395,7 @@ export function createAdvancedSearchTool(
           matchCount: limited.length,
           matches: limited,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

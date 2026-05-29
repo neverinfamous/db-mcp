@@ -19,7 +19,7 @@ describe("Window Function Tools - Ranking", () => {
 
   beforeEach(async () => {
     adapter = new NativeSqliteAdapter();
-    await adapter.connect({ type: "sqlite", database: ":memory:" });
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
 
     // Create test table with numeric data
     await adapter.executeWriteQuery(`
@@ -124,6 +124,7 @@ describe("Window Function Tools - Ranking", () => {
         rows: { row_number: number; amount: number }[];
       };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rowCount).toBe(6);
       expect(result.rows).toBeDefined();
@@ -144,6 +145,7 @@ describe("Window Function Tools - Ranking", () => {
         rows: { region: string; row_number: number }[];
       };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       // Each region should have row numbers 1, 2, 3
       const northRows = result.rows.filter((r) => r.region === "North");
@@ -163,6 +165,7 @@ describe("Window Function Tools - Ranking", () => {
         mockContext,
       )) as { success: boolean; rows: Record<string, unknown>[] };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rows[0]).toHaveProperty("region");
       expect(result.rows[0]).toHaveProperty("amount");
@@ -174,11 +177,12 @@ describe("Window Function Tools - Ranking", () => {
         {
           table: "sales",
           orderBy: "amount",
-          whereClause: "region = 'North'",
+          conditions: [{ column: "region", operator: "=", value: "North" }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rowCount).toBe(3);
     });
@@ -193,6 +197,7 @@ describe("Window Function Tools - Ranking", () => {
         mockContext,
       )) as { success: boolean; rowCount: number };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rowCount).toBe(2);
     });
@@ -205,7 +210,7 @@ describe("Window Function Tools - Ranking", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid table name");
+      expect(result.error).toContain("Invalid identifier");
     });
   });
 
@@ -222,6 +227,7 @@ describe("Window Function Tools - Ranking", () => {
         rows: { rank: number }[];
       };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rankType).toBe("rank");
       expect(result.rows[0].rank).toBe(1);
@@ -233,6 +239,7 @@ describe("Window Function Tools - Ranking", () => {
         mockContext,
       )) as { success: boolean; rankType: string };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rankType).toBe("dense_rank");
     });
@@ -247,6 +254,7 @@ describe("Window Function Tools - Ranking", () => {
         rows: { percent_rank: number }[];
       };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rankType).toBe("percent_rank");
       // First row should have rank 0
@@ -258,11 +266,12 @@ describe("Window Function Tools - Ranking", () => {
         {
           table: "sales",
           orderBy: "amount DESC",
-          whereClause: "region = 'North'",
+          conditions: [{ column: "region", operator: "=", value: "North" }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rowCount).toBe(3);
     });
@@ -275,7 +284,7 @@ describe("Window Function Tools - Ranking", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid table name");
+      expect(result.error).toContain("Invalid identifier");
     });
   });
 
@@ -292,6 +301,7 @@ describe("Window Function Tools - Ranking", () => {
         mockContext,
       )) as { success: boolean; buckets: number; rows: { ntile: number }[] };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.buckets).toBe(4);
       // All rows should have bucket between 1 and 4
@@ -312,6 +322,7 @@ describe("Window Function Tools - Ranking", () => {
         mockContext,
       )) as { success: boolean; rows: { ntile: number }[] };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       // Buckets should be 1 or 2 within each region
       for (const row of result.rows) {
@@ -326,11 +337,12 @@ describe("Window Function Tools - Ranking", () => {
           table: "sales",
           orderBy: "amount DESC",
           buckets: 2,
-          whereClause: "product = 'Widget'",
+          conditions: [{ column: "product", operator: "=", value: "Widget" }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };
 
+      console.log("RESULT:", result);
       expect(result.success).toBe(true);
       expect(result.rowCount).toBe(4); // 4 Widget sales
     });
@@ -343,7 +355,7 @@ describe("Window Function Tools - Ranking", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid table name");
+      expect(result.error).toContain("Invalid identifier");
     });
   });
 });

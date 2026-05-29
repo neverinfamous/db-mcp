@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../../utils/where-clause.js";
 import {
   validateColumnExists,
   validateNumericColumn,
@@ -9,10 +10,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import {
-  validateWhereClause,
-  sanitizeIdentifier,
-} from "../../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import {
   formatHandlerError,
   DbMcpError,
@@ -62,12 +60,12 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           await validateNumericColumn(adapter, input.table, input.column);
         }
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
+        if (input.conditions || input.whereClause) {
+          // validateWhereClause() removed
         }
 
-        const whereClause = input.whereClause
-          ? ` AND ${input.whereClause}`
+        const conditions = input.conditions
+          ? ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}`
           : "";
 
         if (input.testType === "ttest_one") {
@@ -75,10 +73,10 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
 
           const statsResult = await adapter.executeReadQuery(
             `SELECT COUNT(*) as n, AVG("${input.column}") as mean,
-                    SUM(("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause})) *
-                        ("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause}))) /
+                    SUM(("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions})) *
+                        ("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions}))) /
                     (COUNT(*) - 1) as variance
-             FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause}`,
+             FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions}`,
           );
 
           const n = Number(statsResult.rows?.[0]?.["n"] ?? 0);
@@ -136,14 +134,14 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           const statsResult = await adapter.executeReadQuery(
             `SELECT
                COUNT("${input.column}") as n1, AVG("${input.column}") as mean1,
-               SUM(("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause})) *
-                   ("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause}))) /
+               SUM(("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions})) *
+                   ("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions}))) /
                (COUNT("${input.column}") - 1) as var1,
                COUNT("${input.column2}") as n2, AVG("${input.column2}") as mean2,
-               SUM(("${input.column2}" - (SELECT AVG("${input.column2}") FROM "${input.table}" WHERE "${input.column2}" IS NOT NULL${whereClause})) *
-                   ("${input.column2}" - (SELECT AVG("${input.column2}") FROM "${input.table}" WHERE "${input.column2}" IS NOT NULL${whereClause}))) /
+               SUM(("${input.column2}" - (SELECT AVG("${input.column2}") FROM "${input.table}" WHERE "${input.column2}" IS NOT NULL${conditions})) *
+                   ("${input.column2}" - (SELECT AVG("${input.column2}") FROM "${input.table}" WHERE "${input.column2}" IS NOT NULL${conditions}))) /
                (COUNT("${input.column2}") - 1) as var2
-             FROM "${input.table}" WHERE 1=1${whereClause}`,
+             FROM "${input.table}" WHERE 1=1${conditions}`,
           );
 
           const n1 = Number(statsResult.rows?.[0]?.["n1"] ?? 0);
@@ -208,7 +206,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
           const freqResult = await adapter.executeReadQuery(
             `SELECT "${input.column}" as col1, "${input.groupColumn}" as col2, COUNT(*) as observed
              FROM "${input.table}"
-             WHERE "${input.column}" IS NOT NULL AND "${input.groupColumn}" IS NOT NULL${whereClause}
+             WHERE "${input.column}" IS NOT NULL AND "${input.groupColumn}" IS NOT NULL${conditions}
              GROUP BY "${input.column}", "${input.groupColumn}"`,
           );
 
@@ -265,7 +263,7 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
             },
           };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

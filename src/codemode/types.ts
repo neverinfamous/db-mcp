@@ -39,7 +39,7 @@ export interface PoolOptions {
  */
 export const DEFAULT_SANDBOX_OPTIONS: Required<SandboxOptions> = {
   memoryLimitMb: 128,
-  timeoutMs: 30000,
+  timeoutMs: 5000,
   cpuLimitMs: 10000,
 };
 
@@ -80,6 +80,8 @@ export interface SandboxResult {
   error?: string | undefined;
   /** Stack trace (if failed) */
   stack?: string | undefined;
+  /** Execution logs */
+  logs?: string[];
   /** Execution metrics */
   metrics: ExecutionMetrics;
 }
@@ -107,7 +109,7 @@ export interface SecurityConfig {
  */
 export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   maxCodeLength: 50 * 1024, // 50KB
-  maxExecutionsPerMinute: 60,
+  maxExecutionsPerMinute: 10,
   maxResultSize: 10 * 1024 * 1024, // 10MB
   blockedPatterns: [
     /\brequire\s*\(/, // No require()
@@ -120,12 +122,24 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     /\b__proto__\b/, // No prototype pollution
     /\bconstructor\.constructor/, // No constructor chaining
     /\[['"]constructor['"]\]/i, // No bracket-notation constructor access
-    /\bReflect\s*\.\s*construct/i, // No Reflect.construct bypass
+    /\[.*(?:constructor|proto).*\]/i, // No bracket-notation dynamic property access
+    /\bWebAssembly\b/, // No WebAssembly access
+    /\bSharedArrayBuffer\b/, // No SharedArrayBuffer access
+    /\bReflect\s*\./i, // No Reflect API access (getPrototypeOf, ownKeys, construct, etc.)
+    /\bSymbol\b/i, // No Symbol access (hasInstance, toPrimitive, etc.)
+    /\bnew\s+Proxy\s*\(/i, // No Proxy construction
     /\bchild_process/, // No child processes
     /\bfs\./, // No filesystem
     /\bnet\./, // No networking
     /\bhttp\./, // No HTTP
     /\bhttps\./, // No HTTPS
+    /\bfetch\s*\(/, // No fetch()
+    /\bWebSocket\b/, // No WebSocket
+    /\bObject\.getPrototypeOf/, // No getPrototypeOf
+    /\bObject\.setPrototypeOf/, // No setPrototypeOf
+    /\b__defineGetter__/, // No __defineGetter__
+    /\bObject\.defineProperty/, // No Object.defineProperty
+    /\bObject\.defineProperties/, // No Object.defineProperties
   ],
 };
 
@@ -191,6 +205,8 @@ export interface ExecuteCodeResult {
   result?: unknown;
   /** Error message (if failed) */
   error?: string;
+  /** Execution logs */
+  logs?: string[];
   /** Execution metrics */
   metrics: ExecutionMetrics;
 }

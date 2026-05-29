@@ -2,66 +2,82 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
-> We're currently testing Native mode.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 18 JSON read tools are fully WASM-compatible. No items to skip or adjust.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+
+## Setup & Pre-requisites
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-**Step 2:** Please conduct an exhaustive test of the **json-read** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the checklist below using live MCP server tool calls directly — not scripts/terminal.
 
-**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+**Step 3:** The agent should update `C:\Users\chris\Desktop\db-mcp\UNRELEASED.md`, update `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` if appropriate, and create a `memory-journal-mcp` entry summarizing the changes/fixes.
 
-**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore them.
+> [!WARNING]
+> **Stale Build Issues:** The MCP server runs from the compiled `dist/` directory, NOT `src/`. If you encounter inexplicable behavior (e.g., tools executing old logic or throwing validation errors for things already fixed in the source code), the server might be running a stale build. Check if the compiled code in `dist/` matches the source code in `src/`. If out of sync, stop and instruct the user to run `npm run build` and restart the server before continuing testing.
+
+> **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
+
+### Test Schema Reference
+
+> _No specific table schema required for this test group._
 
 ## Reporting Format
 
-- ❌ Fail: Tool errors or produces incorrect results (include error message)
-- ⚠️ Issue: Unexpected behavior or improvement opportunity
-- 📦 Payload: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ❌ **Fail**: Tool errors or produces incorrect results (include error message)
+- ⚠️ **Issue**: Unexpected behavior or improvement opportunity
+- 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
-## Test Database Schema
+### Error Message Quality Rating
 
-The test database (test-server/test.db) contains these tables with JSON-relevant columns:
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
-| Table             | Rows | Columns                                                                       | JSON Columns                                                                              |
-| ----------------- | ---- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| test_products     | 16   | id, name, description, price, category, created_at                            | —                                                                                         |
-| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, order_date, status | —                                                                                         |
-| test_jsonb_docs   | 6    | id, doc, metadata, tags, created_at                                           | **doc**, **metadata** (nested), **tags** (array)                                          |
-| test_articles     | 8    | id, title, body, author, category, published_at                               | —                                                                                         |
-| test_users        | 9    | id, username, email, phone, bio, created_at                                   | —                                                                                         |
-| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, measured_at                   | —                                                                                         |
-| test_embeddings   | 20   | id, content, category, embedding                                              | **embedding** (8-dim float array); category values: database, fitness, food, tech, travel |
-| test_locations    | 15   | id, name, city, latitude, longitude, type                                     | —                                                                                         |
-| test_categories   | 17   | id, name, path, level                                                         | —                                                                                         |
-| test_events       | 100  | id, event_type, user_id (INT, 8 values), payload, event_date                  | **payload** (JSON)                                                                        |
+## Testing Requirements & Error Standards
 
-**Primary JSON test tables:**
-
-- `test_jsonb_docs.doc` — Row 1: `{"type":"article","title":"Getting Started with SQLite","author":"Alice","views":1250,"rating":4.5}`, Row 3: `{"type":"video",...,"duration":3600}`, Row 4 has `nested.level1.level2 = "deep value"`
-- `test_jsonb_docs.metadata` — Object with keys: source, language, version, quality, subscribers
-- `test_jsonb_docs.tags` — Array of strings like `["database","tutorial","beginner"]`
-- `test_events.payload` — Object with keys: page (values: home, products, cart, checkout), session (values: sess_1000+)
-
-> **Note:** String values in test data use **lowercase**. Use case-sensitive matching.
-
-## Testing Requirements
+> [!NOTE]
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+>
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
+>
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
-1. Use existing `test_*` tables for read operations.
-2. Test each tool with realistic inputs based on the schema above.
-3. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads.
-4. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error and (b) a **Zod validation error** (call the tool with `{}` empty params). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
-5. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
+2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
+   - (a) A domain error (e.g., non-existent table).
+   - (b) An **empty parameters test** (call the tool with `{}`).
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
+   > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
+5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
+   > **CRITICAL**: Architectural consistency is paramount. Do not introduce undocumented architectural deviations. If you implement a structural or architectural improvement in one tool, you must apply it symmetrically to other applicable tools in the group or project.
 6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+7. **Token Tracking**: Monitor `metrics.tokenEstimate` to detect payload issues.
+8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
-## Structured Error Response Pattern
+### Structured Error Response Pattern
 
 All tools should return errors as structured objects instead of throwing. The expected pattern:
 
@@ -69,77 +85,47 @@ All tools should return errors as structured objects instead of throwing. The ex
 { "success": false, "error": "Human-readable error message" }
 ```
 
-### Handler Error vs MCP Error — How to Distinguish
-
 | Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
 | -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
 | **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
 
-### Zod Validation Errors
+## Naming & Cleanup
 
-Calling a tool with wrong parameter types or missing required fields triggers a Zod validation error. If the handler has no outer `try/catch`, this surfaces as a raw MCP error (often `-32602`). Test every tool with `{}` (empty params) if it has required parameters — the response must be a handler error, not an MCP error.
-
-**Fix:** Remove ALL `.min(N)` / `.max(N)` refinements from the schema and validate inside the handler instead.
-
-### Wrong-Type Numeric Parameter Coercion
-
-For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
-
-### Output Schema Validation Errors
-
-The MCP SDK enforces `additionalProperties: false` on **output** schemas. If a handler returns fields not declared in its output schema, the SDK rejects the response with a raw `-32602` error.
-
-**How to detect:** If a tool call with **correct, valid inputs** returns a raw MCP `-32602` mentioning "does not match the tool's output schema" or "additional properties", report as ❌ with both the tool name and the missing field(s).
-
-### Error Consistency Audit
-
-1. **Throw-vs-return**: If a tool throws a raw error instead of returning `{success: false}`, report as ❌.
-2. **Error field name**: All `{success: false}` responses should use `error` as the field name.
-3. **Zod validation leaks**: If calling a tool with missing required field produces a raw MCP `-32602` error instead of a structured response, report as ❌.
-4. **Output schema leaks**: If calling a tool with valid inputs produces a raw MCP `-32602` mentioning "output schema", report as ❌.
+- **Temporary tables**: `temp_*` (or `stress_*`) prefix
+- **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
+- Drop at the end of the script. If DROP fails due to lock, note and move on.
 
 ---
 
 ## Group Focus: json-read
 
-> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation. These are the minimum-bar tests that must pass every run — freeform testing comes after.
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### json-read Group Tools (18)
+### Group Tools (18) + Code Mode
 
-1. sqlite_json_valid
-2. sqlite_json_extract
-3. sqlite_json_type
-4. sqlite_json_array_length
-5. sqlite_json_keys
-6. sqlite_json_each
-7. sqlite_json_group_array
-8. sqlite_json_group_object
-9. sqlite_json_pretty
-10. sqlite_jsonb_convert
-11. sqlite_json_storage_info
-12. sqlite_json_normalize_column
-13. sqlite_json_select
-14. sqlite_json_query
-15. sqlite_json_validate_path
-16. sqlite_json_analyze_schema
-17. sqlite_json_security_scan
-18. sqlite_execute_code
+- `sqlite_json_valid`
+- `sqlite_json_extract`
+- `sqlite_json_type`
+- `sqlite_json_array_length`
+- `sqlite_json_keys`
+- `sqlite_json_each`
+- `sqlite_json_group_array`
+- `sqlite_json_group_object`
+- `sqlite_json_pretty`
+- `sqlite_jsonb_convert`
+- `sqlite_json_storage_info`
+- `sqlite_json_normalize_column`
+- `sqlite_json_select`
+- `sqlite_json_query`
+- `sqlite_json_validate_path`
+- `sqlite_json_analyze_schema`
+- `sqlite_json_security_scan`
+- `sqlite_json_diff`
+- _(Code Mode executor)_
+- `sqlite_execute_code`
 
-**Test data reference (test_jsonb_docs):**
-
-| id  | doc.type | doc.author | doc.views | metadata.source | tags                                 |
-| --- | -------- | ---------- | --------- | --------------- | ------------------------------------ |
-| 1   | article  | Alice      | 1250      | blog            | ["database","tutorial","beginner"]   |
-| 2   | article  | Bob        | 890       | docs            | ["json","advanced","sqlite"]         |
-| 3   | video    | Carol      | 5400      | youtube         | ["mcp","protocol","ai"]              |
-| 4   | article  | David      | 670       | wiki            | ["fts5","search","indexing"]         |
-| 5   | podcast  | Eve        | —         | spotify         | ["performance","tips","podcast"]     |
-| 6   | article  | Frank      | 2100      | medium          | ["vector","embeddings","similarity"] |
-
-Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
-
-**Checklist:**
+## Phase 1: Core Check (batched)
 
 1. `sqlite_json_extract({table: "test_jsonb_docs", column: "doc", path: "$.author", whereClause: "id = 1"})` → result contains `"Alice"`
 2. `sqlite_json_extract({table: "test_jsonb_docs", column: "doc", path: "$.nested.level1.level2", whereClause: "id = 4"})` → result contains `"deep value"`
@@ -160,38 +146,52 @@ Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 17. `sqlite_jsonb_convert({table: "test_jsonb_docs", column: "doc", whereClause: "id = 1"})` → JSONB binary conversion result
 18. `sqlite_json_normalize_column({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → normalization report for the doc column as raw text (Tests `outputFormat` parameter)
 19. `sqlite_json_security_scan({table: "test_events", column: "payload"})` → security scan report
+20. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.author"})` → `diffs` array with per-row comparisons showing `path1Value`, `path2Value`, `identical` (should be `false` for most rows since type≠author)
+21. `sqlite_json_diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type"})` → all rows `identical: true` (same path compared to itself)
 
 **Code mode testing:**
 
-20. `sqlite_execute_code({code: "const result = await sqlite.json.extract({table: 'test_jsonb_docs', column: 'doc', path: '$.author', whereClause: 'id = 1'}); return result;"})` → result contains `"Alice"`
-21. `sqlite_execute_code({code: "const keys = await sqlite.json.keys({table: 'test_jsonb_docs', column: 'doc', whereClause: 'id = 1'}); return keys;"})` → keys include `type`, `title`, `author`
+22. `sqlite_execute_code({code: "const result = await sqlite.json.extract({table: 'test_jsonb_docs', column: 'doc', path: '$.author', whereClause: 'id = 1'}); return result;"})` → result contains `"Alice"`
+23. `sqlite_execute_code({code: "const keys = await sqlite.json.keys({table: 'test_jsonb_docs', column: 'doc', whereClause: 'id = 1'}); return keys;"})` → keys include `type`, `title`, `author`
 
 **Error path testing:**
 
-🔴 22. `sqlite_json_extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error
-🔴 23. `sqlite_json_extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
-🔴 24. `sqlite_json_validate_path({path: "invalid path !@#"})` → report behavior
+🔴 24. `sqlite_json_extract({table: "nonexistent_table_xyz", column: "doc", path: "$.x"})` → structured error
+🔴 25. `sqlite_json_extract({table: "test_jsonb_docs", column: "nonexistent_col", path: "$.x"})` → report behavior
+🔴 26. `sqlite_json_validate_path({path: "invalid path !@#"})` → report behavior
+🔴 27. `sqlite_json_diff({table: "nonexistent_xyz", column: "doc", path1: "$.x", path2: "$.y"})` → `{success: false}`
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error, NOT raw MCP error:
+## Phase 2: Zod Validation Sweep
 
-🔴 25. `sqlite_json_valid({})` → handler error
-🔴 26. `sqlite_json_extract({})` → handler error
-🔴 27. `sqlite_json_type({})` → handler error
-🔴 28. `sqlite_json_array_length({})` → handler error
-🔴 29. `sqlite_json_keys({})` → handler error
-🔴 30. `sqlite_json_each({})` → handler error
-🔴 31. `sqlite_json_group_array({})` → handler error
-🔴 32. `sqlite_json_group_object({})` → handler error
-🔴 33. `sqlite_json_pretty({})` → handler error
-🔴 34. `sqlite_jsonb_convert({})` → handler error
-🔴 35. `sqlite_json_storage_info({})` → handler error
-🔴 36. `sqlite_json_normalize_column({})` → handler error
-🔴 37. `sqlite_json_select({})` → handler error
-🔴 38. `sqlite_json_query({})` → handler error
-🔴 39. `sqlite_json_validate_path({})` → handler error
-🔴 40. `sqlite_json_analyze_schema({})` → handler error
-🔴 41. `sqlite_json_security_scan({})` → handler error
-🔴 42. `sqlite_execute_code({})` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 28. `sqlite_json_valid({})` → handler error
+🔴 29. `sqlite_json_extract({})` → handler error
+🔴 30. `sqlite_json_type({})` → handler error
+🔴 31. `sqlite_json_array_length({})` → handler error
+🔴 32. `sqlite_json_keys({})` → handler error
+🔴 33. `sqlite_json_each({})` → handler error
+🔴 34. `sqlite_json_group_array({})` → handler error
+🔴 35. `sqlite_json_group_object({})` → handler error
+🔴 36. `sqlite_json_pretty({})` → handler error
+🔴 37. `sqlite_jsonb_convert({})` → handler error
+🔴 38. `sqlite_json_storage_info({})` → handler error
+🔴 39. `sqlite_json_normalize_column({})` → handler error
+🔴 40. `sqlite_json_select({})` → handler error
+🔴 41. `sqlite_json_query({})` → handler error
+🔴 42. `sqlite_json_validate_path({})` → handler error
+🔴 43. `sqlite_json_analyze_schema({})` → handler error
+🔴 44. `sqlite_json_security_scan({})` → handler error
+🔴 45. `sqlite_json_diff({})` → handler error
+🔴 46. `sqlite_execute_code({})` → handler error
+
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 47. `sqlite_json_each({table: "test_jsonb_docs", column: "tags", limit: "abc"})` → handler error
+🔴 48. `sqlite_json_select({table: "test_jsonb_docs", column: "doc", paths: ["$.author"], limit: "abc"})` → handler error
+🔴 49. `sqlite_json_query({table: "test_jsonb_docs", column: "doc", filterPaths: {"$.type": "article"}, limit: "abc"})` → handler error
 
 ---
 
@@ -204,7 +204,7 @@ Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 
 ### After Testing
 
-1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
@@ -213,7 +213,8 @@ Row 4 has nested path: `doc → nested → level1 → level2 = "deep value"`
 
 ### After Implementation
 
-3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-4. **Commit**: Stage and commit all changes — do NOT push
-5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

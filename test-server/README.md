@@ -9,11 +9,12 @@
 | `test-tool-groups/`          | —     | **10 self-contained test prompts** — one per tool group. Each is a complete, standalone prompt (paste directly). See `test-tool-groups/README.md` for details. | **Primary testing method** — use instead of `test-tools.md` + `test-group-tools.md` |
 | `test-codemode/`             | —     | **10 self-contained Code Mode test prompts** — one per tool group. Tests via `sqlite_execute_code` only. See `test-codemode/README.md`.                        | **Primary Code Mode testing method**                                                |
 | `test-advanced/`             | —     | **10 self-contained advanced stress test prompts** — one per tool group. Second-pass edge cases via Code Mode. See `test-advanced/README.md`.                  | **Primary advanced testing method**                                                 |
+| `scripts/`                   | —     | **Integration test scripts and utilities**. Contains Node.js tests for MCP configuration parity and the `standardize-prompts.js` utility.                      | When testing config or updating prompt templates                                    |
 | `test-resources.md`          | ~6KB  | Resource testing plan (8 data + 7 help resources via `read_resource`)                                                                                          | When testing resources                                                              |
 | `test-preflight.md`          | ~2KB  | **Pre-flight check** — validates slim instructions, help resources, data resources, and tool-filter alignment in 5 steps                                       | Before any test pass                                                                |
-| `test-prompts.md`            | ~10KB | Prompt testing plan (10 prompts, tested manually since agents typically don't invoke prompts)                                                                  | When testing prompts                                                                |
-| `tool-groups-list.md`        | —     | **Canonical tool inventory** — all 10 groups + codemode, 151 Native / 125 WASM tools. Source of truth for tool counts.                                         | Reference / auditing                                                                |
-| `tool-reference.md`          | ~18KB | **Complete Tool Reference** — Detailed list of all 151 Native / 125 WASM tools organized by group.                                                             | Reference                                                                           |
+| `test-prompts-notes.md`      | ~10KB | Prompt testing plan (10 prompts, tested manually since agents typically don't invoke prompts)                                                                  | When testing prompts                                                                |
+| `tool-groups-list.md`        | —     | **Canonical tool inventory** — all 10 groups + codemode. See `tool-reference.md` for the [Tool Count Taxonomy](tool-reference.md#tool-count-taxonomy).         | Reference / auditing                                                                |
+| `tool-reference.md`          | ~18KB | **Complete Tool Reference** — all tools organized by group with [Tool Count Taxonomy](tool-reference.md#tool-count-taxonomy) defining scope labels.            | Reference                                                                           |
 | [`code-map.md`](code-map.md) | ~12KB | **Source Code Map** — Directory tree, handler→tool mapping, type/schema locations, error hierarchy, constants, architecture patterns.                          | When debugging source code or making changes                                        |
 | `reset-database.ps1`         | ~11KB | PowerShell script to delete + re-seed `test.db` from `test-database.sql`. Verifies row counts.                                                                 | After migration group testing or if data is polluted                                |
 | `test-database.sql`          | ~21KB | Seed SQL (DDL + DML) for all `test_*` tables                                                                                                                   | Reference only — reset script consumes this                                         |
@@ -57,7 +58,7 @@
 To validate WASM mode produces identical results for shared tools:
 
 1. **Configure for WASM**: Set `--sqlite` (not `--sqlite-native`) in your MCP client config
-2. **Expected tool count**: 115 WASM vs 140 Native (25 fewer: 4 FTS5, 6 window, 8 transaction, 7 SpatiaLite)
+2. **Expected tool count**: 148 WASM vs 175 Native MCP total (27 fewer group tools: 5 FTS5, 6 window, 8 transaction, 7 SpatiaLite, 1 dump). See [Tool Count Taxonomy](tool-reference.md#tool-count-taxonomy) for scope definitions.
 3. **Run the same checklists**: Use `test-group-tools.md` but skip items marked `[NATIVE ONLY]`
 4. **Verify shared tools**: All non-`[NATIVE ONLY]` items should produce identical output in both backends
 5. **Verify absent tools**: Calling a Native-only tool in WASM mode should return a structured error (not crash)
@@ -84,10 +85,10 @@ cd C:\Users\chris\Desktop\db-mcp
 npm run build
 
 # Help resources
-node test-server/test-help-resources.mjs
+node test-server/scripts/test-help-resources.mjs
 
 # Tool annotations
-node test-server/test-tool-annotations.mjs
+node test-server/scripts/test-tool-annotations.mjs
 ```
 
 ### Success Criteria

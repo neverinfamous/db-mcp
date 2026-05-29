@@ -79,6 +79,7 @@ export interface TableInfo {
   name: string;
   schema?: string;
   type: "table" | "view" | "materialized_view";
+  strict?: boolean;
   rowCount?: number;
   columns?: ColumnInfo[];
 }

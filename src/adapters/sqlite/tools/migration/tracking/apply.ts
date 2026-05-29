@@ -15,6 +15,7 @@ import {
   hashMigration,
   isMigrationTableInitialized,
   toMigrationRecord,
+  validateMigrationSql,
 } from "../helpers.js";
 import {
   sendProgress,
@@ -47,6 +48,7 @@ export function createMigrationApplyTool(
         }
 
         const actualSql = input.migrationSql ?? input.sql ?? "";
+        validateMigrationSql(actualSql);
         const hash = hashMigration(actualSql);
 
         const dupCheck = await adapter.executeReadQuery(
@@ -89,7 +91,7 @@ export function createMigrationApplyTool(
             2,
             `Applying migration ${input.version}...`,
           );
-          await adapter.executeQuery(actualSql);
+          await adapter.executeScript(actualSql);
           await sendProgress(progress, 2, 2, `Migration applied successfully`);
         } catch (execError) {
           if (existingId !== undefined) {
@@ -166,7 +168,7 @@ export function createMigrationApplyTool(
           success: true,
           record: record ? toMigrationRecord(record) : undefined,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

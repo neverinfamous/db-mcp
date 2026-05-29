@@ -175,8 +175,8 @@ describe("Security: Identifier Integration", () => {
       const result = (await getTool("sqlite_text_replace")({
         table: "users; ATTACH DATABASE--",
         column: "name",
-        searchPattern: "a",
-        replaceWith: "b",
+        search: "a",
+        replacement: "b",
         whereClause: "1=1",
       })) as { success: boolean; error?: string };
       expect(result.success).toBe(false);
@@ -254,7 +254,7 @@ describe("Security: Identifier Integration", () => {
     it("should reject view name with injection in create_view", async () => {
       const result = (await getTool("sqlite_create_view")({
         viewName: "my_view'; DROP TABLE--",
-        query: "SELECT * FROM users",
+        selectQuery: "SELECT * FROM users",
       })) as { success: boolean; error?: string };
       expect(result.success).toBe(false);
       expect(result.error).toMatch(/invalid/i);

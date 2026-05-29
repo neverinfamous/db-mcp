@@ -58,7 +58,7 @@ export interface TokenClaims {
   sub: string;
 
   /** Granted scopes */
-  scopes: OAuthScope[];
+  scopes: string[];
 
   /** Token expiration time */
   exp: number;
@@ -67,10 +67,10 @@ export interface TokenClaims {
   iat: number;
 
   /** Token issuer */
-  iss?: string;
+  iss?: string | undefined;
 
   /** Token audience */
-  aud?: string | string[];
+  aud?: string | string[] | undefined;
 
   /** Additional claims */
   [key: string]: unknown;
@@ -81,7 +81,7 @@ export interface TokenClaims {
  */
 export interface RequestContext {
   /** Validated token claims (if authenticated) */
-  auth?: TokenClaims;
+  auth?: TokenClaims | undefined;
 
   /** Raw access token */
   accessToken?: string;
@@ -103,4 +103,9 @@ export interface RequestContext {
    * If present, the client has requested progress updates.
    */
   progressToken?: string | number;
+
+  /**
+   * Client IP address for rate limiting fallback
+   */
+  clientIp?: string | undefined;
 }

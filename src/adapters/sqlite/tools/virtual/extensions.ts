@@ -82,7 +82,7 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
           sql,
           columns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",
@@ -111,21 +111,23 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const input = CreateSeriesTableSchema.parse(params);
 
-        // Validate required fields (schema uses .optional() for SDK compatibility)
-        if (input.start === undefined || input.stop === undefined) {
+        // Validate and quote identifiers
+        const tableName = sanitizeIdentifier(input.tableName);
+        const columnName = sanitizeIdentifier(input.columnName);
+
+        const MAX_SERIES_LENGTH = 100000;
+        const estimatedLength =
+          Math.abs((input.stop - input.start) / input.step) + 1;
+        if (estimatedLength > MAX_SERIES_LENGTH) {
           return {
             success: false,
-            error: "start and stop are required parameters",
+            error: `Series length ${estimatedLength} exceeds maximum allowed of ${MAX_SERIES_LENGTH}`,
             code: "VALIDATION_ERROR",
             category: "validation",
             message: "",
             rowCount: 0,
           };
         }
-
-        // Validate and quote identifiers
-        const tableName = sanitizeIdentifier(input.tableName);
-        const columnName = sanitizeIdentifier(input.columnName);
 
         // Create table
         await adapter.executeWriteQuery(
@@ -165,7 +167,7 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
           message: `Created series table '${input.tableName}' with ${rowCount} rows`,
           rowCount,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

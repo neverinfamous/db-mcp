@@ -9,11 +9,15 @@ import { AuthorizationServerDiscovery } from "../../auth/authorization-server-di
 import { TokenValidator } from "../../auth/token-validator.js";
 import { createAuthMiddleware } from "../../auth/middleware/index.js";
 import { SUPPORTED_SCOPES } from "../../auth/scopes/index.js";
-import { scopesGrantToolAccess } from "../../auth/scopes/index.js";
+import {
+  scopesGrantToolAccess,
+  hasAdminScope,
+  hasReadScope,
+} from "../../auth/scopes/index.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
-import type { RequestHandler } from "express";
+import type { Response } from "express";
 
 const logger = createModuleLogger("HTTP");
 
@@ -28,6 +32,17 @@ const logger = createModuleLogger("HTTP");
  * Warns if no auth is configured.
  */
 export function applyAuthMiddleware(state: HttpTransportState): void {
+  // F-6: Warn when CORS wildcard is combined with auth — risky browser posture
+  const corsOrigins = state.config.corsOrigins ?? [];
+  const isPubliclyExposed =
+    state.config.oauth.enabled || state.config.noAuthEnforcement;
+  if (corsOrigins.includes("*") && isPubliclyExposed) {
+    throw new Error(
+      "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled or enforcement is explicitly disabled. " +
+        "Configure explicit origins via --cors-origins for production deployments.",
+    );
+  }
+
   if (
     state.config.oauth.enabled &&
     state.tokenValidator &&
@@ -42,70 +57,13 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
     });
 
     state.app.use(authMiddleware);
-  } else if (state.config.authToken && state.app) {
-    // Simple bearer token middleware
-    state.app.use(createSimpleBearerAuth(state.config.authToken));
-    logger.info("Simple bearer token authentication enabled", {
-      code: "AUTH_BEARER_ENABLED",
-    });
   } else if (state.app) {
     logger.warning(
       "No authentication configured for HTTP transport. " +
-        "Set --auth-token or --oauth-enabled for production deployments.",
+        "Set --oauth-enabled for production deployments.",
       { code: "AUTH_NONE" },
     );
   }
-}
-
-/**
- * Simple bearer token authentication middleware.
- *
- * Compares the Authorization header against a static token.
- * Lighter-weight than full OAuth 2.1 — suitable for development
- * or single-tenant deployments behind a reverse proxy.
- */
-function createSimpleBearerAuth(expectedToken: string): RequestHandler {
-  const publicPaths = ["/health", "/", "/.well-known"];
-
-  return (req, res, next) => {
-    // Skip public paths
-    if (
-      publicPaths.some((p) => req.path === p || req.path.startsWith(`${p}/`))
-    ) {
-      next();
-      return;
-    }
-
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      res.status(401);
-      res.setHeader("WWW-Authenticate", 'Bearer realm="db-mcp"');
-      res.json({
-        error: "unauthorized",
-        error_description: "Bearer token required",
-      });
-      return;
-    }
-
-    const token = authHeader.slice(7);
-    if (token !== expectedToken) {
-      logger.warning("Invalid bearer token rejected", {
-        code: "AUTH_BEARER_REJECTED",
-      });
-      res.status(401);
-      res.setHeader(
-        "WWW-Authenticate",
-        'Bearer realm="db-mcp", error="invalid_token"',
-      );
-      res.json({
-        error: "unauthorized",
-        error_description: "Invalid bearer token",
-      });
-      return;
-    }
-
-    next();
-  };
 }
 
 /**
@@ -121,55 +79,166 @@ export function applyScopeEnforcementMiddleware(
   state.app.use((req, res, next) => {
     interface JsonRpcBody {
       method?: string;
-      params?: { name?: string };
+      params?: { name?: string; uri?: string };
     }
 
-    // Only intercept JSON-RPC POST requests for tools/call
     const body = req.body as JsonRpcBody | null | undefined;
-    if (req.method !== "POST" || body?.method !== "tools/call") {
+    if (req.method !== "POST") {
       next();
       return;
     }
 
-    const toolName = body.params?.name;
-    if (!toolName) {
-      next();
+    const contentType = req.headers["content-type"]?.split(";")[0]?.trim();
+    if (contentType !== "application/json") {
+      res.status(400).json({
+        error: "invalid_request",
+        error_description: "Content-Type must be exactly application/json",
+      });
       return;
     }
 
-    // If req.auth is missing, it means either:
-    // 1. Auth is not configured (disabled)
-    // 2. Simple bearer auth is used (which doesn't set req.auth but validates)
-    // In both cases, scope enforcement does not apply.
+    // F-3: Prevent scope enforcement bypass via JSON-RPC batching
+    if (Array.isArray(body)) {
+      res.status(400).json({
+        error: "invalid_request",
+        error_description: "Batch JSON-RPC requests are not supported",
+      });
+      return;
+    }
+
+    // If req.auth is missing, it means auth is not configured (disabled).
+    // Simple bearer auth does set req.auth (with 'admin' scope) so it will bypass this.
+    // In the disabled case, scope enforcement does not apply.
     if (!req.auth) {
       next();
       return;
     }
 
-    const hasAccess = scopesGrantToolAccess(req.auth.scopes, toolName);
+    const rpcMethod = body?.method;
 
-    if (!hasAccess) {
-      const error = new InsufficientScopeError(
-        `Tool access: ${toolName}`,
-        req.auth.scopes,
-      );
+    if (rpcMethod === "tools/list") {
+      const originalJson = res.json;
+      const scopes = req.auth.scopes;
 
-      logger.warning(`Insufficient scope for tool: ${toolName}`, {
-        code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
-        toolName,
-        providedScopes: req.auth.scopes,
-      });
+      const isRecord = (val: unknown): val is Record<string, unknown> =>
+        typeof val === "object" && val !== null && !Array.isArray(val);
 
-      res.status(error.httpStatus);
-      if (error.wwwAuthenticate) {
-        res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
-      }
-      res.json({
-        error: "insufficient_scope",
-        error_description: `Access to tool '${toolName}' denied`,
-        tool: toolName,
-      });
+      res.json = function (this: Response, data: unknown): Response {
+        if (
+          isRecord(data) &&
+          isRecord(data["result"]) &&
+          Array.isArray(data["result"]["tools"])
+        ) {
+          data["result"]["tools"] = data["result"]["tools"].filter(
+            (tool: unknown) => {
+              if (isRecord(tool) && typeof tool["name"] === "string") {
+                return scopesGrantToolAccess(scopes, tool["name"]);
+              }
+              return false;
+            },
+          );
+        }
+        return originalJson.call(this, data);
+      };
+      next();
       return;
+    }
+
+    // M-2: Enforce scopes on tools/call (existing), resources/read, and prompts/get
+    if (rpcMethod === "tools/call") {
+      // Tool scope enforcement (existing behavior)
+      const toolName = body?.params?.name;
+      if (!toolName) {
+        next();
+        return;
+      }
+
+      const hasAccess = scopesGrantToolAccess(req.auth.scopes, toolName);
+
+      if (!hasAccess) {
+        const error = new InsufficientScopeError(
+          `Tool access: ${toolName}`,
+          req.auth.scopes,
+        );
+
+        logger.warning(`Insufficient scope for tool: ${toolName}`, {
+          code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+          toolName,
+          providedScopes: req.auth.scopes,
+        });
+
+        res.status(error.httpStatus);
+        if (error.wwwAuthenticate) {
+          res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+        }
+        res.json({
+          error: "insufficient_scope",
+          error_description: `Access to tool '${toolName}' denied`,
+          tool: toolName,
+        });
+        return;
+      }
+    } else if (rpcMethod === "resources/read") {
+      // M-2: Resource scope enforcement — audit resources require admin, others require read
+      const resourceUri = body?.params?.uri ?? "";
+      const requiredScope = resourceUri.startsWith("sqlite://audit")
+        ? "admin"
+        : "read";
+      const hasAccess =
+        requiredScope === "admin"
+          ? hasAdminScope(req.auth.scopes)
+          : hasReadScope(req.auth.scopes);
+
+      if (!hasAccess) {
+        const error = new InsufficientScopeError(
+          `Resource access: ${resourceUri}`,
+          req.auth.scopes,
+        );
+
+        logger.warning(`Insufficient scope for resource: ${resourceUri}`, {
+          code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+          resourceUri,
+          requiredScope,
+          providedScopes: req.auth.scopes,
+        });
+
+        res.status(error.httpStatus);
+        if (error.wwwAuthenticate) {
+          res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+        }
+        res.json({
+          error: "insufficient_scope",
+          error_description: `Access to resource '${resourceUri}' requires '${requiredScope}' scope`,
+        });
+        return;
+      }
+    } else if (rpcMethod === "prompts/get") {
+      // M-2: Prompt scope enforcement — prompts require read scope
+      const hasAccess = hasReadScope(req.auth.scopes);
+
+      if (!hasAccess) {
+        const promptName = body?.params?.name ?? "unknown";
+        const error = new InsufficientScopeError(
+          `Prompt access: ${promptName}`,
+          req.auth.scopes,
+        );
+
+        logger.warning(`Insufficient scope for prompt: ${promptName}`, {
+          code: ERROR_CODES.AUTH.SCOPE_DENIED.full,
+          promptName,
+          providedScopes: req.auth.scopes,
+        });
+
+        res.status(error.httpStatus);
+        if (error.wwwAuthenticate) {
+          res.setHeader("WWW-Authenticate", error.wwwAuthenticate);
+        }
+        res.json({
+          error: "insufficient_scope",
+          error_description: `Access to prompt '${promptName}' requires 'read' scope`,
+        });
+        return;
+      }
     }
 
     next();
@@ -188,6 +257,12 @@ export async function setupOAuth(
   resourceUri: string,
 ): Promise<void> {
   logger.info("Setting up OAuth 2.1...", { code: "HTTP_OAUTH_SETUP" });
+
+  if (state.config.oauth.enabled && !state.config.oauth.audience) {
+    throw new Error(
+      "Security: OAuth audience must be explicitly configured when OAuth is enabled.",
+    );
+  }
 
   // Create Resource Server
   state.resourceServer = new OAuthResourceServer({
@@ -219,8 +294,9 @@ export async function setupOAuth(
     });
 
     logger.info("OAuth 2.1 setup complete", { code: "HTTP_OAUTH_READY" });
-  } catch (error) {
-    // If discovery fails, we can still start without OAuth validation
+  } catch (error: unknown) {
+    // F-2: If discovery fails, only proceed if explicit JWKS URI is provided.
+    // Never silently accept mismatched metadata — fail closed.
     logger.warning(
       "Authorization server discovery failed. OAuth validation disabled.",
       {
@@ -229,9 +305,9 @@ export async function setupOAuth(
       },
     );
 
-    if (!state.config.oauth.jwksUri) {
+    if (!state.config.oauth.jwksUri || !state.config.oauth.issuer) {
       logger.error(
-        "No JWKS URI available. Please provide oauth.jwksUri in config.",
+        "OAuth discovery failed and explicit jwksUri/issuer were not provided. Hard failing to prevent spoofed token acceptance.",
         { code: ERROR_CODES.AUTH.DISCOVERY_FAILED.full },
       );
       throw error;
@@ -239,8 +315,7 @@ export async function setupOAuth(
 
     state.tokenValidator = new TokenValidator({
       jwksUri: state.config.oauth.jwksUri,
-      issuer:
-        state.config.oauth.issuer ?? state.config.oauth.authorizationServerUrl,
+      issuer: state.config.oauth.issuer,
       audience: state.config.oauth.audience,
       clockTolerance: state.config.oauth.clockTolerance,
     });

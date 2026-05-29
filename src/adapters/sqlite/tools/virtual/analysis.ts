@@ -35,9 +35,10 @@ export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Database Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
+
       try {
         input = DbStatSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -204,7 +205,7 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
       let input;
       try {
         input = VacuumIntoSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",
@@ -253,7 +254,7 @@ export function createVacuumTool(adapter: SqliteAdapter): ToolDefinition {
             : "Database vacuumed",
           durationMs: duration,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           message: "",

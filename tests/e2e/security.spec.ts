@@ -66,14 +66,19 @@ test.describe("HTTP Transport Security & Limits", () => {
     expect(response.status()).toBe(204);
   });
 
-  test("should expose oauth: false in /health when OAuth is not configured", async ({
+  test("should not expose detailed fields in /health to unauthenticated clients", async ({
     request,
   }) => {
     const response = await request.get("/health");
     expect(response.status()).toBe(200);
 
     const body = await response.json();
-    expect(body).toHaveProperty("oauth", false);
+    // Auth-gated fields should NOT be present without authentication
+    expect(body).toHaveProperty("status", "healthy");
+    expect(body).toHaveProperty("timestamp");
+    expect(body).not.toHaveProperty("oauth");
+    expect(body).not.toHaveProperty("mode");
+    expect(body).not.toHaveProperty("activeSessions");
   });
 
   test("should ignore X-Forwarded-For for rate limiting when trustProxy is not enabled", async ({
@@ -101,12 +106,16 @@ test.describe("HTTP Transport Security & Limits", () => {
     expect(headers["referrer-policy"]).toBe("no-referrer");
   });
 
-  test("should include CORS headers on responses", async ({ request }) => {
+  test("should not include CORS Allow-Origin header by default (deny-all)", async ({
+    request,
+  }) => {
     const response = await request.get("/health");
     const headers = response.headers();
 
-    // Default CORS origin is * (configurable via --cors-origins)
-    expect(headers["access-control-allow-origin"]).toBe("*");
+    // Default CORS origins is [] (deny-all) — no Allow-Origin header sent
+    expect(headers["access-control-allow-origin"]).toBeUndefined();
+
+    // Allow-Methods and Expose-Headers are always set regardless of origin match
     expect(headers["access-control-allow-methods"]).toContain("POST");
     expect(headers["access-control-allow-methods"]).toContain("GET");
     expect(headers["access-control-expose-headers"]).toContain(

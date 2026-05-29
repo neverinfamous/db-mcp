@@ -23,7 +23,7 @@ export interface QueryExecutor {
  * SQLite is embedded/local, so 5s default (vs mysql-mcp's 30s for network latency)
  */
 const DEFAULT_CACHE_TTL_MS = parseInt(
-  process.env["METADATA_CACHE_TTL_MS"] ?? "5000",
+  process.env["METADATA_CACHE_TTL_MS"] ?? "30000",
   10,
 );
 
@@ -67,6 +67,17 @@ export class SchemaManager {
    */
   clearCache(): void {
     this.metadataCache.clear();
+  }
+
+  /**
+   * Clear cache for a specific table
+   */
+  clearTableCache(tableName: string): void {
+    this.metadataCache.delete(`table_${tableName}`);
+    this.metadataCache.delete("tables");
+    this.metadataCache.delete("schema");
+    this.metadataCache.delete("raw_tables");
+    this.metadataCache.delete("all_indexes");
   }
 
   /**
@@ -184,9 +195,33 @@ export class SchemaManager {
       defaultValue: row["dflt_value"],
     }));
 
+    let strict = false;
+    try {
+      const listResult = await this.executor.executeReadQuery(
+        `PRAGMA table_list("${tableName}")`,
+      );
+      if (listResult.rows && listResult.rows.length > 0) {
+        strict = listResult.rows[0]?.["strict"] === 1;
+      }
+    } catch {
+      try {
+        const ddlResult = await this.executor.executeReadQuery(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+          [tableName],
+        );
+        const ddl = (ddlResult.rows?.[0]?.["sql"] as string) ?? "";
+        if (/\)\s*STRICT/i.test(ddl)) {
+          strict = true;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     const tableInfo: TableInfo = {
       name: tableName,
       type: "table",
+      strict,
       columns,
     };
 

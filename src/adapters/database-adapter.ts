@@ -38,6 +38,7 @@ import {
   registerResourceImpl,
   registerPromptImpl,
 } from "./registration/index.js";
+import { getAuthContext } from "../auth/auth-context.js";
 
 /**
  * Abstract base class for database adapters
@@ -108,15 +109,16 @@ export abstract class DatabaseAdapter {
   abstract executeWriteQuery(
     sql: string,
     params?: unknown[],
-    skipValidation?: boolean,
   ): Promise<QueryResult>;
 
-  /**
-   * Execute any query (for admin operations)
-   * @param sql - SQL query string
-   * @param params - Query parameters for prepared statements
-   */
   abstract executeQuery(sql: string, params?: unknown[]): Promise<QueryResult>;
+
+  /**
+   * Execute a SQL script containing multiple statements (for migrations).
+   * Bypasses standard query validation as scripts are validated separately.
+   * @param sql - SQL script string
+   */
+  abstract executeScript(sql: string): Promise<void>;
 
   // ===========================================================================
   // Schema Introspection
@@ -296,9 +298,12 @@ export abstract class DatabaseAdapter {
     server?: unknown,
     progressToken?: string | number,
   ): RequestContext {
+    const authContext = getAuthContext();
     const context: RequestContext = {
       timestamp: new Date(),
       requestId: requestId ?? crypto.randomUUID(),
+      auth: authContext?.claims,
+      clientIp: authContext?.clientIp,
     };
     if (server !== undefined) {
       context.server = server;

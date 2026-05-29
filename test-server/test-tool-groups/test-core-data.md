@@ -2,187 +2,99 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
-> We're currently testing Native mode.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All 7 core data tools are fully WASM-compatible. No items to skip or adjust.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+
+## Setup & Pre-requisites
 
 **Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-**Step 2:** Please conduct an exhaustive test of the **core-data** tool group specified in the group-specific checklist below using live MCP server tool calls directly — not scripts/terminal.
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the checklist below using live MCP server tool calls directly — not scripts/terminal.
 
-**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+**Step 3:** The agent should update `C:\Users\chris\Desktop\db-mcp\UNRELEASED.md`, update `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` if appropriate, and create a `memory-journal-mcp` entry summarizing the changes/fixes.
 
-**Note** If temp tables are present from a previous test pass, it's because the database is locked. Ignore them.
+> [!WARNING]
+> **Stale Build Issues:** The MCP server runs from the compiled `dist/` directory, NOT `src/`. If you encounter inexplicable behavior (e.g., tools executing old logic or throwing validation errors for things already fixed in the source code), the server might be running a stale build. Check if the compiled code in `dist/` matches the source code in `src/`. If out of sync, stop and instruct the user to run `npm run build` and restart the server before continuing testing.
+
+> **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
+
+### Test Schema Reference
+
+> _No specific table schema required for this test group._
 
 ## Reporting Format
 
-- ❌ Fail: Tool errors or produces incorrect results (include error message)
-- ⚠️ Issue: Unexpected behavior or improvement opportunity
-- 📦 Payload: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization (e.g., filter system tables, add `compact` option, omit empty arrays).
+- ❌ **Fail**: Tool errors or produces incorrect results (include error message)
+- ⚠️ **Issue**: Unexpected behavior or improvement opportunity
+- 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
-## Test Database Schema
+### Error Message Quality Rating
 
-The test database (test-server/test.db) contains these tables with JSON-relevant columns:
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
-| Table             | Rows | Columns                                                                       | JSON Columns                                                                              |
-| ----------------- | ---- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| test_products     | 16   | id, name, description, price, category, created_at                            | —                                                                                         |
-| test_orders       | 20   | id, product_id (FK), customer_name, quantity, total_price, order_date, status | —                                                                                         |
-| test_jsonb_docs   | 6    | id, doc, metadata, tags, created_at                                           | **doc**, **metadata** (nested), **tags** (array)                                          |
-| test_articles     | 8    | id, title, body, author, category, published_at                               | —                                                                                         |
-| test_users        | 9    | id, username, email, phone, bio, created_at                                   | —                                                                                         |
-| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure, measured_at                   | —                                                                                         |
-| test_embeddings   | 20   | id, content, category, embedding                                              | **embedding** (8-dim float array); category values: database, fitness, food, tech, travel |
-| test_locations    | 15   | id, name, city, latitude, longitude, type                                     | —                                                                                         |
-| test_categories   | 17   | id, name, path, level                                                         | —                                                                                         |
-| test_events       | 100  | id, event_type, user_id (INT, 8 values), payload, event_date                  | **payload** (JSON)                                                                        |
+## Testing Requirements & Error Standards
 
-**Primary JSON test tables:**
-
-- `test_jsonb_docs.doc` — Row 1: `{"type":"article","title":"Getting Started with SQLite","author":"Alice","views":1250,"rating":4.5}`, Row 3: `{"type":"video",...,"duration":3600}`, Row 4 has `nested.level1.level2 = "deep value"`
-- `test_jsonb_docs.metadata` — Object with keys: source, language, version, quality, subscribers
-- `test_jsonb_docs.tags` — Array of strings like `["database","tutorial","beginner"]`
-- `test_events.payload` — Object with keys: page (values: home, products, cart, checkout), session (values: sess_1000+)
-
-> **Note:** String values in test data use **lowercase** (e.g., `category = 'electronics'`, not `'Electronics'`). Use case-sensitive matching in queries.
-
-> **Note:** `test_measurements.sensor_id` is an **INTEGER** column (values 1-5), not a string. Use `sensor_id = 1`, not `sensor_id = 'S001'`.
-
-## Testing Requirements
+> [!NOTE]
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, `isError: true`, no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+>
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
+>
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
-1. Use existing `test_*` tables for read operations (SELECT, COUNT, queries)
-2. Create temporary tables with `temp_*` prefix for write operations
-3. Test each tool with realistic inputs based on the schema above
-4. Report all failures, unexpected behaviors, improvement opportunities, or unnecessarily large payloads
-5. Do not mention what already works well or issues well documented in help resources and runtime hints which are already optimal
-6. **Error path testing**: For **every** tool, test at least **two** invalid inputs: (a) a domain error (nonexistent table, invalid column, missing required parameter) and (b) a **Zod validation error** (call the tool with `{}` empty params if it has required parameters, or pass the wrong type). Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame. See the "Structured Error Response Pattern" section below for how to distinguish the two. This is the most common deficiency found across tool groups.
-7. **Output schema testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches (handler returns fields not declared in the schema) produce the same `-32602` code as input errors but are only caught with valid inputs. See "Output Schema Validation Errors" below. Also check for the inverse: if a schema is **defined** in `src/adapters/sqlite/schemas/` but **not wired** to the tool definition, report as ⚠️ — the schema exists but provides no enforcement.
-8. **Deterministic checklist first**: Complete ALL items in the group-specific checklist before moving to freeform exploration. The checklist uses exact inputs and expected outputs to ensure reproducible coverage every run.
-9. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
+2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
+   - (a) A domain error (e.g., non-existent table).
+   - (b) An **empty parameters test** (call the tool with `{}`).
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
+   > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
+5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
+   > **CRITICAL**: Architectural consistency is paramount. Do not introduce undocumented architectural deviations. If you implement a structural or architectural improvement in one tool, you must apply it symmetrically to other applicable tools in the group or project.
+6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+7. **Token Tracking**: Monitor `metrics.tokenEstimate` to detect payload issues.
+8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
-## Structured Error Response Pattern
+### Structured Error Response Pattern
 
-All tools should return errors as structured objects instead of throwing. A thrown error propagates as a raw MCP error, which is unhelpful to clients. The expected pattern:
+All tools should return errors as structured objects instead of throwing. The expected pattern:
 
 ```json
 { "success": false, "error": "Human-readable error message" }
 ```
-
-### Handler Error vs MCP Error — How to Distinguish
-
-There are two kinds of error responses. Only one is correct:
 
 | Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
 | -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
 | **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
 
-**Concrete examples:**
+## Naming & Cleanup
 
-```
-✅ Handler error (correct):
-{"success": false, "error": "Table 'nonexistent_xyz' does not exist"}
-
-❌ MCP error (bug — handler threw instead of catching):
-content: [{type: "text", text: "Error: SQLITE_ERROR: no such table: nonexistent_xyz"}]
-isError: true
-```
-
-The MCP error case means the handler is missing a `try/catch` block. When testing, if you see a raw error string (especially one containing `SQLITE_ERROR` without a `success` field), report it as ❌.
-
-### Zod Validation Errors
-
-Calling a tool with wrong parameter types or missing required fields triggers a Zod validation error. If the handler has no outer `try/catch`, this surfaces as a raw MCP error (often `-32602`). Test every tool with `{}` (empty params) if it has required parameters — the response must be a handler error, not an MCP error.
-
-**Zod refinement leak pattern:** `DatabaseAdapter.registerTool()` uses `.partial()` on input schemas so the SDK accepts `{}`. But `.partial()` only makes keys **optional** — it does NOT strip refinements like `.min(1)`, `.max(90)`, or `.min(-90).max(90)`. This applies to **ALL types** — strings, arrays, AND numbers:
-
-- `z.string().min(1)` + empty `""` → SDK rejects with raw MCP `-32602`
-- `z.array().min(1)` + empty `[]` → SDK rejects with raw MCP `-32602`
-- `z.number().min(-90).max(90)` + value `91` → SDK rejects with raw MCP `-32602`
-
-**Fix:** Remove ALL `.min(N)` / `.max(N)` refinements from the schema and validate inside the handler instead (see `sqlite_query_plan` in `diagnostics.ts`, `sqlite_append_insight` in `pragma.ts`, and `validateCoordinates()` in `geo.ts` for examples). Optional fields with `.default()` are safe because the default satisfies the constraint.
-
-**Required enum coercion pattern:** For **optional** enum params with defaults, `z.preprocess(coercer, z.enum([...]).optional().default(...))` works — the coercer returns `undefined` for invalid values → the `.default()` kicks in. For **required** enum params (no `.optional().default(...)`), this pattern **fails**: the SDK's `.partial()` wraps the preprocess in `.optional()`, but the inner `z.enum()` still rejects `undefined` → raw MCP `-32602`. **Fix:** Use `z.string()` in the schema and validate the enum inside the handler's `try/catch`, returning a structured error (see `VALID_ANALYSIS_TYPES` / `VALID_OPERATIONS` / `VALID_FORMATS` in SpatiaLite `analysis.ts` for examples).
-
-**What to report:**
-
-- If a tool call returns a raw MCP error (no JSON body with `success` field), report it as ❌ with the tool name and the raw error message
-- If a tool returns `{success: false, error: "..."}`, that is the correct behavior — do not report it as a failure
-- If a tool returns a successful response for an obviously invalid input (e.g., nonexistent table returns `{success: true}`), report it as ⚠️
-
-### Wrong-Type Numeric Parameter Coercion
-
-For every tool with optional numeric parameters (e.g., `limit`, `buckets`, `windowSize`, `radius`, `sampleSize`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error. Acceptable behaviors:
-
-- Handler returns `{success: false, error: "..."}` with a validation message
-- Handler silently applies the default value
-- Handler coerces to NaN and returns a descriptive error
-
-Unacceptable: Raw MCP error frame with `-32602` code.
-
-### Output Schema Validation Errors
-
-The MCP SDK enforces `additionalProperties: false` on **output** schemas. If a handler returns fields not declared in its output schema, the SDK rejects the response with a raw `-32602` error — even though the handler logic succeeded. This is a different failure mode from input validation:
-
-- **Input `-32602`**: Triggered by sending unrecognized/invalid parameters → caught by the Zod sweep (call with `{}` or `extraParam`)
-- **Output `-32602`**: Triggered by the handler **returning** undeclared fields → caught by a valid happy-path call that still produces a raw MCP error
-
-**How to detect:** If a tool call with **correct, valid inputs** returns a raw MCP `-32602` mentioning "does not match the tool's output schema" or "additional properties", the output schema in `src/adapters/sqlite/schemas/` is missing fields that the handler returns. Report as ❌ with both the tool name and the missing field(s).
-
-**Fix pattern:** Add the missing fields to the output schema (e.g., `durationMs: z.number().optional()`, `message: z.string().optional()`). Do NOT remove fields from the handler response — the schema must match reality.
-
-**Systematic check:** For every tool that has an `outputSchema`, make at least one valid happy-path call and confirm it returns a parseable JSON object with a `success` field — not a raw MCP error. This is separate from (and complementary to) the Zod validation sweep, which tests invalid inputs.
-
-### Error Consistency Audit
-
-During testing, check for these inconsistencies across tool groups:
-
-1. **Throw-vs-return**: If a tool throws a raw error instead of returning `{success: false}`, report as ❌. Document which tool groups have raw-error leakage.
-2. **Error field name**: All `{success: false}` responses should use `error` as the field name. The `reason` field is reserved for `{success: true, skipped: true}` informational responses.
-3. **Zod validation leaks**: If calling a tool with an invalid enum value or missing required field produces a raw MCP `-32602` error instead of a structured response, report as ❌.
-4. **Output schema leaks**: If calling a tool with valid inputs produces a raw MCP `-32602` mentioning "output schema" or "additional properties", report as ❌ (see "Output Schema Validation Errors" above).
-5. **Centralized error formatting**: db-mcp uses `DbMcpError`. If any tool group catches errors but formats them inconsistently (e.g., different message patterns for the same error type), report as ⚠️.
-6. **Orphaned output schemas**: If a schema is exported from `src/adapters/sqlite/schemas/` (e.g., `TransactionBeginOutputSchema`) but the corresponding tool definition does not reference it via `outputSchema`, report as ⚠️. Use `grep_search` to check whether the schema name appears in any tool file under `src/adapters/`. Defined-but-unwired schemas provide zero enforcement.
-7. **Inline output schemas**: If any tool defines `outputSchema: z.object({...})` inline in the handler file instead of importing a named schema from `schemas/`, report as ⚠️. All output schemas must live in `src/adapters/sqlite/schemas/` with named exports. Use `grep_search` with pattern `outputSchema: z.object` across `src/adapters/` to detect violations.
-
-## Error Path Testing Checklist
-
-For each tool group under test, verify at least one scenario from each applicable row:
-
-| Error Scenario                    | Tool Groups to Test                 | Example Input                                                           |
-| --------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
-| Nonexistent table                 | All table-accepting tools           | `table: "nonexistent_xyz"`                                              |
-| Invalid SQL syntax                | Core (`read_query`, `write_query`)  | `query: "SELEKT * FROM"`                                                |
-| Invalid column name               | Stats, JSON, text, vector, geo      | `column: "nonexistent_col"`                                             |
-| Missing required field            | All tools with required params      | Omit `table`, `query`, etc.                                             |
-| **Zod validation (empty params)** | **Every tool with required params** | `{}` (empty object — must return handler error, not MCP `-32602` error) |
-| **Zod validation (wrong type)**   | **Tools with typed params**         | Pass string where number expected, etc.                                 |
-
-### Split Schema Pattern Verification
-
-All tools use the Split Schema pattern: a plain `z.object()` Base schema for MCP parameter visibility, and a `z.preprocess()` wrapper for handler parsing. Verify:
-
-1. **Parameter visibility**: For tools with optional parameters (e.g., `limit`, `readonly`), make a direct MCP call using those parameters. If the tool ignores or rejects documented parameters, report as a Split Schema violation.
-2. **Alias acceptance**: For tools with documented parameter aliases (e.g., `table`/`tableName`, `query`/`sql`, `indexName`/`name`), verify that direct MCP tool calls correctly accept the aliases.
-
-## Cleanup Conventions
-
-During testing, use these naming conventions:
-
-- **Temporary tables**: Prefix with `temp_` (e.g., `temp_core_test`)
-
-After testing, clean up:
-
-```sql
--- Drop temp table
-DROP TABLE IF EXISTS temp_core_test;
-```
+- **Temporary tables**: `temp_*` (or `stress_*`) prefix
+- **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
+- Drop at the end of the script. If DROP fails due to lock, note and move on.
 
 ---
 
@@ -192,21 +104,23 @@ DROP TABLE IF EXISTS temp_core_test;
 
 ### Built-in Tools (3)
 
-1. server_info
-2. server_health
-3. list_adapters
+- `server_info`
+- `server_health`
+- `list_adapters`
 
-### core-data Group Tools (7)
+### Group Tools (9)
 
-4. sqlite_read_query
-5. sqlite_write_query
-6. sqlite_upsert
-7. sqlite_batch_insert
-8. sqlite_count
-9. sqlite_exists
-10. sqlite_truncate
+- `sqlite_read_query`
+- `sqlite_write_query`
+- `sqlite_upsert`
+- `sqlite_batch_insert`
+- `sqlite_count`
+- `sqlite_exists`
+- `sqlite_truncate`
+- `sqlite_date_add`
+- `sqlite_date_diff`
 
-**Checklist:**
+## Phase 1: Core Check (batched)
 
 1. `server_info` → verify server name, version, adapter info present
 2. `server_health` → verify healthy status
@@ -220,21 +134,49 @@ DROP TABLE IF EXISTS temp_core_test;
 10. `sqlite_count({table: "test_products"})` → `{count: 16}`
 11. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
 12. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
-13. `sqlite_drop_table({table: "temp_core_test2"})` → success
+13. `sqlite_write_query({query: "INSERT INTO temp_core_test2 (id, val) VALUES (99, 'returning_test') RETURNING *"})` → verify `rows` array contains the inserted row with `id: 99` (Note: SQL RETURNING clause passed through directly)
+14. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 100, val: "no_return"}], returning: false})` → verify `rowsAffected: 1` WITHOUT a `rows` array (negative test for returning parameter)
+15. `sqlite_drop_table({table: "temp_core_test2"})` → success
+16. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
+17. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
 
 **Error path testing:**
 
-🔴 14. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 18. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 19. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
+🔴 20. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
+🔴 21. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
+🔴 22. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 23. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 24. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 25. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
+🔴 26. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
 
-**Zod validation sweep** — call each tool with `{}` (empty params). Every response must be a handler error (`{success: false, error: "Validation error: ..."}`) — NOT a raw MCP error frame:
+## Phase 2: Zod Validation Sweep
 
-🔴 15. `sqlite_read_query({})` → handler error
-🔴 16. `sqlite_write_query({})` → handler error
-🔴 17. `sqlite_upsert({})` → handler error
-🔴 18. `sqlite_batch_insert({})` → handler error
-🔴 19. `sqlite_count({})` → handler error
-🔴 20. `sqlite_exists({})` → handler error
-🔴 21. `sqlite_truncate({})` → handler error
+**Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
+
+🔴 27. `sqlite_read_query({})` → handler error
+🔴 28. `sqlite_write_query({})` → handler error
+🔴 29. `sqlite_upsert({})` → handler error
+🔴 30. `sqlite_batch_insert({})` → handler error
+🔴 31. `sqlite_count({})` → handler error
+🔴 32. `sqlite_exists({})` → handler error
+🔴 33. `sqlite_truncate({})` → handler error
+🔴 34. `sqlite_date_add({})` → handler error
+🔴 35. `sqlite_date_diff({})` → handler error
+
+**Built-in tools** — these take no required params, so `{}` should return a successful response (confirming graceful handling):
+
+🔴 36. `server_info({})` → should succeed (no required params)
+🔴 37. `server_health({})` → should succeed (no required params)
+🔴 38. `list_adapters({})` → should succeed (no required params)
+
+## Phase 3: Wrong-Type Numeric Coercion
+
+> For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
+
+🔴 39. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
 
 ---
 
@@ -247,7 +189,7 @@ DROP TABLE IF EXISTS temp_core_test;
 
 ### After Testing
 
-1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
    - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
@@ -256,7 +198,8 @@ DROP TABLE IF EXISTS temp_core_test;
 
 ### After Implementation
 
-3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-4. **Commit**: Stage and commit all changes — do NOT push
-5. **Live re-test**: Test fixes with direct MCP tool calls. I will have already rebuilt and restarted the server.
-6. **Final summary**: If no issues found, provide the final summary after testing. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working. If the test prompt/database can be improved, make the improvements.
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   validateColumnExists,
   validateNumericColumn,
@@ -16,10 +17,7 @@ import type {
 } from "../../../../types/index.js";
 import { resolveAliases } from "../../types.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  validateWhereClause,
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ResourceNotFoundError,
@@ -31,6 +29,7 @@ import {
   StatsGroupByOutputSchema,
   StatsHistogramOutputSchema,
   StatsPercentileOutputSchema,
+  StatsSampleOutputSchema,
 } from "../../schemas/stats.js";
 import {
   BasicStatsSchema,
@@ -38,6 +37,7 @@ import {
   GroupByStatsSchema,
   HistogramSchema,
   PercentileSchema,
+  StatsSampleSchema,
 } from "../../schemas/stats.js";
 
 /**
@@ -54,6 +54,7 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Basic Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const aliasedParams = resolveAliases(params, {
           tableName: "table",
@@ -76,12 +77,18 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
                   MAX(${column}) - MIN(${column}) as range
               FROM ${table}`;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
         const row = result.rows?.[0];
 
         const toNumberOrNull = (val: unknown): number | null => {
@@ -103,7 +110,7 @@ export function createBasicStatsTool(adapter: SqliteAdapter): ToolDefinition {
             range: toNumberOrNull(row?.["range"]),
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -129,6 +136,7 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
           columnName: "column",
         });
         const input = StatsCountSchema.parse(aliasedParams);
+        const queryParams: unknown[] = [];
 
         if (input.column) {
           await validateColumnExists(adapter, input.table, input.column);
@@ -163,19 +171,25 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${countExpr} as count FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
           count: result.rows?.[0]?.["count"] ?? 0,
           distinct: input.distinct,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -197,6 +211,7 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GroupByStatsSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -228,14 +243,20 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
         let sql = `SELECT ${groupByColumn}, ${statFunc}(${valueColumn}) as stat_value
                   FROM ${table}`;
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
 
         sql += ` GROUP BY ${groupByColumn} ORDER BY ${orderCol} DESC LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         return {
           success: true,
@@ -243,7 +264,7 @@ export function createGroupByStatsTool(adapter: SqliteAdapter): ToolDefinition {
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -265,6 +286,7 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = HistogramSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         if (input.buckets < 1) {
           throw new ValidationError(
@@ -287,12 +309,21 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         let minMaxSql = `SELECT MIN(${column}) as min_val, MAX(${column}) as max_val, COUNT(${column}) as cnt FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          minMaxSql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            minMaxSql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
 
-        const minMaxResult = await adapter.executeReadQuery(minMaxSql);
+        const minMaxResult = await adapter.executeReadQuery(
+          minMaxSql,
+          queryParams,
+        );
         const rawMin = minMaxResult.rows?.[0]?.["min_val"];
         const rawMax = minMaxResult.rows?.[0]?.["max_val"];
         const rowCount = (minMaxResult.rows?.[0]?.["cnt"] as number) ?? 0;
@@ -335,12 +366,18 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT ${bucketCases.join(", ")} FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const buckets = [];
         for (let i = 0; i < input.buckets; i++) {
@@ -361,7 +398,7 @@ export function createHistogramTool(adapter: SqliteAdapter): ToolDefinition {
           bucketSize,
           buckets,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -384,6 +421,7 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = PercentileSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         const invalidPercentiles = input.percentiles.filter(
           (p) => p < 0 || p > 100,
@@ -407,13 +445,19 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
         const column = sanitizeIdentifier(input.column);
 
         let sql = `SELECT ${column} as value FROM ${table} WHERE ${column} IS NOT NULL`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` AND ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` AND ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += ` ORDER BY ${column}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
         const values = (result.rows ?? []).map((r) => r["value"] as number);
 
         if (values.length === 0) {
@@ -441,7 +485,94 @@ export function createPercentileTool(adapter: SqliteAdapter): ToolDefinition {
           count: values.length,
           percentiles,
         };
-      } catch (error) {
+      } catch (error: unknown) {
+        return formatHandlerError(error);
+      }
+    },
+  };
+}
+
+/** Hard cap for sample size to prevent excessive memory usage */
+const MAX_SAMPLE_SIZE = 1000;
+
+/**
+ * Random sample
+ */
+export function createSampleTool(adapter: SqliteAdapter): ToolDefinition {
+  return {
+    name: "sqlite_stats_sample",
+    description:
+      "Get a random sample of rows for exploratory analysis. Uses ORDER BY RANDOM() which is O(N) — may be slow on very large tables (>1M rows).",
+    group: "stats",
+    inputSchema: StatsSampleSchema,
+    outputSchema: StatsSampleOutputSchema,
+    requiredScopes: ["read"],
+    annotations: readOnly("Random Sample"),
+    handler: async (params: unknown, _context: RequestContext) => {
+      try {
+        const input = StatsSampleSchema.parse(params);
+        const queryParams: unknown[] = [];
+        const effectiveSize = Math.min(input.sampleSize, MAX_SAMPLE_SIZE);
+
+        if (effectiveSize < 1) {
+          throw new ValidationError(
+            "sampleSize must be at least 1",
+            "INVALID_INPUT",
+          );
+        }
+
+        const table = sanitizeIdentifier(input.table);
+
+        // Build column list
+        let columns = "*";
+        if (input.selectColumns && input.selectColumns.length > 0) {
+          columns = input.selectColumns
+            .map((c) => sanitizeIdentifier(c))
+            .join(", ");
+        }
+
+        // Get total row count for context
+        let countSql = `SELECT COUNT(*) as total FROM ${table}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            countSql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
+        }
+        const countResult = await adapter.executeReadQuery(
+          countSql,
+          queryParams,
+        );
+        const totalRows = (countResult.rows?.[0]?.["total"] as number) ?? 0;
+
+        // Get random sample
+        let sql = `SELECT ${columns} FROM ${table}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
+        }
+        sql += ` ORDER BY RANDOM() LIMIT ${effectiveSize}`;
+
+        const result = await adapter.executeReadQuery(sql, queryParams);
+
+        return {
+          success: true,
+          table: input.table,
+          sampleSize: result.rows?.length ?? 0,
+          totalRows,
+          rows: result.rows,
+        };
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

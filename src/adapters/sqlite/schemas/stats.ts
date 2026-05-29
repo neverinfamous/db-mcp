@@ -1,3 +1,4 @@
+import { WhereConditionSchema } from "./where.js";
 /**
  * Statistical Analysis Tool Output Schemas (14 stats tools)
  */
@@ -8,8 +9,9 @@ import { ErrorFieldsMixin } from "./error-mixin.js";
 
 const coerceNumber = (val: unknown): unknown => {
   if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
     const num = Number(val);
-    return isNaN(num) ? undefined : num;
+    return isNaN(num) ? val : num;
   }
   return val;
 };
@@ -384,7 +386,14 @@ export const BasicStatsSchema = z.object({
   tableName: z.string().optional().describe("Alias for table name"),
   column: z.string().describe("Numeric column for statistics"),
   columnName: z.string().optional().describe("Alias for column name"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const StatsCountSchema = z.object({
@@ -393,7 +402,14 @@ export const StatsCountSchema = z.object({
   column: z.string().optional().describe("Column to count (default: *)"),
   columnName: z.string().optional().describe("Alias for column name"),
   distinct: z.boolean().optional().default(false),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const GroupByStatsSchema = z.object({
@@ -403,7 +419,14 @@ export const GroupByStatsSchema = z.object({
   stat: z
     .string()
     .describe("Statistic type: 'sum', 'avg', 'min', 'max', or 'count'"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   orderBy: z.preprocess(
     coerceEnumValues(["value", "group"]),
     z.enum(["value", "group"]).optional().default("group"),
@@ -418,21 +441,42 @@ export const HistogramSchema = z.object({
     coerceNumber,
     z.number().optional().default(10).describe("Number of buckets"),
   ),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const PercentileSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Numeric column"),
   percentiles: z.array(z.number()).describe("Percentiles to compute"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const CorrelationSchema = z.object({
   table: z.string().describe("Table name"),
   column1: z.string().describe("First numeric column"),
   column2: z.string().describe("Second numeric column"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const TopNSchema = z.object({
@@ -446,7 +490,14 @@ export const TopNSchema = z.object({
     coerceEnumValues(["asc", "desc"]),
     z.enum(["asc", "desc"]).optional().default("desc"),
   ),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   selectColumns: z
     .array(z.string())
     .optional()
@@ -457,7 +508,14 @@ export const DistinctValuesSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to get distinct values"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const SummaryStatsSchema = z.object({
@@ -466,14 +524,28 @@ export const SummaryStatsSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Columns to summarize (default: all numeric)"),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const FrequencySchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column to count frequency"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(20)),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const OutlierSchema = z.object({
@@ -492,7 +564,14 @@ export const OutlierSchema = z.object({
         "IQR multiplier (default 1.5) or Z-score threshold (default 3)",
       ),
   ),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
   maxOutliers: z.preprocess(
     coerceNumber,
@@ -514,7 +593,14 @@ export const RegressionSchema = z.object({
     coerceNumber,
     z.number().optional().default(1).describe("Polynomial degree (1=linear)"),
   ),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 export const HypothesisSchema = z.object({
@@ -532,8 +618,55 @@ export const HypothesisSchema = z.object({
     coerceNumber,
     z.number().optional().describe("Expected mean for one-sample t-test"),
   ),
-  whereClause: z.string().optional(),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
+
+// =============================================================================
+// Stats Sample Schema
+// =============================================================================
+
+export const StatsSampleSchema = z.object({
+  table: z.string().describe("Table name"),
+  sampleSize: z.preprocess(
+    coerceNumber,
+    z
+      .number()
+      .optional()
+      .default(100)
+      .describe(
+        "Number of random rows to return (default: 100, max: 1000). WARNING: Uses ORDER BY RANDOM() which is O(N) — slow on very large tables.",
+      ),
+  ),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
+  selectColumns: z
+    .array(z.string())
+    .optional()
+    .describe("Columns to include in result (default: all columns)"),
+});
+
+export const StatsSampleOutputSchema = z
+  .object({
+    success: z.boolean(),
+    table: z.string().optional(),
+    sampleSize: z.number().optional(),
+    totalRows: z.number().optional(),
+    rows: z.array(StatsRowRecordSchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
 
 // =============================================================================
 // Types
@@ -552,6 +685,7 @@ export type FrequencyInput = z.infer<typeof FrequencySchema>;
 export type OutlierInput = z.infer<typeof OutlierSchema>;
 export type RegressionInput = z.infer<typeof RegressionSchema>;
 export type HypothesisInput = z.infer<typeof HypothesisSchema>;
+export type StatsSampleInput = z.infer<typeof StatsSampleSchema>;
 
 // // const coerceNumber = (val: unknown): unknown =>
 //   typeof val === "string"
@@ -609,7 +743,14 @@ export const DetectAnomaliesSchema = z.object({
       .default(50)
       .describe("Maximum anomalies to return per column (default: 50)"),
   ),
-  whereClause: z.string().optional().describe("Optional WHERE clause filter"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 export type DetectAnomaliesInput = z.infer<typeof DetectAnomaliesSchema>;
 

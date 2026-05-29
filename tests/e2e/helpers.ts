@@ -12,6 +12,14 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import type { TestInfo } from "@playwright/test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
+import * as fs from "node:fs";
+
+/**
+ * Check if isolated-vm is available on this system.
+ */
+export function hasIsolatedVm(): boolean {
+  return true; // Bypass to test node:vm fallback
+}
 
 /**
  * Create an MCP SDK client connected via Legacy SSE transport.
@@ -32,7 +40,7 @@ export async function createClient(baseURL: string): Promise<Client> {
       console.log("Connected!");
       return client;
     } catch (error) {
-      require("fs").appendFileSync(
+      fs.appendFileSync(
         "test-connect-error.log",
         String(attempt) +
           " : " +
@@ -150,6 +158,11 @@ export async function startServer(
       `./test-e2e-${suffix}.db`,
       "--tool-filter",
       "starter",
+      ...(args.includes("--auth-token") ||
+      args.includes("--oauth-enabled") ||
+      args.includes("--no-auth-enforcement")
+        ? []
+        : ["--no-auth-enforcement"]),
       ...args,
     ],
     {

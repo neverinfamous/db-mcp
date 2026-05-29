@@ -6,92 +6,204 @@
  */
 
 import { ValidationError } from "../utils/errors/index.js";
+import { getAuthContext } from "../auth/auth-context.js";
+import sqliteParser from "sqlite-parser";
 
 /**
- * Pre-compiled dangerous SQL patterns for injection detection.
- * Hoisted to module scope to avoid re-allocating RegExp objects per query.
+ * Functions that are generally dangerous in untrusted queries
+ * (e.g., loading extensions, writing files, or data exfiltration oracles).
  */
-const DANGEROUS_SQL_PATTERNS: RegExp[] = [
-  /;\s*DROP\s+/i,
-  /;\s*DELETE\s+/i,
-  /;\s*TRUNCATE\s+/i,
-  /;\s*ALTER\s+/i,
-  /;\s*UNION\s+ALL\s+SELECT/i,
-  /;\s*UNION\s+SELECT/i,
-  /;\s*ATTACH\s+/i,
-  /;\s*DETACH\s+/i,
-];
+const UNSAFE_FUNCTIONS = new Set([
+  "LOAD_EXTENSION",
+  "WRITEFILE",
+  "READFILE",
+  "ATTACH",
+  "DETACH",
+]);
 
 /**
- * Comment-style SQL patterns.
- * Checked against string-literal-stripped SQL to avoid false positives
- * on comment markers inside quoted strings (e.g., SELECT 'a--b').
+ * Security-sensitive PRAGMAs that must be blocked globally.
  */
-const COMMENT_SQL_PATTERNS: RegExp[] = [/--.*$/m, /\/\*[\s\S]*?\*\//];
+export const BLOCKED_PRAGMAS = new Set([
+  "writable_schema",
+  "trusted_schema",
+  "defensive",
+  "cell_size_check",
+  "temp_store_directory",
+  "journal_mode",
+  "synchronous",
+  "page_size",
+  "temp_store",
+  "wal_autocheckpoint",
+  "locking_mode",
+  "mmap_size",
+  "busy_timeout",
+  "cache_size",
+]);
 
 /**
- * Strip SQL string literals so comment detection doesn't match
- * markers inside quoted values. Handles escaped quotes ('').
- */
-function stripSqlStringLiterals(sql: string): string {
-  return sql.replace(/'(?:''|[^'])*'/g, "''");
-}
-
-/**
- * Write-statement prefixes blocked in read-only mode
- */
-const WRITE_PREFIXES = [
-  "INSERT",
-  "UPDATE",
-  "DELETE",
-  "DROP",
-  "CREATE",
-  "ALTER",
-  "TRUNCATE",
-] as const;
-
-/**
- * Validate query for safety (SQL injection prevention).
+ * Validate query for safety (SQL injection prevention) using strict structural validation.
+ * Strips comments and strings to reliably detect stacked queries and disallowed keywords.
  *
  * @param sql - SQL query to validate
  * @param isReadOnly - Whether to enforce read-only restrictions
  * @throws ValidationError if query violates safety rules
  */
 export function validateQuery(sql: string, isReadOnly: boolean): void {
-  const trimmedSql = sql.trim().toUpperCase();
+  if (!sql || sql.trim() === "") {
+    return; // Empty queries are validated elsewhere
+  }
+
+  let stripped = "";
+  let inString = false;
+  let stringChar = "";
+  let inBlockComment = false;
+  let inLineComment = false;
+
+  for (let i = 0; i < sql.length; i++) {
+    const c = sql[i];
+    const next = sql[i + 1] || "";
+
+    if (inBlockComment) {
+      if (c === "*" && next === "/") {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+    if (inLineComment) {
+      if (c === "\n") {
+        inLineComment = false;
+      }
+      continue;
+    }
+    if (inString) {
+      if (c === stringChar) {
+        if (next === stringChar) {
+          i++; // escape
+        } else {
+          inString = false;
+        }
+      }
+      continue;
+    }
+
+    if (c === "'" || c === '"' || c === "`" || c === "[") {
+      inString = true;
+      stringChar = c === "[" ? "]" : c;
+      continue;
+    }
+
+    if (c === "-" && next === "-") {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+
+    stripped += c;
+  }
+
+  // Security check for blocked pragmas that mutate state (after comment stripping)
+  const pragmaMatches = stripped.matchAll(
+    /\bPRAGMA\s+(?:[a-zA-Z_]+\.)?([a-zA-Z_]+)\s*(?:=|\()/gi,
+  );
+  for (const match of pragmaMatches) {
+    if (match[1] && BLOCKED_PRAGMAS.has(match[1].toLowerCase())) {
+      throw new ValidationError(
+        `Mutating PRAGMA '${match[1]}' is blocked for security`,
+        "DB_DANGEROUS_PATTERN",
+      );
+    }
+  }
+
+  let ast: unknown = null;
+  let parseError = false;
+  try {
+    ast = sqliteParser(stripped);
+  } catch {
+    parseError = true;
+  }
+
+  if (
+    ast !== null &&
+    typeof ast === "object" &&
+    "statement" in ast &&
+    Array.isArray((ast as { statement: unknown[] }).statement)
+  ) {
+    if ((ast as { statement: unknown[] }).statement.length > 1) {
+      throw new ValidationError(
+        "Multiple stacked statements are not allowed.",
+        "DB_DANGEROUS_PATTERN",
+      );
+    }
+  } else if (parseError) {
+    if (
+      /;\s*(?:INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE|UPSERT|PRAGMA|TRUNCATE)\b/i.test(
+        stripped,
+      )
+    ) {
+      throw new ValidationError(
+        "Multiple stacked statements are not allowed.",
+        "DB_DANGEROUS_PATTERN",
+      );
+    }
+  }
+
+  const rootStmt = stripped.trim();
 
   if (isReadOnly) {
-    // For read-only queries, block mutating statements
-    for (const prefix of WRITE_PREFIXES) {
-      if (trimmedSql.startsWith(prefix)) {
+    const isSafeRead =
+      /^\s*(?:WITH\s+[\s\S]+?)?(?:SELECT|EXPLAIN|PRAGMA)\b/i.test(rootStmt);
+    const writeMatch =
+      /\b(INSERT|UPDATE|DELETE|REPLACE|DROP|CREATE|ALTER|VACUUM|ANALYZE|TRUNCATE)\b/i.exec(
+        rootStmt,
+      );
+
+    if (writeMatch) {
+      throw new ValidationError(
+        `Read-only mode: ${writeMatch[1]?.toUpperCase() ?? "WRITE"} statements are not allowed`,
+        "DB_READ_ONLY_VIOLATION",
+      );
+    }
+    if (!isSafeRead) {
+      throw new ValidationError(
+        `Read-only mode violation: statement contains disallowed keywords`,
+        "DB_READ_ONLY_VIOLATION",
+      );
+    }
+  } else {
+    const ddlPattern =
+      /^\s*(?:BEGIN\s+)?(?:WITH\s+[\s\S]+?)?(CREATE|DROP|ALTER|VACUUM|ANALYZE)\b/i;
+    if (ddlPattern.test(stripped)) {
+      const authCtx = getAuthContext();
+      if (
+        authCtx &&
+        authCtx.authenticated &&
+        !authCtx.scopes.includes("admin") &&
+        !authCtx.scopes.includes("full")
+      ) {
         throw new ValidationError(
-          `Read-only mode: ${prefix} statements are not allowed`,
-          "DB_READ_ONLY_VIOLATION",
+          "DDL operations (CREATE, DROP, ALTER) require 'admin' or 'full' scope",
+          "DB_ADMIN_REQUIRED",
         );
       }
     }
   }
 
-  // Block obvious SQL injection patterns
-  // Note: This is a basic check; parameterized queries are the primary defense
-  for (const pattern of DANGEROUS_SQL_PATTERNS) {
-    if (pattern.test(sql)) {
-      throw new ValidationError(
-        "Query contains potentially dangerous patterns",
-        "DB_DANGEROUS_PATTERN",
-      );
-    }
-  }
-
-  // Check comment patterns against string-literal-stripped SQL
-  // to avoid false positives on markers inside quoted strings
-  const sqlWithoutStrings = stripSqlStringLiterals(sql);
-  for (const pattern of COMMENT_SQL_PATTERNS) {
-    if (pattern.test(sqlWithoutStrings)) {
-      throw new ValidationError(
-        "Query contains potentially dangerous patterns",
-        "DB_DANGEROUS_PATTERN",
-      );
-    }
+  const unsafePattern = new RegExp(
+    `\\b(${Array.from(UNSAFE_FUNCTIONS).join("|")})\\b`,
+    "i",
+  );
+  const match = unsafePattern.exec(stripped);
+  if (match) {
+    throw new ValidationError(
+      `Unsafe function call detected: ${match[0].toUpperCase()}`,
+      "DB_DANGEROUS_PATTERN",
+    );
   }
 }

@@ -173,6 +173,7 @@ test.describe("Errors: JSON", () => {
         column: "doc",
         path: "$.key",
         value: "test",
+        whereClause: "1=1",
       });
       expectHandlerError(p);
     } finally {
@@ -521,6 +522,92 @@ test.describe("Errors: Admin", () => {
         tableName: "_e2e_nonexistent_vtable_xyz",
       });
       expectHandlerError(p);
+    } finally {
+      await client.close();
+    }
+  });
+});
+
+// =============================================================================
+// DDL Rejection — write_query guards
+// =============================================================================
+
+test.describe("Errors: DDL Rejection in write_query", () => {
+  test("CREATE VIEW rejected", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_write_query", {
+        query: "CREATE VIEW _e2e_hack_view AS SELECT 1",
+      });
+      expectHandlerError(p);
+      expect(p.error as string).toMatch(/CREATE/i);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("ALTER TABLE rejected", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_write_query", {
+        query: "ALTER TABLE test_products ADD COLUMN _e2e_hack TEXT",
+      });
+      expectHandlerError(p);
+      expect(p.error as string).toMatch(/ALTER/i);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("VACUUM rejected", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_write_query", {
+        query: "VACUUM",
+      });
+      expectHandlerError(p);
+      expect(p.error as string).toMatch(/VACUUM/i);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("CREATE TRIGGER rejected via write_query", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      // Create trigger (should fail — DDL exception removed)
+      const p = await callToolAndParse(client, "sqlite_write_query", {
+        query:
+          "CREATE TRIGGER IF NOT EXISTS _e2e_ddl_trg AFTER INSERT ON test_products BEGIN SELECT 1; END",
+      });
+      expectHandlerError(p);
+      expect(p.error as string).toMatch(/CREATE/i);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("DROP TABLE rejected via write_query", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_write_query", {
+        query: "DROP TABLE test_products",
+      });
+      expectHandlerError(p);
+      expect(p.error as string).toMatch(/DROP/i);
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("PRAGMA rejected via write_query", async ({}, testInfo) => {
+    const client = await createClient(getBaseURL(testInfo));
+    try {
+      const p = await callToolAndParse(client, "sqlite_write_query", {
+        query: "PRAGMA journal_mode = WAL",
+      });
+      expectHandlerError(p);
+      expect(p.error as string).toMatch(/PRAGMA/i);
     } finally {
       await client.close();
     }

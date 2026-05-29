@@ -16,9 +16,17 @@ import {
   callToolAndParse,
   expectSuccess,
   expectHandlerError,
+  hasIsolatedVm,
 } from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
+
+test.beforeEach(() => {
+  test.skip(
+    !hasIsolatedVm(),
+    "isolated-vm is not installed on this system, skipping Code Mode tests",
+  );
+});
 
 // =============================================================================
 // Phase 1: Sandbox Basics
@@ -290,7 +298,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not a function");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -311,7 +319,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not a function");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -332,7 +340,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not a function");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -353,7 +361,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not a function");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -374,7 +382,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not a function");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;
@@ -395,7 +403,7 @@ test.describe("Code Mode: Readonly", () => {
       });
       if (isWasm) {
         expect(p.success).toBe(false);
-        expect(String(p.error)).toContain("not a function");
+        expect(String(p.error)).toContain("is not a function");
       } else {
         expectSuccess(p);
         const result = p.result as Record<string, unknown>;

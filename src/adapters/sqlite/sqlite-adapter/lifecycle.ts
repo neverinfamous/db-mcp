@@ -25,6 +25,11 @@ export interface ConnectionResult {
   schemaManager: SchemaManager;
 }
 
+let _sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
+function getSqlJs(): ReturnType<typeof initSqlJs> {
+  return (_sqlJsPromise ??= initSqlJs());
+}
+
 export async function connectSqliteDatabase(
   adapter: SqliteAdapter,
   config: DatabaseConfig,
@@ -39,7 +44,8 @@ export async function connectSqliteDatabase(
   const sqliteConfig = config as SqliteConfig;
 
   try {
-    const sqlJsInstance = await initSqlJs();
+    const sqlJsInstance = await getSqlJs();
+    // SECURITY: operator-controlled only, never from user input
     const filePath =
       sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
     let db: Database;
@@ -109,7 +115,7 @@ export async function connectSqliteDatabase(
     const schemaManager = new SchemaManager(adapter);
 
     return { db, sqlJsInstance, schemaManager };
-  } catch (error) {
+  } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     log.error(`Failed to connect to SQLite: ${message}`, {
       code: ERROR_CODES.DB.CONNECT_FAILED.full,

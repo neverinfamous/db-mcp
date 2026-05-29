@@ -18,6 +18,10 @@ import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import { readOnly, write, admin } from "../../../../utils/annotations.js";
 import {
+  validateIdentifier,
+  sanitizeIdentifier,
+} from "../../../../utils/index.js";
+import {
   LoadSpatialiteSchema,
   CreateSpatialTableSchema,
   SpatialQuerySchema,
@@ -64,7 +68,7 @@ export function createLoadSpatialiteTool(
           });
         }
 
-        const result = tryLoadSpatialite(adapter, input.extensionPath);
+        const result = tryLoadSpatialite(adapter);
 
         if (result.success) {
           return Promise.resolve({
@@ -82,7 +86,7 @@ export function createLoadSpatialiteTool(
           recoverable: false,
           searchedPaths: SPATIALITE_PATHS,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         return Promise.resolve(formatHandlerError(error));
       }
     },
@@ -107,10 +111,13 @@ export function createSpatialTableTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateSpatialTableSchema.parse(params);
+        //       let queryParams: unknown[] = [];
         ensureSpatialite(adapter);
 
-        // Validate table name
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.tableName);
+        } catch {
           return {
             success: false,
             error: `Invalid table name: '${input.tableName}'`,
@@ -120,9 +127,23 @@ export function createSpatialTableTool(
           };
         }
 
+        // Validate geometry column name (CWE-89 remediation — M-1a)
+        try {
+          validateIdentifier(input.geometryColumn);
+        } catch {
+          return {
+            success: false,
+            error: `Invalid geometry column name: '${input.geometryColumn}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
+        }
+
         // Check if table already exists
         const existsCheck = await adapter.executeReadQuery(
-          `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.tableName}'`,
+          `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
+          [input.tableName],
         );
         const alreadyExists =
           existsCheck.rows != null && existsCheck.rows.length > 0;
@@ -139,7 +160,9 @@ export function createSpatialTableTool(
         // Build column definitions
         const columns = ["id INTEGER PRIMARY KEY AUTOINCREMENT"];
         for (const col of input.additionalColumns) {
-          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col.name)) {
+          try {
+            validateIdentifier(col.name);
+          } catch {
             return {
               success: false,
               error: `Invalid column name: '${col.name}'`,
@@ -148,12 +171,12 @@ export function createSpatialTableTool(
               recoverable: false,
             };
           }
-          columns.push(`"${col.name}" ${col.type}`);
+          columns.push(`${sanitizeIdentifier(col.name)} ${col.type}`);
         }
 
         // Create base table
         await adapter.executeWriteQuery(
-          `CREATE TABLE "${input.tableName}" (${columns.join(", ")})`,
+          `CREATE TABLE ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")})`,
         );
 
         // Add geometry column using SpatiaLite
@@ -184,7 +207,7 @@ export function createSpatialTableTool(
           geometryType: input.geometryType,
           srid: input.srid,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -209,6 +232,7 @@ export function createSpatialQueryTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialQuerySchema.parse(params);
+
         ensureSpatialite(adapter);
 
         const result = await adapter.executeReadQuery(input.query);
@@ -218,7 +242,7 @@ export function createSpatialQueryTool(
           rowCount: result.rows?.length ?? 0,
           rows: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes("does not return data")) {
           return {
@@ -254,10 +278,14 @@ export function createSpatialIndexTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialIndexSchema.parse(params);
+
         ensureSpatialite(adapter);
 
         // Validate names
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.tableName);
+        } catch {
           return {
             success: false,
             error: `Invalid table name: '${input.tableName}'`,
@@ -280,9 +308,23 @@ export function createSpatialIndexTool(
           };
         }
 
+        // Validate geometry column name (CWE-89 remediation — M-1a)
+        try {
+          validateIdentifier(input.geometryColumn);
+        } catch {
+          return {
+            success: false,
+            error: `Invalid geometry column name: '${input.geometryColumn}'`,
+            code: "VALIDATION_ERROR",
+            category: "validation" as const,
+            recoverable: false,
+          };
+        }
+
         // Validate table exists before attempting index operations
         const tableCheck = await adapter.executeReadQuery(
-          `SELECT name FROM sqlite_master WHERE type='table' AND name='${input.tableName}'`,
+          `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
+          [input.tableName],
         );
         if (!tableCheck.rows || tableCheck.rows.length === 0) {
           return {
@@ -421,7 +463,7 @@ export function createSpatialIndexTool(
               recoverable: false,
             };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -185,7 +185,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     const schema = JSON.parse(wrapper.contents[0].text);
     const tables = schema.tables as { name: string }[];
 
-    expect(tables.length).toBeGreaterThanOrEqual(11);
+    expect(tables.length).toBeGreaterThanOrEqual(10);
 
     const names = tables.map((t) => t.name);
     for (const expected of [

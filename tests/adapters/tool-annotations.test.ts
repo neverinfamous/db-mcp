@@ -29,6 +29,9 @@ function validateToolAnnotations(tool: ToolDefinition): string | null {
   if (tool.annotations.readOnlyHint === undefined) {
     return `Tool '${tool.name}' (group: ${tool.group}) has annotations but readOnlyHint is undefined`;
   }
+  if (tool.annotations.sensitiveHint === undefined) {
+    return `Tool '${tool.name}' (group: ${tool.group}) has annotations but sensitiveHint is undefined`;
+  }
   return null;
 }
 
@@ -42,7 +45,7 @@ describe("Tool Annotation Invariants (Native)", () => {
 
   beforeEach(async () => {
     adapter = new NativeSqliteAdapter();
-    await adapter.connect({ type: "sqlite", filePath: ":memory:" });
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
     tools = adapter.getToolDefinitions();
   });
 
@@ -264,6 +267,211 @@ describe("Tool Annotation Invariants (WASM)", () => {
     expect(
       violations,
       `${violations.length} WASM tool(s) with invalid annotations:\n  ${violations.join("\n  ")}`,
+    ).toHaveLength(0);
+  });
+});
+
+// =============================================================================
+// Audit Tools (server-level, MCP-only — NOT part of adapter.getToolDefinitions)
+// =============================================================================
+
+describe("Tool Annotation Invariants (Audit Tools)", () => {
+  /**
+   * Audit tools are registered via McpServer.registerTool() in
+   * src/server/registration/audit-tools.ts and are not accessible through
+   * adapter.getToolDefinitions(). This test validates their annotation
+   * structure statically to ensure the invariant holds across all tool surfaces.
+   */
+
+  const expectedAuditTools = [
+    {
+      name: "sqlite_audit_list_backups",
+      readOnlyHint: true,
+      destructiveHint: false,
+      sensitiveHint: true,
+    },
+    {
+      name: "sqlite_audit_get_backup",
+      readOnlyHint: true,
+      destructiveHint: false,
+      sensitiveHint: true,
+    },
+    {
+      name: "sqlite_audit_cleanup",
+      readOnlyHint: false,
+      destructiveHint: true,
+      sensitiveHint: true,
+    },
+    {
+      name: "sqlite_audit_diff_backup",
+      readOnlyHint: true,
+      destructiveHint: false,
+      sensitiveHint: true,
+    },
+    {
+      name: "sqlite_audit_restore_backup",
+      readOnlyHint: false,
+      destructiveHint: true,
+      sensitiveHint: true,
+    },
+  ];
+
+  it("should define exactly 5 audit tools", () => {
+    expect(expectedAuditTools).toHaveLength(5);
+  });
+
+  it("audit tool names follow the sqlite_audit_ prefix convention", () => {
+    for (const tool of expectedAuditTools) {
+      expect(
+        tool.name.startsWith("sqlite_audit_"),
+        `${tool.name} should start with sqlite_audit_`,
+      ).toBe(true);
+    }
+  });
+
+  it("read-only audit tools should not be marked destructive", () => {
+    const violations: string[] = [];
+    for (const tool of expectedAuditTools) {
+      if (tool.readOnlyHint && tool.destructiveHint) {
+        violations.push(
+          `${tool.name}: readOnlyHint=true AND destructiveHint=true is contradictory`,
+        );
+      }
+    }
+    expect(violations).toHaveLength(0);
+  });
+
+  it("destructive audit tools should not be marked read-only", () => {
+    const violations: string[] = [];
+    for (const tool of expectedAuditTools) {
+      if (tool.destructiveHint && tool.readOnlyHint) {
+        violations.push(
+          `${tool.name}: destructiveHint=true AND readOnlyHint=true is contradictory`,
+        );
+      }
+    }
+    expect(violations).toHaveLength(0);
+  });
+});
+
+// =============================================================================
+// Tool Description Security Audit (L-6)
+// =============================================================================
+
+describe("Tool Description Security Audit", () => {
+  /**
+   * Instruction-like patterns that should NOT appear in tool descriptions.
+   * These could be used for tool poisoning / prompt injection where the
+   * description manipulates the LLM's behavior beyond the tool's scope.
+   *
+   * Each pattern is case-insensitive and anchored on word boundaries.
+   */
+  const SUSPICIOUS_PATTERNS: { pattern: RegExp; label: string }[] = [
+    {
+      pattern: /\byou must\b/i,
+      label: "directive language: 'you must'",
+    },
+    {
+      pattern: /\byou should always\b/i,
+      label: "directive language: 'you should always'",
+    },
+    {
+      pattern: /\balways use this tool\b/i,
+      label: "directive language: 'always use this tool'",
+    },
+    {
+      pattern: /\bbefore calling\b/i,
+      label: "instructional: 'before calling'",
+    },
+    {
+      pattern: /\bafter calling\b/i,
+      label: "instructional: 'after calling'",
+    },
+    {
+      pattern: /\bignore previous\b/i,
+      label: "prompt injection: 'ignore previous'",
+    },
+    {
+      pattern: /\bignore all\b/i,
+      label: "prompt injection: 'ignore all'",
+    },
+    {
+      pattern: /\bsystem prompt\b/i,
+      label: "prompt injection: 'system prompt'",
+    },
+    {
+      pattern: /\bdo not tell\b/i,
+      label: "manipulation: 'do not tell'",
+    },
+    {
+      pattern: /\bpretend\b/i,
+      label: "manipulation: 'pretend'",
+    },
+    {
+      pattern: /\brole[- ]?play\b/i,
+      label: "manipulation: 'roleplay'",
+    },
+    {
+      pattern: /\bjailbreak\b/i,
+      label: "prompt injection: 'jailbreak'",
+    },
+    {
+      pattern: /\boverride\b/i,
+      label: "manipulation: 'override'",
+    },
+  ];
+
+  it("Native adapter tool descriptions should not contain instruction-like language", async () => {
+    const adapter = new NativeSqliteAdapter();
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
+    const tools = adapter.getToolDefinitions();
+
+    const violations: string[] = [];
+
+    for (const tool of tools) {
+      const desc = tool.description ?? "";
+      for (const { pattern, label } of SUSPICIOUS_PATTERNS) {
+        if (pattern.test(desc)) {
+          violations.push(
+            `${tool.name}: description matches '${label}'` +
+              ` — "${desc.substring(0, 100)}..."`,
+          );
+        }
+      }
+    }
+
+    await adapter.disconnect();
+
+    expect(
+      violations,
+      `${violations.length} tool(s) with suspicious description language:\n  ${violations.join("\n  ")}`,
+    ).toHaveLength(0);
+  });
+
+  it("WASM adapter tool descriptions should not contain instruction-like language", async () => {
+    const adapter = new SqliteAdapter();
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
+    const tools = adapter.getToolDefinitions();
+
+    const violations: string[] = [];
+
+    for (const tool of tools) {
+      const desc = tool.description ?? "";
+      for (const { pattern, label } of SUSPICIOUS_PATTERNS) {
+        if (pattern.test(desc)) {
+          violations.push(
+            `${tool.name}: description matches '${label}'` +
+              ` — "${desc.substring(0, 100)}..."`,
+          );
+        }
+      }
+    }
+
+    await adapter.disconnect();
+
+    expect(
+      violations,
+      `${violations.length} WASM tool(s) with suspicious description language:\n  ${violations.join("\n  ")}`,
     ).toHaveLength(0);
   });
 });

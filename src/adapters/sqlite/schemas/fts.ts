@@ -110,20 +110,23 @@ export const FtsSearchSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Specific columns to search"),
-  limit: z.preprocess(
-    (val) =>
-      typeof val === "string"
-        ? isNaN(Number(val))
-          ? undefined
-          : Number(val)
-        : val,
-    z.number().optional().default(100),
-  ),
+  limit: z.preprocess((val) => {
+    if (typeof val === "string") {
+      const parsed = Number(val);
+      return isNaN(parsed) ? val : parsed;
+    }
+    return val;
+  }, z.number().optional().default(100)),
   highlight: z
     .boolean()
     .optional()
     .default(false)
     .describe("Include highlighted snippets"),
+  includeRowData: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Include full row data in results"),
 });
 export type FtsSearchInput = z.infer<typeof FtsSearchSchema>;
 
@@ -139,5 +142,10 @@ export const FtsMatchInfoSchema = z.object({
     coerceEnumValues(["bm25", "rank"]),
     z.enum(["bm25", "rank"]).optional().default("bm25"),
   ),
+  includeRowData: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Include full row data in results"),
 });
 export type FtsMatchInfoInput = z.infer<typeof FtsMatchInfoSchema>;

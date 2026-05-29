@@ -11,6 +11,28 @@ export type { ErrorResponse };
 import { DbMcpError } from "./base.js";
 import { findSuggestion } from "./suggestions.js";
 
+/**
+ * Sanitize error messages to prevent leaking physical paths or credentials
+ */
+export function sanitizeErrorMessage(msg: string): string {
+  if (!msg || typeof msg !== "string") return msg;
+  return msg
+    .replace(/[a-zA-Z]:\\[^:\n]*\\/g, "<redacted_path>\\")
+    .replace(/(file:|sqlite:|\/)[^:\s]+(\/[^:\s]*)/g, "<redacted_path>")
+    .replace(
+      /([a-zA-Z0-9+.-]+:\/\/[^:]+:)[^@\s]+(@)/g,
+      "$1<redacted_credential>$2",
+    )
+    .replace(
+      /([?&](?:password|secret|key|token)=)[^&\s]+/gi,
+      "$1<redacted_credential>",
+    )
+    .replace(
+      /(password|secret|key|token)[=:]\s*["']?[^"'\s,;]+["']?/gi,
+      "$1=<redacted_credential>",
+    );
+}
+
 // =============================================================================
 // ErrorContext — optional tool context for richer error messages
 // =============================================================================
@@ -105,7 +127,7 @@ function formatZodError(error: Error): string | null {
  * Use as the single catch block for all tool handlers:
  *
  * ```typescript
- * handler: async (params) => {
+ * handler: async (params: unknown, _context: RequestContext) => {
  *   try {
  *     const parsed = Schema.parse(params);
  *     // ... domain logic ...
@@ -123,9 +145,10 @@ export function formatHandlerError(
   error: unknown,
   _context?: ErrorContext,
 ): ErrorResponse {
-  // 1. Already a typed DbMcpError — use its built-in conversion
   if (error instanceof DbMcpError) {
-    return error.toResponse();
+    const res = error.toResponse();
+    res.error = sanitizeErrorMessage(res.error);
+    return res;
   }
 
   // 2. ZodError — extract path + message for clear validation feedback
@@ -134,7 +157,7 @@ export function formatHandlerError(
     if (zodMessage !== null) {
       return {
         success: false,
-        error: zodMessage,
+        error: sanitizeErrorMessage(zodMessage),
         code: "VALIDATION_ERROR",
         category: ErrorCategory.VALIDATION,
         suggestion: undefined,
@@ -150,7 +173,7 @@ export function formatHandlerError(
     const category = match?.category ?? ErrorCategory.INTERNAL;
     return {
       success: false,
-      error: error.message,
+      error: sanitizeErrorMessage(error.message),
       code: match?.code ?? CATEGORY_DEFAULT_CODES[category],
       category,
       suggestion: match?.suggestion,
@@ -162,7 +185,7 @@ export function formatHandlerError(
   // 4. Non-Error value
   return {
     success: false,
-    error: String(error),
+    error: sanitizeErrorMessage(String(error)),
     code: "UNKNOWN_ERROR",
     category: ErrorCategory.INTERNAL,
     suggestion: undefined,

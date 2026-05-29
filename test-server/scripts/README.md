@@ -18,10 +18,19 @@ node test-server/scripts/test-help-resources.mjs
 
 # 3. Test prompts registration and validation
 node test-server/scripts/test-prompts.mjs
+
+# 4. Test Code Mode progress notifications
+node test-server/scripts/test-progress.mjs
 ```
 
 ## What they verify
 
-- **test-tool-annotations.mjs**: Spins up the server in Native Mode (`--sqlite-native`) and verifies that all 154 tools (151 Native + 3 built-in) are properly exposed, and that they all contain the required `openWorldHint: false` annotation for local database safety.
+- **test-tool-annotations.mjs**: Spins up the server in Native Mode (`--sqlite-native --audit-log stderr --audit-backup`) and verifies that all 175 MCP total tools (172 inventory + 3 built-in) are properly exposed, and that they all contain the required `openWorldHint: false` annotation for local database safety.
 - **test-help-resources.mjs**: Starts the server with multiple `--tool-filter` configurations to verify that the core instructions remain slim (within context limits) and that the correct `sqlite://help/{group}` resources are dynamically registered only when their respective tool groups are enabled.
 - **test-prompts.mjs**: Starts the server and verifies that all 10 MCP prompts are successfully registered via `prompts/list`, and performs functional execution checks on `prompts/get` handling required vs. optional arguments, payload structure correctness, and proper JSON-RPC error rendering.
+- **test-progress.mjs**: Starts the server, executes a custom JavaScript busy-wait loop inside `sqlite_execute_code` that invokes the internal `sqlite.reportProgress` binding, and verifies that the exact number of expected `notifications/progress` JSON-RPC events are successfully emitted.
+
+## Utilities
+
+- **standardize-prompts.js**: A Node utility script that enforces uniform boilerplate and formatting across all 41 test prompts in `test-codemode`, `test-advanced`, and `test-tool-groups`. It dynamically extracts the specific test content and schema configurations from each prompt and rebuilds the file using the standardized layout defined in `prompt-template.md`.
+- **prompt-template.md**: The pure Markdown template used by `standardize-prompts.js` to construct the testing prompts. If you need to change the reporting rules, testing standards, or boilerplate instructions, edit this template and run `node test-server/scripts/standardize-prompts.js` from the project root to update all 41 prompts instantly.

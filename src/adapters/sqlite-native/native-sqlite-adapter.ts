@@ -110,6 +110,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     this.config = sqliteConfig;
 
     try {
+      // SECURITY: operator-controlled only, never from user input
       const filePath =
         sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
 
@@ -161,7 +162,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       this.schemaManager = new SchemaManager(this);
 
       this.connected = true;
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Failed to connect to native SQLite: ${message}`, {
         code: ERROR_CODES.DB.CONNECT_FAILED.full,
@@ -267,6 +268,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
+    this.validateQuery(sql, true);
     return nativeExecuteRead(this.ensureDb(), sql, params, log);
   }
 
@@ -278,6 +280,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     params?: unknown[],
   ): Promise<QueryResult> {
     this.ensureConnected();
+    this.validateQuery(sql, false);
     const result = nativeExecuteWrite(this.ensureDb(), sql, params, log);
 
     // Auto-invalidate schema cache on DDL operations
@@ -293,14 +296,29 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    */
   override executeQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
     const trimmed = sql.trim().toUpperCase();
-    if (
-      trimmed.startsWith("SELECT") ||
-      trimmed.startsWith("PRAGMA") ||
-      trimmed.startsWith("EXPLAIN")
-    ) {
+
+    // PRAGMAs that mutate state must go through write validation
+    if (trimmed.startsWith("PRAGMA")) {
+      if (sql.includes("=") || sql.includes("(")) {
+        return this.executeWriteQuery(sql, params);
+      }
+      return this.executeReadQuery(sql, params);
+    }
+
+    if (trimmed.startsWith("SELECT") || trimmed.startsWith("EXPLAIN")) {
       return this.executeReadQuery(sql, params);
     }
     return this.executeWriteQuery(sql, params);
+  }
+
+  /**
+   * Execute a SQL script containing multiple statements
+   */
+  override executeScript(sql: string): Promise<void> {
+    this.ensureConnected();
+    this.ensureDb().exec(sql);
+    this.clearSchemaCache();
+    return Promise.resolve();
   }
 
   /**
@@ -478,6 +496,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       "geo",
       "introspection",
       "migration",
+      "transactions",
     ];
   }
 
@@ -544,7 +563,15 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    * Execute raw SQL and return results (for tools)
    */
   rawQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
-    return this.executeQuery(sql, params);
+    const trimmed = sql.trim().toUpperCase();
+    if (
+      trimmed.startsWith("SELECT") ||
+      trimmed.startsWith("EXPLAIN") ||
+      (trimmed.startsWith("PRAGMA") && !sql.includes("=") && !sql.includes("("))
+    ) {
+      return nativeExecuteRead(this.ensureDb(), sql, params, log);
+    }
+    return nativeExecuteWrite(this.ensureDb(), sql, params, log);
   }
 
   /**

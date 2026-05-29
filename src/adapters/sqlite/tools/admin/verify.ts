@@ -11,8 +11,11 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { readOnly } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier } from "../../../../utils/index.js";
+import { adminFs, readOnly } from "../../../../utils/annotations.js";
+import {
+  sanitizeIdentifier,
+  validateSameDirPath,
+} from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -31,10 +34,11 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
     group: "admin",
     inputSchema: VerifyBackupSchema,
     outputSchema: VerifyBackupOutputSchema,
-    requiredScopes: ["read"],
-    annotations: readOnly("Verify Backup"),
+    requiredScopes: ["admin"],
+    annotations: adminFs("Verify Backup"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
+        // removed unused
         const input = VerifyBackupSchema.parse(params);
         // WASM mode: backup/restore/verify are not available since file system
         // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
@@ -60,8 +64,20 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Pre-validate file exists (ATTACH silently creates empty DB for nonexistent files)
-        // Resolve to absolute path to avoid CWD-relative false positives
         const resolvedPath = nodePath.resolve(input.backupPath);
+
+        // Security: validate backupPath is within the same directory as the primary DB
+        const pathCheck = validateSameDirPath(
+          input.backupPath,
+          adapter.getConfiguredPath(),
+        );
+        if (!pathCheck.valid) {
+          return {
+            ...formatHandlerError(new ValidationError(pathCheck.error)),
+            backupPath: input.backupPath,
+          };
+        }
+
         if (!fs.existsSync(resolvedPath)) {
           return {
             ...formatHandlerError(
@@ -78,10 +94,10 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Attach backup database temporarily
         try {
-          await adapter.executeQuery(
+          await adapter.rawQuery(
             `ATTACH DATABASE '${escapedPath}' AS backup_verify`,
           );
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             ...formatHandlerError(
               new ValidationError(
@@ -107,7 +123,6 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
           const pageSize =
             (pageSizeResult.rows?.[0]?.["page_size"] as number) ?? 0;
 
-          // Run integrity check on backup
           const integrityResult = await adapter.executeReadQuery(
             "PRAGMA backup_verify.integrity_check(10)",
           );
@@ -128,12 +143,12 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         } finally {
           // Always detach; swallow errors to avoid overriding verification result
           try {
-            await adapter.executeQuery("DETACH DATABASE backup_verify");
+            await adapter.rawQuery("DETACH DATABASE backup_verify");
           } catch {
             // Intentionally ignore detach errors
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -154,6 +169,7 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
     annotations: readOnly("Index Statistics"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
+        const queryParams: unknown[] = [];
         const input = IndexStatsSchema.parse(params);
 
         // Query for indexes
@@ -162,11 +178,11 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
           FROM sqlite_master
           WHERE type = 'index' AND sql IS NOT NULL
         `;
-        const queryParams: unknown[] = [];
+
         if (input.table) {
           // Validate table name using centralized utility
           sanitizeIdentifier(input.table);
-          sql += ` AND tbl_name = ?`;
+          sql += ` AND "tbl_name" = ?`;
           queryParams.push(input.table);
         }
         sql += " ORDER BY tbl_name, name";
@@ -219,7 +235,7 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           indexes,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

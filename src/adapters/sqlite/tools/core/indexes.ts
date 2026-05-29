@@ -52,7 +52,7 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         input = GetIndexesSchema.parse(
           resolveAliases(params, { tableName: "table" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           count: 0,
@@ -60,7 +60,13 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         };
       }
 
-      let sql = `SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL`;
+      let sql = `
+        SELECT name, tbl_name, sql FROM (
+          SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL
+          UNION ALL
+          SELECT name, tbl_name, sql FROM sqlite_temp_master WHERE type = 'index' AND sql IS NOT NULL
+        ) WHERE 1=1
+      `;
 
       if (input.table) {
         // Validate table name
@@ -81,7 +87,7 @@ export function createGetIndexesTool(adapter: SqliteAdapter): ToolDefinition {
         // Check table existence when a specific table is requested
         try {
           await validateTableExists(adapter, input.table);
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             ...formatHandlerError(error),
             count: 0,
@@ -138,7 +144,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
         input = CreateIndexSchema.parse(
           resolveAliases(params, { tableName: "table", name: "indexName" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
       // Validate required: at least 1 column
@@ -175,7 +181,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       // Validate table existence
       try {
         await validateTableExists(adapter, input.table);
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql: "" };
       }
 
@@ -187,8 +193,8 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
       let indexExisted = false;
       if (input.ifNotExists) {
         const checkResult = await adapter.executeReadQuery(
-          `SELECT 1 FROM sqlite_master WHERE type='index' AND name=?`,
-          [input.indexName],
+          `SELECT 1 FROM sqlite_master WHERE type='index' AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type='index' AND name=?`,
+          [input.indexName, input.indexName],
         );
         indexExisted = (checkResult.rows?.length ?? 0) > 0;
       }
@@ -205,7 +211,7 @@ export function createCreateIndexTool(adapter: SqliteAdapter): ToolDefinition {
             : `Index '${input.indexName}' created on ${input.table}(${input.columns.join(", ")})`,
           sql,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return { ...formatHandlerError(error), sql };
       }
     },
@@ -230,7 +236,7 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
         input = DropIndexSchema.parse(
           resolveAliases(params, { name: "indexName" }),
         );
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
 
@@ -247,8 +253,8 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Check if index exists before dropping
       const checkResult = await adapter.executeReadQuery(
-        `SELECT 1 FROM sqlite_master WHERE type='index' AND name=?`,
-        [input.indexName],
+        `SELECT 1 FROM sqlite_master WHERE type='index' AND name=? UNION ALL SELECT 1 FROM sqlite_temp_master WHERE type='index' AND name=?`,
+        [input.indexName, input.indexName],
       );
       const indexExists = (checkResult.rows?.length ?? 0) > 0;
 
@@ -272,7 +278,7 @@ export function createDropIndexTool(adapter: SqliteAdapter): ToolDefinition {
           success: true,
           message: `Index '${input.indexName}' dropped successfully`,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

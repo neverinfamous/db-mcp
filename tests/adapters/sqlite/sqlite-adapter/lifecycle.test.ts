@@ -11,6 +11,7 @@ import {
   disconnectSqliteDatabase,
 } from "../../../../src/adapters/sqlite/sqlite-adapter/lifecycle.js";
 import type { SqliteConfig } from "../../../../src/adapters/sqlite/types.js";
+import fs from "node:fs";
 
 // =============================================================================
 // Helpers
@@ -104,54 +105,48 @@ describe("connectSqliteDatabase", () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "existing.db" };
 
-    vi.mock("fs", () => {
-      return {
-        existsSync: () => true,
-        promises: {
-          readFile: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-        },
-      };
-    });
+    const existSpy = vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    const readSpy = vi
+      .spyOn(fs.promises, "readFile")
+      .mockResolvedValue(new Uint8Array([1, 2, 3]));
 
     const result = await connectSqliteDatabase(adapter as never, config);
     expect(result.db).toBeDefined();
-    vi.unmock("fs");
+
+    existSpy.mockRestore();
+    readSpy.mockRestore();
   });
 
   it("should create new database if file doesn't exist", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "new.db" };
 
-    vi.mock("fs", () => {
-      return {
-        existsSync: () => false,
-        promises: {
-          readFile: vi.fn(),
-        },
-      };
-    });
+    const existSpy = vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    const readSpy = vi
+      .spyOn(fs.promises, "readFile")
+      .mockImplementation(() => undefined as any);
 
     const result = await connectSqliteDatabase(adapter as never, config);
     expect(result.db).toBeDefined();
-    vi.unmock("fs");
+
+    existSpy.mockRestore();
+    readSpy.mockRestore();
   });
 
   it("should fallback to memory if fs throws error during connect", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "error.db" };
 
-    vi.mock("fs", () => {
-      return {
-        existsSync: () => true,
-        promises: {
-          readFile: vi.fn().mockRejectedValue(new Error("File access error")),
-        },
-      };
-    });
+    const existSpy = vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    const readSpy = vi
+      .spyOn(fs.promises, "readFile")
+      .mockRejectedValue(new Error("File access error"));
 
     const result = await connectSqliteDatabase(adapter as never, config);
     expect(result.db).toBeDefined();
-    vi.unmock("fs");
+
+    existSpy.mockRestore();
+    readSpy.mockRestore();
   });
 
   it("should catch and wrap initial connection errors", async () => {
@@ -209,16 +204,13 @@ describe("disconnectSqliteDatabase", () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "test.db" };
 
-    // We mock fs in a specific test so it doesn't leak
-    vi.mock("fs", () => {
-      return {
-        existsSync: () => false,
-        promises: {
-          readFile: vi.fn(),
-          writeFile: vi.fn().mockResolvedValue(undefined),
-        },
-      };
-    });
+    const existSpy = vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    const readSpy = vi
+      .spyOn(fs.promises, "readFile")
+      .mockImplementation(() => undefined as any);
+    const writeSpy = vi
+      .spyOn(fs.promises, "writeFile")
+      .mockResolvedValue(undefined);
 
     const { db } = await connectSqliteDatabase(adapter as never, config);
     // Overwrite the export method for testing
@@ -226,26 +218,26 @@ describe("disconnectSqliteDatabase", () => {
 
     await disconnectSqliteDatabase(db, config);
 
-    // vitest unmock
-    vi.unmock("fs");
+    expect(writeSpy).toHaveBeenCalled();
+
+    existSpy.mockRestore();
+    readSpy.mockRestore();
+    writeSpy.mockRestore();
   });
 
   it("should handle error when saving database to file", async () => {
     const adapter = createMockAdapter();
     const config: SqliteConfig = { type: "sqlite", filePath: "test.db" };
 
-    vi.mock("fs", () => {
-      return {
-        existsSync: () => false,
-        promises: {
-          writeFile: vi.fn().mockRejectedValue(new Error("Save failed")),
-        },
-      };
-    });
+    const existSpy = vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    const writeSpy = vi
+      .spyOn(fs.promises, "writeFile")
+      .mockRejectedValue(new Error("Save failed"));
 
     const { db } = await connectSqliteDatabase(adapter as never, config);
     await disconnectSqliteDatabase(db, config); // Should log warning but not throw
 
-    vi.unmock("fs");
+    existSpy.mockRestore();
+    writeSpy.mockRestore();
   });
 });

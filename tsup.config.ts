@@ -4,10 +4,9 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     cli: "src/cli.ts",
-    "worker-script": "src/codemode/worker-script.ts",
   },
   format: ["esm"],
-  dts: true,
+  dts: false,
   clean: true,
   treeshake: true,
   splitting: true,
@@ -15,6 +14,12 @@ export default defineConfig({
   minify: false,
   outDir: "dist",
   target: "es2022",
-  external: ["sql.js", "better-sqlite3"],
+  external: [
+    "sql.js",
+    "better-sqlite3",
+    "sqlite-parser",
+    "acorn",
+    "isolated-vm",
+  ],
   tsconfig: "tsconfig.build.json",
 });

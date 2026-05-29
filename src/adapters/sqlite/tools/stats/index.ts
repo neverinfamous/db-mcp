@@ -12,6 +12,7 @@ import {
   createGroupByStatsTool,
   createHistogramTool,
   createPercentileTool,
+  createSampleTool,
 } from "./basic.js";
 import {
   createCorrelationTool,
@@ -54,5 +55,7 @@ export function getStatsTools(adapter: SqliteAdapter): ToolDefinition[] {
     createDetectAnomaliesTool(adapter),
     createDetectBloatTool(adapter),
     createDetectSchemaRisksTool(adapter),
+    // Sampling
+    createSampleTool(adapter),
   ];
 }

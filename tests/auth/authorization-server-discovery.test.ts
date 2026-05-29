@@ -150,7 +150,7 @@ describe("AuthorizationServerDiscovery", () => {
       await expect(disc.discover()).rejects.toThrow(AuthServerDiscoveryError);
     });
 
-    it("should warn on issuer mismatch but not throw", async () => {
+    it("should throw on issuer mismatch (RFC 8414 §3.3 — fail closed)", async () => {
       vi.stubGlobal(
         "fetch",
         vi.fn().mockResolvedValue({
@@ -164,9 +164,8 @@ describe("AuthorizationServerDiscovery", () => {
       );
 
       const disc = createDiscovery();
-      // Should not throw — just warns
-      const metadata = await disc.discover();
-      expect(metadata.issuer).toBe("https://different-issuer.com");
+      // F-2: Fail closed on issuer mismatch to prevent key set swapping
+      await expect(disc.discover()).rejects.toThrow(AuthServerDiscoveryError);
     });
   });
 

@@ -28,9 +28,9 @@ export function createMigrationHistoryTool(
     requiredScopes: ["read"],
     annotations: readOnly("Migration History"),
     handler: async (params: unknown, _context: RequestContext) => {
-      const input = MigrationHistorySchema.parse(params);
-
       try {
+        const queryParams: unknown[] = [];
+        const input = MigrationHistorySchema.parse(params);
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
@@ -45,7 +45,6 @@ export function createMigrationHistoryTool(
 
         let query = `SELECT id, version, description, applied_at, applied_by, migration_hash, source_system, status FROM "${MIGRATIONS_TABLE}"`;
         const conditions: string[] = [];
-        const queryParams: unknown[] = [];
 
         if (input.status) {
           conditions.push("status = ?");
@@ -90,7 +89,7 @@ export function createMigrationHistoryTool(
           limit,
           offset,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

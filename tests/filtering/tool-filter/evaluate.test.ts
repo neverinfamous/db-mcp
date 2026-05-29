@@ -103,9 +103,8 @@ describe("edge cases", () => {
   it("should handle duplicate groups gracefully", () => {
     const config = parseToolFilter("core,core,core");
 
-    expect(config.enabledGroups.size).toBe(2); // core + codemode (auto-injected)
+    expect(config.enabledGroups.size).toBe(1); // core
     expect(config.enabledGroups.has("core")).toBe(true);
-    expect(config.enabledGroups.has("codemode")).toBe(true);
   });
 
   it("should handle conflicting include/exclude", () => {
@@ -161,12 +160,12 @@ describe("edge cases", () => {
     expect(config.enabledGroups.has("geo")).toBe(true);
   });
 
-  it("should auto-inject codemode when using a raw group filter", () => {
+  it("should NOT auto-inject codemode when using a raw group filter", () => {
     const config = parseToolFilter("core");
 
     expect(config.enabledGroups.has("core")).toBe(true);
-    expect(config.enabledGroups.has("codemode")).toBe(true);
-    expect(config.enabledGroups.size).toBe(2); // core + codemode
+    expect(config.enabledGroups.has("codemode")).toBe(false);
+    expect(config.enabledGroups.size).toBe(1); // core only
   });
 
   it("should not inject codemode when explicitly excluded with -codemode", () => {

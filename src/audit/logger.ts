@@ -12,6 +12,7 @@
 import { appendFile, mkdir, open, rename, stat } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { AuditConfig, AuditEntry } from "./types.js";
+import { redactObject } from "../utils/redaction.js";
 
 /** Maximum entries to buffer before forcing a flush */
 const BUFFER_HIGH_WATER = 50;
@@ -67,11 +68,12 @@ export class AuditLogger {
       // Touch the file so it exists even before any tool invocation
       const fh = await open(this.config.logPath, "a");
       await fh.close();
-    } catch {
-      // Non-fatal — audit must not block server startup
+    } catch (err) {
+      // M-3: Audit initialization failure must be fatal
       process.stderr.write(
         `[AUDIT] Failed to initialise log file: ${this.config.logPath}\n`,
       );
+      throw err;
     }
   }
 
@@ -83,7 +85,9 @@ export class AuditLogger {
   log(entry: AuditEntry): void {
     if (this.closed || !this.config.enabled) return;
 
-    this.buffer.push(JSON.stringify(entry));
+    // Defense-in-depth: explicitly redact any credentials before persisting
+    const safeEntry = redactObject(entry, 0, 5) as AuditEntry;
+    this.buffer.push(JSON.stringify(safeEntry));
 
     // Eagerly flush when the buffer is full
     if (this.buffer.length >= BUFFER_HIGH_WATER) {

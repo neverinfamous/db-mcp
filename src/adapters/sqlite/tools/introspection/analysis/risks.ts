@@ -115,6 +115,37 @@ export function createMigrationRisksTool(
             }
           };
 
+          const validKeywords = [
+            "CREATE",
+            "ALTER",
+            "DROP",
+            "VACUUM",
+            "BEGIN",
+            "COMMIT",
+            "ROLLBACK",
+            "PRAGMA",
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "REPLACE",
+            "SELECT",
+            "WITH",
+            "ATTACH",
+            "DETACH",
+            "REINDEX",
+            "ANALYZE",
+          ];
+
+          if (!validKeywords.some((kw) => upper.startsWith(kw))) {
+            addRisk(
+              "high",
+              "syntax",
+              "Statement does not appear to begin with a recognized SQLite command.",
+              "Verify SQL syntax. Commands should start with valid SQLite keywords like CREATE, ALTER, etc.",
+            );
+            continue; // Skip further analysis for this statement
+          }
+
           // ALTER TABLE limitations
           if (upper.startsWith("ALTER TABLE")) {
             if (upper.includes("DROP COLUMN")) {
@@ -273,7 +304,7 @@ export function createMigrationRisksTool(
             highestRisk,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

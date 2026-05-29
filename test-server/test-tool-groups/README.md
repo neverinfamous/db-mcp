@@ -1,31 +1,32 @@
-# db-mcp Standard Testing Suite
+# db-mcp Tool Group Testing: [README]
 
-**Directory Purpose**: This folder contains 10 self-contained, modular test prompts covering every tool group in `db-mcp`. Each file is a **complete, standalone prompt** — paste it directly into a conversation to test that tool group without needing any other files.
+**Directory Purpose**: This folder contains 19 self-contained, modular test prompts covering every tool group in `db-mcp`. Each file is a **complete, standalone prompt** — paste it directly into a conversation to test that tool group without needing any other files.
 
 ## File Inventory
 
-| File                                | Group                     | Tools          | Notes                            |
-| ----------------------------------- | ------------------------- | -------------- | -------------------------------- |
-| `test-core-data.md`                 | core-data                 | 7              | Identical Native/WASM            |
-| `test-core-schema.md`               | core-schema               | 8 + Code Mode  | Identical Native/WASM            |
-| `test-json-read.md`                 | json-read                 | 18             | Identical Native/WASM            |
-| `test-json-write.md`                | json-write                | 7              | Identical Native/WASM            |
-| `test-text-basic.md`                | text-basic                | 11 + Code Mode | Identical Native/WASM            |
-| `test-text-advanced.md`             | text-advanced             | 9N/4W          | FTS5 tools `[NATIVE ONLY]`       |
-| `test-stats-basic.md`               | stats-basic               | 16 + Code Mode | Identical Native/WASM            |
-| `test-stats-advanced.md`            | stats-advanced            | 6N/0W          | Window functions `[NATIVE ONLY]` |
-| `test-vector-read.md`               | vector-read               | 7 + Code Mode  | Identical Native/WASM            |
-| `test-vector-write.md`              | vector-write              | 4              | Identical Native/WASM            |
-| `test-admin-core.md`                | admin-core                | 19 + Code Mode | Identical Native/WASM            |
-| `test-admin-extensions.md`          | admin-extensions          | 8              | CSV, series, rtree               |
-| `test-transactions.md`              | transactions              | 8 + Code Mode  | `[NATIVE ONLY]`                  |
-| `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode  | Identical Native/WASM            |
-| `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W          | SpatiaLite `[NATIVE ONLY]`       |
-| `test-introspection-schema.md`      | introspection-schema      | 6              | Identical Native/WASM            |
-| `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode  | Identical Native/WASM            |
-| `test-migration.md`                 | migration                 | 6 + Code Mode  | Identical Native/WASM            |
+| File                                | Group                     | Group Tools         | Notes                            |
+| ----------------------------------- | ------------------------- | ------------------- | -------------------------------- |
+| `test-core-data.md`                 | core-data                 | 9                   | Identical Native/WASM            |
+| `test-core-schema.md`               | core-schema               | 12 + Code Mode      | Identical Native/WASM            |
+| `test-json-read.md`                 | json-read                 | 18 + Code Mode      | Identical Native/WASM            |
+| `test-json-write.md`                | json-write                | 7                   | Identical Native/WASM            |
+| `test-text-basic.md`                | text-basic                | 10 + Code Mode      | Identical Native/WASM            |
+| `test-text-advanced.md`             | text-advanced             | 9N/4W               | FTS5 tools `[NATIVE ONLY]`       |
+| `test-stats-basic.md`               | stats-basic               | 17 + Code Mode      | Identical Native/WASM            |
+| `test-stats-advanced.md`            | stats-advanced            | 6N/0W               | Window functions `[NATIVE ONLY]` |
+| `test-vector-read.md`               | vector-read               | 7 + Code Mode       | Identical Native/WASM            |
+| `test-vector-write.md`              | vector-write              | 4                   | Identical Native/WASM            |
+| `test-admin-core.md`                | admin-core                | 24N/23W + Code Mode | `dump` is `[NATIVE ONLY]`        |
+| `test-admin-extensions.md`          | admin-extensions          | 8                   | CSV, series, rtree               |
+| `test-admin-audit.md`               | admin-audit               | 5                   | Audit snapshot management        |
+| `test-transactions.md`              | transactions              | 8 + Code Mode       | `[NATIVE ONLY]`                  |
+| `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode       | Identical Native/WASM            |
+| `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W               | SpatiaLite `[NATIVE ONLY]`       |
+| `test-introspection-schema.md`      | introspection-schema      | 7                   | Identical Native/WASM            |
+| `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode       | Identical Native/WASM            |
+| `test-migration.md`                 | migration                 | 6 + Code Mode       | Identical Native/WASM            |
 
-**Total**: 151 Native / 125 WASM tools across 10 groups + Code Mode.
+**Inventory total**: 172 Native / 145 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Agent Instructions
 
@@ -71,6 +72,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite_backup`             | `{success: false, error: "...WASM mode"}`      |
 | `sqlite_restore`            | `{success: false, error: "...WASM mode"}`      |
 | `sqlite_verify_backup`      | `{success: false, error: "...WASM mode"}`      |
+| `sqlite_vacuum_into`        | `{success: false, error: "...WASM mode"}`      |
 | `sqlite_create_csv_table`   | `{success: false}` — CSV extension unavailable |
 | `sqlite_analyze_csv_schema` | `{success: false}` — CSV extension unavailable |
 | `sqlite_create_rtree_table` | `{success: false}` — R-Tree module unavailable |
@@ -98,3 +100,29 @@ Several admin tools are **registered in WASM mode but return structured errors**
 ## Execution
 
 Begin with any requested group prompt from this folder (e.g., `test-admin.md`), and execute the deterministic checklist line-by-line using direct tool calls only.
+
+---
+
+## Post-Test Procedures
+
+### Reporting Rules
+
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

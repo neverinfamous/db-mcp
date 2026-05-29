@@ -217,7 +217,9 @@ describe("Geo Tools - Regions", () => {
           latColumn: "latitude",
           lonColumn: "longitude",
           gridSize: 0.1,
-          whereClause: "name != 'JFK Airport'",
+          conditions: [
+            { column: "name", operator: "!=", value: "JFK Airport" },
+          ],
         },
         mockContext,
       )) as {

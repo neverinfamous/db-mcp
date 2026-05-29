@@ -4,7 +4,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../../types/index.js";
-import { readOnly } from "../../../../../utils/annotations.js";
+import { adminFs } from "../../../../../utils/annotations.js";
 import {
   formatHandlerError,
   ExtensionNotAvailableError,
@@ -12,6 +12,8 @@ import {
 import { isModuleAvailable, isCsvModuleAvailable } from "../analysis.js";
 import { AnalyzeCsvSchemaSchema } from "../../../schemas/virtual.js";
 import { AnalyzeCsvSchemaOutputSchema } from "../../../schemas/virtual.js";
+import { validateSameDirPath } from "../../../../../utils/validate-path.js";
+import { getAuthContext } from "../../../../../auth/auth-context.js";
 
 export function createAnalyzeCsvSchemaTool(
   adapter: SqliteAdapter,
@@ -23,13 +25,36 @@ export function createAnalyzeCsvSchemaTool(
     group: "admin",
     inputSchema: AnalyzeCsvSchemaSchema,
     outputSchema: AnalyzeCsvSchemaOutputSchema,
-    requiredScopes: ["read"],
-    annotations: readOnly("Analyze CSV Schema"),
+    requiredScopes: ["admin"],
+    annotations: adminFs("Analyze CSV Schema"),
     handler: async (params: unknown, _context: RequestContext) => {
+      // Enforce admin scope at handler level for defense-in-depth against Code Mode bypass
+      const authCtx = getAuthContext();
+      if (authCtx?.authenticated) {
+        const scopes = authCtx.scopes;
+        if (
+          Array.isArray(scopes) &&
+          !scopes.includes("admin") &&
+          !scopes.includes("full")
+        ) {
+          return {
+            success: false,
+            error:
+              "Admin scope is required for CSV analysis (modifies schema and reads filesystem)",
+            code: "AUTHORIZATION_ERROR",
+            category: "authorization",
+            hasHeader: false,
+            rowCount: 0,
+            columns: [],
+          };
+        }
+      }
+
       let input;
+
       try {
         input = AnalyzeCsvSchemaSchema.parse(params);
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           hasHeader: false,
@@ -43,6 +68,22 @@ export function createAnalyzeCsvSchemaTool(
           success: false,
           error: `Relative path not supported. Please use an absolute path. Example: ${path.resolve(input.filePath)}`,
           code: "VALIDATION_ERROR",
+          category: "validation",
+          hasHeader: false,
+          rowCount: 0,
+          columns: [],
+        };
+      }
+
+      const validation = validateSameDirPath(
+        input.filePath,
+        adapter.getConfiguredPath(),
+      );
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: validation.error || "Path validation failed",
+          code: "SECURITY_ERROR",
           category: "validation",
           hasHeader: false,
           rowCount: 0,
@@ -66,7 +107,7 @@ export function createAnalyzeCsvSchemaTool(
 
         const options = [`filename='${input.filePath.replace(/'/g, "''")}'`];
         if (input.delimiter !== ",") {
-          options.push(`delimiter='${input.delimiter}'`);
+          options.push(`delimiter='${input.delimiter.replace(/'/g, "''")}'`);
         }
 
         await adapter.executeWriteQuery(
@@ -132,7 +173,7 @@ export function createAnalyzeCsvSchemaTool(
           rowCount,
           columns,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return {
           ...formatHandlerError(error),
           hasHeader: false,

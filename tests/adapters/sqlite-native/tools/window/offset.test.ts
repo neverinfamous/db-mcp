@@ -19,7 +19,7 @@ describe("Window Function Tools - Offset", () => {
 
   beforeEach(async () => {
     adapter = new NativeSqliteAdapter();
-    await adapter.connect({ type: "sqlite", database: ":memory:" });
+    await adapter.connect({ type: "sqlite", connectionString: ":memory:" });
 
     // Create test table with numeric data
     await adapter.executeWriteQuery(`
@@ -138,7 +138,7 @@ describe("Window Function Tools - Offset", () => {
           column: "amount",
           orderBy: "sale_date",
           direction: "lag",
-          whereClause: "region = 'North'",
+          conditions: [{ column: "region", operator: "=", value: "North" }],
         },
         mockContext,
       )) as { success: boolean; rowCount: number };
@@ -160,7 +160,7 @@ describe("Window Function Tools - Offset", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid table name");
+      expect(result.error).toContain("Invalid identifier");
     });
 
     it("should reject invalid column name", async () => {
@@ -176,7 +176,7 @@ describe("Window Function Tools - Offset", () => {
       )) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid column name");
+      expect(result.error).toContain("Invalid identifier");
     });
   });
 });

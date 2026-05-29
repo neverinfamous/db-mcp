@@ -2,57 +2,118 @@
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
-> We're currently testing Native mode.
-
-**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
-
-**Step 2:** Conduct an exhaustive test of the **introspection** tool group using ONLY `sqlite_execute_code`. Do not use direct tool calls or terminal.
-
-**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js): All 9 introspection tools are fully WASM-compatible. No phases to skip.
->
-> **Minor difference**: `schemaSnapshot` may report `test_articles_fts` in virtual tables but it is not queryable (FTS5 is unavailable in WASM). Treat its presence as expected but non-functional.
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
+
+## Setup & Pre-requisites
+
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
+
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the checklist below using live MCP server tool calls directly — not scripts/terminal.
+
+**Step 3:** The agent should update `C:\Users\chris\Desktop\db-mcp\UNRELEASED.md`, update `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` if appropriate, and create a `memory-journal-mcp` entry summarizing the changes/fixes.
+
+> [!WARNING]
+> **Stale Build Issues:** The MCP server runs from the compiled `dist/` directory, NOT `src/`. If you encounter inexplicable behavior (e.g., tools executing old logic or throwing validation errors for things already fixed in the source code), the server might be running a stale build. Check if the compiled code in `dist/` matches the source code in `src/`. If out of sync, stop and instruct the user to run `npm run build` and restart the server before continuing testing.
+
+> **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
+
+### Test Schema Reference
+
+> See `code-map.md` in the `test-server/` directory for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
 
-- ❌ Fail: Tool errors or produces incorrect results
-- ⚠️ Issue: Unexpected behavior or improvement opportunity
-- 📦 Payload: Unnecessarily large response — monitor `metrics.tokenEstimate`.
+- ❌ **Fail**: Tool errors or produces incorrect results (include error message)
+- ⚠️ **Issue**: Unexpected behavior or improvement opportunity
+- 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
-## Test Database Schema
+### Error Message Quality Rating
 
-| Table             | Rows | Key Columns                                            |
-| ----------------- | ---- | ------------------------------------------------------ |
-| test_products     | 16   | id, name, price, category                              |
-| test_orders       | 20   | id, product_id (FK→test_products), total_price, status |
-| test_measurements | 200  | id, sensor_id, temperature, humidity, pressure         |
+| Level                                  | Verdict |
+| -------------------------------------- | ------- |
+| 5 - Excellent (name + code + context)  | ✅      |
+| 4 - Good (name)                        | ✅      |
+| 3 - Adequate (raw SQLite, informative) | ⚠️      |
+| 2 - Poor (no object name)              | ⚠️      |
+| 1 - Useless (generic)                  | ❌      |
 
-**Key FK:** `test_orders.product_id → test_products.id`
-**Redundant index (intentional):** `idx_orders_status` is a prefix of `idx_orders_status_date` — used to test index audit tools.
+## Testing Requirements & Error Standards
 
-> All introspection tools are **read-only**. No cleanup required.
-
-## Testing Requirements
+> [!NOTE]
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
-> **Zero tolerance for raw MCP errors.** Report as ❌.
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+>
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
+>
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
-1. **Batched scripting**: Bundle checks with `failures` array.
-2. **Error path testing**: Every tool with `{}` (Zod) and domain error.
-3. **Token tracking**: Monitor `metrics.tokenEstimate`.
-4. **Coverage Matrix**: `| Tool | Happy Path | Domain Error | Zod Error |`
-5. **Deterministic checklist first**.
+1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
+2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
+   - (a) A domain error (e.g., non-existent table).
+   - (b) An **empty parameters test** (call the tool with `{}`).
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
+   > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
+5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
+   > **CRITICAL**: Architectural consistency is paramount. Do not introduce undocumented architectural deviations. If you implement a structural or architectural improvement in one tool, you must apply it symmetrically to other applicable tools in the group or project.
 6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+7. **Token Tracking**: Monitor `metrics.tokenEstimate` to detect payload issues.
+8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
-## Structured Error Response Pattern
+### Structured Error Response Pattern
 
-Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `isError: true`.
+All tools should return errors as structured objects instead of throwing. The expected pattern:
+
+```json
+{ "success": false, "error": "Human-readable error message" }
+```
+
+| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+
+## Naming & Cleanup
+
+- **Temporary tables**: `temp_*` (or `stress_*`) prefix
+- **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
+- Drop at the end of the script. If DROP fails due to lock, note and move on.
 
 ---
+
+## Group Focus: introspection
+
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
+
+### Code Mode Methods
+
+- `sqlite.introspection.dependencyGraph`
+- `sqlite.introspection.topologicalSort`
+- `sqlite.introspection.cascadeSimulator`
+- `sqlite.introspection.schemaSnapshot`
+- `sqlite.introspection.constraintAnalysis`
+- `sqlite.introspection.migrationRisks`
+- `sqlite.introspection.schemaDiff`
+- `sqlite.introspection.storageAnalysis`
+- `sqlite.introspection.indexAudit`
+- `sqlite.introspection.queryPlan`
 
 ## Phase 1: Graph Analysis — Happy Paths (batched)
 
@@ -61,8 +122,6 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 3. `sqlite.introspection.cascadeSimulator({table: "test_products"})` → affectedTables includes `test_orders`
 4. `sqlite.introspection.cascadeSimulator({table: "test_measurements"})` → affectedTables empty
 
----
-
 ## Phase 2: Schema Analysis — Happy Paths (batched)
 
 5. `sqlite.introspection.schemaSnapshot({})` → `snapshot.tables` ≥ 11; `stats.indexes` ≥ 4; `generatedAt` present
@@ -70,59 +129,32 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 7. `sqlite.introspection.migrationRisks({statements: ["DROP TABLE test_products"]})` → risks non-empty, category is "destructive"
 8. `sqlite.introspection.migrationRisks({statements: ["ALTER TABLE test_users ADD COLUMN age INTEGER"]})` → low risk
 9. `sqlite.introspection.migrationRisks({statements: ["CREATE TABLE new_table (id INTEGER PRIMARY KEY)", "DROP TABLE test_products"]})` → `summary.totalStatements: 2`, `summary.highestRisk` ≥ "high"
-
----
+10. `sqlite.introspection.schemaDiff({baseline: "current", target: "current"})` → `summary.totalChanges: 0`, `severity: "none"` (self-diff = no drift)
+11. `sqlite.introspection.schemaDiff({baseline: "current", target: "current", sections: ["tables"]})` → `sections.tables` populated, `sections.views`/`indexes`/`triggers` absent
 
 ## Phase 3: Diagnostics — Happy Paths (batched)
 
-10. `sqlite.introspection.storageAnalysis({})` → `database.pageSize > 0`, `database.totalPages > 0`; tables array present
-11. `sqlite.introspection.indexAudit({})` → `findings` array; redundant index for `idx_orders_status`
-12. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty
-13. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan array contains `idx_orders_status_date`
-14. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan array contains `test_products` (no index on name)
-
----
+12. `sqlite.introspection.storageAnalysis({})` → `database.pageSize > 0`, `database.totalPages > 0`; tables array present
+13. `sqlite.introspection.indexAudit({})` → `findings` array; redundant index for `idx_orders_status`
+14. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty
+15. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan array contains `idx_orders_status_date`
+16. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan array contains `test_products` (no index on name)
 
 ## Phase 4: Advanced Optional Parameters (batched)
 
 > Test these granular optional parameters. Note: While previously thought to be Code Mode-only, these parameters are actually available in both Code Mode and direct tool calls.
 
-15. `sqlite.introspection.schemaSnapshot({sections: ["tables"]})` → only tables section (no views/indexes)
-16. `sqlite.introspection.schemaSnapshot({compact: true})` → compact mode omits columns from table entries
-17. `sqlite.introspection.constraintAnalysis({table: "test_orders"})` → filtered to test_orders only
-18. `sqlite.introspection.constraintAnalysis({checks: ["unindexed_fk"]})` → filtered to unindexed FK findings
-19. `sqlite.introspection.storageAnalysis({includeTableDetails: false})` → database summary only (no tables array)
-20. `sqlite.introspection.indexAudit({table: "test_orders"})` → filtered to test_orders indexes only
-21. `sqlite.introspection.topologicalSort({direction: "drop"})` → drop order: test_orders before test_products
+17. `sqlite.introspection.schemaSnapshot({sections: ["tables"]})` → only tables section (no views/indexes)
+18. `sqlite.introspection.schemaSnapshot({compact: true})` → compact mode omits columns from table entries
+19. `sqlite.introspection.constraintAnalysis({table: "test_orders"})` → filtered to test_orders only
+20. `sqlite.introspection.constraintAnalysis({checks: ["unindexed_fk"]})` → filtered to unindexed FK findings
+21. `sqlite.introspection.storageAnalysis({includeTableDetails: false})` → database summary only (no tables array)
+22. `sqlite.introspection.indexAudit({table: "test_orders"})` → filtered to test_orders indexes only
+23. `sqlite.introspection.topologicalSort({direction: "drop"})` → drop order: test_orders before test_products
 
----
+## Phase 5: Multi-Step Workflow
 
-## Phase 5: Introspection Domain Errors (batched)
-
-🔴 22. `sqlite.introspection.cascadeSimulator({table: "nonexistent_xyz"})` → `{success: false}`
-🔴 23. `sqlite.introspection.queryPlan({sql: "DELETE FROM test_products WHERE id = 1"})` → `{success: false, error: "...only SELECT..."}`
-🔴 24. `sqlite.introspection.storageAnalysis({limit: 0})` → Zod validation error (min: 1)
-🔴 25. `sqlite.introspection.migrationRisks({statements: []})` → report behavior for empty array
-
----
-
-## Phase 6: Introspection Zod Validation (batched)
-
-🔴 26. `sqlite.introspection.dependencyGraph({})` → success or handler error (no required params)
-🔴 27. `sqlite.introspection.topologicalSort({})` → success or handler error (no required params)
-🔴 28. `sqlite.introspection.cascadeSimulator({})` → `{success: false}` (missing `table`)
-🔴 29. `sqlite.introspection.schemaSnapshot({})` → success or handler error (no required params)
-🔴 30. `sqlite.introspection.constraintAnalysis({})` → success or handler error (no required params)
-🔴 31. `sqlite.introspection.migrationRisks({})` → `{success: false}` (missing `statements`)
-🔴 32. `sqlite.introspection.storageAnalysis({})` → success or handler error (no required params)
-🔴 33. `sqlite.introspection.indexAudit({})` → success or handler error (no required params)
-🔴 34. `sqlite.introspection.queryPlan({})` → `{success: false}` (missing `sql`)
-
----
-
-## Phase 7: Multi-Step Workflow
-
-### 7.1 — Full database audit pipeline
+### 5.1 — Full database audit pipeline
 
 ```javascript
 const failures = [];
@@ -158,7 +190,7 @@ return {
 };
 ```
 
-### 7.2 — Query optimization analysis
+### 5.2 — Query optimization analysis
 
 ```javascript
 const queries = [
@@ -178,13 +210,45 @@ for (const sql of queries) {
 return plans;
 ```
 
+## Phase 6: Zod Validation Sweep
+
+🔴 24. `sqlite.introspection.dependencyGraph({})` → success or handler error (no required params)
+🔴 25. `sqlite.introspection.topologicalSort({})` → success or handler error (no required params)
+🔴 26. `sqlite.introspection.cascadeSimulator({})` → `{success: false}` (missing `table`)
+🔴 27. `sqlite.introspection.schemaSnapshot({})` → success or handler error (no required params)
+🔴 28. `sqlite.introspection.schemaDiff({})` → `{success: false}` (missing `baseline` and `target`)
+🔴 29. `sqlite.introspection.constraintAnalysis({})` → success or handler error (no required params)
+🔴 30. `sqlite.introspection.migrationRisks({})` → `{success: false}` (missing `statements`)
+🔴 31. `sqlite.introspection.storageAnalysis({})` → success or handler error (no required params)
+🔴 32. `sqlite.introspection.indexAudit({})` → success or handler error (no required params)
+🔴 33. `sqlite.introspection.queryPlan({})` → `{success: false}` (missing `sql`)
+
+---
+
+> **Note**: No Wrong-Type Numeric Coercion phase is included for this group — none of the introspection tools have optional numeric parameters.
+
 ---
 
 ## Post-Test Procedures
 
-1. **Triage findings**: Create implementation plan if issues found
-2. **Scope of fixes**: Handler code, server-instructions, this prompt
-3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-4. **Commit**: Stage and commit — do NOT push
-5. **Token audit**: Report most expensive block
-6. **Final summary**: After testing/re-testing
+### Reporting Rules
+
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

@@ -4,7 +4,7 @@
  * Tests factory functions, mode management, and mode info.
  */
 
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   createSandbox,
   createSandboxPool,
@@ -17,7 +17,8 @@ import {
 describe("sandbox-factory", () => {
   // Reset default mode after each test to avoid cross-test pollution
   afterEach(() => {
-    setDefaultSandboxMode("worker");
+    vi.unstubAllEnvs();
+    setDefaultSandboxMode("isolate");
   });
 
   // ===========================================================================
@@ -25,21 +26,16 @@ describe("sandbox-factory", () => {
   // ===========================================================================
 
   describe("setDefaultSandboxMode / getDefaultSandboxMode", () => {
-    it("should set and get vm mode", () => {
-      setDefaultSandboxMode("vm");
-      expect(getDefaultSandboxMode()).toBe("vm");
-    });
-
-    it("should set and get worker mode", () => {
-      setDefaultSandboxMode("worker");
-      expect(getDefaultSandboxMode()).toBe("worker");
+    it("should set and get isolate mode", () => {
+      setDefaultSandboxMode("isolate");
+      expect(getDefaultSandboxMode()).toBe("isolate");
     });
   });
 
   describe("getAvailableSandboxModes", () => {
-    it("should return vm and worker modes", () => {
+    it("should return isolate mode", () => {
       const modes = getAvailableSandboxModes();
-      expect(modes).toEqual(["vm", "worker"]);
+      expect(modes).toEqual(["isolate"]);
     });
   });
 
@@ -48,22 +44,15 @@ describe("sandbox-factory", () => {
   // ===========================================================================
 
   describe("createSandbox", () => {
-    it("should create a vm sandbox when mode is vm", () => {
-      const sandbox = createSandbox("vm");
-      expect(sandbox).toBeDefined();
-      expect(sandbox.isHealthy()).toBe(true);
-      sandbox.dispose();
-    });
-
-    it("should create a worker sandbox when mode is worker", () => {
-      const sandbox = createSandbox("worker");
+    it("should create an isolate sandbox when mode is isolate", () => {
+      const sandbox = createSandbox("isolate");
       expect(sandbox).toBeDefined();
       expect(sandbox.isHealthy()).toBe(true);
       sandbox.dispose();
     });
 
     it("should use default mode when none specified", () => {
-      setDefaultSandboxMode("vm");
+      setDefaultSandboxMode("isolate");
       const sandbox = createSandbox();
       expect(sandbox).toBeDefined();
       expect(sandbox.isHealthy()).toBe(true);
@@ -71,7 +60,7 @@ describe("sandbox-factory", () => {
     });
 
     it("should pass options to the sandbox", () => {
-      const sandbox = createSandbox("vm", { timeoutMs: 5000 });
+      const sandbox = createSandbox("isolate", { timeoutMs: 5000 });
       expect(sandbox.isHealthy()).toBe(true);
       sandbox.dispose();
     });
@@ -82,8 +71,8 @@ describe("sandbox-factory", () => {
   // ===========================================================================
 
   describe("createSandboxPool", () => {
-    it("should create a vm sandbox pool", () => {
-      const pool = createSandboxPool("vm", {
+    it("should create an isolate sandbox pool", () => {
+      const pool = createSandboxPool("isolate", {
         minInstances: 1,
         maxInstances: 3,
       });
@@ -92,30 +81,23 @@ describe("sandbox-factory", () => {
       pool.dispose();
     });
 
-    it("should create a worker sandbox pool", () => {
-      const pool = createSandboxPool("worker", { maxInstances: 5 });
-      expect(pool).toBeDefined();
-      expect(pool.getStats().max).toBe(5);
-      pool.dispose();
-    });
-
     it("should use default mode when none specified", () => {
-      setDefaultSandboxMode("vm");
+      setDefaultSandboxMode("isolate");
       const pool = createSandboxPool();
       expect(pool).toBeDefined();
       pool.dispose();
     });
 
     it("should initialize pool correctly", () => {
-      const pool = createSandboxPool("vm", {
+      const pool = createSandboxPool("isolate", {
         minInstances: 2,
         maxInstances: 5,
       });
       pool.initialize();
       const stats = pool.getStats();
-      expect(stats.available).toBe(2);
+      expect(stats.available).toBe(5);
       expect(stats.inUse).toBe(0);
-      pool.dispose();
+      expect(stats.max).toBe(5);
     });
   });
 
@@ -124,20 +106,11 @@ describe("sandbox-factory", () => {
   // ===========================================================================
 
   describe("getSandboxModeInfo", () => {
-    it("should return worker mode info", () => {
-      const info = getSandboxModeInfo("worker");
-      expect(info.name).toBe("Worker Thread");
-      expect(info.isolation).toContain("V8");
-      expect(info.security).toContain("Enhanced");
-      expect(info.requirements).toContain("worker_threads");
-    });
-
-    it("should return vm mode info", () => {
-      const info = getSandboxModeInfo("vm");
-      expect(info.name).toBe("VM Context");
-      expect(info.isolation).toContain("Script isolation");
-      expect(info.security).toContain("Standard");
-      expect(info.requirements).toContain("vm module");
+    it("should return isolate mode info", () => {
+      const info = getSandboxModeInfo("isolate");
+      expect(info.name).toBe("Isolated VM");
+      expect(info.isolation).toContain("True V8 Isolate");
+      expect(info.performance).toContain("Low overhead");
     });
 
     it("should have all required fields", () => {

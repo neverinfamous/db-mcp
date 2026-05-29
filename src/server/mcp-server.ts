@@ -20,21 +20,71 @@ import {
   getFilterSummary,
   getToolFilterFromEnv,
 } from "../filtering/tool-filter.js";
-import {
-  INSTRUCTIONS,
-  HELP_CONTENT,
-} from "../constants/server-instructions.js";
-import type { ToolGroup } from "../types/index.js";
+import { INSTRUCTIONS } from "../constants/server-instructions.js";
+
 import { logger } from "../utils/logger/index.js";
-import { SERVER_ICONS } from "../utils/icons.js";
-import { READ_ONLY } from "../utils/annotations.js";
+
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
 import { AuditLogger } from "../audit/logger.js";
 import { BackupManager } from "../audit/backup-manager.js";
 import { createAuditInterceptor } from "../audit/interceptor.js";
 import type { AuditInterceptor } from "../audit/interceptor.js";
-import { z } from "zod";
+import {
+  registerBuiltInTools,
+  registerHelpResources,
+  registerAuditResource,
+  registerAuditBackupTools,
+} from "./registration/index.js";
+import {
+  registerToolScopes,
+  scopesGrantToolAccess,
+} from "../auth/scopes/enforcement.js";
+import { getAuthContext } from "../auth/auth-context.js";
+/**
+ * Monkey-patch McpServer to return structured JSON errors for validation failures.
+ * This ensures that SDK-level Zod validation errors match the handler error format
+ * expected by clients ({ success: false, error: "..." }).
+ */
+const proto = McpServer.prototype as unknown as Record<
+  string,
+  (errorMessage: string) => {
+    content: { type: string; text: string }[];
+    isError: boolean;
+  }
+>;
+
+if (typeof proto["createToolError"] === "function") {
+  const originalCreateToolError = proto["createToolError"];
+  proto["createToolError"] = function (errorMessage: string) {
+    const result = originalCreateToolError.call(
+      this as unknown as McpServer,
+      errorMessage,
+    );
+    if (result.content?.[0]?.type === "text") {
+      const rawError = result.content[0].text;
+      // Only intercept Zod validation failures from the SDK.
+      // We must ignore "Tool not found" and other raw SDK errors so they propagate properly
+      // (isError: true) for WASM graceful degradation and test suite setup logic.
+      if (rawError.includes("Input validation error")) {
+        // Strip out the MCP error prefix to match handler validation error formatting
+        const cleanError = rawError.replace(
+          /^MCP error -32602: Input validation error: /,
+          "Validation error: ",
+        );
+        const structured = {
+          success: false,
+          error: cleanError,
+          code: "VALIDATION_ERROR",
+          category: ErrorCategory.VALIDATION,
+        };
+        result.content[0].text = JSON.stringify(structured, null, 2);
+        result.isError = true;
+      }
+    }
+    return result;
+  };
+}
 
 /**
  * Main db-mcp server class
@@ -86,8 +136,46 @@ export class DbMcpServer {
     });
 
     // Register built-in tools and help resources
-    this.registerBuiltInTools();
-    this.registerHelpResources();
+    registerBuiltInTools(
+      this.server,
+      this.adapters,
+      this.config,
+      this.toolFilter,
+    );
+    registerHelpResources(this.server, this.toolFilter);
+
+    // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
+    // We must do this AFTER tools are registered, because the SDK lazily registers the 'tools/list' handler
+    type RequestHandler = (
+      request: unknown,
+      extra: unknown,
+    ) => Promise<{ tools: { name: string }[] }>;
+    const internalMcp = this.server as unknown as {
+      server: { _requestHandlers?: Map<string, RequestHandler> };
+    };
+    const handlers = internalMcp.server._requestHandlers;
+
+    if (!handlers?.has("tools/list")) {
+      throw new DbMcpError(
+        "Security: SDK _requestHandlers monkey-patch failed. Scope filtering is disabled.",
+        "SERVER_START_FAILED",
+        ErrorCategory.INTERNAL,
+      );
+    }
+
+    const originalListToolsHandler = handlers.get("tools/list");
+    if (originalListToolsHandler) {
+      handlers.set("tools/list", async (request: unknown, extra: unknown) => {
+        const result = await originalListToolsHandler(request, extra);
+        const authCtx = getAuthContext();
+        if (authCtx && Array.isArray(result.tools)) {
+          result.tools = result.tools.filter((t) =>
+            scopesGrantToolAccess(authCtx.scopes, t.name),
+          );
+        }
+        return result;
+      });
+    }
 
     // Initialize audit subsystem if configured
     if (config.audit?.enabled) {
@@ -122,6 +210,10 @@ export class DbMcpServer {
           setAuditInterceptor: (i: AuditInterceptor) => void;
         }
       ).setAuditInterceptor(this.auditInterceptor);
+
+      this.auditInterceptor.setQueryAdapter({
+        executeQuery: (sql, params) => adapter.executeReadQuery(sql, params),
+      });
     }
     if (this.backupManager && "setBackupManager" in adapter) {
       (
@@ -133,6 +225,17 @@ export class DbMcpServer {
     adapter.registerTools(this.server, this.toolFilter);
     adapter.registerResources(this.server);
     adapter.registerPrompts(this.server);
+
+    // Register tool scopes dynamically for auth enforcement
+    const toolDefs = adapter.getToolDefinitions();
+    const scopesMap = new Map<string, string[]>();
+    for (const tool of toolDefs) {
+      if (tool.requiredScopes) {
+        scopesMap.set(tool.name, tool.requiredScopes);
+        scopesMap.set(`sqlite_${tool.name}`, tool.requiredScopes);
+      }
+    }
+    registerToolScopes(scopesMap);
 
     logger.info(`Registered adapter: ${adapter.name} (${adapterId})`, {
       module: "SERVER",
@@ -151,206 +254,6 @@ export class DbMcpServer {
    */
   getAdapters(): Map<string, DatabaseAdapter> {
     return this.adapters;
-  }
-
-  /**
-   * Register built-in server tools (health, info, etc.)
-   */
-  private registerBuiltInTools(): void {
-    // Build options with icons (SDK type doesn't include icons, so we cast)
-    const serverInfoOpts: Record<string, unknown> = {
-      title: "Server Info",
-      description:
-        "Get information about the db-mcp server and registered adapters",
-      icons: SERVER_ICONS,
-      annotations: READ_ONLY,
-    };
-
-    // Server info tool
-    this.server.registerTool("server_info", serverInfoOpts, () => {
-      const adapterInfo = [];
-      for (const [id, adapter] of this.adapters) {
-        adapterInfo.push({
-          id,
-          ...adapter.getInfo(),
-        });
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(
-              {
-                name: this.config.name,
-                version: this.config.version,
-                transport: this.config.transport,
-                adapters: adapterInfo,
-                toolFilter: {
-                  raw: this.toolFilter.raw,
-                  enabledGroups: [...this.toolFilter.enabledGroups],
-                },
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    });
-
-    // Health check tool
-    const healthOpts: Record<string, unknown> = {
-      title: "Server Health",
-      description: "Check health status of all database connections",
-      icons: SERVER_ICONS,
-      annotations: READ_ONLY,
-    };
-
-    this.server.registerTool("server_health", healthOpts, async () => {
-      const health: Record<string, unknown> = {
-        server: "healthy",
-        timestamp: new Date().toISOString(),
-        adapters: {},
-      };
-
-      for (const [id, adapter] of this.adapters) {
-        try {
-          const adapterHealth = await adapter.getHealth();
-          (health["adapters"] as Record<string, unknown>)[id] = adapterHealth;
-        } catch (error) {
-          (health["adapters"] as Record<string, unknown>)[id] = {
-            connected: false,
-            error: error instanceof Error ? error.message : "Unknown error",
-          };
-        }
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(health, null, 2),
-          },
-        ],
-      };
-    });
-
-    // List adapters tool
-    const listAdaptersOpts: Record<string, unknown> = {
-      title: "List Adapters",
-      description: "List all registered database adapters",
-      icons: SERVER_ICONS,
-      annotations: READ_ONLY,
-    };
-
-    this.server.registerTool("list_adapters", listAdaptersOpts, () => {
-      const adapters = [];
-      for (const [id, adapter] of this.adapters) {
-        adapters.push({
-          id,
-          type: adapter.type,
-          name: adapter.name,
-          version: adapter.version,
-          connected: adapter.isConnected(),
-        });
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(adapters, null, 2),
-          },
-        ],
-      };
-    });
-  }
-
-  /**
-   * Register sqlite://help resources for on-demand reference documentation.
-   * Always registers sqlite://help (gotchas). Group-specific help is filtered
-   * by the tool filter configuration.
-   */
-  private registerHelpResources(): void {
-    // Always register sqlite://help (gotchas + code mode + WASM vs native)
-    const gotchasContent = HELP_CONTENT.get("gotchas");
-    if (gotchasContent) {
-      this.server.registerResource(
-        "sqlite_help",
-        "sqlite://help",
-        {
-          description:
-            "Critical gotchas, WASM vs Native comparison, and Code Mode API reference",
-          mimeType: "text/markdown",
-        },
-        () => ({
-          contents: [
-            {
-              uri: "sqlite://help",
-              mimeType: "text/markdown",
-              text: gotchasContent,
-            },
-          ],
-        }),
-      );
-    }
-
-    // Register group-specific help resources based on tool filter
-    const groupHelpKeys: { group: ToolGroup; key: string }[] = [
-      { group: "core", key: "core" },
-      { group: "json", key: "json" },
-      { group: "text", key: "text" },
-      { group: "stats", key: "stats" },
-      { group: "vector", key: "vector" },
-      { group: "geo", key: "geo" },
-      { group: "admin", key: "admin" },
-      { group: "transactions", key: "transactions" },
-      { group: "introspection", key: "introspection" },
-      { group: "migration", key: "migration" },
-    ];
-
-    for (const { group, key } of groupHelpKeys) {
-      const isCodemodeOnly =
-        this.toolFilter.enabledGroups.size === 1 &&
-        this.toolFilter.enabledGroups.has("codemode");
-
-      if (!this.toolFilter.enabledGroups.has(group) && !isCodemodeOnly) {
-        continue;
-      }
-
-      const content = HELP_CONTENT.get(key);
-      if (!content) continue;
-
-      this.server.registerResource(
-        `sqlite_help_${key}`,
-        `sqlite://help/${key}`,
-        {
-          description: `Tool reference for the ${group} tool group`,
-          mimeType: "text/markdown",
-        },
-        () => ({
-          contents: [
-            {
-              uri: `sqlite://help/${key}`,
-              mimeType: "text/markdown",
-              text: content,
-            },
-          ],
-        }),
-      );
-    }
-
-    // Log registered help resources
-    const registeredHelp = ["sqlite://help"];
-    for (const { group, key } of groupHelpKeys) {
-      if (this.toolFilter.enabledGroups.has(group)) {
-        registeredHelp.push(`sqlite://help/${key}`);
-      }
-    }
-    logger.info(`Help resources: ${registeredHelp.join(", ")}`, {
-      module: "SERVER",
-    });
   }
 
   /**
@@ -382,6 +285,15 @@ export class DbMcpServer {
     logger.info(`db-mcp server started (stdio transport)`, {
       module: "SERVER",
     });
+
+    // Warn about STDIO granting universal admin scope
+    logger.warning(
+      "SECURITY WARNING: Running in STDIO mode grants blanket 'admin' access to all tools. " +
+        "This implies full trust in the local client/agent. If this server is exposed over SSH " +
+        "or used by an untrusted client, consider using HTTP transport with OAuth (--oauth-enabled) " +
+        "for granular scope enforcement.",
+      { module: "SERVER", code: "STDIO_ADMIN_RISK" },
+    );
   }
 
   /**
@@ -423,6 +335,7 @@ export class DbMcpServer {
       }),
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
+      noAuthEnforcement: this.config.noAuthEnforcement ?? false,
     });
 
     // Initialize transport with the MCP server reference
@@ -432,7 +345,7 @@ export class DbMcpServer {
     await transport.start();
 
     const mode = this.config.statelessHttp ? "stateless" : "stateful";
-    const host = this.config.host ?? "0.0.0.0";
+    const host = this.config.host ?? "127.0.0.1";
     const port = String(this.config.port ?? 3000);
     logger.info(
       `db-mcp server started (HTTP transport on ${host}:${port}, ${mode} mode)`,
@@ -451,7 +364,7 @@ export class DbMcpServer {
       try {
         await adapter.disconnect();
         logger.info(`Disconnected adapter: ${id}`, { module: "SERVER" });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error(`Error disconnecting adapter ${id}`, {
           module: "SERVER",
           error: error instanceof Error ? error : undefined,
@@ -500,205 +413,18 @@ export class DbMcpServer {
     this.auditInterceptor = createAuditInterceptor(
       this.auditLogger,
       this.backupManager ?? undefined,
-      undefined, // queryAdapter wired later when adapter connects
     );
 
     // Register sqlite://audit resource
-    this.registerAuditResource();
+    registerAuditResource(this.server, this.auditLogger, this.backupManager);
 
     // Register audit backup tools only if admin group is enabled in the tool filter
     if (this.backupManager && this.toolFilter.enabledGroups.has("admin")) {
-      this.registerAuditBackupTools();
+      registerAuditBackupTools(this.server, this.backupManager, this.adapters);
     }
 
     logger.info(
       `Audit logging enabled (${auditConfig.logPath}, redact=${String(auditConfig.redact)}, reads=${String(auditConfig.auditReads)}, backup=${String(!!auditConfig.backup?.enabled)})`,
-      { module: "AUDIT" },
-    );
-  }
-
-  /**
-   * Register the sqlite://audit resource for agent access to audit log.
-   */
-  private registerAuditResource(): void {
-    if (!this.auditLogger) return;
-    const auditLogger = this.auditLogger;
-    const backupManager = this.backupManager;
-
-    this.server.registerResource(
-      "sqlite_audit",
-      "sqlite://audit",
-      {
-        description:
-          "Recent audit log entries and backup statistics. Shows the last 50 tool invocations with timing, outcomes, and token estimates.",
-        mimeType: "application/json",
-      },
-      async () => {
-        const recent = await auditLogger.recent(50);
-        const backupStats = backupManager
-          ? await backupManager.getStats()
-          : undefined;
-
-        const payload = {
-          entries: recent,
-          stats: {
-            totalEntries: recent.length,
-            ...(backupStats && { backups: backupStats }),
-          },
-        };
-
-        return {
-          contents: [
-            {
-              uri: "sqlite://audit",
-              mimeType: "application/json",
-              text: JSON.stringify(payload, null, 2),
-            },
-          ],
-        };
-      },
-    );
-  }
-
-  /**
-   * Register audit backup tools for snapshot management.
-   */
-  private registerAuditBackupTools(): void {
-    const backupManager = this.backupManager;
-    if (!backupManager) return;
-
-    // sqlite_audit_list_backups
-    this.server.registerTool(
-      "sqlite_audit_list_backups",
-      {
-        title: "List Audit Backups",
-        description:
-          "List pre-mutation DDL snapshots captured before destructive operations. Returns metadata for each snapshot including timestamp, tool, target, and size.",
-        annotations: {
-          readOnlyHint: true,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: false,
-        },
-      },
-      async () => {
-        const snapshots = await backupManager.listSnapshots();
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  snapshots,
-                  count: snapshots.length,
-                  _meta: {
-                    tokenEstimate: Math.ceil(
-                      Buffer.byteLength(JSON.stringify(snapshots), "utf8") / 4,
-                    ),
-                  },
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
-      },
-    );
-
-    // sqlite_audit_get_backup
-    this.server.registerTool(
-      "sqlite_audit_get_backup",
-      {
-        title: "Get Audit Backup",
-        description:
-          "Retrieve a specific pre-mutation DDL snapshot by filename. Returns the full snapshot content including DDL and optional data.",
-        inputSchema: z.object({
-          filename: z
-            .string()
-            .describe(
-              "Snapshot filename from sqlite_audit_list_backups results",
-            ),
-        }),
-        annotations: {
-          readOnlyHint: true,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: false,
-        },
-      },
-      async (args: unknown) => {
-        const { filename } = args as { filename: string };
-        const snapshot = await backupManager.getSnapshot(filename);
-        if (!snapshot) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: false,
-                    error: `Snapshot not found: ${filename}`,
-                  },
-                  null,
-                  2,
-                ),
-              },
-            ],
-            isError: true,
-          };
-        }
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(snapshot, null, 2),
-            },
-          ],
-        };
-      },
-    );
-
-    // sqlite_audit_cleanup
-    this.server.registerTool(
-      "sqlite_audit_cleanup",
-      {
-        title: "Cleanup Audit Backups",
-        description:
-          "Apply retention policy to audit backup snapshots. Deletes snapshots exceeding age or count limits.",
-        annotations: {
-          readOnlyHint: false,
-          destructiveHint: true,
-          idempotentHint: true,
-          openWorldHint: false,
-        },
-      },
-      async () => {
-        const deleted = await backupManager.cleanup();
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  success: true,
-                  deletedCount: deleted,
-                  message:
-                    deleted > 0
-                      ? `Cleaned up ${String(deleted)} snapshot(s)`
-                      : "No snapshots to clean up",
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
-      },
-    );
-
-    logger.info(
-      "Registered audit backup tools: sqlite_audit_list_backups, sqlite_audit_get_backup, sqlite_audit_cleanup",
       { module: "AUDIT" },
     );
   }

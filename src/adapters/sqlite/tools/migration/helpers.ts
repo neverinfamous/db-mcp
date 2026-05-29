@@ -62,3 +62,21 @@ export async function isMigrationTableInitialized(
   );
   return (result.rows?.length ?? 0) > 0;
 }
+
+/**
+ * Validates migration SQL to prevent unauthorized commands
+ */
+export function validateMigrationSql(sql: string): void {
+  const cleanSql = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "");
+  const upperSql = cleanSql.toUpperCase();
+  if (
+    upperSql.includes("ATTACH ") ||
+    upperSql.includes("DETACH ") ||
+    upperSql.includes("PRAGMA ") ||
+    upperSql.includes("LOAD_EXTENSION(")
+  ) {
+    throw new Error(
+      `Migration validation failed: unauthorized command or function call`,
+    );
+  }
+}

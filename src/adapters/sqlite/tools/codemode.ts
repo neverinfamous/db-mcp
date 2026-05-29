@@ -46,6 +46,9 @@ const security = new CodeModeSecurityManager({
   maxExecutionsPerMinute: codemodeRateLimit,
 });
 
+/** Stable process-level identifier for STDIO mode where each agent has its own process */
+const processId = crypto.randomUUID();
+
 // =============================================================================
 // Tool Definition
 // =============================================================================
@@ -65,22 +68,19 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_execute_code",
     description:
-      "Execute JavaScript in a sandboxed environment with access to all SQLite tools " +
-      "via the sqlite.* API. Enables complex multi-step operations in a single call. " +
-      "Groups: sqlite.core, sqlite.json, sqlite.text, sqlite.stats, sqlite.vector, " +
-      "sqlite.admin, sqlite.geo, sqlite.introspection, sqlite.migration. " +
-      "Use sqlite.help() for all groups, sqlite.<group>.help() for methods. " +
-      "Example: const tables = await sqlite.core.listTables(); " +
-      "const schema = await sqlite.core.describeTable(tables[0].name); return schema;",
+      "Execute JS in a sandbox using the sqlite.* API (e.g. sqlite.core.listTables()). " +
+      "Use sqlite.help() for docs. WARNING: Code can modify the DB unless readonly: true is passed.",
     group: "codemode",
     inputSchema: ExecuteCodeSchema,
     outputSchema: ExecuteCodeOutputSchema,
+    requiredScopes: ["admin"],
     annotations: {
       title: "Execute Code (Sandbox)",
       readOnlyHint: false,
-      destructiveHint: false,
+      destructiveHint: true,
       idempotentHint: false,
-      openWorldHint: false,
+      openWorldHint: true,
+      sensitiveHint: true,
     },
     handler: async (
       params: unknown,
@@ -120,8 +120,8 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Check rate limit
-        const clientId = _context.auth?.sub ?? "anonymous";
-        if (!security.checkRateLimit(clientId)) {
+        const clientId = _context.auth?.sub ?? _context.clientIp ?? processId;
+        if (!(await security.checkRateLimit(clientId))) {
           return {
             success: false,
             error: `Rate limit exceeded. Maximum ${String(codemodeRateLimit)} executions per minute.`,
@@ -146,7 +146,7 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
           typeof adapter.getAvailableToolDefinitions === "function"
             ? adapter.getAvailableToolDefinitions()
             : adapter.getToolDefinitions();
-        const api = createSqliteApi(allTools);
+        const api = createSqliteApi(allTools, _context);
         const bindings = api.createSandboxBindings();
 
         // If readonly, wrap write methods with guards that return
@@ -193,13 +193,18 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: result.success,
           result: sanitizedResult,
-          error: result.error,
+          error: result.error
+            ? (security.sanitizeResult(result.error) as string)
+            : undefined,
+          consoleOutput: result.logs
+            ? (security.sanitizeResult(result.logs) as string[])
+            : undefined,
           metrics: {
             ...result.metrics,
             tokenEstimate,
           },
         };
-      } catch (error) {
+      } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         logger.error(`Code execution error: ${errorMsg}`, {
           module: "CODEMODE" as const,
@@ -302,9 +307,14 @@ function wrapReadonlyGuards(
  * Reads CODEMODE_ISOLATION env var to select sandbox mode.
  */
 function initializePool(): void {
-  const modeEnv = process.env["CODEMODE_ISOLATION"]?.toLowerCase();
-  const mode: SandboxMode =
-    modeEnv === "vm" || modeEnv === "worker" ? modeEnv : "worker";
+  // isolate mode provides true C++ V8 isolate separation where host prototypes
+  // are inaccessible by design. It is vastly superior to worker mode for untrusted code.
+  const mode: SandboxMode = "isolate";
+
+  logger.info("Code Mode isolation using 'isolate' (true V8 separation).", {
+    module: "CODEMODE" as const,
+    operation: "initialize",
+  });
 
   setDefaultSandboxMode(mode);
   pool = createSandboxPool(mode, undefined, { timeoutMs: 30000 });

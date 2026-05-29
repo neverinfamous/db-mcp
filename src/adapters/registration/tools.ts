@@ -1,8 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { z } from "zod";
 import type { ToolDefinition, RequestContext } from "../../types/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
 import type { AuditInterceptor } from "../../audit/interceptor.js";
+import { registerToolScope } from "../../auth/scope-map.js";
+import {
+  registerToolScopes,
+  scopesGrantToolAccess,
+} from "../../auth/scopes/enforcement.js";
+import { getAuthContext } from "../../auth/auth-context.js";
+import { InsufficientScopeError } from "../../auth/errors.js";
 
 // Interface for the adapter methods needed by tool registration
 export interface ToolRegistrationAdapter {
@@ -19,32 +25,26 @@ export function registerToolImpl(
   server: McpServer,
   tool: ToolDefinition,
 ): void {
+  // Truncate description to prevent tool poisoning or excessive token usage
+  const safeDescription =
+    tool.description && tool.description.length > 2000
+      ? tool.description.substring(0, 2000) + "... (truncated)"
+      : tool.description;
+
   const toolOptions: Record<string, unknown> = {
-    description: tool.description,
+    description: safeDescription,
+    ...(tool.annotations?.title
+      ? { title: tool.annotations.title.substring(0, 256) }
+      : {}),
   };
+
+  const requiredScope = tool.requiredScopes?.[0] ?? "admin";
+  registerToolScope(tool.name, requiredScope);
+  registerToolScopes(new Map([[tool.name, tool.requiredScopes ?? ["admin"]]]));
 
   if (tool.inputSchema !== undefined) {
     const schema = tool.inputSchema;
-    if (
-      typeof schema === "object" &&
-      schema !== null &&
-      "partial" in schema &&
-      typeof (schema as Record<string, unknown>)["partial"] === "function"
-    ) {
-      try {
-        toolOptions["inputSchema"] = (
-          schema as { partial: () => { passthrough: () => z.ZodType } }
-        )
-          .partial()
-          .passthrough();
-      } catch (e) {
-        console.error(`Error applying .partial() to ${tool.name}:`, e);
-        // ZodEffects throws on .partial() in Zod 4
-        toolOptions["inputSchema"] = schema;
-      }
-    } else {
-      toolOptions["inputSchema"] = schema;
-    }
+    toolOptions["inputSchema"] = schema;
   }
 
   if (tool.outputSchema !== undefined) {
@@ -91,6 +91,15 @@ export function registerToolImpl(
         );
 
         const execFn = async (): Promise<ToolResponse> => {
+          const authCtx = getAuthContext();
+          const requiredScopes = tool.requiredScopes ?? ["admin"];
+
+          const userScopes = authCtx?.scopes ?? [];
+
+          if (authCtx && !scopesGrantToolAccess(userScopes, tool.name)) {
+            throw new InsufficientScopeError(requiredScopes, userScopes);
+          }
+
           const result = await tool.handler(args, context);
 
           // Inject _meta.tokenEstimate into object responses
@@ -106,7 +115,7 @@ export function registerToolImpl(
               '"tokenEstimate":0',
               `"tokenEstimate":${String(tokenEstimate)}`,
             );
-            return {
+            const response: ToolResponse = {
               content: [
                 {
                   type: "text" as const,
@@ -115,6 +124,10 @@ export function registerToolImpl(
               ],
               structuredContent: result as Record<string, unknown>,
             };
+            if ((result as Record<string, unknown>)["success"] === false) {
+              response.isError = true;
+            }
+            return response;
           }
 
           if (typeof result === "object" && result !== null) {
@@ -130,9 +143,13 @@ export function registerToolImpl(
               '"tokenEstimate": 0',
               `"tokenEstimate": ${String(tokenEstimate)}`,
             );
-            return {
+            const response: ToolResponse = {
               content: [{ type: "text" as const, text: finalText }],
             };
+            if ((result as Record<string, unknown>)["success"] === false) {
+              response.isError = true;
+            }
+            return response;
           }
 
           return {
@@ -160,7 +177,7 @@ export function registerToolImpl(
           );
         }
         return await execFn();
-      } catch (error) {
+      } catch (error: unknown) {
         const structured = formatHandlerError(error);
 
         // Token estimate for error responses

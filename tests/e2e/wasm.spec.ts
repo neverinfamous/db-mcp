@@ -48,7 +48,7 @@ test.describe("WASM Adapter Graceful Degradation", () => {
         arguments: { targetPath: "/tmp/test-backup.db" },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
@@ -67,7 +67,7 @@ test.describe("WASM Adapter Graceful Degradation", () => {
         arguments: { sourcePath: "/tmp/nonexistent.db" },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);
@@ -86,7 +86,7 @@ test.describe("WASM Adapter Graceful Degradation", () => {
         arguments: { backupPath: "/tmp/nonexistent.db" },
       });
 
-      expect(response.isError).toBeUndefined();
+      expect(response.isError).toBe(true);
       expect(Array.isArray(response.content)).toBe(true);
       const parsed = JSON.parse((response.content[0] as { text: string }).text);
       expect(parsed.success).toBe(false);

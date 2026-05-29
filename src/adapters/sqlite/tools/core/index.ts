@@ -1,8 +1,8 @@
 /**
  * SQLite Core Database Tools — Public Exports
  *
- * Fundamental database operations: read, write, table management, indexes.
- * 9 tools total with OAuth scope enforcement.
+ * Fundamental database operations: read, write, table management, indexes,
+ * triggers, and schema alteration.
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
@@ -26,6 +26,14 @@ import {
   createExistsTool,
   createTruncateTool,
 } from "./convenience.js";
+import {
+  createListTriggersTool,
+  createCreateTriggerTool,
+  createDropTriggerTool,
+} from "./triggers.js";
+import { createListConstraintsTool } from "./constraints.js";
+import { createDateAddTool, createDateDiffTool } from "./datetime.js";
+import { createAlterTableTool } from "./alter-table.js";
 
 // Re-export SpatiaLite system filters for external use
 export {
@@ -53,5 +61,12 @@ export function getCoreTools(adapter: SqliteAdapter): ToolDefinition[] {
     createCountTool(adapter),
     createExistsTool(adapter),
     createTruncateTool(adapter),
+    createListTriggersTool(adapter),
+    createCreateTriggerTool(adapter),
+    createDropTriggerTool(adapter),
+    createListConstraintsTool(adapter),
+    createDateAddTool(adapter),
+    createDateDiffTool(adapter),
+    createAlterTableTool(adapter),
   ];
 }

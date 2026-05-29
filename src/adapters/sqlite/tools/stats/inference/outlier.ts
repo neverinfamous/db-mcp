@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../../utils/where-clause.js";
 import { validateColumnExists, validateNumericColumn } from "../helpers.js";
 import type { SqliteAdapter } from "../../../sqlite-adapter.js";
 import type {
@@ -5,10 +6,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import {
-  validateWhereClause,
-  sanitizeIdentifier,
-} from "../../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { OutlierSchema } from "../../../schemas/stats.js";
 import { StatsOutliersOutputSchema } from "../../../schemas/stats.js";
@@ -50,12 +48,12 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.table);
         sanitizeIdentifier(input.column);
 
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
+        if (input.conditions || input.whereClause) {
+          // validateWhereClause() removed
         }
 
-        const whereClause = input.whereClause
-          ? ` AND ${input.whereClause}`
+        const conditions = input.conditions
+          ? ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}`
           : "";
 
         if (input.method === "zscore") {
@@ -63,11 +61,11 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
 
           const statsResult = await adapter.executeReadQuery(
             `SELECT AVG("${input.column}") as mean,
-                    (SUM(("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause})) *
-                         ("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause}))) /
+                    (SUM(("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions})) *
+                         ("${input.column}" - (SELECT AVG("${input.column}") FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions}))) /
                      (COUNT(*) - 1)) as variance,
                     COUNT(*) as total
-             FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${whereClause}`,
+             FROM "${input.table}" WHERE "${input.column}" IS NOT NULL${conditions}`,
           );
 
           const mean = Number(statsResult.rows?.[0]?.["mean"] ?? 0);
@@ -80,7 +78,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
 
           const outlierResult = await adapter.executeReadQuery(
             `SELECT rowid, "${input.column}" as value FROM "${input.table}"
-             WHERE "${input.column}" IS NOT NULL${whereClause}
+             WHERE "${input.column}" IS NOT NULL${conditions}
                AND ("${input.column}" < ${lowerBound} OR "${input.column}" > ${upperBound})
              LIMIT ${input.limit}`,
           );
@@ -112,7 +110,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
 
           const allResult = await adapter.executeReadQuery(
             `SELECT "${input.column}" as value FROM "${input.table}"
-             WHERE "${input.column}" IS NOT NULL${whereClause}
+             WHERE "${input.column}" IS NOT NULL${conditions}
              ORDER BY "${input.column}"`,
           );
 
@@ -141,7 +139,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
 
           const outlierResult = await adapter.executeReadQuery(
             `SELECT rowid, "${input.column}" as value FROM "${input.table}"
-             WHERE "${input.column}" IS NOT NULL${whereClause}
+             WHERE "${input.column}" IS NOT NULL${conditions}
                AND ("${input.column}" < ${lowerBound} OR "${input.column}" > ${upperBound})
              LIMIT ${input.limit}`,
           );
@@ -168,7 +166,7 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
               : {}),
           };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

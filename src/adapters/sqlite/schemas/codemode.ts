@@ -11,12 +11,14 @@ import { ErrorResponseFields } from "../../../utils/errors/error-response-fields
  * Coerce string values to numbers for MCP parameter safety.
  * Returns undefined for unparseable values so `.default()` kicks in.
  */
-const coerceNumber = (val: unknown): unknown =>
-  typeof val === "string"
-    ? Number.isNaN(Number(val))
-      ? undefined
-      : Number(val)
-    : val;
+const coerceNumber = (val: unknown): unknown => {
+  if (typeof val === "string") {
+    if (val.trim() === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  }
+  return val;
+};
 
 // =============================================================================
 // Input Schemas
@@ -25,6 +27,7 @@ const coerceNumber = (val: unknown): unknown =>
 export const ExecuteCodeSchema = z.object({
   code: z
     .string()
+    .catch("")
     .describe(
       "JavaScript code to execute. Access all SQLite tools via sqlite.* API. " +
         "Use sqlite.help() to discover groups, sqlite.<group>.help() for methods. " +
@@ -34,6 +37,8 @@ export const ExecuteCodeSchema = z.object({
     coerceNumber,
     z
       .number()
+      .min(500)
+      .max(30000)
       .optional()
       .default(30000)
       .describe(

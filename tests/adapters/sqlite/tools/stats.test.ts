@@ -90,7 +90,7 @@ describe("Statistics Tools", () => {
       const result = (await tools.get("sqlite_stats_basic")?.({
         table: "sales",
         column: "price",
-        whereClause: "category = 'Fruit'",
+        conditions: [{ column: "category", operator: "=", value: "Fruit" }],
       })) as {
         success: boolean;
         stats: { count: number };
@@ -117,7 +117,7 @@ describe("Statistics Tools", () => {
     it("should count with filter", async () => {
       const result = (await tools.get("sqlite_stats_count")?.({
         table: "sales",
-        whereClause: "price > 1.5",
+        conditions: [{ column: "price", operator: ">", value: 1.5 }],
       })) as {
         success: boolean;
         count: number;
@@ -392,7 +392,7 @@ describe("Statistics Tools", () => {
         table: "sales",
         column: "price",
         threshold: 1.0,
-        whereClause: "price < 10.0",
+        conditions: [{ column: "price", operator: "<", value: 10.0 }],
       })) as { success: boolean; anomalies: Record<string, unknown>[] };
 
       expect(result.success).toBe(true);

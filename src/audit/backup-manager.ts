@@ -46,9 +46,9 @@ import type {
 const SNAPSHOT_TOOL_ARGS: Record<string, { targetKey: string }> = {
   sqlite_drop_table: { targetKey: "table" },
   sqlite_drop_index: { targetKey: "index" },
-  sqlite_drop_view: { targetKey: "view" },
+  sqlite_drop_view: { targetKey: "viewName" },
   sqlite_import_csv: { targetKey: "table" },
-  sqlite_backup: { targetKey: "path" },
+  sqlite_backup: { targetKey: "targetPath" },
 };
 
 /** File extension for compressed snapshot files */
@@ -135,15 +135,26 @@ export class BackupManager {
   /**
    * List available snapshots with metadata.
    */
-  async listSnapshots(): Promise<SnapshotMetadata[]> {
+  async listSnapshots(
+    limit = 10,
+    offset = 0,
+  ): Promise<{ snapshots: SnapshotMetadata[]; total: number }> {
     try {
       await this.ensureDirectory();
       const files = await readdir(this.snapshotDir);
+
+      const snapshotFiles = files.filter(
+        (f) => f.endsWith(SNAPSHOT_EXT) || f.endsWith(SNAPSHOT_EXT_LEGACY),
+      );
+      // Sort newest first by parsing timestamp from filename, but lexicographical works for ISO timestamps
+      snapshotFiles.sort((a, b) => b.localeCompare(a));
+
+      const total = snapshotFiles.length;
+      const targetFiles = snapshotFiles.slice(offset, offset + limit);
+
       const snapshots: SnapshotMetadata[] = [];
 
-      for (const file of files) {
-        if (!file.endsWith(SNAPSHOT_EXT) && !file.endsWith(SNAPSHOT_EXT_LEGACY))
-          continue;
+      for (const file of targetFiles) {
         try {
           const parsed = await this.readSnapshotFile(file);
           if (parsed) {
@@ -154,12 +165,10 @@ export class BackupManager {
         }
       }
 
-      // Sort newest first
-      snapshots.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-      return snapshots;
+      return { snapshots, total };
     } catch {
       // Intentional: listSnapshots is best-effort — return empty on error
-      return [];
+      return { snapshots: [], total: 0 };
     }
   }
 

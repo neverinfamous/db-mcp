@@ -1,52 +1,39 @@
-# db-mcp Advanced Stress Test — [admin]
+# db-mcp Advanced Stress Testing: [admin]
 
 > [!IMPORTANT]
 > **Do not track progress in this file.** Track your test progress, coverage matrix, and findings in your internal task tracking system (artifact). However, you SHOULD edit this file to fix any factual errors, broken code, or incorrect assertions in the test prompts.
-> If there is nothing to fix, don't update UNRELEASED.md.
-> We're currently testing Native mode.
-
-**Step 1:** Read `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file`.
-
-**Step 2:** Execute each numbered stress test below using `sqlite_execute_code` (code mode).
-
-**Step 3:** The agent should update C:\Users\chris\Desktop\db-mcp\UNRELEASED.md with any/all changes/fixes.
+> If there are no changes/fixes, do not update UNRELEASED.md or create a memory-journal-mcp entry.
+> **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
 
-> When testing against a **WASM backend** (`--sqlite` / sql.js), apply these adjustments:
+> When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
-- **Category 2**: Item 6 (`createRtreeTable`) — returns `{success: false}` in WASM (R-Tree unavailable). Treat as **negative validation**. Item 7 (`listVirtualTables`) — `test_articles_fts` may appear but is not queryable.
-- **Category 3**: All 3 items (11-13) return `{success: false, error: "...WASM mode"}`. Treat as **negative validation** — verify the structured error, do not skip.
-- **Category 4**: Item 16 (`pragmaCompileOptions` FTS filter) — WASM shows FTS3 instead of FTS5.
-- **Category 5**: Items 21-22 (`analyzeCsvSchema`, `createCsvTable`) — return `{success: false}` in WASM (CSV extension unavailable). Treat as **negative validation**.
-- All other categories are WASM-compatible.
+## Setup & Pre-requisites
 
-## Code Mode Execution
+**Step 1:** Confirm you read the server help content sourced from `C:\Users\chris\Desktop\db-mcp\src\constants\server-instructions\gotchas.md` using `view_file` (not grep or search) — to understand documented behaviors, edge cases, and response structures for this tool group.
 
-- **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+**Step 2:** Please conduct an exhaustive test of the tool group specified in the checklist below using live MCP server tool calls directly — not scripts/terminal.
 
-All tests via `sqlite_execute_code`. Use `sqlite.admin.*` for admin tools, `sqlite.core.*` for read/write.
-State persists across calls. Do NOT pass `readonly: true`. Group related tests into single calls.
+**Step 3:** The agent should update `C:\Users\chris\Desktop\db-mcp\UNRELEASED.md`, update `C:\Users\chris\Desktop\db-mcp\test-server\code-map.md` if appropriate, and create a `memory-journal-mcp` entry summarizing the changes/fixes.
 
-## Test Database Schema
+> [!WARNING]
+> **Stale Build Issues:** The MCP server runs from the compiled `dist/` directory, NOT `src/`. If you encounter inexplicable behavior (e.g., tools executing old logic or throwing validation errors for things already fixed in the source code), the server might be running a stale build. Check if the compiled code in `dist/` matches the source code in `src/`. If out of sync, stop and instruct the user to run `npm run build` and restart the server before continuing testing.
 
-| Table             | Rows | Key Columns                                            |
-| ----------------- | ---- | ------------------------------------------------------ |
-| test_products     | 16   | id, name, price, category, created_at                  |
-| test_orders       | 20   | id, product_id (FK→test_products), total_price, status |
-| test_articles_fts | —    | FTS5 virtual table (title, body) `[NATIVE ONLY]`       |
+> **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
+
+### Test Schema Reference
+
+> See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 > **CSV testing**: Use absolute path `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv`.
 
-## Naming & Cleanup
-
-- **Temporary tables**: `stress_*` prefix
-- **Temporary views**: `stress_view_*` prefix
-- Drop at end. If DROP fails due to lock, note and move on.
-
 ## Reporting Format
 
-- ❌ Fail | ⚠️ Issue | 📦 Payload (monitor `metrics.tokenEstimate`) | ✅ Confirmed (inline only)
+- ❌ **Fail**: Tool errors or produces incorrect results (include error message)
+- ⚠️ **Issue**: Unexpected behavior or improvement opportunity
+- 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
+- ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
 ### Error Message Quality Rating
 
@@ -58,44 +45,101 @@ State persists across calls. Do NOT pass `readonly: true`. Group related tests i
 | 2 - Poor (no object name)              | ⚠️      |
 | 1 - Useless (generic)                  | ❌      |
 
-## Structured Error Response Pattern
+## Testing Requirements & Error Standards
 
-Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `isError: true`.
+> [!NOTE]
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
+
+> [!CAUTION]
+> **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
+>
+> ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
+>
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
+>
+> **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
+
+1. **Test Realism**: Test each tool with realistic inputs based on the schema above.
+2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
+   - (a) A domain error (e.g., non-existent table).
+   - (b) An **empty parameters test** (call the tool with `{}`).
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
+4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
+   > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
+5. **Proactive Improvements**: You are highly encouraged to proactively improve functionality, performance, security, agent experience, and token/payload efficiency whenever you see an opportunity during your testing and handler code review.
+   > **CRITICAL**: Architectural consistency is paramount. Do not introduce undocumented architectural deviations. If you implement a structural or architectural improvement in one tool, you must apply it symmetrically to other applicable tools in the group or project.
+6. **Code Over Docs**: Fix the handler code if standards (Structured Errors/Zod) are violated. Do NOT change docs/prompts to accommodate broken code.
+7. **Token Tracking**: Monitor `metrics.tokenEstimate` to detect payload issues.
+8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
+
+### Structured Error Response Pattern
+
+All tools should return errors as structured objects instead of throwing. The expected pattern:
+
+```json
+{ "success": false, "error": "Human-readable error message" }
+```
+
+| Type                 | Source                                                             | What you see                                                                                                          | Verdict            |
+| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Handler error** ✅ | Handler catches error and returns `{success: false, error: "..."}` | Parseable JSON object with `success` and `error` fields                                                               | Correct            |
+| **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
+
+## Naming & Cleanup
+
+- **Temporary tables**: `temp_*` (or `stress_*`) prefix
+- **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
+- Drop at the end of the script. If DROP fails due to lock, note and move on.
 
 ---
 
-## admin Group Tools (26)
+## Group Focus: admin
 
-1. sqlite_pragma_database_list
-2. sqlite_pragma_compile_options
-3. sqlite_pragma_settings
-4. sqlite_pragma_table_info
-5. sqlite_pragma_optimize
-6. sqlite_index_stats
-7. sqlite_integrity_check
-8. sqlite_analyze
-9. sqlite_dbstat
-10. sqlite_vacuum
-11. sqlite_optimize
-12. sqlite_create_view
-13. sqlite_list_views
-14. sqlite_drop_view
-15. sqlite_list_virtual_tables
-16. sqlite_virtual_table_info
-17. sqlite_drop_virtual_table
-18. sqlite_create_csv_table
-19. sqlite_analyze_csv_schema
-20. sqlite_create_rtree_table
-21. sqlite_create_series_table
-22. sqlite_generate_series
-23. sqlite_backup
-24. sqlite_restore
-25. sqlite_verify_backup
-26. sqlite_append_insight
+> **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
----
+### Code Mode Methods
 
-### Category 1: View Lifecycle Stress
+- `sqlite.admin.pragmaDatabaseList`
+- `sqlite.admin.pragmaCompileOptions`
+- `sqlite.admin.pragmaSettings`
+- `sqlite.admin.pragmaTableInfo`
+- `sqlite.admin.pragmaOptimize`
+- `sqlite.admin.indexStats`
+- `sqlite.admin.integrityCheck`
+- `sqlite.admin.analyze`
+- `sqlite.admin.dbstat`
+- `sqlite.admin.vacuum`
+- `sqlite.admin.optimize`
+- `sqlite.admin.createView`
+- `sqlite.admin.listViews`
+- `sqlite.admin.dropView`
+- `sqlite.admin.listVirtualTables`
+- `sqlite.admin.virtualTableInfo`
+- `sqlite.admin.dropVirtualTable`
+- `sqlite.admin.createCsvTable`
+- `sqlite.admin.analyzeCsvSchema`
+- `sqlite.admin.createRtreeTable`
+- `sqlite.admin.createSeriesTable`
+- `sqlite.admin.generateSeries`
+- `sqlite.admin.backup`
+- `sqlite.admin.restore`
+- `sqlite.admin.verifyBackup`
+- `sqlite.admin.appendInsight`
+- `sqlite.admin.dump` `[NATIVE ONLY]`
+- `sqlite.admin.attachDatabase`
+- `sqlite.admin.detachDatabase`
+- `sqlite.admin.vacuumInto`
+- `sqlite.admin.reindex`
+- `sqlite.admin.wal`
+
+## Phase 1: View Lifecycle Stress (batched)
 
 1. `sqlite.admin.createView({viewName: "stress_view_orders", selectQuery: "SELECT product_id, COUNT(*) as cnt FROM test_orders GROUP BY product_id"})` → success
 2. `sqlite.admin.listViews()` → verify `stress_view_orders` present
@@ -103,9 +147,7 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 4. `sqlite.admin.dropView({viewName: "stress_view_orders"})` → structured error or "not found" (not raw crash)
 5. `sqlite.admin.createView({viewName: "stress_view_orders", selectQuery: "SELECT product_id, COUNT(*) as cnt FROM test_orders GROUP BY product_id"})` → recreate success
 
----
-
-### Category 2: Virtual Table Edge Cases
+## Phase 2: Virtual Table Edge Cases (batched)
 
 6. `sqlite.admin.createRtreeTable({tableName: "stress_rtree_test", dimensions: 2})` → success
 7. `sqlite.admin.listVirtualTables()` → verify `stress_rtree_test` present alongside `test_articles_fts` (Native)
@@ -113,62 +155,91 @@ Handler error ✅ = JSON with `success` + `error`. MCP error ❌ = raw text, `is
 9. `sqlite.admin.dropVirtualTable({tableName: "stress_rtree_test"})` → success
 10. `sqlite.admin.virtualTableInfo({tableName: "nonexistent_vtable_xyz"})` → structured error
 
----
-
-### Category 3: Backup/Restore Integrity
+## Phase 3: Backup/Restore Integrity (batched)
 
 > Use absolute path: `C:\Users\chris\Desktop\db-mcp\test-server\stress-backup.db`
 
 11. `sqlite.admin.backup({targetPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db"})` → success
 12. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db"})` → integrity verified
-13. `sqlite.admin.verifyBackup({backupPath: "nonexistent_file.db"})` → structured error
-14. Note backup file for manual removal
+13. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_file.db"})` → structured error
+14. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-dump.sql"})` → success
+15. `sqlite.admin.dump({outputPath: "C:\\Windows\\System32\\stress-dump.sql"})` → structured security error
+16. Note backup and dump files for manual removal
 
----
+## Phase 4: Pragma Edge Cases (batched)
 
-### Category 4: Pragma Edge Cases
+17. `sqlite.admin.pragmaCompileOptions({filter: "THREAD"})` → filtered result subset
+18. `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` → filtered to FTS options
+19. `sqlite.admin.pragmaSettings({pragma: "journal_mode"})` → `{value: "wal"}`
+20. `sqlite.admin.pragmaTableInfo({table: "nonexistent_table_xyz"})` → report behavior
 
-15. `sqlite.admin.pragmaCompileOptions({filter: "THREAD"})` → filtered result subset
-16. `sqlite.admin.pragmaCompileOptions({filter: "FTS"})` → filtered to FTS options
-17. `sqlite.admin.pragmaSettings({pragma: "journal_mode"})` → `{value: "wal"}`
-18. `sqlite.admin.pragmaTableInfo({table: "nonexistent_table_xyz"})` → report behavior
+## Phase 5: Series & CSV Edge Cases (batched)
 
----
+21. `sqlite.admin.generateSeries({start: 1, stop: 100, step: 1})` → 100 values — check payload size
+22. `sqlite.admin.generateSeries({start: 1, stop: 1, step: 1})` → single value
+23. `sqlite.admin.analyzeCsvSchema({filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → inferred types
+24. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
 
-### Category 5: Series & CSV Edge Cases
+## Phase 6: Database Management Edge Cases (batched)
 
-19. `sqlite.admin.generateSeries({start: 1, stop: 100, step: 1})` → 100 values — check payload size
-20. `sqlite.admin.generateSeries({start: 1, stop: 1, step: 1})` → single value
-21. `sqlite.admin.analyzeCsvSchema({filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → inferred types
-22. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
+25. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db", alias: "stress_attached"})` → success (attaches backup from Category 3)
+26. `sqlite.admin.attachDatabase({filepath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-backup.db", alias: "stress_attached"})` → error (alias in use)
+27. `sqlite.admin.detachDatabase({alias: "stress_attached"})` → success
+28. `sqlite.admin.detachDatabase({alias: "stress_attached"})` → error (already detached)
+29. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-vacuum.db"})` → success
+30. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\stress-vacuum.db"})` → error (file already exists)
+31. Note vacuum file for manual removal
 
----
+## Phase 7: Error Message Quality (batched)
 
-### Category 6: Error Message Quality
+32. `sqlite.admin.dropView({viewName: "nonexistent_view_xyz"})` → structured error
+33. `sqlite.admin.verifyBackup({backupPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_backup.db"})` → structured error
+34. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\nonexistent_file.csv"})` → structured error
+35. `sqlite.admin.attachDatabase({filepath: "../../../etc/passwd", alias: "evil"})` → structured error (path traversal)
 
-23. `sqlite.admin.dropView({viewName: "nonexistent_view_xyz"})` → structured error
-24. `sqlite.admin.verifyBackup({backupPath: "nonexistent_backup.db"})` → structured error
-25. `sqlite.admin.createCsvTable({tableName: "stress_csv", filePath: "nonexistent_file.csv"})` → structured error
-
----
-
-### Category 7: WASM Boundary Verification
+## Phase 8: WASM Boundary Verification (batched)
 
 For WASM testing only:
 
-26. Verify that backup/restore/verify, CSV, and R-Tree tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
+36. Verify that backup/restore/verify, CSV, R-Tree, dump, and vacuumInto tools return `{success: false}` structured errors (not crashes). Confirm all other admin tools produce identical results in WASM and Native.
 
----
+## Phase 9: REINDEX & WAL Edge Cases (batched)
+
+37. `sqlite.admin.reindex()` → full DB reindex, verify `durationMs > 0`
+38. `sqlite.admin.reindex({target: "test_products"})` → table-specific, verify success
+39. `sqlite.admin.reindex({target: "idx_orders_status"})` → index-specific, verify success
+40. `sqlite.admin.reindex({target: "../../etc/passwd"})` → structured error (identifier validation rejects non-alphanumeric)
+41. `sqlite.admin.wal({action: "status"})` → verify `journalMode` matches expectation (should be "wal")
+42. `sqlite.admin.wal({action: "enable"})` → already WAL → "already enabled" message, not error
+43. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "PASSIVE"})` → success with `walPages` and `checkpointedPages`
+44. `sqlite.admin.wal({action: "checkpoint", checkpointMode: "TRUNCATE"})` → success, verify pages
 
 ### Final Cleanup
 
 Drop all `stress_*` tables and views. Confirm `test_products` (16 rows) and `test_orders` (20 rows) unchanged.
 
+---
+
 ## Post-Test Procedures
 
-1. **Cleanup**: Drop all `stress_*` objects
-2. **Fix EVERY finding** — ❌, ⚠️, 📦
-3. **Validate**: Instruct the user to run the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself.
-4. **Commit**: Stage and commit — do NOT push
-5. **Re-test**: After server rebuild
-6. **Token audit**: Report most expensive block
+### Reporting Rules
+
+- Use ✅ only in inline notes during testing; omit from Final Summary
+- Do not mention what already works well or issues already documented in help resources and runtime hints
+
+### After Testing
+
+1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
+2. **Scope of fixes** includes corrections to any of:
+   - Handler code
+   - `src/constants/server-instructions/*.md` (per-group help files) — run `npm run generate:instructions` after editing to regenerate `server-instructions.ts`
+   - Test database (`test-server/test.db`)
+   - This prompt
+
+### After Implementation
+
+3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
+4. **Commit**: Stage and commit all changes — do NOT push.
+5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.
+6. **Live re-test**: Once the user confirms the server is restarted, test the fixes with direct MCP tool calls to confirm they are working.
+7. **Final summary**: If no issues found, provide the final summary. If issues were fixed, provide the summary after live MCP re-testing confirms fixes are working.

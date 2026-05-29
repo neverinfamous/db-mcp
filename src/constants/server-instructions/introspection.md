@@ -1,4 +1,4 @@
-# db-mcp Help — Schema Introspection (9 tools)
+# db-mcp Help — Schema Introspection (10 tools)
 
 All introspection tools are **read-only** — they query PRAGMAs and sqlite_master, never modify data.
 
@@ -14,11 +14,11 @@ sqlite_topological_sort({ direction: "create", excludeSystemTables: true });
 sqlite_topological_sort({ direction: "drop" }); // safe DROP order
 
 // Simulate DELETE/DROP/TRUNCATE impact — shows affected tables, cascade paths, severity scoring
-sqlite_cascade_simulator({ table: "users", operation: "delete" });
-sqlite_cascade_simulator({ table: "users", operation: "drop", compact: true }); // compact omits path arrays
+sqlite_cascade_simulator({ table: "users", operation: "DELETE" });
+sqlite_cascade_simulator({ table: "users", operation: "DROP", compact: true }); // compact omits path arrays
 ```
 
-## Schema Analysis (3 tools)
+## Schema Analysis (4 tools)
 
 ```javascript
 // Full schema in one call — compact: true omits column details, sections limits scope
@@ -27,6 +27,20 @@ sqlite_schema_snapshot({
   excludeSystemTables: true,
 });
 sqlite_schema_snapshot({ compact: true }); // lighter payload
+
+// Compare a saved snapshot against the current live schema — structured drift analysis
+sqlite_schema_diff({
+  baseline: previousSnapshot, // from an earlier sqlite_schema_snapshot call
+  target: "current",
+});
+// Compare specific sections only
+sqlite_schema_diff({
+  baseline: "current",
+  target: modifiedSnapshot,
+  sections: ["tables", "indexes"],
+});
+// Both sides inline (offline diff, no DB queries)
+sqlite_schema_diff({ baseline: snapshotA, target: snapshotB });
 
 // Find constraint health issues — missing PKs, nullable FKs, unindexed FKs
 sqlite_constraint_analysis({ excludeSystemTables: true });

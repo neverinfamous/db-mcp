@@ -14,6 +14,7 @@ import {
   MIGRATIONS_TABLE,
   isMigrationTableInitialized,
   toMigrationRecord,
+  validateMigrationSql,
 } from "../helpers.js";
 
 export function createMigrationRollbackTool(
@@ -31,6 +32,7 @@ export function createMigrationRollbackTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = MigrationRollbackValidationSchema.parse(params);
+
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,
@@ -135,7 +137,8 @@ export function createMigrationRollbackTool(
           };
         }
 
-        await adapter.executeQuery(rollbackSql);
+        validateMigrationSql(rollbackSql);
+        await adapter.executeScript(rollbackSql);
 
         await adapter.executeQuery(
           `UPDATE "${MIGRATIONS_TABLE}" SET status = 'rolled_back', rolled_back_at = datetime('now') WHERE id = ?`,
@@ -155,7 +158,7 @@ export function createMigrationRollbackTool(
           rollbackSql,
           record: record ? toMigrationRecord(record) : undefined,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

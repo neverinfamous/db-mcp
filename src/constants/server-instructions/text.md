@@ -1,4 +1,4 @@
-# db-mcp Help — Text Processing & FTS5
+# db-mcp Help — Text Processing & FTS5 (19N/14W: 14 text + 5 FTS5 [NATIVE ONLY])
 
 ## Full-Text Search / FTS5 (5 tools, Native only)
 
@@ -125,9 +125,11 @@ sqlite_advanced_search({
   fuzzyThreshold: 0.4,
 });
 
-// Sentiment analysis — pure text analysis, no database query needed
+// Sentiment analysis — text analysis (can analyze raw text or database columns)
 sqlite_text_sentiment({ text: "This product is amazing and wonderful!" });
 // → { sentiment: "very_positive", score: 2, confidence: "medium" }
+
+sqlite_text_sentiment({ table: "articles", column: "body" }); // analyzes all rows in a column
 
 sqlite_text_sentiment({
   text: "Great service but slow delivery",

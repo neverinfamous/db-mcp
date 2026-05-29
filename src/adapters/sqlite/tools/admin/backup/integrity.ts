@@ -40,7 +40,7 @@ export function createIntegrityCheckTool(
           errorCount: isOk ? 0 : messages.length,
           messages: isOk ? undefined : messages,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

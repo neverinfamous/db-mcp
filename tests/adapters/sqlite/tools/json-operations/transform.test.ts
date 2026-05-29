@@ -68,12 +68,17 @@ describe("createJsonbConvertTool", () => {
     adapter.executeWriteQuery.mockResolvedValue({ rowsAffected: 3 });
     const tool = createJsonbConvertTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", whereClause: "id < 10" },
+      {
+        table: "users",
+        column: "data",
+        conditions: [{ column: "id", operator: "<", value: 10 }],
+      },
       ctx,
     )) as any;
     if (result.success) {
       expect(adapter.executeWriteQuery).toHaveBeenCalledWith(
-        expect.stringContaining("id < 10"),
+        expect.stringContaining('"id" < ?'),
+        expect.anything(),
       );
     }
   });
@@ -248,12 +253,17 @@ describe("createJsonNormalizeColumnTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonNormalizeColumnTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", whereClause: "id < 10" },
+      {
+        table: "users",
+        column: "data",
+        conditions: [{ column: "id", operator: "<", value: 10 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
     expect(adapter.executeReadQuery).toHaveBeenCalledWith(
-      expect.stringContaining("id < 10"),
+      expect.stringContaining('"id" < ?'),
+      expect.anything(),
     );
   });
 

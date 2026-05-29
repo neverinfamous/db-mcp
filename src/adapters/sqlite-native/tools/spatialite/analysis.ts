@@ -13,7 +13,11 @@ import type {
 } from "../../../../types/index.js";
 import type { NativeSqliteAdapter } from "../../native-sqlite-adapter.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import { readOnly, write } from "../../../../utils/annotations.js";
+import { readOnly, writeFs } from "../../../../utils/annotations.js";
+import {
+  validateIdentifier,
+  sanitizeIdentifier,
+} from "../../../../utils/index.js";
 import {
   SpatialAnalysisSchema,
   GeometryTransformSchema,
@@ -45,8 +49,10 @@ export function createSpatialAnalysisTool(
     requiredScopes: ["read"],
     annotations: readOnly("SpatiaLite Analyze"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = SpatialAnalysisSchema.parse(params);
+
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
@@ -64,8 +70,10 @@ export function createSpatialAnalysisTool(
           };
         }
 
-        // Validate names
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.sourceTable)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.sourceTable);
+        } catch {
           return {
             success: false,
             error: `Invalid source table name: '${input.sourceTable}'`,
@@ -74,13 +82,26 @@ export function createSpatialAnalysisTool(
             recoverable: false,
           };
         }
-        if (
-          input.targetTable &&
-          !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.targetTable)
-        ) {
+        if (input.targetTable) {
+          try {
+            validateIdentifier(input.targetTable);
+          } catch {
+            return {
+              success: false,
+              error: `Invalid target table name: '${input.targetTable}'`,
+              code: "VALIDATION_ERROR",
+              category: "validation" as const,
+              recoverable: false,
+            };
+          }
+        }
+        // Validate geometry column name
+        try {
+          validateIdentifier(input.geometryColumn);
+        } catch {
           return {
             success: false,
-            error: `Invalid target table name: '${input.targetTable}'`,
+            error: `Invalid geometry column name: '${input.geometryColumn}'`,
             code: "VALIDATION_ERROR",
             category: "validation" as const,
             recoverable: false,
@@ -89,15 +110,18 @@ export function createSpatialAnalysisTool(
 
         let query: string;
         switch (input.analysisType) {
-          case "spatial_extent":
+          case "spatial_extent": {
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
             query = `SELECT
-              MbrMinX(Extent("${input.geometryColumn}")) as min_x,
-              MbrMinY(Extent("${input.geometryColumn}")) as min_y,
-              MbrMaxX(Extent("${input.geometryColumn}")) as max_x,
-              MbrMaxY(Extent("${input.geometryColumn}")) as max_y,
+              MbrMinX(Extent(${geomCol})) as min_x,
+              MbrMinY(Extent(${geomCol})) as min_y,
+              MbrMaxX(Extent(${geomCol})) as max_x,
+              MbrMaxY(Extent(${geomCol})) as max_y,
               COUNT(*) as feature_count
-            FROM "${input.sourceTable}"`;
+            FROM ${srcTable}`;
             break;
+          }
 
           case "nearest_neighbor": {
             if (!input.targetTable) {
@@ -110,18 +134,21 @@ export function createSpatialAnalysisTool(
                 recoverable: false,
               };
             }
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
+            const tgtTable = sanitizeIdentifier(input.targetTable);
             // Exclude self-matches when tables are the same and excludeSelf is true
             const sameTable = input.sourceTable === input.targetTable;
             const selfFilter =
               sameTable && input.excludeSelf ? "WHERE s.id != t.id" : "";
             // Conditionally include WKT geometry based on includeGeometry param
             const geomColumns = input.includeGeometry
-              ? `, AsText(s."${input.geometryColumn}") as source_geom, AsText(t."${input.geometryColumn}") as target_geom`
+              ? `, AsText(s.${geomCol}) as source_geom, AsText(t.${geomCol}) as target_geom`
               : "";
             query = `SELECT
               s.id as source_id, t.id as target_id,
-              ST_Distance(s."${input.geometryColumn}", t."${input.geometryColumn}") as distance${geomColumns}
-            FROM "${input.sourceTable}" s, "${input.targetTable}" t
+              ST_Distance(s.${geomCol}, t.${geomCol}) as distance${geomColumns}
+            FROM ${srcTable} s, ${tgtTable} t
             ${selfFilter}
             ORDER BY distance LIMIT ${input.limit}`;
             break;
@@ -138,14 +165,17 @@ export function createSpatialAnalysisTool(
                 recoverable: false,
               };
             }
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
+            const tgtTable = sanitizeIdentifier(input.targetTable);
             // Conditionally include WKT geometry based on includeGeometry param
             const geomCols = input.includeGeometry
-              ? `, AsText(s."${input.geometryColumn}") as source_geom, AsText(t."${input.geometryColumn}") as target_geom`
+              ? `, AsText(s.${geomCol}) as source_geom, AsText(t.${geomCol}) as target_geom`
               : "";
             query = `SELECT
               s.id as source_id, t.id as target_id${geomCols}
-            FROM "${input.sourceTable}" s, "${input.targetTable}" t
-            WHERE ST_Within(s."${input.geometryColumn}", t."${input.geometryColumn}")
+            FROM ${srcTable} s, ${tgtTable} t
+            WHERE ST_Within(s.${geomCol}, t.${geomCol})
             LIMIT ${input.limit}`;
             break;
           }
@@ -154,9 +184,12 @@ export function createSpatialAnalysisTool(
             const dmTarget = input.targetTable ?? input.sourceTable;
             const dmSameTable = dmTarget === input.sourceTable;
             const dmFilter = dmSameTable ? "WHERE a.id < b.id" : "";
+            const geomCol = sanitizeIdentifier(input.geometryColumn);
+            const srcTable = sanitizeIdentifier(input.sourceTable);
+            const dmTgtTable = sanitizeIdentifier(dmTarget);
             query = `SELECT a.id as id1, b.id as id2,
-              ST_Distance(a."${input.geometryColumn}", b."${input.geometryColumn}") as distance
-            FROM "${input.sourceTable}" a, "${dmTarget}" b
+              ST_Distance(a.${geomCol}, b.${geomCol}) as distance
+            FROM ${srcTable} a, ${dmTgtTable} b
             ${dmFilter}
             ORDER BY distance LIMIT ${input.limit}`;
             break;
@@ -167,7 +200,7 @@ export function createSpatialAnalysisTool(
             query = "SELECT 1";
         }
 
-        const result = await adapter.executeReadQuery(query);
+        const result = await adapter.executeReadQuery(query, queryParams);
 
         return {
           success: true,
@@ -175,7 +208,7 @@ export function createSpatialAnalysisTool(
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -198,8 +231,10 @@ export function createGeometryTransformTool(
     requiredScopes: ["read"],
     annotations: readOnly("SpatiaLite Transform"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = GeometryTransformSchema.parse(params);
+
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
@@ -215,10 +250,12 @@ export function createGeometryTransformTool(
           };
         }
 
+        // M-1b: Use parameterized queries for WKT geometry strings (CWE-89 remediation)
         let query: string;
+
         switch (input.operation) {
           case "buffer": {
-            const bufferGeom = `Buffer(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})`;
+            const bufferGeom = `Buffer(GeomFromText(?, CAST(? AS INTEGER)), ?)`;
             // Auto-simplify buffer output with adaptive tolerance based on buffer distance
             // Tolerance scales with distance (1% of buffer distance) for effective vertex reduction
             // Use simplifyTolerance: 0 to disable, or specify custom tolerance
@@ -226,78 +263,76 @@ export function createGeometryTransformTool(
             const tolerance = input.simplifyTolerance ?? defaultTolerance;
             const finalGeom =
               tolerance > 0
-                ? `Simplify(${bufferGeom}, ${tolerance})`
+                ? `Simplify(${bufferGeom}, ${String(tolerance)})`
                 : bufferGeom;
             query = `SELECT AsText(${finalGeom}) as result`;
+            queryParams.push(input.geometry1, input.srid, input.distance);
             break;
           }
 
-          case "intersection":
-            if (!input.geometry2) {
-              return {
-                success: false,
-                error: "Second geometry required for intersection",
-                code: "VALIDATION_ERROR",
-                category: "validation" as const,
-                recoverable: false,
-              };
-            }
-            query = `SELECT AsText(Intersection(
-              GeomFromText('${input.geometry1}', ${input.srid}),
-              GeomFromText('${input.geometry2}', ${input.srid})
-            )) as result`;
+          case "intersection": {
+            const intersectionGeom = `Intersection(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${intersectionGeom}) as result`;
+            queryParams.push(
+              input.geometry1,
+              input.srid,
+              input.geometry2,
+              input.srid,
+            );
             break;
+          }
 
-          case "union":
-            if (!input.geometry2) {
-              return {
-                success: false,
-                error: "Second geometry required for union",
-                code: "VALIDATION_ERROR",
-                category: "validation" as const,
-                recoverable: false,
-              };
-            }
-            query = `SELECT AsText(GUnion(
-              GeomFromText('${input.geometry1}', ${input.srid}),
-              GeomFromText('${input.geometry2}', ${input.srid})
-            )) as result`;
+          case "union": {
+            const unionGeom = `GUnion(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${unionGeom}) as result`;
+            queryParams.push(
+              input.geometry1,
+              input.srid,
+              input.geometry2,
+              input.srid,
+            );
             break;
+          }
 
-          case "difference":
-            if (!input.geometry2) {
-              return {
-                success: false,
-                error: "Second geometry required for difference",
-                code: "VALIDATION_ERROR",
-                category: "validation" as const,
-                recoverable: false,
-              };
-            }
-            query = `SELECT AsText(Difference(
-              GeomFromText('${input.geometry1}', ${input.srid}),
-              GeomFromText('${input.geometry2}', ${input.srid})
-            )) as result`;
+          case "difference": {
+            const differenceGeom = `Difference(GeomFromText(?, CAST(? AS INTEGER)), GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${differenceGeom}) as result`;
+            queryParams.push(
+              input.geometry1,
+              input.srid,
+              input.geometry2,
+              input.srid,
+            );
             break;
+          }
 
-          case "centroid":
-            query = `SELECT AsText(Centroid(GeomFromText('${input.geometry1}', ${input.srid}))) as result`;
+          case "centroid": {
+            const centroidGeom = `Centroid(GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${centroidGeom}) as result`;
+            queryParams.push(input.geometry1, input.srid);
             break;
+          }
 
-          case "envelope":
-            query = `SELECT AsText(Envelope(GeomFromText('${input.geometry1}', ${input.srid}))) as result`;
+          case "envelope": {
+            const envelopeGeom = `Envelope(GeomFromText(?, CAST(? AS INTEGER)))`;
+            query = `SELECT AsText(${envelopeGeom}) as result`;
+            queryParams.push(input.geometry1, input.srid);
             break;
+          }
 
-          case "simplify":
-            query = `SELECT AsText(Simplify(GeomFromText('${input.geometry1}', ${input.srid}), ${input.distance})) as result`;
+          case "simplify": {
+            const simplifyGeom = `Simplify(GeomFromText(?, CAST(? AS INTEGER)), ?)`;
+            query = `SELECT AsText(${simplifyGeom}) as result`;
+            queryParams.push(input.geometry1, input.srid, input.distance);
             break;
+          }
 
           default:
             // Unreachable — handler-level validation above catches invalid values
             query = "SELECT 1";
         }
 
-        const result = await adapter.executeReadQuery(query);
+        const result = await adapter.executeReadQuery(query, queryParams);
         const wktResult = result.rows?.[0]?.["result"] as string | undefined;
 
         // Check for null result indicating invalid geometry input
@@ -316,7 +351,7 @@ export function createGeometryTransformTool(
           operation: input.operation,
           result: wktResult,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -337,10 +372,11 @@ export function createSpatialImportTool(
     inputSchema: SpatialImportSchema,
     outputSchema: SpatialiteImportOutputSchema,
     requiredScopes: ["write"],
-    annotations: write("SpatiaLite Import"),
+    annotations: writeFs("SpatiaLite Import"),
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SpatialImportSchema.parse(params);
+
         ensureSpatialite(adapter);
 
         // Handler-level enum validation (schema uses z.string() to avoid SDK raw MCP errors)
@@ -354,8 +390,10 @@ export function createSpatialImportTool(
           };
         }
 
-        // Validate table name
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.tableName)) {
+        // Use canonical identifier validation (CWE-89 remediation)
+        try {
+          validateIdentifier(input.tableName);
+        } catch {
           return {
             success: false,
             error: `Invalid table name: '${input.tableName}'`,
@@ -365,6 +403,7 @@ export function createSpatialImportTool(
           };
         }
 
+        // M-1b: Use parameterized queries for all user data (CWE-89 remediation)
         let wkt: string;
         if (input.format === "geojson") {
           // Parse GeoJSON and convert with SRID
@@ -374,10 +413,11 @@ export function createSpatialImportTool(
 
             // Validate GeoJSON by attempting to parse it in SQLite
             const geojsonCheck = await adapter.executeReadQuery(
-              `SELECT GeomFromGeoJSON('${input.data}') as geom`,
+              `SELECT ST_IsValid(GeomFromGeoJSON(?)) as valid`,
+              [input.data],
             );
-            const parsedGeom = geojsonCheck.rows?.[0]?.["geom"];
-            if (parsedGeom === null || parsedGeom === undefined) {
+            const isValid = geojsonCheck.rows?.[0]?.["valid"];
+            if (isValid !== 1) {
               return {
                 success: false,
                 error: `Invalid GeoJSON geometry: could not be parsed by SpatiaLite (must be a valid Geometry object)`,
@@ -387,12 +427,11 @@ export function createSpatialImportTool(
               };
             }
 
-            // Build INSERT with additional columns (matching WKT path)
+            // Build INSERT with parameterized values
             // Use SetSRID(GeomFromGeoJSON(...), srid) to ensure SRID is set correctly
             const columns = ["geom"];
-            const values = [
-              `SetSRID(GeomFromGeoJSON('${input.data}'), ${input.srid})`,
-            ];
+            const placeholders = [`SetSRID(GeomFromGeoJSON(?), ?)`];
+            const insertParams: unknown[] = [input.data, input.srid];
 
             if (input.additionalData) {
               for (const [key, value] of Object.entries(input.additionalData)) {
@@ -405,17 +444,17 @@ export function createSpatialImportTool(
                     recoverable: false,
                   };
                 }
-                columns.push(`"${key}"`);
-                values.push(
-                  typeof value === "string"
-                    ? `'${value.replace(/'/g, "''")}'`
-                    : String(value),
-                );
+                columns.push(sanitizeIdentifier(key));
+                placeholders.push("?");
+                insertParams.push(value);
               }
             }
 
-            const sql = `INSERT INTO "${input.tableName}" (${columns.join(", ")}) VALUES (${values.join(", ")})`;
-            const insertResult = await adapter.executeWriteQuery(sql);
+            const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${placeholders.join(", ")})`;
+            const insertResult = await adapter.executeWriteQuery(
+              sql,
+              insertParams,
+            );
             return {
               success: true,
               message: "GeoJSON geometry imported",
@@ -436,10 +475,11 @@ export function createSpatialImportTool(
 
         // Validate WKT by attempting to parse it
         const wktCheck = await adapter.executeReadQuery(
-          `SELECT GeomFromText('${wkt}', ${input.srid}) as geom`,
+          `SELECT ST_IsValid(GeomFromText(?, CAST(? AS INTEGER))) as valid`,
+          [wkt, input.srid],
         );
-        const parsedGeom = wktCheck.rows?.[0]?.["geom"];
-        if (parsedGeom === null || parsedGeom === undefined) {
+        const isValid = wktCheck.rows?.[0]?.["valid"];
+        if (isValid !== 1) {
           return {
             success: false,
             error: `Invalid WKT geometry: '${wkt}' could not be parsed`,
@@ -449,9 +489,10 @@ export function createSpatialImportTool(
           };
         }
 
-        // Build INSERT with additional columns
+        // Build INSERT with parameterized values
         const columns = ["geom"];
-        const values = [`GeomFromText('${wkt}', ${input.srid})`];
+        const placeholders = [`GeomFromText(?, CAST(? AS INTEGER))`];
+        const insertParams: unknown[] = [wkt, input.srid];
 
         if (input.additionalData) {
           for (const [key, value] of Object.entries(input.additionalData)) {
@@ -464,24 +505,21 @@ export function createSpatialImportTool(
                 recoverable: false,
               };
             }
-            columns.push(`"${key}"`);
-            values.push(
-              typeof value === "string"
-                ? `'${value.replace(/'/g, "''")}'`
-                : String(value),
-            );
+            columns.push(sanitizeIdentifier(key));
+            placeholders.push("?");
+            insertParams.push(value);
           }
         }
 
-        const sql = `INSERT INTO "${input.tableName}" (${columns.join(", ")}) VALUES (${values.join(", ")})`;
-        const insertResult = await adapter.executeWriteQuery(sql);
+        const sql = `INSERT INTO ${sanitizeIdentifier(input.tableName)} (${columns.join(", ")}) VALUES (${placeholders.join(", ")})`;
+        const insertResult = await adapter.executeWriteQuery(sql, insertParams);
 
         return {
           success: true,
           message: "WKT geometry imported",
           rowsAffected: insertResult.rowsAffected ?? 1,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

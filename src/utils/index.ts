@@ -15,11 +15,7 @@ export {
   type ErrorCode,
 } from "./logger/index.js";
 
-export {
-  UnsafeWhereClauseError,
-  validateWhereClause,
-  sanitizeWhereClause,
-} from "./where-clause.js";
+export { UnsafeWhereClauseError, sanitizeWhereClause } from "./where-clause.js";
 
 export {
   InvalidIdentifierError,
@@ -33,3 +29,10 @@ export {
   quoteIdentifier,
   needsQuoting,
 } from "./identifiers.js";
+
+export { validateSameDirPath } from "./validate-path.js";
+
+export {
+  validateJsonPath,
+  validateAggregateFunction,
+} from "./validate-json-path.js";

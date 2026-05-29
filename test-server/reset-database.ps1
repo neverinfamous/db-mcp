@@ -109,6 +109,17 @@ if ($backupFiles) {
     Write-Success "Cleaned up $($backupFiles.Count) backup file(s)"
 }
 
+# Remove dump .sql files left by sqlite_dump tests
+$dumpFiles = Get-ChildItem -Path $ScriptDir -Filter "*.sql" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "test-database.sql" }
+if ($dumpFiles) {
+    foreach ($df in $dumpFiles) {
+        Remove-Item $df.FullName -Force -ErrorAction SilentlyContinue
+        if ($Verbose) { Write-Info "Deleted dump: $($df.Name)" }
+    }
+    Write-Success "Cleaned up $($dumpFiles.Count) dump file(s)"
+}
+
 # Warn about any node processes that hold the database file open (e.g. MCP servers)
 $resolvePath = Resolve-Path $DatabasePath -ErrorAction SilentlyContinue
 $dbFullPath = if ($resolvePath) { $resolvePath.Path } else { $DatabasePath }
@@ -375,7 +386,7 @@ db.close();
                     $color = if ($unexpectedTables -contains $ut) { "Yellow" } else { "Cyan" }
                     Write-Host $prefix -ForegroundColor $color -NoNewline
                     Write-Host $ut -ForegroundColor Gray
-                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} try { db.exec('DROP VIEW IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
             }
             # Second pass: drop any remaining tables (shadow tables left behind)
@@ -385,7 +396,7 @@ db.close();
                     $color = if ($unexpectedTables -contains $ut) { "DarkYellow" } else { "DarkCyan" }
                     Write-Host $prefix -ForegroundColor $color -NoNewline
                     Write-Host $ut -ForegroundColor Gray
-                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} "
+                    $dropScript += "try { db.exec('DROP TABLE IF EXISTS `"$ut`"'); } catch(e) {} try { db.exec('DROP VIEW IF EXISTS `"$ut`"'); } catch(e) {} "
                 }
             }
             $dropScript += "db.pragma('foreign_keys = ON'); db.close();"
@@ -408,6 +419,20 @@ db.close();
         Pop-Location
         Remove-Item $tempVerify -Force -ErrorAction SilentlyContinue
     }
+
+    # Ensure WAL is checkpointed so WASM in-memory loads get all the data
+    Write-Host "`n  Checkpointing WAL file..." -ForegroundColor Yellow
+    $checkpointScript = @"
+import Database from 'better-sqlite3';
+const db = new Database(process.argv[2]);
+db.pragma('wal_checkpoint(TRUNCATE)');
+db.close();
+"@
+    $tempCheckpoint = Join-Path $dbMcpRoot ".checkpoint.js"
+    $checkpointScript | Out-File -FilePath $tempCheckpoint -Encoding utf8 -NoNewline
+    node $tempCheckpoint $DatabasePath | Out-Null
+    Remove-Item $tempCheckpoint -Force -ErrorAction SilentlyContinue
+    Write-Success "WAL checkpointed to main database file"
 }
 
 Write-Host "`n========================================================" -ForegroundColor Green

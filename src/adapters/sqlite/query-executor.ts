@@ -35,7 +35,7 @@ export function translateSqliteError(
   const details: Record<string, unknown> = { sql };
 
   if (match?.code === "TABLE_NOT_FOUND") {
-    const tableMatch = /no such table[:\s]*(['"]?)(\w+)\1/i.exec(message);
+    const tableMatch = /no such table[:\s]*(['"]?)([\w.]+)\1/i.exec(message);
     const tableName = tableMatch ? tableMatch[2] : "unknown";
     throw new ResourceNotFoundError(
       `Table '${tableName}' not found`,
@@ -52,8 +52,8 @@ export function translateSqliteError(
 
   if (match?.code === "COLUMN_NOT_FOUND") {
     const colMatch =
-      /no such column[:\s]*(['"]?)(\w+)\1/i.exec(message) ??
-      /has no column named[:\s]*(['"]?)(\w+)\1/i.exec(message);
+      /no such column[:\s]*(['"]?)([\w.]+)\1/i.exec(message) ??
+      /has no column named[:\s]*(['"]?)([\w.]+)\1/i.exec(message);
     const colName = colMatch ? colMatch[2] : "unknown";
     throw new ResourceNotFoundError(
       `Column '${colName}' not found`,
@@ -101,8 +101,10 @@ export function rowsFromSqlJsResult(result: {
     const rowValues = result.values[i];
     if (rowValues) {
       for (let j = 0; j < numColumns; j++) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        rowObj[cols[j]!] = rowValues[j];
+        const colName = cols[j];
+        if (colName !== undefined) {
+          rowObj[colName] = rowValues[j];
+        }
       }
     }
     rows[i] = rowObj;
@@ -152,7 +154,7 @@ export function executeRead(
       columns,
       executionTimeMs: Date.now() - start,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Query execution");
   }
 }
@@ -193,9 +195,11 @@ export function executeWrite(
 
     let lastInsertId: number | undefined;
     try {
-      const rowidResult = db.exec("SELECT last_insert_rowid()");
-      if (rowidResult[0]?.values[0]) {
-        lastInsertId = Number(rowidResult[0].values[0][0]);
+      if (/^\s*INSERT\s/i.test(sql) && !/\bRETURNING\b/i.test(sql)) {
+        const rowidResult = db.exec("SELECT last_insert_rowid()");
+        if (rowidResult[0]?.values[0]) {
+          lastInsertId = Number(rowidResult[0].values[0][0]);
+        }
       }
     } catch {
       // Ignore if not supported
@@ -210,7 +214,7 @@ export function executeWrite(
       result.lastInsertId = lastInsertId;
     }
     return Promise.resolve(result);
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Write query");
   }
 }
@@ -254,7 +258,7 @@ export function executeGeneral(
       rows,
       executionTimeMs: Date.now() - start,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     translateSqliteError(error, sql, "Query");
   }
 }

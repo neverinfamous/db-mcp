@@ -97,7 +97,7 @@ export function createMigrationRecordTool(
           success: true,
           record: record ? toMigrationRecord(record) : undefined,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

@@ -2,7 +2,7 @@
  * Introspection Tools Index
  *
  * Aggregates and exports all introspection tool definitions.
- * 9 read-only tools for schema analysis, dependency mapping, and diagnostics.
+ * 10 read-only tools for schema analysis, dependency mapping, and diagnostics.
  */
 
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
@@ -16,6 +16,7 @@ import {
 
 import {
   createSchemaSnapshotTool,
+  createSchemaDiffTool,
   createConstraintAnalysisTool,
   createMigrationRisksTool,
 } from "./analysis/index.js";
@@ -27,7 +28,7 @@ import {
 } from "./diagnostics/index.js";
 
 /**
- * Get all introspection tools (9 read-only tools)
+ * Get all introspection tools (10 read-only tools)
  */
 export function getIntrospectionTools(
   adapter: SqliteAdapter,
@@ -37,6 +38,7 @@ export function getIntrospectionTools(
     createTopologicalSortTool(adapter),
     createCascadeSimulatorTool(adapter),
     createSchemaSnapshotTool(adapter),
+    createSchemaDiffTool(adapter),
     createConstraintAnalysisTool(adapter),
     createMigrationRisksTool(adapter),
     createStorageAnalysisTool(adapter),
@@ -50,6 +52,7 @@ export {
   createTopologicalSortTool,
   createCascadeSimulatorTool,
   createSchemaSnapshotTool,
+  createSchemaDiffTool,
   createConstraintAnalysisTool,
   createMigrationRisksTool,
   createStorageAnalysisTool,

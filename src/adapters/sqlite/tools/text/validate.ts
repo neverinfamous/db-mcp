@@ -1,3 +1,4 @@
+import { buildWhereClause } from "../../../../utils/where-clause.js";
 import {
   VALID_NORMALIZE_MODES,
   VALID_VALIDATE_PATTERNS,
@@ -9,10 +10,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  validateWhereClause,
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -40,6 +38,7 @@ export function createTextNormalizeTool(
     requiredScopes: ["read"],
     annotations: readOnly("Text Normalize"),
     handler: async (params: unknown, _context: RequestContext) => {
+      const queryParams: unknown[] = [];
       try {
         const input = TextNormalizeSchema.parse(params);
 
@@ -61,13 +60,19 @@ export function createTextNormalizeTool(
         await validateColumnExists(adapter, input.table, input.column);
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const rows = (result.rows ?? []).map((row) => {
           const rawRowid = row["id"];
@@ -100,7 +105,7 @@ export function createTextNormalizeTool(
           rowCount: rows.length,
           rows,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },
@@ -123,6 +128,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextValidateSchema.parse(params);
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -171,13 +177,19 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
-        if (input.whereClause) {
-          validateWhereClause(input.whereClause);
-          sql += ` WHERE ${input.whereClause}`;
+        if (input.conditions || input.whereClause) {
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+          }
         }
         sql += ` LIMIT ${input.limit}`;
 
-        const result = await adapter.executeReadQuery(sql);
+        const result = await adapter.executeReadQuery(sql, queryParams);
 
         const invalidRows: { value: string | null; rowid?: number }[] = [];
         let validCount = 0;
@@ -224,7 +236,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
             : invalidRows,
           ...(truncated ? { truncated: true } : {}),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

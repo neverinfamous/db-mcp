@@ -26,6 +26,70 @@ import type { BackupManager, SnapshotQueryAdapter } from "./backup-manager.js";
 import type { AuditCategory } from "./types.js";
 import { getAuthContext } from "../auth/auth-context.js";
 import { getRequiredScope } from "../auth/scope-map.js";
+import { sanitizeErrorMessage } from "../utils/errors/format.js";
+
+/**
+ * Keys that are always redacted from audit log args, regardless of the
+ * global `redact` setting. Prevents credential echo (M-5 mitigation).
+ */
+const SENSITIVE_KEY_PATTERN =
+  /^(password|passwd|token|secret|authorization|api_?key|credential|private_?key|access_?token|refresh_?token)$/i;
+
+/**
+ * Values that match this pattern are redacted from strings (like SQL queries).
+ */
+const SENSITIVE_VALUE_PATTERN =
+  /(?:sk-|Bearer |token\s*[:=]\s*|password\s*[:=]\s*|secret\s*[:=]\s*|apikey\s*[:=]\s*|api_key\s*[:=]\s*|AWS_SECRET_ACCESS_KEY\s*[:=]\s*|GITHUB_TOKEN\s*[:=]\s*|ghp_|gho_|ghu_|ghs_|xoxb-|xoxp-|xoxs-|AZURE_[A-Z_]*\s*[:=]\s*|DATABASE_URL\s*[:=]\s*|AKIA|sk-ant-api[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_]+|rk_live_[a-zA-Z0-9_]+|SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+|npm_[a-zA-Z0-9]{30,}|dpl_[a-zA-Z0-9]{30,}|hvs\.[a-zA-Z0-9_-]+)[^\s'",;)}\]]{4,}/gi;
+
+/**
+ * Recursively redact sensitive keys from args before logging.
+ * Returns a new object with sensitive values replaced by '[REDACTED]'.
+ * Handles nested objects and arrays up to a configurable depth limit.
+ */
+function redactSensitiveKeys(value: unknown, depth = 0): unknown {
+  const MAX_DEPTH = 5;
+  if (depth > MAX_DEPTH || value === null || value === undefined) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitiveKeys(item, depth + 1));
+  }
+
+  if (typeof value === "string") {
+    const isSql =
+      /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(
+        value,
+      );
+    const scrubbed = isSql ? value.replace(/'(?:''|[^'])*'/g, "'***'") : value;
+    return scrubbed.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
+  }
+
+  if (typeof value === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      if (SENSITIVE_KEY_PATTERN.test(key)) {
+        result[key] = "[REDACTED]";
+      } else if (typeof val === "object" && val !== null) {
+        result[key] = redactSensitiveKeys(val, depth + 1);
+      } else if (typeof val === "string") {
+        const isSql =
+          key.toLowerCase() === "sql" ||
+          key.toLowerCase() === "query" ||
+          /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(
+            val,
+          );
+        const scrubbed = isSql ? val.replace(/'(?:''|[^'])*'/g, "'***'") : val;
+        result[key] = scrubbed.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
+      } else {
+        result[key] = val;
+      }
+    }
+    return result;
+  }
+
+  return value;
+}
 
 /**
  * Audit interceptor interface — used by the registration layer.
@@ -48,6 +112,11 @@ export interface AuditInterceptor {
     fn: () => Promise<T>,
     options?: { logAs?: string },
   ): Promise<T>;
+
+  /**
+   * Dynamically wire the query adapter used for DDL snapshot capture.
+   */
+  setQueryAdapter(adapter: SnapshotQueryAdapter): void;
 }
 
 /**
@@ -75,11 +144,15 @@ function scopeToCategory(scope: string): AuditCategory {
 export function createAuditInterceptor(
   auditLogger: AuditLogger,
   backupManager?: BackupManager,
-  queryAdapter?: SnapshotQueryAdapter,
 ): AuditInterceptor {
   const auditReads = auditLogger.config.auditReads;
+  let currentQueryAdapter: SnapshotQueryAdapter | undefined;
 
   return {
+    setQueryAdapter(adapter: SnapshotQueryAdapter) {
+      currentQueryAdapter = adapter;
+    },
+
     async around<T>(
       toolName: string,
       args: unknown,
@@ -105,7 +178,7 @@ export function createAuditInterceptor(
       // Pre-mutation snapshot (before tool executes)
       if (
         backupManager !== undefined &&
-        queryAdapter !== undefined &&
+        currentQueryAdapter !== undefined &&
         (
           backupManager as { shouldSnapshot(t: string): boolean }
         ).shouldSnapshot(toolName)
@@ -125,7 +198,7 @@ export function createAuditInterceptor(
             toolName,
             args ?? {},
             requestId,
-            queryAdapter,
+            currentQueryAdapter,
             options?.logAs,
           );
         } catch {
@@ -155,7 +228,9 @@ export function createAuditInterceptor(
         return result;
       } catch (err) {
         success = false;
-        error = err instanceof Error ? err.message : String(err);
+        error = sanitizeErrorMessage(
+          err instanceof Error ? err.message : String(err),
+        );
 
         // Match registration layer raw exception fallback token calculation
         const errorResult = {
@@ -202,7 +277,7 @@ export function createAuditInterceptor(
             error,
             args: auditLogger.config.redact
               ? undefined
-              : (args as Record<string, unknown>),
+              : (redactSensitiveKeys(args) as Record<string, unknown>),
             backup: backupRef,
             tokenEstimate,
           });

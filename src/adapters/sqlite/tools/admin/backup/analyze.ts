@@ -44,7 +44,7 @@ export function createAnalyzeTool(adapter: SqliteAdapter): ToolDefinition {
             : "All tables analyzed",
           durationMs: duration,
         };
-      } catch (error) {
+      } catch (error: unknown) {
         return formatHandlerError(error);
       }
     },

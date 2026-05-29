@@ -41,6 +41,26 @@ export class AuthorizationServerDiscovery {
     this.cacheTtl = config.cacheTtl ?? 3600;
     this.timeout = config.timeout ?? 5000;
 
+    // F-5: Reject non-HTTPS discovery URLs in production to prevent MITM
+    if (
+      !this.authServerUrl.startsWith("https://") &&
+      process.env["NODE_ENV"] !== "development" &&
+      process.env["NODE_ENV"] !== "test"
+    ) {
+      const url = new URL(this.authServerUrl);
+      const isLocalDev =
+        url.hostname === "localhost" ||
+        url.hostname === "127.0.0.1" ||
+        url.hostname === "[::1]";
+      if (!isLocalDev) {
+        throw new Error(
+          `Security: Authorization server URL must use HTTPS in production. ` +
+            `Got: ${this.authServerUrl}. ` +
+            `Set NODE_ENV=development to allow HTTP for local testing.`,
+        );
+      }
+    }
+
     logger.info(
       `Authorization Server Discovery initialized for: ${this.authServerUrl}`,
       { code: "AUTH_INIT" },
@@ -108,7 +128,7 @@ export class AuthorizationServerDiscovery {
       );
 
       return metadata;
-    } catch (error) {
+    } catch (error: unknown) {
       const cause = error instanceof Error ? error : new Error(String(error));
 
       logger.error(
@@ -145,15 +165,27 @@ export class AuthorizationServerDiscovery {
       );
     }
 
+    try {
+      new URL(metadata.issuer);
+      new URL(metadata.token_endpoint);
+    } catch {
+      throw new DbMcpError(
+        "Invalid URL format in metadata fields",
+        "AUTH_DISCOVERY_INVALID",
+        ErrorCategory.VALIDATION,
+      );
+    }
+
     // Validate issuer matches the expected URL
-    // Per RFC 8414, issuer MUST be identical to the authorization server URL
+    // Per RFC 8414 §3.3, issuer MUST be identical to the authorization server URL
+    // F-2: Fail closed on mismatch to prevent key set swapping via DNS spoofing
     const expectedIssuer = this.authServerUrl;
     if (metadata.issuer !== expectedIssuer) {
-      logger.warning(
-        `Issuer mismatch: expected ${expectedIssuer}, got ${metadata.issuer}`,
-        { code: "AUTH_ISSUER_MISMATCH" },
+      throw new DbMcpError(
+        `Issuer validation failed. Per RFC 8414 §3.3, the issuer MUST be identical to the authorization server URL.`,
+        "AUTH_ISSUER_MISMATCH",
+        ErrorCategory.VALIDATION,
       );
-      // Note: This is a warning, not an error, as some auth servers may use different URLs
     }
   }
 
