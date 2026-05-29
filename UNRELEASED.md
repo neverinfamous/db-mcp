@@ -29,6 +29,7 @@
 
 ### Fixed
 
+- Optimized `sqlite_text_replace` to include an intrinsic `instr(column, search) > 0` predicate in SQL updates when no `whereClause` is provided, preventing the tool from running unconditional full-table updates when `replace()` wouldn't match any text, saving significant DB IO.
 - Fixed `coerceNumber` helper in `spatialite` and `window` native tools to preserve non-numeric strings for Zod validation instead of silently falling back to `undefined`, ensuring invalid type errors are correctly intercepted and transformed into structured domain errors.
 - Fixed missing parameter validation schemas in `sqlite_cascade_simulator`, `sqlite_schema_diff`, `sqlite_migration_risks`, and `sqlite_query_plan` to properly catch empty `{}` invocations, preventing raw `-32602` MCP errors from escaping the SDK boundary.
 - Fixed `InvalidIdentifierError` mapping to return structured `VALIDATION_ERROR` instead of internal MCP errors when validation fails for tool arguments like `tableName`.

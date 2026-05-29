@@ -130,9 +130,14 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
         // validateWhereClause() removed
         const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
         let sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}')`;
+        
+        const matchCondition = `instr(${column}, '${search}') > 0`;
         if (whereSql) {
-          sql += ` WHERE ${whereSql}`;
+          sql += ` WHERE (${whereSql}) AND ${matchCondition}`;
+        } else {
+          sql += ` WHERE ${matchCondition}`;
         }
+        
         queryParams.push(...whereParams);
 
         const result = await adapter.executeWriteQuery(sql, queryParams);
