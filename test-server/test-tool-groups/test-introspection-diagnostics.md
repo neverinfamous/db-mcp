@@ -106,9 +106,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 ## Phase 1: Core Check (batched)
 
-1. `sqlite_storage_analysis({})` → verify `tables`, `totalSize`, `recommendations` in response
-2. `sqlite_index_audit({})` → verify `redundantIndexes`, `missingFkIndexes`, `suggestions` in response
-3. `sqlite_query_plan({query: "SELECT * FROM test_products WHERE category = 'Electronics'"})` → verify `plan`, `scanType`, `suggestions` in response
+1. `sqlite_storage_analysis({})` → verify `tables`, `database.totalSizeBytes`, `recommendations` in response
+2. `sqlite_index_audit({})` → verify `findings`, `summary` in response
+3. `sqlite_query_plan({query: "SELECT * FROM test_products WHERE category = 'Electronics'"})` → verify `plan`, `analysis` in response
 
 **Code mode testing:**
 
