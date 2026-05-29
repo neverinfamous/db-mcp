@@ -32,10 +32,15 @@ export function createAnalyzeCsvSchemaTool(
       const authCtx = getAuthContext();
       if (authCtx?.authenticated) {
         const scopes = authCtx.scopes;
-        if (Array.isArray(scopes) && !scopes.includes("admin") && !scopes.includes("full")) {
+        if (
+          Array.isArray(scopes) &&
+          !scopes.includes("admin") &&
+          !scopes.includes("full")
+        ) {
           return {
             success: false,
-            error: "Admin scope is required for CSV analysis (modifies schema and reads filesystem)",
+            error:
+              "Admin scope is required for CSV analysis (modifies schema and reads filesystem)",
             code: "AUTHORIZATION_ERROR",
             category: "authorization",
             hasHeader: false,
@@ -46,7 +51,7 @@ export function createAnalyzeCsvSchemaTool(
       }
 
       let input;
-      
+
       try {
         input = AnalyzeCsvSchemaSchema.parse(params);
       } catch (error: unknown) {

@@ -208,7 +208,10 @@ export function createVectorStoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Try update first, then insert (parameterized to prevent SQL injection)
         const updateSql = `UPDATE ${table} SET ${vectorColumn} = ? WHERE ${idColumn} = ?`;
-        const updateResult = await adapter.executeWriteQuery(updateSql, [vectorJson, input.id]);
+        const updateResult = await adapter.executeWriteQuery(updateSql, [
+          vectorJson,
+          input.id,
+        ]);
 
         if (updateResult.rowsAffected === 0) {
           // Only include dimensions column if the table has it
@@ -256,7 +259,9 @@ export function createVectorBatchStoreTool(
         if (input.items.length === 0) {
           // Verify the table exists even with no items to avoid silent success on nonexistent tables
           const checkSql = `SELECT name FROM sqlite_master WHERE type='table' AND name=?`;
-          const checkResult = await adapter.executeReadQuery(checkSql, [input.table]);
+          const checkResult = await adapter.executeReadQuery(checkSql, [
+            input.table,
+          ]);
           if (!checkResult.rows || checkResult.rows.length === 0) {
             return {
               success: false,

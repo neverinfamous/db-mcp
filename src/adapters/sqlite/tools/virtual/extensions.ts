@@ -36,10 +36,9 @@ export function createRtreeTableTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: idempotent("Create R-Tree Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-
       try {
         const input = CreateRtreeTableSchema.parse(params);
-      
+
         // Validate table name
         sanitizeIdentifier(input.tableName);
 
@@ -117,7 +116,8 @@ export function createSeriesTableTool(adapter: SqliteAdapter): ToolDefinition {
         const columnName = sanitizeIdentifier(input.columnName);
 
         const MAX_SERIES_LENGTH = 100000;
-        const estimatedLength = Math.abs((input.stop - input.start) / input.step) + 1;
+        const estimatedLength =
+          Math.abs((input.stop - input.start) / input.step) + 1;
         if (estimatedLength > MAX_SERIES_LENGTH) {
           return {
             success: false,

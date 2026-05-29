@@ -10,9 +10,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -43,7 +41,7 @@ export function createTextNormalizeTool(
       const queryParams: unknown[] = [];
       try {
         const input = TextNormalizeSchema.parse(params);
-      
+
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         const normalizedMode = input.mode?.toLowerCase() ?? "";
         if (
@@ -63,12 +61,15 @@ export function createTextNormalizeTool(
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -127,7 +128,7 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextValidateSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -177,12 +178,15 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -238,5 +242,3 @@ export function createTextValidateTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

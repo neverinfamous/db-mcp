@@ -34,9 +34,8 @@ export function createDbStatTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Database Stats"),
     handler: async (params: unknown, _context: RequestContext) => {
-
       let input;
-      
+
       try {
         input = DbStatSchema.parse(params);
       } catch (error: unknown) {

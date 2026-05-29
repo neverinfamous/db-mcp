@@ -71,8 +71,6 @@ export function scopesGrantToolAccess(
   return scopes.some((scope) => scopeGrantsToolAccess(scope, toolName));
 }
 
-
-
 /**
  * Get the required minimum scope for a tool group
  */

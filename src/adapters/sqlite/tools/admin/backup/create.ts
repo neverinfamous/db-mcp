@@ -66,7 +66,9 @@ export function createBackupTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.targetPath.includes("..") || !pathCheck.valid) {
         return {
           success: false,
-          error: !pathCheck.valid ? pathCheck.error : "Invalid path: must not contain '..'",
+          error: !pathCheck.valid
+            ? pathCheck.error
+            : "Invalid path: must not contain '..'",
           code: "SECURITY_ERROR",
           path: input.targetPath,
         };
@@ -138,9 +140,7 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
 
       if (!input.outputPath?.trim()) {
         return {
-          ...formatHandlerError(
-            new ValidationError("outputPath is required"),
-          ),
+          ...formatHandlerError(new ValidationError("outputPath is required")),
         };
       }
 
@@ -153,7 +153,9 @@ export function createVacuumIntoTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.outputPath.includes("..") || !pathCheck.valid) {
         return {
           success: false,
-          error: !pathCheck.valid ? pathCheck.error : "Invalid path: must not contain '..'",
+          error: !pathCheck.valid
+            ? pathCheck.error
+            : "Invalid path: must not contain '..'",
           code: "SECURITY_ERROR",
         };
       }

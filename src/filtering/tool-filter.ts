@@ -238,8 +238,6 @@ export function parseToolFilter(
     }
   }
 
-
-
   return {
     raw: filterString,
     rules,
@@ -283,7 +281,7 @@ export function isToolEnabled(
   // It is only disabled if explicitly excluded via rule (e.g. -codemode).
   if (tool.group === "codemode") {
     const explicitlyExcludedGroup = config.rules.some(
-      (r) => r.type === "exclude" && r.target === "codemode"
+      (r) => r.type === "exclude" && r.target === "codemode",
     );
     if (!explicitlyExcludedGroup) {
       return true;

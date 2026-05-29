@@ -1,4 +1,7 @@
-import { buildWhereClause, sanitizeWhereClause } from "../../../../utils/where-clause.js";
+import {
+  buildWhereClause,
+  sanitizeWhereClause,
+} from "../../../../utils/where-clause.js";
 /**
  * SQLite Core Tools - Convenience Operations
  *
@@ -47,7 +50,6 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Upsert Data"),
     handler: async (params: unknown, _context: RequestContext) => {
-      
       const queryParams: unknown[] = [];
       let input;
       try {
@@ -99,7 +101,10 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
 
         if (colsToUpdate.length > 0) {
           const updateSets = colsToUpdate
-            .map((c: string) => `${sanitizeIdentifier(c)} = EXCLUDED.${sanitizeIdentifier(c)}`)
+            .map(
+              (c: string) =>
+                `${sanitizeIdentifier(c)} = EXCLUDED.${sanitizeIdentifier(c)}`,
+            )
             .join(", ");
           sql += ` ON CONFLICT (${conflictCols}) DO UPDATE SET ${updateSets}`;
         } else {
@@ -158,7 +163,6 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: write("Batch Insert Data"),
     handler: async (params: unknown, _context: RequestContext) => {
-      
       const queryParams: unknown[] = [];
       let input;
       try {
@@ -189,7 +193,6 @@ export function createBatchInsertTool(adapter: SqliteAdapter): ToolDefinition {
       const safeTable = sanitizeIdentifier(input.table);
       const safeColumns = columns.map(sanitizeIdentifier);
 
-      
       const valueGroups: string[] = [];
 
       for (const row of input.rows) {
@@ -252,7 +255,6 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Count Rows"),
     handler: async (params: unknown, _context: RequestContext) => {
-      
       const queryParams: unknown[] = [];
       let input;
       try {
@@ -283,7 +285,9 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
 
       const safeTable = sanitizeIdentifier(input.table);
       const column =
-        input.column && input.column !== "*" ? sanitizeIdentifier(input.column) : "*";
+        input.column && input.column !== "*"
+          ? sanitizeIdentifier(input.column)
+          : "*";
       const distinctStr = input.distinct && column !== "*" ? "DISTINCT " : "";
       let sql = `SELECT COUNT(${distinctStr}${column}) as count FROM ${safeTable}`;
 
@@ -292,7 +296,10 @@ export function createCountTool(adapter: SqliteAdapter): ToolDefinition {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions !== undefined && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -329,7 +336,6 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: readOnly("Check Existence"),
     handler: async (params: unknown, _context: RequestContext) => {
-      
       const queryParams: unknown[] = [];
       let input;
       try {
@@ -355,7 +361,10 @@ export function createExistsTool(adapter: SqliteAdapter): ToolDefinition {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions !== undefined && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -393,7 +402,6 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["write"],
     annotations: destructive("Truncate Table"),
     handler: async (params: unknown, _context: RequestContext) => {
-      
       const queryParams: unknown[] = [];
       let input;
       try {
@@ -435,4 +443,3 @@ export function createTruncateTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-

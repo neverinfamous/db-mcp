@@ -5,7 +5,10 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { adminFs } from "../../../../../utils/annotations.js";
-import { sanitizeIdentifier, validateSameDirPath } from "../../../../../utils/index.js";
+import {
+  sanitizeIdentifier,
+  validateSameDirPath,
+} from "../../../../../utils/index.js";
 import {
   formatHandlerError,
   ExtensionNotAvailableError,
@@ -27,7 +30,7 @@ export function createCsvTableTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateCsvTableSchema.parse(params);
-      
+
         const safeTableName = sanitizeIdentifier(input.tableName);
 
         if (!path.isAbsolute(input.filePath)) {

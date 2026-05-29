@@ -109,10 +109,15 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
   }
 
   // Security check for blocked pragmas that mutate state (after comment stripping)
-  const pragmaMatches = stripped.matchAll(/\bPRAGMA\s+(?:[a-zA-Z_]+\.)?([a-zA-Z_]+)\s*(?:=|\()/gi);
+  const pragmaMatches = stripped.matchAll(
+    /\bPRAGMA\s+(?:[a-zA-Z_]+\.)?([a-zA-Z_]+)\s*(?:=|\()/gi,
+  );
   for (const match of pragmaMatches) {
     if (match[1] && BLOCKED_PRAGMAS.has(match[1].toLowerCase())) {
-      throw new ValidationError(`Mutating PRAGMA '${match[1]}' is blocked for security`, "DB_DANGEROUS_PATTERN");
+      throw new ValidationError(
+        `Mutating PRAGMA '${match[1]}' is blocked for security`,
+        "DB_DANGEROUS_PATTERN",
+      );
     }
   }
 
@@ -131,20 +136,34 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     Array.isArray((ast as { statement: unknown[] }).statement)
   ) {
     if ((ast as { statement: unknown[] }).statement.length > 1) {
-      throw new ValidationError("Multiple stacked statements are not allowed.", "DB_DANGEROUS_PATTERN");
+      throw new ValidationError(
+        "Multiple stacked statements are not allowed.",
+        "DB_DANGEROUS_PATTERN",
+      );
     }
   } else if (parseError) {
-    if (/;\s*(?:INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE|UPSERT|PRAGMA|TRUNCATE)\b/i.test(stripped)) {
-      throw new ValidationError("Multiple stacked statements are not allowed.", "DB_DANGEROUS_PATTERN");
+    if (
+      /;\s*(?:INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE|UPSERT|PRAGMA|TRUNCATE)\b/i.test(
+        stripped,
+      )
+    ) {
+      throw new ValidationError(
+        "Multiple stacked statements are not allowed.",
+        "DB_DANGEROUS_PATTERN",
+      );
     }
   }
 
   const rootStmt = stripped.trim();
 
   if (isReadOnly) {
-    const isSafeRead = /^\s*(?:WITH\s+[\s\S]+?)?(?:SELECT|EXPLAIN|PRAGMA)\b/i.test(rootStmt);
-    const writeMatch = /\b(INSERT|UPDATE|DELETE|REPLACE|DROP|CREATE|ALTER|VACUUM|ANALYZE|TRUNCATE)\b/i.exec(rootStmt);
-    
+    const isSafeRead =
+      /^\s*(?:WITH\s+[\s\S]+?)?(?:SELECT|EXPLAIN|PRAGMA)\b/i.test(rootStmt);
+    const writeMatch =
+      /\b(INSERT|UPDATE|DELETE|REPLACE|DROP|CREATE|ALTER|VACUUM|ANALYZE|TRUNCATE)\b/i.exec(
+        rootStmt,
+      );
+
     if (writeMatch) {
       throw new ValidationError(
         `Read-only mode: ${writeMatch[1]?.toUpperCase() ?? "WRITE"} statements are not allowed`,
@@ -158,10 +177,16 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
       );
     }
   } else {
-    const ddlPattern = /^\s*(?:BEGIN\s+)?(?:WITH\s+[\s\S]+?)?(CREATE|DROP|ALTER|VACUUM|ANALYZE)\b/i;
+    const ddlPattern =
+      /^\s*(?:BEGIN\s+)?(?:WITH\s+[\s\S]+?)?(CREATE|DROP|ALTER|VACUUM|ANALYZE)\b/i;
     if (ddlPattern.test(stripped)) {
       const authCtx = getAuthContext();
-      if (authCtx && authCtx.authenticated && !authCtx.scopes.includes("admin") && !authCtx.scopes.includes("full")) {
+      if (
+        authCtx &&
+        authCtx.authenticated &&
+        !authCtx.scopes.includes("admin") &&
+        !authCtx.scopes.includes("full")
+      ) {
         throw new ValidationError(
           "DDL operations (CREATE, DROP, ALTER) require 'admin' or 'full' scope",
           "DB_ADMIN_REQUIRED",
@@ -170,9 +195,15 @@ export function validateQuery(sql: string, isReadOnly: boolean): void {
     }
   }
 
-  const unsafePattern = new RegExp(`\\b(${Array.from(UNSAFE_FUNCTIONS).join("|")})\\b`, "i");
+  const unsafePattern = new RegExp(
+    `\\b(${Array.from(UNSAFE_FUNCTIONS).join("|")})\\b`,
+    "i",
+  );
   const match = unsafePattern.exec(stripped);
   if (match) {
-    throw new ValidationError(`Unsafe function call detected: ${match[0].toUpperCase()}`, "DB_DANGEROUS_PATTERN");
+    throw new ValidationError(
+      `Unsafe function call detected: ${match[0].toUpperCase()}`,
+      "DB_DANGEROUS_PATTERN",
+    );
   }
 }

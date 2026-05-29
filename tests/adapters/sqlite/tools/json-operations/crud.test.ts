@@ -88,11 +88,19 @@ describe("createJsonExtractTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [{ value: "x" }] });
     const tool = createJsonExtractTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", path: "$.name", conditions: [{ column: "id", operator: "=", value: 1 }] },
+      {
+        table: "users",
+        column: "data",
+        path: "$.name",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('"id" = ?'), expect.anything());
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining('"id" = ?'),
+      expect.anything(),
+    );
   });
 
   it("should handle query error", async () => {
@@ -244,7 +252,12 @@ describe("createJsonRemoveTool", () => {
   it("should reject invalid path", async () => {
     const tool = createJsonRemoveTool(createMockAdapter());
     const result = (await tool.handler(
-      { table: "users", column: "data", path: "temp", conditions: [{ column: "1", operator: "=", value: 1 }] },
+      {
+        table: "users",
+        column: "data",
+        path: "temp",
+        conditions: [{ column: "1", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(false);
@@ -286,11 +299,18 @@ describe("createJsonTypeTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [{ type: "text" }] });
     const tool = createJsonTypeTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", conditions: [{ column: "id", operator: "=", value: 1 }] },
+      {
+        table: "users",
+        column: "data",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('"id" = ?'), expect.anything());
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining('"id" = ?'),
+      expect.anything(),
+    );
   });
 });
 
@@ -329,7 +349,11 @@ describe("createJsonArrayLengthTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [{ length: 1 }] });
     const tool = createJsonArrayLengthTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "tags", conditions: [{ column: "id", operator: "=", value: 1 }] },
+      {
+        table: "users",
+        column: "tags",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
@@ -396,7 +420,12 @@ describe("createJsonArrayAppendTool", () => {
   it("should reject undefined value", async () => {
     const tool = createJsonArrayAppendTool(createMockAdapter());
     const result = (await tool.handler(
-      { table: "users", column: "tags", path: "$", conditions: [{ column: "1", operator: "=", value: 1 }] },
+      {
+        table: "users",
+        column: "tags",
+        path: "$",
+        conditions: [{ column: "1", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(false);
@@ -408,7 +437,13 @@ describe("createJsonArrayAppendTool", () => {
     adapter.executeWriteQuery.mockRejectedValue(new Error("fail"));
     const tool = createJsonArrayAppendTool(adapter);
     const result = (await tool.handler(
-      { table: "t", column: "c", path: "$", value: 1, conditions: [{ column: "1", operator: "=", value: 1 }] },
+      {
+        table: "t",
+        column: "c",
+        path: "$",
+        value: 1,
+        conditions: [{ column: "1", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(false);

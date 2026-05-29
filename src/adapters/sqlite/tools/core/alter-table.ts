@@ -182,7 +182,9 @@ export function createAlterTableTool(adapter: SqliteAdapter): ToolDefinition {
             }
 
             const quotedCol = `"${input.column.replace(/"/g, '""')}"`;
-            const parts = [`ALTER TABLE ${quotedTable} ADD COLUMN ${quotedCol} ${input.type}`];
+            const parts = [
+              `ALTER TABLE ${quotedTable} ADD COLUMN ${quotedCol} ${input.type}`,
+            ];
             if (!input.nullable) parts.push("NOT NULL");
             if (input.defaultValue !== undefined) {
               parts.push(`DEFAULT ${formatDefaultValue(input.defaultValue)}`);

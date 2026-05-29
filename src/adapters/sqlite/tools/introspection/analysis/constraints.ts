@@ -41,7 +41,7 @@ export function createConstraintAnalysisTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const queryParams: unknown[] = [];
-      const input = ConstraintAnalysisSchema.parse(params);
+        const input = ConstraintAnalysisSchema.parse(params);
         const checksToRun = input.checks ?? [
           "missing_pk",
           "missing_not_null",
@@ -50,7 +50,7 @@ export function createConstraintAnalysisTool(
         ];
         // Get tables to analyze
         let tableQuery = `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%'`;
-        
+
         if (input.table) {
           tableQuery += ` AND name = ?`;
           queryParams.push(input.table);

@@ -64,12 +64,35 @@ describe("SchemaManager", () => {
         }
         if (sql.includes('PRAGMA table_info("users")')) {
           return {
-            rows: [ { name: "id", type: "INTEGER", notnull: 1, pk: 1, dflt_value: null }, { name: "name", type: "TEXT", notnull: 0, pk: 0, dflt_value: null } ],
+            rows: [
+              {
+                name: "id",
+                type: "INTEGER",
+                notnull: 1,
+                pk: 1,
+                dflt_value: null,
+              },
+              {
+                name: "name",
+                type: "TEXT",
+                notnull: 0,
+                pk: 0,
+                dflt_value: null,
+              },
+            ],
           };
         }
         if (sql.includes('PRAGMA table_info("products")')) {
           return {
-            rows: [ { name: "id", type: "INTEGER", notnull: 1, pk: 1, dflt_value: null } ],
+            rows: [
+              {
+                name: "id",
+                type: "INTEGER",
+                notnull: 1,
+                pk: 1,
+                dflt_value: null,
+              },
+            ],
           };
         }
         return { rows: [] };
@@ -327,7 +350,9 @@ describe("SchemaManager", () => {
       // Third call after TTL - re-fetches
       const callCount2 = mockExecuteReadQuery.mock.calls.length;
       await schemaManager.listTables();
-      expect(mockExecuteReadQuery.mock.calls.length).toBeGreaterThan(callCount2);
+      expect(mockExecuteReadQuery.mock.calls.length).toBeGreaterThan(
+        callCount2,
+      );
 
       // Restore
       Date.now = originalDateNow;

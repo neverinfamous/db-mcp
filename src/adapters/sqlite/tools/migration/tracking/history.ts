@@ -45,7 +45,7 @@ export function createMigrationHistoryTool(
 
         let query = `SELECT id, version, description, applied_at, applied_by, migration_hash, source_system, status FROM "${MIGRATIONS_TABLE}"`;
         const conditions: string[] = [];
-        
+
         if (input.status) {
           conditions.push("status = ?");
           queryParams.push(input.status);

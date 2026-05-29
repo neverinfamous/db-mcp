@@ -122,12 +122,15 @@ describe("createVectorSearchTool", () => {
         queryVector: [1, 0],
         metric: "cosine",
         limit: 5,
-        conditions: [{ column: "category", operator: "=", value: 'test' }],
+        conditions: [{ column: "category", operator: "=", value: "test" }],
       },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('"category" = ?'), expect.anything());
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining('"category" = ?'),
+      expect.anything(),
+    );
   });
 
   it("should support returnColumns", async () => {

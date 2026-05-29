@@ -46,7 +46,7 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const queryParams: unknown[] = [];
       let input;
-      
+
       try {
         input = JsonSelectSchema.parse(params);
       } catch (error: unknown) {
@@ -75,12 +75,15 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT ${selectClause} FROM "${input.table}"`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit ?? 100}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -350,5 +353,3 @@ export function createAnalyzeJsonSchemaTool(
     },
   };
 }
-
-

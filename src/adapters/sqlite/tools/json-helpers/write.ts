@@ -51,7 +51,7 @@ export function createJsonInsertTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const queryParams: unknown[] = [];
       let input: JsonInsertInput;
-      
+
       try {
         input = JsonInsertSchema.parse(params);
       } catch (error: unknown) {
@@ -143,7 +143,10 @@ export function createJsonUpdateTool(adapter: SqliteAdapter): ToolDefinition {
 
         const valueJson = JSON.stringify(input.value);
         // validateWhereClause() removed
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
         let sql = `UPDATE "${input.table}" SET "${input.column}" = json_replace("${input.column}", '${input.path}', json('${valueJson.replace(/'/g, "''")}'))`;
         if (whereSql) {
           sql += ` WHERE ${whereSql}`;
@@ -212,7 +215,10 @@ export function createJsonMergeTool(adapter: SqliteAdapter): ToolDefinition {
 
         // validateWhereClause() removed
         // Use json_patch for merging (shallow merge)
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
         let sql = `UPDATE "${input.table}" SET "${input.column}" = json_patch("${input.column}", '${mergeJson.replace(/'/g, "''")}')`;
         if (whereSql) {
           sql += ` WHERE ${whereSql}`;
@@ -273,17 +279,23 @@ export function createJsonCollectionTool(
         const sqls: string[] = [];
 
         // Check if table already exists
-        const checkSql = "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name=?";
-        const checkResult = await adapter.executeReadQuery(checkSql, [input.tableName]);
-        const tableCount = checkResult.rows?.[0] ? Number(checkResult.rows[0]["count"]) : 0;
+        const checkSql =
+          "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name=?";
+        const checkResult = await adapter.executeReadQuery(checkSql, [
+          input.tableName,
+        ]);
+        const tableCount = checkResult.rows?.[0]
+          ? Number(checkResult.rows[0]["count"])
+          : 0;
         if (tableCount > 0) {
           throw new QueryError(
             `Table '${input.tableName}' already exists`,
             "TABLE_EXISTS",
             {
-              suggestion: "Use a different table name or drop the existing table first.",
-              details: { resourceType: "table", resourceName: input.tableName }
-            }
+              suggestion:
+                "Use a different table name or drop the existing table first.",
+              details: { resourceType: "table", resourceName: input.tableName },
+            },
           );
         }
 
@@ -338,4 +350,3 @@ export function createJsonCollectionTool(
     },
   };
 }
-

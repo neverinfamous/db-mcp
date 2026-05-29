@@ -11,15 +11,23 @@ vi.mock("isolated-vm", () => {
   const vm = require("node:vm");
   class Reference {
     constructor(public val: any) {}
-    apply(receiver: any, args: any[]) { return this.val(...args); }
-    applyIgnored(receiver: any, args: any[]) { this.val(...args); }
-    applySync(receiver: any, args: any[]) { return this.val(...args); }
+    apply(receiver: any, args: any[]) {
+      return this.val(...args);
+    }
+    applyIgnored(receiver: any, args: any[]) {
+      this.val(...args);
+    }
+    applySync(receiver: any, args: any[]) {
+      return this.val(...args);
+    }
     release() {}
   }
   class Script {
     constructor(private code: string) {}
     async run(context: any, options: any) {
-      return vm.runInContext(this.code, context.vmContext, { timeout: options.timeout });
+      return vm.runInContext(this.code, context.vmContext, {
+        timeout: options.timeout,
+      });
     }
   }
   class Isolate {
@@ -34,24 +42,26 @@ vi.mock("isolated-vm", () => {
         global: {
           setSync: (key: string, val: any) => {
             if (val instanceof Reference) {
-               sandbox[key] = {
-                 apply: async (r: any, a: any[]) => await val.apply(r, a),
-                 applyIgnored: (r: any, a: any[]) => val.applyIgnored(r, a),
-                 applySync: (r: any, a: any[]) => val.applySync(r, a),
-               };
+              sandbox[key] = {
+                apply: async (r: any, a: any[]) => await val.apply(r, a),
+                applyIgnored: (r: any, a: any[]) => val.applyIgnored(r, a),
+                applySync: (r: any, a: any[]) => val.applySync(r, a),
+              };
             } else {
-               sandbox[key] = val;
+              sandbox[key] = val;
             }
           },
-          derefInto: () => sandbox
+          derefInto: () => sandbox,
         },
         evalSync: (code: string) => {
           vm.runInContext(code, vmContext);
         },
-        release: () => {}
+        release: () => {},
       };
     }
-    compileScriptSync(code: string) { return new Script(code); }
+    compileScriptSync(code: string) {
+      return new Script(code);
+    }
     dispose() {}
   }
   return { default: { Isolate, Reference } };

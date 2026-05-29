@@ -207,8 +207,14 @@ export const VectorSearchSchema = z.object({
     coerceNumber,
     z.number().optional().default(10).describe("Max results"),
   ),
-  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   returnColumns: z
     .array(z.string())
     .optional()
@@ -314,4 +320,3 @@ export type VectorGetInput = z.infer<typeof VectorGetSchema>;
 export type VectorCountInput = z.infer<typeof VectorCountSchema>;
 export type VectorStatsInput = z.infer<typeof VectorStatsSchema>;
 export type VectorDimensionsInput = z.infer<typeof VectorDimensionsSchema>;
-

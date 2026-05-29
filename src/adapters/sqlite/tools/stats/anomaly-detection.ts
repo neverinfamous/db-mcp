@@ -106,7 +106,7 @@ export function createDetectAnomaliesTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DetectAnomaliesSchema.parse(params);
-      
+
         const threshold = Math.max(0.5, Math.min(100, input.threshold));
         const limit = Math.max(1, Math.min(500, input.limit));
 
@@ -209,7 +209,7 @@ async function analyzeColumns(
     // Compute mean
     const statsResult = await adapter.executeReadQuery(
       `SELECT COUNT(${qc}) as cnt, AVG(CAST(${qc} AS REAL)) as mean_val FROM ${qt} WHERE ${whereBase}${extraWhere}`,
-      whereParams
+      whereParams,
     );
     const count = toNum(statsResult.rows?.[0]?.["cnt"]);
     const mean = toNum(statsResult.rows?.[0]?.["mean_val"]);
@@ -218,7 +218,7 @@ async function analyzeColumns(
     // Compute stddev (SQLite has no built-in STDDEV)
     const varResult = await adapter.executeReadQuery(
       `SELECT AVG((CAST(${qc} AS REAL) - ${String(mean)}) * (CAST(${qc} AS REAL) - ${String(mean)})) as variance FROM ${qt} WHERE ${whereBase}${extraWhere}`,
-      whereParams
+      whereParams,
     );
     const stddev = Math.sqrt(toNum(varResult.rows?.[0]?.["variance"]));
     if (stddev === 0) continue;
@@ -230,7 +230,7 @@ async function analyzeColumns(
     // Count anomalies
     const cntResult = await adapter.executeReadQuery(
       `SELECT COUNT(*) as ac FROM ${qt} WHERE ${whereBase} AND ${boundFilter}${extraWhere}`,
-      whereParams
+      whereParams,
     );
     const anomalyCount = toNum(cntResult.rows?.[0]?.["ac"]);
     if (anomalyCount === 0) continue;
@@ -238,7 +238,7 @@ async function analyzeColumns(
     // Top deviations
     const deviations = await adapter.executeReadQuery(
       `SELECT rowid, ${qc} as value, ABS((CAST(${qc} AS REAL) - ${String(mean)}) / ${String(stddev)}) as z_score FROM ${qt} WHERE ${whereBase} AND ${boundFilter}${extraWhere} ORDER BY z_score DESC LIMIT ${String(limit)}`,
-      whereParams
+      whereParams,
     );
 
     totalAnomalies += anomalyCount;
@@ -306,7 +306,7 @@ export function createDetectBloatTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DetectBloatSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
         const limit = Math.max(1, Math.min(500, input.limit));
         const excludeSystem = input.excludeSystemTables !== false;
 

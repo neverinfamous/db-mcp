@@ -57,7 +57,12 @@ export class CodeModeSandbox {
 
     const groupNameRegex = /^[a-zA-Z0-9_]+$/;
     for (const groupName of Object.keys(apiBindings)) {
-      if (!groupNameRegex.test(groupName) || groupName === "__proto__" || groupName === "constructor" || groupName === "prototype") {
+      if (
+        !groupNameRegex.test(groupName) ||
+        groupName === "__proto__" ||
+        groupName === "constructor" ||
+        groupName === "prototype"
+      ) {
         return {
           success: false,
           error: `Security Error: Invalid tool group name '${groupName}'`,
@@ -68,16 +73,30 @@ export class CodeModeSandbox {
 
     try {
       const wrappedCode = `async function __wrapper() { ${code} }`;
-      const ast = acorn.parse(wrappedCode, { ecmaVersion: "latest", sourceType: "script" });
+      const ast = acorn.parse(wrappedCode, {
+        ecmaVersion: "latest",
+        sourceType: "script",
+      });
       const validateAst = (node: unknown): void => {
-        if (node === null || node === undefined || typeof node !== "object") return;
+        if (node === null || node === undefined || typeof node !== "object")
+          return;
         const n = node as Record<string, unknown>;
         if (n["type"] === "WithStatement") {
           throw new Error("'with' statements are forbidden in sandbox code.");
         }
-        if (n["type"] === "MemberExpression" && n["object"] !== null && n["object"] !== undefined && typeof n["object"] === "object" && (n["object"] as Record<string, unknown>)["type"] === "Identifier") {
-          const objName = (n["object"] as Record<string, unknown>)["name"] as string;
-          if (["process", "require", "global", "globalThis"].includes(objName)) {
+        if (
+          n["type"] === "MemberExpression" &&
+          n["object"] !== null &&
+          n["object"] !== undefined &&
+          typeof n["object"] === "object" &&
+          (n["object"] as Record<string, unknown>)["type"] === "Identifier"
+        ) {
+          const objName = (n["object"] as Record<string, unknown>)[
+            "name"
+          ] as string;
+          if (
+            ["process", "require", "global", "globalThis"].includes(objName)
+          ) {
             throw new Error(`Access to '${objName}' is forbidden.`);
           }
         }
@@ -91,7 +110,9 @@ export class CodeModeSandbox {
     } catch (e: unknown) {
       return {
         success: false,
-        error: "Code validation failed: " + (e instanceof Error ? e.message : String(e)),
+        error:
+          "Code validation failed: " +
+          (e instanceof Error ? e.message : String(e)),
         metrics: { wallTimeMs: 0, cpuTimeMs: 0, memoryUsedMb: 0 },
       };
     }
@@ -121,13 +142,17 @@ export class CodeModeSandbox {
 
       const sandboxEnv: SandboxEnv = {
         console: {
-          log: (...args: unknown[]) => logs.push(args.map(String).join(' ')),
-          error: (...args: unknown[]) => logs.push('[ERROR] ' + args.map(String).join(' ')),
-          warn: (...args: unknown[]) => logs.push('[WARN] ' + args.map(String).join(' ')),
-          info: (...args: unknown[]) => logs.push('[INFO] ' + args.map(String).join(' ')),
-          debug: (...args: unknown[]) => logs.push('[DEBUG] ' + args.map(String).join(' ')),
+          log: (...args: unknown[]) => logs.push(args.map(String).join(" ")),
+          error: (...args: unknown[]) =>
+            logs.push("[ERROR] " + args.map(String).join(" ")),
+          warn: (...args: unknown[]) =>
+            logs.push("[WARN] " + args.map(String).join(" ")),
+          info: (...args: unknown[]) =>
+            logs.push("[INFO] " + args.map(String).join(" ")),
+          debug: (...args: unknown[]) =>
+            logs.push("[DEBUG] " + args.map(String).join(" ")),
         },
-        sqlite: {}
+        sqlite: {},
       };
 
       for (const [groupName, groupValue] of Object.entries(apiBindings)) {
@@ -152,7 +177,9 @@ export class CodeModeSandbox {
 
       try {
         const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
-        result = await vm.runInContext(wrappedCode, context, { timeout: effectiveTimeout });
+        result = await vm.runInContext(wrappedCode, context, {
+          timeout: effectiveTimeout,
+        });
       } catch (error: unknown) {
         success = false;
         errorMsg = error instanceof Error ? error.message : String(error);
@@ -168,19 +195,25 @@ export class CodeModeSandbox {
         metrics: {
           wallTimeMs: Math.round(endTime - startTime),
           cpuTimeMs: Math.round(endTime - startTime),
-          memoryUsedMb: 0
-        }
+          memoryUsedMb: 0,
+        },
       };
     }
 
-    const isolate = new ivmLib.Isolate({ memoryLimit: this.options.memoryLimitMb });
+    const isolate = new ivmLib.Isolate({
+      memoryLimit: this.options.memoryLimitMb,
+    });
     const context = isolate.createContextSync();
     const jail = context.global;
     jail.setSync("global", jail.derefInto());
 
     const logs: string[] = [];
     const logRef = new ivmLib.Reference((level: string, ...args: unknown[]) => {
-      const msg = args.map(a => typeof a === "object" && a !== null ? JSON.stringify(a) : String(a)).join(" ");
+      const msg = args
+        .map((a) =>
+          typeof a === "object" && a !== null ? JSON.stringify(a) : String(a),
+        )
+        .join(" ");
       logs.push(level === "LOG" ? msg : `[${level}] ${msg}`);
     });
 
@@ -206,17 +239,25 @@ export class CodeModeSandbox {
     const refCleanup: ivm.Reference<unknown>[] = [];
     for (const [groupName, groupValue] of Object.entries(apiBindings)) {
       if (typeof groupValue === "object" && groupValue !== null) {
-        context.evalSync(`globalThis.sqlite[${JSON.stringify(groupName)}] = {};`);
+        context.evalSync(
+          `globalThis.sqlite[${JSON.stringify(groupName)}] = {};`,
+        );
         for (const [methodName, methodFn] of Object.entries(groupValue)) {
           if (typeof methodFn === "function") {
             const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
               if (++rpcCount > MAX_RPC_CALLS) {
-                throw new Error(`QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`);
+                throw new Error(
+                  `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
+                );
               }
               try {
-                return await (methodFn as (...args: unknown[]) => Promise<unknown>)(...args);
+                return await (
+                  methodFn as (...args: unknown[]) => Promise<unknown>
+                )(...args);
               } catch (e) {
-                throw new Error(e instanceof Error ? e.message : String(e), { cause: e });
+                throw new Error(e instanceof Error ? e.message : String(e), {
+                  cause: e,
+                });
               }
             });
             refCleanup.push(fnRef);
@@ -232,12 +273,18 @@ export class CodeModeSandbox {
       } else if (typeof groupValue === "function") {
         const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
           if (++rpcCount > MAX_RPC_CALLS) {
-            throw new Error(`QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`);
+            throw new Error(
+              `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
+            );
           }
           try {
-            return await (groupValue as (...args: unknown[]) => Promise<unknown>)(...args);
+            return await (
+              groupValue as (...args: unknown[]) => Promise<unknown>
+            )(...args);
           } catch (e) {
-            throw new Error(e instanceof Error ? e.message : String(e), { cause: e });
+            throw new Error(e instanceof Error ? e.message : String(e), {
+              cause: e,
+            });
           }
         });
         refCleanup.push(fnRef);
@@ -258,8 +305,14 @@ export class CodeModeSandbox {
 
     try {
       const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
-      const script = isolate.compileScriptSync(wrappedCode, { filename: `code-mode.js` });
-      result = await script.run(context, { timeout: effectiveTimeout, promise: true, copy: true });
+      const script = isolate.compileScriptSync(wrappedCode, {
+        filename: `code-mode.js`,
+      });
+      result = await script.run(context, {
+        timeout: effectiveTimeout,
+        promise: true,
+        copy: true,
+      });
     } catch (error: unknown) {
       success = false;
       errorMsg = error instanceof Error ? error.message : String(error);
@@ -284,8 +337,8 @@ export class CodeModeSandbox {
       metrics: {
         wallTimeMs: Math.round(endTime - startTime),
         cpuTimeMs: Math.round(endTime - startTime), // ivm doesn't easily expose this per run without cpuTime
-        memoryUsedMb: 0 // ivm doesn't easily expose this per run
-      }
+        memoryUsedMb: 0, // ivm doesn't easily expose this per run
+      },
     };
   }
 
@@ -331,7 +384,9 @@ export class SandboxPool {
   }
 
   static async initialize(): Promise<void> {
-    SandboxPool.ivmPromise ??= import("isolated-vm").then((m) => m.default).catch(() => null as unknown as typeof ivm);
+    SandboxPool.ivmPromise ??= import("isolated-vm")
+      .then((m) => m.default)
+      .catch(() => null as unknown as typeof ivm);
     const lib = await SandboxPool.ivmPromise;
     if (lib !== null) {
       SandboxPool.cachedIvmLib = lib;
@@ -352,12 +407,14 @@ export class SandboxPool {
     }
 
     if (this.inUseCount >= this.options.maxInstances) {
-      throw new Error(`Sandbox pool exhausted (max ${this.options.maxInstances})`);
+      throw new Error(
+        `Sandbox pool exhausted (max ${this.options.maxInstances})`,
+      );
     }
 
     this.inUseCount++;
     let sandbox = this.idlePool.pop();
-    
+
     if (sandbox === undefined) {
       sandbox = CodeModeSandbox.create(this.sandboxOptions);
     } else {
@@ -384,11 +441,11 @@ export class SandboxPool {
   }
 
   getStats(): { available: number; inUse: number; max: number; idle: number } {
-    return { 
-      available: Math.max(0, this.options.maxInstances - this.inUseCount), 
-      inUse: this.inUseCount, 
+    return {
+      available: Math.max(0, this.options.maxInstances - this.inUseCount),
+      inUse: this.inUseCount,
       max: this.options.maxInstances,
-      idle: this.idlePool.length
+      idle: this.idlePool.length,
     };
   }
 

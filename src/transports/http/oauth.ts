@@ -4,20 +4,22 @@
  * OAuth 2.1 component initialization and auth middleware application.
  */
 
-
 import { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { AuthorizationServerDiscovery } from "../../auth/authorization-server-discovery.js";
 import { TokenValidator } from "../../auth/token-validator.js";
 import { createAuthMiddleware } from "../../auth/middleware/index.js";
 import { SUPPORTED_SCOPES } from "../../auth/scopes/index.js";
-import { scopesGrantToolAccess, hasAdminScope, hasReadScope } from "../../auth/scopes/index.js";
+import {
+  scopesGrantToolAccess,
+  hasAdminScope,
+  hasReadScope,
+} from "../../auth/scopes/index.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
 import type { Response } from "express";
 
 const logger = createModuleLogger("HTTP");
-
 
 // =============================================================================
 // Auth Middleware
@@ -32,11 +34,12 @@ const logger = createModuleLogger("HTTP");
 export function applyAuthMiddleware(state: HttpTransportState): void {
   // F-6: Warn when CORS wildcard is combined with auth — risky browser posture
   const corsOrigins = state.config.corsOrigins ?? [];
-  const isPubliclyExposed = state.config.oauth.enabled || state.config.noAuthEnforcement;
+  const isPubliclyExposed =
+    state.config.oauth.enabled || state.config.noAuthEnforcement;
   if (corsOrigins.includes("*") && isPubliclyExposed) {
     throw new Error(
       "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled or enforcement is explicitly disabled. " +
-      "Configure explicit origins via --cors-origins for production deployments."
+        "Configure explicit origins via --cors-origins for production deployments.",
     );
   }
 
@@ -62,8 +65,6 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
     );
   }
 }
-
-
 
 /**
  * Apply per-tool scope enforcement middleware for tools/call requests.
@@ -180,10 +181,13 @@ export function applyScopeEnforcementMiddleware(
     } else if (rpcMethod === "resources/read") {
       // M-2: Resource scope enforcement — audit resources require admin, others require read
       const resourceUri = body?.params?.uri ?? "";
-      const requiredScope = resourceUri.startsWith("sqlite://audit") ? "admin" : "read";
-      const hasAccess = requiredScope === "admin" 
-        ? hasAdminScope(req.auth.scopes)
-        : hasReadScope(req.auth.scopes);
+      const requiredScope = resourceUri.startsWith("sqlite://audit")
+        ? "admin"
+        : "read";
+      const hasAccess =
+        requiredScope === "admin"
+          ? hasAdminScope(req.auth.scopes)
+          : hasReadScope(req.auth.scopes);
 
       if (!hasAccess) {
         const error = new InsufficientScopeError(

@@ -23,12 +23,12 @@ export function createDropVirtualTableTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DropVirtualTableSchema.parse(params);
-      
+
         const tableName = sanitizeIdentifier(input.tableName);
 
         const existsResult = await adapter.executeReadQuery(
           `SELECT name, sql FROM sqlite_master WHERE type='table' AND name=?`,
-          [input.tableName]
+          [input.tableName],
         );
         const tableExists =
           existsResult.rows !== undefined && existsResult.rows.length > 0;

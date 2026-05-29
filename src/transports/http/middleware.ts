@@ -50,7 +50,10 @@ export function setupSecurityHeaders(state: HttpTransportState): void {
 
     // HSTS — only set when explicitly enabled (requires HTTPS)
     if (state.config.enableHSTS) {
-      const maxAge = Math.max(state.config.hstsMaxAge ?? DEFAULT_HSTS_MAX_AGE, 31536000);
+      const maxAge = Math.max(
+        state.config.hstsMaxAge ?? DEFAULT_HSTS_MAX_AGE,
+        31536000,
+      );
       res.setHeader(
         "Strict-Transport-Security",
         `max-age=${String(maxAge)}; includeSubDomains`,
@@ -139,7 +142,6 @@ export function setupCors(state: HttpTransportState): void {
   }
 }
 
-
 // =============================================================================
 // Rate Limiting
 // =============================================================================
@@ -154,7 +156,9 @@ export function setupRateLimiting(state: HttpTransportState): void {
   const parsedMax = process.env["MCP_RATE_LIMIT_MAX"]
     ? parseInt(process.env["MCP_RATE_LIMIT_MAX"], 10)
     : DEFAULT_RATE_LIMIT_MAX;
-  const safeParsedMax = Number.isNaN(parsedMax) ? DEFAULT_RATE_LIMIT_MAX : parsedMax;
+  const safeParsedMax = Number.isNaN(parsedMax)
+    ? DEFAULT_RATE_LIMIT_MAX
+    : parsedMax;
   // L-4: Clamp max requests to a safe range (1 to 10000)
   const maxRequests = Math.max(1, Math.min(safeParsedMax, 10000));
   // M-4: Warning: The default express-rate-limit in-memory store is per-process.
@@ -162,14 +166,19 @@ export function setupRateLimiting(state: HttpTransportState): void {
   if (process.env["REDIS_URL"]) {
     const redisClient = createClient({ url: process.env["REDIS_URL"] });
     redisClient.connect().catch((err: unknown) => {
-      logger.error("Redis connection failed", { error: err instanceof Error ? err : new Error(String(err)) });
+      logger.error("Redis connection failed", {
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
     });
     store = new RedisStore({
       sendCommand: (...args: string[]) => redisClient.sendCommand(args),
     });
     logger.info("Configured RedisStore for rate limiting", { module: "HTTP" });
   } else if (process.env["NODE_ENV"] === "production") {
-    logger.error("CRITICAL SECURITY WARNING: Using default in-memory rate limit store in production. In multi-instance deployments, rate limits will not be synchronized across instances (leading to amplification attacks). Configure REDIS_URL for production clusters or ensure your proxy handles rate limiting.", { module: "HTTP" });
+    logger.error(
+      "CRITICAL SECURITY WARNING: Using default in-memory rate limit store in production. In multi-instance deployments, rate limits will not be synchronized across instances (leading to amplification attacks). Configure REDIS_URL for production clusters or ensure your proxy handles rate limiting.",
+      { module: "HTTP" },
+    );
   }
 
   const limiter = rateLimit({

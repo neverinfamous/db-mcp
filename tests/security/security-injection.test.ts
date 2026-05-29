@@ -243,18 +243,14 @@ describe("Security: WHERE Clause Validation", () => {
 
       it("should reject full-width DROP TABLE after semicolon", () => {
         expect(() =>
-          sanitizeWhereClause(
-            "1=1; \uFF24\uFF32\uFF2F\uFF30 TABLE users",
-          ),
+          sanitizeWhereClause("1=1; \uFF24\uFF32\uFF2F\uFF30 TABLE users"),
         ).toThrow(UnsafeWhereClauseError);
       });
 
       it("should reject mixed ASCII/full-width UNION", () => {
         // Mix: U (ASCII) + Ｎ (full-width) + I (ASCII) + Ｏ (full-width) + N (ASCII)
         expect(() =>
-          sanitizeWhereClause(
-            "1=0 U\uFF2EI\uFF2FN SELECT * FROM users",
-          ),
+          sanitizeWhereClause("1=0 U\uFF2EI\uFF2FN SELECT * FROM users"),
         ).toThrow(UnsafeWhereClauseError);
       });
 

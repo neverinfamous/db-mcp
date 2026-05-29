@@ -135,18 +135,23 @@ export class BackupManager {
   /**
    * List available snapshots with metadata.
    */
-  async listSnapshots(limit = 10, offset = 0): Promise<{ snapshots: SnapshotMetadata[], total: number }> {
+  async listSnapshots(
+    limit = 10,
+    offset = 0,
+  ): Promise<{ snapshots: SnapshotMetadata[]; total: number }> {
     try {
       await this.ensureDirectory();
       const files = await readdir(this.snapshotDir);
-      
-      const snapshotFiles = files.filter(f => f.endsWith(SNAPSHOT_EXT) || f.endsWith(SNAPSHOT_EXT_LEGACY));
+
+      const snapshotFiles = files.filter(
+        (f) => f.endsWith(SNAPSHOT_EXT) || f.endsWith(SNAPSHOT_EXT_LEGACY),
+      );
       // Sort newest first by parsing timestamp from filename, but lexicographical works for ISO timestamps
       snapshotFiles.sort((a, b) => b.localeCompare(a));
-      
+
       const total = snapshotFiles.length;
       const targetFiles = snapshotFiles.slice(offset, offset + limit);
-      
+
       const snapshots: SnapshotMetadata[] = [];
 
       for (const file of targetFiles) {

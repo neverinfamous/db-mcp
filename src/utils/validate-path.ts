@@ -66,8 +66,17 @@ export function validateSameDirPath(
   }
 
   // Validate extension
-  const validExtensions = [".db", ".sqlite", ".sqlite3", ".sql", ".csv", ".tsv"];
-  const hasValidExt = validExtensions.some(ext => base.toLowerCase().endsWith(ext));
+  const validExtensions = [
+    ".db",
+    ".sqlite",
+    ".sqlite3",
+    ".sql",
+    ".csv",
+    ".tsv",
+  ];
+  const hasValidExt = validExtensions.some((ext) =>
+    base.toLowerCase().endsWith(ext),
+  );
   if (!hasValidExt) {
     return {
       valid: false,
@@ -79,12 +88,13 @@ export function validateSameDirPath(
   if (dbPath === ":memory:") {
     return {
       valid: false,
-      error: "Security: Filesystem operations are not permitted for :memory: databases.",
+      error:
+        "Security: Filesystem operations are not permitted for :memory: databases.",
       dbDir: "",
     };
   }
   const dbDir = dirname(resolve(dbPath));
-  
+
   let resolvedTarget = resolve(targetPath);
   try {
     resolvedTarget = realpathSync(resolvedTarget);

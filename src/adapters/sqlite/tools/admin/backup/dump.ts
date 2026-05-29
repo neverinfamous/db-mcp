@@ -70,7 +70,9 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
       if (input.outputPath.includes("..") || !pathCheck.valid) {
         return {
           success: false,
-          error: !pathCheck.valid ? pathCheck.error : "Invalid path: must not contain '..'",
+          error: !pathCheck.valid
+            ? pathCheck.error
+            : "Invalid path: must not contain '..'",
           code: "SECURITY_ERROR",
           path: input.outputPath,
         };
@@ -123,7 +125,8 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
             const values = keys.map((k) => {
               const val = row[k];
               if (val === null || val === undefined) return "NULL";
-              if (typeof val === "number" || typeof val === "bigint") return val.toString();
+              if (typeof val === "number" || typeof val === "bigint")
+                return val.toString();
               if (typeof val === "boolean") return val ? "1" : "0";
               if (typeof val === "string") return escapeString(val);
               if (typeof val === "object") {
@@ -134,7 +137,7 @@ export function createDumpTool(adapter: SqliteAdapter): ToolDefinition {
               }
               return escapeString("");
             });
-            
+
             const quotedKeys = keys.map((k) => `"${k.replace(/"/g, '""')}"`);
             stream.write(
               `INSERT INTO ${quotedTable} (${quotedKeys.join(", ")}) VALUES (${values.join(", ")});\n`,

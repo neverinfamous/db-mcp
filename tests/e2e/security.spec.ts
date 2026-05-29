@@ -106,7 +106,9 @@ test.describe("HTTP Transport Security & Limits", () => {
     expect(headers["referrer-policy"]).toBe("no-referrer");
   });
 
-  test("should not include CORS Allow-Origin header by default (deny-all)", async ({ request }) => {
+  test("should not include CORS Allow-Origin header by default (deny-all)", async ({
+    request,
+  }) => {
     const response = await request.get("/health");
     const headers = response.headers();
 

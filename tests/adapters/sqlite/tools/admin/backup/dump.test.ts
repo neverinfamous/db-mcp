@@ -18,9 +18,9 @@ describe("Admin Tools - Dump", () => {
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
-    
+
     // Clean up old files
-    [testDbPath, dumpTarget].forEach(f => {
+    [testDbPath, dumpTarget].forEach((f) => {
       if (fs.existsSync(f)) fs.unlinkSync(f);
     });
 
@@ -38,54 +38,70 @@ describe("Admin Tools - Dump", () => {
       tools.set(tool.name, (params) => tool.handler(params, context as never));
     }
 
-    await adapter.executeWriteQuery("CREATE TABLE test_data (id INTEGER PRIMARY KEY, num INTEGER, flag BOOLEAN, str TEXT)");
-    await adapter.executeWriteQuery("INSERT INTO test_data (num, flag, str) VALUES (42, true, 'hello ''world''')");
-    await adapter.executeWriteQuery("INSERT INTO test_data (num, flag, str) VALUES (NULL, false, NULL)");
+    await adapter.executeWriteQuery(
+      "CREATE TABLE test_data (id INTEGER PRIMARY KEY, num INTEGER, flag BOOLEAN, str TEXT)",
+    );
+    await adapter.executeWriteQuery(
+      "INSERT INTO test_data (num, flag, str) VALUES (42, true, 'hello ''world''')",
+    );
+    await adapter.executeWriteQuery(
+      "INSERT INTO test_data (num, flag, str) VALUES (NULL, false, NULL)",
+    );
   });
 
   afterEach(async () => {
     await adapter.disconnect();
     // Clean up files
-    [testDbPath, dumpTarget].forEach(f => {
+    [testDbPath, dumpTarget].forEach((f) => {
       if (fs.existsSync(f)) fs.unlinkSync(f);
     });
   });
 
   describe("sqlite_dump", () => {
     it("should require outputPath", async () => {
-      const res = await tools.get("sqlite_dump")?.({}) as { success: boolean };
+      const res = (await tools.get("sqlite_dump")?.({})) as {
+        success: boolean;
+      };
       expect(res.success).toBe(false);
     });
 
     it("should reject path traversal in outputPath", async () => {
-      const res = await tools.get("sqlite_dump")?.({
-        outputPath: "../outside.sql"
-      }) as { success: boolean, code: string };
+      const res = (await tools.get("sqlite_dump")?.({
+        outputPath: "../outside.sql",
+      })) as { success: boolean; code: string };
       expect(res.success).toBe(false);
       expect(res.code).toBe("SECURITY_ERROR");
     });
 
     it("should reject in-memory databases", async () => {
       const memAdapter = createTestAdapter();
-      await memAdapter.connect({ type: "sqlite", connectionString: ":memory:" });
+      await memAdapter.connect({
+        type: "sqlite",
+        connectionString: ":memory:",
+      });
       const memTools = new Map();
-      memAdapter.getToolDefinitions().forEach(t => memTools.set(t.name, t));
-      
-      const res = await memTools.get("sqlite_dump")?.handler({ outputPath: "out.sql" }, { scopes: ["admin"] } as any) as { success: boolean, code: string };
+      memAdapter.getToolDefinitions().forEach((t) => memTools.set(t.name, t));
+
+      const res = (await memTools
+        .get("sqlite_dump")
+        ?.handler({ outputPath: "out.sql" }, { scopes: ["admin"] } as any)) as {
+        success: boolean;
+        code: string;
+      };
       expect(res.success).toBe(false);
       expect(res.code).toBe("SECURITY_ERROR");
-      
+
       await memAdapter.disconnect();
     });
 
     it("should dump schema and data successfully", async () => {
-      const res = await tools.get("sqlite_dump")?.({
-        outputPath: dumpTarget
-      }) as { success: boolean, path: string };
+      const res = (await tools.get("sqlite_dump")?.({
+        outputPath: dumpTarget,
+      })) as { success: boolean; path: string };
       expect(res.success).toBe(true);
       expect(fs.existsSync(dumpTarget)).toBe(true);
       expect(res.path).toBe(dumpTarget);
-      
+
       const dumpContent = fs.readFileSync(dumpTarget, "utf8");
       // Check for table creation
       expect(dumpContent).toContain("CREATE TABLE test_data");

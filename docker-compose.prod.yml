@@ -43,7 +43,7 @@ services:
 
     # ── Networking ──
     ports:
-      - "127.0.0.1:3100:3100"  # Bind to localhost only; expose via reverse proxy
+      - "127.0.0.1:3100:3100" # Bind to localhost only; expose via reverse proxy
 
     # ── Volumes ──
     volumes:
@@ -61,7 +61,13 @@ services:
 
     # ── Health Check ──
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3100/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3100/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

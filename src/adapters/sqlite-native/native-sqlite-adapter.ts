@@ -296,7 +296,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
    */
   override executeQuery(sql: string, params?: unknown[]): Promise<QueryResult> {
     const trimmed = sql.trim().toUpperCase();
-    
+
     // PRAGMAs that mutate state must go through write validation
     if (trimmed.startsWith("PRAGMA")) {
       if (sql.includes("=") || sql.includes("(")) {
@@ -305,10 +305,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       return this.executeReadQuery(sql, params);
     }
 
-    if (
-      trimmed.startsWith("SELECT") ||
-      trimmed.startsWith("EXPLAIN")
-    ) {
+    if (trimmed.startsWith("SELECT") || trimmed.startsWith("EXPLAIN")) {
       return this.executeReadQuery(sql, params);
     }
     return this.executeWriteQuery(sql, params);

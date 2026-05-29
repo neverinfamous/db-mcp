@@ -6,6 +6,7 @@
 > **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
+
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js): Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
@@ -22,17 +23,20 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
+
 > See [`code-map.md`](file:///C:/Users/chris/Desktop/db-mcp/test-server/code-map.md) for the complete test database schema (`test_*` tables).
 
 > **CSV testing**: Use `C:\Users\chris\Desktop\db-mcp\test-server\sample.csv` (columns: id, name, category, price, quantity, created_at). **Absolute paths only** — relative paths resolve from IDE CWD.
 
 ## Reporting Format
+
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
 - 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
 - ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
 ### Error Message Quality Rating
+
 | Level                                  | Verdict |
 | -------------------------------------- | ------- |
 | 5 - Excellent (name + code + context)  | ✅      |
@@ -44,19 +48,19 @@
 ## Testing Requirements & Error Standards
 
 > [!NOTE]
-> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a *different* group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
-> 
+>
 > ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
 >
-> | Response | `isError: true` | SDK behavior | Verdict |
-> |---|---|---|---|
-> | `success: true` | **Absent** | Validates `structuredContent` → passes | ✅ Correct |
-> | `success: true` | **Present** | Skips validation, wraps in error frame | ❌ Bug — valid response shown as error |
-> | `success: false` | **Present** | Skips validation (error shape won't match success schema) | ✅ Correct |
-> | `success: false` | **Absent** | Validates error against success schema → fails | ❌ Bug — raw `-32602` |
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
 >
 > **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
@@ -64,8 +68,8 @@
 2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
    - (a) A domain error (e.g., non-existent table).
    - (b) An **empty parameters test** (call the tool with `{}`).
-   Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
-   > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
 3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
 4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
    > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
@@ -76,7 +80,9 @@
 8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
 ### Structured Error Response Pattern
+
 All tools should return errors as structured objects instead of throwing. The expected pattern:
+
 ```json
 { "success": false, "error": "Human-readable error message" }
 ```
@@ -87,6 +93,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 | **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
 
 ## Naming & Cleanup
+
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
@@ -135,7 +142,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.detachDatabase`
 - `sqlite.admin.vacuumInto`
 - `sqlite.admin.dropVirtualTable`
-- *(cross-group helpers used in test procedures)*
+- _(cross-group helpers used in test procedures)_
 - `sqlite.core.describeTable`
 - `sqlite.core.dropTable`
 
@@ -153,13 +160,11 @@ All tools should return errors as structured objects instead of throwing. The ex
 8. `sqlite.admin.analyze()` → success
 9. `sqlite.admin.dbstat({summarize: true})` → per-table storage
 
-
 ## Phase 2: View Management (batched)
 
 10. `sqlite.admin.createView({viewName: "temp_view_orders", selectQuery: "SELECT product_id, COUNT(*) as order_count, SUM(total_price) as revenue FROM test_orders GROUP BY product_id"})` → success
 11. `sqlite.admin.listViews()` → `temp_view_orders` present
 12. `sqlite.admin.dropView({viewName: "temp_view_orders"})` → success
-
 
 ## Phase 3: Virtual Tables (batched)
 
@@ -169,8 +174,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 16. `sqlite.admin.createRtreeTable({tableName: "temp_cm_rtree", dimensions: 2})` → R-Tree created
 17. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series", start: 1, stop: 10})` → regular table with 10 rows
 18. `sqlite.admin.dropVirtualTable({tableName: "temp_cm_rtree"})` → success (virtual table dropped)
-Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not virtual)
-
+    Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not virtual)
 
 ## Phase 4: Backup/Restore (batched)
 
@@ -181,13 +185,11 @@ Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not
 21. `sqlite.admin.restore({sourcePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db"})` → restore success
 22. `sqlite.admin.dump({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql"})` → success with `path` and `durationMs`
 
-
 ## Phase 5: Optimization (batched)
 
 23. `sqlite.admin.vacuum()` → success
 24. `sqlite.admin.optimize()` → optimization details
 25. `sqlite.admin.pragmaOptimize()` → distinct from `optimize` — runs `PRAGMA optimize`
-
 
 ## Phase 6: CSV (batched)
 
@@ -197,11 +199,9 @@ Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not
 27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → virtual table
 28. Cleanup: drop `temp_cm_csv` (virtual)
 
-
 ## Phase 7: Insights
 
 29. `sqlite.admin.appendInsight({insight: "Test insight from codemode"})` → success
-
 
 ## Phase 8: REINDEX & WAL Management (batched)
 
@@ -213,7 +213,6 @@ Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not
 35. `sqlite.admin.wal({action: "enable"})` → `{success: true}` with "already enabled" message (already WAL)
 36. `sqlite.admin.wal({action: "checkpoint"})` → success with `walPages`, then `sqlite.admin.wal({action: "checkpoint", checkpointMode: "FULL"})` → success
 
-
 ## Phase 9: Database Management (batched)
 
 > Use absolute paths where required
@@ -222,7 +221,6 @@ Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not
 38. `sqlite.admin.pragmaDatabaseList()` → verify `temp_attached` appears in attached databases list
 39. `sqlite.admin.detachDatabase({alias: "temp_attached"})` → success with `message`
 40. `sqlite.admin.vacuumInto({outputPath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db"})` → success with `outputPath` and `sizeBytes`
-
 
 ## Phase 10: Admin Domain Errors (batched)
 
@@ -239,14 +237,12 @@ Cleanup: drop `temp_cm_series` using `sqlite.core.dropTable` (regular table, not
 🔴 51. `sqlite.admin.reindex({target: "nonexistent_xyz"})` → `{success: false}` (no such index or table)
 🔴 52. `sqlite.admin.reindex({target: "../../etc/passwd"})` → `{success: false}` (identifier validation)
 
-
 ## Phase 11: Gotcha Edge Cases (batched)
 
 53. `sqlite.admin.generateSeries({start: 1, stop: 10, step: 2})` → 5 values: 1, 3, 5, 7, 9 (non-default step value)
 54. `sqlite.admin.pragmaSettings({pragma: "cache_size", value: "2000"})` → set cache_size, then `sqlite.admin.pragmaSettings({pragma: "cache_size"})` → verify read-back returns the set value
 55. `sqlite.admin.createSeriesTable({tableName: "temp_cm_series_regular", start: 1, stop: 5})` → creates a REGULAR table (not virtual). Verify with `sqlite.core.describeTable({table: "temp_cm_series_regular"})` → success, then `sqlite.core.dropTable({table: "temp_cm_series_regular"})` → success (gotcha #15: use `dropTable`, not `dropVirtualTable`)
 56. `sqlite.admin.dropVirtualTable({tableName: "test_products"})` → `{success: false}` — test_products is a regular table, not a virtual table (domain error)
-
 
 ## Phase 12: Multi-Step Workflow
 
@@ -292,7 +288,6 @@ await sqlite.admin.dropView({ viewName: "temp_view_cm_test" });
 return { failures, success: failures.length === 0 };
 ```
 
-
 ## Phase 13: Zod Validation Sweep
 
 🔴 57. `sqlite.admin.backup({})` → `{success: false}`
@@ -318,7 +313,6 @@ return { failures, success: failures.length === 0 };
 🔴 77. `sqlite.admin.reindex({})` → success (target is optional — reindexes entire database)
 🔴 78. `sqlite.admin.wal({})` → `{success: false}` handler error (action is required)
 
-
 ## Phase 14: Wrong-Type Numeric Coercion
 
 🔴 79. `sqlite.admin.generateSeries({start: "abc", stop: 5, step: 1})` → handler error, NOT raw MCP `-32602`
@@ -329,10 +323,12 @@ return { failures, success: failures.length === 0 };
 ## Post-Test Procedures
 
 ### Reporting Rules
+
 - Use ✅ only in inline notes during testing; omit from Final Summary
 - Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
+
 1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
@@ -341,6 +337,7 @@ return { failures, success: failures.length === 0 };
    - This prompt
 
 ### After Implementation
+
 3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
 4. **Commit**: Stage and commit all changes — do NOT push.
 5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.

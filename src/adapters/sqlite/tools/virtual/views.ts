@@ -46,7 +46,7 @@ export function createGenerateSeriesTool(
     annotations: readOnly("Generate Series"),
     handler: (params: unknown, _context: RequestContext) => {
       let input;
-      
+
       try {
         input = GenerateSeriesSchema.parse(params);
       } catch (error: unknown) {
@@ -93,7 +93,7 @@ export function createCreateViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateViewSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         // Validate and quote view name
         const viewName = sanitizeIdentifier(input.viewName);
@@ -148,7 +148,7 @@ export function createListViewsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = ListViewsSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'view'`;
         if (input.pattern) {
@@ -200,7 +200,7 @@ export function createDropViewTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DropViewSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         // Validate and quote view name
         const viewName = sanitizeIdentifier(input.viewName);

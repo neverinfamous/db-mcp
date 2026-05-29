@@ -91,9 +91,7 @@ export async function captureSchemaSnapshot(
       const tablesResult = await adapter.executeReadQuery(
         `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_mcp_%' ORDER BY name`,
       );
-      tablesList = (tablesResult.rows ?? []).map(
-        (r) => r["name"] as string,
-      );
+      tablesList = (tablesResult.rows ?? []).map((r) => r["name"] as string);
     }
 
     // Filter SpatiaLite system tables
@@ -192,9 +190,7 @@ export async function captureSchemaSnapshot(
       sql: t["sql"] as string,
     }));
     if (excludeSystem) {
-      triggers = triggers.filter(
-        (t) => !isSpatialiteSystemTable(t.table),
-      );
+      triggers = triggers.filter((t) => !isSpatialiteSystemTable(t.table));
     }
     triggers = triggers.filter((t) => !t.table.includes("_fts_"));
     snapshot["triggers"] = triggers;

@@ -10,9 +10,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import {
   formatHandlerError,
   DbMcpError,
@@ -271,5 +269,3 @@ export function createHypothesisTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

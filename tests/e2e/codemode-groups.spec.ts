@@ -20,7 +20,10 @@ import {
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(() => {
-  test.skip(!hasIsolatedVm(), "isolated-vm is not installed on this system, skipping Code Mode tests");
+  test.skip(
+    !hasIsolatedVm(),
+    "isolated-vm is not installed on this system, skipping Code Mode tests",
+  );
 });
 
 // =============================================================================

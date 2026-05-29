@@ -3,7 +3,10 @@ import type { ToolDefinition, RequestContext } from "../../types/index.js";
 import { formatHandlerError } from "../../utils/errors/index.js";
 import type { AuditInterceptor } from "../../audit/interceptor.js";
 import { registerToolScope } from "../../auth/scope-map.js";
-import { registerToolScopes, scopesGrantToolAccess } from "../../auth/scopes/enforcement.js";
+import {
+  registerToolScopes,
+  scopesGrantToolAccess,
+} from "../../auth/scopes/enforcement.js";
 import { getAuthContext } from "../../auth/auth-context.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 
@@ -23,13 +26,16 @@ export function registerToolImpl(
   tool: ToolDefinition,
 ): void {
   // Truncate description to prevent tool poisoning or excessive token usage
-  const safeDescription = tool.description && tool.description.length > 2000 
-    ? tool.description.substring(0, 2000) + "... (truncated)"
-    : tool.description;
+  const safeDescription =
+    tool.description && tool.description.length > 2000
+      ? tool.description.substring(0, 2000) + "... (truncated)"
+      : tool.description;
 
   const toolOptions: Record<string, unknown> = {
     description: safeDescription,
-    ...(tool.annotations?.title ? { title: tool.annotations.title.substring(0, 256) } : {}),
+    ...(tool.annotations?.title
+      ? { title: tool.annotations.title.substring(0, 256) }
+      : {}),
   };
 
   const requiredScope = tool.requiredScopes?.[0] ?? "admin";

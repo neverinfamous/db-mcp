@@ -112,4 +112,3 @@ sqlite_create_csv_table({
 ```javascript
 sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to memo://insights
 ```
-

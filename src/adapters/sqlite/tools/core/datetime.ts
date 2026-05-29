@@ -1,8 +1,17 @@
-import { buildWhereClause, sanitizeWhereClause } from "../../../../utils/where-clause.js";
+import {
+  buildWhereClause,
+  sanitizeWhereClause,
+} from "../../../../utils/where-clause.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
-import type { ToolDefinition, RequestContext } from "../../../../types/index.js";
+import type {
+  ToolDefinition,
+  RequestContext,
+} from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import { DateAddSchema, DateDiffSchema } from "../../schemas/core.js";
 import { DateMathOutputSchema } from "../../schemas/core.js";
 import { validateColumnExists } from "../column-validation.js";
@@ -28,7 +37,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       }
 
       const { table, column, amount, unit, limit, selectColumns } = input;
-      
+
       try {
         await validateColumnExists(adapter, table, column);
       } catch (error: unknown) {
@@ -40,19 +49,25 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Map unit to SQLite modifier
       const modifier = `${amount > 0 ? "+" : ""}${amount} ${unit}`;
-      
+
       const queryParams: unknown[] = [];
-      const selectCols = selectColumns && selectColumns.length > 0
-        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ") + ", "
-        : "";
+      const selectCols =
+        selectColumns && selectColumns.length > 0
+          ? selectColumns
+              .map((c: string) => `"${c.replace(/"/g, '""')}"`)
+              .join(", ") + ", "
+          : "";
       let query = `SELECT ${selectCols}datetime(${quotedColumn}, '${modifier}') as date_add_result FROM ${quotedTable}`;
-      
+
       const clauses: string[] = [];
       if (input.whereClause) {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -61,7 +76,7 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       if (clauses.length > 0) {
         query += ` WHERE ` + clauses.join(" AND ");
       }
-      
+
       if (limit !== undefined && limit !== null) {
         query += ` LIMIT ${limit}`;
       }
@@ -69,20 +84,24 @@ export function createDateAddTool(adapter: SqliteAdapter): ToolDefinition {
       try {
         const result = await adapter.executeReadQuery(query, queryParams);
 
-        // SQLite's datetime() silently returns NULL if the resulting date is outside 
-        // the supported bounds of 0000-01-01 to 9999-12-31. Detect this by checking 
+        // SQLite's datetime() silently returns NULL if the resulting date is outside
+        // the supported bounds of 0000-01-01 to 9999-12-31. Detect this by checking
         // if the original column was non-null but the result is null.
         if (result.rows && result.rows.length > 0) {
-          const outOfBounds = result.rows.some((row: Record<string, unknown>) => row[column] !== null && row["date_add_result"] === null);
+          const outOfBounds = result.rows.some(
+            (row: Record<string, unknown>) =>
+              row[column] !== null && row["date_add_result"] === null,
+          );
           if (outOfBounds) {
             return formatHandlerError(
               new ValidationError(
                 "Date calculation out of bounds. The resulting date exceeds SQLite's supported range (0000-01-01 to 9999-12-31).",
                 "VALIDATION_ERROR",
                 {
-                  suggestion: "Reduce the amount to stay within the supported 0000-9999 year range.",
-                }
-              )
+                  suggestion:
+                    "Reduce the amount to stay within the supported 0000-9999 year range.",
+                },
+              ),
             );
           }
         }
@@ -156,16 +175,22 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
       const diffExpr = `(julianday(${quotedCol1}) - julianday(${quotedCol2})) * ${multiplier}`;
 
       const queryParams: unknown[] = [];
-      const selectCols = selectColumns && selectColumns.length > 0
-        ? selectColumns.map((c: string) => `"${c.replace(/"/g, '""')}"`).join(", ") + ", "
-        : "";
+      const selectCols =
+        selectColumns && selectColumns.length > 0
+          ? selectColumns
+              .map((c: string) => `"${c.replace(/"/g, '""')}"`)
+              .join(", ") + ", "
+          : "";
       let query = `SELECT ${selectCols}${diffExpr} as date_diff_result FROM ${quotedTable}`;
       const clauses: string[] = [];
       if (input.whereClause) {
         clauses.push(`(${sanitizeWhereClause(input.whereClause)})`);
       }
       if (input.conditions && input.conditions.length > 0) {
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
         if (whereSql !== "") {
           clauses.push(`(${whereSql})`);
           queryParams.push(...whereParams);
@@ -192,4 +217,3 @@ export function createDateDiffTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-

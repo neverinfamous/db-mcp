@@ -143,9 +143,7 @@ describe("createVerifyBackupTool", () => {
   it("should handle ATTACH failure", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const adapter = createMockAdapter();
-    adapter.rawQuery.mockRejectedValueOnce(
-      new Error("ATTACH failed: locked"),
-    );
+    adapter.rawQuery.mockRejectedValueOnce(new Error("ATTACH failed: locked"));
 
     const tool = createVerifyBackupTool(adapter);
     const result = (await tool.handler(

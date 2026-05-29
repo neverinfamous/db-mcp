@@ -44,7 +44,6 @@ export default defineConfig({
       },
       testIgnore: [/wasm\./, /auth\./],
     },
-
   ],
   webServer: [
     {
@@ -78,6 +77,5 @@ export default defineConfig({
         CSV_EXTENSION_PATH: "./extensions/xsv0.dll",
       },
     },
-
   ],
 });

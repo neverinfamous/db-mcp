@@ -12,18 +12,18 @@ This directory contains the "Second-Pass" advanced tests for the `db-mcp` tool g
 
 ## File Inventory
 
-| File                                      | Primary Focus | Key Validations                                                                           |
-| ----------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- |
-| `test-codemode-advanced-core.md`          | Core          | Boundary values, empty states, state pollution, idempotency, error quality, payload sizes |
-| `test-codemode-advanced-json.md`          | JSON          | Deep nesting, merge conflicts (RFC 7396), type coercion, write safety                     |
-| `test-codemode-advanced-text.md`          | Text          | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]`             |
-| `test-codemode-advanced-stats.md`         | Stats         | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]`       |
-| `test-codemode-advanced-vector.md`        | Vector        | Empty tables, distance metrics, dimension mismatch, batch operations                      |
+| File                                      | Primary Focus | Key Validations                                                                                                              |
+| ----------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `test-codemode-advanced-core.md`          | Core          | Boundary values, empty states, state pollution, idempotency, error quality, payload sizes                                    |
+| `test-codemode-advanced-json.md`          | JSON          | Deep nesting, merge conflicts (RFC 7396), type coercion, write safety                                                        |
+| `test-codemode-advanced-text.md`          | Text          | Regex edge cases, fuzzy/phonetic stress, FTS5 state integrity `[NATIVE ONLY]`                                                |
+| `test-codemode-advanced-stats.md`         | Stats         | Empty/single-row/NULL-heavy stats, extreme values, window functions `[NATIVE ONLY]`                                          |
+| `test-codemode-advanced-vector.md`        | Vector        | Empty tables, distance metrics, dimension mismatch, batch operations                                                         |
 | `test-codemode-advanced-admin.md`         | Admin         | View lifecycle, virtual tables, backup/restore, pragma edge cases, database attachment, VACUUM INTO, path traversal security |
-| `test-codemode-advanced-transactions.md`  | Transactions  | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]`                        |
-| `test-codemode-advanced-geo.md`           | Geo           | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]`              |
-| `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, schema diff, storage/index audit, query plan depth    |
-| `test-codemode-advanced-migration.md`     | Migration     | Lifecycle, state pollution, SHA-256 dedup, error paths                                    |
+| `test-codemode-advanced-transactions.md`  | Transactions  | Abort recovery, savepoint stress, execute rollback `[NATIVE ONLY]`                                                           |
+| `test-codemode-advanced-geo.md`           | Geo           | Haversine boundary conditions, nearby edge cases, SpatiaLite `[NATIVE ONLY]`                                                 |
+| `test-codemode-advanced-introspection.md` | Introspection | Graph analysis, schema snapshot, schema diff, storage/index audit, query plan depth                                          |
+| `test-codemode-advanced-migration.md`     | Migration     | Lifecycle, state pollution, SHA-256 dedup, error paths                                                                       |
 
 ## Agent Execution Protocol
 
@@ -75,10 +75,12 @@ Several admin tools are **registered in WASM mode but return structured errors**
 ## Post-Test Procedures
 
 ### Reporting Rules
+
 - Use ✅ only in inline notes during testing; omit from Final Summary
 - Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
+
 1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
@@ -87,6 +89,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
    - This prompt
 
 ### After Implementation
+
 3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
 4. **Commit**: Stage and commit all changes — do NOT push.
 5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.

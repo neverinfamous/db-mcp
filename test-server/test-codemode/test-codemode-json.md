@@ -6,6 +6,7 @@
 > **Adapter mode**: Call `list_adapters` at the start of testing to determine whether you are running against `native` or `wasm`. Apply the WASM Mode rules below if the adapter is `wasm`.
 
 ## WASM Mode
+
 > When testing against a **WASM backend** (`sqlite-wasm` / sql.js): All tools are fully WASM-compatible.
 
 ## Setup & Pre-requisites
@@ -22,15 +23,18 @@
 > **Note**: If temp tables are present from a previous test pass, it's because the database is locked. Ignore them. Use existing `test_*` tables for read operations.
 
 ### Test Schema Reference
+
 > See `code-map.md` in the `test-server/` directory for the complete test database schema (`test_*` tables).
 
 ## Reporting Format
+
 - ❌ **Fail**: Tool errors or produces incorrect results (include error message)
 - ⚠️ **Issue**: Unexpected behavior or improvement opportunity
 - 📦 **Payload**: Unnecessarily large response that should be optimized — **blocking, equally important as ❌ bugs**. Oversized payloads waste LLM context window tokens and degrade downstream tool-calling quality. Report the response size in KB and suggest a concrete optimization.
 - ✅ **Confirmed**: (Use inline only during testing; omit from Final Summary)
 
 ### Error Message Quality Rating
+
 | Level                                  | Verdict |
 | -------------------------------------- | ------- |
 | 5 - Excellent (name + code + context)  | ✅      |
@@ -42,19 +46,19 @@
 ## Testing Requirements & Error Standards
 
 > [!NOTE]
-> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a *different* group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
+> **Tool Availability & Code Mode**: The `sqlite_execute_code` tool is globally injected and always available across all test groups for multi-step test logic or setup. However, if a test step requires a setup tool from a _different_ group (e.g., `sqlite_write_query`) that is missing from the active MCP registry due to injection scoping, do not fail the group. Use `sqlite_execute_code`, existing seed data, or backups if possible, note the missing tool as an expected ⚠️ finding, and proceed with testing.
 
 > [!CAUTION]
 > **Zero tolerance for raw MCP errors.** ANY response that is a raw MCP error (e.g., `-32602`, or a raw text string wrapped in `isError: true` with no `success` field) is a **bug that must be reported and fixed** — never an acceptable design choice, SDK limitation, or expected behavior. If you see one, report it as ❌ immediately. Do not rationalize it as "the SDK rejecting at the boundary" or "by design for range-constrained params." The handler MUST catch it.
-> 
+>
 > ⚠️ **ARCHITECTURAL NOTE — `isError: true` rules for tools with `outputSchema`**: The MCP SDK uses `isError` to decide whether to validate `structuredContent` against the `outputSchema`. Getting this wrong causes either raw `-32602` crashes or valid responses wrapped in error frames. **This is now handled automatically by the server framework in `tools.ts`**, but as a tester, you must verify the SDK output matches this rule:
 >
-> | Response | `isError: true` | SDK behavior | Verdict |
-> |---|---|---|---|
-> | `success: true` | **Absent** | Validates `structuredContent` → passes | ✅ Correct |
-> | `success: true` | **Present** | Skips validation, wraps in error frame | ❌ Bug — valid response shown as error |
-> | `success: false` | **Present** | Skips validation (error shape won't match success schema) | ✅ Correct |
-> | `success: false` | **Absent** | Validates error against success schema → fails | ❌ Bug — raw `-32602` |
+> | Response         | `isError: true` | SDK behavior                                              | Verdict                                |
+> | ---------------- | --------------- | --------------------------------------------------------- | -------------------------------------- |
+> | `success: true`  | **Absent**      | Validates `structuredContent` → passes                    | ✅ Correct                             |
+> | `success: true`  | **Present**     | Skips validation, wraps in error frame                    | ❌ Bug — valid response shown as error |
+> | `success: false` | **Present**     | Skips validation (error shape won't match success schema) | ✅ Correct                             |
+> | `success: false` | **Absent**      | Validates error against success schema → fails            | ❌ Bug — raw `-32602`                  |
 >
 > **TL;DR**: `isError: true` on errors, absent on successes. The framework handles this automatically when your handler returns `success: false`.
 
@@ -62,8 +66,8 @@
 2. **Error Path Testing**: For **every** tool, test at least **two** invalid inputs:
    - (a) A domain error (e.g., non-existent table).
    - (b) An **empty parameters test** (call the tool with `{}`).
-   Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
-   > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
+     Both must return a **structured handler error** (`{success: false, error: "..."}`) — NOT a raw MCP error frame.
+     > **Note on Aliases & Zod**: Tools that support legacy parameter aliases (e.g. `tableName` instead of `table`) often use `.default("")` in their Zod schema so the SDK validation lets the payload reach the handler's alias-resolution logic. For these tools, calling with `{}` will pass Zod validation and correctly trigger a handler-level domain error (e.g. `TABLE_NOT_FOUND`) instead of a strict Zod `invalid_type` error. **This is expected behavior.** Do NOT remove `.default("")` from schemas to force a Zod error, as this will break alias compatibility.
 3. **Output Schema Testing**: For **every** tool that has an `outputSchema`, confirm that at least one valid happy-path call returns a structured JSON response — NOT a raw MCP `-32602` "output schema" error. Output schema mismatches produce the same `-32602` code as input errors but are only caught with valid inputs.
 4. **Wrong-Type Coercion**: For every tool with optional numeric parameters (e.g., `limit`), call the tool with `param: "abc"` (string instead of number). The tool must NOT return a raw MCP `-32602` error.
    > **Note on Zod Coercion & Validation Errors**: When passing `"abc"` to a numeric field, receiving a structured handler error like `{ success: false, error: "limit: Expected number, received string", code: "VALIDATION_ERROR" }` is **correct**. This proves the global SDK monkey-patch successfully intercepted Zod's `invalid_type` error and transformed it into a structured domain error. Do NOT attempt to "fix" `coerceNumber` or schema definitions to bypass this Zod validation or force a silent fallback to `undefined`.
@@ -74,7 +78,9 @@
 8. **Coverage Matrix**: Maintain a coverage matrix: `| Tool | Happy Path | Domain Error | Zod Error |`
 
 ### Structured Error Response Pattern
+
 All tools should return errors as structured objects instead of throwing. The expected pattern:
+
 ```json
 { "success": false, "error": "Human-readable error message" }
 ```
@@ -85,10 +91,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 | **MCP error** ❌     | Uncaught throw propagates to MCP framework                         | Raw text error string, often prefixed with `Error:`, wrapped in an `isError: true` content block — no `success` field | Bug — report as ❌ |
 
 ## Naming & Cleanup
+
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
-
 
 ---
 
@@ -123,7 +129,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.json.remove`
 - `sqlite.json.arrayAppend`
 - `sqlite.json.merge`
-- *(cross-group helpers used in test procedures)*
+- _(cross-group helpers used in test procedures)_
 - `sqlite.core.writeQuery`
 - `sqlite.stats.statsBasic`
 
@@ -153,7 +159,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.author"})` → `diffs` array with per-row comparisons showing `path1Value`, `path2Value`, `identical: false`
 21. `sqlite.json.diff({table: "test_jsonb_docs", column: "doc", path1: "$.type", path2: "$.type"})` → all rows `identical: true`
 
-
 ## Phase 2: JSON Write Tools — Happy Paths (temp table)
 
 22. `sqlite.json.createJsonCollection({tableName: "temp_cm_json"})` → creates collection table
@@ -166,7 +171,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 29. `sqlite.json.merge({table: "test_jsonb_docs", column: "doc", mergeData: {"featured": true}, whereClause: "id = 999"})` → `{rowsAffected: 0}` (non-destructive)
 30. Cleanup: drop temp_cm_json
 
-
 ## Phase 3: JSON Domain Errors (batched)
 
 🔴 31. `sqlite.json.extract({table: "nonexistent_xyz", column: "doc", path: "$.x"})` → `{success: false}`
@@ -175,14 +179,12 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 34. `sqlite.json.securityScan({table: "nonexistent_xyz", column: "doc"})` → `{success: false}`
 🔴 35. `sqlite.json.diff({table: "nonexistent_xyz", column: "doc", path1: "$.x", path2: "$.y"})` → `{success: false}`
 
-
 ## Phase 4: Gotcha Edge Cases (batched)
 
 36. `sqlite.json.each({table: "test_jsonb_docs", column: "tags", whereClause: "id = 1", limit: 2})` → only 2 rows returned (not all array items) — `limit` param prevents row multiplication bloat (gotcha #6)
 37. `sqlite.json.groupObject({table: "test_jsonb_docs", keyColumn: "id", valueColumn: "json_extract(doc, '$.author')", allowExpressions: true})` → 6 key-value pairs with unique keys — verify behavior when keys are guaranteed unique (gotcha #7)
 38. `sqlite.json.normalizeColumn({table: "test_jsonb_docs", column: "doc", outputFormat: "text"})` → verify explicit text output differs from default `preserve` mode (gotcha #9)
 39. `sqlite.json.groupArray({table: "test_jsonb_docs", valueColumn: "COUNT(*)", allowExpressions: true})` → report behavior — `allowExpressions` is designed for column extraction (e.g., `json_extract`), NOT aggregate functions (gotcha #8)
-
 
 ## Phase 5: Multi-Step Workflow
 
@@ -229,7 +231,6 @@ const stats = await sqlite.stats.statsBasic({
 return { jsonExtract: extract, priceStats: stats };
 ```
 
-
 ### 5.3 — Security scan positive detection
 
 ```javascript
@@ -251,7 +252,6 @@ return { failures, success: failures.length === 0, riskLevel: scan.riskLevel };
 ```
 
 Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`) and/or injection/XSS patterns.
-
 
 ## Phase 6: Zod Validation Sweep
 
@@ -281,7 +281,6 @@ Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`)
 🔴 63. `sqlite.json.securityScan({})` → `{success: false}`
 🔴 64. `sqlite.json.diff({})` → `{success: false}` handler error
 
-
 ## Phase 7: Wrong-Type Numeric Coercion
 
 🔴 65. `sqlite.json.each({table: "test_jsonb_docs", column: "tags", limit: "abc"})` → handler error, NOT raw MCP `-32602`
@@ -293,10 +292,12 @@ Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`)
 ## Post-Test Procedures
 
 ### Reporting Rules
+
 - Use ✅ only in inline notes during testing; omit from Final Summary
 - Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
+
 1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
@@ -305,6 +306,7 @@ Expected: `riskLevel` > "low", findings include PII keys (`password`, `api_key`)
    - This prompt
 
 ### After Implementation
+
 3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
 4. **Commit**: Stage and commit all changes — do NOT push.
 5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.

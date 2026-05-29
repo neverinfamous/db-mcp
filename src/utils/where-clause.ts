@@ -298,21 +298,39 @@ export function sanitizeWhereClause(where: string): string {
   return where;
 }
 
-
 export interface WhereCondition {
   column: string;
   operator: string;
   value?: unknown;
 }
 
-export function buildWhereClause(conditions?: WhereCondition[], whereClause?: string): { sql: string; params: unknown[] } {
+export function buildWhereClause(
+  conditions?: WhereCondition[],
+  whereClause?: string,
+): { sql: string; params: unknown[] } {
   let finalSql = "";
   const params: unknown[] = [];
   const clauses: string[] = [];
-  
-  if (conditions !== undefined && conditions !== null && conditions.length > 0) {
-    const allowedOperators = new Set(["=", "!=", ">", ">=", "<", "<=", "LIKE", "IN", "IS", "IS NOT", "NOT LIKE"]);
-    
+
+  if (
+    conditions !== undefined &&
+    conditions !== null &&
+    conditions.length > 0
+  ) {
+    const allowedOperators = new Set([
+      "=",
+      "!=",
+      ">",
+      ">=",
+      "<",
+      "<=",
+      "LIKE",
+      "IN",
+      "IS",
+      "IS NOT",
+      "NOT LIKE",
+    ]);
+
     for (const cond of conditions) {
       if (!allowedOperators.has(cond.operator.toUpperCase())) {
         throw new Error(`Invalid operator: ${cond.operator}`);
@@ -329,7 +347,7 @@ export function buildWhereClause(conditions?: WhereCondition[], whereClause?: st
     }
     finalSql = clauses.join(" AND ");
   }
-  
+
   if (whereClause) {
     const safeWhere = sanitizeWhereClause(whereClause);
     if (finalSql) {
@@ -338,6 +356,6 @@ export function buildWhereClause(conditions?: WhereCondition[], whereClause?: st
       finalSql = safeWhere;
     }
   }
-  
+
   return { sql: finalSql, params };
 }

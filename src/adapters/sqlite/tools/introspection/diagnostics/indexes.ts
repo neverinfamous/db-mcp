@@ -39,7 +39,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = IndexAuditSchema.parse(params);
-      
+
         const excludeSystem = input.excludeSystemTables !== false;
         // Get all user-created indexes
         let indexQuery = `SELECT name, tbl_name, sql FROM sqlite_master
@@ -50,7 +50,7 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
 
           // Verify table exists before proceeding
           const tableCheck = await adapter.executeReadQuery(
-            `SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name = '${escaped}'`
+            `SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name = '${escaped}'`,
           );
           if ((tableCheck.rows?.length ?? 0) === 0) {
             return {
@@ -58,7 +58,8 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
               error: `Table '${input.table}' does not exist`,
               code: "TABLE_NOT_FOUND",
               category: "resource",
-              suggestion: "Table not found. Run sqlite_list_tables to see available tables.",
+              suggestion:
+                "Table not found. Run sqlite_list_tables to see available tables.",
               recoverable: false,
             };
           }

@@ -16,7 +16,10 @@ import {
   validateJsonPath,
   validateAggregateFunction,
 } from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+import {
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   JsonKeysOutputSchema,
   JsonEachOutputSchema,
@@ -43,7 +46,7 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       const queryParams: unknown[] = [];
       let input;
-      
+
       try {
         input = JsonKeysSchema.parse(params);
       } catch (error: unknown) {
@@ -62,7 +65,10 @@ export function createJsonKeysTool(adapter: SqliteAdapter): ToolDefinition {
         // json_each returns: key, value, type, atom, id, parent, fullkey, path
         let sql: string;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
           if (whereSql !== "") {
             sql = `SELECT DISTINCT json_each.key FROM (SELECT * FROM ${table} WHERE ${whereSql}) AS t CROSS JOIN json_each(t.${column}, '${path}')`;
             queryParams.push(...whereParams);
@@ -124,7 +130,10 @@ export function createJsonEachTool(adapter: SqliteAdapter): ToolDefinition {
         // If the source table has any of these columns (e.g., 'id'), they must be qualified
         let sql: string;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
           if (whereSql !== "") {
             // Apply the WHERE clause in a subquery on the base table to completely avoid
             // column ambiguity when joining against json_each
@@ -209,12 +218,15 @@ export function createJsonGroupArrayTool(
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += groupByClause;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -275,7 +287,10 @@ export function createJsonGroupObjectTool(
           // Build subquery that computes the aggregate grouped by key
           let subquery = `SELECT ${keyCol} as agg_key, ${input.aggregateFunction} as agg_value FROM ${table}`;
           if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+            const { sql: whereSql, params: whereParams } = buildWhereClause(
+              input.conditions,
+              input.whereClause,
+            );
             if (whereSql !== "") {
               subquery += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -292,7 +307,7 @@ export function createJsonGroupObjectTool(
             // For now, outer grouping with aggregates is not supported - return error with guidance
             throw new ValidationError(
               "groupByColumn is not supported when using aggregateFunction. Use a separate query for each group.",
-              "VALIDATION_ERROR"
+              "VALIDATION_ERROR",
             );
           }
 
@@ -310,7 +325,7 @@ export function createJsonGroupObjectTool(
         if (!input.valueColumn) {
           throw new ValidationError(
             "valueColumn is required unless using aggregateFunction parameter",
-            "VALIDATION_ERROR"
+            "VALIDATION_ERROR",
           );
         }
 
@@ -355,12 +370,15 @@ export function createJsonGroupObjectTool(
 
         let sql = `SELECT ${selectClause} FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += groupByClause;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -381,5 +399,3 @@ export function createJsonGroupObjectTool(
 /**
  * Pretty print and compact JSON
  */
-
-

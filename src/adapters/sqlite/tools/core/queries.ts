@@ -82,7 +82,9 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
       // Block mutating PRAGMAs while allowing read-only introspection PRAGMAs
       if (trimmedUpper.startsWith("PRAGMA")) {
         // Strip comments before checking to prevent bypass
-        const sqlWithoutComments = trimmedQuery.replace(/--.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+        const sqlWithoutComments = trimmedQuery
+          .replace(/--.*$/gm, "")
+          .replace(/\/\*[\s\S]*?\*\//g, "");
         // Assignment form (PRAGMA [schema.]name = ...) is always mutating
         if (/^PRAGMA\s+(?:\w+\.)?\w+\s*=/i.test(sqlWithoutComments.trim())) {
           return {
@@ -214,7 +216,10 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
           isAllowed = false;
         } else {
           const mainStmt = trimmedUpper.slice(i).trim();
-          if (!mainStmt.startsWith("SELECT") && !mainStmt.startsWith("EXPLAIN")) {
+          if (
+            !mainStmt.startsWith("SELECT") &&
+            !mainStmt.startsWith("EXPLAIN")
+          ) {
             isAllowed = false;
           }
         }

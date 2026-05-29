@@ -197,7 +197,11 @@ export const ReadQuerySchema = z.object({
 });
 
 export const WriteQuerySchema = z.object({
-  query: z.string().max(100000).default("").describe("INSERT/UPDATE/DELETE query to execute"),
+  query: z
+    .string()
+    .max(100000)
+    .default("")
+    .describe("INSERT/UPDATE/DELETE query to execute"),
   sql: z.string().max(100000).optional().describe("Alias for query"),
   params: z
     .array(z.unknown())
@@ -225,9 +229,16 @@ export const CreateTableSchema = z.object({
       z.object({
         column: z.string().describe("Local column name"),
         targetTable: z.string().describe("Target table name"),
-        targetColumn: z.string().optional().describe("Target column name (defaults to primary key)"),
-        onDelete: z.enum(["NO ACTION", "RESTRICT", "SET NULL", "SET DEFAULT", "CASCADE"]).optional(),
-        onUpdate: z.enum(["NO ACTION", "RESTRICT", "SET NULL", "SET DEFAULT", "CASCADE"]).optional(),
+        targetColumn: z
+          .string()
+          .optional()
+          .describe("Target column name (defaults to primary key)"),
+        onDelete: z
+          .enum(["NO ACTION", "RESTRICT", "SET NULL", "SET DEFAULT", "CASCADE"])
+          .optional(),
+        onUpdate: z
+          .enum(["NO ACTION", "RESTRICT", "SET NULL", "SET DEFAULT", "CASCADE"])
+          .optional(),
       }),
     )
     .optional()
@@ -439,8 +450,14 @@ export const BatchInsertSchema = z.object({
 export const CountSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
   column: z
     .string()
     .optional()
@@ -459,8 +476,14 @@ export const CountSchema = z.object({
 export const ExistsSchema = z.object({
   table: z.string().default("").describe("Table name"),
   tableName: z.string().optional().describe("Alias for table"),
-  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 
 // =============================================================================
@@ -483,23 +506,56 @@ export const TruncateSchema = z.object({
 export const DateAddSchema = z.object({
   table: z.string().describe("Table name"),
   column: z.string().describe("Column containing date/time values"),
-  amount: z.preprocess(coerceNumber, z.number().describe("Amount of time to add (use negative to subtract)")),
-  unit: z.enum(["days", "months", "years", "hours", "minutes", "seconds"]).describe("Time unit"),
-  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
-  selectColumns: z.array(z.string()).optional().describe("Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables."),
+  amount: z.preprocess(
+    coerceNumber,
+    z.number().describe("Amount of time to add (use negative to subtract)"),
+  ),
+  unit: z
+    .enum(["days", "months", "years", "hours", "minutes", "seconds"])
+    .describe("Time unit"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
+  limit: z
+    .preprocess(coerceNumber, z.number().optional().default(50))
+    .describe("Maximum number of rows to return (default: 50)"),
+  selectColumns: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables.",
+    ),
 });
 
 export const DateDiffSchema = z.object({
   table: z.string().describe("Table name"),
   column1: z.string().describe("First date/time column"),
   column2: z.string().describe("Second date/time column (column1 - column2)"),
-  unit: z.enum(["days", "hours", "minutes", "seconds"]).describe("Unit for the difference result"),
-  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
-  limit: z.preprocess(coerceNumber, z.number().optional().default(50)).describe("Maximum number of rows to return (default: 50)"),
-  selectColumns: z.array(z.string()).optional().describe("Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables."),
+  unit: z
+    .enum(["days", "hours", "minutes", "seconds"])
+    .describe("Unit for the difference result"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
+  limit: z
+    .preprocess(coerceNumber, z.number().optional().default(50))
+    .describe("Maximum number of rows to return (default: 50)"),
+  selectColumns: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Specific columns to return (defaults to all columns). Useful to prevent large payloads on wide tables.",
+    ),
 });
 
 // =============================================================================
@@ -577,12 +633,14 @@ export const CreateTriggerSchema = z.object({
   whenClause: z
     .string()
     .optional()
-    .describe("Optional WHEN condition (e.g. \"NEW.status != OLD.status\")"),
+    .describe('Optional WHEN condition (e.g. "NEW.status != OLD.status")'),
   forEachRow: z
     .boolean()
     .optional()
     .default(true)
-    .describe("FOR EACH ROW (default: true). SQLite only supports row-level triggers."),
+    .describe(
+      "FOR EACH ROW (default: true). SQLite only supports row-level triggers.",
+    ),
   ifNotExists: z
     .boolean()
     .optional()
@@ -621,5 +679,3 @@ export const DropTriggerOutputSchema = z
 
 export type CreateTriggerInput = z.infer<typeof CreateTriggerSchema>;
 export type DropTriggerInput = z.infer<typeof DropTriggerSchema>;
-
-

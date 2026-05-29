@@ -193,8 +193,12 @@ function createExecuteCodeTool(adapter: SqliteAdapter): ToolDefinition {
         return {
           success: result.success,
           result: sanitizedResult,
-          error: result.error ? security.sanitizeResult(result.error) as string : undefined,
-          consoleOutput: result.logs ? security.sanitizeResult(result.logs) as string[] : undefined,
+          error: result.error
+            ? (security.sanitizeResult(result.error) as string)
+            : undefined,
+          consoleOutput: result.logs
+            ? (security.sanitizeResult(result.logs) as string[])
+            : undefined,
           metrics: {
             ...result.metrics,
             tokenEstimate,
@@ -306,10 +310,11 @@ function initializePool(): void {
   // isolate mode provides true C++ V8 isolate separation where host prototypes
   // are inaccessible by design. It is vastly superior to worker mode for untrusted code.
   const mode: SandboxMode = "isolate";
-  
-  logger.info("Code Mode isolation using 'isolate' (true V8 separation).",
-    { module: "CODEMODE" as const, operation: "initialize" }
-  );
+
+  logger.info("Code Mode isolation using 'isolate' (true V8 separation).", {
+    module: "CODEMODE" as const,
+    operation: "initialize",
+  });
 
   setDefaultSandboxMode(mode);
   pool = createSandboxPool(mode, undefined, { timeoutMs: 30000 });

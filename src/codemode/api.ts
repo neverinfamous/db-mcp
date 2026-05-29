@@ -12,7 +12,11 @@
  * - Exposes `help()` at top level and per-group for discoverability
  */
 
-import type { ToolDefinition, ToolGroup, RequestContext } from "../types/index.js";
+import type {
+  ToolDefinition,
+  ToolGroup,
+  RequestContext,
+} from "../types/index.js";
 import { buildProgressContext, sendProgress } from "../utils/progress-utils.js";
 import {
   METHOD_ALIASES,
@@ -87,8 +91,10 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
       if (Array.isArray(paramMapping) && paramMapping[0] !== undefined) {
         return { [paramMapping[0]]: arg };
       }
-      
-      throw new Error(`Positional arguments are not supported for method: ${methodName}. Please use an options object.`);
+
+      throw new Error(
+        `Positional arguments are not supported for method: ${methodName}. Please use an options object.`,
+      );
     }
 
     return arg;
@@ -97,7 +103,9 @@ function normalizeParams(methodName: string, args: unknown[]): unknown {
   // Multi-arg: use positional parameter mapping
   const paramMapping = POSITIONAL_PARAM_MAP[methodName];
   if (paramMapping === undefined) {
-    throw new Error(`Positional arguments are not supported for method: ${methodName}. Please use an options object.`);
+    throw new Error(
+      `Positional arguments are not supported for method: ${methodName}. Please use an options object.`,
+    );
   }
 
   if (typeof paramMapping === "string") {
@@ -178,7 +186,9 @@ function createGroupApi(
     api[methodName] = async (...args: unknown[]) => {
       if (baseContext?.auth !== undefined) {
         if (!scopesGrantToolAccess(baseContext.auth.scopes ?? [], tool.name)) {
-          throw new Error(`Forbidden: Required scope for tool '${tool.name}' not granted.`);
+          throw new Error(
+            `Forbidden: Required scope for tool '${tool.name}' not granted.`,
+          );
         }
       }
 
@@ -186,8 +196,12 @@ function createGroupApi(
       const context: RequestContext = {
         timestamp: new Date(),
         requestId: crypto.randomUUID(),
-        ...(baseContext?.server !== undefined ? { server: baseContext.server } : {}),
-        ...(baseContext?.progressToken !== undefined ? { progressToken: baseContext.progressToken } : {}),
+        ...(baseContext?.server !== undefined
+          ? { server: baseContext.server }
+          : {}),
+        ...(baseContext?.progressToken !== undefined
+          ? { progressToken: baseContext.progressToken }
+          : {}),
         ...(baseContext?.auth !== undefined ? { auth: baseContext.auth } : {}),
       };
 
@@ -264,22 +278,46 @@ export class SqliteApi {
     }
 
     // Create group-specific APIs for all 9 groups
-    this.core = createGroupApi("core", this.toolsByGroup.get("core") ?? [], baseContext);
-    this.json = createGroupApi("json", this.toolsByGroup.get("json") ?? [], baseContext);
-    this.text = createGroupApi("text", this.toolsByGroup.get("text") ?? [], baseContext);
-    this.stats = createGroupApi("stats", this.toolsByGroup.get("stats") ?? [], baseContext);
+    this.core = createGroupApi(
+      "core",
+      this.toolsByGroup.get("core") ?? [],
+      baseContext,
+    );
+    this.json = createGroupApi(
+      "json",
+      this.toolsByGroup.get("json") ?? [],
+      baseContext,
+    );
+    this.text = createGroupApi(
+      "text",
+      this.toolsByGroup.get("text") ?? [],
+      baseContext,
+    );
+    this.stats = createGroupApi(
+      "stats",
+      this.toolsByGroup.get("stats") ?? [],
+      baseContext,
+    );
     this.vector = createGroupApi(
       "vector",
       this.toolsByGroup.get("vector") ?? [],
       baseContext,
     );
-    this.admin = createGroupApi("admin", this.toolsByGroup.get("admin") ?? [], baseContext);
+    this.admin = createGroupApi(
+      "admin",
+      this.toolsByGroup.get("admin") ?? [],
+      baseContext,
+    );
     this.transactions = createGroupApi(
       "transactions",
       this.toolsByGroup.get("transactions") ?? [],
       baseContext,
     );
-    this.geo = createGroupApi("geo", this.toolsByGroup.get("geo") ?? [], baseContext);
+    this.geo = createGroupApi(
+      "geo",
+      this.toolsByGroup.get("geo") ?? [],
+      baseContext,
+    );
     this.introspection = createGroupApi(
       "introspection",
       this.toolsByGroup.get("introspection") ?? [],
@@ -382,6 +420,9 @@ export class SqliteApi {
  * Create a SqliteApi instance from tool definitions.
  * Convenience factory for use in tool handler setup.
  */
-export function createSqliteApi(tools: ToolDefinition[], baseContext?: RequestContext): SqliteApi {
+export function createSqliteApi(
+  tools: ToolDefinition[],
+  baseContext?: RequestContext,
+): SqliteApi {
   return new SqliteApi(tools, baseContext);
 }

@@ -16,9 +16,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ResourceNotFoundError,
@@ -56,7 +54,7 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
       const queryParams: unknown[] = [];
       try {
         const input = CorrelationSchema.parse(params);
-      
+
         await validateColumnExists(adapter, input.table, input.column1);
         await validateColumnExists(adapter, input.table, input.column2);
 
@@ -97,12 +95,15 @@ export function createCorrelationTool(adapter: SqliteAdapter): ToolDefinition {
                   FROM ${table}
                   WHERE ${col1} IS NOT NULL AND ${col2} IS NOT NULL`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` AND ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` AND ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
 
         const result = await adapter.executeReadQuery(sql, queryParams);
         const pairs = (result.rows ?? []).map((r) => ({
@@ -164,7 +165,7 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TopNSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         await validateColumnExists(adapter, input.table, input.column);
 
@@ -254,12 +255,15 @@ export function createTopNTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT ${columnList} FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` ORDER BY ${column} ${order} LIMIT ${input.n}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -300,7 +304,7 @@ export function createDistinctValuesTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = DistinctValuesSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         await validateColumnExists(adapter, input.table, input.column);
 
@@ -309,12 +313,15 @@ export function createDistinctValuesTool(
 
         let sql = `SELECT DISTINCT ${column} as value FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -349,7 +356,7 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = SummaryStatsSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         const table = sanitizeIdentifier(input.table);
 
@@ -443,7 +450,10 @@ export function createSummaryStatsTool(adapter: SqliteAdapter): ToolDefinition {
                   FROM ${table}`;
 
           if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+            const { sql: whereSql, params: whereParams } = buildWhereClause(
+              input.conditions,
+              input.whereClause,
+            );
             if (whereSql !== "") {
               sql += ` WHERE ${whereSql}`;
               queryParams.push(...whereParams);
@@ -513,7 +523,7 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FrequencySchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         await validateColumnExists(adapter, input.table, input.column);
 
@@ -523,12 +533,15 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
         let sql = `SELECT ${column} as value, COUNT(*) as frequency
                   FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` GROUP BY ${column} ORDER BY frequency DESC LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -545,5 +558,3 @@ export function createFrequencyTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

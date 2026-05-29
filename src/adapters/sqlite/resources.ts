@@ -69,7 +69,7 @@ function createSchemaResource(adapter: SqliteAdapter): ResourceDefinition {
             !idx.tableName.startsWith("_mcp_"),
         ),
       };
-      
+
       return {
         contents: [
           {
@@ -100,7 +100,7 @@ function createTablesResource(adapter: SqliteAdapter): ResourceDefinition {
           !isSpatialiteSystemView(t.name) &&
           !t.name.startsWith("_mcp_"),
       );
-      
+
       return {
         contents: [
           {
@@ -176,7 +176,7 @@ function createIndexesResource(adapter: SqliteAdapter): ResourceDefinition {
     handler: async () => {
       // Use single cached query via SchemaManager (eliminates N+1)
       const allRawIndexes = await adapter.getAllIndexes();
-      
+
       const indexes = allRawIndexes.filter(
         (idx) =>
           !isSpatialiteSystemIndex(idx.name) &&
@@ -219,14 +219,14 @@ function createViewsResource(adapter: SqliteAdapter): ResourceDefinition {
       const result = await adapter.executeReadQuery(
         "SELECT name, sql FROM sqlite_master WHERE type = 'view' ORDER BY name",
       );
-      
+
       const views = (result.rows ?? []).filter(
         (row) =>
           !isSpatialiteSystemTable(row["name"] as string) &&
           !isSpatialiteSystemView(row["name"] as string) &&
-          !(row["name"] as string).startsWith("_mcp_")
+          !(row["name"] as string).startsWith("_mcp_"),
       );
-      
+
       return {
         contents: [
           {

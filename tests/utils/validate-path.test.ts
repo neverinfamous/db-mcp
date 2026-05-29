@@ -67,10 +67,15 @@ describe("validateSameDirPath — in-memory database", () => {
   });
 
   it("should reject paths within cwd when database is :memory: for security", () => {
-    const result = validateSameDirPath(join(process.cwd(), "file.db"), ":memory:");
+    const result = validateSameDirPath(
+      join(process.cwd(), "file.db"),
+      ":memory:",
+    );
     expect(result.valid).toBe(false);
     if (!result.valid) {
-      expect(result.error).toContain("Security: Filesystem operations are not permitted for :memory: databases.");
+      expect(result.error).toContain(
+        "Security: Filesystem operations are not permitted for :memory: databases.",
+      );
     }
   });
 
@@ -131,10 +136,7 @@ describe("validateSameDirPath — traversal prevention", () => {
 
 describe("validateSameDirPath — edge cases", () => {
   it("should handle paths with trailing separator", () => {
-    const result = validateSameDirPath(
-      DB_DIR + sep + "backup.db",
-      DB_PATH,
-    );
+    const result = validateSameDirPath(DB_DIR + sep + "backup.db", DB_PATH);
     expect(result.valid).toBe(true);
   });
 

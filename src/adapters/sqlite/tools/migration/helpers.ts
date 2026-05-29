@@ -75,6 +75,8 @@ export function validateMigrationSql(sql: string): void {
     upperSql.includes("PRAGMA ") ||
     upperSql.includes("LOAD_EXTENSION(")
   ) {
-    throw new Error(`Migration validation failed: unauthorized command or function call`);
+    throw new Error(
+      `Migration validation failed: unauthorized command or function call`,
+    );
   }
 }

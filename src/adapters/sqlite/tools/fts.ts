@@ -112,7 +112,7 @@ function createFtsCreateTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsCreateSchema.parse(params);
-      
+
         const targetTableName = input.tableName || input.ftsTable;
         if (!targetTableName) {
           throw new ValidationError(
@@ -240,7 +240,7 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsSearchSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -316,7 +316,7 @@ function createFtsRebuildTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsRebuildSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -363,7 +363,7 @@ function createFtsMatchInfoTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsMatchInfoSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -419,7 +419,7 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = FtsHeadlineSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Upfront FTS5 availability check
         if (!isFts5Available(adapter)) {
@@ -438,7 +438,8 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.column) {
           // Look up column index from FTS table structure
           const colResult = await adapter.executeReadQuery(
-            `PRAGMA table_info("${input.table}")`, queryParams,
+            `PRAGMA table_info("${input.table}")`,
+            queryParams,
           );
           const colRows = colResult.rows ?? [];
           const found = colRows.findIndex(

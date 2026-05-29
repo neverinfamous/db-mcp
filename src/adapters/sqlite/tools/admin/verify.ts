@@ -12,7 +12,10 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { adminFs, readOnly } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
+import {
+  sanitizeIdentifier,
+  validateSameDirPath,
+} from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -36,7 +39,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         // removed unused
-      const input = VerifyBackupSchema.parse(params);
+        const input = VerifyBackupSchema.parse(params);
         // WASM mode: backup/restore/verify are not available since file system
         // ATTACH succeeds silently in WASM (creates empty DB), giving false positives.
         if (!adapter.isNativeBackend()) {
@@ -70,9 +73,7 @@ export function createVerifyBackupTool(adapter: SqliteAdapter): ToolDefinition {
         );
         if (!pathCheck.valid) {
           return {
-            ...formatHandlerError(
-              new ValidationError(pathCheck.error),
-            ),
+            ...formatHandlerError(new ValidationError(pathCheck.error)),
             backupPath: input.backupPath,
           };
         }
@@ -169,7 +170,7 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const queryParams: unknown[] = [];
-      const input = IndexStatsSchema.parse(params);
+        const input = IndexStatsSchema.parse(params);
 
         // Query for indexes
         let sql = `
@@ -177,7 +178,7 @@ export function createIndexStatsTool(adapter: SqliteAdapter): ToolDefinition {
           FROM sqlite_master
           WHERE type = 'index' AND sql IS NOT NULL
         `;
-        
+
         if (input.table) {
           // Validate table name using centralized utility
           sanitizeIdentifier(input.table);

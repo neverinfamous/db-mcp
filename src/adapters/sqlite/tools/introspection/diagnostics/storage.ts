@@ -70,7 +70,7 @@ export function createStorageAnalysisTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = StorageAnalysisSchema.parse(params);
-      
+
         const includeDetails = input.includeTableDetails !== false;
         const excludeSystem = input.excludeSystemTables !== false;
         const limit = input.limit ?? 50;

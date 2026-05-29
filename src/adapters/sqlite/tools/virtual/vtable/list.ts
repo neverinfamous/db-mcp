@@ -22,10 +22,10 @@ export function createListVirtualTablesTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const queryParams: unknown[] = [];
-      const input = ListVirtualTablesSchema.parse(params);
+        const input = ListVirtualTablesSchema.parse(params);
 
         let sql = `SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'`;
-        
+
         if (input.pattern) {
           sql += ` AND name LIKE ?`;
           queryParams.push(input.pattern);

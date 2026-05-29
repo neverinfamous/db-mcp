@@ -161,7 +161,9 @@ export function createHybridSearchWorkflowPrompt(): PromptDefinition {
       },
     ],
     handler: (args: Record<string, string>) => {
-      const useCase = (args["use_case"] ?? "content").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 50);
+      const useCase = (args["use_case"] ?? "content")
+        .replace(/[^a-zA-Z0-9_]/g, "")
+        .slice(0, 50);
 
       return Promise.resolve({
         messages: [

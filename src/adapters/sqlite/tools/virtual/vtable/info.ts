@@ -28,7 +28,7 @@ export function createVirtualTableInfoTool(
 
         const sqlResult = await adapter.executeReadQuery(
           `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ? AND sql LIKE 'CREATE VIRTUAL TABLE%'`,
-          [input.tableName]
+          [input.tableName],
         );
 
         if (!sqlResult.rows || sqlResult.rows.length === 0) {

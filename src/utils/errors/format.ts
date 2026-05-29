@@ -19,9 +19,18 @@ export function sanitizeErrorMessage(msg: string): string {
   return msg
     .replace(/[a-zA-Z]:\\[^:\n]*\\/g, "<redacted_path>\\")
     .replace(/(file:|sqlite:|\/)[^:\s]+(\/[^:\s]*)/g, "<redacted_path>")
-    .replace(/([a-zA-Z0-9+.-]+:\/\/[^:]+:)[^@\s]+(@)/g, "$1<redacted_credential>$2")
-    .replace(/([?&](?:password|secret|key|token)=)[^&\s]+/gi, "$1<redacted_credential>")
-    .replace(/(password|secret|key|token)[=:]\s*["']?[^"'\s,;]+["']?/gi, "$1=<redacted_credential>");
+    .replace(
+      /([a-zA-Z0-9+.-]+:\/\/[^:]+:)[^@\s]+(@)/g,
+      "$1<redacted_credential>$2",
+    )
+    .replace(
+      /([?&](?:password|secret|key|token)=)[^&\s]+/gi,
+      "$1<redacted_credential>",
+    )
+    .replace(
+      /(password|secret|key|token)[=:]\s*["']?[^"'\s,;]+["']?/gi,
+      "$1=<redacted_credential>",
+    );
 }
 
 // =============================================================================

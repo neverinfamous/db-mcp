@@ -33,9 +33,11 @@ interface Win32DllAddon {
 /**
  * Try to load SpatiaLite extension
  */
-export function tryLoadSpatialite(
-  adapter: NativeSqliteAdapter,
-): { success: boolean; path?: string; error?: string } {
+export function tryLoadSpatialite(adapter: NativeSqliteAdapter): {
+  success: boolean;
+  path?: string;
+  error?: string;
+} {
   const db = adapter.getDatabase();
   if (db === null) {
     return { success: false, error: "Database not connected" };
@@ -51,7 +53,8 @@ export function tryLoadSpatialite(
   let win32Dll: Win32DllAddon | null = null;
 
   if (process.platform === "win32" && chosenPathForEnv) {
-    const looksLikeFsPath = chosenPathForEnv.includes("/") || chosenPathForEnv.includes("\\");
+    const looksLikeFsPath =
+      chosenPathForEnv.includes("/") || chosenPathForEnv.includes("\\");
     if (looksLikeFsPath) {
       const extensionDir = chosenPathForEnv.replace(/[/\\][^/\\]+$/, ""); // Get directory from DLL path
       try {
@@ -59,7 +62,10 @@ export function tryLoadSpatialite(
         // Use a relative path from the built dist/ or src/ location.
         // It might be running from dist/adapters/sqlite-native/tools/spatialite/loader.js
         // so we navigate up to the root build/Release/win32_dll.node.
-        const addonPath = path.resolve(__dirname, "../../../../../build/Release/win32_dll.node");
+        const addonPath = path.resolve(
+          __dirname,
+          "../../../../../build/Release/win32_dll.node",
+        );
         win32Dll = require(addonPath) as Win32DllAddon;
         dllCookie = win32Dll.addDllDirectory(extensionDir);
       } catch {

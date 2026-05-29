@@ -79,8 +79,7 @@ export class TokenValidator {
     this.audience = config.audience;
     this.clockTolerance = config.clockTolerance ?? 30; // F12: Default 30s
     this.jwksCacheTtl = config.jwksCacheTtl ?? 3600;
-    this.algorithms =
-      config.algorithms ?? TokenValidator.DEFAULT_ALGORITHMS;
+    this.algorithms = config.algorithms ?? TokenValidator.DEFAULT_ALGORITHMS;
 
     logger.info(`Token Validator initialized for issuer: ${this.issuer}`, {
       code: "AUTH_INIT",

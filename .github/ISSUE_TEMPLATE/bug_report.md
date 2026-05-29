@@ -1,9 +1,9 @@
 ---
 name: Bug Report
 about: Create a report to help us improve db-mcp
-title: '[BUG] '
-labels: ['bug']
-assignees: ''
+title: "[BUG] "
+labels: ["bug"]
+assignees: ""
 ---
 
 ## 🐛 Bug Description

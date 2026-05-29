@@ -179,7 +179,7 @@ jobs:
         run: |
           # Use skopeo to copy the multi-arch image from the local registry to Docker Hub
           skopeo copy --all docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-          
+
           # Also tag and push 'latest' if applicable
           if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
             skopeo copy --all docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

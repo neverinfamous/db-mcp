@@ -46,10 +46,7 @@ const SENSITIVE_VALUE_PATTERN =
  * Returns a new object with sensitive values replaced by '[REDACTED]'.
  * Handles nested objects and arrays up to a configurable depth limit.
  */
-function redactSensitiveKeys(
-  value: unknown,
-  depth = 0,
-): unknown {
+function redactSensitiveKeys(value: unknown, depth = 0): unknown {
   const MAX_DEPTH = 5;
   if (depth > MAX_DEPTH || value === null || value === undefined) {
     return value;
@@ -60,7 +57,10 @@ function redactSensitiveKeys(
   }
 
   if (typeof value === "string") {
-    const isSql = /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(value);
+    const isSql =
+      /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(
+        value,
+      );
     const scrubbed = isSql ? value.replace(/'(?:''|[^'])*'/g, "'***'") : value;
     return scrubbed.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
   }
@@ -73,7 +73,12 @@ function redactSensitiveKeys(
       } else if (typeof val === "object" && val !== null) {
         result[key] = redactSensitiveKeys(val, depth + 1);
       } else if (typeof val === "string") {
-        const isSql = key.toLowerCase() === "sql" || key.toLowerCase() === "query" || /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(val);
+        const isSql =
+          key.toLowerCase() === "sql" ||
+          key.toLowerCase() === "query" ||
+          /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(
+            val,
+          );
         const scrubbed = isSql ? val.replace(/'(?:''|[^'])*'/g, "'***'") : val;
         result[key] = scrubbed.replace(SENSITIVE_VALUE_PATTERN, "[REDACTED]");
       } else {
@@ -223,7 +228,9 @@ export function createAuditInterceptor(
         return result;
       } catch (err) {
         success = false;
-        error = sanitizeErrorMessage(err instanceof Error ? err.message : String(err));
+        error = sanitizeErrorMessage(
+          err instanceof Error ? err.message : String(err),
+        );
 
         // Match registration layer raw exception fallback token calculation
         const errorResult = {
@@ -270,7 +277,7 @@ export function createAuditInterceptor(
             error,
             args: auditLogger.config.redact
               ? undefined
-              : redactSensitiveKeys(args) as Record<string, unknown>,
+              : (redactSensitiveKeys(args) as Record<string, unknown>),
             backup: backupRef,
             tokenEstimate,
           });

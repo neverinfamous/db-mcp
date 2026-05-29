@@ -94,7 +94,9 @@ export function createSandbox(
   if (selectedMode === "isolate") {
     return CodeModeSandbox.create(options);
   }
-  throw new Error("Only 'isolate' mode is supported. Worker mode was disabled for security.");
+  throw new Error(
+    "Only 'isolate' mode is supported. Worker mode was disabled for security.",
+  );
 }
 
 /**
@@ -113,7 +115,9 @@ export function createSandboxPool(
   if (selectedMode === "isolate") {
     return new SandboxPool(poolOptions, sandboxOptions);
   }
-  throw new Error("Only 'isolate' mode is supported. Worker mode was disabled for security.");
+  throw new Error(
+    "Only 'isolate' mode is supported. Worker mode was disabled for security.",
+  );
 }
 
 /**

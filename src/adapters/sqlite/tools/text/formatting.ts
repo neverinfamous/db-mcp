@@ -17,9 +17,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -52,7 +50,7 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
       const queryParams: unknown[] = [];
       try {
         const input = TextConcatSchema.parse(params);
-      
+
         // Validate and quote identifiers, then verify columns exist
         const table = sanitizeIdentifier(input.table);
         const quotedCols = input.columns.map((c) => sanitizeIdentifier(c));
@@ -67,12 +65,15 @@ export function createTextConcatTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT ${concatExpr} as concatenated FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -106,11 +107,12 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
         const input = TextReplaceSchema.parse(params);
         const p = params as Record<string, unknown>;
         const queryParams: unknown[] = [];
-        
+
         const tableStr = input.table || (p["tableName"] as string) || "";
         const columnStr = input.column || (p["columnName"] as string) || "";
         const searchStr = input.search || (p["searchPattern"] as string) || "";
-        const replaceStr = input.replacement || (p["replaceWith"] as string) || "";
+        const replaceStr =
+          input.replacement || (p["replaceWith"] as string) || "";
 
         if (!tableStr || !columnStr) {
           throw new ValidationError("Table and column are required");
@@ -128,16 +130,19 @@ export function createTextReplaceTool(adapter: SqliteAdapter): ToolDefinition {
         const replace = replaceStr.replace(/'/g, "''");
 
         // validateWhereClause() removed
-        const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
+        const { sql: whereSql, params: whereParams } = buildWhereClause(
+          input.conditions,
+          input.whereClause,
+        );
         let sql = `UPDATE ${table} SET ${column} = replace(${column}, '${search}', '${replace}')`;
-        
+
         const matchCondition = `instr(${column}, '${search}') > 0`;
         if (whereSql) {
           sql += ` WHERE (${whereSql}) AND ${matchCondition}`;
         } else {
           sql += ` WHERE ${matchCondition}`;
         }
-        
+
         queryParams.push(...whereParams);
 
         const result = await adapter.executeWriteQuery(sql, queryParams);
@@ -168,7 +173,7 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextTrimSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -201,12 +206,15 @@ export function createTextTrimTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT rowid as __rowid, ${trimFunc}(${column}) as trimmed FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -249,7 +257,7 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextCaseSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -272,12 +280,15 @@ export function createTextCaseTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT rowid as __rowid, ${caseFunc}(${column}) as transformed FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -322,7 +333,7 @@ export function createTextSubstringTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextSubstringSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Handler-side validation: start is required (schema uses .optional() to prevent raw MCP errors)
         if (input.start === undefined || input.start === null) {
@@ -343,12 +354,15 @@ export function createTextSubstringTool(
 
         let sql = `SELECT rowid as __rowid, ${substrExpr} as substring FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -551,5 +565,3 @@ export const VALIDATION_PATTERNS: Record<string, RegExp> = {
 /**
  * Fuzzy match using Levenshtein distance
  */
-
-

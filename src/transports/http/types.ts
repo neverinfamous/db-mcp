@@ -18,7 +18,6 @@ import type { Express } from "express";
 // Rate Limiting
 // =============================================================================
 
-
 export const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
 export const DEFAULT_RATE_LIMIT_MAX = 100;
 export const DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MB
@@ -55,8 +54,6 @@ export interface HttpTransportConfig {
    * Default: false (stateful mode with session management and SSE support)
    */
   stateless?: boolean;
-
-
 
   /** Explicitly bypass auth requirement */
   noAuthEnforcement?: boolean;
@@ -174,5 +171,4 @@ export interface HttpTransportState {
 
   // Reference to the MCP server for stateful connections
   mcpServer: McpServer | null;
-
 }

@@ -5,10 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  matchesCorsOrigin,
-} from "../../src/transports/http/middleware.js";
-
+import { matchesCorsOrigin } from "../../src/transports/http/middleware.js";
 
 // =============================================================================
 // matchesCorsOrigin

@@ -168,7 +168,13 @@ export const MigrationApplyValidationSchema = MigrationRecordValidationSchema;
 export const MigrationRollbackSchema = z.object({
   id: z.preprocess(
     coerceNumber,
-    z.union([z.number(), z.string()]).refine(v => v === undefined || typeof v === 'number', { message: "Expected number, received string" }).optional().describe("Migration ID to roll back"),
+    z
+      .union([z.number(), z.string()])
+      .refine((v) => v === undefined || typeof v === "number", {
+        message: "Expected number, received string",
+      })
+      .optional()
+      .describe("Migration ID to roll back"),
   ),
   version: z
     .string()
@@ -210,11 +216,23 @@ export const MigrationHistorySchema = z
     sourceSystem: z.string().optional().describe("Filter by source system"),
     limit: z.preprocess(
       coerceNumber,
-      z.union([z.number(), z.string()]).refine(v => v === undefined || typeof v === 'number', { message: "Expected number, received string" }).optional().describe("Maximum records to return (default: 50)"),
+      z
+        .union([z.number(), z.string()])
+        .refine((v) => v === undefined || typeof v === "number", {
+          message: "Expected number, received string",
+        })
+        .optional()
+        .describe("Maximum records to return (default: 50)"),
     ),
     offset: z.preprocess(
       coerceNumber,
-      z.union([z.number(), z.string()]).refine(v => v === undefined || typeof v === 'number', { message: "Expected number, received string" }).optional().describe("Offset for pagination (default: 0)"),
+      z
+        .union([z.number(), z.string()])
+        .refine((v) => v === undefined || typeof v === "number", {
+          message: "Expected number, received string",
+        })
+        .optional()
+        .describe("Offset for pagination (default: 0)"),
     ),
     compact: z
       .boolean()

@@ -12,10 +12,7 @@ import type {
 } from "../../../../types/index.js";
 import { admin } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import {
-  ReindexSchema,
-  ReindexOutputSchema,
-} from "../../schemas/admin.js";
+import { ReindexSchema, ReindexOutputSchema } from "../../schemas/admin.js";
 
 export function createReindexTool(adapter: SqliteAdapter): ToolDefinition {
   return {

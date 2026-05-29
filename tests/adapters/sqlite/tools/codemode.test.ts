@@ -8,7 +8,6 @@
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-
 import {
   getCodeModeTools,
   cleanupCodeMode,
@@ -26,17 +25,31 @@ vi.mock("../../../../src/codemode/sandbox.js", () => {
         if (code.includes("42")) {
           return Promise.resolve({ success: true, result: 42, metrics: {} });
         } else if (code.includes("Worker Error")) {
-          return Promise.resolve({ success: false, error: "Worker Error", metrics: {} });
+          return Promise.resolve({
+            success: false,
+            error: "Worker Error",
+            metrics: {},
+          });
         } else if (code.includes("timeout")) {
           // simulate timeout by returning error
-          return Promise.resolve({ success: false, error: "Timeout", metrics: {} });
+          return Promise.resolve({
+            success: false,
+            error: "Timeout",
+            metrics: {},
+          });
         } else {
-          return Promise.resolve({ success: true, result: undefined, metrics: {} });
+          return Promise.resolve({
+            success: true,
+            result: undefined,
+            metrics: {},
+          });
         }
       }
-      getStats() { return { available: 1, inUse: 0, max: 1 }; }
+      getStats() {
+        return { available: 1, inUse: 0, max: 1 };
+      }
       dispose() {}
-    }
+    },
   };
 });
 

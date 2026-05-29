@@ -23,8 +23,6 @@ import {
   TransactionStatusOutputSchema,
 } from "../../sqlite/schemas/index.js";
 
-
-
 // Schemas
 const BeginTransactionSchema = z.object({
   mode: z
@@ -87,7 +85,7 @@ function createBeginTransactionTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = BeginTransactionSchema.parse(params);
-      
+
         const mode = input.mode.toUpperCase();
         await adapter.executeWriteQuery(`BEGIN ${mode} TRANSACTION`);
 
@@ -214,7 +212,7 @@ function createSavepointTool(adapter: NativeSqliteAdapter): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -258,7 +256,7 @@ function createReleaseSavepointTool(
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -302,7 +300,7 @@ function createRollbackToSavepointTool(
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = SavepointSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input.name)) {
           return Promise.resolve(
@@ -389,7 +387,10 @@ function createExecuteInTransactionTool(
               .startsWith("SELECT");
 
             if (isSelect) {
-              const result = await adapter.executeReadQuery(statement, queryParams);
+              const result = await adapter.executeReadQuery(
+                statement,
+                queryParams,
+              );
               const rowCount = result.rows?.length ?? 0;
               const statementResult: {
                 statement: string;
@@ -405,14 +406,18 @@ function createExecuteInTransactionTool(
               if (result.rows) {
                 if (result.rows.length > 50) {
                   statementResult.rows = result.rows.slice(0, 50);
-                  statementResult.error = "Result truncated to 50 rows. Use sqlite_read_query with LIMIT for larger datasets.";
+                  statementResult.error =
+                    "Result truncated to 50 rows. Use sqlite_read_query with LIMIT for larger datasets.";
                 } else {
                   statementResult.rows = result.rows;
                 }
               }
               results.push(statementResult);
             } else {
-              const result = await adapter.executeWriteQuery(statement, queryParams);
+              const result = await adapter.executeWriteQuery(
+                statement,
+                queryParams,
+              );
               results.push({
                 statement:
                   statement.substring(0, 100) +

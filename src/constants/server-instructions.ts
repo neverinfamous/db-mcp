@@ -160,7 +160,7 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 
 - \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10" })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements
 - \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
-  
+
 ## Tables & Schema
 
 - \`sqlite_list_tables({ excludeSystemTables?: boolean })\` — list all tables in the database (system tables excluded by default)
@@ -328,7 +328,7 @@ sqlite_spatialite_index({
 | Transactions (8 tools)                            | ✅                    | ❌          | None             |
 | Window functions (6 tools in stats group)         | ✅                    | ❌          | None             |
 | SpatiaLite GIS (7 tools; 4 basic geo always work) | ✅                    | ❌          | None             |
-| Backup/Restore/Dump/VacuumInto/Verify (5 tools)  | ✅                    | ❌          | Graceful error   |
+| Backup/Restore/Dump/VacuumInto/Verify (5 tools)   | ✅                    | ❌          | Graceful error   |
 | R-Tree spatial indexing                           | ✅                    | ❌          | Graceful error   |
 | CSV virtual tables                                | ✅                    | ❌          | Graceful error   |
 | generate_series                                   | JS fallback           | JS fallback | —                |

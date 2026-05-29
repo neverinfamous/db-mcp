@@ -126,10 +126,12 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 ## Post-Test Procedures
 
 ### Reporting Rules
+
 - Use ✅ only in inline notes during testing; omit from Final Summary
 - Do not mention what already works well or issues already documented in help resources and runtime hints
 
 ### After Testing
+
 1. **Triage findings**: If issues were found, create an implementation plan, making sure they are consistent with working patterns in other tools/tool groups. If the plan requires no user decisions, proceed directly to implementation.
 2. **Scope of fixes** includes corrections to any of:
    - Handler code
@@ -138,6 +140,7 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
    - This prompt
 
 ### After Implementation
+
 3. **Document**: Update `UNRELEASED.md`, `code-map.md` (if appropriate), and create a `memory-journal-mcp` entry detailing the changes and improvements made.
 4. **Commit**: Stage and commit all changes — do NOT push.
 5. **Validate**: Halt your work and instruct the user to validate the changes by running the test suite (Vitest/Playwright), lint, and typecheck. Do NOT run them yourself. Also instruct the user to rebuild and restart the server.

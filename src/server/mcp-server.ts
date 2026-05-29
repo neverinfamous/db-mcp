@@ -36,7 +36,10 @@ import {
   registerAuditResource,
   registerAuditBackupTools,
 } from "./registration/index.js";
-import { registerToolScopes, scopesGrantToolAccess } from "../auth/scopes/enforcement.js";
+import {
+  registerToolScopes,
+  scopesGrantToolAccess,
+} from "../auth/scopes/enforcement.js";
 import { getAuthContext } from "../auth/auth-context.js";
 /**
  * Monkey-patch McpServer to return structured JSON errors for validation failures.
@@ -45,13 +48,19 @@ import { getAuthContext } from "../auth/auth-context.js";
  */
 const proto = McpServer.prototype as unknown as Record<
   string,
-  (errorMessage: string) => { content: { type: string; text: string }[]; isError: boolean }
+  (errorMessage: string) => {
+    content: { type: string; text: string }[];
+    isError: boolean;
+  }
 >;
 
-if (typeof proto['createToolError'] === "function") {
-  const originalCreateToolError = proto['createToolError'];
-  proto['createToolError'] = function (errorMessage: string) {
-    const result = originalCreateToolError.call(this as unknown as McpServer, errorMessage);
+if (typeof proto["createToolError"] === "function") {
+  const originalCreateToolError = proto["createToolError"];
+  proto["createToolError"] = function (errorMessage: string) {
+    const result = originalCreateToolError.call(
+      this as unknown as McpServer,
+      errorMessage,
+    );
     if (result.content?.[0]?.type === "text") {
       const rawError = result.content[0].text;
       // Only intercept Zod validation failures from the SDK.
@@ -59,7 +68,10 @@ if (typeof proto['createToolError'] === "function") {
       // (isError: true) for WASM graceful degradation and test suite setup logic.
       if (rawError.includes("Input validation error")) {
         // Strip out the MCP error prefix to match handler validation error formatting
-        const cleanError = rawError.replace(/^MCP error -32602: Input validation error: /, "Validation error: ");
+        const cleanError = rawError.replace(
+          /^MCP error -32602: Input validation error: /,
+          "Validation error: ",
+        );
         const structured = {
           success: false,
           error: cleanError,
@@ -111,8 +123,6 @@ export class DbMcpServer {
       },
     );
 
-
-
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });
 
@@ -126,30 +136,42 @@ export class DbMcpServer {
     });
 
     // Register built-in tools and help resources
-    registerBuiltInTools(this.server, this.adapters, this.config, this.toolFilter);
+    registerBuiltInTools(
+      this.server,
+      this.adapters,
+      this.config,
+      this.toolFilter,
+    );
     registerHelpResources(this.server, this.toolFilter);
 
     // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
     // We must do this AFTER tools are registered, because the SDK lazily registers the 'tools/list' handler
-    type RequestHandler = (request: unknown, extra: unknown) => Promise<{ tools: { name: string }[] }>;
-    const internalMcp = this.server as unknown as { server: { _requestHandlers?: Map<string, RequestHandler> } };
+    type RequestHandler = (
+      request: unknown,
+      extra: unknown,
+    ) => Promise<{ tools: { name: string }[] }>;
+    const internalMcp = this.server as unknown as {
+      server: { _requestHandlers?: Map<string, RequestHandler> };
+    };
     const handlers = internalMcp.server._requestHandlers;
-    
+
     if (!handlers?.has("tools/list")) {
       throw new DbMcpError(
         "Security: SDK _requestHandlers monkey-patch failed. Scope filtering is disabled.",
         "SERVER_START_FAILED",
-        ErrorCategory.INTERNAL
+        ErrorCategory.INTERNAL,
       );
     }
-    
+
     const originalListToolsHandler = handlers.get("tools/list");
     if (originalListToolsHandler) {
       handlers.set("tools/list", async (request: unknown, extra: unknown) => {
         const result = await originalListToolsHandler(request, extra);
         const authCtx = getAuthContext();
         if (authCtx && Array.isArray(result.tools)) {
-          result.tools = result.tools.filter((t) => scopesGrantToolAccess(authCtx.scopes, t.name));
+          result.tools = result.tools.filter((t) =>
+            scopesGrantToolAccess(authCtx.scopes, t.name),
+          );
         }
         return result;
       });
@@ -188,7 +210,7 @@ export class DbMcpServer {
           setAuditInterceptor: (i: AuditInterceptor) => void;
         }
       ).setAuditInterceptor(this.auditInterceptor);
-      
+
       this.auditInterceptor.setQueryAdapter({
         executeQuery: (sql, params) => adapter.executeReadQuery(sql, params),
       });
@@ -263,14 +285,14 @@ export class DbMcpServer {
     logger.info(`db-mcp server started (stdio transport)`, {
       module: "SERVER",
     });
-    
+
     // Warn about STDIO granting universal admin scope
     logger.warning(
       "SECURITY WARNING: Running in STDIO mode grants blanket 'admin' access to all tools. " +
-      "This implies full trust in the local client/agent. If this server is exposed over SSH " +
-      "or used by an untrusted client, consider using HTTP transport with OAuth (--oauth-enabled) " +
-      "for granular scope enforcement.",
-      { module: "SERVER", code: "STDIO_ADMIN_RISK" }
+        "This implies full trust in the local client/agent. If this server is exposed over SSH " +
+        "or used by an untrusted client, consider using HTTP transport with OAuth (--oauth-enabled) " +
+        "for granular scope enforcement.",
+      { module: "SERVER", code: "STDIO_ADMIN_RISK" },
     );
   }
 
@@ -390,7 +412,7 @@ export class DbMcpServer {
     // Create interceptor (backup + query adapter wired after first adapter registers)
     this.auditInterceptor = createAuditInterceptor(
       this.auditLogger,
-      this.backupManager ?? undefined
+      this.backupManager ?? undefined,
     );
 
     // Register sqlite://audit resource
@@ -406,7 +428,6 @@ export class DbMcpServer {
       { module: "AUDIT" },
     );
   }
-
 }
 
 /**

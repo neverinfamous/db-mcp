@@ -16,9 +16,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
   formatHandlerError,
   ValidationError,
@@ -50,7 +48,7 @@ export function createFuzzyMatchTool(adapter: SqliteAdapter): ToolDefinition {
       const queryParams: unknown[] = [];
       try {
         const input = FuzzyMatchSchema.parse(params);
-      
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -139,7 +137,7 @@ export function createPhoneticMatchTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = PhoneticMatchSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         if (
@@ -275,7 +273,7 @@ export function createAdvancedSearchTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = AdvancedSearchSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Handler-side enum validation (schema uses z.string() to prevent raw MCP -32602)
         for (const technique of input.techniques) {
@@ -403,5 +401,3 @@ export function createAdvancedSearchTool(
     },
   };
 }
-
-

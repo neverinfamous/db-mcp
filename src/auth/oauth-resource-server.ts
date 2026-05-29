@@ -12,10 +12,7 @@ import type {
   ProtectedResourceMetadata,
   ResourceServerConfig,
 } from "./types.js";
-import {
-  SUPPORTED_SCOPES,
-  BASE_SCOPES,
-} from "./scopes/index.js";
+import { SUPPORTED_SCOPES, BASE_SCOPES } from "./scopes/index.js";
 import { createModuleLogger } from "../utils/logger/index.js";
 
 const logger = createModuleLogger("AUTH");

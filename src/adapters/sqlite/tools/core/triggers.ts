@@ -48,9 +48,7 @@ function parseTriggerEvent(sql: string): string {
   return "UNKNOWN";
 }
 
-export function createListTriggersTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createListTriggersTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_list_triggers",
     description:
@@ -63,12 +61,12 @@ export function createListTriggersTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const queryParams: unknown[] = [];
-      const input = ListTriggersSchema.parse(params);
+        const input = ListTriggersSchema.parse(params);
 
         if (input.table) {
           const tableCheck = await adapter.executeReadQuery(
             `SELECT 1 FROM sqlite_master WHERE name=? AND type IN ('table', 'view') UNION ALL SELECT 1 FROM sqlite_temp_master WHERE name=? AND type IN ('table', 'view')`,
-            [input.table, input.table]
+            [input.table, input.table],
           );
           if ((tableCheck.rows?.length ?? 0) === 0) {
             return formatHandlerError(
@@ -76,16 +74,17 @@ export function createListTriggersTool(
                 `Table '${input.table}' does not exist`,
                 "TABLE_NOT_FOUND",
                 {
-                  suggestion: "Table not found. Run sqlite_list_tables to see available tables.",
-                }
-              )
+                  suggestion:
+                    "Table not found. Run sqlite_list_tables to see available tables.",
+                },
+              ),
             );
           }
         }
 
         let sql =
           "SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'trigger'";
-        
+
         if (input.table) {
           sql += " AND tbl_name = ?";
           queryParams.push(input.table);
@@ -105,15 +104,15 @@ export function createListTriggersTool(
         const triggers = (result.rows ?? [])
           .filter((row) => !isSpatialiteSystemTable(row["tbl_name"] as string))
           .map((row) => {
-          const triggerSql = (row["sql"] as string) ?? "";
-          return {
-            name: row["name"] as string,
-            table: row["tbl_name"] as string,
-            event: parseTriggerEvent(triggerSql),
-            timing: parseTriggerTiming(triggerSql),
-            sql: triggerSql,
-          };
-        });
+            const triggerSql = (row["sql"] as string) ?? "";
+            return {
+              name: row["name"] as string,
+              table: row["tbl_name"] as string,
+              event: parseTriggerEvent(triggerSql),
+              timing: parseTriggerTiming(triggerSql),
+              sql: triggerSql,
+            };
+          });
 
         return {
           success: true,
@@ -215,7 +214,11 @@ export function createCreateTriggerTool(
       }
 
       // Column-specific triggers only valid for UPDATE
-      if (input.columns && input.columns.length > 0 && input.event !== "UPDATE") {
+      if (
+        input.columns &&
+        input.columns.length > 0 &&
+        input.event !== "UPDATE"
+      ) {
         return {
           ...formatHandlerError(
             new ValidationError(
@@ -237,7 +240,7 @@ export function createCreateTriggerTool(
         };
       }
 
-      if (input.whenClause?.includes(';')) {
+      if (input.whenClause?.includes(";")) {
         return {
           ...formatHandlerError(
             new ValidationError("whenClause cannot contain semicolons"),
@@ -301,13 +304,10 @@ export function createCreateTriggerTool(
 /**
  * Drop a trigger
  */
-export function createDropTriggerTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createDropTriggerTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_drop_trigger",
-    description:
-      "Drop (delete) a database trigger. This is irreversible.",
+    description: "Drop (delete) a database trigger. This is irreversible.",
     group: "core",
     inputSchema: DropTriggerSchema,
     outputSchema: DropTriggerOutputSchema,
@@ -372,4 +372,3 @@ export function createDropTriggerTool(
     },
   };
 }
-

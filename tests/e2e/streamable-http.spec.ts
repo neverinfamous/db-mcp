@@ -79,8 +79,7 @@ test.describe("Streamable HTTP Transport (MCP 2025-03-26)", () => {
       const response = await client.callTool({
         name: "sqlite_write_query",
         arguments: {
-          query:
-            "UPDATE test_products SET price = price + 1 WHERE id = -1",
+          query: "UPDATE test_products SET price = price + 1 WHERE id = -1",
         },
       });
 

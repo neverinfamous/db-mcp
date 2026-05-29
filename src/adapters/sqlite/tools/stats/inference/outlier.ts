@@ -6,9 +6,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import { formatHandlerError } from "../../../../../utils/errors/index.js";
 import { OutlierSchema } from "../../../schemas/stats.js";
 import { StatsOutliersOutputSchema } from "../../../schemas/stats.js";
@@ -174,5 +172,3 @@ export function createOutlierTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

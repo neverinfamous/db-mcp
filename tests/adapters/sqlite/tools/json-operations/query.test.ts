@@ -75,11 +75,18 @@ describe("createJsonKeysTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [{ key: "k" }] });
     const tool = createJsonKeysTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", conditions: [{ column: "id", operator: "=", value: 1 }] },
+      {
+        table: "users",
+        column: "data",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('"id" = ?'), expect.anything());
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining('"id" = ?'),
+      expect.anything(),
+    );
   });
 
   it("should handle empty result", async () => {
@@ -145,12 +152,22 @@ describe("createJsonEachTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonEachTool(adapter);
     const result = (await tool.handler(
-      { table: "users", column: "data", conditions: [{ column: "id", operator: "=", value: 1 }], limit: 10 },
+      {
+        table: "users",
+        column: "data",
+        conditions: [{ column: "id", operator: "=", value: 1 }],
+        limit: 10,
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
     // Should use a base table subquery to isolate the WHERE clause and avoid ambiguity with json_each output columns
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('FROM (SELECT rowid, * FROM "users" WHERE "id" = ?) AS t'), expect.anything());
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'FROM (SELECT rowid, * FROM "users" WHERE "id" = ?) AS t',
+      ),
+      expect.anything(),
+    );
   });
 
   it("should handle query error", async () => {
@@ -226,11 +243,18 @@ describe("createJsonGroupArrayTool", () => {
     adapter.executeReadQuery.mockResolvedValue({ rows: [] });
     const tool = createJsonGroupArrayTool(adapter);
     const result = (await tool.handler(
-      { table: "users", valueColumn: "name", conditions: [{ column: "active", operator: "=", value: 1 }] },
+      {
+        table: "users",
+        valueColumn: "name",
+        conditions: [{ column: "active", operator: "=", value: 1 }],
+      },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('"active" = ?'), expect.anything());
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining('"active" = ?'),
+      expect.anything(),
+    );
   });
 
   it("should handle query error", async () => {
@@ -357,12 +381,15 @@ describe("createJsonGroupObjectTool", () => {
         table: "orders",
         keyColumn: "category",
         aggregateFunction: "SUM(amount)",
-        conditions: [{ column: "status", operator: "=", value: 'active' }],
+        conditions: [{ column: "status", operator: "=", value: "active" }],
       },
       ctx,
     )) as any;
     expect(result.success).toBe(true);
-    expect(adapter.executeReadQuery).toHaveBeenCalledWith(expect.stringContaining('"status" = ?'), expect.anything());
+    expect(adapter.executeReadQuery).toHaveBeenCalledWith(
+      expect.stringContaining('"status" = ?'),
+      expect.anything(),
+    );
   });
 
   it("should support whereClause and groupByColumn", async () => {

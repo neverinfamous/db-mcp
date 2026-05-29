@@ -55,7 +55,7 @@ Error codes are module-prefixed (e.g., `SQLITE_CONNECTION_FAILED`, `TABLE_NOT_FO
 - ✅ **WHERE clause validation** — Core and stats tools enforce strict structured arrays (`WhereCondition[]`), completely eliminating SQL injection vectors present in legacy string-based WHERE properties. For raw query tools, a blocklist rejects dangerous patterns including `UNION SELECT`, stacked queries, comment injection, subqueries (`(SELECT ...`), `ATTACH DATABASE`, `load_extension`, `PRAGMA`, fileio functions, FTS tokenizer abuse, hex string injection, `GLOB` leading wildcards, and `RANDOMBLOB`/`ZEROBLOB` memory allocation DoS. Input is Unicode NFC-normalized with full-width Latin character (U+FF01–U+FF5E) to ASCII mapping before pattern matching to prevent homoglyph-based blocklist bypasses (CWE-20)
 - ✅ **JSON path validation** — all JSON path parameters (e.g., `$.key[0].subkey`) are validated against a strict regex allowlist (`^\$(\.\w+|\[\d+\]|\[#\]|\[\*\])*$`) before SQL interpolation, preventing injection via malicious path values. See `src/utils/validate-json-path.ts`
 - ✅ **Aggregate function validation** — SQL aggregate functions (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `TOTAL`) are validated against a strict whitelist with column name sanitization, preventing arbitrary SQL execution via `aggregateFunction` parameters
-- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). This validation strictly enforces exact directory matching, blocking access even to legitimate subdirectories. *Note: In-memory databases (`:memory:`) bypass path validation by design.*
+- ✅ **Path Traversal Prevention** — database exports, backups, and dumps enforce strict path boundaries preventing arbitrary file writes (e.g. `sqlite_dump`, `sqlite_backup`). This validation strictly enforces exact directory matching, blocking access even to legitimate subdirectories. _Note: In-memory databases (`:memory:`) bypass path validation by design._
 - ✅ **DDL Validation** — Migration tools (`sqlite_migration_apply`, `sqlite_migration_rollback`) use `validateMigrationSql` to strictly prevent unauthorized DDL commands such as `ATTACH`, `DETACH`, `PRAGMA`, and `LOAD_EXTENSION`.
 - ✅ **JWT claims sanitization** — prototype-polluting keys (`__proto__`, `constructor`, `prototype`) are filtered from OAuth token payloads before spreading into claims objects
 
@@ -81,6 +81,7 @@ Code Mode executes user-provided JavaScript inside a **process-level `isolated-v
 > **⚠️ Threat Model:** Code Mode is designed for use by **trusted AI agents**, not for executing arbitrary untrusted code from end users. While `isolated-vm` provides robust security against context escapes, this server still runs the isolation within the main Node.js process space.
 >
 > **For untrusted input deployments:** Use infrastructure-level sandboxing:
+>
 > 1. Run the container with `--cap-drop=ALL --security-opt=no-new-privileges` to limit post-compromise capabilities.
 > 2. Apply Docker resource limits (`--memory`, `--cpus`) and read-only filesystem (`--read-only`) where possible.
 
@@ -151,7 +152,6 @@ Full OAuth 2.1 for production multi-tenant deployments:
 - ✅ **WWW-Authenticate sanitization** — `error_description` attributes in `WWW-Authenticate` headers are sanitized (quotes stripped, truncated to 200 chars) to prevent header injection (CWE-113) and information disclosure (CWE-209)
 
 > **⚠️ HTTP without OAuth:** When OAuth is not configured, all scope checks are bypassed. If you expose the HTTP transport without enabling OAuth, any client has full unrestricted access. Always enable OAuth for production HTTP deployments.
-
 
 ## 🐳 **Docker Security**
 

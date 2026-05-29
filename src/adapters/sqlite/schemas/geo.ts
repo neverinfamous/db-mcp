@@ -166,8 +166,13 @@ export const GeoClusterSchema = z.object({
     coerceNumber,
     z.number().optional().default(0.1).describe("Grid size in degrees"),
   ),
-  conditions: z.array(WhereConditionSchema).optional().describe("Optional WHERE conditions"),
-  whereClause: z.string().optional().describe("Deprecated: Use conditions instead"),
+  conditions: z
+    .array(WhereConditionSchema)
+    .optional()
+    .describe("Optional WHERE conditions"),
+  whereClause: z
+    .string()
+    .optional()
+    .describe("Deprecated: Use conditions instead"),
 });
 export type GeoClusterInput = z.infer<typeof GeoClusterSchema>;
-

@@ -28,7 +28,10 @@ function buildArgsSchema(
 
   const schema: Record<string, z.ZodType> = {};
   for (const arg of args) {
-    const field = z.string().max(200, "Argument too long").describe(arg.description);
+    const field = z
+      .string()
+      .max(200, "Argument too long")
+      .describe(arg.description);
     schema[arg.name] = arg.required ? field : field.optional();
   }
   return schema;

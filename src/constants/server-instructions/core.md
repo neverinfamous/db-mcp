@@ -4,7 +4,7 @@
 
 - `sqlite_read_query({ query: "SELECT * FROM users LIMIT 10" })` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements
 - `sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
-  
+
 ## Tables & Schema
 
 - `sqlite_list_tables({ excludeSystemTables?: boolean })` — list all tables in the database (system tables excluded by default)
@@ -32,4 +32,3 @@
 - `sqlite_truncate({ table: "users" })` — quickly delete all rows from a table (executes `DELETE FROM table`)
 - `sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })` — add or subtract time intervals from a date column. By default returns only the computed column; use `selectColumns` to return additional context.
 - `sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })` — calculate the difference between two date columns. By default returns only the computed column; use `selectColumns` to return additional context.
-

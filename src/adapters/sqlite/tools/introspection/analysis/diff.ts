@@ -183,9 +183,7 @@ function computeSeverity(
 // Tool Creator
 // =============================================================================
 
-export function createSchemaDiffTool(
-  adapter: SqliteAdapter,
-): ToolDefinition {
+export function createSchemaDiffTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_schema_diff",
     description:
@@ -238,7 +236,10 @@ export function createSchemaDiffTool(
 
         // --- Tables ---
         if (sections.includes("tables")) {
-          interface TableEntry { name: string; columns?: TableColumn[] }
+          interface TableEntry {
+            name: string;
+            columns?: TableColumn[];
+          }
           const baseTables = (baselineData.tables ?? []) as TableEntry[];
           const targetTables = (targetData.tables ?? []) as TableEntry[];
           const { added, removed, common } = diffNameSets(
@@ -400,11 +401,7 @@ export function createSchemaDiffTool(
             added: totalAdded,
             removed: totalRemoved,
             modified: totalModified,
-            severity: computeSeverity(
-              totalAdded,
-              totalRemoved,
-              totalModified,
-            ),
+            severity: computeSeverity(totalAdded, totalRemoved, totalModified),
           },
           comparedAt: new Date().toISOString(),
         };

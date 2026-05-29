@@ -36,12 +36,7 @@ export const SCOPE_PATTERNS = {
 /**
  * All supported scope patterns for metadata
  */
-export const SUPPORTED_SCOPES = [
-  "read",
-  "write",
-  "admin",
-  "full",
-] as const;
+export const SUPPORTED_SCOPES = ["read", "write", "admin", "full"] as const;
 
 /**
  * Parse a scope string (space-delimited) into an array
@@ -52,4 +47,3 @@ export function parseScopes(scopeString: string): string[] {
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 }
-

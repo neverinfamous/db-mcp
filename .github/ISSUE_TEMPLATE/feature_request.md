@@ -1,9 +1,9 @@
 ---
 name: Feature Request
 about: Suggest an idea for db-mcp
-title: '[FEATURE] '
-labels: ['enhancement']
-assignees: ''
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees: ""
 ---
 
 ## 🚀 Feature Summary

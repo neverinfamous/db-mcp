@@ -1,9 +1,9 @@
 ---
 name: Question
 about: Ask a question about using db-mcp
-title: '[QUESTION] '
-labels: ['question']
-assignees: ''
+title: "[QUESTION] "
+labels: ["question"]
+assignees: ""
 ---
 
 ## ❓ Question

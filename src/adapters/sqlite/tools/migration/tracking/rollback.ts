@@ -32,7 +32,7 @@ export function createMigrationRollbackTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = MigrationRollbackValidationSchema.parse(params);
-      
+
         if (!(await isMigrationTableInitialized(adapter))) {
           return {
             success: false,

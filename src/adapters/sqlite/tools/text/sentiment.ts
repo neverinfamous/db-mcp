@@ -16,9 +16,7 @@ import {
   formatHandlerError,
   ValidationError,
 } from "../../../../utils/errors/index.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { TextSentimentOutputSchema } from "../../schemas/text.js";
 import { TextSentimentSchema } from "../../schemas/text.js";
 import type { SqliteAdapter } from "../../sqlite-adapter.js";
@@ -184,9 +182,11 @@ export function createTextSentimentTool(
         await validateColumnExists(adapter, parsed.table, parsed.column);
 
         const queryParams: unknown[] = [];
-      let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
+        let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (parsed.conditions) {
-          const { sql: whereSql, params: whereParams } = buildWhereClause(parsed.conditions);
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            parsed.conditions,
+          );
           if (whereSql !== "") {
             sql += ` WHERE ${whereSql}`;
             queryParams.push(...whereParams);

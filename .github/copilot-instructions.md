@@ -78,11 +78,11 @@ src/
 
 ## Key Reference Files
 
-| File                                   | Purpose                                           |
-| -------------------------------------- | ------------------------------------------------- |
-| `CONTRIBUTING.md`                      | Development setup and PR guidelines               |
-| `DOCKER_README.md`                     | Docker Hub documentation                          |
-| `CHANGELOG.md`                         | Version history                                   |
+| File               | Purpose                             |
+| ------------------ | ----------------------------------- |
+| `CONTRIBUTING.md`  | Development setup and PR guidelines |
+| `DOCKER_README.md` | Docker Hub documentation            |
+| `CHANGELOG.md`     | Version history                     |
 
 ## Review Checklist
 

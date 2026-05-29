@@ -51,7 +51,8 @@ export function createQueryPlanTool(adapter: SqliteAdapter): ToolDefinition {
         if (!sql) {
           return {
             success: false,
-            error: "Validation error: Parameter 'sql' (or 'query') is required and must be a non-empty string",
+            error:
+              "Validation error: Parameter 'sql' (or 'query') is required and must be a non-empty string",
             code: "VALIDATION_ERROR",
             category: "validation",
           };

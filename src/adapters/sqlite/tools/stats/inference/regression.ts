@@ -6,9 +6,7 @@ import type {
   RequestContext,
 } from "../../../../../types/index.js";
 import { readOnly } from "../../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../../utils/index.js";
 import {
   formatHandlerError,
   DbMcpError,
@@ -38,7 +36,7 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = RegressionSchema.parse(params);
-      
+
         if (input.degree < 1 || input.degree > 3) {
           return {
             success: false,
@@ -63,7 +61,9 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
           // validateWhereClause() removed
         }
 
-        const andClause = input.conditions ? ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}` : "";
+        const andClause = input.conditions
+          ? ` AND ${buildWhereClause(input.conditions, input.whereClause).sql}`
+          : "";
         const degree = input.degree ?? 1;
 
         const sql = `
@@ -158,5 +158,3 @@ export function createRegressionTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

@@ -12,10 +12,7 @@ import type {
 } from "../../../../types/index.js";
 import { admin } from "../../../../utils/annotations.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
-import {
-  WalSchema,
-  WalOutputSchema,
-} from "../../schemas/admin.js";
+import { WalSchema, WalOutputSchema } from "../../schemas/admin.js";
 
 export function createWalTool(adapter: SqliteAdapter): ToolDefinition {
   return {
@@ -102,8 +99,7 @@ export function createWalTool(adapter: SqliteAdapter): ToolDefinition {
               "PRAGMA journal_mode=DELETE",
             );
             const newMode =
-              (disableResult.rows?.[0]?.["journal_mode"] as string) ??
-              "delete";
+              (disableResult.rows?.[0]?.["journal_mode"] as string) ?? "delete";
 
             return {
               success: true,

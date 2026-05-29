@@ -67,21 +67,24 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
         let hasWhere = false;
 
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-              hasWhere = true;
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
+            hasWhere = true;
+          }
         }
 
         if (input.onlyDifferences) {
-            if (hasWhere) {
-                sql += ` AND json_extract(${column}, ?) IS NOT json_extract(${column}, ?)`;
-            } else {
-                sql += ` WHERE json_extract(${column}, ?) IS NOT json_extract(${column}, ?)`;
-            }
-            queryParams.push(input.path1, input.path2);
+          if (hasWhere) {
+            sql += ` AND json_extract(${column}, ?) IS NOT json_extract(${column}, ?)`;
+          } else {
+            sql += ` WHERE json_extract(${column}, ?) IS NOT json_extract(${column}, ?)`;
+          }
+          queryParams.push(input.path1, input.path2);
         }
 
         sql += ` LIMIT ${effectiveLimit}`;
@@ -89,8 +92,7 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
         const result = await adapter.executeReadQuery(sql, queryParams);
 
         const diffs = (result.rows ?? []).map((row) => ({
-          rowid:
-            typeof row["rowid"] === "number" ? row["rowid"] : undefined,
+          rowid: typeof row["rowid"] === "number" ? row["rowid"] : undefined,
           path1Value: row["path1_value"],
           path2Value: row["path2_value"],
           identical: row["identical"] === 1,
@@ -107,5 +109,3 @@ export function createJsonDiffTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

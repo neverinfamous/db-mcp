@@ -18,9 +18,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 
 // ---------------------------------------------------------------------------
@@ -88,7 +86,7 @@ export function createJsonSecurityScanTool(
     annotations: readOnly("JSON Security Scan"),
     handler: async (params: unknown, _context: RequestContext) => {
       let input;
-      
+
       try {
         input = JsonSecurityScanSchema.parse(params);
       } catch (error: unknown) {
@@ -103,12 +101,15 @@ export function createJsonSecurityScanTool(
         const queryParams: unknown[] = [];
         let sql = `SELECT json(${column}) as json_data FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.sampleSize}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -239,5 +240,3 @@ export function createJsonSecurityScanTool(
     },
   };
 }
-
-

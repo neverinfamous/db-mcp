@@ -213,7 +213,7 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
 
       // Build table-level constraints
       const tableConstraints: string[] = [];
-      
+
       if (input.foreignKeys && input.foreignKeys.length > 0) {
         for (const fk of input.foreignKeys) {
           const safeColumn = fk.column.replace(/"/g, '""');
@@ -234,8 +234,12 @@ export function createCreateTableTool(adapter: SqliteAdapter): ToolDefinition {
           try {
             validateQuery(`SELECT 1 WHERE ${chk}`, true);
           } catch (error: unknown) {
-             return {
-              ...formatHandlerError(new ValidationError(`Invalid CHECK constraint '${chk}': ${error instanceof Error ? error.message : String(error)}`)),
+            return {
+              ...formatHandlerError(
+                new ValidationError(
+                  `Invalid CHECK constraint '${chk}': ${error instanceof Error ? error.message : String(error)}`,
+                ),
+              ),
               sql: "",
             };
           }
@@ -557,10 +561,10 @@ export function createDropTableTool(adapter: SqliteAdapter): ToolDefinition {
           }
         } catch (err) {
           // Ignore cleanup errors to ensure the primary DROP TABLE operation proceeds
-          logger.warning(
-            `Failed to clean up FTS triggers for ${input.table}`,
-            { code: "FTS_CLEANUP_FAILED", error: err instanceof Error ? err : new Error(String(err)) }
-          );
+          logger.warning(`Failed to clean up FTS triggers for ${input.table}`, {
+            code: "FTS_CLEANUP_FAILED",
+            error: err instanceof Error ? err : new Error(String(err)),
+          });
         }
 
         const sql = `DROP TABLE ${safeTable}`;

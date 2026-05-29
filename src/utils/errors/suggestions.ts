@@ -260,7 +260,8 @@ const ERROR_SUGGESTIONS: {
     code: "INVALID_IDENTIFIER",
   },
   {
-    pattern: /(expected property name|unexpected token|in JSON at position|Expected double-quoted property name)/i,
+    pattern:
+      /(expected property name|unexpected token|in JSON at position|Expected double-quoted property name)/i,
     suggestion:
       "The JSON data provided is malformed. Ensure the input string is valid JSON.",
     category: ErrorCategory.VALIDATION,

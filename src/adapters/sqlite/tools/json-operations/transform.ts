@@ -15,10 +15,11 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly, write } from "../../../../utils/annotations.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
-import { formatHandlerError, ValidationError } from "../../../../utils/errors/index.js";
+  formatHandlerError,
+  ValidationError,
+} from "../../../../utils/errors/index.js";
 import {
   normalizeJson,
   isJsonbSupported,
@@ -46,7 +47,7 @@ export function createJsonPrettyTool(): ToolDefinition {
     annotations: readOnly("JSON Pretty"),
     handler: (params: unknown, _context: RequestContext) => {
       let input;
-      
+
       try {
         input = JsonPrettySchema.parse(params);
       } catch (error: unknown) {
@@ -103,18 +104,24 @@ export function createJsonbConvertTool(adapter: SqliteAdapter): ToolDefinition {
           throw new ValidationError(
             "JSONB not supported (requires SQLite 3.45+)",
             "FEATURE_UNAVAILABLE",
-            { suggestion: "Current SQLite version does not support JSONB. Data remains as text JSON." }
+            {
+              suggestion:
+                "Current SQLite version does not support JSONB. Data remains as text JSON.",
+            },
           );
         }
 
         let sql = `UPDATE ${table} SET ${column} = jsonb(${column})`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
 
         const result = await adapter.executeWriteQuery(sql, queryParams);
 
@@ -249,7 +256,7 @@ export function createJsonNormalizeColumnTool(
         ) {
           throw new ValidationError(
             `Invalid outputFormat '${input.outputFormat}'. Must be one of: ${VALID_OUTPUT_FORMATS.join(", ")}`,
-            "VALIDATION_ERROR"
+            "VALIDATION_ERROR",
           );
         }
 
@@ -263,14 +270,20 @@ export function createJsonNormalizeColumnTool(
         // 2. Get text JSON for normalization processing
         let selectSql = `SELECT _rowid_ AS _rid_, ${column} as raw_data, json(${column}) as json_data FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              selectSql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            selectSql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
 
-        const selectResult = await adapter.executeReadQuery(selectSql, queryParams);
+        const selectResult = await adapter.executeReadQuery(
+          selectSql,
+          queryParams,
+        );
         let normalizedCount = 0;
         let unchangedCount = 0;
         let errorCount = 0;
@@ -350,5 +363,3 @@ export function createJsonNormalizeColumnTool(
     },
   };
 }
-
-

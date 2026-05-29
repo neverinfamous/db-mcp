@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-deprecated -- Intentional: SSEServerTransport provides backward compatibility for MCP 2024-11-05 clients */
 import type { Request, Response } from "express";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { ERROR_CODES, createModuleLogger } from "../../../utils/logger/index.js";
+import {
+  ERROR_CODES,
+  createModuleLogger,
+} from "../../../utils/logger/index.js";
 import type { HttpTransportState } from "../types.js";
 import { JSONRPC_SERVER_ERROR } from "../types.js";
 import { asIncoming, asServerResponse } from "../type-adapters.js";

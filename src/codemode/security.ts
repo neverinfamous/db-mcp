@@ -15,8 +15,6 @@ import {
 import { createClient, type RedisClientType } from "redis";
 import { SENSITIVE_KEY_PATTERN, redactObject } from "../utils/redaction.js";
 
-
-
 /**
  * Security manager for Code Mode executions
  */
@@ -34,7 +32,9 @@ export class CodeModeSecurityManager {
     if (process.env["REDIS_URL"]) {
       this.redisClient = createClient({ url: process.env["REDIS_URL"] });
       this.redisClient.connect().catch((err: unknown) => {
-        logger.error("Redis connection failed in CodeModeSecurityManager", { error: err instanceof Error ? err : new Error(String(err)) });
+        logger.error("Redis connection failed in CodeModeSecurityManager", {
+          error: err instanceof Error ? err : new Error(String(err)),
+        });
       });
     }
   }
@@ -59,7 +59,8 @@ export class CodeModeSecurityManager {
     }
 
     // Check for Unicode escape sequences which could bypass pattern matching
-    const hasUnicodeEscapes = /\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}|\\x[0-9a-fA-F]{2}/i.test(code);
+    const hasUnicodeEscapes =
+      /\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}|\\x[0-9a-fA-F]{2}/i.test(code);
     if (hasUnicodeEscapes) {
       errors.push("Unicode escape sequences in identifiers are not allowed");
       return { valid: false, errors };
@@ -68,9 +69,9 @@ export class CodeModeSecurityManager {
     // Check for blocked patterns
     const strippedCode = code
       .normalize("NFKC")
-      .replace(/\/\*[\s\S]*?\*\//g, " ")   // block comments
-      .replace(/\/\/[^\n]*/g, " ");        // line comments
-      
+      .replace(/\/\*[\s\S]*?\*\//g, " ") // block comments
+      .replace(/\/\/[^\n]*/g, " "); // line comments
+
     for (const pattern of this.config.blockedPatterns) {
       if (pattern.test(strippedCode)) {
         errors.push(`Blocked pattern detected: ${pattern.source}`);
@@ -99,7 +100,9 @@ export class CodeModeSecurityManager {
         }
         return current <= this.config.maxExecutionsPerMinute;
       } catch (err) {
-        logger.error("Redis rate limit error, falling back to memory", { error: err instanceof Error ? err : new Error(String(err)) });
+        logger.error("Redis rate limit error, falling back to memory", {
+          error: err instanceof Error ? err : new Error(String(err)),
+        });
       }
     }
 
@@ -132,11 +135,11 @@ export class CodeModeSecurityManager {
     }
 
     existing.count++;
-    
+
     // Move to end of map to maintain LRU order for eviction
     this.rateLimitMap.delete(clientId);
     this.rateLimitMap.set(clientId, existing);
-    
+
     return true;
   }
 
@@ -173,11 +176,11 @@ export class CodeModeSecurityManager {
     try {
       const redactedResult = redactObject(result, 0, 15);
       const serialized = JSON.stringify(redactedResult);
-      
+
       if (serialized === undefined) {
         throw new Error("Not serializable");
       }
-      
+
       if (serialized.length > this.config.maxResultSize) {
         return {
           _truncated: true,
@@ -218,22 +221,20 @@ export class CodeModeSecurityManager {
       const safePreview = codePreview
         .substring(0, 50)
         .replace(SENSITIVE_KEY_PATTERN, "[REDACTED]");
-      logger.info(
-        `Code execution completed: ${safePreview}...`,
-        logContext,
-      );
+      logger.info(`Code execution completed: ${safePreview}...`, logContext);
     } else {
-      const safeError = result.error ? result.error.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]") : "unknown error";
-      const safeStack = result.stack ? result.stack.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]") : undefined;
+      const safeError = result.error
+        ? result.error.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]")
+        : "unknown error";
+      const safeStack = result.stack
+        ? result.stack.replace(SENSITIVE_KEY_PATTERN, "[REDACTED]")
+        : undefined;
 
-      logger.warning(
-        `Code execution failed: ${safeError}`,
-        {
-          ...logContext,
-          ...(safeError !== "unknown error" ? { errorMessage: safeError } : {}),
-          ...(safeStack !== undefined ? { stack: safeStack } : {}),
-        },
-      );
+      logger.warning(`Code execution failed: ${safeError}`, {
+        ...logContext,
+        ...(safeError !== "unknown error" ? { errorMessage: safeError } : {}),
+        ...(safeStack !== undefined ? { stack: safeStack } : {}),
+      });
     }
   }
 
@@ -250,10 +251,10 @@ export class CodeModeSecurityManager {
       id: crypto.randomUUID(),
       clientId,
       timestamp: new Date(),
-      codePreview: (code.length > 200 ? code.substring(0, 200) + "..." : code).replace(
-        SENSITIVE_KEY_PATTERN,
-        "[REDACTED]",
-      ),
+      codePreview: (code.length > 200
+        ? code.substring(0, 200) + "..."
+        : code
+      ).replace(SENSITIVE_KEY_PATTERN, "[REDACTED]"),
       result,
       readonly,
     };

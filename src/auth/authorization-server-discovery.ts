@@ -49,7 +49,9 @@ export class AuthorizationServerDiscovery {
     ) {
       const url = new URL(this.authServerUrl);
       const isLocalDev =
-        url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
+        url.hostname === "localhost" ||
+        url.hostname === "127.0.0.1" ||
+        url.hostname === "[::1]";
       if (!isLocalDev) {
         throw new Error(
           `Security: Authorization server URL must use HTTPS in production. ` +

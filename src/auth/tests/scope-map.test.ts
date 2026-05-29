@@ -5,7 +5,11 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { getRequiredScope, getToolScopeMap, registerToolScope } from "../scope-map.js";
+import {
+  getRequiredScope,
+  getToolScopeMap,
+  registerToolScope,
+} from "../scope-map.js";
 
 describe("scope-map", () => {
   beforeEach(() => {

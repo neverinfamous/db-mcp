@@ -15,10 +15,7 @@ export {
   type ErrorCode,
 } from "./logger/index.js";
 
-export {
-  UnsafeWhereClauseError,
-  sanitizeWhereClause,
-} from "./where-clause.js";
+export { UnsafeWhereClauseError, sanitizeWhereClause } from "./where-clause.js";
 
 export {
   InvalidIdentifierError,

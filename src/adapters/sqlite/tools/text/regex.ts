@@ -12,9 +12,7 @@ import type {
   RequestContext,
 } from "../../../../types/index.js";
 import { readOnly } from "../../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-} from "../../../../utils/index.js";
+import { sanitizeIdentifier } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 import {
   RegexMatchOutputSchema,
@@ -44,7 +42,7 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
       const queryParams: unknown[] = [];
       try {
         const input = RegexExtractSchema.parse(params);
-      
+
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -52,12 +50,15 @@ export function createRegexExtractTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -115,7 +116,7 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = RegexMatchSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -123,12 +124,15 @@ export function createRegexMatchTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -183,7 +187,7 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = TextSplitSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
         // Validate and quote identifiers, then verify column exists
         const table = sanitizeIdentifier(input.table);
         const column = sanitizeIdentifier(input.column);
@@ -191,12 +195,15 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
 
         let sql = `SELECT rowid as id, ${column} as value FROM ${table}`;
         if (input.conditions || input.whereClause) {
-            const { sql: whereSql, params: whereParams } = buildWhereClause(input.conditions, input.whereClause);
-            if (whereSql !== "") {
-              sql += ` WHERE ${whereSql}`;
-              queryParams.push(...whereParams);
-            }
+          const { sql: whereSql, params: whereParams } = buildWhereClause(
+            input.conditions,
+            input.whereClause,
+          );
+          if (whereSql !== "") {
+            sql += ` WHERE ${whereSql}`;
+            queryParams.push(...whereParams);
           }
+        }
         sql += ` LIMIT ${input.limit}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
@@ -235,5 +242,3 @@ export function createTextSplitTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

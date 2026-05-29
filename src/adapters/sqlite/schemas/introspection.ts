@@ -129,9 +129,7 @@ export const SchemaSnapshotShape = z.object({
       }),
     )
     .optional(),
-  views: z
-    .array(z.object({ name: z.string(), sql: z.string() }))
-    .optional(),
+  views: z.array(z.object({ name: z.string(), sql: z.string() })).optional(),
   indexes: z
     .array(
       z.object({
@@ -711,9 +709,7 @@ export const SchemaDiffSchema = z
     sections: z
       .preprocess(
         coerceDiffSections,
-        z
-          .array(z.enum(["tables", "views", "indexes", "triggers"]))
-          .optional(),
+        z.array(z.enum(["tables", "views", "indexes", "triggers"])).optional(),
       )
       .describe("Sections to compare (default: all)"),
     excludeSystemTables: z

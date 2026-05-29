@@ -10,10 +10,7 @@ import { buildWhereClause } from "../../../utils/where-clause.js";
 import type { SqliteAdapter } from "../sqlite-adapter.js";
 import type { ToolDefinition, RequestContext } from "../../../types/index.js";
 import { readOnly } from "../../../utils/annotations.js";
-import {
-  sanitizeIdentifier,
-  createColumnList,
-} from "../../../utils/index.js";
+import { sanitizeIdentifier, createColumnList } from "../../../utils/index.js";
 import {
   formatHandlerError,
   DbMcpError,
@@ -134,7 +131,7 @@ function createGeoDistanceTool(): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoDistanceSchema.parse(params);
-      
+
         const lat1 = requireCoordinate(input.lat1, "lat1", -90, 90);
         const lon1 = requireCoordinate(input.lon1, "lon1", -180, 180);
         const lat2 = requireCoordinate(input.lat2, "lat2", -90, 90);
@@ -169,7 +166,7 @@ function createGeoNearbyTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoNearbySchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Validate radius is a valid number
         const radius = requireNumber(input.radius, "radius");
@@ -290,7 +287,7 @@ function createGeoBoundingBoxTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoBoundingBoxSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         const minLat = requireCoordinate(input.minLat, "minLat", -90, 90);
         const maxLat = requireCoordinate(input.maxLat, "maxLat", -90, 90);
@@ -346,7 +343,7 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = GeoClusterSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Validate columns exist
         await validateColumnExists(adapter, input.table, input.latColumn);
@@ -372,13 +369,16 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
                   AVG(${lonColumn}) as center_lon
               FROM ${table}
               ${(() => {
-                  const { sql: wSql, params: wParams } = buildWhereClause(input.conditions, input.whereClause);
-                  if (wSql) {
-                    queryParams.push(...wParams);
-                    return `WHERE ${wSql}`;
-                  }
-                  return "";
-                })()}
+                const { sql: wSql, params: wParams } = buildWhereClause(
+                  input.conditions,
+                  input.whereClause,
+                );
+                if (wSql) {
+                  queryParams.push(...wParams);
+                  return `WHERE ${wSql}`;
+                }
+                return "";
+              })()}
               GROUP BY grid_lat, grid_lon
               ORDER BY point_count DESC`;
 
@@ -404,5 +404,3 @@ function createGeoClusterTool(adapter: SqliteAdapter): ToolDefinition {
     },
   };
 }
-
-

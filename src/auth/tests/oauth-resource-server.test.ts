@@ -117,8 +117,6 @@ describe("OAuthResourceServer", () => {
       expect(server.isScopeSupported("delete")).toBe(false);
       expect(server.isScopeSupported("unknown")).toBe(false);
     });
-
-
   });
 
   describe("getResourceUri()", () => {

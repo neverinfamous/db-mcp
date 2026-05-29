@@ -59,7 +59,7 @@ export function createLoadSpatialiteTool(
     handler: (_params: unknown, _context: RequestContext) => {
       try {
         const input = LoadSpatialiteSchema.parse(_params);
-      
+
         if (!input.forceReload && isSpatialiteLoaded(adapter)) {
           return Promise.resolve({
             success: true,
@@ -111,7 +111,7 @@ export function createSpatialTableTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = CreateSpatialTableSchema.parse(params);
-//       let queryParams: unknown[] = [];
+        //       let queryParams: unknown[] = [];
         ensureSpatialite(adapter);
 
         // Use canonical identifier validation (CWE-89 remediation)

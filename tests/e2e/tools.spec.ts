@@ -95,8 +95,7 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
       const createResponse = await client.callTool({
         name: "sqlite_write_query",
         arguments: {
-          query:
-            "UPDATE test_products SET price = price + 1 WHERE id = -1",
+          query: "UPDATE test_products SET price = price + 1 WHERE id = -1",
         },
       });
 
@@ -108,7 +107,10 @@ test.describe("E2E Tool Execution (via MCP SDK Client)", () => {
   });
 
   test("should execute code mode (sqlite_execute_code)", async ({}, testInfo) => {
-    test.skip(!hasIsolatedVm(), "isolated-vm is not installed on this system, skipping Code Mode tests");
+    test.skip(
+      !hasIsolatedVm(),
+      "isolated-vm is not installed on this system, skipping Code Mode tests",
+    );
     const baseURL = testInfo.project.use.baseURL as string;
     const client = await createClient(baseURL);
     try {

@@ -99,7 +99,8 @@ adminToolNames.push(
   "sqlite_audit_restore_backup",
   "drop_table", // explicitly admin since it is destructive, despite being in core
 );
-export const ADMIN_TOOLS: ReadonlySet<string> = withSqlitePrefix(adminToolNames);
+export const ADMIN_TOOLS: ReadonlySet<string> =
+  withSqlitePrefix(adminToolNames);
 
 /**
  * Read-only tools: tools that only read data (SELECT, metadata, pure functions).

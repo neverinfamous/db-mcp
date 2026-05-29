@@ -39,7 +39,12 @@ export const AnalyzeSchema = z.object({
 export const IntegrityCheckSchema = z.object({
   maxErrors: z.preprocess(
     coerceNumber,
-    z.number().int().optional().default(100).describe("Maximum errors to report"),
+    z
+      .number()
+      .int()
+      .optional()
+      .default(100)
+      .describe("Maximum errors to report"),
   ),
 });
 
@@ -51,7 +56,13 @@ export const OptimizeSchema = z.object({
 
 export const RestoreSchema = z.object({
   sourcePath: z.string().describe("Path to backup file to restore from"),
-  allowTriggers: z.boolean().optional().default(false).describe("If true, allows triggers in the backup file to be restored. This is a security risk if the backup file is untrusted."),
+  allowTriggers: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "If true, allows triggers in the backup file to be restored. This is a security risk if the backup file is untrusted.",
+    ),
 });
 
 export const VerifyBackupSchema = z.object({
@@ -112,7 +123,10 @@ export const AppendInsightSchema = z.object({
   insight: z
     .string()
     .max(2000)
-    .regex(/^[\x20-\x7E\n\r]*$/, "Insight must contain only printable ASCII characters")
+    .regex(
+      /^[\x20-\x7E\n\r]*$/,
+      "Insight must contain only printable ASCII characters",
+    )
     .describe("Business insight discovered from data analysis"),
 });
 
@@ -152,11 +166,18 @@ export const VacuumIntoCopySchema = z.object({
 export const AuditListBackupsSchema = z.object({
   limit: z.preprocess(
     coerceNumber,
-    z.number().int().min(1).max(100).optional().default(10).describe("Maximum number of snapshots to return (default 10, max 100)")
+    z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .default(10)
+      .describe("Maximum number of snapshots to return (default 10, max 100)"),
   ),
   offset: z.preprocess(
     coerceNumber,
-    z.number().int().min(0).optional().default(0).describe("Pagination offset")
+    z.number().int().min(0).optional().default(0).describe("Pagination offset"),
   ),
 });
 
@@ -216,7 +237,7 @@ export const AuditCleanupOutputSchema = z
   .object({
     success: z.boolean(),
     deletedCount: z.number().optional(),
-    message: z.string().optional()
+    message: z.string().optional(),
   })
   .extend(ErrorResponseFields.shape);
 
@@ -225,7 +246,7 @@ export const AuditDiffBackupOutputSchema = z
     success: z.boolean(),
     diffs: z.array(z.any()).optional(),
     snapshotTimestamp: z.string().optional(),
-    snapshotTarget: z.string().optional()
+    snapshotTarget: z.string().optional(),
   })
   .extend(ErrorResponseFields.shape);
 
@@ -235,7 +256,7 @@ export const AuditRestoreBackupOutputSchema = z
     message: z.string().optional(),
     ddl: z.string().optional(),
     dryRun: z.boolean().optional(),
-    changesApplied: z.number().optional()
+    changesApplied: z.number().optional(),
   })
   .extend(ErrorResponseFields.shape);
 
@@ -523,4 +544,3 @@ export type AuditRestoreBackupInput = z.infer<typeof AuditRestoreBackupSchema>;
 export type AuditDiffBackupInput = z.infer<typeof AuditDiffBackupSchema>;
 export type ReindexInput = z.infer<typeof ReindexSchema>;
 export type WalInput = z.infer<typeof WalSchema>;
-

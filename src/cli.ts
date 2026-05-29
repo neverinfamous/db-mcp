@@ -288,13 +288,17 @@ function loadEnvConfig(): Partial<McpServerConfig> {
   const authToken = process.env["MCP_AUTH_TOKEN"];
   if (authToken) {
     if (authToken.length < 32) {
-      logger.warning("MCP_AUTH_TOKEN is too short (< 32 chars). Use a cryptographically random token.");
+      logger.warning(
+        "MCP_AUTH_TOKEN is too short (< 32 chars). Use a cryptographically random token.",
+      );
     }
     config.authToken = authToken;
   }
-  
+
   if (process.env["NO_AUTH_ENFORCEMENT"] === "true") {
-    logger.warning("Auth enforcement explicitly disabled via NO_AUTH_ENFORCEMENT. Ensure this is not running in production.");
+    logger.warning(
+      "Auth enforcement explicitly disabled via NO_AUTH_ENFORCEMENT. Ensure this is not running in production.",
+    );
     config.noAuthEnforcement = true;
   }
 
@@ -385,7 +389,10 @@ async function main(): Promise<void> {
       !config.authToken &&
       !config.noAuthEnforcement
     ) {
-      logger.error("FATAL SECURITY ERROR: HTTP transport in production requires authentication (--oauth-enabled or --auth-token). If you intend to run without authentication, you must explicitly pass --no-auth-enforcement.", { module: "SERVER" });
+      logger.error(
+        "FATAL SECURITY ERROR: HTTP transport in production requires authentication (--oauth-enabled or --auth-token). If you intend to run without authentication, you must explicitly pass --no-auth-enforcement.",
+        { module: "SERVER" },
+      );
       process.exit(1);
     }
 
@@ -433,13 +440,17 @@ async function main(): Promise<void> {
     // Start server
     await server.start();
   } catch (error: unknown) {
-    logger.error("Fatal error", { error: error instanceof Error ? error : new Error(String(error)) });
+    logger.error("Fatal error", {
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
     process.exit(1);
   }
 }
 
 // Run
 main().catch((error: unknown) => {
-  logger.error("Unhandled fatal error", { error: error instanceof Error ? error : new Error(String(error)) });
+  logger.error("Unhandled fatal error", {
+    error: error instanceof Error ? error : new Error(String(error)),
+  });
   process.exit(1);
 });

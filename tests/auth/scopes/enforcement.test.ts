@@ -12,7 +12,6 @@ import { describe, it, expect } from "vitest";
 import {
   scopeGrantsToolAccess,
   scopesGrantToolAccess,
-
   getRequiredScopeForGroup,
   getRequiredScopeForTool,
   getAccessibleToolGroups,
@@ -126,16 +125,10 @@ describe("scopesGrantToolAccess", () => {
   });
 
   it("should check sqlite_-prefixed tool names", () => {
-    expect(
-      scopesGrantToolAccess(["write"], "sqlite_execute_code"),
-    ).toBe(false);
-    expect(
-      scopesGrantToolAccess(["admin"], "sqlite_execute_code"),
-    ).toBe(true);
+    expect(scopesGrantToolAccess(["write"], "sqlite_execute_code")).toBe(false);
+    expect(scopesGrantToolAccess(["admin"], "sqlite_execute_code")).toBe(true);
   });
 });
-
-
 
 // =============================================================================
 // getRequiredScopeForGroup / getRequiredScopeForTool

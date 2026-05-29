@@ -9,8 +9,16 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import { admin, adminFs, readOnly, write } from "../../../../utils/annotations.js";
-import { sanitizeIdentifier, validateSameDirPath } from "../../../../utils/index.js";
+import {
+  admin,
+  adminFs,
+  readOnly,
+  write,
+} from "../../../../utils/annotations.js";
+import {
+  sanitizeIdentifier,
+  validateSameDirPath,
+} from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 
 import { insightsManager } from "../../../../utils/insights-manager.js";
@@ -50,7 +58,7 @@ export function createPragmaCompileOptionsTool(
     handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const input = PragmaCompileOptionsSchema.parse(_params);
-      
+
         const result = await adapter.executeReadQuery("PRAGMA compile_options");
         let options = (result.rows ?? []).map(
           (r) => r["compile_options"] as string,
@@ -113,7 +121,9 @@ export function createPragmaDatabaseListTool(
         const normalize = (p: string): string => p.replace(/\\/g, "/");
         const mainDb = databases.find((db) => db.name === "main");
         const internalPathDiffers = Boolean(
-          mainDb?.file && normalize(mainDb.file) !== normalize(configuredPath.split(/[\\/]/).pop() ?? ""),
+          mainDb?.file &&
+          normalize(mainDb.file) !==
+            normalize(configuredPath.split(/[\\/]/).pop() ?? ""),
         );
 
         return {
@@ -147,7 +157,7 @@ export function createPragmaOptimizeTool(
     handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const input = PragmaOptimizeSchema.parse(_params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
         const start = Date.now();
 
         const sql =
@@ -209,19 +219,24 @@ export function createPragmaSettingsTool(
         "page_size",
         "busy_timeout",
         "cache_size",
-        "wal_autocheckpoint"
+        "wal_autocheckpoint",
       ]);
 
-      if (input.value !== undefined && !ALLOWED_WRITE_PRAGMAS.has(input.pragma.toLowerCase())) {
+      if (
+        input.value !== undefined &&
+        !ALLOWED_WRITE_PRAGMAS.has(input.pragma.toLowerCase())
+      ) {
         return {
           success: false,
           error: `Mutating PRAGMA '${input.pragma}' is not permitted for security reasons`,
-          code: "SECURITY_ERROR"
+          code: "SECURITY_ERROR",
         };
       }
-      
-      const isSensitive = ['key', 'cipher_key', 'hexkey', 'rekey'].includes(input.pragma.toLowerCase());
-      
+
+      const isSensitive = ["key", "cipher_key", "hexkey", "rekey"].includes(
+        input.pragma.toLowerCase(),
+      );
+
       try {
         if (input.value !== undefined) {
           // Get old value first
@@ -231,12 +246,13 @@ export function createPragmaSettingsTool(
           const oldValue = oldResult.rows?.[0]?.[input.pragma];
 
           // Set new value
-          const safeValue = typeof input.value === 'string' 
-            ? `'${input.value.replace(/'/g, "''")}'` 
-            : input.value;
+          const safeValue =
+            typeof input.value === "string"
+              ? `'${input.value.replace(/'/g, "''")}'`
+              : input.value;
           // skipValidation=true is passed here to bypass the strict regex checks in query-validation.ts
           // which normally block PRAGMA statements. This is safe because we've already enforced
-          // an explicit ALLOWED_WRITE_PRAGMAS allowlist above, protecting against dangerous 
+          // an explicit ALLOWED_WRITE_PRAGMAS allowlist above, protecting against dangerous
           // pragmas like writable_schema or foreign_keys.
           await adapter.rawQuery(
             `PRAGMA ${input.pragma} = ${safeValue}`,
@@ -303,7 +319,7 @@ export function createPragmaTableInfoTool(
     handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const input = PragmaTableInfoSchema.parse(_params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         // Validate and quote table name
         const table = sanitizeIdentifier(input.table);
@@ -364,7 +380,7 @@ export function createAppendInsightTool(): ToolDefinition {
     handler: (_params: unknown, _context: RequestContext) => {
       try {
         const input = AppendInsightSchema.parse(_params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         // Validate non-empty (can't use .min(1) on schema — SDK validates before handler)
         let sanitizedInsight = input.insight.replace(/[<>]/g, "");
@@ -416,7 +432,7 @@ export function createAttachDatabaseTool(
     handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const input = AttachDatabaseSchema.parse(_params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         // Prevent attaching as 'main' or 'temp'
         const aliasLower = input.alias.toLowerCase();
@@ -477,7 +493,7 @@ export function createDetachDatabaseTool(
     handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const input = DetachDatabaseSchema.parse(_params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         const aliasLower = input.alias.toLowerCase();
         if (aliasLower === "main" || aliasLower === "temp") {
@@ -503,4 +519,3 @@ export function createDetachDatabaseTool(
     },
   };
 }
-

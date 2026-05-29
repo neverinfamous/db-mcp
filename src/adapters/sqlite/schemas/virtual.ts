@@ -166,7 +166,11 @@ export const GenerateSeriesSchema = z.object({
   ),
   limit: z.preprocess(
     coerceNumber,
-    z.number().optional().default(100).describe("Maximum number of values to return (default: 100, max: 1000)"),
+    z
+      .number()
+      .optional()
+      .default(100)
+      .describe("Maximum number of values to return (default: 100, max: 1000)"),
   ),
 });
 
@@ -245,7 +249,10 @@ export const CreateCsvTableSchema = z.object({
   delimiter: z
     .string()
     .length(1, "Delimiter must be exactly one character")
-    .regex(/^[\t\x20-\x7E]$/, "Delimiter must be a printable ASCII character or tab")
+    .regex(
+      /^[\t\x20-\x7E]$/,
+      "Delimiter must be a printable ASCII character or tab",
+    )
     .optional()
     .default(",")
     .describe("Column delimiter"),
@@ -264,7 +271,10 @@ export const AnalyzeCsvSchemaSchema = z.object({
   delimiter: z
     .string()
     .length(1, "Delimiter must be exactly one character")
-    .regex(/^[\t\x20-\x7E]$/, "Delimiter must be a printable ASCII character or tab")
+    .regex(
+      /^[\t\x20-\x7E]$/,
+      "Delimiter must be a printable ASCII character or tab",
+    )
     .optional()
     .default(",")
     .describe("Column delimiter"),

@@ -22,7 +22,12 @@ import { RestoreSchema } from "../../../schemas/admin.js";
  * Validate DDL to prevent execution of unauthorized or destructive statements
  * during restore operations.
  */
-function validateDdl(sql: string, type: string, name: string, allowTriggers = false): void {
+function validateDdl(
+  sql: string,
+  type: string,
+  name: string,
+  allowTriggers = false,
+): void {
   const cleanSql = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "");
   const upperSql = cleanSql.toUpperCase();
   // Reject potentially destructive or unauthorized statements
@@ -77,7 +82,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
     },
     handler: async (params: unknown, context: RequestContext) => {
       let input;
-      
+
       try {
         input = RestoreSchema.parse(params);
       } catch (error: unknown) {
@@ -116,9 +121,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
       );
       if (!pathCheck.valid) {
         return {
-          ...formatHandlerError(
-            new ValidationError(pathCheck.error),
-          ),
+          ...formatHandlerError(new ValidationError(pathCheck.error)),
           sourcePath: input.sourcePath,
         };
       }
@@ -162,10 +165,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             const tableName = row["name"] as string;
             const quotedName = `"${tableName.replace(/"/g, '""')}"`;
             await adapter
-              .rawQuery(
-                `DROP TABLE IF EXISTS main.${quotedName}`,
-                undefined,
-              )
+              .rawQuery(`DROP TABLE IF EXISTS main.${quotedName}`, undefined)
               .catch(() => {
                 // Ignore errors
               });
@@ -176,10 +176,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
 
         await sendProgress(progress, 4, 5, "Restoring tables from backup...");
 
-        await adapter.rawQuery(
-          "PRAGMA foreign_keys = OFF",
-          undefined,
-        );
+        await adapter.rawQuery("PRAGMA foreign_keys = OFF", undefined);
 
         const tablesResult = await adapter.executeReadQuery(
           `SELECT name, sql FROM backup_source.sqlite_master
@@ -215,10 +212,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
             try {
               validateDdl(createSql, "table", tableName);
               await adapter
-                .rawQuery(
-                  `DROP TABLE IF EXISTS main.${quotedName}`,
-                  undefined,
-                )
+                .rawQuery(`DROP TABLE IF EXISTS main.${quotedName}`, undefined)
                 .catch(() => {
                   /* ignore */
                 });
@@ -256,7 +250,9 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           try {
             validateDdl(createSql, "table", tableName);
           } catch (error: unknown) {
-            skippedTables.push(`${tableName} (DDL Validation: ${error instanceof Error ? error.message : String(error)})`);
+            skippedTables.push(
+              `${tableName} (DDL Validation: ${error instanceof Error ? error.message : String(error)})`,
+            );
             continue;
           }
 
@@ -310,10 +306,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           try {
             validateDdl(createSql, "view", viewName);
             await adapter
-              .rawQuery(
-                `DROP VIEW IF EXISTS main.${quotedViewName}`,
-                undefined,
-              )
+              .rawQuery(`DROP VIEW IF EXISTS main.${quotedViewName}`, undefined)
               .catch(() => {
                 /* ignore */
               });
@@ -343,10 +336,7 @@ export function createRestoreTool(adapter: SqliteAdapter): ToolDefinition {
           }
         }
 
-        await adapter.rawQuery(
-          "PRAGMA foreign_keys = ON",
-          undefined,
-        );
+        await adapter.rawQuery("PRAGMA foreign_keys = ON", undefined);
 
         const duration = Date.now() - start;
 

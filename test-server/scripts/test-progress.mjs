@@ -7,13 +7,7 @@ const projectDir = resolve(__dirname, "../..");
 
 const proc = spawn(
   "node",
-  [
-    "dist/cli.js",
-    "--sqlite",
-    "./test-server/test.db",
-    "--log-level",
-    "error",
-  ],
+  ["dist/cli.js", "--sqlite", "./test-server/test.db", "--log-level", "error"],
   {
     cwd: projectDir,
     stdio: ["pipe", "pipe", "pipe"],
@@ -33,13 +27,15 @@ proc.stdout.on("data", (chunk) => {
     if (!trimmed) continue;
     try {
       const msg = JSON.parse(trimmed);
-      
+
       // Handle notifications
       if (msg.method === "notifications/progress") {
-        console.log(`[PROGRESS] Step ${msg.params.progress} of ${msg.params.total || '?'}`);
+        console.log(
+          `[PROGRESS] Step ${msg.params.progress} of ${msg.params.total || "?"}`,
+        );
         progressEvents.push(msg.params);
       }
-      
+
       // Handle RPC responses
       if (msg.id && pending.has(msg.id)) {
         pending.get(msg.id)(msg);
@@ -102,11 +98,11 @@ async function main() {
   `;
 
   console.log("\nCalling sqlite_execute_code with a progress loop...");
-  
+
   const response = await rpc("tools/call", {
     name: "sqlite_execute_code",
     arguments: { code },
-    _meta: { progressToken: "test-token" }
+    _meta: { progressToken: "test-token" },
   });
 
   if (response.error) {
@@ -114,11 +110,13 @@ async function main() {
     process.exitCode = 1;
   } else {
     console.log("\nTool finished successfully!");
-    
+
     if (progressEvents.length === 3) {
       console.log(`PASS: Received exactly 3 progress notifications!`);
     } else {
-      console.error(`FAIL: Expected 3 progress notifications, got ${progressEvents.length}`);
+      console.error(
+        `FAIL: Expected 3 progress notifications, got ${progressEvents.length}`,
+      );
       process.exitCode = 1;
     }
   }

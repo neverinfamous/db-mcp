@@ -47,10 +47,17 @@ test.describe("Payload Contracts: CSV Tools", () => {
       if (!payload.success) {
         // CSV extension not available — mark remaining tests for skip
         const msg = String(payload.error ?? payload.message ?? "");
-        if (msg.includes("not available") || msg.includes("csv") || msg.includes("CSV") || msg.includes("EXTENSION_MISSING")) {
+        if (
+          msg.includes("not available") ||
+          msg.includes("csv") ||
+          msg.includes("CSV") ||
+          msg.includes("EXTENSION_MISSING")
+        ) {
           csvAvailable = false;
           // Extension unavailability is an expected condition — pass gracefully
-          expect(["EXTENSION_MISSING", "DB_QUERY_FAILED"]).toContain(payload.code);
+          expect(["EXTENSION_MISSING", "DB_QUERY_FAILED"]).toContain(
+            payload.code,
+          );
           return;
         }
       }

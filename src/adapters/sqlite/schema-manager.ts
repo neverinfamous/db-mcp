@@ -197,7 +197,9 @@ export class SchemaManager {
 
     let strict = false;
     try {
-      const listResult = await this.executor.executeReadQuery(`PRAGMA table_list("${tableName}")`);
+      const listResult = await this.executor.executeReadQuery(
+        `PRAGMA table_list("${tableName}")`,
+      );
       if (listResult.rows && listResult.rows.length > 0) {
         strict = listResult.rows[0]?.["strict"] === 1;
       }
@@ -205,7 +207,7 @@ export class SchemaManager {
       try {
         const ddlResult = await this.executor.executeReadQuery(
           "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
-          [tableName]
+          [tableName],
         );
         const ddl = (ddlResult.rows?.[0]?.["sql"] as string) ?? "";
         if (/\)\s*STRICT/i.test(ddl)) {

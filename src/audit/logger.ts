@@ -26,8 +26,6 @@ const DEFAULT_RECENT_COUNT = 50;
 /** Special logPath value that routes audit output to stderr */
 const STDERR_SENTINEL = "stderr";
 
-
-
 /**
  * Maximum bytes to read from the end of the audit log for `recent()`.
  * 64 KB is enough for ~100+ typical JSONL audit entries (~500 bytes each).

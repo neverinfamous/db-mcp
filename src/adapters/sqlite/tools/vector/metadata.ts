@@ -45,7 +45,7 @@ export function createVectorCountTool(adapter: SqliteAdapter): ToolDefinition {
       const queryParams: unknown[] = [];
       try {
         const input = VectorCountSchema.parse(params);
-      
+
         // Validate and quote table name
         const table = sanitizeIdentifier(input.table);
 
@@ -81,7 +81,7 @@ export function createVectorStatsTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorStatsSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
@@ -165,7 +165,7 @@ export function createVectorDimensionsTool(
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorDimensionsSchema.parse(params);
-      const queryParams: unknown[] = [];
+        const queryParams: unknown[] = [];
 
         // Validate and quote identifiers
         const table = sanitizeIdentifier(input.table);
@@ -218,7 +218,7 @@ export function createVectorNormalizeTool(): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorNormalizeSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         if (input.vector.length === 0) {
           return Promise.resolve({
@@ -263,7 +263,7 @@ export function createVectorDistanceTool(): ToolDefinition {
     handler: (params: unknown, _context: RequestContext) => {
       try {
         const input = VectorDistanceSchema.parse(params);
-//       const queryParams: unknown[] = [];
+        //       const queryParams: unknown[] = [];
 
         if (input.vector1.length === 0 || input.vector2.length === 0) {
           return Promise.resolve({
