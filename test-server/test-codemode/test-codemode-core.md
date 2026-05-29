@@ -222,7 +222,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 57. `sqlite.core.describeTable({table: "nonexistent_table"})` → `{success: false}`
 🔴 58. `sqlite.core.getIndexes({table: "nonexistent_table"})` → `{success: false}`
 🔴 59. `sqlite.core.createIndex({table: "nonexistent_table", columns: ["id"], indexName: "idx_bad"})` → `{success: false}`
-🔴 60. `sqlite.core.listTriggers({table: "nonexistent_xyz"})` → report behavior (may return empty or error)
+🔴 60. `sqlite.core.listTriggers({table: "nonexistent_xyz"})` → `{success: false}` (TABLE_NOT_FOUND)
 🔴 61. `sqlite.core.listConstraints({table: "nonexistent_xyz"})` → `{success: false}`
 
 **Write/read separation (gotcha #1):**
@@ -232,7 +232,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **Boundary conditions:**
 
-🔴 64. `sqlite.core.batchInsert({table: "test_products", rows: []})` → report behavior (empty rows array)
+🔴 64. `sqlite.core.batchInsert({table: "test_products", rows: []})` → `{success: false}` handler error (VALIDATION_ERROR)
 
 **ALTER TABLE domain errors:**
 
