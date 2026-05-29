@@ -65,7 +65,7 @@ export function createWalTool(adapter: SqliteAdapter): ToolDefinition {
             }
 
             // Enable WAL
-            const enableResult = await adapter.executeQuery(
+            const enableResult = await adapter.rawQuery(
               "PRAGMA journal_mode=WAL",
             );
             const newMode =
@@ -98,7 +98,7 @@ export function createWalTool(adapter: SqliteAdapter): ToolDefinition {
             }
 
             // Switch to DELETE mode
-            const disableResult = await adapter.executeQuery(
+            const disableResult = await adapter.rawQuery(
               "PRAGMA journal_mode=DELETE",
             );
             const newMode =
@@ -131,7 +131,7 @@ export function createWalTool(adapter: SqliteAdapter): ToolDefinition {
             }
 
             // Run checkpoint with specified mode
-            const checkpointResult = await adapter.executeQuery(
+            const checkpointResult = await adapter.rawQuery(
               `PRAGMA wal_checkpoint(${input.checkpointMode})`,
             );
 

@@ -6,6 +6,7 @@
 - 20 new tools across Core, Admin, Stats, JSON, Introspection, and Server Audit groups (including DDL operations, WAL management, schema diffing, and backup lifecycle).
 - `sqlite.reportProgress()` utility in Code Mode for long-running sandboxed execution feedback.
 - Output schema registry and reference documentation for LLM invocations.
+- Expanded Vitest test coverage for `Core`, `Admin`, and `Introspection` tool handlers.
 
 ### Changed
 
@@ -37,6 +38,7 @@
 - Fixed `sqlite_audit_restore_backup` crashing on comment-only snapshots.
 - Fixed false-positive path traversal violation on Windows due to drive letter case sensitivity.
 - Fixed WASM degradation test assertions for Code Mode.
+- Fixed `sqlite_wal` failing to enable WAL mode due to the internal query validation layer erroneously blocking `PRAGMA journal_mode`; now leverages `rawQuery` to execute admin actions correctly.
 
 ### Security
 
