@@ -2,7 +2,7 @@
 
 > **Agent-optimized navigation reference.** Read this before searching the codebase. Covers directory layout, handler→tool mapping, type/schema locations, error hierarchy, and key constants.
 >
-> Last updated: May 22, 2026
+> Last updated: May 29, 2026
 
 ---
 
@@ -214,7 +214,6 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `introspection/analysis/diff.ts`          | 1     | `sqlite_schema_diff`                                                                                                          |
 |                   | `introspection/diagnostics/storage.ts`    | 1     | `sqlite_storage_analysis`                                                                                                     |
 |                   | `introspection/diagnostics/indexes.ts`    | 1     | `sqlite_index_audit`                                                                                                          |
-|                   | `introspection/diagnostics/indexes.ts`    | 1     | `sqlite_index_audit`                                                                                                           |
 |                   | `introspection/diagnostics/query-plan.ts` | 1     | `sqlite_query_plan`                                                                                                           |
 | **migration**     | `migration/tracking/init.ts`              | 1     | `sqlite_migration_init`                                                                                                       |
 |                   | `migration/tracking/record.ts`            | 1     | `sqlite_migration_record`                                                                                                     |
@@ -396,7 +395,7 @@ catch (error) {
 | `test-server/README.md`                      | Agent testing orchestration doc                                                                                    |
 | `test-server/test-database.sql`              | Seed DDL+DML (10 tables, ~400 rows)                                                                                |
 | `test-server/reset-database.ps1`             | Reset script — drops + re-seeds `test.db`                                                                          |
-| `test-server/tool-reference.md`              | Tool inventory (171N/144W group+audit; 175N/148W MCP total) with [Tool Count Taxonomy](test-server/tool-reference.md#tool-count-taxonomy) and descriptions |
+| `test-server/tool-reference.md`              | Tool inventory (172N/145W group+audit; 176N/149W MCP total) with [Tool Count Taxonomy](test-server/tool-reference.md#tool-count-taxonomy) and descriptions |
 | `test-server/test-preflight.md`              | Pre-test verification checklist                                                                                    |
 | `test-server/test-tool-groups/`              | 20 self-contained test prompts — sub-group granularity (e.g., core-data, core-schema). Direct calls only.           |
 | `test-server/test-codemode/`                 | 12 self-contained test prompts — 10 tool groups + sandbox + wasm-degradation meta-tests. Code Mode execution only. |
