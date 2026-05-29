@@ -144,7 +144,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 > Dimension validation on store is best-effort. `distance` enforces strictly.
 
 15. `sqlite.vector.store({table: "stress_vec_empty", idColumn: "id", vectorColumn: "vector", id: 2, vector: [1, 2]})` → dimension mismatch error (table has 4-dim rows)
-16. `sqlite.vector.search({table: "stress_vec_empty", vectorColumn: "vector", queryVector: [1, 2], metric: "cosine"})` → search runs (dimension mismatch silently handled via try/catch)
+16. `sqlite.vector.search({table: "stress_vec_empty", vectorColumn: "vector", queryVector: [1, 2], metric: "cosine"})` → search runs (dimension mismatch handled via try/catch, returns warning)
 17. `sqlite.vector.distance({vector1: [1, 2, 3], vector2: [1, 2], metric: "cosine"})` → structured error: "Vector dimensions must match"
 
 
