@@ -61,6 +61,6 @@ jobs:
       attestations: write
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
       DOCKERHUB_DESC_TOKEN: ${{ secrets.DOCKERHUB_DESC_TOKEN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
