@@ -12,6 +12,7 @@
 
 - Bumped npm dependencies (including `@modelcontextprotocol/sdk` to 1.29.0, `zod` to 4.4.3) and GitHub Actions versions.
 - Optimized token context-window usage by enforcing `limit`/`offset` pagination, result truncation, explicit wide-column validation, and defaulting date tools to computed columns.
+- Optimized `sqlite_json_diff` tool with an `onlyDifferences` flag to filter identical rows and prevent unnecessary LLM context window bloat on large datasets.
 - Implemented MCP 2025 Specification annotations globally (`sensitiveHint` for tools, `ASSISTANT_FOCUSED` for resources).
 - Enhanced DDL tools (`sqlite_create_table`, `sqlite_describe_table`) with support for `STRICT` tables, generated columns, and `sqlite_temp_master`.
 - Improved Code Mode performance with LRU eviction for the `SandboxPool` and global WASM engine caching.

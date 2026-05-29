@@ -519,6 +519,7 @@ export const JsonDiffSchema = z.object({
       .default(50)
       .describe("Maximum rows to compare (default: 50, max: 100)"),
   ),
+  onlyDifferences: z.boolean().optional().default(false).describe("Only return rows where the values differ"),
 });
 
 export const JsonDiffOutputSchema = z
