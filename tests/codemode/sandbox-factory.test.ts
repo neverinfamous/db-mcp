@@ -4,7 +4,7 @@
  * Tests factory functions, mode management, and mode info.
  */
 
-import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   createSandbox,
   createSandboxPool,
@@ -30,8 +30,6 @@ describe("sandbox-factory", () => {
       setDefaultSandboxMode("isolate");
       expect(getDefaultSandboxMode()).toBe("isolate");
     });
-
-
   });
 
   describe("getAvailableSandboxModes", () => {
@@ -52,8 +50,6 @@ describe("sandbox-factory", () => {
       expect(sandbox.isHealthy()).toBe(true);
       sandbox.dispose();
     });
-
-
 
     it("should use default mode when none specified", () => {
       setDefaultSandboxMode("isolate");
@@ -85,8 +81,6 @@ describe("sandbox-factory", () => {
       pool.dispose();
     });
 
-
-
     it("should use default mode when none specified", () => {
       setDefaultSandboxMode("isolate");
       const pool = createSandboxPool();
@@ -95,7 +89,10 @@ describe("sandbox-factory", () => {
     });
 
     it("should initialize pool correctly", () => {
-      const pool = createSandboxPool("isolate", { minInstances: 2, maxInstances: 5 });
+      const pool = createSandboxPool("isolate", {
+        minInstances: 2,
+        maxInstances: 5,
+      });
       pool.initialize();
       const stats = pool.getStats();
       expect(stats.available).toBe(5);
@@ -109,8 +106,6 @@ describe("sandbox-factory", () => {
   // ===========================================================================
 
   describe("getSandboxModeInfo", () => {
-
-
     it("should return isolate mode info", () => {
       const info = getSandboxModeInfo("isolate");
       expect(info.name).toBe("Isolated VM");

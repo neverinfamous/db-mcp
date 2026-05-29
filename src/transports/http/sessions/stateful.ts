@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { ERROR_CODES, createModuleLogger } from "../../../utils/logger/index.js";
+import {
+  ERROR_CODES,
+  createModuleLogger,
+} from "../../../utils/logger/index.js";
 import type { HttpTransportState } from "../types.js";
 import { JSONRPC_SERVER_ERROR, JSONRPC_INTERNAL_ERROR } from "../types.js";
 import { asIncoming, asServerResponse } from "../type-adapters.js";
@@ -96,10 +99,11 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
     void (async () => {
       try {
         let httpTransport: StreamableHTTPServerTransport | undefined;
+        const existingTransport = sessionId ? state.transports.get(sessionId) : undefined;
 
-        if (sessionId && state.transports.has(sessionId)) {
+        if (existingTransport !== undefined) {
           // H-2: Verify the requesting client owns this session
-          if (!verifySessionOwner(state, sessionId, req.auth?.sub)) {
+          if (!verifySessionOwner(state, sessionId!, req.auth?.sub)) {
             res.status(403).json({
               jsonrpc: "2.0",
               error: {
@@ -110,7 +114,7 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
             });
             return;
           }
-          httpTransport = state.transports.get(sessionId);
+          httpTransport = existingTransport;
         } else if (sessionId === undefined && isNewSessionRequest(req.body)) {
           const maxSessions = state.config.maxSessions ?? 1000;
           if (state.transports.size >= maxSessions) {
@@ -118,7 +122,8 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
               jsonrpc: "2.0",
               error: {
                 code: JSONRPC_SERVER_ERROR,
-                message: "Too Many Requests: Maximum number of concurrent sessions reached",
+                message:
+                  "Too Many Requests: Maximum number of concurrent sessions reached",
               },
               id: null,
             });
@@ -248,7 +253,13 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
   state.app.get("/mcp", (req: Request, res: Response): void => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-    if (sessionId === undefined || !isValidSessionId(sessionId) || !state.transports.has(sessionId)) {
+    if (sessionId === undefined || !isValidSessionId(sessionId)) {
+      res.status(400).send("Invalid or missing session ID");
+      return;
+    }
+
+    const httpTransport = state.transports.get(sessionId);
+    if (httpTransport === undefined) {
       res.status(400).send("Invalid or missing session ID");
       return;
     }
@@ -268,7 +279,6 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
       });
     }
 
-    const httpTransport = state.transports.get(sessionId);
     if (httpTransport !== undefined) {
       void httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
     }
@@ -277,7 +287,13 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
   state.app.delete("/mcp", (req: Request, res: Response): void => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-    if (sessionId === undefined || !isValidSessionId(sessionId) || !state.transports.has(sessionId)) {
+    if (sessionId === undefined || !isValidSessionId(sessionId)) {
+      res.status(400).send("Invalid or missing session ID");
+      return;
+    }
+
+    const httpTransport = state.transports.get(sessionId);
+    if (httpTransport === undefined) {
       res.status(400).send("Invalid or missing session ID");
       return;
     }
@@ -293,7 +309,6 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
       sessionId,
     });
 
-    const httpTransport = state.transports.get(sessionId);
     if (httpTransport !== undefined) {
       void httpTransport.handleRequest(asIncoming(req), asServerResponse(res));
     }

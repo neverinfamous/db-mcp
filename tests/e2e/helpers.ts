@@ -13,9 +13,6 @@ import type { TestInfo } from "@playwright/test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import * as fs from "node:fs";
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
 
 /**
  * Check if isolated-vm is available on this system.
@@ -161,7 +158,11 @@ export async function startServer(
       `./test-e2e-${suffix}.db`,
       "--tool-filter",
       "starter",
-      ...(args.includes("--auth-token") || args.includes("--oauth-enabled") || args.includes("--no-auth-enforcement") ? [] : ["--no-auth-enforcement"]),
+      ...(args.includes("--auth-token") ||
+      args.includes("--oauth-enabled") ||
+      args.includes("--no-auth-enforcement")
+        ? []
+        : ["--no-auth-enforcement"]),
       ...args,
     ],
     {
