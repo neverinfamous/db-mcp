@@ -10,6 +10,7 @@
     "db-mcp": "./dist/cli.js"
   },
   "scripts": {
+    "install": "echo \"Skipping automatic native build to preserve optional dependencies\"",
     "build": "npm run build:native && npm run build:js && npm run build:types",
     "build:native": "node-gyp rebuild",
     "build:js": "tsup",
