@@ -9,6 +9,9 @@
   "bin": {
     "db-mcp": "./dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "install": "echo \"Skipping automatic native build to preserve optional dependencies\"",
     "build": "npm run build:native && npm run build:js && npm run build:types",
