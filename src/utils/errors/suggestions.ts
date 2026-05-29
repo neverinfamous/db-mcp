@@ -250,6 +250,22 @@ const ERROR_SUGGESTIONS: {
     category: ErrorCategory.CONFIGURATION,
     code: "EXTENSION_MISSING",
   },
+
+  // Custom JS errors mapped from tools
+  {
+    pattern: /invalid identifier/i,
+    suggestion:
+      "Identifiers must start with a letter or underscore and contain only alphanumeric characters or underscores. Ensure the name follows SQLite identifier rules.",
+    category: ErrorCategory.VALIDATION,
+    code: "INVALID_IDENTIFIER",
+  },
+  {
+    pattern: /(expected property name|unexpected token|in JSON at position|Expected double-quoted property name)/i,
+    suggestion:
+      "The JSON data provided is malformed. Ensure the input string is valid JSON.",
+    category: ErrorCategory.VALIDATION,
+    code: "MALFORMED_JSON",
+  },
 ];
 
 /**
