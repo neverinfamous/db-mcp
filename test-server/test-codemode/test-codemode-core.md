@@ -141,8 +141,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 8. `sqlite.core.count({table: "test_products", column: "category", distinct: true})` → distinct category count
 9. `sqlite.core.exists({table: "test_products", whereClause: "price > 1000"})` → `{exists: true}`
 10. `sqlite.core.exists({table: "test_products", whereClause: "price > 99999"})` → `{exists: false}`
-11. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → returns `date_add_result` correctly calculated
-12. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → returns `date_diff_result` in days
+11. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → `{rows: [{date_add_result: ...}]}`
+12. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → `{rows: [{date_diff_result: ...}]}`
 
 **Write tools (use temp tables):**
 

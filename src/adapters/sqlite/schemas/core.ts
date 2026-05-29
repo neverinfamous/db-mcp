@@ -93,6 +93,7 @@ export const DescribeTableOutputSchema = z
   .object({
     success: z.boolean(),
     table: z.string().optional(),
+    strict: z.boolean().optional(),
     rowCount: z.number().optional(),
     columns: z.array(ColumnInfoSchema).optional(),
   })

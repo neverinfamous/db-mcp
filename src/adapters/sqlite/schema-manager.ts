@@ -195,9 +195,31 @@ export class SchemaManager {
       defaultValue: row["dflt_value"],
     }));
 
+    let strict = false;
+    try {
+      const listResult = await this.executor.executeReadQuery(`PRAGMA table_list("${tableName}")`);
+      if (listResult.rows && listResult.rows.length > 0) {
+        strict = listResult.rows[0]?.["strict"] === 1;
+      }
+    } catch {
+      try {
+        const ddlResult = await this.executor.executeReadQuery(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+          [tableName]
+        );
+        const ddl = (ddlResult.rows?.[0]?.["sql"] as string) ?? "";
+        if (/\)\s*STRICT/i.test(ddl)) {
+          strict = true;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     const tableInfo: TableInfo = {
       name: tableName,
       type: "table",
+      strict,
       columns,
     };
 

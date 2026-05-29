@@ -452,6 +452,7 @@ export function createDescribeTableTool(
         return {
           success: true,
           table: tableInfo.name,
+          strict: tableInfo.strict,
           rowCount: tableInfo.rowCount,
           columns: enrichedColumns,
         };

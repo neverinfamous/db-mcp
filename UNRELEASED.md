@@ -39,6 +39,7 @@
 - Fixed false-positive path traversal violation on Windows due to drive letter case sensitivity.
 - Fixed WASM degradation test assertions for Code Mode.
 - Fixed `sqlite_wal` failing to enable WAL mode due to the internal query validation layer erroneously blocking `PRAGMA journal_mode`; now leverages `rawQuery` to execute admin actions correctly.
+- Fixed `sqlite_describe_table` to accurately report the `strict` property for SQLite 3.37.1+ STRICT tables by parsing `PRAGMA table_list` with a DDL fallback.
 
 ### Security
 
