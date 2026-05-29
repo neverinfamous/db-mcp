@@ -24,7 +24,7 @@ const templateStr = fs.readFileSync(templatePath, 'utf-8');
 const WASM_ALL_COMPATIBLE = 'All tools are fully WASM-compatible.';
 const WASM_HAS_NATIVE = 'Tools marked `[NATIVE ONLY]` in the checklist are unavailable and should be skipped. All unmarked tools are fully WASM-compatible.';
 
-const getTemplate = (titleType, groupName, schemaRef, wasmMode, testContent) => {
+const getTemplate = (titleType, groupName, schemaRef, wasmMode, testContent, fileCleanup) => {
   // Use replacer functions (not string literals) to prevent $-substitution.
   // String.prototype.replace() interprets $&, $', $`, $n in string replacements.
   // Test content may contain $ (e.g. regex patterns like `@gmail\\.com$`).
@@ -33,6 +33,7 @@ const getTemplate = (titleType, groupName, schemaRef, wasmMode, testContent) => 
     .replace('{{GROUP_NAME}}', () => groupName)
     .replace('{{SCHEMA_REF}}', () => schemaRef.trim())
     .replace('{{WASM_MODE}}', () => wasmMode)
+    .replace('{{FILE_CLEANUP}}', () => fileCleanup)
     .replace('{{TEST_CONTENT}}', () => testContent.trim());
 };
 
@@ -133,7 +134,12 @@ function processDirectory(dirName) {
       ? WASM_HAS_NATIVE
       : WASM_ALL_COMPATIBLE;
 
-    const newContent = getTemplate(titleType, groupName, schemaRef, wasmMode, testContent);
+    let fileCleanup = '';
+    if (file === 'test-codemode-admin.md') {
+      fileCleanup = `- **Temporary files**: Delete the following test artifacts after testing:\n  - \`C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-dump.sql\`\n  - \`C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-backup.db\`\n  - \`C:\\\\Users\\\\chris\\\\Desktop\\\\db-mcp\\\\test-server\\\\test-vacuum-copy.db\``;
+    }
+
+    const newContent = getTemplate(titleType, groupName, schemaRef, wasmMode, testContent, fileCleanup);
     fs.writeFileSync(filePath, newContent, 'utf-8');
     console.log(`Standardized ${file} (${titleType}, WASM: ${testContent.includes('[NATIVE ONLY]') ? 'has-native' : 'all-wasm'})`);
   }
