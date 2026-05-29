@@ -41,7 +41,7 @@ jobs:
         run: git diff --exit-code Dockerfile || (echo "Uncommitted changes to Dockerfile detected" && exit 1)
 
       - name: Build image for scanning (local only)
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: Dockerfile
@@ -162,7 +162,7 @@ jobs:
 
       - name: Build and push to local registry
         id: build
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: Dockerfile
