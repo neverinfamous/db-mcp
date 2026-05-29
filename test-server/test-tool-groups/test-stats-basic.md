@@ -134,50 +134,53 @@ All tools should return errors as structured objects instead of throwing. The ex
 12. `sqlite_stats_outliers({table: "test_measurements", column: "temperature"})` → outlier detection result
 13. `sqlite_stats_regression({table: "test_measurements", xColumn: "temperature", yColumn: "humidity", degree: 1})` → regression coefficients
 14. `sqlite_stats_hypothesis({table: "test_measurements", column: "temperature", testType: "ttest_one", expectedMean: 25})` → verify `statistic` and `pValue` present
-15. `sqlite_stats_sample({table: "test_measurements", sampleSize: 10})` → verify `sampleSize`, `totalRows: 200`, `rows` array with ≤ 10 items
-16. `sqlite_stats_sample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → verify column filtering
+15. `sqlite_stats_detect_anomalies({table: "test_measurements", column: "temperature"})` → verify `anomalies` array and `summary`
+16. `sqlite_stats_detect_bloat({})` → verify `tables` array and `summary`
+17. `sqlite_stats_detect_schema_risks({})` → verify `tables` array and `summary`
+18. `sqlite_stats_sample({table: "test_measurements", sampleSize: 10})` → verify `sampleSize`, `totalRows: 200`, `rows` array with ≤ 10 items
+19. `sqlite_stats_sample({table: "test_products", sampleSize: 5, selectColumns: ["name", "price"]})` → verify column filtering
 
 **Code mode testing:**
 
-17. `sqlite_execute_code({code: "const result = await sqlite.stats.statsBasic({table: 'test_measurements', column: 'temperature'}); return result;"})` → verify `count: 200`, `min`, `max`, `avg` present
-18. `sqlite_execute_code({code: "const result = await sqlite.stats.statsPercentile({table: 'test_measurements', column: 'temperature', percentiles: [50]}); return result;"})` → median value
+20. `sqlite_execute_code({code: "const result = await sqlite.stats.statsBasic({table: 'test_measurements', column: 'temperature'}); return result;"})` → verify `count: 200`, `min`, `max`, `avg` present
+21. `sqlite_execute_code({code: "const result = await sqlite.stats.statsPercentile({table: 'test_measurements', column: 'temperature', percentiles: [50]}); return result;"})` → median value
 
 **Error path testing:**
 
-🔴 19. `sqlite_stats_basic({table: "nonexistent_table_xyz", column: "x"})` → structured error
-🔴 20. `sqlite_stats_correlation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
-🔴 21. `sqlite_stats_sample({table: "nonexistent_xyz", sampleSize: 5})` → structured error
+🔴 22. `sqlite_stats_basic({table: "nonexistent_table_xyz", column: "x"})` → structured error
+🔴 23. `sqlite_stats_correlation({table: "test_products", column1: "name", column2: "description"})` → error about non-numeric columns
+🔴 24. `sqlite_stats_sample({table: "nonexistent_xyz", sampleSize: 5})` → structured error
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 22. `sqlite_stats_basic({})` → handler error
-🔴 23. `sqlite_stats_count({})` → handler error
-🔴 24. `sqlite_stats_group_by({})` → handler error
-🔴 25. `sqlite_stats_histogram({})` → handler error
-🔴 26. `sqlite_stats_percentile({})` → handler error
-🔴 27. `sqlite_stats_correlation({})` → handler error
-🔴 28. `sqlite_stats_top_n({})` → handler error
-🔴 29. `sqlite_stats_distinct({})` → handler error
-🔴 30. `sqlite_stats_summary({})` → handler error
-🔴 31. `sqlite_stats_frequency({})` → handler error
-🔴 32. `sqlite_stats_outliers({})` → handler error
-🔴 33. `sqlite_stats_regression({})` → handler error
-🔴 34. `sqlite_stats_hypothesis({})` → handler error
-🔴 35. `sqlite_stats_detect_anomalies({})` → handler error
-✅ 36. `sqlite_stats_detect_bloat({})` → success (no required params)
-✅ 37. `sqlite_stats_detect_schema_risks({})` → success (no required params)
-🔴 38. `sqlite_stats_sample({})` → handler error
-🔴 39. `sqlite_execute_code({})` → handler error
+🔴 25. `sqlite_stats_basic({})` → handler error
+🔴 26. `sqlite_stats_count({})` → handler error
+🔴 27. `sqlite_stats_group_by({})` → handler error
+🔴 28. `sqlite_stats_histogram({})` → handler error
+🔴 29. `sqlite_stats_percentile({})` → handler error
+🔴 30. `sqlite_stats_correlation({})` → handler error
+🔴 31. `sqlite_stats_top_n({})` → handler error
+🔴 32. `sqlite_stats_distinct({})` → handler error
+🔴 33. `sqlite_stats_summary({})` → handler error
+🔴 34. `sqlite_stats_frequency({})` → handler error
+🔴 35. `sqlite_stats_outliers({})` → handler error
+🔴 36. `sqlite_stats_regression({})` → handler error
+🔴 37. `sqlite_stats_hypothesis({})` → handler error
+🔴 38. `sqlite_stats_detect_anomalies({})` → handler error
+39. `sqlite_stats_detect_bloat({})` → success (no required params)
+40. `sqlite_stats_detect_schema_risks({})` → success (no required params)
+🔴 41. `sqlite_stats_sample({})` → handler error
+🔴 42. `sqlite_execute_code({})` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 40. `sqlite_stats_histogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → handler error
-🔴 41. `sqlite_stats_top_n({table: "test_products", column: "price", n: "abc"})` → handler error
-🔴 42. `sqlite_stats_sample({table: "test_measurements", sampleSize: "abc"})` → handler error
+🔴 43. `sqlite_stats_histogram({table: "test_measurements", column: "temperature", buckets: "abc"})` → handler error
+🔴 44. `sqlite_stats_top_n({table: "test_products", column: "price", n: "abc"})` → handler error
+🔴 45. `sqlite_stats_sample({table: "test_measurements", sampleSize: "abc"})` → handler error
 
 ---
 
