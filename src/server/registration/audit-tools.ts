@@ -619,7 +619,27 @@ export function registerAuditBackupTools(
           const statements = ddl
             .split(";")
             .map((s: string) => s.trim())
-            .filter(Boolean);
+            .filter((s: string) => {
+              const cleanSql = s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").trim();
+              return cleanSql.length > 0;
+            });
+
+          if (statements.length === 0) {
+            const result = {
+              success: true,
+              message: "No executable statements found in snapshot (only comments)",
+              changesApplied: 0,
+            };
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: JSON.stringify(result, null, 2),
+                },
+              ],
+              structuredContent: result,
+            };
+          }
 
           await adapter.executeQuery("BEGIN TRANSACTION;");
           try {
