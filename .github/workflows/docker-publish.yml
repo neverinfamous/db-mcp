@@ -209,5 +209,8 @@ jobs:
     needs: [build-and-push]
     if: always() && needs.build-and-push.result == 'success' && startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/publish-npm.yml
+    permissions:
+      contents: read
+      id-token: write
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
