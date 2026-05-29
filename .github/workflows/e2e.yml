@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Rebuild better-sqlite3 (explicitly allowed)
+        run: npm rebuild better-sqlite3 --ignore-scripts=false
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
