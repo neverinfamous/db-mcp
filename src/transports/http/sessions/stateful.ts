@@ -101,9 +101,9 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
         let httpTransport: StreamableHTTPServerTransport | undefined;
         const existingTransport = sessionId ? state.transports.get(sessionId) : undefined;
 
-        if (existingTransport !== undefined) {
+        if (typeof sessionId === "string" && existingTransport !== undefined) {
           // H-2: Verify the requesting client owns this session
-          if (!verifySessionOwner(state, sessionId!, req.auth?.sub)) {
+          if (!verifySessionOwner(state, sessionId, req.auth?.sub)) {
             res.status(403).json({
               jsonrpc: "2.0",
               error: {
