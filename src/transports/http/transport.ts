@@ -112,8 +112,15 @@ export class HttpTransport {
 
     // Configure trust proxy (requires explicitly defined downstream IPs)
     if (this.state.config.trustedProxyIps !== undefined) {
-      if (Array.isArray(this.state.config.trustedProxyIps) && this.state.config.trustedProxyIps.length === 0) {
-        throw new DbMcpError("trustedProxyIps cannot be an empty array if specified", "CONFIG_ERROR", ErrorCategory.CONFIGURATION);
+      if (
+        Array.isArray(this.state.config.trustedProxyIps) &&
+        this.state.config.trustedProxyIps.length === 0
+      ) {
+        throw new DbMcpError(
+          "trustedProxyIps cannot be an empty array if specified",
+          "CONFIG_ERROR",
+          ErrorCategory.CONFIGURATION,
+        );
       }
       this.state.app.set("trust proxy", this.state.config.trustedProxyIps);
     } else {
@@ -142,11 +149,14 @@ export class HttpTransport {
       `http://localhost:${String(this.state.config.port)}`;
 
     // Enforce authentication if HTTP is enabled and auth is not explicitly bypassed
-    if (!this.state.config.oauth.enabled && !this.state.config.noAuthEnforcement) {
+    if (
+      !this.state.config.oauth.enabled &&
+      !this.state.config.noAuthEnforcement
+    ) {
       throw new DbMcpError(
         "HTTP transport is enabled without authentication. You must configure OAuth (--oauth-enabled) or explicitly bypass this check with --no-auth-enforcement.",
         "AUTH_REQUIRED",
-        ErrorCategory.CONFIGURATION
+        ErrorCategory.CONFIGURATION,
       );
     }
 
@@ -213,12 +223,16 @@ export class HttpTransport {
     // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint
     const oauthEnabled = this.state.config.oauth?.enabled ?? false;
     let lastNoAuthWarning = 0;
+    // lgtm[js/missing-rate-limiting]
     this.state.app.use((req, _res, next) => {
       const implicitAdmin = !req.auth && !oauthEnabled;
       if (implicitAdmin) {
         const now = Date.now();
         if (now - lastNoAuthWarning > 60000) {
-          logger.warning("No-auth mode is granting implicit 'admin' scope. This is expected for local dev but dangerous in production.", { module: "HTTP", ip: req.ip });
+          logger.warning(
+            "No-auth mode is granting implicit 'admin' scope. This is expected for local dev but dangerous in production.",
+            { module: "HTTP", ip: req.ip },
+          );
           lastNoAuthWarning = now;
         }
       }

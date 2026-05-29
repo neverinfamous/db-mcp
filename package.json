@@ -90,7 +90,7 @@
     "vitest": "^4.0.17"
   },
   "optionalDependencies": {
-    "better-sqlite3": "^12.8.0"
+    "better-sqlite3": "^12.10.0"
   },
   "//overrides": "Transitive CVE patches. Review quarterly or when dockerfile-patch-drift.yml flags staleness.",
   "overrides": {
