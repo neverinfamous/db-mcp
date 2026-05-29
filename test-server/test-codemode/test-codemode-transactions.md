@@ -244,7 +244,7 @@ const count = await sqlite.core.count({ table: "temp_cm_txn" });
 if (count.count !== 2) failures.push(`expected 2 rows, got ${count.count}`);
 
 // Cleanup
-await sqlite.core.writeQuery("DROP TABLE IF EXISTS temp_cm_txn");
+await sqlite.transactions.execute({ statements: ["DROP TABLE IF EXISTS temp_cm_txn"] });
 
 return { failures, success: failures.length === 0 };
 ```
