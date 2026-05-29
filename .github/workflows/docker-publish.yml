@@ -191,7 +191,7 @@ jobs:
         timeout-minutes: 5
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_DESC_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_DESC_TOKEN || secrets.DOCKER_TOKEN }}
           repository: ${{ env.IMAGE_NAME }}
           readme-filepath: ./DOCKER_README.md
           short-description: "SQLite MCP — 167 Tools in 1 Code Mode, HTTP/SSE, OAuth 2.1, Tool Filtering & Audit/Token Logging."
