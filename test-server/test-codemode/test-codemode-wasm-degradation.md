@@ -126,18 +126,16 @@ return { groups: help.groups, totalMethods: help.totalMethods };
 
 Expected: `totalMethods` should be significantly less than 167 (the Native count). The exact WASM count depends on adapter registration but should be approximately 140.
 
-### 1.2 — Transactions group is empty
+### 1.2 — Transactions group is completely omitted
 
 ```javascript
-const txHelp = await sqlite.transactions.help();
+const txExists = sqlite.transactions !== undefined;
 return {
-  group: txHelp.group,
-  methodCount: txHelp.methods.length,
-  methods: txHelp.methods,
+  transactionsExists: txExists
 };
 ```
 
-Expected: `methodCount: 0` (or only `help` itself). No transaction methods should be available.
+Expected: `transactionsExists: false`. The entire `transactions` group should be omitted from the `sqlite` object in Code Mode under WASM.
 
 ### 1.3 — Window functions absent from stats
 
@@ -382,10 +380,10 @@ for (const g of groups) {
   groupSizes[g] = gHelp.methods.length;
 }
 
-// Step 3: Verify transactions is empty
-if (groupSizes.transactions > 0) {
+// Step 3: Verify transactions is completely omitted
+if (groupSizes.transactions !== undefined) {
   failures.push(
-    `transactions should have 0 methods, got ${groupSizes.transactions}`,
+    `transactions should be completely omitted, got ${groupSizes.transactions} methods`,
   );
 }
 
