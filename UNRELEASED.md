@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Changed
+- **Dependency Updates**: Updated npm dependencies (e.g. `eslint` to `10.4.1`).
 - Rewrote `test-server/scripts/test-tool-annotations.mjs` from a basic `openWorldHint` counter into a comprehensive annotation validation suite. Now validates all 5 annotation fields (`openWorldHint`, `readOnlyHint`, `destructiveHint`, `sensitiveHint`, `idempotentHint`), checks logical consistency (e.g., no `readOnly+destructive` contradiction), enforces an exact allowlist for `openWorldHint=true` tools, and validates `title` presence.
 
 ### Fixed
