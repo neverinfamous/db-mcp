@@ -22,9 +22,6 @@ import {
   hasReadScope,
   scopeGrantsToolAccess,
   scopesGrantToolAccess,
-  scopesGrantDatabaseAccess,
-  scopesGrantTableAccess,
-  parseScopes,
   isValidScope,
   getRequiredScopeForTool,
   getAccessibleTools,
@@ -150,29 +147,7 @@ describe("Scope Checking", () => {
     { iterations: 10000, warmupIterations: 100 },
   );
 
-  bench(
-    "scopesGrantDatabaseAccess(pattern-based)",
-    () => {
-      scopesGrantDatabaseAccess(validScopes, "mydb");
-    },
-    { iterations: 10000, warmupIterations: 100 },
-  );
 
-  bench(
-    "scopesGrantTableAccess(pattern-based)",
-    () => {
-      scopesGrantTableAccess(validScopes, "mydb", "users");
-    },
-    { iterations: 10000, warmupIterations: 100 },
-  );
-
-  bench(
-    "parseScopes(space-delimited string)",
-    () => {
-      parseScopes("read write admin db:mydb table:mydb:users");
-    },
-    { iterations: 10000, warmupIterations: 100 },
-  );
 
   bench(
     "isValidScope() x5 patterns",

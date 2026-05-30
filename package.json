@@ -26,6 +26,7 @@
     "lint:fix": "eslint . --fix",
     "lint:json": "eslint . --format json --output-file eslint-results.json",
     "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc --noEmit --project tsconfig.test.json",
     "check": "npm run lint && npm run typecheck",
     "test": "vitest run",
     "test:watch": "vitest",

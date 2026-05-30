@@ -58,12 +58,13 @@ jobs:
             echo "::error::No SARIF file found — CodeQL analysis failed or did not output results"
             exit 1
           fi
-          # Count results with error-level severity (high/critical)
-          HIGH_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' "$SARIF_FILE") || { echo "::error::jq failed parsing SARIF"; exit 1; }
+          # Count results with error-level severity (high/critical), correctly resolving rule defaults
+          # and explicitly ignoring files inside the tests/ directory.
+          HIGH_COUNT=$(jq '[.runs[] | .tool.driver.rules as $rules | .results[]? | select((.locations[0].physicalLocation.artifactLocation.uri | test("^tests/|\\.test\\.ts$|\\.bench\\.ts$|\\.spec\\.ts$")) | not) | (if .level then .level elif .ruleIndex != null then ($rules[.ruleIndex].defaultConfiguration.level // "warning") else "warning" end) | select(. == "error")] | length' "$SARIF_FILE") || { echo "::error::jq failed parsing SARIF"; exit 1; }
           echo "High/critical findings: $HIGH_COUNT"
           if [ "$HIGH_COUNT" -gt 0 ]; then
             echo "::error::CodeQL found $HIGH_COUNT high/critical finding(s). Review Security tab for details."
-            jq '.runs[].results[] | select(.level == "error") | {ruleId, message: .message.text}' "$SARIF_FILE"
+            jq '.runs[] | .tool.driver.rules as $rules | .results[]? | select((.locations[0].physicalLocation.artifactLocation.uri | test("^tests/|\\.test\\.ts$|\\.bench\\.ts$|\\.spec\\.ts$")) | not) | select((if .level then .level elif .ruleIndex != null then ($rules[.ruleIndex].defaultConfiguration.level // "warning") else "warning" end) == "error") | {ruleId, message: .message.text, file: .locations[0].physicalLocation.artifactLocation.uri}' "$SARIF_FILE"
             exit 1
           fi
           echo "✅ No high/critical CodeQL findings"

@@ -1,1 +1,6 @@
 ## [Unreleased]
+
+### Fixed
+- Fixed a bug in `.github/workflows/codeql.yml` where CodeQL severity validation failed to block deployments. The SARIF parser now correctly inherits `defaultConfiguration.level` when the finding level is omitted, and explicitly excludes the `tests/` directory from blocking production releases.
+- Fixed `tsconfig.test.json` to properly include the `tests/` directory and added `npm run typecheck:tests` to the main check script so CI catches test-related type errors.
+- Fixed "Invocation of non-function" CodeQL alerts in `utilities.bench.ts` and `transport-auth.bench.ts` by removing dead benchmark code referencing non-existent functions.
