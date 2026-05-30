@@ -16,9 +16,7 @@ import {
   createColumnList,
   needsQuoting,
 } from "../../src/utils/identifiers.js";
-import {
-  sanitizeWhereClause,
-} from "../../src/utils/where-clause.js";
+import { sanitizeWhereClause } from "../../src/utils/where-clause.js";
 
 // Suppress logger output
 vi.mock("../../src/utils/logger/index.js", () => ({

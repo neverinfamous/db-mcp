@@ -208,7 +208,10 @@ function validateAnnotations(tools) {
 
   // ── 2. All tools have annotations ──
   if (stats.hasAnnotations === tools.length) {
-    pass("All tools have annotations", `${stats.hasAnnotations}/${tools.length}`);
+    pass(
+      "All tools have annotations",
+      `${stats.hasAnnotations}/${tools.length}`,
+    );
   } else {
     fail(
       "All tools have annotations",
@@ -362,9 +365,7 @@ function validateAnnotations(tools) {
   console.log(
     `│   idempotentHint:  ${pct(stats.hasIdempotentHint, tools.length)} (optional)`,
   );
-  console.log(
-    `│   title:           ${pct(stats.hasTitle, tools.length)}`,
-  );
+  console.log(`│   title:           ${pct(stats.hasTitle, tools.length)}`);
   console.log("├──────────────────────────────────────────────────────────┤");
   console.log(
     `│ BREAKDOWN: readOnlyHint=true: ${stats.readOnlyTrue.length} | destructiveHint=true: ${stats.destructiveTrue.length} | sensitiveHint=true: ${stats.sensitiveTrue.length}`,

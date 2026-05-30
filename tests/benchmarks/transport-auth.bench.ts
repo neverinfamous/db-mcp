@@ -147,8 +147,6 @@ describe("Scope Checking", () => {
     { iterations: 10000, warmupIterations: 100 },
   );
 
-
-
   bench(
     "isValidScope() x5 patterns",
     () => {

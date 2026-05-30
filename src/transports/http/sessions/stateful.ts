@@ -99,7 +99,9 @@ export function setupStatefulEndpoints(state: HttpTransportState): void {
     void (async () => {
       try {
         let httpTransport: StreamableHTTPServerTransport | undefined;
-        const existingTransport = sessionId ? state.transports.get(sessionId) : undefined;
+        const existingTransport = sessionId
+          ? state.transports.get(sessionId)
+          : undefined;
 
         if (typeof sessionId === "string" && existingTransport !== undefined) {
           // H-2: Verify the requesting client owns this session
