@@ -217,39 +217,9 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Code Mode            | 1       | Sandboxed JavaScript execution             |
 | **Total**            | **166** |                                            |
 
-### 📁 Resources (11 Data + 9 Help)
+### 📁 Resources & Prompts
 
-Data resources provide read-only access to database metadata. Help resources (`sqlite://help/*`) provide on-demand per-group tool reference, filtered by `--tool-filter`.
-
-| Resource                 | URI                                 | Description                     |
-| ------------------------ | ----------------------------------- | ------------------------------- |
-| `sqlite_schema`          | `sqlite://schema`                   | Full database schema            |
-| `sqlite_tables`          | `sqlite://tables`                   | List all tables                 |
-| `sqlite_table_schema`    | `sqlite://table/{tableName}/schema` | Schema for a specific table     |
-| `sqlite_indexes`         | `sqlite://indexes`                  | All indexes in the database     |
-| `sqlite_views`           | `sqlite://views`                    | All views in the database       |
-| `sqlite_health`          | `sqlite://health`                   | Database health and status      |
-| `sqlite_meta`            | `sqlite://meta`                     | Database metadata and PRAGMAs   |
-| `sqlite_compile_options` | `sqlite://compile_options`          | Compile-time build options      |
-| `sqlite_pragma`          | `sqlite://pragma`                   | Runtime PRAGMA snapshot         |
-| `sqlite_insights`        | `memo://insights`                   | Business insights memo          |
-| `sqlite_audit`           | `sqlite://audit`                    | Recent audit log + backup stats |
-| `sqlite_help`            | `sqlite://help`                     | Main help + per-group refs      |
-
-### 💬 Prompts (10)
-
-| Prompt                          | Description                                      |
-| ------------------------------- | ------------------------------------------------ |
-| `sqlite_explain_schema`         | Explain database structure and relationships     |
-| `sqlite_query_builder`          | Help construct SQL queries for common operations |
-| `sqlite_data_analysis`          | Analyze data patterns and provide insights       |
-| `sqlite_optimization`           | Analyze and suggest database optimizations       |
-| `sqlite_migration`              | Help create database migration scripts           |
-| `sqlite_debug_query`            | Debug SQL queries that aren't working            |
-| `sqlite_documentation`          | Generate documentation for the database schema   |
-| `sqlite_summarize_table`        | Intelligent table analysis and summary           |
-| `sqlite_hybrid_search_workflow` | Hybrid FTS5 + vector search workflow             |
-| `sqlite_demo`                   | Interactive demo of MCP capabilities             |
+db-mcp exposes 20 resources (including dynamic `sqlite://help` documentation) and 10 AI-powered prompts (for schema exploration, query building, data analysis, optimization, and migration). See the [GitHub README](https://github.com/neverinfamous/db-mcp) for the complete list.
 
 ### SQLite Extensions
 
