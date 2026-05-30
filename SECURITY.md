@@ -330,13 +330,15 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Comprehensive security documentation
 - [x] DDL Validation blocklist for `ATTACH` / `DETACH` / `LOAD_EXTENSION` (CWE-89, CWE-22)
 - [x] Code Mode recursive credential redaction for deeply nested array objects (CWE-200)
+- [x] Tool annotations with exact allowlist enforcement for `openWorldHint=true` (filesystem-touching tools only)
 
 ## 🚨 **Reporting Security Issues**
 
 | Version | Supported |
 | ------- | --------- |
+| 3.x.x   | ✅        |
 | 2.x.x   | ✅        |
-| 1.x.x   | ✅        |
+| 1.x.x   | ❌        |
 | < 1.0   | ❌        |
 
 If you discover a security vulnerability:

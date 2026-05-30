@@ -125,7 +125,7 @@ export function registerAuditBackupTools(
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
-        openWorldHint: false, // Requires admin scope
+        openWorldHint: false,
       },
     },
     async (args: unknown) => {
@@ -202,7 +202,7 @@ export function registerAuditBackupTools(
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
-        openWorldHint: false, // Requires admin scope
+        openWorldHint: false,
       },
     },
     async (args: unknown) => {
@@ -327,7 +327,7 @@ export function registerAuditBackupTools(
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
-        openWorldHint: false, // Requires admin scope
+        openWorldHint: false,
       },
     },
     async (args: unknown) => {

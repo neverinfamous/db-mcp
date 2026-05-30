@@ -16,10 +16,7 @@ import {
   createColumnList,
   needsQuoting,
 } from "../../src/utils/identifiers.js";
-import {
-  validateWhereClause,
-  sanitizeWhereClause,
-} from "../../src/utils/where-clause.js";
+import { sanitizeWhereClause } from "../../src/utils/where-clause.js";
 
 // Suppress logger output
 vi.mock("../../src/utils/logger/index.js", () => ({
@@ -172,17 +169,17 @@ describe("Identifier Sanitization", () => {
 // ---------------------------------------------------------------------------
 describe("WHERE Clause Validation", () => {
   bench(
-    "validateWhereClause(simple)",
+    "sanitizeWhereClause(simple)",
     () => {
-      validateWhereClause("price > 10");
+      sanitizeWhereClause("price > 10");
     },
     { iterations: 10000, warmupIterations: 100 },
   );
 
   bench(
-    "validateWhereClause(complex, ~110 chars)",
+    "sanitizeWhereClause(complex, ~110 chars)",
     () => {
-      validateWhereClause(
+      sanitizeWhereClause(
         "status = 'active' AND created_at > '2025-01-01' AND (role = 'admin' OR role = 'moderator') AND deleted_at IS NULL",
       );
     },
@@ -198,10 +195,10 @@ describe("WHERE Clause Validation", () => {
   );
 
   bench(
-    "validateWhereClause(blocked — early rejection)",
+    "sanitizeWhereClause(blocked — early rejection)",
     () => {
       try {
-        validateWhereClause("1=1; DROP TABLE users;--");
+        sanitizeWhereClause("1=1; DROP TABLE users;--");
       } catch {
         // Expected
       }
