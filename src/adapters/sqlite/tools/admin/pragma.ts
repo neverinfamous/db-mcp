@@ -193,7 +193,7 @@ export function createPragmaSettingsTool(
     inputSchema: PragmaSettingsSchema,
     outputSchema: PragmaSettingsOutputSchema,
     requiredScopes: ["admin"],
-    annotations: { ...admin("PRAGMA Settings"), openWorldHint: true },
+    annotations: admin("PRAGMA Settings"),
     handler: async (_params: unknown, _context: RequestContext) => {
       let input;
       try {
