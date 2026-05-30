@@ -411,7 +411,6 @@ MCP prompts provide AI-assisted database workflows:
 | `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                                      |
 | `SQLITE_DATABASE`           | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)                     |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (CLI: `--tool-filter`)                                      |
-| `MCP_AUTH_TOKEN`            | —         | Simple bearer token for HTTP auth (CLI: `--auth-token`)                        |
 | `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                                      |
 | `OAUTH_ISSUER`              | —         | Authorization server URL (CLI: `--oauth-issuer`)                               |
 | `OAUTH_AUDIENCE`            | —         | Expected token audience (CLI: `--oauth-audience`)                              |
@@ -438,7 +437,7 @@ MCP prompts provide AI-assisted database workflows:
 db-mcp [options]
 
 Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --stateless
-Auth:         --auth-token <token>  |  --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
+Auth:         --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>
 Extensions:   --csv  --spatialite                         (native only)
 Audit:        --audit-log <path>  --audit-no-redact  --audit-reads  --audit-backup  --audit-backup-data
@@ -549,21 +548,7 @@ Legacy protocol (MCP 2024-11-05) — for clients like Python `mcp.client.sse`:
 
 ## 🔐 Authentication
 
-db-mcp supports two authentication mechanisms for HTTP transport:
-
-### Simple Bearer Token (`--auth-token`)
-
-Lightweight authentication for development or single-tenant deployments:
-
-```bash
-node dist/cli.js --transport http --port 3000 --auth-token my-secret --sqlite-native ./database.db
-
-# Or via environment variable
-export MCP_AUTH_TOKEN=my-secret
-node dist/cli.js --transport http --port 3000 --sqlite-native ./database.db
-```
-
-Clients must include `Authorization: Bearer my-secret` on all requests. `/health` and `/` are exempt. Unauthenticated requests receive `401` with `WWW-Authenticate: Bearer` headers per RFC 6750.
+db-mcp secures the HTTP transport using strict OAuth 2.1 authentication:
 
 ### OAuth 2.1 (Enterprise)
 
@@ -611,7 +596,7 @@ The server exposes metadata at `/.well-known/oauth-protected-resource`.
 > **Audit identity integration:** When OAuth is enabled alongside audit logging (`--audit-log`), audit entries for write/admin tools automatically capture the authenticated user (`claims.sub`) and granted scopes. This provides a complete forensic trail linking every mutation to a specific identity. Without OAuth, these fields are `null`/`[]`.
 
 > [!WARNING]
-> **HTTP without authentication:** When using `--transport http` without enabling OAuth or `--auth-token`, all clients have full unrestricted access. Always enable authentication for production HTTP deployments. See [SECURITY.md](SECURITY.md) for details.
+> **HTTP without authentication:** When using `--transport http` without enabling OAuth, all clients have full unrestricted access. Always enable authentication for production HTTP deployments. See [SECURITY.md](SECURITY.md) for details.
 
 ## 📊 Benchmarks
 

@@ -239,7 +239,6 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (`--server-host`)                                      |
 | `SQLITE_DATABASE`           | —         | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (`--tool-filter`)                                      |
-| `MCP_AUTH_TOKEN`            | —         | Simple bearer token for HTTP auth (`--auth-token`)                        |
 | `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                                      |
 | `OAUTH_ISSUER`              | —         | Authorization server URL (`--oauth-issuer`)                               |
 | `OAUTH_AUDIENCE`            | —         | Expected token audience (`--oauth-audience`)                              |
@@ -288,19 +287,6 @@ docker run --rm -p 3000:3000 \
 
 ### 🔐 Authentication
 
-#### Simple Bearer Token
-
-```bash
-docker run --rm -p 3000:3000 \
-  -v ./data:/app/data \
-  writenotenow/db-mcp:latest \
-  --transport http --port 3000 --server-host 0.0.0.0 --auth-token my-secret --sqlite-native /app/data/database.db
-```
-
-Clients must include `Authorization: Bearer my-secret` on all requests. `/health` and `/` are exempt.
-
-#### OAuth 2.1 (Enterprise)
-
 Full OAuth 2.1 with RFC 9728/8414 compliance:
 
 ```bash
@@ -313,8 +299,6 @@ docker run --rm -p 3000:3000 \
 ```
 
 **Scopes:** `full`, `read`, `write`, `admin`, `db:{name}`, `table:{db}:{table}`. See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for provider configuration.
-
-> When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence.
 
 > **Audit identity:** When OAuth is enabled with audit logging (`--audit-log`), write/admin audit entries capture the authenticated user (`claims.sub`) and granted scopes — providing a forensic trail linking mutations to identities.
 
