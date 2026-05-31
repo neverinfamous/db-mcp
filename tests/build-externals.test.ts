@@ -24,7 +24,10 @@ describe("Build externals consistency", () => {
 
     // Extract the external array from the config file
     const externalMatch = tsupConfig.match(/external:\s*\[([\s\S]*?)\]/);
-    expect(externalMatch, "Could not find external array in tsup.config.ts").not.toBeNull();
+    expect(
+      externalMatch,
+      "Could not find external array in tsup.config.ts",
+    ).not.toBeNull();
 
     const externals = externalMatch![1]
       .split(",")

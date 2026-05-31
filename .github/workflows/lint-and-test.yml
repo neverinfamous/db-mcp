@@ -134,7 +134,7 @@ jobs:
       - name: Smoke test — HTTP transport starts
         run: |
           docker run --rm -d --name pr-smoke -p 3000:3000 pr-smoke-test:latest \
-            --transport http --port 3000 --sqlite /tmp/test.db
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite /tmp/test.db
           sleep 5
           if ! docker ps --filter name=pr-smoke --format '{{.Status}}' | grep -q "Up"; then
             echo "❌ Docker smoke test failed — container crashed (${{ matrix.platform }})"
@@ -154,14 +154,20 @@ jobs:
       - name: Smoke test — native SQLite backend starts
         run: |
           # Verify better-sqlite3 native bindings load correctly
-          docker run --rm -d --name pr-smoke-native pr-smoke-test:latest \
-            --transport stdio --sqlite-native /tmp/test.db
+          docker run --rm -d --name pr-smoke-native -p 3001:3000 pr-smoke-test:latest \
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite-native /tmp/test.db
           sleep 5
           if ! docker ps --filter name=pr-smoke-native --format '{{.Status}}' | grep -q "Up"; then
             echo "❌ Native SQLite smoke test failed (${{ matrix.platform }})"
             docker logs pr-smoke-native 2>&1 || true
             exit 1
           fi
+          HTTP_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://localhost:3001/health || echo "000")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Health endpoint returned $HTTP_STATUS (${{ matrix.platform }})"
+            docker logs pr-smoke-native 2>&1 || true
+            docker stop pr-smoke-native || true
+            exit 1
+          fi
           docker stop pr-smoke-native
           echo "✅ Native SQLite smoke test passed (${{ matrix.platform }})"
-

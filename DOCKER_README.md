@@ -313,7 +313,7 @@ Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sq
 
 **Available Tags:**
 
-- `v3.0.1` - Specific version (recommended for production)
+- `v3.0.2` - Specific version (recommended for production)
 - `latest` - Always the newest version
 - `sha-<commit>` - Git commit pinned
 

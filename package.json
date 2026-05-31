@@ -1,6 +1,6 @@
 {
   "name": "db-mcp",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "SQLite MCP Server — Secure Database Administration & Observability with Code Mode. True V8 Isolate Sandbox Unifying 170+ Specialized Tools with Highly Optimized Payloads for 70–90% Token Savings. Includes Dynamic Tool Filtering, Dual-Transport HTTP/SSE, OAuth 2.1 Auth, Granular Access Control, Audit Logging, & Deterministic Error Handling.",
   "mcpName": "io.github.neverinfamous/db-mcp",
   "type": "module",
