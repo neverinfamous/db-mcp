@@ -58,6 +58,7 @@ jobs:
       contents: read
       security-events: write
       id-token: write
+      packages: write
       attestations: write
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
