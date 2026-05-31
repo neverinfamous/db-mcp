@@ -92,3 +92,82 @@ jobs:
       - name: Run npm audit (production only)
         timeout-minutes: 10
         run: npm audit --omit=dev --audit-level=moderate
+
+  # Smoke test: verify the Docker image builds and starts successfully
+  # Catches dependency resolution failures that only surface after npm prune (#149)
+  # Runs on native runners per-platform to validate native addon compilation
+  docker-smoke-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Build Docker image
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: false
+          load: true
+          tags: pr-smoke-test:latest
+          cache-from: type=gha,scope=pr-smoke-${{ matrix.platform }}
+          cache-to: type=gha,scope=pr-smoke-${{ matrix.platform }},mode=max
+
+      - name: Smoke test — HTTP transport starts
+        run: |
+          docker run --rm -d --name pr-smoke -p 3000:3000 pr-smoke-test:latest \
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite /tmp/test.db
+          sleep 5
+          if ! docker ps --filter name=pr-smoke --format '{{.Status}}' | grep -q "Up"; then
+            echo "❌ Docker smoke test failed — container crashed (${{ matrix.platform }})"
+            docker logs pr-smoke 2>&1 || true
+            exit 1
+          fi
+          HTTP_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://localhost:3000/health || echo "000")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Health endpoint returned $HTTP_STATUS (${{ matrix.platform }})"
+            docker logs pr-smoke 2>&1 || true
+            docker stop pr-smoke || true
+            exit 1
+          fi
+          docker stop pr-smoke
+          echo "✅ HTTP smoke test passed (${{ matrix.platform }})"
+
+      - name: Smoke test — native SQLite backend starts
+        run: |
+          # Verify better-sqlite3 native bindings load correctly
+          docker run --rm -d --name pr-smoke-native -p 3001:3000 pr-smoke-test:latest \
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite-native /tmp/test.db
+          sleep 5
+          if ! docker ps --filter name=pr-smoke-native --format '{{.Status}}' | grep -q "Up"; then
+            echo "❌ Native SQLite smoke test failed (${{ matrix.platform }})"
+            docker logs pr-smoke-native 2>&1 || true
+            exit 1
+          fi
+          HTTP_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://localhost:3001/health || echo "000")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Health endpoint returned $HTTP_STATUS (${{ matrix.platform }})"
+            docker logs pr-smoke-native 2>&1 || true
+            docker stop pr-smoke-native || true
+            exit 1
+          fi
+          docker stop pr-smoke-native
+          echo "✅ Native SQLite smoke test passed (${{ matrix.platform }})"

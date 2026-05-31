@@ -107,7 +107,7 @@ src/
 │       ├── transport.ts            # HTTP/SSE transport (Streamable HTTP + legacy SSE)
 │       ├── session.ts              # Session management (stateful + stateless modes)
 │       ├── middleware.ts            # Security headers, rate limiting, CORS, body parsing, DNS rebinding guard
-│       ├── oauth.ts                # OAuth 2.1 integration + simple bearer auth middleware
+│       ├── oauth.ts                # OAuth 2.1 integration middleware
 │       ├── type-adapters.ts        # Hono→Express type bridges
 │       ├── types.ts                # HTTP transport types
 │       └── index.ts                # Barrel

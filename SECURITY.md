@@ -67,7 +67,7 @@ Code Mode executes user-provided JavaScript inside a **process-level `isolated-v
 
 - ✅ **Strict Memory Separation** — `isolated-vm` enforces true, native V8 isolates. The executing code has absolutely no memory access to the host Node.js environment, `worker_threads`, or shared `vm` namespaces.
 - ✅ **Blocked globals** — `require`, `process`, `global`, `globalThis`, `module`, `exports`, `setTimeout`, `setInterval`, `setImmediate`, `Proxy` are strictly undefined.
-- ✅ **Blocked patterns** — 20 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, `fetch()`, `WebSocket`, and filesystem/network/child_process references. Code comments (`/* ... */` and `//`) are stripped, and `\u` / `\x` escapes are explicitly blocked prior to validation to prevent pattern evasion.
+- ✅ **Blocked patterns** — 29 static regex rules reject code containing `require()`, `import()`, `eval()`, `Function()`, `__proto__`, `constructor.constructor`, `Reflect.*`, `Symbol.*`, `new Proxy()`, `fetch()`, `WebSocket`, `Object.getPrototypeOf`, `Object.defineProperty`, and filesystem/network/child_process references. Code comments (`/* ... */` and `//`) are stripped, and `\u` / `\x` escapes are explicitly blocked prior to validation to prevent pattern evasion.
 - ✅ **RPC boundary enforcement** — Host-side API capabilities (e.g. `sqlite.*` tools) are explicitly bridged into the isolate via explicit C++ `Reference` instances. The isolate cannot bridge out to host functions arbitrarily.
 - ✅ **Readonly Proxy traps** — group API objects are wrapped in Proxy traps that throw structured errors when stripped (readonly) methods are called, halting execution instead of silently returning undefined.
 - ✅ **Execution timeout** — 30s hard limit (configurable), enforced strictly by the isolate engine.
@@ -265,7 +265,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Code Mode sandbox isolation (worker_threads V8 isolate + vm.createContext)
 - [x] Code Mode V8 codeGeneration restrictions (eval/Function disabled at engine level)
 - [x] Code Mode frozen built-in prototypes (constructor chain escape prevention)
-- [x] Code Mode blocked patterns (18 static regex rules)
+- [x] Code Mode blocked patterns (29 static regex rules)
 - [x] Code Mode Proxy constructor nullified in sandbox context
 - [x] Code Mode RPC allowlist validation (host-side method authorization)
 - [x] Code Mode readonly Proxy traps (structured errors for stripped methods)
@@ -322,7 +322,7 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] CI/CD concurrent execution block safeguards
 - [x] Unauthenticated HTTP transport implicitly fails closed without `--no-auth-enforcement` flag
 - [x] Session ID format and length validation (UUIDv4) for stateful transport
-- [x] TLS enforcement warning for HTTP bearer tokens
+
 - [x] WebAssembly and SharedArrayBuffer blocked in Code Mode sandbox
 - [x] File I/O functions (`WRITEFILE`, `READFILE`) blocked in restore tool
 - [x] Obfuscated adapter ID mapping in built-in tools

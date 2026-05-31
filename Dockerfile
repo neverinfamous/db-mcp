@@ -19,6 +19,10 @@ COPY package*.json ./
 # This will compile better-sqlite3 native bindings
 RUN npm ci
 
+# Ensure better-sqlite3 native addon is compiled for the current target architecture
+# (prevents stale/cross-arch cached binaries from npm ci)
+RUN npm rebuild better-sqlite3 --ignore-scripts=false
+
 # Remove protobufjs CLI entirely - not needed at runtime
 # Eliminates CVE-2019-10790 (taffydb), CVE-2025-54798 (tmp), CVE-2025-5889 (brace-expansion)
 RUN rm -rf node_modules/protobufjs/cli || true
@@ -111,6 +115,7 @@ RUN addgroup -g 1001 -S appgroup && \
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV MCP_HOST=0.0.0.0
 
 # Switch to non-root user
 USER appuser

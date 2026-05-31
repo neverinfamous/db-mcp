@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-87.55%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-87.54%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -32,7 +32,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`full`, `read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                                                                                                                                     |
 | **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                                                                                                                                               |
 | **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) + legacy SSE (`/sse`) with auth, security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                                                                                                                                     |
-| **Production-Ready Security**    | SQL injection protection (parameterized queries + Unicode-normalized WHERE clause validation), sandboxed code execution (V8 `codeGeneration` restrictions, frozen prototypes, 18 blocked patterns, Proxy nullified, RPC allowlist), CORS deny-all default, fail-closed scope enforcement, JWT claims sanitization, 7 security headers, body size limits, rate limiting, slowloris timeouts, opt-in HSTS, non-root Docker, and build provenance |
+| **Production-Ready Security**    | SQL injection protection (parameterized queries + Unicode-normalized WHERE clause validation), sandboxed code execution (V8 `codeGeneration` restrictions, frozen prototypes, 29 blocked patterns, Proxy nullified, RPC allowlist), CORS deny-all default, fail-closed scope enforcement, JWT claims sanitization, 7 security headers, body size limits, rate limiting, slowloris timeouts, opt-in HSTS, non-root Docker, and build provenance |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                                                                                                                                         |
 
 ### Backend Options
@@ -217,39 +217,9 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Code Mode            | 1       | Sandboxed JavaScript execution             |
 | **Total**            | **166** |                                            |
 
-### 📁 Resources (11 Data + 9 Help)
+### 📁 Resources & Prompts
 
-Data resources provide read-only access to database metadata. Help resources (`sqlite://help/*`) provide on-demand per-group tool reference, filtered by `--tool-filter`.
-
-| Resource                 | URI                                 | Description                     |
-| ------------------------ | ----------------------------------- | ------------------------------- |
-| `sqlite_schema`          | `sqlite://schema`                   | Full database schema            |
-| `sqlite_tables`          | `sqlite://tables`                   | List all tables                 |
-| `sqlite_table_schema`    | `sqlite://table/{tableName}/schema` | Schema for a specific table     |
-| `sqlite_indexes`         | `sqlite://indexes`                  | All indexes in the database     |
-| `sqlite_views`           | `sqlite://views`                    | All views in the database       |
-| `sqlite_health`          | `sqlite://health`                   | Database health and status      |
-| `sqlite_meta`            | `sqlite://meta`                     | Database metadata and PRAGMAs   |
-| `sqlite_compile_options` | `sqlite://compile_options`          | Compile-time build options      |
-| `sqlite_pragma`          | `sqlite://pragma`                   | Runtime PRAGMA snapshot         |
-| `sqlite_insights`        | `memo://insights`                   | Business insights memo          |
-| `sqlite_audit`           | `sqlite://audit`                    | Recent audit log + backup stats |
-| `sqlite_help`            | `sqlite://help`                     | Main help + per-group refs      |
-
-### 💬 Prompts (10)
-
-| Prompt                          | Description                                      |
-| ------------------------------- | ------------------------------------------------ |
-| `sqlite_explain_schema`         | Explain database structure and relationships     |
-| `sqlite_query_builder`          | Help construct SQL queries for common operations |
-| `sqlite_data_analysis`          | Analyze data patterns and provide insights       |
-| `sqlite_optimization`           | Analyze and suggest database optimizations       |
-| `sqlite_migration`              | Help create database migration scripts           |
-| `sqlite_debug_query`            | Debug SQL queries that aren't working            |
-| `sqlite_documentation`          | Generate documentation for the database schema   |
-| `sqlite_summarize_table`        | Intelligent table analysis and summary           |
-| `sqlite_hybrid_search_workflow` | Hybrid FTS5 + vector search workflow             |
-| `sqlite_demo`                   | Interactive demo of MCP capabilities             |
+db-mcp exposes 20 resources (including dynamic `sqlite://help` documentation) and 10 AI-powered prompts (for schema exploration, query building, data analysis, optimization, and migration). See the [GitHub README](https://github.com/neverinfamous/db-mcp) for the complete list.
 
 ### SQLite Extensions
 
@@ -269,7 +239,6 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (`--server-host`)                                      |
 | `SQLITE_DATABASE`           | —         | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (`--tool-filter`)                                      |
-| `MCP_AUTH_TOKEN`            | —         | Simple bearer token for HTTP auth (`--auth-token`)                        |
 | `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                                      |
 | `OAUTH_ISSUER`              | —         | Authorization server URL (`--oauth-issuer`)                               |
 | `OAUTH_AUDIENCE`            | —         | Expected token audience (`--oauth-audience`)                              |
@@ -318,19 +287,6 @@ docker run --rm -p 3000:3000 \
 
 ### 🔐 Authentication
 
-#### Simple Bearer Token
-
-```bash
-docker run --rm -p 3000:3000 \
-  -v ./data:/app/data \
-  writenotenow/db-mcp:latest \
-  --transport http --port 3000 --server-host 0.0.0.0 --auth-token my-secret --sqlite-native /app/data/database.db
-```
-
-Clients must include `Authorization: Bearer my-secret` on all requests. `/health` and `/` are exempt.
-
-#### OAuth 2.1 (Enterprise)
-
 Full OAuth 2.1 with RFC 9728/8414 compliance:
 
 ```bash
@@ -343,8 +299,6 @@ docker run --rm -p 3000:3000 \
 ```
 
 **Scopes:** `full`, `read`, `write`, `admin`, `db:{name}`, `table:{db}:{table}`. See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for provider configuration.
-
-> When both `--auth-token` and `--oauth-enabled` are set, OAuth 2.1 takes precedence.
 
 > **Audit identity:** When OAuth is enabled with audit logging (`--audit-log`), write/admin audit entries capture the authenticated user (`claims.sub`) and granted scopes — providing a forensic trail linking mutations to identities.
 
@@ -359,7 +313,7 @@ Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sq
 
 **Available Tags:**
 
-- `v3.0.1` - Specific version (recommended for production)
+- `v3.0.2` - Specific version (recommended for production)
 - `latest` - Always the newest version
 - `sha-<commit>` - Git commit pinned
 

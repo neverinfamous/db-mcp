@@ -97,24 +97,24 @@ jobs:
           sarif_file: trivy-results.sarif
           category: trivy-docker-scan
 
-  # Build platforms to local registry, then merge and push to Docker Hub
-  build-and-push:
+  # Smoke test: verify the Docker image actually starts before pushing
+  # Prevents shipping images that pass CVE scans but crash at runtime (#149)
+  # Runs on native runners per-platform to validate native addon compilation
+  smoke-test:
     needs: [security-scan]
-    if: always() && needs.security-scan.result == 'success' && github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    if: ${{ needs.security-scan.result == 'success' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
     permissions:
       contents: read
-      id-token: write
-      attestations: write
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
-    environment:
-      name: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || '' }}
-      url: https://hub.docker.com/r/writenotenow/db-mcp
 
     steps:
       - name: Checkout repository
@@ -122,13 +122,110 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Build image for smoke test
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: false
+          load: true
+          tags: smoke-test:latest
+          cache-from: type=gha,scope=smoke-${{ matrix.platform }}
+          cache-to: type=gha,scope=smoke-${{ matrix.platform }},mode=max
+
+      - name: Smoke test — stdio transport starts
+        run: |
+          # Run the container in stdio mode, wait for init, check it didn't crash
+          docker run --rm -d --name smoke-stdio smoke-test:latest \
+            --transport stdio --sqlite /tmp/test.db
+          sleep 5
+          if ! docker ps --filter name=smoke-stdio --format '{{.Status}}' | grep -q "Up"; then
+            echo "❌ stdio smoke test failed — container crashed (${{ matrix.platform }})"
+            docker logs smoke-stdio 2>&1 || true
+            exit 1
+          fi
+          docker stop smoke-stdio
+          echo "✅ stdio transport smoke test passed (${{ matrix.platform }})"
+
+      - name: Smoke test — HTTP transport starts and responds
+        run: |
+          # Run the container in HTTP mode, verify health endpoint
+          docker run --rm -d --name smoke-http -p 3000:3000 smoke-test:latest \
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite /tmp/test.db
+          sleep 5
+          if ! docker ps --filter name=smoke-http --format '{{.Status}}' | grep -q "Up"; then
+            echo "❌ HTTP smoke test failed — container crashed (${{ matrix.platform }})"
+            docker logs smoke-http 2>&1 || true
+            exit 1
+          fi
+          HTTP_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://localhost:3000/health || echo "000")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Health endpoint returned $HTTP_STATUS (${{ matrix.platform }})"
+            docker logs smoke-http 2>&1 || true
+            docker stop smoke-http || true
+            exit 1
+          fi
+          docker stop smoke-http
+          echo "✅ HTTP transport smoke test passed (${{ matrix.platform }})"
+
+      - name: Smoke test — native SQLite backend starts
+        run: |
+          # Verify better-sqlite3 native bindings load correctly on this platform
+          docker run --rm -d --name smoke-native -p 3001:3000 smoke-test:latest \
+            --transport http --port 3000 --server-host 0.0.0.0 --no-auth-enforcement --sqlite-native /tmp/test.db
+          sleep 5
+          if ! docker ps --filter name=smoke-native --format '{{.Status}}' | grep -q "Up"; then
+            echo "❌ Native SQLite smoke test failed (${{ matrix.platform }})"
+            docker logs smoke-native 2>&1 || true
+            exit 1
+          fi
+          HTTP_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://localhost:3001/health || echo "000")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Health endpoint returned $HTTP_STATUS (${{ matrix.platform }})"
+            docker logs smoke-native 2>&1 || true
+            docker stop smoke-native || true
+            exit 1
+          fi
+          docker stop smoke-native
+          echo "✅ Native SQLite smoke test passed (${{ matrix.platform }})"
+
+  # Build each platform on native architecture (only runs if all gates pass)
+  # Native runners ensure C++ addons (better-sqlite3) compile correctly per-architecture
+  build-platform:
+    needs: [security-scan, smoke-test]
+    if: always() && needs.security-scan.result == 'success' && needs.smoke-test.result == 'success' && github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
-        with:
-          driver-opts: network=host
 
       - name: Log in to Docker Hub
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3.0.0
@@ -155,35 +252,107 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
+            suffix=-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
           tags: |
-            type=raw,value=v${{ steps.version.outputs.version }},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=sha,prefix=sha-,format=short
 
-      - name: Build and push to local registry
+      - name: Build and push platform image
         id: build
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           push: true
-          tags: localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,scope=${{ matrix.platform }},mode=max
           provenance: mode=max
           sbom: true
 
-      - name: Push manifest to Docker Hub
+      - name: Export digest
         run: |
-          # Use skopeo to copy the multi-arch image from the local registry to Docker Hub
-          skopeo copy --src-tls-verify=false --all docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
 
-          # Also tag and push 'latest' if applicable
-          if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
-            skopeo copy --src-tls-verify=false --all docker://localhost:5000/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      - name: Upload digest
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: digests-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Merge platform images into multi-arch manifest
+  merge-and-push:
+    runs-on: ubuntu-24.04
+    needs: [build-platform]
+    if: always() && needs.build-platform.result == 'success' && github.event_name != 'pull_request'
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    environment:
+      name: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || '' }}
+      url: https://hub.docker.com/r/writenotenow/db-mcp
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Download digests
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ -z "$VERSION" ] || [ "$VERSION" = "undefined" ]; then
+            VERSION="1.0.0"
           fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Extract metadata for manifest
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=v${{ steps.version.outputs.version }},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha,prefix=sha-,format=short
+
+      - name: Create and push manifest
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect manifest
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
 
       - name: Update Docker Hub Description
         if: startsWith(github.ref, 'refs/tags/v')
@@ -201,13 +370,14 @@ jobs:
         run: |
           echo "✅ Successfully published Docker images to production"
           echo "🐳 Registry: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "🏷️ Tags: ${{ steps.meta.outputs.tags }}"
           echo "📝 Commit: ${{ github.sha }}"
           echo "👤 Published by: ${{ github.actor }}"
 
   # Publish to npm AFTER Docker images are successfully pushed
   npm-publish:
-    needs: [build-and-push]
-    if: always() && needs.build-and-push.result == 'success' && startsWith(github.ref, 'refs/tags/v')
+    needs: [merge-and-push]
+    if: always() && needs.merge-and-push.result == 'success' && startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/publish-npm.yml
     permissions:
       contents: read
