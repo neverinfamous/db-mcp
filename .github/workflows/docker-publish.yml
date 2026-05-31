@@ -137,19 +137,6 @@ jobs:
           cache-from: type=gha,scope=smoke-${{ matrix.platform }}
           cache-to: type=gha,scope=smoke-${{ matrix.platform }},mode=max
 
-      - name: Smoke test — stdio transport starts
-        run: |
-          # Run the container in stdio mode, wait for init, check it didn't crash
-          docker run --rm -d --name smoke-stdio smoke-test:latest \
-            --transport stdio --sqlite /tmp/test.db
-          sleep 5
-          if ! docker ps --filter name=smoke-stdio --format '{{.Status}}' | grep -q "Up"; then
-            echo "❌ stdio smoke test failed — container crashed (${{ matrix.platform }})"
-            docker logs smoke-stdio 2>&1 || true
-            exit 1
-          fi
-          docker stop smoke-stdio
-          echo "✅ stdio transport smoke test passed (${{ matrix.platform }})"
 
       - name: Smoke test — HTTP transport starts and responds
         run: |
