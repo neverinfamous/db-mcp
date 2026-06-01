@@ -240,6 +240,7 @@ Subscribe to the dynamic schema resources and verify the server accepts the subs
 | Subscribe to `sqlite://schema`             | ✅ Success (empty response)           |
 | Subscribe to `sqlite://tables`             | ✅ Success (empty response)           |
 | Subscribe to `sqlite://table/test_products/schema` | ✅ Success (empty response)   |
+| Subscribe to `sqlite://health`             | ✅ Success (empty response)           |
 
 **Test B — Live Update Notifications:**
 
@@ -250,6 +251,7 @@ Once subscribed, mutate the database schema and verify the server emits an `noti
 | Create a new table: `CREATE TABLE test_live_sub (id INTEGER PRIMARY KEY);`                          | Event fired with `uri: sqlite://schema` and `sqlite://tables` |
 | Add a column to an existing table: `ALTER TABLE test_products ADD COLUMN sub_test TEXT;`          | Event fired with `uri: sqlite://schema` and `sqlite://table/test_products/schema` |
 | Cleanup: `DROP TABLE test_live_sub;` and ignore the column                                          | Event fired with `uri: sqlite://schema` and `sqlite://tables` |
+| Wait up to 60 seconds (background health polling)                                                   | Event fired with `uri: sqlite://health` |
 
 **Test C — Invalid Subscriptions:**
 

@@ -103,7 +103,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (6)
+### Group Tools (7)
 
 - `sqlite_audit_list_backups`
 - `sqlite_audit_get_backup`
@@ -111,6 +111,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_audit_restore_backup`
 - `sqlite_audit_cleanup`
 - `sqlite_audit_search`
+- `sqlite_server_config`
 
 ## Phase 1: Core Check (batched)
 
@@ -123,33 +124,38 @@ All tools should return errors as structured objects instead of throwing. The ex
 5. `sqlite_audit_restore_backup({filename: "<filename_from_step_1>", dryRun: false})` → Actually restore the backup.
 6. `sqlite_audit_cleanup({})` → Enforce retention policy (should succeed and report removed count).
 7. `sqlite_audit_search({limit: 5})` → Verify it returns recent audit log entries successfully.
+8. `sqlite_server_config({ action: "get" })` → Verify it returns success and the current logLevel.
+9. `sqlite_server_config({ action: "set", setting: "logLevel", value: "debug" })` → Verify it returns success and updates the logLevel to "debug".
 
 **Code mode testing:**
 
 > **Note**: `sqlite_execute_code` is currently not being injected into the tool groups properly. If you find it is missing, note it as an issue but do not block testing of the rest of the group.
 
-Audit tools are server-level (MCP-only) and intentionally not exposed in Code Mode. Verify all 6 return `"undefined"`:
+Audit tools are server-level (MCP-only) and intentionally not exposed in Code Mode. Verify all 7 return `"undefined"`:
 
-12. `sqlite_execute_code({code: "return [typeof sqlite.admin.auditListBackups, typeof sqlite.admin.auditGetBackup, typeof sqlite.admin.auditDiffBackup, typeof sqlite.admin.auditRestoreBackup, typeof sqlite.admin.auditCleanup, typeof sqlite.admin.auditSearch]"})` → All 6 must be `"undefined"`. If any returns `"function"`, report as ⚠️.
+10. `sqlite_execute_code({code: "return [typeof sqlite.admin.auditListBackups, typeof sqlite.admin.auditGetBackup, typeof sqlite.admin.auditDiffBackup, typeof sqlite.admin.auditRestoreBackup, typeof sqlite.admin.auditCleanup, typeof sqlite.admin.auditSearch, typeof sqlite.admin.serverConfig]"})` → All 7 must be `"undefined"`. If any returns `"function"`, report as ⚠️.
 
 **Error path testing:**
 
-🔴 13. `sqlite_audit_get_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
-🔴 14. `sqlite_audit_diff_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
-🔴 15. `sqlite_audit_restore_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
-🔴 16. `sqlite_audit_get_backup({filename: "../../../etc/passwd"})` → structured error (path traversal rejection)
-🔴 17. `sqlite_audit_search({limit: "invalid"})` → structured error (Zod coercion rejection)
+🔴 11. `sqlite_audit_get_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
+🔴 12. `sqlite_audit_diff_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
+🔴 13. `sqlite_audit_restore_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
+🔴 14. `sqlite_audit_get_backup({filename: "../../../etc/passwd"})` → structured error (path traversal rejection)
+🔴 15. `sqlite_audit_search({limit: "invalid"})` → structured error (Zod coercion rejection)
+🔴 16. `sqlite_server_config({ action: "set", setting: "logLevel", value: "invalid_level" })` → structured error
+🔴 17. `sqlite_server_config({ action: "set" })` → structured error (missing setting/value)
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 17. `sqlite_audit_get_backup({})` → handler error
-🔴 18. `sqlite_audit_diff_backup({})` → handler error
-🔴 19. `sqlite_audit_restore_backup({})` → handler error
-🔴 20. `sqlite_audit_list_backups({})` → success (no required params)
-🔴 21. `sqlite_audit_cleanup({})` → success (no required params)
-🔴 22. `sqlite_audit_search({})` → success (no required params)
+🔴 18. `sqlite_audit_get_backup({})` → handler error
+🔴 19. `sqlite_audit_diff_backup({})` → handler error
+🔴 20. `sqlite_audit_restore_backup({})` → handler error
+🔴 21. `sqlite_audit_list_backups({})` → success (no required params)
+🔴 22. `sqlite_audit_cleanup({})` → success (no required params)
+🔴 23. `sqlite_audit_search({})` → success (no required params)
+🔴 24. `sqlite_server_config({})` → handler error
 
 ---
 
