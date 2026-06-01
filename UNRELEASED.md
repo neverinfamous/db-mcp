@@ -26,6 +26,7 @@
 - Synchronized `test-server` test prompt tool counts in `test-codemode` and `test-tool-groups` to accurately reflect the addition of `sqlite_hybrid_search`.
 - Added Encryption at Rest (SQLCipher) support for the Native backend, configurable via `--encryption-key` flag or `DB_ENCRYPTION_KEY` environment variable.
 - Added automatic encryption of the sidecar `SystemDb` audit logs when a database encryption key is provided.
+- Added comprehensive Capacity Planning Guide to the db-mcp Wiki, addressing scaling, memory requirements, and token budget strategies.
 
 ### Fixed
 - Fixed V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during teardown of `CodeModeSandbox` by rigorously wrapping isolate executions in `try...finally` blocks with explicit object `.dispose()` and `.release()` calls.
