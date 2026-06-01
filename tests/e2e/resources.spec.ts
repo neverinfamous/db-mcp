@@ -352,4 +352,26 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
     expect(insights).toContain("verify write+read cycle");
   });
+
+  // ===========================================================================
+  // R9: Resource Subscriptions
+  // ===========================================================================
+
+  test("should successfully subscribe to sqlite://health", async () => {
+    await expect(
+      client.subscribeResource({ uri: "sqlite://health" }),
+    ).resolves.not.toThrow();
+  });
+
+  test("should successfully subscribe to sqlite://schema", async () => {
+    await expect(
+      client.subscribeResource({ uri: "sqlite://schema" }),
+    ).resolves.not.toThrow();
+  });
+
+  test("should fail to subscribe to an invalid resource", async () => {
+    await expect(
+      client.subscribeResource({ uri: "sqlite://invalid_resource" }),
+    ).rejects.toThrow();
+  });
 });
