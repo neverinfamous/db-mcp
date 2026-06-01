@@ -66,7 +66,7 @@
     "cors": "2.8.6",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",
-    "isolated-vm": "6.1.2",
+    "isolated-vm": "7.0.0",
     "jose": "6.2.3",
     "rate-limit-redis": "^5.0.0",
     "redis": "^6.0.0",
