@@ -116,7 +116,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 1. `sqlite_storage_analysis({})` → verify `tables`, `database.totalSizeBytes`, `recommendations` in response
 2. `sqlite_index_audit({})` → verify `findings`, `summary` in response
 3. `sqlite_index_audit({recommendComposite: true, queriesToAnalyze: ["SELECT * FROM test_users WHERE is_active = 1 AND created_at > '2023-01-01'"]})` → identify `missing_composite_index` recommendation in findings based on query plan scan
-4. `sqlite_query_plan({query: "SELECT * FROM test_products WHERE category = 'Electronics'"})` → verify `plan`, `analysis` in response
+4. `sqlite_index_audit({recommendComposite: true, queriesToAnalyze: ["INVALID SQL SYNTAX EXPLAIN"]})` → queries should be skipped or gracefully error out, no raw crash
+5. `sqlite_query_plan({query: "SELECT * FROM test_products WHERE category = 'Electronics'"})` → verify `plan`, `analysis` in response
 
 **Code mode testing:**
 

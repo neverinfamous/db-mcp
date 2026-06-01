@@ -292,6 +292,11 @@ return { success: true, type };
 
 Expected: `{success: true, type: "function"}`. The `sqlite.reportProgress(current, total, message)` utility must be accessible and callable without errors. Progress notifications are sent to the client but do not affect the return value.
 
+### 2.9 — Metrics Resource (External to Sandbox)
+
+Outside of `sqlite_execute_code`, use your built-in resource reading tool (e.g. `read_resource`) to read `sqlite://metrics`.
+Expected: Returns a JSON string containing `metrics` (with `callCounts`, `latencyMetrics`, etc.). This validates the observability system is active.
+
 ## Phase 3: Security & Error Handling (7 tests)
 
 ### 3.1 — Blocked pattern (require)

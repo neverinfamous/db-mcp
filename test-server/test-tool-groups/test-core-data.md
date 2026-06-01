@@ -131,17 +131,18 @@ All tools should return errors as structured objects instead of throwing. The ex
 6. `sqlite_read_query({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
 7. `sqlite_read_query({query: "SELECT * FROM test_measurements"})` → return 50 rows (automatic limit) and `nextCursor` populated
 8. `sqlite_read_query({query: "SELECT * FROM test_measurements", cursor: "<nextCursor>"})` → return next batch of rows via opaque pagination
-9. `sqlite_create_table({table: "temp_core_test2", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
-8. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 1, val: "a"}, {id: 2, val: "b"}], returning: true})` → `{rowsAffected: 2}` and returns inserted rows (Note: Test `returning` parameter)
-9. `sqlite_upsert({table: "temp_core_test2", data: {id: 1, val: "c"}, conflictColumns: ["id"], updateColumns: ["val"], returning: true})` → `{rowsAffected: 1}` and returns updated row
-10. `sqlite_count({table: "test_products"})` → `{count: 16}`
-11. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
-12. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
-13. `sqlite_write_query({query: "INSERT INTO temp_core_test2 (id, val) VALUES (99, 'returning_test') RETURNING *"})` → verify `rows` array contains the inserted row with `id: 99` (Note: SQL RETURNING clause passed through directly)
-14. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 100, val: "no_return"}], returning: false})` → verify `rowsAffected: 1` WITHOUT a `rows` array (negative test for returning parameter)
-15. `sqlite_drop_table({table: "temp_core_test2"})` → success
-16. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
-17. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
+9. `sqlite_read_query({query: "SELECT * FROM test_measurements", cursor: "invalid_cursor_string_123"})` → structured error indicating invalid or corrupted cursor format
+10. `sqlite_create_table({table: "temp_core_test2", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
+11. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 1, val: "a"}, {id: 2, val: "b"}], returning: true})` → `{rowsAffected: 2}` and returns inserted rows (Note: Test `returning` parameter)
+12. `sqlite_upsert({table: "temp_core_test2", data: {id: 1, val: "c"}, conflictColumns: ["id"], updateColumns: ["val"], returning: true})` → `{rowsAffected: 1}` and returns updated row
+13. `sqlite_count({table: "test_products"})` → `{count: 16}`
+14. `sqlite_exists({table: "test_products", where: "id = 1"})` → `{exists: true}`
+15. `sqlite_truncate({table: "temp_core_test2"})` → `{rowsAffected: 2}`
+16. `sqlite_write_query({query: "INSERT INTO temp_core_test2 (id, val) VALUES (99, 'returning_test') RETURNING *"})` → verify `rows` array contains the inserted row with `id: 99` (Note: SQL RETURNING clause passed through directly)
+17. `sqlite_batch_insert({table: "temp_core_test2", rows: [{id: 100, val: "no_return"}], returning: false})` → verify `rowsAffected: 1` WITHOUT a `rows` array (negative test for returning parameter)
+18. `sqlite_drop_table({table: "temp_core_test2"})` → success
+19. `sqlite_date_add({table: "test_orders", column: "order_date", amount: 7, unit: "days", whereClause: "id = 1"})` → return result with `date_add_result` column showing date + 7 days
+20. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
 
 **Error path testing:**
 

@@ -114,6 +114,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_fts_rebuild [NATIVE ONLY]`
 - `sqlite_fts_match_info [NATIVE ONLY]`
 - `sqlite_fts_headline [NATIVE ONLY]`
+- `sqlite_hybrid_search [NATIVE ONLY]`
 
 ## Phase 1: Core Check (batched)
 
@@ -136,8 +137,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 13. `sqlite_fts_search({table: "test_articles_fts", query: "*", limit: 1})` → return exactly 1 result and `nextCursor` populated
 14. `sqlite_fts_search({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → return next result via opaque pagination
 15. `sqlite_fts_search({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
-14. `sqlite_fts_match_info({table: "test_articles_fts", query: "database"})` → match info with scoring data
-15. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
+16. `sqlite_fts_match_info({table: "test_articles_fts", query: "database"})` → match info with scoring data
+17. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
+18. `sqlite_hybrid_search({table: "test_articles", query: "database", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → results combining vector distance and FTS
+19. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist
 
 **Error path testing:**
 
@@ -157,6 +160,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 24. `sqlite_fts_rebuild({})` `[NATIVE ONLY]` → handler error
 🔴 25. `sqlite_fts_match_info({})` `[NATIVE ONLY]` → handler error
 🔴 26. `sqlite_fts_headline({})` `[NATIVE ONLY]` → handler error
+🔴 27. `sqlite_hybrid_search({})` `[NATIVE ONLY]` → handler error
 
 ## Phase 3: Wrong-Type Numeric Coercion
 

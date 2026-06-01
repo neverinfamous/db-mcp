@@ -123,6 +123,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.text.ftsSearch`
 - `sqlite.text.ftsMatchInfo`
 - `sqlite.text.ftsHeadline`
+- `sqlite.text.hybridSearch`
 - `sqlite.text.replace`
 - _(cross-group helpers used in test procedures)_
 - `sqlite.core.dropTable`
@@ -144,7 +145,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 11. `sqlite.text.trim({table: "test_users", column: "bio"})` → trimmed
 12. `sqlite.text.substring({table: "test_users", column: "username", start: 1, length: 4})` → first 4 chars
 13. `sqlite.text.sentiment({text: "I love this product"})` → sentiment scores
-14. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"]})` → finds `Mechanical Keyboard`
+14. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["exact", "fuzzy", "phonetic"], includeFacets: true})` → finds `Mechanical Keyboard` and includes faceted breakdown
 
 ## Phase 2: FTS5 Tools `[NATIVE ONLY]` — Happy Paths (batched)
 
@@ -155,10 +156,11 @@ All tools should return errors as structured objects instead of throwing. The ex
 19. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
 20. Cleanup: drop `temp_cm_fts` (automatically drops associated sync triggers)
 21. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite"})` → at least 1 result
-22. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "MCP protocol"})` → article 3
+22. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "MCP protocol", includeFacets: true})` → article 3 and facets block
 23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1})` → return exactly 1 result and `nextCursor` populated
 24. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → return next result via opaque pagination
-23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
+25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
+26. `sqlite.text.hybridSearch({table: "test_articles", query: "future of interfaces", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 60, includeFacets: true})` → results combining vector distance and FTS rank via Reciprocal Rank Fusion, with facets
 
 ## Phase 3: Text Write Tool (temp table)
 
@@ -276,6 +278,7 @@ Expected: `beforeCount: > 0`, `afterCount: > 0` — validates that `ftsCreate` a
 🔴 48. `sqlite.text.ftsRebuild({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 49. `sqlite.text.ftsMatchInfo({})` `[NATIVE ONLY]` → `{success: false}`
 🔴 50. `sqlite.text.ftsHeadline({})` `[NATIVE ONLY]` → `{success: false}`
+🔴 51. `sqlite.text.hybridSearch({})` → `{success: false}`
 
 ## Phase 8: Wrong-Type Numeric Coercion
 

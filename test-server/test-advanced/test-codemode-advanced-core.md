@@ -201,8 +201,9 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 
 28. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements"})` → exactly 50 rows (default limit applied), `nextCursor` string provided — verify response size
 29. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements", cursor: "<nextCursor>"})` → return exactly 50 rows, correctly paginated payload
-29. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
-30. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100"})` → 100 rows — check payload size
+30. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
+31. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements", cursor: "invalid_cursor_string_123"})` → structured error indicating invalid or corrupted cursor format
+32. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100"})` → 100 rows — check payload size
 
 ## Phase 5: Trigger & Constraint Edge Cases (batched)
 
