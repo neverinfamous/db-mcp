@@ -624,13 +624,13 @@ You can provide the key via the `--encryption-key` CLI flag or the `DB_ENCRYPTIO
 
 Performance benchmarks measure framework overhead on critical hot paths using [Vitest bench](https://vitest.dev/guide/features.html#benchmarking) (tinybench). The suite validates that framework plumbing stays negligible relative to actual database I/O:
 
-- **Tool dispatch:** 11–14M ops/sec — Map-based lookup is effectively zero-cost
-- **Auth scope checks:** 6–8M ops/sec — OAuth middleware adds no measurable latency
-- **Identifier validation:** 6–7M ops/sec — SQL sanitization is near-instant
-- **Schema cache hits:** 4–6M ops/sec — metadata lookups avoid redundant queries
-- **Debug log (filtered):** 10–11M ops/sec — disabled log levels are true no-ops
-- **Code Mode security:** 1–1.3M validations/sec for typical code, blocked patterns rejected in <1 µs
-- **Sandbox execution:** ~4.4–4.9K executions/sec — trivial code round-trips through V8 isolate in ~0.2 ms
+- **Tool dispatch:** 6–14M ops/sec — Map-based lookup is effectively zero-cost
+- **Auth scope checks:** 4–8M ops/sec — OAuth middleware adds no measurable latency
+- **Identifier validation:** 4–7M ops/sec — SQL sanitization is near-instant
+- **Schema cache hits:** 3–6M ops/sec — metadata lookups avoid redundant queries
+- **Debug log (filtered):** 5–11M ops/sec — disabled log levels are true no-ops
+- **Code Mode security:** ~0.2–1.3M validations/sec for typical code, blocked patterns rejected in 1-2 µs
+- **Sandbox execution:** ~0.5–4.9K executions/sec — trivial code round-trips through V8 isolate in 0.2-1.5 ms
 
 ```bash
 npm run bench            # Run all benchmarks
