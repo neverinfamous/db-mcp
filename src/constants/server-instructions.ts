@@ -20,6 +20,7 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 | Purpose         | Action                     |
 | --------------- | -------------------------- |
 | Health check    | \`server_health\` tool       |
+| Live server health | \`sqlite://health\` resource |
 | Server info     | \`server_info\` tool         |
 | Database schema | \`sqlite://schema\` resource |
 | Tool help       | \`sqlite://help\` resource   |
@@ -40,7 +41,7 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (6 tools)
+  ["admin", `# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (7 tools)
 
 ## Maintenance
 
@@ -65,9 +66,10 @@ sqlite_verify_backup({ backupPath: "/path/to/backup.db" }); // check integrity w
 sqlite_restore({ sourcePath: "/path/to/backup.db" }); // ⚠️ WARNING: Replaces current database
 \`\`\`
 
-## Audit Backups
+## Server Management & Audit
 
 \`\`\`javascript
+sqlite_server_config({ action: "set", setting: "logLevel", value: "debug" }); // get or update runtime server configuration
 sqlite_audit_list_backups({ limit: 10, offset: 0 }); // list pre-mutation DDL snapshots
 sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific snapshot
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
@@ -320,6 +322,7 @@ sqlite_spatialite_index({
 19. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs
 20. **sqlite_schema_diff**: \`baseline\` and \`target\` accept either the string \`"current"\` (queries live DB) or an inline snapshot object from a prior \`sqlite_schema_snapshot\` call. At least one side must be \`"current"\` unless doing an offline comparison
 21. **sqlite_upsert**: Always specify \`conflictColumns\` — without it, falls back to \`REPLACE\` which deletes and re-inserts the row, potentially losing columns not included in \`data\`
+22. **Resource Subscriptions**: The \`sqlite://schema\` and \`sqlite://health\` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
 
 ## WASM vs Native
 

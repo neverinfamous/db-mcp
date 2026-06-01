@@ -5,6 +5,7 @@
 | Purpose         | Action                     |
 | --------------- | -------------------------- |
 | Health check    | `server_health` tool       |
+| Live server health | `sqlite://health` resource |
 | Server info     | `server_info` tool         |
 | Database schema | `sqlite://schema` resource |
 | Tool help       | `sqlite://help` resource   |
