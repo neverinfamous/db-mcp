@@ -39,6 +39,7 @@ import {
   registerAuditBackupTools,
   registerAuditSearchTool,
   registerObservabilityResources,
+  registerAdminTools,
 } from "./registration/index.js";
 import {
   registerToolScopes,
@@ -53,7 +54,7 @@ import { getAuthContext } from "../auth/auth-context.js";
  */
 const proto = McpServer.prototype as unknown as Record<
   string,
-  (errorMessage: string) => {
+  (this: McpServer, errorMessage: string) => {
     content: { type: string; text: string }[];
     isError: boolean;
   }
@@ -63,7 +64,7 @@ if (typeof proto["createToolError"] === "function") {
   const originalCreateToolError = proto["createToolError"];
   proto["createToolError"] = function (errorMessage: string) {
     const result = originalCreateToolError.call(
-      this as unknown as McpServer,
+      this,
       errorMessage,
     );
     if (result.content?.[0]?.type === "text") {
@@ -150,6 +151,11 @@ export class DbMcpServer {
     );
     registerHelpResources(this.server, this.toolFilter);
     registerObservabilityResources(this.server);
+    
+    // Register admin tools if the admin group is enabled
+    if (this.toolFilter.enabledGroups.has("admin")) {
+      registerAdminTools(this.server);
+    }
 
     // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
     // We must do this AFTER tools are registered, because the SDK lazily registers the 'tools/list' handler

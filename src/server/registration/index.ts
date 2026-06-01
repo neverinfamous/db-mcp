@@ -6,3 +6,4 @@ export {
   registerAuditSearchTool,
 } from "./audit-tools.js";
 export * from "./observability-resources.js";
+export * from "./admin-tools.js";

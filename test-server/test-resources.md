@@ -229,6 +229,47 @@ Call `tools/list` and verify that **all** tools have `openWorldHint: false` in t
 
 ---
 
+### 12. Resource Subscriptions & Live Updates
+
+**Test A — Valid Subscriptions:**
+
+Subscribe to the dynamic schema resources and verify the server accepts the subscription.
+
+| Action                                     | Expected Result                       |
+| ------------------------------------------ | ------------------------------------- |
+| Subscribe to `sqlite://schema`             | ✅ Success (empty response)           |
+| Subscribe to `sqlite://tables`             | ✅ Success (empty response)           |
+| Subscribe to `sqlite://table/test_products/schema` | ✅ Success (empty response)   |
+
+**Test B — Live Update Notifications:**
+
+Once subscribed, mutate the database schema and verify the server emits an `notifications/resources/updated` event.
+
+| Action                                                                                              | Expected Notification Payload       |
+| --------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Create a new table: `CREATE TABLE test_live_sub (id INTEGER PRIMARY KEY);`                          | Event fired with `uri: sqlite://schema` and `sqlite://tables` |
+| Add a column to an existing table: `ALTER TABLE test_products ADD COLUMN sub_test TEXT;`          | Event fired with `uri: sqlite://schema` and `sqlite://table/test_products/schema` |
+| Cleanup: `DROP TABLE test_live_sub;` and ignore the column                                          | Event fired with `uri: sqlite://schema` and `sqlite://tables` |
+
+**Test C — Invalid Subscriptions:**
+
+Attempt to subscribe to static or non-subscribable resources.
+
+| Action                                     | Expected Result                       |
+| ------------------------------------------ | ------------------------------------- |
+| Subscribe to `sqlite://meta`               | ❌ Error: Resource not subscribable   |
+| Subscribe to `sqlite://help`               | ❌ Error: Resource not subscribable   |
+| Subscribe to `sqlite://invalid_uri`        | ❌ Error: Unknown resource            |
+
+**Test D — Unsubscribe:**
+
+| Action                                     | Expected Result                       |
+| ------------------------------------------ | ------------------------------------- |
+| Unsubscribe from `sqlite://schema`         | ✅ Success (empty response)           |
+| Mutate database (e.g. `CREATE TABLE x...`) | ❌ No notification should be received |
+
+---
+
 ## Verification Plan
 
 ### Execution Method

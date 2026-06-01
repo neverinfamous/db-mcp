@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-86.29%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-86.66%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -96,7 +96,7 @@ Or with **WASM backend** (sql.js — cross-platform, no compilation required):
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (168 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (141 tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (178 MCP tools / 168 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (151 MCP tools / 141 group tools, no native dependencies).
 
 ### Verify It Works
 
@@ -472,7 +472,7 @@ Add to your `~/.cursor/mcp.json`, Claude Desktop config, or equivalent:
 ```
 
 > [!TIP]
-> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 168 tools). To use the **WASM** backend (sql.js, 141 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 178 MCP tools). To use the **WASM** backend (sql.js, 151 MCP tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
 
 **Variants** (modify the `args` array above):
 

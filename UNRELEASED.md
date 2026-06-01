@@ -11,6 +11,10 @@
 - New SystemDb observability architecture replacing legacy JSONL and memory-only logs with a structured SQLite sidecar (`system.db`).
 - `sqlite_audit_search` tool allowing native structured searches against the server's own audit logs.
 - `MetricsRegistry` now persists historical snapshots directly into the SystemDb sidecar to survive server restarts.
+- `sqlite_server_config` administrative tool allowing dynamic server configuration changes (e.g., log levels) at runtime without restarting.
+- `--dump-config` CLI flag to securely print the fully resolved configuration hierarchy (redacting secrets) for debugging.
+- `--config <path>` flag parsing supporting configuration via `.yaml` and `.json` files.
+- Ported `docs-drift-detector.md` agentic workflow to detect and remediate documentation drift in `README.md` and `DOCKER_README.md`.
 
 ### Fixed
 - Fixed V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during teardown of `CodeModeSandbox` by rigorously wrapping isolate executions in `try...finally` blocks with explicit object `.dispose()` and `.release()` calls.

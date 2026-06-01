@@ -13,6 +13,8 @@ import type {
   DatabaseConfig,
   OAuthConfig,
 } from "./types/index.js";
+import fs from "node:fs";
+import yaml from "yaml";
 import {
   DEFAULT_AUDIT_LOG_MAX_SIZE_BYTES,
   DEFAULT_AUDIT_BACKUP_MAX_DATA_SIZE_BYTES,
@@ -23,7 +25,7 @@ import {
 /**
  * Parse command line arguments
  */
-function parseArgs(): Partial<McpServerConfig> {
+function parseArgs(): { cliConfig: Partial<McpServerConfig>, dumpConfig: boolean, configPath?: string } {
   const args = process.argv.slice(2);
   const config: Partial<McpServerConfig> = {};
   const databases: DatabaseConfig[] = [];
@@ -41,6 +43,9 @@ function parseArgs(): Partial<McpServerConfig> {
 
   // Track observability flags
   let metricsExport: "prometheus" | undefined;
+
+  let dumpConfig = false;
+  let configPath: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -166,6 +171,13 @@ function parseArgs(): Partial<McpServerConfig> {
       if (metricsValue === "prometheus") {
         metricsExport = "prometheus";
       }
+    } else if (arg === "--config" || arg === "-c") {
+      const pathValue = args[++i];
+      if (pathValue) {
+        configPath = pathValue;
+      }
+    } else if (arg === "--dump-config") {
+      dumpConfig = true;
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -200,7 +212,11 @@ function parseArgs(): Partial<McpServerConfig> {
     };
   }
 
-  return config;
+  return { 
+    cliConfig: config, 
+    dumpConfig, 
+    ...(configPath !== undefined ? { configPath } : {})
+  };
 }
 
 /**
@@ -246,6 +262,8 @@ Audit Options:
   --audit-backup-data       Include sample data rows in snapshots
 
 Server Options:
+  --config, -c <path>       Load configuration from YAML/JSON file
+  --dump-config             Print the resolved configuration and exit
   --name <name>             Server name (default: db-mcp)
   --version <version>       Server version (default: ${VERSION})
   --metrics-export <type>   Export metrics at HTTP /metrics (e.g., prometheus)
@@ -382,23 +400,67 @@ function loadEnvConfig(): Partial<McpServerConfig> {
 }
 
 /**
+ * Load configuration from a JSON or YAML file
+ */
+function loadConfigFile(configPath: string): Partial<McpServerConfig> {
+  try {
+    const fileContent = fs.readFileSync(configPath, "utf-8");
+    if (configPath.endsWith(".yaml") || configPath.endsWith(".yml")) {
+      return yaml.parse(fileContent) as Partial<McpServerConfig>;
+    } else {
+      return JSON.parse(fileContent) as Partial<McpServerConfig>;
+    }
+  } catch (error) {
+    logger.error(`Failed to load config file: ${configPath}`, {
+      error: error instanceof Error ? error : new Error(String(error)),
+      module: "CLI",
+    });
+    process.exit(1);
+  }
+}
+
+/**
  * Main entry point
  */
 async function main(): Promise<void> {
   try {
-    // Load configuration from environment, then CLI (CLI overrides env)
+    // Parse CLI args first to get config path and dump flag
+    const { cliConfig, dumpConfig, configPath } = parseArgs();
+
+    // Load config file if specified
+    const fileConfig = configPath ? loadConfigFile(configPath) : {};
+
+    // Load configuration from environment
     const envConfig = loadEnvConfig();
-    const cliConfig = parseArgs();
 
     const config: McpServerConfig = {
       ...DEFAULT_CONFIG,
+      ...fileConfig,
       ...envConfig,
       ...cliConfig,
       databases: [
+        ...(fileConfig.databases ?? []),
         ...(envConfig.databases ?? []),
         ...(cliConfig.databases ?? []),
       ],
     } as McpServerConfig;
+
+    if (dumpConfig) {
+      // Redact sensitive values before dumping
+      const safeConfig = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
+      if (typeof safeConfig["authToken"] === "string") {
+        safeConfig["authToken"] = "***REDACTED***";
+      }
+      if (typeof safeConfig["oauth"] === "object" && safeConfig["oauth"] !== null) {
+        const oauth = safeConfig["oauth"] as Record<string, unknown>;
+        if (typeof oauth["jwksUri"] === "string") {
+          oauth["jwksUri"] = "***REDACTED***";
+        }
+      }
+      
+      process.stdout.write(JSON.stringify(safeConfig, null, 2) + "\n");
+      process.exit(0);
+    }
 
     // Security Check: Prevent unauthenticated production access
     if (

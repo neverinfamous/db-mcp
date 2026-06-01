@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete reference of all db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all 178 db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 ## Tool Count Taxonomy
 

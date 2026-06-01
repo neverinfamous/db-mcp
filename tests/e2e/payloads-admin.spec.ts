@@ -259,4 +259,15 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
       await client.close();
     }
   });
+  test("sqlite_audit_search returns { success, count, entries[] }", async ({ baseURL }) => {
+    const client = await createClient(baseURL);
+    try {
+      const payload = await callToolAndParse(client, "sqlite_audit_search", { limit: 10 });
+      expectSuccess(payload);
+      expect(typeof payload.count).toBe("number");
+      expect(Array.isArray(payload.entries)).toBe(true);
+    } finally {
+      await client.close();
+    }
+  });
 });

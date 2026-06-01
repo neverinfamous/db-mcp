@@ -40,7 +40,7 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (5 tools)
+  ["admin", `# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (6 tools)
 
 ## Maintenance
 
@@ -73,6 +73,7 @@ sqlite_audit_get_backup({ filename: "snapshot_123.json" }); // retrieve specific
 sqlite_audit_diff_backup({ filename: "snapshot_123.json" }); // compare snapshot against live schema
 sqlite_audit_restore_backup({ filename: "snapshot_123.json", dryRun: true }); // restore schema from snapshot
 sqlite_audit_cleanup(); // apply retention policy and delete old snapshots
+sqlite_audit_search({ query: "DROP TABLE", limit: 50 }); // search and filter structured audit logs
 \`\`\`
 
 ## PRAGMA
