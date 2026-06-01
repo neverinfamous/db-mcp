@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-87.29%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-87.3%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -619,6 +619,9 @@ You can provide the key via the `--encryption-key` CLI flag or the `DB_ENCRYPTIO
    ```bash
    DB_ENCRYPTION_KEY="x'2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99'"
    ```
+
+> [!WARNING]
+> **Audit Log Compatibility**: The `DB_ENCRYPTION_KEY` environment variable applies globally and will cause the internal `SystemDb` to attempt to decrypt your audit log (`--audit-log`). If you have an existing unencrypted audit log, the server will fail to start with `file is not a database`. To encrypt ONLY your target database (leaving the audit log unencrypted), use the `--encryption-key` CLI flag instead of the global environment variable.
 
 ## 📊 Benchmarks
 
