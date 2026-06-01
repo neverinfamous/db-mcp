@@ -153,6 +153,18 @@ function parseArgs(): { cliConfig: Partial<McpServerConfig>, dumpConfig: boolean
       if (lastDb?.options && "backend" in lastDb.options) {
         lastDb.options["spatialite"] = true;
       }
+    } else if (arg === "--encryption-key") {
+      const keyValue = args[++i];
+      if (keyValue) {
+        // Apply to already-added native database if exists
+        const lastDb = databases[databases.length - 1];
+        if (lastDb?.options && "backend" in lastDb.options) {
+          lastDb.options["encryptionKey"] = keyValue;
+        } else {
+          console.error("Error: --encryption-key must be specified after --sqlite-native");
+          process.exit(1);
+        }
+      }
     } else if (arg === "--audit-log") {
       const logPath = args[++i];
       if (logPath) {
@@ -253,6 +265,7 @@ Database Options:
 Extension Options (Native only):
   --csv                     Load CSV extension for CSV virtual tables
   --spatialite              Load SpatiaLite extension for GIS capabilities
+  --encryption-key <key>    Set SQLCipher encryption key for the database
 
 Audit Options:
   --audit-log <path>        Enable audit logging (JSONL file path, or "stderr")
@@ -284,6 +297,7 @@ Environment Variables:
   MCP_ENABLE_HSTS            Enable HSTS header (same as --enable-hsts)
   DB_MCP_TOOL_FILTER        Tool filter string
   SQLITE_DATABASE           SQLite database path
+  DB_ENCRYPTION_KEY         SQLCipher encryption key (Native only)
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
   SPATIALITE_PATH           Custom path to SpatiaLite extension binary
   METRICS_EXPORT            Export metrics (e.g., prometheus)
@@ -494,10 +508,22 @@ async function main(): Promise<void> {
     });
 
     // Register database adapters based on config.databases
+    const globalEncryptionKey = process.env["DB_ENCRYPTION_KEY"];
+    
     for (const dbConfig of config.databases) {
       if (dbConfig.type === "sqlite") {
-        const options = dbConfig.options as { backend?: string } | undefined;
-        if (options?.backend === "better-sqlite3") {
+        const options = (dbConfig.options ?? {}) as { backend?: string; encryptionKey?: string };
+        if (globalEncryptionKey && !options.encryptionKey) {
+          options.encryptionKey = globalEncryptionKey;
+        }
+        dbConfig.options = options;
+
+        if (options.encryptionKey && options.backend !== "better-sqlite3") {
+          logger.error("FATAL: SQLCipher encryption is only supported with the native better-sqlite3 backend. Use --sqlite-native or specify backend: 'better-sqlite3' in config.", { module: "CLI" });
+          process.exit(1);
+        }
+
+        if (options.backend === "better-sqlite3") {
           // Use native SQLite adapter with FTS5, window functions, transactions
           const { NativeSqliteAdapter } =
             await import("./adapters/sqlite-native/index.js");

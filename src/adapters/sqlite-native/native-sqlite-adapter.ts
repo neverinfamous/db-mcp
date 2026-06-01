@@ -5,7 +5,6 @@
  * and SpatiaLite support.
  */
 
-import Database from "better-sqlite3";
 import type { Database as BetterSqliteDb } from "better-sqlite3";
 import { DatabaseAdapter } from "../database-adapter.js";
 import type {
@@ -98,7 +97,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
   /**
    * Connect to a SQLite database using better-sqlite3
    */
-  override connect(config: DatabaseConfig): Promise<void> {
+  override async connect(config: DatabaseConfig): Promise<void> {
     if (config.type !== "sqlite") {
       throw new ConfigurationError(
         `Invalid database type: expected 'sqlite', got '${config.type as string}'`,
@@ -115,14 +114,32 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         sqliteConfig.filePath ?? sqliteConfig.connectionString ?? ":memory:";
 
       // Create database connection
-      this.db = new Database(filePath, {
-        readonly: false,
-        fileMustExist: false,
-      });
+      if (sqliteConfig.options?.encryptionKey) {
+        // Use SQLCipher driver if encryption key is provided
+        const DatabaseDriver = (await import("better-sqlite3-multiple-ciphers")).default;
+        this.db = new DatabaseDriver(filePath, {
+          readonly: false,
+          fileMustExist: false,
+        });
+        
+        // Apply the encryption key immediately
+        this.db.pragma(`key = '${sqliteConfig.options.encryptionKey}'`);
+        
+        log.info(`Connected to SQLite database (native encrypted): ${filePath}`, {
+          code: "SQLITE_CONNECT_ENCRYPTED",
+        });
+      } else {
+        // Use standard driver
+        const DatabaseDriver = (await import("better-sqlite3")).default;
+        this.db = new DatabaseDriver(filePath, {
+          readonly: false,
+          fileMustExist: false,
+        });
 
-      log.info(`Connected to SQLite database (native): ${filePath}`, {
-        code: "SQLITE_CONNECT",
-      });
+        log.info(`Connected to SQLite database (native): ${filePath}`, {
+          code: "SQLITE_CONNECT",
+        });
+      }
 
       // Apply options
       this.applyOptions(sqliteConfig.options);
@@ -175,8 +192,6 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         },
       );
     }
-
-    return Promise.resolve();
   }
 
   /**

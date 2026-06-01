@@ -4,6 +4,13 @@ The db-mcp SQLite MCP server implements comprehensive security measures to prote
 
 ## 🛡️ **Database Security**
 
+### **Encryption at Rest (SQLCipher)**
+
+- ✅ **SQLCipher Support** — The native backend (`better-sqlite3-multiple-ciphers`) optionally supports full database encryption.
+- ✅ **Dynamic Loading** — Enabled by providing a `DB_ENCRYPTION_KEY` via environment variable or the `--encryption-key` CLI flag.
+- ✅ **System Database Encryption** — When an encryption key is provided, the `SystemDb` (which contains audit logs and system metrics) is automatically encrypted using the same key to ensure sensitive queries do not leak through the audit trail.
+- ⚠️ **Native-Only** — Encryption is exclusively available on the native backend. It cannot be used with WASM (`sql.js`).
+
 ### **SQL Injection Prevention**
 
 **Identifier Sanitization** (`src/utils/identifiers.ts`)

@@ -17,13 +17,23 @@ export class SystemDb {
 
   async init(): Promise<void> {
     try {
-      const BetterSqlite3 = (await import("better-sqlite3")).default;
+      const encryptionKey = process.env["DB_ENCRYPTION_KEY"];
+      let BetterSqlite3;
+      if (encryptionKey) {
+        BetterSqlite3 = (await import("better-sqlite3-multiple-ciphers")).default;
+      } else {
+        BetterSqlite3 = (await import("better-sqlite3")).default;
+      }
       
       if (this.config.dbPath !== ":memory:") {
         mkdirSync(dirname(this.config.dbPath), { recursive: true });
       }
 
       this.db = new BetterSqlite3(this.config.dbPath);
+
+      if (encryptionKey) {
+        this.db.pragma(`key = '${encryptionKey}'`);
+      }
 
       // Initialize schema
       this.db.pragma("journal_mode = WAL");

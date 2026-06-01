@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-86.64%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-86.58%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -35,6 +35,7 @@
 | **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                                                                                                                                                                              |
 | **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) for modern clients + legacy SSE (`/sse`) for backward compatibility — both protocols supported simultaneously with security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                                                                                  |
 | **Production-Ready Security**    | SQL injection protection (parameterized queries + Unicode-normalized WHERE clause validation), sandboxed code execution (V8 `codeGeneration` restrictions, frozen prototypes, 29 blocked patterns, Proxy nullified, RPC allowlist), CORS deny-all default, fail-closed scope enforcement, JWT claims sanitization, 7 security headers, body size limits, rate limiting with Retry-After, slowloris timeouts, `trustProxy`, opt-in HSTS, non-root Docker, and build provenance |
+| **Encryption at Rest**           | Native SQLCipher support via `--encryption-key` or `DB_ENCRYPTION_KEY`. Dynamically loads `better-sqlite3-multiple-ciphers` and automatically encrypts the sidecar `SystemDb` audit logs to prevent sensitive queries from leaking |
 | **Strict TypeScript**            | 100% type-safe codebase with strict mode, no `any` types, 1911 unit tests + 1136 E2E tests and 90% coverage                                                                                                                                                                                                                                                                                                                                                                   |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions, no silent failures. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                                                                                                                                                    |
 | **MCP 2025-03-26 Compliant**     | Full protocol support with tool safety hints (`sensitiveHint`, `readOnlyHint`), resource priorities, and progress notifications                                                                                                                                                                                                                                                                                                                                               |
@@ -411,6 +412,7 @@ MCP prompts provide AI-assisted database workflows:
 | --------------------------- | --------- | ------------------------------------------------------------------------------ |
 | `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                                      |
 | `SQLITE_DATABASE`           | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)                     |
+| `DB_ENCRYPTION_KEY`         | —         | SQLCipher encryption key (Native only) (CLI: `--encryption-key`)               |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (CLI: `--tool-filter`)                                      |
 | `METRICS_EXPORT`            | —         | Export metrics at HTTP /metrics (e.g., `prometheus`) (CLI: `--metrics-export`) |
 | `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                                      |
@@ -440,7 +442,7 @@ db-mcp [options]
 
 Transport:    --transport <stdio|http|sse>  --port <N>  --server-host <host>  --stateless
 Auth:         --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
-Database:     --sqlite <path>  |  --sqlite-native <path>
+Database:     --sqlite <path>  |  --sqlite-native <path>  [--encryption-key <key>]
 Extensions:   --csv  --spatialite                         (native only)
 Audit:        --audit-log <path>  --audit-no-redact  --audit-reads  --audit-backup  --audit-backup-data
 Server:       --name <name>  --version <ver>  --metrics-export <type>  --tool-filter <filter>

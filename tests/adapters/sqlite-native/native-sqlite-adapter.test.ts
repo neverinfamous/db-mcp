@@ -77,14 +77,14 @@ describe("NativeSqliteAdapter", () => {
       expect(result.rows?.[0]).toEqual({ val: "initialized" });
     });
 
-    it("should reject non-sqlite config type", () => {
+    it("should reject non-sqlite config type", async () => {
       const invalidConfig = {
         type: "postgres",
         connectionString: "postgres://localhost",
       };
 
-      // connect() throws synchronously for invalid config type
-      expect(() => adapter.connect(invalidConfig as never)).toThrow(
+      // connect() returns a rejected promise for invalid config type
+      await expect(adapter.connect(invalidConfig as never)).rejects.toThrow(
         "Invalid database type",
       );
     });

@@ -23,6 +23,8 @@
 - Ported `docs-drift-detector.md` agentic workflow to detect and remediate documentation drift in `README.md` and `DOCKER_README.md`.
 - E2E Triple-Path Verification test coverage for `sqlite_server_config` payload shapes and resource subscriptions (`sqlite://health`, `sqlite://schema`).
 - Synchronized `test-server` manifests (`tool-reference.md`, `code-map.md`, `test-resources.md`) with recent codebase additions and the expanded 179 Native / 152 WASM tool inventory.
+- Added Encryption at Rest (SQLCipher) support for the Native backend, configurable via `--encryption-key` flag or `DB_ENCRYPTION_KEY` environment variable.
+- Added automatic encryption of the sidecar `SystemDb` audit logs when a database encryption key is provided.
 
 ### Fixed
 - Fixed V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during teardown of `CodeModeSandbox` by rigorously wrapping isolate executions in `try...finally` blocks with explicit object `.dispose()` and `.release()` calls.
@@ -32,3 +34,4 @@
 - Pinned `isolated-vm` to exactly `6.1.2` (reverting from 7.0.0) to prevent uncontrolled minor/patch updates from introducing native V8 thread leaks on Windows.
 - Bumped `tsx` from 4.22.3 to 4.22.4
 - Miscellaneous transitive dependencies updated via `npm update`
+- Added `better-sqlite3-multiple-ciphers@12.10.0` as an optional dependency for SQLCipher support.

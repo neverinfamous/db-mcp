@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-86.64%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-86.58%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -33,6 +33,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 | **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                                                                                                                                               |
 | **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) + legacy SSE (`/sse`) with auth, security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                                                                                                                                     |
 | **Production-Ready Security**    | SQL injection protection (parameterized queries + Unicode-normalized WHERE clause validation), sandboxed code execution (V8 `codeGeneration` restrictions, frozen prototypes, 29 blocked patterns, Proxy nullified, RPC allowlist), CORS deny-all default, fail-closed scope enforcement, JWT claims sanitization, 7 security headers, body size limits, rate limiting, slowloris timeouts, opt-in HSTS, non-root Docker, and build provenance |
+| **Encryption at Rest**           | Native SQLCipher support via `--encryption-key` or `DB_ENCRYPTION_KEY`. Dynamically loads `better-sqlite3-multiple-ciphers` and automatically encrypts the sidecar `SystemDb` audit logs to prevent sensitive queries from leaking |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                                                                                                                                         |
 
 ### Backend Options
@@ -238,6 +239,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | --------------------------- | --------- | ------------------------------------------------------------------------- |
 | `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (`--server-host`)                                      |
 | `SQLITE_DATABASE`           | —         | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
+| `DB_ENCRYPTION_KEY`         | —         | SQLCipher encryption key (Native only) (`--encryption-key`)               |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (`--tool-filter`)                                      |
 | `METRICS_EXPORT`            | —         | Export metrics at HTTP /metrics (e.g., `prometheus`) (`--metrics-export`) |
 | `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                                      |

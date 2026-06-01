@@ -17,6 +17,7 @@ export default defineConfig({
   external: [
     "sql.js",
     "better-sqlite3",
+    "better-sqlite3-multiple-ciphers",
     "sqlite-parser",
     "acorn",
     "isolated-vm",

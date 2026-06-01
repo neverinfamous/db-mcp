@@ -45,6 +45,9 @@ export interface SqliteOptions {
   /** Enable automatic JSON normalization (key sorting, compact format) */
   jsonNormalize?: boolean;
 
+  /** SQLCipher encryption key (Native only) */
+  encryptionKey?: string;
+
   /** Index signature for compatibility with DatabaseConfig.options */
   [key: string]: unknown;
 }
@@ -60,6 +63,9 @@ export interface SqliteConfig extends DatabaseConfig {
 
   /** Optional SQL statements to run immediately after connection */
   initializationSql?: string[];
+
+  /** SQLCipher encryption key (Native only) */
+  encryptionKey?: string;
 
   /** SQLite-specific options */
   options?: SqliteOptions;
