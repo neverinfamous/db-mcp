@@ -8,10 +8,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createAuditInterceptor } from "./interceptor.js";
 import { AuditLogger } from "./logger.js";
-import { rm, readFile, mkdir } from "node:fs/promises";
+import { SystemDb } from "../observability/system-db.js";
+import { rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import type { AuditConfig, AuditEntry } from "./types.js";
+import type { AuditConfig } from "./types.js";
 import { registerToolScope } from "../auth/scope-map.js";
 
 /** Create a temporary directory for each test */
@@ -29,7 +30,7 @@ function makeConfig(
 ): AuditConfig {
   return {
     enabled: true,
-    logPath: join(dir, "audit.jsonl"),
+    logPath: join(dir, "system.db"),
     redact: false,
     auditReads: false,
     maxSizeBytes: 10 * 1024 * 1024,
@@ -39,6 +40,7 @@ function makeConfig(
 
 describe("AuditInterceptor", () => {
   let dir: string;
+  let systemDb: SystemDb | null;
 
   beforeEach(async () => {
     dir = tempDir();
@@ -46,15 +48,21 @@ describe("AuditInterceptor", () => {
     registerToolScope("migration_apply", "write");
     registerToolScope("read_query", "read");
     registerToolScope("vacuum", "admin");
+    systemDb = null;
   });
 
   afterEach(async () => {
+    if (systemDb) {
+      systemDb.close();
+    }
     await rm(dir, { recursive: true, force: true });
   });
 
   it("logs write tool invocations with around()", async () => {
     const config = makeConfig(dir);
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     const result = await interceptor.around(
@@ -67,21 +75,22 @@ describe("AuditInterceptor", () => {
     expect(result).toEqual({ success: true, rowsAffected: 1 });
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const lines = content.trim().split("\n");
-    expect(lines).toHaveLength(1);
+    const recent = await logger.recent(10);
+    expect(recent).toHaveLength(1);
 
-    const entry = JSON.parse(lines[0] ?? "") as AuditEntry;
+    const entry = recent[0]!;
     expect(entry.tool).toBe("migration_apply");
     expect(entry.category).toBe("write");
     expect(entry.success).toBe(true);
     expect(entry.durationMs).toBeGreaterThanOrEqual(0);
-    expect(entry.tokenEstimate).toBeGreaterThan(0);
+    expect(entry.tokenEstimate ?? 0).toBeGreaterThan(0);
   });
 
   it("does not log read tools when auditReads is false", async () => {
     const config = makeConfig(dir, { auditReads: false });
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     await interceptor.around(
@@ -93,18 +102,15 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    // File should not exist or be empty — read tools are skipped
-    try {
-      const content = await readFile(config.logPath, "utf-8");
-      expect(content.trim()).toBe("");
-    } catch {
-      // File doesn't exist — that's fine
-    }
+    const recent = await logger.recent(10);
+    expect(recent).toHaveLength(0);
   });
 
   it("logs read tools when auditReads is true", async () => {
     const config = makeConfig(dir, { auditReads: true });
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     await interceptor.around(
@@ -116,18 +122,19 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const lines = content.trim().split("\n");
-    expect(lines).toHaveLength(1);
+    const recent = await logger.recent(10);
+    expect(recent).toHaveLength(1);
 
-    const entry = JSON.parse(lines[0] ?? "") as AuditEntry;
+    const entry = recent[0]!;
     expect(entry.tool).toBe("read_query");
     expect(entry.category).toBe("read");
   });
 
   it("records errors and re-throws", async () => {
     const config = makeConfig(dir);
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     await expect(
@@ -143,16 +150,19 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const entry = JSON.parse(content.trim()) as AuditEntry;
+    const recent = await logger.recent(10);
+    expect(recent).toHaveLength(1);
+    const entry = recent[0]!;
     expect(entry.success).toBe(false);
     expect(entry.error).toBe("syntax error");
-    expect(entry.tokenEstimate).toBeGreaterThan(0);
+    expect(entry.tokenEstimate ?? 0).toBeGreaterThan(0);
   });
 
   it("redacts args when redact is enabled", async () => {
     const config = makeConfig(dir, { redact: true });
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     await interceptor.around(
@@ -164,14 +174,16 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const entry = JSON.parse(content.trim()) as AuditEntry;
+    const recent = await logger.recent(10);
+    const entry = recent[0]!;
     expect(entry.args).toBeUndefined();
   });
 
   it("includes args when redact is disabled", async () => {
     const config = makeConfig(dir, { redact: false });
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     await interceptor.around(
@@ -183,15 +195,17 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const entry = JSON.parse(content.trim()) as AuditEntry;
+    const recent = await logger.recent(10);
+    const entry = recent[0]!;
     expect(entry.args).toBeDefined();
     expect(entry.args?.["sql"]).toBe("INSERT INTO test VALUES (1)");
   });
 
   it("always logs admin tools regardless of auditReads setting", async () => {
     const config = makeConfig(dir, { auditReads: false });
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     await interceptor.around("vacuum", {}, "req-1", async () => ({
@@ -200,18 +214,19 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const lines = content.trim().split("\n");
-    expect(lines).toHaveLength(1);
+    const recent = await logger.recent(10);
+    expect(recent).toHaveLength(1);
 
-    const entry = JSON.parse(lines[0] ?? "") as AuditEntry;
+    const entry = recent[0]!;
     expect(entry.tool).toBe("vacuum");
     expect(entry.category).toBe("admin");
   });
 
   it("captures null user/scopes when no auth context is active", async () => {
     const config = makeConfig(dir);
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     await interceptor.around(
@@ -223,8 +238,8 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const entry = JSON.parse(content.trim()) as AuditEntry;
+    const recent = await logger.recent(10);
+    const entry = recent[0]!;
     expect(entry.user).toBeNull();
     expect(entry.scopes).toEqual([]);
   });
@@ -232,7 +247,9 @@ describe("AuditInterceptor", () => {
   it("captures OAuth identity from AsyncLocalStorage", async () => {
     const { runWithAuthContext } = await import("../auth/auth-context.js");
     const config = makeConfig(dir);
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     const authCtx = {
@@ -257,8 +274,8 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const entry = JSON.parse(content.trim()) as AuditEntry;
+    const recent = await logger.recent(10);
+    const entry = recent[0]!;
     expect(entry.user).toBe("user-42");
     expect(entry.scopes).toEqual(["read", "write"]);
   });
@@ -266,7 +283,9 @@ describe("AuditInterceptor", () => {
   it("captures partial auth context (authenticated but no sub)", async () => {
     const { runWithAuthContext } = await import("../auth/auth-context.js");
     const config = makeConfig(dir);
-    const logger = new AuditLogger(config);
+    systemDb = new SystemDb({ dbPath: config.logPath });
+    await systemDb.init();
+    const logger = new AuditLogger(config, systemDb);
     const interceptor = createAuditInterceptor(logger);
 
     const authCtx = {
@@ -291,8 +310,8 @@ describe("AuditInterceptor", () => {
 
     await logger.close();
 
-    const content = await readFile(config.logPath, "utf-8");
-    const entry = JSON.parse(content.trim()) as AuditEntry;
+    const recent = await logger.recent(10);
+    const entry = recent[0]!;
     expect(entry.user).toBeNull();
     expect(entry.scopes).toEqual(["read"]);
   });

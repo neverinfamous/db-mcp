@@ -19,7 +19,7 @@ src/
 │   ├── built-in-tools.ts           # Registration logic for server_info, server_health, list_adapters
 │   ├── help-resources.ts           # Registration logic for sqlite://help resources
 │   ├── observability-resources.ts  # Registration logic for observability resources (sqlite://metrics)
-│   └── audit-tools.ts              # Registration logic for audit backup tools (5 tools)
+│   └── audit-tools.ts              # Registration logic for audit tools (6 tools)
 │
 ├── types/                          # Core TypeScript types (barrel: types/index.ts)
 │   ├── adapter.ts                  # ToolDefinition, ResourceDefinition, PromptDefinition, AdapterCapabilities
@@ -46,6 +46,11 @@ src/
 ├── filtering/
 │   ├── tool-constants.ts           # TOOL_GROUPS arrays, META_GROUPS shortcuts, group→tools map
 │   └── tool-filter.ts              # ToolFilter class — parse/apply --tool-filter expressions
+│
+├── observability/                  # System telemetry and sidecar databases
+│   ├── system-db.ts                # SystemDb — sidecar SQLite for internal metrics/audit storage
+│   ├── metrics.ts                  # MetricsRegistry — tracks execution latency and percentiles
+│   └── index.ts                    # Barrel
 │
 ├── utils/
 │   ├── annotations.ts              # MCP tool annotation helpers (readOnly, destructive hints)
@@ -98,7 +103,7 @@ src/
 │
 ├── audit/                          # Audit logging subsystem
 │   ├── types.ts                    # AuditEntry, AuditConfig, BackupConfig, SnapshotMetadata types
-│   ├── logger.ts                   # AuditLogger — async-buffered JSONL writer with rotation
+│   ├── logger.ts                   # AuditLogger — async-buffered SystemDb SQLite writer
 │   ├── interceptor.ts              # createAuditInterceptor() — wraps tool handlers with around(), reads OAuth identity from AsyncLocalStorage
 │   ├── backup-manager.ts           # BackupManager — pre-mutation DDL snapshots (gzip)
 │   └── index.ts                    # Barrel

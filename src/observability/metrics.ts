@@ -6,6 +6,9 @@
  * (p50, p95, p99) without memory bloat.
  */
 
+import type { SystemDb } from "./system-db.js";
+import { logger } from "../utils/logger/index.js";
+
 const MAX_SAMPLES = 1000;
 
 export interface MetricSummary {
@@ -92,6 +95,85 @@ class ResourceMetric {
 export class MetricsRegistry {
   private tools = new Map<string, ToolMetric>();
   private resources = new Map<string, ResourceMetric>();
+  private systemDb: SystemDb | null = null;
+  private flushTimer: ReturnType<typeof setInterval> | null = null;
+
+  setSystemDb(systemDb: SystemDb): void {
+    this.systemDb = systemDb;
+    this.loadHistorical();
+    this.startFlushTimer();
+  }
+
+  private loadHistorical(): void {
+    if (!this.systemDb) return;
+    try {
+      const db = this.systemDb.getDb();
+      // Load latest snapshots for each tool to initialize counters
+      const rows = db.prepare(`
+        SELECT tool, MAX(calls) as max_calls, MAX(errors) as max_errors, MAX(tokens) as max_tokens
+        FROM metrics_snapshots
+        GROUP BY tool
+      `).all() as { tool: string; max_calls: number; max_errors: number; max_tokens: number }[];
+
+      for (const row of rows) {
+        const metric = new ToolMetric();
+        metric.calls = row.max_calls;
+        metric.errors = row.max_errors;
+        metric.tokens = row.max_tokens;
+        this.tools.set(row.tool, metric);
+      }
+      logger.info(`Loaded historical metrics for ${rows.length} tools`, { module: "METRICS" });
+    } catch (err) {
+      logger.warning("Failed to load historical metrics", { module: "METRICS", error: err instanceof Error ? err : new Error(String(err)) });
+    }
+  }
+
+  private startFlushTimer(): void {
+    if (this.flushTimer) clearInterval(this.flushTimer);
+    // Flush metrics every 5 minutes
+    this.flushTimer = setInterval(() => {
+      this.flushToDb();
+    }, 5 * 60 * 1000);
+    this.flushTimer.unref();
+  }
+
+  private flushToDb(): void {
+    if (!this.systemDb) return;
+    try {
+      const db = this.systemDb.getDb();
+      const stmt = db.prepare(`
+        INSERT INTO metrics_snapshots (timestamp, tool, calls, errors, p50, p95, p99, tokens)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      const timestamp = new Date().toISOString();
+      const transaction = db.transaction(() => {
+        for (const [name, metric] of this.tools.entries()) {
+          const summary = metric.getSummary();
+          stmt.run(
+            timestamp,
+            name,
+            summary.calls,
+            summary.errors,
+            summary.p50,
+            summary.p95,
+            summary.p99,
+            summary.tokens
+          );
+        }
+      });
+      transaction();
+    } catch (err) {
+      logger.warning("Failed to flush metrics to db", { module: "METRICS", error: err instanceof Error ? err : new Error(String(err)) });
+    }
+  }
+
+  close(): void {
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+      this.flushTimer = null;
+    }
+    this.flushToDb();
+  }
 
   recordToolCall(toolName: string, durationMs: number, success: boolean, tokens = 0): void {
     let metric = this.tools.get(toolName);

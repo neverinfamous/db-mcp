@@ -27,7 +27,9 @@ import { logger } from "../utils/logger/index.js";
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
 import { AuditLogger } from "../audit/logger.js";
+import { SystemDb } from "../observability/system-db.js";
 import { BackupManager } from "../audit/backup-manager.js";
+import { metrics } from "../observability/metrics.js";
 import { createAuditInterceptor } from "../audit/interceptor.js";
 import type { AuditInterceptor } from "../audit/interceptor.js";
 import {
@@ -35,6 +37,7 @@ import {
   registerHelpResources,
   registerAuditResource,
   registerAuditBackupTools,
+  registerAuditSearchTool,
   registerObservabilityResources,
 } from "./registration/index.js";
 import {
@@ -100,6 +103,7 @@ export class DbMcpServer {
   private config: McpServerConfig;
   private auditLogger: AuditLogger | null = null;
   private backupManager: BackupManager | null = null;
+  private systemDb: SystemDb | null = null;
   private auditInterceptor: AuditInterceptor | null = null;
   private auditInitPromise: Promise<void> | null = null;
 
@@ -384,6 +388,13 @@ export class DbMcpServer {
       logger.info("Audit logger closed", { module: "AUDIT" });
     }
 
+    // Close metrics and SystemDb
+    metrics.close();
+    if (this.systemDb) {
+      this.systemDb.close();
+      logger.info("System database closed", { module: "SYSTEM_DB" });
+    }
+
     // Flush backup manager
     if (this.backupManager) {
       await this.backupManager.flush();
@@ -403,8 +414,14 @@ export class DbMcpServer {
     const auditConfig = config.audit;
     if (!auditConfig?.enabled) return;
 
+    if (auditConfig.logPath !== "stderr") {
+      this.systemDb = new SystemDb({ dbPath: auditConfig.logPath });
+      await this.systemDb.init();
+      metrics.setSystemDb(this.systemDb);
+    }
+
     // Create audit logger and eagerly touch the log file
-    this.auditLogger = new AuditLogger(auditConfig);
+    this.auditLogger = new AuditLogger(auditConfig, this.systemDb);
     await this.auditLogger.init();
 
     // Create backup manager if configured
@@ -427,6 +444,11 @@ export class DbMcpServer {
     // Register audit backup tools only if admin group is enabled in the tool filter
     if (this.backupManager && this.toolFilter.enabledGroups.has("admin")) {
       registerAuditBackupTools(this.server, this.backupManager, this.adapters);
+    }
+
+    // Register sqlite_audit_search tool if admin group is enabled
+    if (this.toolFilter.enabledGroups.has("admin")) {
+      registerAuditSearchTool(this.server, this.auditLogger);
     }
 
     logger.info(

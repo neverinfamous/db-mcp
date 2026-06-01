@@ -7,10 +7,10 @@ Complete reference of all db-mcp tools organized by 10 tool groups + codemode. E
 | Scope           | What it includes                                    |  Native |    WASM | Notes                                           |
 | --------------- | --------------------------------------------------- | ------: | ------: | ----------------------------------------------- |
 | **Group tools** | 10 adapter-registered groups                        |     168 |     141 | Accessible via Code Mode `sqlite.help()`        |
-| **Audit tools** | 5 server-level snapshot tools                       |       5 |       5 | MCP-only — not exposed in Code Mode             |
-| **Inventory**   | Group + Audit                                       | **173** | **146** | All filterable/functional tools                 |
+| **Audit tools** | 6 server-level audit tools                          |       6 |       6 | MCP-only — not exposed in Code Mode             |
+| **Inventory**   | Group + Audit                                       | **174** | **147** | All filterable/functional tools                 |
 | **Built-in**    | `server_info`, `health`, `adapters`, `execute_code` |       4 |       4 | Always on (Code Mode can be excluded via rules) |
-| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **177** | **150** | **What a client sees via `tools/list`**         |
+| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **178** | **151** | **What a client sees via `tools/list`**         |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 
@@ -171,7 +171,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (32N/31W group + 5 audit + Code Mode)
+## admin (32N/31W group + 6 audit + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 
@@ -221,6 +221,7 @@ Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 | `sqlite_audit_diff_backup`    | —              | Compare an audit snapshot against the live database schema.     |
 | `sqlite_audit_restore_backup` | —              | Restore schema from an audit snapshot with dry-run support.     |
 | `sqlite_audit_cleanup`        | —              | Enforce retention policy and remove expired audit snapshots.    |
+| `sqlite_audit_search`         | —              | Search and filter structured audit logs from the System Database.|
 
 ---
 
@@ -310,7 +311,7 @@ All schemas are centralized in `src/adapters/sqlite/schemas/` with named exports
 | `stats.ts`         | stats                        | `StatsBasicOutputSchema`, `StatsCountOutputSchema`, `StatsGroupByOutputSchema`, `StatsHistogramOutputSchema`, `StatsPercentileOutputSchema`, `StatsCorrelationOutputSchema`, `StatsHypothesisOutputSchema`, `StatsDetectAnomaliesOutputSchema`, `StatsDetectBloatOutputSchema`, `StatsDetectSchemaRisksOutputSchema`            |
 | `vector.ts`        | vector                       | `VectorSearchOutputSchema`, `VectorStoreOutputSchema`, `VectorBatchStoreOutputSchema`, `VectorGetOutputSchema`, `VectorDeleteOutputSchema`, `VectorCountOutputSchema`, `VectorStatsOutputSchema`, `VectorDimensionsOutputSchema`, `VectorNormalizeOutputSchema`, `VectorDistanceOutputSchema`                                   |
 | `geo.ts`           | geo                          | Schemas for all 4 geo tools                                                                                                                                                                                                                                                                                                     |
-| `admin.ts`         | admin                        | `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`, `AnalyzeOutputSchema`, `OptimizeOutputSchema`, `IntegrityCheckOutputSchema`, `PragmaSettingsOutputSchema`, `AppendInsightOutputSchema`, `DbstatOutputSchema`, `AttachDatabaseOutputSchema`, `DetachDatabaseOutputSchema`, `VacuumIntoCopyOutputSchema` |
+| `admin.ts`         | admin                        | `BackupOutputSchema`, `RestoreOutputSchema`, `VerifyBackupOutputSchema`, `AnalyzeOutputSchema`, `OptimizeOutputSchema`, `IntegrityCheckOutputSchema`, `PragmaSettingsOutputSchema`, `AppendInsightOutputSchema`, `DbstatOutputSchema`, `AttachDatabaseOutputSchema`, `DetachDatabaseOutputSchema`, `VacuumIntoCopyOutputSchema`, `AuditSearchOutputSchema` |
 | `virtual.ts`       | admin (virtual)              | `ListVirtualTablesOutputSchema`, `VirtualTableInfoOutputSchema`, `DropVirtualTableOutputSchema`, `CreateCsvTableOutputSchema`, `AnalyzeCsvSchemaOutputSchema`, `CreateRtreeTableOutputSchema`, `CreateSeriesTableOutputSchema`                                                                                                  |
 | `introspection.ts` | introspection                | `DependencyGraphOutputSchema`, `TopologicalSortOutputSchema`, `CascadeSimulatorOutputSchema`, `SchemaSnapshotOutputSchema`, `SchemaDiffOutputSchema`, `ConstraintAnalysisOutputSchema`, `MigrationRisksOutputSchema`, `StorageAnalysisOutputSchema`, `IndexAuditOutputSchema`, `QueryPlanOutputSchema`                          |
 | `migration.ts`     | migration                    | `MigrationInitOutputSchema`, `MigrationRecordOutputSchema`, `MigrationApplyOutputSchema`, `MigrationRollbackOutputSchema`, `MigrationHistoryOutputSchema`, `MigrationStatusOutputSchema`                                                                                                                                        |

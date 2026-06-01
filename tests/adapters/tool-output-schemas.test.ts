@@ -372,6 +372,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
         "AuditCleanupOutputSchema",
         "AuditDiffBackupOutputSchema",
         "AuditRestoreBackupOutputSchema",
+        "AuditSearchOutputSchema",
       ]);
 
       const orphans: string[] = [];

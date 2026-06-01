@@ -1,18 +1,33 @@
 /**
  * db-mcp — Audit Logger
  *
- * Async-buffered JSONL writer for the audit trail. Appends one
- * JSON object per line to a configurable file path, or writes to
+ * Async-buffered SQLite writer for the audit trail. Uses SystemDb
+ * to persist structured logs for queryability, or writes to
  * stderr for containerised deployments (`--audit-log stderr`).
  *
  * Non-throwing by design: audit failures log to stderr but never
  * propagate to tool callers.
  */
 
-import { appendFile, mkdir, open, rename, stat } from "node:fs/promises";
-import { dirname } from "node:path";
-import type { AuditConfig, AuditEntry } from "./types.js";
+import type { AuditConfig, AuditEntry, AuditCategory } from "./types.js";
 import { redactObject } from "../utils/redaction.js";
+import type { SystemDb } from "../observability/system-db.js";
+
+interface AuditLogRow {
+  timestamp: string;
+  requestId: string;
+  tool: string;
+  category: string;
+  scope: string;
+  user: string | null;
+  scopesJson: string | null;
+  durationMs: number;
+  success: number;
+  tokenEstimate: number | null;
+  error: string | null;
+  argsJson: string | null;
+  backupPath: string | null;
+}
 
 /** Maximum entries to buffer before forcing a flush */
 const BUFFER_HIGH_WATER = 50;
@@ -26,25 +41,19 @@ const DEFAULT_RECENT_COUNT = 50;
 /** Special logPath value that routes audit output to stderr */
 const STDERR_SENTINEL = "stderr";
 
-/**
- * Maximum bytes to read from the end of the audit log for `recent()`.
- * 64 KB is enough for ~100+ typical JSONL audit entries (~500 bytes each).
- * Files smaller than this are read in full; larger files only read the tail.
- */
-const TAIL_READ_BYTES = 65_536;
-
 export class AuditLogger {
   readonly config: AuditConfig;
 
-  private buffer: string[] = [];
+  private buffer: AuditEntry[] = [];
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private activeFlush: Promise<void> | null = null;
   private closed = false;
-  private dirEnsured = false;
   private readonly stderrMode: boolean;
+  private systemDb: SystemDb | null;
 
-  constructor(config: AuditConfig) {
+  constructor(config: AuditConfig, systemDb: SystemDb | null = null) {
     this.config = config;
+    this.systemDb = systemDb;
     this.stderrMode = config.logPath.toLowerCase() === STDERR_SENTINEL;
 
     if (config.enabled) {
@@ -57,37 +66,24 @@ export class AuditLogger {
   }
 
   /**
-   * Eagerly create the log directory and touch the log file on startup.
-   * Provides immediate confirmation that audit is configured correctly.
-   * Non-throwing — falls back silently if the path is inaccessible.
+   * Initialization is handled externally by SystemDb.
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async init(): Promise<void> {
     if (this.stderrMode || !this.config.enabled) return;
-    try {
-      await this.ensureDirectory();
-      // Touch the file so it exists even before any tool invocation
-      const fh = await open(this.config.logPath, "a");
-      await fh.close();
-    } catch (err) {
-      // M-3: Audit initialization failure must be fatal
-      process.stderr.write(
-        `[AUDIT] Failed to initialise log file: ${this.config.logPath}\n`,
-      );
-      throw err;
-    }
   }
 
   /**
    * Append an audit entry to the buffer.
-   * Non-blocking — the entry is serialised and queued; the
-   * actual file write happens on the next flush cycle.
+   * Non-blocking — the entry is queued; the
+   * actual DB write happens on the next flush cycle.
    */
   log(entry: AuditEntry): void {
     if (this.closed || !this.config.enabled) return;
 
     // Defense-in-depth: explicitly redact any credentials before persisting
     const safeEntry = redactObject(entry, 0, 5) as AuditEntry;
-    this.buffer.push(JSON.stringify(safeEntry));
+    this.buffer.push(safeEntry);
 
     // Eagerly flush when the buffer is full
     if (this.buffer.length >= BUFFER_HIGH_WATER) {
@@ -96,7 +92,7 @@ export class AuditLogger {
   }
 
   /**
-   * Flush the buffer to disk.
+   * Flush the buffer to SystemDb or stderr.
    * Safe to call concurrently — serialises via `this.activeFlush` Promise.
    */
   async flush(): Promise<void> {
@@ -110,32 +106,52 @@ export class AuditLogger {
     if (this.buffer.length === 0) return;
 
     const doFlush = async (): Promise<void> => {
-      // Rotate before writing if the log exceeds the configured size
-      await this.rotateIfNeeded();
-
+       
+      await Promise.resolve();
       // Swap the buffer so new entries can accumulate while we write
-      const lines = this.buffer;
+      const entries = this.buffer;
       this.buffer = [];
 
       try {
         if (this.stderrMode) {
-          // Stderr mode: write directly, no buffering to disk
+          // Stderr mode: write directly
+          const lines = entries.map(e => JSON.stringify(e));
           process.stderr.write(lines.join("\n") + "\n");
-        } else {
-          await this.ensureDirectory();
-          // One appendFile call with all buffered lines — each terminated by \n
-          await appendFile(
-            this.config.logPath,
-            lines.join("\n") + "\n",
-            "utf-8",
-          );
+        } else if (this.systemDb) {
+          const db = this.systemDb.getDb();
+          const stmt = db.prepare(`
+            INSERT INTO audit_logs (timestamp, requestId, tool, category, scope, user, scopesJson, durationMs, success, tokenEstimate, error, argsJson, backupPath)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          
+          const transaction = db.transaction((logs: AuditEntry[]) => {
+            for (const log of logs) {
+              stmt.run(
+                log.timestamp,
+                log.requestId,
+                log.tool,
+                log.category,
+                log.scope,
+                log.user ?? null,
+                JSON.stringify(log.scopes),
+                log.durationMs,
+                log.success ? 1 : 0,
+                log.tokenEstimate ?? null,
+                log.error ?? null,
+                log.args ? JSON.stringify(log.args) : null,
+                log.backup ?? null
+              );
+            }
+          });
+          
+          transaction(entries);
         }
       } catch (err) {
         // Never throw — audit must not break tool execution
         const message = err instanceof Error ? err.message : String(err);
         process.stderr.write(`[AUDIT] Write failed: ${message}\n`);
-        // Re-queue the failed lines so they aren't lost
-        this.buffer.unshift(...lines);
+        // Re-queue the failed entries so they aren't lost
+        this.buffer.unshift(...entries);
       }
     };
 
@@ -162,103 +178,127 @@ export class AuditLogger {
   }
 
   /**
-   * Read the most recent audit entries from the log file.
-   * Uses a streaming tail-read: only the last TAIL_READ_BYTES (64 KB) are
-   * read from disk, preventing O(n) memory spikes for large audit logs.
-   * Used by the `sqlite://audit` resource.
-   *
-   * @param count Maximum number of entries to return (default 50)
+   * Read the most recent audit entries from the SystemDb.
+   * Retrieve recent entries directly from the SystemDb.
    */
-  async recent(count: number = DEFAULT_RECENT_COUNT): Promise<AuditEntry[]> {
-    // Stderr mode has no file to read from
-    if (this.stderrMode) return [];
+  async recent(limit: number = DEFAULT_RECENT_COUNT): Promise<AuditEntry[]> {
+    if (this.stderrMode || !this.systemDb) {
+      return [];
+    }
 
-    // Force flush buffered entries to ensure the read includes up-to-the-millisecond events
     await this.flush();
 
     try {
-      // Open directly — avoids TOCTOU race between stat() and open()
-      let fh: Awaited<ReturnType<typeof open>>;
-      try {
-        fh = await open(this.config.logPath, "r");
-      } catch {
-        // File does not exist yet
-        return [];
-      }
+      const db = this.systemDb.getDb();
+      const rows = db.prepare(`
+        SELECT * FROM audit_logs
+        ORDER BY timestamp DESC
+        LIMIT ?
+      `).all(limit) as AuditLogRow[];
 
-      try {
-        // stat after open — file is guaranteed to exist since we hold the FD
-        const info = await stat(this.config.logPath);
-        const fileSize = info.size;
-        if (fileSize === 0) return [];
-
-        // Read only the tail of the file — avoids loading entire log into memory
-        const readSize = Math.min(fileSize, TAIL_READ_BYTES);
-        const startOffset = fileSize - readSize;
-
-        const buf = Buffer.alloc(readSize);
-        await fh.read(buf, 0, readSize, startOffset);
-        const chunk = buf.toString("utf-8");
-
-        // Split into lines: if we started mid-file, discard the first
-        // (likely partial) line
-        const rawLines = chunk.split("\n").filter(Boolean);
-        const lines = startOffset > 0 ? rawLines.slice(1) : rawLines;
-        const tail = lines.slice(-count);
-
-        return tail.reduce<AuditEntry[]>((acc, line) => {
-          try {
-            acc.push(JSON.parse(line) as AuditEntry);
-          } catch {
-            // Gracefully ignore corrupted or partial log entries
-          }
-          return acc;
-        }, []);
-      } finally {
-        await fh.close();
-      }
+      return rows.map(row => ({
+        timestamp: row.timestamp,
+        requestId: row.requestId,
+        tool: row.tool,
+        category: row.category as AuditCategory,
+        scope: row.scope,
+        user: row.user,
+        scopes: row.scopesJson ? (JSON.parse(row.scopesJson) as string[]) : [],
+        durationMs: row.durationMs,
+        success: row.success === 1,
+        tokenEstimate: row.tokenEstimate ?? undefined,
+        error: row.error ?? undefined,
+        args: row.argsJson ? (JSON.parse(row.argsJson) as Record<string, unknown>) : undefined,
+        backup: row.backupPath ?? undefined
+      }));
     } catch {
       return [];
     }
   }
 
   /**
-   * Ensure the parent directory of the log file exists.
+   * Search and filter audit entries from the SystemDb.
    */
-  private async ensureDirectory(): Promise<void> {
-    if (this.dirEnsured) return;
-    try {
-      await mkdir(dirname(this.config.logPath), { recursive: true });
-      this.dirEnsured = true;
-    } catch {
-      // Directory may already exist — that's fine
-      this.dirEnsured = true;
+  async search(filters: {
+    tool?: string | undefined;
+    category?: string | undefined;
+    success?: boolean | undefined;
+    requestId?: string | undefined;
+    fromTimestamp?: string | undefined;
+    toTimestamp?: string | undefined;
+    limit?: number | undefined;
+    offset?: number | undefined;
+  }): Promise<{ entries: AuditEntry[]; totalCount: number }> {
+    if (this.stderrMode || !this.systemDb) {
+      return { entries: [], totalCount: 0 };
     }
-  }
 
-  /**
-   * Rotate the log file if it exceeds the configured size limit.
-   * Keeps up to 5 rotated files (`.1` through `.5`); older data is discarded.
-   * Rotation failure is non-fatal — audit must not block tool execution.
-   */
-  private async rotateIfNeeded(): Promise<void> {
-    if (this.stderrMode || !this.config.maxSizeBytes) return;
+    await this.flush();
+
     try {
-      const info = await stat(this.config.logPath).catch(() => null);
-      if (!info || info.size < this.config.maxSizeBytes) return;
+      const db = this.systemDb.getDb();
+      let sql = "SELECT * FROM audit_logs WHERE 1=1";
+      let countSql = "SELECT COUNT(*) as c FROM audit_logs WHERE 1=1";
+      const params: unknown[] = [];
 
-      // Cascade rename from .4 to .5, .3 to .4, etc. to keep 5 backups
-      for (let i = 4; i >= 1; i--) {
-        const oldFile = `${this.config.logPath}.${String(i)}`;
-        const newFile = `${this.config.logPath}.${String(i + 1)}`;
-        await rename(oldFile, newFile).catch(() => null); // ignore if .i doesn't exist
+      if (filters.tool) {
+        sql += " AND tool = ?";
+        countSql += " AND tool = ?";
+        params.push(filters.tool);
+      }
+      if (filters.category) {
+        sql += " AND category = ?";
+        countSql += " AND category = ?";
+        params.push(filters.category);
+      }
+      if (filters.success !== undefined) {
+        sql += " AND success = ?";
+        countSql += " AND success = ?";
+        params.push(filters.success ? 1 : 0);
+      }
+      if (filters.requestId) {
+        sql += " AND requestId = ?";
+        countSql += " AND requestId = ?";
+        params.push(filters.requestId);
+      }
+      if (filters.fromTimestamp) {
+        sql += " AND timestamp >= ?";
+        countSql += " AND timestamp >= ?";
+        params.push(filters.fromTimestamp);
+      }
+      if (filters.toTimestamp) {
+        sql += " AND timestamp <= ?";
+        countSql += " AND timestamp <= ?";
+        params.push(filters.toTimestamp);
       }
 
-      // Rename current to .1
-      const rotatedPath = `${this.config.logPath}.1`;
-      await rename(this.config.logPath, rotatedPath);
+      const totalCount = (db.prepare(countSql).get(...params) as { c: number }).c;
+
+      sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?";
+      params.push(filters.limit ?? 50);
+      params.push(filters.offset ?? 0);
+
+      const rows = db.prepare(sql).all(...params) as AuditLogRow[];
+
+      const entries = rows.map(row => ({
+        timestamp: row.timestamp,
+        requestId: row.requestId,
+        tool: row.tool,
+        category: row.category as AuditCategory,
+        scope: row.scope,
+        user: row.user,
+        scopes: row.scopesJson ? (JSON.parse(row.scopesJson) as string[]) : [],
+        durationMs: row.durationMs,
+        success: row.success === 1,
+        tokenEstimate: row.tokenEstimate ?? undefined,
+        error: row.error ?? undefined,
+        args: row.argsJson ? (JSON.parse(row.argsJson) as Record<string, unknown>) : undefined,
+        backup: row.backupPath ?? undefined
+      }));
+
+      return { entries, totalCount };
     } catch {
-      // Rotation failure must not block logging
+      return { entries: [], totalCount: 0 };
     }
   }
 }

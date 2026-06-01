@@ -8,6 +8,9 @@
 - FTS5 query sanitization to prevent syntax errors on malformed user input (`sanitizeFtsQuery`).
 - `cursor` parameter support in `sqlite_read_query` and `sqlite_fts_search` for base64 opaque cursor-based pagination.
 - `recommendComposite` and `queriesToAnalyze` options in `sqlite_index_audit` to automatically recommend composite and partial indexes using `EXPLAIN QUERY PLAN` heuristics.
+- New SystemDb observability architecture replacing legacy JSONL and memory-only logs with a structured SQLite sidecar (`system.db`).
+- `sqlite_audit_search` tool allowing native structured searches against the server's own audit logs.
+- `MetricsRegistry` now persists historical snapshots directly into the SystemDb sidecar to survive server restarts.
 
 ### Fixed
 - Fixed V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during teardown of `CodeModeSandbox` by rigorously wrapping isolate executions in `try...finally` blocks with explicit object `.dispose()` and `.release()` calls.
