@@ -11,6 +11,7 @@ import {
 import { getAuthContext } from "../../auth/auth-context.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
 import { z } from "zod";
+import { metrics } from "../../observability/metrics.js";
 import {
   AuditListBackupsSchema,
   AuditListBackupsOutputSchema,
@@ -74,6 +75,7 @@ export function registerAuditResource(
       mimeType: "application/json",
     },
     async () => {
+      metrics.recordResourceRead("sqlite://audit");
       const recent = await auditLogger.recent(50);
       const backupStats = backupManager
         ? await backupManager.getStats()

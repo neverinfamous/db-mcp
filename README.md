@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.neverinfamous/db-mcp -->
 
-**SQLite MCP Server** with 170+ specialized tools, 11 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
+**SQLite MCP Server** with 170+ specialized tools, 12 data resources + 9 help resources, and 10 prompts, audit logging with DDL backup snapshots, HTTP/SSE Transport, OAuth 2.1 authentication, tool filtering, granular access control, and structured error handling with categorized, actionable responses. Available in WASM and better-sqlite3 variants.
 
 [![GitHub](https://img.shields.io/badge/GitHub-neverinfamous/db--mcp-blue?logo=github)](https://github.com/neverinfamous/db-mcp)
 ![GitHub Release](https://img.shields.io/github/v/release/neverinfamous/db-mcp)
@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-87.29%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-86.94%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -26,7 +26,7 @@
 | Feature                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **170+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                                                            |
-| **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                                                       |
+| **21 Resources**                 | 12 data resources (schema, tables, indexes, views, health, metadata, insights, audit, metrics, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                                                       |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                                                                                                                                                   |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 170+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                                               |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `_meta.tokenEstimate` on every response so agents know their token cost. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access                                                                                                                                                  |
@@ -348,7 +348,7 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 ## 📁 Resources
 
-### Data Resources (11)
+### Data Resources (12)
 
 MCP resources provide read-only access to database metadata:
 
@@ -365,6 +365,7 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_pragma`          | `sqlite://pragma`                   | Runtime PRAGMA config snapshot    | _(read-only)_ |
 | `sqlite_insights`        | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
 | `sqlite_audit`           | `sqlite://audit`                    | Recent audit log + backup stats   | `--audit-log` |
+| `sqlite_metrics`         | `sqlite://metrics`                  | Internal server metrics           | _(read-only)_ |
 
 ### Help Resources (1 + up to 8)
 
@@ -411,6 +412,7 @@ MCP prompts provide AI-assisted database workflows:
 | `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (CLI: `--server-host`)                                      |
 | `SQLITE_DATABASE`           | —         | SQLite database path (CLI: `--sqlite` / `--sqlite-native`)                     |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (CLI: `--tool-filter`)                                      |
+| `METRICS_EXPORT`            | —         | Export metrics at HTTP /metrics (e.g., `prometheus`) (CLI: `--metrics-export`) |
 | `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (CLI: `--oauth-enabled`)                                      |
 | `OAUTH_ISSUER`              | —         | Authorization server URL (CLI: `--oauth-issuer`)                               |
 | `OAUTH_AUDIENCE`            | —         | Expected token audience (CLI: `--oauth-audience`)                              |
@@ -441,7 +443,7 @@ Auth:         --oauth-enabled --oauth-issuer <url> --oauth-audience <aud>
 Database:     --sqlite <path>  |  --sqlite-native <path>
 Extensions:   --csv  --spatialite                         (native only)
 Audit:        --audit-log <path>  --audit-no-redact  --audit-reads  --audit-backup  --audit-backup-data
-Server:       --name <name>  --version <ver>  --tool-filter <filter>
+Server:       --name <name>  --version <ver>  --metrics-export <type>  --tool-filter <filter>
 ```
 
 > CLI flags override environment variables. Run `node dist/cli.js --help` for full details.

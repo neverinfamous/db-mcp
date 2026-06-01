@@ -3,6 +3,7 @@ import type { ToolFilterConfig, ToolGroup } from "../../types/index.js";
 import { HELP_CONTENT } from "../../constants/server-instructions.js";
 import { logger } from "../../utils/logger/index.js";
 import { ASSISTANT_FOCUSED } from "../../utils/resource-annotations.js";
+import { metrics } from "../../observability/metrics.js";
 
 /**
  * Register sqlite://help resources for on-demand reference documentation.
@@ -23,7 +24,9 @@ export function registerHelpResources(
         mimeType: "text/markdown",
         annotations: ASSISTANT_FOCUSED,
       },
-      () => ({
+      () => {
+        metrics.recordResourceRead("sqlite://help");
+        return {
         contents: [
           {
             uri: "sqlite://help",
@@ -31,7 +34,8 @@ export function registerHelpResources(
             text: gotchasContent,
           },
         ],
-      }),
+        };
+      }
     );
   }
 
@@ -69,7 +73,9 @@ export function registerHelpResources(
         mimeType: "text/markdown",
         annotations: ASSISTANT_FOCUSED,
       },
-      () => ({
+      () => {
+        metrics.recordResourceRead(`sqlite://help/${key}`);
+        return {
         contents: [
           {
             uri: `sqlite://help/${key}`,
@@ -77,7 +83,8 @@ export function registerHelpResources(
             text: content,
           },
         ],
-      }),
+        };
+      }
     );
   }
 

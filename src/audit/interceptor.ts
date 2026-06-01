@@ -27,6 +27,7 @@ import type { AuditCategory } from "./types.js";
 import { getAuthContext } from "../auth/auth-context.js";
 import { getRequiredScope } from "../auth/scope-map.js";
 import { sanitizeErrorMessage } from "../utils/errors/format.js";
+import { metrics } from "../observability/metrics.js";
 
 /**
  * Keys that are always redacted from audit log args, regardless of the
@@ -249,6 +250,9 @@ export function createAuditInterceptor(
         throw err; // Re-throw — don't swallow
       } finally {
         const durationMs = Math.round(performance.now() - start);
+
+        // Record metrics
+        metrics.recordToolCall(options?.logAs ?? toolName, durationMs, success, tokenEstimate ?? 0);
 
         if (isReadScope) {
           // Compact read entries — omit args, user, scopes for ~100 byte entries

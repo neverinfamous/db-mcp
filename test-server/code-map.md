@@ -18,6 +18,7 @@ src/
 │   ├── mcp-server.ts               # McpServer setup, adapter registration, tool/resource/prompt wiring
 │   ├── built-in-tools.ts           # Registration logic for server_info, server_health, list_adapters
 │   ├── help-resources.ts           # Registration logic for sqlite://help resources
+│   ├── observability-resources.ts  # Registration logic for observability resources (sqlite://metrics)
 │   └── audit-tools.ts              # Registration logic for audit backup tools (5 tools)
 │
 ├── types/                          # Core TypeScript types (barrel: types/index.ts)
@@ -135,7 +136,7 @@ src/
 │   │   ├── schema-manager.ts       # Schema cache + metadata (TTL-based)
 │   │   ├── json-utils.ts           # JSON column detection and normalization
 │   │   ├── types.ts                # WASM-specific Zod schemas + TS types
-│   │   ├── resources.ts            # 10 data MCP resources (schema, tables, indexes, compile_options, etc.)
+│   │   ├── resources.ts            # 11 data MCP resources (schema, tables, indexes, compile_options, etc.)
 │   │   ├── index.ts                # Barrel
 │   │   ├── schemas/                # Zod outputSchema definitions per group (see § below)
 │   │   ├── prompts/                # 10 MCP prompts (see § below)

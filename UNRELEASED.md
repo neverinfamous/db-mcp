@@ -1,6 +1,8 @@
 ## [Unreleased]
 
 ### Added
+- `--metrics-export` CLI flag and `METRICS_EXPORT` environment variable to expose internal server metrics at `/metrics` (e.g., Prometheus format).
+- `sqlite://metrics` MCP resource to expose internal server metrics natively to MCP clients.
 - `sqlite_hybrid_search` tool combining FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF).
 - `includeFacets` faceted search support added to `sqlite_fts_search`, `sqlite_advanced_search`, and `sqlite_hybrid_search`.
 - FTS5 query sanitization to prevent syntax errors on malformed user input (`sanitizeFtsQuery`).

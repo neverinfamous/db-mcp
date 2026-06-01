@@ -35,12 +35,14 @@ import {
   registerHelpResources,
   registerAuditResource,
   registerAuditBackupTools,
+  registerObservabilityResources,
 } from "./registration/index.js";
 import {
   registerToolScopes,
   scopesGrantToolAccess,
 } from "../auth/scopes/enforcement.js";
 import { getAuthContext } from "../auth/auth-context.js";
+
 /**
  * Monkey-patch McpServer to return structured JSON errors for validation failures.
  * This ensures that SDK-level Zod validation errors match the handler error format
@@ -143,6 +145,7 @@ export class DbMcpServer {
       this.toolFilter,
     );
     registerHelpResources(this.server, this.toolFilter);
+    registerObservabilityResources(this.server);
 
     // M-8: Monkey-patch tools/list at protocol layer to filter based on OAuth scopes
     // We must do this AFTER tools are registered, because the SDK lazily registers the 'tools/list' handler
@@ -336,6 +339,9 @@ export class DbMcpServer {
       oauth: oauthConfig,
       stateless: this.config.statelessHttp ?? false,
       noAuthEnforcement: this.config.noAuthEnforcement ?? false,
+      ...(this.config.metricsExport !== undefined && {
+        metricsExport: this.config.metricsExport,
+      }),
     });
 
     // Initialize transport with the MCP server reference

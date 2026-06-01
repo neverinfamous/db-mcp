@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-87.29%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-86.94%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -24,7 +24,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 | Feature                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **170+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                             |
-| **20 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, insights, audit, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                        |
+| **21 Resources**                 | 12 data resources (schema, tables, indexes, views, health, metadata, insights, audit, metrics, compile_options, pragma) + 9 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                        |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                                                                                                                    |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 170+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access. Every response includes `_meta.tokenEstimate` so agents know their token cost                                                                                                                                            |
@@ -219,7 +219,7 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 
 ### 📁 Resources & Prompts
 
-db-mcp exposes 20 resources (including dynamic `sqlite://help` documentation) and 10 AI-powered prompts (for schema exploration, query building, data analysis, optimization, and migration). See the [GitHub README](https://github.com/neverinfamous/db-mcp) for the complete list.
+db-mcp exposes 21 resources (including dynamic `sqlite://help` documentation) and 10 AI-powered prompts (for schema exploration, query building, data analysis, optimization, and migration). See the [GitHub README](https://github.com/neverinfamous/db-mcp) for the complete list.
 
 ### SQLite Extensions
 
@@ -239,6 +239,7 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 | `MCP_HOST`                  | `0.0.0.0` | Host/IP to bind to (`--server-host`)                                      |
 | `SQLITE_DATABASE`           | —         | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
 | `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (`--tool-filter`)                                      |
+| `METRICS_EXPORT`            | —         | Export metrics at HTTP /metrics (e.g., `prometheus`) (`--metrics-export`) |
 | `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                                      |
 | `OAUTH_ISSUER`              | —         | Authorization server URL (`--oauth-issuer`)                               |
 | `OAUTH_AUDIENCE`            | —         | Expected token audience (`--oauth-audience`)                              |

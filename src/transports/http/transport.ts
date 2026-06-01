@@ -45,6 +45,7 @@ import {
 import type { OAuthResourceServer } from "../../auth/oauth-resource-server.js";
 import { runWithAuthContext } from "../../auth/auth-context.js";
 import type { AuthenticatedContext } from "../../auth/middleware/index.js";
+import { metrics } from "../../observability/metrics.js";
 
 const logger = createModuleLogger("HTTP");
 
@@ -214,6 +215,13 @@ export class HttpTransport {
         documentation: "https://github.com/neverinfamous/db-mcp",
       });
     });
+
+    if (this.state.config.metricsExport === "prometheus") {
+      this.state.app.get("/metrics", (_req, res) => {
+        res.set("Content-Type", "text/plain");
+        res.send(metrics.toPrometheus());
+      });
+    }
 
     // Apply auth middleware before MCP endpoints
     applyAuthMiddleware(this.state);

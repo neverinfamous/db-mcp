@@ -39,6 +39,9 @@ function parseArgs(): Partial<McpServerConfig> {
   let auditBackup = false;
   let auditBackupData = false;
 
+  // Track observability flags
+  let metricsExport: "prometheus" | undefined;
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
@@ -158,6 +161,11 @@ function parseArgs(): Partial<McpServerConfig> {
       auditBackup = true;
     } else if (arg === "--audit-backup-data") {
       auditBackupData = true;
+    } else if (arg === "--metrics-export") {
+      const metricsValue = args[++i];
+      if (metricsValue === "prometheus") {
+        metricsExport = "prometheus";
+      }
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -166,6 +174,10 @@ function parseArgs(): Partial<McpServerConfig> {
 
   if (databases.length > 0) {
     config.databases = databases;
+  }
+
+  if (metricsExport) {
+    config.metricsExport = metricsExport;
   }
 
   // Build audit config if --audit-log was specified
@@ -236,6 +248,7 @@ Audit Options:
 Server Options:
   --name <name>             Server name (default: db-mcp)
   --version <version>       Server version (default: ${VERSION})
+  --metrics-export <type>   Export metrics at HTTP /metrics (e.g., prometheus)
   --tool-filter <filter>    Tool filter string. Supports:
                               Shortcuts: starter, analytics, search, spatial, minimal, full
                               Groups: core, json, text, fts5, stats, vector, geo, ...
@@ -255,6 +268,7 @@ Environment Variables:
   SQLITE_DATABASE           SQLite database path
   CSV_EXTENSION_PATH        Custom path to CSV extension binary
   SPATIALITE_PATH           Custom path to SpatiaLite extension binary
+  METRICS_EXPORT            Export metrics (e.g., prometheus)
   AUDIT_LOG                 Audit log file path (or "stderr")
   AUDIT_REDACT              Redact arguments (default: true, set false to include args)
   AUDIT_READS               Log reads (true/false)
@@ -353,6 +367,11 @@ function loadEnvConfig(): Partial<McpServerConfig> {
     process.env["SQLITE_DATABASE"] ?? process.env["SQLITE_PATH"];
   if (sqliteUri) {
     databases.push({ type: "sqlite", connectionString: sqliteUri });
+  }
+
+  // Metrics from environment
+  if (process.env["METRICS_EXPORT"] === "prometheus") {
+    config.metricsExport = "prometheus";
   }
 
   if (databases.length > 0) {

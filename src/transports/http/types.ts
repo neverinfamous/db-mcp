@@ -58,6 +58,9 @@ export interface HttpTransportConfig {
   /** Explicitly bypass auth requirement */
   noAuthEnforcement?: boolean;
 
+  /** Enable Prometheus metrics export at /metrics */
+  metricsExport?: "prometheus";
+
   /** OAuth 2.1 configuration */
   oauth: {
     /** Enable OAuth authentication */
