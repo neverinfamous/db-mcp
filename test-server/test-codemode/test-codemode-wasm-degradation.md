@@ -134,7 +134,7 @@ const help = await sqlite.help();
 return { groups: help.groups, totalMethods: help.totalMethods };
 ```
 
-Expected: `totalMethods` should be significantly less than 167 (the Native count). The exact WASM count depends on adapter registration but should be approximately 140.
+Expected: `totalMethods` should be significantly less than 168 (the Native count). The exact WASM count depends on adapter registration but should be approximately 141.
 
 ### 1.2 — Transactions group is completely omitted
 

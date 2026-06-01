@@ -160,7 +160,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1})` → return exactly 1 result and `nextCursor` populated
 24. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → return next result via opaque pagination
 25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
-26. `sqlite.text.hybridSearch({table: "test_articles", query: "future of interfaces", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 60, includeFacets: true})` → results combining vector distance and FTS rank via Reciprocal Rank Fusion, with facets
+26. `sqlite.text.hybridSearch({table: "test_articles", query: "future of interfaces", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 60})` → results combining vector distance and FTS rank via Reciprocal Rank Fusion
 
 ## Phase 3: Text Write Tool (temp table)
 
@@ -172,12 +172,13 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 26. `sqlite.text.regexMatch({table: "nonexistent_xyz", column: "x", pattern: "."})` → `{success: false}`
 🔴 27. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → `{success: false}`
 🔴 28. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → `{success: false}`
+🔴 29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` `[NATIVE ONLY]` → should gracefully handle malformed FTS syntax without crashing the parser (via `sanitizeFtsQuery`)
 
 ## Phase 5: Gotcha Edge Cases (batched)
 
-29. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
-30. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
-31. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
+30. `sqlite.text.fuzzyMatch({table: "test_products", column: "name", search: "Laptop Pro 15", tokenize: false, maxDistance: 3})` → full-string matching (default tokenizes into words and matches per-token, gotcha #10)
+31. `sqlite.text.phoneticMatch({table: "test_products", column: "name", search: "Labtop", algorithm: "metaphone"})` → test Metaphone algorithm variant (default is Soundex)
+32. `sqlite.text.advancedSearch({table: "test_products", column: "name", searchTerm: "keyboard", techniques: ["phonetic"]})` → single technique instead of all 3 — verify it works in isolation
 
 ## Phase 6: Multi-Step Workflow
 

@@ -13,7 +13,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-86.58%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-87.29%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[GitHub](https://github.com/neverinfamous/db-mcp)** • **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](https://github.com/neverinfamous/db-mcp/blob/main/CHANGELOG.md)**
 
@@ -207,7 +207,7 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | -------------------- | ------- | ------------------------------------------ |
 | Core Database        | 21      | CRUD, schema, indexes, views, convenience  |
 | JSON Operations      | 25      | JSON/JSONB, schema analysis, security scan |
-| Text Processing      | 19      | Regex, fuzzy, phonetic, sentiment, FTS5    |
+| Text Processing      | 20      | Regex, fuzzy, phonetic, sentiment, FTS5    |
 | Statistical Analysis | 23      | Stats, outliers, window funcs              |
 | Vector/Semantic      | 11      | Embeddings, similarity search              |
 | Geospatial           | 11      | Distance, SpatiaLite GIS                   |

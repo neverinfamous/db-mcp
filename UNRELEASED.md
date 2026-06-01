@@ -6,7 +6,7 @@
 - `sqlite_hybrid_search` tool combining FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF).
 - `sqlite_audit_search` tool (including Code Mode support) to securely query the server's own audit logs.
 - `sqlite_server_config` administrative tool to dynamically change server logging levels (`debug`, `info`, `warn`, `error`).
-- `includeFacets` faceted search support in `sqlite_fts_search`, `sqlite_advanced_search`, and `sqlite_hybrid_search`.
+- `includeFacets` faceted search support in `sqlite_fts_search` and `sqlite_advanced_search`.
 - FTS5 query sanitization (`sanitizeFtsQuery`) to prevent syntax errors on malformed user input.
 - `cursor` parameter support in `sqlite_read_query` and `sqlite_fts_search` for base64 opaque cursor-based pagination.
 - `recommendComposite` and `queriesToAnalyze` options in `sqlite_index_audit` to automatically recommend indexes.
@@ -21,6 +21,7 @@
 - Agent workflow `docs-drift-detector.md` to detect and remediate documentation drift in `README.md` and `DOCKER_README.md`.
 - E2E Triple-Path Verification test coverage for `sqlite_server_config` and resource subscriptions.
 - Updated `test-server` manifests and test prompts to reflect recent codebase and tool additions.
+- Added robust programmatic Vitest coverage for hybrid search, faceted search, and FTS5 query sanitization.
 - Capacity Planning Guide in the Wiki covering scaling, memory requirements, and token budget strategies.
 
 ### Fixed

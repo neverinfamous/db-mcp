@@ -9,6 +9,7 @@ import {
 } from "../../auth/scopes/enforcement.js";
 import { getAuthContext } from "../../auth/auth-context.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
+import { estimateTokens } from "../../utils/index.js";
 
 // Interface for the adapter methods needed by tool registration
 export interface ToolRegistrationAdapter {
@@ -108,9 +109,7 @@ export function registerToolImpl(
               ...(result as object),
               _meta: { tokenEstimate: 0 },
             });
-            const tokenEstimate = Math.ceil(
-              Buffer.byteLength(enriched, "utf8") / 4,
-            );
+            const tokenEstimate = estimateTokens(enriched, "json");
             const finalText = enriched.replace(
               '"tokenEstimate":0',
               `"tokenEstimate":${String(tokenEstimate)}`,
@@ -136,9 +135,7 @@ export function registerToolImpl(
               null,
               2,
             );
-            const tokenEstimate = Math.ceil(
-              Buffer.byteLength(withMeta, "utf8") / 4,
-            );
+            const tokenEstimate = estimateTokens(withMeta, "json");
             const finalText = withMeta.replace(
               '"tokenEstimate": 0',
               `"tokenEstimate": ${String(tokenEstimate)}`,
@@ -186,9 +183,7 @@ export function registerToolImpl(
             ...structured,
             _meta: { tokenEstimate: 0 },
           });
-          const tokenEstimate = Math.ceil(
-            Buffer.byteLength(enriched, "utf8") / 4,
-          );
+          const tokenEstimate = estimateTokens(enriched, "json");
           const finalText = enriched.replace(
             '"tokenEstimate":0',
             `"tokenEstimate":${String(tokenEstimate)}`,
@@ -210,9 +205,7 @@ export function registerToolImpl(
           null,
           2,
         );
-        const tokenEstimate = Math.ceil(
-          Buffer.byteLength(withMeta, "utf8") / 4,
-        );
+        const tokenEstimate = estimateTokens(withMeta, "json");
         const finalText = withMeta.replace(
           '"tokenEstimate": 0',
           `"tokenEstimate": ${String(tokenEstimate)}`,

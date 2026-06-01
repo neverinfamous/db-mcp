@@ -172,12 +172,15 @@ All tools should return errors as structured objects instead of throwing. The ex
 27. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
 28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1})` → exactly 1 result, `nextCursor` provided
 29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → next cursor chunk retrieved
-28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
-29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
-30. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
-31. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0, 0, 0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → results combining vector distance and FTS
-32. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error or handles dimension mismatch gracefully
-33. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist and aren't overly large payloads
+30. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
+31. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
+32. `sqlite.text.ftsSearch({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` → should gracefully handle malformed FTS syntax without crashing the parser
+33. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
+34. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0, 0, 0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → results combining vector distance and FTS
+35. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error or handles dimension mismatch gracefully
+36. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 0})` → verify edge case `rrfK` is handled gracefully
+37. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist and aren't overly large payloads
+
 
 ## Phase 7: WASM Boundary Verification (batched)
 

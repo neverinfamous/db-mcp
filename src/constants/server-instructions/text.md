@@ -135,8 +135,7 @@ sqlite_hybrid_search({
   vectorColumn: "embedding",
   queryVector: [0.1, 0.2, 0.3], // vector data from external embedding API
   metric: "cosine",
-  limit: 10,
-  includeFacets: true
+  limit: 10
 });
 
 // Sentiment analysis — text analysis (can analyze raw text or database columns)
