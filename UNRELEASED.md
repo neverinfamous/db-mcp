@@ -1,39 +1,32 @@
 ## [Unreleased]
 
 ### Added
-- `--metrics-export` CLI flag and `METRICS_EXPORT` environment variable to expose internal server metrics at `/metrics` (e.g., Prometheus format).
+- `--metrics-export` CLI flag and `METRICS_EXPORT` environment variable to expose internal server metrics at `/metrics`.
 - `sqlite://metrics` MCP resource to expose internal server metrics natively to MCP clients.
 - `sqlite_hybrid_search` tool combining FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF).
-- `includeFacets` faceted search support added to `sqlite_fts_search`, `sqlite_advanced_search`, and `sqlite_hybrid_search`.
-- FTS5 query sanitization to prevent syntax errors on malformed user input (`sanitizeFtsQuery`).
+- `sqlite_audit_search` tool (including Code Mode support) to securely query the server's own audit logs.
+- `sqlite_server_config` administrative tool to dynamically change server logging levels (`debug`, `info`, `warn`, `error`).
+- `includeFacets` faceted search support in `sqlite_fts_search`, `sqlite_advanced_search`, and `sqlite_hybrid_search`.
+- FTS5 query sanitization (`sanitizeFtsQuery`) to prevent syntax errors on malformed user input.
 - `cursor` parameter support in `sqlite_read_query` and `sqlite_fts_search` for base64 opaque cursor-based pagination.
-- `recommendComposite` and `queriesToAnalyze` options in `sqlite_index_audit` to automatically recommend composite and partial indexes using `EXPLAIN QUERY PLAN` heuristics.
-- New SystemDb observability architecture replacing legacy JSONL and memory-only logs with a structured SQLite sidecar (`system.db`).
-- `sqlite_audit_search` tool allowing native structured searches against the server's own audit logs.
-- `MetricsRegistry` now persists historical snapshots directly into the SystemDb sidecar to survive server restarts.
-- Added `resources/subscribe` capability support in `McpServer`.
-- Added `SubscriptionManager` for robust resource tracking with automatic cleanup on session disconnect for both HTTP and Legacy SSE transports.
-- Exposed database schema modification events through the new `schemaChanged` event in `DatabaseAdapter`, automatically notifying clients subscribed to `sqlite://schema` and `sqlite://tables`.
-- Added `docs-drift-detector.md` agent workflow for automated validation of `db-mcp` documentation.
-- Added new `sqlite_server_config` administrative tool to change server logging levels dynamically (`debug`, `info`, `warn`, `error`).
-- Expanded startup CLI arguments (`--audit-log`, `--enable-admin`, `--cors-origins`) to `db-mcp.config.yaml` to simplify Docker deployments.
-- Implemented `sqlite_audit_search` Code Mode tool exclusively accessible via `agent` workflows to query the SQLite internal log securely.
-- `--dump-config` CLI flag to securely print the fully resolved configuration hierarchy (redacting secrets) for debugging.
-- `--config <path>` flag parsing supporting configuration via `.yaml` and `.json` files.
-- Ported `docs-drift-detector.md` agentic workflow to detect and remediate documentation drift in `README.md` and `DOCKER_README.md`.
-- E2E Triple-Path Verification test coverage for `sqlite_server_config` payload shapes and resource subscriptions (`sqlite://health`, `sqlite://schema`).
-- Synchronized `test-server` manifests (`tool-reference.md`, `code-map.md`, `test-resources.md`) with recent codebase additions and the expanded 179 Native / 152 WASM tool inventory.
-- Synchronized `test-server` test prompt tool counts in `test-codemode` and `test-tool-groups` to accurately reflect the addition of `sqlite_hybrid_search`.
-- Added Encryption at Rest (SQLCipher) support for the Native backend, configurable via `--encryption-key` flag or `DB_ENCRYPTION_KEY` environment variable.
-- Added automatic encryption of the sidecar `SystemDb` audit logs when a database encryption key is provided.
-- Added comprehensive Capacity Planning Guide to the db-mcp Wiki, addressing scaling, memory requirements, and token budget strategies.
+- `recommendComposite` and `queriesToAnalyze` options in `sqlite_index_audit` to automatically recommend indexes.
+- SystemDb observability architecture replacing memory-only logs with a structured SQLite sidecar (`system.db`).
+- `MetricsRegistry` persistence of historical snapshots into the SystemDb sidecar to survive server restarts.
+- `resources/subscribe` capability support in `McpServer` with a `SubscriptionManager` for automatic session cleanup.
+- Database schema modification events (`schemaChanged`) that automatically notify clients subscribed to `sqlite://schema` and `sqlite://tables`.
+- `--config <path>` and `--dump-config` CLI flags for advanced configuration file support (`.yaml`, `.json`) and debugging.
+- Configuration file support (`db-mcp.config.yaml`) for startup arguments (`--audit-log`, `--enable-admin`, `--cors-origins`) to simplify Docker deployments.
+- Encryption at Rest (SQLCipher) support for the Native backend and sidecar `SystemDb` audit logs, configurable via `--encryption-key` or `DB_ENCRYPTION_KEY`.
+- `better-sqlite3-multiple-ciphers@12.10.0` optional dependency for SQLCipher support.
+- Agent workflow `docs-drift-detector.md` to detect and remediate documentation drift in `README.md` and `DOCKER_README.md`.
+- E2E Triple-Path Verification test coverage for `sqlite_server_config` and resource subscriptions.
+- Updated `test-server` manifests and test prompts to reflect recent codebase and tool additions.
+- Capacity Planning Guide in the Wiki covering scaling, memory requirements, and token budget strategies.
 
 ### Fixed
-- Fixed V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during teardown of `CodeModeSandbox` by rigorously wrapping isolate executions in `try...finally` blocks with explicit object `.dispose()` and `.release()` calls.
+- V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during `CodeModeSandbox` teardown by explicitly disposing and releasing isolate executions.
 
 ### Changed
-**Dependency Updates**
-- Pinned `isolated-vm` to exactly `6.1.2` (reverting from 7.0.0) to prevent uncontrolled minor/patch updates from introducing native V8 thread leaks on Windows.
-- Bumped `tsx` from 4.22.3 to 4.22.4
-- Miscellaneous transitive dependencies updated via `npm update`
-- Added `better-sqlite3-multiple-ciphers@12.10.0` as an optional dependency for SQLCipher support.
+- Pinned `isolated-vm` to exactly `6.1.2` to prevent native V8 thread leaks on Windows.
+- Bumped `tsx` from `4.22.3` to `4.22.4`.
+- Updated miscellaneous transitive dependencies.
