@@ -39,7 +39,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 
 | Feature              | WASM (sql.js)                                                    | Native (better-sqlite3)         |
 | -------------------- | ---------------------------------------------------------------- | ------------------------------- |
-| **Group Tools**      | 139                                                              | **166**                         |
+| **Group Tools**      | 141                                                              | **168**                         |
 | **Transactions**     | ❌                                                               | ✅ 8 tools                      |
 | **Window Functions** | ❌                                                               | ✅ 6 tools                      |
 | **SpatiaLite GIS**   | ❌                                                               | ✅ 7 tools                      |
@@ -85,7 +85,7 @@ Add to your `~/.cursor/mcp.json` or Claude Desktop config:
 > **⭐ Code Mode** (`--tool-filter codemode`) is the recommended configuration — it exposes `sqlite_execute_code`, a V8 isolate sandbox with process-level isolation providing access to all 170+ tools' worth of capability with 70–90% token savings. See [Tool Filtering](#️-tool-filtering) for alternatives.
 
 > [!TIP]
-> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 166 tools). To use the **WASM** backend (sql.js, 139 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options](#backend-options) table for feature differences.
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 168 tools). To use the **WASM** backend (sql.js, 141 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options](#backend-options) table for feature differences.
 
 ### 3. Restart & Query!
 
@@ -135,7 +135,7 @@ Specify exactly the groups you need:
 | `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
 | `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
 | `minimal`    | 21     | 21     | +4         | Core only                      |
-| `full`       | 139    | 166    | +4         | Everything enabled             |
+| `full`       | 141    | 168    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
@@ -146,7 +146,7 @@ Specify exactly the groups you need:
 | `codemode`      | 1    | 1      | +4         | Code Mode (sandboxed code execution) 🧠    |
 | `core`          | 21   | 21     | +4         | Basic CRUD, schema, tables                 |
 | `json`          | 25   | 25     | +4         | JSON/JSONB operations, analysis            |
-| `text`          | 14   | 19     | +4         | Text processing + FTS5 + advanced search   |
+| `text`          | 15   | 20     | +4         | Text processing + FTS5 + advanced search   |
 | `stats`         | 17   | 23     | +4         | Descriptive, inference, window functions   |
 | `vector`        | 11   | 11     | +4         | Vector storage, similarity search          |
 | `admin`         | 31   | 32     | +4         | DB maintenance, backup, virtual tables     |
@@ -215,7 +215,7 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 | Introspection        | 10      | FK graph, cascade sim, audit               |
 | Migration            | 6       | Tracking, apply, rollback                  |
 | Code Mode            | 1       | Sandboxed JavaScript execution             |
-| **Total**            | **166** |                                            |
+| **Total**            | **168** |                                            |
 
 ### 📁 Resources & Prompts
 
@@ -306,8 +306,8 @@ docker run --rm -p 3000:3000 \
 
 | Platform                  | Features                            |
 | ------------------------- | ----------------------------------- |
-| **AMD64** (x86_64)        | Full: 166 tools, native, SpatiaLite |
-| **ARM64** (Apple Silicon) | Full: 166 tools, native             |
+| **AMD64** (x86_64)        | Full: 168 tools, native, SpatiaLite |
+| **ARM64** (Apple Silicon) | Full: 168 tools, native             |
 
 Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sqlite3 native
 

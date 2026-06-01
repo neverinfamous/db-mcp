@@ -297,6 +297,7 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_fts_search", "FtsSearchOutputSchema"],
       ["sqlite_fts_rebuild", "FtsRebuildOutputSchema"],
       ["sqlite_fts_match_info", "FtsSearchOutputSchema"],
+      ["sqlite_hybrid_search", "HybridSearchOutputSchema"],
 
       // JSON tools
       ["sqlite_json_diff", "JsonDiffOutputSchema"],

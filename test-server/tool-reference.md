@@ -6,11 +6,11 @@ Complete reference of all db-mcp tools organized by 10 tool groups + codemode. E
 
 | Scope           | What it includes                                    |  Native |    WASM | Notes                                           |
 | --------------- | --------------------------------------------------- | ------: | ------: | ----------------------------------------------- |
-| **Group tools** | 10 adapter-registered groups                        |     167 |     140 | Accessible via Code Mode `sqlite.help()`        |
+| **Group tools** | 10 adapter-registered groups                        |     168 |     141 | Accessible via Code Mode `sqlite.help()`        |
 | **Audit tools** | 5 server-level snapshot tools                       |       5 |       5 | MCP-only — not exposed in Code Mode             |
-| **Inventory**   | Group + Audit                                       | **172** | **145** | All filterable/functional tools                 |
+| **Inventory**   | Group + Audit                                       | **173** | **146** | All filterable/functional tools                 |
 | **Built-in**    | `server_info`, `health`, `adapters`, `execute_code` |       4 |       4 | Always on (Code Mode can be excluded via rules) |
-| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **176** | **149** | **What a client sees via `tools/list`**         |
+| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **177** | **150** | **What a client sees via `tools/list`**         |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 
@@ -90,9 +90,9 @@ Comprehensive JSON manipulation — read, write, transform, validate, and analyz
 
 ---
 
-## text (19 Native / 14 WASM tools + Code Mode)
+## text (20 Native / 15 WASM tools + Code Mode)
 
-Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and FTS5 full-text search.
+Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, hybrid search, and FTS5 full-text search.
 
 | MCP Tool Name            | Code Mode Name               | Description                                                                                                                                                                      |
 | :----------------------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -109,6 +109,7 @@ Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and
 | `sqlite_text_normalize`  | `sqlite.text.normalize`      | Normalize text using Unicode normalization (NFC, NFD, NFKC, NFKD) or strip accents.                                                                                              |
 | `sqlite_text_validate`   | `sqlite.text.validate`       | Validate text values against patterns: email, phone, URL, UUID, IPv4, or custom regex.                                                                                           |
 | `sqlite_advanced_search` | `sqlite.text.advancedSearch` | Advanced search combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching.                                                                                           |
+| `sqlite_hybrid_search`   | `sqlite.text.hybridSearch`   | Hybrid search combining FTS5 text search and vector embedding search using Reciprocal Rank Fusion (RRF). Returns a unified, scored result set.                                   |
 | `sqlite_text_sentiment`  | `sqlite.text.sentiment`      | Perform basic keyword-based sentiment analysis on raw text. Returns sentiment classification, score, confidence, and optionally matched words. No database query needed.         |
 | `sqlite_fts_create`      | `sqlite.text.ftsCreate`      | Create an FTS5 full-text search virtual table. `[NATIVE ONLY]`                                                                                                                   |
 | `sqlite_fts_search`      | `sqlite.text.ftsSearch`      | Search an FTS5 table using full-text query syntax. Supports cursor pagination. `[NATIVE ONLY]`                                                                                                               |
@@ -304,7 +305,7 @@ All schemas are centralized in `src/adapters/sqlite/schemas/` with named exports
 | :----------------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `core.ts`          | core                         | `ReadQueryOutputSchema`, `WriteQueryOutputSchema`, `CreateTableOutputSchema`, `ListTablesOutputSchema`, `DescribeTableOutputSchema`, `DropTableOutputSchema`, `GetIndexesOutputSchema`, `CreateIndexOutputSchema`, `DropIndexOutputSchema`, `ListTriggersOutputSchema`, `ListConstraintsOutputSchema`, `DateMathOutputSchema`   |
 | `json.ts`          | json                         | `JsonDiffOutputSchema` + schemas for all 25 JSON tools                                                                                                                                                                                                                                                                          |
-| `text.ts`          | text                         | `TextConcatOutputSchema`, `TextTrimOutputSchema`, `TextCaseOutputSchema`, `TextSubstringOutputSchema`, `AdvancedSearchOutputSchema` + schemas for all 14 text tools                                                                                                                                                             |
+| `text.ts`          | text                         | `TextConcatOutputSchema`, `TextTrimOutputSchema`, `TextCaseOutputSchema`, `TextSubstringOutputSchema`, `AdvancedSearchOutputSchema`, `HybridSearchOutputSchema` + schemas for all 15 text tools                                                                                                                                                             |
 | `fts.ts`           | text (FTS5)                  | `FtsCreateOutputSchema`, `FtsSearchOutputSchema`, `FtsRebuildOutputSchema`                                                                                                                                                                                                                                                      |
 | `stats.ts`         | stats                        | `StatsBasicOutputSchema`, `StatsCountOutputSchema`, `StatsGroupByOutputSchema`, `StatsHistogramOutputSchema`, `StatsPercentileOutputSchema`, `StatsCorrelationOutputSchema`, `StatsHypothesisOutputSchema`, `StatsDetectAnomaliesOutputSchema`, `StatsDetectBloatOutputSchema`, `StatsDetectSchemaRisksOutputSchema`            |
 | `vector.ts`        | vector                       | `VectorSearchOutputSchema`, `VectorStoreOutputSchema`, `VectorBatchStoreOutputSchema`, `VectorGetOutputSchema`, `VectorDeleteOutputSchema`, `VectorCountOutputSchema`, `VectorStatsOutputSchema`, `VectorDimensionsOutputSchema`, `VectorNormalizeOutputSchema`, `VectorDistanceOutputSchema`                                   |

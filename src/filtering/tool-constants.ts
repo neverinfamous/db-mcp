@@ -6,7 +6,7 @@
  * GROUP TOOLS (adapter-registered, accessible via Code Mode sqlite.help()):
  *   core: 21 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts, core/triggers.ts, core/constraints.ts, core/datetime.ts, core/alter-table.ts)
  *   json: 25 tools (json-operations/crud+query+transform+security+diff.ts, json-helpers/read+write.ts)
- *   text: 14 WASM / 19 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
+ *   text: 15 WASM / 20 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
  *   stats: 17 WASM / 23 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
  *   admin: 31 WASM / 32 Native (admin/backup+verify+pragma+reindex+wal.ts, virtual/views+vtable+extensions+analysis.ts; dump.ts is NATIVE ONLY)
@@ -15,17 +15,17 @@
  *   introspection: 10 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot+diff.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Subtotal: 139 WASM / 166 Native (excluding Code Mode)
+ *   Subtotal: 140 WASM / 167 Native (excluding Code Mode)
  *
  * AUDIT TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
  *   5 tools (server/registration/audit-tools.ts)
  *
  * TOOL COUNT TAXONOMY:
- *   Group tools:  166 Native / 139 WASM  (Code Mode sqlite.help() base total)
+ *   Group tools:  168 Native / 141 WASM  (Code Mode sqlite.help() base total)
  *   Audit tools:    5 Native /   5 WASM  (MCP-only)
- *   Inventory:    171 Native / 144 WASM  (Group + Audit)
+ *   Inventory:    173 Native / 146 WASM  (Group + Audit)
  *   Built-in:       4 /   4              (server_info, health, adapters, + Code Mode injected)
- *   MCP total:    175 Native / 148 WASM  (tools/list response)
+ *   MCP total:    177 Native / 150 WASM  (tools/list response)
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";
@@ -122,6 +122,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "text_normalize",
     "text_validate",
     "advanced_search",
+    "hybrid_search",
     "text_sentiment",
     // FTS5 Tools (5 Native-only)
     "fts_create",
@@ -283,7 +284,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Bare minimum - Core (21 tools)
   minimal: ["core", "codemode"],
 
-  // All group tools enabled (166 Native / 139 WASM — see TOOL COUNT TAXONOMY above)
+  // All group tools enabled (168 Native / 141 WASM — see TOOL COUNT TAXONOMY above)
   full: [
     "core",
     "json",

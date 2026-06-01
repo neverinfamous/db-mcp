@@ -203,100 +203,12 @@ export class CodeModeSandbox {
     const isolate = new ivmLib.Isolate({
       memoryLimit: this.options.memoryLimitMb,
     });
-    const context = isolate.createContextSync();
-    const jail = context.global;
-    jail.setSync("global", jail.derefInto());
-
-    const logs: string[] = [];
-    const logRef = new ivmLib.Reference((level: string, ...args: unknown[]) => {
-      const msg = args
-        .map((a) =>
-          typeof a === "object" && a !== null ? JSON.stringify(a) : String(a),
-        )
-        .join(" ");
-      logs.push(level === "LOG" ? msg : `[${level}] ${msg}`);
-    });
-
-    context.global.setSync("logRef", logRef);
-    const setupScript = `
-      globalThis.console = {
-        log: (...args) => logRef.applyIgnored(undefined, ['LOG', ...args], { arguments: { copy: true } }),
-        error: (...args) => logRef.applyIgnored(undefined, ['ERROR', ...args], { arguments: { copy: true } }),
-        warn: (...args) => logRef.applyIgnored(undefined, ['WARN', ...args], { arguments: { copy: true } }),
-        info: (...args) => logRef.applyIgnored(undefined, ['INFO', ...args], { arguments: { copy: true } }),
-        debug: (...args) => logRef.applyIgnored(undefined, ['DEBUG', ...args], { arguments: { copy: true } })
-      };
-      globalThis.sqlite = {};
-    `;
-    context.evalSync(setupScript);
-
-    let rpcCount = 0;
-    // Security (CWE-400): Limit host tool calls per execution to prevent
-    // malicious code from flooding the host via rapid RPC requests.
-    const MAX_RPC_CALLS = 100;
-
-    // Inject apiBindings
+    
+    let context: ivm.Context | undefined;
+    let logRef: ivm.Reference<unknown> | undefined;
+    let script: ivm.Script | undefined;
     const refCleanup: ivm.Reference<unknown>[] = [];
-    for (const [groupName, groupValue] of Object.entries(apiBindings)) {
-      if (typeof groupValue === "object" && groupValue !== null) {
-        context.evalSync(
-          `globalThis.sqlite[${JSON.stringify(groupName)}] = {};`,
-        );
-        for (const [methodName, methodFn] of Object.entries(groupValue)) {
-          if (typeof methodFn === "function") {
-            const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
-              if (++rpcCount > MAX_RPC_CALLS) {
-                throw new Error(
-                  `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
-                );
-              }
-              try {
-                return await (
-                  methodFn as (...args: unknown[]) => Promise<unknown>
-                )(...args);
-              } catch (e) {
-                throw new Error(e instanceof Error ? e.message : String(e), {
-                  cause: e,
-                });
-              }
-            });
-            refCleanup.push(fnRef);
-            const refName = `fnRef_${groupName}_${methodName}`;
-            context.global.setSync(refName, fnRef);
-            context.evalSync(`
-              globalThis.sqlite[${JSON.stringify(groupName)}][${JSON.stringify(methodName)}] = async (...args) => {
-                return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
-              };
-            `);
-          }
-        }
-      } else if (typeof groupValue === "function") {
-        const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
-          if (++rpcCount > MAX_RPC_CALLS) {
-            throw new Error(
-              `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
-            );
-          }
-          try {
-            return await (
-              groupValue as (...args: unknown[]) => Promise<unknown>
-            )(...args);
-          } catch (e) {
-            throw new Error(e instanceof Error ? e.message : String(e), {
-              cause: e,
-            });
-          }
-        });
-        refCleanup.push(fnRef);
-        const refName = `fnRef_${groupName}`;
-        context.global.setSync(refName, fnRef);
-        context.evalSync(`
-          globalThis.sqlite[${JSON.stringify(groupName)}] = async (...args) => {
-            return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
-          };
-        `);
-      }
-    }
+    const logs: string[] = [];
 
     const startTime = performance.now();
     let result: unknown;
@@ -304,8 +216,101 @@ export class CodeModeSandbox {
     let errorMsg: string | undefined;
 
     try {
+      context = isolate.createContextSync();
+      const jail = context.global;
+      jail.setSync("global", jail.derefInto());
+
+      logRef = new ivmLib.Reference((level: string, ...args: unknown[]) => {
+        const msg = args
+          .map((a) =>
+            typeof a === "object" && a !== null ? JSON.stringify(a) : String(a),
+          )
+          .join(" ");
+        logs.push(level === "LOG" ? msg : `[${level}] ${msg}`);
+      });
+
+      context.global.setSync("logRef", logRef);
+      const setupScript = `
+        globalThis.console = {
+          log: (...args) => logRef.applyIgnored(undefined, ['LOG', ...args], { arguments: { copy: true } }),
+          error: (...args) => logRef.applyIgnored(undefined, ['ERROR', ...args], { arguments: { copy: true } }),
+          warn: (...args) => logRef.applyIgnored(undefined, ['WARN', ...args], { arguments: { copy: true } }),
+          info: (...args) => logRef.applyIgnored(undefined, ['INFO', ...args], { arguments: { copy: true } }),
+          debug: (...args) => logRef.applyIgnored(undefined, ['DEBUG', ...args], { arguments: { copy: true } })
+        };
+        globalThis.sqlite = {};
+      `;
+      context.evalSync(setupScript);
+
+      let rpcCount = 0;
+      // Security (CWE-400): Limit host tool calls per execution to prevent
+      // malicious code from flooding the host via rapid RPC requests.
+      const MAX_RPC_CALLS = 100;
+
+      // Inject apiBindings
+      for (const [groupName, groupValue] of Object.entries(apiBindings)) {
+        if (typeof groupValue === "object" && groupValue !== null) {
+          context.evalSync(
+            `globalThis.sqlite[${JSON.stringify(groupName)}] = {};`,
+          );
+          for (const [methodName, methodFn] of Object.entries(groupValue)) {
+            if (typeof methodFn === "function") {
+              const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
+                if (++rpcCount > MAX_RPC_CALLS) {
+                  throw new Error(
+                    `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
+                  );
+                }
+                try {
+                  return await (
+                    methodFn as (...args: unknown[]) => Promise<unknown>
+                  )(...args);
+                } catch (e) {
+                  throw new Error(e instanceof Error ? e.message : String(e), {
+                    cause: e,
+                  });
+                }
+              });
+              refCleanup.push(fnRef);
+              const refName = `fnRef_${groupName}_${methodName}`;
+              context.global.setSync(refName, fnRef);
+              context.evalSync(`
+                globalThis.sqlite[${JSON.stringify(groupName)}][${JSON.stringify(methodName)}] = async (...args) => {
+                  return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
+                };
+              `);
+            }
+          }
+        } else if (typeof groupValue === "function") {
+          const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
+            if (++rpcCount > MAX_RPC_CALLS) {
+              throw new Error(
+                `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
+              );
+            }
+            try {
+              return await (
+                groupValue as (...args: unknown[]) => Promise<unknown>
+              )(...args);
+            } catch (e) {
+              throw new Error(e instanceof Error ? e.message : String(e), {
+                cause: e,
+              });
+            }
+          });
+          refCleanup.push(fnRef);
+          const refName = `fnRef_${groupName}`;
+          context.global.setSync(refName, fnRef);
+          context.evalSync(`
+            globalThis.sqlite[${JSON.stringify(groupName)}] = async (...args) => {
+              return await globalThis[${JSON.stringify(refName)}].apply(undefined, args, { arguments: { copy: true }, result: { promise: true, copy: true } });
+            };
+          `);
+        }
+      }
+
       const wrappedCode = `(async () => { ${transformAutoReturn(code)} })()`;
-      const script = isolate.compileScriptSync(wrappedCode, {
+      script = isolate.compileScriptSync(wrappedCode, {
         filename: `code-mode.js`,
       });
       result = await script.run(context, {
@@ -317,13 +322,14 @@ export class CodeModeSandbox {
       success = false;
       errorMsg = error instanceof Error ? error.message : String(error);
     } finally {
-      // Cleanup references and isolate
+      // Cleanup references and isolate robustly
       for (const ref of refCleanup) {
-        ref.release();
+        try { ref.release(); } catch { /* ignore */ }
       }
-      logRef.release();
-      context.release();
-      isolate.dispose();
+      try { logRef?.release(); } catch { /* ignore */ }
+      try { script?.release(); } catch { /* ignore */ }
+      try { context?.release(); } catch { /* ignore */ }
+      try { isolate.dispose(); } catch { /* ignore */ }
     }
 
     const endTime = performance.now();

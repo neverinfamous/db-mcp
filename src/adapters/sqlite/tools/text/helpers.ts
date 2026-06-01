@@ -39,3 +39,39 @@ export {
  * Coerce string-typed numbers to actual numbers.
  * Returns undefined for non-numeric strings so the schema default kicks in.
  */
+
+/**
+ * Sanitizes an FTS5 search query by:
+ * 1. Stripping unbalanced double quotes or balancing them.
+ * 2. Normalizing whitespace.
+ * 3. Removing stray/invalid operators (AND, OR, NOT) that would crash FTS5.
+ * 4. Escaping single quotes to prevent SQL injection.
+ * Allows balanced double quotes for exact phrase matching.
+ */
+export function sanitizeFtsQuery(query: string): string {
+  if (!query) return "";
+  
+  // 1. Normalize whitespace
+  let clean = query.replace(/\s+/g, " ").trim();
+  
+  // 2. Balance double quotes for exact phrase matching
+  const quoteCount = (clean.match(/"/g) ?? []).length;
+  if (quoteCount % 2 !== 0) {
+    // Unbalanced: either strip all or add one at the end. Stripping is safer for search.
+    clean = clean.replace(/"/g, "");
+  }
+  
+  // 3. Remove stray or invalid operators (AND, OR, NOT)
+  // Remove if they appear at the start or end
+  clean = clean.replace(/^(?:AND|OR|NOT)\s+/i, "");
+  clean = clean.replace(/\s+(?:AND|OR|NOT)$/i, "");
+  // Replace consecutive operators with the first one
+  clean = clean.replace(/\s+(?:AND|OR|NOT)\s+(?:AND|OR|NOT)\s+/gi, " AND ");
+  
+  // 4. Escape single quotes for SQLite string literals
+  // Notice: The tool handlers often already do `replace(/'/g, "''")`. 
+  // We don't do it here to avoid double escaping if we apply this to the raw query string.
+  // Instead, the handlers will do it after sanitization.
+  
+  return clean.trim();
+}

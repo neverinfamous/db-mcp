@@ -36,6 +36,7 @@ export const FtsSearchOutputSchema = z
     rowCount: z.number().optional(),
     results: z.array(FtsResultSchema).optional(),
     nextCursor: z.string().optional(),
+    facets: z.record(z.string(), z.number()).optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -129,6 +130,11 @@ export const FtsSearchSchema = z.object({
     .default(true)
     .describe("Include full row data in results"),
   cursor: z.string().optional().describe("Opaque cursor for pagination"),
+  includeFacets: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Return match counts per column (distribution by matched column)"),
 });
 export type FtsSearchInput = z.infer<typeof FtsSearchSchema>;
 
