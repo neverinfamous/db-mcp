@@ -17,15 +17,15 @@
  *   codemode: 1 tool (codemode.ts)
  *   Subtotal: 140 WASM / 167 Native (excluding Code Mode)
  *
- * AUDIT TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
- *   6 tools (server/registration/audit-tools.ts)
+ * AUDIT & ADMIN TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
+ *   7 tools (server/registration/audit-tools.ts, admin-tools.ts)
  *
  * TOOL COUNT TAXONOMY:
  *   Group tools:  168 Native / 141 WASM  (Code Mode sqlite.help() base total)
- *   Audit tools:    6 Native /   6 WASM  (MCP-only)
- *   Inventory:    174 Native / 147 WASM  (Group + Audit)
+ *   Audit tools:    7 Native /   7 WASM  (MCP-only)
+ *   Inventory:    175 Native / 148 WASM  (Group + Audit)
  *   Built-in:       4 /   4              (server_info, health, adapters, + Code Mode injected)
- *   MCP total:    178 Native / 151 WASM  (tools/list response)
+ *   MCP total:    179 Native / 152 WASM  (tools/list response)
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";

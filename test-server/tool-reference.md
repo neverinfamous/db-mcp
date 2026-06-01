@@ -1,16 +1,16 @@
 # Tool Reference
 
-Complete reference of all 178 db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all 179 db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 ## Tool Count Taxonomy
 
 | Scope           | What it includes                                    |  Native |    WASM | Notes                                           |
 | --------------- | --------------------------------------------------- | ------: | ------: | ----------------------------------------------- |
 | **Group tools** | 10 adapter-registered groups                        |     168 |     141 | Accessible via Code Mode `sqlite.help()`        |
-| **Audit tools** | 6 server-level audit tools                          |       6 |       6 | MCP-only — not exposed in Code Mode             |
-| **Inventory**   | Group + Audit                                       | **174** | **147** | All filterable/functional tools                 |
+| **Audit tools** | 7 server-level audit & admin tools                  |       7 |       7 | MCP-only — not exposed in Code Mode             |
+| **Inventory**   | Group + Audit                                       | **175** | **148** | All filterable/functional tools                 |
 | **Built-in**    | `server_info`, `health`, `adapters`, `execute_code` |       4 |       4 | Always on (Code Mode can be excluded via rules) |
-| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **178** | **151** | **What a client sees via `tools/list`**         |
+| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **179** | **152** | **What a client sees via `tools/list`**         |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 
@@ -210,12 +210,13 @@ Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 | `sqlite_reindex`                | `sqlite.admin.reindex`              | Rebuild indexes targeting a specific index, table, or the entire database.                                                |
 | `sqlite_wal`                    | `sqlite.admin.wal`                  | WAL mode management: check status, enable/disable WAL mode, or run checkpoints with configurable modes.                   |
 
-### Server Audit Tools
+### Server Management & Audit Tools
 
-> These tools manage pre-mutation DDL snapshots. They are not exposed in Code Mode.
+> These tools manage server configuration and pre-mutation DDL snapshots. They are not exposed in Code Mode.
 
 | MCP Tool Name                 | Code Mode Name | Description                                                     |
 | :---------------------------- | :------------- | :-------------------------------------------------------------- |
+| `sqlite_server_config`        | —              | Change server configuration dynamically (e.g., log levels).     |
 | `sqlite_audit_list_backups`   | —              | List all available schema audit snapshots.                      |
 | `sqlite_audit_get_backup`     | —              | Retrieve the contents of a specific audit snapshot by filename. |
 | `sqlite_audit_diff_backup`    | —              | Compare an audit snapshot against the live database schema.     |
