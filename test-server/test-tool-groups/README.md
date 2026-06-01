@@ -11,7 +11,7 @@
 | `test-json-read.md`                 | json-read                 | 18 + Code Mode      | Identical Native/WASM            |
 | `test-json-write.md`                | json-write                | 7                   | Identical Native/WASM            |
 | `test-text-basic.md`                | text-basic                | 10 + Code Mode      | Identical Native/WASM            |
-| `test-text-advanced.md`             | text-advanced             | 9N/4W               | FTS5 tools `[NATIVE ONLY]`       |
+| `test-text-advanced.md`             | text-advanced             | 10N/5W              | FTS5 tools `[NATIVE ONLY]`       |
 | `test-stats-basic.md`               | stats-basic               | 17 + Code Mode      | Identical Native/WASM            |
 | `test-stats-advanced.md`            | stats-advanced            | 6N/0W               | Window functions `[NATIVE ONLY]` |
 | `test-vector-read.md`               | vector-read               | 7 + Code Mode       | Identical Native/WASM            |

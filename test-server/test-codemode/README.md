@@ -89,7 +89,7 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 | `test-codemode-sandbox.md`          | sandbox       | Sandbox basics, API discoverability, security, readonly, state isolation |
 | `test-codemode-core.md`             | core          | 21                                                                       |
 | `test-codemode-json.md`             | json          | 25                                                                       |
-| `test-codemode-text.md`             | text          | 19N/14W                                                                  |
+| `test-codemode-text.md`             | text          | 20N/15W                                                                  |
 | `test-codemode-stats.md`            | stats         | 23N/17W                                                                  |
 | `test-codemode-vector.md`           | vector        | 11                                                                       |
 | `test-codemode-admin.md`            | admin         | 32N/31W                                                                  |
