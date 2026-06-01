@@ -602,6 +602,24 @@ The server exposes metadata at `/.well-known/oauth-protected-resource`.
 > [!WARNING]
 > **HTTP without authentication:** When using `--transport http` without enabling OAuth, all clients have full unrestricted access. Always enable authentication for production HTTP deployments. See [SECURITY.md](SECURITY.md) for details.
 
+## 🔐 Encryption at Rest (Native Only)
+
+db-mcp supports transparent database encryption using SQLCipher via the `better-sqlite3-multiple-ciphers` driver. When encryption is enabled, the server automatically encrypts both your target database (if newly created) and the sidecar `SystemDb` audit log, ensuring your schema, queries, and results are protected at rest.
+
+**Important WASM Limitation**: The WASM backend (`sql.js`) **does not** support encryption. If you supply an encryption key to the WASM backend, it will gracefully ignore it for the target database. However, this can cause conflicts if both a Native and WASM backend share the same `--audit-log` file (since the Native backend will encrypt the shared audit log, causing the WASM backend to crash when reading it). To avoid this in dual-backend setups, assign a separate audit log (e.g., `--audit-log mcp-audit-wasm.db`) for your WASM instance.
+
+**Configuring the Key**:
+You can provide the key via the `--encryption-key` CLI flag or the `DB_ENCRYPTION_KEY` environment variable.
+
+1. **Strong Passphrase**: A standard string. SQLCipher will automatically use PBKDF2 key derivation.
+   ```bash
+   DB_ENCRYPTION_KEY="your-strong-passphrase-here"
+   ```
+2. **Raw Hex Key (Best Performance)**: To skip PBKDF2 derivation overhead, provide an exact 256-bit raw hex key prefixed with `x` and wrapped in single quotes:
+   ```bash
+   DB_ENCRYPTION_KEY="x'2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99'"
+   ```
+
 ## 📊 Benchmarks
 
 Performance benchmarks measure framework overhead on critical hot paths using [Vitest bench](https://vitest.dev/guide/features.html#benchmarking) (tinybench). The suite validates that framework plumbing stays negligible relative to actual database I/O:
