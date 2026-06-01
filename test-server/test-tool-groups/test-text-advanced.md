@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -132,7 +133,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 10. Cleanup: `sqlite_drop_table({table: "temp_users_fts"})` (drop the temp FTS table using sqlite_write_query or core drop_table)
 11. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite"})` → at least 1 result (article 1: "Introduction to SQLite")
 12. `sqlite_fts_search({table: "test_articles_fts", query: "MCP protocol"})` → matches article 3: "The Model Context Protocol Explained"
-13. `sqlite_fts_search({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
+13. `sqlite_fts_search({table: "test_articles_fts", query: "*", limit: 1})` → return exactly 1 result and `nextCursor` populated
+14. `sqlite_fts_search({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → return next result via opaque pagination
+15. `sqlite_fts_search({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
 14. `sqlite_fts_match_info({table: "test_articles_fts", query: "database"})` → match info with scoring data
 15. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
 

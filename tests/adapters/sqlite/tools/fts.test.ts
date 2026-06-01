@@ -114,6 +114,35 @@ describe("FTS Tools", () => {
       expect(searchSpecific.results[0].snippet).toBeDefined();
     });
 
+    it("should support cursor-based pagination", async () => {
+      await tools.get("sqlite_fts_create")?.({
+        ftsTable: "documents_fts",
+        sourceTable: "documents",
+        columns: ["title", "body"],
+      });
+
+      const firstPage = (await tools.get("sqlite_fts_search")?.({
+        table: "documents_fts",
+        query: "*",
+        limit: 1,
+        includeRowData: true
+      })) as any;
+      expect(firstPage.success).toBe(true);
+      expect(firstPage.results).toHaveLength(1);
+      expect(firstPage.nextCursor).toBeDefined();
+
+      const secondPage = (await tools.get("sqlite_fts_search")?.({
+        table: "documents_fts",
+        query: "*",
+        limit: 1,
+        includeRowData: true,
+        cursor: firstPage.nextCursor
+      })) as any;
+      expect(secondPage.success).toBe(true);
+      expect(secondPage.results).toHaveLength(1);
+      expect(secondPage.results[0].title).not.toBe(firstPage.results[0].title);
+    });
+
     it("should search with column filters", async () => {
       await tools.get("sqlite_fts_create")?.({
         ftsTable: "documents_fts",

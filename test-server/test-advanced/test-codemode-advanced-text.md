@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -169,6 +170,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → results about databases
 26. `sqlite.text.ftsRebuild({table: "test_articles_fts"})` → success
 27. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "database"})` → same results after rebuild (idempotent)
+28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1})` → exactly 1 result, `nextCursor` provided
+29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → next cursor chunk retrieved
 28. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite AND database"})` → boolean operator
 29. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
 30. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results

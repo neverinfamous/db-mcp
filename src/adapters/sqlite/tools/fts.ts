@@ -251,6 +251,14 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         sanitizeIdentifier(input.table);
         await validateTableExists(adapter, input.table);
 
+        let offset = 0;
+        if (input.cursor) {
+          try {
+            const cursorData = JSON.parse(Buffer.from(input.cursor, 'base64').toString('utf8')) as Record<string, unknown>;
+            if (typeof cursorData["offset"] === 'number') offset = cursorData["offset"];
+          } catch { /* ignore invalid cursor */ }
+        }
+
         let selectClause = input.includeRowData ? "*" : "rowid";
         if (input.highlight) {
           selectClause += `, highlight("${input.table}", 0, '<b>', '</b>') as snippet`;
@@ -258,12 +266,19 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Handle wildcard/list-all query - skip MATCH and return all rows
         if (input.query === "*" || input.query.trim() === "") {
-          const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit}`;
+          const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit} OFFSET ${offset}`;
           const result = await adapter.executeReadQuery(sql, queryParams);
+          
+          let nextCursor: string | undefined;
+          if (result.rows?.length === input.limit) {
+            nextCursor = Buffer.from(JSON.stringify({ offset: offset + input.limit })).toString('base64');
+          }
+
           return {
             success: true,
             rowCount: result.rows?.length ?? 0,
             results: result.rows,
+            nextCursor,
           };
         }
 
@@ -282,14 +297,20 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
           matchExpr = `"${input.table}" MATCH '${colFilter}'`;
         }
 
-        const sql = `SELECT ${selectClause}, rank FROM "${input.table}" WHERE ${matchExpr} ORDER BY rank LIMIT ${input.limit}`;
+        const sql = `SELECT ${selectClause}, rank FROM "${input.table}" WHERE ${matchExpr} ORDER BY rank LIMIT ${input.limit} OFFSET ${offset}`;
 
         const result = await adapter.executeReadQuery(sql, queryParams);
+
+        let nextCursor: string | undefined;
+        if (result.rows?.length === input.limit) {
+          nextCursor = Buffer.from(JSON.stringify({ offset: offset + input.limit })).toString('base64');
+        }
 
         return {
           success: true,
           rowCount: result.rows?.length ?? 0,
           results: result.rows,
+          nextCursor,
         };
       } catch (error: unknown) {
         if (isFts5UnavailableError(error)) {

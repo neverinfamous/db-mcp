@@ -97,7 +97,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
-- **Temporary files**: Delete the following test artifacts after testing:
+  - **Temporary files**: Delete the following test artifacts after testing:
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-dump.sql`
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-backup.db`
   - `C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\test-vacuum-copy.db`

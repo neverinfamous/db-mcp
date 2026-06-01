@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -137,6 +138,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 1. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_products"})` → `{rows: [{n: 16}]}`
 2. `sqlite.core.readQuery("SELECT name, price FROM test_products WHERE price > 500")` → 1 result: `Laptop Pro 15` (1299.99)
 3. `sqlite.core.readQuery({query: "SELECT COUNT(*) AS n FROM test_orders WHERE status = 'completed'"})` → `{rows: [{n: 8}]}`
+4. `sqlite.core.readQuery("SELECT * FROM test_users")` → should return JSON rows of test_users
+5. `sqlite.core.readQuery("SELECT * FROM test_measurements")` → return 50 rows (automatic limit) and `nextCursor` populated
+6. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements", cursor: "<nextCursor>"})` → return next batch of rows via opaque pagination
 4. `sqlite.core.listTables()` → tables array includes `test_products`, `test_orders`, etc.
 5. `sqlite.core.describeTable("test_products")` → columns include `id` (INTEGER), `name` (TEXT), `price` (REAL)
 6. `sqlite.core.getIndexes({table: "test_orders"})` → includes `idx_orders_status`

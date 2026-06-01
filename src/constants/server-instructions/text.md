@@ -18,6 +18,7 @@ sqlite_fts_search({
   table: "articles_fts",
   query: "machine learning",
   limit: 10,
+  cursor: "..." // Optional offset-based cursor for pagination (returns nextCursor)
 });
 sqlite_fts_match_info({ table: "articles_fts", query: "machine learning" }); // bm25 ranking info
 

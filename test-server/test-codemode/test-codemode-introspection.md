@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -136,7 +137,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 12. `sqlite.introspection.storageAnalysis({})` → `database.pageSize > 0`, `database.totalPages > 0`; tables array present
 13. `sqlite.introspection.indexAudit({})` → `findings` array; redundant index for `idx_orders_status`
-14. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty
+14. `sqlite.introspection.indexAudit({recommendComposite: true, queriesToAnalyze: ["SELECT * FROM test_users WHERE is_active = 1 AND created_at > '2023-01-01'"]})` → identify `missing_composite_index` recommendation in findings based on query plan scan
+15. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE category = 'electronics'"})` → plan array non-empty
 15. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_orders WHERE status = 'completed'"})` → index scan array contains `idx_orders_status_date`
 16. `sqlite.introspection.queryPlan({sql: "SELECT * FROM test_products WHERE name = 'Laptop Pro 15'"})` → full scan array contains `test_products` (no index on name)
 

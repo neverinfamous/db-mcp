@@ -100,7 +100,8 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
         type FindingType =
           | "redundant"
           | "missing_fk_index"
-          | "unindexed_large_table";
+          | "unindexed_large_table"
+          | "missing_composite_index";
         const findings: {
           type: FindingType;
           severity: "info" | "warning" | "error";
@@ -209,6 +210,40 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
             }
           } catch {
             // Skip virtual tables or other errors
+          }
+        }
+
+        // Check 4: Index Recommendations based on queries (Composite/Partial)
+        if (input.recommendComposite && input.queriesToAnalyze && input.queriesToAnalyze.length > 0) {
+          for (const query of input.queriesToAnalyze) {
+            try {
+              // Don't run EXPLAIN QUERY PLAN on DML/DDL that might mutate if an agent accidentally sent one.
+              // Safe query check:
+              if (/^\s*SELECT/i.test(query)) {
+                const planResult = await adapter.executeReadQuery(`EXPLAIN QUERY PLAN ${query}`);
+                const planRows = planResult.rows ?? [];
+                
+                // Simple heuristic: look for "SCAN TABLE" or "SEARCH TABLE" without a covering index.
+                for (const row of planRows) {
+                  const detailVal = row["detail"];
+                  const detail = typeof detailVal === "string" ? detailVal : "";
+                  if (detail.startsWith("SCAN TABLE") || detail.startsWith("SCAN ")) {
+                    const match = /SCAN (?:TABLE )?([\w_]+)/i.exec(detail);
+                    const tableName = match ? match[1] : "unknown";
+                    if (tableName && tableName !== "unknown") {
+                      findings.push({
+                        type: "missing_composite_index",
+                        severity: "warning",
+                        table: tableName,
+                        suggestion: `Query resulted in SCAN TABLE "${tableName}". Consider analyzing WHERE/JOIN clauses to add a composite index.`,
+                      });
+                    }
+                  }
+                }
+              }
+            } catch {
+              // Ignore EXPLAIN failures (e.g., syntax errors in user queries)
+            }
           }
         }
 

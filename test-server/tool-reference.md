@@ -32,7 +32,7 @@ Read/write queries, table and index management, and schema discovery.
 
 | MCP Tool Name             | Code Mode Name                | Description                                                                                                                          |
 | :------------------------ | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `sqlite_read_query`       | `sqlite.core.readQuery`       | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety.                               |
+| `sqlite_read_query`       | `sqlite.core.readQuery`       | Execute a SELECT query on the SQLite database. Returns rows as JSON. Use parameter binding for safety. Supports cursor pagination.                               |
 | `sqlite_write_query`      | `sqlite.core.writeQuery`      | Execute an INSERT, UPDATE, or DELETE query. Returns affected row count. Use parameter binding for safety.                            |
 | `sqlite_upsert`           | `sqlite.core.upsert`          | Insert a row or update it if it already exists (INSERT ON CONFLICT DO UPDATE / INSERT OR REPLACE).                                   |
 | `sqlite_batch_insert`     | `sqlite.core.batchInsert`     | Insert multiple rows in a single statement.                                                                                          |
@@ -111,7 +111,7 @@ Text processing, regex, fuzzy matching, phonetic search, sentiment analysis, and
 | `sqlite_advanced_search` | `sqlite.text.advancedSearch` | Advanced search combining exact, fuzzy (Levenshtein), and phonetic (Soundex) matching.                                                                                           |
 | `sqlite_text_sentiment`  | `sqlite.text.sentiment`      | Perform basic keyword-based sentiment analysis on raw text. Returns sentiment classification, score, confidence, and optionally matched words. No database query needed.         |
 | `sqlite_fts_create`      | `sqlite.text.ftsCreate`      | Create an FTS5 full-text search virtual table. `[NATIVE ONLY]`                                                                                                                   |
-| `sqlite_fts_search`      | `sqlite.text.ftsSearch`      | Search an FTS5 table using full-text query syntax. `[NATIVE ONLY]`                                                                                                               |
+| `sqlite_fts_search`      | `sqlite.text.ftsSearch`      | Search an FTS5 table using full-text query syntax. Supports cursor pagination. `[NATIVE ONLY]`                                                                                                               |
 | `sqlite_fts_rebuild`     | `sqlite.text.ftsRebuild`     | Rebuild an FTS5 index to optimize search performance. `[NATIVE ONLY]`                                                                                                            |
 | `sqlite_fts_match_info`  | `sqlite.text.ftsMatchInfo`   | Get FTS5 match ranking information using bm25. `[NATIVE ONLY]`                                                                                                                   |
 | `sqlite_fts_headline`    | `sqlite.text.ftsHeadline`    | Generate highlighted snippets from FTS5 search results using `highlight()` and `snippet()`. `[NATIVE ONLY]`                                                                      |
@@ -274,7 +274,7 @@ Read-only schema analysis — dependency graphs, cascade simulation, diagnostics
 | `sqlite_constraint_analysis` | `sqlite.introspection.constraintAnalysis` | Analyze database schema for constraint health issues: missing primary keys, columns that should be NOT NULL, foreign keys without indexes, and tables that could benefit from FK relationships.  |
 | `sqlite_migration_risks`     | `sqlite.introspection.migrationRisks`     | Analyze DDL statements for SQLite-specific migration risks. Detects ALTER TABLE limitations, large table operations, column type changes, destructive operations, and FTS5 rebuild requirements. |
 | `sqlite_storage_analysis`    | `sqlite.introspection.storageAnalysis`    | Analyze database storage health: fragmentation, size breakdown per table, and optimization recommendations.                                                                                      |
-| `sqlite_index_audit`         | `sqlite.introspection.indexAudit`         | Audit index effectiveness: find redundant indexes (prefix duplicates), missing foreign key indexes, and large tables without secondary indexes. Returns actionable suggestions.                  |
+| `sqlite_index_audit`         | `sqlite.introspection.indexAudit`         | Audit index effectiveness: find redundant indexes (prefix duplicates), missing foreign key indexes, and large tables without secondary indexes. Can recommend composite indexes for specific queries. Returns actionable suggestions.                  |
 | `sqlite_query_plan`          | `sqlite.introspection.queryPlan`          | Analyze a SQL query's execution plan. Returns structured EXPLAIN QUERY PLAN output with scan-type classification and optimization suggestions.                                                   |
 
 ---

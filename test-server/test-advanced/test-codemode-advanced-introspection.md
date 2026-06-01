@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -168,7 +169,8 @@ All tools should return errors as structured objects instead of throwing. The ex
 24. `sqlite.introspection.indexAudit({})` → flag `idx_orders_status` as `type: "redundant"` (prefix of `idx_orders_status_date`). Field name is `index`.
 25. `sqlite.introspection.indexAudit({})` → verify `redundantOf` points to `idx_orders_status_date`
 26. `sqlite.introspection.indexAudit({})` → check for `missing_fk_index` on `test_orders.product_id`
-27. `sqlite.introspection.indexAudit({table: "test_products"})` → only test_products findings. `idx_products_category` NOT redundant.
+27. `sqlite.introspection.indexAudit({recommendComposite: true, queriesToAnalyze: ["SELECT * FROM test_users WHERE is_active = 1 AND created_at > '2023-01-01'"]})` → output includes `missing_composite_index` indicating a suggested composite index scan.
+28. `sqlite.introspection.indexAudit({table: "test_products"})` → only test_products findings. `idx_products_category` NOT redundant.
 28. `sqlite.introspection.indexAudit({table: "test_measurements"})` → 200 rows, no secondary indexes. `unindexed_large_table` threshold is 1000 → no finding expected.
 
 ## Phase 5: Query Plan Deep Analysis (batched)

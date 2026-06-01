@@ -284,6 +284,7 @@ export const IndexAuditOutputSchema = z
             "redundant",
             "missing_fk_index",
             "unindexed_large_table",
+            "missing_composite_index",
           ]),
           severity: z.enum(["info", "warning", "error"]),
           table: z.string(),
@@ -454,8 +455,17 @@ export const IndexAuditSchema = z
       .describe(
         "Minimum severity to include in findings (default: all). Reduces payload for large databases.",
       ),
+    recommendComposite: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("Analyze queriesToAnalyze to recommend composite/partial indexes"),
+    queriesToAnalyze: z
+      .array(z.string())
+      .optional()
+      .describe("Queries to analyze using EXPLAIN QUERY PLAN (used if recommendComposite is true)"),
   })
-  .default({});
+  .default({ recommendComposite: false });
 export type IndexAuditInput = z.infer<typeof IndexAuditSchema>;
 
 export const SchemaSnapshotSchema = z
