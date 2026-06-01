@@ -21,6 +21,8 @@
 - `--dump-config` CLI flag to securely print the fully resolved configuration hierarchy (redacting secrets) for debugging.
 - `--config <path>` flag parsing supporting configuration via `.yaml` and `.json` files.
 - Ported `docs-drift-detector.md` agentic workflow to detect and remediate documentation drift in `README.md` and `DOCKER_README.md`.
+- E2E Triple-Path Verification test coverage for `sqlite_server_config` payload shapes and resource subscriptions (`sqlite://health`, `sqlite://schema`).
+- Synchronized `test-server` manifests (`tool-reference.md`, `code-map.md`, `test-resources.md`) with recent codebase additions and the expanded 179 Native / 152 WASM tool inventory.
 
 ### Fixed
 - Fixed V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during teardown of `CodeModeSandbox` by rigorously wrapping isolate executions in `try...finally` blocks with explicit object `.dispose()` and `.release()` calls.
