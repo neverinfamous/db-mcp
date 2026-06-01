@@ -514,7 +514,9 @@ async function main(): Promise<void> {
       if (dbConfig.type === "sqlite") {
         const options = (dbConfig.options ?? {}) as { backend?: string; encryptionKey?: string };
         if (globalEncryptionKey && !options.encryptionKey) {
-          options.encryptionKey = globalEncryptionKey;
+          if (options.backend === "better-sqlite3") {
+            options.encryptionKey = globalEncryptionKey;
+          }
         }
         dbConfig.options = options;
 

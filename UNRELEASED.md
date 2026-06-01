@@ -21,3 +21,5 @@
 - FTS5 syntax errors on malformed user input by introducing query sanitization.
 - V8 Garbage Collection `STATUS_ACCESS_VIOLATION` (0xC0000005) crashes during `CodeModeSandbox` teardown.
 - Native V8 thread leaks on Windows by pinning `isolated-vm` to exactly `6.1.2`.
+- Fixed SQLCipher `PRAGMA key` syntax error causing `file is not a database` failures by wrapping the encryption key in double quotes in `native-sqlite-adapter.ts` and `system-db.ts`.
+- Prevented `DB_ENCRYPTION_KEY` environment variable leakage from breaking unencrypted Playwright E2E tests by unsetting the variable in `playwright.config.ts` and restricting auto-injection in `cli.ts`.

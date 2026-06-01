@@ -56,6 +56,7 @@ export default defineConfig({
       stderr: "pipe",
       env: {
         ...process.env,
+        DB_ENCRYPTION_KEY: "",
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
       },
@@ -70,6 +71,7 @@ export default defineConfig({
       stderr: "pipe",
       env: {
         ...process.env,
+        DB_ENCRYPTION_KEY: "",
         MCP_RATE_LIMIT_MAX: "10000",
         MCP_CODEMODE_RATE_LIMIT: "10000",
         SPATIALITE_PATH:

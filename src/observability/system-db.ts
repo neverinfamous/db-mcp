@@ -31,8 +31,8 @@ export class SystemDb {
 
       this.db = new BetterSqlite3(this.config.dbPath);
 
-      if (encryptionKey) {
-        this.db.pragma(`key = '${encryptionKey}'`);
+      if (encryptionKey && this.config.dbPath !== ":memory:" && this.config.dbPath !== "") {
+        this.db.pragma(`key = "${encryptionKey}"`);
       }
 
       // Initialize schema

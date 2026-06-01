@@ -123,7 +123,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
         });
         
         // Apply the encryption key immediately
-        this.db.pragma(`key = '${sqliteConfig.options.encryptionKey}'`);
+        this.db.pragma(`key = "${sqliteConfig.options.encryptionKey}"`);
         
         log.info(`Connected to SQLite database (native encrypted): ${filePath}`, {
           code: "SQLITE_CONNECT_ENCRYPTED",
