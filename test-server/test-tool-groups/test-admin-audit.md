@@ -103,13 +103,14 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (5)
+### Group Tools (6)
 
 - `sqlite_audit_list_backups`
 - `sqlite_audit_get_backup`
 - `sqlite_audit_diff_backup`
 - `sqlite_audit_restore_backup`
 - `sqlite_audit_cleanup`
+- `sqlite_audit_search`
 
 ## Phase 1: Core Check (batched)
 
@@ -121,14 +122,15 @@ All tools should return errors as structured objects instead of throwing. The ex
 4. `sqlite_audit_restore_backup({filename: "<filename_from_step_1>", dryRun: true})` → Dry run a restore. Verify the preview output.
 5. `sqlite_audit_restore_backup({filename: "<filename_from_step_1>", dryRun: false})` → Actually restore the backup.
 6. `sqlite_audit_cleanup({})` → Enforce retention policy (should succeed and report removed count).
+7. `sqlite_audit_search({limit: 5})` → Verify it returns recent audit log entries successfully.
 
 **Code mode testing:**
 
 > **Note**: `sqlite_execute_code` is currently not being injected into the tool groups properly. If you find it is missing, note it as an issue but do not block testing of the rest of the group.
 
-Audit tools are server-level (MCP-only) and intentionally not exposed in Code Mode. Verify all 5 return `"undefined"`:
+Audit tools are server-level (MCP-only) and intentionally not exposed in Code Mode. Verify all 6 return `"undefined"`:
 
-12. `sqlite_execute_code({code: "return [typeof sqlite.admin.auditListBackups, typeof sqlite.admin.auditGetBackup, typeof sqlite.admin.auditDiffBackup, typeof sqlite.admin.auditRestoreBackup, typeof sqlite.admin.auditCleanup]"})` → All 5 must be `"undefined"`. If any returns `"function"`, report as ⚠️.
+12. `sqlite_execute_code({code: "return [typeof sqlite.admin.auditListBackups, typeof sqlite.admin.auditGetBackup, typeof sqlite.admin.auditDiffBackup, typeof sqlite.admin.auditRestoreBackup, typeof sqlite.admin.auditCleanup, typeof sqlite.admin.auditSearch]"})` → All 6 must be `"undefined"`. If any returns `"function"`, report as ⚠️.
 
 **Error path testing:**
 
@@ -136,6 +138,7 @@ Audit tools are server-level (MCP-only) and intentionally not exposed in Code Mo
 🔴 14. `sqlite_audit_diff_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
 🔴 15. `sqlite_audit_restore_backup({filename: "nonexistent_backup.snapshot.json.gz"})` → structured error
 🔴 16. `sqlite_audit_get_backup({filename: "../../../etc/passwd"})` → structured error (path traversal rejection)
+🔴 17. `sqlite_audit_search({limit: "invalid"})` → structured error (Zod coercion rejection)
 
 ## Phase 2: Zod Validation Sweep
 
@@ -146,6 +149,7 @@ Audit tools are server-level (MCP-only) and intentionally not exposed in Code Mo
 🔴 19. `sqlite_audit_restore_backup({})` → handler error
 🔴 20. `sqlite_audit_list_backups({})` → success (no required params)
 🔴 21. `sqlite_audit_cleanup({})` → success (no required params)
+🔴 22. `sqlite_audit_search({})` → success (no required params)
 
 ---
 

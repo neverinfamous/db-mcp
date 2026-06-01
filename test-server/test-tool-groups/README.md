@@ -18,7 +18,7 @@
 | `test-vector-write.md`              | vector-write              | 4                   | Identical Native/WASM            |
 | `test-admin-core.md`                | admin-core                | 24N/23W + Code Mode | `dump` is `[NATIVE ONLY]`        |
 | `test-admin-extensions.md`          | admin-extensions          | 8                   | CSV, series, rtree               |
-| `test-admin-audit.md`               | admin-audit               | 5                   | Audit snapshot management        |
+| `test-admin-audit.md`               | admin-audit               | 6                   | Audit snapshot management and search |
 | `test-transactions.md`              | transactions              | 8 + Code Mode       | `[NATIVE ONLY]`                  |
 | `test-geo-haversine.md`             | geo-haversine             | 4 + Code Mode       | Identical Native/WASM            |
 | `test-geo-spatialite.md`            | geo-spatialite            | 7N/0W               | SpatiaLite `[NATIVE ONLY]`       |
@@ -26,7 +26,7 @@
 | `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode       | Identical Native/WASM            |
 | `test-migration.md`                 | migration                 | 6 + Code Mode       | Identical Native/WASM            |
 
-**Inventory total**: 172 Native / 145 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Inventory total**: 174 Native / 147 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Agent Instructions
 

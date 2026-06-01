@@ -99,7 +99,7 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 | `test-codemode-migration.md`        | migration     | 6                                                                        |
 | `test-codemode-wasm-degradation.md` | cross-group   | WASM-only graceful degradation                                           |
 
-**Group tools total**: 167 Native / 140 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt. Audit tools (5) are MCP-only and not covered here. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Group tools total**: 168 Native / 141 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt. Audit tools (6) are MCP-only and not covered here. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Recommended Execution Order
 
