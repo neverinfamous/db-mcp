@@ -433,6 +433,82 @@ db.close();
     node $tempCheckpoint $DatabasePath | Out-Null
     Remove-Item $tempCheckpoint -Force -ErrorAction SilentlyContinue
     Write-Success "WAL checkpointed to main database file"
+
+    # Generate encrypted copy
+    Write-Host "`n  Generating encrypted database copy..." -ForegroundColor Yellow
+    $encryptedDbPath = $DatabasePath -replace '\.db$', '-encrypted.db'
+    
+    # Remove existing encrypted db if it exists
+    $filesToDelete = @(
+        $encryptedDbPath,
+        "$encryptedDbPath-shm",
+        "$encryptedDbPath-wal",
+        "$encryptedDbPath-journal"
+    )
+    foreach ($file in $filesToDelete) {
+        if (Test-Path $file) {
+            Remove-Item $file -Force -ErrorAction SilentlyContinue
+        }
+    }
+    
+    # Copy the unencrypted database
+    Copy-Item $DatabasePath $encryptedDbPath -Force
+    
+    # Attempt to load DB_ENCRYPTION_KEY from secrets.env if not set
+    if (-not $env:DB_ENCRYPTION_KEY) {
+        $secretsPath = "C:\Users\chris\Desktop\adamic\secrets.env"
+        if (Test-Path $secretsPath) {
+            $keys = Get-Content $secretsPath | Where-Object { $_ -match "^DB_ENCRYPTION_KEY=(.+)$" } | ForEach-Object {
+                $matches[1].Trim('"')
+            }
+            if ($keys) {
+                # Get the last non-empty key (in case of multiple lines)
+                $env:DB_ENCRYPTION_KEY = $keys | Where-Object { $_ -ne "x''" -and $_ -ne "''" -and $_ -ne "" } | Select-Object -Last 1
+            }
+        }
+    }
+
+    if (-not $env:DB_ENCRYPTION_KEY) {
+        Write-Info "Skipping encrypted database copy (no DB_ENCRYPTION_KEY found)"
+    } else {
+        $encryptScript = @"
+import Database from 'better-sqlite3-multiple-ciphers';
+
+const dbPath = process.argv[2];
+const key = process.argv[3];
+
+if (!key) {
+    console.error('No DB_ENCRYPTION_KEY provided');
+    process.exit(1);
+}
+
+try {
+    const db = new Database(dbPath);
+    // Wrap the key in double quotes for SQLite PRAGMA syntax
+    // This handles both string passphrases and "x'...'" hex keys
+    db.pragma('rekey = "' + key + '"');
+    db.close();
+} catch (err) {
+    console.error('Failed to encrypt:', err);
+    process.exit(1);
+}
+"@
+        $tempEncrypt = Join-Path $dbMcpRoot ".encrypt.js"
+        $encryptScript | Out-File -FilePath $tempEncrypt -Encoding utf8 -NoNewline
+        Push-Location $dbMcpRoot
+        try {
+            # Quote the key so powershell doesn't eat the single quotes inside it
+            $output = node $tempEncrypt $encryptedDbPath "$($env:DB_ENCRYPTION_KEY)" 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warn "Failed to encrypt copy: $output"
+            } else {
+                Write-Success "Created encrypted database copy at: $encryptedDbPath"
+            }
+        } finally {
+            Pop-Location
+            Remove-Item $tempEncrypt -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 Write-Host "`n========================================================" -ForegroundColor Green
