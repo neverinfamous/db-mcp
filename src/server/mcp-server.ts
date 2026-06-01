@@ -46,6 +46,8 @@ import {
   scopesGrantToolAccess,
 } from "../auth/scopes/enforcement.js";
 import { getAuthContext } from "../auth/auth-context.js";
+import { SubscribeRequestSchema, UnsubscribeRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { SubscriptionManager } from "./subscription-manager.js";
 
 /**
  * Monkey-patch McpServer to return structured JSON errors for validation failures.
@@ -107,6 +109,7 @@ export class DbMcpServer {
   private systemDb: SystemDb | null = null;
   private auditInterceptor: AuditInterceptor | null = null;
   private auditInitPromise: Promise<void> | null = null;
+  public readonly subscriptionManager: SubscriptionManager;
 
   constructor(config: McpServerConfig) {
     this.config = config;
@@ -129,6 +132,42 @@ export class DbMcpServer {
         instructions: INSTRUCTIONS,
       },
     );
+
+    this.subscriptionManager = new SubscriptionManager(this.server);
+    // Expose subscriptionManager on the raw server object for transport cleanup
+    (
+      this.server as unknown as { subscriptionManager: SubscriptionManager }
+    ).subscriptionManager = this.subscriptionManager;
+
+    // Register subscription capability
+    this.server.server.registerCapabilities({
+      resources: {
+        subscribe: true,
+      },
+    });
+
+    // Handle subscribe request
+    this.server.server.setRequestHandler(SubscribeRequestSchema, (request, extra) => {
+      const uri = request.params.uri;
+      const sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
+      
+      // Allow subscriptions to schema, tables, health, and dynamic table URIs
+      if (!["sqlite://schema", "sqlite://tables", "sqlite://health"].includes(uri) && !uri.startsWith("sqlite://table/")) {
+        throw new Error(`Resource ${uri} is not subscribable`);
+      }
+      
+      this.subscriptionManager.subscribe(uri, sessionId as string | undefined);
+      return {};
+    });
+
+    // Handle unsubscribe request
+    this.server.server.setRequestHandler(UnsubscribeRequestSchema, (request, extra) => {
+      const uri = request.params.uri;
+      const sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
+      
+      this.subscriptionManager.unsubscribe(uri, sessionId as string | undefined);
+      return {};
+    });
 
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });
@@ -194,6 +233,13 @@ export class DbMcpServer {
     if (config.audit?.enabled) {
       this.auditInitPromise = this.initializeAudit(config);
     }
+
+    // Periodically push health updates if there are subscribers
+    setInterval(() => {
+      if (this.subscriptionManager.hasSubscribers("sqlite://health")) {
+        void this.subscriptionManager.notifyResourceUpdated("sqlite://health");
+      }
+    }, 60_000).unref();
   }
 
   /**
@@ -238,6 +284,11 @@ export class DbMcpServer {
     adapter.registerTools(this.server, this.toolFilter);
     adapter.registerResources(this.server);
     adapter.registerPrompts(this.server);
+
+    // Wire up schema changed event to push resource updates
+    adapter.on("schemaChanged", () => {
+      void this.subscriptionManager.notifySchemaSubscribers();
+    });
 
     // Register tool scopes dynamically for auth enforcement
     const toolDefs = adapter.getToolDefinitions();

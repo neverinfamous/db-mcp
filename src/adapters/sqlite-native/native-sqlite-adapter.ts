@@ -286,6 +286,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     // Auto-invalidate schema cache on DDL operations
     if (isDDL(sql)) {
       this.clearSchemaCache();
+      this.emit("schemaChanged");
     }
 
     return result;
@@ -318,6 +319,7 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
     this.ensureConnected();
     this.ensureDb().exec(sql);
     this.clearSchemaCache();
+    this.emit("schemaChanged");
     return Promise.resolve();
   }
 

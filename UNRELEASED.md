@@ -11,7 +11,13 @@
 - New SystemDb observability architecture replacing legacy JSONL and memory-only logs with a structured SQLite sidecar (`system.db`).
 - `sqlite_audit_search` tool allowing native structured searches against the server's own audit logs.
 - `MetricsRegistry` now persists historical snapshots directly into the SystemDb sidecar to survive server restarts.
-- `sqlite_server_config` administrative tool allowing dynamic server configuration changes (e.g., log levels) at runtime without restarting.
+- Added `resources/subscribe` capability support in `McpServer`.
+- Added `SubscriptionManager` for robust resource tracking with automatic cleanup on session disconnect for both HTTP and Legacy SSE transports.
+- Exposed database schema modification events through the new `schemaChanged` event in `DatabaseAdapter`, automatically notifying clients subscribed to `sqlite://schema` and `sqlite://tables`.
+- Added `docs-drift-detector.md` agent workflow for automated validation of `db-mcp` documentation.
+- Added new `sqlite_server_config` administrative tool to change server logging levels dynamically (`debug`, `info`, `warn`, `error`).
+- Expanded startup CLI arguments (`--audit-log`, `--enable-admin`, `--cors-origins`) to `db-mcp.config.yaml` to simplify Docker deployments.
+- Implemented `sqlite_audit_search` Code Mode tool exclusively accessible via `agent` workflows to query the SQLite internal log securely.
 - `--dump-config` CLI flag to securely print the fully resolved configuration hierarchy (redacting secrets) for debugging.
 - `--config <path>` flag parsing supporting configuration via `.yaml` and `.json` files.
 - Ported `docs-drift-detector.md` agentic workflow to detect and remediate documentation drift in `README.md` and `DOCKER_README.md`.
