@@ -175,8 +175,8 @@ Rate each error response 1-5:
 
 24. Drop `_mcp_migrations`: `sqlite.core.dropTable({table: "_mcp_migrations"})`
 25. Drop `stress_migration_data`: `sqlite.core.dropTable({table: "stress_migration_data"})`
-26. Drop `stress_idx_flag`: `sqlite.core.writeQuery("DROP INDEX IF EXISTS stress_idx_flag")`
-27. Drop `stress_flag` column: `sqlite.core.writeQuery("ALTER TABLE test_products DROP COLUMN stress_flag")`
+26. Drop `stress_idx_flag`: `sqlite.core.dropIndex({name: "stress_idx_flag"})`
+27. Drop `stress_flag` column: `sqlite.core.alterTable({table: "test_products", operation: "drop_column", column: "stress_flag"})`
 28. Verify: `test_products` has original columns (no `stress_flag`)
 
 ## Phase 5: Error Paths & Recovery (batched)
