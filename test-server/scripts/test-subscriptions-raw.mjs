@@ -56,19 +56,19 @@ async function main() {
   await new Promise(r => setTimeout(r, 500));
 
   console.log("Mutating DB: CREATE");
-  send("tools/call", { name: "sqlite_execute_query", arguments: { sql: "CREATE TABLE test_live_sub (id INTEGER PRIMARY KEY);" } });
+  send("tools/call", { name: "sqlite_create_table", arguments: { table: "test_live_sub", columns: [{ name: "id", type: "INTEGER", primaryKey: true }] } });
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after CREATE:", notifications);
   notifications = [];
 
   console.log("Mutating DB: ALTER");
-  send("tools/call", { name: "sqlite_execute_query", arguments: { sql: "ALTER TABLE test_products ADD COLUMN sub_test TEXT;" } });
+  send("tools/call", { name: "sqlite_alter_table", arguments: { table: "test_products", operation: "add_column", column: "sub_test", type: "TEXT" } });
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after ALTER:", notifications);
   notifications = [];
 
   console.log("Mutating DB: DROP");
-  send("tools/call", { name: "sqlite_execute_query", arguments: { sql: "DROP TABLE test_live_sub;" } });
+  send("tools/call", { name: "sqlite_drop_table", arguments: { table: "test_live_sub" } });
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after DROP:", notifications);
 

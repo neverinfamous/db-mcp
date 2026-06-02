@@ -15,9 +15,11 @@ async function main() {
   console.log("Connected.");
   let notifications = [];
   
-  client.setNotificationHandler("notifications/resources/updated", (notif) => {
-    notifications.push(notif.uri);
-    console.log("Notification received:", notif.uri);
+  const ResourceUpdatedNotificationSchema = z.object({ method: z.literal("notifications/resources/updated") }).passthrough();
+  client.setNotificationHandler(ResourceUpdatedNotificationSchema, (notif) => {
+    const uri = notif.params ? notif.params.uri : notif.uri;
+    notifications.push(uri);
+    console.log("Notification received:", uri);
   });
 
   // Test A: Valid Subscriptions
@@ -33,18 +35,18 @@ async function main() {
 
   // Test B: Mutate and wait
   console.log("Mutating DB...");
-  await client.request({ method: "tools/call", params: { name: "sqlite_write_query", arguments: { sql: "CREATE TABLE test_live_sub (id INTEGER PRIMARY KEY);" } } }, z.any());
+  await client.request({ method: "tools/call", params: { name: "sqlite_create_table", arguments: { table: "test_live_sub", columns: [{ name: "id", type: "INTEGER", primaryKey: true }] } } }, z.any());
   
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after CREATE:", notifications);
   notifications = [];
 
-  await client.request({ method: "tools/call", params: { name: "sqlite_write_query", arguments: { sql: "ALTER TABLE test_products ADD COLUMN sub_test TEXT;" } } }, z.any());
+  await client.request({ method: "tools/call", params: { name: "sqlite_alter_table", arguments: { table: "test_products", operation: "add_column", column: "sub_test", type: "TEXT" } } }, z.any());
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after ALTER:", notifications);
   notifications = [];
 
-  await client.request({ method: "tools/call", params: { name: "sqlite_write_query", arguments: { sql: "DROP TABLE test_live_sub;" } } }, z.any());
+  await client.request({ method: "tools/call", params: { name: "sqlite_drop_table", arguments: { table: "test_live_sub" } } }, z.any());
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after DROP:", notifications);
   notifications = [];
@@ -53,12 +55,12 @@ async function main() {
   await client.request({ method: "resources/unsubscribe", params: { uri: "sqlite://schema" } }, z.any());
   console.log("Unsubbed schema");
   
-  await client.request({ method: "tools/call", params: { name: "sqlite_write_query", arguments: { sql: "CREATE TABLE test_live_sub2 (id INTEGER PRIMARY KEY);" } } }, z.any());
+  await client.request({ method: "tools/call", params: { name: "sqlite_create_table", arguments: { table: "test_live_sub2", columns: [{ name: "id", type: "INTEGER", primaryKey: true }] } } }, z.any());
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after unsub and CREATE:", notifications);
 
   // Clean up
-  await client.request({ method: "tools/call", params: { name: "sqlite_write_query", arguments: { sql: "DROP TABLE test_live_sub2;" } } }, z.any());
+  await client.request({ method: "tools/call", params: { name: "sqlite_drop_table", arguments: { table: "test_live_sub2" } } }, z.any());
 
   process.exit(0);
 }

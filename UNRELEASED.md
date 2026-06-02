@@ -42,6 +42,7 @@
 - Code Mode API normalization regression where parameter arrays were incorrectly processed for methods like `searchRegex`.
 - Missing AST validation error trigger in `sandbox.test.ts`.
 - ESLint `prefer-const` issue in `tables.ts`.
+- Automated subscription test scripts (`test-subscriptions-raw.mjs`, `test-subscriptions-sdk.mjs`) attempting DDL via `sqlite_write_query` instead of dedicated DDL tools, and using an outdated SDK signature for `setNotificationHandler`.
 
 ### Security
 
