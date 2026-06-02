@@ -175,7 +175,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 **Parameter binding:**
 
 25. `sqlite.core.readQuery({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99)
-26. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → verify multi-parameter binding returns correct subset
+26. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → 4 results
 
 **Trigger & constraint introspection:**
 
