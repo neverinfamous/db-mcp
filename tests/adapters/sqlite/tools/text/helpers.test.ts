@@ -37,9 +37,8 @@ describe("Text Helpers", () => {
     it("should replace consecutive operators with AND", () => {
       expect(sanitizeFtsQuery("hello AND OR world")).toBe("hello AND world");
       expect(sanitizeFtsQuery("hello OR NOT world")).toBe("hello AND world");
-      // Since it's a simple regex replace without a loop, 3 consecutive operators
-      // will be partially reduced. That's fine for simple sanitization.
-      expect(sanitizeFtsQuery("hello NOT AND OR world")).toBe("hello AND OR world");
+      // The improved regex now correctly reduces 3+ consecutive operators down to a single AND.
+      expect(sanitizeFtsQuery("hello NOT AND OR world")).toBe("hello AND world");
     });
 
     it("should combine all fixes correctly", () => {

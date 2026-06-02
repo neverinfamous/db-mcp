@@ -63,10 +63,10 @@ export function sanitizeFtsQuery(query: string): string {
   
   // 3. Remove stray or invalid operators (AND, OR, NOT)
   // Remove if they appear at the start or end
-  clean = clean.replace(/^(?:AND|OR|NOT)\s+/i, "");
-  clean = clean.replace(/\s+(?:AND|OR|NOT)$/i, "");
-  // Replace consecutive operators with the first one
-  clean = clean.replace(/\s+(?:AND|OR|NOT)\s+(?:AND|OR|NOT)\s+/gi, " AND ");
+  clean = clean.replace(/^(?:\s*(?:AND|OR|NOT))+(?=\s|$)/i, "");
+  clean = clean.replace(/(?:^|\s)(?:AND|OR|NOT)(?:\s+(?:AND|OR|NOT))*$/i, "");
+  // Replace 2 or more consecutive operators with a single AND
+  clean = clean.replace(/(?:\s+(?:AND|OR|NOT)){2,}\s+/gi, " AND ");
   
   // 4. Escape single quotes for SQLite string literals
   // Notice: The tool handlers often already do `replace(/'/g, "''")`. 

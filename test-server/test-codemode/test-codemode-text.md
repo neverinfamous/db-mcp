@@ -160,7 +160,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 23. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1})` → return exactly 1 result and `nextCursor` populated
 24. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "*", limit: 1, cursor: "<nextCursor>"})` → return next result via opaque pagination
 25. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "nonexistent_term_xyz"})` → 0 results
-26. `sqlite.text.hybridSearch({table: "test_articles", query: "future of interfaces", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 60})` → results combining vector distance and FTS rank via Reciprocal Rank Fusion
+26. Create FTS table for embeddings: `sqlite.text.ftsCreate({sourceTable: "test_embeddings", columns: ["content", "category"], tableName: "test_embeddings_fts"})`
+27. `sqlite.text.hybridSearch({table: "test_embeddings", query: "future of interfaces", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_embeddings_fts", rrfK: 60})` → results combining vector distance and FTS rank via Reciprocal Rank Fusion
+28. Cleanup: drop `test_embeddings_fts`
 
 ## Phase 3: Text Write Tool (temp table)
 
