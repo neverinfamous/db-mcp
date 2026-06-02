@@ -21,3 +21,12 @@
 - `DB_ENCRYPTION_KEY` environment variable leakage breaking unencrypted Playwright E2E tests.
 - Numbering discontinuity and duplicate list items in prompt suites (`test-codemode`, `test-advanced`, `test-tool-groups`).
 - Factual error in introspection Code Mode test prompt suppressing the expected `missing_composite_index` finding.
+
+### Security
+- Bumped npm bundled `tar` in Dockerfile from `7.5.15` to `7.5.16` to apply latest security patches.
+
+### Changed
+**Dependency Updates**
+- Bumped `@vitest/coverage-v8` to `4.1.8`.
+- Bumped `typescript-eslint` to `8.60.1`.
+- Bumped `vitest` to `4.1.8`.

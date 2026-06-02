@@ -84,7 +84,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.4.0",
     "@types/sql.js": "^1.4.9",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.0.2",
     "globals": "^17.4.0",
     "node-addon-api": "^8.8.0",
@@ -92,8 +92,8 @@
     "tsup": "^8.5.1",
     "tsx": "^4.22.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.0",
-    "vitest": "^4.0.17"
+    "typescript-eslint": "^8.60.1",
+    "vitest": "^4.1.8"
   },
   "optionalDependencies": {
     "better-sqlite3": "^12.10.0",
@@ -103,7 +103,7 @@
   "overrides": {
     "diff": "9.0.0",
     "@isaacs/brace-expansion": "5.0.1",
-    "tar": "7.5.15",
+    "tar": "7.5.16",
     "minimatch": "10.2.5",
     "brace-expansion": "5.0.6"
   }
