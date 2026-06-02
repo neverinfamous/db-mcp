@@ -16,7 +16,8 @@
 
 ### Fixed
 
-- Fixed factual error in `test-introspection-diagnostics.md` test query for `sqlite_index_audit` missing composite index detection.
+- Fixed silent fallbacks in `introspection` Zod schemas (`sqlite_schema_snapshot`, `sqlite_schema_diff`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_constraint_analysis`) that swallowed wrong-type validation errors for enum properties.
+
 - Fixed `sqlite_spatialite_load` not returning the `version` string as required by the schema output.
 - Fixed native build failure on Node 26 for Windows caused by LLVM/Clang LTO flags being inappropriately passed to MSVC via `node-gyp`.
 - FTS5 syntax errors on malformed user input.

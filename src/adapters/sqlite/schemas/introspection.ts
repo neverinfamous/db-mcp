@@ -359,52 +359,7 @@ const coerceNumber = (val: unknown): unknown => {
   return val;
 };
 
-const VALID_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
 
-/** Filter array to only valid section values; pass non-arrays through for Zod to reject */
-const coerceSections = (val: unknown): unknown =>
-  Array.isArray(val)
-    ? val.filter(
-        (v) =>
-          typeof v === "string" &&
-          (VALID_SECTIONS as readonly string[]).includes(v),
-      )
-    : val;
-
-const VALID_CHECKS = [
-  "missing_pk",
-  "missing_not_null",
-  "unindexed_fk",
-  "missing_fk",
-] as const;
-
-/** Filter array to only valid check values; pass non-arrays through for Zod to reject */
-const coerceChecks = (val: unknown): unknown =>
-  Array.isArray(val)
-    ? val.filter(
-        (v) =>
-          typeof v === "string" &&
-          (VALID_CHECKS as readonly string[]).includes(v),
-      )
-    : val;
-
-const VALID_DIRECTIONS = ["create", "drop"] as const;
-const coerceDirection = (val: unknown): unknown =>
-  typeof val === "string" &&
-  (VALID_DIRECTIONS as readonly string[]).includes(val)
-    ? val
-    : typeof val === "string"
-      ? undefined
-      : val;
-
-const VALID_OPERATIONS = ["DELETE", "DROP", "TRUNCATE"] as const;
-const coerceOperation = (val: unknown): unknown =>
-  typeof val === "string" &&
-  (VALID_OPERATIONS as readonly string[]).includes(val)
-    ? val
-    : typeof val === "string"
-      ? undefined
-      : val;
 
 export const StorageAnalysisSchema = z
   .object({
@@ -471,10 +426,8 @@ export type IndexAuditInput = z.infer<typeof IndexAuditSchema>;
 export const SchemaSnapshotSchema = z
   .object({
     sections: z
-      .preprocess(
-        coerceSections,
-        z.array(z.enum(["tables", "views", "indexes", "triggers"])).optional(),
-      )
+      .array(z.enum(["tables", "views", "indexes", "triggers"]))
+      .optional()
       .describe("Specific sections to include (default: all)"),
     compact: z
       .boolean()
@@ -510,19 +463,15 @@ export const ConstraintAnalysisSchema = z
       .optional()
       .describe("Analyze constraints for a specific table only"),
     checks: z
-      .preprocess(
-        coerceChecks,
-        z
-          .array(
-            z.enum([
-              "missing_pk",
-              "missing_not_null",
-              "unindexed_fk",
-              "missing_fk",
-            ]),
-          )
-          .optional(),
+      .array(
+        z.enum([
+          "missing_pk",
+          "missing_not_null",
+          "unindexed_fk",
+          "missing_fk",
+        ]),
       )
+      .optional()
       .describe("Specific checks to run (default: all)"),
     excludeSystemTables: z
       .boolean()
@@ -559,7 +508,8 @@ export type DependencyGraphInput = z.infer<typeof DependencyGraphSchema>;
 export const TopologicalSortSchema = z
   .object({
     direction: z
-      .preprocess(coerceDirection, z.enum(["create", "drop"]).optional())
+      .enum(["create", "drop"])
+      .optional()
       .describe(
         "Sort direction: 'create' = dependencies first, 'drop' = dependents first (default: create)",
       ),
@@ -581,10 +531,8 @@ export const CascadeSimulatorSchema = z
       .default("")
       .describe("Table name to simulate deletion from"),
     operation: z
-      .preprocess(
-        coerceOperation,
-        z.enum(["DELETE", "DROP", "TRUNCATE"]).optional(),
-      )
+      .enum(["DELETE", "DROP", "TRUNCATE"])
+      .optional()
       .describe("Operation to simulate (default: DELETE)"),
     compact: z
       .boolean()
@@ -691,16 +639,7 @@ export const SchemaDiffOutputSchema = z
  * Both baseline and target accept either "current" (capture live DB schema)
  * or an inline snapshot object from a previous sqlite_schema_snapshot call.
  */
-const VALID_DIFF_SECTIONS = ["tables", "views", "indexes", "triggers"] as const;
 
-const coerceDiffSections = (val: unknown): unknown =>
-  Array.isArray(val)
-    ? val.filter(
-        (v) =>
-          typeof v === "string" &&
-          (VALID_DIFF_SECTIONS as readonly string[]).includes(v),
-      )
-    : val;
 
 export const SchemaDiffSchema = z
   .object({
@@ -717,10 +656,8 @@ export const SchemaDiffSchema = z
         "Target schema to compare against baseline — 'current' to snapshot live DB, or an inline snapshot object",
       ),
     sections: z
-      .preprocess(
-        coerceDiffSections,
-        z.array(z.enum(["tables", "views", "indexes", "triggers"])).optional(),
-      )
+      .array(z.enum(["tables", "views", "indexes", "triggers"]))
+      .optional()
       .describe("Sections to compare (default: all)"),
     excludeSystemTables: z
       .boolean()
