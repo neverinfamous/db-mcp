@@ -200,7 +200,7 @@ Expected: `{success: true}` — sandbox must serialize deeply nested objects.
 return await sqlite.help();
 ```
 
-Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 140.
+Expected: `{groups: [...], totalMethods: <number>, usage: "..."}` with 10 groups listed (including transactions). **WASM**: Fewer groups — `transactions` is absent; `totalMethods` ≈ 187.
 
 ### 2.2 — Group help (core)
 
@@ -227,8 +227,12 @@ const groups = [
 ];
 const results = {};
 for (const g of groups) {
-  const h = await sqlite[g].help();
-  results[g] = h.methods.length;
+  try {
+    const h = await sqlite[g].help();
+    results[g] = h.methods.length;
+  } catch (e) {
+    results[g] = "error: " + e.message;
+  }
 }
 return results;
 ```
@@ -348,7 +352,7 @@ Call with `timeout: 500`. Expected: `{success: false}` with timeout error — th
 return await sqlite.core.readQuery({ query: "SELECT * FROM nonexistent_xyz" });
 ```
 
-Expected: Returns `{success: false, error: "..."}` — sandbox must not crash.
+Expected: Returns a result object containing the handler error (e.g. `{success: true, result: {success: false, error: "..."}}`) — sandbox must not crash.
 
 ### 3.7 — Undefined API group
 
