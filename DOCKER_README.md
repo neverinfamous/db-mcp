@@ -40,7 +40,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 
 | Feature              | WASM (sql.js)                                                    | Native (better-sqlite3)         |
 | -------------------- | ---------------------------------------------------------------- | ------------------------------- |
-| **Group Tools**      | 141                                                              | **168**                         |
+| **Group Tools**      | 141                                                              | **167**                         |
 | **Transactions**     | ❌                                                               | ✅ 8 tools                      |
 | **Window Functions** | ❌                                                               | ✅ 6 tools                      |
 | **SpatiaLite GIS**   | ❌                                                               | ✅ 7 tools                      |
@@ -86,7 +86,7 @@ Add to your `~/.cursor/mcp.json` or Claude Desktop config:
 > **⭐ Code Mode** (`--tool-filter codemode`) is the recommended configuration — it exposes `sqlite_execute_code`, a V8 isolate sandbox with process-level isolation providing access to all 170+ tools' worth of capability with 70–90% token savings. See [Tool Filtering](#️-tool-filtering) for alternatives.
 
 > [!TIP]
-> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 168 tools). To use the **WASM** backend (sql.js, 141 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options](#backend-options) table for feature differences.
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 167 tools). To use the **WASM** backend (sql.js, 141 tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options](#backend-options) table for feature differences.
 
 ### 3. Restart & Query!
 
@@ -136,7 +136,7 @@ Specify exactly the groups you need:
 | `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
 | `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
 | `minimal`    | 21     | 21     | +4         | Core only                      |
-| `full`       | 141    | 168    | +4         | Everything enabled             |
+| `full`       | 141    | 167    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
@@ -155,7 +155,7 @@ Specify exactly the groups you need:
 | Geospatial (`geo`)                   | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)      |
 | Introspection (`introspection`)      | 10   | 10     | +4         | Schema mapping, FK graph, cascade sim      |
 | Migration (`migration`)              | 6    | 6      | +4         | Schema migration tracking (opt-in)         |
-| **Total**                            | **141** | **168** | | |
+| **Total**                            | **141** | **167** | | |
 
 ### Syntax Reference
 
@@ -316,8 +316,8 @@ You can provide the key via the `--encryption-key` CLI flag or the `DB_ENCRYPTIO
 
 | Platform                  | Features                            |
 | ------------------------- | ----------------------------------- |
-| **AMD64** (x86_64)        | Full: 168 tools, native, SpatiaLite |
-| **ARM64** (Apple Silicon) | Full: 168 tools, native             |
+| **AMD64** (x86_64)        | Full: 167 tools, native, SpatiaLite |
+| **ARM64** (Apple Silicon) | Full: 167 tools, native             |
 
 Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sqlite3 native
 

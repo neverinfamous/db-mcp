@@ -15,7 +15,7 @@
  *   introspection: 10 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot+diff.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Subtotal: 139 WASM / 166 Native (excluding Code Mode)
+ *   Subtotal: 139 WASM / 165 Native (excluding Code Mode)
  *
  * AUDIT & ADMIN TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
  *   7 tools (server/registration/audit-tools.ts, admin-tools.ts)

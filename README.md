@@ -97,7 +97,7 @@ Or with **WASM backend** (sql.js — cross-platform, no compilation required):
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (179 MCP tools / 168 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (152 MCP tools / 141 group tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (178 MCP tools / 167 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (152 MCP tools / 141 group tools, no native dependencies).
 
 ### Verify It Works
 
@@ -210,7 +210,7 @@ Specify exactly the groups you need:
 | `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
 | `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
 | `minimal`    | 21     | 21     | +4         | Core only                      |
-| `full`       | 141    | 168    | +4         | Everything enabled             |
+| `full`       | 141    | 167    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
@@ -475,7 +475,7 @@ Add to your `~/.cursor/mcp.json`, Claude Desktop config, or equivalent:
 ```
 
 > [!TIP]
-> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 179 MCP tools). To use the **WASM** backend (sql.js, 152 MCP tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 178 MCP tools). To use the **WASM** backend (sql.js, 152 MCP tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
 
 **Variants** (modify the `args` array above):
 

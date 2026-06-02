@@ -41,7 +41,7 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (32N/31W tools) + Server Audit (7 tools)
+  ["admin", `# db-mcp Help — Database Administration (31N/31W tools) + Server Audit (7 tools)
 
 ## Maintenance
 

@@ -40,10 +40,15 @@
 
 - Bumped npm bundled `tar` in Dockerfile from `7.5.15` to `7.5.16` to apply latest security patches.
 
+### Removed
+
+- Removed `sqlite_append_insight` tool and `memo://insights` resource (leftovers from memory-journal port that did not belong in database context).
+
 ### Changed
 
 - CI/CD: Enforced single quotes in YAML frontmatter for `ci-health-monitor.md` and `docs-drift-detector.md` agentic workflows.
 - Added token conservation guidance to `sqlite_read_query` instructions, advising agents to avoid `SELECT *` on wide tables with JSON payloads to preserve context window depth.
+- Comprehensive `/doc-audit` run to perfectly synchronize codebase tool counts (178 Native / 152 WASM tools) across all README files, code map documentation, and code mode sandboxing help instructions.
 
 **Dependency Updates**
 

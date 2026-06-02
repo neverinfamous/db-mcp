@@ -75,7 +75,7 @@ Several admin tools are **registered in WASM mode but return structured errors**
 | `sqlite.admin.pragmaCompileOptions()`                           | Includes `ENABLE_FTS5`                    | Shows `ENABLE_FTS3` instead                                           |
 | `sqlite.admin.pragmaCompileOptions({filter: "FTS"})`            | Matches FTS5                              | Matches FTS3                                                          |
 | `sqlite.core.listTables()` / `sqlite.admin.listVirtualTables()` | `test_articles_fts` present and queryable | `test_articles_fts` may appear in sqlite_master but FTS5 queries fail |
-| `sqlite.help()`                                                 | `totalMethods` reflects 168 tools         | `totalMethods` reflects 141 tools                                     |
+| `sqlite.help()`                                                 | `totalMethods` reflects 167 tools         | `totalMethods` reflects 141 tools                                     |
 | Phase 2.1 (sandbox prompt) top-level help                       | 10 groups listed                          | `transactions` group shows 0 methods                                  |
 
 #### WASM-Specific Degradation Prompt
@@ -99,7 +99,7 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 | `test-codemode-migration.md`        | migration     | 6                                                                        |
 | `test-codemode-wasm-degradation.md` | cross-group   | WASM-only graceful degradation                                           |
 
-**Group tools total**: 168 Native / 141 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt. Audit tools (7) are MCP-only and not covered here. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Group tools total**: 167 Native / 141 WASM tools across 10 groups + 1 sandbox prompt + 1 WASM degradation prompt. Audit tools (7) are MCP-only and not covered here. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Recommended Execution Order
 
