@@ -21,6 +21,10 @@ node test-server/scripts/test-prompts.mjs
 
 # 4. Test Code Mode progress notifications
 node test-server/scripts/test-progress.mjs
+
+# 5. Test resource subscriptions and notifications
+node test-server/scripts/test-subscriptions-raw.mjs
+node test-server/scripts/test-subscriptions-sdk.mjs
 ```
 
 ## What they verify
@@ -29,6 +33,8 @@ node test-server/scripts/test-progress.mjs
 - **test-help-resources.mjs**: Starts the server with multiple `--tool-filter` configurations to verify that the core instructions remain slim (within context limits) and that the correct `sqlite://help/{group}` resources are dynamically registered only when their respective tool groups are enabled.
 - **test-prompts.mjs**: Starts the server and verifies that all 10 MCP prompts are successfully registered via `prompts/list`, and performs functional execution checks on `prompts/get` handling required vs. optional arguments, payload structure correctness, and proper JSON-RPC error rendering.
 - **test-progress.mjs**: Starts the server, executes a custom JavaScript busy-wait loop inside `sqlite_execute_code` that invokes the internal `sqlite.reportProgress` binding, and verifies that the exact number of expected `notifications/progress` JSON-RPC events are successfully emitted.
+- **test-subscriptions-raw.mjs**: Connects to the server over `stdio` without the official MCP SDK to manually test raw JSON-RPC subscription handling and verify that subscriptions are silently dropped in stateless `stdio` environments.
+- **test-subscriptions-sdk.mjs**: Connects to the server using the official MCP SDK to test subscription capabilities, though it currently serves as a reference for SDK validation constraints.
 
 ## Utilities
 

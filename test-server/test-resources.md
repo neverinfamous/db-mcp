@@ -260,10 +260,20 @@ Use live MCP resource reads via the `read_resource` tool against the running sql
 
 ### Test Commands
 
+For manual data validation, use the `read_resource` tool:
+
 ```
 # Resources being tested use the read_resource tool with:
 # ServerName: "sqlite"
 # Uri: "<resource-uri>"
+```
+
+For testing subscription mechanics, execute the automated Node scripts:
+
+```bash
+# From project root:
+node test-server/scripts/test-subscriptions-raw.mjs
+node test-server/scripts/test-subscriptions-sdk.mjs
 ```
 
 ### Pass/Fail Criteria
