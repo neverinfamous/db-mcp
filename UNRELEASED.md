@@ -49,3 +49,4 @@
 ### Security
 
 - Bumped npm bundled `tar` in Dockerfile to `7.5.16` to apply latest security patches.
+- Added explicit Data Privacy and Compliance policies to `SECURITY.md`.

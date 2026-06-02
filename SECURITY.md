@@ -339,6 +339,37 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - [x] Code Mode recursive credential redaction for deeply nested array objects (CWE-200)
 - [x] Tool annotations with exact allowlist enforcement for `openWorldHint=true` (filesystem-touching tools only)
 
+## 🔍 **Data Privacy**
+
+### **Architecture Characteristics**
+
+- ✅ **Full data ownership**: SQLite databases stay on your infrastructure
+- ✅ **No telemetry**: No data sent to external telemetry endpoints
+- ⚠️ **External Services**: If configured for HTTP transport with OAuth, communicates with authorization server discovery (JWKS) endpoints.
+
+### **Context Security**
+
+- ✅ **No sensitive data harvesting**: Doesn't harvest private keys or credentials
+- ✅ **Schema and Data Secrecy**: The server operates strictly on the databases you configure. It does not phone home schemas, queries, or query results.
+
+## 📜 **Compliance**
+
+### **Data Protection**
+
+**GDPR-friendly:**
+
+- No telemetry collection
+- No external data transmission of database records
+- Controlled local or containerized storage
+- User controls all data
+- Easy database export/backup via built-in tools
+
+**No PII collection:**
+
+- No implicit collection of user identities
+- No tracking
+- No analytics
+
 ## 🚨 **Reporting Security Issues**
 
 | Version | Supported |
