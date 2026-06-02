@@ -108,7 +108,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "json_diff",
   ],
   text: [
-    // Text Tools (14 WASM)
+    // Text Tools (15 WASM)
     "regex_extract",
     "regex_match",
     "text_split",

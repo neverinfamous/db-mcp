@@ -23,6 +23,7 @@
 - V8 Garbage Collection `STATUS_ACCESS_VIOLATION` crashes during `CodeModeSandbox` teardown.
 - Native V8 thread leaks on Windows.
 - SQLCipher `PRAGMA key` syntax errors causing `file is not a database` failures.
+- Fixed out-of-sync documentation mappings in `test-server/code-map.md` (server directory tree and `text` tool counts) and `tool-constants.ts` (WASM text tool counts).
 - `DB_ENCRYPTION_KEY` environment variable leakage breaking unencrypted Playwright E2E tests.
 
 ### Security

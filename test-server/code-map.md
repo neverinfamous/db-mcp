@@ -16,10 +16,13 @@ src/
 │
 ├── server/
 │   ├── mcp-server.ts               # McpServer setup, adapter registration, tool/resource/prompt wiring
-│   ├── built-in-tools.ts           # Registration logic for server_info, server_health, list_adapters
-│   ├── help-resources.ts           # Registration logic for sqlite://help resources
-│   ├── observability-resources.ts  # Registration logic for observability resources (sqlite://metrics)
-│   └── audit-tools.ts              # Registration logic for audit tools (6 tools)
+│   ├── subscription-manager.ts     # Subscription lifecycle for MCP resources (schema, tables)
+│   └── registration/               # Extracted tool/resource registration logic
+│       ├── admin-tools.ts          # Registration logic for admin config tools (e.g. server_config)
+│       ├── audit-tools.ts          # Registration logic for audit tools (7 tools)
+│       ├── built-in-tools.ts       # Registration logic for server_info, server_health, list_adapters
+│       ├── help-resources.ts       # Registration logic for sqlite://help resources
+│       └── observability-resources.ts  # Registration logic for observability resources (sqlite://metrics)
 │
 ├── types/                          # Core TypeScript types (barrel: types/index.ts)
 │   ├── adapter.ts                  # ToolDefinition, ResourceDefinition, PromptDefinition, AdapterCapabilities
@@ -188,7 +191,7 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `json-helpers/write.ts`                   | 4     | `sqlite_json_insert`, `sqlite_json_update`, `sqlite_json_merge`, `sqlite_create_json_collection`                                                                                                                            |
 | **text**          | `text/regex.ts`                           | 2     | `sqlite_regex_extract`, `sqlite_regex_match`                                                                                                                                                                                |
 |                   | `text/formatting.ts`                      | 6     | `sqlite_text_split`, `sqlite_text_concat`, `sqlite_text_replace`, `sqlite_text_trim`, `sqlite_text_case`, `sqlite_text_substring`                                                                                           |
-|                   | `text/search.ts`                          | 3     | `sqlite_fuzzy_match`, `sqlite_phonetic_match`, `sqlite_advanced_search`                                                                                                                                                     |
+|                   | `text/search.ts`                          | 4     | `sqlite_fuzzy_match`, `sqlite_phonetic_match`, `sqlite_advanced_search`, `sqlite_hybrid_search`                                                                                                                             |
 |                   | `text/validate.ts`                        | 2     | `sqlite_text_normalize`, `sqlite_text_validate`                                                                                                                                                                             |
 |                   | `text/sentiment.ts`                       | 1     | `sqlite_text_sentiment`                                                                                                                                                                                                     |
 | **text** (FTS5)   | `fts.ts`                                  | 5     | `sqlite_fts_create`, `sqlite_fts_search`, `sqlite_fts_rebuild`, `sqlite_fts_match_info`, `sqlite_fts_headline`                                                                                                              |
