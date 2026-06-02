@@ -161,7 +161,7 @@ sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to me
 
 ## Basic Queries
 
-- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "..." })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports \`cursor\` for offset-based pagination (returns \`nextCursor\`)
+- \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "..." })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports \`cursor\` for offset-based pagination (returns \`nextCursor\`). **Agent Tip:** Avoid \`SELECT *\` on wide tables with large text/JSON columns to conserve token context; use \`sqlite_describe_table\` first and select specific columns.
 - \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
 
 ## Tables & Schema

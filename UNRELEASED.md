@@ -30,6 +30,8 @@
 
 ### Changed
 
+- Added token conservation guidance to `sqlite_read_query` instructions, advising agents to avoid `SELECT *` on wide tables with JSON payloads to preserve context window depth.
+
 **Dependency Updates**
 
 - Bumped `@vitest/coverage-v8` to `4.1.8`.
