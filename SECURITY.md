@@ -370,6 +370,33 @@ docker run --memory=1g --cpus=1 writenotenow/db-mcp:latest
 - No tracking
 - No analytics
 
+## ⛓️ **Supply Chain Security**
+
+### **SHA-Pinned Images**
+
+**Recommended (highest security):**
+
+```bash
+# Use SHA-256 digest for immutable reference
+docker pull writenotenow/db-mcp@sha256:abc123...
+
+# Find SHA digests at:
+# https://hub.docker.com/r/writenotenow/db-mcp/tags
+```
+
+**Benefits:**
+
+- Immutable image reference
+- Protection against tag hijacking
+- Reproducible deployments
+- Supply chain verification
+
+**Tag-based (convenience):**
+
+```bash
+docker pull writenotenow/db-mcp:latest
+```
+
 ## 🚨 **Reporting Security Issues**
 
 | Version | Supported |
