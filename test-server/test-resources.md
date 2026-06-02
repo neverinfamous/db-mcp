@@ -228,9 +228,9 @@ Once subscribed, mutate the database schema and verify the server emits an `noti
 
 | Action                                                                                              | Expected Notification Payload       |
 | --------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Create a new table: `CREATE TABLE test_live_sub (id INTEGER PRIMARY KEY);`                          | Event fired with `uri: sqlite://schema` and `sqlite://tables` |
-| Add a column to an existing table: `ALTER TABLE test_products ADD COLUMN sub_test TEXT;`          | Event fired with `uri: sqlite://schema` and `sqlite://table/test_products/schema` |
-| Cleanup: `DROP TABLE test_live_sub;` and ignore the column                                          | Event fired with `uri: sqlite://schema` and `sqlite://tables` |
+| Create a new table using `sqlite_create_table` (`test_live_sub`)                                    | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema` |
+| Add a column using `sqlite_alter_table` (`test_products.sub_test TEXT`)                             | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/test_products/schema` |
+| Cleanup: Drop table using `sqlite_drop_table` (`test_live_sub`)                                     | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema` |
 | Wait up to 60 seconds (background health polling)                                                   | Event fired with `uri: sqlite://health` |
 
 **Test C — Invalid Subscriptions:**
@@ -248,7 +248,7 @@ Attempt to subscribe to static or non-subscribable resources.
 | Action                                     | Expected Result                       |
 | ------------------------------------------ | ------------------------------------- |
 | Unsubscribe from `sqlite://schema`         | ✅ Success (empty response)           |
-| Mutate database (e.g. `CREATE TABLE x...`) | ❌ No notification should be received |
+| Mutate database (e.g. `sqlite_create_table`)| ❌ No notification should be received |
 
 ---
 
