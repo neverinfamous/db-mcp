@@ -15,8 +15,7 @@ Please test all db-mcp resources (11 data + up to 9 help) using the test databas
 | 7   | sqlite_meta            | sqlite://meta                | Static    | PRAGMA values + adapter info               |
 | 8   | sqlite_compile_options | sqlite://compile_options     | Static    | SQLite compile-time build options          |
 | 9   | sqlite_pragma          | sqlite://pragma              | Static    | Runtime PRAGMA config snapshot             |
-| 10  | sqlite_insights        | memo://insights              | Static    | In-memory insights memo                    |
-| 11  | sqlite_audit           | sqlite://audit               | Static    | Audit log access (if enabled)              |
+| 10  | sqlite_audit           | sqlite://audit               | Static    | Audit log access (if enabled)              |
 
 ---
 
@@ -140,28 +139,7 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 8. sqlite_insights — Business Insights Memo
-
-**URI:** `memo://insights`  
-**Test:** Read insights resource (may be empty initially), then add an insight and verify.
-
-> **Prerequisite:** The `sqlite_append_insight` tool requires the `admin` tool group to be enabled.
-
-**Test Sequence:**
-
-1. Read memo://insights — May be empty or have default content ("No business insights have been discovered yet.")
-2. Call sqlite_append_insight tool with a test insight `{"insight": "Test insight"}` (requires admin tools)
-3. Read memo://insights again — Should contain the new insight
-4. Verify the exact insight text is present
-
-**Expected Output:**
-
-- Plain text (mimeType: text/plain)
-- Synthesized memo format from insightsManager
-
----
-
-### 9. sqlite_compile_options — Compile-Time Options
+### 8. sqlite_compile_options — Compile-Time Options
 
 **URI:** `sqlite://compile_options`  
 **Test:** Read the compile options resource.
@@ -173,7 +151,7 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 10. sqlite_pragma — Runtime Configuration Snapshot
+### 9. sqlite_pragma — Runtime Configuration Snapshot
 
 **URI:** `sqlite://pragma`  
 **Test:** Read the pragma configuration resource.
@@ -185,7 +163,7 @@ DROP VIEW IF EXISTS test_view_order_summary;
 
 ---
 
-### 11. Help Resources — On-Demand Reference Documentation
+### 10. Help Resources — On-Demand Reference Documentation
 
 **Test A — sqlite://help (always registered):**
 
@@ -220,16 +198,18 @@ If a group-specific help resource is available, read it and verify it contains r
 
 **Test C — Tool Annotations (`openWorldHint`):**
 
-Call `tools/list` and verify that **all** tools have `openWorldHint: false` in their annotations. db-mcp tools are local database operations — none require external network access.
+Call `tools/list` and verify that tools accurately report their `openWorldHint` in their annotations. `openWorldHint` should be `true` for tools that interact with the external file system (e.g., `ADMIN_FS`, `WRITE_FS`) or execute arbitrary logic (`CODEMODE`), and `false` for all standard database operations.
 
 | Check                               | Expected                 |
 | ----------------------------------- | ------------------------ |
 | All tools have `annotations` object | ✅ Present on every tool |
-| All `openWorldHint` values          | `false`                  |
+| `openWorldHint` values              | `true` for FS/CodeMode tools, `false` otherwise |
 
 ---
 
-### 12. Resource Subscriptions & Live Updates
+### 11. Resource Subscriptions & Live Updates
+
+> **Note:** Resource subscriptions are fully supported over HTTP transport. The STDIO transport operates statelessly (no persistent `sessionId`), so subscriptions are silently dropped and live update notifications will not be emitted.
 
 **Test A — Valid Subscriptions:**
 
