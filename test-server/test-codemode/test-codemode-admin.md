@@ -135,7 +135,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.pragmaOptimize`
 - `sqlite.admin.analyzeCsvSchema`
 - `sqlite.admin.createCsvTable`
-- `sqlite.admin.appendInsight`
+
 - `sqlite.admin.reindex`
 - `sqlite.admin.wal`
 - `sqlite.admin.attachDatabase`
@@ -199,9 +199,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → virtual table
 28. Cleanup: drop `temp_cm_csv` (virtual)
 
-## Phase 7: Insights
-
-29. `sqlite.admin.appendInsight({insight: "Test insight from codemode"})` → success
 
 ## Phase 8: REINDEX & WAL Management (batched)
 
@@ -295,7 +292,7 @@ return { failures, success: failures.length === 0 };
 🔴 59. `sqlite.admin.verifyBackup({})` → `{success: false}`
 🔴 60. `sqlite.admin.pragmaTableInfo({})` → `{success: false}`
 🔴 61. `sqlite.admin.pragmaSettings({})` → `{success: false}`
-🔴 62. `sqlite.admin.appendInsight({})` → `{success: false}`
+
 🔴 63. `sqlite.admin.createView({})` → `{success: false}`
 🔴 64. `sqlite.admin.dropView({})` → `{success: false}`
 🔴 65. `sqlite.admin.virtualTableInfo({})` → `{success: false}`

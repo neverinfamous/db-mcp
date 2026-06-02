@@ -119,16 +119,6 @@ export const PragmaCompileOptionsSchema = z.object({
 
 export const PragmaDatabaseListSchema = z.object({});
 
-export const AppendInsightSchema = z.object({
-  insight: z
-    .string()
-    .max(2000)
-    .regex(
-      /^[\x20-\x7E\n\r]*$/,
-      "Insight must contain only printable ASCII characters",
-    )
-    .describe("Business insight discovered from data analysis"),
-});
 
 export const VacuumSchema = z.object({
   analyze: z
@@ -454,13 +444,6 @@ export const PragmaTableInfoOutputSchema = z
   })
   .extend(ErrorResponseFields.shape);
 
-export const AppendInsightOutputSchema = z
-  .object({
-    success: z.boolean(),
-    message: z.string().optional(),
-    insightCount: z.number().optional(),
-  })
-  .extend(ErrorResponseFields.shape);
 
 export const AttachDatabaseOutputSchema = z
   .object({
@@ -560,7 +543,6 @@ export type PragmaCompileOptionsInput = z.infer<
   typeof PragmaCompileOptionsSchema
 >;
 export type PragmaDatabaseListInput = z.infer<typeof PragmaDatabaseListSchema>;
-export type AppendInsightInput = z.infer<typeof AppendInsightSchema>;
 export type VacuumInput = z.infer<typeof VacuumSchema>;
 export type AttachDatabaseInput = z.infer<typeof AttachDatabaseSchema>;
 export type DetachDatabaseInput = z.infer<typeof DetachDatabaseSchema>;

@@ -13,7 +13,6 @@ import {
   admin,
   adminFs,
   readOnly,
-  write,
 } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
@@ -21,9 +20,7 @@ import {
 } from "../../../../utils/index.js";
 import { formatHandlerError } from "../../../../utils/errors/index.js";
 
-import { insightsManager } from "../../../../utils/insights-manager.js";
 import {
-  AppendInsightOutputSchema,
   PragmaCompileOptionsOutputSchema,
   PragmaDatabaseListSchema,
   PragmaDatabaseListOutputSchema,
@@ -38,7 +35,6 @@ import {
   PragmaOptimizeSchema,
   PragmaSettingsSchema,
   PragmaTableInfoSchema,
-  AppendInsightSchema,
   AttachDatabaseSchema,
   DetachDatabaseSchema,
 } from "../../schemas/admin.js";
@@ -364,55 +360,7 @@ export function createPragmaTableInfoTool(
   };
 }
 
-/**
- * Append a business insight to the memo resource
- */
-export function createAppendInsightTool(): ToolDefinition {
-  return {
-    name: "sqlite_append_insight",
-    description:
-      "Add a business insight to the memo://insights resource. Use this to capture key findings during data analysis.",
-    group: "admin",
-    inputSchema: AppendInsightSchema,
-    outputSchema: AppendInsightOutputSchema,
-    requiredScopes: ["write"],
-    annotations: write("Append Insight"),
-    handler: (_params: unknown, _context: RequestContext) => {
-      try {
-        const input = AppendInsightSchema.parse(_params);
-        //       const queryParams: unknown[] = [];
 
-        // Validate non-empty (can't use .min(1) on schema — SDK validates before handler)
-        let sanitizedInsight = input.insight.replace(/[<>]/g, "");
-        if (sanitizedInsight.length > 500) {
-          sanitizedInsight = sanitizedInsight.substring(0, 500) + "...";
-        }
-        if (!sanitizedInsight || sanitizedInsight.trim().length === 0) {
-          return Promise.resolve({
-            success: false,
-            error: "Insight must be a non-empty string",
-            message: "",
-            insightCount: insightsManager.count(),
-          });
-        }
-
-        insightsManager.append(sanitizedInsight);
-
-        return Promise.resolve({
-          success: true,
-          message: "Insight added to memo",
-          insightCount: insightsManager.count(),
-        });
-      } catch (error: unknown) {
-        return Promise.resolve({
-          ...formatHandlerError(error),
-          message: "",
-          insightCount: insightsManager.count(),
-        });
-      }
-    },
-  };
-}
 
 /**
  * Attach an external database

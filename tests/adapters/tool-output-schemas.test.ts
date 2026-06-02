@@ -316,7 +316,6 @@ describe("Tool Output Schema Invariants (Native)", () => {
       ["sqlite_pragma_optimize", "PragmaOptimizeOutputSchema"],
       ["sqlite_pragma_table_info", "PragmaTableInfoOutputSchema"],
       ["sqlite_index_stats", "IndexStatsOutputSchema"],
-      ["sqlite_append_insight", "AppendInsightOutputSchema"],
       ["sqlite_dbstat", "DbstatOutputSchema"],
       ["sqlite_attach_database", "AttachDatabaseOutputSchema"],
       ["sqlite_detach_database", "DetachDatabaseOutputSchema"],

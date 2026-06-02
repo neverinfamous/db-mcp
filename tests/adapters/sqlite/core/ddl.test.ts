@@ -169,6 +169,77 @@ describe("Core Tools - DDL", () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain("already exists");
     });
+
+    it("should return validation error for invalid table name", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        table: "1invalid",
+        columns: [{ name: "id", type: "INTEGER" }],
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
+    });
+
+    it("should return validation error for empty columns array", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        table: "empty_cols",
+        columns: [],
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("At least one column definition is required");
+    });
+
+    it("should create table with foreign keys", async () => {
+      await adapter.executeWriteQuery("CREATE TABLE parent (id INTEGER PRIMARY KEY)");
+      
+      const result = (await tools.get("sqlite_create_table")?.({
+        table: "child",
+        columns: [
+          { name: "id", type: "INTEGER", primaryKey: true },
+          { name: "parent_id", type: "INTEGER" }
+        ],
+        foreignKeys: [{
+          column: "parent_id",
+          targetTable: "parent",
+          targetColumn: "id",
+          onDelete: "CASCADE",
+          onUpdate: "RESTRICT"
+        }]
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain("FOREIGN KEY");
+      expect(result.sql).toContain("REFERENCES");
+      expect(result.sql).toContain("ON DELETE CASCADE");
+    });
+
+    it("should create table with check constraints", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        table: "checked_table",
+        columns: [
+          { name: "age", type: "INTEGER" }
+        ],
+        checkConstraints: ["age >= 18"]
+      })) as { success: boolean; sql: string };
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain("CHECK (age >= 18)");
+    });
+
+    it("should reject table creation with invalid check constraint syntax", async () => {
+      const result = (await tools.get("sqlite_create_table")?.({
+        table: "bad_check",
+        columns: [
+          { name: "age", type: "INTEGER" }
+        ],
+        checkConstraints: ["age >= "]
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      // SQLite throws a syntax error when it encounters an invalid expression inside CHECK()
+      expect(result.error).toMatch(/syntax error|Write query failed/i);
+    });
   });
 
   describe("sqlite_create_index", () => {
@@ -229,6 +300,35 @@ describe("Core Tools - DDL", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain("does not exist");
+    });
+
+    it("should return validation error for invalid table name", async () => {
+      const result = (await tools.get("sqlite_drop_table")?.({
+        table: "1invalid",
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Invalid table name");
+    });
+
+    it("should clean up FTS triggers on drop", async () => {
+      await adapter.executeWriteQuery("CREATE TABLE search_data (id INTEGER, text TEXT)");
+      // Create a dummy trigger simulating an FTS5 trigger that inserts into the table
+      await adapter.executeWriteQuery(`
+        CREATE TRIGGER search_data_ai AFTER INSERT ON search_data
+        BEGIN
+          INSERT INTO "search_data" (id) VALUES (new.id);
+        END;
+      `);
+
+      const result = (await tools.get("sqlite_drop_table")?.({
+        table: "search_data",
+      })) as { success: boolean };
+
+      expect(result.success).toBe(true);
+      
+      const triggers = await adapter.executeReadQuery("SELECT name FROM sqlite_master WHERE type='trigger'");
+      expect(triggers.rows?.map(r => r.name)).not.toContain("search_data_ai");
     });
   });
 

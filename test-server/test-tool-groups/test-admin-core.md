@@ -125,7 +125,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_pragma_optimize`
 - `sqlite_pragma_settings`
 - `sqlite_pragma_table_info`
-- `sqlite_append_insight`
+
 - `sqlite_attach_database`
 - `sqlite_detach_database`
 - `sqlite_vacuum_into`
@@ -170,10 +170,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 22. `sqlite_create_view({viewName: "temp_view_orders", selectQuery: "SELECT product_id, COUNT(*) as order_count, SUM(total_price) as revenue FROM test_orders GROUP BY product_id"})` → success
 23. `sqlite_list_views` → verify `temp_view_orders` present
 24. `sqlite_drop_view({viewName: "temp_view_orders"})` → success
-
-## Phase 5: Insights (batched)
-
-25. `sqlite_append_insight({insight: "Test insight for verification"})` → success
 
 ## Phase 6: REINDEX (batched)
 
@@ -220,7 +216,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 52. `sqlite_verify_backup({})` → handler error
 🔴 53. `sqlite_pragma_table_info({})` → handler error
 🔴 54. `sqlite_pragma_settings({})` → handler error (has required `pragma` param)
-🔴 55. `sqlite_append_insight({})` → handler error
+
 🔴 56. `sqlite_create_view({})` → handler error
 🔴 57. `sqlite_drop_view({})` → handler error
 🔴 58. `sqlite_dbstat({})` → handler error (or success if no required params)

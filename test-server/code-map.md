@@ -59,7 +59,7 @@ src/
 │   ├── annotations.ts              # MCP tool annotation helpers (readOnly, destructive hints)
 │   ├── icons.ts                    # MCP icon definitions per tool group
 │   ├── identifiers.ts              # SQL identifier validation/sanitization (table names, columns)
-│   ├── insights-manager.ts         # memo://insights resource accumulator
+
 │   ├── progress-utils.ts           # MCP progress notification helpers
 │   ├── resource-annotations.ts     # MCP resource annotation helpers
 │   ├── where-clause.ts             # WHERE clause builder/validator
@@ -209,7 +209,7 @@ Each file below registers tools with `group` labels. Native-only tools are marke
 |                   | `admin/backup/integrity.ts`               | 1     | `sqlite_integrity_check`                                                                                                                                                                                                    |
 |                   | `admin/backup/optimize.ts`                | 1     | `sqlite_optimize`                                                                                                                                                                                                           |
 |                   | `admin/verify.ts`                         | 2     | `sqlite_verify_backup`, `sqlite_index_stats`                                                                                                                                                                                |
-|                   | `admin/pragma.ts`                         | 8     | `sqlite_pragma_compile_options`, `sqlite_pragma_database_list`, `sqlite_pragma_optimize`, `sqlite_pragma_settings`, `sqlite_pragma_table_info`, `sqlite_append_insight`, `sqlite_attach_database`, `sqlite_detach_database` |
+|                   | `admin/pragma.ts`                         | 7     | `sqlite_pragma_compile_options`, `sqlite_pragma_database_list`, `sqlite_pragma_optimize`, `sqlite_pragma_settings`, `sqlite_pragma_table_info`, `sqlite_attach_database`, `sqlite_detach_database` |
 |                   | `virtual/views.ts`                        | 3     | `sqlite_create_view`, `sqlite_list_views`, `sqlite_drop_view`                                                                                                                                                               |
 |                   | `virtual/vtable.ts`                       | 5     | `sqlite_list_virtual_tables`, `sqlite_virtual_table_info`, `sqlite_drop_virtual_table`, `sqlite_create_csv_table`, `sqlite_analyze_csv_schema`                                                                              |
 |                   | `virtual/extensions.ts`                   | 2     | `sqlite_create_rtree_table`, `sqlite_create_series_table`                                                                                                                                                                   |
@@ -282,7 +282,7 @@ Zod schemas that define the `outputSchema` for MCP tool responses. All output sc
 | `fts.ts`           | FTS5 output schemas                                                                                                                                                                                                              |
 | `stats.ts`         | Stats group output schemas (incl. `StatsHypothesisOutputSchema`)                                                                                                                                                                 |
 | `vector.ts`        | Vector group output schemas                                                                                                                                                                                                      |
-| `admin.ts`         | Admin group and server-audit output schemas (incl. `AppendInsightOutputSchema`, `DbstatOutputSchema`, and 5 `Audit*OutputSchema` definitions)                                                                                    |
+| `admin.ts`         | Admin group and server-audit output schemas (incl. `DbstatOutputSchema`, and 5 `Audit*OutputSchema` definitions)                                                                                    |
 | `geo.ts`           | Geo group output schemas                                                                                                                                                                                                         |
 | `introspection.ts` | Introspection group output schemas (10 schemas: DependencyGraph, TopologicalSort, CascadeSimulator, SchemaSnapshotShape, SchemaSnapshot, SchemaDiff, ConstraintAnalysis, MigrationRisks, StorageAnalysis, IndexAudit, QueryPlan) |
 | `migration.ts`     | Migration group output schemas (7 schemas: MigrationInit, MigrationRecord, MigrationApply, MigrationRollback, MigrationHistory, MigrationStatus + MigrationRecordEntry)                                                          |

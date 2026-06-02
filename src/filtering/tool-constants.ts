@@ -9,23 +9,23 @@
  *   text: 15 WASM / 20 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
  *   stats: 17 WASM / 23 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
  *   vector: 11 tools (vector/storage+search+metadata.ts)
- *   admin: 31 WASM / 32 Native (admin/backup+verify+pragma+reindex+wal.ts, virtual/views+vtable+extensions+analysis.ts; dump.ts is NATIVE ONLY)
+ *   admin: 30 WASM / 31 Native (admin/backup+verify+pragma+reindex+wal.ts, virtual/views+vtable+extensions+analysis.ts; dump.ts is NATIVE ONLY)
  *   transactions: 8 Native (native: transactions.ts)
  *   geo: 4 WASM / 11 Native (geo.ts, native: spatialite/tools+analysis.ts)
  *   introspection: 10 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot+diff.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Subtotal: 140 WASM / 167 Native (excluding Code Mode)
+ *   Subtotal: 139 WASM / 166 Native (excluding Code Mode)
  *
  * AUDIT & ADMIN TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
  *   7 tools (server/registration/audit-tools.ts, admin-tools.ts)
  *
  * TOOL COUNT TAXONOMY:
- *   Group tools:  168 Native / 141 WASM  (Code Mode sqlite.help() base total)
+ *   Group tools:  167 Native / 140 WASM  (Code Mode sqlite.help() base total)
  *   Audit tools:    7 Native /   7 WASM  (MCP-only)
- *   Inventory:    175 Native / 148 WASM  (Group + Audit)
+ *   Inventory:    174 Native / 147 WASM  (Group + Audit)
  *   Built-in:       4 /   4              (server_info, health, adapters, + Code Mode injected)
- *   MCP total:    179 Native / 152 WASM  (tools/list response)
+ *   MCP total:    178 Native / 151 WASM  (tools/list response)
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";
@@ -174,7 +174,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "vector_distance",
   ],
   admin: [
-    // Admin Tools (15: backup.ts, verify.ts, pragma.ts, reindex.ts, wal.ts)
+    // Admin Tools (14: backup.ts, verify.ts, pragma.ts, reindex.ts, wal.ts)
     "backup",
     "analyze",
     "integrity_check",
@@ -187,7 +187,6 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "pragma_optimize",
     "pragma_settings",
     "pragma_table_info",
-    "append_insight",
     // Virtual Table Tools (13: views.ts, vtable.ts, extensions.ts, analysis.ts)
     "generate_series",
     "create_view",
@@ -284,7 +283,7 @@ export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
   // Bare minimum - Core (21 tools)
   minimal: ["core", "codemode"],
 
-  // All group tools enabled (168 Native / 141 WASM — see TOOL COUNT TAXONOMY above)
+  // All group tools enabled (167 Native / 140 WASM — see TOOL COUNT TAXONOMY above)
   full: [
     "core",
     "json",

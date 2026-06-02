@@ -386,7 +386,7 @@ export function createDescribeTableTool(
           generatedType?: "VIRTUAL" | "STORED" | undefined;
         }
 
-        let enrichedColumns: EnrichedColumn[] = rawColumns.map((c) => ({
+        const enrichedColumns: EnrichedColumn[] = rawColumns.map((c) => ({
           name: c.name,
           type: c.type,
           nullable: c.nullable,
@@ -421,32 +421,42 @@ export function createDescribeTableTool(
               );
               const ddl = (ddlResult.rows?.[0]?.["sql"] as string) ?? "";
 
-              enrichedColumns = enrichedColumns.map((col) => {
-                const hidden = xinfoMap.get(col.name);
-                if (hidden !== 2 && hidden !== 3) return col;
+              // Add columns from xinfoResult that are missing in enrichedColumns (e.g. generated columns hidden by table_info)
+              for (const row of xinfoResult.rows) {
+                const colName = row["name"] as string;
+                const hidden = row["hidden"] as number;
+                
+                if (hidden === 2 || hidden === 3) {
+                  let enriched = enrichedColumns.find(c => c.name === colName);
+                  if (!enriched) {
+                    enriched = {
+                      name: colName,
+                      type: row["type"] as string,
+                      nullable: row["notnull"] === 0,
+                      primaryKey: row["pk"] === 1,
+                      defaultValue: row["dflt_value"],
+                    };
+                    enrichedColumns.push(enriched);
+                  }
 
-                const enriched: EnrichedColumn = {
-                  ...col,
-                  isGenerated: true,
-                  generatedType: hidden === 3 ? "STORED" : "VIRTUAL",
-                };
+                  enriched.isGenerated = true;
+                  enriched.generatedType = hidden === 3 ? "STORED" : "VIRTUAL";
 
-                // Extract expression from DDL using column name
-                const escapedName = col.name.replace(
-                  /[.*+?^${}()|[\]\\]/g,
-                  "\\$&",
-                );
-                const exprPattern = new RegExp(
-                  `"?${escapedName}"?\\s+\\w+[^,]*GENERATED\\s+ALWAYS\\s+AS\\s*\\(([^)]+)\\)`,
-                  "i",
-                );
-                const match = exprPattern.exec(ddl);
-                if (match?.[1]) {
-                  enriched.generatedExpression = match[1].trim();
+                  // Extract expression from DDL using column name
+                  const escapedName = colName.replace(
+                    /[.*+?^${}()|[\]\\]/g,
+                    "\\$&",
+                  );
+                  const exprPattern = new RegExp(
+                    `"?${escapedName}"?\\s+\\w+[^,]*GENERATED\\s+ALWAYS\\s+AS\\s*\\(([^)]+)\\)`,
+                    "i",
+                  );
+                  const match = exprPattern.exec(ddl);
+                  if (match?.[1]) {
+                    enriched.generatedExpression = match[1].trim();
+                  }
                 }
-
-                return enriched;
-              });
+              }
             }
           }
         } catch {

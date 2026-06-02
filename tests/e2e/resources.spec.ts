@@ -150,18 +150,7 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(pragma.settings).toHaveProperty("journal_mode");
   });
 
-  test("should read memo://insights resource", async () => {
-    const response = await client.readResource({ uri: "memo://insights" });
 
-    expect(response.contents).toBeDefined();
-    expect(response.contents.length).toBeGreaterThan(0);
-
-    // Insights is text/plain, so the inner text is a plain string (not JSON)
-    const text = (response.contents[0] as { text: string }).text;
-    const wrapper = JSON.parse(text);
-    expect(wrapper).toHaveProperty("contents");
-    expect(typeof wrapper.contents[0].text).toBe("string");
-  });
 
   test("should list resource templates", async () => {
     const response = await client.listResourceTemplates();
@@ -327,31 +316,6 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(Array.isArray(views)).toBe(true);
   });
 
-  // ===========================================================================
-  // R8: Insights write+read cycle
-  // ===========================================================================
-
-  test("memo://insights reflects content after sqlite_append_insight", async () => {
-    // Write an insight
-    const toolResult = await client.callTool({
-      name: "sqlite_append_insight",
-      arguments: {
-        insight: "E2E test resource insight: verify write+read cycle.",
-        category: "test",
-      },
-    });
-    const toolText = (toolResult.content as { text: string }[])[0].text;
-    const parsed = JSON.parse(toolText);
-    expect(parsed.success).toBe(true);
-
-    // Re-read insights resource — should contain the new insight
-    const response = await client.readResource({ uri: "memo://insights" });
-    const text = (response.contents[0] as { text: string }).text;
-    const wrapper = JSON.parse(text);
-    const insights = wrapper.contents[0].text as string;
-
-    expect(insights).toContain("verify write+read cycle");
-  });
 
   // ===========================================================================
   // R9: Resource Subscriptions

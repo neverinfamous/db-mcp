@@ -62,7 +62,7 @@ describe("SQLite Resources", () => {
   describe("getResourceDefinitions", () => {
     it("should return 10 resource definitions", () => {
       const resources = adapter.getResourceDefinitions();
-      expect(resources.length).toBe(10);
+      expect(resources.length).toBe(9);
     });
 
     it("should include all expected resources", () => {
@@ -76,7 +76,6 @@ describe("SQLite Resources", () => {
       expect(names).toContain("sqlite_views");
       expect(names).toContain("sqlite_health");
       expect(names).toContain("sqlite_meta");
-      expect(names).toContain("sqlite_insights");
     });
   });
 
@@ -260,24 +259,6 @@ describe("SQLite Resources", () => {
 
       const meta = JSON.parse(result.contents[0].text);
       expect(meta.database_list).toBeNull();
-    });
-  });
-
-  describe("sqlite_insights resource", () => {
-    it("should return insights memo", async () => {
-      const resources = adapter.getResourceDefinitions();
-      const insightsResource = resources.find(
-        (r) => r.name === "sqlite_insights",
-      );
-      expect(insightsResource).toBeDefined();
-
-      const result = (await insightsResource!.handler(
-        "memo://insights",
-        ctx,
-      )) as { contents: { mimeType: string; text: string }[] };
-      expect(result.contents).toHaveLength(1);
-      expect(result.contents[0].mimeType).toBe("text/plain");
-      expect(typeof result.contents[0].text).toBe("string");
     });
   });
 

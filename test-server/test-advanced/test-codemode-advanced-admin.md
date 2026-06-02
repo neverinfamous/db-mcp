@@ -132,7 +132,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.admin.backup`
 - `sqlite.admin.restore`
 - `sqlite.admin.verifyBackup`
-- `sqlite.admin.appendInsight`
+
 - `sqlite.admin.dump` `[NATIVE ONLY]`
 - `sqlite.admin.attachDatabase`
 - `sqlite.admin.detachDatabase`

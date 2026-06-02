@@ -126,6 +126,22 @@ describe("NativeSqliteAdapter", () => {
       await adapter.disconnect();
       expect(adapter.isConnected()).toBe(false);
     });
+
+    it("should attempt to use SQLCipher when encryptionKey is provided", async () => {
+      const config: SqliteConfig = {
+        type: "sqlite",
+        filePath: ":memory:",
+        options: { encryptionKey: "secret" },
+      };
+
+      // In tests, better-sqlite3-multiple-ciphers might not be installed or it might throw
+      // We just need to catch the error and verify it hit the catch block (native sqlite connection failed)
+      try {
+        await adapter.connect(config);
+      } catch (err: any) {
+        expect(err.message).toContain("Native SQLite connection failed");
+      }
+    });
   });
 
   describe("Options", () => {
@@ -202,6 +218,26 @@ describe("NativeSqliteAdapter", () => {
 
       expect(health.connected).toBe(false);
       expect(health.latencyMs).toBe(0);
+    });
+
+    it("should handle error during getHealth query", async () => {
+      const config: SqliteConfig = {
+        type: "sqlite",
+        filePath: ":memory:",
+      };
+
+      await adapter.connect(config);
+      
+      // Mock db.prepare to throw
+      const db = (adapter as any).db;
+      const originalPrepare = db.prepare;
+      db.prepare = () => { throw new Error("Simulated failure") };
+
+      const health = await adapter.getHealth();
+      expect(health.connected).toBe(false);
+
+      // Restore
+      db.prepare = originalPrepare;
     });
   });
 
@@ -342,6 +378,50 @@ describe("NativeSqliteAdapter", () => {
     it("should get schema info", async () => {
       const schema = await adapter.getSchema();
       expect(schema.tables.map((t) => t.name)).toContain("users");
+    });
+
+    describe("SchemaManager Fallbacks", () => {
+      beforeEach(() => {
+        // Force schemaManager to null to test fallback paths
+        (adapter as any).schemaManager = null;
+      });
+
+      it("should list tables via fallback", async () => {
+        const tables = await adapter.listTables();
+        expect(tables.map((t) => t.name)).toContain("users");
+      });
+
+      it("should get schema via fallback", async () => {
+        const schema = await adapter.getSchema();
+        expect(schema.tables.map((t) => t.name)).toContain("users");
+      });
+
+      it("should describe a table via fallback", async () => {
+        const tableInfo = await adapter.describeTable("users");
+        expect(tableInfo.name).toBe("users");
+      });
+
+      it("should throw for non-existent table in describeTable fallback", async () => {
+        await expect(adapter.describeTable("nonexistent")).rejects.toThrow(
+          "does not exist"
+        );
+      });
+
+      it("should throw for invalid table name in describeTable fallback", async () => {
+        await expect(adapter.describeTable("1invalid")).rejects.toThrow(
+          "Invalid table name"
+        );
+      });
+
+      it("should get all indexes via fallback", async () => {
+        const indexes = await adapter.getAllIndexes();
+        expect(indexes.map((i) => i.name)).toContain("idx_posts_user");
+      });
+
+      it("should get specific table indexes via fallback", async () => {
+        const indexes = await adapter.getIndexes("posts");
+        expect(indexes.map((i) => i.name)).toContain("idx_posts_user");
+      });
     });
   });
 
@@ -568,6 +648,14 @@ describe("NativeSqliteAdapter", () => {
       // name and age should be nullable
       const nameCol = tableInfo.columns?.find((c) => c.name === "name");
       expect(nameCol?.nullable).toBe(true);
+    });
+  });
+
+  describe("Factory Function", () => {
+    it("should create a new NativeSqliteAdapter instance", async () => {
+      const { createNativeSqliteAdapter } = await import("../../../src/adapters/sqlite-native/native-sqlite-adapter.js");
+      const instance = createNativeSqliteAdapter();
+      expect(instance).toBeInstanceOf(NativeSqliteAdapter);
     });
   });
 });

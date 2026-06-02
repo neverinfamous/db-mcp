@@ -27,6 +27,14 @@
 - Fixed `SubscriptionManager` silently dropping subscriptions over the stateless `stdio` transport by implementing an explicit `"stdio"` fallback session ID, restoring live `schemaChanged` update functionality.
 - Fixed inaccuracies in `test-resources.md` regarding `openWorldHint` expectations and STDIO transport subscription limitations.
 - Tool count drift in `Tool-Filtering.md` (Wiki) for `full` shortcut and `text` group.
+- Fixed `SchemaManager`/`describeTable` (in `tables.ts`) to properly include generated columns that are omitted from standard `table_info` by cross-referencing `table_xinfo` and `sqlite_master` DDL.
+- Fixed Code Mode API normalization regression where parameter arrays were incorrectly processed for methods like `searchRegex`.
+- Fixed `sandbox.test.ts` to test `require.main` access, triggering the expected AST validation error.
+- Fixed an ESLint `prefer-const` issue in `tables.ts`.
+
+### Test Coverage
+
+- Added `auto-return` transformation unit tests to push Code Mode coverage above 90.5%.
 
 ### Security
 

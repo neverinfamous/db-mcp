@@ -285,7 +285,6 @@ You are guiding an interactive demo of the SQLite MCP Server capabilities.
 
 **Prompts**: Pre-written templates that structure AI conversations (like this one)
 **Tools**: SQL operations (read_query, write_query, create_table, etc.)
-**Resources**: Living documents like \`memo://insights\` that update during analysis
 
 ## Demo Workflow
 
@@ -311,17 +310,10 @@ After setup, present 3-4 natural language query choices:
 For each user selection:
 - Run the appropriate SQL query
 - Explain the results
-- Use \`sqlite_append_insight\` to capture findings
 
-### 5. Capture Insights
-Remind the user about \`memo://insights\`:
-- Each insight is automatically added to this resource
-- They can attach it to see all discoveries
-
-### 6. Wrap Up
+### 5. Wrap Up
 Summarize what was demonstrated:
 - Data creation and querying
-- Insight capture via resources
 - The power of MCP for database workflows
 
 ---

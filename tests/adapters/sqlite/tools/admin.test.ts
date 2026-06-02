@@ -10,7 +10,7 @@ import {
   createTestAdapter,
   type TestAdapter,
 } from "../../../utils/test-adapter.js";
-import { insightsManager } from "../../../../src/utils/insights-manager.js";
+
 
 describe("Admin Tools", () => {
   let adapter: TestAdapter;
@@ -23,8 +23,7 @@ describe("Admin Tools", () => {
       connectionString: ":memory:",
     });
 
-    // Clear insights between tests
-    insightsManager.clear();
+
 
     // Get tools as a map for easy access
     tools = new Map();
@@ -432,35 +431,7 @@ describe("Admin Tools", () => {
     });
   });
 
-  describe("sqlite_append_insight", () => {
-    it("should add insight to memo", async () => {
-      const result = (await tools.get("sqlite_append_insight")?.({
-        insight: "Sales increased by 20% in Q4",
-      })) as {
-        success: boolean;
-        message: string;
-        insightCount: number;
-      };
 
-      expect(result.success).toBe(true);
-      expect(result.message).toBe("Insight added to memo");
-      expect(result.insightCount).toBe(1);
-    });
-
-    it("should accumulate multiple insights", async () => {
-      await tools.get("sqlite_append_insight")?.({
-        insight: "First insight",
-      });
-
-      const result = (await tools.get("sqlite_append_insight")?.({
-        insight: "Second insight",
-      })) as {
-        insightCount: number;
-      };
-
-      expect(result.insightCount).toBe(2);
-    });
-  });
 
   describe("sqlite_backup", () => {
     it("should attempt to backup database", async () => {

@@ -150,12 +150,6 @@ sqlite_create_csv_table({
   tableName: "csv_data",
   filePath: "/absolute/path/to/data.csv",
 });
-\`\`\`
-
-## Business Insights
-
-\`\`\`javascript
-sqlite_append_insight({ insight: "Q4 revenue increased 23% YoY" }); // add to memo://insights
 \`\`\``],
   ["core", `# db-mcp Help — Core Operations (21 tools)
 

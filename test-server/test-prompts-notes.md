@@ -293,7 +293,6 @@ These prompts format a structured request but require database tools to execute 
 - LLM creates interactive business narrative scenario
 - May create demo tables with synthetic data
 - Presents query options to user
-- Uses `sqlite_append_insight` to capture findings in `memo://insights`
 - Demonstrates prompts + tools + resources workflow
 
 **Alternative Test Case:**

@@ -99,6 +99,21 @@ describe("Statistics Tools", () => {
       expect(result.success).toBe(true);
       expect(result.stats.count).toBe(3);
     });
+
+    it("should handle non-numeric string values as null", async () => {
+      await adapter.executeWriteQuery("CREATE TABLE weird_stats (id INTEGER, val REAL)");
+      await adapter.executeWriteQuery("INSERT INTO weird_stats (id, val) VALUES (1, 'not a number')");
+      
+      const result = (await tools.get("sqlite_stats_basic")?.({
+        table: "weird_stats",
+        column: "val",
+      })) as { success: boolean; stats: any };
+
+      expect(result.success).toBe(true);
+      // SQLite sum() on strings usually returns 0 or null depending on data/version. 
+      // Our JS logic does toNumberOrNull which checks Number.isNaN
+      expect(result.stats.sum).toBe(0); // SUM('not a number') in SQLite returns 0.0, which JS sees as 0
+    });
   });
 
   describe("sqlite_stats_count", () => {
@@ -174,6 +189,45 @@ describe("Statistics Tools", () => {
       expect(result.success).toBe(true);
       expect(result.buckets.length).toBeGreaterThan(0);
     });
+
+    it("should reject buckets less than 1", async () => {
+      const result = (await tools.get("sqlite_stats_histogram")?.({
+        table: "sales",
+        column: "price",
+        buckets: 0,
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("buckets' must be at least 1");
+    });
+
+    it("should handle empty tables", async () => {
+      await adapter.executeWriteQuery("CREATE TABLE empty_hist (id INTEGER, val REAL)");
+      const result = (await tools.get("sqlite_stats_histogram")?.({
+        table: "empty_hist",
+        column: "val",
+        buckets: 5,
+      })) as { success: boolean; buckets: any[] };
+
+      expect(result.success).toBe(true);
+      expect(result.buckets.length).toBe(0);
+    });
+
+    it("should handle uniform data (all values same)", async () => {
+      await adapter.executeWriteQuery("CREATE TABLE uniform_hist (id INTEGER, val REAL)");
+      await adapter.executeWriteQuery("INSERT INTO uniform_hist (id, val) VALUES (1, 10), (2, 10), (3, 10)");
+      
+      const result = (await tools.get("sqlite_stats_histogram")?.({
+        table: "uniform_hist",
+        column: "val",
+        buckets: 5,
+      })) as { success: boolean; buckets: any[] };
+
+      expect(result.success).toBe(true);
+      expect(result.buckets.length).toBe(1);
+      expect(result.buckets[0].count).toBe(3);
+      expect(result.buckets[0].min).toBe(10);
+    });
   });
 
   describe("sqlite_stats_percentile", () => {
@@ -189,6 +243,29 @@ describe("Statistics Tools", () => {
 
       expect(result.success).toBe(true);
       expect(result.percentiles.length).toBe(3);
+    });
+
+    it("should reject invalid percentiles", async () => {
+      const result = (await tools.get("sqlite_stats_percentile")?.({
+        table: "sales",
+        column: "price",
+        percentiles: [-1, 105],
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Percentile values must be between 0 and 100");
+    });
+
+    it("should handle empty tables gracefully", async () => {
+      await adapter.executeWriteQuery("CREATE TABLE empty_perc (id INTEGER, val REAL)");
+      const result = (await tools.get("sqlite_stats_percentile")?.({
+        table: "empty_perc",
+        column: "val",
+        percentiles: [50],
+      })) as { success: boolean; percentiles: { percentile: number; value: number | null }[] };
+
+      expect(result.success).toBe(true);
+      expect(result.percentiles[0].value).toBeNull();
     });
   });
 
@@ -450,7 +527,69 @@ describe("Statistics Tools", () => {
         (t: any) => t.name === "risk_test",
       );
       expect(riskTestTable).toBeDefined();
+      expect(riskTestTable).toBeDefined();
       expect((riskTestTable as any)?.hasPrimaryKey).toBe(false);
+    });
+  });
+
+  describe("sqlite_stats_sample", () => {
+    it("should return random sample of rows", async () => {
+      const result = (await tools.get("sqlite_stats_sample")?.({
+        table: "sales",
+        sampleSize: 3,
+      })) as {
+        success: boolean;
+        sampleSize: number;
+        totalRows: number;
+        rows: Record<string, unknown>[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.sampleSize).toBe(3);
+      expect(result.totalRows).toBe(10);
+      expect(result.rows.length).toBe(3);
+    });
+
+    it("should select specific columns", async () => {
+      const result = (await tools.get("sqlite_stats_sample")?.({
+        table: "sales",
+        sampleSize: 2,
+        selectColumns: ["product", "price"],
+      })) as {
+        success: boolean;
+        rows: Record<string, unknown>[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.rows[0]).toHaveProperty("product");
+      expect(result.rows[0]).toHaveProperty("price");
+      expect(result.rows[0]).not.toHaveProperty("id");
+    });
+
+    it("should handle whereClause string", async () => {
+      const result = (await tools.get("sqlite_stats_sample")?.({
+        table: "sales",
+        sampleSize: 5,
+        whereClause: "category = 'Dairy'",
+      })) as {
+        success: boolean;
+        totalRows: number;
+        rows: Record<string, unknown>[];
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.totalRows).toBe(3);
+      expect(result.rows.length).toBeLessThanOrEqual(3);
+    });
+
+    it("should return validation error for invalid sample size", async () => {
+      const result = (await tools.get("sqlite_stats_sample")?.({
+        table: "sales",
+        sampleSize: 0,
+      })) as { success: boolean; error: string };
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("sampleSize must be at least 1");
     });
   });
 
