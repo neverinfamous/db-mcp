@@ -16,6 +16,7 @@ export const SpatialiteLoadOutputSchema = z
     alreadyLoaded: z.boolean().optional(),
     extensionPath: z.string().optional(),
     searchedPaths: z.array(z.string()).optional(),
+    version: z.string().optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 

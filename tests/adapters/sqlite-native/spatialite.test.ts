@@ -34,8 +34,8 @@ function createMockAdapter() {
     loadExtension: vi.fn(), // for tryLoadSpatialite
   };
   return {
-    executeReadQuery: vi.fn(),
-    executeWriteQuery: vi.fn(),
+    executeReadQuery: vi.fn().mockResolvedValue({ rows: [] }),
+    executeWriteQuery: vi.fn().mockResolvedValue({ rowsAffected: 0 }),
     getDatabase: vi.fn().mockReturnValue(mockDb),
     isNativeBackend: vi.fn().mockReturnValue(true),
     _mockDb: mockDb,
@@ -55,8 +55,8 @@ function createUnloadedAdapter() {
     }),
   };
   return {
-    executeReadQuery: vi.fn(),
-    executeWriteQuery: vi.fn(),
+    executeReadQuery: vi.fn().mockResolvedValue({ rows: [] }),
+    executeWriteQuery: vi.fn().mockResolvedValue({ rowsAffected: 0 }),
     getDatabase: vi.fn().mockReturnValue(mockDb),
     isNativeBackend: vi.fn().mockReturnValue(true),
     _mockDb: mockDb,

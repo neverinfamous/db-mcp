@@ -56,38 +56,44 @@ export function createLoadSpatialiteTool(
     outputSchema: SpatialiteLoadOutputSchema,
     requiredScopes: ["admin"],
     annotations: admin("SpatiaLite Load"),
-    handler: (_params: unknown, _context: RequestContext) => {
+    handler: async (_params: unknown, _context: RequestContext) => {
       try {
         const input = LoadSpatialiteSchema.parse(_params);
 
         if (!input.forceReload && isSpatialiteLoaded(adapter)) {
-          return Promise.resolve({
+          const versionResult = await adapter.executeReadQuery("SELECT spatialite_version() as v");
+          const version = versionResult.rows?.[0]?.["v"] as string | undefined;
+          return {
             success: true,
             message: "SpatiaLite already loaded",
             alreadyLoaded: true,
-          });
+            version,
+          };
         }
 
         const result = tryLoadSpatialite(adapter);
 
         if (result.success) {
-          return Promise.resolve({
+          const versionResult = await adapter.executeReadQuery("SELECT spatialite_version() as v");
+          const version = versionResult.rows?.[0]?.["v"] as string | undefined;
+          return {
             success: true,
             message: "SpatiaLite loaded successfully",
             extensionPath: result.path,
-          });
+            version,
+          };
         }
 
-        return Promise.resolve({
+        return {
           success: false,
           error: result.error,
           code: "SPATIALITE_LOAD_FAILED",
           category: "internal" as const,
           recoverable: false,
           searchedPaths: SPATIALITE_PATHS,
-        });
+        };
       } catch (error: unknown) {
-        return Promise.resolve(formatHandlerError(error));
+        return formatHandlerError(error);
       }
     },
   };

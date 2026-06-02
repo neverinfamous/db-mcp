@@ -16,6 +16,8 @@
 
 ### Fixed
 
+- Fixed `sqlite_spatialite_load` not returning the `version` string as required by the schema output.
+- Fixed native build failure on Node 26 for Windows caused by LLVM/Clang LTO flags being inappropriately passed to MSVC via `node-gyp`.
 - FTS5 syntax errors on malformed user input.
 - V8 Garbage Collection `STATUS_ACCESS_VIOLATION` crashes during `CodeModeSandbox` teardown.
 - Native V8 thread leaks on Windows.
