@@ -142,19 +142,20 @@ Specify exactly the groups you need:
 
 > +4 built-in tools (server_info, server_health, list_adapters, sqlite_execute_code) are injected into every group.
 
-| Group           | WASM | Native | + Built-in | Description                                |
-| --------------- | ---- | ------ | ---------- | ------------------------------------------ |
-| `codemode`      | 1    | 1      | +4         | Code Mode (sandboxed code execution) 🧠    |
-| `core`          | 21   | 21     | +4         | Basic CRUD, schema, tables                 |
-| `json`          | 25   | 25     | +4         | JSON/JSONB operations, analysis            |
-| `text`          | 15   | 20     | +4         | Text processing + FTS5 + advanced search   |
-| `stats`         | 17   | 23     | +4         | Descriptive, inference, window functions   |
-| `vector`        | 11   | 11     | +4         | Vector storage, similarity search          |
-| `admin`         | 31   | 32     | +4         | DB maintenance, backup, virtual tables     |
-| `transactions`  | 0    | 8      | +4         | Commit, rollback, savepoints (Native only) |
-| `geo`           | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)      |
-| `introspection` | 10   | 10     | +4         | Schema mapping, FK graph, analysis         |
-| `migration`     | 6    | 6      | +4         | Schema migration tracking (opt-in)         |
+| Category (Group)                     | WASM | Native | + Built-in | Description                                |
+| ------------------------------------ | ---- | ------ | ---------- | ------------------------------------------ |
+| Code Mode (`codemode`)               | 1    | 1      | +4         | Sandboxed JavaScript execution 🧠          |
+| Core Database (`core`)               | 21   | 21     | +4         | Basic CRUD, schema, tables, indexes, views |
+| JSON Operations (`json`)             | 25   | 25     | +4         | JSON/JSONB, schema analysis, security scan |
+| Text Processing (`text`)             | 15   | 20     | +4         | Regex, fuzzy, phonetic, sentiment, FTS5    |
+| Statistical Analysis (`stats`)       | 17   | 23     | +4         | Descriptive, inference, window functions   |
+| Vector/Semantic (`vector`)           | 11   | 11     | +4         | Vector storage, similarity search          |
+| Admin/Backup (`admin`)               | 31   | 32     | +4         | DB maintenance, backup, virtual tables     |
+| Transactions (`transactions`)        | 0    | 8      | +4         | Commit, rollback, savepoints (Native only) |
+| Geospatial (`geo`)                   | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)      |
+| Introspection (`introspection`)      | 10   | 10     | +4         | Schema mapping, FK graph, cascade sim      |
+| Migration (`migration`)              | 6    | 6      | +4         | Schema migration tracking (opt-in)         |
+| **Total**                            | **141** | **168** | | |
 
 ### Syntax Reference
 
@@ -201,22 +202,7 @@ docker pull writenotenow/db-mcp@sha256:<manifest-digest>
 - ✅ **Non-root Execution** — Minimal attack surface
 - ✅ **Security Scanned** — Docker Scout blocks critical/high CVEs
 
-## 📊 Tool Categories
 
-| Category             | Native  | Description                                |
-| -------------------- | ------- | ------------------------------------------ |
-| Core Database        | 21      | CRUD, schema, indexes, views, convenience  |
-| JSON Operations      | 25      | JSON/JSONB, schema analysis, security scan |
-| Text Processing      | 20      | Regex, fuzzy, phonetic, sentiment, FTS5    |
-| Statistical Analysis | 23      | Stats, outliers, window funcs              |
-| Vector/Semantic      | 11      | Embeddings, similarity search              |
-| Geospatial           | 11      | Distance, SpatiaLite GIS                   |
-| Admin/Backup         | 32      | Backup, restore, virtual tables, pragma    |
-| Transactions         | 8       | Transaction control and atomic execution   |
-| Introspection        | 10      | FK graph, cascade sim, audit               |
-| Migration            | 6       | Tracking, apply, rollback                  |
-| Code Mode            | 1       | Sandboxed JavaScript execution             |
-| **Total**            | **168** |                                            |
 
 ### 📁 Resources & Prompts
 

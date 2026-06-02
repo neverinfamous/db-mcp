@@ -70,6 +70,7 @@ src/
 ├── codemode/                   # Sandboxed JS execution engine
 ├── constants/                  # Server instructions, config
 ├── filtering/                  # Tool filtering (groups, meta-groups)
+├── observability/              # Logging, metrics, and health checks
 ├── server/                     # MCP server setup and registration
 ├── transports/                 # HTTP/SSE transport layer
 ├── types/                      # Type definitions + barrel exports

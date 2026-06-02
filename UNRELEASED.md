@@ -32,6 +32,9 @@
 
 ### Changed
 
+- Documentation: Reduced `DOCKER_README.md` size to comply with Docker Hub limits by consolidating tables.
+- Documentation: Updated Architecture tree in `.github/copilot-instructions.md` to include `observability/`.
+- CI/CD: Enforced single quotes in YAML frontmatter for `ci-health-monitor.md` and `docs-drift-detector.md` agentic workflows.
 - Added token conservation guidance to `sqlite_read_query` instructions, advising agents to avoid `SELECT *` on wide tables with JSON payloads to preserve context window depth.
 
 **Dependency Updates**
