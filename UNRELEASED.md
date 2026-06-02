@@ -23,7 +23,6 @@
 - Native V8 thread leaks on Windows.
 - SQLCipher `PRAGMA key` syntax errors causing `file is not a database` failures.
 - `DB_ENCRYPTION_KEY` environment variable leakage breaking unencrypted Playwright E2E tests.
-- Fixed `sqlite.text.hybridSearch` advanced test prompt to expect a structured `COLUMN_NOT_FOUND` error since `test_articles` test schema correctly lacks an `embedding` column.
 
 ### Security
 
