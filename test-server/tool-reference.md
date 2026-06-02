@@ -1,16 +1,16 @@
 # Tool Reference
 
-Complete reference of all 178 db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
+Complete reference of all 177 db-mcp tools organized by 10 tool groups + codemode. Each group automatically includes Code Mode (`sqlite_execute_code`) for token-efficient operations.
 
 ## Tool Count Taxonomy
 
 | Scope           | What it includes                                    |  Native |    WASM | Notes                                           |
 | --------------- | --------------------------------------------------- | ------: | ------: | ----------------------------------------------- |
-| **Group tools** | 10 adapter-registered groups                        |     167 |     141 | Accessible via Code Mode `sqlite.help()`        |
+| **Group tools** | 10 adapter-registered groups                        |     166 |     139 | Accessible via Code Mode `sqlite.help()`        |
 | **Audit tools** | 7 server-level audit & admin tools                  |       7 |       7 | MCP-only — not exposed in Code Mode             |
-| **Inventory**   | Group + Audit                                       | **174** | **148** | All filterable/functional tools                 |
+| **Inventory**   | Group + Audit                                       | **173** | **146** | All filterable/functional tools                 |
 | **Built-in**    | `server_info`, `health`, `adapters`, `execute_code` |       4 |       4 | Always on (Code Mode can be excluded via rules) |
-| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **178** | **152** | **What a client sees via `tools/list`**         |
+| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **177** | **150** | **What a client sees via `tools/list`**         |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 
@@ -171,7 +171,7 @@ Vector storage, similarity search, and distance calculations for embeddings and 
 
 ---
 
-## admin (31N/31W group + 6 audit + Code Mode)
+## admin (31N/30W group + 7 audit + Code Mode)
 
 Database maintenance — backup/restore, PRAGMA, views, and virtual tables.
 

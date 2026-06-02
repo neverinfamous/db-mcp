@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-db-mcp is a TypeScript MCP (Model Context Protocol) server for SQLite database integration. It offers **178 Native / 152 WASM tools** with dual backends — native (better-sqlite3) for full performance and WASM (sql.js) for zero-dependency portability. Features include Code Mode (sandboxed JS execution), HTTP/SSE transport, OAuth 2.1, Tool Filtering, and Audit/Token Logging.
+db-mcp is a TypeScript MCP (Model Context Protocol) server for SQLite database integration. It offers **177 Native / 150 WASM tools** with dual backends — native (better-sqlite3) for full performance and WASM (sql.js) for zero-dependency portability. Features include Code Mode (sandboxed JS execution), HTTP/SSE transport, OAuth 2.1, Tool Filtering, and Audit/Token Logging.
 
 **Stack**: TypeScript, Vitest, Playwright (E2E), Zod schemas, better-sqlite3 (native), sql.js (WASM), Commander (CLI).
 
