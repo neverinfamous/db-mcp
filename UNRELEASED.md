@@ -2,57 +2,47 @@
 
 ### Added
 
-- Internal server metrics exposed at `/metrics` (via `--metrics-export` or `METRICS_EXPORT`) and natively to clients via the `sqlite://metrics` resource.
+- Internal server metrics exposed at `/metrics` and natively to clients via the `sqlite://metrics` resource.
 - `sqlite_hybrid_search` tool combining FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF).
-- `sqlite_audit_search` tool (with Code Mode support) to securely query the server's own audit logs.
+- `sqlite_audit_search` tool to securely query the server's own audit logs.
 - `sqlite_server_config` administrative tool to dynamically change server logging levels (`debug`, `info`, `warn`, `error`).
-- `includeFacets` for faceted search and `cursor` for base64 pagination in search and read queries (`sqlite_fts_search`, `sqlite_advanced_search`, `sqlite_read_query`).
+- `includeFacets` for faceted search and `cursor` for base64 pagination in search and read queries.
 - `recommendComposite` and `queriesToAnalyze` options in `sqlite_index_audit` to automatically recommend indexes.
-- SystemDb observability architecture replacing memory-only logs with a structured SQLite sidecar (`system.db`), including `MetricsRegistry` persistence across server restarts.
+- SystemDb observability architecture replacing memory-only logs with a structured SQLite sidecar (`system.db`) including `MetricsRegistry` persistence.
 - `resources/subscribe` capability (via `SubscriptionManager`) with `schemaChanged` events to automatically notify clients subscribed to `sqlite://schema` and `sqlite://tables`.
 - Configuration file support (`.yaml`, `.json`) via `--config` and `--dump-config` CLI flags.
-- Encryption at rest (SQLCipher) support for the Native backend and sidecar `SystemDb` audit logs, configurable via `--encryption-key` or `DB_ENCRYPTION_KEY` (includes README documentation and interaction warnings).
+- Encryption at rest (SQLCipher) support for the Native backend and sidecar `SystemDb` audit logs, configurable via `--encryption-key` or `DB_ENCRYPTION_KEY`.
 - Capacity Planning Guide covering scaling, memory requirements, and token budget strategies.
+
+### Changed
+
+- Updated `sqlite_read_query` instructions with token conservation guidance.
+- Synchronized codebase tool counts across all README files and documentation.
+- Enforced single quotes in YAML frontmatter for CI agentic workflows.
+- Bumped `@vitest/coverage-v8` to `4.1.8`, `typescript-eslint` to `8.60.1`, and `vitest` to `4.1.8`.
+
+### Removed
+
+- `sqlite_append_insight` tool and `memo://insights` resource (leftovers from memory-journal port).
 
 ### Fixed
 
-- Fixed silent fallbacks in `introspection` Zod schemas (`sqlite_schema_snapshot`, `sqlite_schema_diff`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_constraint_analysis`) that swallowed wrong-type validation errors for enum properties.
-- Fixed `sqlite_spatialite_load` not returning the `version` string as required by the schema output.
-- Fixed native build failure on Node 26 for Windows caused by LLVM/Clang LTO flags being inappropriately passed to MSVC via `node-gyp`.
+- Silent fallbacks in `introspection` Zod schemas that swallowed wrong-type validation errors for enum properties.
+- `sqlite_spatialite_load` not returning the `version` string as required by the schema output.
+- Native build failure on Node 26 for Windows caused by LLVM/Clang LTO flags.
 - FTS5 syntax errors on malformed user input.
 - V8 Garbage Collection `STATUS_ACCESS_VIOLATION` crashes during `CodeModeSandbox` teardown.
 - Native V8 thread leaks on Windows.
 - SQLCipher `PRAGMA key` syntax errors causing `file is not a database` failures.
 - `DB_ENCRYPTION_KEY` environment variable leakage breaking unencrypted Playwright E2E tests.
-- Fixed `SubscriptionManager` silently dropping subscriptions over the stateless `stdio` transport by implementing an explicit `"stdio"` fallback session ID, restoring live `schemaChanged` update functionality.
-- Fixed inaccuracies in `test-resources.md` regarding `openWorldHint` expectations and STDIO transport subscription limitations.
+- `SubscriptionManager` silently dropping subscriptions over the stateless `stdio` transport.
+- Inaccuracies in test documentation regarding `openWorldHint` expectations and STDIO transport limitations.
 - Tool count drift in `Tool-Filtering.md` (Wiki) for `full` shortcut and `text` group.
-- Fixed `SchemaManager`/`describeTable` (in `tables.ts`) to properly include generated columns that are omitted from standard `table_info` by cross-referencing `table_xinfo` and `sqlite_master` DDL.
-- Fixed Code Mode API normalization regression where parameter arrays were incorrectly processed for methods like `searchRegex`.
-- Fixed `sandbox.test.ts` to test `require.main` access, triggering the expected AST validation error.
-- Fixed an ESLint `prefer-const` issue in `tables.ts`.
-
-### Test Coverage
-
-- Added `auto-return` transformation unit tests to push Code Mode coverage above 90.5%.
+- `SchemaManager`/`describeTable` omitting generated columns by cross-referencing `table_xinfo` and `sqlite_master` DDL.
+- Code Mode API normalization regression where parameter arrays were incorrectly processed for methods like `searchRegex`.
+- Missing AST validation error trigger in `sandbox.test.ts`.
+- ESLint `prefer-const` issue in `tables.ts`.
 
 ### Security
 
-- Bumped npm bundled `tar` in Dockerfile from `7.5.15` to `7.5.16` to apply latest security patches.
-
-### Removed
-
-- Removed `sqlite_append_insight` tool and `memo://insights` resource (leftovers from memory-journal port that did not belong in database context).
-
-### Changed
-
-- CI/CD: Enforced single quotes in YAML frontmatter for `ci-health-monitor.md` and `docs-drift-detector.md` agentic workflows.
-- Added token conservation guidance to `sqlite_read_query` instructions, advising agents to avoid `SELECT *` on wide tables with JSON payloads to preserve context window depth.
-- Comprehensive `/doc-audit` run to perfectly synchronize codebase tool counts (178 Native / 152 WASM tools) across all README files, code map documentation, and code mode sandboxing help instructions.
-- Corrected residual tool counts in `test-admin-core.md` (now 23N/22W), missing audit tools in `test-codemode-admin.md`, and missing `[NATIVE ONLY]` labels + accurate WASM counts in `test-admin-extensions.md`.
-
-**Dependency Updates**
-
-- Bumped `@vitest/coverage-v8` to `4.1.8`.
-- Bumped `typescript-eslint` to `8.60.1`.
-- Bumped `vitest` to `4.1.8`.
+- Bumped npm bundled `tar` in Dockerfile to `7.5.16` to apply latest security patches.
