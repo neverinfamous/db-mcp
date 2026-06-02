@@ -92,7 +92,7 @@ After completing the applicable prompts above, run `test-codemode-wasm-degradati
 | `test-codemode-text.md`             | text          | 20N/15W                                                                  |
 | `test-codemode-stats.md`            | stats         | 23N/17W                                                                  |
 | `test-codemode-vector.md`           | vector        | 11                                                                       |
-| `test-codemode-admin.md`            | admin         | 32N/31W                                                                  |
+| `test-codemode-admin.md`            | admin         | 31N/31W                                                                  |
 | `test-codemode-transactions.md`     | transactions  | 8 `[NATIVE ONLY]`                                                        |
 | `test-codemode-geo.md`              | geo           | 11N/4W                                                                   |
 | `test-codemode-introspection.md`    | introspection | 10                                                                       |

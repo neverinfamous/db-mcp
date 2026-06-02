@@ -106,7 +106,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (24N/23W) + Code Mode
+### Group Tools (23N/22W) + Code Mode
 
 - `sqlite_create_view`
 - `sqlite_list_views`

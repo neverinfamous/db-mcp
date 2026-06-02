@@ -146,7 +146,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.core.describeTable`
 - `sqlite.core.dropTable`
 
-> **Note**: The 6 **Server Audit Tools** (`sqlite_audit_list_backups`, `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, `sqlite_audit_restore_backup`, `sqlite_audit_cleanup`, `sqlite_audit_search`) are not exposed in Code Mode by design. They are tested via direct tool calls in `test-tool-groups/test-admin-audit.md`.
+> **Note**: The 7 **Server Audit Tools** (`sqlite_audit_list_backups`, `sqlite_audit_get_backup`, `sqlite_audit_diff_backup`, `sqlite_audit_restore_backup`, `sqlite_audit_cleanup`, `sqlite_audit_search`, `sqlite_server_config`) are not exposed in Code Mode by design. They are tested via direct tool calls in `test-tool-groups/test-admin-audit.md`.
 
 ## Phase 1: Pragma & Inspection — Happy Paths (batched)
 
