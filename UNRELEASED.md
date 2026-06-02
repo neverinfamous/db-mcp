@@ -2,6 +2,7 @@
 
 ### Added
 
+- Added `Performance-Tuning.md` guide to the GitHub Wiki covering cache TTLs, WASM vs Native backends, and token efficiency.
 - Internal server metrics exposed at `/metrics` and natively to clients via the `sqlite://metrics` resource.
 - `sqlite_hybrid_search` tool combining FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF).
 - `sqlite_audit_search` tool to securely query the server's own audit logs.
