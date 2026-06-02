@@ -38,13 +38,15 @@ src/
 │       ├── overview.md             # Root help content (sqlite://help)
 │       ├── gotchas.md              # Common gotchas and critical usage patterns
 │       ├── admin.md                # Admin group help
+│       ├── core.md                 # Core group help
 │       ├── geo.md                  # Geo group help
 │       ├── introspection.md        # Introspection group help
 │       ├── json.md                 # JSON group help
 │       ├── migration.md            # Migration group help
 │       ├── stats.md                # Stats group help
 │       ├── text.md                 # Text group help
-│       └── vector.md              # Vector group help
+│       ├── transactions.md         # Transactions group help
+│       └── vector.md               # Vector group help
 │
 ├── filtering/
 │   ├── tool-constants.ts           # TOOL_GROUPS arrays, META_GROUPS shortcuts, group→tools map

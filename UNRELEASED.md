@@ -30,6 +30,8 @@
 - `sqlite_append_insight` tool and `memo://insights` resource (leftovers from memory-journal port).
 
 ### Fixed
+- Corrected documentation drift across README files, agentic workflows, codebase map, and wiki to accurately reflect 11 data resources, 11 help resources, and the removal of legacy memory-journal capabilities.
+- Updated agentic workflows to strictly use single quotes in YAML frontmatter and explicitly reference `gh copilot` in instructions.
 - Fixed minor inconsistencies in tool count explanations across `DOCKER_README.md` and `db-mcp.wiki` documentation.
 - Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings.
 

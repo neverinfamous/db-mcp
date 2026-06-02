@@ -6,6 +6,8 @@ db-mcp is a TypeScript MCP (Model Context Protocol) server for SQLite database i
 
 **Stack**: TypeScript, Vitest, Playwright (E2E), Zod schemas, better-sqlite3 (native), sql.js (WASM), Commander (CLI).
 
+> **Note**: For any CLI interactions involving Copilot, you must reference `gh copilot` and NEVER the deprecated `github-copilot-cli`.
+
 ## Session Context
 
 Before starting work on this project, read `memory://briefing/db-mcp` from the `memory-journal-mcp` server for real-time context:
