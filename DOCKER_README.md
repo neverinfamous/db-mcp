@@ -272,7 +272,7 @@ docker run --rm -p 3000:3000 \
 | `GET /health`    | Health check (always public)                     | Both     |
 | `GET /`          | Server info and available endpoints              | Both     |
 
-**Security:** 7 security headers, server timeouts (slowloris protection), rate limiting (100/min, 429 + Retry-After), CORS deny-all default (explicit `--cors-origins` required), trust proxy (`trustProxy`), body size limit (`--max-body-bytes`, default 1MB), opt-in HSTS, cross-protocol session guard.
+**Security:** 7 security headers, server timeouts (slowloris protection), rate limiting (100/min, 429 + Retry-After), CORS deny-all default (explicit `corsOrigins` config required), trust proxy (`trustProxy`), body size limit (`--max-body-bytes`, default 1MB), opt-in HSTS, cross-protocol session guard.
 
 ### 🔐 Authentication
 

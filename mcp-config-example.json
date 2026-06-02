@@ -45,6 +45,8 @@
         "-e",
         "OAUTH_CLOCK_TOLERANCE",
         "-e",
+        "MCP_ENABLE_HSTS",
+        "-e",
         "AUDIT_BACKUP",
         "-e",
         "AUDIT_REDACT",
@@ -54,10 +56,6 @@
         "AUDIT_BACKUP_DATA",
         "-e",
         "AUDIT_LOG",
-        "-e",
-        "ENABLE_ADMIN",
-        "-e",
-        "CORS_ORIGINS",
         "writenotenow/db-mcp:latest",
         "--sqlite-native",
         "/app/data/my-database.db",
@@ -68,10 +66,7 @@
         "--metrics-export",
         "prometheus",
         "--audit-log",
-        "/tmp/db-mcp-logs/audit.jsonl",
-        "--enable-admin",
-        "--cors-origins",
-        "*"
+        "/tmp/db-mcp-logs/audit.jsonl"
       ],
       "env": {
         "MCP_HOST": "0.0.0.0",
@@ -92,13 +87,12 @@
         "OAUTH_AUDIENCE": "",
         "OAUTH_JWKS_URI": "",
         "OAUTH_CLOCK_TOLERANCE": "60",
+        "MCP_ENABLE_HSTS": "false",
         "AUDIT_BACKUP": "false",
         "AUDIT_REDACT": "false",
         "AUDIT_READS": "false",
         "AUDIT_BACKUP_DATA": "false",
-        "AUDIT_LOG": "",
-        "ENABLE_ADMIN": "false",
-        "CORS_ORIGINS": ""
+        "AUDIT_LOG": ""
       }
     }
   }

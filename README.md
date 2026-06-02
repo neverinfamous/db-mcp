@@ -420,6 +420,7 @@ MCP prompts provide AI-assisted database workflows:
 | `OAUTH_AUDIENCE`            | —         | Expected token audience (CLI: `--oauth-audience`)                              |
 | `OAUTH_JWKS_URI`            | —         | JWKS URI, auto-discovered if omitted (CLI: `--oauth-jwks-uri`)                 |
 | `OAUTH_CLOCK_TOLERANCE`     | `60`      | Clock tolerance in seconds (CLI: `--oauth-clock-tolerance`)                    |
+| `MCP_ENABLE_HSTS`           | `false`   | Enable HSTS header (CLI: `--enable-hsts`)                                      |
 | `LOG_LEVEL`                 | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`                             |
 | `METADATA_CACHE_TTL_MS`     | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL operations)                    |
 | `CODEMODE_ISOLATION`        | `isolate` | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`                  |
