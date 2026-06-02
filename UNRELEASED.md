@@ -24,4 +24,4 @@
 - Fixed SQLCipher `PRAGMA key` syntax error causing `file is not a database` failures by wrapping the encryption key in double quotes in `native-sqlite-adapter.ts` and `system-db.ts`.
 - Documented SQLCipher encryption options in READMEs and added a warning regarding `DB_ENCRYPTION_KEY`'s interaction with the audit log.
 - Prevented `DB_ENCRYPTION_KEY` environment variable leakage from breaking unencrypted Playwright E2E tests by unsetting the variable in `playwright.config.ts` and restricting auto-injection in `cli.ts`.
-- Fixed numbering discontinuity and duplicate list items in the test-codemode prompt suites (`introspection`, `text`, and `core`).
+- Fixed numbering discontinuity and duplicate list items in the `test-codemode` and `test-codemode-advanced` prompt suites.

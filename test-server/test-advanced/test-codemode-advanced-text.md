@@ -186,15 +186,15 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 For WASM testing only:
 
-31. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
-32. All 14 non-FTS text tools should work identically in WASM and Native
+38. Confirm FTS5 tools are NOT present in the tool list (WASM mode excludes them)
+39. All 14 non-FTS text tools should work identically in WASM and Native
 
 ## Phase 8: Error Message Quality (batched)
 
-33. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
-34. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
-35. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
-36. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
+40. `sqlite.text.regexMatch({table: "nonexistent_table_xyz", column: "x", pattern: "."})` → structured error
+41. `sqlite.text.fuzzyMatch({table: "test_users", column: "nonexistent_col", search: "test"})` → structured error
+42. `sqlite.text.validate({table: "test_users", column: "email", pattern: "custom"})` → error about missing `customPattern`
+43. `sqlite.text.ftsSearch({table: "nonexistent_fts_xyz", query: "test"})` `[NATIVE ONLY]` → structured error
 
 ### Final Cleanup
 
