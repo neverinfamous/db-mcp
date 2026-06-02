@@ -17,6 +17,8 @@
 
 ### Changed
 
+- Updated `actions/checkout` and `actions/setup-node` to `v6` across all GitHub Actions workflows via SHA pinning.
+- Added Dependabot verification step to `.github/workflows/ci-health-monitor.md`.
 - Updated `sqlite_read_query` instructions with token conservation guidance.
 - Synchronized codebase tool counts across all README files and documentation.
 - Enforced single quotes in YAML frontmatter for CI agentic workflows.
