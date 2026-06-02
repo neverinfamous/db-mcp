@@ -176,9 +176,9 @@ All tools should return errors as structured objects instead of throwing. The ex
 31. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "\"full-text search\""})` → phrase query
 32. `sqlite.text.ftsSearch({table: "test_articles_fts", query: '"unbalanced AND OR NOT quote'})` → should gracefully handle malformed FTS syntax without crashing the parser
 33. `sqlite.text.ftsHeadline({table: "test_articles_fts", query: "SQLite"})` → highlighted results
-34. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0, 0, 0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → results combining vector distance and FTS
-35. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error or handles dimension mismatch gracefully
-36. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 0})` → verify edge case `rrfK` is handled gracefully
+34. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0, 0, 0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error (COLUMN_NOT_FOUND)
+35. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0], vectorColumn: "embedding", ftsTable: "test_articles_fts"})` → structured error (COLUMN_NOT_FOUND)
+36. `sqlite.text.hybridSearch({table: "test_articles", query: "database", queryVector: [0.1, 0.2, -0.1], vectorColumn: "embedding", ftsTable: "test_articles_fts", rrfK: 0})` → structured error (COLUMN_NOT_FOUND)
 37. `sqlite.text.ftsSearch({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist and aren't overly large payloads
 
 
