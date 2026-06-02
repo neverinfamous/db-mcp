@@ -208,7 +208,7 @@ const scan = await sqlite.json.securityScan({
   table: "temp_cm_json_etl",
   column: "data",
 });
-await sqlite.admin.dropTable({
+await sqlite.core.dropTable({
   tableName: "temp_cm_json_etl",
 });
 return {
@@ -244,7 +244,7 @@ const scan = await sqlite.json.securityScan({
   table: "temp_cm_json_sec",
   column: "data",
 });
-await sqlite.admin.dropTable({
+await sqlite.core.dropTable({
   tableName: "temp_cm_json_sec",
 });
 if (scan.riskLevel === "low")
