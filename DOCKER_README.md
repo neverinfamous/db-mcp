@@ -140,7 +140,7 @@ Specify exactly the groups you need:
 
 ### Tool Groups (10 Available)
 
-> +4 built-in tools (server_info, server_health, list_adapters, sqlite_execute_code) are injected into every group.
+> +4 built-in tools (server_info, server_health, list_adapters, sqlite_execute_code) are injected into every group. (Note: There are also 7 admin/audit tools that are always available but not part of any group, making the total MCP tool count 177 Native / 150 WASM).
 
 | Category (Group)                     | WASM | Native | + Built-in | Description                                |
 | ------------------------------------ | ---- | ------ | ---------- | ------------------------------------------ |

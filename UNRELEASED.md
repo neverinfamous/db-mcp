@@ -26,6 +26,8 @@
 - `sqlite_append_insight` tool and `memo://insights` resource (leftovers from memory-journal port).
 
 ### Fixed
+- Fixed minor inconsistencies in tool count explanations across `DOCKER_README.md` and `db-mcp.wiki` documentation.
+- Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings.
 
 - Silent fallbacks in `introspection` Zod schemas that swallowed wrong-type validation errors for enum properties.
 - `sqlite_spatialite_load` not returning the `version` string as required by the schema output.
