@@ -49,7 +49,7 @@
 - CI/CD: Enforced single quotes in YAML frontmatter for `ci-health-monitor.md` and `docs-drift-detector.md` agentic workflows.
 - Added token conservation guidance to `sqlite_read_query` instructions, advising agents to avoid `SELECT *` on wide tables with JSON payloads to preserve context window depth.
 - Comprehensive `/doc-audit` run to perfectly synchronize codebase tool counts (178 Native / 152 WASM tools) across all README files, code map documentation, and code mode sandboxing help instructions.
-- Corrected residual tool counts in `test-admin-core.md` (now 23N/22W) and missing audit tools in `test-codemode-admin.md`.
+- Corrected residual tool counts in `test-admin-core.md` (now 23N/22W), missing audit tools in `test-codemode-admin.md`, and missing `[NATIVE ONLY]` labels + accurate WASM counts in `test-admin-extensions.md`.
 
 **Dependency Updates**
 

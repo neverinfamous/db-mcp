@@ -103,15 +103,15 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 > **Instructions**: Execute every numbered checklist item with the exact inputs shown. Compare responses against the expected results. Report any deviation.
 
-### Group Tools (8)
+### Group Tools (8N/5W)
 
 - `sqlite_generate_series`
 - `sqlite_list_virtual_tables`
 - `sqlite_virtual_table_info`
 - `sqlite_drop_virtual_table`
-- `sqlite_create_csv_table`
-- `sqlite_analyze_csv_schema`
-- `sqlite_create_rtree_table`
+- `sqlite_create_csv_table [NATIVE ONLY]`
+- `sqlite_analyze_csv_schema [NATIVE ONLY]`
+- `sqlite_create_rtree_table [NATIVE ONLY]`
 - `sqlite_create_series_table`
 
 ## Phase 1: Core Check (batched)
