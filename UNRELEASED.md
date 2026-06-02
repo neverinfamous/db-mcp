@@ -17,7 +17,7 @@
 ### Fixed
 
 - Fixed silent fallbacks in `introspection` Zod schemas (`sqlite_schema_snapshot`, `sqlite_schema_diff`, `sqlite_topological_sort`, `sqlite_cascade_simulator`, `sqlite_constraint_analysis`) that swallowed wrong-type validation errors for enum properties.
-
+- Fixed `test-text-advanced.md` test script incorrectly referencing `test_articles` and a 3-dimensional vector for `sqlite_hybrid_search` instead of `test_embeddings` and an 8-dimensional vector.
 - Fixed `sqlite_spatialite_load` not returning the `version` string as required by the schema output.
 - Fixed native build failure on Node 26 for Windows caused by LLVM/Clang LTO flags being inappropriately passed to MSVC via `node-gyp`.
 - FTS5 syntax errors on malformed user input.
