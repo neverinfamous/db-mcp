@@ -149,8 +149,12 @@ export class DbMcpServer {
     // Handle subscribe request
     this.server.server.setRequestHandler(SubscribeRequestSchema, (request, extra) => {
       const uri = request.params.uri;
-      const sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
+      let sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
       
+      if (sessionId === undefined && this.config.transport === "stdio") {
+        sessionId = "stdio";
+      }
+
       // Allow subscriptions to schema, tables, health, and dynamic table URIs
       if (!["sqlite://schema", "sqlite://tables", "sqlite://health"].includes(uri) && !uri.startsWith("sqlite://table/")) {
         throw new Error(`Resource ${uri} is not subscribable`);
@@ -163,8 +167,12 @@ export class DbMcpServer {
     // Handle unsubscribe request
     this.server.server.setRequestHandler(UnsubscribeRequestSchema, (request, extra) => {
       const uri = request.params.uri;
-      const sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
+      let sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
       
+      if (sessionId === undefined && this.config.transport === "stdio") {
+        sessionId = "stdio";
+      }
+
       this.subscriptionManager.unsubscribe(uri, sessionId as string | undefined);
       return {};
     });

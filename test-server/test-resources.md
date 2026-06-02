@@ -209,7 +209,7 @@ Call `tools/list` and verify that tools accurately report their `openWorldHint` 
 
 ### 11. Resource Subscriptions & Live Updates
 
-> **Note:** Resource subscriptions are fully supported over HTTP transport. The STDIO transport operates statelessly (no persistent `sessionId`), so subscriptions are silently dropped and live update notifications will not be emitted.
+> **Note:** Resource subscriptions are fully supported over both HTTP and STDIO transports. Although the STDIO transport operates statelessly (no persistent `sessionId`), the server explicitly manages it as a singleton session to enable live update notifications.
 
 **Test A — Valid Subscriptions:**
 

@@ -24,6 +24,7 @@
 - Native V8 thread leaks on Windows.
 - SQLCipher `PRAGMA key` syntax errors causing `file is not a database` failures.
 - `DB_ENCRYPTION_KEY` environment variable leakage breaking unencrypted Playwright E2E tests.
+- Fixed `SubscriptionManager` silently dropping subscriptions over the stateless `stdio` transport by implementing an explicit `"stdio"` fallback session ID, restoring live `schemaChanged` update functionality.
 - Fixed inaccuracies in `test-resources.md` regarding `openWorldHint` expectations and STDIO transport subscription limitations.
 - Tool count drift in `Tool-Filtering.md` (Wiki) for `full` shortcut and `text` group.
 

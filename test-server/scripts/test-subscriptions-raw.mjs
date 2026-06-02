@@ -6,6 +6,8 @@ async function main() {
     stdio: ["pipe", "pipe", "pipe"]
   });
 
+  proc.stderr.on("data", (chunk) => console.error("SERVER STDERR:", chunk.toString()));
+
   let buffer = "";
   let notifications = [];
   let msgId = 1;
@@ -24,13 +26,14 @@ async function main() {
 
     for (const line of lines) {
       if (!line.trim()) continue;
+      console.log("RAW STDOUT:", line);
       try {
         const msg = JSON.parse(line);
         if (msg.method === "notifications/resources/updated") {
           notifications.push(msg.params.uri);
           console.log("NOTIF:", msg.params.uri);
         } else if (msg.id) {
-          // console.log("Response for", msg.id, msg.error ? msg.error : "OK");
+          console.log("Response for", msg.id, msg.error ? JSON.stringify(msg.error) : "OK");
         }
       } catch (e) {
         // ignore incomplete
@@ -53,23 +56,24 @@ async function main() {
   await new Promise(r => setTimeout(r, 500));
 
   console.log("Mutating DB: CREATE");
-  send("tools/call", { name: "sqlite_write_query", arguments: { sql: "CREATE TABLE test_live_sub (id INTEGER PRIMARY KEY);" } });
+  send("tools/call", { name: "sqlite_execute_query", arguments: { sql: "CREATE TABLE test_live_sub (id INTEGER PRIMARY KEY);" } });
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after CREATE:", notifications);
   notifications = [];
 
   console.log("Mutating DB: ALTER");
-  send("tools/call", { name: "sqlite_write_query", arguments: { sql: "ALTER TABLE test_products ADD COLUMN sub_test TEXT;" } });
+  send("tools/call", { name: "sqlite_execute_query", arguments: { sql: "ALTER TABLE test_products ADD COLUMN sub_test TEXT;" } });
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after ALTER:", notifications);
   notifications = [];
 
   console.log("Mutating DB: DROP");
-  send("tools/call", { name: "sqlite_write_query", arguments: { sql: "DROP TABLE test_live_sub;" } });
+  send("tools/call", { name: "sqlite_execute_query", arguments: { sql: "DROP TABLE test_live_sub;" } });
   await new Promise(r => setTimeout(r, 500));
   console.log("Notifications after DROP:", notifications);
 
   proc.kill();
+  setTimeout(() => process.exit(0), 500);
 }
 
 main().catch(console.error);
