@@ -175,9 +175,9 @@ Rate each error response 1-5:
 
 24. Drop `_mcp_migrations`: `sqlite.core.dropTable({table: "_mcp_migrations"})`
 25. Drop `stress_migration_data`: `sqlite.core.dropTable({table: "stress_migration_data"})`
-26. Drop `stress_idx_flag`: _Handled by database reset below_
-27. **Reset database** with `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to undo `stress_flag` column on `test_products`
-28. After reset, verify: `test_products` has 16 rows and original columns (no `stress_flag`)
+26. Drop `stress_idx_flag`: `sqlite.core.writeQuery("DROP INDEX IF EXISTS stress_idx_flag")`
+27. Drop `stress_flag` column: `sqlite.core.writeQuery("ALTER TABLE test_products DROP COLUMN stress_flag")`
+28. Verify: `test_products` has original columns (no `stress_flag`)
 
 ## Phase 5: Error Paths & Recovery (batched)
 
