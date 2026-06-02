@@ -121,20 +121,20 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **Code mode testing:**
 
-4. `sqlite_execute_code({code: "const analysis = await sqlite.introspection.storageAnalysis(); return { tableCount: analysis.tables?.length, hasRecommendations: !!analysis.recommendations };"})` → returns storage analysis via Code Mode bridge
+6. `sqlite_execute_code({code: "const analysis = await sqlite.introspection.storageAnalysis(); return { tableCount: analysis.tables?.length, hasRecommendations: !!analysis.recommendations };"})` → returns storage analysis via Code Mode bridge
 
 ## Phase 2: Domain Errors (batched)
 
-🔴 5. `sqlite_query_plan({query: "SELECT * FROM nonexistent_table_xyz"})` → `{success: false}` — structured error mentioning table name
-🔴 6. `sqlite_query_plan({query: "THIS IS NOT SQL"})` → `{success: false}` — structured error for invalid SQL
+🔴 7. `sqlite_query_plan({query: "SELECT * FROM nonexistent_table_xyz"})` → `{success: false}` — structured error mentioning table name
+🔴 8. `sqlite_query_plan({query: "THIS IS NOT SQL"})` → `{success: false}` — structured error for invalid SQL
 
 ## Phase 3: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 7. `sqlite_storage_analysis({})` → success (no required params)
-🔴 8. `sqlite_index_audit({})` → success (no required params)
-🔴 9. `sqlite_query_plan({})` → handler error (missing required `query` param)
+🔴 9. `sqlite_storage_analysis({})` → success (no required params)
+🔴 10. `sqlite_index_audit({})` → success (no required params)
+🔴 11. `sqlite_query_plan({})` → handler error (missing required `query` param)
 
 ---
 

@@ -146,41 +146,41 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 **Error path testing:**
 
-🔴 18. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
-🔴 19. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
-🔴 20. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
-🔴 21. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
-🔴 22. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 23. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 24. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
-🔴 25. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
-🔴 26. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
+🔴 21. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 22. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
+🔴 23. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
+🔴 24. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
+🔴 25. `sqlite_count({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 26. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 27. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 28. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
+🔴 29. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
 
 ## Phase 2: Zod Validation Sweep
 
 **Zod validation sweep** — call each tool with `{}` (empty params). Must return handler error (`{success: false, error: "Validation error: ..."}`), NOT raw MCP error:
 
-🔴 27. `sqlite_read_query({})` → handler error
-🔴 28. `sqlite_write_query({})` → handler error
-🔴 29. `sqlite_upsert({})` → handler error
-🔴 30. `sqlite_batch_insert({})` → handler error
-🔴 31. `sqlite_count({})` → handler error
-🔴 32. `sqlite_exists({})` → handler error
-🔴 33. `sqlite_truncate({})` → handler error
-🔴 34. `sqlite_date_add({})` → handler error
-🔴 35. `sqlite_date_diff({})` → handler error
+🔴 30. `sqlite_read_query({})` → handler error
+🔴 31. `sqlite_write_query({})` → handler error
+🔴 32. `sqlite_upsert({})` → handler error
+🔴 33. `sqlite_batch_insert({})` → handler error
+🔴 34. `sqlite_count({})` → handler error
+🔴 35. `sqlite_exists({})` → handler error
+🔴 36. `sqlite_truncate({})` → handler error
+🔴 37. `sqlite_date_add({})` → handler error
+🔴 38. `sqlite_date_diff({})` → handler error
 
 **Built-in tools** — these take no required params, so `{}` should return a successful response (confirming graceful handling):
 
-🔴 36. `server_info({})` → should succeed (no required params)
-🔴 37. `server_health({})` → should succeed (no required params)
-🔴 38. `list_adapters({})` → should succeed (no required params)
+🔴 39. `server_info({})` → should succeed (no required params)
+🔴 40. `server_health({})` → should succeed (no required params)
+🔴 41. `list_adapters({})` → should succeed (no required params)
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 39. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
+🔴 42. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
 
 ---
 
