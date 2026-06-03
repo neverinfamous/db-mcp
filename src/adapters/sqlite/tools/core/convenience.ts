@@ -70,7 +70,7 @@ export function createUpsertTool(adapter: SqliteAdapter): ToolDefinition {
               : [],
         };
         if (Object.keys(input.data).length === 0)
-          throw new Error("data (or values alias) is required");
+          throw new ValidationError("data (or values alias) is required");
       } catch (error: unknown) {
         return { ...formatHandlerError(error), rowsAffected: 0 };
       }

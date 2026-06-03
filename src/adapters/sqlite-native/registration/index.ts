@@ -26,7 +26,7 @@ import { getCodeModeTools } from "../../sqlite/tools/codemode.js";
 
 // Import native-specific tools
 import { getTransactionTools } from "../tools/transactions.js";
-import { getWindowTools } from "../tools/window.js";
+import { getWindowTools } from "../tools/window/index.js";
 import { getSpatialiteTools } from "../tools/spatialite/index.js";
 
 /**

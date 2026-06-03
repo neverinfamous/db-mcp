@@ -15,6 +15,7 @@ import {
   hasReadScope,
 } from "../../auth/scopes/index.js";
 import { InsufficientScopeError } from "../../auth/errors.js";
+import { ConfigurationError } from "../../utils/errors/classes.js";
 import { createModuleLogger, ERROR_CODES } from "../../utils/logger/index.js";
 import type { HttpTransportState } from "./types.js";
 import type { Response } from "express";
@@ -37,7 +38,7 @@ export function applyAuthMiddleware(state: HttpTransportState): void {
   const isPubliclyExposed =
     state.config.oauth.enabled || state.config.noAuthEnforcement;
   if (corsOrigins.includes("*") && isPubliclyExposed) {
-    throw new Error(
+    throw new ConfigurationError(
       "Security: CORS wildcard origin ('*') is forbidden when authentication is enabled or enforcement is explicitly disabled. " +
         "Configure explicit origins via --cors-origins for production deployments.",
     );
@@ -259,7 +260,7 @@ export async function setupOAuth(
   logger.info("Setting up OAuth 2.1...", { code: "HTTP_OAUTH_SETUP" });
 
   if (state.config.oauth.enabled && !state.config.oauth.audience) {
-    throw new Error(
+    throw new ConfigurationError(
       "Security: OAuth audience must be explicitly configured when OAuth is enabled.",
     );
   }

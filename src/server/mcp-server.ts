@@ -26,6 +26,7 @@ import { logger } from "../utils/logger/index.js";
 
 import { DbMcpError } from "../utils/errors/base.js";
 import { ErrorCategory } from "../utils/errors/categories.js";
+import { ValidationError } from "../utils/errors/classes.js";
 import { AuditLogger } from "../audit/logger.js";
 import { SystemDb } from "../observability/system-db.js";
 import { BackupManager } from "../audit/backup-manager.js";
@@ -33,11 +34,13 @@ import { metrics } from "../observability/metrics.js";
 import { createAuditInterceptor } from "../audit/interceptor.js";
 import type { AuditInterceptor } from "../audit/interceptor.js";
 import {
-  registerBuiltInTools,
-  registerHelpResources,
   registerAuditResource,
   registerAuditBackupTools,
   registerAuditSearchTool,
+} from "./registration/audit-tools/index.js";
+import {
+  registerBuiltInTools,
+  registerHelpResources,
   registerObservabilityResources,
   registerAdminTools,
 } from "./registration/index.js";
@@ -193,7 +196,7 @@ export class DbMcpServer {
           ) &&
           !uri.startsWith("sqlite://table/")
         ) {
-          throw new Error(`Resource ${uri} is not subscribable`);
+          throw new ValidationError(`Resource ${uri} is not subscribable`);
         }
 
         this.subscriptionManager.subscribe(

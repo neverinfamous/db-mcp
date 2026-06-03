@@ -9,6 +9,10 @@
         "-v",
         "./data:/app/data",
         "-e",
+        "PROJECT_REGISTRY",
+        "-e",
+        "TEAM_DB_PATH",
+        "-e",
         "MCP_HOST",
         "-e",
         "LOG_LEVEL",
@@ -73,6 +77,8 @@
         "/tmp/db-mcp-logs/audit.jsonl"
       ],
       "env": {
+        "PROJECT_REGISTRY": "<path_placeholder>",
+        "TEAM_DB_PATH": "<path_placeholder>",
         "MCP_HOST": "0.0.0.0",
         "LOG_LEVEL": "info",
         "METADATA_CACHE_TTL_MS": "5000",

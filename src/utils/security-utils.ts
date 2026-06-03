@@ -2,6 +2,7 @@ import { resolve, dirname, join, relative, isAbsolute, sep, parse as pathParse }
 import { realpathSync, existsSync, lstatSync } from "node:fs";
 import { DbMcpError } from "./errors/base.js";
 import { ErrorCategory } from "./errors/categories.js";
+import { ConfigurationError } from "./errors/classes.js";
 
 /**
  * Thrown when a path validation fails the security boundaries.
@@ -162,7 +163,7 @@ export function parseAllowedIoRoots(raw: string | undefined): string[] | undefin
   if (!raw) return undefined;
 
   if (raw.length > 51200) {
-    throw new Error(
+    throw new ConfigurationError(
       "ALLOWED_IO_ROOTS configuration exceeds size limit (50KB)",
     );
   }
@@ -175,7 +176,7 @@ export function parseAllowedIoRoots(raw: string | undefined): string[] | undefin
       if (Array.isArray(parsed) && parsed.every((p) => typeof p === "string" && isAbsolute(p))) {
         paths = parsed as string[];
       } else {
-        throw new Error("Must be an array of absolute paths");
+        throw new ConfigurationError("Must be an array of absolute paths");
       }
     } else {
       paths = raw
@@ -184,13 +185,13 @@ export function parseAllowedIoRoots(raw: string | undefined): string[] | undefin
         .filter(Boolean);
         
       if (paths.some((p) => !isAbsolute(p))) {
-        throw new Error("All paths must be absolute");
+        throw new ConfigurationError("All paths must be absolute");
       }
     }
   } catch (e: unknown) {
     const errName = e instanceof Error ? e.message : String(e);
-    throw new Error(`Invalid ALLOWED_IO_ROOTS configuration: ${errName}`, {
-      cause: e,
+    throw new ConfigurationError(`Invalid ALLOWED_IO_ROOTS configuration: ${errName}`, "CONFIG_ERROR", {
+      cause: e instanceof Error ? e : undefined,
     });
   }
 

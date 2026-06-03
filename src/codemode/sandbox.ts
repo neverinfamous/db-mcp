@@ -15,6 +15,7 @@ import {
   type SandboxResult,
 } from "./types.js";
 import { transformAutoReturn } from "./auto-return.js";
+import { ValidationError, RateLimitError, InternalError } from "../utils/errors/classes.js";
 
 /**
  * A sandboxed execution context using isolated-vm
@@ -82,7 +83,7 @@ export class CodeModeSandbox {
           return;
         const n = node as Record<string, unknown>;
         if (n["type"] === "WithStatement") {
-          throw new Error("'with' statements are forbidden in sandbox code.");
+          throw new ValidationError("'with' statements are forbidden in sandbox code.");
         }
         if (
           n["type"] === "MemberExpression" &&
@@ -97,7 +98,7 @@ export class CodeModeSandbox {
           if (
             ["process", "require", "global", "globalThis"].includes(objName)
           ) {
-            throw new Error(`Access to '${objName}' is forbidden.`);
+            throw new ValidationError(`Access to '${objName}' is forbidden.`);
           }
         }
         for (const key in n) {
@@ -276,7 +277,7 @@ export class CodeModeSandbox {
             if (typeof methodFn === "function") {
               const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
                 if (++rpcCount > MAX_RPC_CALLS) {
-                  throw new Error(
+                  throw new RateLimitError(
                     `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
                   );
                 }
@@ -285,8 +286,8 @@ export class CodeModeSandbox {
                     methodFn as (...args: unknown[]) => Promise<unknown>
                   )(...args);
                 } catch (e) {
-                  throw new Error(e instanceof Error ? e.message : String(e), {
-                    cause: e,
+                  throw new InternalError(e instanceof Error ? e.message : String(e), "RPC_EXECUTION_ERROR", {
+                    cause: e instanceof Error ? e : undefined,
                   });
                 }
               });
@@ -303,7 +304,7 @@ export class CodeModeSandbox {
         } else if (typeof groupValue === "function") {
           const fnRef = new ivmLib.Reference(async (...args: unknown[]) => {
             if (++rpcCount > MAX_RPC_CALLS) {
-              throw new Error(
+              throw new RateLimitError(
                 `QuotaExceededError: Maximum number of host tool calls (${MAX_RPC_CALLS}) exceeded (attempted call ${rpcCount}).`,
               );
             }
@@ -312,8 +313,8 @@ export class CodeModeSandbox {
                 groupValue as (...args: unknown[]) => Promise<unknown>
               )(...args);
             } catch (e) {
-              throw new Error(e instanceof Error ? e.message : String(e), {
-                cause: e,
+              throw new InternalError(e instanceof Error ? e.message : String(e), "RPC_EXECUTION_ERROR", {
+                cause: e instanceof Error ? e : undefined,
               });
             }
           });
@@ -443,7 +444,7 @@ export class SandboxPool {
 
   static getIvmLib(): typeof ivm {
     if (!SandboxPool.cachedIvmLib) {
-      throw new Error("ivmLib not initialized");
+      throw new InternalError("ivmLib not initialized", "IVMLIB_NOT_INITIALIZED");
     }
     return SandboxPool.cachedIvmLib;
   }
@@ -472,8 +473,9 @@ export class SandboxPool {
     }
 
     if (this.inUseCount >= this.options.maxInstances) {
-      throw new Error(
+      throw new InternalError(
         `Sandbox pool exhausted (max ${this.options.maxInstances})`,
+        "POOL_EXHAUSTED"
       );
     }
 

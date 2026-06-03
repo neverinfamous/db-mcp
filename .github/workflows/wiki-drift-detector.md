@@ -1,23 +1,23 @@
 ---
-description: "Audit the GitHub Wiki documentation for accuracy and consistency on every code PR"
+description: 'Audit the GitHub Wiki documentation for accuracy and consistency on every code PR'
 private: true
-labels: ["documentation", "automation", "wiki"]
+labels: ['documentation', 'automation', 'wiki']
 
 on:
   pull_request:
     types: [opened, ready_for_review]
     paths:
-      ["src/**", "package.json", "Dockerfile", "tsconfig*.json", "scripts/**"]
+      ['src/**', 'package.json', 'Dockerfile', 'tsconfig*.json', 'scripts/**']
 
 engine:
-  id: "copilot"
-  model: "claude-opus-4-20250514"
+  id: 'copilot'
+  model: 'claude-opus-4-20250514'
 
 network:
   allowed:
-    - "defaults"
+    - 'defaults'
 
-permissions: "read-all"
+permissions: 'read-all'
 
 safe-outputs:
   report-failure-as-issue: false
@@ -28,7 +28,7 @@ safe-outputs:
     max: 1
 
 timeout-minutes: 15
-concurrency: "wiki-drift-detector"
+concurrency: 'wiki-drift-detector'
 ---
 
 # Wiki Documentation Drift Detector

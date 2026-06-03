@@ -17,8 +17,12 @@
 - Migrated package manager from `npm` to `pnpm` (v9.15.4), reducing disk footprint and updating `Dockerfile`.
 - Simplified `gotchas.md` by moving tool-specific instructions to native tool group URIs.
 - Consolidated and expanded agent prompts and E2E tests to validate `ALLOWED_IO_ROOTS`, OCC lifecycle, and chunked streaming.
+- Split complex tool handlers (`audit-tools.ts`, `window.ts`) into sub-modules and grouped exports via barrel files to adhere to complexity boundaries.
+- Replaced generic `Error` classes with domain-specific `ValidationError`, `ConfigurationError`, etc., in core auth and validation logic.
 
 ### Fixed
+- Missing `PROJECT_REGISTRY` and `TEAM_DB_PATH` variables in `mcp-config-example.json` and `.env.example`.
+- Enforced single quotes in YAML frontmatter for agentic workflows (`docs-drift-detector.md`, `ci-health-monitor.md`, `wiki-drift-detector.md`) and recompiled locks.
 - Synchronized tool counts and versions in `DOCKER_README.md` and `SECURITY.md`.
 - Refactored `ErrorCategory` enum to a literal union type to reduce runtime footprint.
 - Enforced strict parsing (`.strict()`) on empty schema objects in migration, admin, and transaction tools.

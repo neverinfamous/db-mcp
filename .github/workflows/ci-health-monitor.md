@@ -1,21 +1,21 @@
 ---
-description: "Weekly audit of CI workflows for deprecations, outdated actions, and health issues"
+description: 'Weekly audit of CI workflows for deprecations, outdated actions, and health issues'
 private: true
-labels: ["maintenance", "ci-cd"]
+labels: ['maintenance', 'ci-cd']
 
 on:
   schedule:
-    - cron: "0 14 * * 3" # Every Wednesday at 14:00 UTC
+    - cron: '0 14 * * 3' # Every Wednesday at 14:00 UTC
   workflow_dispatch:
 
 engine:
-  id: "copilot"
-  model: "claude-opus-4-20250514"
+  id: 'copilot'
+  model: 'claude-opus-4-20250514'
 
 network:
   allowed:
-    - "defaults"
-    - "node"
+    - 'defaults'
+    - 'node'
 
 permissions:
   contents: read
@@ -23,14 +23,14 @@ permissions:
 safe-outputs:
   report-failure-as-issue: false
   create-issue:
-    title-prefix: "[ci-health] "
-    labels: ["maintenance", "ci-cd"]
+    title-prefix: '[ci-health] '
+    labels: ['maintenance', 'ci-cd']
     max: 1
   noop:
     max: 1
 
 timeout-minutes: 15
-concurrency: "ci-health-monitor"
+concurrency: 'ci-health-monitor'
 ---
 
 # CI Health Monitor
