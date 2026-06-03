@@ -143,6 +143,7 @@ src/
 │   │
 │   ├── sqlite/                     # ── WASM adapter (sql.js) ──
 │   │   ├── sqlite-adapter.ts       # SqliteAdapter class (extends DatabaseAdapter)
+│   │   ├── read-write-lock.ts      # Reader-writer lock for HTTP request serialization
 │   │   ├── query-executor.ts       # WASM query execution
 │   │   ├── schema-manager.ts       # Schema cache + metadata (TTL-based)
 │   │   ├── json-utils.ts           # JSON column detection and normalization

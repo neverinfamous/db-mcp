@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- WASM adapter request serialization via reader-writer lock for concurrent HTTP deployments
 - Added `stream: true` parameter (with optional `chunkSize`) to `sqlite_read_query` for streaming query results via MCP progress notifications, reducing memory pressure for large result sets.
 - Implemented `ALLOWED_IO_ROOTS` filesystem boundary sandbox to restrict IO operations (e.g., CSV imports, backup dumps) to explicitly authorized directories.
 - Added `--allowed-io-roots` CLI flag and `ALLOWED_IO_ROOTS` environment variable to configure the IO sandbox.
@@ -13,6 +14,12 @@
 - Updated agent testing prompts (`test-admin-core.md`, `test-admin-extensions.md`, `test-codemode-admin.md`, `test-codemode-advanced-admin.md`) to include explicit absolute path traversal boundary tests for `ALLOWED_IO_ROOTS`.
 - Added Playwright E2E tests for `ALLOWED_IO_ROOTS` boundary enforcement and HTTP startup failures.
 - Audited and updated all testing prompt `README.md` files to explicitly mandate `ALLOWED_IO_ROOTS` environment variable usage, document HTTP session timeouts, and require chunked stream verification.
+- Bumped `isolated-vm` to `7.0.0` (major version aligns with V8 engine upgrades) for out-of-the-box compatibility with Node.js 26.
+
+### Fixed
+- Fixed native addon crashes during Vitest execution by migrating the execution pool from `threads` to `forks` in `vitest.config.ts`, ensuring isolated V8 heaps for `isolated-vm`.
+- Fixed false-positive test failures in `sqlite-adapter-methods.test.ts` by correcting async `Promise` rejection assertions and `connectionPooling` capability flags.
+- Removed unused `error` variable in `read-write-lock.ts` disposal handler.
 
 ### Security
 - **Hard Gate**: HTTP transports will now fail to start (exit code 1) if `ALLOWED_IO_ROOTS` is not explicitly provided, preventing ambient filesystem access for exposed servers.
