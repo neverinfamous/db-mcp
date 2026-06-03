@@ -10,8 +10,10 @@
 - Implemented `ALLOWED_IO_ROOTS` filesystem boundary sandbox to restrict IO operations (e.g., CSV imports, backup dumps) to explicitly authorized directories.
 - Added `--allowed-io-roots` CLI flag and `ALLOWED_IO_ROOTS` environment variable to configure the IO sandbox.
 - Session timeout enforcement for HTTP stateful mode: 30-minute idle timeout with 1-minute sweep interval, 24-hour absolute TTL, and in-flight request protection via session locks.
+- Added 4 new Optimistic Concurrency Control (OCC) tools to the `core` group: `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, and `sqlite_conditional_update`.
 
 ### Changed
+- `sqlite_write_query` and `sqlite_upsert` now accept an optional `expectedVersion` parameter. If a table is versioned, this parameter becomes required to prevent lost updates, throwing a `ConflictError` on mismatch.
 - Updated `sqlite_read_query` agent testing prompts (`test-core-data.md`, `test-codemode-core.md`, `test-codemode-advanced-core.md`) to natively validate streaming chunk degradation behavior.
 - Updated node integration tests (`test-progress.mjs`) to rigorously verify E2E JSON-RPC chunked row emission over stdio for `sqlite_read_query`.
 - Updated server instructions (`admin.md`, `gotchas.md`) to explicitly document `ALLOWED_IO_ROOTS` behavior and requirements for backup/restore and CSV operations.
@@ -21,6 +23,7 @@
 - Bumped `isolated-vm` to `7.0.0` (major version aligns with V8 engine upgrades) for out-of-the-box compatibility with Node.js 26.
 
 ### Fixed
+- Fixed Code Mode sandbox timeouts failing to surface as structured `TimeoutError` responses by catching execution timeouts directly from the sandbox pool execution result.
 - Fixed native addon crashes during Vitest execution by migrating the execution pool from `threads` to `forks` in `vitest.config.ts`, ensuring isolated V8 heaps for `isolated-vm`.
 - Fixed false-positive test failures in `sqlite-adapter-methods.test.ts` by correcting async `Promise` rejection assertions and `connectionPooling` capability flags.
 - Removed unused `error` variable in `read-write-lock.ts` disposal handler.
