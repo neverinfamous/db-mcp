@@ -203,6 +203,7 @@ For each test, verify **structured response** (`{success: false, error: "..."}`)
 30. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements LIMIT 5"})` → exactly 5 rows
 31. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements", cursor: "invalid_cursor_string_123"})` → structured error indicating invalid or corrupted cursor format
 32. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100"})` → 100 rows — check payload size (✅ 15KB payload. Noted optimization opportunity: agents should avoid `SELECT *` on wide tables like `test_events`.)
+33. `sqlite.core.readQuery({query: "SELECT * FROM test_events LIMIT 100", stream: true, chunkSize: 10})` → returns rows successfully (verifies that `stream: true` gracefully degrades to full buffering in Code Mode)
 
 ## Phase 5: Trigger & Constraint Edge Cases (batched)
 

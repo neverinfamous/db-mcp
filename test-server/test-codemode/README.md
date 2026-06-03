@@ -7,6 +7,7 @@
 1. The testing database MUST be freshly seeded via `Set-Location C:\Users\chris\Desktop\db-mcp\test-server; .\reset-database.ps1` to ensure deterministic results.
 2. The MCP server MUST be started with the `ALLOWED_IO_ROOTS` environment variable configured (e.g., set to the db-mcp repository root), otherwise it will hard-fail to start and block file-based tool tests (like CSV generation or database dumps).
 3. **Session Timeouts**: If using the HTTP transport, note that sessions will strictly expire after 30 minutes of inactivity and have an absolute TTL of 24 hours. Ensure your manual testing flows account for these timeouts.
+4. **Streaming Validation**: When testing `sqlite.core.readQuery`, setting `stream: true` instructs the server to stream results. However, because Code Mode does not expose the client's `_meta.progressToken`, verify that the system gracefully degrades to full buffering without throwing errors.
 
 ## Agent Instructions
 

@@ -140,9 +140,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 4. `sqlite.core.readQuery("SELECT * FROM test_users")` → should return JSON rows of test_users
 5. `sqlite.core.readQuery("SELECT * FROM test_measurements")` → return 50 rows (automatic limit) and `nextCursor` populated
 6. `sqlite.core.readQuery({query: "SELECT * FROM test_measurements", cursor: "<nextCursor>"})` → return next batch of rows via opaque pagination
-7. `sqlite.core.listTables()` → tables array includes `test_products`, `test_orders`, etc.
-8. `sqlite.core.describeTable("test_products")` → columns include `id` (INTEGER), `name` (TEXT), `price` (REAL)
-9. `sqlite.core.getIndexes({table: "test_orders"})` → includes `idx_orders_status`
+7. `sqlite.core.readQuery({query: "SELECT * FROM test_products", stream: true, chunkSize: 5})` → returns rows successfully (verifies that `stream: true` degrades gracefully to full buffering in Code Mode)
+8. `sqlite.core.listTables()` → tables array includes `test_products`, `test_orders`, etc.
+9. `sqlite.core.describeTable("test_products")` → columns include `id` (INTEGER), `name` (TEXT), `price` (REAL)
+10. `sqlite.core.getIndexes({table: "test_orders"})` → includes `idx_orders_status`
 
 **Convenience tools:**
 

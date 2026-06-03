@@ -7,10 +7,12 @@
 - Session timeout enforcement for HTTP stateful mode: 30-minute idle timeout with 1-minute sweep interval, 24-hour absolute TTL, and in-flight request protection via session locks.
 
 ### Changed
+- Updated `sqlite_read_query` agent testing prompts (`test-core-data.md`, `test-codemode-core.md`, `test-codemode-advanced-core.md`) to natively validate streaming chunk degradation behavior.
+- Updated node integration tests (`test-progress.mjs`) to rigorously verify E2E JSON-RPC chunked row emission over stdio for `sqlite_read_query`.
 - Updated server instructions (`admin.md`, `gotchas.md`) to explicitly document `ALLOWED_IO_ROOTS` behavior and requirements for backup/restore and CSV operations.
 - Updated agent testing prompts (`test-admin-core.md`, `test-admin-extensions.md`, `test-codemode-admin.md`, `test-codemode-advanced-admin.md`) to include explicit absolute path traversal boundary tests for `ALLOWED_IO_ROOTS`.
 - Added Playwright E2E tests for `ALLOWED_IO_ROOTS` boundary enforcement and HTTP startup failures.
-- Audited and updated all testing prompt `README.md` files to explicitly mandate `ALLOWED_IO_ROOTS` environment variable usage and document HTTP session timeouts.
+- Audited and updated all testing prompt `README.md` files to explicitly mandate `ALLOWED_IO_ROOTS` environment variable usage, document HTTP session timeouts, and require chunked stream verification.
 
 ### Security
 - **Hard Gate**: HTTP transports will now fail to start (exit code 1) if `ALLOWED_IO_ROOTS` is not explicitly provided, preventing ambient filesystem access for exposed servers.

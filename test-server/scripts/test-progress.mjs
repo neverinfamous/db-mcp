@@ -7,6 +7,7 @@ const projectDir = resolve(__dirname, "../..");
 
 const cleanEnv = { ...process.env };
 delete cleanEnv.DB_ENCRYPTION_KEY;
+cleanEnv.ALLOWED_IO_ROOTS = projectDir;
 
 const proc = spawn(
   "node",
@@ -40,8 +41,10 @@ proc.stdout.on("data", (chunk) => {
 
       // Handle notifications
       if (msg.method === "notifications/progress") {
+        const isStream = msg.params.progressToken === "test-token-sqlite_read_query";
+        const prefix = isStream ? "[STREAM] Chunk" : "[PROGRESS] Step";
         console.log(
-          `[PROGRESS] Step ${msg.params.progress} of ${msg.params.total || "?"}`,
+          `${prefix} ${msg.params.progress} of ${msg.params.total || "?"}`,
         );
         progressEvents.push(msg.params);
       }
@@ -102,9 +105,15 @@ async function runTest(toolName, args, expectedMinEvents = 1) {
   }
 
   if (progressEvents.length >= expectedMinEvents) {
-    console.log(
-      `  PASS: Received ${progressEvents.length} progress notifications!`,
-    );
+    if (toolName === "sqlite_read_query") {
+      console.log(
+        `  PASS: Received ${progressEvents.length} streaming chunks via progress notifications!`,
+      );
+    } else {
+      console.log(
+        `  PASS: Received ${progressEvents.length} progress notifications!`,
+      );
+    }
     return true;
   } else {
     console.error(
@@ -159,6 +168,11 @@ async function main() {
       },
     },
     { name: "sqlite_execute_code", args: { code }, minEvents: 5 },
+    {
+      name: "sqlite_read_query",
+      args: { query: "SELECT * FROM test_measurements", stream: true, chunkSize: 10 },
+      minEvents: 5,
+    },
   ];
 
   let passed = true;
@@ -186,7 +200,7 @@ async function main() {
     process.exitCode = 1;
   } else {
     console.log(
-      "\nAll 7 tools successfully tested for progress notifications!",
+      "\nAll 8 tools successfully tested for progress notifications and chunk streaming!",
     );
   }
 }
