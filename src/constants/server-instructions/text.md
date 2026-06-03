@@ -19,7 +19,7 @@ sqlite_fts_search({
   query: "machine learning",
   limit: 10,
   includeFacets: true, // optionally return breakdown by technique
-  cursor: "..." // Optional offset-based cursor for pagination (returns nextCursor)
+  cursor: "...", // Optional offset-based cursor for pagination (returns nextCursor)
 });
 sqlite_fts_match_info({ table: "articles_fts", query: "machine learning" }); // bm25 ranking info
 
@@ -125,7 +125,7 @@ sqlite_advanced_search({
   searchTerm: "laptop",
   techniques: ["exact", "fuzzy", "phonetic"],
   fuzzyThreshold: 0.4,
-  includeFacets: true
+  includeFacets: true,
 });
 
 // Hybrid Search — combines FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF)
@@ -135,7 +135,7 @@ sqlite_hybrid_search({
   vectorColumn: "embedding",
   queryVector: [0.1, 0.2, 0.3], // vector data from external embedding API
   metric: "cosine",
-  limit: 10
+  limit: 10,
 });
 
 // Sentiment analysis — text analysis (can analyze raw text or database columns)

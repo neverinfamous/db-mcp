@@ -116,18 +116,26 @@ export class NativeSqliteAdapter extends DatabaseAdapter {
       // Create database connection
       if (sqliteConfig.options?.encryptionKey) {
         // Use SQLCipher driver if encryption key is provided
-        const DatabaseDriver = (await import("better-sqlite3-multiple-ciphers")).default;
+        const DatabaseDriver = (await import("better-sqlite3-multiple-ciphers"))
+          .default;
         this.db = new DatabaseDriver(filePath, {
           readonly: false,
           fileMustExist: false,
         });
-        
+
         // Apply the encryption key immediately
-        this.db.pragma(`key = "${sqliteConfig.options.encryptionKey}"`);
-        
-        log.info(`Connected to SQLite database (native encrypted): ${filePath}`, {
-          code: "SQLITE_CONNECT_ENCRYPTED",
-        });
+        const escapedKey = sqliteConfig.options.encryptionKey.replace(
+          /"/g,
+          '""',
+        );
+        this.db.pragma(`key = "${escapedKey}"`);
+
+        log.info(
+          `Connected to SQLite database (native encrypted): ${filePath}`,
+          {
+            code: "SQLITE_CONNECT_ENCRYPTED",
+          },
+        );
       } else {
         // Use standard driver
         const DatabaseDriver = (await import("better-sqlite3")).default;

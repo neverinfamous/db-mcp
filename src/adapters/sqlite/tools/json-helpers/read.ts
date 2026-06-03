@@ -89,13 +89,14 @@ export function createJsonSelectTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
-        const parsedRows = result.rows?.map((row) => {
-          const parsedRow: Record<string, unknown> = {};
-          for (const [key, value] of Object.entries(row)) {
-            parsedRow[key] = parseJsonValue(value);
-          }
-          return parsedRow;
-        }) ?? [];
+        const parsedRows =
+          result.rows?.map((row) => {
+            const parsedRow: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(row)) {
+              parsedRow[key] = parseJsonValue(value);
+            }
+            return parsedRow;
+          }) ?? [];
 
         return {
           success: true,
@@ -178,13 +179,14 @@ export function createJsonQueryTool(adapter: SqliteAdapter): ToolDefinition {
 
         const result = await adapter.executeReadQuery(sql, queryParams);
 
-        const parsedRows = result.rows?.map((row) => {
-          const parsedRow: Record<string, unknown> = {};
-          for (const [key, value] of Object.entries(row)) {
-            parsedRow[key] = parseJsonValue(value);
-          }
-          return parsedRow;
-        }) ?? [];
+        const parsedRows =
+          result.rows?.map((row) => {
+            const parsedRow: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(row)) {
+              parsedRow[key] = parseJsonValue(value);
+            }
+            return parsedRow;
+          }) ?? [];
 
         return {
           success: true,

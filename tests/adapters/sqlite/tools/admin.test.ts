@@ -11,7 +11,6 @@ import {
   type TestAdapter,
 } from "../../../utils/test-adapter.js";
 
-
 describe("Admin Tools", () => {
   let adapter: TestAdapter;
   let tools: Map<string, (params: unknown) => Promise<unknown>>;
@@ -22,8 +21,6 @@ describe("Admin Tools", () => {
       type: "sqlite",
       connectionString: ":memory:",
     });
-
-
 
     // Get tools as a map for easy access
     tools = new Map();
@@ -430,8 +427,6 @@ describe("Admin Tools", () => {
       expect(scoreCol?.defaultValue).toBe("0.0");
     });
   });
-
-
 
   describe("sqlite_backup", () => {
     it("should attempt to backup database", async () => {

@@ -106,7 +106,6 @@ export class AuditLogger {
     if (this.buffer.length === 0) return;
 
     const doFlush = async (): Promise<void> => {
-       
       await Promise.resolve();
       // Swap the buffer so new entries can accumulate while we write
       const entries = this.buffer;
@@ -115,7 +114,7 @@ export class AuditLogger {
       try {
         if (this.stderrMode) {
           // Stderr mode: write directly
-          const lines = entries.map(e => JSON.stringify(e));
+          const lines = entries.map((e) => JSON.stringify(e));
           process.stderr.write(lines.join("\n") + "\n");
         } else if (this.systemDb) {
           const db = this.systemDb.getDb();
@@ -123,7 +122,7 @@ export class AuditLogger {
             INSERT INTO audit_logs (timestamp, requestId, tool, category, scope, user, scopesJson, durationMs, success, tokenEstimate, error, argsJson, backupPath)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
-          
+
           const transaction = db.transaction((logs: AuditEntry[]) => {
             for (const log of logs) {
               stmt.run(
@@ -139,11 +138,11 @@ export class AuditLogger {
                 log.tokenEstimate ?? null,
                 log.error ?? null,
                 log.args ? JSON.stringify(log.args) : null,
-                log.backup ?? null
+                log.backup ?? null,
               );
             }
           });
-          
+
           transaction(entries);
         }
       } catch (err) {
@@ -190,13 +189,17 @@ export class AuditLogger {
 
     try {
       const db = this.systemDb.getDb();
-      const rows = db.prepare(`
+      const rows = db
+        .prepare(
+          `
         SELECT * FROM audit_logs
         ORDER BY timestamp DESC
         LIMIT ?
-      `).all(limit) as AuditLogRow[];
+      `,
+        )
+        .all(limit) as AuditLogRow[];
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         timestamp: row.timestamp,
         requestId: row.requestId,
         tool: row.tool,
@@ -208,8 +211,10 @@ export class AuditLogger {
         success: row.success === 1,
         tokenEstimate: row.tokenEstimate ?? undefined,
         error: row.error ?? undefined,
-        args: row.argsJson ? (JSON.parse(row.argsJson) as Record<string, unknown>) : undefined,
-        backup: row.backupPath ?? undefined
+        args: row.argsJson
+          ? (JSON.parse(row.argsJson) as Record<string, unknown>)
+          : undefined,
+        backup: row.backupPath ?? undefined,
       }));
     } catch {
       return [];
@@ -272,7 +277,8 @@ export class AuditLogger {
         params.push(filters.toTimestamp);
       }
 
-      const totalCount = (db.prepare(countSql).get(...params) as { c: number }).c;
+      const totalCount = (db.prepare(countSql).get(...params) as { c: number })
+        .c;
 
       sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?";
       params.push(filters.limit ?? 50);
@@ -280,7 +286,7 @@ export class AuditLogger {
 
       const rows = db.prepare(sql).all(...params) as AuditLogRow[];
 
-      const entries = rows.map(row => ({
+      const entries = rows.map((row) => ({
         timestamp: row.timestamp,
         requestId: row.requestId,
         tool: row.tool,
@@ -292,8 +298,10 @@ export class AuditLogger {
         success: row.success === 1,
         tokenEstimate: row.tokenEstimate ?? undefined,
         error: row.error ?? undefined,
-        args: row.argsJson ? (JSON.parse(row.argsJson) as Record<string, unknown>) : undefined,
-        backup: row.backupPath ?? undefined
+        args: row.argsJson
+          ? (JSON.parse(row.argsJson) as Record<string, unknown>)
+          : undefined,
+        backup: row.backupPath ?? undefined,
       }));
 
       return { entries, totalCount };

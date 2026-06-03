@@ -72,19 +72,19 @@ flowchart LR
 
 ### CI / Orchestration
 
-| File                                                   | Trigger                        | Purpose                                                                                 |
-| ------------------------------------------------------ | ------------------------------ | --------------------------------------------------------------------------------------- |
-| [gatekeeper.yml](gatekeeper.yml)                       | push to `main` / tag `v*`      | Orchestrates CI/CD: fans out lint + security scans, gates docker-publish on all passing |
-| [lint-and-test.yml](lint-and-test.yml)                 | PR to `main` / `workflow_call` | Lint, typecheck, build, unit tests (Node 24.x + 25.x matrix), npm audit                 |
-| [e2e.yml](e2e.yml)                                     | PR to `main` / `workflow_call` | End-to-end tests via Playwright                                                         |
+| File                                   | Trigger                        | Purpose                                                                                 |
+| -------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------- |
+| [gatekeeper.yml](gatekeeper.yml)       | push to `main` / tag `v*`      | Orchestrates CI/CD: fans out lint + security scans, gates docker-publish on all passing |
+| [lint-and-test.yml](lint-and-test.yml) | PR to `main` / `workflow_call` | Lint, typecheck, build, unit tests (Node 24.x + 25.x matrix), npm audit                 |
+| [e2e.yml](e2e.yml)                     | PR to `main` / `workflow_call` | End-to-end tests via Playwright                                                         |
 
 ### Security
 
-| File                                         | Trigger                                           | Purpose                                                                                            |
-| -------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| [codeql.yml](codeql.yml)                     | PR / weekly / `workflow_call`                     | CodeQL static analysis for `javascript-typescript` and `actions`                                   |
-| [secrets-scanning.yml](secrets-scanning.yml) | PR / `workflow_call`                              | TruffleHog (verified secrets) + Gitleaks scanning                                                  |
-| [security-update.yml](security-update.yml)   | weekly / manual / `workflow_call`                 | Docker image Trivy scan (CRITICAL/HIGH/MEDIUM), SARIF upload, auto-creates GitHub issue on failure |
+| File                                         | Trigger                           | Purpose                                                                                            |
+| -------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [codeql.yml](codeql.yml)                     | PR / weekly / `workflow_call`     | CodeQL static analysis for `javascript-typescript` and `actions`                                   |
+| [secrets-scanning.yml](secrets-scanning.yml) | PR / `workflow_call`              | TruffleHog (verified secrets) + Gitleaks scanning                                                  |
+| [security-update.yml](security-update.yml)   | weekly / manual / `workflow_call` | Docker image Trivy scan (CRITICAL/HIGH/MEDIUM), SARIF upload, auto-creates GitHub issue on failure |
 
 ### Release & Publishing
 
@@ -95,19 +95,19 @@ flowchart LR
 
 ### Maintenance
 
-| File                                                     | Trigger              | Purpose                                                                   |
-| -------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------- |
-| [dockerfile-patch-drift.yml](dockerfile-patch-drift.yml) | schedule             | Detects out-of-sync Dockerfile versions between testing and production    |
+| File                                                     | Trigger  | Purpose                                                                |
+| -------------------------------------------------------- | -------- | ---------------------------------------------------------------------- |
+| [dockerfile-patch-drift.yml](dockerfile-patch-drift.yml) | schedule | Detects out-of-sync Dockerfile versions between testing and production |
 
 ### Agentic Workflows (GitHub Copilot)
 
 These are AI-powered workflows using [GitHub Copilot Coding Agent](https://docs.github.com/en/copilot/using-github-copilot/using-copilot-coding-agent-to-work-on-tasks/about-assigning-tasks-to-copilot). Each `.md` file contains the agent prompt; the corresponding `.lock.yml` is the auto-generated compiled workflow (**do not edit `.lock.yml` files**).
 
-| Prompt                                               | Lock File                                                    | Schedule             | Purpose                                                                                  |
-| ---------------------------------------------------- | ------------------------------------------------------------ | -------------------- | ---------------------------------------------------------------------------------------- |
-| [ci-health-monitor.md](ci-health-monitor.md)         | [ci-health-monitor.lock.yml](ci-health-monitor.lock.yml)     | Wed 14:00 UTC        | Audits workflows for deprecated actions, Node.js runtime issues, stale Dependabot config |
-| [docs-drift-detector.md](docs-drift-detector.md)     | [docs-drift-detector.lock.yml](docs-drift-detector.lock.yml) | PR (on code changes) | Audits README, DOCKER_README, CONTRIBUTING for drift against code changes                |
-| [wiki-drift-detector.md](wiki-drift-detector.md)     | [wiki-drift-detector.lock.yml](wiki-drift-detector.lock.yml) | PR (on code changes) | Audits Wiki documentation for drift against code changes                                 |
+| Prompt                                           | Lock File                                                    | Schedule             | Purpose                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------ | -------------------- | ---------------------------------------------------------------------------------------- |
+| [ci-health-monitor.md](ci-health-monitor.md)     | [ci-health-monitor.lock.yml](ci-health-monitor.lock.yml)     | Wed 14:00 UTC        | Audits workflows for deprecated actions, Node.js runtime issues, stale Dependabot config |
+| [docs-drift-detector.md](docs-drift-detector.md) | [docs-drift-detector.lock.yml](docs-drift-detector.lock.yml) | PR (on code changes) | Audits README, DOCKER_README, CONTRIBUTING for drift against code changes                |
+| [wiki-drift-detector.md](wiki-drift-detector.md) | [wiki-drift-detector.lock.yml](wiki-drift-detector.lock.yml) | PR (on code changes) | Audits Wiki documentation for drift against code changes                                 |
 
 ---
 

@@ -216,16 +216,16 @@ export class HttpTransport {
       });
     });
 
+    // Apply auth middleware before MCP endpoints
+    applyAuthMiddleware(this.state);
+    applyScopeEnforcementMiddleware(this.state);
+
     if (this.state.config.metricsExport === "prometheus") {
       this.state.app.get("/metrics", (_req, res) => {
         res.set("Content-Type", "text/plain");
         res.send(metrics.toPrometheus());
       });
     }
-
-    // Apply auth middleware before MCP endpoints
-    applyAuthMiddleware(this.state);
-    applyScopeEnforcementMiddleware(this.state);
 
     // Bind authenticated context to AsyncLocalStorage for audit identity capture.
     // Must be AFTER auth middleware (which sets req.auth) and BEFORE endpoint

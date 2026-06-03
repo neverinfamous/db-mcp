@@ -35,7 +35,11 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
     requiredScopes: ["read"],
     annotations: { ...readOnly("Read Query"), idempotentHint: true },
     handler: async (params: unknown, _context: RequestContext) => {
-      let input: { query: string; params?: unknown[] | undefined; cursor?: string | undefined };
+      let input: {
+        query: string;
+        params?: unknown[] | undefined;
+        cursor?: string | undefined;
+      };
       try {
         input = ReadQuerySchema.parse(resolveAliases(params, { sql: "query" }));
       } catch (error: unknown) {
@@ -253,17 +257,24 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         let offset = 0;
         if (input.cursor) {
           try {
-            const cursorData = JSON.parse(Buffer.from(input.cursor, 'base64').toString('utf8')) as Record<string, unknown>;
-            if (typeof cursorData["offset"] === 'number') {
+            const cursorData = JSON.parse(
+              Buffer.from(input.cursor, "base64").toString("utf8"),
+            ) as Record<string, unknown>;
+            if (typeof cursorData["offset"] === "number") {
               offset = cursorData["offset"];
             }
           } catch {
             return {
               ...formatHandlerError(
-                new ValidationError("Invalid cursor format", "VALIDATION_ERROR", {
-                  suggestion: "Use the nextCursor value returned from a previous query.",
-                  details: {},
-                })
+                new ValidationError(
+                  "Invalid cursor format",
+                  "VALIDATION_ERROR",
+                  {
+                    suggestion:
+                      "Use the nextCursor value returned from a previous query.",
+                    details: {},
+                  },
+                ),
               ),
               rowCount: 0,
               rows: [],
@@ -278,7 +289,7 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         const isLimitable =
           upperForLimit.startsWith("SELECT") ||
           upperForLimit.startsWith("WITH");
-        
+
         const limit = 50;
         const hasLimit = /\bLIMIT\b/i.test(finalQuery);
         if (isLimitable && !hasLimit) {
@@ -294,12 +305,14 @@ export function createReadQueryTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         const result = await adapter.executeReadQuery(finalQuery, input.params);
-        
+
         let nextCursor: string | undefined;
         // If we didn't have a LIMIT originally, and we got 50 rows, there might be more
         if (isLimitable && !hasLimit && result.rows?.length === limit) {
           const nextOffset = offset + limit;
-          nextCursor = Buffer.from(JSON.stringify({ offset: nextOffset })).toString('base64');
+          nextCursor = Buffer.from(
+            JSON.stringify({ offset: nextOffset }),
+          ).toString("base64");
         }
 
         return {

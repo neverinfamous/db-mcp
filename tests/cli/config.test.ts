@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -12,7 +12,9 @@ describe("CLI Configuration & Dumping", () => {
   beforeAll(() => {
     // Ensure dist/cli.js exists
     if (!fs.existsSync(cliPath)) {
-      throw new Error("dist/cli.js not found. Please run 'npm run build' before testing.");
+      throw new Error(
+        "dist/cli.js not found. Please run 'npm run build' before testing.",
+      );
     }
 
     if (!fs.existsSync(tempDir)) {
@@ -30,7 +32,7 @@ metricsExport: "prometheus"
 databases:
   - type: "sqlite"
     connectionString: "yaml-db.sqlite"
-`.trim()
+`.trim(),
     );
 
     // Write a sample JSON config
@@ -41,7 +43,7 @@ databases:
         port: 8910,
         authToken: "super-secret-json-token",
         metricsExport: "prometheus",
-      })
+      }),
     );
   });
 
@@ -51,9 +53,11 @@ databases:
     }
   });
 
-  function runDumpConfig(args: string[] = [], env: Record<string, string> = {}): Record<string, any> {
-    const command = `node ${cliPath} --dump-config ${args.join(" ")}`;
-    const output = execSync(command, {
+  function runDumpConfig(
+    args: string[] = [],
+    env: Record<string, string> = {},
+  ): Record<string, any> {
+    const output = execFileSync("node", [cliPath, "--dump-config", ...args], {
       encoding: "utf-8",
       env: { ...process.env, ...env },
     });
@@ -78,21 +82,30 @@ databases:
 
   it("should enforce precedence: CLI flags > File Config", () => {
     // Port 9999 from CLI should override Port 4567 from YAML
-    const config = runDumpConfig(["--config", yamlConfigPath, "--port", "9999"]);
+    const config = runDumpConfig([
+      "--config",
+      yamlConfigPath,
+      "--port",
+      "9999",
+    ]);
     expect(config.port).toBe(9999);
     expect(config.name).toBe("yaml-server-name"); // Fallback to YAML
   });
 
   it("should enforce precedence: Env Vars > File Config", () => {
     // HOST 127.0.0.1 from Env should override HOST from YAML
-    const config = runDumpConfig(["--config", yamlConfigPath], { HOST: "127.0.0.1" });
+    const config = runDumpConfig(["--config", yamlConfigPath], {
+      HOST: "127.0.0.1",
+    });
     expect(config.host).toBe("127.0.0.1");
     expect(config.name).toBe("yaml-server-name"); // Fallback to YAML
   });
 
   it("should enforce precedence: CLI flags > Env Vars", () => {
     // Host from CLI should override HOST from Env
-    const config = runDumpConfig(["--server-host", "192.168.1.1"], { HOST: "127.0.0.1" });
+    const config = runDumpConfig(["--server-host", "192.168.1.1"], {
+      HOST: "127.0.0.1",
+    });
     expect(config.host).toBe("192.168.1.1");
   });
 
@@ -103,8 +116,17 @@ databases:
   });
 
   it("should safely redact sensitive oauth JWKS URIs when dumping config", () => {
-    const command = `node ${cliPath} --dump-config --oauth-enabled --oauth-jwks-uri "secret-jwks-uri"`;
-    const output = execSync(command, { encoding: "utf-8" });
+    const output = execFileSync(
+      "node",
+      [
+        cliPath,
+        "--dump-config",
+        "--oauth-enabled",
+        "--oauth-jwks-uri",
+        "secret-jwks-uri",
+      ],
+      { encoding: "utf-8" },
+    );
     const config = JSON.parse(output);
     expect(config.oauth).toBeDefined();
     expect(config.oauth.jwksUri).toBe("***REDACTED***");

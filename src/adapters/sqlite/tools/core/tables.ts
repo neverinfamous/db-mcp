@@ -425,9 +425,11 @@ export function createDescribeTableTool(
               for (const row of xinfoResult.rows) {
                 const colName = row["name"] as string;
                 const hidden = row["hidden"] as number;
-                
+
                 if (hidden === 2 || hidden === 3) {
-                  let enriched = enrichedColumns.find(c => c.name === colName);
+                  let enriched = enrichedColumns.find(
+                    (c) => c.name === colName,
+                  );
                   if (!enriched) {
                     enriched = {
                       name: colName,

@@ -119,7 +119,6 @@ export const PragmaCompileOptionsSchema = z.object({
 
 export const PragmaDatabaseListSchema = z.object({});
 
-
 export const VacuumSchema = z.object({
   analyze: z
     .boolean()
@@ -194,18 +193,34 @@ export const AuditDiffBackupSchema = z.object({
 
 export const AuditSearchSchema = z.object({
   tool: z.string().optional().describe("Filter by exact tool name"),
-  category: z.enum(["read", "write", "admin", "auth", "error"]).optional().describe("Filter by operation category"),
+  category: z
+    .enum(["read", "write", "admin", "auth", "error"])
+    .optional()
+    .describe("Filter by operation category"),
   success: z.boolean().optional().describe("Filter by success status"),
   requestId: z.string().optional().describe("Filter by exact request ID"),
-  fromTimestamp: z.string().optional().describe("Filter by start timestamp (ISO 8601)"),
-  toTimestamp: z.string().optional().describe("Filter by end timestamp (ISO 8601)"),
+  fromTimestamp: z
+    .string()
+    .optional()
+    .describe("Filter by start timestamp (ISO 8601)"),
+  toTimestamp: z
+    .string()
+    .optional()
+    .describe("Filter by end timestamp (ISO 8601)"),
   limit: z.preprocess(
     coerceNumber,
-    z.number().int().min(1).max(1000).optional().default(50).describe("Maximum number of entries to return (default 50)")
+    z
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .optional()
+      .default(50)
+      .describe("Maximum number of entries to return (default 50)"),
   ),
   offset: z.preprocess(
     coerceNumber,
-    z.number().int().min(0).optional().default(0).describe("Pagination offset")
+    z.number().int().min(0).optional().default(0).describe("Pagination offset"),
   ),
 });
 
@@ -443,7 +458,6 @@ export const PragmaTableInfoOutputSchema = z
     columns: z.array(PragmaTableInfoColumnSchema).optional(),
   })
   .extend(ErrorResponseFields.shape);
-
 
 export const AttachDatabaseOutputSchema = z
   .object({

@@ -48,12 +48,21 @@ class ToolMetric {
 
   getSummary(): MetricSummary {
     if (this.sampleCount === 0) {
-      return { calls: this.calls, errors: this.errors, tokens: this.tokens, p50: 0, p95: 0, p99: 0 };
+      return {
+        calls: this.calls,
+        errors: this.errors,
+        tokens: this.tokens,
+        p50: 0,
+        p95: 0,
+        p99: 0,
+      };
     }
 
     // Sort active samples to calculate percentiles
-    const activeSamples = this.samples.slice(0, this.sampleCount).sort((a, b) => a - b);
-    
+    const activeSamples = this.samples
+      .slice(0, this.sampleCount)
+      .sort((a, b) => a - b);
+
     return {
       calls: this.calls,
       errors: this.errors,
@@ -71,7 +80,7 @@ class ToolMetric {
     const rest = idx - base;
     const v0 = sorted[base] ?? 0;
     const v1 = sorted[base + 1];
-    
+
     if (v1 !== undefined) {
       return Math.round(v0 + rest * (v1 - v0));
     } else {
@@ -109,11 +118,20 @@ export class MetricsRegistry {
     try {
       const db = this.systemDb.getDb();
       // Load latest snapshots for each tool to initialize counters
-      const rows = db.prepare(`
+      const rows = db
+        .prepare(
+          `
         SELECT tool, MAX(calls) as max_calls, MAX(errors) as max_errors, MAX(tokens) as max_tokens
         FROM metrics_snapshots
         GROUP BY tool
-      `).all() as { tool: string; max_calls: number; max_errors: number; max_tokens: number }[];
+      `,
+        )
+        .all() as {
+        tool: string;
+        max_calls: number;
+        max_errors: number;
+        max_tokens: number;
+      }[];
 
       for (const row of rows) {
         const metric = new ToolMetric();
@@ -122,18 +140,26 @@ export class MetricsRegistry {
         metric.tokens = row.max_tokens;
         this.tools.set(row.tool, metric);
       }
-      logger.info(`Loaded historical metrics for ${rows.length} tools`, { module: "METRICS" });
+      logger.info(`Loaded historical metrics for ${rows.length} tools`, {
+        module: "METRICS",
+      });
     } catch (err) {
-      logger.warning("Failed to load historical metrics", { module: "METRICS", error: err instanceof Error ? err : new Error(String(err)) });
+      logger.warning("Failed to load historical metrics", {
+        module: "METRICS",
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
     }
   }
 
   private startFlushTimer(): void {
     if (this.flushTimer) clearInterval(this.flushTimer);
     // Flush metrics every 5 minutes
-    this.flushTimer = setInterval(() => {
-      this.flushToDb();
-    }, 5 * 60 * 1000);
+    this.flushTimer = setInterval(
+      () => {
+        this.flushToDb();
+      },
+      5 * 60 * 1000,
+    );
     this.flushTimer.unref();
   }
 
@@ -157,13 +183,16 @@ export class MetricsRegistry {
             summary.p50,
             summary.p95,
             summary.p99,
-            summary.tokens
+            summary.tokens,
           );
         }
       });
       transaction();
     } catch (err) {
-      logger.warning("Failed to flush metrics to db", { module: "METRICS", error: err instanceof Error ? err : new Error(String(err)) });
+      logger.warning("Failed to flush metrics to db", {
+        module: "METRICS",
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
     }
   }
 
@@ -175,7 +204,12 @@ export class MetricsRegistry {
     this.flushToDb();
   }
 
-  recordToolCall(toolName: string, durationMs: number, success: boolean, tokens = 0): void {
+  recordToolCall(
+    toolName: string,
+    durationMs: number,
+    success: boolean,
+    tokens = 0,
+  ): void {
     let metric = this.tools.get(toolName);
     if (!metric) {
       metric = new ToolMetric();
@@ -207,13 +241,13 @@ export class MetricsRegistry {
     return {
       tools: toolsSummary,
       resources: resourcesSummary,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   toPrometheus(): string {
     const lines: string[] = [];
-    
+
     // Tools
     lines.push("# HELP db_mcp_tool_calls_total Total tool calls");
     lines.push("# TYPE db_mcp_tool_calls_total counter");

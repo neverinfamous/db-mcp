@@ -137,7 +137,6 @@ jobs:
           cache-from: type=gha,scope=smoke-${{ matrix.platform }}
           cache-to: type=gha,scope=smoke-${{ matrix.platform }},mode=max
 
-
       - name: Smoke test — HTTP transport starts and responds
         run: |
           # Run the container in HTTP mode, verify health endpoint

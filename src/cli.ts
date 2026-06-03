@@ -25,7 +25,11 @@ import {
 /**
  * Parse command line arguments
  */
-function parseArgs(): { cliConfig: Partial<McpServerConfig>, dumpConfig: boolean, configPath?: string } {
+function parseArgs(): {
+  cliConfig: Partial<McpServerConfig>;
+  dumpConfig: boolean;
+  configPath?: string;
+} {
   const args = process.argv.slice(2);
   const config: Partial<McpServerConfig> = {};
   const databases: DatabaseConfig[] = [];
@@ -161,7 +165,9 @@ function parseArgs(): { cliConfig: Partial<McpServerConfig>, dumpConfig: boolean
         if (lastDb?.options && "backend" in lastDb.options) {
           lastDb.options["encryptionKey"] = keyValue;
         } else {
-          console.error("Error: --encryption-key must be specified after --sqlite-native");
+          console.error(
+            "Error: --encryption-key must be specified after --sqlite-native",
+          );
           process.exit(1);
         }
       }
@@ -224,10 +230,10 @@ function parseArgs(): { cliConfig: Partial<McpServerConfig>, dumpConfig: boolean
     };
   }
 
-  return { 
-    cliConfig: config, 
-    dumpConfig, 
-    ...(configPath !== undefined ? { configPath } : {})
+  return {
+    cliConfig: config,
+    dumpConfig,
+    ...(configPath !== undefined ? { configPath } : {}),
   };
 }
 
@@ -461,17 +467,23 @@ async function main(): Promise<void> {
 
     if (dumpConfig) {
       // Redact sensitive values before dumping
-      const safeConfig = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
+      const safeConfig = JSON.parse(JSON.stringify(config)) as Record<
+        string,
+        unknown
+      >;
       if (typeof safeConfig["authToken"] === "string") {
         safeConfig["authToken"] = "***REDACTED***";
       }
-      if (typeof safeConfig["oauth"] === "object" && safeConfig["oauth"] !== null) {
+      if (
+        typeof safeConfig["oauth"] === "object" &&
+        safeConfig["oauth"] !== null
+      ) {
         const oauth = safeConfig["oauth"] as Record<string, unknown>;
         if (typeof oauth["jwksUri"] === "string") {
           oauth["jwksUri"] = "***REDACTED***";
         }
       }
-      
+
       process.stdout.write(JSON.stringify(safeConfig, null, 2) + "\n");
       process.exit(0);
     }
@@ -509,10 +521,13 @@ async function main(): Promise<void> {
 
     // Register database adapters based on config.databases
     const globalEncryptionKey = process.env["DB_ENCRYPTION_KEY"];
-    
+
     for (const dbConfig of config.databases) {
       if (dbConfig.type === "sqlite") {
-        const options = (dbConfig.options ?? {}) as { backend?: string; encryptionKey?: string };
+        const options = (dbConfig.options ?? {}) as {
+          backend?: string;
+          encryptionKey?: string;
+        };
         if (globalEncryptionKey && !options.encryptionKey) {
           if (options.backend === "better-sqlite3") {
             options.encryptionKey = globalEncryptionKey;
@@ -521,7 +536,10 @@ async function main(): Promise<void> {
         dbConfig.options = options;
 
         if (options.encryptionKey && options.backend !== "better-sqlite3") {
-          logger.error("FATAL: SQLCipher encryption is only supported with the native better-sqlite3 backend. Use --sqlite-native or specify backend: 'better-sqlite3' in config.", { module: "CLI" });
+          logger.error(
+            "FATAL: SQLCipher encryption is only supported with the native better-sqlite3 backend. Use --sqlite-native or specify backend: 'better-sqlite3' in config.",
+            { module: "CLI" },
+          );
           process.exit(1);
         }
 

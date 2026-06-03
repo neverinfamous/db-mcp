@@ -150,8 +150,6 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
     expect(pragma.settings).toHaveProperty("journal_mode");
   });
 
-
-
   test("should list resource templates", async () => {
     const response = await client.listResourceTemplates();
 
@@ -315,7 +313,6 @@ test.describe("E2E Resource Reads (via MCP SDK Client)", () => {
 
     expect(Array.isArray(views)).toBe(true);
   });
-
 
   // ===========================================================================
   // R9: Resource Subscriptions

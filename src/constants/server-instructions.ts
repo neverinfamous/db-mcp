@@ -17,13 +17,13 @@ export const INSTRUCTIONS = `# db-mcp (SQLite MCP Server)
 
 ## Quick Access
 
-| Purpose         | Action                     |
-| --------------- | -------------------------- |
-| Health check    | \`server_health\` tool       |
+| Purpose            | Action                     |
+| ------------------ | -------------------------- |
+| Health check       | \`server_health\` tool       |
 | Live server health | \`sqlite://health\` resource |
-| Server info     | \`server_info\` tool         |
-| Database schema | \`sqlite://schema\` resource |
-| Tool help       | \`sqlite://help\` resource   |
+| Server info        | \`server_info\` tool         |
+| Database schema    | \`sqlite://schema\` resource |
+| Tool help          | \`sqlite://help\` resource   |
 
 ## Built-in Tools
 
@@ -41,7 +41,9 @@ Only help resources for your enabled tool groups are registered.`;
  * Other keys are tool groups (sqlite://help/{group}).
  */
 export const HELP_CONTENT: ReadonlyMap<string, string> = new Map([
-  ["admin", `# db-mcp Help — Database Administration (31N/30W tools) + Server Audit (7 tools)
+  [
+    "admin",
+    `# db-mcp Help — Database Administration (31N/30W tools) + Server Audit (7 tools)
 
 ## Maintenance
 
@@ -150,8 +152,11 @@ sqlite_create_csv_table({
   tableName: "csv_data",
   filePath: "/absolute/path/to/data.csv",
 });
-\`\`\``],
-  ["core", `# db-mcp Help — Core Operations (21 tools)
+\`\`\``,
+  ],
+  [
+    "core",
+    `# db-mcp Help — Core Operations (21 tools)
 
 ## Basic Queries
 
@@ -184,8 +189,11 @@ sqlite_create_csv_table({
 - \`sqlite_exists({ table: "users", where: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
 - \`sqlite_truncate({ table: "users" })\` — quickly delete all rows from a table (executes \`DELETE FROM table\`)
 - \`sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })\` — add or subtract time intervals from a date column. By default returns only the computed column; use \`selectColumns\` to return additional context.
-- \`sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })\` — calculate the difference between two date columns. By default returns only the computed column; use \`selectColumns\` to return additional context.`],
-  ["geo", `# db-mcp Help — Geospatial Operations (11N/4W: 4 basic + 7 SpatiaLite [NATIVE ONLY])
+- \`sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })\` — calculate the difference between two date columns. By default returns only the computed column; use \`selectColumns\` to return additional context.`,
+  ],
+  [
+    "geo",
+    `# db-mcp Help — Geospatial Operations (11N/4W: 4 basic + 7 SpatiaLite [NATIVE ONLY])
 
 ## Basic Geo (always available — Haversine formula)
 
@@ -290,8 +298,11 @@ sqlite_spatialite_index({
   geometryColumn: "geom",
   action: "create",
 }); // create, drop, or check
-\`\`\``],
-  ["gotchas", `# db-mcp Help — Gotchas & Code Mode
+\`\`\``,
+  ],
+  [
+    "gotchas",
+    `# db-mcp Help — Gotchas & Code Mode
 
 ## ⚠️ Critical Gotchas
 
@@ -354,8 +365,11 @@ sqlite_spatialite_index({
 
 **Positional args work**: \`sqlite.core.readQuery("SELECT...")\`, \`sqlite.json.insert("docs", "data", {...})\`
 
-**Discovery**: \`sqlite.help()\` returns all groups and methods. \`sqlite.core.help()\`, \`sqlite.json.help()\` for group-specific methods.`],
-  ["introspection", `# db-mcp Help — Schema Introspection (10 tools)
+**Discovery**: \`sqlite.help()\` returns all groups and methods. \`sqlite.core.help()\`, \`sqlite.json.help()\` for group-specific methods.`,
+  ],
+  [
+    "introspection",
+    `# db-mcp Help — Schema Introspection (10 tools)
 
 All introspection tools are **read-only** — they query PRAGMAs and sqlite_master, never modify data.
 
@@ -429,7 +443,12 @@ sqlite_storage_analysis({ limit: 10 }); // top 10 tables only
 sqlite_index_audit({ excludeSystemTables: true });
 sqlite_index_audit({ table: "orders", minSeverity: "warning" }); // reduce payload
 // Run EXPLAIN QUERY PLAN on target queries to recommend composite/partial indexes
-sqlite_index_audit({ recommendComposite: true, queriesToAnalyze: ["SELECT * FROM orders WHERE user_id = 1 AND status = 'active'"] });
+sqlite_index_audit({
+  recommendComposite: true,
+  queriesToAnalyze: [
+    "SELECT * FROM orders WHERE user_id = 1 AND status = 'active'",
+  ],
+});
 
 // EXPLAIN QUERY PLAN with scan-type classification and optimization suggestions (SELECT/WITH only)
 sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
@@ -438,8 +457,11 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
 ## ⚠️ Gotchas
 
 - \`excludeSystemTables\` defaults to \`true\` — SpatiaLite system tables are hidden for cleaner output. Pass \`false\` to include them
-- \`sqlite_migration_risks\` analyzes DDL text statically — it does NOT execute the statements`],
-  ["json", `# db-mcp Help — JSON Operations (25 tools)
+- \`sqlite_migration_risks\` analyzes DDL text statically — it does NOT execute the statements`,
+  ],
+  [
+    "json",
+    `# db-mcp Help — JSON Operations (25 tools)
 
 ## Collection & CRUD
 
@@ -513,8 +535,11 @@ sqlite_json_group_object({
 
 - \`sqlite_json_storage_info({ table, column })\` — check text vs JSONB format
 - \`sqlite_jsonb_convert({ table, column })\` — convert to JSONB for faster queries
-- \`sqlite_json_normalize_column({ table, column, outputFormat? })\` — normalize JSON (sort keys, compact). ⚠️ Defaults to \`"preserve"\` (maintains original format); use \`outputFormat: "text"\` to force text output`],
-  ["migration", `# db-mcp Help — Migration Tracking (6 tools)
+- \`sqlite_json_normalize_column({ table, column, outputFormat? })\` — normalize JSON (sort keys, compact). ⚠️ Defaults to \`"preserve"\` (maintains original format); use \`outputFormat: "text"\` to force text output`,
+  ],
+  [
+    "migration",
+    `# db-mcp Help — Migration Tracking (6 tools)
 
 ⚠️ Must call \`sqlite_migration_init()\` before using any other migration tool — it creates the tracking table.
 
@@ -556,8 +581,11 @@ sqlite_migration_status();
 ## ⚠️ Gotchas
 
 - Rollback requires \`rollbackSql\` to have been provided when the migration was recorded/applied
-- Migration group is **opt-in** — not included by default. Enable via \`--tool-filter\` flag: use \`dev-schema\` (core+introspection+migration+codemode) or \`full\` (all groups)`],
-  ["stats", `# db-mcp Help — Statistical Analysis (23N/17W: 17 core + 6 window [NATIVE ONLY])
+- Migration group is **opt-in** — not included by default. Enable via \`--tool-filter\` flag: use \`dev-schema\` (core+introspection+migration+codemode) or \`full\` (all groups)`,
+  ],
+  [
+    "stats",
+    `# db-mcp Help — Statistical Analysis (23N/17W: 17 core + 6 window [NATIVE ONLY])
 
 ## Core Statistics (always available)
 
@@ -676,8 +704,11 @@ sqlite_window_moving_avg({
   windowSize: 7,
   selectColumns: ["date"],
 });
-\`\`\``],
-  ["text", `# db-mcp Help — Text Processing & FTS5 (20N/15W: 15 text + 5 FTS5 [NATIVE ONLY])
+\`\`\``,
+  ],
+  [
+    "text",
+    `# db-mcp Help — Text Processing & FTS5 (20N/15W: 15 text + 5 FTS5 [NATIVE ONLY])
 
 ## Full-Text Search / FTS5 (5 tools, Native only)
 
@@ -698,7 +729,7 @@ sqlite_fts_search({
   query: "machine learning",
   limit: 10,
   includeFacets: true, // optionally return breakdown by technique
-  cursor: "..." // Optional offset-based cursor for pagination (returns nextCursor)
+  cursor: "...", // Optional offset-based cursor for pagination (returns nextCursor)
 });
 sqlite_fts_match_info({ table: "articles_fts", query: "machine learning" }); // bm25 ranking info
 
@@ -804,7 +835,7 @@ sqlite_advanced_search({
   searchTerm: "laptop",
   techniques: ["exact", "fuzzy", "phonetic"],
   fuzzyThreshold: 0.4,
-  includeFacets: true
+  includeFacets: true,
 });
 
 // Hybrid Search — combines FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF)
@@ -814,7 +845,7 @@ sqlite_hybrid_search({
   vectorColumn: "embedding",
   queryVector: [0.1, 0.2, 0.3], // vector data from external embedding API
   metric: "cosine",
-  limit: 10
+  limit: 10,
 });
 
 // Sentiment analysis — text analysis (can analyze raw text or database columns)
@@ -828,8 +859,11 @@ sqlite_text_sentiment({
   returnWords: true,
 });
 // → { sentiment: "neutral", score: 0, matchedPositive: ["great"], matchedNegative: ["slow"] }
-\`\`\``],
-  ["transactions", `# db-mcp Help — Transactions (8 tools, Native only)
+\`\`\``,
+  ],
+  [
+    "transactions",
+    `# db-mcp Help — Transactions (8 tools, Native only)
 
 ## Atomic Execution (preferred for simple cases)
 
@@ -860,8 +894,11 @@ sqlite_transaction_status(); // → { status: "active" | "none", active: true/fa
 
 - Transaction tools are **Native only** — WASM adapter does not support transactions
 - Use \`sqlite_transaction_execute\` for simple multi-statement operations; manual \`begin\`/\`commit\` for complex flows with savepoints
-- \`sqlite_transaction_status\` is read-only and requires only \`read\` scope; all other transaction tools require \`write\` scope`],
-  ["vector", `# db-mcp Help — Vector/Semantic Search (11 tools)
+- \`sqlite_transaction_status\` is read-only and requires only \`read\` scope; all other transaction tools require \`write\` scope`,
+  ],
+  [
+    "vector",
+    `# db-mcp Help — Vector/Semantic Search (11 tools)
 
 \`\`\`javascript
 // Create vector table with metadata columns
@@ -887,5 +924,6 @@ sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }); // returns sampleSi
 // Utility tools for preprocessing
 sqlite_vector_normalize({ vector: [3, 4, 0, 0] }); // returns unit vector [0.6, 0.8, 0, 0]
 sqlite_vector_distance({ vector1: [...], vector2: [...], metric: "cosine" }); // returns { value: <number> }
-\`\`\``],
+\`\`\``,
+  ],
 ]);

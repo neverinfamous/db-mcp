@@ -255,9 +255,14 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         let offset = 0;
         if (input.cursor) {
           try {
-            const cursorData = JSON.parse(Buffer.from(input.cursor, 'base64').toString('utf8')) as Record<string, unknown>;
-            if (typeof cursorData["offset"] === 'number') offset = cursorData["offset"];
-          } catch { /* ignore invalid cursor */ }
+            const cursorData = JSON.parse(
+              Buffer.from(input.cursor, "base64").toString("utf8"),
+            ) as Record<string, unknown>;
+            if (typeof cursorData["offset"] === "number")
+              offset = cursorData["offset"];
+          } catch {
+            /* ignore invalid cursor */
+          }
         }
 
         let selectClause = input.includeRowData ? "*" : "rowid";
@@ -269,10 +274,12 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
         if (input.query === "*" || input.query.trim() === "") {
           const sql = `SELECT ${selectClause}, NULL as rank FROM "${input.table}" ORDER BY rowid LIMIT ${input.limit} OFFSET ${offset}`;
           const result = await adapter.executeReadQuery(sql, queryParams);
-          
+
           let nextCursor: string | undefined;
           if (result.rows?.length === input.limit) {
-            nextCursor = Buffer.from(JSON.stringify({ offset: offset + input.limit })).toString('base64');
+            nextCursor = Buffer.from(
+              JSON.stringify({ offset: offset + input.limit }),
+            ).toString("base64");
           }
 
           return {
@@ -317,17 +324,17 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
             name: String(r["name"]),
             index: i,
           }));
-          
+
           if (input.columns && input.columns.length > 0) {
             columnsToFacet = allCols.filter((c) =>
-              input.columns?.includes(c.name)
+              input.columns?.includes(c.name),
             );
           } else {
             columnsToFacet = allCols.filter(
-              (c) => c.name !== input.table && c.name !== "rank"
+              (c) => c.name !== input.table && c.name !== "rank",
             );
           }
-          
+
           for (const col of columnsToFacet) {
             selectClause += `, highlight("${input.table}", ${col.index}, '\x02', '\x03') as _facet_${col.index}`;
           }
@@ -339,7 +346,9 @@ function createFtsSearchTool(adapter: SqliteAdapter): ToolDefinition {
 
         let nextCursor: string | undefined;
         if (result.rows?.length === input.limit) {
-          nextCursor = Buffer.from(JSON.stringify({ offset: offset + input.limit })).toString('base64');
+          nextCursor = Buffer.from(
+            JSON.stringify({ offset: offset + input.limit }),
+          ).toString("base64");
         }
 
         const facets: Record<string, number> = {};
@@ -515,7 +524,11 @@ function createFtsHeadlineTool(adapter: SqliteAdapter): ToolDefinition {
 
         // Escape single quotes in query
         const sanitizedQuery = sanitizeFtsQuery(input.query);
-        if (!sanitizedQuery && input.query !== "*" && input.query.trim() !== "") {
+        if (
+          !sanitizedQuery &&
+          input.query !== "*" &&
+          input.query.trim() !== ""
+        ) {
           return {
             success: true,
             rowCount: 0,

@@ -2,7 +2,12 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { logger } from "../../utils/logger/index.js";
 import type { LogLevel } from "../../utils/logger/types.js";
-import { registerToolScopes } from "../../auth/scopes/enforcement.js";
+import {
+  registerToolScopes,
+  scopesGrantToolAccess,
+} from "../../auth/scopes/enforcement.js";
+import { getAuthContext } from "../../auth/auth-context.js";
+import { InsufficientScopeError } from "../../auth/errors.js";
 
 /**
  * Register administrative tools
@@ -12,11 +17,22 @@ export function registerAdminTools(server: McpServer): void {
     "sqlite_server_config",
     {
       title: "Server Configuration",
-      description: "Get or update runtime configuration values for the server. Currently supports updating the log level.",
+      description:
+        "Get or update runtime configuration values for the server. Currently supports updating the log level.",
       inputSchema: z.object({
-        action: z.enum(["get", "set"]).describe("Whether to get or set the configuration value"),
-        setting: z.enum(["logLevel"]).optional().describe("The setting to modify"),
-        value: z.string().optional().describe("The new value for the setting (e.g., 'debug', 'info', 'warning')"),
+        action: z
+          .enum(["get", "set"])
+          .describe("Whether to get or set the configuration value"),
+        setting: z
+          .enum(["logLevel"])
+          .optional()
+          .describe("The setting to modify"),
+        value: z
+          .string()
+          .optional()
+          .describe(
+            "The new value for the setting (e.g., 'debug', 'info', 'warning')",
+          ),
       }),
       annotations: {
         readOnlyHint: false,
@@ -26,12 +42,21 @@ export function registerAdminTools(server: McpServer): void {
       },
     },
     (args: unknown) => {
+      const authCtx = getAuthContext();
+      if (
+        authCtx &&
+        !scopesGrantToolAccess(authCtx.scopes, "sqlite_server_config")
+      ) {
+        throw new InsufficientScopeError(["admin"], authCtx.scopes);
+      }
       try {
-        const parsed = z.object({
-          action: z.enum(["get", "set"]),
-          setting: z.enum(["logLevel"]).optional(),
-          value: z.string().optional(),
-        }).parse(args ?? {});
+        const parsed = z
+          .object({
+            action: z.enum(["get", "set"]),
+            setting: z.enum(["logLevel"]).optional(),
+            value: z.string().optional(),
+          })
+          .parse(args ?? {});
 
         const { action, setting, value } = parsed;
 
@@ -57,7 +82,16 @@ export function registerAdminTools(server: McpServer): void {
 
         if (action === "set") {
           if (setting === "logLevel" && value) {
-            const validLevels = ["debug", "info", "notice", "warning", "error", "critical", "alert", "emergency"];
+            const validLevels = [
+              "debug",
+              "info",
+              "notice",
+              "warning",
+              "error",
+              "critical",
+              "alert",
+              "emergency",
+            ];
             if (!validLevels.includes(value.toLowerCase())) {
               return {
                 content: [
@@ -79,9 +113,12 @@ export function registerAdminTools(server: McpServer): void {
             }
 
             logger.setLevel(value.toLowerCase() as LogLevel);
-            logger.info(`Log level dynamically changed to ${value} via sqlite_server_config tool`, {
-              module: "SERVER",
-            });
+            logger.info(
+              `Log level dynamically changed to ${value} via sqlite_server_config tool`,
+              {
+                module: "SERVER",
+              },
+            );
 
             return {
               content: [
@@ -146,10 +183,8 @@ export function registerAdminTools(server: McpServer): void {
           isError: true,
         };
       }
-    }
+    },
   );
 
-  registerToolScopes(
-    new Map([["sqlite_server_config", ["admin"]]])
-  );
+  registerToolScopes(new Map([["sqlite_server_config", ["admin"]]]));
 }

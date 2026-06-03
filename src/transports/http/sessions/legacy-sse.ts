@@ -50,7 +50,9 @@ export function setupLegacySSEEndpoints(state: HttpTransportState): void {
           if ("subscriptionManager" in server) {
             (
               server as unknown as {
-                subscriptionManager: { unsubscribeSession: (id: string) => void };
+                subscriptionManager: {
+                  unsubscribeSession: (id: string) => void;
+                };
               }
             ).subscriptionManager.unsubscribeSession(sseTransport.sessionId);
           }

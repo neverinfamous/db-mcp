@@ -29,7 +29,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 | **Advanced Query & Search**      | O(1) cursor-based keyset pagination, faceted search aggregation, and `sqlite_hybrid_search` orchestrating FTS5 + Vector similarity with Reciprocal Rank Fusion (RRF) in a single tool call                                                                                                                                                                                                                                                     |
 | **AI Index Recommendations**     | `sqlite_index_audit` automatically analyzes `EXPLAIN QUERY PLAN` responses to suggest optimized composite and partial indexes based on workload patterns                                                                                                                                                                                                                                                                                       |
 | **Real-time Subscriptions**      | Native `resources/subscribe` support pushing event-driven notifications for `sqlite://schema` DDL changes and periodic `sqlite://health` updates directly to clients                                                                                                                                                                                                                                                                           |
-| **22 Resources**                 | 11 data resources (schema, tables, table_schema, indexes, views, health, meta, audit, metrics, compile_options, pragma) + 11 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                        |
+| **22 Resources**                 | 11 data resources (schema, tables, table_schema, indexes, views, health, meta, audit, metrics, compile_options, pragma) + 11 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                              |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                                                                                                                    |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 177+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access. Every response includes `_meta.tokenEstimate` so agents know their token cost                                                                                                                                            |
@@ -38,7 +38,7 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 | **Smart Tool Filtering**         | 10 tool groups + 7 shortcuts let you stay within IDE limits while exposing exactly what you need                                                                                                                                                                                                                                                                                                                                               |
 | **HTTP Streaming Transport**     | Streamable HTTP (`/mcp`) + legacy SSE (`/sse`) with auth, security headers, rate limiting, health check, and stateless mode for serverless                                                                                                                                                                                                                                                                                                     |
 | **Production-Ready Security**    | SQL injection protection (parameterized queries + Unicode-normalized WHERE clause validation), sandboxed code execution (V8 `codeGeneration` restrictions, frozen prototypes, 29 blocked patterns, Proxy nullified, RPC allowlist), CORS deny-all default, fail-closed scope enforcement, JWT claims sanitization, 7 security headers, body size limits, rate limiting, slowloris timeouts, opt-in HSTS, non-root Docker, and build provenance |
-| **Encryption at Rest**           | Native SQLCipher support via `--encryption-key` or `DB_ENCRYPTION_KEY`. Dynamically loads `better-sqlite3-multiple-ciphers` and automatically encrypts the sidecar `SystemDb` audit logs to prevent sensitive queries from leaking |
+| **Encryption at Rest**           | Native SQLCipher support via `--encryption-key` or `DB_ENCRYPTION_KEY`. Dynamically loads `better-sqlite3-multiple-ciphers` and automatically encrypts the sidecar `SystemDb` audit logs to prevent sensitive queries from leaking                                                                                                                                                                                                             |
 | **Deterministic Error Handling** | Every tool returns structured `{success, error, code, category, suggestion, recoverable}` responses — no raw exceptions. Agents get enriched error context with actionable suggestions instead of cryptic SQLite codes                                                                                                                                                                                                                         |
 
 ### Backend Options
@@ -151,8 +151,6 @@ Specify exactly the groups you need:
 
 For enhanced security, use SHA-pinned multi-arch manifests (`docker pull writenotenow/db-mcp:sha256-<digest>`). Our images feature cryptographic build provenance, SBOMs, non-root execution, and zero critical/high CVEs (Docker Scout scanned). Find exact tags on [Docker Hub](https://hub.docker.com/r/writenotenow/db-mcp/tags).
 
-
-
 ### 📁 Resources & Prompts
 
 db-mcp exposes 22 resources (including dynamic `sqlite://help` documentation) and 10 AI-powered prompts (for schema exploration, query building, data analysis, optimization, and migration). See the [GitHub README](https://github.com/neverinfamous/db-mcp) for the complete list.
@@ -170,33 +168,33 @@ The Docker image includes **FTS5**, **JSON1**, and **R-Tree** built-in. Enable l
 
 ### Environment Variables
 
-| Variable                    | Default   | Description                                                               |
-| --------------------------- | --------- | ------------------------------------------------------------------------- |
+| Variable                    | Default     | Description                                                               |
+| --------------------------- | ----------- | ------------------------------------------------------------------------- |
 | `MCP_HOST`                  | `127.0.0.1` | Host/IP to bind to (`0.0.0.0` in Docker) (`--server-host`)                |
-| `SQLITE_DATABASE`           | —         | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
-| `DB_ENCRYPTION_KEY`         | —         | SQLCipher encryption key (Native only) (`--encryption-key`)               |
-| `DB_MCP_TOOL_FILTER`        | —         | Tool filter string (`--tool-filter`)                                      |
-| `METRICS_EXPORT`            | —         | Export metrics at HTTP /metrics (e.g., `prometheus`) (`--metrics-export`) |
-| `OAUTH_ENABLED`             | `false`   | Enable OAuth 2.1 (`--oauth-enabled`)                                      |
-| `OAUTH_ISSUER`              | —         | Authorization server URL (`--oauth-issuer`)                               |
-| `OAUTH_AUDIENCE`            | —         | Expected token audience (`--oauth-audience`)                              |
-| `OAUTH_JWKS_URI`            | —         | JWKS URI, auto-discovered if omitted (`--oauth-jwks-uri`)                 |
-| `OAUTH_CLOCK_TOLERANCE`     | `60`      | Clock tolerance in seconds (`--oauth-clock-tolerance`)                    |
-| `MCP_ENABLE_HSTS`           | `false`   | Enable HSTS header (`--enable-hsts`)                                      |
-| `NO_AUTH_ENFORCEMENT`       | `false`   | Explicitly bypass auth enforcement for HTTP (`--no-auth-enforcement`)     |
-| `LOG_LEVEL`                 | `info`    | Log verbosity: `debug`, `info`, `warning`, `error`                        |
-| `METADATA_CACHE_TTL_MS`     | `5000`    | Schema cache TTL in ms (auto-invalidated on DDL)                          |
-| `CODEMODE_ISOLATION`        | `isolate` | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`             |
-| `CODE_MODE_MAX_RESULT_SIZE` | `102400`  | Max Code Mode result payload in bytes (default 100KB, cap 50MB)           |
-| `MCP_RATE_LIMIT_MAX`        | `100`     | Max requests/minute per IP (HTTP transport)                               |
-| `CSV_EXTENSION_PATH`        | —         | Path to CSV extension binary (native only)                                |
-| `SPATIALITE_PATH`           | —         | Path to SpatiaLite extension binary (native only)                         |
-| `MCP_AUTH_TOKEN`            | —         | Simple bearer token for HTTP auth (`--auth-token`)                        |
-| `AUDIT_LOG`                 | —         | Audit log file path, or `stderr` (`--audit-log`)                          |
-| `AUDIT_REDACT`              | `true`    | Redact tool arguments from audit entries (`--audit-no-redact` to disable) |
-| `AUDIT_READS`               | `false`   | Also log read-scoped tool invocations (`--audit-reads`)                   |
-| `AUDIT_BACKUP`              | `false`   | Enable pre-mutation DDL snapshots (`--audit-backup`)                      |
-| `AUDIT_BACKUP_DATA`         | `false`   | Include sample data rows in snapshots (`--audit-backup-data`)             |
+| `SQLITE_DATABASE`           | —           | SQLite database path (`--sqlite` / `--sqlite-native`)                     |
+| `DB_ENCRYPTION_KEY`         | —           | SQLCipher encryption key (Native only) (`--encryption-key`)               |
+| `DB_MCP_TOOL_FILTER`        | —           | Tool filter string (`--tool-filter`)                                      |
+| `METRICS_EXPORT`            | —           | Export metrics at HTTP /metrics (e.g., `prometheus`) (`--metrics-export`) |
+| `OAUTH_ENABLED`             | `false`     | Enable OAuth 2.1 (`--oauth-enabled`)                                      |
+| `OAUTH_ISSUER`              | —           | Authorization server URL (`--oauth-issuer`)                               |
+| `OAUTH_AUDIENCE`            | —           | Expected token audience (`--oauth-audience`)                              |
+| `OAUTH_JWKS_URI`            | —           | JWKS URI, auto-discovered if omitted (`--oauth-jwks-uri`)                 |
+| `OAUTH_CLOCK_TOLERANCE`     | `60`        | Clock tolerance in seconds (`--oauth-clock-tolerance`)                    |
+| `MCP_ENABLE_HSTS`           | `false`     | Enable HSTS header (`--enable-hsts`)                                      |
+| `NO_AUTH_ENFORCEMENT`       | `false`     | Explicitly bypass auth enforcement for HTTP (`--no-auth-enforcement`)     |
+| `LOG_LEVEL`                 | `info`      | Log verbosity: `debug`, `info`, `warning`, `error`                        |
+| `METADATA_CACHE_TTL_MS`     | `5000`      | Schema cache TTL in ms (auto-invalidated on DDL)                          |
+| `CODEMODE_ISOLATION`        | `isolate`   | Code Mode sandbox: `isolate` (isolated-vm native) or `worker`             |
+| `CODE_MODE_MAX_RESULT_SIZE` | `102400`    | Max Code Mode result payload in bytes (default 100KB, cap 50MB)           |
+| `MCP_RATE_LIMIT_MAX`        | `100`       | Max requests/minute per IP (HTTP transport)                               |
+| `CSV_EXTENSION_PATH`        | —           | Path to CSV extension binary (native only)                                |
+| `SPATIALITE_PATH`           | —           | Path to SpatiaLite extension binary (native only)                         |
+| `MCP_AUTH_TOKEN`            | —           | Simple bearer token for HTTP auth (`--auth-token`)                        |
+| `AUDIT_LOG`                 | —           | Audit log file path, or `stderr` (`--audit-log`)                          |
+| `AUDIT_REDACT`              | `true`      | Redact tool arguments from audit entries (`--audit-no-redact` to disable) |
+| `AUDIT_READS`               | `false`     | Also log read-scoped tool invocations (`--audit-reads`)                   |
+| `AUDIT_BACKUP`              | `false`     | Enable pre-mutation DDL snapshots (`--audit-backup`)                      |
+| `AUDIT_BACKUP_DATA`         | `false`     | Include sample data rows in snapshots (`--audit-backup-data`)             |
 
 ### HTTP/SSE Transport
 
@@ -245,10 +243,9 @@ docker run --rm -p 3000:3000 \
 
 ## 🔐 Encryption at Rest (Native Only)
 
-db-mcp supports transparent database encryption using SQLCipher via the `--encryption-key` CLI flag or `DB_ENCRYPTION_KEY` environment variable. 
+db-mcp supports transparent database encryption using SQLCipher via the `--encryption-key` CLI flag or `DB_ENCRYPTION_KEY` environment variable.
 
 For advanced configuration (raw hex keys vs passphrases, dual-backend audit log encryption rules, and migration steps), please see the full [Security Documentation](https://github.com/neverinfamous/db-mcp/blob/main/SECURITY.md).
-
 
 ## 📦 Image Details
 
@@ -261,7 +258,7 @@ Node.js 24 on Alpine Linux • Multi-stage build • Non-root user • better-sq
 
 **Available Tags:**
 
-- `v3.0.2` - Specific version (recommended for production)
+- `v4.0.0` - Specific version (recommended for production)
 - `latest` - Always the newest version
 - `sha-<commit>` - Git commit pinned
 

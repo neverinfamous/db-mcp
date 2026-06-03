@@ -3,7 +3,16 @@
  *
  * Tests the fallback path when isolated-vm is broken or missing.
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+  vi,
+} from "vitest";
 
 // Mock isolated-vm to throw so the fallback path is triggered
 vi.mock("isolated-vm", () => {
@@ -12,11 +21,22 @@ vi.mock("isolated-vm", () => {
 
 import { CodeModeSandbox } from "../../src/codemode/sandbox.js";
 
-// Set environment variable required for VM sandbox mode to function
-process.env["CODEMODE_ISOLATION_INSECURE"] = "1";
-
 describe("CodeModeSandbox - Node VM Fallback", () => {
   let sandbox: CodeModeSandbox;
+  let originalInsecureEnv: string | undefined;
+
+  beforeAll(() => {
+    originalInsecureEnv = process.env["CODEMODE_ISOLATION_INSECURE"];
+    process.env["CODEMODE_ISOLATION_INSECURE"] = "1";
+  });
+
+  afterAll(() => {
+    if (originalInsecureEnv === undefined) {
+      delete process.env["CODEMODE_ISOLATION_INSECURE"];
+    } else {
+      process.env["CODEMODE_ISOLATION_INSECURE"] = originalInsecureEnv;
+    }
+  });
 
   beforeEach(() => {
     sandbox = CodeModeSandbox.create();
@@ -58,13 +78,16 @@ describe("CodeModeSandbox - Node VM Fallback", () => {
   });
 
   it("should capture all console methods", async () => {
-    await sandbox.execute(`
+    await sandbox.execute(
+      `
       console.log('l');
       console.error('e');
       console.warn('w');
       console.info('i');
       console.debug('d');
-    `, {});
+    `,
+      {},
+    );
     const output = sandbox.getConsoleOutput();
     expect(output).toHaveLength(5);
     expect(output).toContain("l");

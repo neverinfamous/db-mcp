@@ -200,9 +200,9 @@ If a group-specific help resource is available, read it and verify it contains r
 
 Call `tools/list` and verify that tools accurately report their `openWorldHint` in their annotations. `openWorldHint` should be `true` for tools that interact with the external file system (e.g., `ADMIN_FS`, `WRITE_FS`) or execute arbitrary logic (`CODEMODE`), and `false` for all standard database operations.
 
-| Check                               | Expected                 |
-| ----------------------------------- | ------------------------ |
-| All tools have `annotations` object | ✅ Present on every tool |
+| Check                               | Expected                                        |
+| ----------------------------------- | ----------------------------------------------- |
+| All tools have `annotations` object | ✅ Present on every tool                        |
 | `openWorldHint` values              | `true` for FS/CodeMode tools, `false` otherwise |
 
 ---
@@ -215,40 +215,40 @@ Call `tools/list` and verify that tools accurately report their `openWorldHint` 
 
 Subscribe to the dynamic schema resources and verify the server accepts the subscription.
 
-| Action                                     | Expected Result                       |
-| ------------------------------------------ | ------------------------------------- |
-| Subscribe to `sqlite://schema`             | ✅ Success (empty response)           |
-| Subscribe to `sqlite://tables`             | ✅ Success (empty response)           |
-| Subscribe to `sqlite://table/test_products/schema` | ✅ Success (empty response)   |
-| Subscribe to `sqlite://health`             | ✅ Success (empty response)           |
+| Action                                             | Expected Result             |
+| -------------------------------------------------- | --------------------------- |
+| Subscribe to `sqlite://schema`                     | ✅ Success (empty response) |
+| Subscribe to `sqlite://tables`                     | ✅ Success (empty response) |
+| Subscribe to `sqlite://table/test_products/schema` | ✅ Success (empty response) |
+| Subscribe to `sqlite://health`                     | ✅ Success (empty response) |
 
 **Test B — Live Update Notifications:**
 
 Once subscribed, mutate the database schema and verify the server emits an `notifications/resources/updated` event.
 
-| Action                                                                                              | Expected Notification Payload       |
-| --------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Create a new table using `sqlite_create_table` (`test_live_sub`)                                    | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema` |
-| Add a column using `sqlite_alter_table` (`test_products.sub_test TEXT`)                             | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/test_products/schema` |
-| Cleanup: Drop table using `sqlite_drop_table` (`test_live_sub`)                                     | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema` |
-| Wait up to 60 seconds (background health polling)                                                   | Event fired with `uri: sqlite://health` |
+| Action                                                                  | Expected Notification Payload                                                                         |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Create a new table using `sqlite_create_table` (`test_live_sub`)        | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema`           |
+| Add a column using `sqlite_alter_table` (`test_products.sub_test TEXT`) | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/test_products/schema` |
+| Cleanup: Drop table using `sqlite_drop_table` (`test_live_sub`)         | Event fired with `uri: sqlite://schema`, `sqlite://tables`, and `sqlite://table/.../schema`           |
+| Wait up to 60 seconds (background health polling)                       | Event fired with `uri: sqlite://health`                                                               |
 
 **Test C — Invalid Subscriptions:**
 
 Attempt to subscribe to static or non-subscribable resources.
 
-| Action                                     | Expected Result                       |
-| ------------------------------------------ | ------------------------------------- |
-| Subscribe to `sqlite://meta`               | ❌ Error: Resource not subscribable   |
-| Subscribe to `sqlite://help`               | ❌ Error: Resource not subscribable   |
-| Subscribe to `sqlite://invalid_uri`        | ❌ Error: Unknown resource            |
+| Action                              | Expected Result                     |
+| ----------------------------------- | ----------------------------------- |
+| Subscribe to `sqlite://meta`        | ❌ Error: Resource not subscribable |
+| Subscribe to `sqlite://help`        | ❌ Error: Resource not subscribable |
+| Subscribe to `sqlite://invalid_uri` | ❌ Error: Unknown resource          |
 
 **Test D — Unsubscribe:**
 
-| Action                                     | Expected Result                       |
-| ------------------------------------------ | ------------------------------------- |
-| Unsubscribe from `sqlite://schema`         | ✅ Success (empty response)           |
-| Mutate database (e.g. `sqlite_create_table`)| ❌ No notification should be received |
+| Action                                       | Expected Result                       |
+| -------------------------------------------- | ------------------------------------- |
+| Unsubscribe from `sqlite://schema`           | ✅ Success (empty response)           |
+| Mutate database (e.g. `sqlite_create_table`) | ❌ No notification should be received |
 
 ---
 

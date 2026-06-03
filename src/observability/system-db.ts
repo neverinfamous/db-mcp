@@ -20,19 +20,25 @@ export class SystemDb {
       const encryptionKey = process.env["DB_ENCRYPTION_KEY"];
       let BetterSqlite3;
       if (encryptionKey) {
-        BetterSqlite3 = (await import("better-sqlite3-multiple-ciphers")).default;
+        BetterSqlite3 = (await import("better-sqlite3-multiple-ciphers"))
+          .default;
       } else {
         BetterSqlite3 = (await import("better-sqlite3")).default;
       }
-      
+
       if (this.config.dbPath !== ":memory:") {
         mkdirSync(dirname(this.config.dbPath), { recursive: true });
       }
 
       this.db = new BetterSqlite3(this.config.dbPath);
 
-      if (encryptionKey && this.config.dbPath !== ":memory:" && this.config.dbPath !== "") {
-        this.db.pragma(`key = "${encryptionKey}"`);
+      if (
+        encryptionKey &&
+        this.config.dbPath !== ":memory:" &&
+        this.config.dbPath !== ""
+      ) {
+        const escapedKey = encryptionKey.replace(/"/g, '""');
+        this.db.pragma(`key = "${escapedKey}"`);
       }
 
       // Initialize schema
@@ -77,12 +83,17 @@ export class SystemDb {
         CREATE INDEX IF NOT EXISTS idx_metrics_snapshots_timestamp ON metrics_snapshots(timestamp);
       `);
 
-      logger.info(`System database initialized at ${this.config.dbPath}`, { module: "SYSTEM_DB" });
-    } catch (err) {
-      logger.error("Failed to initialize SystemDb. better-sqlite3 may not be installed.", {
+      logger.info(`System database initialized at ${this.config.dbPath}`, {
         module: "SYSTEM_DB",
-        error: err instanceof Error ? err : new Error(String(err))
       });
+    } catch (err) {
+      logger.error(
+        "Failed to initialize SystemDb. better-sqlite3 may not be installed.",
+        {
+          module: "SYSTEM_DB",
+          error: err instanceof Error ? err : new Error(String(err)),
+        },
+      );
       throw err;
     }
   }

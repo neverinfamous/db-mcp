@@ -27,15 +27,15 @@ export function registerHelpResources(
       () => {
         metrics.recordResourceRead("sqlite://help");
         return {
-        contents: [
-          {
-            uri: "sqlite://help",
-            mimeType: "text/markdown",
-            text: gotchasContent,
-          },
-        ],
+          contents: [
+            {
+              uri: "sqlite://help",
+              mimeType: "text/markdown",
+              text: gotchasContent,
+            },
+          ],
         };
-      }
+      },
     );
   }
 
@@ -76,15 +76,15 @@ export function registerHelpResources(
       () => {
         metrics.recordResourceRead(`sqlite://help/${key}`);
         return {
-        contents: [
-          {
-            uri: `sqlite://help/${key}`,
-            mimeType: "text/markdown",
-            text: content,
-          },
-        ],
+          contents: [
+            {
+              uri: `sqlite://help/${key}`,
+              mimeType: "text/markdown",
+              text: content,
+            },
+          ],
         };
-      }
+      },
     );
   }
 

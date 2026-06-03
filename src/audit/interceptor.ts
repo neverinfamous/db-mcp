@@ -224,7 +224,10 @@ export function createAuditInterceptor(
             // Serialization failure must not block tool execution
           }
         } else if (typeof result === "string") {
-          const isSql = /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(result);
+          const isSql =
+            /^\s*(?:SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|PRAGMA)\b/i.test(
+              result,
+            );
           tokenEstimate = estimateTokens(result, isSql ? "sql" : "text");
         }
 
@@ -254,7 +257,12 @@ export function createAuditInterceptor(
         const durationMs = Math.round(performance.now() - start);
 
         // Record metrics
-        metrics.recordToolCall(options?.logAs ?? toolName, durationMs, success, tokenEstimate ?? 0);
+        metrics.recordToolCall(
+          options?.logAs ?? toolName,
+          durationMs,
+          success,
+          tokenEstimate ?? 0,
+        );
 
         if (isReadScope) {
           // Compact read entries — omit args, user, scopes for ~100 byte entries

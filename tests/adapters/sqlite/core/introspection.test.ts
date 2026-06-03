@@ -123,20 +123,20 @@ describe("Core Tools - Introspection", () => {
 
     it("should describe generated columns correctly", async () => {
       await adapter.executeWriteQuery(
-        "CREATE TABLE gen_tbl (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER GENERATED ALWAYS AS (a * 2) VIRTUAL, c TEXT GENERATED ALWAYS AS (a || 'x') STORED)"
+        "CREATE TABLE gen_tbl (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER GENERATED ALWAYS AS (a * 2) VIRTUAL, c TEXT GENERATED ALWAYS AS (a || 'x') STORED)",
       );
 
       const result = (await tools.get("sqlite_describe_table")?.({
         table: "gen_tbl",
       })) as { columns: any[] };
 
-      const bCol = result.columns.find(c => c.name === "b");
+      const bCol = result.columns.find((c) => c.name === "b");
       expect(bCol).toBeDefined();
       expect(bCol.isGenerated).toBe(true);
       expect(bCol.generatedType).toBe("VIRTUAL");
       expect(bCol.generatedExpression).toBe("a * 2");
 
-      const cCol = result.columns.find(c => c.name === "c");
+      const cCol = result.columns.find((c) => c.name === "c");
       expect(cCol).toBeDefined();
       expect(cCol.isGenerated).toBe(true);
       expect(cCol.generatedType).toBe("STORED");

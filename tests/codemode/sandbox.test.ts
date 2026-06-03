@@ -184,7 +184,10 @@ describe("CodeModeSandbox", () => {
     });
 
     it("should block 'with' statements during AST validation", async () => {
-      const result = await sandbox.execute("with (Math) { return max(1, 2); }", {});
+      const result = await sandbox.execute(
+        "with (Math) { return max(1, 2); }",
+        {},
+      );
       expect(result.success).toBe(false);
       expect(result.error).toContain("'with' statements are forbidden");
     });
@@ -197,7 +200,7 @@ describe("CodeModeSandbox", () => {
 
     it("should block require property access during AST validation", async () => {
       const result = await sandbox.execute("return require.main;", {});
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain("Access to 'require' is forbidden");
     });

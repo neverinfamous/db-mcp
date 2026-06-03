@@ -227,11 +227,13 @@ describe("NativeSqliteAdapter", () => {
       };
 
       await adapter.connect(config);
-      
+
       // Mock db.prepare to throw
       const db = (adapter as any).db;
       const originalPrepare = db.prepare;
-      db.prepare = () => { throw new Error("Simulated failure") };
+      db.prepare = () => {
+        throw new Error("Simulated failure");
+      };
 
       const health = await adapter.getHealth();
       expect(health.connected).toBe(false);
@@ -403,13 +405,13 @@ describe("NativeSqliteAdapter", () => {
 
       it("should throw for non-existent table in describeTable fallback", async () => {
         await expect(adapter.describeTable("nonexistent")).rejects.toThrow(
-          "does not exist"
+          "does not exist",
         );
       });
 
       it("should throw for invalid table name in describeTable fallback", async () => {
         await expect(adapter.describeTable("1invalid")).rejects.toThrow(
-          "Invalid table name"
+          "Invalid table name",
         );
       });
 
@@ -653,7 +655,8 @@ describe("NativeSqliteAdapter", () => {
 
   describe("Factory Function", () => {
     it("should create a new NativeSqliteAdapter instance", async () => {
-      const { createNativeSqliteAdapter } = await import("../../../src/adapters/sqlite-native/native-sqlite-adapter.js");
+      const { createNativeSqliteAdapter } =
+        await import("../../../src/adapters/sqlite-native/native-sqlite-adapter.js");
       const instance = createNativeSqliteAdapter();
       expect(instance).toBeInstanceOf(NativeSqliteAdapter);
     });

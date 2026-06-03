@@ -49,22 +49,26 @@ describe("Core Tools - DML", () => {
     });
 
     it("should support cursor-based pagination", async () => {
-      await adapter.executeWriteQuery("CREATE TABLE paginate_test (id INTEGER, val TEXT)");
+      await adapter.executeWriteQuery(
+        "CREATE TABLE paginate_test (id INTEGER, val TEXT)",
+      );
       let values = [];
       for (let i = 1; i <= 50; i++) values.push(`(${i}, 'val')`);
-      await adapter.executeWriteQuery(`INSERT INTO paginate_test VALUES ${values.join(",")}`);
+      await adapter.executeWriteQuery(
+        `INSERT INTO paginate_test VALUES ${values.join(",")}`,
+      );
 
       const firstPage = (await tools.get("sqlite_read_query")?.({
         query: "SELECT * FROM paginate_test ORDER BY id",
-      })) as { rows: unknown[], nextCursor?: string };
+      })) as { rows: unknown[]; nextCursor?: string };
 
       expect(firstPage.rows).toHaveLength(50);
       expect(firstPage.nextCursor).toBeDefined();
 
       const secondPage = (await tools.get("sqlite_read_query")?.({
         query: "SELECT * FROM paginate_test ORDER BY id",
-        cursor: firstPage.nextCursor
-      })) as { rows: unknown[], nextCursor?: string };
+        cursor: firstPage.nextCursor,
+      })) as { rows: unknown[]; nextCursor?: string };
 
       expect(secondPage.rows).toHaveLength(0);
       expect(secondPage.nextCursor).toBeUndefined();

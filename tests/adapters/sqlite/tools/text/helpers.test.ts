@@ -38,12 +38,16 @@ describe("Text Helpers", () => {
       expect(sanitizeFtsQuery("hello AND OR world")).toBe("hello AND world");
       expect(sanitizeFtsQuery("hello OR NOT world")).toBe("hello AND world");
       // The improved regex now correctly reduces 3+ consecutive operators down to a single AND.
-      expect(sanitizeFtsQuery("hello NOT AND OR world")).toBe("hello AND world");
+      expect(sanitizeFtsQuery("hello NOT AND OR world")).toBe(
+        "hello AND world",
+      );
     });
 
     it("should combine all fixes correctly", () => {
       // Balanced quotes are kept. Stray AND / NOT are removed.
-      expect(sanitizeFtsQuery('  AND "balanced   hello AND OR world"  NOT ')).toBe('"balanced hello AND world"');
+      expect(
+        sanitizeFtsQuery('  AND "balanced   hello AND OR world"  NOT '),
+      ).toBe('"balanced hello AND world"');
     });
   });
 });

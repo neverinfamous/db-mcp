@@ -1,10 +1,13 @@
 # Docs Drift Detector Workflow (db-mcp)
 
 ## Objective
+
 Detect and remediate documentation drift in `db-mcp` against live schema and code capabilities.
 
 ## Context
+
 `db-mcp` features a complex architecture:
+
 - **Dual Backends**: WASM (`sql.js`) and Native (`better-sqlite3`).
 - **Code Mode**: Exposes tools via a sandboxed execution environment.
 - **SQLite Specifics**: Geotemporal, FTS5 (Native only), and JSON handling.

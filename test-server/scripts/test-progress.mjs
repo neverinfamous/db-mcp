@@ -84,7 +84,7 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 async function runTest(toolName, args, expectedMinEvents = 1) {
   console.log(`\nTesting tool: ${toolName}...`);
   progressEvents.length = 0; // Reset array
-  
+
   const response = await rpc("tools/call", {
     name: toolName,
     arguments: args,
@@ -95,14 +95,16 @@ async function runTest(toolName, args, expectedMinEvents = 1) {
     console.error(`  FAIL: Tool returned error:`, response.error);
     return false;
   }
-  
+
   if (response.result?.isError) {
     console.error(`  FAIL: Tool returned business error:`, response.result);
     return false;
   }
 
   if (progressEvents.length >= expectedMinEvents) {
-    console.log(`  PASS: Received ${progressEvents.length} progress notifications!`);
+    console.log(
+      `  PASS: Received ${progressEvents.length} progress notifications!`,
+    );
     return true;
   } else {
     console.error(
@@ -149,7 +151,13 @@ async function main() {
     { name: "sqlite_restore", args: { sourcePath: "./test-server/backup.db" } },
     { name: "sqlite_dump", args: { outputPath: "./test-server/dump.sql" } },
     { name: "sqlite_optimize", args: { analyze: true, reindex: true } },
-    { name: "sqlite_migration_apply", args: { version: "test-" + ts, sql: "CREATE TABLE test_prog_" + ts + " (id INTEGER);" } },
+    {
+      name: "sqlite_migration_apply",
+      args: {
+        version: "test-" + ts,
+        sql: "CREATE TABLE test_prog_" + ts + " (id INTEGER);",
+      },
+    },
     { name: "sqlite_execute_code", args: { code }, minEvents: 5 },
   ];
 
@@ -159,19 +167,27 @@ async function main() {
     const success = await runTest(t.name, t.args, t.minEvents || 1);
     if (!success) passed = false;
   }
-  
+
   // Cleanup
-  import("fs").then(fs => {
-    try { fs.unlinkSync(resolve(projectDir, "test-server", "vacuum.db")); } catch {}
-    try { fs.unlinkSync(resolve(projectDir, "test-server", "backup.db")); } catch {}
-    try { fs.unlinkSync(resolve(projectDir, "test-server", "dump.sql")); } catch {}
+  import("fs").then((fs) => {
+    try {
+      fs.unlinkSync(resolve(projectDir, "test-server", "vacuum.db"));
+    } catch {}
+    try {
+      fs.unlinkSync(resolve(projectDir, "test-server", "backup.db"));
+    } catch {}
+    try {
+      fs.unlinkSync(resolve(projectDir, "test-server", "dump.sql"));
+    } catch {}
   });
 
   proc.kill();
   if (!passed) {
     process.exitCode = 1;
   } else {
-    console.log("\nAll 7 tools successfully tested for progress notifications!");
+    console.log(
+      "\nAll 7 tools successfully tested for progress notifications!",
+    );
   }
 }
 

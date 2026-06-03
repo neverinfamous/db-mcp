@@ -9,11 +9,7 @@ import type {
   ToolDefinition,
   RequestContext,
 } from "../../../../types/index.js";
-import {
-  admin,
-  adminFs,
-  readOnly,
-} from "../../../../utils/annotations.js";
+import { admin, adminFs, readOnly } from "../../../../utils/annotations.js";
 import {
   sanitizeIdentifier,
   validateSameDirPath,
@@ -359,8 +355,6 @@ export function createPragmaTableInfoTool(
     },
   };
 }
-
-
 
 /**
  * Attach an external database

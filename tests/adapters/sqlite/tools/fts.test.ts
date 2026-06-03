@@ -128,7 +128,7 @@ describe("FTS Tools", () => {
         table: "documents_fts",
         query: "*",
         limit: 1,
-        includeRowData: true
+        includeRowData: true,
       })) as any;
       expect(firstPage.success).toBe(true);
       expect(firstPage.results).toHaveLength(1);
@@ -139,7 +139,7 @@ describe("FTS Tools", () => {
         query: "*",
         limit: 1,
         includeRowData: true,
-        cursor: firstPage.nextCursor
+        cursor: firstPage.nextCursor,
       })) as any;
       expect(secondPage.success).toBe(true);
       expect(secondPage.results).toHaveLength(1);

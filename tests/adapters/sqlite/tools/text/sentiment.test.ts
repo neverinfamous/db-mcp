@@ -263,7 +263,7 @@ describe("Text Sentiment Tool", () => {
 
       const res1 = result.results.find((r: any) => r.rowid === 1);
       expect(res1.sentiment).toBe("positive");
-      
+
       const res2 = result.results.find((r: any) => r.rowid === 2);
       expect(res2.sentiment).toBe("negative");
 
@@ -291,7 +291,9 @@ describe("Text Sentiment Tool", () => {
       })) as any;
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Must provide either 'text' or both 'table' and 'column'");
+      expect(result.error).toContain(
+        "Must provide either 'text' or both 'table' and 'column'",
+      );
     });
 
     it("should handle null and JSON values in table gracefully", async () => {

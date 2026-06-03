@@ -61,7 +61,9 @@ export function createLoadSpatialiteTool(
         const input = LoadSpatialiteSchema.parse(_params);
 
         if (!input.forceReload && isSpatialiteLoaded(adapter)) {
-          const versionResult = await adapter.executeReadQuery("SELECT spatialite_version() as v");
+          const versionResult = await adapter.executeReadQuery(
+            "SELECT spatialite_version() as v",
+          );
           const version = versionResult.rows?.[0]?.["v"] as string | undefined;
           return {
             success: true,
@@ -74,7 +76,9 @@ export function createLoadSpatialiteTool(
         const result = tryLoadSpatialite(adapter);
 
         if (result.success) {
-          const versionResult = await adapter.executeReadQuery("SELECT spatialite_version() as v");
+          const versionResult = await adapter.executeReadQuery(
+            "SELECT spatialite_version() as v",
+          );
           const version = versionResult.rows?.[0]?.["v"] as string | undefined;
           return {
             success: true,

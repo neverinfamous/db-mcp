@@ -199,7 +199,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 27. `sqlite.admin.createCsvTable({tableName: "temp_cm_csv", filePath: "C:\\Users\\chris\\Desktop\\db-mcp\\test-server\\sample.csv"})` → virtual table
 28. Cleanup: drop `temp_cm_csv` (virtual)
 
-
 ## Phase 8: REINDEX & WAL Management (batched)
 
 30. `sqlite.admin.reindex()` → reindex entire database, success with `durationMs`

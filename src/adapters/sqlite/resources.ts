@@ -321,7 +321,6 @@ function createMetaResource(adapter: SqliteAdapter): ResourceDefinition {
   };
 }
 
-
 /**
  * SQLite compile-time options
  */

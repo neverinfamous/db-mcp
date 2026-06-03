@@ -187,25 +187,31 @@ describe("Core Tools - DDL", () => {
       })) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("At least one column definition is required");
+      expect(result.error).toContain(
+        "At least one column definition is required",
+      );
     });
 
     it("should create table with foreign keys", async () => {
-      await adapter.executeWriteQuery("CREATE TABLE parent (id INTEGER PRIMARY KEY)");
-      
+      await adapter.executeWriteQuery(
+        "CREATE TABLE parent (id INTEGER PRIMARY KEY)",
+      );
+
       const result = (await tools.get("sqlite_create_table")?.({
         table: "child",
         columns: [
           { name: "id", type: "INTEGER", primaryKey: true },
-          { name: "parent_id", type: "INTEGER" }
+          { name: "parent_id", type: "INTEGER" },
         ],
-        foreignKeys: [{
-          column: "parent_id",
-          targetTable: "parent",
-          targetColumn: "id",
-          onDelete: "CASCADE",
-          onUpdate: "RESTRICT"
-        }]
+        foreignKeys: [
+          {
+            column: "parent_id",
+            targetTable: "parent",
+            targetColumn: "id",
+            onDelete: "CASCADE",
+            onUpdate: "RESTRICT",
+          },
+        ],
       })) as { success: boolean; sql: string };
 
       expect(result.success).toBe(true);
@@ -217,10 +223,8 @@ describe("Core Tools - DDL", () => {
     it("should create table with check constraints", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
         table: "checked_table",
-        columns: [
-          { name: "age", type: "INTEGER" }
-        ],
-        checkConstraints: ["age >= 18"]
+        columns: [{ name: "age", type: "INTEGER" }],
+        checkConstraints: ["age >= 18"],
       })) as { success: boolean; sql: string };
 
       expect(result.success).toBe(true);
@@ -230,10 +234,8 @@ describe("Core Tools - DDL", () => {
     it("should reject table creation with invalid check constraint syntax", async () => {
       const result = (await tools.get("sqlite_create_table")?.({
         table: "bad_check",
-        columns: [
-          { name: "age", type: "INTEGER" }
-        ],
-        checkConstraints: ["age >= "]
+        columns: [{ name: "age", type: "INTEGER" }],
+        checkConstraints: ["age >= "],
       })) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
@@ -312,7 +314,9 @@ describe("Core Tools - DDL", () => {
     });
 
     it("should clean up FTS triggers on drop", async () => {
-      await adapter.executeWriteQuery("CREATE TABLE search_data (id INTEGER, text TEXT)");
+      await adapter.executeWriteQuery(
+        "CREATE TABLE search_data (id INTEGER, text TEXT)",
+      );
       // Create a dummy trigger simulating an FTS5 trigger that inserts into the table
       await adapter.executeWriteQuery(`
         CREATE TRIGGER search_data_ai AFTER INSERT ON search_data
@@ -326,9 +330,11 @@ describe("Core Tools - DDL", () => {
       })) as { success: boolean };
 
       expect(result.success).toBe(true);
-      
-      const triggers = await adapter.executeReadQuery("SELECT name FROM sqlite_master WHERE type='trigger'");
-      expect(triggers.rows?.map(r => r.name)).not.toContain("search_data_ai");
+
+      const triggers = await adapter.executeReadQuery(
+        "SELECT name FROM sqlite_master WHERE type='trigger'",
+      );
+      expect(triggers.rows?.map((r) => r.name)).not.toContain("search_data_ai");
     });
   });
 

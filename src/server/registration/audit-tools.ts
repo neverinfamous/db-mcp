@@ -759,7 +759,8 @@ export function registerAuditSearchTool(
     "sqlite_audit_search",
     {
       title: "Search Audit Log",
-      description: "Search and filter structured audit logs from the System Database. Returns recent tool invocations, outcomes, token estimates, and parameters.",
+      description:
+        "Search and filter structured audit logs from the System Database. Returns recent tool invocations, outcomes, token estimates, and parameters.",
       inputSchema: AuditSearchSchema,
       outputSchema: AuditSearchOutputSchema,
       annotations: {
@@ -777,7 +778,7 @@ export function registerAuditSearchTool(
       ) {
         throw new InsufficientScopeError(["admin", "full"], authCtx.scopes);
       }
-      
+
       let parsed;
       try {
         parsed = AuditSearchSchema.parse(args ?? {});
@@ -796,7 +797,7 @@ export function registerAuditSearchTool(
       }
 
       const { entries, totalCount } = await auditLogger.search(parsed);
-      
+
       const result = {
         success: true,
         entries,
@@ -821,14 +822,12 @@ export function registerAuditSearchTool(
         ],
         structuredContent: result as unknown as Record<string, unknown>,
       };
-    }
+    },
   );
 
-  registerToolScopes(
-    new Map([
-      ["sqlite_audit_search", ["admin", "full"]],
-    ]),
-  );
+  registerToolScopes(new Map([["sqlite_audit_search", ["admin", "full"]]]));
 
-  logger.info("Registered audit search tool: sqlite_audit_search", { module: "AUDIT" });
+  logger.info("Registered audit search tool: sqlite_audit_search", {
+    module: "AUDIT",
+  });
 }

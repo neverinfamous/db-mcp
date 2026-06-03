@@ -108,4 +108,3 @@ sqlite_create_csv_table({
   filePath: "/absolute/path/to/data.csv",
 });
 ```
-

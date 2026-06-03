@@ -428,7 +428,8 @@ export function createAdvancedSearchTool(
 export function createHybridSearchTool(adapter: SqliteAdapter): ToolDefinition {
   return {
     name: "sqlite_hybrid_search",
-    description: "Hybrid search combining full-text search and vector similarity using Reciprocal Rank Fusion (RRF).",
+    description:
+      "Hybrid search combining full-text search and vector similarity using Reciprocal Rank Fusion (RRF).",
     group: "text",
     inputSchema: HybridSearchSchema,
     outputSchema: HybridSearchOutputSchema,
@@ -437,11 +438,11 @@ export function createHybridSearchTool(adapter: SqliteAdapter): ToolDefinition {
     handler: async (params: unknown, _context: RequestContext) => {
       try {
         const input = HybridSearchSchema.parse(params);
-        
+
         const table = sanitizeIdentifier(input.table);
         const vectorColumn = sanitizeIdentifier(input.vectorColumn);
         await validateColumnExists(adapter, input.table, input.vectorColumn);
-        
+
         let textResults: { id: number; rank: number }[] = [];
         try {
           const sanitizedQuery = sanitizeFtsQuery(input.query);
@@ -461,7 +462,7 @@ export function createHybridSearchTool(adapter: SqliteAdapter): ToolDefinition {
         const vecSql = `SELECT rowid as id, ${vectorColumn} as vec FROM ${table} WHERE ${vectorColumn} IS NOT NULL LIMIT 10000`;
         const vecResult = await adapter.executeReadQuery(vecSql, []);
         const queryVector = input.queryVector;
-        
+
         const vecScored: { id: number; score: number }[] = [];
         for (const row of vecResult.rows ?? []) {
           try {
@@ -484,16 +485,33 @@ export function createHybridSearchTool(adapter: SqliteAdapter): ToolDefinition {
             // skip bad vectors
           }
         }
-        
-        vecScored.sort((a, b) => b.score - a.score);
-        const vectorResults = vecScored.map((r, i) => ({ id: r.id, rank: i + 1, score: r.score }));
 
-        const combined = new Map<number, { id: number; rrfScore: number; ftsRank: number | null; vectorSimilarity: number | null }>();
+        vecScored.sort((a, b) => b.score - a.score);
+        const vectorResults = vecScored.map((r, i) => ({
+          id: r.id,
+          rank: i + 1,
+          score: r.score,
+        }));
+
+        const combined = new Map<
+          number,
+          {
+            id: number;
+            rrfScore: number;
+            ftsRank: number | null;
+            vectorSimilarity: number | null;
+          }
+        >();
         const k = input.rrfK;
-        
+
         for (const f of textResults) {
           if (!combined.has(f.id)) {
-             combined.set(f.id, { id: f.id, rrfScore: 0, ftsRank: null, vectorSimilarity: null });
+            combined.set(f.id, {
+              id: f.id,
+              rrfScore: 0,
+              ftsRank: null,
+              vectorSimilarity: null,
+            });
           }
           const entry = combined.get(f.id);
           if (entry) {
@@ -501,10 +519,15 @@ export function createHybridSearchTool(adapter: SqliteAdapter): ToolDefinition {
             entry.rrfScore += 1 / (k + f.rank);
           }
         }
-        
+
         for (const v of vectorResults) {
           if (!combined.has(v.id)) {
-             combined.set(v.id, { id: v.id, rrfScore: 0, ftsRank: null, vectorSimilarity: null });
+            combined.set(v.id, {
+              id: v.id,
+              rrfScore: 0,
+              ftsRank: null,
+              vectorSimilarity: null,
+            });
           }
           const entry = combined.get(v.id);
           if (entry) {
@@ -516,11 +539,14 @@ export function createHybridSearchTool(adapter: SqliteAdapter): ToolDefinition {
         const sortedCombined = Array.from(combined.values())
           .sort((a, b) => b.rrfScore - a.rrfScore)
           .slice(0, input.limit)
-          .map(r => ({
+          .map((r) => ({
             rowid: r.id,
             rrfScore: Math.round(r.rrfScore * 10000) / 10000,
             ftsRank: r.ftsRank,
-            vectorSimilarity: r.vectorSimilarity !== null ? Math.round(r.vectorSimilarity * 10000) / 10000 : null,
+            vectorSimilarity:
+              r.vectorSimilarity !== null
+                ? Math.round(r.vectorSimilarity * 10000) / 10000
+                : null,
           }));
 
         return {

@@ -101,16 +101,20 @@ describe("Statistics Tools", () => {
     });
 
     it("should handle non-numeric string values as null", async () => {
-      await adapter.executeWriteQuery("CREATE TABLE weird_stats (id INTEGER, val REAL)");
-      await adapter.executeWriteQuery("INSERT INTO weird_stats (id, val) VALUES (1, 'not a number')");
-      
+      await adapter.executeWriteQuery(
+        "CREATE TABLE weird_stats (id INTEGER, val REAL)",
+      );
+      await adapter.executeWriteQuery(
+        "INSERT INTO weird_stats (id, val) VALUES (1, 'not a number')",
+      );
+
       const result = (await tools.get("sqlite_stats_basic")?.({
         table: "weird_stats",
         column: "val",
       })) as { success: boolean; stats: any };
 
       expect(result.success).toBe(true);
-      // SQLite sum() on strings usually returns 0 or null depending on data/version. 
+      // SQLite sum() on strings usually returns 0 or null depending on data/version.
       // Our JS logic does toNumberOrNull which checks Number.isNaN
       expect(result.stats.sum).toBe(0); // SUM('not a number') in SQLite returns 0.0, which JS sees as 0
     });
@@ -202,7 +206,9 @@ describe("Statistics Tools", () => {
     });
 
     it("should handle empty tables", async () => {
-      await adapter.executeWriteQuery("CREATE TABLE empty_hist (id INTEGER, val REAL)");
+      await adapter.executeWriteQuery(
+        "CREATE TABLE empty_hist (id INTEGER, val REAL)",
+      );
       const result = (await tools.get("sqlite_stats_histogram")?.({
         table: "empty_hist",
         column: "val",
@@ -214,9 +220,13 @@ describe("Statistics Tools", () => {
     });
 
     it("should handle uniform data (all values same)", async () => {
-      await adapter.executeWriteQuery("CREATE TABLE uniform_hist (id INTEGER, val REAL)");
-      await adapter.executeWriteQuery("INSERT INTO uniform_hist (id, val) VALUES (1, 10), (2, 10), (3, 10)");
-      
+      await adapter.executeWriteQuery(
+        "CREATE TABLE uniform_hist (id INTEGER, val REAL)",
+      );
+      await adapter.executeWriteQuery(
+        "INSERT INTO uniform_hist (id, val) VALUES (1, 10), (2, 10), (3, 10)",
+      );
+
       const result = (await tools.get("sqlite_stats_histogram")?.({
         table: "uniform_hist",
         column: "val",
@@ -253,16 +263,23 @@ describe("Statistics Tools", () => {
       })) as { success: boolean; error: string };
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Percentile values must be between 0 and 100");
+      expect(result.error).toContain(
+        "Percentile values must be between 0 and 100",
+      );
     });
 
     it("should handle empty tables gracefully", async () => {
-      await adapter.executeWriteQuery("CREATE TABLE empty_perc (id INTEGER, val REAL)");
+      await adapter.executeWriteQuery(
+        "CREATE TABLE empty_perc (id INTEGER, val REAL)",
+      );
       const result = (await tools.get("sqlite_stats_percentile")?.({
         table: "empty_perc",
         column: "val",
         percentiles: [50],
-      })) as { success: boolean; percentiles: { percentile: number; value: number | null }[] };
+      })) as {
+        success: boolean;
+        percentiles: { percentile: number; value: number | null }[];
+      };
 
       expect(result.success).toBe(true);
       expect(result.percentiles[0].value).toBeNull();

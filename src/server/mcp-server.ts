@@ -46,7 +46,10 @@ import {
   scopesGrantToolAccess,
 } from "../auth/scopes/enforcement.js";
 import { getAuthContext } from "../auth/auth-context.js";
-import { SubscribeRequestSchema, UnsubscribeRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  SubscribeRequestSchema,
+  UnsubscribeRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { SubscriptionManager } from "./subscription-manager.js";
 
 /**
@@ -56,7 +59,10 @@ import { SubscriptionManager } from "./subscription-manager.js";
  */
 const proto = McpServer.prototype as unknown as Record<
   string,
-  (this: McpServer, errorMessage: string) => {
+  (
+    this: McpServer,
+    errorMessage: string,
+  ) => {
     content: { type: string; text: string }[];
     isError: boolean;
   }
@@ -65,10 +71,7 @@ const proto = McpServer.prototype as unknown as Record<
 if (typeof proto["createToolError"] === "function") {
   const originalCreateToolError = proto["createToolError"];
   proto["createToolError"] = function (errorMessage: string) {
-    const result = originalCreateToolError.call(
-      this,
-      errorMessage,
-    );
+    const result = originalCreateToolError.call(this, errorMessage);
     if (result.content?.[0]?.type === "text") {
       const rawError = result.content[0].text;
       // Only intercept Zod validation failures from the SDK.
@@ -147,35 +150,58 @@ export class DbMcpServer {
     });
 
     // Handle subscribe request
-    this.server.server.setRequestHandler(SubscribeRequestSchema, (request, extra) => {
-      const uri = request.params.uri;
-      let sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
-      
-      if (sessionId === undefined && this.config.transport === "stdio") {
-        sessionId = "stdio";
-      }
+    this.server.server.setRequestHandler(
+      SubscribeRequestSchema,
+      (request, extra) => {
+        const uri = request.params.uri;
+        let sessionId =
+          extra.sessionId ??
+          extra.requestInfo?.headers["mcp-session-id"] ??
+          undefined;
 
-      // Allow subscriptions to schema, tables, health, and dynamic table URIs
-      if (!["sqlite://schema", "sqlite://tables", "sqlite://health"].includes(uri) && !uri.startsWith("sqlite://table/")) {
-        throw new Error(`Resource ${uri} is not subscribable`);
-      }
-      
-      this.subscriptionManager.subscribe(uri, sessionId as string | undefined);
-      return {};
-    });
+        if (sessionId === undefined && this.config.transport === "stdio") {
+          sessionId = "stdio";
+        }
+
+        // Allow subscriptions to schema, tables, health, and dynamic table URIs
+        if (
+          !["sqlite://schema", "sqlite://tables", "sqlite://health"].includes(
+            uri,
+          ) &&
+          !uri.startsWith("sqlite://table/")
+        ) {
+          throw new Error(`Resource ${uri} is not subscribable`);
+        }
+
+        this.subscriptionManager.subscribe(
+          uri,
+          sessionId as string | undefined,
+        );
+        return {};
+      },
+    );
 
     // Handle unsubscribe request
-    this.server.server.setRequestHandler(UnsubscribeRequestSchema, (request, extra) => {
-      const uri = request.params.uri;
-      let sessionId = extra.sessionId ?? extra.requestInfo?.headers['mcp-session-id'] ?? undefined;
-      
-      if (sessionId === undefined && this.config.transport === "stdio") {
-        sessionId = "stdio";
-      }
+    this.server.server.setRequestHandler(
+      UnsubscribeRequestSchema,
+      (request, extra) => {
+        const uri = request.params.uri;
+        let sessionId =
+          extra.sessionId ??
+          extra.requestInfo?.headers["mcp-session-id"] ??
+          undefined;
 
-      this.subscriptionManager.unsubscribe(uri, sessionId as string | undefined);
-      return {};
-    });
+        if (sessionId === undefined && this.config.transport === "stdio") {
+          sessionId = "stdio";
+        }
+
+        this.subscriptionManager.unsubscribe(
+          uri,
+          sessionId as string | undefined,
+        );
+        return {};
+      },
+    );
 
     // Log filter summary
     logger.info(getFilterSummary(this.toolFilter), { module: "FILTER" });
@@ -198,7 +224,7 @@ export class DbMcpServer {
     );
     registerHelpResources(this.server, this.toolFilter);
     registerObservabilityResources(this.server);
-    
+
     // Register admin tools if the admin group is enabled
     if (this.toolFilter.enabledGroups.has("admin")) {
       registerAdminTools(this.server);

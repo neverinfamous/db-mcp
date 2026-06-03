@@ -95,7 +95,6 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
-  
 
 ---
 
@@ -143,7 +142,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. `sqlite_fts_rebuild({table: "test_articles_fts"})` → success
 21. `sqlite_fts_create({sourceTable: "test_embeddings", columns: ["content"], ftsTable: "test_embeddings_fts"})` → FTS virtual table created
 22. `sqlite_fts_rebuild({table: "test_embeddings_fts"})` → rebuild index before searching
-22.5. `sqlite_hybrid_search({table: "test_embeddings", query: "database", queryVector: [0.1, 0.2, -0.1, 0.3, -0.2, 0.4, 0.1, -0.5], vectorColumn: "embedding", ftsTable: "test_embeddings_fts"})` → results combining vector distance and FTS
+    22.5. `sqlite_hybrid_search({table: "test_embeddings", query: "database", queryVector: [0.1, 0.2, -0.1, 0.3, -0.2, 0.4, 0.1, -0.5], vectorColumn: "embedding", ftsTable: "test_embeddings_fts"})` → results combining vector distance and FTS
 23. `sqlite_fts_search({table: "test_articles_fts", query: "SQLite", includeFacets: true})` → verify faceted categories exist
 
 **Error path testing:**

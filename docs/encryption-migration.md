@@ -9,30 +9,34 @@ This guide covers how to encrypt an existing `db-mcp` plaintext SQLite database 
 
 You will need the `sqlcipher` command-line utility installed on your system.
 
-* **macOS**: `brew install sqlcipher`
-* **Ubuntu/Debian**: `sudo apt-get install sqlcipher`
-* **Windows**: Download from [zetetic.net/sqlcipher](https://www.zetetic.net/sqlcipher/open-source/) or use WSL.
+- **macOS**: `brew install sqlcipher`
+- **Ubuntu/Debian**: `sudo apt-get install sqlcipher`
+- **Windows**: Download from [zetetic.net/sqlcipher](https://www.zetetic.net/sqlcipher/open-source/) or use WSL.
 
 ## Encryption Steps
 
 If you have an existing database named `data.db` and you want to encrypt it:
 
 1. Open your terminal and create a new encrypted database file:
+
    ```bash
    sqlcipher encrypted_data.db
    ```
 
 2. Set the encryption key for the new database (this must be done first):
+
    ```sql
    sqlite> PRAGMA key = 'your-super-secret-key-here';
    ```
 
 3. Attach your existing plaintext database:
+
    ```sql
    sqlite> ATTACH DATABASE 'data.db' AS plaintext KEY '';
    ```
 
 4. Export the plaintext data into the encrypted database:
+
    ```sql
    sqlite> SELECT sqlcipher_export('main', 'plaintext');
    ```
@@ -62,6 +66,6 @@ db-mcp --sqlite-native ./encrypted_data.db --encryption-key "your-super-secret-k
 
 ## Considerations
 
-* **System Database**: If you enable encryption, your sidecar `SystemDb` (which contains audit logs and metrics) will also be encrypted using the same key automatically. This ensures sensitive queries recorded in the audit log are protected.
-* **Performance**: SQLCipher introduces a slight performance overhead (typically 5-15%) compared to plaintext SQLite due to page-level encryption and decryption.
-* **Key Rotation**: To change your encryption key, you must connect to the encrypted database using `sqlcipher`, execute `PRAGMA key = 'old-key';` followed by `PRAGMA rekey = 'new-key';`. You cannot rotate keys directly through `db-mcp`.
+- **System Database**: If you enable encryption, your sidecar `SystemDb` (which contains audit logs and metrics) will also be encrypted using the same key automatically. This ensures sensitive queries recorded in the audit log are protected.
+- **Performance**: SQLCipher introduces a slight performance overhead (typically 5-15%) compared to plaintext SQLite due to page-level encryption and decryption.
+- **Key Rotation**: To change your encryption key, you must connect to the encrypted database using `sqlcipher`, execute `PRAGMA key = 'old-key';` followed by `PRAGMA rekey = 'new-key';`. You cannot rotate keys directly through `db-mcp`.

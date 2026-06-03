@@ -359,8 +359,6 @@ const coerceNumber = (val: unknown): unknown => {
   return val;
 };
 
-
-
 export const StorageAnalysisSchema = z
   .object({
     includeTableDetails: z
@@ -414,11 +412,15 @@ export const IndexAuditSchema = z
       .boolean()
       .optional()
       .default(false)
-      .describe("Analyze queriesToAnalyze to recommend composite/partial indexes"),
+      .describe(
+        "Analyze queriesToAnalyze to recommend composite/partial indexes",
+      ),
     queriesToAnalyze: z
       .array(z.string())
       .optional()
-      .describe("Queries to analyze using EXPLAIN QUERY PLAN (used if recommendComposite is true)"),
+      .describe(
+        "Queries to analyze using EXPLAIN QUERY PLAN (used if recommendComposite is true)",
+      ),
   })
   .default({ recommendComposite: false });
 export type IndexAuditInput = z.infer<typeof IndexAuditSchema>;
@@ -639,7 +641,6 @@ export const SchemaDiffOutputSchema = z
  * Both baseline and target accept either "current" (capture live DB schema)
  * or an inline snapshot object from a previous sqlite_schema_snapshot call.
  */
-
 
 export const SchemaDiffSchema = z
   .object({

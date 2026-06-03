@@ -158,7 +158,6 @@ test.describe("Payload Contracts: Admin Extended", () => {
     }
   });
 
-
   test("sqlite_backup returns success or WASM limitation", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {

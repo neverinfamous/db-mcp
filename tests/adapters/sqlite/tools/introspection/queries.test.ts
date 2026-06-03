@@ -207,11 +207,15 @@ describe("Introspection Query Tools", () => {
     it("should recommend composite indexes for analyzed queries", async () => {
       const result = (await tools.get("sqlite_index_audit")?.({
         recommendComposite: true,
-        queriesToAnalyze: ["SELECT * FROM employees WHERE dept_id = 1 AND name = 'Alice'"],
+        queriesToAnalyze: [
+          "SELECT * FROM employees WHERE dept_id = 1 AND name = 'Alice'",
+        ],
       })) as any;
 
       expect(result.success).toBe(true);
-      const recommendations = result.findings.filter((f: any) => f.type === "missing_composite_index");
+      const recommendations = result.findings.filter(
+        (f: any) => f.type === "missing_composite_index",
+      );
       expect(recommendations.length).toBeGreaterThanOrEqual(1);
       expect(recommendations[0].table).toBe("employees");
       expect(recommendations[0].suggestion).toContain("composite");

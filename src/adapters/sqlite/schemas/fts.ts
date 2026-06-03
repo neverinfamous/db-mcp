@@ -134,7 +134,9 @@ export const FtsSearchSchema = z.object({
     .boolean()
     .optional()
     .default(false)
-    .describe("Return match counts per column (distribution by matched column)"),
+    .describe(
+      "Return match counts per column (distribution by matched column)",
+    ),
 });
 export type FtsSearchInput = z.infer<typeof FtsSearchSchema>;
 

@@ -214,14 +214,18 @@ export const HybridSearchOutputSchema = z
     success: z.boolean(),
     query: z.string().optional(),
     matchCount: z.number().optional(),
-    results: z.array(
-      z.object({
-        rowid: z.number().optional(),
-        rrfScore: z.number().optional(),
-        ftsRank: z.number().nullable().optional(),
-        vectorSimilarity: z.number().nullable().optional(),
-      }).loose()
-    ).optional(),
+    results: z
+      .array(
+        z
+          .object({
+            rowid: z.number().optional(),
+            rrfScore: z.number().optional(),
+            ftsRank: z.number().nullable().optional(),
+            vectorSimilarity: z.number().nullable().optional(),
+          })
+          .loose(),
+      )
+      .optional(),
   })
   .extend(ErrorFieldsMixin.shape);
 
@@ -535,8 +539,15 @@ export const HybridSearchSchema = z.object({
   vectorColumn: z.string().describe("Vector column to search"),
   queryVector: z.array(z.number()).describe("Vector embedding of the query"),
   limit: z.preprocess(coerceNumber, z.number().optional().default(100)),
-  rrfK: z.preprocess(coerceNumber, z.number().optional().default(60).describe("RRF k constant")),
-  metric: z.enum(["cosine", "euclidean", "dot"]).optional().default("cosine").describe("Vector similarity metric"),
+  rrfK: z.preprocess(
+    coerceNumber,
+    z.number().optional().default(60).describe("RRF k constant"),
+  ),
+  metric: z
+    .enum(["cosine", "euclidean", "dot"])
+    .optional()
+    .default("cosine")
+    .describe("Vector similarity metric"),
 });
 
 export const TextSentimentSchema = z.object({

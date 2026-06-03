@@ -15,7 +15,8 @@ export function registerObservabilityResources(server: McpServer): void {
     "sqlite://metrics",
     "sqlite://metrics",
     {
-      description: "Returns in-memory streaming metrics including p50/p95/p99 latency percentiles and token usage.",
+      description:
+        "Returns in-memory streaming metrics including p50/p95/p99 latency percentiles and token usage.",
       mimeType: "application/json",
     },
     () => {

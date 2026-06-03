@@ -72,7 +72,12 @@ sqlite_storage_analysis({ limit: 10 }); // top 10 tables only
 sqlite_index_audit({ excludeSystemTables: true });
 sqlite_index_audit({ table: "orders", minSeverity: "warning" }); // reduce payload
 // Run EXPLAIN QUERY PLAN on target queries to recommend composite/partial indexes
-sqlite_index_audit({ recommendComposite: true, queriesToAnalyze: ["SELECT * FROM orders WHERE user_id = 1 AND status = 'active'"] });
+sqlite_index_audit({
+  recommendComposite: true,
+  queriesToAnalyze: [
+    "SELECT * FROM orders WHERE user_id = 1 AND status = 'active'",
+  ],
+});
 
 // EXPLAIN QUERY PLAN with scan-type classification and optimization suggestions (SELECT/WITH only)
 sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });

@@ -238,7 +238,7 @@ describe("Text Search Tools", () => {
           embedding TEXT
         )
       `);
-      
+
       await adapter.executeWriteQuery(`
         INSERT INTO vector_docs (id, title, embedding) VALUES
         (1, 'Database Systems', '[0.9, 0.1, 0.0]'),

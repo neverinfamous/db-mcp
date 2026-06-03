@@ -233,15 +233,15 @@ describe("codemode api", () => {
       };
 
       const api = createSqliteApi([noPosTool]);
-      
+
       // Should throw for single primitive
       await expect(api.core.unsupportedTool("value")).rejects.toThrow(
-        "Positional arguments are not supported for method: unsupportedTool"
+        "Positional arguments are not supported for method: unsupportedTool",
       );
 
       // Should throw for multiple args
       await expect(api.core.unsupportedTool("val1", "val2")).rejects.toThrow(
-        "Positional arguments are not supported for method: unsupportedTool"
+        "Positional arguments are not supported for method: unsupportedTool",
       );
     });
 
@@ -261,9 +261,9 @@ describe("codemode api", () => {
           table: "users",
           column: "email",
           delimiter: ",",
-          limit: 10
+          limit: 10,
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

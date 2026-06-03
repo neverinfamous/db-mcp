@@ -7,7 +7,7 @@ import { logger } from "../utils/logger/index.js";
  */
 export class SubscriptionManager {
   private readonly server: McpServer;
-  
+
   // Map of URI string -> Set of Session IDs
   private subscriptions = new Map<string, Set<string>>();
 
@@ -20,7 +20,9 @@ export class SubscriptionManager {
    */
   public subscribe(uri: string, sessionId?: string): void {
     if (!sessionId) {
-      logger.debug(`Subscription requested for ${uri} but no sessionId provided. Assuming stateless transport.`);
+      logger.debug(
+        `Subscription requested for ${uri} but no sessionId provided. Assuming stateless transport.`,
+      );
       return;
     }
 
@@ -32,7 +34,9 @@ export class SubscriptionManager {
 
     if (!sessions.has(sessionId)) {
       sessions.add(sessionId);
-      logger.debug(`Session ${sessionId} subscribed to resource ${uri}`, { module: "SERVER" });
+      logger.debug(`Session ${sessionId} subscribed to resource ${uri}`, {
+        module: "SERVER",
+      });
     }
   }
 
@@ -47,8 +51,10 @@ export class SubscriptionManager {
     const sessions = this.subscriptions.get(uri);
     if (sessions?.has(sessionId)) {
       sessions.delete(sessionId);
-      logger.debug(`Session ${sessionId} unsubscribed from resource ${uri}`, { module: "SERVER" });
-      
+      logger.debug(`Session ${sessionId} unsubscribed from resource ${uri}`, {
+        module: "SERVER",
+      });
+
       if (sessions.size === 0) {
         this.subscriptions.delete(uri);
       }
@@ -70,7 +76,10 @@ export class SubscriptionManager {
       }
     }
     if (count > 0) {
-      logger.debug(`Session ${sessionId} disconnected, removed ${count} subscriptions`, { module: "SERVER" });
+      logger.debug(
+        `Session ${sessionId} disconnected, removed ${count} subscriptions`,
+        { module: "SERVER" },
+      );
     }
   }
 
@@ -81,12 +90,17 @@ export class SubscriptionManager {
     if (!this.hasSubscribers(uri)) {
       return;
     }
-    
+
     try {
       await this.server.server.sendResourceUpdated({ uri });
-      logger.debug(`Notified subscribers of update to ${uri}`, { module: "SERVER" });
+      logger.debug(`Notified subscribers of update to ${uri}`, {
+        module: "SERVER",
+      });
     } catch (error) {
-      logger.error(`Failed to notify subscribers for ${uri}`, { module: "SERVER", error: error instanceof Error ? error : new Error(String(error)) });
+      logger.error(`Failed to notify subscribers for ${uri}`, {
+        module: "SERVER",
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
     }
   }
 
@@ -94,8 +108,11 @@ export class SubscriptionManager {
    * Notifies subscribers of schema-related resources (schema, tables, and specific tables).
    */
   public async notifySchemaSubscribers(): Promise<void> {
-    const urisToNotify = new Set<string>(["sqlite://schema", "sqlite://tables"]);
-    
+    const urisToNotify = new Set<string>([
+      "sqlite://schema",
+      "sqlite://tables",
+    ]);
+
     // Find any specific table subscriptions
     for (const uri of this.subscriptions.keys()) {
       if (uri.startsWith("sqlite://table/")) {
@@ -103,7 +120,9 @@ export class SubscriptionManager {
       }
     }
 
-    const promises = Array.from(urisToNotify).map(uri => this.notifyResourceUpdated(uri));
+    const promises = Array.from(urisToNotify).map((uri) =>
+      this.notifyResourceUpdated(uri),
+    );
     await Promise.allSettled(promises);
   }
 

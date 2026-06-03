@@ -214,20 +214,29 @@ export function createIndexAuditTool(adapter: SqliteAdapter): ToolDefinition {
         }
 
         // Check 4: Index Recommendations based on queries (Composite/Partial)
-        if (input.recommendComposite && input.queriesToAnalyze && input.queriesToAnalyze.length > 0) {
+        if (
+          input.recommendComposite &&
+          input.queriesToAnalyze &&
+          input.queriesToAnalyze.length > 0
+        ) {
           for (const query of input.queriesToAnalyze) {
             try {
               // Don't run EXPLAIN QUERY PLAN on DML/DDL that might mutate if an agent accidentally sent one.
               // Safe query check:
               if (/^\s*SELECT/i.test(query)) {
-                const planResult = await adapter.executeReadQuery(`EXPLAIN QUERY PLAN ${query}`);
+                const planResult = await adapter.executeReadQuery(
+                  `EXPLAIN QUERY PLAN ${query}`,
+                );
                 const planRows = planResult.rows ?? [];
-                
+
                 // Simple heuristic: look for "SCAN TABLE" or "SEARCH TABLE" without a covering index.
                 for (const row of planRows) {
                   const detailVal = row["detail"];
                   const detail = typeof detailVal === "string" ? detailVal : "";
-                  if (detail.startsWith("SCAN TABLE") || detail.startsWith("SCAN ")) {
+                  if (
+                    detail.startsWith("SCAN TABLE") ||
+                    detail.startsWith("SCAN ")
+                  ) {
                     const match = /SCAN (?:TABLE )?([\w_]+)/i.exec(detail);
                     const tableName = match ? match[1] : "unknown";
                     if (tableName && tableName !== "unknown") {

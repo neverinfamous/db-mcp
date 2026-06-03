@@ -23,10 +23,16 @@ describe("AuditLogger", () => {
   });
 
   it("should initialize and respect stderr mode", async () => {
-    logger = new AuditLogger({ enabled: true, logPath: "stderr", logRetentionDays: 1 });
+    logger = new AuditLogger({
+      enabled: true,
+      logPath: "stderr",
+      logRetentionDays: 1,
+    });
     await logger.init(); // Shouldn't do anything for stderr
-    
-    const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
     logger.log({
       timestamp: new Date().toISOString(),
       requestId: "req-1",
@@ -35,17 +41,20 @@ describe("AuditLogger", () => {
       scope: "read",
       durationMs: 100,
       success: true,
-      scopes: []
+      scopes: [],
     } as AuditEntry);
-    
+
     await logger.flush();
     expect(stderrSpy).toHaveBeenCalled();
     stderrSpy.mockRestore();
   });
 
   it("should write logs to systemDb", async () => {
-    logger = new AuditLogger({ enabled: true, logPath: "db", logRetentionDays: 1 }, systemDb);
-    
+    logger = new AuditLogger(
+      { enabled: true, logPath: "db", logRetentionDays: 1 },
+      systemDb,
+    );
+
     const entry: AuditEntry = {
       timestamp: new Date().toISOString(),
       requestId: "req-2",
@@ -57,7 +66,7 @@ describe("AuditLogger", () => {
       error: "test error",
       scopes: ["write"],
       args: { test: 123 },
-      user: "user1"
+      user: "user1",
     };
 
     logger.log(entry);
@@ -74,8 +83,11 @@ describe("AuditLogger", () => {
   });
 
   it("should handle search with filters", async () => {
-    logger = new AuditLogger({ enabled: true, logPath: "db", logRetentionDays: 1 }, systemDb);
-    
+    logger = new AuditLogger(
+      { enabled: true, logPath: "db", logRetentionDays: 1 },
+      systemDb,
+    );
+
     logger.log({
       timestamp: "2024-01-01T10:00:00Z",
       requestId: "req-1",
@@ -84,7 +96,7 @@ describe("AuditLogger", () => {
       scope: "read",
       durationMs: 10,
       success: true,
-      scopes: []
+      scopes: [],
     } as AuditEntry);
 
     logger.log({
@@ -95,7 +107,7 @@ describe("AuditLogger", () => {
       scope: "write",
       durationMs: 20,
       success: false,
-      scopes: []
+      scopes: [],
     } as AuditEntry);
 
     await logger.flush();
@@ -122,22 +134,27 @@ describe("AuditLogger", () => {
     expect(searchRes.entries[0].requestId).toBe("req-2");
 
     // Search by timestamp range
-    searchRes = await logger.search({ 
+    searchRes = await logger.search({
       fromTimestamp: "2024-01-01T09:00:00Z",
-      toTimestamp: "2024-01-01T10:30:00Z"
+      toTimestamp: "2024-01-01T10:30:00Z",
     });
     expect(searchRes.entries.length).toBe(1);
     expect(searchRes.entries[0].tool).toBe("tool_a");
   });
 
   it("should not throw on DB write failure", async () => {
-    logger = new AuditLogger({ enabled: true, logPath: "db", logRetentionDays: 1 }, systemDb);
-    
-    const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-    
+    logger = new AuditLogger(
+      { enabled: true, logPath: "db", logRetentionDays: 1 },
+      systemDb,
+    );
+
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+
     // Break the DB to simulate failure
     systemDb.getDb().exec("DROP TABLE audit_logs");
-    
+
     logger.log({
       timestamp: new Date().toISOString(),
       requestId: "req-fail",
@@ -146,22 +163,25 @@ describe("AuditLogger", () => {
       scope: "read",
       durationMs: 10,
       success: true,
-      scopes: []
+      scopes: [],
     } as AuditEntry);
 
     // This should not throw, but it should log to stderr
     await expect(logger.flush()).resolves.not.toThrow();
-    
+
     expect(stderrSpy).toHaveBeenCalled();
-    const callStr = stderrSpy.mock.calls.map(c => c.join(" ")).join(" ");
+    const callStr = stderrSpy.mock.calls.map((c) => c.join(" ")).join(" ");
     expect(callStr).toContain("[AUDIT] Write failed");
 
     stderrSpy.mockRestore();
   });
 
   it("should handle empty systemDb for recent and search", async () => {
-    logger = new AuditLogger({ enabled: true, logPath: "db", logRetentionDays: 1 }, null);
-    
+    logger = new AuditLogger(
+      { enabled: true, logPath: "db", logRetentionDays: 1 },
+      null,
+    );
+
     const recent = await logger.recent();
     expect(recent).toEqual([]);
 
@@ -171,7 +191,10 @@ describe("AuditLogger", () => {
   });
 
   it("should safely close", async () => {
-    logger = new AuditLogger({ enabled: true, logPath: "db", logRetentionDays: 1 }, systemDb);
+    logger = new AuditLogger(
+      { enabled: true, logPath: "db", logRetentionDays: 1 },
+      systemDb,
+    );
     logger.log({
       timestamp: new Date().toISOString(),
       requestId: "req-1",
@@ -180,11 +203,11 @@ describe("AuditLogger", () => {
       scope: "read",
       durationMs: 10,
       success: true,
-      scopes: []
+      scopes: [],
     } as AuditEntry);
-    
+
     await logger.close();
-    
+
     const recent = await logger.recent();
     expect(recent.length).toBe(1);
   });

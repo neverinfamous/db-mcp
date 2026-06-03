@@ -4,7 +4,7 @@
 
 # Basic Server Information
 name: "db-mcp"
-version: "3.0.2"
+version: "4.0.0"
 
 # Transport configuration
 # Options: "stdio", "http", "sse"
@@ -34,11 +34,11 @@ databases:
 audit:
   enabled: true
   logPath: "./logs/audit.db"
-  redact: true               # Redact PII and secrets
-  auditReads: false          # Set to true to also audit SELECT queries
+  redact: true # Redact PII and secrets
+  auditReads: false # Set to true to also audit SELECT queries
   backup:
-    enabled: true            # Automatically backup DDL before destructive operations
-    includeData: false       # Set to true to include sample data in backups
+    enabled: true # Automatically backup DDL before destructive operations
+    includeData: false # Set to true to include sample data in backups
     maxAgeDays: 30
     maxCount: 100
     maxDataSizeBytes: 10485760 # 10MB limit for captured data

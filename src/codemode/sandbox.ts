@@ -203,7 +203,7 @@ export class CodeModeSandbox {
     const isolate = new ivmLib.Isolate({
       memoryLimit: this.options.memoryLimitMb,
     });
-    
+
     let context: ivm.Context | undefined;
     let logRef: ivm.Reference<unknown> | undefined;
     let script: ivm.Script | undefined;
@@ -324,12 +324,32 @@ export class CodeModeSandbox {
     } finally {
       // Cleanup references and isolate robustly
       for (const ref of refCleanup) {
-        try { ref.release(); } catch { /* ignore */ }
+        try {
+          ref.release();
+        } catch {
+          /* ignore */
+        }
       }
-      try { logRef?.release(); } catch { /* ignore */ }
-      try { script?.release(); } catch { /* ignore */ }
-      try { context?.release(); } catch { /* ignore */ }
-      try { isolate.dispose(); } catch { /* ignore */ }
+      try {
+        logRef?.release();
+      } catch {
+        /* ignore */
+      }
+      try {
+        script?.release();
+      } catch {
+        /* ignore */
+      }
+      try {
+        context?.release();
+      } catch {
+        /* ignore */
+      }
+      try {
+        isolate.dispose();
+      } catch {
+        /* ignore */
+      }
     }
 
     const endTime = performance.now();

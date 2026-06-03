@@ -262,7 +262,9 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
   test("sqlite_audit_search returns { success, count, entries[] }", async ({}, testInfo) => {
     const client = await createClient(getBaseURL(testInfo));
     try {
-      const payload = await callToolAndParse(client, "sqlite_audit_search", { limit: 10 });
+      const payload = await callToolAndParse(client, "sqlite_audit_search", {
+        limit: 10,
+      });
       expectSuccess(payload);
       expect(typeof payload.count).toBe("number");
       expect(Array.isArray(payload.entries)).toBe(true);
@@ -275,13 +277,21 @@ test.describe("Payload Contracts: Admin + Introspection + Migration", () => {
     const client = await createClient(getBaseURL(testInfo));
     try {
       // 1. Get current logLevel
-      const getPayload = await callToolAndParse(client, "sqlite_server_config", { action: "get", setting: "logLevel" });
+      const getPayload = await callToolAndParse(
+        client,
+        "sqlite_server_config",
+        { action: "get", setting: "logLevel" },
+      );
       expectSuccess(getPayload);
       const configObj = getPayload.config as Record<string, unknown>;
       expect(typeof configObj.logLevel).toBe("string");
 
       // 2. Set logLevel
-      const setPayload = await callToolAndParse(client, "sqlite_server_config", { action: "set", setting: "logLevel", value: "debug" });
+      const setPayload = await callToolAndParse(
+        client,
+        "sqlite_server_config",
+        { action: "set", setting: "logLevel", value: "debug" },
+      );
       expectSuccess(setPayload);
       expect(setPayload.message).toContain("debug");
     } finally {
