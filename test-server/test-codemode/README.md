@@ -23,6 +23,7 @@ When tasked with running tests from this folder, adhere to the following optimiz
 
 - **Happy Path Parity**: Validate that Code Mode handler execution matches expected database behavior.
 - **Structured Error Path**: Ensure domain errors (e.g., nonexistent table) return an object `{"success": false, "error": "..."}` instead of crashing or leaking raw MCP errors.
+- **Timeouts & Rate Limits**: Validate that exceeding sandbox limits (e.g., via infinite loops) safely returns a `TimeoutError` (category: `timeout`), and exceeding rate limits returns a `RateLimitError` (category: `rate_limit`).
 - **Zod Resilience**: Pass `{}` with missing required parameters or invalid types. Verify that Zod errors are properly caught and formatted.
 - **Payload Limits**: If a response payload is excessively large, report it as a 📦 Payload issue.
 - **Code Over Docs (When Standards Violated)**: If the code deviates from established standards (e.g., throwing raw MCP errors instead of Structured Errors, or failing Zod validation), **fix the handler code**. Do not modify documentation, prompts, or `gotchas.md` to accommodate buggy code.
