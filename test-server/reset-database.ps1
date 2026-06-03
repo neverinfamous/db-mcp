@@ -149,7 +149,9 @@ if ($nodeProcesses) {
     foreach ($proc in $nodeProcesses) {
         Write-Warn "Node process PID $($proc.ProcessId) is using this database (likely an MCP server)"
     }
-    Write-Info "The database file will be replaced in-place - existing connections will pick up the new data."
+    Write-Warn "The database is currently in use and cannot be safely reset."
+    Write-Warn "Please close any active connections (e.g. restart the MCP server) and try again."
+    exit 1
 }
 
 $filesToDelete = @(
@@ -171,9 +173,10 @@ foreach ($file in $filesToDelete) {
             }
         } catch {
             if ($file -eq $DatabasePath) {
-                # Main DB file is locked — overwrite will happen at seed step
-                Write-Warn "Database file is locked; will overwrite in-place at seed step"
-                $lockFailed = $true
+                Write-Warn "Database file is locked by another process (likely your IDE or an MCP server)."
+                Write-Warn "The database cannot be safely reset while in use."
+                Write-Warn "Please close any active connections and try again."
+                exit 1
             } else {
                 Write-Info "Could not delete $file (may be in use): $_"
             }
