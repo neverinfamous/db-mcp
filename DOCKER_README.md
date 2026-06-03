@@ -140,8 +140,7 @@ Specify exactly the groups you need:
 
 ### Tool Groups (10 Available)
 
-> +4 built-in tools (server_info, server_health, list_adapters, sqlite_execute_code) are injected into every group. (Note: There are also 7 admin/audit tools that are always available but not part of any group, making the total MCP tool count 177 Native / 150 WASM).
-
+> +4 built-in tools are injected into every group. (7 audit tools are also always available).
 | Category (Group)                     | WASM | Native | + Built-in | Description                                |
 | ------------------------------------ | ---- | ------ | ---------- | ------------------------------------------ |
 | Code Mode (`codemode`)               | 1    | 1      | +4         | Sandboxed JavaScript execution 🧠          |
@@ -155,7 +154,7 @@ Specify exactly the groups you need:
 | Geospatial (`geo`)                   | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)      |
 | Introspection (`introspection`)      | 10   | 10     | +4         | Schema mapping, FK graph, cascade sim      |
 | Migration (`migration`)              | 6    | 6      | +4         | Schema migration tracking (opt-in)         |
-| **Total**                            | **139** | **166** | | |
+| **Total** (excluding Code Mode)      | **139** | **166** | | |
 
 ### Syntax Reference
 
@@ -289,7 +288,7 @@ docker run --rm -p 3000:3000 \
 
 **Scopes:** `full`, `read`, `write`, `admin`, `db:{name}`, `table:{db}:{table}`. See [Keycloak Setup](https://github.com/neverinfamous/db-mcp/blob/main/docs/KEYCLOAK_SETUP.md) for provider configuration.
 
-> **Audit identity:** When OAuth is enabled with audit logging (`--audit-log`), write/admin audit entries capture the authenticated user (`claims.sub`) and granted scopes — providing a forensic trail linking mutations to identities.
+> **Audit identity:** When OAuth is enabled with audit logging (`--audit-log`), write/admin audit entries capture the authenticated user (`claims.sub`) and granted scopes.
 
 ## 🔐 Encryption at Rest (Native Only)
 

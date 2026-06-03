@@ -29,6 +29,9 @@
 
 ### Fixed
 
+- Documentation limits: Shortened `DOCKER_README.md` to safely conform to Docker Hub's 25,000 character limit, and corrected the tool count math in the groupings table.
+- Template usability: Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings for encryption keys, extensions, and auth variables.
+
 - Updated agentic workflows to strictly use single quotes in YAML frontmatter and explicitly reference `gh copilot` in instructions.
 - Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings.
 - Silent fallbacks in `introspection` Zod schemas that swallowed wrong-type validation errors for enum properties.
