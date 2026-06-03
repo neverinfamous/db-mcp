@@ -47,6 +47,7 @@
 - Missing AST validation error trigger in `sandbox.test.ts`.
 - ESLint `prefer-const` issue in `tables.ts`.
 - Automated subscription test scripts (`test-subscriptions-raw.mjs`, `test-subscriptions-sdk.mjs`) attempting DDL via `sqlite_write_query` instead of dedicated DDL tools, and using an outdated SDK signature for `setNotificationHandler`.
+- Fixed factual error in `test-codemode-admin.md` where `sqlite.admin.wal` testing incorrectly expected a `{success: true}` response instead of a DB lock error due to expected Code Mode connection pool behavior.
 
 ### Security
 
