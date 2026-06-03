@@ -25,3 +25,7 @@ sqlite_vector_stats({ table: "docs", vectorColumn: "emb" }); // returns sampleSi
 sqlite_vector_normalize({ vector: [3, 4, 0, 0] }); // returns unit vector [0.6, 0.8, 0, 0]
 sqlite_vector_distance({ vector1: [...], vector2: [...], metric: "cosine" }); // returns { value: <number> }
 ```
+
+## ⚠️ Vector Gotchas
+
+- **Vector tool schemas**: Vector tools use distinct schemas for specific operations. E.g., `sqlite.vector.dimensions` requires `vectorColumn`. Additionally, `sqlite_vector_get` wraps metadata inside a `metadata` object (e.g., `metadata.content`), and `sqlite_vector_stats` returns `sampleSize` and `magnitudeStats` (not `count` and `stats`).

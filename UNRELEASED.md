@@ -11,7 +11,8 @@
 - Added `--allowed-io-roots` CLI flag and `ALLOWED_IO_ROOTS` environment variable to configure the IO sandbox.
 - Session timeout enforcement for HTTP stateful mode: 30-minute idle timeout with 1-minute sweep interval, 24-hour absolute TTL, and in-flight request protection via session locks.
 - Added 4 new Optimistic Concurrency Control (OCC) tools to the `core` group: `sqlite_enable_versioning`, `sqlite_disable_versioning`, `sqlite_check_version`, and `sqlite_conditional_update`.
-
+- Implemented universal `snake_case` parameter mapping in `resolveAliases` for automatic validation schema forgiveness.
+- Wrapped Code Mode Sandbox bindings and `GroupApi` handlers with a `Proxy` to automatically map `snake_case` method calls to their `camelCase` implementations.
 ### Changed
 - `sqlite_write_query` and `sqlite_upsert` now accept an optional `expectedVersion` parameter. If a table is versioned, this parameter becomes required to prevent lost updates, throwing a `ConflictError` on mismatch.
 - Updated `sqlite_read_query` agent testing prompts (`test-core-data.md`, `test-codemode-core.md`, `test-codemode-advanced-core.md`) to natively validate streaming chunk degradation behavior.
@@ -21,6 +22,7 @@
 - Updated `core` agent testing prompts (`test-core-data.md`, `test-codemode-core.md`) to include comprehensive lifecycle and error boundary tests for Optimistic Concurrency Control tools and `expectedVersion` requirements.
 - Added Playwright E2E tests for `ALLOWED_IO_ROOTS` boundary enforcement and HTTP startup failures.
 - Audited and updated all testing prompt `README.md` files to explicitly mandate `ALLOWED_IO_ROOTS` environment variable usage, document HTTP session timeouts, and require chunked stream verification.
+- Refactored and simplified server instructions (`gotchas.md`), redistributing tool-specific gotchas to their native tool group documentation URIs (`sqlite://help/*`) to reduce the root help payload size.
 - Bumped `isolated-vm` to `7.0.0` (major version aligns with V8 engine upgrades) for out-of-the-box compatibility with Node.js 26.
 - Migrated project package manager from `npm` to `pnpm` (`v9.15.4`) for improved performance, stricter dependency resolution, and reduced disk footprint.
 - Updated `Dockerfile` to use `pnpm` exclusively, eliminating the need to manually patch transitively bundled `npm` vulnerabilities.

@@ -87,3 +87,4 @@ sqlite_query_plan({ sql: "SELECT * FROM orders WHERE status = 'active'" });
 
 - `excludeSystemTables` defaults to `true` — SpatiaLite system tables are hidden for cleaner output. Pass `false` to include them
 - `sqlite_migration_risks` analyzes DDL text statically — it does NOT execute the statements
+- `sqlite_schema_diff`: `baseline` and `target` accept either the string `"current"` (queries live DB) or an inline snapshot object from a prior `sqlite_schema_snapshot` call. At least one side must be `"current"` unless doing an offline comparison.

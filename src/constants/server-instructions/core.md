@@ -39,3 +39,10 @@
 - `sqlite_truncate({ table: "users" })` — quickly delete all rows from a table (executes `DELETE FROM table`)
 - `sqlite_date_add({ table: "users", column: "created_at", amount: 7, unit: "days", whereClause: "id = 1" })` — add or subtract time intervals from a date column. By default returns only the computed column; use `selectColumns` to return additional context.
 - `sqlite_date_diff({ table: "users", column1: "ended_at", column2: "started_at", unit: "days", whereClause: "id = 1" })` — calculate the difference between two date columns. By default returns only the computed column; use `selectColumns` to return additional context.
+
+## ⚠️ Core Gotchas
+
+1. **sqlite_write_query**: DML only (INSERT/UPDATE/DELETE/REPLACE) — use `sqlite_read_query` for SELECT, and dedicated DDL tools for schema modifications.
+2. **sqlite_upsert**: Always specify `conflictColumns` — without it, falls back to `REPLACE` which deletes and re-inserts the row, potentially losing columns not included in `data`.
+3. **Optimistic Concurrency Control (OCC)**: When a table is versioned (`sqlite_enable_versioning`), you MUST supply `expectedVersion` to `sqlite_write_query`, `sqlite_upsert`, and `sqlite_conditional_update`. Omitting it will result in a `ConflictError` to strictly prevent lost updates.
+4. **sqlite_batch_insert**: All rows must have the same keys — inconsistent column sets across rows will cause errors or unexpected NULLs.
