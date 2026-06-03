@@ -53,6 +53,7 @@
 - Missing AST validation error trigger in `sandbox.test.ts`.
 - Automated subscription test scripts (`test-subscriptions-raw.mjs`, `test-subscriptions-sdk.mjs`) attempting DDL via `sqlite_write_query` instead of dedicated DDL tools, and using an outdated SDK signature for `setNotificationHandler`.
 - Fixed `test-server/reset-database.ps1` to gracefully abort and warn the user when the database is locked (e.g., by an active MCP server or IDE) instead of crashing with a `SQLITE_NOTADB` error during encryption.
+- Removed defunct `--auth-token` argument from `cli.ts` help text to align with its removal during the May 2026 security audit.
 
 ### Security
 
