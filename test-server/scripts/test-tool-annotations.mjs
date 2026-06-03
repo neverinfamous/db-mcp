@@ -30,8 +30,8 @@ import { spawn } from "child_process";
 
 const projectDir = "C:\\Users\\chris\\Desktop\\db-mcp";
 
-/** Expected total tool count: 171 inventory (166 group + 5 audit) + 4 built-in */
-const EXPECTED_TOOL_COUNT = 177;
+/** Expected total tool count: 175 inventory (170 group + 5 audit) + 6 built-in */
+const EXPECTED_TOOL_COUNT = 181;
 
 /**
  * Tools registered directly via SDK's registerTool() cannot carry sensitiveHint

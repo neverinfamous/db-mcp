@@ -226,6 +226,14 @@ export const WriteQuerySchema = z.object({
     .array(z.unknown())
     .optional()
     .describe("Query parameters for prepared statements"),
+  expectedVersion: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "If set and rowsAffected is 0, throws ConflictError instead of returning silently. Use with manual WHERE _version = ? guards.",
+    ),
 });
 
 export const CreateTableSchema = z.object({
@@ -443,6 +451,14 @@ export const UpsertSchema = z.object({
     .union([z.boolean(), z.array(z.string())])
     .optional()
     .describe("Columns to return, or true for all columns"),
+  expectedVersion: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Expected _version value for optimistic concurrency control. Requires conflictColumns and a versioned table.",
+    ),
 });
 
 // =============================================================================
@@ -698,3 +714,77 @@ export const DropTriggerOutputSchema = z
 
 export type CreateTriggerInput = z.infer<typeof CreateTriggerSchema>;
 export type DropTriggerInput = z.infer<typeof DropTriggerSchema>;
+
+// =============================================================================
+// OCC / Versioning Schemas
+// =============================================================================
+
+export const EnableVersioningSchema = z.object({
+  table: z.string().describe("Name of the table to enable versioning for"),
+  tableName: z.string().optional().describe("Alias for table"),
+});
+
+export const EnableVersioningOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+    alreadyEnabled: z.boolean().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+export const DisableVersioningSchema = z.object({
+  table: z.string().describe("Name of the table to disable versioning for"),
+  tableName: z.string().optional().describe("Alias for table"),
+  ifExists: z.boolean().optional().default(true),
+});
+
+export const DisableVersioningOutputSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    sql: z.string().optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+export const CheckVersionSchema = z.object({
+  table: z.string().describe("Table name"),
+  tableName: z.string().optional().describe("Alias for table"),
+  rowId: z
+    .union([z.number(), z.string()])
+    .describe("Primary key or rowid value of the row"),
+  idColumn: z
+    .string()
+    .optional()
+    .describe("Name of the primary key column (default: 'rowid')"),
+});
+
+export const CheckVersionOutputSchema = z
+  .object({
+    success: z.boolean(),
+    version: z.number().optional(),
+    row: RowRecordSchema.optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+export const ConditionalUpdateSchema = z.object({
+  table: z.string().describe("Table name"),
+  tableName: z.string().optional().describe("Alias for table"),
+  data: z.record(z.string(), z.unknown()).describe("Column-value pairs to update"),
+  conditions: z.array(WhereConditionSchema).describe("WHERE conditions to locate the row (e.g. id = 1)"),
+  expectedVersion: z.number().int().positive().describe("The _version value expected to be currently in the database"),
+});
+
+export const ConditionalUpdateOutputSchema = z
+  .object({
+    success: z.boolean(),
+    rowsAffected: z.number().optional(),
+    currentVersion: z.number().optional(),
+    rows: z.array(RowRecordSchema).optional(),
+  })
+  .extend(ErrorFieldsMixin.shape);
+
+export type EnableVersioningInput = z.infer<typeof EnableVersioningSchema>;
+export type DisableVersioningInput = z.infer<typeof DisableVersioningSchema>;
+export type CheckVersionInput = z.infer<typeof CheckVersionSchema>;
+export type ConditionalUpdateInput = z.infer<typeof ConditionalUpdateSchema>;

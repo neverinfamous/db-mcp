@@ -27,16 +27,16 @@ git clone https://github.com/YOUR_USERNAME/db-mcp.git
 cd db-mcp
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build TypeScript
-npm run build
+pnpm run build
 
 # Run the test suite
-npm test
+pnpm test
 
 # Run the full quality check
-npm run check   # Runs ESLint + TypeScript strict-mode type checking
+pnpm run check   # Runs ESLint + TypeScript strict-mode type checking
 ```
 
 ### Running the Server Locally
@@ -92,27 +92,27 @@ We especially welcome contributions in these areas:
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests with coverage
-npm run test:coverage
+pnpm run test:coverage
 
 # Run a specific test file
-npx vitest run src/__tests__/your-test-file.test.ts
+pnpm dlx vitest run src/__tests__/your-test-file.test.ts
 
 # Run benchmarks
-npm run bench
+pnpm run bench
 ```
 
 ### Quality Checks
 
 ```bash
 # Lint + type check (required before submitting)
-npm run check   # ESLint + TypeScript strict-mode
+pnpm run check   # ESLint + TypeScript strict-mode
 
 # Or individually
-npm run lint        # ESLint only
-npm run typecheck   # TypeScript strict-mode type checking
+pnpm run lint        # ESLint only
+pnpm run typecheck   # TypeScript strict-mode type checking
 ```
 
 ### End-to-End Tests
@@ -120,7 +120,7 @@ npm run typecheck   # TypeScript strict-mode type checking
 The Playwright E2E suite validates HTTP and SSE transport parity:
 
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 ### Manual Testing with MCP Client
@@ -157,7 +157,7 @@ docker run --rm -i db-mcp-dev --transport stdio --sqlite-native /app/data/test.d
 ### TypeScript Code Style
 
 - **Strict mode** — `tsconfig.json` enforces strict TypeScript
-- **ESLint** — Run `npm run lint` to check, `npm run lint:fix` to auto-fix (when available)
+- **ESLint** — Run `pnpm run lint` to check, `pnpm run lint:fix` to auto-fix (when available)
 - **Prettier** — Formatting is handled automatically during the release workflow
 - **Type safety** — Avoid `any`; use proper types and Zod schemas
 - **Modularity** — Keep files under ~500 lines; split into sub-modules when approaching the limit
@@ -247,7 +247,7 @@ Use our [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md).
 ### Before Submitting
 
 - [ ] **Fork** the repository and create a feature branch
-- [ ] **Test** your changes (`npm run check && npm test`)
+- [ ] **Test** your changes (`pnpm run check && pnpm test`)
 - [ ] **Update documentation** if you changed APIs or behavior
 - [ ] **Add examples** for new features
 - [ ] **Update `UNRELEASED.md`** with your change
@@ -321,23 +321,23 @@ src/
 
 | Script                  | Purpose                                              |
 | ----------------------- | ---------------------------------------------------- |
-| `npm run build`         | Production build via tsc                             |
-| `npm run dev`           | Watch mode (incremental builds)                      |
-| `npm run check`         | **Quality gate** — lint + typecheck (run before PRs) |
-| `npm run lint`          | ESLint only                                          |
-| `npm run typecheck`     | TypeScript strict-mode type checking                 |
-| `npm test`              | Run all unit tests (Vitest)                          |
-| `npm run test:coverage` | Tests with V8 coverage report                        |
-| `npm run test:e2e`      | Playwright end-to-end tests (HTTP/SSE transport)     |
-| `npm run bench`         | Performance benchmarks (tinybench via Vitest)        |
-| `npm run bench:verbose` | Benchmarks with detailed timings                     |
+| `pnpm run build`         | Production build via tsc                             |
+| `pnpm run dev`           | Watch mode (incremental builds)                      |
+| `pnpm run check`         | **Quality gate** — lint + typecheck (run before PRs) |
+| `pnpm run lint`          | ESLint only                                          |
+| `pnpm run typecheck`     | TypeScript strict-mode type checking                 |
+| `pnpm test`              | Run all unit tests (Vitest)                          |
+| `pnpm run test:coverage` | Tests with V8 coverage report                        |
+| `pnpm run test:e2e`      | Playwright end-to-end tests (HTTP/SSE transport)     |
+| `pnpm run bench`         | Performance benchmarks (tinybench via Vitest)        |
+| `pnpm run bench:verbose` | Benchmarks with detailed timings                     |
 
 ### Benchmarks
 
 If your change touches a hot path (tool dispatch, schema parsing, auth, Code Mode, connection pool), run benchmarks to verify you haven't introduced a regression:
 
 ```bash
-npm run bench
+pnpm run bench
 ```
 
 ## 🔐 Security

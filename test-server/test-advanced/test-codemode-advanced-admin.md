@@ -97,6 +97,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 

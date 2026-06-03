@@ -9,19 +9,19 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++ && \
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main curl openssl musl nghttp2
 
-# Pin npm version for reproducible builds (builder is discarded, but pin ensures consistent devDep resolution)
-RUN npm install -g npm@11.4.2 --force && npm cache clean --force
+# Pin pnpm version for reproducible builds
+RUN npm install -g pnpm@9.15.4 && pnpm config set store-dir /app/.pnpm-store
 
 # Copy package files first for better layer caching
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
 # Install all dependencies (including devDependencies for build)
 # This will compile better-sqlite3 native bindings
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Ensure better-sqlite3 native addon is compiled for the current target architecture
-# (prevents stale/cross-arch cached binaries from npm ci)
-RUN npm rebuild better-sqlite3 --ignore-scripts=false
+# (prevents stale/cross-arch cached binaries from pnpm install)
+RUN pnpm rebuild better-sqlite3
 
 # Remove protobufjs CLI entirely - not needed at runtime
 # Eliminates CVE-2019-10790 (taffydb), CVE-2025-54798 (tmp), CVE-2025-5889 (brace-expansion)
@@ -32,10 +32,10 @@ COPY tsconfig*.json tsup.config.ts binding.gyp ./
 COPY src/ ./src/
 
 # Build TypeScript
-RUN npm run build
+RUN pnpm run build
 
-# Prune devDependencies after build (removes vulnerable rimraf -> @isaacs/brace-expansion chain)
-RUN npm prune --omit=dev
+# Prune devDependencies after build
+RUN pnpm prune --prod
 
 # Production stage
 FROM node:24-alpine
@@ -97,12 +97,12 @@ RUN cd /usr/local/lib/node_modules/npm && \
     rm brace-expansion-5.0.6.tgz
 
 # Copy built artifacts and production dependencies
-# Remove npm CLI after patching — it is not needed at runtime and reduces attack surface (L-4)
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx && \
-    rm -rf /root/.npm
+# Remove package managers CLI after building — they are not needed at runtime and reduce attack surface (L-4)
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/pnpm /usr/local/bin/pnpx && \
+    rm -rf /root/.npm /app/.pnpm-store
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 COPY LICENSE ./
 
 # Create data directory for SQLite database with proper permissions

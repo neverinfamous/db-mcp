@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -112,6 +113,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite.core.exists`
 - `sqlite.core.dateAdd`
 - `sqlite.core.dateDiff`
+- `sqlite.core.enableVersioning`
+- `sqlite.core.disableVersioning`
+- `sqlite.core.checkVersion`
+- `sqlite.core.conditionalUpdate`
 - `sqlite.core.createTable`
 - `sqlite.core.writeQuery`
 - `sqlite.core.upsert`
@@ -158,24 +163,36 @@ All tools should return errors as structured objects instead of throwing. The ex
 
 13. `sqlite.core.createTable({table: "temp_cm_core", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "name", type: "TEXT"}, {name: "value", type: "REAL"}]})` → success
 14. `sqlite.core.writeQuery("INSERT INTO temp_cm_core (id, name, value) VALUES (1, 'alpha', 10.5), (2, 'beta', 20.0)")` → `{rowsAffected: 2}`
-15. `sqlite.core.upsert({table: "temp_cm_core", data: {id: 1, name: "alpha_updated", value: 15.0}, conflictColumn: "id"})` → success, row 1 updated
+15. `sqlite.core.upsert({table: "temp_cm_core", data: {id: 1, name: "alpha_updated", value: 15.0}, conflictColumns: ["id"]})` → success, row 1 updated
 16. `sqlite.core.batchInsert({table: "temp_cm_core", rows: [{id: 3, name: "gamma", value: 30.0}, {id: 4, name: "delta", value: 40.0}]})` → 2 rows inserted
 17. `sqlite.core.count({table: "temp_cm_core"})` → `{count: 4}`
-18. `sqlite.core.truncate({table: "temp_cm_core"})` → success
-19. `sqlite.core.count({table: "temp_cm_core"})` → `{count: 0}`
+
+**OCC tools lifecycle:**
+
+18. `sqlite.core.enableVersioning({table: "temp_cm_core"})` → success
+19. `sqlite.core.checkVersion({table: "temp_cm_core", rowId: 1})` → `{version: 1}`
+20. `sqlite.core.writeQuery({query: "UPDATE temp_cm_core SET value = 16.0 WHERE id = 1", expectedVersion: 1})` → success
+21. `sqlite.core.checkVersion({table: "temp_cm_core", rowId: 1})` → `{version: 2}`
+22. `sqlite.core.conditionalUpdate({table: "temp_cm_core", conditions: [{column: "id", operator: "=", value: 1}], data: {value: 17.0}, expectedVersion: 2})` → `{rowsAffected: 1}`
+23. `sqlite.core.disableVersioning({table: "temp_cm_core"})` → success
+
+**Write tools (cleanup):**
+
+24. `sqlite.core.truncate({table: "temp_cm_core"})` → success
+25. `sqlite.core.count({table: "temp_cm_core"})` → `{count: 0}`
 
 **Index lifecycle:**
 
-20. `sqlite.core.writeQuery("INSERT INTO temp_cm_core (id, name) VALUES (1, 'test')")` → re-populate
-21. `sqlite.core.createIndex({table: "temp_cm_core", columns: ["name"], indexName: "idx_temp_cm_name"})` → success
-22. `sqlite.core.getIndexes({table: "temp_cm_core"})` → includes `idx_temp_cm_name`
-23. `sqlite.core.dropIndex({indexName: "idx_temp_cm_name"})` → success
-24. `sqlite.core.dropTable({table: "temp_cm_core"})` → success
+26. `sqlite.core.writeQuery("INSERT INTO temp_cm_core (id, name) VALUES (1, 'test')")` → re-populate
+27. `sqlite.core.createIndex({table: "temp_cm_core", columns: ["name"], indexName: "idx_temp_cm_name"})` → success
+28. `sqlite.core.getIndexes({table: "temp_cm_core"})` → includes `idx_temp_cm_name`
+29. `sqlite.core.dropIndex({indexName: "idx_temp_cm_name"})` → success
+30. `sqlite.core.dropTable({table: "temp_cm_core"})` → success
 
 **Parameter binding:**
 
-25. `sqlite.core.readQuery({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99)
-26. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → 4 results
+31. `sqlite.core.readQuery({query: "SELECT name, price FROM test_products WHERE price > ?", params: [500]})` → 1 result: `Laptop Pro 15` (1299.99)
+32. `sqlite.core.readQuery({query: "SELECT name FROM test_products WHERE category = ? AND price < ?", params: ["electronics", 100]})` → 4 results
 
 **Trigger & constraint introspection:**
 
@@ -271,6 +288,23 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 70. `sqlite.core.createTrigger({name: "bad", table: "nonexistent_xyz", event: "INSERT", timing: "AFTER", body: "SELECT 1;"})` → `{success: false}`
 🔴 71. `sqlite.core.createTrigger({name: "bad", table: "test_products", event: "INSERT", timing: "INSTEAD OF", body: "SELECT 1;"})` → `{success: false}` (INSTEAD OF only on views)
 🔴 72. `sqlite.core.dropTrigger({name: "nonexistent_xyz"})` → `{success: false}` (TRIGGER_NOT_FOUND)
+
+**OCC domain errors:**
+
+🔴 73. `sqlite.core.enableVersioning({table: "nonexistent_xyz"})` → `{success: false}`
+🔴 74. `sqlite.core.checkVersion({table: "nonexistent_xyz", rowId: 1})` → `{success: false}`
+🔴 75. `sqlite.core.conditionalUpdate({table: "nonexistent_xyz", conditions: [{column: "id", operator: "=", value: 1}], data: {val: 1}, expectedVersion: 1})` → `{success: false}`
+
+```javascript
+// Test missing expectedVersion ConflictError
+await sqlite.core.createTable({ table: "temp_occ_err", columns: [{name: "id", type: "INTEGER", primaryKey: true}]});
+await sqlite.core.writeQuery("INSERT INTO temp_occ_err (id) VALUES (1)");
+await sqlite.core.enableVersioning({table: "temp_occ_err"});
+const res = await sqlite.core.writeQuery("UPDATE temp_occ_err SET id=2 WHERE id=1");
+// The writeQuery call should THROW a structured ConflictError indicating expectedVersion is required.
+// Note: If you don't wrap it in try/catch in Code Mode, the sandbox execution returns the structured error naturally.
+```
+🔴 76. Ensure the `temp_occ_err` code mode snippet returns `{success: false}` with ConflictError details, then drop `temp_occ_err`.
 
 ## Phase 3: Multi-Step Workflow (4 tests)
 
@@ -373,11 +407,17 @@ return { failures, success: failures.length === 0 };
 🔴 88. `sqlite.core.alterTable({})` → `{success: false}` handler error
 🔴 89. `sqlite.core.createTrigger({})` → `{success: false}` handler error
 🔴 90. `sqlite.core.dropTrigger({})` → `{success: false}` handler error
+🔴 91. `sqlite.core.enableVersioning({})` → `{success: false}` handler error
+🔴 92. `sqlite.core.disableVersioning({})` → `{success: false}` handler error
+🔴 93. `sqlite.core.checkVersion({})` → `{success: false}` handler error
+🔴 94. `sqlite.core.conditionalUpdate({})` → `{success: false}` handler error
 
 ## Phase 5: Wrong-Type Numeric Coercion
 
-🔴 91. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error, NOT raw MCP
-🔴 92. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", limit: "abc"})` → handler error, NOT raw MCP
+🔴 95. `sqlite.core.dateAdd({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error, NOT raw MCP
+🔴 96. `sqlite.core.dateDiff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", limit: "abc"})` → handler error, NOT raw MCP
+🔴 97. `sqlite.core.checkVersion({table: "test_orders", rowId: "abc"})` → handler error, NOT raw MCP
+🔴 98. `sqlite.core.conditionalUpdate({table: "test_orders", conditions: [{column: "id", operator: "=", value: 1}], data: {x: 1}, expectedVersion: "abc"})` → handler error, NOT raw MCP
 
 ---
 

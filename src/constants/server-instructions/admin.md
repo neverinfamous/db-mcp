@@ -45,7 +45,7 @@ sqlite_pragma_settings({ pragma: "cache_size", value: 10000 }); // set value
 sqlite_pragma_table_info({ table: "users" }); // column details
 sqlite_pragma_compile_options({ filter: "FTS" }); // ⚠️ WASM may show FTS3, not FTS5
 sqlite_pragma_database_list(); // list attached databases
-sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB
+sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB (⚠️ subject to ALLOWED_IO_ROOTS)
 sqlite_detach_database({ alias: "archive" }); // detach DB
 sqlite_pragma_optimize(); // run PRAGMA optimize
 ```

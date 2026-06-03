@@ -18,10 +18,12 @@
 - Updated node integration tests (`test-progress.mjs`) to rigorously verify E2E JSON-RPC chunked row emission over stdio for `sqlite_read_query`.
 - Updated server instructions (`admin.md`, `gotchas.md`) to explicitly document `ALLOWED_IO_ROOTS` behavior and requirements for backup/restore and CSV operations.
 - Updated agent testing prompts (`test-admin-core.md`, `test-admin-extensions.md`, `test-codemode-admin.md`, `test-codemode-advanced-admin.md`) to include explicit absolute path traversal boundary tests for `ALLOWED_IO_ROOTS`.
+- Updated `core` agent testing prompts (`test-core-data.md`, `test-codemode-core.md`) to include comprehensive lifecycle and error boundary tests for Optimistic Concurrency Control tools and `expectedVersion` requirements.
 - Added Playwright E2E tests for `ALLOWED_IO_ROOTS` boundary enforcement and HTTP startup failures.
 - Audited and updated all testing prompt `README.md` files to explicitly mandate `ALLOWED_IO_ROOTS` environment variable usage, document HTTP session timeouts, and require chunked stream verification.
 - Bumped `isolated-vm` to `7.0.0` (major version aligns with V8 engine upgrades) for out-of-the-box compatibility with Node.js 26.
-
+- Migrated project package manager from `npm` to `pnpm` (`v9.15.4`) for improved performance, stricter dependency resolution, and reduced disk footprint.
+- Updated `Dockerfile` to use `pnpm` exclusively, eliminating the need to manually patch transitively bundled `npm` vulnerabilities.
 ### Fixed
 - Fixed Code Mode sandbox timeouts failing to surface as structured `TimeoutError` responses by catching execution timeouts directly from the sandbox pool execution result.
 - Fixed native addon crashes during Vitest execution by migrating the execution pool from `threads` to `forks` in `vitest.config.ts`, ensuring isolated V8 heaps for `isolated-vm`.

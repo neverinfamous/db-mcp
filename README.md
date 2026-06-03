@@ -15,7 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://github.com/neverinfamous/db-mcp)
 [![E2E](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml/badge.svg)](https://github.com/neverinfamous/db-mcp/actions/workflows/e2e.yml)
 [![Tests](https://img.shields.io/badge/Tests-1911%20passed-brightgreen.svg)](https://github.com/neverinfamous/db-mcp)
-[![Coverage](https://img.shields.io/badge/Coverage-88.25%25-green.svg)](https://github.com/neverinfamous/db-mcp)
+[![Coverage](https://img.shields.io/badge/Coverage-88.2%25-green.svg)](https://github.com/neverinfamous/db-mcp)
 
 **[Wiki](https://github.com/neverinfamous/db-mcp/wiki)** • **[Changelog](CHANGELOG.md)**
 
@@ -25,7 +25,7 @@
 
 | Feature                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **177+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                                                                 |
+| **181+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                                                                 |
 | **Deep Observability**           | Built-in Prometheus `/metrics` export, real-time `sqlite://metrics` MCP resource, historical persistence to a `SystemDb` sidecar, and a granular `sqlite_audit_search` tool for compliance and investigation                                                                                                                                                                                                                                                                       |
 | **Dynamic Configuration**        | Full YAML/JSON config file support (`--config`) with precedence rules, plus a `sqlite_server_config` tool for live runtime config updates (e.g., log levels) without server restarts                                                                                                                                                                                                                                                                                               |
 | **Advanced Query & Search**      | O(1) cursor-based keyset pagination, faceted search aggregation, and `sqlite_hybrid_search` orchestrating FTS5 + Vector similarity with Reciprocal Rank Fusion (RRF) in a single tool call                                                                                                                                                                                                                                                                                         |
@@ -33,7 +33,7 @@
 | **Real-time Subscriptions**      | Native `resources/subscribe` support pushing event-driven notifications for `sqlite://schema` DDL changes and periodic `sqlite://health` updates directly to clients                                                                                                                                                                                                                                                                                                               |
 | **22 Resources**                 | 11 data resources (schema, tables, table_schema, indexes, views, health, meta, audit, metrics, compile_options, pragma) + 11 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                                                  |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                                                                                                                                                        |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 177+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                                                    |
+| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 180+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                                                    |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `_meta.tokenEstimate` on every response so agents know their token cost. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access                                                                                                                                                       |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for high-performance concurrent execution with full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                                                                                                                                  |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`full`, `read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                                                                                                                                                                         |
@@ -81,13 +81,13 @@ cd db-mcp
 Install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Build the project:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 Run the server with **Native backend** (better-sqlite3 — full features, requires Node.js native build):
@@ -102,7 +102,7 @@ Or with **WASM backend** (sql.js — cross-platform, no compilation required):
 node dist/cli.js --transport stdio --sqlite ./database.db
 ```
 
-> **Backend Choice:** Use `--sqlite-native` for full features (177 MCP tools / 166 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (150 MCP tools / 139 group tools, no native dependencies).
+> **Backend Choice:** Use `--sqlite-native` for full features (181 MCP tools / 170 group tools, transactions, window functions, SpatiaLite). Use `--sqlite` for WASM mode (154 MCP tools / 143 group tools, no native dependencies).
 
 ### Verify It Works
 
@@ -121,7 +121,7 @@ Expected output:
 Run the test suite:
 
 ```bash
-npm run test
+pnpm run test
 ```
 
 ### Prerequisites
@@ -146,7 +146,7 @@ Set `CODEMODE_ISOLATION=vm` with `CODEMODE_ISOLATION_INSECURE=1` to fall back to
 
 ### ⚡ Code Mode Only (Maximum Token Savings)
 
-If you control your own setup, you can run with **only Code Mode enabled** — a single tool that provides access to all 170+ tools' worth of capability through the `sqlite.*` API:
+If you control your own setup, you can run with **only Code Mode enabled** — a single tool that provides access to all 180+ tools' worth of capability through the `sqlite.*` API:
 
 ```json
 {
@@ -179,7 +179,7 @@ This exposes just `sqlite_execute_code` plus built-in tools. The agent writes Ja
 ## 🎛️ Tool Filtering
 
 > [!IMPORTANT]
-> **AI-enabled IDEs like Cursor have tool limits.** With 170+ tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
+> **AI-enabled IDEs like Cursor have tool limits.** With 180+ tools in the native backend, you must use tool filtering to stay within limits. Use **shortcuts** or specify **groups** to enable only what you need.
 
 ### Quick Start: Recommended Configurations
 
@@ -209,13 +209,13 @@ Specify exactly the groups you need:
 
 | Shortcut     | WASM   | Native | + Built-in | What's Included                |
 | ------------ | ------ | ------ | ---------- | ------------------------------ |
-| `starter`    | **61** | **66** | +4         | Core, JSON, Text               |
-| `analytics`  | 63     | 69     | +4         | Core, JSON, Stats              |
-| `search`     | 47     | 52     | +4         | Core, Text, Vector             |
-| `spatial`    | 36     | 43     | +4         | Core, Geo, Vector              |
-| `dev-schema` | 37     | 37     | +4         | Core, Introspection, Migration |
-| `minimal`    | 21     | 21     | +4         | Core only                      |
-| `full`       | 139    | 166    | +4         | Everything enabled             |
+| `starter`    | **65** | **70** | +4         | Core, JSON, Text               |
+| `analytics`  | 67     | 73     | +4         | Core, JSON, Stats              |
+| `search`     | 51     | 56     | +4         | Core, Text, Vector             |
+| `spatial`    | 40     | 47     | +4         | Core, Geo, Vector              |
+| `dev-schema` | 41     | 41     | +4         | Core, Introspection, Migration |
+| `minimal`    | 25     | 25     | +4         | Core only                      |
+| `full`       | 143    | 170    | +4         | Everything enabled             |
 
 ### Tool Groups (10 Available)
 
@@ -223,7 +223,7 @@ Specify exactly the groups you need:
 
 | Group           | WASM | Native | + Built-in | Description                                |
 | --------------- | ---- | ------ | ---------- | ------------------------------------------ |
-| `core`          | 21   | 21     | +4         | Basic CRUD, schema, tables                 |
+| `core`          | 25   | 25     | +4         | Basic CRUD, schema, tables                 |
 | `json`          | 25   | 25     | +4         | JSON/JSONB operations, analysis            |
 | `text`          | 15   | 20     | +4         | Text processing + FTS5 + advanced search   |
 | `stats`         | 17   | 23     | +4         | Descriptive, inference, window functions   |
@@ -483,7 +483,7 @@ Add to your `~/.cursor/mcp.json`, Claude Desktop config, or equivalent:
 ```
 
 > [!TIP]
-> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 177 MCP tools). To use the **WASM** backend (sql.js, 150 MCP tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
+> **Switching backends:** The config above uses the **Native** backend (better-sqlite3, 181 MCP tools). To use the **WASM** backend (sql.js, 154 MCP tools, zero native dependencies), change `--sqlite-native` to `--sqlite` in the args array. See the [Backend Options table in DOCKER_README](DOCKER_README.md#backend-options) for feature differences.
 
 **Variants** (modify the `args` array above):
 
@@ -648,8 +648,8 @@ Performance benchmarks measure framework overhead on critical hot paths using [V
 - **Sandbox execution:** ~0.5–4.9K executions/sec — trivial code round-trips through V8 isolate in 0.2-1.5 ms
 
 ```bash
-npm run bench            # Run all benchmarks
-npm run bench:verbose    # Verbose mode with detailed timings
+pnpm run bench            # Run all benchmarks
+pnpm run bench:verbose    # Verbose mode with detailed timings
 ```
 
 | Benchmark             | What It Measures                                                        |

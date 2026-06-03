@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "install": "echo \"Skipping automatic native build to preserve optional dependencies\"",
-    "build": "npm run build:native && npm run build:js && npm run build:types",
+    "build": "pnpm run build:native && pnpm run build:js && pnpm run build:types",
     "build:native": "node-gyp rebuild",
     "build:js": "tsup",
     "build:types": "tsc --project tsconfig.build.json --emitDeclarationOnly",
@@ -27,7 +27,7 @@
     "lint:json": "eslint . --format json --output-file eslint-results.json",
     "typecheck": "tsc --noEmit",
     "typecheck:tests": "tsc --noEmit --project tsconfig.test.json",
-    "check": "npm run lint && npm run typecheck",
+    "check": "pnpm run lint && pnpm run typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage && tsx scripts/update-badges.ts",
@@ -36,7 +36,7 @@
     "bench:verbose": "vitest bench --run --reporter=verbose",
     "clean": "rimraf dist",
     "generate:instructions": "node scripts/generate-server-instructions.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "mcp",

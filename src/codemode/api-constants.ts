@@ -181,6 +181,10 @@ export const POSITIONAL_PARAM_MAP: Record<string, string | string[]> = {
   listConstraints: "table",
   dateAdd: ["table", "column", "amount", "unit", "whereClause"],
   dateDiff: ["table", "column1", "column2", "unit", "whereClause"],
+  enableVersioning: "table",
+  disableVersioning: "table",
+  checkVersion: ["table", "rowId"],
+  conditionalUpdate: ["table", "data", "conditions", "expectedVersion"],
 
   // JSON
   extract: ["table", "column", "path", "whereClause"],

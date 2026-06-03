@@ -88,7 +88,7 @@ sqlite_pragma_settings({ pragma: "cache_size", value: 10000 }); // set value
 sqlite_pragma_table_info({ table: "users" }); // column details
 sqlite_pragma_compile_options({ filter: "FTS" }); // ⚠️ WASM may show FTS3, not FTS5
 sqlite_pragma_database_list(); // list attached databases
-sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB
+sqlite_attach_database({ filepath: "/path/to/other.db", alias: "archive" }); // attach external DB (⚠️ subject to ALLOWED_IO_ROOTS)
 sqlite_detach_database({ alias: "archive" }); // detach DB
 sqlite_pragma_optimize(); // run PRAGMA optimize
 \`\`\`
@@ -153,12 +153,12 @@ sqlite_create_csv_table({
   filePath: "/absolute/path/to/data.csv",
 });
 \`\`\``],
-  ["core", `# db-mcp Help — Core Operations (21 tools)
+  ["core", `# db-mcp Help — Core Operations (25 tools)
 
 ## Basic Queries
 
 - \`sqlite_read_query({ query: "SELECT * FROM users LIMIT 10", cursor: "...", stream: true, chunkSize: 10 })\` — execute SELECT, PRAGMA, EXPLAIN, or WITH statements. Supports \`cursor\` for offset-based pagination (returns \`nextCursor\`). Set \`stream: true\` to return row-by-row chunks via progress notifications instead of full response buffering (requires client progressToken support; gracefully falls back if unavailable). **Agent Tip:** Avoid \`SELECT *\` on wide tables with large text/JSON columns to conserve token context; use \`sqlite_describe_table\` first and select specific columns.
-- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER)
+- \`sqlite_write_query({ query: "INSERT INTO users (name) VALUES ('Alice')" })\` — execute INSERT, UPDATE, DELETE, REPLACE, or trigger DDL (CREATE/DROP TRIGGER). Supports \`expectedVersion\` for OCC.
 
 ## Tables & Schema
 
@@ -178,9 +178,16 @@ sqlite_create_csv_table({
 - \`sqlite_create_index({ indexName: "idx_users_email", table: "users", columns: ["email"], unique?: true })\` — create a new index
 - \`sqlite_drop_index({ indexName: "idx_users_email", ifExists?: true })\` — drop an existing index
 
+## Versioning & Concurrency (OCC)
+
+- \`sqlite_enable_versioning({ table: "users" })\` — add a \`_version\` column and a BEFORE UPDATE trigger to enforce optimistic concurrency control on a table
+- \`sqlite_disable_versioning({ table: "users" })\` — remove the \`_version\` column and concurrency trigger
+- \`sqlite_check_version({ table: "users", rowId: 1 })\` — get the current \`_version\` of a row
+- \`sqlite_conditional_update({ table: "users", conditions: [{ column: "id", operator: "=", value: 1 }], expectedVersion: 2, data: { name: "Bob" } })\` — safely update a row, incrementing \`_version\` atomically. Will fail if \`expectedVersion\` does not match
+
 ## Convenience Tools (High-Level Data Operations)
 
-- \`sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update a row using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns.
+- \`sqlite_upsert({ table: "users", data: { id: 1, name: "Alice" }, conflictColumns: ["id"], updateColumns: ["name"], returning: true })\` — insert or update a row using \`ON CONFLICT\` (or \`REPLACE\` fallback). Supports \`returning: true\` or array of columns, and \`expectedVersion\` for OCC.
 - \`sqlite_batch_insert({ table: "users", rows: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }], returning: true })\` — insert multiple rows in a single batch. Supports \`returning: true\` or array of columns.
 - \`sqlite_count({ table: "users", where?: "status = 'active'" })\` — count rows in a table (faster than a full query)
 - \`sqlite_exists({ table: "users", where: "email = 'test@example.com'" })\` — check if a row exists (stops at first match)
@@ -321,6 +328,7 @@ sqlite_spatialite_index({
 22. **Resource Subscriptions**: The \`sqlite://schema\` and \`sqlite://health\` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
 23. **HTTP Session Timeouts**: Stateful HTTP sessions automatically expire after 30 minutes of inactivity, or 24 hours total. Sessions are swept automatically; ensure client workflows re-authenticate or handle broken sessions gracefully.
 24. **Structured Errors**: Execution timeouts surface as recoverable \`TimeoutError\` (category: \`timeout\`). Rate limit violations surface as \`RateLimitError\` (category: \`rate_limit\`). Use this metadata to programmatically retry or backoff.
+25. **Optimistic Concurrency Control (OCC)**: When a table is versioned (\`sqlite_enable_versioning\`), you MUST supply \`expectedVersion\` to \`sqlite_write_query\`, \`sqlite_upsert\`, and \`sqlite_conditional_update\`. Omitting it will result in a \`ConflictError\` to strictly prevent lost updates.
 ## WASM vs Native
 
 | Feature                                           | Native                | WASM        | Fallback         |

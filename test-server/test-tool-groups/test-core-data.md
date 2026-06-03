@@ -95,6 +95,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - **Temporary tables**: `temp_*` (or `stress_*`) prefix
 - **Temporary views**: `temp_view_*` (or `stress_view_*`) prefix
 - Drop at the end of the script. If DROP fails due to lock, note and move on.
+  
 
 ---
 
@@ -108,7 +109,7 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `server_health`
 - `list_adapters`
 
-### Group Tools (9)
+### Group Tools (13)
 
 - `sqlite_read_query`
 - `sqlite_write_query`
@@ -119,6 +120,10 @@ All tools should return errors as structured objects instead of throwing. The ex
 - `sqlite_truncate`
 - `sqlite_date_add`
 - `sqlite_date_diff`
+- `sqlite_enable_versioning`
+- `sqlite_disable_versioning`
+- `sqlite_check_version`
+- `sqlite_conditional_update`
 
 ## Phase 1: Core Check (batched)
 
@@ -144,9 +149,21 @@ All tools should return errors as structured objects instead of throwing. The ex
 20. `sqlite_date_diff({table: "test_orders", column1: "order_date", column2: "'2025-01-01'", unit: "days", whereClause: "id = 1"})` → return result with `date_diff_result` showing difference in days
 21. `sqlite_read_query({query: "SELECT * FROM test_products", stream: true, chunkSize: 5})` → returns rows successfully (verifies that `stream: true` gracefully degrades to full buffering without error when the testing client does not provide a `_meta.progressToken`)
 
+**OCC testing (batched on a new table):**
+
+22. `sqlite_create_table({table: "temp_core_occ", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → success
+23. `sqlite_write_query({query: "INSERT INTO temp_core_occ (id, val) VALUES (1, 'initial')"})` → success
+24. `sqlite_enable_versioning({table: "temp_core_occ"})` → success
+25. `sqlite_check_version({table: "temp_core_occ", rowId: 1})` → `{version: 1}`
+26. `sqlite_write_query({query: "UPDATE temp_core_occ SET val = 'updated' WHERE id = 1", expectedVersion: 1})` → success
+27. `sqlite_check_version({table: "temp_core_occ", rowId: 1})` → `{version: 2}`
+28. `sqlite_conditional_update({table: "temp_core_occ", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "conditional"}, expectedVersion: 2})` → `{rowsAffected: 1}`
+29. `sqlite_disable_versioning({table: "temp_core_occ"})` → success
+30. `sqlite_drop_table({table: "temp_core_occ"})` → success
+
 **Error path testing:**
 
-🔴 22. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
+🔴 31. `sqlite_read_query({query: "SELECT * FROM nonexistent_table_xyz"})` → structured error mentioning table name
 🔴 23. `sqlite_write_query({query: "INSERT INTO nonexistent_table_xyz VALUES (1)"})` → `{success: false}` — structured error
 🔴 24. `sqlite_upsert({table: "nonexistent_table_xyz", data: {id: 1}, conflictColumns: ["id"]})` → `{success: false}`
 🔴 25. `sqlite_batch_insert({table: "nonexistent_table_xyz", rows: [{id: 1}]})` → `{success: false}`
@@ -154,7 +171,20 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 27. `sqlite_exists({table: "nonexistent_table_xyz"})` → `{success: false}`
 🔴 28. `sqlite_truncate({table: "nonexistent_table_xyz"})` → `{success: false}`
 🔴 29. `sqlite_date_add({table: "nonexistent_table_xyz", column: "created", amount: 1, unit: "days"})` → `{success: false}`
-🔴 30. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
+🔴 39. `sqlite_date_diff({table: "nonexistent_table_xyz", column1: "created", column2: "updated", unit: "days"})` → `{success: false}`
+🔴 40. `sqlite_enable_versioning({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 41. `sqlite_disable_versioning({table: "nonexistent_table_xyz"})` → `{success: false}`
+🔴 42. `sqlite_check_version({table: "nonexistent_table_xyz", rowId: 1})` → `{success: false}`
+🔴 43. `sqlite_conditional_update({table: "nonexistent_table_xyz", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "x"}, expectedVersion: 1})` → `{success: false}`
+
+**OCC Error Paths (requires versioned table):**
+44. `sqlite_create_table({table: "temp_core_occ_err", columns: [{name: "id", type: "INTEGER", primaryKey: true}, {name: "val", type: "TEXT"}]})` → setup
+45. `sqlite_write_query({query: "INSERT INTO temp_core_occ_err (id, val) VALUES (1, 'initial')"})` → setup
+46. `sqlite_enable_versioning({table: "temp_core_occ_err"})` → setup
+🔴 47. `sqlite_write_query({query: "UPDATE temp_core_occ_err SET val = 'bad' WHERE id = 1"})` → `{success: false}` (ConflictError: missing expectedVersion)
+🔴 48. `sqlite_upsert({table: "temp_core_occ_err", data: {id: 1, val: "bad"}, conflictColumns: ["id"]})` → `{success: false}` (ConflictError: missing expectedVersion)
+🔴 49. `sqlite_conditional_update({table: "temp_core_occ_err", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "bad"}, expectedVersion: 99})` → `{success: false}` (ConflictError: expectedVersion mismatch)
+50. `sqlite_drop_table({table: "temp_core_occ_err"})` → cleanup
 
 ## Phase 2: Zod Validation Sweep
 
@@ -168,19 +198,25 @@ All tools should return errors as structured objects instead of throwing. The ex
 🔴 36. `sqlite_exists({})` → handler error
 🔴 37. `sqlite_truncate({})` → handler error
 🔴 38. `sqlite_date_add({})` → handler error
-🔴 39. `sqlite_date_diff({})` → handler error
+🔴 60. `sqlite_date_diff({})` → handler error
+🔴 61. `sqlite_enable_versioning({})` → handler error
+🔴 62. `sqlite_disable_versioning({})` → handler error
+🔴 63. `sqlite_check_version({})` → handler error
+🔴 64. `sqlite_conditional_update({})` → handler error
 
 **Built-in tools** — these take no required params, so `{}` should return a successful response (confirming graceful handling):
 
-🔴 40. `server_info({})` → should succeed (no required params)
-🔴 41. `server_health({})` → should succeed (no required params)
-🔴 42. `list_adapters({})` → should succeed (no required params)
+🔴 65. `server_info({})` → should succeed (no required params)
+🔴 66. `server_health({})` → should succeed (no required params)
+🔴 67. `list_adapters({})` → should succeed (no required params)
 
 ## Phase 3: Wrong-Type Numeric Coercion
 
 > For every tool with optional numeric parameters, pass `"abc"` instead of a number. Must return a handler error, NOT a raw MCP `-32602` error.
 
-🔴 43. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
+🔴 68. `sqlite_date_add({table: "test_orders", column: "order_date", amount: "abc", unit: "days"})` → handler error
+🔴 69. `sqlite_check_version({table: "test_orders", rowId: "abc"})` → handler error
+🔴 70. `sqlite_conditional_update({table: "test_orders", conditions: [{column: "id", operator: "=", value: 1}], data: {val: "x"}, expectedVersion: "abc"})` → handler error
 
 ---
 

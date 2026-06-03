@@ -4,7 +4,7 @@
  * Defines the tool groups and meta-groups used for filtering.
  *
  * GROUP TOOLS (adapter-registered, accessible via Code Mode sqlite.help()):
- *   core: 21 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts, core/triggers.ts, core/constraints.ts, core/datetime.ts, core/alter-table.ts)
+ *   core: 25 tools (core/queries.ts, core/tables.ts, core/indexes.ts, core/convenience.ts, core/triggers.ts, core/constraints.ts, core/datetime.ts, core/alter-table.ts, core/versioning.ts)
  *   json: 25 tools (json-operations/crud+query+transform+security+diff.ts, json-helpers/read+write.ts)
  *   text: 15 WASM / 20 Native (text/regex+formatting+search+validate+sentiment.ts, fts.ts)
  *   stats: 17 WASM / 23 Native (stats/basic+advanced.ts, inference/, anomaly-detection.ts, schema-risks.ts, native: window.ts)
@@ -15,17 +15,17 @@
  *   introspection: 10 tools (introspection/graph/tools.ts, analysis/constraints+risks+snapshot+diff.ts, diagnostics/storage+indexes+query-plan.ts)
  *   migration: 6 tools (migration/tracking.ts) — opt-in
  *   codemode: 1 tool (codemode.ts)
- *   Subtotal: 139 WASM / 166 Native (excluding Code Mode)
+ *   Subtotal: 143 WASM / 170 Native (excluding Code Mode)
  *
  * AUDIT & ADMIN TOOLS (server-level, MCP-only — NOT exposed in Code Mode):
  *   7 tools (server/registration/audit-tools.ts, admin-tools.ts)
  *
  * TOOL COUNT TAXONOMY:
- *   Group tools:  166 Native / 139 WASM  (10 groups excluding Code Mode)
+ *   Group tools:  170 Native / 143 WASM  (10 groups excluding Code Mode)
  *   Audit tools:    7 Native /   7 WASM  (MCP-only)
- *   Inventory:    173 Native / 146 WASM  (Group + Audit)
+ *   Inventory:    177 Native / 150 WASM  (Group + Audit)
  *   Built-in:       4 /   4              (server_info, health, adapters, execute_code)
- *   MCP total:    177 Native / 150 WASM  (tools/list response)
+ *   MCP total:    181 Native / 154 WASM  (tools/list response)
  */
 
 import type { ToolGroup, MetaGroup } from "../types/index.js";
@@ -74,6 +74,10 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "date_add",
     "date_diff",
     "alter_table",
+    "enable_versioning",
+    "disable_versioning",
+    "check_version",
+    "conditional_update",
   ],
   json: [
     // CRUD + Query + Collection (8: crud.ts, query.ts, write.ts)
@@ -265,25 +269,25 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
  * These provide shortcuts for common use cases.
  */
 export const META_GROUPS: Record<MetaGroup, ToolGroup[]> = {
-  // General development - Core + JSON + Text (61 WASM / 66 Native)
+  // General development - Core + JSON + Text (65 WASM / 70 Native)
   starter: ["core", "json", "text", "codemode"],
 
-  // Data analysis - Core + JSON + Stats (63 WASM / 69 Native)
+  // Data analysis - Core + JSON + Stats (67 WASM / 73 Native)
   analytics: ["core", "json", "stats", "codemode"],
 
-  // Search workloads - Core + Text + Vector (47 WASM / 52 Native)
+  // Search workloads - Core + Text + Vector (51 WASM / 56 Native)
   search: ["core", "text", "vector", "codemode"],
 
-  // Geospatial workloads - Core + Geo + Vector (36 WASM / 43 Native)
+  // Geospatial workloads - Core + Geo + Vector (40 WASM / 47 Native)
   spatial: ["core", "geo", "vector", "codemode"],
 
-  // Schema development - Core + Introspection + Migration (37 tools)
+  // Schema development - Core + Introspection + Migration (41 tools)
   "dev-schema": ["core", "introspection", "migration", "codemode"],
 
-  // Bare minimum - Core (21 tools)
+  // Bare minimum - Core (25 tools)
   minimal: ["core", "codemode"],
 
-  // All group tools enabled (167 Native / 140 WASM — see TOOL COUNT TAXONOMY above)
+  // All group tools enabled (171 Native / 144 WASM — see TOOL COUNT TAXONOMY above)
   full: [
     "core",
     "json",

@@ -6,7 +6,7 @@
 
 | File                                | Group                     | Group Tools         | Notes                                                |
 | ----------------------------------- | ------------------------- | ------------------- | ---------------------------------------------------- |
-| `test-core-data.md`                 | core-data                 | 9                   | Identical Native/WASM                                |
+| `test-core-data.md`                 | core-data                 | 13                  | Identical Native/WASM                                |
 | `test-core-schema.md`               | core-schema               | 12 + Code Mode      | Identical Native/WASM                                |
 | `test-json-read.md`                 | json-read                 | 18 + Code Mode      | Identical Native/WASM                                |
 | `test-json-write.md`                | json-write                | 7                   | Identical Native/WASM                                |
@@ -26,7 +26,7 @@
 | `test-introspection-diagnostics.md` | introspection-diagnostics | 3 + Code Mode       | Identical Native/WASM                                |
 | `test-migration.md`                 | migration                 | 6 + Code Mode       | Identical Native/WASM                                |
 
-**Inventory total**: 175 Native / 148 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
+**Inventory total**: 179 Native / 152 WASM tools across 11 groups + Code Mode. See [Tool Count Taxonomy](../tool-reference.md#tool-count-taxonomy) for scope definitions.
 
 ## Pre-requisites
 

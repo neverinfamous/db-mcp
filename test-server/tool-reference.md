@@ -6,11 +6,11 @@ Complete reference of all 177 db-mcp tools organized by 10 tool groups + codemod
 
 | Scope           | What it includes                                    |  Native |    WASM | Notes                                           |
 | --------------- | --------------------------------------------------- | ------: | ------: | ----------------------------------------------- |
-| **Group tools** | 10 adapter-registered groups                        |     166 |     139 | Accessible via Code Mode `sqlite.help()`        |
+| **Group tools** | 10 adapter-registered groups                        |     170 |     143 | Accessible via Code Mode `sqlite.help()`        |
 | **Audit tools** | 7 server-level audit & admin tools                  |       7 |       7 | MCP-only — not exposed in Code Mode             |
-| **Inventory**   | Group + Audit                                       | **173** | **146** | All filterable/functional tools                 |
+| **Inventory**   | Group + Audit                                       | **177** | **150** | All filterable/functional tools                 |
 | **Built-in**    | `server_info`, `health`, `adapters`, `execute_code` |       4 |       4 | Always on (Code Mode can be excluded via rules) |
-| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **177** | **150** | **What a client sees via `tools/list`**         |
+| **MCP total**   | Inventory + Built-in (`tools/list`)                 | **181** | **154** | **What a client sees via `tools/list`**         |
 
 > Use [Tool Filtering](#️-tool-filtering) to select the groups you need. See [Code Mode](#-recommended-code-mode-maximum-token-savings) for the `sqlite.*` API that exposes every group tool through sandboxed JavaScript.
 
@@ -26,7 +26,7 @@ Sandboxed JavaScript execution that exposes all 9 tool groups through the `sqlit
 
 ---
 
-## core (21 tools + Code Mode)
+## core (25 tools + Code Mode)
 
 Read/write queries, table and index management, and schema discovery.
 
@@ -51,6 +51,10 @@ Read/write queries, table and index management, and schema discovery.
 | `sqlite_date_add`         | `sqlite.core.dateAdd`         | Add or subtract time from a date/time column using native SQLite datetime modifiers.                                                 |
 | `sqlite_date_diff`        | `sqlite.core.dateDiff`        | Calculate the difference between two date/time columns, returning the result in days, hours, minutes, or seconds.                    |
 | `sqlite_alter_table`      | `sqlite.core.alterTable`      | Alter a table's structure: add, rename, or drop columns, or rename the table. Validates constraints and SQLite-specific limitations. |
+| `sqlite_enable_versioning`| `sqlite.core.enableVersioning`| Add a `_version` column and a BEFORE UPDATE trigger to enforce optimistic concurrency control on a table.                            |
+| `sqlite_disable_versioning`| `sqlite.core.disableVersioning`| Remove the `_version` column and concurrency trigger from a versioned table.                                                       |
+| `sqlite_check_version`    | `sqlite.core.checkVersion`    | Get the current `_version` of a row. Returns null if row doesn't exist.                                                              |
+| `sqlite_conditional_update`| `sqlite.core.conditionalUpdate`| Safely update a row, incrementing `_version` atomically. Will fail if `expectedVersion` does not match the database state.         |
 | `sqlite_create_trigger`   | `sqlite.core.createTrigger`   | Create a database trigger with BEFORE/AFTER/INSTEAD OF timing, column-specific UPDATE triggers, and optional WHEN conditions.        |
 | `sqlite_drop_trigger`     | `sqlite.core.dropTrigger`     | Drop a database trigger with existence checking.                                                                                     |
 
