@@ -23,10 +23,15 @@ Production-ready SQLite MCP server with 170+ tools, audit logging, OAuth 2.1, an
 
 | Feature                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **170+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                             |
+| **178+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                             |
+| **Deep Observability**           | Built-in Prometheus `/metrics` export, real-time `sqlite://metrics` MCP resource, historical persistence to a `SystemDb` sidecar, and a granular `sqlite_audit_search` tool for compliance and investigation                                                                                                                                                                                                                                   |
+| **Dynamic Configuration**        | Full YAML/JSON config file support (`--config`) with precedence rules, plus a `sqlite_server_config` tool for live runtime config updates (e.g., log levels) without server restarts                                                                                                                                                                                                                                                           |
+| **Advanced Query & Search**      | O(1) cursor-based keyset pagination, faceted search aggregation, and `sqlite_hybrid_search` orchestrating FTS5 + Vector similarity with Reciprocal Rank Fusion (RRF) in a single tool call                                                                                                                                                                                                                                                     |
+| **AI Index Recommendations**     | `sqlite_index_audit` automatically analyzes `EXPLAIN QUERY PLAN` responses to suggest optimized composite and partial indexes based on workload patterns                                                                                                                                                                                                                                                                                       |
+| **Real-time Subscriptions**      | Native `resources/subscribe` support pushing event-driven notifications for `sqlite://schema` DDL changes and periodic `sqlite://health` updates directly to clients                                                                                                                                                                                                                                                                           |
 | **22 Resources**                 | 11 data resources (schema, tables, table_schema, indexes, views, health, meta, audit, metrics, compile_options, pragma) + 11 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                        |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                                                                                                                    |
-| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 170+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                |
+| **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 178+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters — letting agents control response size without losing data access. Every response includes `_meta.tokenEstimate` so agents know their token cost                                                                                                                                            |
 | **Dual SQLite Backends**         | WASM (sql.js) for zero-compilation portability, Native (better-sqlite3) for full features including transactions, window functions, and SpatiaLite GIS                                                                                                                                                                                                                                                                                         |
 | **OAuth 2.1 + Access Control**   | Enterprise-ready security with RFC 9728/8414 compliance, granular scopes (`full`, `read`, `write`, `admin`, `db:*`, `table:*:*`), and Keycloak integration                                                                                                                                                                                                                                                                                     |
@@ -140,65 +145,11 @@ Specify exactly the groups you need:
 
 ### Tool Groups (10 Available)
 
-> +4 built-in tools are injected into every group. (7 audit tools are also always available).
-| Category (Group)                     | WASM | Native | + Built-in | Description                                |
-| ------------------------------------ | ---- | ------ | ---------- | ------------------------------------------ |
-| Core Database (`core`)               | 21   | 21     | +4         | Basic CRUD, schema, tables, indexes, views |
-| JSON Operations (`json`)             | 25   | 25     | +4         | JSON/JSONB, schema analysis, security scan |
-| Text Processing (`text`)             | 15   | 20     | +4         | Regex, fuzzy, phonetic, sentiment, FTS5    |
-| Statistical Analysis (`stats`)       | 17   | 23     | +4         | Descriptive, inference, window functions   |
-| Vector/Semantic (`vector`)           | 11   | 11     | +4         | Vector storage, similarity search          |
-| Admin/Backup (`admin`)               | 30   | 31     | +4         | DB maintenance, backup, virtual tables     |
-| Transactions (`transactions`)        | 0    | 8      | +4         | Commit, rollback, savepoints (Native only) |
-| Geospatial (`geo`)                   | 4    | 11     | +4         | Geospatial + SpatiaLite (Native only)      |
-| Introspection (`introspection`)      | 10   | 10     | +4         | Schema mapping, FK graph, cascade sim      |
-| Migration (`migration`)              | 6    | 6      | +4         | Schema migration tracking (opt-in)         |
-| **Total** (excluding Code Mode)      | **139** | **166** | | |
-
-### Syntax Reference
-
-| Prefix   | Target   | Example         | Effect                                        |
-| -------- | -------- | --------------- | --------------------------------------------- |
-| _(none)_ | Shortcut | `starter`       | **Whitelist Mode:** Enable ONLY this shortcut |
-| _(none)_ | Group    | `core`          | **Whitelist Mode:** Enable ONLY this group    |
-| _(none)_ | Tool     | `read_query`    | **Whitelist Mode:** Enable ONLY this tool     |
-| `+`      | Group    | `+vector`       | Add tools from this group to current set      |
-| `-`      | Group    | `-admin`        | Remove tools in this group from current set   |
-| `+`      | Tool     | `+fuzzy_search` | Add one specific tool                         |
-| `-`      | Tool     | `-drop_table`   | Remove one specific tool                      |
-
-**Examples:**
-
-```bash
---tool-filter "starter"
---tool-filter "core,json,text,fts5"
---tool-filter "starter,+stats"
---tool-filter "starter,-fts5"
---tool-filter "read_query,write_query,list_tables"  # Custom whitelist
-```
+10 granular tool groups (e.g., `core`, `json`, `text`, `stats`, `vector`, `admin`) let you precisely control exposed capabilities. For advanced syntax (whitelisting individual tools, additive `+` and subtractive `-` filters) and the complete tool group list, refer to the [GitHub Repository](https://github.com/neverinfamous/db-mcp).
 
 ## 🛡️ Supply Chain Security
 
-For enhanced security, use SHA-pinned images:
-
-**Find SHA tags:** https://hub.docker.com/r/writenotenow/db-mcp/tags
-
-**Multi-arch manifest (recommended):**
-
-```bash
-docker pull writenotenow/db-mcp:sha256-<manifest-digest>
-```
-
-**Direct digest (maximum security):**
-
-```bash
-docker pull writenotenow/db-mcp@sha256:<manifest-digest>
-```
-
-- ✅ **Build Provenance** — Cryptographic proof of build process
-- ✅ **SBOM Available** — Complete software bill of materials
-- ✅ **Non-root Execution** — Minimal attack surface
-- ✅ **Security Scanned** — Docker Scout blocks critical/high CVEs
+For enhanced security, use SHA-pinned multi-arch manifests (`docker pull writenotenow/db-mcp:sha256-<digest>`). Our images feature cryptographic build provenance, SBOMs, non-root execution, and zero critical/high CVEs (Docker Scout scanned). Find exact tags on [Docker Hub](https://hub.docker.com/r/writenotenow/db-mcp/tags).
 
 
 
@@ -293,24 +244,10 @@ docker run --rm -p 3000:3000 \
 
 ## 🔐 Encryption at Rest (Native Only)
 
-db-mcp supports transparent database encryption using SQLCipher via the `better-sqlite3-multiple-ciphers` driver. When encryption is enabled, the server automatically encrypts both your target database (if newly created) and the sidecar `SystemDb` audit log, ensuring your schema, queries, and results are protected at rest.
+db-mcp supports transparent database encryption using SQLCipher via the `--encryption-key` CLI flag or `DB_ENCRYPTION_KEY` environment variable. 
 
-**Important WASM Limitation**: The WASM backend (`sql.js`) **does not** support encryption. If you supply an encryption key to the WASM backend, it will gracefully ignore it for the target database. However, this can cause conflicts if both a Native and WASM backend share the same `--audit-log` file (since the Native backend will encrypt the shared audit log, causing the WASM backend to crash when reading it). To avoid this in dual-backend setups, assign a separate audit log (e.g., `--audit-log mcp-audit-wasm.db`) for your WASM instance.
+For advanced configuration (raw hex keys vs passphrases, dual-backend audit log encryption rules, and migration steps), please see the full [Security Documentation](https://github.com/neverinfamous/db-mcp/blob/main/SECURITY.md).
 
-**Configuring the Key**:
-You can provide the key via the `--encryption-key` CLI flag or the `DB_ENCRYPTION_KEY` environment variable.
-
-1. **Strong Passphrase**: A standard string. SQLCipher will automatically use PBKDF2 key derivation.
-   ```bash
-   DB_ENCRYPTION_KEY="your-strong-passphrase-here"
-   ```
-2. **Raw Hex Key (Best Performance)**: To skip PBKDF2 derivation overhead, provide an exact 256-bit raw hex key prefixed with `x` and wrapped in single quotes:
-   ```bash
-   DB_ENCRYPTION_KEY="x'2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99'"
-   ```
-
-> [!WARNING]
-> **Audit Log Compatibility**: The `DB_ENCRYPTION_KEY` environment variable applies globally and will cause the internal `SystemDb` to attempt to decrypt your audit log (`--audit-log`). If you have an existing unencrypted audit log, the server will fail to start with `file is not a database`. To encrypt ONLY your target database (leaving the audit log unencrypted), use the `--encryption-key` CLI flag instead of the global environment variable.
 
 ## 📦 Image Details
 
