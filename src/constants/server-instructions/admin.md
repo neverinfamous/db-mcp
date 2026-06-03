@@ -15,6 +15,8 @@ sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table
 
 ## Backup/Restore (Native only)
 
+⚠️ Paths must be absolute and within `ALLOWED_IO_ROOTS` if configured.
+
 ```javascript
 sqlite_backup({ targetPath: "/path/to/backup.db" });
 sqlite_vacuum_into({ outputPath: "/path/to/compact.db" }); // create defragmented copy
@@ -99,7 +101,7 @@ sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }); // 2D:
 
 ## CSV Virtual Tables (Native only)
 
-⚠️ Requires ABSOLUTE file paths
+⚠️ Requires ABSOLUTE file paths that must fall within `ALLOWED_IO_ROOTS` if configured.
 
 ```javascript
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" }); // analyze CSV structure

@@ -58,6 +58,8 @@ sqlite_reindex({ target: "orders" }); // rebuild all indexes for a table
 
 ## Backup/Restore (Native only)
 
+⚠️ Paths must be absolute and within \`ALLOWED_IO_ROOTS\` if configured.
+
 \`\`\`javascript
 sqlite_backup({ targetPath: "/path/to/backup.db" });
 sqlite_vacuum_into({ outputPath: "/path/to/compact.db" }); // create defragmented copy
@@ -142,7 +144,7 @@ sqlite_create_rtree_table({ tableName: "locations_idx", dimensions: 2 }); // 2D:
 
 ## CSV Virtual Tables (Native only)
 
-⚠️ Requires ABSOLUTE file paths
+⚠️ Requires ABSOLUTE file paths that must fall within \`ALLOWED_IO_ROOTS\` if configured.
 
 \`\`\`javascript
 sqlite_analyze_csv_schema({ filePath: "/absolute/path/to/data.csv" }); // analyze CSV structure
@@ -307,7 +309,7 @@ sqlite_spatialite_index({
 10. **SpatiaLite distances**: \`nearest_neighbor\`/\`distance_matrix\` return CARTESIAN distance (degrees), not geodetic (km/miles)
 11. **SpatiaLite buffer**: Auto-simplifies output by default (tolerance=0.0001). Use \`simplifyTolerance: 0\` to disable
 12. **sqlite_stats_top_n**: Returns all columns by default which creates large payloads for wide tables — always pass \`selectColumns\` to control output size
-13. **CSV virtual tables**: Require ABSOLUTE file paths
+13. **CSV virtual tables & Backups**: Require ABSOLUTE file paths. Operations will be blocked if paths do not fall within the authorized \`ALLOWED_IO_ROOTS\` directory (or the primary database directory if unconfigured).
 14. **sqlite_create_series_table**: Creates a REGULAR table (not virtual) — use \`sqlite_drop_table\` to remove
 15. **sqlite_dbstat**: \`summarize\` only works in native; WASM returns counts only
 16. **PRAGMA compile options**: WASM may show FTS3, not FTS5
