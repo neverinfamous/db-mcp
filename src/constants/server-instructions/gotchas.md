@@ -25,7 +25,7 @@
 21. **sqlite_upsert**: Always specify `conflictColumns` — without it, falls back to `REPLACE` which deletes and re-inserts the row, potentially losing columns not included in `data`
 22. **Resource Subscriptions**: The `sqlite://schema` and `sqlite://health` resources support MCP subscriptions, allowing the client to receive real-time push notifications when DDL changes occur or health metrics update without needing to poll.
 23. **HTTP Session Timeouts**: Stateful HTTP sessions automatically expire after 30 minutes of inactivity, or 24 hours total. Sessions are swept automatically; ensure client workflows re-authenticate or handle broken sessions gracefully.
-
+24. **Structured Errors**: Execution timeouts surface as recoverable `TimeoutError` (category: `timeout`). Rate limit violations surface as `RateLimitError` (category: `rate_limit`). Use this metadata to programmatically retry or backoff.
 ## WASM vs Native
 
 | Feature                                           | Native                | WASM        | Fallback         |
