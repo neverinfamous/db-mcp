@@ -73,8 +73,7 @@
     "sql.js": "1.14.1",
     "sqlite-parser": "^1.0.1",
     "yaml": "^2.9.0",
-    "zod": "^4.4.3",
-    "zod-to-json-schema": "3.25.2"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

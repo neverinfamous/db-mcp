@@ -117,7 +117,7 @@ export const PragmaCompileOptionsSchema = z.object({
     ),
 });
 
-export const PragmaDatabaseListSchema = z.object({});
+export const PragmaDatabaseListSchema = z.object({}).strict();
 
 export const VacuumSchema = z.object({
   analyze: z
@@ -239,7 +239,7 @@ export const SqlDumpSchema = z.object({
 export const AuditListBackupsOutputSchema = z
   .object({
     success: z.boolean(),
-    snapshots: z.array(z.any()).optional(),
+    snapshots: z.array(z.unknown()).optional(),
     count: z.number().optional(),
     totalCount: z.number().optional(),
     _meta: z.object({ tokenEstimate: z.number() }).optional(),
@@ -249,7 +249,7 @@ export const AuditListBackupsOutputSchema = z
 export const AuditGetBackupOutputSchema = z
   .object({
     success: z.boolean(),
-    metadata: z.any().optional(),
+    metadata: z.unknown().optional(),
     ddl: z.string().optional(),
     data: z.string().optional(),
   })
@@ -266,7 +266,7 @@ export const AuditCleanupOutputSchema = z
 export const AuditDiffBackupOutputSchema = z
   .object({
     success: z.boolean(),
-    diffs: z.array(z.any()).optional(),
+    diffs: z.array(z.unknown()).optional(),
     snapshotTimestamp: z.string().optional(),
     snapshotTarget: z.string().optional(),
   })
@@ -285,7 +285,7 @@ export const AuditRestoreBackupOutputSchema = z
 export const AuditSearchOutputSchema = z
   .object({
     success: z.boolean(),
-    entries: z.array(z.any()).optional(),
+    entries: z.array(z.unknown()).optional(),
     count: z.number().optional(),
     totalCount: z.number().optional(),
   })

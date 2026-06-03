@@ -113,7 +113,7 @@ function createTransactionStatusTool(
       "Check whether a transaction is currently active. " +
       "Returns status and a boolean flag. Read-only — does not alter transaction state.",
     group: "transactions",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     outputSchema: TransactionStatusOutputSchema,
     annotations: readOnly("Transaction Status"),
     requiredScopes: ["read"],
@@ -148,7 +148,7 @@ function createCommitTransactionTool(
     description:
       "Commit the current transaction, making all changes permanent.",
     group: "transactions",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     outputSchema: TransactionCommitOutputSchema,
     annotations: write("Commit Transaction"),
     requiredScopes: ["write"],
@@ -178,7 +178,7 @@ function createRollbackTransactionTool(
     description: "Rollback the current transaction, discarding all changes.",
     group: "transactions",
     outputSchema: TransactionRollbackOutputSchema,
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).strict(),
     annotations: write("Rollback Transaction"),
     requiredScopes: ["write"],
     handler: (_params: unknown, _context: RequestContext) => {

@@ -28,6 +28,11 @@
 - Updated `Dockerfile` to use `pnpm` exclusively, eliminating the need to manually patch transitively bundled `npm` vulnerabilities.
 ### Fixed
 - Synchronized tool counts and supported versions across `DOCKER_README.md` and `SECURITY.md` based on `v4.0.0` audit.
+- Fixed typescript enum `ErrorCategory` to use a literal union type instead for reduced runtime footprint.
+- Fixed overly permissive `z.object({})` schemas by enforcing `.strict()` in migration, admin, and transaction tools.
+- Fixed isolated `any` type usage by casting to `unknown` in admin schemas and metrics tests.
+- Fixed ESLint suppression directives by refactoring `logger.ts` to be fully synchronous. Restored justified external SDK deprecation suppressions in HTTP transport.
+- Removed unused dependency `zod-to-json-schema` to improve dependency hygiene.
 - Fixed Code Mode sandbox timeouts failing to surface as structured `TimeoutError` responses by catching execution timeouts directly from the sandbox pool execution result.
 - Fixed native addon crashes during Vitest execution by migrating the execution pool from `threads` to `forks` in `vitest.config.ts`, ensuring isolated V8 heaps for `isolated-vm`.
 - Fixed false-positive test failures in `sqlite-adapter-methods.test.ts` by correcting async `Promise` rejection assertions and `connectionPooling` capability flags.
