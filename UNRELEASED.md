@@ -2,8 +2,9 @@
 
 ### Added
 
-- Added comprehensive CI/CD workflow documentation with Mermaid diagrams at `.github/workflows/README.md`.
-- Added `Performance-Tuning.md` guide to the GitHub Wiki covering cache TTLs, WASM vs Native backends, and token efficiency.
+- Comprehensive CI/CD workflow documentation with Mermaid diagrams at `.github/workflows/README.md`.
+- `Performance-Tuning.md` guide to the GitHub Wiki covering cache TTLs, WASM vs Native backends, and token efficiency.
+- Dependabot verification step to `.github/workflows/ci-health-monitor.md`.
 - Internal server metrics exposed at `/metrics` and natively to clients via the `sqlite://metrics` resource.
 - `sqlite_hybrid_search` tool combining FTS5 text search and vector embedding search via Reciprocal Rank Fusion (RRF).
 - `sqlite_audit_search` tool to securely query the server's own audit logs.
@@ -19,10 +20,7 @@
 ### Changed
 
 - Updated `actions/checkout` and `actions/setup-node` to `v6` across all GitHub Actions workflows via SHA pinning.
-- Added Dependabot verification step to `.github/workflows/ci-health-monitor.md`.
 - Updated `sqlite_read_query` instructions with token conservation guidance.
-- Synchronized codebase tool counts across all README files and documentation.
-- Enforced single quotes in YAML frontmatter for CI agentic workflows.
 - Bumped `@vitest/coverage-v8` to `4.1.8`, `typescript-eslint` to `8.60.1`, and `vitest` to `4.1.8`.
 
 ### Removed
@@ -30,11 +28,10 @@
 - `sqlite_append_insight` tool and `memo://insights` resource (leftovers from memory-journal port).
 
 ### Fixed
+
 - Corrected documentation drift across README files, agentic workflows, codebase map, and wiki to accurately reflect 11 data resources, 11 help resources, and the removal of legacy memory-journal capabilities.
 - Updated agentic workflows to strictly use single quotes in YAML frontmatter and explicitly reference `gh copilot` in instructions.
-- Fixed minor inconsistencies in tool count explanations across `DOCKER_README.md` and `db-mcp.wiki` documentation.
 - Populated `mcp-config-example.json` with meaningful placeholder values instead of empty strings.
-
 - Silent fallbacks in `introspection` Zod schemas that swallowed wrong-type validation errors for enum properties.
 - `sqlite_spatialite_load` not returning the `version` string as required by the schema output.
 - Native build failure on Node 26 for Windows caused by LLVM/Clang LTO flags.
@@ -45,7 +42,6 @@
 - `DB_ENCRYPTION_KEY` environment variable leakage breaking unencrypted Playwright E2E tests.
 - `SubscriptionManager` silently dropping subscriptions over the stateless `stdio` transport.
 - Inaccuracies in test documentation regarding `openWorldHint` expectations and STDIO transport limitations.
-- Tool count drift in `Tool-Filtering.md` (Wiki) for `full` shortcut and `text` group.
 - `SchemaManager`/`describeTable` omitting generated columns by cross-referencing `table_xinfo` and `sqlite_master` DDL.
 - Code Mode API normalization regression where parameter arrays were incorrectly processed for methods like `searchRegex`.
 - Missing AST validation error trigger in `sandbox.test.ts`.

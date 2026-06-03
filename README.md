@@ -26,7 +26,7 @@
 | Feature                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **170+ Specialized Tools**       | The most comprehensive SQLite MCP server available — core CRUD, JSON/JSONB, FTS5 full-text search, statistical analysis, vector search, geospatial/SpatiaLite, introspection, migration, and admin                                                                                                                                                                                                                                                                            |
-| **22 Resources**                 | 11 data resources (schema, tables, indexes, views, health, metadata, audit, metrics, compile_options, pragma) + 11 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                                                       |
+| **22 Resources**                 | 11 data resources (schema, tables, table_schema, indexes, views, health, meta, audit, metrics, compile_options, pragma) + 11 help resources (`sqlite://help` + per-group reference) — filtered by `--tool-filter`                                                                                                                                                                                                                                                               |
 | **10 AI-Powered Prompts**        | Guided workflows for schema exploration, query building, data analysis, optimization, migration, debugging, and hybrid FTS5 + vector search                                                                                                                                                                                                                                                                                                                                   |
 | **Code Mode**                    | **Massive Token Savings:** Execute complex, multi-step operations inside a **V8 isolate sandbox** with process-level isolation and hard timeouts. Instead of spending thousands of tokens on back-and-forth tool calls, Code Mode exposes all 170+ capabilities locally, reducing token overhead by 70–90% and supercharging AI agent reasoning                                                                                                                               |
 | **Token-Optimized Payloads**     | Every tool response is designed for minimal token footprint with `_meta.tokenEstimate` on every response so agents know their token cost. Tools include `compact`, `nodesOnly`, `maxOutliers`, `minSeverity`, and `maxInvalid` parameters where applicable — letting agents control response size without losing data access                                                                                                                                                  |
@@ -349,7 +349,7 @@ db-mcp --sqlite-native ./data.db --spatialite
 
 ## 📁 Resources
 
-### Data Resources (12)
+### Data Resources (11)
 
 MCP resources provide read-only access to database metadata:
 
@@ -364,7 +364,6 @@ MCP resources provide read-only access to database metadata:
 | `sqlite_meta`            | `sqlite://meta`                     | Database metadata and PRAGMAs     | `core,admin`  |
 | `sqlite_compile_options` | `sqlite://compile_options`          | SQLite compile-time build options | _(read-only)_ |
 | `sqlite_pragma`          | `sqlite://pragma`                   | Runtime PRAGMA config snapshot    | _(read-only)_ |
-| `sqlite_insights`        | `memo://insights`                   | Business insights memo (analysis) | `core,admin`  |
 | `sqlite_audit`           | `sqlite://audit`                    | Recent audit log + backup stats   | `--audit-log` |
 | `sqlite_metrics`         | `sqlite://metrics`                  | Internal server metrics           | _(read-only)_ |
 

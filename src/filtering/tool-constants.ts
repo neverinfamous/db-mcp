@@ -201,7 +201,7 @@ export const TOOL_GROUPS: Record<ToolGroup, string[]> = {
     "analyze_csv_schema",
     "create_rtree_table",
     "create_series_table",
-    // Database management (5: pragma.ts, backup/create.ts, reindex.ts, wal.ts)
+    // Database management (6: pragma.ts, backup/create.ts, dump.ts, reindex.ts, wal.ts)
     "attach_database",
     "detach_database",
     "vacuum_into",
